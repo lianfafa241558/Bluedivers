@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5877342823092023798
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5877342823092023793}
+  - component: {fileID: -766845851129917296}
+  m_Layer: 0
+  m_Name: SpireNest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5877342823092023793
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5877342823092023798}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-766845851129917296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5877342823092023798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ab55abf20157354ebe9d31a801bc232, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hide: 0
+  prefabs:
+  - {fileID: 5250069461111745338, guid: 5fcb23933a0fd8847a5cfb678f74511d, type: 3}
+  title: "\u62C6\u9664\u88AD\u63A0\u8005\u6298\u8D8A\u951A"
+  tip: 
+  MaxProgress: 0
+  NowProgress: 0
+  AirdropRange: 10
+  subTask: []
+  data:
+    cfg:
+      type: 0
+      color: {r: 0, g: 0, b: 0, a: 0}
+      sprite: {fileID: 0}
+      sizeType: 0
+      mapEntitySize: {x: 0, y: 0}
+      count: {x: 0, y: 0}
+      reward: {x: 0, y: 0}
+      extraCount: 0
+      name: 
+      desc: 
+      controller: {fileID: 0}
+      evacuateType: 0
+      prefab: {fileID: 0}
+      RequiredAD: []
+    targetCount: 0
+    reward: 0
+    complete: 0
+  root:
+    RequiredAD: 
+    nestReward: c80000009600000096000000
+    nestCount: 040000000200000001000000
+    nestDemolish: 000000000000000000000000
+    campData: {fileID: 0}
+    mapImage: {fileID: 0}
+    mapIcon: {fileID: 0}
+    activeTask: 0
+  icon: {fileID: 0}
+  pos: {x: 0, y: 0, z: 0}
+  entitySize: 0
+  InEntityRange: 0
+  InAirdropRange: 0
+  actorNames:
+  - SpireNest

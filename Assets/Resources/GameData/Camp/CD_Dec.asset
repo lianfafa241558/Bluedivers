@@ -1,0 +1,185 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fa3084c78287f94190363f9312ba760, type: 3}
+  m_Name: CD_Dec
+  m_EditorClassIdentifier: 
+  enemyVarietyType: 5
+  ShowName: "\u5341\u5B57\u795E\u660E"
+  Sprite: {fileID: 21300000, guid: db98d366425374145a850959cd37c0ee, type: 3}
+  KillSprite: {fileID: 21300000, guid: fe24f9f83fef0604a97a6381d8bf3103, type: 3}
+  Color: {r: 1, g: 0.8, b: 0.39999998, a: 1}
+  Suffix: Zerg
+  Desc: "\u5341\u5B57\u795E\u660E\u63A7\u5236\u4E0B\u7684\u673A\u68B0\u5927\u519B\uFF0C\u7A83\u53D6\u4E86\u65E0\u540D\u4F17\u795E\u7684\u6280\u672F\u3002"
+  WaveCool: 240
+  WaveUseObject:
+  - {fileID: 2675460735055145210, guid: 6a25c09697f01a64c8ca92c8f1e6d11c, type: 3}
+  Templates:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      Template: []
+      PatrolName: []
+    arr:
+    - Key: "\u8DF3\u866B\u6A21\u677F"
+      Value:
+        Template:
+        - Key: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
+            type: 3}
+          Value: {x: 130, y: 1}
+        - Key: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
+            type: 3}
+          Value: {x: 60, y: 3}
+        - Key: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
+            type: 3}
+          Value: {x: 30, y: 3}
+        - Key: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
+            type: 3}
+          Value: {x: 30, y: 3}
+        - Key: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+            type: 3}
+          Value: {x: 5, y: 8}
+        - Key: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
+            type: 3}
+          Value: {x: 5, y: 6}
+        PatrolName:
+        - "\u76FE\u866B\u5DE1\u903B\u961F"
+        - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    - Key: "\u6218\u58EB\u6A21\u677F"
+      Value:
+        Template:
+        - Key: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
+            type: 3}
+          Value: {x: 40, y: 1}
+        - Key: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
+            type: 3}
+          Value: {x: 70, y: 3}
+        - Key: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
+            type: 3}
+          Value: {x: 80, y: 3}
+        - Key: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
+            type: 3}
+          Value: {x: 30, y: 3}
+        - Key: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+            type: 3}
+          Value: {x: 5, y: 8}
+        - Key: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
+            type: 3}
+          Value: {x: 5, y: 6}
+        PatrolName:
+        - "\u76FE\u866B\u5DE1\u903B\u961F"
+        - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    - Key: "\u5BBF\u4E3B\u6A21\u677F"
+      Value:
+        Template:
+        - Key: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
+            type: 3}
+          Value: {x: 30, y: 1}
+        - Key: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
+            type: 3}
+          Value: {x: 50, y: 3}
+        - Key: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
+            type: 3}
+          Value: {x: 40, y: 3}
+        - Key: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
+            type: 3}
+          Value: {x: 20, y: 3}
+        - Key: {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+            type: 3}
+          Value: {x: 50, y: 5}
+        - Key: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+            type: 3}
+          Value: {x: 5, y: 6}
+        - Key: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
+            type: 3}
+          Value: {x: 5, y: 6}
+        PatrolName:
+        - "\u76FE\u866B\u5DE1\u903B\u961F"
+        - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    - Key: "\u70B9\u706B\u866B\u6A21\u677F"
+      Value:
+        Template:
+        - Key: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
+            type: 3}
+          Value: {x: 40, y: 1}
+        - Key: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
+            type: 3}
+          Value: {x: 40, y: 3}
+        - Key: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
+            type: 3}
+          Value: {x: 20, y: 3}
+        - Key: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
+            type: 3}
+          Value: {x: 60, y: 3}
+        - Key: {fileID: 6731495466205310902, guid: bc235516cb7a542479405b035086c116,
+            type: 3}
+          Value: {x: 40, y: 5}
+        - Key: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+            type: 3}
+          Value: {x: 5, y: 6}
+        - Key: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
+            type: 3}
+          Value: {x: 5, y: 6}
+        PatrolName:
+        - "\u76FE\u866B\u5DE1\u903B\u961F"
+        - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    meetReset: 0
+  Patrol:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue: []
+    arr:
+    - Key: "\u76FE\u866B\u5DE1\u903B\u961F"
+      Value:
+      - {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341, type: 3}
+      - {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341, type: 3}
+      - {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341, type: 3}
+      - {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+    - Key: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+      Value:
+      - {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b, type: 3}
+      - {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b, type: 3}
+      - {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b, type: 3}
+    - Key: "\u7EFF\u80D6\u5DE1\u903B\u961F"
+      Value:
+      - {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21, type: 3}
+      - {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21, type: 3}
+      - {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+    - Key: "\u9EC4\u80D6\u5DE1\u903B\u961F"
+      Value:
+      - {fileID: 6731495466205310902, guid: bc235516cb7a542479405b035086c116, type: 3}
+      - {fileID: 6731495466205310902, guid: bc235516cb7a542479405b035086c116, type: 3}
+      - {fileID: 6731495466205310902, guid: bc235516cb7a542479405b035086c116, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+      - {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783, type: 3}
+    meetReset: 0
+  Nest:
+  - {fileID: -766845851129917296, guid: c36e54fb64b8fa744af4fa7b0afdc1e6, type: 3}
+  - {fileID: -766845851129917296, guid: 6457f1baefaced84386f8f51911c9c7c, type: 3}
+  - {fileID: -766845851129917296, guid: b9463701e7fdd514da5f5491f528d0aa, type: 3}
+  NestName: 
+  mainTypes: 000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000b000000
+  extraTypes: 2200000023000000240000002800000029000000
+  nestTypes: 640000006500000066000000

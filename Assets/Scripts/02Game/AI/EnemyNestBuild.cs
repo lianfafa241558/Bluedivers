@@ -1,0 +1,90 @@
+using System.Collections.Generic;
+using Unity.BaseTool;
+using UnityEngine;
+namespace Unity.FPS.AI
+{
+    /// <summary>
+    /// 工厂型敌人的状态机
+    /// </summary>
+    public class EnemyNestBuild : AIInputBaseController
+    {
+        public enum AIState
+        {
+            Idle,
+            Active,
+            Death,
+        }
+
+        [CustomLabel("创建点")]
+        public Transform creatPoint;
+
+        [CustomLabel("生产单位")]
+        public List<GameObject> creatUnits;
+        [CustomLabel("生产时间")]
+        public int creatTime = 10;
+        [CustomLabel("脱战时间")]
+        public int damagedTime=12;
+        [SerializeField]
+        [DisplayField(true,false,true)]
+        private float lastDamagedTime = Mathf.NegativeInfinity, lastCreatTime= Mathf.NegativeInfinity;
+
+        public AIState AiState { get; private set; }
+
+        protected override void UpdateCurrentAiState()
+        {
+            switch (AiState)
+            {
+                case AIState.Idle:
+                    break;
+                case AIState.Active:
+                    if(Time.time - creatTime >= lastCreatTime)
+                    {
+                        lastCreatTime = Time.time;
+                        var go = Instantiate(RandomUtils.RandomTake(creatUnits), creatPoint.position + creatPoint.forward, creatPoint.rotation, transform.parent);
+                    }
+                    break;
+            }
+        }
+        protected override void UpdateAiStateTransitions()
+        {
+            switch (AiState)
+            {
+                case AIState.Idle:
+                    if (Time.time - damagedTime < lastDamagedTime)
+                    {
+                        AiState = AIState.Active;
+                        lastCreatTime = Time.time - 0.5f * creatTime;//第一个生产时间减半
+                    }
+                    break;
+                case AIState.Active:
+                    if (Time.time - damagedTime > lastDamagedTime)
+                    {
+                        AiState = AIState.Idle;
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 受击
+        /// </summary>
+        protected override void OnDamaged(Collider collider)
+        {
+            lastDamagedTime = Time.time;
+        }
+        protected override void OnDetectedTarget()
+        {
+            lastDamagedTime = Time.time;
+        }
+        protected override void OnLostTarget()
+        {
+
+        }
+
+
+        protected override void OnDie()
+        {
+            AiState = AIState.Death;
+        }
+    }
+}

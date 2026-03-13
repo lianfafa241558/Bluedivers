@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 150ca7a623f31424aad6112aba22d37e, type: 3}
+  m_Name: WUD_Grenade_Range
+  m_EditorClassIdentifier: 
+  name: "\u7B80\u88C5\u6846\u67B6"
+  type: "\u5C04\u7A0B"
+  icon: {fileID: 21300000, guid: 1b3193f68ca866943bada632271653b6, type: 3}
+  desc: "\u5C11\u88C5\u4E24\u4E2A\u5F39\u7C27\uFF0C\u53BB\u6389\u51E0\u4E2A\u87BA\u4E1D\u3002\u4E0D\u7BA1\u600E\u4E48\u6837\uFF0C\u4F60\u53EF\u4EE5\u4E22\u7684\u66F4\u8FDC\u4E86\u3002"
+  cost:
+  - Key: 0
+    Value: 1000
+  modifys:
+  - name: 
+    type: 23
+    modifier: 2
+    value: 0.25
+  - name: "\u6295\u63B7\u8DDD\u79BB"
+    type: 999
+    modifier: 1
+    value: 10

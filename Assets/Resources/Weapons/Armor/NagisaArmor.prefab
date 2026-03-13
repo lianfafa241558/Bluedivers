@@ -1,0 +1,138 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2225486910712267859
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2225486910712267856}
+  - component: {fileID: 8028225167041763301}
+  m_Layer: 0
+  m_Name: NagisaArmor
+  m_TagString: Untagged
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2225486910712267856
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2225486910712267859}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8028225167041763301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2225486910712267859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e03ea2fb50b06ab468194bc5b83375d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WeaponRoot: {fileID: 0}
+  WeaponMuzzle: {fileID: 0}
+  cfg:
+    _fakeAttrs:
+    - Key: 0
+      Value: 30
+    - Key: 1
+      Value: 8
+    - Key: 2
+      Value: 0.5
+    - Key: 10
+      Value: 2
+  DelayBetweenShots: 0.5
+  BulletsPerShot: 1
+  BulletSpreadAngle: 0
+  MaxAmmo: 8
+  ProjectilePrefab: {fileID: 0}
+  BulletFlag: 0
+  Damages: []
+  UseDamageIndex: 0
+  MuzzleFlashPrefab: {fileID: 0}
+  UnparentMuzzleFlash: 0
+  SFXRange: 20
+  ShootSfx: {fileID: 0}
+  UseContinuousShootSound: 0
+  ContinuousShootStartSfx: {fileID: 0}
+  ContinuousShootLoopSfx: {fileID: 0}
+  ContinuousShootEndSfx: {fileID: 0}
+  nowAmmo: 0
+  remainBullets: 0
+  ShootType: 0
+  WeaponFlag: 0
+  ClipSize: 30
+  AmmoReloadRate: 1
+  AmmoReloadDelay: 2
+  ChargeSpeedScale: 1
+  ChargeGravityScale: 1
+  WaitTime: 0
+  AutomaticReleaseOnCharged: 0
+  ChargeLowestStage: 0
+  Chargestage: 0
+  MaxChargeDuration: 2
+  AmmoUsedOnStartCharge: 1
+  AmmoUsageRateWhileCharging: 1
+  LockDistance: 0
+  Lockshape: 0
+  LockRange: 64
+  LockLayers: 1
+  LockInterval: 1
+  ActorMaxLockCount: 1
+  ReloadSfx: {fileID: 0}
+  ChangeWeaponSfx: {fileID: 0}
+  ChargeVfx: {fileID: 0}
+  WeaponAnimator: {fileID: 0}
+  HasPhysicalBullets: 0
+  ShellCasing: {fileID: 0}
+  EjectionPort: {fileID: 0}
+  ShellCasingEjectionForce: 2
+  ShellPoolSize: 1
+  PlayerIndex: 0
+  WeaponName: "\u8336\u4F1A\u7279\u4F9B\u9632\u5F39\u5957\u88C5"
+  WeaponType: "\u88C5\u7532"
+  WeaponIcon: {fileID: 21300000, guid: 04c3eb9d73b3c2a448cefdde9b9dafe1, type: 3}
+  Sight: {fileID: 4066082357213353509, guid: 682987df4a63fd641bcafdf118cf811e, type: 3}
+  ScopeGo: {fileID: 0}
+  LHand: {fileID: 0}
+  RHand: {fileID: 0}
+  ShowRoot: {fileID: 0}
+  RecoilForce: 1
+  AimingHideCrosshair: 1
+  AimZoomRatio: 1
+  AimOffset: {x: 0, y: 0, z: 0}
+  playerAngle: 0
+  desc: 
+  showAttr: []
+  Upgrade: []
+  m_UniqueAttr:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      noValue: 0
+      value: 0
+      percentage: 0
+      flipPlus: 0
+      defaultHide: 0
+      defaultValue: 0
+      extraValue: 0
+    arr: []
+    meetReset: 0
+  Modules: []
+  ActiveModule: {fileID: 0}

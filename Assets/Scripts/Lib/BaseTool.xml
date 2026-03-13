@@ -1,0 +1,351 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BaseTool</name>
+    </assembly>
+    <members>
+        <member name="T:Unity.BaseTool.ObjectPool`1">
+            <summary>手动对象池 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.ObjectPool`1._Add">
+            <summary> 创建时的处理 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.ObjectPool`1._Pop">
+            <summary> 从池子中取出时的处理 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.ObjectPool`1._Push">
+            <summary> 放入池子时的处理 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.ObjectPool`1.freeObjects">
+            <summary> 池子中的对象 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.ObjectPool`1.Count">
+            <summary> 池子中的对象数量 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.ObjectPool`1.useObjects">
+            <summary> 被取出的对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.#ctor(System.Func{`0},System.Action{`0},System.Int32)">
+            <summary>
+            手动对象池
+            </summary>
+            <param name="add">添加时的操作</param>
+            <param name="push">放入池子时的处理</param>
+            <param name="startCount">初始数量</param>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.#ctor(System.Func{`0},System.Action{`0},System.Action{`0},System.Int32)">
+            <summary>
+            手动对象池
+            </summary>
+            <param name="add">添加时的操作</param>
+            <param name="pop">从池子中取出时的处理</param>
+            <param name="push">放入池子时的处理</param>
+            <param name="startCount">初始数量</param>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.Add">
+            <summary>添加到池中</summary>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.Get">
+            <summary> 从池中取出一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.Release(`0)">
+            <summary> 释放一个对象到池中 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.Contains(System.Predicate{`0})">
+            <summary>池中是否包含对象</summary>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.Release">
+            <summary> 释放全部对象到池中 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.Release(System.Predicate{`0})">
+            <summary> 释放特定对象到池中 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.UnInit">
+            <summary>反初始化 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.ObjectPool`1.Remove">
+            <summary> 移除一个对象</summary>
+        </member>
+        <member name="T:Unity.BaseTool.DicObjectPool`2">
+            <summary>字典对象池 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.DicObjectPool`2._Add">
+            <summary>根据K创建对象</summary>
+        </member>
+        <member name="F:Unity.BaseTool.DicObjectPool`2._Pop">
+            <summary>从池子中取出时的处理 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.DicObjectPool`2._Push">
+            <summary>释放对象时的处理</summary>
+        </member>
+        <member name="M:Unity.BaseTool.DicObjectPool`2.#ctor(System.Func{`0,`1},System.Action{`1},System.Action{`1})">
+            <summary>
+            自动字典对象池
+            </summary>
+            <param name="add">创建对象时的处理</param>
+            <param name="pop">从池子中取出时的处理</param>
+            <param name="push">释放对象时的处理</param>
+        </member>
+        <member name="M:Unity.BaseTool.DicObjectPool`2.Add(`0)">
+            <summary>
+            添加对象
+            </summary>
+            <param name="key">键</param>
+            <returns>创建的对象</returns>
+        </member>
+        <member name="M:Unity.BaseTool.DicObjectPool`2.Get(`0)">
+            <summary>
+            取出一个对象
+            </summary>
+            <param name="key">键</param>
+            <returns>取出的对象</returns>
+        </member>
+        <member name="M:Unity.BaseTool.DicObjectPool`2.Release(`0)">
+            <summary> 释放一组对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.DicObjectPool`2.Release(`0,`1)">
+            <summary> 释放一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.DicObjectPool`2.Release(`0,System.Predicate{`1})">
+            <summary> 释放一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.DicObjectPool`2.Remove(`0)">
+            <summary> 移除一组对象</summary>
+        </member>
+        <member name="M:Unity.BaseTool.DicObjectPool`2.Clear">
+            <summary>
+            清空对象池
+            </summary>
+        </member>
+        <member name="T:Unity.BaseTool.AutoObjectPoolBase`1">
+            <summary>
+            自动对象池的基类
+            </summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoObjectPoolBase`1._ItemUpdate">
+            <summary>返回false时释放</summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoObjectPoolBase`1._Add">
+            <summary> 创建时的处理 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoObjectPoolBase`1._Pop">
+            <summary> 从池子中取出时的处理 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoObjectPoolBase`1._Push">
+            <summary> 放入池子时的处理 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoObjectPoolBase`1.freeObjects">
+            <summary> 池子中的对象 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoObjectPoolBase`1.Count">
+            <summary> 池子中的对象数量 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPoolBase`1.#ctor(System.Func{`0,System.Boolean},System.Func{`0},System.Action{`0},System.Int32)">
+            <summary>
+            自动对象池
+            </summary>
+            <param name="itemUpdate">update每一项判断是否自动释放</param>
+            <param name="add">创建对象时的处理</param>
+            <param name="push">释放对象时的处理</param>
+            <param name="startCount">初始数量</param>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPoolBase`1.#ctor(System.Func{`0,System.Boolean},System.Func{`0},System.Action{`0},System.Action{`0},System.Int32)">
+            <summary>
+            自动对象池
+            </summary>
+            <param name="itemUpdate">update每一项判断是否自动释放</param>
+            <param name="add">创建对象时的处理</param>
+            <param name="pop">取出对象时的处理</param>
+            <param name="push">释放对象时的处理</param>
+            <param name="startCount">初始数量</param>
+        </member>
+        <member name="T:Unity.BaseTool.AutoObjectPool`1">
+            <summary>无映射的对象池 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoObjectPool`1.lastGetTime">
+            <summary>
+            上次取出对象的时间
+            </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPool`1.Get">
+            <summary> 取出一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPool`1.Release(`0)">
+            <summary> 释放一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPool`1.Release">
+            <summary> 释放全部对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPool`1.Release(System.Predicate{`0})">
+            <summary> 释放特定对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPool`1.Remove">
+            <summary> 移除一个对 </summary>
+        </member>
+        <member name="T:Unity.BaseTool.AutoObjectPool`2">
+            <summary>一对一的对象池 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPool`2.Get(`0)">
+            <summary> 取出一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoObjectPool`2.Release(`0)">
+            <summary> 释放一个对象 </summary>
+        </member>
+        <member name="T:Unity.BaseTool.AutoDicPool`2">
+            <summary>自动字典对象池 </summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoDicPool`2._ItemUpdate">
+            <summary>返回false时释放</summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoDicPool`2._Add">
+            <summary>根据K创建对象</summary>
+        </member>
+        <member name="F:Unity.BaseTool.AutoDicPool`2._Enqueue">
+            <summary>释放对象时的处理</summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoDicPool`2.#ctor(System.Func{`1,System.Boolean},System.Func{`0,`1},System.Action{`1},System.Single)">
+            <summary>
+            自动字典对象池
+            </summary>
+            <param name="itemUpdate">update每一项判断是否自动释放</param>
+            <param name="add">创建对象时的处理</param>
+            <param name="enqueue">释放对象时的处理</param>
+            <param name="startCount">初始数量</param>
+        </member>
+        <member name="M:Unity.BaseTool.AutoDicPool`2.Get(`0)">
+            <summary> 取出一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoDicPool`2.Release(`0)">
+            <summary> 释放一组对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoDicPool`2.Release(`0,`1)">
+            <summary> 释放一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.AutoDicPool`2.Release(`0,System.Predicate{`1})">
+            <summary> 释放一个对象 </summary>
+        </member>
+        <member name="M:Unity.BaseTool.DisplayDic`2.Synchronize(Unity.BaseTool.DisplayDic{`0,`1})">
+            <summary>
+            非覆盖的合并/同步
+            </summary>
+        </member>
+        <member name="T:Unity.BaseTool.RandomUtils">
+            <summary>
+            随机数工具
+            </summary>
+        </member>
+        <member name="M:Unity.BaseTool.RandomUtils.InitRandom(System.Int32)">
+            <summary>
+            初始化随机数
+            </summary>
+            <param name="seed">保证每个客户端种子一致，得到的随机数一致</param>
+        </member>
+        <member name="M:Unity.BaseTool.RandomUtils.Range(System.Int32,System.Int32)">
+            <summary>
+            返回整数 [min,max)
+            </summary>
+        </member>
+        <member name="M:Unity.BaseTool.RandomUtils.Range(System.Random,System.Int32,System.Int32)">
+            <summary>
+            返回整数 [min,max)
+            </summary>
+        </member>
+        <member name="M:Unity.BaseTool.RandomUtils.Range(System.Single,System.Single)">
+            <summary>
+            仅返回2位小数
+            </summary>
+        </member>
+        <member name="M:Unity.BaseTool.RandomUtils.Range(System.Random,System.Single,System.Single)">
+            <summary>
+            仅返回2位小数
+            </summary>
+        </member>
+        <member name="M:Unity.BaseTool.RandomUtils.Bool(System.Single)">
+            <summary>
+            概率(0-100)
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Unity.BaseTool.RandomUtils.RandomOrdering``1(System.Collections.Generic.List{``0})">
+            <summary>
+            随机排序(感觉挺危险的，少用?)
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Unity.BaseTool.RandomUtils.RandomTake``1(System.Int32,System.Int32)" -->
+        <!-- Badly formed XML comment ignored for member "M:Unity.BaseTool.RandomUtils.RandomTake``1(System.Random,System.Int32,System.Int32)" -->
+        <member name="F:Unity.BaseTool.Singleton`1.instance">
+            <summary>
+            外部访问，公共静态成员（单例）
+            </summary>
+        </member>
+        <member name="F:Unity.BaseTool.ShapeType.Circle">
+            <summary>圆形</summary>
+        </member>
+        <member name="F:Unity.BaseTool.ShapeType.Ellipse">
+            <summary>椭圆</summary>
+        </member>
+        <member name="F:Unity.BaseTool.ShapeType.Rectangle">
+            <summary>矩形</summary>
+        </member>
+        <member name="F:Unity.BaseTool.ShapeType.Prismatic">
+            <summary>棱形</summary>
+        </member>
+        <member name="F:Unity.BaseTool.CompareOperate.Equal">
+            <summary>等于</summary>
+        </member>
+        <member name="F:Unity.BaseTool.CompareOperate.NotEqual">
+            <summary>不等于</summary>
+        </member>
+        <member name="F:Unity.BaseTool.CompareOperate.Less">
+            <summary>小于</summary>
+        </member>
+        <member name="F:Unity.BaseTool.CompareOperate.LessEqual">
+            <summary>小于等于</summary>
+        </member>
+        <member name="F:Unity.BaseTool.CompareOperate.Greater">
+            <summary>大于</summary>
+        </member>
+        <member name="F:Unity.BaseTool.CompareOperate.GreaterEqual">
+            <summary>大于等于</summary>
+        </member>
+        <member name="F:Unity.BaseTool.CompareOperate.Contain">
+            <summary>包含(Flags)</summary>
+        </member>
+        <member name="F:Unity.BaseTool.CompareOperate.NotContain">
+            <summary>不包含(Flags)</summary>
+        </member>
+        <member name="T:Unity.BaseTool.CustomLabelAttribute">
+            <summary>
+            使字段在Inspector中显示自定义的名称。
+            </summary>
+        </member>
+        <member name="M:Unity.BaseTool.CustomLabelAttribute.#ctor(System.String)">
+            <summary>
+            使字段在Inspector中显示自定义的名称。
+            </summary>
+            <param name="name">自定义名称</param>
+        </member>
+        <member name="M:Unity.BaseTool.FoldoutAttribute.#ctor(System.String,System.Boolean)">
+            <summary>将属性添加到指定的文件夹组。</summary>
+            <param name="name">文件夹的名称</param>
+            <param name="foldEverything">切换以将所有属性放入指定组</param>
+        </member>
+        <member name="M:Unity.BaseTool.BoolShowAttribute.#ctor(System.String)">
+            <summary>
+            使用某个属性的布尔值来控制该属性是否显示
+            </summary>
+            <param name="boolFieldName"></param>
+        </member>
+        <member name="T:Unity.BaseTool.LogicTimerSystem">
+            <summary>
+            逻辑计时器系统
+            </summary>
+        </member>
+        <member name="T:Unity.BaseTool.ViewTimerSystem">
+            <summary>
+            表现计时器系统
+            </summary>
+        </member>
+    </members>
+</doc>

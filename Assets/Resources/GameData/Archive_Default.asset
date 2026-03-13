@@ -1,0 +1,427 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b29868497c51b2e46b0cdccbe665dec5, type: 3}
+  m_Name: Archive_Default
+  m_EditorClassIdentifier: 
+  playerName: 
+  UID: 0
+  lastSelectRole: Yuuka
+  roleDataDic:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      ID: 
+      Level: 0
+      Exp: 0
+      weaponSelect:
+        ShowSetting: 0
+        NoLog: 0
+        NoDefaultVale: 0
+        DefaultValue: 0
+        arr: []
+        meetReset: 0
+    arr:
+    - Key: Aris
+      Value:
+        ID: Aris
+        Level: 1
+        Exp: 0
+        weaponSelect:
+          ShowSetting: 0
+          NoLog: 1
+          NoDefaultVale: 0
+          DefaultValue: 0
+          arr:
+          - Key: 0
+            Value: 0
+          - Key: 1
+            Value: 0
+          - Key: 2
+            Value: 0
+          - Key: 3
+            Value: 0
+          - Key: 4
+            Value: 0
+          - Key: 5
+            Value: 0
+          meetReset: 0
+    - Key: Yuuka
+      Value:
+        ID: Yuuka
+        Level: 1
+        Exp: 0
+        weaponSelect:
+          ShowSetting: 0
+          NoLog: 1
+          NoDefaultVale: 0
+          DefaultValue: 0
+          arr:
+          - Key: 0
+            Value: 0
+          - Key: 1
+            Value: 0
+          - Key: 2
+            Value: 0
+          - Key: 3
+            Value: 0
+          - Key: 4
+            Value: 0
+          - Key: 5
+            Value: 0
+          meetReset: 0
+    - Key: Noa
+      Value:
+        ID: Noa
+        Level: 1
+        Exp: 0
+        weaponSelect:
+          ShowSetting: 0
+          NoLog: 1
+          NoDefaultVale: 0
+          DefaultValue: 0
+          arr:
+          - Key: 0
+            Value: 0
+          - Key: 1
+            Value: 0
+          - Key: 2
+            Value: 0
+          - Key: 3
+            Value: 0
+          - Key: 4
+            Value: 0
+          - Key: 5
+            Value: 0
+          meetReset: 0
+    - Key: Nagisa
+      Value:
+        ID: Nagisa
+        Level: 1
+        Exp: 0
+        weaponSelect:
+          ShowSetting: 0
+          NoLog: 1
+          NoDefaultVale: 0
+          DefaultValue: 0
+          arr:
+          - Key: 0
+            Value: 0
+          - Key: 1
+            Value: 0
+          - Key: 2
+            Value: 0
+          - Key: 3
+            Value: 0
+          - Key: 4
+            Value: 0
+          - Key: 5
+            Value: 0
+          meetReset: 0
+    - Key: Hare
+      Value:
+        ID: Hare
+        Level: 1
+        Exp: 0
+        weaponSelect:
+          ShowSetting: 0
+          NoLog: 1
+          NoDefaultVale: 0
+          DefaultValue: 0
+          arr:
+          - Key: 0
+            Value: 0
+          - Key: 1
+            Value: 0
+          - Key: 2
+            Value: 0
+          - Key: 3
+            Value: 0
+          - Key: 4
+            Value: 0
+          - Key: 5
+            Value: 0
+          meetReset: 0
+    meetReset: 0
+  occupierDic:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue: []
+    arr:
+    - Key: Abydos
+      Value:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 99
+      - name: "\u963F\u62DC\u591A\u65AF\u5BF9\u7B56\u59D4\u5458\u4F1A"
+        value: 1
+    - Key: Federal
+      Value:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 51
+      - name: "\u8054\u90A6\u5B66\u751F\u4F1A"
+        value: 49
+    - Key: Gehanna
+      Value:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 60
+      - name: "\u5730\u4E0B\u9ED1\u5E02"
+        value: 20
+      - name: "\u6DF7\u4E71\u52BF\u529B"
+        value: 16
+      - name: "\u683C\u9ED1\u90A3\u590D\u6821\u59D4\u5458\u4F1A"
+        value: 4
+    - Key: Highlander
+      Value:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+    - Key: HyakkiYako
+      Value:
+      - name: "\u9634\u9633\u90E8"
+        value: 20
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 80
+      - name: "\u5730\u4E0B\u9ED1\u5E02"
+        value: 10
+    - Key: Kronos
+      Value:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+    - Key: Millennium
+      Value:
+      - name: "\u5341\u5B57\u795E\u660E"
+        value: 100
+    - Key: PassionAndTempest
+      Value:
+      - name: "\u5341\u5B57\u795E\u660E"
+        value: 100
+    - Key: RedWinter
+      Value:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 50
+      - name: "\u7EA2\u51AC\u5DE5\u52A1\u90E8"
+        value: 50
+    - Key: Shanhaijin
+      Value:
+      - name: "\u7384\u9F99\u95E8"
+        value: 30
+      - name: "\u7384\u6B66\u5546\u4F1A"
+        value: 65
+      - name: "\u5730\u4E0B\u9ED1\u5E02"
+        value: 5
+    - Key: Trinity
+      Value:
+      - name: "'\u8272\u5F69'"
+        value: 30
+      - name: "\u8D1D\u963F\u7279\u5229\u5207"
+        value: 59
+      - name: "\u5723\u4E09\u4E00\u6D41\u4EA1\u8336\u4F1A"
+        value: 1
+    - Key: Valkyrie
+      Value:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 41
+      - name: "\u8054\u90A6\u5B66\u751F\u4F1A"
+        value: 39
+      - name: "SRT\u7279\u6B8A\u5B66\u9662"
+        value: 20
+    meetReset: 0
+  weaponUpgradeDic:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      ID: 
+      selectIndex: 
+      buyIndex: 
+    arr: []
+    meetReset: 0
+  propertys:
+    ShowSetting: 0
+    NoLog: 1
+    NoDefaultVale: 0
+    DefaultValue: 0
+    arr:
+    - Key: 0
+      Value: 50000
+    - Key: 1
+      Value: 20
+    - Key: 2
+      Value: 20
+    - Key: 3
+      Value: 20
+    - Key: 4
+      Value: 20
+    - Key: 5
+      Value: 20
+    - Key: 6
+      Value: 20
+    - Key: 7
+      Value: 20
+    meetReset: 0
+  AirdropBuyDic: 6400000065000000c8000000d20000002c01000090010000
+  settingDic:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      titile: 
+      type: 2
+      value:
+        value: 
+      showTexts: []
+      sliderRange: {x: 0, y: 0}
+      sliderSuffix: 
+    arr:
+    - Key: "\u663E\u793A\u6A21\u5F0F"
+      Value:
+        titile: "\u56FE\u50CF"
+        type: 0
+        value:
+          value: 0
+        showTexts:
+        - "\u5168\u5C4F\u663E\u793A"
+        - "\u6700\u5927\u7A97\u53E3\u5316"
+        - "\u7A97\u53E3\u5316"
+        sliderRange: {x: 0, y: 0}
+        sliderSuffix: 
+    - Key: "\u4E3B\u97F3\u91CF"
+      Value:
+        titile: "\u97F3\u9891"
+        type: 2
+        value:
+          value: 100
+        showTexts: []
+        sliderRange: {x: 0, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u97F3\u4E50\u97F3\u91CF"
+      Value:
+        titile: 
+        type: 2
+        value:
+          value: 25
+        showTexts: []
+        sliderRange: {x: 0, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u97F3\u6548\u97F3\u91CF"
+      Value:
+        titile: 
+        type: 2
+        value:
+          value: 55
+        showTexts: []
+        sliderRange: {x: 0, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u64AD\u62A5\u5458\u97F3\u91CF"
+      Value:
+        titile: 
+        type: 2
+        value:
+          value: 100
+        showTexts: []
+        sliderRange: {x: 0, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u89D2\u8272\u97F3\u91CF"
+      Value:
+        titile: 
+        type: 2
+        value:
+          value: 100
+        showTexts: []
+        sliderRange: {x: 0, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u654C\u4EBA\u97F3\u91CF"
+      Value:
+        titile: 
+        type: 2
+        value:
+          value: 100
+        showTexts: []
+        sliderRange: {x: 0, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u6B66\u5668\u97F3\u91CF"
+      Value:
+        titile: 
+        type: 2
+        value:
+          value: 40
+        showTexts: []
+        sliderRange: {x: 0, y: 200}
+        sliderSuffix: '%'
+    - Key: "UI\u97F3\u91CF"
+      Value:
+        titile: 
+        type: 2
+        value:
+          value: 40
+        showTexts: []
+        sliderRange: {x: 0, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u6C34\u5E73\u7075\u654F\u5EA6"
+      Value:
+        titile: "\u63A7\u5236"
+        type: 2
+        value:
+          value: 100
+        showTexts: []
+        sliderRange: {x: 10, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u5782\u76F4\u7075\u654F\u5EA6"
+      Value:
+        titile: 
+        type: 2
+        value:
+          value: 100
+        showTexts: []
+        sliderRange: {x: 10, y: 200}
+        sliderSuffix: '%'
+    - Key: "\u53CD\u8F6CX\u8F74"
+      Value:
+        titile: 
+        type: 1
+        value:
+          value: 0
+        showTexts: []
+        sliderRange: {x: 0, y: 0}
+        sliderSuffix: 
+    - Key: "\u53CD\u8F6CY\u8F74"
+      Value:
+        titile: 
+        type: 1
+        value:
+          value: 0
+        showTexts: []
+        sliderRange: {x: 0, y: 0}
+        sliderSuffix: 
+    - Key: "\u663E\u793A\u7269\u4F53\u6807\u8BB0"
+      Value:
+        titile: "\u663E\u793A"
+        type: 0
+        value:
+          value: 0
+        showTexts:
+        - "\u603B\u662F\u663E\u793A"
+        - "\u6309\u4F4FCtrl\u65F6"
+        sliderRange: {x: 0, y: 0}
+        sliderSuffix: 
+    - Key: "UI\u7F29\u653E\u7CFB\u6570"
+      Value:
+        titile: UI
+        type: 2
+        value:
+          value: 100
+        showTexts:
+        - "\u603B\u662F\u663E\u793A"
+        - "\u6309\u4F4FCtrl\u65F6"
+        sliderRange: {x: 50, y: 150}
+        sliderSuffix: '%'
+    meetReset: 0

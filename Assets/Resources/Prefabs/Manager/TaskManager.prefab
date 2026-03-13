@@ -1,0 +1,835 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4929319762328553117
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1675723327515467257}
+  - component: {fileID: 7796262847564304581}
+  m_Layer: 0
+  m_Name: TaskManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1675723327515467257
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4929319762328553117}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7796262847564304581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4929319762328553117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eee53e841f7a4d48b657aa8131726fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AreaCount: 12
+  TaskCount: 8
+  MainTask:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      type: 0
+      color: {r: 0, g: 0, b: 0, a: 0}
+      sprite: {fileID: 0}
+      sizeType: 0
+      count: {x: 0, y: 0}
+      reward: {x: 0, y: 0}
+      extraCount: 0
+      name: 
+      desc: "\u9519\u8BEF\u7684\u7C7B\u578B"
+      controller: {fileID: 0}
+      evacuateType: 0
+      RequiredAD: []
+    arr:
+    - Key: 0
+      Value:
+        type: 0
+        color: {r: 1, g: 0.5, b: 0.5, a: 1}
+        sprite: {fileID: 21300000, guid: 8bb5358366ec62c4ebfcfc24d60edeb9, type: 3}
+        sizeType: 1
+        count: {x: 1, y: 1}
+        reward: {x: 500, y: 500}
+        extraCount: 3
+        name: "\u6B7C\u706D\u4EFB\u52A1"
+        desc: "\u6D88\u706D\u9996\u9886"
+        controller: {fileID: 0}
+        evacuateType: 31
+        RequiredAD: []
+    - Key: 1
+      Value:
+        type: 1
+        color: {r: 1, g: 0.9149105, b: 0.5019608, a: 1}
+        sprite: {fileID: 21300000, guid: c98f3a20293a8374fbf3c6be98ca084f, type: 3}
+        sizeType: 2
+        count: {x: 18, y: 30}
+        reward: {x: 300, y: 500}
+        extraCount: 5
+        name: "\u6551\u63F4\u4EFB\u52A1"
+        desc: "\u89E3\u6551\u88AB\u5173\u62BC\u7684\u5B66\u751F"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 2
+      Value:
+        type: 2
+        color: {r: 0.5019608, g: 1, b: 0.5019608, a: 1}
+        sprite: {fileID: 21300000, guid: 523cde5d6f58df34895872718c569a5a, type: 3}
+        sizeType: 1
+        count: {x: 12, y: 18}
+        reward: {x: 300, y: 500}
+        extraCount: 3
+        name: "\u6536\u96C6\u4EFB\u52A1"
+        desc: "\u63D0\u53D6\u4EE5\u592A\u7D20"
+        controller: {fileID: 0}
+        evacuateType: 30
+        RequiredAD: []
+    - Key: 3
+      Value:
+        type: 3
+        color: {r: 1, g: 0.5019608, b: 0.91699356, a: 1}
+        sprite: {fileID: 21300000, guid: 9ee7d48aa3c31634c83b19a873fc5994, type: 3}
+        sizeType: 2
+        count: {x: 1, y: 1}
+        reward: {x: 500, y: 500}
+        extraCount: 5
+        name: "\u62A4\u9001\u4EFB\u52A1"
+        desc: "\u62A4\u9001[\u767E\u592B\u957F]\u5230\u8FBE\u76EE\u6807"
+        controller: {fileID: 0}
+        evacuateType: 31
+        RequiredAD: []
+    - Key: 4
+      Value:
+        type: 4
+        color: {r: 0.58496726, g: 0.5019608, b: 1, a: 1}
+        sprite: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
+        sizeType: 1
+        count: {x: 1, y: 1}
+        reward: {x: 500, y: 500}
+        extraCount: 3
+        name: "\u6E17\u900F\u4EFB\u52A1"
+        desc: "\u4E0A\u4F20\u6709\u4EF7\u503C\u7684\u4FE1\u606F"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 5
+      Value:
+        type: 5
+        color: {r: 0.4666667, g: 1, b: 1, a: 1}
+        sprite: {fileID: 21300000, guid: de0fe21a6b85e0b47b0e43c873ae4cd2, type: 3}
+        sizeType: 0
+        count: {x: 1, y: 1}
+        reward: {x: 800, y: 800}
+        extraCount: 0
+        name: "\u4FDD\u536B\u4EFB\u52A1"
+        desc: "\u4FDD\u62A4\u9999\u6599\u63D0\u70BC\u4E95"
+        controller: {fileID: 0}
+        evacuateType: 30
+        RequiredAD: []
+    - Key: 6
+      Value:
+        type: 6
+        color: {r: 1, g: 1, b: 0.4666667, a: 1}
+        sprite: {fileID: 21300000, guid: 424269cafe6df354ba744fb1592500f4, type: 3}
+        sizeType: 2
+        count: {x: 1, y: 1}
+        reward: {x: 500, y: 500}
+        extraCount: 5
+        name: "\u5BA3\u4F20\u4EFB\u52A1"
+        desc: "\u5347\u8D77\u590F\u83B1\u65D7\u5E1C"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 7
+      Value:
+        type: 7
+        color: {r: 0.73333335, g: 0.4666667, b: 1, a: 1}
+        sprite: {fileID: 21300000, guid: 0cb9898e36f898345809fab940283789, type: 3}
+        sizeType: 0
+        count: {x: 1, y: 1}
+        reward: {x: 500, y: 500}
+        extraCount: 0
+        name: "\u6B7C\u706D\u4EFB\u52A1"
+        desc: "\u6D88\u706D\u654C\u65B9\u90E8\u961F"
+        controller: {fileID: -7798245845040610509, guid: 44be67189c5c7df4aac71fbbe56a8461,
+          type: 3}
+        evacuateType: 30
+        RequiredAD: []
+    - Key: 8
+      Value:
+        type: 8
+        color: {r: 1, g: 0.73333335, b: 0.4666667, a: 1}
+        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
+        sizeType: 2
+        count: {x: 8, y: 14}
+        reward: {x: 300, y: 500}
+        extraCount: 3
+        name: "\u8FDB\u653B\u4EFB\u52A1"
+        desc: "\u7834\u574F\u654C\u65B9\u8425\u5730"
+        controller: {fileID: 0}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 9
+      Value:
+        type: 9
+        color: {r: 1, g: 0.5555556, b: 0.4666667, a: 1}
+        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
+        sizeType: 2
+        count: {x: 8, y: 14}
+        reward: {x: 300, y: 500}
+        extraCount: 5
+        name: "\u8FDB\u653B\u4EFB\u52A1"
+        desc: "\u7834\u574F\u654C\u65B9\u8425\u5730"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 10
+      Value:
+        type: 10
+        color: {r: 0.4666667, g: 0.4666667, b: 1, a: 1}
+        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
+        sizeType: 2
+        count: {x: 8, y: 14}
+        reward: {x: 300, y: 500}
+        extraCount: 5
+        name: "\u6E17\u900F\u4EFB\u52A1"
+        desc: "\u6536\u96C6\u6298\u8D8A\u951A\u70B9"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 11
+      Value:
+        type: 11
+        color: {r: 1, g: 0.82222223, b: 0.4666667, a: 1}
+        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
+        sizeType: 2
+        count: {x: 8, y: 14}
+        reward: {x: 300, y: 500}
+        extraCount: 5
+        name: "\u7834\u574F\u4EFB\u52A1"
+        desc: "\u70B8\u6BC1\u751F\u4EA7\u5DE5\u5382"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 17
+      Value:
+        type: 17
+        color: {r: 0.4666667, g: 1, b: 0.6945149, a: 1}
+        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
+        sizeType: 2
+        count: {x: 8, y: 14}
+        reward: {x: 300, y: 500}
+        extraCount: 5
+        name: "\u8FDB\u653B\u4EFB\u52A1"
+        desc: "\u6467\u6BC1\u7A7A\u519B\u57FA\u5730"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 18
+      Value:
+        type: 18
+        color: {r: 0.4666667, g: 1, b: 0.8222223, a: 1}
+        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
+        sizeType: 1
+        count: {x: 8, y: 14}
+        reward: {x: 300, y: 500}
+        extraCount: 3
+        name: "\u62E6\u622A\u4EFB\u52A1"
+        desc: "\u62E6\u622A\u51EF\u6492\u8F66\u961F"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 29
+      Value:
+        type: 29
+        color: {r: 1, g: 1, b: 1, a: 1}
+        sprite: {fileID: 21300000, guid: f00872ed9347fa4429007328248539b8, type: 3}
+        sizeType: 2
+        count: {x: 1, y: 1}
+        reward: {x: 1500, y: 1500}
+        extraCount: 0
+        name: "\u6218\u5F79\u4EFB\u52A1"
+        desc: "\u5B8C\u6210\u5267\u60C5\u4EFB\u52A1"
+        controller: {fileID: 0}
+        evacuateType: 32
+        RequiredAD: []
+    - Key: 30
+      Value:
+        type: 30
+        color: {r: 1, g: 1, b: 1, a: 1}
+        sprite: {fileID: 21300000, guid: 378501a40d8ed2b47b02935ce7866e2f, type: 3}
+        sizeType: 0
+        count: {x: 1, y: 1}
+        reward: {x: 0, y: 0}
+        extraCount: 0
+        name: "\u64A4\u79BB"
+        desc: "\u5B8C\u6210\u64A4\u79BB"
+        controller: {fileID: 5877342823092023792, guid: b8aa70f4a8c2eee4a9885fc9e074aa06,
+          type: 3}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 31
+      Value:
+        type: 31
+        color: {r: 1, g: 1, b: 1, a: 1}
+        sprite: {fileID: 21300000, guid: 378501a40d8ed2b47b02935ce7866e2f, type: 3}
+        sizeType: 0
+        count: {x: 1, y: 1}
+        reward: {x: 0, y: 0}
+        extraCount: 0
+        name: "\u64A4\u79BB"
+        desc: "\u5B8C\u6210\u64A4\u79BB"
+        controller: {fileID: 0}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 32
+      Value:
+        type: 32
+        color: {r: 1, g: 1, b: 1, a: 1}
+        sprite: {fileID: 21300000, guid: 378501a40d8ed2b47b02935ce7866e2f, type: 3}
+        sizeType: 0
+        count: {x: 1, y: 1}
+        reward: {x: 0, y: 0}
+        extraCount: 0
+        name: "\u64A4\u79BB"
+        desc: "\u5B8C\u6210\u64A4\u79BB"
+        controller: {fileID: 5877342823092023792, guid: e57aeae1992b8cc42bb3a8ecbd89dd74,
+          type: 3}
+        evacuateType: 0
+        RequiredAD: []
+    meetReset: 0
+  ExtraTask:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      type: 37
+      color: {r: 0, g: 0, b: 0, a: 0}
+      sprite: {fileID: 0}
+      sizeType: 0
+      count: {x: 0, y: 0}
+      reward: {x: 0, y: 0}
+      extraCount: 0
+      name: 
+      desc: "\u9519\u8BEF\u7684\u7C7B\u578B"
+      controller: {fileID: 0}
+      evacuateType: 0
+      RequiredAD: []
+    arr:
+    - Key: 34
+      Value:
+        type: 34
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 21300000, guid: b25c56923f969654289483b22b61396d, type: 3}
+        sizeType: 1
+        count: {x: 1, y: 1}
+        reward: {x: 200, y: 200}
+        extraCount: 0
+        name: 
+        desc: "\u4E0A\u4F20\u9ED1\u5323\u5B50\u4FE1\u606F"
+        controller: {fileID: -8998719791419222789, guid: 3f6e8ea63ec5cc246b9080e9c72114be,
+          type: 3}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 35
+      Value:
+        type: 35
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 21300000, guid: e05643fe1e482c945b3ffce973964e79, type: 3}
+        sizeType: 2
+        count: {x: 1, y: 2}
+        reward: {x: 200, y: 200}
+        extraCount: 0
+        name: 
+        desc: "\u6FC0\u6D3B\u96F7\u8FBE\u7AD9"
+        controller: {fileID: 6966723222540371125, guid: 50db54d5248166c46b08abf31438b160,
+          type: 3}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 36
+      Value:
+        type: 36
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 21300000, guid: 65b3612418435cf43b5b619b863150d0, type: 3}
+        sizeType: 1
+        count: {x: 1, y: 2}
+        reward: {x: 200, y: 200}
+        extraCount: 0
+        name: 
+        desc: "\u62C6\u6BC1\u975E\u6CD5\u5E7F\u64AD"
+        controller: {fileID: -4897129379581357080, guid: bc3f7e196829b974399aeb0ddd4b7da4,
+          type: 3}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 40
+      Value:
+        type: 40
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 21300000, guid: c58e0ede1d307a14396ed3416611682e, type: 3}
+        sizeType: 1
+        count: {x: 2, y: 3}
+        reward: {x: 200, y: 200}
+        extraCount: 0
+        name: 
+        desc: "\u6467\u6BC1\u88AD\u63A0\u8005\u6298\u8D8A\u951A"
+        controller: {fileID: -766845851129917296, guid: b044690bd453f85439db409e123cc541,
+          type: 3}
+        evacuateType: 0
+        RequiredAD:
+        - {fileID: 11400000, guid: 1b4154cb9ece04247bb0caebbc83bc3c, type: 2}
+    - Key: 41
+      Value:
+        type: 41
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 21300000, guid: 2a8122cd519b8014cbfdf4686fa82d97, type: 3}
+        sizeType: 1
+        count: {x: 1, y: 2}
+        reward: {x: 200, y: 200}
+        extraCount: 0
+        name: 
+        desc: "\u6467\u6BC1\u8FFD\u730E\u8005\u6298\u8D8A\u951A"
+        controller: {fileID: -766845851129917296, guid: 01f55e01660e2bf438835a6191cd6b11,
+          type: 3}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 45
+      Value:
+        type: 45
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 21300000, guid: 2066be9e474461b45b50bb84ebca19ed, type: 3}
+        sizeType: 1
+        count: {x: 1, y: 2}
+        reward: {x: 200, y: 200}
+        extraCount: 0
+        name: 
+        desc: "\u6467\u6BC1\u9ED1\u9E70\u5236\u9020\u5382"
+        controller: {fileID: 0}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 46
+      Value:
+        type: 46
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 21300000, guid: dd607c7afbdb8d647915b3a12f81d9d4, type: 3}
+        sizeType: 2
+        count: {x: 1, y: 1}
+        reward: {x: 200, y: 200}
+        extraCount: 0
+        name: 
+        desc: "\u5173\u95ED\u4FE1\u53F7\u5E72\u6270\u5854"
+        controller: {fileID: 0}
+        evacuateType: 0
+        RequiredAD: []
+    - Key: 50
+      Value:
+        type: 50
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 21300000, guid: dd607c7afbdb8d647915b3a12f81d9d4, type: 3}
+        sizeType: 1
+        count: {x: 1, y: 1}
+        reward: {x: 200, y: 200}
+        extraCount: 0
+        name: 
+        desc: "\u5173\u95ED\u4FE1\u53F7\u5E72\u6270\u5854"
+        controller: {fileID: 0}
+        evacuateType: 0
+        RequiredAD: []
+    meetReset: 0
+  NestTask:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      type: 0
+      color: {r: 0, g: 0, b: 0, a: 0}
+      sprite: {fileID: 0}
+      sizeType: 0
+      count: {x: 0, y: 0}
+      reward: {x: 0, y: 0}
+      extraCount: 0
+      name: 
+      desc: 
+      controller: {fileID: 0}
+      evacuateType: 0
+      RequiredAD: []
+    arr:
+    - Key: 50
+      Value:
+        type: 50
+        color: {r: 0, g: 0, b: 0, a: 0}
+        sprite: {fileID: 0}
+        sizeType: 0
+        count: {x: 0, y: 0}
+        reward: {x: 0, y: 0}
+        extraCount: 0
+        name: 
+        desc: 
+        controller: {fileID: 0}
+        evacuateType: 0
+        RequiredAD: []
+    meetReset: 0
+  codeA:
+  - "\u7070\u96BC"
+  - "\u84DD\u76FE"
+  - "\u957F\u5F13"
+  - "\u9759\u9ED8"
+  - "\u68F1\u955C"
+  - "\u5317\u6781"
+  - "\u7802\u5CA9"
+  - "\u94C1\u5E55"
+  - "\u767D\u6866"
+  - "\u56DE\u58F0"
+  - "\u77F3\u82F1"
+  - "\u65AD\u5D16"
+  - "\u5730\u6F5C"
+  - "\u6DF1\u5CA9"
+  - "\u8FF7\u96FE"
+  - "\u8702\u5DE2"
+  - "\u78D0\u77F3"
+  - "\u6F6E\u6C50"
+  - "\u4F18\u9999\u7684"
+  - "\u75AF\u72C2"
+  - "\u8BFA\u4E9A\u7684"
+  - "\u8367\u5149"
+  - "\u65E0\u77E5"
+  - "\u6726\u80E7"
+  - "\u611F\u67D3"
+  - "\u568E\u54ED"
+  - "\u635F\u6BC1"
+  - "\u8FDC\u53E4"
+  - "\u7834\u88C2"
+  - "\u7EDD\u5BF9"
+  codeB:
+  - "\u94F6\u6CB3"
+  - "\u80A1\u95F4"
+  - "\u5B50\u5BAB"
+  - "\u534F\u8BAE"
+  - "\u54E8\u5175"
+  - "\u884C\u52A8"
+  - "\u8B66\u6212"
+  - "\u67A2\u7EBD"
+  - "\u89C2\u6D4B"
+  - "\u5C4F\u969C"
+  - "\u4FE1\u6807"
+  - "\u8DEF\u5F84"
+  - "\u8282\u70B9"
+  - "\u951A\u70B9"
+  - "\u8109\u51B2"
+  - "\u9632\u7EBF"
+  - "\u5DE1\u822A"
+  - "\u5B88\u671B"
+  - "\u5750\u6807"
+  - "\u89E3\u7801"
+  - "\u8986\u76D6"
+  - "\u5B9A\u4F4D"
+  - "\u4F11\u5047"
+  - "\u5F2F\u94A9"
+  - "\u53CC\u5CF0"
+  - "\u7389\u8DB3"
+  - "\u978B\u5B50"
+  - "\u6E05\u7B97"
+  - "\u7360\u7259"
+  - "\u6C9F\u6E20"
+  - "\u624B\u638C"
+  OccupierIcon:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue: {fileID: 21300000, guid: 4b7e7a933cdef1e4e857db37744ad3db, type: 3}
+    arr:
+    - Key: "\u51EF\u6492\u96C6\u56E2"
+      Value: {fileID: 21300000, guid: 66b0d2f8f19b0954680b372697eab0b8, type: 3}
+    - Key: "\u963F\u62DC\u591A\u65AF\u5BF9\u7B56\u59D4\u5458\u4F1A"
+      Value: {fileID: 21300000, guid: b42771086ec54074f85ce698885ead87, type: 3}
+    - Key: "\u8054\u90A6\u5B66\u751F\u4F1A"
+      Value: {fileID: 21300000, guid: d67bd695e38eed740a2554e512f4e6a9, type: 3}
+    - Key: "\u5730\u4E0B\u9ED1\u5E02"
+      Value: {fileID: 21300000, guid: b8070403812e62744b08dbd851811b01, type: 3}
+    - Key: "\u6DF7\u4E71\u52BF\u529B"
+      Value: {fileID: 21300000, guid: 4b7e7a933cdef1e4e857db37744ad3db, type: 3}
+    - Key: "\u683C\u9ED1\u90A3\u590D\u6821\u59D4\u5458\u4F1A"
+      Value: {fileID: 21300000, guid: 36f7f64a6c0c406438da5398507da4f4, type: 3}
+    - Key: "\u9634\u9633\u90E8"
+      Value: {fileID: 21300000, guid: 0d1aa0cf740dbac40894d26d020b41b9, type: 3}
+    - Key: "\u5341\u5B57\u795E\u660E"
+      Value: {fileID: 21300000, guid: db98d366425374145a850959cd37c0ee, type: 3}
+    - Key: "\u7EA2\u51AC\u5DE5\u52A1\u90E8"
+      Value: {fileID: 21300000, guid: a3d776daf127dce41bfb7c0c04e89fb8, type: 3}
+    - Key: "\u7384\u9F99\u95E8"
+      Value: {fileID: 21300000, guid: 80ca9643ed9570f408bf7c9b9bd9dd41, type: 3}
+    - Key: "\u7384\u6B66\u5546\u4F1A"
+      Value: {fileID: 21300000, guid: 80ca9643ed9570f408bf7c9b9bd9dd41, type: 3}
+    - Key: "SRT\u7279\u6B8A\u5B66\u9662"
+      Value: {fileID: 21300000, guid: 9cf74a5f345852e4c860c21ecf34092e, type: 3}
+    - Key: "'\u8272\u5F69'"
+      Value: {fileID: 21300000, guid: 5903460501c32c344969ccfd195cc858, type: 3}
+    - Key: "\u8D1D\u963F\u7279\u5229\u5207"
+      Value: {fileID: 21300000, guid: bef55cd8dfa0257468eef8003166208c, type: 3}
+    - Key: "\u5723\u4E09\u4E00\u6D41\u4EA1\u8336\u4F1A"
+      Value: {fileID: 21300000, guid: e12668b48a5215c42bfe3f750db35397, type: 3}
+    meetReset: 0
+  MapData:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      MapName: 
+      Icon: {fileID: 0}
+      Map: {fileID: 0}
+      mapItemInfos: []
+      AreaDesc: 
+      AreaBackground: {fileID: 0}
+      product: 
+      enemyVarietyType: 0
+    arr:
+    - Key: Abydos
+      Value:
+        MapName: "\u963F\u62DC\u591A\u65AF\u9AD8\u4E2D"
+        Icon: {fileID: 21300000, guid: b42771086ec54074f85ce698885ead87, type: 3}
+        Map: {fileID: 21300000, guid: 73921a4d68eb45d479d24ab0e2a84d09, type: 3}
+        mapItemInfos:
+        - name: "\u51EF\u6492PMC\u9A7B\u624E\u5730"
+          pos: {x: -180, y: -15}
+          noTask: 0
+        - name: "\u897F\u90E8\u9057\u8FF9\u533A\u57DF"
+          pos: {x: -335, y: -70}
+          noTask: 0
+        - name: "\u4E1C\u90E8\u9057\u8FF9\u533A\u57DF"
+          pos: {x: 300, y: 25}
+          noTask: 0
+        - name: "\u963F\u62DC\u591A\u65AF\u4E3B\u6821\u533A"
+          pos: {x: 0, y: 0}
+          noTask: 0
+        - name: "\u963F\u62DC\u591A\u65AF\u95F9\u5E02\u533A"
+          pos: {x: 130, y: -100}
+          noTask: 0
+        - name: "\u51EF\u6492\u9999\u6599\u5F00\u91C7\u533A"
+          pos: {x: -30, y: -125}
+          noTask: 0
+        AreaDesc: "\"\u51EF\u6492\u96C6\u56E2\"\u6CBB\u4E0B\u7684\u4F01\u4E1A\u90FD\u5E02\u3002\n\u66FE\u7ECF\u9762\u79EF\u5E7F\u9614\u3001\u4EBA\u53E3\u4F17\u591A\u3002\n\u5728\u51EF\u6492\u96C6\u56E2\u5168\u9762\u63A5\u7BA1\u540E\uFF0C\u4E00\u5EA7\u53C8\u4E00\u5EA7\u7684\u9999\u6599\u91C7\u96C6\u8BBE\u65BD\u5728\u5E7F\u88A4\u7684\u6C99\u6F20\u4E2D\u5EFA\u8D77\u3002\n\u6709\u4F20\u8A00\uFF0C\u5728\u4E1C\u90E8\u9057\u8FF9\u4E2D\uFF0C\u4ECD\u6709\u4EBA\u5728\u6311\u6218\u51EF\u6492\u96C6\u56E2\u7684\u7EDF\u6CBB\u3002"
+        AreaBackground: {fileID: 21300000, guid: cba4fd74928c3194d8335af97adcf0cb,
+          type: 3}
+        product: 030000000100000006000000
+        enemyVarietyType: 1
+    - Key: Federal
+      Value:
+        MapName: "\u8054\u90A6\u5B66\u751F\u4F1A"
+        Icon: {fileID: 21300000, guid: d67bd695e38eed740a2554e512f4e6a9, type: 3}
+        Map: {fileID: 21300000, guid: 5e45671ac5dfd3f41aab7ff515d7e957, type: 3}
+        mapItemInfos:
+        - name: "S.c.h.a.l.e\u5927\u697C"
+          pos: {x: 0, y: 100}
+          noTask: 0
+        - name: "D.U.\u4E2D\u592E\u673A\u573A"
+          pos: {x: -200, y: 30}
+          noTask: 0
+        - name: "\u8054\u90A6\u5B66\u751F\u4F1A\u672C\u90E8"
+          pos: {x: 100, y: 0}
+          noTask: 0
+        - name: "D.U.\u6E2F\u5F0F\u8336\u9910\u5385"
+          pos: {x: -30, y: -100}
+          noTask: 0
+        AreaDesc: "\u8054\u90A6\u5B66\u751F\u4F1A\u516C\u53F8\u662F\u5982\u4ECA\u5168\u57FA\u6C83\u6258\u65AF\u5B66\u9662\u7684\u7BA1\u7406\u5C40\u3002\n\u73B0\u5728\u51EF\u6492\u96C6\u56E2\u4EE551%\u7684\u80A1\u4EFD\u83B7\u5F97\u4E86\u8463\u4E8B\u4F1A\u7684\u8BAE\u4E8B\u6743\u3002\n\u65B0\u4EFB\u4F1A\u957F\u4E0D\u77E5\u706B\u82B1\u8036\u6210\u4E3A\u4E86\u51EF\u6492\u8463\u4E8B\u957F\u7684\u5DE6\u8180\u53F3\u81C2\u3002"
+        AreaBackground: {fileID: 21300000, guid: 38e85723dacc5c840aec82787bdb0432,
+          type: 3}
+        product: 060000000400000007000000
+        enemyVarietyType: 2
+    - Key: Gehanna
+      Value:
+        MapName: "\u683C\u9ED1\u90A3\u5B66\u9662"
+        Icon: {fileID: 21300000, guid: 36f7f64a6c0c406438da5398507da4f4, type: 3}
+        Map: {fileID: 21300000, guid: a4a1b4cc898516646bad32531543e5d2, type: 3}
+        mapItemInfos:
+        - name: "\u5730\u4E0B\u9ED1\u5E02"
+          pos: {x: 180, y: 150}
+          noTask: 0
+        - name: "\u98CE\u7EAA\u59D4\u5458\u4F1A\u9057\u5740"
+          pos: {x: 60, y: -30}
+          noTask: 0
+        - name: "\u5E0C\u8BFA\u59C6\u706B\u5C71"
+          pos: {x: -200, y: 65}
+          noTask: 0
+        - name: "\u683C\u8D6B\u5A1C\u7B2C1\u673A\u573A"
+          pos: {x: -50, y: 220}
+          noTask: 1
+        - name: "\u65E0\u6CD5\u5730\u5E26"
+          pos: {x: -35, y: -200}
+          noTask: 0
+        AreaDesc: "\"\u51EF\u6492\u96C6\u56E2\"\u6CBB\u4E0B\u7684\u4F01\u4E1A\u90FD\u5E02\u3002\u66FE\u7ECF\u7684\u57FA\u6C83\u6258\u65AF\u4E09\u5927\u5B66\u9662\u4E4B\u4E00\u3002\n\u5C3D\u7BA1\u51EF\u6492\u5F97\u5230\u4E86\u5176\u540D\u4E49\u4E0A\u7684\u7EDF\u6CBB\u6743\uFF0C\u4F46\u7531\u4E8E\u683C\u9ED1\u90A3\u8FC7\u4E8E\u6DF7\u4E71\u4E0E\u65E0\u5E8F\uFF0C\u957F\u671F\u5904\u4E8E\u52A8\u8361\u7684\u72B6\u6001\u3002"
+        AreaBackground: {fileID: 21300000, guid: 68b245c58b3e5c84381ee5c12a2c083e,
+          type: 3}
+        product: 030000000400000002000000
+        enemyVarietyType: 0
+    - Key: Highlander
+      Value:
+        MapName: "\u6D77\u5170\u5FB7\u94C1\u9053\u5B66\u9662"
+        Icon: {fileID: 21300000, guid: 884631a047240bb4f8616c76ae02f73c, type: 3}
+        Map: {fileID: 21300000, guid: 27c3e04f5781e9f41ac51a5b60e21715, type: 3}
+        mapItemInfos: []
+        AreaDesc: "\"\u51EF\u6492\u96C6\u56E2\"\u6CBB\u4E0B\u7684\u4F01\u4E1A\u90FD\u5E02\u3002"
+        AreaBackground: {fileID: 21300000, guid: dab962e253408924ca44eec4f2a9787e,
+          type: 3}
+        product: 
+        enemyVarietyType: 0
+    - Key: HyakkiYako
+      Value:
+        MapName: "\u767E\u9B3C\u591C\u884C\u8054\u5408\u5B66\u9662"
+        Icon: {fileID: 21300000, guid: 0d1aa0cf740dbac40894d26d020b41b9, type: 3}
+        Map: {fileID: 21300000, guid: 52f1b12100827cc4d8ff63a6fb3cb722, type: 3}
+        mapItemInfos: []
+        AreaDesc: "\"\u51EF\u6492\u96C6\u56E2\"\u6CBB\u4E0B\u7684\u4F01\u4E1A\u90FD\u5E02\u3002\n\u767E\u9B3C\u591C\u884C\u8054\u5408\u5B66\u9662\u7684\u5B66\u751F\u4F1A\u5F88\u8BC6\u65F6\u52A1\u7684\u8BA9\u6E21\u51FA\u4E86\u5B66\u9662\u7684\u5404\u79CD\u6743\u5229\uFF0C\u56E0\u6B64\u51EF\u6492\u4ECD\u7136\u4FDD\u7559\u4E86\u5B66\u751F\u4F1A\u6765\u7EF4\u6301\u767E\u9B3C\u591C\u884C\u7684\u7EDF\u6CBB\u3002"
+        AreaBackground: {fileID: 21300000, guid: d2eab042d2dfd524784905bc38426353,
+          type: 3}
+        product: 
+        enemyVarietyType: 0
+    - Key: Kronos
+      Value:
+        MapName: "\u514B\u7F57\u8BFA\u65AF\u5B66\u6821"
+        Icon: {fileID: 21300000, guid: 68abee10eb0f90645bed288740399a6e, type: 3}
+        Map: {fileID: 21300000, guid: 8fbeebe432f6f174aa6079733cedd874, type: 3}
+        mapItemInfos: []
+        AreaDesc: "\"\u51EF\u6492\u96C6\u56E2\"\u6CBB\u4E0B\u7684\u4F01\u4E1A\u90FD\u5E02\u3002"
+        AreaBackground: {fileID: 21300000, guid: dab962e253408924ca44eec4f2a9787e,
+          type: 3}
+        product: 
+        enemyVarietyType: 0
+    - Key: Millennium
+      Value:
+        MapName: "\u5343\u5E74\u79D1\u5B66\u5B66\u9662"
+        Icon: {fileID: 21300000, guid: d7300e06d985a21478c8ce66814c3835, type: 3}
+        Map: {fileID: 21300000, guid: 0d0e711038e9f1e4fb93566d8f56e1e3, type: 3}
+        mapItemInfos:
+        - name: "\u5343\u79A7\u5854"
+          pos: {x: 0, y: 0}
+          noTask: 0
+        - name: "\u6625\u53F6\u539F"
+          pos: {x: 55, y: 190}
+          noTask: 0
+        - name: "\u5343\u5E74\u6570\u636E\u4E2D\u5FC3"
+          pos: {x: 160, y: 75}
+          noTask: 0
+        - name: "\u5343\u5E74\u901A\u4FE1\u5854\u53F0"
+          pos: {x: -330, y: -15}
+          noTask: 0
+        - name: "\u5E9F\u5F03\u9057\u8FF9"
+          pos: {x: -110, y: -140}
+          noTask: 0
+        - name: "\u57C3\u91CC\u90FD"
+          pos: {x: -300, y: -125}
+          noTask: 1
+        AreaDesc: "\u66FE\u7ECF\u7684\u57FA\u6C83\u6258\u65AF\u4E09\u5927\u5B66\u9662\u4E4B\u4E00\uFF0C\u57FA\u6C83\u6258\u65AF\u7684\u524D\u6CBF\u53D1\u660E\u51E0\u4E4E\u90FD\u51FA\u81EA\u4ED6\u4EEC\u4E4B\u624B\u3002\n\u5728\u795E\u660E\u5341\u6587\u5B57\u7684\u5148\u77E5\u8BF1\u5BFC\u4E0B\uFF0C\u5B66\u9662\u7684\u667A\u80FD\u673A\u68B0\u53D1\u8D77\u66B4\u52A8\u3002\n\u5982\u4ECA\u7684\u5343\u5E74\u5B66\u9662\u5DF2\u88AB\u795E\u660E\u5341\u6587\u5B57\u63A5\u7BA1\uFF0C\u5B66\u9662\u4E2D\u9690\u85CF\u7740\u4EC0\u4E48\u65E0\u4EBA\u77E5\u6653\u3002"
+        AreaBackground: {fileID: 21300000, guid: e0048c62510a6454792b6864cea9e94a,
+          type: 3}
+        product: 020000000100000005000000
+        enemyVarietyType: 5
+    - Key: PassionAndTempest
+      Value:
+        MapName: "\u72C2\u730E\u827A\u672F\u5B66\u9662"
+        Icon: {fileID: 21300000, guid: efa092ce0ef6c084d907e9da1dfb2156, type: 3}
+        Map: {fileID: 21300000, guid: 1b089a3ad3b665842b70691de9f44497, type: 3}
+        mapItemInfos: []
+        AreaDesc: "\u53D7\u5341\u5B57\u795E\u660E\u51B2\u51FB\u800C\u53D8\u6210\u4E00\u7247\u5E9F\u589F\u7684\u524D\u72C2\u730E\u827A\u672F\u5B66\u9662\u3002"
+        AreaBackground: {fileID: 21300000, guid: dab962e253408924ca44eec4f2a9787e,
+          type: 3}
+        product: 
+        enemyVarietyType: 5
+    - Key: RedWinter
+      Value:
+        MapName: "\u7EA2\u4E1C\u8054\u90A6\u5B66\u9662"
+        Icon: {fileID: 21300000, guid: a3d776daf127dce41bfb7c0c04e89fb8, type: 3}
+        Map: {fileID: 21300000, guid: 82f18a5ab5758c644a8c00894b226301, type: 3}
+        mapItemInfos:
+        - name: "\u7EA2\u51AC\u4E8B\u52A1\u5C40"
+          pos: {x: 0, y: 50}
+          noTask: 0
+        - name: "227\u7279\u522B\u73ED"
+          pos: {x: -470, y: -190}
+          noTask: 0
+        - name: "\u51EF\u6492PMC\u9A7B\u624E\u5730"
+          pos: {x: 130, y: -80}
+          noTask: 0
+        - name: "\u6D77\u8C5A\u5E02\u573A"
+          pos: {x: -180, y: -90}
+          noTask: 0
+        - name: "\u51B0\u6D77"
+          pos: {x: 220, y: 260}
+          noTask: 0
+        AreaDesc: "\u5C3D\u7BA1\u51EF\u6492\u96C6\u56E2\u5DF2\u7ECF\u63A5\u7BA1\u4E86\u7EA2\u51AC\u4E8B\u52A1\u5C40\uFF0C\u4F46\u6124\u6012\u7684\u5DE5\u52A1\u90E8\u4ECD\u5728\u53CD\u6297\uFF0C\u751A\u81F3\u4E0E\u51EF\u6492\u5206\u5EAD\u6297\u793C\u3002\n\u8DDD\u79BB\u7EA2\u51AC\u7684\u5F7B\u5E95\u89E3\u653E\uFF0C\u53EA\u5DEE\u6700\u540E\u4E00\u628A\u706B\u3002"
+        AreaBackground: {fileID: 21300000, guid: dab962e253408924ca44eec4f2a9787e,
+          type: 3}
+        product: 070000000400000005000000
+        enemyVarietyType: 0
+    - Key: Shanhaijin
+      Value:
+        MapName: 
+        Icon: {fileID: 21300000, guid: 80ca9643ed9570f408bf7c9b9bd9dd41, type: 3}
+        Map: {fileID: 21300000, guid: b72191030cdc1f74ea49d7f8edcb42f0, type: 3}
+        mapItemInfos: []
+        AreaDesc: "\u5C71\u6D77\u7ECF\u7531\u4E8E\u5176\u826F\u597D\u7684\u5185\u5FAA\u73AF\u7ECF\u6D4E\uFF0C\u5373\u4F7F\u662F\u51EF\u6492\u4E5F\u65E0\u6CD5\u63D2\u624B\u5176\u5185\u653F\u3002\n\u7136\u800C\uFF0C\u7D20\u6765\u4E0E\u7384\u9F99\u95E8\u4E0D\u5BF9\u4ED8\u7684\u7384\u6B66\u5546\u4F1A\u8FD1\u6765\u6536\u5230\u5927\u7B14\u6295\u8D44\uFF0C\u5728\u5C71\u6D77\u7ECF\u5185\u90E8\u7684\u8BDD\u8BED\u6743\u5927\u5927\u63D0\u5347\u3002"
+        AreaBackground: {fileID: 21300000, guid: dab962e253408924ca44eec4f2a9787e,
+          type: 3}
+        product: 
+        enemyVarietyType: 0
+    - Key: Trinity
+      Value:
+        MapName: "\u5723\u4E09\u4E00\u7EFC\u5408\u5B66\u9662"
+        Icon: {fileID: 21300000, guid: e12668b48a5215c42bfe3f750db35397, type: 3}
+        Map: {fileID: 21300000, guid: 48be236345e0ebc47969d7e93a74da3f, type: 3}
+        mapItemInfos:
+        - name: "\u8865\u4E60\u90E8\u65E7\u5740"
+          pos: {x: -180, y: 130}
+          noTask: 0
+        - name: "\u65B9\u5F62\u5E7F\u573A\u533A"
+          pos: {x: 80, y: 80}
+          noTask: 0
+        - name: "\u5723\u5802\u9057\u8FF9"
+          pos: {x: 60, y: -170}
+          noTask: 0
+        - name: "\u55B7\u6CC9\u516C\u56ED"
+          pos: {x: -70, y: 40}
+          noTask: 0
+        - name: "\u5730\u4E0B\u5893\u7A74"
+          pos: {x: 160, y: -30}
+          noTask: 0
+        - name: "\u793C\u62DC\u5802"
+          pos: {x: 140, y: 300}
+          noTask: 1
+        AreaDesc: "\u66FE\u7ECF\u7684\u57FA\u6C83\u6258\u65AF\u4E09\u5927\u5B66\u9662\u4E4B\u4E00\uFF0C\u968F\u7740\u8D1D\u963F\u7279\u5229\u5207\u4E0E\"\u8272\u5F69\"\u7684\u5F52\u6765\u800C\u8986\u706D\u3002\n\u7EDD\u5927\u591A\u6570\u5723\u4E09\u4E00\u7684\u5B66\u751F\u751F\u6B7B\u672A\u535C\uFF0C\u8336\u4F1A\u7684\u9886\u5BFC\u4EBA\u5728\u7A81\u56F4\u6210\u529F\u540E\u5EFA\u7ACB\u4E86\u6D41\u4EA1\u8336\u4F1A\uFF0C\u610F\u56FE\u6062\u590D\u5723\u4E09\u4E00\u7684\u8363\u8000\u3002"
+        AreaBackground: {fileID: 21300000, guid: e9eaa28509f1a524e8d8f386ef1516f8,
+          type: 3}
+        product: 070000000200000005000000
+        enemyVarietyType: 10
+    - Key: Valkyrie
+      Value:
+        MapName: "\u74E6\u5C14\u57FA\u91CC\u8B66\u5BDF\u5B66\u9662"
+        Icon: {fileID: 21300000, guid: 8060c39770929ba4181f258f6e7d5c11, type: 3}
+        Map: {fileID: 21300000, guid: 51911cf1d4c59924ba29b2e6ed8c7601, type: 3}
+        mapItemInfos: []
+        AreaDesc: "\"\u51EF\u6492\u96C6\u56E2\"\u6CBB\u4E0B\u7684\u4F01\u4E1A\u90FD\u5E02\u3002"
+        AreaBackground: {fileID: 21300000, guid: dab962e253408924ca44eec4f2a9787e,
+          type: 3}
+        product: 
+        enemyVarietyType: 0
+    meetReset: 0

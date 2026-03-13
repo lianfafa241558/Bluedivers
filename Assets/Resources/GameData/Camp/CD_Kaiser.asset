@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fa3084c78287f94190363f9312ba760, type: 3}
+  m_Name: CD_Kaiser
+  m_EditorClassIdentifier: 
+  enemyVarietyType: 0
+  ShowName: "\u51EF\u6492\u96C6\u56E2"
+  Sprite: {fileID: 21300000, guid: 66b0d2f8f19b0954680b372697eab0b8, type: 3}
+  KillSprite: {fileID: 21300000, guid: 9304da9461f975044b128032467dab3e, type: 3}
+  Color: {r: 1, g: 0.5138363, b: 0.5, a: 1}
+  Suffix: Zerg
+  Desc: "\u96B6\u5C5E\u4E8E\u51EF\u6492\u96C6\u56E2\u7684\u673A\u5668\u4EBA\u90E8\u961F\u3002"
+  WaveCool: 240
+  WaveUseObject: []
+  Templates:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      Template: []
+      PatrolName: []
+    arr:
+    - Key: "\u6B65\u5175\u6A21\u677F"
+      Value:
+        Template:
+        - Key: {fileID: 369260635418747019, guid: 09b33a1eb27f26c48b3d30d66e9a4a89,
+            type: 3}
+          Value: {x: 100, y: 2}
+        - Key: {fileID: 4051209648162713433, guid: 67fdd2c3832872d4eb3bf36c6d2b3c13,
+            type: 3}
+          Value: {x: 100, y: 2}
+        - Key: {fileID: 5119575936748598836, guid: 0831d3dde53e2e543b38aff28a9c3b84,
+            type: 3}
+          Value: {x: 100, y: 2}
+        - Key: {fileID: 8208532637738799141, guid: 944cd229766fd1440ab9b6d5e037d326,
+            type: 3}
+          Value: {x: 30, y: 3}
+        - Key: {fileID: 3049176853473726561, guid: dcf72cdd576fb6a41b0284418103da21,
+            type: 3}
+          Value: {x: 30, y: 3}
+        - Key: {fileID: 7116943157928245084, guid: ab75d8577cfbf7949b1525bad2019493,
+            type: 3}
+          Value: {x: 10, y: 10}
+        PatrolName: []
+    - Key: "\u7535\u952F\u6A21\u677F"
+      Value:
+        Template:
+        - Key: {fileID: 369260635418747019, guid: 09b33a1eb27f26c48b3d30d66e9a4a89,
+            type: 3}
+          Value: {x: 100, y: 2}
+        - Key: {fileID: 8208532637738799141, guid: 944cd229766fd1440ab9b6d5e037d326,
+            type: 3}
+          Value: {x: 100, y: 3}
+        - Key: {fileID: 3049176853473726561, guid: dcf72cdd576fb6a41b0284418103da21,
+            type: 3}
+          Value: {x: 100, y: 3}
+        PatrolName: []
+    meetReset: 0
+  Patrol:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue: []
+    arr:
+    - Key: "\u5C0F\u89C4\u6A21"
+      Value:
+      - {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c, type: 3}
+      - {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c, type: 3}
+      - {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c, type: 3}
+      - {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c, type: 3}
+    - Key: "\u6307\u6325\u5B98"
+      Value:
+      - {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c, type: 3}
+      - {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c, type: 3}
+      - {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c, type: 3}
+    meetReset: 0
+  Nest:
+  - {fileID: -766845851129917296, guid: c36e54fb64b8fa744af4fa7b0afdc1e6, type: 3}
+  - {fileID: -766845851129917296, guid: 6457f1baefaced84386f8f51911c9c7c, type: 3}
+  - {fileID: -766845851129917296, guid: b9463701e7fdd514da5f5491f528d0aa, type: 3}
+  NestName: 
+  mainTypes: 0000000001000000020000000300000004000000050000000600000007000000080000001100000012000000
+  extraTypes: 2200000023000000240000002d0000002e000000
+  nestTypes: 640000006500000066000000
