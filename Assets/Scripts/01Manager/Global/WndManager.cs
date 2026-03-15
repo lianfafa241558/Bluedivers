@@ -30,6 +30,16 @@ public class WndManager : WndManagerBase<WndManager>
     public Transform WndUI;//只有设置界面用
     public Sprite empty;
 
+    public override void Awake()
+    {
+        base.Awake();
+        GameRoot.OnGameStateChange += OnGameStateChange;
+        GameRoot.OnWindowStateChange += OnWindowStateChange;
+        GlobalEventManager.OnSettingCange += OnSettingCange;
+
+    }
+
+
     protected override void Start()
     {
         base.Start();
@@ -39,9 +49,6 @@ public class WndManager : WndManagerBase<WndManager>
         //foreach (var wnd in Tool.GetComponentsInChildren<Wnd>(transform, 2, false)) { wnd.Init(); }
         foreach (var wnd in TransformUtils.GetComponentsInChildren<WindowRoot>(transform, 2, false)) { wnd.Init(); wnd.gameObject.SetActive(false); }
 
-        GameRoot.OnGameStateChange += OnGameStateChange;
-        GameRoot.OnWindowStateChange += OnWindowStateChange;
-        GlobalEventManager.OnSettingCange += OnSettingCange;
 
         if (!GameRoot.Instance.IsLocal)
         {
@@ -49,8 +56,8 @@ public class WndManager : WndManagerBase<WndManager>
         }
         else
         {
-            GameRoot.WindowState = WindowStateEnum.Game;
-            GameRoot.GameState = GameStateEnum.Game;
+            //GameRoot.WindowState = WindowStateEnum.Game;
+            //GameRoot.GameState = GameStateEnum.Game;
         }
     }
     void OnDestroy()
@@ -122,6 +129,7 @@ public class WndManager : WndManagerBase<WndManager>
 
                 break;
             case GameStateEnum.Game:
+                Debug.LogError("进入战斗");
                 playerWnd.SetWndState(true);
                 jetpackWnd.SetWndState(true);
                 airdropWnd.SetWndState(true);

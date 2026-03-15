@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using FpsGame.Mission;
 using Unity.BaseTool;
 using UnityEngine;
 using Utils;
@@ -45,11 +46,6 @@ public class MissionController : MonoBehaviour
     /// </summary>
     MissionBase CreatMission(TaskItem task)
     {
-        if (task.cfg.controller == null)
-        {
-            Debug.LogError("类型"+ task.cfg.type+Tool.GetEnumString(task.cfg.type) + "没有控制器");
-            return null;
-        }
         var go = Instantiate(task.cfg.controller, transform);
         var size = RandomUtils.Range(random, go.mapEntitySize.x, go.mapEntitySize.y);
         go.Init(root, task,task.cfg.sprite,GenerateNewMissionPoint(size),size);
@@ -71,7 +67,15 @@ public class MissionController : MonoBehaviour
     /// </summary>
     void InitAllMission() 
     {
-        waitMissions = waitMissions.OrderByDescending(task => task.cfg.controller.mapEntitySize.y).ToList();
+        foreach(var task in waitMissions)
+        {
+            if (task.cfg.controller == null)
+            {
+                Debug.LogError("类型" + task.cfg.type + Tool.GetEnumString(task.cfg.type) + "没有控制器");
+            }
+        }
+
+        waitMissions = waitMissions.Where(task=>task.cfg.controller).OrderByDescending(task => task.cfg.controller.mapEntitySize.y).ToList();
         //这里的实现就很丑陋了，但是没办法，不能让主任务直接生成
         MissionBase main=null, evacuate = null;
         foreach (var task in waitMissions)
@@ -95,6 +99,7 @@ public class MissionController : MonoBehaviour
         Vector2 statrPoint = Constants.MapBorder / 2 * Vector2.one;
         Vector2 center = root.MapSize / 2 * Vector2.one;
         int mapRadius = (root.CameraSize)/2;
+        if (newRange == 0) return center;
 
         // 步骤1：将地图划分为网格，保证均匀分布（网格大小为“最小安全间距”）
         float gridSize = newRange * 2; // 新点与其他点的最小安全间距（避免相切）
@@ -111,7 +116,7 @@ public class MissionController : MonoBehaviour
             {
                 //Debug.LogError("创建位置:" + candidatePos);
                 missionCreatPoints.Add((candidatePos, newRange));
-                return new Vector3(candidatePos.x, BattleManager.Instance.GroundHeight(candidatePos), candidatePos.y);
+                return new Vector3(candidatePos.x, TerrainUtils.WSToHeight(candidatePos), candidatePos.y);
             }
         }
         Debug.LogError("没有找到可用的点");

@@ -2,22 +2,26 @@ using System.Collections;
 using System.Collections.Generic;
 using GameContract;
 using UnityEngine;
-/// <summary>
-/// 雷达站
-/// </summary>
-public class MissionLidarStation : MissionBase
+
+namespace FpsGame.Mission
 {
-    KeyScreen keyScreen;
-
-    protected override void Start()
+    /// <summary>
+    /// 雷达站
+    /// </summary>
+    public class MissionLidarStation : MissionBase
     {
-        keyScreen = entity.transform.GetComponentInChildren<KeyScreen>();
-        keyScreen.OnComple += OnKeyScreenComple;
-        base.Start();
-    }
+        KeyScreen keyScreen;
 
-    private void OnKeyScreenComple()
-    {
-        CompleteMission();
+        protected override void Start()
+        {
+            keyScreen = entity.transform.GetComponentInChildren<KeyScreen>();
+            keyScreen.OnComple += OnKeyScreenComple;
+            base.Start();
+        }
+
+        private void OnKeyScreenComple()
+        {
+            CompleteMission();
+        }
     }
 }

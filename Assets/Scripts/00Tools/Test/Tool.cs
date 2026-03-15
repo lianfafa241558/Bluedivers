@@ -710,6 +710,16 @@ namespace Utils
         public static Color ColorMax(Color a, Color b) => ColorLight(a) > ColorLight(b) ? a : b;
         public static Color ColorMax(float a, Color b) => a > ColorLight(b) ? a * Color.white : b;
         public static Color ColorMax(Color a, float b) => ColorLight(a) > b ? a : b * Color.white;
+        public static Color MultiplyRGB(this Color color, float multiplier)
+        {
+            return new Color(
+                color.r * multiplier,
+                color.g * multiplier,
+                color.b * multiplier,
+                color.a
+            );
+        }
+
 
         #endregion
 

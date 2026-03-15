@@ -4,37 +4,38 @@ using System.Linq;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
-
-/// <summary>
-/// 搜索并摧毁
-/// </summary>
-public class MissionDestroyNest : MissionBase
+namespace FpsGame.Mission
 {
-
-
-    protected override void CreatMission()
+    /// <summary>
+    /// 搜索并摧毁
+    /// </summary>
+    public class MissionDestroyNest : MissionBase
     {
-        base.CreatMission();
-        GlobalEventManager.OnEnemyDead += OnActorDeath;
-        MaxProgress = data.targetCount;
-    }
-    protected override void EndMission()
-    {
-        base.EndMission();
-        GlobalEventManager.OnEnemyDead -= OnActorDeath;
-    }
 
-    void OnActorDeath(Actor actor)
-    {
-        if (!actor.HasFlag(Core.ActorFlag.Nest)) return;
-        if (++NowProgress < MaxProgress)
+        protected override void CreatMission()
         {
-            UpdateMission(false);
+            base.CreatMission();
+            GlobalEventManager.OnEnemyDead += OnActorDeath;
+            MaxProgress = data.targetCount;
         }
-        else
+        protected override void EndMission()
         {
-            UpdateMission(false);
-            CompleteMission();
+            base.EndMission();
+            GlobalEventManager.OnEnemyDead -= OnActorDeath;
+        }
+
+        void OnActorDeath(Actor actor)
+        {
+            if (!actor.HasFlag(Core.ActorFlag.Nest)) return;
+            if (++NowProgress < MaxProgress)
+            {
+                UpdateMission(false);
+            }
+            else
+            {
+                UpdateMission(false);
+                CompleteMission();
+            }
         }
     }
 }

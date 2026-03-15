@@ -50,13 +50,6 @@ public class CampData_SO : ScriptableObject
     [CustomLabel("巡逻队")]
     public DisplayDic<string, List<GameObject>> Patrol;
 
-    [Space(16)]
-    /// <summary>营地</summary>
-    [Header("营地预制体")]
-    public MissionBase[] Nest;
-    [CustomLabel("巢穴名称")]
-    public string NestName;
-
 
     [Space(16)]
     [Header("允许的主线类型")]

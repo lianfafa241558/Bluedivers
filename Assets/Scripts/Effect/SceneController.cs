@@ -43,8 +43,6 @@ public class SceneController : MonoBehaviour
     {
         ResManager.Instance.AsyncLoadScene("TestScene", () => {
             BattleManager.Creat();
-            GameRoot.GameState = GameStateEnum.Game;
-            GameRoot.WindowState = WindowStateEnum.Game;
             //GlobalEventManager.OnFakeBg(null);
         },true);
     }

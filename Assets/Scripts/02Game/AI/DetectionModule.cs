@@ -400,11 +400,11 @@ namespace Unity.FPS.AI
                 switch (m_Actor.shape)
                 {
                     case ShapeType.Circle:
-                        Gizmos.DrawWireSphere(pos, m_Actor.rangeLength);
+                        Gizmos.DrawWireSphere(pos, m_Actor.HalfRange);
                         break;
                     case ShapeType.Rectangle:
                         
-                        Gizmos.DrawWireCube(pos, Vector3.one * m_Actor.rangeLength * 2);
+                        Gizmos.DrawWireCube(pos, Vector3.one * m_Actor.HalfRange * 2);
                         break;
                 }
             }

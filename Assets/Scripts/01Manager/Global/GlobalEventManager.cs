@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using FpsGame.Mission;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;

@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5877342823092023793}
-  - component: {fileID: 5877342823092023792}
+  - component: {fileID: -2383477966626112125}
   m_Layer: 0
-  m_Name: Rescue
+  m_Name: DestroyNest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,7 +32,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5877342823092023792
+--- !u!114 &-2383477966626112125
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,17 +41,34 @@ MonoBehaviour:
   m_GameObject: {fileID: 5877342823092023798}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9250e0c3f09817a4883cbbf6ed3884ce, type: 3}
+  m_Script: {fileID: 11500000, guid: b4c7abf03768eeb478a453d514d948e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isMain: 1
-  title: "\u6FC0\u6D3B\u64A4\u79BB\u7EC8\u7AEF"
+  hide: 0
+  displayMiniMap: 1
+  prefabs: []
+  title: 
   tip: 
   MaxProgress: 0
   NowProgress: 0
-  color: {r: 0.5019608, g: 0.99607843, b: 1, a: 1}
-  sprite: {fileID: 21300000, guid: 378501a40d8ed2b47b02935ce7866e2f, type: 3}
-  count: {x: 0, y: 0}
-  reward: {x: 0, y: 0}
-  FollowTask: {fileID: 0}
+  AirdropRange: 0
+  mapEntitySize: {x: 0, y: 0}
   subTask: []
+  parent: {fileID: 0}
+  data:
+    cfg: {fileID: 0}
+    targetCount: 0
+    reward: 0
+    complete: 0
+  root:
+    RequiredAD: 
+    nestCount: 
+    campData: {fileID: 0}
+    mapImage: {fileID: 0}
+    mapIcon: {fileID: 0}
+    activeTask: 0
+  icon: {fileID: 0}
+  pos: {x: 0, y: 0, z: 0}
+  entitySize: 0
+  percentage: 0
+  InEntityRange: 0

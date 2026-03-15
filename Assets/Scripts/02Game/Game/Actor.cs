@@ -51,6 +51,8 @@ namespace Unity.FPS.Game
         public UnitTypeEnum Type => type;
         public IPERange Range=> range;
 
+        public override float HalfRange => rangeLength;
+
         public int Team { get => team; set => team=value; }
 
         List<UnitQueryGridNode> I_Actor.GridNodes => curQueryGridNodes;
@@ -61,9 +63,9 @@ namespace Unity.FPS.Game
 
         public float Threat => threat;
 
-        public override Vector3 CenterPos => AimPoint.position;
+        public override Vector3 CenterPos => AimPoint?AimPoint.position: base.CenterPos;
 
-        public Vector3 HpPos => aimPoint.position + Vector3.up * HpHeight;
+        public Vector3 HpPos => AimPoint.position + Vector3.up * HpHeight;
 
 
         public bool HasFlag(ActorFlag flag) => this.flag.HasFlag(flag);
@@ -126,8 +128,9 @@ namespace Unity.FPS.Game
         #region 逻辑碰撞
         [Foldout("逻辑碰撞", true)]
         public ShapeType shape= ShapeType.Circle;
+        [SerializeField]
         [CustomLabel("半径/半长度")]
-        public float rangeLength;
+        private float rangeLength;
 
         [DisplayField]
         [CustomLabel("召唤者")]
@@ -164,26 +167,24 @@ namespace Unity.FPS.Game
             if(m_Health) m_Health.OnDie += OnDie;
 
             damageables = GetComponentsInChildren<Damageable>();
-        }
 
-        void Start()
-        {
 
 #if UNITY_EDITOR
             if (GameRoot.Instance.IsLocal)
             {
-                Invoke("OnStart", Time.fixedDeltaTime*2);
+                Invoke("Init", Time.fixedDeltaTime*2);
+                //Init();
             }
             else
             {
-                OnStart();
+                Init();
             }
 #else
             OnStart();
 #endif
         }
 
-        void OnStart()
+        void Init()
         {
             if(!HasFlag(ActorFlag.AllowFloating)) transform.position = TerrainUtils.WSToTS(transform.position);
             Range.SetXY((PEVector2)Pos);
@@ -268,7 +269,7 @@ namespace Unity.FPS.Game
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.DrawWireSphere(AimPoint.position, rangeLength);
+            Gizmos.DrawWireSphere(CenterPos, rangeLength);
         }
 
 

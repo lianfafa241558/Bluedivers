@@ -285,6 +285,8 @@ public static partial class TerrainUtils
         // 源地形的中心点（旋转中心）
         Vector3 sourceCenter = source.GetPosition() + Vector3.one / 2 * smallTerrainSize;
 
+        smallTerrainSize += transitionDistance * 0.5f;//额外的过渡范围
+
         var uv = WSToUV(sourceCenter); 
         var heights = GetHeights(uv, WRToHR(smallTerrainSize / 2), out int xBaseH, out int yBaseH, out int sizeH);
         float[,,] alphas = GetAlphas(uv, WRToAR(smallTerrainSize / 2), out int xBaseA, out int yBaseA, out int sizeA, out int layer);
@@ -310,15 +312,16 @@ public static partial class TerrainUtils
 
                 //没有修改成功说明normalizedDistance不对，现在一直是0
                 // 标准化之后(距离边缘)的距离[0,1]
-                float normalizedDistance = GetDistanceToTerrainEdge(source, ws, transitionDistance);
+                float normalizedDistance = Mathf.SmoothStep(GetDistanceToTerrainEdge(source, rotatedWS, transitionDistance), GetDistanceToTerrainEdge(source, ws, transitionDistance),0.5f);
 
                 //if (normalizedDistance < 0.99f)
                 //{
-                    //Tool.DrawShape(ShapeType.Rectangle, ws + Vector3.up * WSToHeight(ws), Vector3.one * heightmapRes / data.size.x/3.5f, 1, new Color(1-normalizedDistance, 0, 0, 1));
+                //Tool.DrawShape(ShapeType.Rectangle, ws + Vector3.up * WSToHeight(ws), Vector3.one * heightmapRes / data.size.x/3.5f, 1, new Color(1-normalizedDistance, 0, 0, 1));
                 //}
 
                 // 从旋转后的坐标获取源地形高度
                 //heights[y, x] = Mathf.Lerp(heights[y, x], (source.WSToHeight(rotatedWS)) / terrainHeight, normalizedDistance);
+                //WSToHeight 自带边界 clamped 保护
                 heights[y, x] = Mathf.SmoothStep(heights[y, x], (source.WSToHeight(rotatedWS)) / terrainHeight, normalizedDistance);
                 //heights[y, x] = (source.WSToHeight(rotatedWS)) / terrainHeight;
 
@@ -341,12 +344,14 @@ public static partial class TerrainUtils
                 float normalizedDistance = GetDistanceToTerrainEdge(source, ws, transitionDistance);
                 // 从旋转后的世界坐标获取源地形的UV
                 Vector2 uvSmall = source.WSToUV(rotatedWS);
+                uvSmall = new(Mathf.Clamp01(uvSmall.x), Mathf.Clamp01(uvSmall.y));
 
                 // 纹理权重插值
                 for (int i = 0; i < layer; ++i)
                 {
                     float smallAlphaValue = SampleSmallAlphaBilinear(smallAlphas, smallAlphaRes, uvSmall, i);
-                    alphas[y, x, i] = Mathf.Lerp(alphas[y, x, i], smallAlphaValue, normalizedDistance);
+                    alphas[y, x, i] = Mathf.SmoothStep(alphas[y, x, i], smallAlphaValue, normalizedDistance);
+
                 }
             }
         }
@@ -419,7 +424,7 @@ public static partial class TerrainUtils
     /// <returns>高度值[0,1]</returns>
     private static float GetMapHeightAtUV(Vector2 uv)
     {
-        TerrainData data = main.terrainData;
+        TerrainData data = Main.terrainData;
         int heightmapRes = data.heightmapResolution - 1;// 高度图的像素数（如513 = 512x512网格 + 1）
 
         // 转换公式：像素索引 = 标准化UV * (分辨率 - 1)，向下取整

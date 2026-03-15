@@ -129,6 +129,6 @@ public abstract class SubtitleBase : MonoBehaviour
         return Vector3.Distance(owner.Pos, TargetPos);
     }
 
-    protected Vector3 TargetPos => targetPoint != default ? targetPoint : (targetActor ? targetActor.AimPoint.position + targetActor.HpHeight * Vector3.up : target.transform.position + Vector3.up * 2);
+    protected Vector3 TargetPos => targetPoint != default ? targetPoint : (targetActor ? targetActor.CenterPos + targetActor.HpHeight * Vector3.up : target.transform.position + Vector3.up * 2);
 
 }

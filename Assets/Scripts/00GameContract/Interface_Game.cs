@@ -31,7 +31,7 @@ namespace GameContract
 
     public interface I_MissionPoint : I_Entity
     {
-
+        public bool IsArea { get; }
         //public bool IsMain { get;}
 
 

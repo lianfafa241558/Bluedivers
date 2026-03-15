@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core;
+using FpsGame.MapUtils;
 using GameContract;
 using PEMaths;
 using Unity.BaseTool;
@@ -9,6 +10,8 @@ using Utils;
 
 public class BattleManager : Singleton<BattleManager>
 {
+    public bool IsStartBattle;
+
     public AirdropController ADCont;
     public BattleRoleManager BRCont;
     public WaveManager WaveCont;
@@ -25,6 +28,11 @@ public class BattleManager : Singleton<BattleManager>
         mapRoot = transMapRoot.GetComponent<MapRoot>();
         var pos = mapRoot.rect;
         unitQueryGrid = new(new((PEVector2)pos.center, pos.size.x / 2, pos.size.z / 2), 30);
+        var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
+        if (debugger.IsValid())
+        {
+            debugger.grid = unitQueryGrid;
+        }
 
         GlobalEventManager.OnUnitPosChange += OnUnitPosChange;
         GlobalEventManager.OnEnemyCreate += OnEnemyCreate;
@@ -32,11 +40,7 @@ public class BattleManager : Singleton<BattleManager>
         GlobalEventManager.OnPlayerCreate += OnPlayerCreate;
         GlobalEventManager.OnPlayerDead += OnPlayerDeath;
         GlobalEventManager.OnOOPartCollect += OOPartCollect;
-        var debugger = mapRoot.transform.GetComponent<UnitQueryGridDebugger>();
-        if (debugger.IsValid())
-        {
-            debugger.grid = unitQueryGrid;
-        }
+        
     }
     private void OnDestroy()
     {
@@ -57,7 +61,7 @@ public class BattleManager : Singleton<BattleManager>
     {
         var manager = new GameObject("BattleManager").AddComponent<BattleManager>();
         manager.BattleRandom = new(TaskManager.Instance.nowTaskCfg.nowTask.seed);
-
+        manager.InitTerrain();
         manager.MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
         manager.MissionCont.transform.SetParent(manager.transform);
         manager.ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
@@ -67,7 +71,26 @@ public class BattleManager : Singleton<BattleManager>
         manager.BRCont.transform.SetParent(manager.transform);
         manager.WaveCont = new GameObject("WaveManager").AddComponent<WaveManager>();
         manager.WaveCont.transform.SetParent(manager.transform);
+
     }
+
+    void InitTerrain()
+    {
+        var cfg=TaskManager.Instance.nowTaskCfg;
+        var terrainData = Terrain.activeTerrain.terrainData;
+
+        Debug.LogError("地图尺寸"+ cfg.MainCfg.sizeType+" 地图大小"+ cfg.MapSize);
+        var mapRes= cfg.MainCfg.sizeType switch {
+            SizeType.Small => 256,
+            SizeType.Medium => 512,
+            SizeType.Large => 512,
+            _ => 256 
+        };
+        terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
+        terrainData.heightmapResolution = mapRes + 1;
+        terrainData.alphamapResolution = mapRes;
+    }
+
 
     public List<I_Actor> FindUnits(IPERange range, TargetCfg targetCfg, System.Func<I_Actor, bool> customFilter = null)
     {
@@ -105,31 +128,10 @@ public class BattleManager : Singleton<BattleManager>
     private void OnPlayerCreate(I_Actor unit)
     {
         unitQueryGrid.AddUnit(unit);
-    }
+        IsStartBattle = true;
+        GameRoot.GameState = GameStateEnum.Game;
+        GameRoot.WindowState = WindowStateEnum.Game;
 
-    public float GroundHeight(Vector2 worldPos)
-    {
-       return mapRoot.GroundHeight(worldPos);
-    }
-
-
-    /// <summary>
-    /// 设置弹坑
-    /// </summary>
-    public void TryCreateCrater(Collider collider,Vector3 worldPosition, float radius, float depth)
-    {
-        if (collider.IsValid() && collider.gameObject == mapRoot.terrain.gameObject)
-        {
-            mapRoot.CreateCrater(worldPosition, radius/2, radius, depth,false);
-        }
-    }
-
-    /// <summary>
-    /// 设置弹坑
-    /// </summary>
-    public void TryCreateCrater(Vector3 worldPosition, float innerRadius, float outerRadius, float depth)
-    {
-        mapRoot.CreateCrater(worldPosition, innerRadius, outerRadius, depth,true);
     }
 
 

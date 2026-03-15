@@ -18,6 +18,8 @@ namespace Core
         [CustomLabel("颜色")]
         public Color Color = Color.white;
 
+        public virtual float HalfRange => 1;
+
         string I_Entity.ShowName { get => ShowName; set => ShowName=value; }
         string I_Entity.Id { get => Id; set => Id=value; }
         Sprite I_Entity.Portrait { get => Portrait; set => Portrait = value; }

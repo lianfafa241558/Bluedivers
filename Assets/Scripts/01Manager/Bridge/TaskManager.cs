@@ -33,7 +33,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     public DisplayDic<string, _MapData> MapData;
 
 
-    public TaskInfo[,] TaskInfos;
+    public TaskCfg[,] TaskCfgs;
 
     public SelectTaskData nowTaskCfg { get;private set; }
 
@@ -58,40 +58,16 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         Missions = Enumerable.ToDictionary(ResManager.Instance.LoadObjects<MissionData_SO>("GameData/Mission"),item => item.type);
         Camps = Enumerable.ToDictionary(ResManager.Instance.LoadObjects<CampData_SO>("GameData/Camp"),item => item.enemyVarietyType);
 
-        TaskInfos = new TaskInfo[AreaCount,TaskCount];
+        TaskCfgs = new TaskCfg[AreaCount,TaskCount];
         nowTaskCfg = new();
         CreatAllTask();
         //if (GameRoot.Instance.IsLocal)
         {
             SetTask("Millennium", 0, DifficultyEnum.Insane, new int[4], 2);
-            nowTaskCfg.nowTask.main.cfg= Missions[MissionEnum.Eradicate];
+            nowTaskCfg.nowTask.main.cfg= Missions[MissionEnum.SearchAndDestroy];
             nowTaskCfg.nowTask.evacuate.cfg = Missions[MissionEnum.EvacuateFast];
 
-            //nowTaskCfg.nowTask.main.complete = true;
-            /*
-            for (int i=0;i< nowTaskCfg.nowTask.extra.Length;++i)
-            {
-                nowTaskCfg.nowTask.extra[i].cfg = ExtraTask[MissionEnum.Broadcast];
-            }*/
-
-            /*
-            for (int i=0;i< nowTaskCfg.SpecialtyPropertys.Length;++i)
-            {
-                nowTaskCfg.collectProperty[nowTaskCfg.SpecialtyPropertys[i]]= TaskRandom.Range(1, 20);
-            }*/
-            /*
-            for (int i = 0; i < nowTaskCfg.BattleData.Count; ++i)
-            {
-                nowTaskCfg.BattleData[i]["击杀敌人"] = TaskRandom.Range(1, 500);
-                nowTaskCfg.BattleData[i]["开火次数"] = TaskRandom.Range(1, 1000);
-                nowTaskCfg.BattleData[i]["死亡次数"] = TaskRandom.Range(1, 10);
-                nowTaskCfg.BattleData[i]["救援次数"] = TaskRandom.Range(1, 10);
-
-                nowTaskCfg.BattleData[i]["命中次数"] = TaskRandom.Range(1, 1000);
-                nowTaskCfg.BattleData[i]["使用补给次数"] = TaskRandom.Range(1, 100);
-                nowTaskCfg.BattleData[i]["呼叫战备次数"] = TaskRandom.Range(1, 100);
-                nowTaskCfg.BattleData[i]["采集欧帕兹数量"] = TaskRandom.Range(1, 100);
-            }*/
+           
         }
     }
 
@@ -142,7 +118,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 
                 MissionMainData_SO missionCfg = (MissionMainData_SO)Missions[mainType];
 
-                TaskInfos[i, u] = new() {
+                TaskCfgs[i, u] = new() {
                     enable = TaskRandom.Bool(),
                     name = RandomName(),
                     seed = TaskRandom.Range(0,114514),
@@ -166,7 +142,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         TaskItem[] CreatExtra(MissionEnum[] arr,int count)
         {
             //TODO:为了方便测试
-            count = 3;
+            count = 5;
             TaskItem[] re = new TaskItem[count];
             for(int i = 0; i < re.Length; ++i)
             {
@@ -178,7 +154,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         TaskItem[][] CreatNest(MissionEnum[] arr, int[] counts)
         {
             //TODO:为了方便测试
-            counts = new int[3] { 3, 1, 0 };
+            counts = new int[3] { 8, 4, 1 };
             TaskItem[][] re = new TaskItem[counts.Length][];
             for (int u=0;u< counts.Length;++u)
             {
@@ -262,7 +238,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         int mapIndex = MapData.Keys.FindIndex(item=>item==mapId);
         var data = MapData[mapId];
         var task = nowTaskCfg;
-        task.nowTask = TaskInfos[mapIndex, taskIndex];
+        task.nowTask = TaskCfgs[mapIndex, taskIndex];
 
         //task.RequiredAD = new() {10,11};
         task.RequiredAD = new() { 10, 11 ,12};//先直接加上
@@ -350,10 +326,17 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 
         public int MapSize => MainCfg.sizeType switch {
             SizeType.Small => 256+Constants.MapBorder,
-            SizeType.Medium => 512+Constants.MapBorder,
-            SizeType.Large => 1024 + Constants.MapBorder,
+            SizeType.Medium => 384+Constants.MapBorder,
+            SizeType.Large => 512 + Constants.MapBorder,
             _ => 128+Constants.MapBorder,
         };
+        public int MapHeight => MainCfg.sizeType switch {
+            SizeType.Small => 64,
+            SizeType.Medium => 80,
+            SizeType.Large => 96,
+            _ => 64,
+        };
+
         public int CameraSize => MapSize-Constants.MapBorder;
 
         public int MainReward => nowTask.main.complete ? nowTask.main.reward : 0;
@@ -372,7 +355,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 
 
         /// <summary>选择的任务</summary>
-        public TaskInfo nowTask { get; set; }
+        public TaskCfg nowTask { get; set; }
 
         /// <summary>巢穴刷新数</summary>
         public int[] nestCount;
@@ -390,7 +373,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     }
     [System.Serializable]
     /// <summary>任务配置</summary>
-    public struct TaskInfo
+    public struct TaskCfg
     {
         public bool enable;
         public string name;

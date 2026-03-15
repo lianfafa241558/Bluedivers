@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using GameContract;
+using Utils;
+
 public class ShootMapPreView : MonoBehaviour
 {
     [SerializeField]
@@ -68,9 +70,10 @@ public class ShootMapPreView : MonoBehaviour
         cameraData.renderShadows = false; // 仅对该相机生效
         cameraData.renderPostProcessing = true;
         cam.cullingMask =LayerDefinition.GroundLayers & ~1;
-            
- 
 
+
+        contourRenderTexture = new RenderTexture(cameraSize, cameraSize, 0, RenderTextureFormat.Default);
+        contourRenderTexture.Create();
         cam.targetTexture = contourRenderTexture;
         cam.Render();
         RenderSettings.fog = true;
@@ -79,11 +82,13 @@ public class ShootMapPreView : MonoBehaviour
         Destroy(CameraObj, 01.05f);
 
         AddCountour();
+        GetComponent<RawImage>().texture = contourRenderTexture;
     }
 
     private void AddCountour()
     {
-        int textureSize = contourRenderTexture.width;//贴图大小，例如512
+        //int textureSize = contourRenderTexture.width;//贴图大小，例如512
+        int textureSize = TaskManager.Instance.nowTaskCfg.CameraSize;//贴图大小
         // 1. 初始化byte数组
         Texture2D contourTex = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false);
         contourTex.filterMode = FilterMode.Bilinear;
@@ -136,6 +141,8 @@ public class ShootMapPreView : MonoBehaviour
             {
                 int pixelIndex = yOffset + x;
                 float terrainX = x * sizeRatio;//[0,terrainSize]
+
+                filteredBytes[pixelIndex]= filteredBytes[pixelIndex].MultiplyRGB(0.7f);//降低亮度
 
                 //绘制网格也顺便在这边弄了
                 if (x % gridSize10 == 0 || y % gridSize10 == 0)

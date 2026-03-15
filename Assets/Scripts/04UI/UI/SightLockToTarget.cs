@@ -64,10 +64,10 @@ namespace Unity.FPS.UI
             for (int i = 0; i < keys.Length; ++i)
             {
                 var actor = keys[i];
-                dic[actor].Item1.position = Camera.main.WorldToScreenPoint(actor.AimPoint.position);
+                dic[actor].Item1.position = Camera.main.WorldToScreenPoint(actor.CenterPos);
                 if (UseLine)
                 {
-                    UpdateLine(dic[actor].Item1.GetComponent<LineRenderer>(), actor.AimPoint.position);
+                    UpdateLine(dic[actor].Item1.GetComponent<LineRenderer>(), actor.CenterPos);
                 }
             }
         }

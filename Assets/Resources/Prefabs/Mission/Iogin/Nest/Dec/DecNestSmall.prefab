@@ -44,7 +44,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ab55abf20157354ebe9d31a801bc232, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  missionType: 2
   hide: 0
+  displayMiniMap: 0
+  isArea: 1
   prefabs:
   - {fileID: 8014547356471634972, guid: 5bdbd769061f47041bb03990ddabb3b0, type: 3}
   title: "\u62C6\u9664\u88AD\u63A0\u8005\u6298\u8D8A\u951A"
@@ -56,36 +59,24 @@ MonoBehaviour:
   subTask: []
   parent: {fileID: 0}
   data:
-    cfg:
-      type: 0
-      color: {r: 0, g: 0, b: 0, a: 0}
-      sprite: {fileID: 0}
-      sizeType: 0
-      count: {x: 0, y: 0}
-      reward: {x: 0, y: 0}
-      extraCount: 0
-      name: 
-      desc: 
-      controller: {fileID: 0}
-      evacuateType: 0
-      RequiredAD: []
+    cfg: {fileID: 0}
     targetCount: 0
     reward: 0
     complete: 0
   root:
     RequiredAD: 
-    nestReward: c80000009600000096000000
     nestCount: 040000000200000001000000
-    nestDemolish: 000000000000000000000000
     campData: {fileID: 0}
     mapImage: {fileID: 0}
     mapIcon: {fileID: 0}
     activeTask: 0
+  color: {r: 0, g: 0, b: 0, a: 0}
   icon: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
   entitySize: 0
   percentage: 0
-  InEntityRange: 0
+  InAirdropRange: 0
+  entity: {fileID: 0}
   actorNames:
   - DecNestBase
   - DecNestLeader

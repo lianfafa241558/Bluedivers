@@ -1,12 +1,17 @@
 using System.Collections.Generic;
+using FpsGame.Mission;
 using Unity.FPS.AI;
 using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEditor;
 using UnityEngine;
 
+
 namespace Unity.FPS.EditorExt
 {
+    /// <summary>
+    /// 分析器
+    /// </summary>
     public class MiniProfiler : EditorWindow
     {
         class BoundsAndCount

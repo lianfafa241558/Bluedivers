@@ -5,72 +5,75 @@ using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
-/// <summary>
-/// 黑盒子
-/// </summary>
-public class MissionBlackBox : MissionBase
+namespace FpsGame.Mission
 {
-    [SerializeField]
-    private float defenseRange;
-
-    KeyScreen keyScreen;
-    bool startDefense;
-    bool lastHavePlayer = true;
-
-    protected override void Start()
+    /// <summary>
+    /// 黑盒子
+    /// </summary>
+    public class MissionBlackBox : MissionBase
     {
-        keyScreen = entity.transform.GetComponentInChildren<KeyScreen>(true);
-        keyScreen.OnUpdateStage += OnUpdateStage;
-        base.Start();
-        TickTime = 0.5f;
-    }
+        [SerializeField]
+        private float defenseRange;
 
-    void OnUpdateStage(int stage)
-    {
-        switch (stage)
+        KeyScreen keyScreen;
+        bool startDefense;
+        bool lastHavePlayer = true;
+
+        protected override void Start()
         {
-            case 1:
-                startDefense = true;
-                GameRoot.CreateTimer(()=>BattleManager.Instance.CreatWave(entity.Pos,true),5);
-                break;
-            case 2:
-                CompleteMission();
-                break;
+            keyScreen = entity.transform.GetComponentInChildren<KeyScreen>(true);
+            keyScreen.OnUpdateStage += OnUpdateStage;
+            base.Start();
+            TickTime = 0.5f;
         }
-    }
-    public override bool Tick()
-    {
-        base.Tick();
-        if (!startDefense|| data.complete) return true;
 
-        if (lastHavePlayer!=AreaHavePlayer())
+        void OnUpdateStage(int stage)
         {
-            lastHavePlayer = !lastHavePlayer;
-            if (!lastHavePlayer)
+            switch (stage)
             {
-                //TODO:临时的
-                CreatNotice("Kotama", "TaskPodUnvaildAble", () => !lastHavePlayer);
+                case 1:
+                    startDefense = true;
+                    GameRoot.CreateTimer(() => BattleManager.Instance.CreatWave(entity.Pos, true), 5);
+                    break;
+                case 2:
+                    CompleteMission();
+                    break;
             }
         }
-       
-        var nowTime = keyScreen.GetTime();
-        var remainTime = keyScreen.nowProcedure.time- nowTime;
-        percentage = nowTime / keyScreen.nowProcedure.time;
-        if (!lastHavePlayer)
+        public override bool Tick()
         {
-            if(nowTime >0) keyScreen.AddTime(2*TickTime);
-            
-            UpdateTip("<color=#FF4040>请返回信号发射范围</color> [" + Tool.FloatToTime(remainTime) + "]");
-        }
-        else
-        {
-            UpdateTip("请在信号发射区坚守  [" + Tool.FloatToTime(remainTime) + "]");
-        }
-        return true;
-    }
+            base.Tick();
+            if (!startDefense || data.complete) return true;
 
-    private bool AreaHavePlayer()
-    {
-        return ActorsManager.Players.Any(item => Vector3.Distance(item.Pos, entity.Pos) < defenseRange);
+            if (lastHavePlayer != AreaHavePlayer())
+            {
+                lastHavePlayer = !lastHavePlayer;
+                if (!lastHavePlayer)
+                {
+                    //TODO:临时的
+                    CreatNotice("Kotama", "TaskPodUnvaildAble", () => !lastHavePlayer);
+                }
+            }
+
+            var nowTime = keyScreen.GetTime();
+            var remainTime = keyScreen.nowProcedure.time - nowTime;
+            percentage = nowTime / keyScreen.nowProcedure.time;
+            if (!lastHavePlayer)
+            {
+                if (nowTime > 0) keyScreen.AddTime(2 * TickTime);
+
+                UpdateTip("<color=#FF4040>请返回信号发射范围</color> [" + Tool.FloatToTime(remainTime) + "]");
+            }
+            else
+            {
+                UpdateTip("请在信号发射区坚守  [" + Tool.FloatToTime(remainTime) + "]");
+            }
+            return true;
+        }
+
+        private bool AreaHavePlayer()
+        {
+            return ActorsManager.Players.Any(item => Vector3.Distance(item.Pos, entity.Pos) < defenseRange);
+        }
     }
 }

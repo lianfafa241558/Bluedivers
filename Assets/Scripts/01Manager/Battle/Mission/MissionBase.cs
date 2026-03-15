@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Core;
 using GameContract;
 using Unity.BaseTool;
@@ -7,264 +8,248 @@ using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 
-/// <summary>
-/// 任务目标(逻辑层)
-/// </summary>
-public abstract class MissionBase : TickBehaviour  //虽然他自己不用，但是他的子类用
+namespace FpsGame.Mission
 {
-    
-    public event Action<MissionBase> OnMissionCompleted;
-
-
-    public bool isMain=>data.cfg.type<MissionEnum.BlackBox;//小于第一个副任务
-
-    [CustomLabel("是否隐藏")]
-    public bool hide;
-
-    //这玩意应该放着这里吗？我得想想
-    [SerializeField]
-    private List<GameObject> prefabs;
-
-    [Header("信息")]
-    [DisplayField(true, false, false)]
-    [CustomLabel("标题")]
-    public string title;
-    [DisplayField(true, false, false)]
-    [CustomLabel("当前目标提示")]
-    public string tip;
-    [DisplayField(true, false, false)]
-    [CustomLabel("最大任务进度")]
-    public int MaxProgress;
-    [DisplayField(true,false,false)]
-    [CustomLabel("当前任务进度")]
-    public int NowProgress;
-
-    [CustomLabel("允许部署战备的范围")]
-    public int AirdropRange=10;
-
-    [CustomLabel("占地面积(半径)")]
-    public Vector2Int mapEntitySize = Vector2Int.one * 20;
-
-    [Header("子任务")]
-    public MissionBase[] subTask;
-
-    [DisplayField(true, false, false)]
-    public MissionBase parent;//主任务
-
-    [SerializeField]
-    [DisplayField(true, false, false)]
-    protected TaskManager.TaskItem data;
-    [SerializeField]
-    [DisplayField(true, false, false)]
-    protected TaskManager.SelectTaskData root;
-
-    [HideInInspector]
-    public Sprite icon;
-    [HideInInspector]
-    public Vector3 pos;
-    [HideInInspector]
-    public int entitySize;//半径
-
-    [DisplayField(false)]
-    public float percentage;//完成百分比(用来显示条)
-
-    [Header("显示")]
-    [DisplayField(false)]
-    [SerializeField]
-    /// <summary>在任务范围内</summary>
-    private bool InEntityRange;
-    /// <summary>在部署战备范围内</summary>
-    private bool InAirdropRange;
-    /// <summary>已使用战备</summary>
-    private bool allowUseAirdrop;
-    /// <summary>已被发现</summary>
-    private bool discovered;
-
-    public I_MissionPoint entity;
-
-    
-
-    public void Init(TaskManager.SelectTaskData root,TaskManager.TaskItem data,Sprite icon,Vector3 pos,int entitySize)
+    public enum MissionType
     {
-        this.data = data;
-        this.root = root;
-        this.icon = icon;
-        this.pos = pos;
-        this.entitySize = entitySize;
-        title = data.cfg.desc;
-
-        if (prefabs.Count > 0)
-        {
-            entity = Instantiate(prefabs.RandomTake(), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0)).GetComponent<I_MissionPoint>();
-            //Debug.LogError("初始化实体"+ entity);
-        }
-        CreatMission();
-
-        GameRoot.CreateTimer(() => {
-            GlobalEventManager.MissionCreated(this);
-            //主任务直接显示
-            if (isMain && !hide)
-            {
-                if(entity.IsValid()) GlobalEventManager.MissionShow(this);
-                GlobalEventManager.MissionStateChange(this, true);
-            }
-        }, 0.2f);
+        Main,Extra,Nest
     }
 
-
-
-    protected virtual void CreatMission()
-    {
-        if (data.cfg.RequiredAD.Count == 0) AirdropRange = 0;
-        else GlobalEventManager.OnAirdrop += OnAirdrop;
-
-        if (entity.IsValid()) GlobalEventManager.OnMark += Mark;
-    }
-
-    protected virtual void UpdateMission(bool refresh=true)
-    {
-        GlobalEventManager.MissionUpdate(this, refresh);
-    }
-
-    protected virtual void CompleteMission()
-    {
-        data.complete = true;
-        if (isMain) root.result = GameResult.Victory;
-        GlobalEventManager.MissionCompleted(this);
-        OnMissionCompleted?.Invoke(this);
-        EndMission();
-    }
-
-    protected virtual void FailMission()
-    {
-        if (isMain) root.result = GameResult.Failure;
-        GlobalEventManager.MissionFail(this);
-        EndMission();
-    }
-    protected virtual void EndMission()
-    {
-        GlobalEventManager.MissionEnd(this);
-        if (!allowUseAirdrop) GlobalEventManager.OnAirdrop -= OnAirdrop;
-        if (entity.IsValid() && !discovered) GlobalEventManager.OnMark -= Mark;
-    }
-
-    private void Mark(GameObject owner, GameObject target, Vector3 point)
-    {
-        if (!target) return;
-        
-        if (!discovered && target && target.transform.IsChildOf(entity.transform))
-        {
-            TryDiscovered();
-        }
-    }
-
-    private void TryDiscovered()
-    {
-        discovered = true;
-        GlobalEventManager.MissionShow(this);
-        GlobalEventManager.OnMark -= Mark;
-    }
-
-    private void OnAirdrop(GameObject source, GameObject beacon, Vector3 point, AirdropController.AirdropData data)
-    {
-        if (this.data.cfg.RequiredAD.FindIndex(item => item.ID == data.cfg.ID) > -1)
-        {
-            allowUseAirdrop = true;
-            GlobalEventManager.OnAirdrop -= OnAirdrop;
-        }
-
-    }
-
-    protected void UpdateTip(string tip)
-    {
-        this.tip = tip;
-        UpdateMission(false);
-    }
-
-
-    protected void UpdateText(string title,string tip)
-    {
-        this.title = title;
-        this.tip = tip;
-        UpdateMission(true);
-    }
-
-
-    protected void UpdateHide(bool hide)
-    {
-        this.hide = hide;
-        UpdateMission(true);
-    }
 
     /// <summary>
-    /// 用来暴露一个任务给另一个任务
+    /// 任务目标(逻辑层)
     /// </summary>
-    /// <param name="mission"></param>
-    public virtual void Link(MissionBase mission) {
-
-
-    }
-
-    public override bool Tick()
+    public abstract class MissionBase : TickBehaviour  //虽然他自己不用，但是他的子类用
     {
-        if (entitySize <= 0) return true;
 
-        float dis = Vector2.Distance(ActorsManager.Player.Pos.ToVector2(), pos.ToVector2());
-        bool entityRange = dis < entitySize+10;
+        public event Action<MissionBase> OnMissionCompleted;
 
-        if (entityRange!= InEntityRange)
+        public MissionType missionType;
+
+
+
+        [CustomLabel("是否隐藏")]
+        public bool hide;
+
+        [CustomLabel("是否暴露在小地图上")]
+        public bool displayMiniMap;
+
+        [CustomLabel("显示一个区域")]
+        public bool isArea;
+
+        //这玩意应该放着这里吗？我得想想
+        [SerializeField]
+        private List<GameObject> prefabs;
+
+        [Header("信息")]
+        [DisplayField(true, false, false)]
+        [CustomLabel("标题")]
+        public string title;
+        [DisplayField(true, false, false)]
+        [CustomLabel("当前目标提示")]
+        public string tip;
+        [DisplayField(true, false, false)]
+        [CustomLabel("最大任务进度")]
+        public int MaxProgress;
+        [DisplayField(true, false, false)]
+        [CustomLabel("当前任务进度")]
+        public int NowProgress;
+
+        [CustomLabel("允许部署战备的范围")]
+        public int AirdropRange = 10;
+
+        [CustomLabel("占地面积的取值范围(半径)")]
+        public Vector2Int mapEntitySize = Vector2Int.one * 20;
+
+        [Header("子任务")]
+        public MissionBase[] subTask;
+
+        [DisplayField(true, false, false)]
+        public MissionBase parent;//主任务
+
+        [SerializeField]
+        [DisplayField(true, false, false)]
+        protected TaskManager.TaskItem data;
+        [SerializeField]
+        [DisplayField(true, false, false)]
+        protected TaskManager.SelectTaskData root;
+
+        [HideInInspector]
+        public Color color;//暂时只有巢穴用
+        [HideInInspector]
+        public Sprite icon;
+        [HideInInspector]
+        public Vector3 pos;
+        [HideInInspector]
+        public int entitySize;//半径
+
+        [DisplayField(false)]
+        public float percentage;//完成百分比(用来显示条)
+
+        [Header("显示")]
+        [DisplayField(false)]
+        [SerializeField]
+        /// <summary>在部署战备范围内</summary>
+        private bool InAirdropRange;
+
+
+        public MissionView entity;
+
+
+
+        public void Init(TaskManager.SelectTaskData root, TaskManager.TaskItem data, Sprite icon, Vector3 pos, int entitySize)
         {
-            InEntityRange = entityRange;
-            if (entityRange&&!discovered) 
+            this.data = data;
+            this.root = root;
+            this.icon = icon;
+            this.pos = pos;
+            this.entitySize = entitySize;
+            switch (missionType)
             {
-                TryDiscovered();
-                CreatNotice("Kotama", "ApproachingTarget", () => InEntityRange && !InAirdropRange);
+                case MissionType.Main:
+                    if (data.cfg is MissionMainData_SO maincfg)
+                    {
+                        color = maincfg.color;
+                    }
+                    else
+                    {
+                        //Debug.LogError("错误:mission"+name+"不是主要任务", gameObject);
+                        color = Color.white;
+                    }
+                    break;
+                case MissionType.Extra:
+                    color = Color.white;
+                    break;
+                case MissionType.Nest:
+                    color = root.campData.Color;
+                    break;
             }
-            GlobalEventManager.MissionStateChange(this, entityRange);
-        }
+            
+            title = data.cfg.desc;
 
-        bool airdropRange = dis < AirdropRange;
-        if (airdropRange != InAirdropRange)
-        {
-            InAirdropRange = airdropRange;
-            if (airdropRange)//进去又出来就不说了
+            if (prefabs.Count > 0)
             {
-                if (!allowUseAirdrop) CreatNotice("Kotama", "TaskPodVaildAble", () => InAirdropRange);
+                entity = Instantiate(prefabs.RandomTake(), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0)).GetComponent<MissionView>();
+                //Debug.LogError("初始化实体"+ entity);
+                entity.Init(this, this.data.cfg.RequiredAD.Select(item=>item.ID).ToArray());
+            }
+            if (data.cfg.RequiredAD.Count == 0) AirdropRange = 0;
+            CreatMission();
 
-                foreach (var ad in data.cfg.RequiredAD)
+            GameRoot.CreateTimer(() => {
+                GlobalEventManager.MissionCreated(this);
+                //主任务直接显示
+                if (missionType==MissionType.Main && !hide)
                 {
-                    BattleManager.Instance.Authorize(ad.ID, true);
+                    GlobalEventManager.MissionStateChange(this, true);
+                }
+                if (displayMiniMap)
+                {
+                    if(entity.IsValid()) entity.TryDiscovered();
                 }
 
-            }
-            else
+            }, 0.2f);
+        }
+
+
+
+        protected virtual void CreatMission()
+        {
+            
+
+        }
+
+        protected virtual void UpdateMission(bool refresh = true)
+        {
+            GlobalEventManager.MissionUpdate(this, refresh);
+        }
+
+        protected virtual void CompleteMission()
+        {
+            data.complete = true;
+            if (missionType == MissionType.Main&&!parent) root.result = GameResult.Victory;
+            GlobalEventManager.MissionCompleted(this);
+            OnMissionCompleted?.Invoke(this);
+            EndMission();
+        }
+
+        protected virtual void FailMission()
+        {
+            if (missionType == MissionType.Main) root.result = GameResult.Failure;
+            GlobalEventManager.MissionFail(this);
+            EndMission();
+        }
+        protected virtual void EndMission()
+        {
+            GlobalEventManager.MissionEnd(this);
+            entity.Uninit();
+        }
+
+        protected void UpdateTip(string tip)
+        {
+            this.tip = tip;
+            UpdateMission(false);
+        }
+
+
+        protected void UpdateText(string title, string tip)
+        {
+            this.title = title;
+            this.tip = tip;
+            UpdateMission(true);
+        }
+
+
+        protected void UpdateHide(bool hide)
+        {
+            this.hide = hide;
+            UpdateMission(true);
+        }
+
+        /// <summary>
+        /// 用来暴露一个任务给另一个任务
+        /// </summary>
+        /// <param name="mission"></param>
+        public virtual void Link(MissionBase mission)
+        {
+
+
+        }
+
+        public override bool Tick()
+        {
+            if (entitySize <= 0) return true;
+
+            float dis = Vector2.Distance(ActorsManager.Player.Pos.ToVector2(), pos.ToVector2());
+           
+            bool airdropRange = dis < AirdropRange;
+            if (airdropRange != InAirdropRange)
             {
-                if (!allowUseAirdrop) CreatNotice("Kotama", "TaskPodUnvaildAble", () => InAirdropRange);
+                InAirdropRange = airdropRange;
                 foreach (var ad in data.cfg.RequiredAD)
                 {
-                    BattleManager.Instance.Authorize(ad.ID, false);
+                    BattleManager.Instance.Authorize(ad.ID, airdropRange);
                 }
             }
+
+            return true;
         }
-        
 
-        return true;
+        protected void CreatNotice(string role, string type, Func<bool> func = default, float delay = 0, float vaildTime = -1)
+        {
+            WndManager.Instance.CreatNotice(role, type, func, delay, vaildTime);
+        }
+
+
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(pos, entitySize + 10);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(pos, entitySize);
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(pos, AirdropRange);
+        }
+
     }
-
-    protected void CreatNotice(string role, string type,Func<bool> func = default, float delay = 0, float vaildTime = -1)
-    {
-        WndManager.Instance.CreatNotice(role, type, func, delay, vaildTime);
-    }
-
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(pos, entitySize + 10);
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(pos, entitySize);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(pos, AirdropRange);
-    }
-
 }

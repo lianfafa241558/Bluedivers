@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core;
+using FpsGame.Mission;
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
@@ -102,32 +103,37 @@ public class MissionWnd : WindowRoot
         //Debug.LogError("创建任务"+ objective.title,objective);
         MissionHUDItem go = null;
         RectTransform par = null;
-        if (mission.isMain)
+        switch (mission.missionType)
         {
-            if (mission.parent)
-            {
-                go = MissionSubPrefab;
-                if (m_ObjectivesDictionnary.TryGetValue(mission.parent, out MissionHUDItem toast2))
+            case MissionType.Main:
+                if (mission.parent)
                 {
-                    par = (RectTransform)toast2.subGroup.transform;
+                    go = MissionSubPrefab;
+                    if (m_ObjectivesDictionnary.TryGetValue(mission.parent, out MissionHUDItem toast2))
+                    {
+                        par = (RectTransform)toast2.subGroup.transform;
+                    }
+                    else
+                    {
+                        Debug.LogError(mission.title + "没有找到父级任务");
+                    }
                 }
                 else
                 {
-                    Debug.LogError(mission.title+"没有找到父级任务");
+                    go = MissionMainPrefab;
+                    par = MainLayout;
                 }
-            }
-            else
-            {
-                go = MissionMainPrefab;
-                par = MainLayout;
-            }
-            
+                break;
+            case MissionType.Extra:
+                go = MissionExtraPrefab;
+                par = ExtraLayout;
+                break;
+            case MissionType.Nest:
+                go = MissionExtraPrefab;
+                par = ExtraLayout;
+                break;
         }
-        else
-        {
-            go = MissionExtraPrefab;
-            par = ExtraLayout;
-        }
+        
         MissionHUDItem toast = Instantiate(go, par);
         m_ObjectivesDictionnary.Add(mission, toast);
         // 初始化并提供描述
@@ -155,7 +161,7 @@ public class MissionWnd : WindowRoot
     /// </summary>
     public void OnObjectiveCompleted(MissionBase mission)
     {
-        wndManager.PlaySound(new(mission.isMain?m_MainCompletedSound:m_ExtraCompletedSound, AudioGroups.UI));
+        wndManager.PlaySound(new(mission.missionType==MissionType.Main?m_MainCompletedSound:m_ExtraCompletedSound, AudioGroups.UI));
         AudioManager.Suppressed(3);
         if (m_ObjectivesDictionnary.TryGetValue(mission, out MissionHUDItem toast))
         {
@@ -171,7 +177,7 @@ public class MissionWnd : WindowRoot
     {
         //Debug.LogError("任务" + objective.title + "结束");
         //支线任务才移除，主线是显示完成的
-        if (!objective.isMain&&m_ObjectivesDictionnary.TryGetValue(objective, out MissionHUDItem toast))
+        if (objective.missionType != MissionType.Main && m_ObjectivesDictionnary.TryGetValue(objective, out MissionHUDItem toast))
         {
             //Debug.LogError("移除" + toast.gameObject);
             Tool.Destroy(toast.gameObject);

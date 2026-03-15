@@ -65,7 +65,7 @@ public class SelectMapWnd : WindowRoot
             if (info.Length>0) {
                 SetActive(mapRoot.GetChild(a, 1, 3), true);
                 SetActive(mapRoot.GetChild(a, 1, 4), false);
-                for (int u = 0; u < taskManager.TaskCount; ++u) taskManager.TaskInfos[a,u].enable &= u<info.Length&&!info[u].noTask;
+                for (int u = 0; u < taskManager.TaskCount; ++u) taskManager.TaskCfgs[a,u].enable &= u<info.Length&&!info[u].noTask;
             }
             else
             {
@@ -97,7 +97,7 @@ public class SelectMapWnd : WindowRoot
             });
             
             SetButtonEnter(mapInfoLayout.GetChild(a), (data) => {
-                if(taskManager.TaskInfos[SelectMapIndex,a].enable && a != SelectTaskIndex) ShowAreaInfoWnd(a, SelectTaskIndex > -1);
+                if(taskManager.TaskCfgs[SelectMapIndex,a].enable && a != SelectTaskIndex) ShowAreaInfoWnd(a, SelectTaskIndex > -1);
             });
 
             SetButtonExit(mapInfoLayout.GetChild(a), (data) => {
@@ -105,7 +105,7 @@ public class SelectMapWnd : WindowRoot
                 {
                     if (a != SelectTaskIndex)ShowAreaInfoWnd(SelectTaskIndex,true);
                 }
-                else if (taskManager.TaskInfos[SelectMapIndex, a].enable && a != SelectTaskIndex) HideAreaInfoWnd();
+                else if (taskManager.TaskCfgs[SelectMapIndex, a].enable && a != SelectTaskIndex) HideAreaInfoWnd();
             });
         }
 
@@ -251,7 +251,7 @@ public class SelectMapWnd : WindowRoot
                 int nowIndex = 0;
                 for (int u = 0; u < taskManager.TaskCount; ++u)
                 {
-                    var info = taskManager.TaskInfos[i, u];
+                    var info = taskManager.TaskCfgs[i, u];
                     if (info.enable)
                     {
                         var item = mapRoot.GetChild(i, 1, 3, nowIndex);
@@ -312,7 +312,7 @@ public class SelectMapWnd : WindowRoot
             SetActive(areaRoot.GetChild(1, i), false);
             if (i < info.Length)
             {
-                var item = taskManager.TaskInfos[SelectMapIndex, i];
+                var item = taskManager.TaskCfgs[SelectMapIndex, i];
 
                 areaRoot.GetChild(1, i).RectTransform().anchoredPosition = info[i].pos;
                 SetText(areaRoot.GetChild(1, i, 2),info[i].name);
@@ -396,7 +396,7 @@ public class SelectMapWnd : WindowRoot
     private void ShowAreaInfoWnd(int index, bool immediately = false)
     {
         //Debug.LogWarning("鼠标进入任务");
-        var info = taskManager.TaskInfos[SelectMapIndex, index];
+        var info = taskManager.TaskCfgs[SelectMapIndex, index];
         SetText(areaInfoType, info.main.cfg.name);
         SetText(areaInfoName, info.name);
         SetText(areaInfoMainTarget, info.main.cfg.desc);
@@ -485,7 +485,7 @@ public class SelectMapWnd : WindowRoot
         {
             float diffScale = taskManager.DiffScale((DifficultyEnum)SelectTaskDiff);
             float extraScale = taskManager.ExtraDiffScale((DifficultyEnum)SelectTaskDiff);
-            var info = taskManager.TaskInfos[SelectMapIndex, index];
+            var info = taskManager.TaskCfgs[SelectMapIndex, index];
 
             for (int i = 0; i < 4; ++i)
             {
@@ -497,7 +497,7 @@ public class SelectMapWnd : WindowRoot
         }
         else
         {
-            var info = taskManager.TaskInfos[SelectMapIndex, index];
+            var info = taskManager.TaskCfgs[SelectMapIndex, index];
             SetText(areaInfoMainReward, info.main.reward);
             SetText(areaInfoExtraReward,info.ExtraAllReward);
         }

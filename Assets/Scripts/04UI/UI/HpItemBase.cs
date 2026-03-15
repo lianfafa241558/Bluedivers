@@ -33,7 +33,7 @@ public class HpItemBase : MonoBehaviour
 
     public virtual void Tick()
     {
-        transform.position = Tool.WorldPosToScreenPos(actor.AimPoint.position + Vector3.up * actor.HpHeight);
+        transform.position = Tool.WorldPosToScreenPos(actor.CenterPos + Vector3.up * actor.HpHeight);
         SetFill(FillW, health.GetHpRatio() - 0.02f, Time.deltaTime * 2);
     }
 

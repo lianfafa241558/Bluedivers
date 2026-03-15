@@ -6,8 +6,6 @@ using UnityEngine;
 
 public class InterestPoint : BaseObject, I_MissionPoint
 {
-
-
-
+    public bool IsArea => false;
 
 }

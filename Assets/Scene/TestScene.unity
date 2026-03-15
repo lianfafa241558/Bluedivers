@@ -419,7 +419,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 8400000, guid: 805fab28a576b6949b0e4a9d3ee93f49, type: 2}
+  m_Texture: {fileID: 0}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -469,8 +469,7 @@ MonoBehaviour:
   targetTerrain: {fileID: 1376797506}
   contourInterval: 4
   lineWidth: 0.15
-  contourRenderTexture: {fileID: 8400000, guid: 805fab28a576b6949b0e4a9d3ee93f49,
-    type: 2}
+  contourRenderTexture: {fileID: 0}
 --- !u!1001 &462578131
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1114,7 +1113,7 @@ MonoBehaviour:
     type: 3}
   MissionPointPrefab: {fileID: 2767320301268785195, guid: d9c1c07866ccd904a993aab487d002c2,
     type: 3}
-  MissionPointExtraPrefab: {fileID: 2767320301268785195, guid: 52d8cd7582768874890e5573132e9347,
+  MissionNestPrefab: {fileID: 2767320301268785195, guid: d4a71b8957525f0409884c78e74239d0,
     type: 3}
   PlayerRoot: {fileID: 2024866378}
   EnemyRoot: {fileID: 1990966736}
@@ -2310,8 +2309,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_AgentTypeID: -334000983
   m_CollectObjects: 1
-  m_Size: {x: 288, y: 64, z: 288}
-  m_Center: {x: 144, y: 32, z: 144}
+  m_Size: {x: 544, y: 64, z: 544}
+  m_Center: {x: 272, y: 32, z: 272}
   m_LayerMask:
     serializedVersion: 2
     m_Bits: 8
@@ -2338,15 +2337,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrain: {fileID: 1376797506}
-  EffectiveRange: 0.8
   rect:
     m_Position: {x: 16, y: 0, z: 16}
-    m_Size: {x: 256, y: 64, z: 256}
+    m_Size: {x: 512, y: 64, z: 512}
   wallPrefab: {fileID: 5634124777019873605, guid: 941d312f9f9805f40b9c823b850c75b5,
     type: 3}
-  wallMat: {fileID: 2100000, guid: e42a51036afa3a44e9a1e0b6f145ffa8, type: 2}
-  unitRoot: {fileID: 0}
-  cam: {fileID: 0}
 --- !u!114 &1603278500
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2378,15 +2373,6 @@ MonoBehaviour:
   baseAmplitude: 1
   detailScale: 40
   detailAmplitude: 0.05
-  nestProbability: 0.2
-  plateauSize: {x: 20, y: 80}
-  nestIntensity: 0.01
-  nestScale: 800
-  nestAmplitude: 0.001
-  nestEdge: 0
-  nestPrefab: {fileID: 5645958791598517288, guid: cd5b4fcbf7ac2774aa2c7d87cc8f7290,
-    type: 3}
-  CreatPrefab: 0
   plateauRadius: 0
   plateauIntensity: 0.03
   edgeDropoff: 0.1
@@ -3128,7 +3114,7 @@ PrefabInstance:
     - target: {fileID: 318344083748552231, guid: 3efa5fc4b1953254a8d3ac525590bccd,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 150.01
       objectReference: {fileID: 0}
     - target: {fileID: 318344083748552231, guid: 3efa5fc4b1953254a8d3ac525590bccd,
         type: 3}

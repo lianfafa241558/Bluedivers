@@ -45,6 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hide: 1
+  displayMiniMap: 1
   prefabs:
   - {fileID: 6201182580605112986, guid: 8fe6d8017ef6b88408482d8d3be872fd, type: 3}
   title: "\u6FC0\u6D3B\u64A4\u79BB\u7EC8\u7AEF"
@@ -56,27 +57,13 @@ MonoBehaviour:
   subTask: []
   parent: {fileID: 0}
   data:
-    cfg:
-      type: 0
-      color: {r: 0, g: 0, b: 0, a: 0}
-      sprite: {fileID: 0}
-      sizeType: 0
-      count: {x: 0, y: 0}
-      reward: {x: 0, y: 0}
-      extraCount: 0
-      name: 
-      desc: 
-      controller: {fileID: 0}
-      evacuateType: 0
-      RequiredAD: []
+    cfg: {fileID: 0}
     targetCount: 0
     reward: 0
     complete: 0
   root:
     RequiredAD: 
-    nestReward: c80000009600000096000000
     nestCount: 040000000200000001000000
-    nestDemolish: 000000000000000000000000
     campData: {fileID: 0}
     mapImage: {fileID: 0}
     mapIcon: {fileID: 0}

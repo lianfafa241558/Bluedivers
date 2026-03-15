@@ -147,11 +147,11 @@ public static class FpsHelper
     
     public static PEInt ThreatValue(PEVector3 pos,I_Actor target)
     {
-        return PEVector3.Distance(pos, (PEVector3)target.AimPoint.position) * (PEInt)target.Threat;
+        return PEVector3.Distance(pos, (PEVector3)target.CenterPos) * (PEInt)target.Threat;
     }
     public static PEInt ThreatValue(Vector3 pos, I_Actor target)
     {
-        return PEVector3.Distance((PEVector3)pos, (PEVector3)target.AimPoint.position) * (PEInt)target.Threat;
+        return PEVector3.Distance((PEVector3)pos, (PEVector3)target.CenterPos) * (PEInt)target.Threat;
     }
 
     public static bool HaveNavMeshAgent(NavMeshAgent navMeshAgent) => navMeshAgent && navMeshAgent.isActiveAndEnabled;

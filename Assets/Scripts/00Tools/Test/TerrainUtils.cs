@@ -12,7 +12,7 @@ public static partial class TerrainUtils
         => pos - terrain.GetPosition().ToVector2();
 
     /// <summary>
-    /// 获取世界坐标对应的实际高度
+    /// 获取世界坐标对应的实际高度,自带边界 clamped 保护
     /// </summary>
     public static float WSToHeight(this Terrain terrain, Vector3 pos) 
         => terrain.SampleHeight(pos)+terrain.GetPosition().y;

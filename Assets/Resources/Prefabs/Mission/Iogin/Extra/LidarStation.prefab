@@ -44,7 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5664bb3ba25a2e44380aadaf9f3a153f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  missionType: 1
   hide: 0
+  displayMiniMap: 0
   prefabs:
   - {fileID: 4246651415828566976, guid: 5a79ab5407ab0c34ca7fa81fbf58a913, type: 3}
   title: "\u6FC0\u6D3B\u96F7\u8FBE\u7AD9"
@@ -54,34 +56,22 @@ MonoBehaviour:
   AirdropRange: 0
   mapEntitySize: {x: 20, y: 20}
   subTask: []
+  parent: {fileID: 0}
   data:
-    cfg:
-      type: 0
-      color: {r: 0, g: 0, b: 0, a: 0}
-      sprite: {fileID: 0}
-      sizeType: 0
-      count: {x: 0, y: 0}
-      reward: {x: 0, y: 0}
-      extraCount: 0
-      name: 
-      desc: 
-      controller: {fileID: 0}
-      evacuateType: 0
-      RequiredAD: []
+    cfg: {fileID: 0}
     targetCount: 0
     reward: 0
     complete: 0
   root:
     RequiredAD: 
-    nestReward: c80000009600000096000000
     nestCount: 040000000200000001000000
-    nestDemolish: 000000000000000000000000
     campData: {fileID: 0}
     mapImage: {fileID: 0}
     mapIcon: {fileID: 0}
     activeTask: 0
+  color: {r: 0, g: 0, b: 0, a: 0}
   icon: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
   entitySize: 0
+  percentage: 0
   InEntityRange: 0
-  InAirdropRange: 0

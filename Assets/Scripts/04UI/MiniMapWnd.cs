@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Core;
 using Core.Interface;
+using FpsGame.Mission;
 using GameContract;
 using PEMaths;
 using Unity.FPS.Game;
@@ -23,10 +24,18 @@ public class MiniMapWnd : WindowRoot
     [SerializeField]
     Sprite ExtraIcon, MainIcon;
 
+    [Space(16)]
     [SerializeField]
-    GameObject EnemyPointPrefab,PlayerPrefab, FriendPrefab,OtherPrefab,MissionPointPrefab, MissionPointExtraPrefab;
+    GameObject EnemyPointPrefab;
     [SerializeField]
-    RectTransform PlayerRoot,EnemyRoot,OtherRoot, MissionPointRoot;
+    GameObject PlayerPrefab, FriendPrefab,OtherPrefab,MissionPointPrefab,MissionNestPrefab;
+    
+    [Space(16)]
+    [SerializeField]
+    RectTransform PlayerRoot;
+    [SerializeField]
+    RectTransform EnemyRoot, OtherRoot, MissionPointRoot;
+
     [SerializeField]
     RawImage rawImage;//,gridImage;
     //Dictionary<RectTransform,Vector2> EnemyDic;
@@ -42,7 +51,7 @@ public class MiniMapWnd : WindowRoot
     public Doublet<float> mapScale;
     public Doublet<Vector2> center;
 
-    float TargetMapSize => mapSize * mapScale.Target;//当前地图展示的尺寸
+    float TargetMapSize => mapSize * mapScale.Target;//目标地图展示的尺寸
     float NowMapSize=> mapSize* mapScale.Now;//当前地图展示的尺寸
     Vector2 zeroPoint=>center.Now - Vector2.one* NowMapSize/2;//当前的视野起点
 
@@ -118,7 +127,7 @@ public class MiniMapWnd : WindowRoot
     }
 
 
-    private void Start()
+    private void Awake()
     {
         //临时的，以后再想办法创建
         gameObject.SetActive(false);
@@ -129,45 +138,22 @@ public class MiniMapWnd : WindowRoot
 
     private void Update()
     {
-        /*
-        bool meetRefresh = false;
-        if (Mathf.Abs(nowMapScale - targetMapScale) > 0.005f)
-        {
-            nowMapScale = Mathf.Lerp(nowMapScale, targetMapScale, Time.deltaTime * 8);
-            meetRefresh = true;
-        }
-        if (Mathf.Abs(nowMapSize - targetMapSize) > 0.05f)
-        {
-            nowMapSize = Mathf.Lerp(nowMapSize, targetMapSize,Time.deltaTime*8);
-            meetRefresh = true;
-        }
-        if (Vector2.Distance(nowCenter,targetCenter) > 0.05f)
-        {
-            nowCenter = Vector2.Lerp(nowCenter, targetCenter, Time.deltaTime * 8);
-            meetRefresh = true;
-        }
-        if (Vector2.Distance(nowZeroPoint, targetZeroPoint) > 0.05f)
-        {
-            nowZeroPoint = Vector2.Lerp(nowZeroPoint, targetZeroPoint, Time.deltaTime * 8);
-            meetRefresh = true;
-        }
-        if (meetRefresh)
-        {
-            rawImage.uvRect = new((nowZeroPoint - Vector2.one * Constants.MapBorder / 2) / mapSize, Vector2.one * nowMapScale);
-
-            PlayerPoint[player].anchoredPosition = WorldPosToMapPos(player.Pos.ToVector2());
-            
-        }
-        */
-
+       
         if (/*player.IsValid()&&*/(!mapScale.Update()|!center.Update()))//不能使用短路或
         {
             rawImage.uvRect = new((zeroPoint - Vector2.one * Constants.MapBorder / 2) / mapSize, Vector2.one * mapScale.Now);
-            //gridImage.uvRect = new(UIMask mapScale.Now);
 
             foreach (var item in ActorPoint)
             {
                 item.Value.anchoredPosition = WorldPosToMapPos(item.Key.Pos.ToVector2());
+                if(item.Key is I_MissionPoint mission&&mission.IsArea)
+                {
+                    //*2.5是因为要稍微往外拓一点
+                    int size = Mathf.CeilToInt(mission.HalfRange*2.5f / mapScale.Now);
+                    SetSizeDelta(item.Value.GetChild(0), size, size);
+                    var iconSize = Mathf.Max(size / 2.5f, 25);
+                    SetSizeDelta(item.Value.GetChild(1, 1), iconSize, iconSize);
+                }
             }
           
             for (int i=0; i < EnemyCount; ++i){
@@ -245,7 +231,7 @@ public class MiniMapWnd : WindowRoot
             group.Item2 = actor.Pos.ToVector2();
             group.Point.anchoredPosition = WorldPosToMapPos(EnemyPoint[i].Item2);
 
-            group.Point.sizeDelta = Vector2.one * actor.Range.GetHalfWidth().RawFloat * 10;
+            group.Point.sizeDelta = Vector2.one * actor.HalfRange * 10;
             EnemyPoint[i] = group;
             ++i;
         }
@@ -377,49 +363,73 @@ public class MiniMapWnd : WindowRoot
             Debug.LogWarning("警告:任务"+mission.name+"没有实体");
             return;
         }
-        RectTransform go;
-        
-        if (mission.isMain)
+
+        if (!ActorPoint.TryGetValue(entity, out var go))
         {
+            //*2.5是因为要稍微往外拓一点
+            int size = Mathf.CeilToInt(entity.HalfRange * 2.5f / mapScale.Now);
             go = Instantiate(MissionPointPrefab, MissionPointRoot).transform.GetRect();
-            //SetSprite(go, MainIcon);
-            SetSprite(go.GetChild(0), mission.icon);
-            SetColor(go.GetChild(0), MainColor);
-            SetColor(go, MainColor);
+            SetSprite(go.GetChild(1, 1), mission.icon);
+
+            SetActive(go.GetChild(0), mission.entity.IsArea);
+            SetSizeDelta(go.GetChild(0), size, size);
+
+            //等待显示状态变化
+            SetActive(go.GetChild(1), false);
+            go.gameObject.name = "Mission_" + mission.name;
+            switch (mission.missionType)
+            {
+                case MissionType.Main:
+                    SetColor(go.GetChild(1, 1), MainColor);
+                    //SetColor(go.GetChild(1), MainColor);
+
+                    break;
+                case MissionType.Extra:
+                    SetColor(go.GetChild(1, 1), ExtraColor);
+                    SetActive(go.GetChild(1, 0), false);
+                    break;
+                case MissionType.Nest:
+                    var iconSize = Mathf.Max(size / 2.5f,25);
+                    SetSizeDelta(go.GetChild(1, 1), iconSize, iconSize);
+                    SetColor(go.GetChild(1, 1), mission.color);
+                    SetActive(go.GetChild(1, 0), false);
+                    break;
+            }
+            ActorPoint.Add(entity, go);
+            OnGenericMove(entity);
+
         }
         else
         {
-            go = Instantiate(MissionPointExtraPrefab, MissionPointRoot).transform.GetRect();
-            SetSprite(go, mission.icon);
-            SetColor(go,ExtraColor);
+            Debug.LogWarning("警告:任务" + mission.name + "重复注册?");
         }
-        //等待显示状态变化
-        SetActive(go,false);
-        ActorPoint.Add(entity, go);
-        OnGenericMove(entity);
+
     }
     void MissionPointEnd(MissionBase mission)
     {
         if (mission.entity == null) return;
         if (ActorPoint.TryGetValue(mission.entity,out var go)){
-            if (mission.isMain)
+            switch (mission.missionType)
             {
-                SetColor(go.GetChild(0), EndColor);
-                SetColor(go, EndColor);
-            }
-            else
-            {
-                SetColor(go, EndColor);
+                case MissionType.Main:
+                    SetColor(go.GetChild(0), EndColor);
+                    SetColor(go, EndColor);
+                    break;
+                case MissionType.Extra:
+                    SetColor(go, EndColor);
+                    break;
+                case MissionType.Nest:
+                    break;
             }
         }
-        
+
     }
     public void OnMissionShow(MissionBase mission)
     {
         if (ActorPoint.TryGetValue(mission.entity, out var go))
         {
             //显示之后就不再隐藏
-            SetActive(go, true);
+            SetActive(go.GetChild(1), true);
         }
     }
 
@@ -484,5 +494,5 @@ public class MiniMapWnd : WindowRoot
             return true;
         }
     }
-    
+
 }
