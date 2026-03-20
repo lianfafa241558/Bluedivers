@@ -52,11 +52,12 @@ public class ShootMapPreView : MonoBehaviour
 
     private void Shoot()
     {
-        int mapSize = TaskManager.Instance.nowTaskCfg.MapSize;
-        int cameraSize = TaskManager.Instance.nowTaskCfg.CameraSize;
+        
+        int mapSize = TaskManager.Instance.nowTask.MapSize;
+        int cameraSize = TaskManager.Instance.nowTask.CameraSize;
         //Vector3 size = new(cameraSize, 256, cameraSize);
         Vector3 center = new Vector3(mapSize, 0, mapSize)/2;
-
+        
         var CameraObj = new GameObject("TmpCamera");
         Camera cam = CameraObj.AddComponent<Camera>();
         cam.transform.localPosition = new Vector3(center.x, 128, center.z);
@@ -74,12 +75,14 @@ public class ShootMapPreView : MonoBehaviour
 
         contourRenderTexture = new RenderTexture(cameraSize, cameraSize, 0, RenderTextureFormat.Default);
         contourRenderTexture.Create();
+
         cam.targetTexture = contourRenderTexture;
         cam.Render();
         RenderSettings.fog = true;
         cam.enabled = false;
         cam.targetTexture = null;
         Destroy(CameraObj, 01.05f);
+        
 
         AddCountour();
         GetComponent<RawImage>().texture = contourRenderTexture;
@@ -88,7 +91,7 @@ public class ShootMapPreView : MonoBehaviour
     private void AddCountour()
     {
         //int textureSize = contourRenderTexture.width;//贴图大小，例如512
-        int textureSize = TaskManager.Instance.nowTaskCfg.CameraSize;//贴图大小
+        int textureSize = TaskManager.Instance.nowTask.CameraSize;//贴图大小
         // 1. 初始化byte数组
         Texture2D contourTex = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false);
         contourTex.filterMode = FilterMode.Bilinear;
@@ -141,21 +144,29 @@ public class ShootMapPreView : MonoBehaviour
             {
                 int pixelIndex = yOffset + x;
                 float terrainX = x * sizeRatio;//[0,terrainSize]
-
-                filteredBytes[pixelIndex]= filteredBytes[pixelIndex].MultiplyRGB(0.7f);//降低亮度
+                var color = filteredBytes[pixelIndex];
+                //filteredBytes[pixelIndex]= filteredBytes[pixelIndex].MultiplyRGB(0.7f);//降低亮度
+                color = color.MultiplyRGB(0.8f);
+                color *= color;
+                color = color.MultiplyRGB(0.6f);
+                // 亮的多降，暗的少降
+                //float adjust = 1 - (1 - 0.2f) * color.GetValue();
+                //color = color.MultiplyRGB(adjust);
+                //filteredBytes[pixelIndex] = color;
+                filteredBytes[pixelIndex] = Color.Lerp(color,Color.white.MultiplyRGB(color.grayscale), 0.7f);
 
                 //绘制网格也顺便在这边弄了
                 if (x % gridSize10 == 0 || y % gridSize10 == 0)
                 {
-                    float scale = 0.1f;
+                    float scale = 0.03f;
 
                     if (x % gridSize50 == 0 || y % gridSize50 == 0)
                     {
-                        scale = 0.2f;
+                        scale = 0.05f;
                         
                         if (Mathf.Abs((x % gridSize50) - gridSize25) > gridSize25 - 5 && Mathf.Abs((y % gridSize50) - gridSize25) > gridSize25 - 5)
                         {
-                            scale = 0.4f;
+                            scale = 0.15f;
                         }
                     }
                     filteredBytes[pixelIndex] += Color.white * scale;
@@ -185,7 +196,7 @@ public class ShootMapPreView : MonoBehaviour
                 }
                 if (contourCount<8)//周围有和自己不一样的
                 {
-                    filteredBytes[pixelIndex] += Color.white * 0.07f;
+                    filteredBytes[pixelIndex] += Color.white * 0.03f;
                 }
 
    

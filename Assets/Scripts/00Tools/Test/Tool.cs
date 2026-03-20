@@ -344,6 +344,10 @@ namespace Utils
 
         public static float Difference(float a,float b)=> Mathf.Abs(a - b);
 
+        public static float Lerp(this Vector2 vector, float scale) => Mathf.Lerp(vector.x,vector.y,scale);
+
+        public static int Lerp(this Vector2Int vector, float scale) => Mathf.RoundToInt(Mathf.Lerp(vector.x, vector.y, scale));
+
         #endregion
 
         #region 坐标系转换
@@ -697,19 +701,53 @@ namespace Utils
         #endregion
 
         #region 颜色
-        /// <summary>
-        /// 颜色的亮度
-        /// </summary>
-        public static float ColorLight(this Color color) => Mathf.Max(color.r, color.g, color.b);
 
-        public static Color ColorMin(Color a, Color b) => ColorLight(a) < ColorLight(b) ? a : b;
-        public static Color ColorMin(float a, Color b) => a < ColorLight(b) ? a * Color.white : b;
-        public static Color ColorMin(Color a, float b) => ColorLight(a) < b ? a : b * Color.white;
+        /// <summary>颜色的灰度</summary>
+        public static float GetGray(this Color color) => 0.299f * color.r + 0.587f * color.g + 0.114f * color.b;
+
+        /// <summary>颜色的明度只看最亮</summary>
+        public static float GetValue(this Color color) => Mathf.Max(color.r, color.g, color.b);
+
+        /// <summary>颜色的亮度(最亮和最暗的平均值) </summary>
+        public static float GetBrightness(this Color color) => (Mathf.Max(color.r, color.g, color.b) + Mathf.Min(color.r, color.g, color.b)) / 2;
+
+        /// <summary>颜色的饱和度</summary>
+        public static float GetSaturation(this Color color) {
+            var max = Mathf.Max(color.r, color.g, color.b);
+            var min = Mathf.Min(color.r, color.g, color.b);
+            float lightness = (max + min) / 2f;
+
+            return (max - min) / (1 - Mathf.Abs(2 * lightness - 1));
+        }
+
+        /// <summary>颜色的色相 </summary>
+        public static float GetHue(this Color color)
+        {
+            var max = Mathf.Max(color.r, color.g, color.b);
+            var min = Mathf.Min(color.r, color.g, color.b);
+            float hue;
+            float delta = max - min;
+            if (delta == 0) return 0;
+
+            if (max == color.r)
+                hue = 60 * ((color.g - color.b) / delta % 6);
+            else if (max == color.g)
+                hue = 60 * ((color.b - color.r) / delta + 2);
+            else
+                hue = 60 * ((color.r - color.g) / delta + 4);
+            hue /= 360f;
+            return hue;
+        }
 
 
-        public static Color ColorMax(Color a, Color b) => ColorLight(a) > ColorLight(b) ? a : b;
-        public static Color ColorMax(float a, Color b) => a > ColorLight(b) ? a * Color.white : b;
-        public static Color ColorMax(Color a, float b) => ColorLight(a) > b ? a : b * Color.white;
+        public static Color ColorMin(Color a, Color b) => GetValue(a) < GetValue(b) ? a : b;
+        public static Color ColorMin(float a, Color b) => a < GetValue(b) ? a * Color.white : b;
+        public static Color ColorMin(Color a, float b) => GetValue(a) < b ? a : b * Color.white;
+
+
+        public static Color ColorMax(Color a, Color b) => GetValue(a) > GetValue(b) ? a : b;
+        public static Color ColorMax(float a, Color b) => a > GetValue(b) ? a * Color.white : b;
+        public static Color ColorMax(Color a, float b) => GetValue(a) > b ? a : b * Color.white;
         public static Color MultiplyRGB(this Color color, float multiplier)
         {
             return new Color(

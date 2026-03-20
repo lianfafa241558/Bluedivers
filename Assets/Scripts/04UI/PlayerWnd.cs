@@ -99,9 +99,9 @@ public partial class PlayerWnd : WindowRoot
         killRoot.alpha = 0;
         m_LastKillTime = -15;
         m_KillCount = 0;
-        SetSprite(killIcon,taskManager.nowTaskCfg.campData.KillSprite);
-        SetSprite(enemyShow, taskManager.nowTaskCfg.campData.Sprite);
-        SetText(diffshow, taskManager.nowTaskCfg.difficulty.ToString());
+        SetSprite(killIcon,taskManager.nowTask.campData.KillSprite);
+        SetSprite(enemyShow, taskManager.nowTask.campData.Sprite);
+        SetText(diffshow, taskManager.nowTask.difficulty.ToString());
         m_TaskStartTime = Time.time;
 
         if (m_ActiveWeapon)

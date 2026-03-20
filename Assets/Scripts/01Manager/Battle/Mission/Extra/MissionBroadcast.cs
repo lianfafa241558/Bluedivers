@@ -26,9 +26,11 @@ namespace FpsGame.Mission
 
         private void OnKeyScreenComple()
         {
-            Debug.LogError("激活控制台完成" + gameObject + entity.transform, entity.transform);
-            tower.Kill();
-            //CompleteObjective();
+            //Debug.LogError("激活控制台完成" + gameObject + entity.transform, entity.transform);
+            //tower.Kill();
+            entity.transform.Find("BroadcastTower").Find("Audio").gameObject.SetActive(false);
+            CompleteMission();
+
         }
 
 

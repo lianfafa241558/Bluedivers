@@ -20,7 +20,7 @@ public class MiniShopMove : MonoBehaviour
         {
             foreach (Transform item in pointRoot)
             {
-               if( item.GetChild(1).GetComponent<TMPro.TextMeshPro>().text== TaskManager.Instance.nowTaskCfg.mapName)
+               if( item.GetChild(1).GetComponent<TMPro.TextMeshPro>().text== TaskManager.Instance.nowTask.mapName)
                 {
                     transform.position = item.GetChild(1).position+0.3f*Vector3.up;
                 }

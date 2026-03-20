@@ -66,11 +66,11 @@ public class ArmamentWnd : WindowRoot
 
             for (int u = 0; u < 7; ++u)
             {
-                if (u<taskManager.nowTaskCfg.RequiredAD.Count)
+                if (u<taskManager.nowTask.RequiredAD.Count)
                 {
-                    buttons[armamentRoot.GetChild(i, 6, u)] = taskManager.nowTaskCfg.RequiredAD[u];
+                    buttons[armamentRoot.GetChild(i, 6, u)] = taskManager.nowTask.RequiredAD[u];
                     SetButton(armamentRoot.GetChild(i, 6, u), tipRoot, ShowTip);
-                    SetSprite(armamentRoot.GetChild(i, 6, u, 0,0), ResManager.airdropDic[taskManager.nowTaskCfg.RequiredAD[u]].icon);
+                    SetSprite(armamentRoot.GetChild(i, 6, u, 0,0), ResManager.airdropDic[taskManager.nowTask.RequiredAD[u]].icon);
                 }
                 else{
                     SetActive(armamentRoot.GetChild(i, 6, u,0),false);
@@ -116,10 +116,10 @@ public class ArmamentWnd : WindowRoot
 
         WindowState = WindowStateEnum.UI;
         GetComponent<Animator>().Play("Entry");
-        SetColor(enemyIcon, taskManager.nowTaskCfg.campData.Color);
-        SetSprite(enemyIcon, taskManager.nowTaskCfg.campData.Sprite);
-        SetText(mapName, taskManager.nowTaskCfg.mapName);
-        SetText(enemyName, "由"+taskManager.nowTaskCfg.campData.ShowName+"控制");
+        SetColor(enemyIcon, taskManager.nowTask.campData.Color);
+        SetSprite(enemyIcon, taskManager.nowTask.campData.Sprite);
+        SetText(mapName, taskManager.nowTask.mapName);
+        SetText(enemyName, "由"+taskManager.nowTask.campData.ShowName+"控制");
         for (int i = 0; i < armamentRoot.childCount; ++i)
         {
             var item = armamentRoot.GetChild(i);

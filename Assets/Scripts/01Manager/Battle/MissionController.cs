@@ -23,20 +23,24 @@ public class MissionController : MonoBehaviour
     void Start()
     {
         manager = BattleManager.Instance;
-        root = TaskManager.Instance.nowTaskCfg;
+        root = TaskManager.Instance.nowTask;
         waitMissions = new();
         missionCreatPoints = new();
 
-        waitMissions.Add(root.nowTask.main);
-        waitMissions.Add(root.nowTask.evacuate);
-        waitMissions.AddRange(root.nowTask.extra);
-        waitMissions.AddRange(root.nowTask.nest.SelectMany(nestItem => nestItem));
+        waitMissions.Add(root.main);
+        waitMissions.Add(root.evacuate);
+        waitMissions.AddRange(root.extras);
+        waitMissions.AddRange(root.nests.SelectMany(nestItem => nestItem));
 
         InitAllMission();
         //上面都折腾完了再刷新
         TerrainUtils.Refresh(true);
         //Debug.LogError("更新了地形" + gameObject);
-
+        //TODO:为了方便测试
+        foreach (var ad in root.RequiredAD)
+        {
+            BattleManager.Instance.Authorize(ad, true);
+        }
     }
 
    
@@ -81,8 +85,8 @@ public class MissionController : MonoBehaviour
         foreach (var task in waitMissions)
         {
             var go=CreatMission(task);
-            if (task == root.nowTask.main) main = go;
-            else if (task == root.nowTask.evacuate) evacuate = go;
+            if (task == root.main) main = go;
+            else if (task == root.evacuate) evacuate = go;
         }           
         //让撤离任务链接主任务
         evacuate.Link(main);

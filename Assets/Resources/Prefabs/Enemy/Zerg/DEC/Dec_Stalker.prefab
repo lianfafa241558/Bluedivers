@@ -162,6 +162,7 @@ GameObject:
   - component: {fileID: 1417902310742990671}
   - component: {fileID: 1417902310742990668}
   - component: {fileID: 8693517485169913222}
+  - component: {fileID: 2631144585064407608}
   m_Layer: 6
   m_Name: Dec_Stalker
   m_TagString: Untagged
@@ -479,6 +480,28 @@ MonoBehaviour:
   - {fileID: 1417902311429570399}
   invincibleArmor: []
   deathArmor: []
+--- !u!114 &2631144585064407608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1417902310742990674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc39d2846151d704a8a03daee550ab3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Cool: 12
+  Duration: 0
+  MeetDetectedTime: 12
+  Range: 0
+  tag: 0
+  nowCoolTime: 0
+  nowDurationTime: 0
+  DamageSkillTime: 2
+  cilp: {fileID: 8300000, guid: 7019c73f50a36ee49940d1467b715db5, type: 3}
+  ps: {fileID: 2718146370288285652, guid: ffec244900398db429c687eaea520cc7, type: 3}
 --- !u!1 &1417902310839341757
 GameObject:
   m_ObjectHideFlags: 0

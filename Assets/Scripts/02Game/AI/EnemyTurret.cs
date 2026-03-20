@@ -8,7 +8,7 @@ namespace Unity.FPS.AI
     {
         protected EnemyController m_EnemyController;
 
-        protected Vector3 TargetPosition => m_EnemyController.KnownDetectedTarget.Pos;
+        protected Vector3 TargetPosition => m_EnemyController.Target.Pos;
 
         public bool PreJudgment = true;
 
@@ -30,7 +30,7 @@ namespace Unity.FPS.AI
         {
             base.Start();
             AiState = AIState.Idle;
-            m_EnemyController = m_AIController as EnemyController;
+            m_EnemyController = m_Controller as EnemyController;
             //m_EnemyController.OnDie += OnDie;
         }
 
@@ -63,7 +63,7 @@ namespace Unity.FPS.AI
                     });
                     break;
                 case AIState.Attack:
-                    if (m_EnemyController.KnownDetectedTarget==null) break;
+                    if (m_EnemyController.Target==null) break;
                     // shoot
                     if (AimTargrt()) {
                         turrets.ForEach(item => m_EnemyController.TryAtack(item.weapon));

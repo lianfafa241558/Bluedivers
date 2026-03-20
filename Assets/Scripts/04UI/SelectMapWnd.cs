@@ -397,9 +397,9 @@ public class SelectMapWnd : WindowRoot
     {
         //Debug.LogWarning("鼠标进入任务");
         var info = taskManager.TaskCfgs[SelectMapIndex, index];
-        SetText(areaInfoType, info.main.cfg.name);
+        SetText(areaInfoType, info.TaskType);
         SetText(areaInfoName, info.name);
-        SetText(areaInfoMainTarget, info.main.cfg.desc);
+        SetText(areaInfoMainTarget, info.TaskDesc);
         SetText(areaInfoExtraTarget,"可选任务 * " + info.extra.Length);
 
         AccountReward(index,false);
@@ -491,15 +491,15 @@ public class SelectMapWnd : WindowRoot
             {
                 diffScale += extraScale * SelectTaskExtraDiff[i];
             }
-            SetText(areaInfoMainReward, (int)(info.main.reward * (1 + diffScale)));
-            SetText(areaInfoExtraReward, (int)(info.ExtraAllReward * (1 + diffScale)));
+            SetText(areaInfoMainReward, (int)(info.MainReward * (1 + diffScale)));
+            SetText(areaInfoExtraReward, (int)(info.ExtraReward * (1 + diffScale)));
             SetText(areaInfoDiffReward, "风险奖励：+" + Mathf.RoundToInt(diffScale * 100) + "%");
         }
         else
         {
             var info = taskManager.TaskCfgs[SelectMapIndex, index];
-            SetText(areaInfoMainReward, info.main.reward);
-            SetText(areaInfoExtraReward,info.ExtraAllReward);
+            SetText(areaInfoMainReward, info.MainReward);
+            SetText(areaInfoExtraReward,info.ExtraReward);
         }
 
 

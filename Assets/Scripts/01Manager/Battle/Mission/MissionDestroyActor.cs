@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using GameContract;
+using Unity.BaseTool;
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -12,6 +13,11 @@ namespace FpsGame.Mission
     /// </summary>
     public class MissionDestroyActor : MissionBase
     {
+        [Foldout("标旗")]
+        [CustomLabel("显示进度条")]
+        [SerializeField]
+        bool useBar;
+
         /// <summary>
         /// 只有指定名称的物体被摧毁才算
         /// </summary>
@@ -32,6 +38,7 @@ namespace FpsGame.Mission
             {
                 item.OnDie += OnActorDeath;
             }
+            if (useBar) percentage = 0.01f;
         }
 
 
@@ -40,6 +47,7 @@ namespace FpsGame.Mission
             //这里就不做取消绑定了，因为不知道是谁死了，只能计数
             if (++NowProgress < MaxProgress)
             {
+                percentage = NowProgress / (MaxProgress + 0f);
                 UpdateMission(false);
             }
             else

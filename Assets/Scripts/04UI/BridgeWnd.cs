@@ -95,8 +95,8 @@ public class BridgeWnd : WindowRoot
 
     private void DisplayTask()
     {
-        var task = taskManager.nowTaskCfg;
-        var info = task.nowTask;
+        var task = taskManager.nowTask;
+        var info = task.taskCfg;
         var cfg = task.MainCfg;
         float diffScale = taskManager.FinalDiffScale();
         
@@ -109,8 +109,8 @@ public class BridgeWnd : WindowRoot
 
         SetText(taskMainTarget, cfg.desc);
         SetText(taskExtraTarget,"可选目标 * " +info.extra.Length);
-        SetText(taskMainReward, (int)(info.main.reward* diffScale));
-        SetText(taskExtraReward, (int)(info.ExtraAllReward* diffScale));
+        SetText(taskMainReward, (int)(info.MainReward* diffScale));
+        SetText(taskExtraReward, (int)(info.ExtraReward* diffScale));
         SetColor(taskIcon, info.Color);
         SetColor(taskIcon.parent, info.Color);
         SetSprite(taskIcon, info.Sprite);

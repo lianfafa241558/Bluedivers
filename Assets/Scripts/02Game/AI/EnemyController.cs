@@ -27,6 +27,15 @@ namespace Unity.FPS.AI
 
         public bool Boss => m_Actor.HasFlag(ActorFlag.Boss);
 
+        public override Vector3 Pos
+        {
+            get => base.Pos;
+            set
+            {
+                if (FpsHelper.HaveNavMeshAgent(NavMeshAgent)) NavMeshAgent.Warp(value);
+                else base.Pos = value;
+            }
+        }
 
         [CustomLabel("敌人认为已到达当前路径目标点的距离")]
         public float PathReachingRadius = 2f;
@@ -36,13 +45,13 @@ namespace Unity.FPS.AI
         /// <summary>巡逻路径</summary>
         public PatrolPath PatrolPath { get; set; }
         /// <summary>当前的目标(的AimPoint)</summary>
-        public TargetData KnownDetectedTarget => DetectionModule.Target;
+        public TargetData Target => DetectionModule.Target;
         /// <summary>目标是否进入攻击范围</summary>
         public bool IsTargetInAttackRange => DetectionModule.IsTargetInAttackRange;
         /// <summary>目标是否可见</summary>
         public bool IsSeeingTarget => DetectionModule.IsSeeingTarget;
 
-        public float Speed=> NavMeshAgent? NavMeshAgent.speed:0;
+        public WeaponAttribute Speed;
 
         public Vector3 Velocity => NavMeshAgent ? NavMeshAgent.velocity : Vector3.zero;
         
@@ -100,7 +109,8 @@ namespace Unity.FPS.AI
                 EyePoint = AimPoint;
             }
 
-            
+            Speed = UnitAttributeFactory.Create(UnitAttrType.Speed, FpsHelper.HaveNavMeshAgent(NavMeshAgent) ? (PEInt)NavMeshAgent.speed : 0);
+            if(Speed.PrimeValue > 0)Speed.OnFinalValueChange += (value) => { NavMeshAgent.speed = value.RawFloat; };
         }
 
 
@@ -187,19 +197,27 @@ namespace Unity.FPS.AI
             }
         }
 
-        public bool HaveNavMeshAgent() => NavMeshAgent && NavMeshAgent.isActiveAndEnabled;
-
         /// <summary>
         /// 设置目标点
         /// </summary>
         /// <param name="destination"></param>
         public void SetNavDestination(Vector3 destination)
         {
+            //if (NavMesh.SamplePosition(destination, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+            //{
+            //    m_lastDestination = hit.position;
+            //    if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
+            //    {
+            //        if (BirthComplete) NavMeshAgent.SetDestination(hit.position);
+            //    }
+            //}
+
             m_lastDestination = destination;
-            if (HaveNavMeshAgent())
+            if (FpsHelper.HaveNavMeshAgent(NavMeshAgent)&& NavMeshAgent.isOnNavMesh)
             {
-                if(BirthComplete)NavMeshAgent.SetDestination(destination);
+                if (BirthComplete) NavMeshAgent.SetDestination(destination);
             }
+            
         }
         /// <summary>
         /// 更新巡逻路径
@@ -281,7 +299,7 @@ namespace Unity.FPS.AI
 
         public bool TryAtack(WeaponEnemyController weapon) {
             bool didFire = false;
-            float dis = Vector3.Distance(EyePoint.position,KnownDetectedTarget.Pos);
+            float dis = Vector3.Distance(EyePoint.position,Target.Pos);
             if (dis <= weapon.CurrentWeaponExtremeRange) {
                 didFire |= weapon.HandleShootInputs(true, true, false);
             }

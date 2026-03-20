@@ -186,7 +186,14 @@ namespace Unity.FPS.Game
 
         void Init()
         {
-            if(!HasFlag(ActorFlag.AllowFloating)) transform.position = TerrainUtils.WSToTS(transform.position);
+            if (!HasFlag(ActorFlag.AllowFloating))
+            {
+                if (UnityEngine.AI.NavMesh.SamplePosition(transform.position, out var hit, 100, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    transform.position = hit.position;
+                }
+                //transform.position = TerrainUtils.WSToTS(transform.position);
+            }
             Range.SetXY((PEVector2)Pos);
             lastAngle = transform.eulerAngles;
             GlobalEventManager.UnitPosChange(this);
@@ -213,6 +220,7 @@ namespace Unity.FPS.Game
 
         void OnDie(GameObject source)
         {
+            //Debug.LogError("单位死亡"+gameObject,gameObject);
             GlobalEventManager.UnitDeath(this);
             ActorState = ActorState.Dead;
             if(source.IsValid()) GlobalEventManager.UnitKill(source.GetComponent<Actor>(),this);

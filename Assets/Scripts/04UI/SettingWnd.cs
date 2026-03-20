@@ -265,23 +265,23 @@ public class SettingWnd : WindowRoot
 
     private void DisplayTask()
     {
-        var cfg = taskManager.nowTaskCfg;
-        var info = cfg.nowTask;
+        var cfg = taskManager.nowTask;
+        var info = cfg.taskCfg;
         float diffScale = taskManager.FinalDiffScale();
 
         SetActive(stateActiveRoot, true);
         SetActive(stateHideRoot, false);
         SetText(mapName, cfg.mapName);
-        SetSprite(mapIcon, cfg.mapIcon);
-        SetSprite(mapImage, cfg.mapImage);
+        SetSprite(mapIcon, cfg.mapCfg.Icon);
+        SetSprite(mapImage, cfg.mapCfg.Map);
 
         SetText(taskType, cfg.MainCfg.name);
         SetText(taskName, info.name);
 
         SetText(taskMainDesc, cfg.MainCfg.desc);
         SetText(taskExtraDesc, "额外目标");
-        SetText(taskMainReward, (int)(info.main.reward * diffScale));
-        SetText(taskExtraReward, (int)(info.ExtraAllReward * diffScale));
+        SetText(taskMainReward, (int)(info.MainReward * diffScale));
+        SetText(taskExtraReward, (int)(info.ExtraReward * diffScale));
         SetColor(taskTypeIcon, info.Color);
         SetSprite(taskTypeIcon, info.Sprite);
 
@@ -297,7 +297,7 @@ public class SettingWnd : WindowRoot
     public void SetStateRoot()
     {
         var player = ActorsManager.Player;
-        if (taskManager.nowTaskCfg.activeTask)
+        if (taskManager.nowTask.activeTask)
         {
             DisplayTask();
         }

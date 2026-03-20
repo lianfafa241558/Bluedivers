@@ -27,15 +27,21 @@ namespace FpsGame.Mission
         public MissionType missionType;
 
 
-
+        [Foldout("标旗")]
         [CustomLabel("是否隐藏")]
         public bool hide;
-
+        [Foldout("标旗")]
         [CustomLabel("是否暴露在小地图上")]
         public bool displayMiniMap;
-
+        [Foldout("标旗")]
         [CustomLabel("显示一个区域")]
         public bool isArea;
+        [Foldout("标旗")]
+        [CustomLabel("跟随地图缩放")]
+        public bool followMapScale;
+        [Foldout("标旗")]
+        [CustomLabel("完成时隐藏图标")]
+        public bool compleHide;
 
         //这玩意应该放着这里吗？我得想想
         [SerializeField]
@@ -182,7 +188,7 @@ namespace FpsGame.Mission
         protected virtual void EndMission()
         {
             GlobalEventManager.MissionEnd(this);
-            entity.Uninit();
+            if(entity.IsValid()) entity.Uninit();
         }
 
         protected void UpdateTip(string tip)

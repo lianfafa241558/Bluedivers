@@ -73,7 +73,7 @@ public class MiniMapWnd : WindowRoot
         {
             AddEnemyPoint();
         }
-        mapSize = TaskManager.Instance.nowTaskCfg.CameraSize;
+        mapSize = TaskManager.Instance.nowTask.CameraSize;
         UISize = (int)rawImage.rectTransform.rect.width;
 
         mapScale = new(1, 8, 0.01f, Mathf.Lerp, Tool.Difference);
@@ -85,7 +85,7 @@ public class MiniMapWnd : WindowRoot
         GlobalEventManager.OnPlayerCreate += PlayerCreat;
         GlobalEventManager.OnFriendCreate += FriendCreat;
         GlobalEventManager.OnSpecUnitCreate += OtherCreat;
-        GlobalEventManager.OnUnitDeath += OtherDeath;
+        GlobalEventManager.OnSpecUnitDead += OtherDeath;
         GlobalEventManager.OnMissionCreated += MissionPointCreat;
         GlobalEventManager.OnMissionShow += OnMissionShow;
         GlobalEventManager.OnMissionEnd += MissionPointEnd;
@@ -98,7 +98,7 @@ public class MiniMapWnd : WindowRoot
         GlobalEventManager.OnPlayerCreate -= PlayerCreat;
         GlobalEventManager.OnFriendCreate -= FriendCreat;
         GlobalEventManager.OnSpecUnitCreate -= OtherCreat;
-        GlobalEventManager.OnUnitDeath -= OtherDeath;
+        GlobalEventManager.OnSpecUnitDead -= OtherDeath;
         GlobalEventManager.OnMissionCreated -= MissionPointCreat;
         GlobalEventManager.OnMissionShow -= OnMissionShow;
         GlobalEventManager.OnMissionEnd -= MissionPointEnd;
@@ -146,13 +146,16 @@ public class MiniMapWnd : WindowRoot
             foreach (var item in ActorPoint)
             {
                 item.Value.anchoredPosition = WorldPosToMapPos(item.Key.Pos.ToVector2());
-                if(item.Key is I_MissionPoint mission&&mission.IsArea)
+                if(item.Key is I_MissionPoint mission&&mission.AreaRange>0)
                 {
                     //*2.5是因为要稍微往外拓一点
-                    int size = Mathf.CeilToInt(mission.HalfRange*2.5f / mapScale.Now);
+                    int size = Mathf.CeilToInt(mission.AreaRange * 2.5f / mapScale.Now);
                     SetSizeDelta(item.Value.GetChild(0), size, size);
-                    var iconSize = Mathf.Max(size / 2.5f, 25);
-                    SetSizeDelta(item.Value.GetChild(1, 1), iconSize, iconSize);
+                    if (mission.FollowAreaScale)
+                    {
+                        var iconSize = Mathf.Max(mission.HalfRange / mapScale.Now, 25);
+                        SetSizeDelta(item.Value.GetChild(1, 1), iconSize, iconSize);
+                    }
                 }
             }
           
@@ -349,7 +352,15 @@ public class MiniMapWnd : WindowRoot
 
     void OtherDeath(I_Actor actor)
     {
-        if(!actor.HasFlag(ActorFlag.MiniMapIgnore)&&actor.Type != UnitTypeEnum.Player && actor.Type != UnitTypeEnum.Friend) ActorPoint.Remove(actor);
+        if (!actor.HasFlag(ActorFlag.MiniMapIgnore))
+        {
+            if (ActorPoint.TryGetValue(actor,out var rect))
+            {
+                //姑且如此，以后再搞池
+                Tool.Destroy(rect.gameObject);
+                ActorPoint.Remove(actor);
+            }
+        }
     }
     #endregion
 
@@ -366,13 +377,27 @@ public class MiniMapWnd : WindowRoot
 
         if (!ActorPoint.TryGetValue(entity, out var go))
         {
-            //*2.5是因为要稍微往外拓一点
-            int size = Mathf.CeilToInt(entity.HalfRange * 2.5f / mapScale.Now);
+           
             go = Instantiate(MissionPointPrefab, MissionPointRoot).transform.GetRect();
-            SetSprite(go.GetChild(1, 1), mission.icon);
 
-            SetActive(go.GetChild(0), mission.entity.IsArea);
+            SetSprite(go.GetChild(1, 1), mission.icon);
+            SetActive(go.GetChild(0), entity.AreaRange > 0);
+            
+            //*2.5是因为要稍微往外拓一点
+            int size = Mathf.CeilToInt(entity.AreaRange * 2.5f / mapScale.Now);
+            //Debug.LogError("任务" + mission.title + "尺寸"+size+" 区域范围"+ entity.AreaRange);
             SetSizeDelta(go.GetChild(0), size, size);
+            if (entity.FollowAreaScale)
+            {
+                var iconSize = Mathf.Max(size / 2.5f, 25);
+                SetSizeDelta(go.GetChild(1, 1), iconSize, iconSize);
+            }
+            else
+            {
+                var iconSize = go.GetChild(1, 1).GetRect().sizeDelta.x*entity.IconSizeScale;
+                SetSizeDelta(go.GetChild(1, 1), iconSize, iconSize);
+            }
+
 
             //等待显示状态变化
             SetActive(go.GetChild(1), false);
@@ -408,18 +433,27 @@ public class MiniMapWnd : WindowRoot
     void MissionPointEnd(MissionBase mission)
     {
         if (mission.entity == null) return;
-        if (ActorPoint.TryGetValue(mission.entity,out var go)){
-            switch (mission.missionType)
+        I_MissionPoint entity = mission.entity;
+        //Debug.LogError("任务完成" + mission, mission);
+        if (ActorPoint.TryGetValue(entity,out var go)){
+            SetColor(go.GetChild(1,0), EndColor);
+            SetColor(go.GetChild(1,1), EndColor);
+            if (mission.compleHide)
             {
-                case MissionType.Main:
-                    SetColor(go.GetChild(0), EndColor);
-                    SetColor(go, EndColor);
-                    break;
-                case MissionType.Extra:
-                    SetColor(go, EndColor);
-                    break;
-                case MissionType.Nest:
-                    break;
+                SetActive(go.GetChild(1), false);
+            }
+            if (entity.AreaRange > 0)
+            {
+                var size=GetSizeDelta(go.GetChild(0));
+                GameRoot.CreateTimer((count)=> {
+                    entity.AreaRange = Mathf.Lerp(entity.HalfRange, 0, count / 40f);
+                    if (mapScale.Comple)
+                    {
+                        //*2.5是因为要稍微往外拓一点
+                        int size = Mathf.CeilToInt(entity.AreaRange * 2.5f / mapScale.Now);
+                        SetSizeDelta(go.GetChild(0), size, size);
+                    }
+                },0.05f,40);
             }
         }
 
@@ -482,7 +516,7 @@ public class MiniMapWnd : WindowRoot
         /// <returns>是否已经回正</returns>
         public bool Update()
         {
-            if (CompareMethod.Invoke(Target,Now)> _threshold)
+            if (!Comple)
             {
                 Now = UpdateMethod.Invoke(Now, Target, _updateSpeed * Time.deltaTime);
                 if (CompareMethod.Invoke(Target,Now) < 0.01f)
@@ -493,6 +527,7 @@ public class MiniMapWnd : WindowRoot
             }
             return true;
         }
+        public bool Comple => CompareMethod.Invoke(Target, Now) <= _threshold;
     }
 
 }

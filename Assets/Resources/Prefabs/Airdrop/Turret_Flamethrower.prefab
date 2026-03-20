@@ -128,6 +128,7 @@ MonoBehaviour:
   armorBreakEffect: []
   BleedValue: 0
   isMain: 0
+  showArmor: 0
 --- !u!65 &1741344437931071918
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -202,6 +203,7 @@ MonoBehaviour:
   armorBreakEffect: []
   BleedValue: 0
   isMain: 0
+  showArmor: 0
 --- !u!65 &1741344437950759654
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -906,11 +908,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3de939d976a5bb0419ccd8dbd0b6836b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  legs: []
-  InvincibleArmor: []
-  PathReachingRadius: 2
   DeathDuration: 3
   BirthDuration: 4
+  birthTime: 0
+  PathReachingRadius: 2
 --- !u!114 &3709943754688266615
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -999,6 +1000,7 @@ MonoBehaviour:
     DefaultValue:
       cilp: {fileID: 0}
       ps: {fileID: 0}
+      trans: {fileID: 0}
       go: []
     arr:
     - Key: 3
@@ -1006,12 +1008,14 @@ MonoBehaviour:
         cilp: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
+        trans: {fileID: 0}
         go: []
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: 25991f9234f6aed4286e237922012984, type: 3}
         ps: {fileID: 8950624839484268202, guid: 45ce85b82008be84287f2c7e5bf07647,
           type: 3}
+        trans: {fileID: 0}
         go: []
     meetReset: 0
   rendererSet:
@@ -1114,13 +1118,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EyePoint: {fileID: 144043054288983364}
   DetectionRange: 24
+  HearingRange: 10
   AttackRange: 15
   AlertRange: 0
   KnownTargetTimeout: 2
   IsSeeingTarget: 0
+  TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
+  showCollider: {fileID: 0}
   RespondMark: 1
 --- !u!1 &8720925257971182960
 GameObject:
@@ -1356,6 +1363,7 @@ MonoBehaviour:
   armorBreakEffect: []
   BleedValue: 0
   isMain: 0
+  showArmor: 0
 --- !u!4 &1329237961137662521 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8477998363858258344, guid: 5881cfa01e393654996e7381857a6ff3,
@@ -1426,6 +1434,7 @@ MonoBehaviour:
   armorBreakEffect: []
   BleedValue: 0
   isMain: 0
+  showArmor: 0
 --- !u!4 &2279040177668946826 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5881cfa01e393654996e7381857a6ff3,
@@ -1483,6 +1492,7 @@ MonoBehaviour:
   armorBreakEffect: []
   BleedValue: 0
   isMain: 0
+  showArmor: 0
 --- !u!1 &4473756778140490405 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2756068402857428676, guid: 5881cfa01e393654996e7381857a6ff3,
@@ -1530,7 +1540,7 @@ MonoBehaviour:
   isWeakness: 0
   showArmorLists:
   - Key: 0
-    Value: 0.5
+    Value: 0.2
   - Key: 1
     Value: 0.5
   armorValue: 0
@@ -1538,6 +1548,7 @@ MonoBehaviour:
   armorBreakEffect: []
   BleedValue: 0
   isMain: 0
+  showArmor: 0
 --- !u!4 &5240970916890292219 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3417716661118585958, guid: 5881cfa01e393654996e7381857a6ff3,

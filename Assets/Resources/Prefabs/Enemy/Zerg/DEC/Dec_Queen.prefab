@@ -565,6 +565,7 @@ GameObject:
   - component: {fileID: 310874619415933553}
   - component: {fileID: 310874619415933558}
   - component: {fileID: -4395217143133484069}
+  - component: {fileID: 5319274923366140422}
   m_Layer: 6
   m_Name: Dec_Queen
   m_TagString: Untagged
@@ -899,6 +900,31 @@ MonoBehaviour:
   - {fileID: 310874618907118219}
   invincibleArmor: []
   deathArmor: []
+--- !u!114 &5319274923366140422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 310874619415933559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37ddf9beb2a675f4d918f167cac2c0c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Cool: 30
+  Duration: 0
+  MeetDetectedTime: 2
+  Range: 20
+  tag: 0
+  cilp: {fileID: 8300000, guid: 9fbfe6f7e6a642e49abfad47bd217cfa, type: 3}
+  summoned:
+  - Key: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17, type: 3}
+    Value: {x: 0, y: 0, z: 3}
+  - Key: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17, type: 3}
+    Value: {x: -3, y: 0, z: 1}
+  - Key: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17, type: 3}
+    Value: {x: 3, y: 0, z: 1}
 --- !u!1 &310874619644911665
 GameObject:
   m_ObjectHideFlags: 0

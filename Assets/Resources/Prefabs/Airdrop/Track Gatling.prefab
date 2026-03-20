@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 8184225224088515705}
   WeaponMuzzle: {fileID: 8184225224088515704}
+  WeaponMuzzle2: {fileID: 0}
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -54,9 +55,7 @@ MonoBehaviour:
     - Key: 2
       Value: 0.15
     - Key: 8
-      Value: 7
-  DelayBetweenShots: 0.15
-  MaxAmmo: 60
+      Value: 16
   ProjectilePrefab: {fileID: 8924682559891268397, guid: 0ce3428b8138c4545a0343d432ca51bd,
     type: 3}
   BulletFlag: 0
@@ -74,7 +73,7 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     DamageExplosion: 100
-    ExplosionRange: 2
+    ExplosionRange: 4
     DamageRatioOverDis:
       serializedVersion: 2
       m_Curve:
@@ -113,6 +112,8 @@ MonoBehaviour:
       Value: 1
     - Key: 2
       Value: 1
+    - Key: 12
+      Value: 1
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: 3d31a15fb2276d8458033ffc2aca4f6c,
@@ -122,6 +123,7 @@ MonoBehaviour:
     Hole: {fileID: 0}
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
+    ChargeSpeedScale: 1
     ChargeGravityScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
@@ -132,11 +134,14 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
-  nowAmmo: 0
-  remainBullets: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
   UseManyMuzzle: 0
   WeaponManyMuzzles: []
-  randomRange: 7
 --- !u!1 &8184225224088515705
 GameObject:
   m_ObjectHideFlags: 0

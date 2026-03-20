@@ -10,7 +10,7 @@ namespace Unity.FPS.AI
     public abstract class AIInputBaseController : MonoBehaviour
     {
 
-        protected I_AIController m_AIController;
+        protected I_AIController m_Controller;
         /// <summary>发现目标的时间</summary>
         protected float m_TimeStartedDetection { get; set; }//;
         /// <summary>丢失目标的时间</summary>
@@ -21,23 +21,23 @@ namespace Unity.FPS.AI
         {
 
             m_TimeStartedDetection = Mathf.NegativeInfinity;
-            m_AIController = GetComponent<I_AIController>();
+            m_Controller = GetComponent<I_AIController>();
             //攻击本身就是从这里控制的，再从控制器传回来太荒谬了
             //m_AIController.OnAttack += OnAttack;
-            m_AIController.OnDetectedTarget += OnDetectedTarget;
-            m_AIController.OnLostTarget += OnLostTarget;
-            m_AIController.OnDamaged += OnDamaged;
-            m_AIController.OnDie += OnDie;
+            m_Controller.OnDetectedTarget += OnDetectedTarget;
+            m_Controller.OnLostTarget += OnLostTarget;
+            m_Controller.OnDamaged += OnDamaged;
+            m_Controller.OnDie += OnDie;
 
         }
 
         private void OnDestroy()
         {
-            if (m_AIController == null) return;
-            m_AIController.OnDetectedTarget -= OnDetectedTarget;
-            m_AIController.OnLostTarget -= OnLostTarget;
-            m_AIController.OnDamaged -= OnDamaged;
-            m_AIController.OnDie -= OnDie;
+            if (m_Controller == null) return;
+            m_Controller.OnDetectedTarget -= OnDetectedTarget;
+            m_Controller.OnLostTarget -= OnLostTarget;
+            m_Controller.OnDamaged -= OnDamaged;
+            m_Controller.OnDie -= OnDie;
         }
 
         protected virtual void Update()

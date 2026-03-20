@@ -60,7 +60,7 @@ public class BattleManager : Singleton<BattleManager>
     public static void Creat()
     {
         var manager = new GameObject("BattleManager").AddComponent<BattleManager>();
-        manager.BattleRandom = new(TaskManager.Instance.nowTaskCfg.nowTask.seed);
+        manager.BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
         manager.InitTerrain();
         manager.MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
         manager.MissionCont.transform.SetParent(manager.transform);
@@ -76,7 +76,7 @@ public class BattleManager : Singleton<BattleManager>
 
     void InitTerrain()
     {
-        var cfg=TaskManager.Instance.nowTaskCfg;
+        var cfg=TaskManager.Instance.nowTask;
         var terrainData = Terrain.activeTerrain.terrainData;
 
         Debug.LogError("地图尺寸"+ cfg.MainCfg.sizeType+" 地图大小"+ cfg.MapSize);
@@ -154,7 +154,7 @@ public class BattleManager : Singleton<BattleManager>
 
     public void EndGame(int delay,GameResult result= GameResult.Unknow)
     {
-        if (result != GameResult.Unknow) TaskManager.Instance.nowTaskCfg.result = result;
+        if (result != GameResult.Unknow) TaskManager.Instance.nowTask.result = result;
         //GlobalEventManager.Evacuate();
         GameRoot.CreateTimer(() => {
             ResManager.Instance.AsyncLoadScene("GameEnd", () => {
@@ -167,7 +167,7 @@ public class BattleManager : Singleton<BattleManager>
 
     private void OOPartCollect(GameObject user, OOPartEnum type, int count)
     {
-        var dic = TaskManager.Instance.nowTaskCfg.collectProperty;
+        var dic = TaskManager.Instance.nowTask.collectProperty;
         if (!dic.TryAdd(type, count)) dic[type]+= count;
         if (user&&user.TryGetComponent(out PlayerController player)) AddBattleDataItem(player.PlayerIndex, "采集欧帕兹数量");
     }

@@ -24,24 +24,37 @@ namespace Unity.FPS.AI
         public List<RendererSet> rendererSet;
 
 
-        protected I_AIController m_EnemyController;
+        protected I_AIController m_Controller;
         private List<KVP<Renderer,Material[]>> originalMaterials;
+
+        protected float m_lastDamageTime;
 
         protected virtual void Start() 
         {
 
-            m_EnemyController = GetComponent<I_AIController>();
+            m_Controller = GetComponent<I_AIController>();
 
-            m_EnemyController.OnAttack += OnAttack;
-            m_EnemyController.OnDetectedTarget += OnDetectedTarget;
-            m_EnemyController.OnLostTarget += OnLostTarget;
-            m_EnemyController.OnDamaged += OnDamaged;
-            m_EnemyController.OnDie += OnDie;
+            m_Controller.OnAttack += OnAttack;
+            m_Controller.OnDetectedTarget += OnDetectedTarget;
+            m_Controller.OnLostTarget += OnLostTarget;
+            m_Controller.OnDamaged += OnDamaged;
+            m_Controller.OnDie += OnDie;
 
             InitRS();
-            TriggerFX(OccasionTypeEnum.Birth, m_EnemyController.Pos, Quaternion.identity, transform);
+            TriggerFX(OccasionTypeEnum.Birth, m_Controller.Pos, Quaternion.identity, transform);
             
         }
+        private void OnDestroy()
+        {
+
+            m_Controller.OnAttack -= OnAttack;
+            m_Controller.OnDetectedTarget -= OnDetectedTarget;
+            m_Controller.OnLostTarget -= OnLostTarget;
+            m_Controller.OnDamaged -= OnDamaged;
+            m_Controller.OnDie -= OnDie;
+
+        }
+
 
         protected virtual void Update() {
             UpdateRS();
@@ -52,6 +65,7 @@ namespace Unity.FPS.AI
         /// 受击时
         /// </summary>
         protected virtual void OnDamaged(Collider collider) {
+            
             TriggerRS(OccasionTypeEnum.Hit);
             Vector3 pos;
             Quaternion normal;
@@ -61,11 +75,16 @@ namespace Unity.FPS.AI
             }
             else
             {
-                pos = m_EnemyController.CenterPos;
+                pos = m_Controller.CenterPos;
                 normal = transform.rotation;
             }
-            
-            TriggerFX(OccasionTypeEnum.Hit, pos, normal, collider?collider.transform:default);
+            //每0.05秒最多触发一次音效
+            bool ignoreAudio = Time.time < m_lastDamageTime + Constants.LoginFrame.RawFloat;
+            if (!ignoreAudio)
+            {
+                m_lastDamageTime = Time.time;
+            }
+            TriggerFX(OccasionTypeEnum.Hit, pos, normal, collider?collider.transform:default, ignoreAudio);
             SetTrigger(Constants.k_AnimOnDamagedParameter,true);
         }
         /// <summary>
@@ -81,7 +100,7 @@ namespace Unity.FPS.AI
         /// </summary>
         protected virtual void OnDetectedTarget() {
             TriggerRS(OccasionTypeEnum.DetectedTarget);
-            TriggerFX(OccasionTypeEnum.DetectedTarget, m_EnemyController.HpPos, Quaternion.identity, transform);
+            TriggerFX(OccasionTypeEnum.DetectedTarget, m_Controller.HpPos, Quaternion.identity, transform);
             SetBool(Constants.k_AnimIsActiveParameter, true);
         }
 
@@ -90,7 +109,7 @@ namespace Unity.FPS.AI
         /// </summary>
         protected virtual void OnLostTarget() {
             TriggerRS(OccasionTypeEnum.LostTarget);
-            TriggerFX(OccasionTypeEnum.LostTarget, m_EnemyController.Pos, Quaternion.identity, transform);
+            TriggerFX(OccasionTypeEnum.LostTarget, m_Controller.Pos, Quaternion.identity, transform);
             SetBool(Constants.k_AnimIsActiveParameter, false);
         }
 
@@ -99,7 +118,7 @@ namespace Unity.FPS.AI
         /// </summary>
         void OnDie() {
             TriggerRS(OccasionTypeEnum.Die);
-            TriggerFX(OccasionTypeEnum.Die, m_EnemyController.Pos, Quaternion.identity,null);
+            TriggerFX(OccasionTypeEnum.Die, m_Controller.Pos, Quaternion.identity,null);
             SetBool(Constants.k_AnimIsActiveParameter, false);
             SetTrigger(Constants.k_AnimOnDeathParameter, true);
         }
@@ -145,7 +164,7 @@ namespace Unity.FPS.AI
             }
             if (BirthMaterial)
             {
-                Invoke("RestoreMat", m_EnemyController.BirthDuration);
+                Invoke("RestoreMat", m_Controller.BirthDuration);
             }
         }
 
@@ -169,9 +188,9 @@ namespace Unity.FPS.AI
         }
 
 
-        protected void TriggerFX(OccasionTypeEnum type,Vector3 pos,Quaternion roat,Transform parent) {
+        protected void TriggerFX(OccasionTypeEnum type,Vector3 pos,Quaternion roat,Transform parent,bool ignoreAudio =false) {
             if(fxDic.TryGet(type, out var value)){
-                if(value.cilp.IsValid()) AudioManager.PlaySound(new(value.cilp, pos, group: AudioGroups.Enemy));
+                if(!ignoreAudio  && value.cilp.IsValid()) AudioManager.PlaySound(new(value.cilp, pos, group: AudioGroups.Enemy));
                 if (value.ps.IsValid())
                 {
                     VFXManager.Creat(value.ps.gameObject, pos, roat, parent);

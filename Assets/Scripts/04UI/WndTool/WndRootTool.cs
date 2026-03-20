@@ -122,7 +122,10 @@ namespace WndTools
 
         public static void SetSizeDelta(Transform trans, int startX, int startY, int targetX, int targetY, int timeMs)
         {
-            viewTimer.CreateTimer((count) => SetSizeDelta(trans, (int)Mathf.Lerp(startX, targetX, count * 20f / timeMs), (int)Mathf.Lerp(startY, targetY, count * 20f / timeMs)), 0.02f, timeMs / 20, () => SetSizeDelta(trans, targetX, targetY));
+            viewTimer.CreateTimer((count) => SetSizeDelta(trans, (int)Mathf.Lerp(startX, targetX, count * 20f / timeMs), (int)Mathf.Lerp(startY, targetY, count * 20f / timeMs)), 0.02f, timeMs / 20, 
+                () => {
+                    SetSizeDelta(trans, targetX, targetY);
+                });
         }
 
         //private static System.Text.StringBuilder sb = new(8);

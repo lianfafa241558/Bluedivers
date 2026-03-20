@@ -6,6 +6,10 @@ using UnityEngine;
 
 public class InterestPoint : BaseObject, I_MissionPoint
 {
-    public bool IsArea => false;
 
+    bool I_MissionPoint.FollowAreaScale => false;
+
+    float I_MissionPoint.IconSizeScale => 0.5f;
+
+    float I_MissionPoint.AreaRange { get => 0; set{ } }
 }

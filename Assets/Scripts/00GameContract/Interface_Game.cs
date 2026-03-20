@@ -31,9 +31,11 @@ namespace GameContract
 
     public interface I_MissionPoint : I_Entity
     {
-        public bool IsArea { get; }
-        //public bool IsMain { get;}
+        public bool FollowAreaScale { get; }//跟随区域大小变化
 
+        public float IconSizeScale { get; }
+        //public bool IsMain { get;}
+        public float AreaRange { get; set; }
 
     }
 
@@ -72,7 +74,7 @@ namespace GameContract
         // 转换为布尔值的转换函数
         //public static implicit operator bool(I_Actor obj);
     }
-
+    [System.Serializable]
     public class TargetData
     {
 

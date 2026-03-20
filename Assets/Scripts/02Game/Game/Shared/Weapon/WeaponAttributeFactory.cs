@@ -264,13 +264,6 @@ namespace Unity.FPS.Game
         Special = 999,
     }
 
-    public enum AttrValueEnum{
-        //Prime,
-        Final,
-        //Curr,
-        //Scale,
-    }
-
     public class WeaponAttribute
     {
         public event Action<PEInt> OnFinalValueChange;

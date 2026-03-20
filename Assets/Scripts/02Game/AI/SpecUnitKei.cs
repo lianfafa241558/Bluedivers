@@ -30,7 +30,7 @@ namespace Unity.FPS.AI
         MpbController mpb;
 
 
-        SpecUnitController m_Controller;
+        new SpecUnitController m_Controller;
         Vector3 m_Target;
         GameObject m_callInstance;
         AudioSource m_audioSource;
@@ -47,7 +47,7 @@ namespace Unity.FPS.AI
             GlobalEventManager.OnCallKai += OnCall;
             m_audioSource = AudioManager.CreatSource(gameObject, AudioGroups.General);
             m_audioSource.loop = false;
-            m_Controller = m_AIController as SpecUnitController;
+            m_Controller = base.m_Controller as SpecUnitController;
             AiState = AIState.Wait;
             mpb = new(renderer);
             mpb.Set("_Expression", 1).Apply();
@@ -162,7 +162,7 @@ namespace Unity.FPS.AI
                 case AIState.Attack:
 
                     float dis = Vector3.Distance(TargetPosition,
-                            m_Controller.AimPoint.position);
+                            m_Controller.CenterPos);
                     float stopRange = (0.95f * m_Controller.DetectionModule.AttackRange);//停止距离
                     //如果目标到自己的距离大于停止系数*攻击范围，那就追，到范围就停
                     if (dis >= stopRange + 1 / m_Controller.DetectionModule.AttackRange)//接近

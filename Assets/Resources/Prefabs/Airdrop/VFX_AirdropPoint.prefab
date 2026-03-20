@@ -10077,14 +10077,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   normalPod: {fileID: 57782140885802990, guid: 51d6b42fe7cdb7749b7162d0fb37e9cd, type: 3}
-  warning:
-  - {fileID: 7398774882054948896, guid: 524286b93f503ac49aad69614b81ae50, type: 2}
-  - {fileID: -5476231398626388455, guid: 524286b93f503ac49aad69614b81ae50, type: 2}
-  - {fileID: 1833582835799199926, guid: 524286b93f503ac49aad69614b81ae50, type: 2}
   data:
     cfg: {fileID: 0}
     isGift: 0
     time: 0
+    isTmp: 0
+    authorizeCounter: 0
     state: 0
   effectRangeCube: {fileID: 2265320968345426189}
   effectRangeCircle: {fileID: 2790872986054262847}
@@ -10106,6 +10104,7 @@ MonoBehaviour:
   IsDestroy: 0
   LiftTime: 0
   PreRelease: 1
+  allowSeeRelease: 0
   allowRelease: 0
   useDebug: 0
   showScale: 0

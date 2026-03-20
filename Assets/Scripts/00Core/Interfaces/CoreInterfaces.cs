@@ -29,7 +29,7 @@ namespace Core.Interface
         Vector3 Angles { get; }
 
         /// <summary>单位半径</summary>
-        public float HalfRange { get; }
+        public float HalfRange { get;}
 
         public Transform transform { get; }
         public GameObject gameObject { get; }

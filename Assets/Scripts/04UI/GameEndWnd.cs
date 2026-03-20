@@ -47,7 +47,7 @@ public class GameEndWnd : WindowRoot
     protected override void FirstShowWnd()
     {
 
-        var task = taskManager.nowTaskCfg;
+        var task = taskManager.nowTask;
         var players = roomManager.players;
         int count = players.Count;
         AudioManager.PlayMusic(task.result == GameResult.Victory ? AudioManager.MusicGroup.End : AudioManager.MusicGroup.Fail, 0.5f);
@@ -88,7 +88,7 @@ public class GameEndWnd : WindowRoot
             }
             actors[i] = showModle.transform.GetComponent<Animator>();
             
-            if(i==roomManager.SelfIndex) wndManager.PlaySound(new (Resources.Load<RoleData_SO>("GameData/Role/RD_" + roomManager.players[i].roleName).Speech(taskManager.nowTaskCfg.nowTask.main.complete? SpeechTypeEnum.Victory: SpeechTypeEnum.Defeat).Clip, AudioGroups.Player, 1, 6));
+            if(i==roomManager.SelfIndex) wndManager.PlaySound(new (Resources.Load<RoleData_SO>("GameData/Role/RD_" + roomManager.players[i].roleName).Speech(taskManager.nowTask.main.complete? SpeechTypeEnum.Victory: SpeechTypeEnum.Defeat).Clip, AudioGroups.Player, 1, 6));
 
             var go = Instantiate(prefab, UIRoot).transform;
             GameRoot.CreateTimer(() => {
@@ -217,8 +217,8 @@ public class GameEndWnd : WindowRoot
 
     void InitOther()
     {
-        var task = taskManager.nowTaskCfg;
-        var info = task.nowTask;
+        var task = taskManager.nowTask;
+        var info = task.taskCfg;
         SetColor(topRoot.GetChild(0, 0), info.Color);
         SetSprite(topRoot.GetChild(0, 0), info.Sprite);
         SetText(topRoot.GetChild(1), task.MainCfg.name);
@@ -247,8 +247,8 @@ public class GameEndWnd : WindowRoot
 
     void InitLeft()
     {
-        var task = taskManager.nowTaskCfg;
-        var info = task.nowTask;
+        var task = taskManager.nowTask;
+        var info = task.taskCfg;
 
         SetColor(leftRoot.GetChild(1, 0, 0), info.Color);
         SetSprite(leftRoot.GetChild(1, 0, 0), info.Sprite);
@@ -260,7 +260,7 @@ public class GameEndWnd : WindowRoot
             {
                 SetActive(leftRoot.GetChild(3, i), true);
                 SetAlpha(leftRoot.GetChild(3, i), _Dim);
-                SetSprite(leftRoot.GetChild(3, i), info.extra[i].cfg.sprite);
+                SetSprite(leftRoot.GetChild(3, i), task.extras[i].cfg.sprite);
             }
             else
             {
@@ -289,8 +289,8 @@ public class GameEndWnd : WindowRoot
 
     void InitRight()
     {
-        var task = taskManager.nowTaskCfg;
-        var info = task.nowTask;
+        var task = taskManager.nowTask;
+        var info = task.taskCfg;
  
 
         SetText(rightRoot.GetChild(1, 3), 0);
@@ -315,7 +315,7 @@ public class GameEndWnd : WindowRoot
 
     void InitMiddle()
     {
-        var task = taskManager.nowTaskCfg;
+        var task = taskManager.nowTask;
         var keys = task.collectProperty.Keys.ToList();
         for (int i=0;i<middleRoot.childCount;++i)
         {
@@ -354,50 +354,50 @@ public class GameEndWnd : WindowRoot
     {
 
 
-        var task = taskManager.nowTaskCfg;
-        var info = task.nowTask;
+        var task = taskManager.nowTask;
+        var info = task.taskCfg;
 
         
         yield return new WaitForSeconds(0.6f);
         PlaySount(1);
-        if (info.main.complete) SetAlpha(leftRoot.GetChild(1, 0, 0),1);
+        if (task.main.complete) SetAlpha(leftRoot.GetChild(1, 0, 0),1);
         
 
         yield return new WaitForSeconds(0.4f);
         PlaySount(1);
         for (int i = 0; i < info.extra.Length; ++i)
         {
-            if (info.extra[i].complete) SetAlpha(leftRoot.GetChild(3, i),1);
+            if (task.extras[i].complete) SetAlpha(leftRoot.GetChild(3, i),1);
             yield return null; 
         }
 
         yield return new WaitForSeconds(0.4f);
         PlaySount(1);
-        for (int i = 0; i < info.nest.Length; ++i)
+        for (int i = 0; i < task.nests.Length; ++i)
         {
-            int count = info.nest[i].Count(item => item.complete);
-            if (count == task.nestCount[i])
+            int count = task.nests[i].Count(item => item.complete);
+            if (count == task.nests[i].Length)
             {
                 SetAlpha(leftRoot.GetChild(5, i, 0), 1);
                 SetAlpha(leftRoot.GetChild(5, i, 1), 1);
             }
-            SetText(leftRoot.GetChild(5, i, 1), count + "/" + task.nestCount[i]);
+            SetText(leftRoot.GetChild(5, i, 1), count + "/" + task.nests[i].Length);
         }
        
         yield return new WaitForSeconds(0.6f);
         PlaySount(3);
 
-        float baseAlpha = info.main.complete ? 1 : _Dim;
+        float baseAlpha = task.main.complete ? 1 : _Dim;
         float[] baseAlpha2 = new float[info.extra.Length];
-        for (int i = 0; i < info.extra.Length; ++i)
+        for (int i = 0; i < task.extras.Length; ++i)
         {
-            baseAlpha2[i]= info.extra[i].complete?1:_Dim;
+            baseAlpha2[i]= task.extras[i].complete?1:_Dim;
             yield return null;
         }
-        float[] baseAlpha3 = new float[info.nest.Length];
-        for (int i = 0; i < info.nest.Length; ++i)
+        float[] baseAlpha3 = new float[task.nests.Length];
+        for (int i = 0; i < task.nests.Length; ++i)
         {
-            baseAlpha3[i] = info.nest[i].Count(item=>item.complete)== task.nestCount[i] ? 1 : _Dim;
+            baseAlpha3[i] = task.nests[i].Count(item=>item.complete)== task.nests[i].Length ? 1 : _Dim;
             yield return null;
         }
         
@@ -427,7 +427,7 @@ public class GameEndWnd : WindowRoot
         //巢穴奖励
         PlaySount(3);
         SetAlpha(leftRoot2.GetChild(2),0,1,200);
-        for (int i = 0; i < task.nestCount.Length; ++i)
+        for (int i = 0; i < task.nests.Length; ++i)
         {
             SetAlpha(leftRoot.GetChild(5, i, 0), baseAlpha3[i], 0.1f,200);
             SetAlpha(leftRoot.GetChild(5, i, 1), baseAlpha3[i], 0.1f ,200);
@@ -459,7 +459,7 @@ public class GameEndWnd : WindowRoot
         PlaySount(2);
         //重置巢穴奖励
         SetAlpha(leftRoot2.GetChild(2), 1, 0, 200);
-        for (int i = 0; i < task.nestCount.Length; ++i)
+        for (int i = 0; i < task.nests.Length; ++i)
         {
             SetAlpha(leftRoot.GetChild(5, i, 0), 0.1f, baseAlpha3[i], 200);
             SetAlpha(leftRoot.GetChild(5, i, 1), 0.1f, baseAlpha3[i], 200);
@@ -471,7 +471,7 @@ public class GameEndWnd : WindowRoot
     public IEnumerator DisplyRight()
     {
 
-        var task = taskManager.nowTaskCfg;
+        var task = taskManager.nowTask;
         var baseScale = (int)(taskManager.DiffScale(task.difficulty) * 100);
         var finScale = (int)(taskManager.FinalDiffScale() * 100);
         yield return new WaitForSeconds(0.6f);
@@ -528,7 +528,7 @@ public class GameEndWnd : WindowRoot
 
     public IEnumerator DisplyMiddle()
     {
-        var task = taskManager.nowTaskCfg;
+        var task = taskManager.nowTask;
         var values = task.collectProperty.Values.ToList();
         for (int i = 0; i < task.collectProperty.Count; ++i)
         {

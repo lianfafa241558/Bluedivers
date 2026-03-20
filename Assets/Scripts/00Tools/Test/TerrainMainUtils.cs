@@ -137,7 +137,8 @@ public static partial class TerrainUtils
         }
         //中心点应该的高度
         //float centerHeight = GetMapHeightAtUV(uv)- depth/data.size.y;
-        float centerHeight = heights[size / 2, size / 2] - depth / terrainHeight;
+        float centerOldHeight = heights[size / 2, size / 2];
+        float centerHeight = centerOldHeight - depth / terrainHeight;
 
         Vector2 center = Vector2.one * size * 0.5f;
 
@@ -161,7 +162,7 @@ public static partial class TerrainUtils
                     }
                     else
                     {
-                        heights[y, x] = Mathf.Max(0, heights[y, x] - depth * power / data.size.y);
+                        heights[y, x] = Mathf.Max(0, Mathf.Min(heights[y, x], Mathf.Lerp(heights[y, x], centerOldHeight, power) - depth * power / terrainHeight));
                     }
                 }
             }
@@ -169,7 +170,7 @@ public static partial class TerrainUtils
 
         data.SetHeightsDelayLOD(xBase, yBase, heights); //延迟写入（性能最优）
         data.SyncHeightmap();//同步地形数据
-        ModifyAlphaMap(uv, innerRadius, outerRadius, shape);
+        ModifyAlphaMap(uv, innerRadius, outerRadius, shape,isSet);
         if (refresh) Refresh(innerRadius>2);
     }
 
@@ -241,7 +242,7 @@ public static partial class TerrainUtils
 
                         float targetWeight = Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale));
                         //总和必须是1
-                        float originalSum = (1 - targetWeight) / (1 - alphas[y, x, 0]);
+                        float originalSum = (1 - targetWeight);
                         //例如:0.3/0.1/0.15/0.2/0.25 弹坑权重0.6,残余权重就是(1-0.6)/(1-0.3)
                         //变成了 0.6/0.057/0.0855/0.1142/0.143
                         var remain = 1f;

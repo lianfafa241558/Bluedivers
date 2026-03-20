@@ -5071,7 +5071,7 @@ MonoBehaviour:
   ExtraPortrait: {fileID: 21300000, guid: 2a8122cd519b8014cbfdf4686fa82d97, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
-  flag: 2
+  flag: 66
   type: 4
   team: 1
   threat: 0
@@ -5247,10 +5247,12 @@ MonoBehaviour:
   creatPoint: {fileID: 9150198892112717303}
   creatUnits:
   - {fileID: 1417902310742990674, guid: 9daa0085da612034281d3688be01157c, type: 3}
-  creatTime: 20
+  creatData:
+  - Key: {fileID: 1417902310742990674, guid: 9daa0085da612034281d3688be01157c, type: 3}
+    Value: 20
   damagedTime: 22
   lastDamagedTime: -Infinity
-  lastCreatTime: -Infinity
+  creatTime: 20
 --- !u!114 &7394111883239897838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5263,7 +5265,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHealth: 1000
+  MaxHealth: 500
   MaxShield: 0
   MainPart: {fileID: 5534251723615431800}
   showHealth: 0
@@ -5526,9 +5528,9 @@ MonoBehaviour:
   isWeakness: 0
   showArmorLists:
   - Key: 0
-    Value: 0.9
+    Value: 0.6
   - Key: 1
-    Value: 0.7
+    Value: 0.3
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

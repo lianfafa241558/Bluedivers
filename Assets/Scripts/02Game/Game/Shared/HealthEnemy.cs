@@ -11,8 +11,8 @@ namespace Unity.FPS.Game
 
         protected override void Start() {
             base.Start();
-            PEInt scale = 1+(TaskManager.Instance.nowTaskCfg.ExtraDifficulty[3]* (PEInt)0.1f);
-            switch (TaskManager.Instance.nowTaskCfg.difficulty)
+            PEInt scale = 1+(TaskManager.Instance.nowTask.ExtraDifficulty[3]* (PEInt)0.1f);
+            switch (TaskManager.Instance.nowTask.difficulty)
             {
                 case DifficultyEnum.Normal:
                     scale *= (PEInt)0.7f;

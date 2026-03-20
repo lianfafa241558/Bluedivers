@@ -26,7 +26,7 @@ public class WaveManager : TickBehaviour
     protected override void Start()
     {
         base.Start();
-        var task = TaskManager.Instance.nowTaskCfg;
+        var task = TaskManager.Instance.nowTask;
         var cfg = task.campData;
         Suffix = cfg.Suffix;
         WaveCool = cfg.WaveCool;

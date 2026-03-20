@@ -1,4 +1,6 @@
+using PEMaths;
 using Unity.BaseTool;
+using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.AI;
@@ -19,13 +21,15 @@ public class PartController : MonoBehaviour
 
     private int DeathPartCount;
 
-    public NavMeshAgent NavMeshAgent { get; private set; }
-    private float baseSpeed;
+    private EnemyController controller;
+    //public NavMeshAgent NavMeshAgent { get; private set; }
+    //private float baseSpeed;
 
     public void Start()
     {
-        NavMeshAgent = GetComponent<NavMeshAgent>();
-        if (FpsHelper.HaveNavMeshAgent(NavMeshAgent)) baseSpeed = NavMeshAgent.speed;
+        controller = GetComponent<EnemyController>();
+        //NavMeshAgent = GetComponent<NavMeshAgent>();
+        //if (FpsHelper.HaveNavMeshAgent(NavMeshAgent)) baseSpeed = NavMeshAgent.speed;
 
         DeathPartCount = 0;
         for (int i = 0; i < legs.Length; ++i)
@@ -41,10 +45,11 @@ public class PartController : MonoBehaviour
 
     void OnLegDestroy()
     {
-        if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
-        {
-            NavMeshAgent.speed -= baseSpeed / legs.Length;
-        }
+        controller.Speed.AddModifier(ModifierType.Factor,new(1f/legs.Length));
+        //if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
+        //{
+        //    NavMeshAgent.speed -= baseSpeed / legs.Length;
+        //}
 
     }
     void OnDeathPartDestroy()

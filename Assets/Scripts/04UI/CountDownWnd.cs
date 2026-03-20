@@ -41,7 +41,7 @@ public class CountDownWnd : WindowRoot
     // Update is called once per frame
     void Update()
     {
-        int nowcd = taskManager.nowTaskCfg.Countdown;
+        int nowcd = taskManager.nowTask.Countdown;
         if (nowcd < 16!=GetActive(anim.transform))
         {
             SetActive(anim.transform, nowcd < 16);

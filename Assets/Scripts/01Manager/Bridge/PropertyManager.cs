@@ -26,11 +26,11 @@ public class PropertyManager : Singleton<PropertyManager>
     {
         if (RandomUtils.Bool())
         {
-            return GetPrefab(TaskManager.Instance.nowTaskCfg.SpecialtyPropertys.RandomTake());
+            return GetPrefab(TaskManager.Instance.nowTask.SpecialtyPropertys.RandomTake());
         }
         else
         {
-            return GetPrefab(TaskManager.Instance.nowTaskCfg.OtherPropertys.RandomTake());
+            return GetPrefab(TaskManager.Instance.nowTask.OtherPropertys.RandomTake());
         }
     }
 

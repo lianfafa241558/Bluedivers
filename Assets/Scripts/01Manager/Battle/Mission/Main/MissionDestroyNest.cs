@@ -17,6 +17,7 @@ namespace FpsGame.Mission
             base.CreatMission();
             GlobalEventManager.OnEnemyDead += OnActorDeath;
             MaxProgress = data.targetCount;
+            MaxProgress /= 10;
         }
         protected override void EndMission()
         {

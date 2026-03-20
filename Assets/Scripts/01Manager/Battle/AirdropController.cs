@@ -68,7 +68,7 @@ public class AirdropController : MonoBehaviour
 
         useAd = new();
         //读取任务所需战备
-        var required = TaskManager.Instance.nowTaskCfg.RequiredAD;
+        var required = TaskManager.Instance.nowTask.RequiredAD;
         for (int i = 0; i < required.Count; ++i)
         {
             //Debug.LogError("添加任务所需战备"+ ResManager.airdropDic[required[i]].showName);

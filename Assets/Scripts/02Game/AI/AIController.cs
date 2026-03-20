@@ -20,11 +20,13 @@ public interface I_AIController
     public UnityAction OnDie { get; set; }
 
     public Vector3 HpPos { get; }
-    public Vector3 Pos { get; }
+    public Vector3 Pos { get; set; }
     public Vector3 CenterPos { get; }
     public float BirthDuration { get; }
 
     public string ID { get; }
+
+    //public WeaponCurrentAttribute Speed { get;}
 
     public void Kill();
 
@@ -40,10 +42,17 @@ public class AIController : MonoBehaviour, I_AIController
 
     public Transform AimPoint => m_Actor.AimPoint;
     public Vector3 CenterPos => m_Actor.CenterPos;
-    public Vector3 Pos => m_Actor.Pos;
+    public virtual Vector3 Pos {
+        get => m_Actor.Pos;
+        set
+        {
+            m_Actor.transform.position = value;
+        }
+    }
     public Vector3 HpPos => m_Actor.HpPos;
     public string ID => m_Actor.Id;
     float I_AIController.BirthDuration => this.BirthDuration;
+    //public WeaponCurrentAttribute Speed => speed;
 
     //感觉可能需要加是第X号武器进行攻击的参数
     public UnityAction<WeaponBaseController> OnAttack { get => onAttack; set => onAttack = value; }
@@ -65,7 +74,7 @@ public class AIController : MonoBehaviour, I_AIController
     [CustomLabel("诞生后延迟（以允许动画）")]
     public float BirthDuration = 0f;
 
-
+    //protected WeaponCurrentAttribute speed;
 
     protected Health m_Health;
     protected I_Actor m_Actor;
@@ -82,7 +91,6 @@ public class AIController : MonoBehaviour, I_AIController
     {
         m_Health = GetComponent<Health>();
         m_Actor = GetComponent<Actor>();
-
     }
 
     protected virtual void Start()
@@ -98,6 +106,9 @@ public class AIController : MonoBehaviour, I_AIController
     {
         OnLostTarget?.Invoke();
         OnDie?.Invoke();
+
+        m_Health.OnDie -= _OnDie;
+        m_Health.OnDamaged -= _OnDamaged;
 
         Tool.Destroy(gameObject, DeathDuration);
     }

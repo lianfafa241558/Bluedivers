@@ -19,14 +19,13 @@ namespace Unity.FPS.AI
         public Transform creatPoint;
 
         [CustomLabel("生产单位")]
-        public List<GameObject> creatUnits;
-        [CustomLabel("生产时间")]
-        public int creatTime = 10;
+        public List<KVP<GameObject,int>> creatData;
+
         [CustomLabel("脱战时间")]
         public int damagedTime=12;
         [SerializeField]
         [DisplayField(true,false,true)]
-        private float lastDamagedTime = Mathf.NegativeInfinity, lastCreatTime= Mathf.NegativeInfinity;
+        private float lastDamagedTime = Mathf.NegativeInfinity, creatTime= Mathf.Infinity;
 
         public AIState AiState { get; private set; }
 
@@ -37,10 +36,11 @@ namespace Unity.FPS.AI
                 case AIState.Idle:
                     break;
                 case AIState.Active:
-                    if(Time.time - creatTime >= lastCreatTime)
+                    if(Time.time > creatTime)
                     {
-                        lastCreatTime = Time.time;
-                        var go = Instantiate(RandomUtils.RandomTake(creatUnits), creatPoint.position + creatPoint.forward, creatPoint.rotation, transform.parent);
+                        var item = RandomUtils.RandomTake(creatData);
+                        creatTime = Time.time+ item.Value;
+                        var go = Instantiate(item.Key, creatPoint.position + creatPoint.forward, creatPoint.rotation, transform.parent);
                     }
                     break;
             }
@@ -53,7 +53,8 @@ namespace Unity.FPS.AI
                     if (Time.time - damagedTime < lastDamagedTime)
                     {
                         AiState = AIState.Active;
-                        lastCreatTime = Time.time - 0.5f * creatTime;//第一个生产时间减半
+
+                        creatTime = Time.time + RandomUtils.Range(5,10);//第一个生产时间随机
                     }
                     break;
                 case AIState.Active:

@@ -36,10 +36,8 @@ namespace Unity.FPS.AI
         public UnityAction onDetectedTarget;
         public UnityAction onLostTarget;
 
-        /// <summary>当前锁定的目标</summary>
-        public I_Actor TargetActor { get; private set; }
 
-        public TargetData Target { get; protected set; } = new();
+        public TargetData Target = new();// { get; protected set; } = new();
 
         Collider[] targetColliders;
 
@@ -51,7 +49,7 @@ namespace Unity.FPS.AI
         /// <summary>目标是否可见</summary>
         public bool IsSeeingTarget;// { get; private set; }
 
-
+        [SerializeField]
         /// <summary>上次丢失目标的时间</summary>
         protected float TimeLastSeenTarget = Mathf.NegativeInfinity;
 
@@ -63,6 +61,7 @@ namespace Unity.FPS.AI
         private Transform CorePoint;
 
         public Transform GetCorePoint()=> EyePoint == null ? transform : EyePoint;
+
 
         protected override void Start()
         {
@@ -139,11 +138,11 @@ namespace Unity.FPS.AI
             var haveNewTarget = FpsHelper.VaildTarget(Target.Actor);
 
             //目标是否在范围内
-            IsTargetInAttackRange = haveNewTarget
-                && Vector3.Distance(CorePoint.position, Target.Pos) <= AttackRange;
+            IsTargetInAttackRange = haveNewTarget && Vector3.Distance(CorePoint.position, Target.Pos) <= AttackRange + Target.Actor.HalfRange;
+   
 
             //发现目标
-            if (!haveOldTarget && haveNewTarget)
+            if ((!haveOldTarget && haveNewTarget))
             {
                 OnDetect();
             }
@@ -155,6 +154,7 @@ namespace Unity.FPS.AI
 
         }
 
+        public GameObject showCollider;
         protected bool CanLook(Vector3 targetPos,bool ignoreAngle,out RaycastHit hit)
         {
             Vector3 startPoint = CorePoint.position;
@@ -177,6 +177,14 @@ namespace Unity.FPS.AI
                 if (!Physics.Raycast(startPoint, (targetPos - startPoint).normalized, out hit, distance, LayerDefinition.GroundLayers))
                 {
                     return true;
+                }
+                else if (hit.collider.GetComponentInParent<I_Actor>()== Target.Actor)
+                {
+                    return true;
+
+                }
+                else{
+                    showCollider = hit.collider.gameObject;
                 }
             }
 
@@ -326,7 +334,7 @@ namespace Unity.FPS.AI
         void BulletHit(GameObject source, Vector3 pos)
         {
 
-            if (m_Actor.IsValid()
+            if ((m_Actor as I_Actor).IsValid()
                 && source
                 && source.TryGetComponent(out Actor actor)
                 && actor.Team != m_Actor.Team

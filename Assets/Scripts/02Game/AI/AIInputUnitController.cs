@@ -256,7 +256,7 @@ namespace Unity.FPS.AI
                 // 计算点积绝对值
                 //float dot = Mathf.Abs(Quaternion.Dot(tarChassisRotation, chassis.rotation));
                 //Debug.LogError("dot"+ (1 - dot));
-                if ((1 - dot) < 0.0005f) {
+                if ((1 - dot) < 0.005f) {
                     return true;
                 }
                 return false;

@@ -331,7 +331,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
         //main.startLifetime = new(data.cfg.arriveTime + data.cfg.sustainTime);
         //main.duration = data.cfg.arriveTime + data.cfg.sustainTime;
 
-        Color color = Color.LerpUnclamped(Color.white * data.cfg.Color.ColorLight(), data.cfg.Color,1.7f);
+        Color color = Color.LerpUnclamped(Color.white * data.cfg.Color.GetValue(), data.cfg.Color,1.7f);
 
         transform.ForEach(item => SetColor(item, color));
         var size = data.cfg.showRange;

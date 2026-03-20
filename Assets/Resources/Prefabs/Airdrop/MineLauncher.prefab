@@ -286,7 +286,12 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
-  state: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
   UseManyMuzzle: 1
   WeaponManyMuzzles:
   - {fileID: 784931011598212422}
@@ -311,16 +316,17 @@ MonoBehaviour:
   Id: MineLauncher
   Portrait: {fileID: 21300000, guid: 5b8041c2f5a7d6e43b09ab878fb408ad, type: 3}
   ExtraPortrait: {fileID: 21300000, guid: 5b8041c2f5a7d6e43b09ab878fb408ad, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
-  flag: 24
+  flag: 26
   type: 16
   team: 0
+  threat: 1
   aimPoint: {fileID: 9156009779032510650}
   UseHpBar: 0
   HpHeight: 1
   shape: 0
   rangeLength: 0
-  Owner: {fileID: 0}
   damageables: []
 --- !u!114 &4222784401819727284
 MonoBehaviour:
@@ -359,6 +365,7 @@ MonoBehaviour:
   armorBreakEffect: []
   BleedValue: 0
   isMain: 0
+  showArmor: 0
 --- !u!1 &582375947040637986
 GameObject:
   m_ObjectHideFlags: 0

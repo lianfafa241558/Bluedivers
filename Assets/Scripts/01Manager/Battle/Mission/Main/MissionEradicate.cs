@@ -18,7 +18,7 @@ namespace FpsGame.Mission
         protected override void Start()
         {
             GlobalEventManager.OnEnemyDead += EnemyDead;
-            var task = TaskManager.Instance.nowTaskCfg;
+            var task = TaskManager.Instance.nowTask;
             MaxProgress = root.campData.enemyVarietyType.ToEnemyType() switch {
                 EnemyType.Kaiser => 70,
                 EnemyType.Decagrammaton => 90,

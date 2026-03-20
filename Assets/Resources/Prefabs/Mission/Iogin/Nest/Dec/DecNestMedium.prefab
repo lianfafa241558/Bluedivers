@@ -48,6 +48,8 @@ MonoBehaviour:
   hide: 0
   displayMiniMap: 0
   isArea: 1
+  followMapScale: 1
+  compleHide: 1
   prefabs:
   - {fileID: 8234732363325784942, guid: d672c3872da3ba74cb2ed09a6d4550ab, type: 3}
   title: "\u62C6\u9664\u88AD\u63A0\u8005\u6298\u8D8A\u951A"
@@ -65,11 +67,18 @@ MonoBehaviour:
     complete: 0
   root:
     RequiredAD: 
-    nestCount: 040000000200000001000000
-    campData: {fileID: 0}
-    mapImage: {fileID: 0}
-    mapIcon: {fileID: 0}
     activeTask: 0
+    main:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    evacuate:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    extras: []
   color: {r: 0, g: 0, b: 0, a: 0}
   icon: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
@@ -77,6 +86,7 @@ MonoBehaviour:
   percentage: 0
   InAirdropRange: 0
   entity: {fileID: 0}
+  useBar: 1
   actorNames:
   - DecNestBase
   - DecNestLeader

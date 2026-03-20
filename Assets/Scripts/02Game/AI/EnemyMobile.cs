@@ -6,10 +6,11 @@ namespace Unity.FPS.AI
     [RequireComponent(typeof(EnemyController))]
     public class EnemyMobile : AIInputUnitController
     {
+
         public bool AttackStop;
         protected EnemyController m_EnemyController;
 
-        protected Vector3 TargetPosition => m_EnemyController.KnownDetectedTarget.Pos;
+        protected Vector3 TargetPosition => m_EnemyController.Target.Pos;
 
         protected TargetData target;
 
@@ -30,14 +31,14 @@ namespace Unity.FPS.AI
         public bool MaintainMaxDis = false;
 
 
-        public AIState AiState { get; private set; }
+        public AIState AiState;// { get; private set; }
 
 
 
         protected override void Start()
         {
             base.Start();
-            m_EnemyController = m_AIController as EnemyController;
+            m_EnemyController = m_Controller as EnemyController;
             m_EnemyController.SetPathDestinationToClosestNode();
             //m_EnemyController.OnDie += OnDie;
             // Start patrolling
@@ -106,7 +107,7 @@ namespace Unity.FPS.AI
                     break;
                 case AIState.Attack:
                    
-                    float dis = Vector3.Distance(TargetPosition,m_EnemyController.AimPoint.position);
+                    float dis = Vector3.Distance(TargetPosition,m_EnemyController.CenterPos);
                     float stopRange = (AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange);
                     bool mustStop = AttackStop && InAttackState();
                     if (mustStop)
@@ -131,13 +132,16 @@ namespace Unity.FPS.AI
                     if (mustStop)
                     {
                         turrets.ForEach(item => {
-                            if (item.IsLockTarget(TargetPosition)) m_EnemyController.TryAtack(item.weapon);
+                            if (item.IsLockTarget(TargetPosition)) m_EnemyController.TryStop(item.weapon);
                         });
                     }
                     else if (AimTargrt())
                     {
                         turrets.ForEach(item=> {
-                            if(item.IsLockTarget(TargetPosition))m_EnemyController.TryAtack(item.weapon); 
+                            if (item.IsLockTarget(TargetPosition))
+                            {
+                                m_EnemyController.TryAtack(item.weapon);
+                            }
                         });
                     }
 

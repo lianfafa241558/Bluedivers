@@ -9925,7 +9925,7 @@ MonoBehaviour:
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
-  flag: 2
+  flag: 66
   type: 4
   team: 1
   threat: 0
@@ -10064,10 +10064,12 @@ MonoBehaviour:
   creatPoint: {fileID: 2647102822365142575}
   creatUnits:
   - {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17, type: 3}
-  creatTime: 10
-  damagedTime: 12
+  creatData:
+  - Key: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17, type: 3}
+    Value: 12
+  damagedTime: 16
   lastDamagedTime: -Infinity
-  lastCreatTime: -Infinity
+  creatTime: 10
 --- !u!114 &2647102821790562782
 MonoBehaviour:
   m_ObjectHideFlags: 0

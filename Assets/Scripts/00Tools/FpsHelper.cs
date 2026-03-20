@@ -112,11 +112,11 @@ public static class FpsHelper
         }
 
         //地形破坏
-        var terrainItem = hitData.data.DamageGroupDirect.Find(item => item.Key == DamageTypeEnum.Terrain);
+        var terrainItem = hitData.data.DamageGroupExplosion.Find(item => item.Key == DamageTypeEnum.Terrain);
         if (terrainItem.IsValid())
         {
             var range = (PEInt)terrainItem.Value * PEMath.Max(damageRange, 1);
-            TerrainUtils.ModifyHeightMap(point, range.RawInt/2, range.RawInt, PEMath.Sqrt(range).RawFloat, ShapeType.Circle,false);
+            TerrainUtils.ModifyHeightMap(point, (int)(range.RawInt/1.5f), range.RawInt, range.RawFloat/5, ShapeType.Circle,false);
         }
 
         if (!hitData.data.NoSource&&(!collider.IsValid() || collider.GetComponent<I_Damagable>()==null))
@@ -129,7 +129,7 @@ public static class FpsHelper
 
 
 
-    public static bool IsTarget(Actor actor, TargetCfg targetCfg)
+    public static bool IsTarget(I_Actor actor, TargetCfg targetCfg)
     {
         if (actor.IsValid()
             && actor.ActorState.HasFlag(targetCfg.actorState)
@@ -147,10 +147,12 @@ public static class FpsHelper
     
     public static PEInt ThreatValue(PEVector3 pos,I_Actor target)
     {
+        if (!target.IsValid() || !target.gameObject) return 0;
         return PEVector3.Distance(pos, (PEVector3)target.CenterPos) * (PEInt)target.Threat;
     }
     public static PEInt ThreatValue(Vector3 pos, I_Actor target)
     {
+        if (!target.IsValid()|| !target.gameObject) return 0;
         return PEVector3.Distance((PEVector3)pos, (PEVector3)target.CenterPos) * (PEInt)target.Threat;
     }
 
@@ -192,8 +194,8 @@ public static class FpsHelper
 
     public static PEInt DiffDamageScale()
     {
-        PEInt scale = 1 + (TaskManager.Instance.nowTaskCfg.ExtraDifficulty[0] * (PEInt)0.334f)+(ActorsManager.Players.Count-1)*(PEInt)0.05f;
-        switch (TaskManager.Instance.nowTaskCfg.difficulty)
+        PEInt scale = 1 + (TaskManager.Instance.nowTask.ExtraDifficulty[0] * (PEInt)0.334f)+(ActorsManager.Players.Count-1)*(PEInt)0.05f;
+        switch (TaskManager.Instance.nowTask.difficulty)
         {
             case DifficultyEnum.Normal:
                 scale *= (PEInt)0.6f;

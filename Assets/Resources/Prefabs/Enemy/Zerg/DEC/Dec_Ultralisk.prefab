@@ -861,7 +861,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EyePoint: {fileID: 1477713122}
-  DetectionRange: 15
+  DetectionRange: 25
   HearingRange: 10
   AttackRange: 4
   AlertRange: 20
@@ -917,6 +917,7 @@ GameObject:
   - component: {fileID: 910742491}
   - component: {fileID: 910742492}
   - component: {fileID: 2633842092142326504}
+  - component: {fileID: 7590578707099627886}
   m_Layer: 6
   m_Name: Dec_Ultralisk
   m_TagString: Untagged
@@ -1107,6 +1108,8 @@ MonoBehaviour:
     limitRotation: 0
     barrelSetOffset: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
     dot: 1
+  showTryAttack: 0
+  showTryAiming: 0
   AttackStop: 0
   AttackStopDistanceRatio: 0.7
   MaintainMaxDis: 0
@@ -1212,6 +1215,26 @@ MonoBehaviour:
   - {fileID: 678551047}
   invincibleArmor: []
   deathArmor: []
+--- !u!114 &7590578707099627886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5022651815003707193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 578a14152ae1e004d993e8d6bf7a052e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Cool: 15
+  Duration: 4
+  MeetDetectedTime: 3
+  Range: 19
+  tag: 0
+  nowCoolTime: 0
+  nowDurationTime: 0
+  cilp: {fileID: 8300000, guid: e2734bab73117f340aa9bf9ea7166446, type: 3}
 --- !u!1 &5970679412572759866
 GameObject:
   m_ObjectHideFlags: 0

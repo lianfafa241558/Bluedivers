@@ -414,6 +414,8 @@ MonoBehaviour:
     limitRotation: 0
     barrelSetOffset: {x: 0, y: 0, z: 1, w: -0.00000004371139}
     dot: 1
+  showTryAttack: 0
+  showTryAiming: 0
   AttackStop: 0
   AttackStopDistanceRatio: 0.7
   MaintainMaxDis: 1
@@ -593,8 +595,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad4ab75d62d60e341bbdfe3714d1fa73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DetectedTime: 3
-  DetectedRange: 24
+  Cool: 100
+  Duration: 0
+  MeetDetectedTime: 3
+  Range: 24
+  tag: 1
+  nowCoolTime: 0
+  nowDurationTime: 0
   cilp: {fileID: 8300000, guid: 7ed7f696400707c48bf9d42a3a6e2498, type: 3}
   ps: {fileID: 8596584320823240780, guid: bacb9b0fe3f498644985c69bc7ab3a22, type: 3}
 --- !u!1 &8523330832917000864

@@ -40,7 +40,7 @@ public class MedivacController : MonoBehaviour
 
     void Update()
     {
-        if (!taskManager.nowTaskCfg.IsValid()) return;
+        if (!taskManager.nowTask.IsValid()) return;
         cam.LookAt(target);
         if ((time += Time.deltaTime) > 1)
         {
@@ -93,21 +93,21 @@ public class MedivacController : MonoBehaviour
     private int showCount, ShowPlayerCount, showTime;
     private void SortieUpdate(int count,int playerCount)
     {
-        if (taskManager.nowTaskCfg.Countdown >0)
+        if (taskManager.nowTask.Countdown >0)
         {
             if (count == 0)
             {
-                taskManager.nowTaskCfg.Countdown = 16;
+                taskManager.nowTask.Countdown = 16;
             }
             else if (count < playerCount)
             {
-                --taskManager.nowTaskCfg.Countdown;
+                --taskManager.nowTask.Countdown;
             }
             else
             {
-                if (taskManager.nowTaskCfg.Countdown > 6) taskManager.nowTaskCfg.Countdown = 6;
+                if (taskManager.nowTask.Countdown > 6) taskManager.nowTask.Countdown = 6;
 
-                --taskManager.nowTaskCfg.Countdown;
+                --taskManager.nowTask.Countdown;
             }
 
         }
@@ -122,7 +122,7 @@ public class MedivacController : MonoBehaviour
         }
         showCount = count;
         ShowPlayerCount= playerCount;
-        showTime= taskManager.nowTaskCfg.Countdown;
+        showTime= taskManager.nowTask.Countdown;
     }
     private void LandUpdate(int count, int playerCount)
     {

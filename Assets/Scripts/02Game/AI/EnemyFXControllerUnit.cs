@@ -43,7 +43,7 @@ namespace Unity.FPS.AI
         protected override void Update()
         {
             //float moveSpeed = GetActualVelocity();
-            float moveSpeed = (m_EnemyController as EnemyController).Velocity.magnitude;
+            float moveSpeed = (m_Controller as EnemyController).Velocity.magnitude;
             //show = m_EnemyController.Velocity;
             //if (moveSpeed > 0)
             //{
@@ -66,7 +66,7 @@ namespace Unity.FPS.AI
             if (Time.time > lastFreeFx)
             {
                 lastFreeFx = Time.time + Random.Range(20, 40);//纯表现层不需要同步
-                TriggerFX(OccasionTypeEnum.Free, m_EnemyController.Pos, Quaternion.identity, transform);
+                TriggerFX(OccasionTypeEnum.Free, m_Controller.Pos, Quaternion.identity, transform);
             }
             base.Update();
         }
@@ -118,6 +118,14 @@ namespace Unity.FPS.AI
         {
             base.OnDetectedTarget();
             SetTrigger(Constants.k_AnimAlertedParameter, true);
+        }
+        /// <summary>
+        /// 丢失目标
+        /// </summary>
+        protected override void OnLostTarget()
+        {
+            base.OnLostTarget();
+            SetTrigger(Constants.k_AnimAlertedParameter, false);
         }
 
     }

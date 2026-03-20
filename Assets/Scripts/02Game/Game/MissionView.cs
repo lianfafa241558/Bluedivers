@@ -14,8 +14,14 @@ namespace FpsGame.Mission
     public class MissionView : BaseObject, I_MissionPoint
     {
         #region 接口
+
         public override float HalfRange => mission.entitySize;
-        public bool IsArea => mission.isArea;
+        public bool CompleHide => mission.compleHide;
+        bool I_MissionPoint.FollowAreaScale => mission.followMapScale;
+
+        float I_MissionPoint.IconSizeScale => mission.missionType == MissionType.Main ? 1 : 0.7f;
+
+        float I_MissionPoint.AreaRange { get => areaRange; set => areaRange = value; }
         #endregion
 
 
@@ -26,11 +32,15 @@ namespace FpsGame.Mission
         /// <summary>已被发现</summary>
         private bool discovered { get; set; }
 
+
+        private float areaRange;
         private MissionBase mission;
         private int[] requiredAD;
 
         public void Init(MissionBase mission, int[] requiredAD)
         {
+            this.discovered = mission.displayMiniMap;
+            areaRange = mission.isArea ? mission.entitySize : 0;
             this.mission = mission;
             this.requiredAD = requiredAD;
             GlobalEventManager.OnMark += Mark;
