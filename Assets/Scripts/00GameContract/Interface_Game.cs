@@ -31,21 +31,67 @@ namespace GameContract
 
     public interface I_MissionPoint : I_Entity
     {
-        public bool FollowAreaScale { get; }//跟随区域大小变化
+        public bool HaveTag(MissionTag tag);
 
         public float IconSizeScale { get; }
         //public bool IsMain { get;}
         public float AreaRange { get; set; }
 
     }
+    [System.Flags]//flag不能跳位，必须占位符
+    public enum MissionTag
+    {
+        /// <summary>跟随地图缩放</summary>
+        [CustomLabel("初始暴露")] StratDiscovered = 1 << 0,
+        /// <summary>显示一个区域</summary>
+        [CustomLabel("显示一个区域")] IsArea = 1 << 1,
+        /// <summary>跟随地图缩放</summary>
+        [CustomLabel("跟随地图缩放")] FollowAreaScale = 1 << 2,
+        /// <summary>完成时隐藏图标</summary>
+        [CustomLabel("完成时隐藏图标")] CompleHide = 1 << 3,
+        /// <summary>显示边框</summary>
+        [CustomLabel("显示边框")] DisplayFrame = 1 << 4,
+        /// <summary>暴露后不隐藏</summary>
+        [CustomLabel("暴露后不隐藏")] OneDiscovered = 1 << 5,
+        /// <summary>产生热度</summary>
+        [CustomLabel("产生热度")] HeatPoint = 1 << 6,
+        [CustomLabel("占位符3")] placeholder3 = 1 << 7,
+        [CustomLabel("占位符4")] placeholder4 = 1 << 8,
+        [CustomLabel("占位符5")] placeholder5 = 1 << 9,
+        /// <summary>是否隐藏和子任务(在ui上)</summary>
+        [CustomLabel("是否隐藏和子任务(在ui上)")] hideAll = 1 << 10,
+        /// <summary>是否隐藏自身(在ui上)</summary>
+        [CustomLabel("是否隐藏自身(在ui上)")] hideSelf = 1 << 11,
+        /// <summary>显示进度值</summary>
+        [CustomLabel("显示进度值")] DisplayProgress = 1 << 12,
+        /// <summary>激活</summary>
+        [CustomLabel("激活")] IsActive = 1 << 13,
+    }
 
+    public enum UnitTier
+    {
+        /// <summary>无</summary>
+        [CustomLabel("无")] None = 0,
+        /// <summary>小型单位</summary>
+        [CustomLabel("小型单位")] Small = 1,
+        /// <summary>中型单位</summary>
+        [CustomLabel("中型单位")] Medium = 2,
+        /// <summary>精英单位</summary>
+        [CustomLabel("精英单位")] Elite = 3,
+        /// <summary>重型单位</summary>
+        [CustomLabel("重型单位")] Heavy = 4,
+        /// <summary>巨型单位</summary>
+        [CustomLabel("巨型单位")] Giant = 5,
+        /// <summary>警戒单位</summary>
+        [CustomLabel("警戒单位")] Alert = 6,
+    }
 
     public interface I_Actor: I_Entity
     {
         //public event UnityAction<I_Actor> OnStateChange;
         public event UnityAction<I_Actor> OnPosChange;
         public event UnityAction<I_Actor> OnAngleChange;
-        public event UnityAction OnDeath;
+        //public event UnityAction OnDeath;
 
         public int IndexID { get; }
 
@@ -77,11 +123,13 @@ namespace GameContract
     [System.Serializable]
     public class TargetData
     {
-
+        [SerializeField]
         private Vector3 pos;
         private I_Actor actor;
-        
-        public Vector3 Pos => actor != null && actor.transform!=null? actor.CenterPos : pos;
+
+        //public Vector3 Pos => actor != null && !ReferenceEquals(actor, null) && !actor.Equals(null) ? actor.CenterPos : pos;
+        public Vector3 Pos => actor == null ? pos:(actor.CenterPos == default ? pos : actor.CenterPos);
+
         public I_Actor Actor => actor;
         
         public TargetData()

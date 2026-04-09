@@ -115,6 +115,15 @@ public class Furniture_General : Furniture_Base
                 //Debug.LogError("开启了黑匣子");
             }
         },
+        ["PipeTarget"] = new() {
+            _Start = (furn) => {
+                Furniture_Pipe.targets = Furniture_Pipe.targets.FindAll(item=>item.IsValid());
+                Furniture_Pipe.targets.Add(furn);
+            },           
+            _Operate = (Furniture_General furn) => {
+                furn.BaseOp();
+            }
+        },
     };
 
 

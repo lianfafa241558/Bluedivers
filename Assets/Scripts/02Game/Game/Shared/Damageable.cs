@@ -29,6 +29,11 @@ namespace Unity.FPS.Game
         [SerializeField]
         private List<KVP<DamageTypeEnum, float>> showArmorLists;
 
+        [SerializeField]
+        [CustomLabel("全抗性")]
+        private float AllArmor;
+
+
         [CustomLabel("基础护甲值")]
         public int armorValue;
         [Header("关联护甲")]
@@ -117,7 +122,7 @@ namespace Unity.FPS.Game
             //比如护甲里面填0.5，收到的伤害就-50%
             foreach (var item in showArmorLists)
             {
-                armors[item.Key]-=item.Value;
+                armors[item.Key]-=item.Value-AllArmor;
             }
         }
 

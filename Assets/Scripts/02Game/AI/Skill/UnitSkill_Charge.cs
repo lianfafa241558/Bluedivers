@@ -7,6 +7,7 @@ namespace Unity.FPS.AI
     /// <summary>
     /// 冲锋
     /// </summary>
+    [AddComponentMenu("技能/冲锋", 30)]
     public class UnitSkill_Charge : UnitSkill_Base
     {
         public AudioClip cilp;

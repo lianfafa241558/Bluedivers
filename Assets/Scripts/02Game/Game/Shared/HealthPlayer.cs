@@ -33,6 +33,7 @@ namespace Unity.FPS.Game
         }
 
         private void FixedUpdate() {
+            if (m_IsDead) return;
             if (ShieldRestoreSpeed > 0 && CurrentShield < MaxShield && Time.time > m_LastHitTime + ShieldDelay) {
                 CurrentShield += (PEInt)(Time.fixedDeltaTime * ShieldRestoreSpeed);
                 if (!m_Audio.isPlaying) m_Audio.Play();
@@ -60,6 +61,15 @@ namespace Unity.FPS.Game
                 m_Audio.PlayOneShot(ShieldDamage.RandomTake());
             }
 
+        }
+
+        /// <summary>复活</summary>
+        public override void Revive()
+        {
+            CurrentHealth = MaxHealth/10;
+            CurrentShield = 0;
+            OnRevive?.Invoke();
+            m_IsDead = false;
         }
 
         //protected override void HandleDeath() {

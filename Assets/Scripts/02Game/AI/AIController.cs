@@ -22,13 +22,13 @@ public interface I_AIController
     public Vector3 HpPos { get; }
     public Vector3 Pos { get; set; }
     public Vector3 CenterPos { get; }
-    public float BirthDuration { get; }
+    public float BirthDuration { get; set; }
 
     public string ID { get; }
 
     //public WeaponCurrentAttribute Speed { get;}
 
-    public void Kill();
+    public void Kill(bool isRemove);
 
 }
 
@@ -51,7 +51,11 @@ public class AIController : MonoBehaviour, I_AIController
     }
     public Vector3 HpPos => m_Actor.HpPos;
     public string ID => m_Actor.Id;
-    float I_AIController.BirthDuration => this.BirthDuration;
+    float I_AIController.BirthDuration
+    {
+        get => this.BirthDuration;
+        set => this.BirthDuration=value;
+    }
     //public WeaponCurrentAttribute Speed => speed;
 
     //感觉可能需要加是第X号武器进行攻击的参数
@@ -82,6 +86,10 @@ public class AIController : MonoBehaviour, I_AIController
     [HideInInspector]
     public float birthTime;
 
+    /// <summary>是被移除而不是正常死亡</summary>
+    [HideInInspector]
+    public bool IsRemove;
+
     private void Awake()
     {
         InitComponent();
@@ -104,13 +112,16 @@ public class AIController : MonoBehaviour, I_AIController
 
     protected virtual void _OnDie(GameObject source)
     {
-        OnLostTarget?.Invoke();
-        OnDie?.Invoke();
+        if (!IsRemove)
+        {
+            OnDie?.Invoke();
+            OnLostTarget?.Invoke();
+        }
 
         m_Health.OnDie -= _OnDie;
         m_Health.OnDamaged -= _OnDamaged;
 
-        Tool.Destroy(gameObject, DeathDuration);
+        Tool.Destroy(gameObject, IsRemove?0: DeathDuration);
     }
 
     protected virtual void _OnLostTarget()
@@ -128,8 +139,9 @@ public class AIController : MonoBehaviour, I_AIController
         OnDamaged?.Invoke(collider);
     }
 
-    public void Kill()
+    public void Kill(bool IsRemove)
     {
+        this.IsRemove = IsRemove;
         m_Health.Kill();
     }
 

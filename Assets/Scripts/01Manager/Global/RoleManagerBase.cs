@@ -25,9 +25,7 @@ public abstract class RoleManagerBase : MonoBehaviour
 
         m_nowSelectIndex = dataList.FindIndex(item => item.ID == GameRoot.Archive.lastSelectRole);
 
-        GameObject startPoint = GameObject.FindGameObjectWithTag("StartPoint");
-        //Debug.LogError("初始点"+ (startPoint.transform.position + Vector3.up * 3));
-        var player = Instantiate(PlayerPrefab, startPoint.transform.position+Vector3.up*3,default,null);
+        var player = Instantiate(PlayerPrefab, GetStartPoint(), default,null);
         m_player = player.GetComponent<PlayerController>();
         m_player.Init(RoomManager.Instance.SelfIndex);
         EmptyWeapon = resManager.LoadRes<GameObject>("Weapons/Empty").GetComponent<WeaponPlayerController>();
@@ -38,6 +36,6 @@ public abstract class RoleManagerBase : MonoBehaviour
     {
         GlobalEventManager.OnSwitchRole?.Invoke(player);
     }
-    
 
+    public abstract Vector3 GetStartPoint();
 }

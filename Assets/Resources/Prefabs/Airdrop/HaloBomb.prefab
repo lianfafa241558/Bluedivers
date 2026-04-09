@@ -276,6 +276,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 0.1
     MaxRange: -1
+    MinRange: -1
     NoSource: 1
     DamageDirect: 0
     DamageGroupDirect: []
@@ -1030,6 +1031,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 5900522125226825037}
     m_Modifications:
+    - target: {fileID: 85202389, guid: cf02da3a4781fac46a2d26154e498fdc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1942874329, guid: cf02da3a4781fac46a2d26154e498fdc, type: 3}
       propertyPath: procedure.Array.data[1].contGo
       value: 
@@ -1242,6 +1247,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   showArmorLists: []
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

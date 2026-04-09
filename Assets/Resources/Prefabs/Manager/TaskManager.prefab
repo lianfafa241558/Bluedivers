@@ -46,450 +46,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AreaCount: 12
   TaskCount: 8
-  MainTask:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue:
-      type: 0
-      color: {r: 0, g: 0, b: 0, a: 0}
-      sprite: {fileID: 0}
-      sizeType: 0
-      count: {x: 0, y: 0}
-      reward: {x: 0, y: 0}
-      extraCount: 0
-      name: 
-      desc: "\u9519\u8BEF\u7684\u7C7B\u578B"
-      controller: {fileID: 0}
-      evacuateType: 0
-      RequiredAD: []
-    arr:
-    - Key: 0
-      Value:
-        type: 0
-        color: {r: 1, g: 0.5, b: 0.5, a: 1}
-        sprite: {fileID: 21300000, guid: 8bb5358366ec62c4ebfcfc24d60edeb9, type: 3}
-        sizeType: 1
-        count: {x: 1, y: 1}
-        reward: {x: 500, y: 500}
-        extraCount: 3
-        name: "\u6B7C\u706D\u4EFB\u52A1"
-        desc: "\u6D88\u706D\u9996\u9886"
-        controller: {fileID: 0}
-        evacuateType: 31
-        RequiredAD: []
-    - Key: 1
-      Value:
-        type: 1
-        color: {r: 1, g: 0.9149105, b: 0.5019608, a: 1}
-        sprite: {fileID: 21300000, guid: c98f3a20293a8374fbf3c6be98ca084f, type: 3}
-        sizeType: 2
-        count: {x: 18, y: 30}
-        reward: {x: 300, y: 500}
-        extraCount: 5
-        name: "\u6551\u63F4\u4EFB\u52A1"
-        desc: "\u89E3\u6551\u88AB\u5173\u62BC\u7684\u5B66\u751F"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 2
-      Value:
-        type: 2
-        color: {r: 0.5019608, g: 1, b: 0.5019608, a: 1}
-        sprite: {fileID: 21300000, guid: 523cde5d6f58df34895872718c569a5a, type: 3}
-        sizeType: 1
-        count: {x: 12, y: 18}
-        reward: {x: 300, y: 500}
-        extraCount: 3
-        name: "\u6536\u96C6\u4EFB\u52A1"
-        desc: "\u63D0\u53D6\u4EE5\u592A\u7D20"
-        controller: {fileID: 0}
-        evacuateType: 30
-        RequiredAD: []
-    - Key: 3
-      Value:
-        type: 3
-        color: {r: 1, g: 0.5019608, b: 0.91699356, a: 1}
-        sprite: {fileID: 21300000, guid: 9ee7d48aa3c31634c83b19a873fc5994, type: 3}
-        sizeType: 2
-        count: {x: 1, y: 1}
-        reward: {x: 500, y: 500}
-        extraCount: 5
-        name: "\u62A4\u9001\u4EFB\u52A1"
-        desc: "\u62A4\u9001[\u767E\u592B\u957F]\u5230\u8FBE\u76EE\u6807"
-        controller: {fileID: 0}
-        evacuateType: 31
-        RequiredAD: []
-    - Key: 4
-      Value:
-        type: 4
-        color: {r: 0.58496726, g: 0.5019608, b: 1, a: 1}
-        sprite: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
-        sizeType: 1
-        count: {x: 1, y: 1}
-        reward: {x: 500, y: 500}
-        extraCount: 3
-        name: "\u6E17\u900F\u4EFB\u52A1"
-        desc: "\u4E0A\u4F20\u6709\u4EF7\u503C\u7684\u4FE1\u606F"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 5
-      Value:
-        type: 5
-        color: {r: 0.4666667, g: 1, b: 1, a: 1}
-        sprite: {fileID: 21300000, guid: de0fe21a6b85e0b47b0e43c873ae4cd2, type: 3}
-        sizeType: 0
-        count: {x: 1, y: 1}
-        reward: {x: 800, y: 800}
-        extraCount: 0
-        name: "\u4FDD\u536B\u4EFB\u52A1"
-        desc: "\u4FDD\u62A4\u9999\u6599\u63D0\u70BC\u4E95"
-        controller: {fileID: 0}
-        evacuateType: 30
-        RequiredAD: []
-    - Key: 6
-      Value:
-        type: 6
-        color: {r: 1, g: 1, b: 0.4666667, a: 1}
-        sprite: {fileID: 21300000, guid: 424269cafe6df354ba744fb1592500f4, type: 3}
-        sizeType: 2
-        count: {x: 1, y: 1}
-        reward: {x: 500, y: 500}
-        extraCount: 5
-        name: "\u5BA3\u4F20\u4EFB\u52A1"
-        desc: "\u5347\u8D77\u590F\u83B1\u65D7\u5E1C"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 7
-      Value:
-        type: 7
-        color: {r: 0.73333335, g: 0.4666667, b: 1, a: 1}
-        sprite: {fileID: 21300000, guid: 0cb9898e36f898345809fab940283789, type: 3}
-        sizeType: 0
-        count: {x: 1, y: 1}
-        reward: {x: 500, y: 500}
-        extraCount: 0
-        name: "\u6B7C\u706D\u4EFB\u52A1"
-        desc: "\u6D88\u706D\u654C\u65B9\u90E8\u961F"
-        controller: {fileID: -7798245845040610509, guid: 44be67189c5c7df4aac71fbbe56a8461,
-          type: 3}
-        evacuateType: 30
-        RequiredAD: []
-    - Key: 8
-      Value:
-        type: 8
-        color: {r: 1, g: 0.73333335, b: 0.4666667, a: 1}
-        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
-        sizeType: 2
-        count: {x: 8, y: 14}
-        reward: {x: 300, y: 500}
-        extraCount: 3
-        name: "\u8FDB\u653B\u4EFB\u52A1"
-        desc: "\u7834\u574F\u654C\u65B9\u8425\u5730"
-        controller: {fileID: 0}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 9
-      Value:
-        type: 9
-        color: {r: 1, g: 0.5555556, b: 0.4666667, a: 1}
-        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
-        sizeType: 2
-        count: {x: 8, y: 14}
-        reward: {x: 300, y: 500}
-        extraCount: 5
-        name: "\u8FDB\u653B\u4EFB\u52A1"
-        desc: "\u7834\u574F\u654C\u65B9\u8425\u5730"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 10
-      Value:
-        type: 10
-        color: {r: 0.4666667, g: 0.4666667, b: 1, a: 1}
-        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
-        sizeType: 2
-        count: {x: 8, y: 14}
-        reward: {x: 300, y: 500}
-        extraCount: 5
-        name: "\u6E17\u900F\u4EFB\u52A1"
-        desc: "\u6536\u96C6\u6298\u8D8A\u951A\u70B9"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 11
-      Value:
-        type: 11
-        color: {r: 1, g: 0.82222223, b: 0.4666667, a: 1}
-        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
-        sizeType: 2
-        count: {x: 8, y: 14}
-        reward: {x: 300, y: 500}
-        extraCount: 5
-        name: "\u7834\u574F\u4EFB\u52A1"
-        desc: "\u70B8\u6BC1\u751F\u4EA7\u5DE5\u5382"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 17
-      Value:
-        type: 17
-        color: {r: 0.4666667, g: 1, b: 0.6945149, a: 1}
-        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
-        sizeType: 2
-        count: {x: 8, y: 14}
-        reward: {x: 300, y: 500}
-        extraCount: 5
-        name: "\u8FDB\u653B\u4EFB\u52A1"
-        desc: "\u6467\u6BC1\u7A7A\u519B\u57FA\u5730"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 18
-      Value:
-        type: 18
-        color: {r: 0.4666667, g: 1, b: 0.8222223, a: 1}
-        sprite: {fileID: 21300000, guid: 7aae960c9a31c354dae576c3bcd3acf7, type: 3}
-        sizeType: 1
-        count: {x: 8, y: 14}
-        reward: {x: 300, y: 500}
-        extraCount: 3
-        name: "\u62E6\u622A\u4EFB\u52A1"
-        desc: "\u62E6\u622A\u51EF\u6492\u8F66\u961F"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 29
-      Value:
-        type: 29
-        color: {r: 1, g: 1, b: 1, a: 1}
-        sprite: {fileID: 21300000, guid: f00872ed9347fa4429007328248539b8, type: 3}
-        sizeType: 2
-        count: {x: 1, y: 1}
-        reward: {x: 1500, y: 1500}
-        extraCount: 0
-        name: "\u6218\u5F79\u4EFB\u52A1"
-        desc: "\u5B8C\u6210\u5267\u60C5\u4EFB\u52A1"
-        controller: {fileID: 0}
-        evacuateType: 32
-        RequiredAD: []
-    - Key: 30
-      Value:
-        type: 30
-        color: {r: 1, g: 1, b: 1, a: 1}
-        sprite: {fileID: 21300000, guid: 378501a40d8ed2b47b02935ce7866e2f, type: 3}
-        sizeType: 0
-        count: {x: 1, y: 1}
-        reward: {x: 0, y: 0}
-        extraCount: 0
-        name: "\u64A4\u79BB"
-        desc: "\u5B8C\u6210\u64A4\u79BB"
-        controller: {fileID: 5877342823092023792, guid: b8aa70f4a8c2eee4a9885fc9e074aa06,
-          type: 3}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 31
-      Value:
-        type: 31
-        color: {r: 1, g: 1, b: 1, a: 1}
-        sprite: {fileID: 21300000, guid: 378501a40d8ed2b47b02935ce7866e2f, type: 3}
-        sizeType: 0
-        count: {x: 1, y: 1}
-        reward: {x: 0, y: 0}
-        extraCount: 0
-        name: "\u64A4\u79BB"
-        desc: "\u5B8C\u6210\u64A4\u79BB"
-        controller: {fileID: 0}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 32
-      Value:
-        type: 32
-        color: {r: 1, g: 1, b: 1, a: 1}
-        sprite: {fileID: 21300000, guid: 378501a40d8ed2b47b02935ce7866e2f, type: 3}
-        sizeType: 0
-        count: {x: 1, y: 1}
-        reward: {x: 0, y: 0}
-        extraCount: 0
-        name: "\u64A4\u79BB"
-        desc: "\u5B8C\u6210\u64A4\u79BB"
-        controller: {fileID: 5877342823092023792, guid: e57aeae1992b8cc42bb3a8ecbd89dd74,
-          type: 3}
-        evacuateType: 0
-        RequiredAD: []
-    meetReset: 0
-  ExtraTask:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue:
-      type: 37
-      color: {r: 0, g: 0, b: 0, a: 0}
-      sprite: {fileID: 0}
-      sizeType: 0
-      count: {x: 0, y: 0}
-      reward: {x: 0, y: 0}
-      extraCount: 0
-      name: 
-      desc: "\u9519\u8BEF\u7684\u7C7B\u578B"
-      controller: {fileID: 0}
-      evacuateType: 0
-      RequiredAD: []
-    arr:
-    - Key: 34
-      Value:
-        type: 34
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 21300000, guid: b25c56923f969654289483b22b61396d, type: 3}
-        sizeType: 1
-        count: {x: 1, y: 1}
-        reward: {x: 200, y: 200}
-        extraCount: 0
-        name: 
-        desc: "\u4E0A\u4F20\u9ED1\u5323\u5B50\u4FE1\u606F"
-        controller: {fileID: -8998719791419222789, guid: 3f6e8ea63ec5cc246b9080e9c72114be,
-          type: 3}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 35
-      Value:
-        type: 35
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 21300000, guid: e05643fe1e482c945b3ffce973964e79, type: 3}
-        sizeType: 2
-        count: {x: 1, y: 2}
-        reward: {x: 200, y: 200}
-        extraCount: 0
-        name: 
-        desc: "\u6FC0\u6D3B\u96F7\u8FBE\u7AD9"
-        controller: {fileID: 6966723222540371125, guid: 50db54d5248166c46b08abf31438b160,
-          type: 3}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 36
-      Value:
-        type: 36
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 21300000, guid: 65b3612418435cf43b5b619b863150d0, type: 3}
-        sizeType: 1
-        count: {x: 1, y: 2}
-        reward: {x: 200, y: 200}
-        extraCount: 0
-        name: 
-        desc: "\u62C6\u6BC1\u975E\u6CD5\u5E7F\u64AD"
-        controller: {fileID: -4897129379581357080, guid: bc3f7e196829b974399aeb0ddd4b7da4,
-          type: 3}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 40
-      Value:
-        type: 40
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 21300000, guid: c58e0ede1d307a14396ed3416611682e, type: 3}
-        sizeType: 1
-        count: {x: 2, y: 3}
-        reward: {x: 200, y: 200}
-        extraCount: 0
-        name: 
-        desc: "\u6467\u6BC1\u88AD\u63A0\u8005\u6298\u8D8A\u951A"
-        controller: {fileID: -766845851129917296, guid: b044690bd453f85439db409e123cc541,
-          type: 3}
-        evacuateType: 0
-        RequiredAD:
-        - {fileID: 11400000, guid: 1b4154cb9ece04247bb0caebbc83bc3c, type: 2}
-    - Key: 41
-      Value:
-        type: 41
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 21300000, guid: 2a8122cd519b8014cbfdf4686fa82d97, type: 3}
-        sizeType: 1
-        count: {x: 1, y: 2}
-        reward: {x: 200, y: 200}
-        extraCount: 0
-        name: 
-        desc: "\u6467\u6BC1\u8FFD\u730E\u8005\u6298\u8D8A\u951A"
-        controller: {fileID: -766845851129917296, guid: 01f55e01660e2bf438835a6191cd6b11,
-          type: 3}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 45
-      Value:
-        type: 45
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 21300000, guid: 2066be9e474461b45b50bb84ebca19ed, type: 3}
-        sizeType: 1
-        count: {x: 1, y: 2}
-        reward: {x: 200, y: 200}
-        extraCount: 0
-        name: 
-        desc: "\u6467\u6BC1\u9ED1\u9E70\u5236\u9020\u5382"
-        controller: {fileID: 0}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 46
-      Value:
-        type: 46
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 21300000, guid: dd607c7afbdb8d647915b3a12f81d9d4, type: 3}
-        sizeType: 2
-        count: {x: 1, y: 1}
-        reward: {x: 200, y: 200}
-        extraCount: 0
-        name: 
-        desc: "\u5173\u95ED\u4FE1\u53F7\u5E72\u6270\u5854"
-        controller: {fileID: 0}
-        evacuateType: 0
-        RequiredAD: []
-    - Key: 50
-      Value:
-        type: 50
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 21300000, guid: dd607c7afbdb8d647915b3a12f81d9d4, type: 3}
-        sizeType: 1
-        count: {x: 1, y: 1}
-        reward: {x: 200, y: 200}
-        extraCount: 0
-        name: 
-        desc: "\u5173\u95ED\u4FE1\u53F7\u5E72\u6270\u5854"
-        controller: {fileID: 0}
-        evacuateType: 0
-        RequiredAD: []
-    meetReset: 0
-  NestTask:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue:
-      type: 0
-      color: {r: 0, g: 0, b: 0, a: 0}
-      sprite: {fileID: 0}
-      sizeType: 0
-      count: {x: 0, y: 0}
-      reward: {x: 0, y: 0}
-      extraCount: 0
-      name: 
-      desc: 
-      controller: {fileID: 0}
-      evacuateType: 0
-      RequiredAD: []
-    arr:
-    - Key: 50
-      Value:
-        type: 50
-        color: {r: 0, g: 0, b: 0, a: 0}
-        sprite: {fileID: 0}
-        sizeType: 0
-        count: {x: 0, y: 0}
-        reward: {x: 0, y: 0}
-        extraCount: 0
-        name: 
-        desc: 
-        controller: {fileID: 0}
-        evacuateType: 0
-        RequiredAD: []
-    meetReset: 0
   codeA:
   - "\u7070\u96BC"
   - "\u84DD\u76FE"
@@ -603,6 +159,7 @@ MonoBehaviour:
       AreaBackground: {fileID: 0}
       product: 
       enemyVarietyType: 0
+      interestPoints: []
     arr:
     - Key: Abydos
       Value:
@@ -633,6 +190,25 @@ MonoBehaviour:
           type: 3}
         product: 030000000100000006000000
         enemyVarietyType: 1
+        interestPoints:
+        - Key: {fileID: 1826518615125622148, guid: 7e556cc142313804ebf707b435d60d9f,
+            type: 3}
+          Value: 10
+        - Key: {fileID: 4252756687723068181, guid: a509a294ae69aff4ebde73c647822cad,
+            type: 3}
+          Value: 60
+        - Key: {fileID: 5196571325329302849, guid: 66956573c8a7a574abadada208b5ba3b,
+            type: 3}
+          Value: 12
+        - Key: {fileID: 5706469834003650477, guid: 74fb42066095dfe4d91a11747b16168a,
+            type: 3}
+          Value: 8
+        - Key: {fileID: 3396989222530088960, guid: bd727d164e0c067418b2f7fd41cc92a7,
+            type: 3}
+          Value: 5
+        - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a,
+            type: 3}
+          Value: 5
     - Key: Federal
       Value:
         MapName: "\u8054\u90A6\u5B66\u751F\u4F1A"
@@ -656,6 +232,25 @@ MonoBehaviour:
           type: 3}
         product: 060000000400000007000000
         enemyVarietyType: 2
+        interestPoints:
+        - Key: {fileID: 1826518615125622148, guid: 7e556cc142313804ebf707b435d60d9f,
+            type: 3}
+          Value: 10
+        - Key: {fileID: 4252756687723068181, guid: a509a294ae69aff4ebde73c647822cad,
+            type: 3}
+          Value: 60
+        - Key: {fileID: 5196571325329302849, guid: 66956573c8a7a574abadada208b5ba3b,
+            type: 3}
+          Value: 12
+        - Key: {fileID: 5706469834003650477, guid: 74fb42066095dfe4d91a11747b16168a,
+            type: 3}
+          Value: 8
+        - Key: {fileID: 3396989222530088960, guid: bd727d164e0c067418b2f7fd41cc92a7,
+            type: 3}
+          Value: 5
+        - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a,
+            type: 3}
+          Value: 5
     - Key: Gehanna
       Value:
         MapName: "\u683C\u9ED1\u90A3\u5B66\u9662"
@@ -682,6 +277,25 @@ MonoBehaviour:
           type: 3}
         product: 030000000400000002000000
         enemyVarietyType: 0
+        interestPoints:
+        - Key: {fileID: 1826518615125622148, guid: 7e556cc142313804ebf707b435d60d9f,
+            type: 3}
+          Value: 10
+        - Key: {fileID: 4252756687723068181, guid: a509a294ae69aff4ebde73c647822cad,
+            type: 3}
+          Value: 60
+        - Key: {fileID: 5196571325329302849, guid: 66956573c8a7a574abadada208b5ba3b,
+            type: 3}
+          Value: 12
+        - Key: {fileID: 5706469834003650477, guid: 74fb42066095dfe4d91a11747b16168a,
+            type: 3}
+          Value: 8
+        - Key: {fileID: 3396989222530088960, guid: bd727d164e0c067418b2f7fd41cc92a7,
+            type: 3}
+          Value: 5
+        - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a,
+            type: 3}
+          Value: 5
     - Key: Highlander
       Value:
         MapName: "\u6D77\u5170\u5FB7\u94C1\u9053\u5B66\u9662"
@@ -693,6 +307,7 @@ MonoBehaviour:
           type: 3}
         product: 
         enemyVarietyType: 0
+        interestPoints: []
     - Key: HyakkiYako
       Value:
         MapName: "\u767E\u9B3C\u591C\u884C\u8054\u5408\u5B66\u9662"
@@ -704,6 +319,7 @@ MonoBehaviour:
           type: 3}
         product: 
         enemyVarietyType: 0
+        interestPoints: []
     - Key: Kronos
       Value:
         MapName: "\u514B\u7F57\u8BFA\u65AF\u5B66\u6821"
@@ -715,6 +331,7 @@ MonoBehaviour:
           type: 3}
         product: 
         enemyVarietyType: 0
+        interestPoints: []
     - Key: Millennium
       Value:
         MapName: "\u5343\u5E74\u79D1\u5B66\u5B66\u9662"
@@ -744,6 +361,25 @@ MonoBehaviour:
           type: 3}
         product: 020000000100000005000000
         enemyVarietyType: 5
+        interestPoints:
+        - Key: {fileID: 1826518615125622148, guid: 7e556cc142313804ebf707b435d60d9f,
+            type: 3}
+          Value: 10
+        - Key: {fileID: 4252756687723068181, guid: a509a294ae69aff4ebde73c647822cad,
+            type: 3}
+          Value: 60
+        - Key: {fileID: 5196571325329302849, guid: 66956573c8a7a574abadada208b5ba3b,
+            type: 3}
+          Value: 20
+        - Key: {fileID: 5706469834003650477, guid: 74fb42066095dfe4d91a11747b16168a,
+            type: 3}
+          Value: 15
+        - Key: {fileID: 3396989222530088960, guid: bd727d164e0c067418b2f7fd41cc92a7,
+            type: 3}
+          Value: 5
+        - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a,
+            type: 3}
+          Value: 5
     - Key: PassionAndTempest
       Value:
         MapName: "\u72C2\u730E\u827A\u672F\u5B66\u9662"
@@ -755,6 +391,7 @@ MonoBehaviour:
           type: 3}
         product: 
         enemyVarietyType: 5
+        interestPoints: []
     - Key: RedWinter
       Value:
         MapName: "\u7EA2\u4E1C\u8054\u90A6\u5B66\u9662"
@@ -781,6 +418,25 @@ MonoBehaviour:
           type: 3}
         product: 070000000400000005000000
         enemyVarietyType: 0
+        interestPoints:
+        - Key: {fileID: 1826518615125622148, guid: 7e556cc142313804ebf707b435d60d9f,
+            type: 3}
+          Value: 10
+        - Key: {fileID: 4252756687723068181, guid: a509a294ae69aff4ebde73c647822cad,
+            type: 3}
+          Value: 60
+        - Key: {fileID: 5196571325329302849, guid: 66956573c8a7a574abadada208b5ba3b,
+            type: 3}
+          Value: 12
+        - Key: {fileID: 5706469834003650477, guid: 74fb42066095dfe4d91a11747b16168a,
+            type: 3}
+          Value: 8
+        - Key: {fileID: 3396989222530088960, guid: bd727d164e0c067418b2f7fd41cc92a7,
+            type: 3}
+          Value: 5
+        - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a,
+            type: 3}
+          Value: 5
     - Key: Shanhaijin
       Value:
         MapName: 
@@ -792,6 +448,7 @@ MonoBehaviour:
           type: 3}
         product: 
         enemyVarietyType: 0
+        interestPoints: []
     - Key: Trinity
       Value:
         MapName: "\u5723\u4E09\u4E00\u7EFC\u5408\u5B66\u9662"
@@ -821,6 +478,25 @@ MonoBehaviour:
           type: 3}
         product: 070000000200000005000000
         enemyVarietyType: 10
+        interestPoints:
+        - Key: {fileID: 1826518615125622148, guid: 7e556cc142313804ebf707b435d60d9f,
+            type: 3}
+          Value: 10
+        - Key: {fileID: 4252756687723068181, guid: a509a294ae69aff4ebde73c647822cad,
+            type: 3}
+          Value: 60
+        - Key: {fileID: 5196571325329302849, guid: 66956573c8a7a574abadada208b5ba3b,
+            type: 3}
+          Value: 12
+        - Key: {fileID: 5706469834003650477, guid: 74fb42066095dfe4d91a11747b16168a,
+            type: 3}
+          Value: 8
+        - Key: {fileID: 3396989222530088960, guid: bd727d164e0c067418b2f7fd41cc92a7,
+            type: 3}
+          Value: 5
+        - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a,
+            type: 3}
+          Value: 5
     - Key: Valkyrie
       Value:
         MapName: "\u74E6\u5C14\u57FA\u91CC\u8B66\u5BDF\u5B66\u9662"
@@ -832,4 +508,20 @@ MonoBehaviour:
           type: 3}
         product: 
         enemyVarietyType: 0
+        interestPoints: []
     meetReset: 0
+  nowTask:
+    RequiredAD: 
+    activeTask: 0
+    main:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    evacuate:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    extras: []
+    subs: []

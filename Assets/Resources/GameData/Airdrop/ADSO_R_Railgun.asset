@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dfe521d3dbee1e44a48bd0994d06029, type: 3}
   m_Name: ADSO_R_Railgun
   m_EditorClassIdentifier: 
+  isHide: 0
   ID: 100
   showName: "\u8F68\u9053\u6253\u51FB"
   desc: "\u5411\u4FE1\u6807\u9644\u8FD1\u7684\u6700\u5927\u578B\u76EE\u6807\u53D1\u5C04\u9AD8\u901F\u8F68\u9053\u70AE\u5F39\u3002\u8F68\u9053\u70AE\u81EA\u52A8\u5B8C\u6210\u76EE\u6807\u5B9A\u4F4D\u3002"
@@ -19,14 +20,16 @@ MonoBehaviour:
   opter: 02000000020000000300000002000000
   type: 0
   deliveryType: 1
-  cost: 2
   cool: 90
   arriveTime: 0
   arriveHeight: 200
   arriveCount: 0
   showRange: {x: 20, y: 0}
-  sustainTime: 0
-  creatObect: {fileID: 0}
+  sustainTime: 3
+  creatObect: {fileID: 8443615167776225864, guid: f6476e7914a786045b54c9b798cb137e,
+    type: 3}
   useNormalPod: 0
-  sustainHideBeacon: 0
-  useWarning: 1
+  sustainHideBeacon: 1
+  useWarning: 0
+  permanentPod: 0
+  authorize: 0

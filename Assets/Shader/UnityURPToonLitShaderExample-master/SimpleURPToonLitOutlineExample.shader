@@ -30,7 +30,7 @@ Shader "SimpleURPToonLitExample"
     Properties
     {
         [Header(High Level Setting)]
-        [ToggleUI]_IsFace("Is Face? (please turn on if this is a face material)", Float) = 0
+        [ToggleUI]_IsFace("Is Face? (请确定这是面部材质)", Float) = 0
         [Toggle(_UseMosaic)]_UseMosaic("UseMosaic", Float) = 0
         [Toggle(_MAIN_LIGHT_SHADOWS)]_MAIN_LIGHT_SHADOWS("_MAIN_LIGHT_SHADOWS", Float) = 1
         _RenderRef("_RenderRef",Int) = 0
@@ -42,28 +42,30 @@ Shader "SimpleURPToonLitExample"
         //有关URP光照着色器的命名约定，请参见URP的光照着色器
         [Header(Base Color)]
         [MainTexture]_BaseMap("_BaseMap (Albedo)", 2D) = "white" {}
-        //混合纹理
-        _BlendingScale("_BlendingScale", Range(0,1)) = 0
-        _BlendingMap("_BlendingMap", 2D) = "white" {}
-        
-
-        [Toggle(_UseMouthMap)]_UseMouthMap("_UseMouthMap", Float) = 0
-        [MainTexture]_MouthMap("_Mouth (Albedo)", 2D) = "white" {}
-        [IntRange]_Expression("_Expression", Range(0,64)) = 24
-        _Column("_Column", Int) = 8
-
         [HDR][MainColor]_BaseColor("_BaseColor", Color) = (1,1,1,1)
-        [ToggleUI]_Discoloration("on/off Discoloration", Float) = 0
+
+        //混合纹理
+        _BlendingScale("混合程度", Range(0,1)) = 0
+        _BlendingMap("混合纹理", 2D) = "white" {}
+
+
+        [Space(20)]
+        [Header(Mouth)]
+        [Toggle(_UseMouthMap)]_UseMouthMap("使用嘴部", Float) = 0
+        [MainTexture]_MouthMap("嘴部贴图", 2D) = "white" {}
+        [IntRange]_Expression("表情序号", Range(0,64)) = 24
+        _Column("每行数量", Int) = 8
+
 
 
 
         [Header(Dissolve)]
-        [Toggle(_UseAlphaClipping)]_UseAlphaClipping("_UseDissolve", Float) = 0
-        _DissolveValue("DissolveValue", Color) = (0,0,0)//实际上float就行，但是为了方便控制
-        _EdgeWidth ("Edge Width", Range(0, 0.1)) = 0.05
-
-        _AlphaMap("_AlphaMap", 2D) = "white" {}
-        [HDR]_EdgeColor("_EdgeColor", Color) = (0.8,0.8,0.8)
+        [Toggle(_UseAlphaClipping)]_UseAlphaClipping("使用溶解", Float) = 0
+        [Toggle(_UseAlphaUV)]_UseAlphaUV("使用UV进行溶解", Float) = 0
+        _AlphaMap("溶解贴图", 2D) = "white" {}
+        _DissolveValue("溶解系数", Color) = (0,0,0)//实际上float就行，但是为了方便控制
+        _EdgeWidth ("边缘宽度", Range(0, 0.1)) = 0.05
+        [HDR]_EdgeColor("边缘颜色", Color) = (0.8,0.8,0.8)
         //_Cutoff("_Cutoff (Alpha Cutoff)", Range(0.0, 1.0)) = 0.5
 
         //[Header(Spec)]
@@ -74,20 +76,20 @@ Shader "SimpleURPToonLitExample"
         
         
         [Header(Colour)]
-        [Toggle]_UseColour("_UseColour(on/off Colour completely)", Float) = 0
-        _ColourTex("_ColourTex", 2D) = "black" {}
-        _ColourMaskTex("_ColourTex", 2D) = "white" {}
-        _ColourScale("_ColourScale", Range(0.0, 1.0)) = 1.0
-        _ColourOutlineWidth("Outline width", Range(0.01, 0.5)) = 0.02
+        [Toggle]_UseColour("使用‘色彩’效果", Float) = 0
+        _ColourTex("色彩贴图", 2D) = "black" {}
+        _ColourMaskTex("色彩遮罩", 2D) = "white" {}
+        _ColourScale("色彩系数", Range(0.0, 1.0)) = 1.0
+
 
         [Header(Emission)]
-        [Toggle]_UseEmission("_UseEmission (on/off Emission completely)", Float) = 0
-        [Toggle]_EmissionMaskAddite("_EmissionMaskAddite (on/off Emission completely)", Float) = 0
-        [HDR] _EmissionColor("_EmissionColor", Color) = (0,0,0)
-        _EmissionMulByBaseColor("_EmissionMulByBaseColor", Range(0,1)) = 0
-        _EmissionScale("_EmissionScale", Range(0,2)) = 1
-        [NoScaleOffset]_EmissionMap("_EmissionMap", 2D) = "white" {}
-        _EmissionMapChannelMask("_EmissionMapChannelMask", Vector) = (1,1,1,0)
+        [Toggle]_UseEmission("使用自发光", Float) = 0
+        [Toggle]_EmissionMaskAddite("使用每个通道作为蒙版", Float) = 0
+        [HDR] _EmissionColor("自发光颜色", Color) = (0,0,0)
+        _EmissionMulByBaseColor("根据原颜色发光", Range(0,1)) = 0
+        _EmissionScale("发光系数", Range(0,2)) = 1
+        [NoScaleOffset]_EmissionMap("自发光贴图", 2D) = "white" {}
+        _EmissionMapChannelMask("自发光贴图通道", Vector) = (1,1,1,0)
 
         [Header(Occlusion)]
         [Toggle]_UseOcclusion("_UseOcclusion (on/off Occlusion completely)", Float) = 0
@@ -99,25 +101,27 @@ Shader "SimpleURPToonLitExample"
         _OcclusionRemapEnd("_OcclusionRemapEnd", Range(0,1)) = 1
 
         [Header(Lighting)]
-        _IndirectLightMinColor("_IndirectLightMinColor", Color) = (0.1,0.1,0.1,1) //如果光探头没有烘烤，可以防止完全变黑
-        _IndirectLightMultiplier("_IndirectLightMultiplier", Range(0,1)) = 1
-        _DirectLightMultiplier("_DirectLightMultiplier", Range(0,1)) = 1
-        _CelShadeMidPoint("_CelShadeMidPoint", Range(-1,1)) = -0.5
-        _CelShadeSoftness("_CelShadeSoftness", Range(0,1)) = 0.05
-        _MainLightIgnoreCelShade("_MainLightIgnoreCelShade", Range(0,1)) = 0
-        _AdditionalLightIgnoreCelShade("_AdditionalLightIgnoreCelShade", Range(0,1)) = 0.9
+        _IndirectLightMinColor("最低颜色", Color) = (0.1,0.1,0.1,1) //如果光探头没有烘烤，可以防止完全变黑
+        _IndirectLightMultiplier("间接光照系数", Range(0,1)) = 1
+        _DirectLightMultiplier("主光照系数", Range(0,1)) = 1
+        _CelShadeMidPoint("阴影切面的系数", Range(-1,1)) = -0.5
+        _CelShadeSoftness("阴影切面的平滑程度", Range(0,1)) = 0.05
+        _MainLightIgnoreCelShade("主光忽略切面", Range(0,1)) = 0
+        _AdditionalLightIgnoreCelShade("额外光忽略切面", Range(0,1)) = 0.9
 
         [Header(Shadow mapping)]
         _ReceiveShadowMappingAmount("_ReceiveShadowMappingAmount", Range(0,1)) = 0.65
         _ReceiveShadowMappingPosOffset("_ReceiveShadowMappingPosOffset", Float) = 0
-        _ShadowMapColor("_ShadowMapColor", Color) = (0.8,0.8,0.8)
+        _ShadowMapColor("阴影颜色", Color) = (0.8,0.8,0.8)
+        _FogMaxValue("雾气系数", Range(0,1)) = 1
+
 
         [Header(Outline)]
         [ToggleUI]_WhiteFocusOutline("_WhiteFocusOutline", Float) = 0
-        [ToggleUI]_FixOutlineColor("_FixOutline", Float) = 0
-        _OutlineWidth("_OutlineWidth (World Space)", Range(0,20)) = 4
-        _OutlineColor("_OutlineColor", Color) = (0.5,0.5,0.5,1)
-        _OutlineZOffset("_OutlineZOffset (View Space)", Range(0,1)) = 0.0001
+        [ToggleUI]_FixOutlineColor("使用固定颜色而非乘数", Float) = 0
+        _OutlineWidth("描边宽度 (World Space)", Range(0,20)) = 4
+        _OutlineColor("描边颜色", Color) = (0.5,0.5,0.5,1)
+        _OutlineZOffset("描边偏移 (View Space)", Range(0,1)) = 0.0001
         [NoScaleOffset]_OutlineZOffsetMaskTex("_OutlineZOffsetMask (black is apply ZOffset)", 2D) = "black" {}
         _OutlineZOffsetMaskRemapStart("_OutlineZOffsetMaskRemapStart", Range(0,1)) = 0
         _OutlineZOffsetMaskRemapEnd("_OutlineZOffsetMaskRemapEnd", Range(0,1)) = 1
@@ -152,6 +156,7 @@ Shader "SimpleURPToonLitExample"
 
         //所有过程都需要这个关键字
         #pragma shader_feature_local_fragment _UseAlphaClipping
+         #pragma shader_feature_local_fragment _UseAlphaUV
         #pragma shader_feature_local_fragment _UseMouthMap
         //#pragma shader_feature_local_fragment _SpecMap
         //#pragma shader_feature _AdditionalLights

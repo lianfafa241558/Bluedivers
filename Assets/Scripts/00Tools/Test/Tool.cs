@@ -118,6 +118,33 @@ namespace Utils
             return Vector3.Distance(a.ClosestPointOnBounds(b.transform.position), b.ClosestPointOnBounds(a.transform.position));
         }
 
+        /// <summary>
+        /// 求圆内一点沿 direction 方向发射，与圆的交点
+        /// </summary>
+        /// <param name="center">圆心</param>
+        /// <param name="radius">圆半径</param>
+        /// <param name="point">圆内一点</param>
+        /// <param name="direction">方向</param>
+        /// <returns>射线与圆的交点</returns>
+        public static Vector2 GetCircleIntersection(Vector2 center, float radius, Vector2 point, Vector2 direction)
+        {
+            // 1. 方向归一化
+            Vector2 dir = direction.normalized;
+
+            // 2. 从圆心指向点的向量
+            Vector2 oc = point - center;
+
+            // 3. 解一元二次方程
+            float a = Vector2.Dot(dir, dir);
+            float b = 2 * Vector2.Dot(oc, dir);
+            float c = Vector2.Dot(oc, oc) - radius * radius;
+
+            float discriminant = b * b - 4 * a * c;
+            float t = (-b + Mathf.Sqrt(discriminant)) / (2f * a);// 取最近的交点
+
+            // 4. 计算交点
+            return point + dir * t;
+        }
 
         #endregion
 

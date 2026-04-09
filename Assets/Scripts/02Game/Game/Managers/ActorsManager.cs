@@ -38,9 +38,27 @@ namespace Unity.FPS.Game
 
         public void UnRegisterUnit(Actor actor)
         {
-            Actors.Remove(actor);
-            Players.Remove(actor);
-            SpecUnits.Remove(actor);
+            switch (actor.Type)
+            {
+                case UnitTypeEnum.Player:
+                    //Players.Remove(actor);
+                    break;
+                case UnitTypeEnum.Friend:
+                    //Players.Remove(actor);
+                    break;
+                case UnitTypeEnum.Enemy:
+                    Actors.Remove(actor);
+                    break;
+                case UnitTypeEnum.SpecUnit:
+                    SpecUnits.Remove(actor);
+                    Actors.Remove(actor);
+                    break;
+                case UnitTypeEnum.Other:
+                    SpecUnits.Remove(actor);
+                    Actors.Remove(actor);
+                    break;
+            }
+
         }
 
         public override void Awake()

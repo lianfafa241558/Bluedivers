@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8122707096932665468
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7959259848086290265}
+  - component: {fileID: 7559125463775297483}
+  m_Layer: 0
+  m_Name: Explore
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7959259848086290265
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8122707096932665468}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 104.39831, y: 20.220104, z: 345.04172}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7559125463775297483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8122707096932665468}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d98cdf5800588d743834f7e84349ed7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  missionTag: 8209
+  missionType: 0
+  priority: 100
+  prefabs:
+  - {fileID: 8559943016807702174, guid: 59e6b242d9adb004d993cae29fafa20b, type: 3}
+  title: 
+  tip: 
+  MaxProgress: 0
+  NowProgress: 0
+  AirdropRange: 0
+  mapEntitySize: {x: 31, y: 31}
+  parent: {fileID: 0}
+  data:
+    cfg: {fileID: 0}
+    targetCount: 0
+    reward: 0
+    complete: 0
+  root:
+    RequiredAD: 
+    activeTask: 0
+    main:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    evacuate:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    extras: []
+    subs: []
+  color: {r: 0, g: 0, b: 0, a: 0}
+  icon: {fileID: 0}
+  pos: {x: 0, y: 0, z: 0}
+  entitySize: 0
+  percentage: 0
+  subTask: []
+  InAirdropRange: 0
+  entity: {fileID: 0}
+  end: 0
+  completed: 0

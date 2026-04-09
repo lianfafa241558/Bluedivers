@@ -35,19 +35,25 @@ namespace Unity.FPS.AI
         [SerializeField]
         protected float m_LastDetectedTarget;
 
+        bool isDead;
+
         protected sealed override void Start()
         {
             base.Start();
             m_Controller = GetComponent<EnemyController>();
             m_Controller.OnDetectedTarget += OnDetectedTarget;
             m_Controller.OnLostTarget += OnLostTarget;
+            m_Controller.OnDie += OnDeath;
             nowCoolTime = 0;
+            isDead = false;
             Init();
         }
         private void OnDestroy()
         {
             m_Controller.OnDetectedTarget -= OnDetectedTarget;
             m_Controller.OnLostTarget -= OnLostTarget;
+            m_Controller.OnDie -= OnDeath;
+
             Uninit();
         }
 
@@ -56,6 +62,7 @@ namespace Unity.FPS.AI
 
         public override bool Tick()
         {
+            if (isDead) return true;
 
             if (CanExecute())
             {
@@ -83,38 +90,7 @@ namespace Unity.FPS.AI
                         ResetDetectedTime();
                     }
                 }
-                //else if (m_HaveTarget)
-                //{
-                //    var actor = m_Controller.Target.Actor;
-                //    //有目标并且可见并且小于范围
-                //    if (actor.IsValid() && m_Controller.IsSeeingTarget)
-                //    {
-                //        if (!HaveTag(SkillTag.CoolMeetTargetInRange))
-                //        {
-                //            //目标不需要是玩家 | 有目标而且是玩家/盟友
-                //            if (!HaveTag(SkillTag.TargetIsPlayer) || actor.Type.HasFlag(UnitTypeEnum.Player | UnitTypeEnum.Friend))
-                //            {
-                //                TickCool();
-                //            }
-                //        }
-                //        else
-                //        {
-                //            if (Range <= 0 || Vector3.Distance(m_Controller.Pos, actor.Pos) < Range)
-                //            {
-                //                //目标不需要是玩家 | 有目标而且是玩家/盟友
-                //                if (!HaveTag(SkillTag.TargetIsPlayer) || actor.Type.HasFlag(UnitTypeEnum.Player | UnitTypeEnum.Friend))
-                //                {
-                //                    TickCool();
-                //                }
-                //            }
-
-                //        }
-
-                //    }
-
-
-                //}
-
+                
             }
 
 
@@ -154,6 +130,13 @@ namespace Unity.FPS.AI
         {
             m_HaveTarget = false;
         }
+
+        /// <summary>发现目标 </summary>
+        protected virtual void OnDeath()
+        {
+            isDead = true;
+        }
+
 
         protected bool CanExecute()
         {

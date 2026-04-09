@@ -1,10 +1,12 @@
+using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEngine;
+#endif
 
 public class DisplayBone : MonoBehaviour
 {
     public float size=0.1f;
+#if UNITY_EDITOR
     void OnDrawGizmos()
     {
        
@@ -108,6 +110,6 @@ public class DisplayBone : MonoBehaviour
             Gizmos.DrawLine(topCenter + offset, bottomCenter + offset);
         }
     }
+#endif
 }
 
-#endif

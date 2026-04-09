@@ -9,7 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: AirdropHighLight
   m_Shader: {fileID: 4800000, guid: 66c4b52bd1e641148b0a113c6f0c8acb, type: 3}
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _MY_FOG_ENABLE
   m_InvalidKeywords:
   - _EMISSION
   - _FLIPBOOKBLENDING_OFF
@@ -96,6 +97,7 @@ Material:
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _LightingEnabled: 0
+    - _MY_FOG_ENABLE: 1
     - _Metallic: 0
     - _Mode: 4
     - _MoveOtherSpeed: 0
@@ -113,6 +115,7 @@ Material:
     - _SrcBlend: 5
     - _Surface: 1
     - _TimeScale: 1
+    - _Transpose: 0
     - _UVSec: 0
     - _UseFresnel: 0
     - _UseLight: 0

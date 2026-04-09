@@ -25,6 +25,9 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
     [SerializeField]
     private Transform effectRangeCube,effectRangeCircle;
     [SerializeField]
+    private new Light light;
+
+    [SerializeField]
     private Transform m_creatObject;
     /// <summary>预计的降落时间</summary>
     private float m_ExpectedDuration;
@@ -69,7 +72,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
         GlobalEventManager.Airdrop(null, gameObject, point, this.data);
 
         transform.parent = null;
-        transform.eulerAngles = Vector3.zero;
+        //transform.eulerAngles = Vector3.zero;
         m_owner = ActorsManager.Player.gameObject;
         m_weapon = m_owner.GetComponent<PlayerWeaponsManager>().GetWeaponAtSlotIndex((int)WeaponTypeEnum.FlareGun);
         if(action.IsValid()) OnCreatObject += action;
@@ -78,6 +81,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
 
     private void Init()
     {
+
         m_creatObject = null;
         SetDisplay();
         switch (data.cfg.deliveryType)
@@ -128,6 +132,10 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
             case AirdropDeliveryEnum.Jet:
                 EndJet();
                 break;
+        }
+        if (m_creatObject&&m_creatObject.TryGetComponent(out ProjectileBase pro))
+        {
+            pro.OnHit -= PodHit;
         }
         OnCreatObject = null;
         data = null;
@@ -212,7 +220,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
         AudioManager.Stop("PodIntA_1");
 
         //AudioManager.PlaySound(new("AirDrop/PodDoor_Stop_1", transform.position, 50, AudioGroups.WeaponShoot));
-        AudioManager.PlaySound(new("AirDrop/SupplyPod/SupplyPodSpawnImpactCombinedA_1", transform.position, 50, AudioGroups.Weapon,0.25f));
+        AudioManager.PlaySound(new("AirDrop/SupplyPod/SupplyPodSpawnImpactCombinedA_1", hitData.pos, 50, AudioGroups.Weapon,0.25f));
         //直接在落地的时候就该创建创建而不是结束
         //Debug.LogError("落地位置"+ m_creatObject.position+"标记位置"+ transform.position+"碰撞位置"+hitData.pos);
         m_creatObject.position = transform.position;
@@ -323,7 +331,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
 
     void SetDisplay()
     {
-        AudioManager.PlaySound(new ("AirDrop/superbeacon_impact", AudioGroups.Weapon,0.5f));
+        AudioManager.PlaySound(new ("AirDrop/superbeacon_impact",transform.position,60, AudioGroups.Weapon,0.5f));
         m_Lift = GetComponent<LimitedLife>();
         //Debug.LogError("持续时间"+ (data.cfg.arriveTime + data.cfg.sustainTime));
         m_Lift.SetLift(data.cfg.arriveTime + data.cfg.sustainTime);
@@ -332,8 +340,13 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
         //main.duration = data.cfg.arriveTime + data.cfg.sustainTime;
 
         Color color = Color.LerpUnclamped(Color.white * data.cfg.Color.GetValue(), data.cfg.Color,1.7f);
-
+        for (int i = 1; i < 5; ++i)
+        {
+            transform.GetChild(i).gameObject.SetActive(data.cfg.arriveTime>0);
+        }
         transform.ForEach(item => SetColor(item, color));
+        light.color = color;
+
         var size = data.cfg.showRange;
         if (size.x > 0 && size.y > 0)
         {//矩形

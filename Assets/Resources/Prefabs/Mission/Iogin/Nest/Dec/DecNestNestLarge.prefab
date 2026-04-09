@@ -44,12 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ab55abf20157354ebe9d31a801bc232, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  missionTag: 12359
   missionType: 2
-  hide: 0
-  displayMiniMap: 1
-  isArea: 1
-  followMapScale: 1
-  compleHide: 1
+  priority: 3
   prefabs:
   - {fileID: 8648117571723643078, guid: 309607b7c99042a4fafd71ac8b3db825, type: 3}
   title: "\u62C6\u9664\u88AD\u63A0\u8005\u6298\u8D8A\u951A"
@@ -58,7 +55,6 @@ MonoBehaviour:
   NowProgress: 0
   AirdropRange: 0
   mapEntitySize: {x: 80, y: 80}
-  subTask: []
   parent: {fileID: 0}
   data:
     cfg: {fileID: 0}
@@ -79,13 +75,17 @@ MonoBehaviour:
       reward: 0
       complete: 0
     extras: []
+    subs: []
   color: {r: 0, g: 0, b: 0, a: 0}
   icon: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
   entitySize: 0
   percentage: 0
+  subTask: []
   InAirdropRange: 0
   entity: {fileID: 0}
+  end: 0
+  completed: 0
   useBar: 1
   actorNames:
   - DecNestBase

@@ -80,6 +80,26 @@ MonoBehaviour:
   Type: 
   Space: 0
   Delay: 0
+--- !u!114 &-6408314754451825579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
+  m_Name: "\u7231\u4E3D\u4E1D: \u662FHP\u836F\u6C34\uFF01"
+  m_EditorClassIdentifier: 
+  Desc: "\u662FHP\u836F\u6C34\uFF01"
+  Clip: {fileID: 8300000, guid: ea4981264a9bf434aa187c62fa54a389, type: 3}
+  SourceName: "\u7231\u4E3D\u4E1D"
+  Portrait: {fileID: 21300000, guid: c7830ef867ab0bb4faadb6ff4c8ff83d, type: 3}
+  Priority: 0
+  Type: 
+  Space: 0
+  Delay: 0
 --- !u!114 &-5372590153539913575
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -174,6 +194,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Desc: "\u8001\u5E08\uFF0C\u7231\u4E3D\u4E1D\u73B0\u5728\u662F\u4E16\u754C\u4E0A\u6700\u5F3A\u7684\u6218\u58EB\u3002"
   Clip: {fileID: 8300000, guid: fb97ac55fec971344bf3e8f60e14d131, type: 3}
+  SourceName: "\u7231\u4E3D\u4E1D"
+  Portrait: {fileID: 21300000, guid: c7830ef867ab0bb4faadb6ff4c8ff83d, type: 3}
+  Priority: 0
+  Type: 
+  Space: 0
+  Delay: 0
+--- !u!114 &-2910166404779157384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
+  m_Name: "\u7231\u4E3D\u4E1D: \u88C5\u5907\u8010\u4E45\u5EA6\u6062\u590D\u4E86\uFF01"
+  m_EditorClassIdentifier: 
+  Desc: "\u88C5\u5907\u8010\u4E45\u5EA6\u6062\u590D\u4E86\uFF01"
+  Clip: {fileID: 8300000, guid: 35bc9ad0924625f42bbb52e13e458980, type: 3}
   SourceName: "\u7231\u4E3D\u4E1D"
   Portrait: {fileID: 21300000, guid: c7830ef867ab0bb4faadb6ff4c8ff83d, type: 3}
   Priority: 0
@@ -277,9 +317,11 @@ MonoBehaviour:
   UseResLoad: 0
   nodes:
   - {fileID: 5922160610083103686}
+  - {fileID: 4500375865475179744}
   - {fileID: -5372590153539913575}
   - {fileID: 2374357283348408208}
   - {fileID: 187578883661421440}
+  - {fileID: -5089708622921692701}
   - {fileID: -3074445636627434366}
   - {fileID: 88241359654724639}
   - {fileID: 8994490143780817215}
@@ -287,6 +329,7 @@ MonoBehaviour:
   - {fileID: 2870885717174160204}
   - {fileID: 9218598510675590161}
   - {fileID: -9128106890473873854}
+  - {fileID: 4166122465844323392}
   - {fileID: 8948265497620121027}
   - {fileID: 7421812934663561273}
   - {fileID: 5932008785102832145}
@@ -307,9 +350,9 @@ MonoBehaviour:
   - {fileID: 6671377108834088067}
   - {fileID: -429072849391821721}
   - {fileID: 8676188342563432600}
-  - {fileID: -5089708622921692701}
-  - {fileID: 4166122465844323392}
-  - {fileID: 4500375865475179744}
+  - {fileID: -6408314754451825579}
+  - {fileID: -2910166404779157384}
+  - {fileID: 246262484667389266}
 --- !u!114 &88241359654724639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -369,6 +412,26 @@ MonoBehaviour:
   Priority: 0
   Type: 
   Space: 1
+  Delay: 0
+--- !u!114 &246262484667389266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
+  m_Name: "\u7231\u4E3D\u4E1D: HP\u56DE\u590D\u4E86\uFF01"
+  m_EditorClassIdentifier: 
+  Desc: "HP\u56DE\u590D\u4E86\uFF01"
+  Clip: {fileID: 8300000, guid: 4e390612ffdf80f4eb6b20e0a17e38f0, type: 3}
+  SourceName: "\u7231\u4E3D\u4E1D"
+  Portrait: {fileID: 21300000, guid: c7830ef867ab0bb4faadb6ff4c8ff83d, type: 3}
+  Priority: 0
+  Type: 
+  Space: 0
   Delay: 0
 --- !u!114 &1080762914947633157
 MonoBehaviour:

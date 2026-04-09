@@ -636,7 +636,7 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_Spacing: 6
   m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
@@ -655,7 +655,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
-  m_VerticalFit: 1
+  m_VerticalFit: 2
 --- !u!114 &6507359511105177318
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -668,6 +668,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8a872216adabc6409c86c1dcebe6239, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  self: {fileID: 4611122474002531434}
   title: {fileID: 7803196658118130388}
   counter: {fileID: 9065428955935793743}
   tip: {fileID: 1985448748888801200}
@@ -677,6 +678,8 @@ MonoBehaviour:
   subGroup: {fileID: 0}
   FadeInDuration: 0.5
   FadeOutDuration: 2
+  mission: {fileID: 0}
+  allowShow: 0
 --- !u!1 &9077083429906869543
 GameObject:
   m_ObjectHideFlags: 0
@@ -909,11 +912,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Color.r
       value: 0.82677174
-      objectReference: {fileID: 0}
-    - target: {fileID: 3034798618855625123, guid: 809173b6167d089418a3f3b8ad57f618,
-        type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 3092765797219893555, guid: 809173b6167d089418a3f3b8ad57f618,
         type: 3}

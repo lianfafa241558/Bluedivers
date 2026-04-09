@@ -42,6 +42,11 @@ public class BridgeRoleManager : RoleManagerBase
         GameRoot.Archive.GainRoleExp(dataList[m_nowShowIndex].ID, Random.Range(5000, 99999), out int level, out float expScale);
     }
 
+    public override Vector3 GetStartPoint()
+    {
+        return GameObject.FindGameObjectWithTag("StartPoint").transform.position + Vector3.up * 0.2f;
+    }
+
     public override void SetPlayerRole(PlayerController player)
     {
         player.SetBody(Instantiate(resManager.LoadRes<Transform>("Prefabs/StudentModle/" + dataList[m_nowSelectIndex].ID)), dataList[m_nowSelectIndex], new() { EmptyWeapon });

@@ -103,8 +103,9 @@ namespace Unity.FPS.Gameplay
         {
 
             if (m_isStop) return;
+            var dis = Vector3.Distance(InitialPosition, transform.position);
             //超出范围
-            if (MaxRange > 0 && Vector3.Distance(InitialPosition, transform.position) > MaxRange)
+            if (MaxRange > 0 && dis > MaxRange)
             {
                 m_isStop = true;
                 //GlobalEventManager.BulletHit(Owner,transform.position);
@@ -126,7 +127,7 @@ namespace Unity.FPS.Gameplay
                 Move();
             }
 
-            TryHit();
+            if (dis>MinRange) { TryHit(); }
             m_lastTime = Time.time;
             m_LastRootPosition = Root.position;
         }

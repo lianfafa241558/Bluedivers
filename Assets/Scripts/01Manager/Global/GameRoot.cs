@@ -21,7 +21,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
         set {
             var oldstste = Instance.windowState;
             Instance.windowState = value;
-            Debug.LogWarning("界面状态被设置为"+value);
+            //Debug.LogWarning("界面状态被设置为"+value);
             OnWindowStateChange?.Invoke(oldstste,value);
         }
     }
@@ -38,7 +38,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
         set {
             var oldstste = Instance.gameState;
             Instance.gameState = value; 
-            Debug.LogWarning("游戏状态被设置为" + value);
+            //Debug.LogWarning("游戏状态被设置为" + value);
             OnGameStateChange?.Invoke(oldstste,value);
         }
     }
@@ -46,7 +46,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
     public static event UnityAction<GameStateEnum,GameStateEnum> OnGameStateChange;
 
     [CustomLabel("游戏状态")][SerializeField]
-    private GameStateEnum gameState = GameStateEnum.Game;
+    private GameStateEnum gameState = GameStateEnum.Front;
 
     public static float TimeScale
     {
@@ -101,7 +101,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
     {
         showArchive = (ArchivesData_SO)ArchivesData_SO.Load();
 
-
+        //Debug.LogWarning("游戏状态初始被设置为" + GameState);
         LayerDefinition.HittableHighSpeedLayers = hittableHighSpeedLayers | groundLayers | unitLayers;
         LayerDefinition.HittableLayers = groundLayers | unitLayers;
         LayerDefinition.MoveableLayers = airWallLayers| groundLayers;
@@ -119,7 +119,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
 
         if (IsLocal)
         {
-            RoomManager.Instance.Self.airdrop = new int[4] {100,101,200,201 };
+            RoomManager.Instance.Self.airdrop = new int[4] {105,104,103,100 };
             BattleManager.Creat();
         }
         CreateTimer(InitSetting, 0.1f);

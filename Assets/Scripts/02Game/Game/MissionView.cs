@@ -4,27 +4,30 @@ using Core;
 using GameContract;
 using Utils;
 using Unity.FPS.Game;
-
-
+using Unity.BaseTool;
 
 namespace FpsGame.Mission
 {
-
 
     public class MissionView : BaseObject, I_MissionPoint
     {
         #region 接口
 
         public override float HalfRange => mission.entitySize;
-        public bool CompleHide => mission.compleHide;
-        bool I_MissionPoint.FollowAreaScale => mission.followMapScale;
 
-        float I_MissionPoint.IconSizeScale => mission.missionType == MissionType.Main ? 1 : 0.7f;
+        float I_MissionPoint.IconSizeScale => 1;
 
         float I_MissionPoint.AreaRange { get => areaRange; set => areaRange = value; }
+
+        public bool HaveTag(MissionTag tag) => mission.missionTag.HasFlag(tag);
+
+
         #endregion
+        #region
 
-
+        #endregion
+        /// <summary>在范围内</summary>
+        private bool InHalfRange;
         /// <summary>在部署战备范围内</summary>
         private bool InAirdropRange;
         /// <summary>已使用战备</summary>
@@ -33,16 +36,18 @@ namespace FpsGame.Mission
         private bool discovered { get; set; }
 
 
-        private float areaRange;
-        private MissionBase mission;
+        private float areaRange;//会变化
+        [HideInInspector]
+        public MissionBase mission;//仅用来触发事件
         private int[] requiredAD;
 
         public void Init(MissionBase mission, int[] requiredAD)
         {
-            this.discovered = mission.displayMiniMap;
-            areaRange = mission.isArea ? mission.entitySize : 0;
             this.mission = mission;
             this.requiredAD = requiredAD;
+            this.discovered = HaveTag(MissionTag.StratDiscovered);
+            areaRange = HaveTag(MissionTag.IsArea) ? mission.entitySize : 0;
+
             GlobalEventManager.OnMark += Mark;
             if (requiredAD.Length > 0) GlobalEventManager.OnAirdrop += OnAirdrop;
         }
@@ -51,34 +56,50 @@ namespace FpsGame.Mission
         {
             if (!discovered) GlobalEventManager.OnMark -= Mark;
             if (requiredAD.Length > 0) GlobalEventManager.OnAirdrop -= OnAirdrop;
+            enabled = false;
         }
 
         private void Update()
         {
             if (!BattleManager.Instance.IsStartBattle) return;
 
-            var dis = Vector2.Distance(ActorsManager.Player.Pos.ToVector2(), Pos.ToVector2());
+            var dis = ActorsManager.Players.Min(item => Vector2.Distance(item.Pos.ToVector2(), Pos.ToVector2()));
 
             bool entityRange = dis < HalfRange + 10;
+            if (HaveTag(MissionTag.OneDiscovered))
+            {
+                if (entityRange && !discovered)
+                {
+                    TryDiscovered();
+                }
+            }
+            else//超出距离自动消失的任务
+            {
+                if (entityRange != InHalfRange)
+                {
+                    InHalfRange = entityRange;
+                    GlobalEventManager.MissionStateChange(mission, entityRange);
+                }
+            }
+
 
             if (entityRange && !discovered)
             {
                 TryDiscovered();
                 CreatNotice("Kotama", "ApproachingTarget", () => !InAirdropRange);
-                GlobalEventManager.MissionStateChange(mission, entityRange);
             }
 
-            bool airdropRange = dis < mission.AirdropRange;
-            if (airdropRange != InAirdropRange)
+            bool inAirdropRange = dis < mission.AirdropRange;
+            if (inAirdropRange != InAirdropRange)
             {
-                InAirdropRange = airdropRange;
-                if (airdropRange)//进去又出来就不说了
+                InAirdropRange = inAirdropRange;
+                if (inAirdropRange)//进去又出来就不说了
                 {
                     if (!allowUseAirdrop) CreatNotice("Kotama", "TaskPodVaildAble", () => InAirdropRange);
                 }
                 else
                 {
-                    if (!allowUseAirdrop) CreatNotice("Kotama", "TaskPodUnvaildAble", () => InAirdropRange);
+                    if (!allowUseAirdrop) CreatNotice("Kotama", "TaskPodUnvaildAble", () => !InAirdropRange);
                 }
             }
 
@@ -92,10 +113,13 @@ namespace FpsGame.Mission
         public void TryDiscovered()
         {
             discovered = true;
-            GlobalEventManager.MissionShow(mission);
+            GlobalEventManager.MissionEnityShow(this);
             GlobalEventManager.OnMark -= Mark;
+            if (HaveTag(MissionTag.OneDiscovered))
+            {
+                GlobalEventManager.MissionStateChange(mission, true);
+            }
         }
-
         private void Mark(GameObject owner, GameObject target, Vector3 point)
         {
             if (!target) return;

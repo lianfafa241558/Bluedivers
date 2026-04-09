@@ -13,14 +13,19 @@ namespace FpsGame.MapUtils
         [Header("空气墙")]
         public GameObject wallPrefab;
 
-
-
+        public void Init()
+        {
+            //TerrainUtils.Main = terrain;
+            GenerateTerrainRect();
+            CreatAirWall();
+        }
+        /*
         private void Awake()
         {
             TerrainUtils.Main = terrain;
             GenerateTerrainRect();
             CreatAirWall();
-        }
+        }*/
 
         private void OnDestroy()
         {
@@ -33,10 +38,13 @@ namespace FpsGame.MapUtils
         [ContextMenu("生成Rect")]
         public void GenerateTerrainRect()
         {
+            var border = Constants.TaskBorder;
             var locpos = terrain.GetPosition();
-            locpos.y = -Constants.MapBorder / 2;
             var size = terrain.terrainData.size;
-            rect = new((locpos + Vector3.one * +Constants.MapBorder / 2).ToInt(), new Vector3Int((int)(size.x - Constants.MapBorder), (int)size.y, (int)(size.z - Constants.MapBorder)));
+            Vector3Int startPos = (locpos + border * new Vector3(1,0,1)).ToInt();
+            Vector3Int rectSize = size.ToInt() - border * new Vector3Int(2, 0, 2);
+
+            rect = new(startPos, rectSize);
             var sur = GetComponent<NavMeshSurface>();
             sur.size = size;
             sur.center = rect.center;

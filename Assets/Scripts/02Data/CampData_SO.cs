@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Core;
+using GameContract;
 using Unity.BaseTool;
 using UnityEngine;
 
@@ -36,7 +38,7 @@ public class CampData_SO : ScriptableObject
     [Space(16)]
     /// <summary>波次间隔</summary>
     [Header("波次")]
-    [CustomLabel("波次间隔")]
+    [CustomLabel("波次间隔(:秒)")]
     public int WaveCool;
     /// <summary>波次使用物体</summary>
     [CustomLabel("波次使用物体")]
@@ -48,7 +50,10 @@ public class CampData_SO : ScriptableObject
 
     [Header("巡逻队")]
     [CustomLabel("巡逻队")]
-    public DisplayDic<string, List<GameObject>> Patrol;
+    public DisplayDic<string, PatrolTemplate> Patrol;
+
+    [CustomLabel("巡逻队创建基准值(:秒)")]
+    public int PatrolCreatValue;
 
 
     [Space(16)]
@@ -63,16 +68,52 @@ public class CampData_SO : ScriptableObject
     [CustomLabel("巢穴类型")]
     public MissionEnum[] nestTypes;
 
+    [Space(16)]
+    [CustomLabel("备份的主线类型")]
+    public MissionEnum[] mainTypesBackup;
 
+    //[ContextMenu("转换")]
+    //public void trans()
+    //{
+    //    Templates.ForEach((key,value)=> value.Template=value.Cfg.ToList());
+    //}
+
+    [System.Serializable]
+    public class PatrolTemplate
+    {
+        [Header("巡逻队配置")]
+        public List<KVP<UnitTier, int>> Template;
+    }
 
     [System.Serializable]
     public class CampTemplate
     {
-        public List<KVP<GameObject, Vector2Int>> Template;
-        public List<string> PatrolName;
+        //[CustomLabel("敌人权重")]
+        //public DisplayDic<UnitTier, TierCfg> Cfg;
+        [Header("敌人权重")]
+        public List<KVP<UnitTier, TierCfg>> Template;
+
+        [Header("巡逻队类型")]
+        public List<string> PatrolTemplate;
     }
 
-
-
+    [System.Serializable]
+    public struct UnitWeightCfg
+    {
+        [CustomLabel("预制体")]
+        public GameObject unit;
+        [CustomLabel("概率")]
+        public int weight;
+        [CustomLabel("占据补给量")]
+        public int size;
+    }
+    [System.Serializable]
+    public struct TierCfg
+    {
+        [CustomLabel("权重")]
+        public int weight;
+        [Header("单位类型")]
+        public List<UnitWeightCfg> unitWeights;
+    }
 }
 

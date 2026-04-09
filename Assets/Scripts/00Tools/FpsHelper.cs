@@ -223,6 +223,39 @@ public static class FpsHelper
         }
         return scale;
     }
+
+    /// <summary>
+    /// 根据根骨骼和末端骨骼，手动更新蒙皮网格的包围盒
+    /// </summary>
+    /// <param name="smr">目标蒙皮网格渲染器</param>
+    /// <param name="endBone">管道末端骨骼</param>
+    /// <param name="boundsExpand">包围盒向外扩大值（适配管道粗细）</param>
+    public static void UpdatePipeBounds(SkinnedMeshRenderer smr, Transform endBone, float expand = 1f)
+    {
+        // 参数校验
+        if (smr == null || endBone == null)
+        {
+            Debug.LogError("参数错误", smr);
+            return;
+        }
+
+        Transform bone = endBone;
+
+        // 初始化包围盒（以第一个骨骼为起点）
+        Bounds bounds = new Bounds(smr.transform.InverseTransformPoint(bone.position), Vector3.zero);
+        bone = bone.parent;
+        while (bone != null && bone != smr.rootBone)
+        {
+            bounds.Encapsulate(smr.transform.InverseTransformPoint(bone.position));
+            bone = bone.parent;
+        }
+        bounds.center = new(-bounds.center.z, bounds.center.y, bounds.center.x);
+        bounds.size = new(bounds.size.z, bounds.size.y, bounds.size.x);
+        // 扩展并赋值
+        bounds.Expand(expand);
+        smr.localBounds = bounds;
+    }
+
 }
 
 

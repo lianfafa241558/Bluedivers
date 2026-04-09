@@ -133,6 +133,7 @@ MonoBehaviour:
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
+  mission: {fileID: 0}
 --- !u!114 &8142537480972770134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -148,7 +149,7 @@ MonoBehaviour:
   datas: []
   additionTerrain: {fileID: 8142537480278911204}
   transitionDistance: 8
-  StartModify: 1
+  StartModify: 0
 --- !u!1001 &1643153094582400364
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -156,6 +157,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 8142537480972770132}
     m_Modifications:
+    - target: {fileID: 1417902310742990665, guid: 9daa0085da612034281d3688be01157c,
+        type: 3}
+      propertyPath: BirthDuration
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1417902310742990669, guid: 9daa0085da612034281d3688be01157c,
         type: 3}
       propertyPath: m_RootOrder
@@ -215,6 +221,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Dec_Stalker
+      objectReference: {fileID: 0}
+    - target: {fileID: 1417902310742990674, guid: 9daa0085da612034281d3688be01157c,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9daa0085da612034281d3688be01157c, type: 3}

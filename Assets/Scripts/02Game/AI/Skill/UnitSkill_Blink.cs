@@ -9,6 +9,7 @@ using Utils;
 
 namespace Unity.FPS.AI
 {
+    [AddComponentMenu("技能/闪现", 30)]
     public class UnitSkill_Blink : UnitSkill_Base
     {
         [CustomLabel("受击后触发技能的时间")]

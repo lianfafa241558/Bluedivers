@@ -191,10 +191,14 @@ MonoBehaviour:
   AttackRange: 15
   AlertRange: 20
   KnownTargetTimeout: 8
+  Target:
+    pos: {x: 0, y: 0, z: 0}
   IsSeeingTarget: 0
+  TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
+  showCollider: {fileID: 0}
 --- !u!1 &3577463980131566663
 GameObject:
   m_ObjectHideFlags: 0
@@ -529,6 +533,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: -1
+    MinRange: -1
     NoSource: 0
     DamageDirect: 0
     DamageGroupDirect:
@@ -984,7 +989,7 @@ MonoBehaviour:
   UseHpBar: 1
   HpHeight: 1
   shape: 0
-  rangeLength: 1
+  rangeLength: 1.7
   damageables: []
 --- !u!114 &75619832239817635
 MonoBehaviour:
@@ -1001,6 +1006,7 @@ MonoBehaviour:
   DeathDuration: 3
   BirthDuration: 2
   birthTime: 0
+  IsRemove: 0
   PathReachingRadius: 1
 --- !u!114 &579562280907152891
 MonoBehaviour:
@@ -1197,6 +1203,8 @@ MonoBehaviour:
   AttackStop: 1
   AttackStopDistanceRatio: 0.6
   MaintainMaxDis: 0
+  PatrolSpeed: 2
+  AiState2: 1
 --- !u!195 &7820146443735053807
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -3381,6 +3389,7 @@ MonoBehaviour:
   showArmorLists:
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 150
   LineArmor:
   - {fileID: 2894464610256575581}
@@ -3429,6 +3438,7 @@ MonoBehaviour:
   showArmorLists:
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 150
   LineArmor:
   - {fileID: 7508501207925251303}
@@ -3483,6 +3493,7 @@ MonoBehaviour:
   showArmorLists:
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 100
   LineArmor:
   - {fileID: 3085531840998514021}
@@ -3642,6 +3653,7 @@ MonoBehaviour:
     Value: -1
   - Key: 2
     Value: -1
+  AllArmor: 0
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -3697,6 +3709,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   showArmorLists: []
+  AllArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 5832997876581394934}
@@ -3881,6 +3894,7 @@ MonoBehaviour:
   showArmorLists:
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 100
   LineArmor:
   - {fileID: 8781071549759883367}

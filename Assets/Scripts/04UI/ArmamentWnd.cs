@@ -64,13 +64,26 @@ public class ArmamentWnd : WindowRoot
                 }
             }
 
-            for (int u = 0; u < 7; ++u)
+            for (int u = 0,y=0; u < 7; ++u)
             {
                 if (u<taskManager.nowTask.RequiredAD.Count)
                 {
-                    buttons[armamentRoot.GetChild(i, 6, u)] = taskManager.nowTask.RequiredAD[u];
-                    SetButton(armamentRoot.GetChild(i, 6, u), tipRoot, ShowTip);
-                    SetSprite(armamentRoot.GetChild(i, 6, u, 0,0), ResManager.airdropDic[taskManager.nowTask.RequiredAD[u]].icon);
+                    var item = ResManager.airdropDic[taskManager.nowTask.RequiredAD[u]];
+                    if (!item.isHide)
+                    {
+                        //正常的，因为跑了4个玩家的
+                        //Debug.LogError("第"+u+"是"+ taskManager.nowTask.RequiredAD[u]);
+                        buttons[armamentRoot.GetChild(i, 6, y)] = taskManager.nowTask.RequiredAD[u];
+                        SetButton(armamentRoot.GetChild(i, 6, y), tipRoot, ShowTip);
+                        SetSprite(armamentRoot.GetChild(i, 6, y, 0, 0), item.icon);
+                        SetActive(armamentRoot.GetChild(i, 6, y, 0), true);
+                        ++y;
+                    }
+                    else
+                    {
+                        SetActive(armamentRoot.GetChild(i, 6, u, 0), false);
+                    }
+
                 }
                 else{
                     SetActive(armamentRoot.GetChild(i, 6, u,0),false);
@@ -155,7 +168,9 @@ public class ArmamentWnd : WindowRoot
         }
         InitPlayerAirdrop();
     }
-
+    /// <summary>
+    /// 显示可选战备
+    /// </summary>
     private void InitPlayerAirdrop()
     {
         var layout = armamentRoot.GetChild(0, 2, 0, 0, 0);
@@ -164,7 +179,7 @@ public class ArmamentWnd : WindowRoot
         {
             var root = layout.GetChild(i);
             var type = (AirdropData_SO.AirdropType)(i / 2);
-            var list = airdropList.FindAll(item=>item.type== type);
+            var list = airdropList.FindAll(item=>item.type== type&& !item.isHide);
             for (int u = 0; u < list.Count; ++u)
             {
                 var button=Instantiate(buttonPrefab, root).transform;

@@ -129,7 +129,7 @@ public class WndManager : WndManagerBase<WndManager>
 
                 break;
             case GameStateEnum.Game:
-                Debug.LogError("进入战斗");
+                Debug.LogWarning("进入战斗");
                 playerWnd.SetWndState(true);
                 jetpackWnd.SetWndState(true);
                 airdropWnd.SetWndState(true);
@@ -137,7 +137,6 @@ public class WndManager : WndManagerBase<WndManager>
                 subtitleWnd.SetWndState(true);
                 hpWnd.SetWndState(true);
                 missionWnd.SetWndState(true);
-                CreatNotice("Yuuka2", "MissionStart", delay: 3);
                 /*
                 if (GameRoot.Instance.IsLocal)
                 {
@@ -151,7 +150,7 @@ public class WndManager : WndManagerBase<WndManager>
         }
     }
 
-    LoginTimer contAlpha;
+    //LoginTimer contAlpha;
     private void OnWindowStateChange(WindowStateEnum oldState, WindowStateEnum state)
     {
         switch (state)
@@ -163,8 +162,9 @@ public class WndManager : WndManagerBase<WndManager>
                 {
                     SetActive(GameUI, true);
                     GameUI.GetComponent<CanvasGroup>().alpha = 0;
-                    if (contAlpha.IsValid()) contAlpha.Stop();
-                    contAlpha = GameRoot.CreateTimer((count) => GameUI.GetComponent<CanvasGroup>().alpha = 0.02f * count, 0.02f, 50);
+                    //if (contAlpha.IsValid()) contAlpha.Stop();
+                    SetAlpha(GameUI,0,1,500);
+                    //contAlpha = GameRoot.CreateTimer((count) => GameUI.GetComponent<CanvasGroup>().alpha = 0.02f * count, 0.02f, 50);
                 }
                 break;
             case WindowStateEnum.UI:

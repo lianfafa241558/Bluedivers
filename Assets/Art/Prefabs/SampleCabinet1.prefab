@@ -67,7 +67,7 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: d817dc4a51f9bde4b84c686a5a0b950f, type: 2}
   - {fileID: 2100000, guid: fc63ddbe2eee054469f48ada70d2892e, type: 2}
-  - {fileID: 2100000, guid: 1b97b3dab845acb4c9a16b81ee250326, type: 2}
+  - {fileID: 2100000, guid: d583402e8402ae64ba98960d385f9402, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -115,9 +115,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PlayerName: "\u6837\u672C\u67DC"
+  ShowName: 
   Id: 
   Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &787357441960223838
 GameObject:
   m_ObjectHideFlags: 0
@@ -309,6 +311,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Sample1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5b0a07506d4f58f4e8838df784937689,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5b0a07506d4f58f4e8838df784937689, type: 3}

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4778346531047654934}
   - component: {fileID: 1636757916397185046}
   - component: {fileID: 3189300229661463795}
+  - component: {fileID: 2729281214287269657}
   m_Layer: 5
   m_Name: Directional Light
   m_TagString: Untagged
@@ -44,7 +45,7 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 1, g: 0.90409833, b: 0.85, a: 1}
+  m_Color: {r: 0.865, g: 0.78358823, b: 0.73609805, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
@@ -79,10 +80,10 @@ Light:
   m_Cookie: {fileID: 0}
   m_DrawHalo: 0
   m_Flare: {fileID: 0}
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 7499
+    m_Bits: 2147483647
   m_RenderingLayerMask: 1
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
@@ -115,3 +116,31 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
+--- !u!114 &2729281214287269657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4778346531047654936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd9e0c180e6d6fa468a0e531c09d8864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fullDayDuration: 1800
+  noonIntensity: 1
+  midnightIntensity: 0.15
+  noonAmbient: {r: 0.75, g: 0.72187495, b: 0.675, a: 1}
+  sunsetAmbient: {r: 0.3529412, g: 0.4082106, b: 0.5019608, a: 1}
+  nightAmbient: {r: 0.17078653, g: 0.22921348, b: 0.4, a: 1}
+  dawnAmbient: {r: 0.4, g: 0.37414995, b: 0.2784314, a: 1}
+  noonFog: {r: 0.69803923, g: 0.24705882, b: 0.15294118, a: 1}
+  nightFog: {r: 0.09044134, g: 0.09019608, b: 0.14117648, a: 1}
+  noonFogDensity: 0.01
+  nightFogDensity: 0.03
+  skyboxMaterial: {fileID: 2100000, guid: f79ac4ee263483846b3e1b221dc609d0, type: 2}
+  currentTime: 0.7905333
+  showFogColor: {r: 0.09044134, g: 0.09019608, b: 0.14117648, a: 1}
+  showLightColor: {r: 0, g: 0, b: 0, a: 0}
+  showAmbColor: {r: 0.17078653, g: 0.22921348, b: 0.4, a: 1}

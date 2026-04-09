@@ -44,8 +44,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4c7abf03768eeb478a453d514d948e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hide: 0
-  displayMiniMap: 1
+  missionTag: 12305
+  iconSizeScale: 1
+  missionType: 0
+  priority: 100
   prefabs: []
   title: 
   tip: 
@@ -53,7 +55,6 @@ MonoBehaviour:
   NowProgress: 0
   AirdropRange: 0
   mapEntitySize: {x: 0, y: 0}
-  subTask: []
   parent: {fileID: 0}
   data:
     cfg: {fileID: 0}
@@ -62,13 +63,26 @@ MonoBehaviour:
     complete: 0
   root:
     RequiredAD: 
-    nestCount: 
-    campData: {fileID: 0}
-    mapImage: {fileID: 0}
-    mapIcon: {fileID: 0}
     activeTask: 0
+    main:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    evacuate:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    extras: []
+    subs: []
+  color: {r: 0, g: 0, b: 0, a: 0}
   icon: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
   entitySize: 0
   percentage: 0
-  InEntityRange: 0
+  subTask: []
+  InAirdropRange: 0
+  entity: {fileID: 0}
+  end: 0
+  completed: 0

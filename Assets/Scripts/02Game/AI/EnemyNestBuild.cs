@@ -41,6 +41,7 @@ namespace Unity.FPS.AI
                         var item = RandomUtils.RandomTake(creatData);
                         creatTime = Time.time+ item.Value;
                         var go = Instantiate(item.Key, creatPoint.position + creatPoint.forward, creatPoint.rotation, transform.parent);
+                        go.GetComponent<EnemyController>().SetNavDestination(GetComponent<EnemyController>().Target.Pos);
                     }
                     break;
             }

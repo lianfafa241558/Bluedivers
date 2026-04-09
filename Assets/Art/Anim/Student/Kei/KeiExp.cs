@@ -6,7 +6,7 @@ using Utils;
 public class KeiExp : MonoBehaviour
 {
 
-    public new Renderer renderer;
+    public Renderer renderer;
     public float time = 0;
     public int exp=0;
 

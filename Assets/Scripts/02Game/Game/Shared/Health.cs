@@ -38,6 +38,9 @@ namespace Unity.FPS.Game {
         /// <summary>死亡时</summary>
         public UnityAction<GameObject> OnDie;
 
+        /// <summary>复活时</summary>
+        public UnityAction OnRevive;
+
         [Space]
         [DisplayField]
         [CustomLabel("剩余生命值")]
@@ -143,10 +146,12 @@ namespace Unity.FPS.Game {
 
 
         /// <summary>复活</summary>
-        public void Revive()
+        public virtual void Revive()
         {
             CurrentHealth = MaxHealth;
             CurrentShield = MaxShield;
+            OnRevive?.Invoke();
+            m_IsDead = false;
         }
 
         /// <summary>代码杀</summary>
@@ -166,7 +171,7 @@ namespace Unity.FPS.Game {
 
             // call OnDie action
             if (CurrentHealth <= 0) {
-                Debug.LogWarning(gameObject+"单位死亡",gameObject);
+                Debug.Log(gameObject+"单位死亡",gameObject);
                 m_IsDead = true;
                 OnDie?.Invoke(source);
             }

@@ -57,6 +57,8 @@ public class SubtitleWnd : WindowRoot
         }
         AirDropSubtitlesPool = new(AirdropPoolUpdate, AirdropPoolAdd, AirdropPoolEnqueue, 0);
 
+        GainObjectTipRoot.alpha = 0;
+
         GlobalEventManager.OnAirdrop += OnAirdrop;
         GlobalEventManager.OnSettingCange += OnSettingCange;
         GlobalEventManager.OnUnitDeath += OnActorDeath;
@@ -89,9 +91,11 @@ public class SubtitleWnd : WindowRoot
         var forward = camera.transform.forward;
         int useIndex = 0;
         show.Clear();
+
+        if (ActorsManager.Player == null) return;
         foreach (var item in Furniture_Base.list.Values)
         {
-            if (!item.canOperate || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
+            if (!item.CanOperate(ActorsManager.Player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
             float dis = Vector3.Distance(item.CenterPos, pos);
             if (dis < 20 && item != wndManager.operationWnd.furn)
             {
@@ -157,6 +161,10 @@ public class SubtitleWnd : WindowRoot
 
     private void OnActorCreat(KVP<UnitTypeEnum, I_Actor> item)
     {
+        if (Subtitles==null)
+        {
+            FirstShowWnd();
+        }
         switch (item.Key)
         {
             case UnitTypeEnum.Player:
@@ -169,6 +177,8 @@ public class SubtitleWnd : WindowRoot
                 Subtitles.Add(Instantiate(RolePrefab).Creat(item.Value, item.Value.gameObject, transform, alwaysShow));
                 break;
             case UnitTypeEnum.SpecUnit:
+                //Debug.LogError($"创建特殊单位,玩家{ActorsManager.Player}，目标{item.Value}");
+                //Debug.LogError($"目标的单位{item.Value.gameObject}");
                 Subtitles.Add(Instantiate(SpecUnitPrefab).Creat(ActorsManager.Player, item.Value.gameObject, transform, alwaysShow));
                 break;
         }
@@ -177,6 +187,8 @@ public class SubtitleWnd : WindowRoot
 
     private void OnActorDeath(Actor actor)
     {
+        if (actor.Type == UnitTypeEnum.Player || actor.Type == UnitTypeEnum.Friend) return;
+
         for (int i = Subtitles.Count - 1; i >= 0; --i)
         {
             if (actor == (Actor)Subtitles[i].owner)

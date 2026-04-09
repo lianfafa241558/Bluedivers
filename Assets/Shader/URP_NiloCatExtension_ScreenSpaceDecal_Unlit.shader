@@ -99,10 +99,12 @@ Shader "Screen Space Decal"
             // (https://docs.unity3d.com/Manual/SL-UnityShaderVariables.html
             // It will also include many utilitary functions. 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             struct appdata
             {
                 float3 positionOS : POSITION;
+                float3 normal : NORMAL;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -112,6 +114,7 @@ Shader "Screen Space Decal"
                 float4 screenPos : TEXCOORD0;
                 float4 viewRayOS : TEXCOORD1; // xyz: viewRayOS, w: extra copy of positionVS.z 
                 float4 cameraPosOSAndFogFactor : TEXCOORD2;
+                float3 normalWS : TEXCOORD3; // 世界空间法线
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -149,7 +152,7 @@ Shader "Screen Space Decal"
                 VertexPositionInputs vertexPositionInput = GetVertexPositionInputs(input.positionOS);
 
                 o.positionCS = vertexPositionInput.positionCS;
-
+                o.normalWS = TransformObjectToWorldNormal(input.normal);
                 // regular unity fog
 #if _UnityFogEnable
                 o.cameraPosOSAndFogFactor.a = ComputeFogFactor(o.positionCS.z);
@@ -289,6 +292,27 @@ Shader "Screen Space Decal"
                 // with a custom one.
                 col.rgb = MixFog(col.rgb, i.cameraPosOSAndFogFactor.a);
 #endif
+
+                // 1. 获取主方向光
+                Light mainLight = GetMainLight();
+                float3 lightDir = normalize(mainLight.direction);
+                float3 lightColor = mainLight.color;
+
+                // 2. 法线归一化（插值后要重新归一化）
+                float3 normalWS = normalize(i.normalWS);
+
+                // 3. 漫反射 Lambert
+                half ndotl = saturate(dot(normalWS, lightDir));
+                half3 diffuse = lightColor * ndotl;
+
+                // 4. 获取环境光
+                half3 ambient = SampleSH(normalWS); // 球谐光照，包含环境光
+
+
+                col.rgb *= (diffuse + ambient);
+
+
+
                 return col;
             }
             ENDHLSL

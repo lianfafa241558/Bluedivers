@@ -45,6 +45,7 @@ public class PlayerSpeechManager : MonoBehaviour
             lastSpeechTime = Time.time;
             lastSpeechType = type;
             var item = Cfg.Speech(type);
+            //Debug.LogError("找到的语句"+item,item);
             if (item)
             {
                 speechShowTime = item.Clip.length;
@@ -123,7 +124,7 @@ public class PlayerSpeechManager : MonoBehaviour
 
     void OnMeetSpeech(GameObject user, SpeechTypeEnum state)
     {
-        //Debug.LogError("收到事件目标玩家 "+user+" 本地玩家"+gameObject);
+        //Debug.LogError("收到事件目标玩家 "+user+" 本地玩家"+gameObject+"尝试"+ state);
         if (user == gameObject)
         {
             Speech(state);

@@ -20,6 +20,7 @@ public static partial class TerrainUtils
                 heightmapRes = value.terrainData.heightmapResolution - 1;
                 alphamapRes = value.terrainData.alphamapResolution;
                 terrainHeight = (int)value.terrainData.size.y;
+                Debug.LogWarning("设置main地形", value);
             }
         }
     }
@@ -103,42 +104,51 @@ public static partial class TerrainUtils
     /// <param name="outerRadius">外半径:米</param>
     /// <param name="depth">深度:米</param>
     /// <param name="isSet">设置/修改</param>
-    public static void ModifyHeightMap(Vector3 pos, int innerRadius, int outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true)
+    public static void ModifyHeightMap(Vector3 pos, float innerRadius, float outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true)
     {
-        ModifyHeightMap(WSToUV(pos), innerRadius, outerRadius, depth, shape, isSet,refresh);
+
+        ModifyHeightMap(WSToUV(pos), pos.y, innerRadius, outerRadius, depth, shape, isSet,refresh);
     }
 
     /// <summary>
     /// 修改高度图
     /// </summary>
     /// <param name="uv">标准化之后的坐标[0,1]</param>
+    /// <param name="baseHeight">中心点高度:米</param>
     /// <param name="shape">形状，只有圆和方有用</param>
     /// <param name="innerRadius">内半径:米</param>
     /// <param name="outerRadius">外半径:米</param>
     /// <param name="depth">深度:米</param>
     /// <param name="isSet">设置/修改</param>
-    public static void ModifyHeightMap(Vector2 uv, int innerRadius, int outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true,bool refresh=true)
+    public static void ModifyHeightMap(Vector2 uv,float baseHeight, float innerRadius, float outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true,bool refresh=true)
     {
         if (shape != ShapeType.Circle && shape != ShapeType.Ellipse)
         {
             Debug.LogError("修改地形使用了错误的形状" + shape);
             return;
         }
+        baseHeight /= terrainHeight;
         var outerRadiusRes = WRToHR(outerRadius);
         float invRadius = 1f / outerRadiusRes;//范围的倒数，让dis标准化
         float innerScale = innerRadius / (outerRadius + 0f);//内半径的系数(比如0.8)
 
         //地形数据
-        float[,] heights = GetHeights(uv, outerRadiusRes, out int xBase, out int yBase, out int size);
+        float[,] heights = GetHeights(uv, outerRadiusRes, out int xBase, out int yBase, out int size, out Vector2 offset);
         if (size==0)
         {
             Debug.LogError("错误:修改的地形半径为0");
             return;
         }
-        //中心点应该的高度
+        //中心点应该的高度[0,1]
+        float centerOldHeight = SampleSmallHeight(heights, size / 2f, size / 2f);
         //float centerHeight = GetMapHeightAtUV(uv)- depth/data.size.y;
-        float centerOldHeight = heights[size / 2, size / 2];
+        //float centerOldHeight = heights[size / 2f, size / 2f];
         float centerHeight = centerOldHeight - depth / terrainHeight;
+        if (!isSet)
+        {
+            centerHeight = centerOldHeight - Mathf.Max(0,depth / terrainHeight - (baseHeight - centerOldHeight));
+        }
+
 
         Vector2 center = Vector2.one * size * 0.5f;
 
@@ -154,15 +164,18 @@ public static partial class TerrainUtils
                 };
                 if (normalizedDistance <= 1f)
                 {
+                    var height = SampleSmallHeight(heights, y+ offset.y, x + offset.x);
                     //在外圈线性[0,1]，内圈直接1
                     float power = Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale));
                     if (isSet)
                     {
-                        heights[y, x] = Mathf.Lerp(heights[y, x], centerHeight, power);
+                        heights[y, x] = Mathf.Lerp(height, centerHeight, power);
                     }
                     else
                     {
-                        heights[y, x] = Mathf.Max(0, Mathf.Min(heights[y, x], Mathf.Lerp(heights[y, x], centerOldHeight, power) - depth * power / terrainHeight));
+                        //最终深度[0,1]
+                        float nowDepth = Mathf.Max(0, depth / terrainHeight - (baseHeight - centerOldHeight));
+                        heights[y, x] = Mathf.Max(0, Mathf.Min(height, Mathf.Lerp(height, centerOldHeight, power) - nowDepth * power));
                     }
                 }
             }
@@ -170,7 +183,8 @@ public static partial class TerrainUtils
 
         data.SetHeightsDelayLOD(xBase, yBase, heights); //延迟写入（性能最优）
         data.SyncHeightmap();//同步地形数据
-        ModifyAlphaMap(uv, innerRadius, outerRadius, shape,isSet);
+        //这里高度已经被标准化过了
+        ModifyAlphaMap(uv, 1-Mathf.Clamp01((baseHeight - centerOldHeight)/(depth / terrainHeight)-0.1f) , innerRadius, outerRadius, shape,isSet);
         if (refresh) Refresh(innerRadius>2);
     }
 
@@ -181,7 +195,7 @@ public static partial class TerrainUtils
     /// </summary>
     /// <param name="uv"></param>
     /// <param name="radius"></param>
-    private static void ModifyAlphaMap(Vector2 uv, int innerRadius, int outerRadius, ShapeType shape = ShapeType.Circle, bool isSet = true)
+    private static void ModifyAlphaMap(Vector2 uv, float modifityScale, float innerRadius, float outerRadius, ShapeType shape = ShapeType.Circle, bool isSet = true)
     {
 
         var radiusRes = WRToHR(outerRadius);
@@ -212,35 +226,35 @@ public static partial class TerrainUtils
                         int xHeight = ARToHR(xBase + x);
                         int yHeight = ARToHR(yBase + y);
                         var steep = GetSteepness(xHeight, yHeight) / 90;//坡度[0,1]
-                        float height = data.GetHeight(xHeight, yHeight)/ terrainHeight;//高度[0,1]
+                        float height = data.GetHeight(yHeight, xHeight)/ terrainHeight;//高度[0,1]
                         //巢穴系数不变，弹坑层级归零，剩下的层级分权重
-                        float weightSum = 1 - alphas[x, y, 3];
+                        float weightSum = 1 - alphas[y, x, 3];
 
                         //例如:0.3/0.1/0.15/0.2/0.25 剩余权重0.8/(1-0.3)
                         //变成了 0/0.114/0.171/0.2/0.279
 
                         // 陡坡层[22.5度,67.5度],[0.25,0.75]
-                        alphas[y, x, 4] = Mathf.Clamp01(steep * 2f - 0.5f);
+                        alphas[y, x, 4] = Mathf.Clamp01(steep * 2f - 0.5f) * weightSum;
 
                         // 沙地层（中等高度)在[0,0.5]高度逐步变为[0,1]
-                        alphas[x, y, 1] = Mathf.Clamp01(height * 2f) * (1 - alphas[x, y, 4]) * weightSum;
+                        alphas[y, x, 1] = Mathf.Clamp01(height * 2f) * (1 - alphas[y, x, 4]) * weightSum;
 
                         // 侵蚀层(低洼区域)在[0,0.5]高度逐步变为[1,0]
-                        alphas[x, y, 2] = Mathf.Clamp01((1 - height) * 2f) * (1 - alphas[x, y, 4]) * weightSum;
+                        alphas[y, x, 2] = Mathf.Clamp01((1 - height) * 2f) * (1 - alphas[y, x, 4]) * weightSum;
 
-                        alphas[y, x, 4] *= weightSum;
+                        //alphas[y, x, 4] *= weightSum;
 
                         //巢穴层不变
                         //alphas[x, y, 3] = 0;
                         //弹坑层归零
-                        alphas[x, y, 0] = 0;
+                        alphas[y, x, 0] = 0;
 
                     }
                     else
                     {
                         // 使用平滑曲线计算权重
 
-                        float targetWeight = Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale));
+                        float targetWeight = Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale))* modifityScale;
                         //总和必须是1
                         float originalSum = (1 - targetWeight);
                         //例如:0.3/0.1/0.15/0.2/0.25 弹坑权重0.6,残余权重就是(1-0.6)/(1-0.3)
@@ -273,6 +287,7 @@ public static partial class TerrainUtils
     /// <param name="angle">绕Y轴旋转的角度（单位：度）</param>
     public static void AdditionTerrain(Terrain source, float transitionDistance, float angle, bool refresh = true)
     {
+
         TerrainData sourceData = source.terrainData;
         float smallTerrainSize = sourceData.size.x; // 假设地形是正方形，x/z尺寸一致
 
@@ -289,7 +304,7 @@ public static partial class TerrainUtils
         smallTerrainSize += transitionDistance * 0.5f;//额外的过渡范围
 
         var uv = WSToUV(sourceCenter); 
-        var heights = GetHeights(uv, WRToHR(smallTerrainSize / 2), out int xBaseH, out int yBaseH, out int sizeH);
+        var heights = GetHeights(uv, WRToHR(smallTerrainSize / 2), out int xBaseH, out int yBaseH, out int sizeH,out Vector2 heightsOffset);
         float[,,] alphas = GetAlphas(uv, WRToAR(smallTerrainSize / 2), out int xBaseA, out int yBaseA, out int sizeA, out int layer);
 
         for (int y = 0; y < sizeH; y++)
@@ -323,12 +338,14 @@ public static partial class TerrainUtils
                 // 从旋转后的坐标获取源地形高度
                 //heights[y, x] = Mathf.Lerp(heights[y, x], (source.WSToHeight(rotatedWS)) / terrainHeight, normalizedDistance);
                 //WSToHeight 自带边界 clamped 保护
-                heights[y, x] = Mathf.SmoothStep(heights[y, x], (source.WSToHeight(rotatedWS)) / terrainHeight, normalizedDistance);
+                var height = SampleSmallHeight(heights, y + heightsOffset.y, x + heightsOffset.x);
+                heights[y, x] = Mathf.SmoothStep(height, (source.WSToHeight(rotatedWS)) / terrainHeight, normalizedDistance);
                 //heights[y, x] = (source.WSToHeight(rotatedWS)) / terrainHeight;
 
             }
         }
 
+        int smallLayout= smallAlphas.GetLength(2);
         for (int y = 0; y < sizeA; y++)
         {
             for (int x = 0; x < sizeA; x++)
@@ -350,9 +367,11 @@ public static partial class TerrainUtils
                 // 纹理权重插值
                 for (int i = 0; i < layer; ++i)
                 {
-                    float smallAlphaValue = SampleSmallAlphaBilinear(smallAlphas, smallAlphaRes, uvSmall, i);
-                    alphas[y, x, i] = Mathf.SmoothStep(alphas[y, x, i], smallAlphaValue, normalizedDistance);
-
+                    if (i<smallLayout)
+                    {
+                        float smallAlphaValue = SampleSmallAlphaBilinear(smallAlphas, smallAlphaRes, uvSmall, i);
+                        alphas[y, x, i] = Mathf.SmoothStep(alphas[y, x, i], smallAlphaValue, normalizedDistance);
+                    }
                 }
             }
         }
@@ -372,8 +391,12 @@ public static partial class TerrainUtils
 
     public static void Refresh(bool refreshNav) {
         Main.Flush();
-        if(refreshNav) nav.UpdateNavMesh(nav.navMeshData);
+        //TODO:这个是异步的
+        //if(refreshNav) nav.UpdateNavMesh(nav.navMeshData);
+        //先用同步的凑合一下
+        if (refreshNav) nav.BuildNavMesh();
     }
+
 
 
     /// <summary>
@@ -385,12 +408,13 @@ public static partial class TerrainUtils
     /// <param name="yBase">起始Y:像素</param>
     /// <param name="size">尺寸:像素</param>
     /// <returns>高度数组 [0,1]</returns>
-    private static float[,] GetHeights(Vector2 center, float radius, out int xBase, out int yBase, out int size)
+    private static float[,] GetHeights(Vector2 center, float radius, out int xBase, out int yBase, out int size,out Vector2 offset)
     {
         center *= heightmapRes;
         xBase = Mathf.Clamp(Mathf.FloorToInt(center.x - radius), 0, heightmapRes);
         yBase = Mathf.Clamp(Mathf.FloorToInt(center.y - radius), 0, heightmapRes);
         size = Mathf.Clamp(Mathf.FloorToInt(2 * radius), 0, heightmapRes - Mathf.Max(xBase, yBase));
+        offset = new(center.x%1,center.y%1);
         //Debug.LogError("起点" + xBase + " " + yBase + "大小" + Mathf.FloorToInt(2 * radius)+"最大"+(heightmapRes - Mathf.Max(xBase, yBase)));
         //地形数据
         return data.GetHeights(xBase, yBase, size, size);
@@ -573,9 +597,39 @@ public static partial class TerrainUtils
         float tx = pixelX - x0;
         float ty = pixelY - y0;
 
+        //Debug.LogError("查询" + x0 + "," + y0+" 和"+x1+","+y1+"uv"+ uv+"层级");
         // 双线性插值：先插值x方向，再插值y方向
         float val0 = Mathf.Lerp(smallAlphas[y0, x0, layer], smallAlphas[y0, x1, layer], tx);
         float val1 = Mathf.Lerp(smallAlphas[y1, x0, layer], smallAlphas[y1, x1, layer], tx);
+        return Mathf.Lerp(val0, val1, ty);
+    }
+
+
+    /// <summary>
+    /// 双线性插值采样地形高度权重
+    /// </summary>
+    /// <param name="smallHeight">数组数据</param>
+    /// <param name="offect">在这一数组中的偏移(浮点数)</param>
+    /// <returns></returns>
+    private static float SampleSmallHeight(float[,] smallHeight,float pixelY, float pixelX)
+    {
+        int smallRes = smallHeight.GetLength(0);
+        // u/v：小地形的归一化UV（0~1），而非像素索引
+        if (pixelX < 0 || pixelX > smallRes || pixelY < 0 || pixelY > smallRes) return 0f;
+
+        // 计算四个相邻像素的索引
+        int x0 = Mathf.FloorToInt(pixelX);
+        int x1 = Mathf.Min(x0 + 1, smallRes - 1);
+        int y0 = Mathf.FloorToInt(pixelY);
+        int y1 = Mathf.Min(y0 + 1, smallRes - 1);
+
+        // 计算小数部分（插值权重）
+        float tx = pixelX - x0;
+        float ty = pixelY - y0;
+
+        // 双线性插值：先插值x方向，再插值y方向
+        float val0 = Mathf.Lerp(smallHeight[y0, x0], smallHeight[y0, x1], tx);
+        float val1 = Mathf.Lerp(smallHeight[y1, x0], smallHeight[y1, x1], tx);
         return Mathf.Lerp(val0, val1, ty);
     }
     #endregion

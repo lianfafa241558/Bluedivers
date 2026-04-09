@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 using Tool = Utils.Tool;
 public static class CopyUtils
 {
@@ -67,7 +68,24 @@ public static class CopyUtils
         }
         //}
     }
-     
+
+    [MenuItem("GameObject/辅助功能/反向粘贴全部变换", priority = -100)]
+    static void PasteTransforms()
+    {
+        var target = Selection.activeGameObject;
+        // 获取两个物体的所有子物体（包含自身）
+        Transform[] sourceTrans = source.GetComponentsInChildren<Transform>();
+        Transform[] targetTrans = target.GetComponentsInChildren<Transform>();
+
+        // 按索引一一对应复制
+        for (int i = 0; i < sourceTrans.Length; i++)
+        {
+            sourceTrans[i].localPosition = targetTrans[i].localPosition;
+            sourceTrans[i].localRotation = targetTrans[i].localRotation;
+            sourceTrans[i].localScale = targetTrans[i].localScale;
+        }
+    }
+
 
     [MenuItem("GameObject/辅助功能/粘贴碰撞箱和伤害组件",false, priority = -100)]
     static void CopyCollider()

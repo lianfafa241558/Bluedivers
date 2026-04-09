@@ -181,7 +181,7 @@ namespace Core
         [CustomLabel("巢穴")]
         Nest = 1 << 6,
         /// <summary>不重要的</summary>
-        //[CustomLabel("不重要的")]
-        //Unimportant = 1 << 4,
+        [CustomLabel("不重要的(只对非other有效,阻止它在小地图注册)")]
+        Unimportant = 1 << 7,
     }
 }

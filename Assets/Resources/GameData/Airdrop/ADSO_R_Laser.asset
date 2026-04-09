@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dfe521d3dbee1e44a48bd0994d06029, type: 3}
   m_Name: ADSO_R_Laser
   m_EditorClassIdentifier: 
+  isHide: 0
   ID: 105
   showName: "\u8F68\u9053\u6FC0\u5149\u70AE"
   desc: "\u4ECE\u8F68\u9053\u9AD8\u7A7A\u53D1\u5C04\u6FC0\u5149\u52A0\u519C\u70AE\u626B\u5C04\u6307\u5B9A\u533A\u57DF\uFF0C\n\u4EE4\u6548\u679C\u8303\u56F4\u5185\u7684\u76EE\u6807\u5168\u6570\u84B8\u53D1\u3002"
@@ -19,14 +20,16 @@ MonoBehaviour:
   opter: 0200000003000000010000000200000003000000
   type: 0
   deliveryType: 1
-  cost: 8
   cool: 300
-  arriveTime: 4
+  arriveTime: 1
   arriveHeight: 200
   arriveCount: 0
   showRange: {x: 0, y: 0}
-  sustainTime: 10
-  creatObect: {fileID: 0}
+  sustainTime: 25
+  creatObect: {fileID: 2175551841436684055, guid: 601d662930efdb3459fbea534ad34c70,
+    type: 3}
   useNormalPod: 0
-  sustainHideBeacon: 0
-  useWarning: 1
+  sustainHideBeacon: 1
+  useWarning: 0
+  permanentPod: 0
+  authorize: 0

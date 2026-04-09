@@ -134,6 +134,7 @@ public class SettingWnd : WindowRoot
 
     private void OnEsc()
     {
+        //Debug.LogError("当前状态"+ GameRoot.GameState +"目标组"+ (GameStateEnum.Front | GameStateEnum.Transition | GameStateEnum.Load | GameStateEnum.GameEnd));
         if(justClosed<Time.time&&(GameRoot.GameState & (GameStateEnum.Front| GameStateEnum.Transition| GameStateEnum.Load| GameStateEnum.GameEnd)) == 0)
         {
             if (InputManager.CancelEmpty() && !State) SetWndState(true);
@@ -205,7 +206,7 @@ public class SettingWnd : WindowRoot
                 SetText(textD, data.showTexts[data.value.RawInt]);
                 left.onClick.AddListener(() => {
                     
-                    Debug.LogError("点击左"+ (data.value.RawInt - 1)+"  "+ data.showTexts.Length);
+                    Debug.Log("点击左"+ (data.value.RawInt - 1)+"  "+ data.showTexts.Length);
                     data.value = Tool.PositiveRemainder(data.value.RawInt - 1, data.showTexts.Length);
                     SetText(textD, data.showTexts[data.value.RawInt]);
                     haveSettingChagne = true;
@@ -214,7 +215,7 @@ public class SettingWnd : WindowRoot
                 });
                 right.onClick.AddListener(() => {
                     
-                    Debug.LogError("点击右" + (data.value.RawInt + 1) + "  " + data.showTexts.Length);
+                    Debug.Log("点击右" + (data.value.RawInt + 1) + "  " + data.showTexts.Length);
                     data.value = Tool.PositiveRemainder(data.value.RawInt + 1, data.showTexts.Length);
                     SetText(textD, data.showTexts[data.value.RawInt]);
                     haveSettingChagne = true;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using Core;
 using Core.Interface;
 using FpsGame.Mission;
@@ -18,6 +19,8 @@ using static WndTools.WndRootTool;
 /// </summary>
 public class MiniMapWnd : WindowRoot
 {
+    private float areaMultScale = 4;
+
 
     [SerializeField]
     Color ExtraColor, MainColor,EndColor,DisableColor;
@@ -28,7 +31,7 @@ public class MiniMapWnd : WindowRoot
     [SerializeField]
     GameObject EnemyPointPrefab;
     [SerializeField]
-    GameObject PlayerPrefab, FriendPrefab,OtherPrefab,MissionPointPrefab,MissionNestPrefab;
+    GameObject PlayerPrefab, FriendPrefab,OtherPrefab,MissionPointPrefab, InterestPointPrefab;
     
     [Space(16)]
     [SerializeField]
@@ -45,7 +48,7 @@ public class MiniMapWnd : WindowRoot
     Dictionary<I_Entity, RectTransform> ActorPoint;
 
     float time;
-    //[SerializeField]
+    [SerializeField]
     int mapSize;//地图尺寸(比实际小32！很重要)
 
     public Doublet<float> mapScale;
@@ -58,7 +61,7 @@ public class MiniMapWnd : WindowRoot
     int UISize;//小地图ui的尺寸
 
     I_Actor player;
-
+    float border;
 
     public override void Init(){}
 
@@ -73,12 +76,14 @@ public class MiniMapWnd : WindowRoot
         {
             AddEnemyPoint();
         }
-        mapSize = TaskManager.Instance.nowTask.CameraSize;
+        var root = TaskManager.Instance.nowTask;
+        mapSize = root.CameraSize;
         UISize = (int)rawImage.rectTransform.rect.width;
+        border = root.MapBorder;
 
         mapScale = new(1, 8, 0.01f, Mathf.Lerp, Tool.Difference);
-        center = new(Vector2.one * (Constants.MapBorder + mapSize) / 2, 8, 0.1f, Vector2.Lerp, Vector2.Distance);
-
+        center = new(Vector2.one * (TaskManager.Instance.nowTask.MapSize) / 2, 8, 0.1f, Vector2.Lerp, Vector2.Distance);
+        //Debug.LogError("中心"+center.Target);
 
         InputManager.Bind(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
 
@@ -87,7 +92,8 @@ public class MiniMapWnd : WindowRoot
         GlobalEventManager.OnSpecUnitCreate += OtherCreat;
         GlobalEventManager.OnSpecUnitDead += OtherDeath;
         GlobalEventManager.OnMissionCreated += MissionPointCreat;
-        GlobalEventManager.OnMissionShow += OnMissionShow;
+        GlobalEventManager.OnMissionEntityShow += OnMissionShow;
+        GlobalEventManager.OnMissionUpdate += OnMissionUpdate;
         GlobalEventManager.OnMissionEnd += MissionPointEnd;
 
         SetActive(gameObject, false);
@@ -100,7 +106,8 @@ public class MiniMapWnd : WindowRoot
         GlobalEventManager.OnSpecUnitCreate -= OtherCreat;
         GlobalEventManager.OnSpecUnitDead -= OtherDeath;
         GlobalEventManager.OnMissionCreated -= MissionPointCreat;
-        GlobalEventManager.OnMissionShow -= OnMissionShow;
+        GlobalEventManager.OnMissionEntityShow -= OnMissionShow;
+        GlobalEventManager.OnMissionUpdate -= OnMissionUpdate;
         GlobalEventManager.OnMissionEnd -= MissionPointEnd;
         GameRoot.OnWindowStateChange -= OnWindowStateChange;
 
@@ -116,6 +123,7 @@ public class MiniMapWnd : WindowRoot
         //InputManager.Bind(WindowStateEnum.Airdrop, InputState.Airdrop, CloseWnd);
         //Debug.LogError("注册事件");
         GameRoot.OnWindowStateChange += OnWindowStateChange;
+        GlobalEventManager.OnPlayerDead += OnPlayerDown;
     }
 
     protected override void HideWnd()
@@ -124,6 +132,7 @@ public class MiniMapWnd : WindowRoot
         //InputManager.UnBind(WindowStateEnum.Airdrop, InputState.Airdrop, CloseWnd);
         //Debug.LogError("注销事件");
         GameRoot.OnWindowStateChange -= OnWindowStateChange;
+        GlobalEventManager.OnPlayerDead -= OnPlayerDown;
     }
 
 
@@ -141,7 +150,7 @@ public class MiniMapWnd : WindowRoot
        
         if (/*player.IsValid()&&*/(!mapScale.Update()|!center.Update()))//不能使用短路或
         {
-            rawImage.uvRect = new((zeroPoint - Vector2.one * Constants.MapBorder / 2) / mapSize, Vector2.one * mapScale.Now);
+            rawImage.uvRect = new((zeroPoint - Vector2.one * border) / mapSize, Vector2.one * mapScale.Now);
 
             foreach (var item in ActorPoint)
             {
@@ -149,9 +158,9 @@ public class MiniMapWnd : WindowRoot
                 if(item.Key is I_MissionPoint mission&&mission.AreaRange>0)
                 {
                     //*2.5是因为要稍微往外拓一点
-                    int size = Mathf.CeilToInt(mission.AreaRange * 2.5f / mapScale.Now);
+                    int size = Mathf.CeilToInt(mission.AreaRange * areaMultScale / mapScale.Now);
                     SetSizeDelta(item.Value.GetChild(0), size, size);
-                    if (mission.FollowAreaScale)
+                    if (mission.HaveTag(MissionTag.FollowAreaScale))
                     {
                         var iconSize = Mathf.Max(mission.HalfRange / mapScale.Now, 25);
                         SetSizeDelta(item.Value.GetChild(1, 1), iconSize, iconSize);
@@ -210,7 +219,10 @@ public class MiniMapWnd : WindowRoot
             SetWndState(false);
         }
     }
-
+    private void OnPlayerDown(I_Actor _)
+    {
+        SetWndState(false);
+    }
     /// <summary>
     /// 直接用搜索做显示
     /// </summary>
@@ -220,7 +232,7 @@ public class MiniMapWnd : WindowRoot
         foreach (var item in ActorsManager.Players)
         {
             //先临时用50，之后再想办法
-            list.UnionWith(BattleManager.Instance.FindUnits(new PECircle(item.LogicPos, 50), TargetCfg.Enemy, null));
+            list.UnionWith(BattleManager.Instance.FindUnits(new PECircle(item.LogicPos, 50), TargetCfg.Enemy, (actor) =>!actor.HasFlag(ActorFlag.MiniMapIgnore)));
         }
         int i = 0;
         EnemyCount = 0;
@@ -352,15 +364,15 @@ public class MiniMapWnd : WindowRoot
 
     void OtherDeath(I_Actor actor)
     {
-        if (!actor.HasFlag(ActorFlag.MiniMapIgnore))
+        if (actor.HasFlag(ActorFlag.MiniMapIgnore)) return;
+        
+        if (ActorPoint.TryGetValue(actor,out var rect))
         {
-            if (ActorPoint.TryGetValue(actor,out var rect))
-            {
-                //姑且如此，以后再搞池
-                Tool.Destroy(rect.gameObject);
-                ActorPoint.Remove(actor);
-            }
+            //姑且如此，以后再搞池
+            Tool.Destroy(rect.gameObject);
+            ActorPoint.Remove(actor);
         }
+        
     }
     #endregion
 
@@ -380,16 +392,17 @@ public class MiniMapWnd : WindowRoot
            
             go = Instantiate(MissionPointPrefab, MissionPointRoot).transform.GetRect();
 
+            SetActive(go.GetChild(1, 0), mission.HasTag(MissionTag.DisplayFrame));
             SetSprite(go.GetChild(1, 1), mission.icon);
             SetActive(go.GetChild(0), entity.AreaRange > 0);
-            
+
             //*2.5是因为要稍微往外拓一点
-            int size = Mathf.CeilToInt(entity.AreaRange * 2.5f / mapScale.Now);
+            int size = Mathf.CeilToInt(entity.AreaRange * areaMultScale / mapScale.Now);
             //Debug.LogError("任务" + mission.title + "尺寸"+size+" 区域范围"+ entity.AreaRange);
             SetSizeDelta(go.GetChild(0), size, size);
-            if (entity.FollowAreaScale)
+            if (mission.entity.HaveTag(MissionTag.FollowAreaScale))
             {
-                var iconSize = Mathf.Max(size / 2.5f, 25);
+                var iconSize = Mathf.Max(size / areaMultScale, 25);
                 SetSizeDelta(go.GetChild(1, 1), iconSize, iconSize);
             }
             else
@@ -402,24 +415,26 @@ public class MiniMapWnd : WindowRoot
             //等待显示状态变化
             SetActive(go.GetChild(1), false);
             go.gameObject.name = "Mission_" + mission.name;
-            switch (mission.missionType)
-            {
-                case MissionType.Main:
-                    SetColor(go.GetChild(1, 1), MainColor);
-                    //SetColor(go.GetChild(1), MainColor);
 
-                    break;
-                case MissionType.Extra:
-                    SetColor(go.GetChild(1, 1), ExtraColor);
-                    SetActive(go.GetChild(1, 0), false);
-                    break;
-                case MissionType.Nest:
-                    var iconSize = Mathf.Max(size / 2.5f,25);
-                    SetSizeDelta(go.GetChild(1, 1), iconSize, iconSize);
-                    SetColor(go.GetChild(1, 1), mission.color);
-                    SetActive(go.GetChild(1, 0), false);
-                    break;
+            bool targetActive = mission.HasTag(MissionTag.IsActive);
+
+            if (targetActive)
+            {
+                Color color = mission.missionType switch {
+                    MissionType.Main => MainColor,
+                    MissionType.Extra => ExtraColor,
+                    MissionType.Nest => mission.color,
+                    _ => default,
+                };
+                SetColor(go.GetChild(1, 1), color);
+                SetColor(go.GetChild(1, 0), color);
             }
+            else
+            {
+                SetColor(go.GetChild(1, 1), DisableColor);
+                SetColor(go.GetChild(1, 0), DisableColor);
+            }
+            
             ActorPoint.Add(entity, go);
             OnGenericMove(entity);
 
@@ -438,7 +453,7 @@ public class MiniMapWnd : WindowRoot
         if (ActorPoint.TryGetValue(entity,out var go)){
             SetColor(go.GetChild(1,0), EndColor);
             SetColor(go.GetChild(1,1), EndColor);
-            if (mission.compleHide)
+            if (mission.HasTag(MissionTag.CompleHide))
             {
                 SetActive(go.GetChild(1), false);
             }
@@ -450,7 +465,7 @@ public class MiniMapWnd : WindowRoot
                     if (mapScale.Comple)
                     {
                         //*2.5是因为要稍微往外拓一点
-                        int size = Mathf.CeilToInt(entity.AreaRange * 2.5f / mapScale.Now);
+                        int size = Mathf.CeilToInt(entity.AreaRange * areaMultScale / mapScale.Now);
                         SetSizeDelta(go.GetChild(0), size, size);
                     }
                 },0.05f,40);
@@ -458,15 +473,50 @@ public class MiniMapWnd : WindowRoot
         }
 
     }
-    public void OnMissionShow(MissionBase mission)
+    public void OnMissionShow(I_Entity entity)
     {
-        if (ActorPoint.TryGetValue(mission.entity, out var go))
+        if (ActorPoint.TryGetValue(entity, out var go))//任务
         {
             //显示之后就不再隐藏
             SetActive(go.GetChild(1), true);
         }
-    }
+        else//兴趣点
+        {
+            go = Instantiate(InterestPointPrefab, MissionPointRoot).transform.GetRect();
+            go.gameObject.name = "Inter" + entity.gameObject.name;
 
+            ActorPoint.Add(entity, go);
+            OnGenericMove(entity);
+        }
+    }
+    public void OnMissionUpdate(MissionBase mission)
+    {
+        if (!mission.entity) return;
+        if (ActorPoint.TryGetValue(mission.entity, out var go))
+        {
+            bool targetActive = mission.HasTag(MissionTag.IsActive);
+            bool selfActive = GetColor(go.GetChild(1, 1)).GetGray() > DisableColor.GetGray();
+            if (selfActive!= targetActive)
+            {
+                if (targetActive)
+                {
+                    Color color = mission.missionType switch {
+                        MissionType.Main => MainColor,
+                        MissionType.Extra => ExtraColor,
+                        MissionType.Nest => mission.color,
+                        _ => default,
+                    };
+                    SetColor(go.GetChild(1, 1), color);
+                    SetColor(go.GetChild(1, 0), color);
+                }
+                else
+                {
+                    SetColor(go.GetChild(1, 1), DisableColor);
+                    SetColor(go.GetChild(1, 0), DisableColor);
+                }
+            }
+        }
+    }
 
     #endregion
 
@@ -474,14 +524,14 @@ public class MiniMapWnd : WindowRoot
     {
         var pos = player.Pos;
         float radius = TargetMapSize / 2;
-        float min = radius + Constants.MapBorder / 2;
-        float max = mapSize - radius + Constants.MapBorder / 2;
+        float min = radius + border;
+        float max = mapSize - radius + border;
 
 
         //Debug.LogError("半径"+radius+"坐标"+ pos+"限制:"+ min+" , "+max);
         center.Target = new Vector2(Mathf.Clamp(pos.x, min, max), Mathf.Clamp(pos.z, min, max));
 
-        //rawImage.uvRect = new((targetZeroPoint - Vector2.one * Constants.MapBorder / 2) / mapSize, Vector2.one * mapScale);
+        //rawImage.uvRect = new((targetZeroPoint - Vector2.one * border) / mapSize, Vector2.one * mapScale);
 
         ActorPoint[player].anchoredPosition = WorldPosToMapPos(pos.ToVector2());
         //PlayerPoint[player].GetChild(0).eulerAngles = new(0, 0, -player.Angles.y);

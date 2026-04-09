@@ -44,10 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9250e0c3f09817a4883cbbf6ed3884ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  missionTag: 1041
   missionType: 0
-  hide: 1
-  displayMiniMap: 1
-  isArea: 0
+  priority: 0
   prefabs:
   - {fileID: 6201182580605112986, guid: 8fe6d8017ef6b88408482d8d3be872fd, type: 3}
   title: "\u6FC0\u6D3B\u64A4\u79BB\u7EC8\u7AEF"
@@ -55,8 +54,7 @@ MonoBehaviour:
   MaxProgress: 0
   NowProgress: 0
   AirdropRange: 10
-  mapEntitySize: {x: 40, y: 40}
-  subTask: []
+  mapEntitySize: {x: 30, y: 30}
   parent: {fileID: 0}
   data:
     cfg: {fileID: 0}
@@ -77,11 +75,15 @@ MonoBehaviour:
       reward: 0
       complete: 0
     extras: []
+    subs: []
   color: {r: 0, g: 0, b: 0, a: 0}
   icon: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
   entitySize: 0
   percentage: 0
+  subTask: []
   InAirdropRange: 0
   entity: {fileID: 0}
+  end: 0
+  completed: 0
   IsFast: 0

@@ -7,19 +7,26 @@
 // doing this can make sure your .hlsl's user can include this .hlsl anywhere anytime without producing any multi include conflict
 #pragma once
 
+
+// 方法功能：计算卡通渲染的全局光照（间接光 / 环境光）
 half3 ShadeGI(ToonSurfaceData surfaceData, ToonLightingData lightingData)
 {
-    // hide 3D feeling by ignoring all detail SH (leaving only the constant SH term)
-    // we just want some average envi indirect color only
+    // 采样环境球谐光照(SH)，只取基础环境色（忽略复杂细节，保留平均色调）
+    // 注释原意：通过忽略所有细节SH，隐藏3D立体感，只保留基础的环境颜色
     half3 averageSH = SampleSH(0);
 
-    // can prevent result becomes completely black if lightprobe was not baked 
-    averageSH = max(_IndirectLightMinColor,averageSH);
+    // 确保间接光不会全黑（设置最低亮度）
+    // 如果没有光照探针烘焙，使用 _IndirectLightMinColor 作为最低颜色
+    averageSH = max(_IndirectLightMinColor, averageSH);
 
-    // occlusion (maximum 50% darken for indirect to prevent result becomes completely black)
+    // 计算间接光的遮挡效果
+    //  Occlusion（遮挡）只影响50%的亮度，防止画面过暗、完全变黑
     half indirectOcclusion = lerp(1, surfaceData.occlusion, 0.5);
+
+    // 最终返回：环境颜色 * 间接光遮挡
     return averageSH * indirectOcclusion;
 }
+
 
 // 此功能将由所有直射灯使用(directional/point/spot)
 half3 ShadeSingleLight(ToonSurfaceData surfaceData, ToonLightingData lightingData, Light light,bool isAdditionalLight)
@@ -78,11 +85,12 @@ half3 ShadeEmission(ToonSurfaceData surfaceData, ToonLightingData lightingData)
     return emissionResult;
 }
 
+//间接光，主要光，额外光
 half3 CompositeAllLightResults(half3 indirectResult, half3 mainLightResult, half3 additionalLightSumResult, half3 emissionResult,half3 colourResult, ToonSurfaceData surfaceData, ToonLightingData lightingData)
 {
     //这里我们防止光线过亮，
     //同时仍要保持浅色的色调
-        half3 rawLightSum = max(indirectResult, mainLightResult + additionalLightSumResult); // pick the highest between indirect and direct light
+        half3 rawLightSum = max(indirectResult, mainLightResult + additionalLightSumResult); //在间接光和直接光之间拾取最高值
 /*
 #ifdef _MAIN_LIGHT_SHADOWS
     return lightingData.shadowCoord;

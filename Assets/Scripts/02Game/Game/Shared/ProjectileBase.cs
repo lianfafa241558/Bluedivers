@@ -28,6 +28,11 @@ namespace Unity.FPS.Game
 
         /// <summary>最大射程/自爆引信</summary>
         public float MaxRange { get; private set; }
+
+        /// <summary>最小射程/安全引信</summary>
+        public float MinRange { get; private set; }
+        
+
         /// <summary>重力加速度</summary>
         public float Gravity { get; private set; }
 
@@ -55,6 +60,7 @@ namespace Unity.FPS.Game
             Charge = controller.WeaponChargeScale_D;
             SFXRange = controller.SFXRange;
             MaxRange = controller.CurrentWeaponRange;
+            MinRange = DamageData.MinRange;
             Gravity = controller.CurrentGravity*Mathf.Lerp(1,DamageData.ChargeGravityScale, Charge);
             BulletFlag = controller.BulletFlag;
             IgnoredColliders = controller.IgnoredColliders;
@@ -64,7 +70,7 @@ namespace Unity.FPS.Game
         }
         public void Release()
         {
-            Debug.Log("释放" + gameObject, gameObject);
+            //Debug.Log("释放" + gameObject, gameObject);
             VFXManager.Release(this);
         }
 

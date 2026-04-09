@@ -33,10 +33,11 @@ public enum FurnitureFlag
 public class Furniture_Base : BaseObject
 {
 
-
     public static Dictionary<int,Furniture_Base> list=new();
     private static int nowID=0;
     private static int GetID => ++nowID;
+
+    public Action OnOperate;
 
     [Foldout("配置", true)]
 
@@ -73,7 +74,9 @@ public class Furniture_Base : BaseObject
 
     [Foldout("关联", true)]
     [SerializeField]
-    protected Transform relatedTrans;
+    public Transform relatedTrans;
+    [SerializeField]
+    protected Transform relatedTrans2;
     [CustomLabel("外部浮点数参数")]
     public float ExtFloatParameter;
     [CustomLabel("外部布尔参数")]
@@ -82,7 +85,7 @@ public class Furniture_Base : BaseObject
     [DisplayField(true, false, true)]
     [SerializeField]
     protected ParticleSystem particle;
-    [DisplayField(true,false,true)]
+
     public Animator anim;
     [DisplayField(true, false, true)]
     [SerializeField]
@@ -115,19 +118,35 @@ public class Furniture_Base : BaseObject
     //public static bool IsTargetProp(Prop_Base prop, string name) => prop != null && prop.propName == name;
     public bool HaveFlag(FurnitureFlag flag) => flags.HasFlag(flag);
 
+    public float Press
+    {
+        get => pressTime;
+        set
+        {
+            pressTime = value;
+            if (pressTime > 0 && HaveFlag(FurnitureFlag.ControlAnim))
+                anim.Play(Constants.k_AnimEntry, 0, value / meetTime);
+        }
+    }
 
     protected virtual void Awake()
     {
         particle = GetComponentInChildren<ParticleSystem>(true);
         audio = GetComponent<AudioSource>();
-        anim = GetComponent<Animator>();
+        if(!anim) anim = GetComponent<Animator>();
         obs = GetComponent<NavMeshObstacle>();
         //renderers = Tool.GetRendererGroup(transform);
-        list.Add(ID=GetID, this);
+        
     }
+    private void Start()
+    {
+        list.Add(ID = GetID, this);
+    }
+
 
     private void OnDestroy()
     {
+        OnOperate = null;
         list.Remove(ID);
     }
 
@@ -137,15 +156,6 @@ public class Furniture_Base : BaseObject
         if (HaveFlag(FurnitureFlag.ControlAnim))
         {
 
-        }
-    }
-    public float Press
-    {
-        get => pressTime;
-        set
-        {
-            pressTime = value;
-            if(HaveFlag( FurnitureFlag.ControlAnim)) anim.Play(Constants.k_AnimEntry, 0, value/meetTime);
         }
     }
 
@@ -199,6 +209,7 @@ public class Furniture_Base : BaseObject
         //if (cfg.provideProp) BattleManager.Player.PickUpProp(Instantiate(cfg.provideProp));
         lastOperatetime = Time.time;
         GlobalEventManager.FurnitureOperate(user, this);
+        OnOperate?.Invoke();
     }
 
     public virtual bool CanOperate(GameObject unit)
@@ -242,7 +253,7 @@ public class Furniture_Base : BaseObject
 
     protected void PlaySound(AudioClip path)
     {
-        AudioManager.PlaySound(new(path, Pos));
+        AudioManager.PlaySound(new(path, Pos) { importance=true });
     }
 
 

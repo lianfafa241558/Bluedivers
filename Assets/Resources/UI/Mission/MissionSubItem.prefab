@@ -572,7 +572,6 @@ GameObject:
   - component: {fileID: 4611122474002531434}
   - component: {fileID: 8146773930870887569}
   - component: {fileID: 8209077674522269081}
-  - component: {fileID: 7783783051324965312}
   - component: {fileID: 6507359511105177318}
   m_Layer: 5
   m_Name: MissionSubItem
@@ -602,7 +601,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 175, y: 0}
-  m_SizeDelta: {x: 270, y: 0}
+  m_SizeDelta: {x: 270, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &8146773930870887569
 CanvasGroup:
@@ -636,26 +635,12 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_Spacing: 6
   m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &7783783051324965312
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6977215507610351991}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 0
-  m_VerticalFit: 1
 --- !u!114 &6507359511105177318
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -668,6 +653,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8a872216adabc6409c86c1dcebe6239, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  self: {fileID: 4611122474002531434}
   title: {fileID: 7803196658118130388}
   counter: {fileID: 9065428955935793743}
   tip: {fileID: 1985448748888801200}
@@ -677,6 +663,8 @@ MonoBehaviour:
   subGroup: {fileID: 0}
   FadeInDuration: 0.5
   FadeOutDuration: 2
+  mission: {fileID: 0}
+  allowShow: 0
 --- !u!1 &9077083429906869543
 GameObject:
   m_ObjectHideFlags: 0
@@ -899,11 +887,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Color.r
       value: 0.19215685
-      objectReference: {fileID: 0}
-    - target: {fileID: 3034798618855625123, guid: 809173b6167d089418a3f3b8ad57f618,
-        type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 3092765797219893555, guid: 809173b6167d089418a3f3b8ad57f618,
         type: 3}

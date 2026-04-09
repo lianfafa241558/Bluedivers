@@ -106,7 +106,7 @@ public abstract class BaseMono :MonoBehaviour
     public Vector3 Angles => transform.eulerAngles;
 
     public virtual Vector3 Forward => transform.forward;
-    public virtual Vector3 CenterPos => transform.position + Vector3.up * 2;
+    public virtual Vector3 CenterPos =>this==null?default: transform.position + Vector3.up * 2;
 
 
 

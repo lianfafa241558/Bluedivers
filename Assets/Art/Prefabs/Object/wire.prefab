@@ -10,7 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2510901073075950047}
   - component: {fileID: 2778896487858028709}
-  - component: {fileID: 3351155131447006366}
+  - component: {fileID: 1876239303332799725}
+  - component: {fileID: 1284316744136086128}
+  - component: {fileID: 951540971308266131}
   m_Layer: 0
   m_Name: wire
   m_TagString: Untagged
@@ -25,7 +27,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5058036032287315983}
-  m_LocalRotation: {x: -0, y: -0.30105242, z: -0, w: 0.95360756}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.756, y: 3.357, z: 3.732}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -33,7 +35,7 @@ Transform:
   - {fileID: 8542519680831987653}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: -35.042, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &2778896487858028709
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -47,7 +49,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 4, y: 2, z: 0.2}
   m_Center: {x: 0, y: 0.7, z: 0}
---- !u!114 &3351155131447006366
+--- !u!114 &1876239303332799725
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -56,7 +58,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5058036032287315983}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ShowName: "\u56F4\u5899"
@@ -64,6 +66,60 @@ MonoBehaviour:
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
+  actorState: 1
+  flag: 48
+  type: 16
+  team: 0
+  threat: 0
+  aimPoint: {fileID: 8542519680831987653}
+  UseHpBar: 0
+  HpHeight: 1
+  shape: 0
+  rangeLength: 1
+  damageables: []
+--- !u!114 &1284316744136086128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5058036032287315983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 353e2a5a83e815841b7088f2d19c38b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxHealth: 100
+  MaxShield: 0
+  MainPart: {fileID: 951540971308266131}
+  showHealth: 0
+  m_IsDead: 0
+  AutoDestroy: 1
+--- !u!114 &951540971308266131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5058036032287315983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 0
+  showArmorLists:
+  - Key: 1
+    Value: -0.9
+  - Key: 3
+    Value: -0.9
+  AllArmor: 0.9
+  armorValue: 0
+  LineArmor: []
+  armorBreakEffect: []
+  BleedValue: 0
+  isMain: 0
+  showArmor: 0
 --- !u!1001 &8144646808614434862
 PrefabInstance:
   m_ObjectHideFlags: 0

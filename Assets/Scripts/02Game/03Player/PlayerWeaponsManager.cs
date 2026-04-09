@@ -97,8 +97,8 @@ namespace Unity.FPS.Gameplay
                 m_isAiming = value;
             }
         }
-        private bool m_isShoot;
 
+        //private bool IsDown => m_PlayerCharacterController.IsDead;
         /*
         public int ActiveWeaponIndex { get; private set; } = -1;
         public int ActiveSecWeaponIndex { get; private set; } = -1;
@@ -179,6 +179,7 @@ namespace Unity.FPS.Gameplay
         void Update()
         {
 
+            //if (IsDown) return;
             WeaponPlayerController activeWeapon = GetActiveWeapon();
             WeaponPlayerController activeSecWeapon = GetActiveSecWeapon();
 
@@ -743,7 +744,7 @@ namespace Unity.FPS.Gameplay
             //3.允许双持且 (“武器和主手不一样”或者"武器和主手一样，但是有副手")
             if (force || (newWeaponIndex != ActiveWeaponIndex && newWeaponIndex >= 0)||(allowDual&&GetActiveSecWeapon()))
             {
-                if (ActiveWeaponIndex == (int)WeaponTypeEnum.FlareGun && WaitRelease.IsValid()) GlobalEventManager.CancelAirdrop(WaitRelease);
+                if (ActiveWeaponIndex == (int)WeaponTypeEnum.FlareGun && WaitRelease.IsValid()) GlobalEventManager.CancelAirdrop(gameObject,WaitRelease);
                 //存储与武器切换动画相关的数据
                 m_SwitchNewWeaponIndex = newWeaponIndex;
                 m_TimeStartedWeaponSwitch = Time.time;
@@ -771,6 +772,24 @@ namespace Unity.FPS.Gameplay
                     m_WeaponSwitchState = WeaponSwitchState.PutDownPrevious;
                     
                 }
+            }
+        }
+
+        /// <summary>
+        /// 切换到武器插槽中的给定武器索引
+        /// </summary>
+        /// <param name="weaponName">武器名称</param>
+        /// <param name="force">强制切换</param>
+        /// <param name="allowDual">是否允许双持</param>
+        /// <param name="instant">瞬间完成</param>
+        public void SwitchToWeaponIndex(string weaponName, bool force = false, bool allowDual = true, bool instant = false)
+        {
+
+            int index = m_WeaponSlots.FindIndex(item => item.WeaponName == weaponName);
+            //Debug.LogError("寻找武器" + weaponName+"结果"+ index);
+            if (index>-1)
+            {
+                SwitchToWeaponIndex(index, force, allowDual, instant);
             }
         }
 
@@ -1035,12 +1054,14 @@ namespace Unity.FPS.Gameplay
                 SwitchToWeaponIndex((m_LastWeaponIndex == (int)WeaponTypeEnum.FlareGun)?0: m_LastWeaponIndex, false, false, false);
             }
         }
-        void OnInputCompletedAirdrop(AirdropData data) {
+        void OnInputCompletedAirdrop(GameObject go, AirdropData data) {
+            if (go != gameObject) return;
             var weapon = GetWeaponAtSlotIndex((int)WeaponTypeEnum.FlareGun);
             weapon.UseDamageIndex = 1;
         }
-        void OnCancelAirdrop(AirdropData data)
+        void OnCancelAirdrop(GameObject go,AirdropData data)
         {
+            if (go != gameObject) return;
             var weapon = GetWeaponAtSlotIndex((int)WeaponTypeEnum.FlareGun);
             weapon.UseDamageIndex = 0;
         }

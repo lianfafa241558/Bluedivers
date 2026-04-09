@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Core.Interface;
 using FpsGame.Mission;
 using GameContract;
 using Unity.FPS.Game;
@@ -51,6 +52,13 @@ public static class GlobalEventManager
     public static void WndSwitch(string name, bool state)
     {
         OnWndSwitch?.Invoke(name,state);
+    }
+
+    public static event Action<bool> OnDaySwitch;
+    /// <summary>昼夜交替时</summary>
+    public static void DaySwitch(bool isNoon)
+    {
+        OnDaySwitch?.Invoke(isNoon);
     }
 
     #region 存档和设置
@@ -105,6 +113,13 @@ public static class GlobalEventManager
     /// </summary>
     public static event Action<Actor> OnPlayerDead;
     public static void PlayerDead(Actor unit) => OnPlayerDead?.Invoke(unit);
+
+    /// <summary>
+    /// 玩家复活
+    /// </summary>
+    public static event Action<Actor> OnPlayerRevive;
+    public static void PlayerRevive(Actor unit) => OnPlayerRevive?.Invoke(unit);
+
     /// <summary>
     /// 盟友被创建
     /// </summary>
@@ -141,14 +156,14 @@ public static class GlobalEventManager
     /// <summary>
     /// 完成选择空投
     /// </summary>
-    public static event Action<AirdropData> OnSelectAirdrop;
-    public static void SelectAirdrop(AirdropData data) => OnSelectAirdrop?.Invoke(data);
+    public static event Action<GameObject,AirdropData> OnSelectAirdrop;
+    public static void SelectAirdrop(GameObject go,AirdropData data) => OnSelectAirdrop?.Invoke(go,data);
 
     /// <summary>
     /// 取消空投
     /// </summary>
-    public static event Action<AirdropData> OnCancelAirdrop;
-    public static void CancelAirdrop(AirdropData data) => OnCancelAirdrop?.Invoke(data);
+    public static event Action<GameObject,AirdropData> OnCancelAirdrop;
+    public static void CancelAirdrop(GameObject go, AirdropData data) => OnCancelAirdrop?.Invoke(go,data);
 
     /// <summary>
     /// 建立空投信标(发射者,信标物体,位置,使用的空投)
@@ -233,19 +248,18 @@ public static class GlobalEventManager
     public static void MissionEnd(MissionBase mission) => OnMissionEnd?.Invoke(mission);
 
     /// <summary>任务更新时(任务/是否刷新整个UI)</summary>
-    public static event Action<MissionBase, bool> OnMissionUpdate;
-    public static void MissionUpdate(MissionBase mission,bool refresh) => OnMissionUpdate?.Invoke(mission, refresh);
+    public static event Action<MissionBase> OnMissionUpdate;
+    public static void MissionUpdate(MissionBase mission) => OnMissionUpdate?.Invoke(mission);
 
     /// <summary>任务显示状态变化时(任务/状态)任务窗口使用</summary>
     public static event Action<MissionBase, bool> OnMissionStateChange;
     /// <summary>任务显示状态变化时(任务/状态)任务窗口使用</summary>
     public static void MissionStateChange(MissionBase mission, bool state) => OnMissionStateChange?.Invoke(mission, state);
 
-    /// <summary>任务显示时，小地图使用</summary>
-    public static event Action<MissionBase> OnMissionShow;
-    /// <summary>任务显示时，小地图使用</summary>
-    public static void MissionShow(MissionBase mission) => OnMissionShow?.Invoke(mission);
-
+    /// <summary>任务暴露时，小地图使用</summary>
+    public static event Action<I_Entity> OnMissionEntityShow;
+    /// <summary>任务暴露时，小地图使用</summary>
+    public static void MissionEnityShow(I_Entity mission) => OnMissionEntityShow?.Invoke(mission);
 
 
     /// <summary>

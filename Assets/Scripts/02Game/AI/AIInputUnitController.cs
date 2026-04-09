@@ -187,8 +187,9 @@ namespace Unity.FPS.AI
 
                 dot = Mathf.Abs(Quaternion.Dot(tarUnlimitBarrelRotation, barrelRotation));
             }
-            
+
             private int rotateDir=1;
+
             public void Rotate(float angle)
             {
                 if (integrated) return;//一体式炮塔不吃这套
@@ -199,11 +200,10 @@ namespace Unity.FPS.AI
                 
                 if (limitRotation > 0)
                 {
-                    // 获取当前根节点水平方向
-                    Vector3 rootForwardXZ = Vector3.ProjectOnPlane(root.forward, Vector3.up).normalized;
+                    // 获取原始根节点水平方向
+                    Vector3 rootForwardXZ = chassisStartRotation * Vector3.forward;
                     // 获取当前根节点水平方向
                     Vector3 chassisForwardXZ = Vector3.ProjectOnPlane(chassisDir * chassisOffset * Vector3.forward, Vector3.up).normalized;
-
                     //反方向
                     if (Vector3.Angle(rootForwardXZ, chassisForwardXZ) >= limitRotation)
                     {

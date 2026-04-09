@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Core;
 using GameContract;
 using Unity.BaseTool;
+using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 
@@ -19,7 +20,7 @@ namespace Unity.FPS.AI
             Death,
         }
         [SerializeField]
-        new Renderer renderer;
+        Renderer renderer;
         [SerializeField]
         List<NoticeData_SO> call;
         [SerializeField]
@@ -61,6 +62,7 @@ namespace Unity.FPS.AI
 
         void OnCall(GameObject source, Vector3 point)
         {
+            point += (transform.position - point).normalized * 0.5f;
             if (Physics.Raycast(point, Vector3.down, out RaycastHit hit, 100, LayerDefinition.GroundLayers))
             {
                 point = hit.point;
@@ -124,7 +126,16 @@ namespace Unity.FPS.AI
                     {
                         AiState = AIState.Wait;
                         mpb.Set("_Expression", 1).Apply();
-                        m_callInstance.GetComponent<LimitedLife>().allowRelease = true;
+                        if(m_callInstance) m_callInstance.GetComponent<LimitedLife>().allowRelease = true;
+                        //到目标点了，尝试对着拉人
+                        ActorsManager.Players.ForEach((item)=> {
+                            if (Vector3.Distance(item.Pos, transform.position)<=2
+                                &&item.transform.TryGetComponent(out Furniture_PlayerDown furn))
+                            {
+                                furn.Handle(gameObject);
+                            }
+                        });
+                        
                     }
                     break;
             }

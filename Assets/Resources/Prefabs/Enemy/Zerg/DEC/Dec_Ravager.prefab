@@ -98,6 +98,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: -1
+    MinRange: -1
     NoSource: 0
     DamageDirect: 5
     DamageGroupDirect:
@@ -365,10 +366,14 @@ MonoBehaviour:
   AttackRange: 30
   AlertRange: 20
   KnownTargetTimeout: 8
+  Target:
+    pos: {x: 0, y: 0, z: 0}
   IsSeeingTarget: 0
+  TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
+  showCollider: {fileID: 0}
 --- !u!1 &3808758975234262439
 GameObject:
   m_ObjectHideFlags: 0
@@ -438,6 +443,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 8
     MaxRange: -1
+    MinRange: -1
     NoSource: 0
     DamageDirect: 2
     DamageGroupDirect:
@@ -800,7 +806,7 @@ MonoBehaviour:
   UseHpBar: 1
   HpHeight: 1
   shape: 0
-  rangeLength: 1
+  rangeLength: 1.7
   damageables: []
 --- !u!114 &6731495466205310907
 MonoBehaviour:
@@ -817,6 +823,7 @@ MonoBehaviour:
   DeathDuration: 4
   BirthDuration: 2
   birthTime: 0
+  IsRemove: 0
   PathReachingRadius: 1
 --- !u!114 &6731495466205310906
 MonoBehaviour:
@@ -1022,6 +1029,8 @@ MonoBehaviour:
   AttackStop: 0
   AttackStopDistanceRatio: 0.5
   MaintainMaxDis: 0
+  PatrolSpeed: 2
+  AiState2: 1
 --- !u!195 &6731495466205310901
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -2261,6 +2270,7 @@ MonoBehaviour:
     Value: 0.2
   - Key: 1
     Value: 0.8
+  AllArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 8758041376956919421}
@@ -2316,6 +2326,7 @@ MonoBehaviour:
     Value: 0.1
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 90
   LineArmor:
   - {fileID: 7198725040718444843}
@@ -2404,6 +2415,7 @@ MonoBehaviour:
     Value: 0.1
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 70
   LineArmor:
   - {fileID: 1322073786529135222}
@@ -2456,6 +2468,7 @@ MonoBehaviour:
     Value: -1
   - Key: 2
     Value: -1
+  AllArmor: 0
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -2582,6 +2595,7 @@ MonoBehaviour:
     Value: 0.1
   - Key: 1
     Value: 0.1
+  AllArmor: 0
   armorValue: 70
   LineArmor:
   - {fileID: 7085621635824225683}
@@ -2719,6 +2733,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   showArmorLists: []
+  AllArmor: 0
   armorValue: 100
   LineArmor: []
   armorBreakEffect:
@@ -2765,6 +2780,7 @@ MonoBehaviour:
     Value: 0.1
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 70
   LineArmor:
   - {fileID: 8477769561650769273}
@@ -2903,6 +2919,7 @@ MonoBehaviour:
   showArmorLists:
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 5549107878628929267}
@@ -2947,6 +2964,7 @@ MonoBehaviour:
     Value: 0.1
   - Key: 1
     Value: 0.1
+  AllArmor: 0
   armorValue: 70
   LineArmor:
   - {fileID: 3533603623595228897}
@@ -2997,6 +3015,7 @@ MonoBehaviour:
     Value: -0.5
   - Key: 3
     Value: -0.5
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -3159,6 +3178,7 @@ MonoBehaviour:
     Value: 0.35
   - Key: 1
     Value: 1
+  AllArmor: 0
   armorValue: 80
   LineArmor: []
   armorBreakEffect:
@@ -3343,6 +3363,7 @@ MonoBehaviour:
     Value: 0.1
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 90
   LineArmor:
   - {fileID: 3975263505995788144}

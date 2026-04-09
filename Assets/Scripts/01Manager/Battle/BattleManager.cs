@@ -16,6 +16,8 @@ public class BattleManager : Singleton<BattleManager>
     public BattleRoleManager BRCont;
     public WaveManager WaveCont;
     public MissionController MissionCont;
+    public PatrolContriller PatrolCont;
+
 
     private UnitQueryGrid unitQueryGrid;
     private MapRoot mapRoot;
@@ -24,15 +26,10 @@ public class BattleManager : Singleton<BattleManager>
 
     void Start()
     {
-        Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
-        mapRoot = transMapRoot.GetComponent<MapRoot>();
+
         var pos = mapRoot.rect;
         unitQueryGrid = new(new((PEVector2)pos.center, pos.size.x / 2, pos.size.z / 2), 30);
-        var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
-        if (debugger.IsValid())
-        {
-            debugger.grid = unitQueryGrid;
-        }
+        
 
         GlobalEventManager.OnUnitPosChange += OnUnitPosChange;
         GlobalEventManager.OnEnemyCreate += OnEnemyCreate;
@@ -40,7 +37,7 @@ public class BattleManager : Singleton<BattleManager>
         GlobalEventManager.OnPlayerCreate += OnPlayerCreate;
         GlobalEventManager.OnPlayerDead += OnPlayerDeath;
         GlobalEventManager.OnOOPartCollect += OOPartCollect;
-        
+        GlobalEventManager.OnDaySwitch += OnDatSwitch;
     }
     private void OnDestroy()
     {
@@ -50,36 +47,43 @@ public class BattleManager : Singleton<BattleManager>
         GlobalEventManager.OnPlayerCreate -= OnPlayerCreate;
         GlobalEventManager.OnPlayerDead -= OnPlayerDeath;
         GlobalEventManager.OnOOPartCollect -= OOPartCollect;
+        GlobalEventManager.OnDaySwitch -= OnDatSwitch;
     }
 
-    void Update()
-    {
-
-    }
 
     public static void Creat()
     {
         var manager = new GameObject("BattleManager").AddComponent<BattleManager>();
         manager.BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
+        
         manager.InitTerrain();
+
         manager.MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
         manager.MissionCont.transform.SetParent(manager.transform);
         manager.ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
         manager.ADCont.Init();
         manager.ADCont.transform.SetParent(manager.transform);
-        manager.BRCont = new GameObject("BattleRoleManager").AddComponent<BattleRoleManager>();
+        manager.BRCont = new GameObject("BattleRoleCont").AddComponent<BattleRoleManager>();
         manager.BRCont.transform.SetParent(manager.transform);
-        manager.WaveCont = new GameObject("WaveManager").AddComponent<WaveManager>();
+        manager.WaveCont = new GameObject("WaveCont").AddComponent<WaveManager>();
         manager.WaveCont.transform.SetParent(manager.transform);
+        manager.PatrolCont = new GameObject("PatrolCont").AddComponent<PatrolContriller>();
+        manager.PatrolCont.transform.SetParent(manager.transform);
+
+        GameRoot.CreateTimer(() => WndManager.Instance.CreatNotice("Yuuka2", "MissionStart"), 8);
 
     }
 
     void InitTerrain()
     {
+        Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
+        mapRoot = transMapRoot.GetComponent<MapRoot>();
+       
+        var terrain=TerrainUtils.Main = mapRoot.terrain;
         var cfg=TaskManager.Instance.nowTask;
-        var terrainData = Terrain.activeTerrain.terrainData;
+        var terrainData = terrain.terrainData;
 
-        Debug.LogError("地图尺寸"+ cfg.MainCfg.sizeType+" 地图大小"+ cfg.MapSize);
+        Debug.LogWarning("地图尺寸"+ cfg.MainCfg.sizeType+" 地图大小"+ cfg.MapSize);
         var mapRes= cfg.MainCfg.sizeType switch {
             SizeType.Small => 256,
             SizeType.Medium => 512,
@@ -87,8 +91,17 @@ public class BattleManager : Singleton<BattleManager>
             _ => 256 
         };
         terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
-        terrainData.heightmapResolution = mapRes + 1;
-        terrainData.alphamapResolution = mapRes;
+        terrainData.heightmapResolution = mapRes*2 + 1;
+        terrainData.alphamapResolution = mapRes*2;
+
+        mapRoot.Init();
+        mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain();
+
+        var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
+        if (debugger.IsValid())
+        {
+            debugger.grid = unitQueryGrid;
+        }
     }
 
 
@@ -101,8 +114,18 @@ public class BattleManager : Singleton<BattleManager>
         return new List<I_Actor>(unitQueryGrid.QueryUnits(targetCfg, customFilter));
     }
 
-    public bool CreatWave(Vector3 point, bool extraWave) => WaveCont.CreatWave(point, extraWave);
-    
+    public GameObject CreatUnit(UnitTier tier,Vector3 pos,float range,bool NoVfx=true)
+    {
+       return WaveCont.CreatUnit(tier, pos,range, NoVfx);
+    }
+
+    public List<GameObject> CreatPatrol(Vector3 pos)
+    {
+        return WaveCont.CreatPatrol(pos);
+    }
+
+    public bool CreatWave(WaveCreateParams param) => WaveCont.CreatWave(param);
+
     private void OnUnitPosChange(I_Actor unit)
     {
         if (unit.Type != UnitTypeEnum.None)
@@ -137,7 +160,11 @@ public class BattleManager : Singleton<BattleManager>
 
     public void ReleaseAirdrop(Vector3 point,int id, System.Action<GameObject> action=default)
     {
-        var beacon = VFXManager.Creat(ResManager.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), point,Quaternion.Euler(0,RandomUtils.Range(0,360),0), null);
+        ReleaseAirdrop(point, RandomUtils.Range(0, 360), id, action);
+    }
+    public void ReleaseAirdrop(Vector3 point,float angle, int id, System.Action<GameObject> action = default)
+    {
+        var beacon = VFXManager.Creat(ResManager.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), point, Quaternion.Euler(0,angle, 0), null);
         beacon.GetComponent<VFXAirdropEffect>()?.TmpAirdrop(point, ResManager.Instance.GetAirdrop(id), action);
     }
 
@@ -171,5 +198,65 @@ public class BattleManager : Singleton<BattleManager>
         if (!dic.TryAdd(type, count)) dic[type]+= count;
         if (user&&user.TryGetComponent(out PlayerController player)) AddBattleDataItem(player.PlayerIndex, "采集欧帕兹数量");
     }
+    private void OnDatSwitch(bool isNoon)
+    {
+        //Debug.LogError("昼夜交替"+ isNoon);
+        ADCont.Authorize(16, !isNoon);
+        ADCont.Authorize(17, !isNoon);
+        //应该加语音播报
+    }
 
+}
+
+public struct WaveCreateParams
+{
+    public Vector3 center;
+    public Vector3[] points;
+
+    public bool extraWave;
+    public float range;
+    public float scale;
+    public bool tip;
+
+    public static WaveCreateParams Default => new WaveCreateParams {
+        extraWave = false,
+        range = 35,
+        scale = 1,
+        tip = true
+    };
+
+    public static WaveCreateParams Extra => new WaveCreateParams {
+        extraWave = true,
+        range = 35,
+        scale = 0.5f,
+        tip = true
+    };
+
+    public static WaveCreateParams Defensive => new WaveCreateParams {
+        extraWave = true,
+        range = 5,
+        scale = 1,
+        tip = true,
+    };
+
+
+}
+public static class WaveUtil
+{
+    public static WaveCreateParams Set(this WaveCreateParams para, Vector3 center)
+    {
+        para.center = center;
+        return para;
+    }
+    public static WaveCreateParams Set(this WaveCreateParams para, Vector3 center,Vector3[] points)
+    {
+        para.center = center;
+        para.points = points;
+        return para;
+    }
+    public static WaveCreateParams Scale(this WaveCreateParams para, float scale)
+    {
+        para.scale = scale;
+        return para;
+    }
 }

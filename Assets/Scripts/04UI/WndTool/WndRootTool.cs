@@ -167,16 +167,77 @@ namespace WndTools
             return t;
         }
 
+        /// <summary>
+        /// 立即刷新布局
+        /// </summary>
+        public static void RefreshLayoutImmediate(Transform transform)
+        {
+            if (!transform) return;
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(transform as RectTransform);
+            /*
+            if(transform.TryGetComponent(out LayoutElement le))
+            {
+                le.preferredHeight= LayoutUtility.GetPreferredHeight(transform as RectTransform);
+            }*/
+        }
+        /// <summary>
+        /// 统一标记，下一帧刷新布局
+        /// </summary>
         public static void RefreshLayout(Transform transform)
         {
-            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(transform.RectTransform());
+            if (!transform) return;
+            LayoutRebuilder.MarkLayoutForRebuild(transform.RectTransform());
+        }
+        /// <summary>
+        /// 刷新自身并向上递归刷新
+        /// </summary>
+        /// <param name="rt"></param>
+        public static void RefreshContentSizeFitter(Transform rt)
+        {
+            while (rt != null)
+            {
+                LayoutRebuilder.MarkLayoutForRebuild(rt as RectTransform);
+                /*
+                if (rt.parent.TryGetComponent(out LayoutElement le))
+                {
+                    le.preferredHeight = LayoutUtility.GetPreferredHeight(rt as RectTransform);
+                }*/
+                // 无布局组件也安全，内部自动跳过
+                rt = rt.parent as RectTransform;
+            }
         }
 
         public static void SetToggle(Transform tran, bool state)
         {
             tran.GetComponent<Toggle>().isOn = state;
         }
+        public static Color GetColor(Transform trans)
+        {
+            if (trans == null) return Color.black;
+            if (trans.TryGetComponent<Image>(out var image))
+            {
+                
+                return image.color;
+            }
+            if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu))
+            {
+                
+                return tmpu.color;
+            }
 
+            if (trans.TryGetComponent<TMPro.TextMeshPro>(out var tmp))
+            {
+                
+                return tmp.color ;
+            }
+
+            if (trans.TryGetComponent<Text>(out var text))
+            {
+                
+                return text.color;
+            }
+            return Color.black;
+        }
         public static void SetColor(Transform trans, Color color)
         {
             if (trans==null) return;
@@ -224,10 +285,13 @@ namespace WndTools
                 linkComp.link.ForEach(item => item.color = color);
             }
         }
-        public static void SetAlpha(Transform trans, float start, float target, int timeMs)
+        public static void SetAlpha(Transform trans, float start, float target, int timeMs,Action action=null)
         {
             SetAlpha(trans, start);
-            viewTimer.CreateTimer((count) => SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => SetAlpha(trans, target));
+            viewTimer.CreateTimer((count) => SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => {
+                SetAlpha(trans, target);
+                action?.Invoke();
+            });
         }
         public static void SetText(Transform trans, int start, int target, int timeMs)
         {

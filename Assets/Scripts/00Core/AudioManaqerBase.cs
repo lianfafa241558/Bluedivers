@@ -136,8 +136,10 @@ namespace Core
             {
                 //stop会打断shot，但active不会
                 //距离越远允许偏差的越大
+                //一定要group相等！！！
+                var group = GetMixGroup(info.group);
                 var distance = Mathf.Sqrt(Vector3.Distance(info.vector, Camera.main.transform.position));//100m可以偏差10格
-                var tmpSource = sourcePool.Find(item => Vector3.Distance(item.transform.position,info.vector)<Mathf.Max(2, distance));
+                var tmpSource = sourcePool.Find(item => Vector3.Distance(item.transform.position,info.vector)<Mathf.Max(2, distance) && group == item.outputAudioMixerGroup);
                 if (tmpSource)
                 {
                     tmpSource.PlayOneShot(cilp);

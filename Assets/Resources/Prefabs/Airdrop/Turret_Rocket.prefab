@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   showArmorLists: []
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -120,6 +121,7 @@ MonoBehaviour:
     Value: 0.5
   - Key: 0
     Value: 0.5
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -228,6 +230,8 @@ MonoBehaviour:
   AttackRange: 100
   AlertRange: 0
   KnownTargetTimeout: 4
+  Target:
+    pos: {x: 0, y: 0, z: 0}
   IsSeeingTarget: 0
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
@@ -805,7 +809,7 @@ MonoBehaviour:
     - Key: 1
       Value: 16
     - Key: 2
-      Value: 0.7
+      Value: 1.5
     - Key: 7
       Value: 2
     - Key: 11
@@ -823,6 +827,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
+    MinRange: 1
     NoSource: 0
     DamageDirect: 110
     DamageGroupDirect:
@@ -871,7 +876,7 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     - Key: 12
-      Value: 0.2
+      Value: 0.5
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 7655095426451682942, guid: 8c84ae7d953e4994993fe852f7fd1bf4,
@@ -1277,7 +1282,7 @@ PrefabInstance:
     - target: {fileID: -7361764783371040475, guid: f459de3327904d8468894ccb431b844e,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.58
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: -7361764783371040475, guid: f459de3327904d8468894ccb431b844e,
         type: 3}
@@ -1362,6 +1367,7 @@ MonoBehaviour:
     Value: 0.2
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1427,6 +1433,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   showArmorLists: []
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1489,6 +1496,7 @@ MonoBehaviour:
     Value: 0.3
   - Key: 1
     Value: 0.3
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1566,6 +1574,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   showArmorLists: []
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

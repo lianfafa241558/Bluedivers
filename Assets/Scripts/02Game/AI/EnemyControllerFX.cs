@@ -28,6 +28,7 @@ namespace Unity.FPS.AI
         private List<KVP<Renderer,Material[]>> originalMaterials;
 
         protected float m_lastDamageTime;
+        protected bool allowDeath;
 
         protected virtual void Start() 
         {
@@ -41,7 +42,7 @@ namespace Unity.FPS.AI
             m_Controller.OnDie += OnDie;
 
             InitRS();
-            TriggerFX(OccasionTypeEnum.Birth, m_Controller.Pos, Quaternion.identity, transform);
+            if(m_Controller.BirthDuration>0) TriggerFX(OccasionTypeEnum.Birth, m_Controller.Pos, Quaternion.identity, transform);
             
         }
         private void OnDestroy()
@@ -116,7 +117,8 @@ namespace Unity.FPS.AI
         /// <summary>
         /// 死亡时
         /// </summary>
-        void OnDie() {
+        protected virtual void OnDie() {
+            allowDeath = true;
             TriggerRS(OccasionTypeEnum.Die);
             TriggerFX(OccasionTypeEnum.Die, m_Controller.Pos, Quaternion.identity,null);
             SetBool(Constants.k_AnimIsActiveParameter, false);
@@ -159,10 +161,10 @@ namespace Unity.FPS.AI
                     {
                         newMats[i] = BirthMaterial;
                     }
-                    renderer.sharedMaterials = newMats;
+                    if(m_Controller.BirthDuration > 0) renderer.sharedMaterials = newMats;
                 }
             }
-            if (BirthMaterial)
+            if (BirthMaterial&&m_Controller.BirthDuration > 0)
             {
                 Invoke("RestoreMat", m_Controller.BirthDuration);
             }
@@ -190,7 +192,10 @@ namespace Unity.FPS.AI
 
         protected void TriggerFX(OccasionTypeEnum type,Vector3 pos,Quaternion roat,Transform parent,bool ignoreAudio =false) {
             if(fxDic.TryGet(type, out var value)){
-                if(!ignoreAudio  && value.cilp.IsValid()) AudioManager.PlaySound(new(value.cilp, pos, group: AudioGroups.Enemy));
+                if (!ignoreAudio && value.cilp.IsValid())
+                {
+                    AudioManager.PlaySound(new(value.cilp, pos,range:40, group: AudioGroups.Enemy));
+                }
                 if (value.ps.IsValid())
                 {
                     VFXManager.Creat(value.ps.gameObject, pos, roat, parent);
@@ -217,7 +222,7 @@ namespace Unity.FPS.AI
         protected class FxSet {
             public AudioClip cilp;
             public ParticleSystem ps;
-            public GameObject trans;
+            public GameObject trans;//创建的物体
             public List<ArmorBreakEffect> go;
         }
 

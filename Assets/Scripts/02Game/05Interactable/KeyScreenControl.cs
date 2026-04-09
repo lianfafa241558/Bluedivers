@@ -44,6 +44,7 @@ public partial class KeyScreen
     #region 输入
     void InputInit(Procedure now)
     {
+
         SetActive(inputs, true);
         targetInput = new();
         nowInput = new();
@@ -408,6 +409,7 @@ public partial class KeyScreen
                 SetText(item.GetChild(3), now.UnlockItem[i]);
                 SetColor(item, i == 0 ? _LightColor : Color.white);
                 itemState[i] = false;
+                item.GetComponent<Animator>().SetBool("Active", false);
             }
             else
             {

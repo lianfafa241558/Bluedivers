@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Utils;
 
 namespace FPSGame.UI
 {
@@ -18,7 +19,7 @@ namespace FPSGame.UI
         {
             //bar = (RectTransform)transform;
             canvasGroup = slider.GetComponent<CanvasGroup>();
-            width = (int)bar.rectTransform.rect.width;
+            width = (int)bar.rectTransform.GetRectWidth();
         }
 
         public void SetBar(float scale)

@@ -34,6 +34,7 @@ namespace Unity.FPS.AI
                 {
                     m_moveAudio = AudioManager.CreatSource(gameObject, AudioGroups.Enemy);
                     m_moveAudio.clip = value.cilp;
+                    m_moveAudio.Stop();
                 }
 
             }
@@ -42,6 +43,8 @@ namespace Unity.FPS.AI
 
         protected override void Update()
         {
+            base.Update();
+            if (allowDeath) return;
             //float moveSpeed = GetActualVelocity();
             float moveSpeed = (m_Controller as EnemyController).Velocity.magnitude;
             //show = m_EnemyController.Velocity;
@@ -68,7 +71,7 @@ namespace Unity.FPS.AI
                 lastFreeFx = Time.time + Random.Range(20, 40);//纯表现层不需要同步
                 TriggerFX(OccasionTypeEnum.Free, m_Controller.Pos, Quaternion.identity, transform);
             }
-            base.Update();
+            
         }
 
         /// <summary>
@@ -128,5 +131,10 @@ namespace Unity.FPS.AI
             SetTrigger(Constants.k_AnimAlertedParameter, false);
         }
 
+        protected override void OnDie()
+        {
+            base.OnDie();
+            if(m_moveAudio) m_moveAudio.Stop();
+        }
     }
 }

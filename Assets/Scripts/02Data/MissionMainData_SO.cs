@@ -17,6 +17,7 @@ public class MissionMainData_SO : MissionData_SO
 
     [CustomLabel("撤离类型")]
     public MissionEnum evacuateType;
-
+    [CustomLabel("子任务类型")]
+    public MissionEnum[] subType;
 
 }

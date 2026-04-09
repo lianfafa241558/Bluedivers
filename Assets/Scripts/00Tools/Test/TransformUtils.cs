@@ -7,6 +7,29 @@ namespace Utils
 {
     public static class TransformUtils
     {
+
+        /// <summary>
+        /// 获取 RectTransform 实际渲染宽度（适配所有布局：固定/填充/百分比/缩放）
+        /// </summary>
+        public static float GetRectWidth(this RectTransform rect)
+        {
+            Vector3[] corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            // 右下角X - 左下角X = 实际宽度
+            return corners[2].x - corners[0].x;
+        }
+
+        /// <summary>
+        /// 获取 RectTransform 实际渲染高度
+        /// </summary>
+        public static float GetRectHeight(this RectTransform rect)
+        {
+            Vector3[] corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            // 右上角Y - 右下角Y = 实际高度
+            return corners[1].y - corners[2].y;
+        }
+
         public static Transform GetChild(this Transform transform, params int[] values)
         {
             //故意让他报错显示的

@@ -7,6 +7,9 @@ public class AdjustLineOnDistance : MonoBehaviour
 {
 
     public float baseWidth=0.1f,disScale=0.01f;
+
+    public bool useForward;//使用前方向作为方向
+
     LineRenderer m_line;
     RaycastHit hit;
     void Start()
@@ -19,14 +22,15 @@ public class AdjustLineOnDistance : MonoBehaviour
         if (!Camera.main) return;
         //例:scale=0.01;距离100宽度+10*0.01=0.1
         m_line.startWidth = m_line.endWidth = baseWidth+Mathf.Sqrt(Vector3.Distance(Camera.main.transform.position,transform.position))* disScale;
-
-        if (Physics.Raycast(transform.position+Vector3.up, Vector3.up, out hit, 500))
+        Vector3 dir = useForward ? transform.forward : transform.up;
+        Vector3 dir2= useForward ? Vector3.forward : Vector3.up;
+        if (Physics.Raycast(transform.position + dir, dir, out hit, 500))
         {
-            m_line.SetPosition(1,Vector3.up*hit.distance);
+            m_line.SetPosition(1, dir2 * (hit.distance+1));
         }
         else
         {
-            m_line.SetPosition(1, Vector3.up * 500);
+            m_line.SetPosition(1, dir2 * 500);
         }
     }
 }

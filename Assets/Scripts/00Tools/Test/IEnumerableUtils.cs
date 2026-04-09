@@ -3,10 +3,39 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.BaseTool;
 using UnityEngine;
+using Random = System.Random;
 namespace Utils
 {
     public static class IEnumerableUtils
     {
+
+        public static T WeightTake<T>(this List<KVP<int,T>> list,int totleWeight,Random random)
+        {
+            int randomValue = random.Range(1,totleWeight+1);
+            for (int i=0,v=0;i<list.Count;++i)
+            {
+                v += list[i].Key;
+                if (randomValue < v)
+                {
+                    return list[i].Value;
+                }
+            }
+            return list[0].Value;
+        }
+        public static T WeightTake<T>(this KVP<T, int>[] list, int totleWeight, Random random)
+        {
+            int randomValue = random.Range(1, totleWeight + 1);
+            for (int i = 0, v = 0; i < list.Length; ++i)
+            {
+                v += list[i].Value;
+                if (randomValue < v)
+                {
+                    return list[i].Key;
+                }
+            }
+            return list[0].Key;
+        }
+
 
         public static T NaturalWeightTake<T>(this List<T> list, bool takeOut = false)
         {
@@ -55,7 +84,15 @@ namespace Utils
             return keys;
         }
 
-
+        public static List<KVP<K, V>> ToList<K, V>(this DisplayDic<K, V> dis)
+        {
+            List<KVP<K, V>> list = new();
+            foreach (var item in dis)
+            {
+                list.Add(new(item.Key, item.Value));
+            }
+            return list;
+        }
 
         public static List<KVP<K, V>> ToList<K, V>(this Dictionary<K, V> dis)
         {
@@ -93,7 +130,14 @@ namespace Utils
         {
             return list.FindIndex(item => key.Equals(item.Key));
         }
-
+        public static Dictionary<K, V> ToDictionary<K, V>(this DisplayDic<K, V> kvps)
+        {
+            if (kvps == null) Debug.LogError("错误：List不存在");
+            Dictionary<K, V> dic = new();
+            kvps.ForEach((key,value) => dic.Add(key, value));
+            //kvps.Clear();
+            return dic;
+        }
         public static Dictionary<K, V> ToDictionary<K, V>(this List<KVP<K, V>> kvps)
         {
             if (kvps == null) Debug.LogError("错误：List不存在");

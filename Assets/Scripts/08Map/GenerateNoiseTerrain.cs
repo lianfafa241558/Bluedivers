@@ -48,7 +48,7 @@ namespace FpsGame.MapUtils
         public bool isLand;
 
         [SerializeField]
-        private Texture2D preHeight, preTexture, preBaseHeight;
+        private Texture2D preHeight, preTexture;//, preBaseHeight;
 
         private float[,] heightMap;
         private float[,,] textureMap;
@@ -58,7 +58,7 @@ namespace FpsGame.MapUtils
         //比如分辨率1024/宽512就是2
         private float mapscale => terrain.terrainData.heightmapResolution / terrain.terrainData.size.x;
 
-
+        /*
         void Awake()
         {
             if (generateOnStart && terrain != null)
@@ -66,7 +66,7 @@ namespace FpsGame.MapUtils
                 ApplyFractalNoiseToTerrain();
             }
         }
-
+        */
         /// <summary>
         /// 应用分形噪声到地形
         /// </summary>
@@ -78,7 +78,7 @@ namespace FpsGame.MapUtils
                 return;
             }
 
-
+            //Debug.LogError("开始生成地形");
             TerrainData terrainData = terrain.terrainData;
             width = terrainData.heightmapResolution;
             height = terrainData.heightmapResolution;
@@ -89,7 +89,7 @@ namespace FpsGame.MapUtils
 
             preHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
             preTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
-            preBaseHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
+            //preBaseHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
             heightMap = terrainData.GetHeights(0, 0, width, height);//原始值(0-1)
             textureMap = terrainData.GetAlphamaps(0, 0, size, size);//原始值(0-1)
 
@@ -239,7 +239,7 @@ namespace FpsGame.MapUtils
 
             preHeight.Apply(false, false);//必须加上
             preTexture.Apply(false, false);//必须加上
-            preBaseHeight.Apply(false, false);//必须加上
+            //preBaseHeight.Apply(false, false);//必须加上
                                               //terrainData.SetHeights(0, 0, heightMap);
 
             var surface = GetComponent<UnityEngine.AI.NavMeshSurface>();
@@ -271,17 +271,17 @@ namespace FpsGame.MapUtils
                     // 基础噪声层
                     float nx = offsetX + x / (float)width * baseScale;
                     float ny = offsetY + y / (float)height * baseScale;
-                    var nowheight = (Mathf.Pow(Mathf.PerlinNoise(nx, ny), 2) * 0.9f + 0.1f) * baseAmplitude;
+                    var nowheight = (Mathf.Pow(Mathf.PerlinNoise(ny, nx), 2) * 0.9f + 0.1f) * baseAmplitude;
 
                     // 细节噪声层
                     float dx = offsetX + x / (float)width * detailScale;
                     float dy = offsetY + y / (float)height * detailScale;
-                    nowheight += (Mathf.Pow(Mathf.PerlinNoise(dx, dy), 2) * 2 - 1) * detailAmplitude;
+                    nowheight += (Mathf.Pow(Mathf.PerlinNoise(dy, dx), 2) * 2 - 1) * detailAmplitude;
 
 
                     // 标准化高度
-                    heightMap[x, y] = nowheight / (1 + baseAmplitude + detailAmplitude);
-                    SetPixel(preHeight, x, y, heightMap[x, y], 0);
+                    heightMap[y, x] = nowheight / (1 + baseAmplitude + detailAmplitude);
+                    SetPixel(preHeight, y, x, heightMap[y, x], 0);
                 }
             }
         }
@@ -367,25 +367,25 @@ namespace FpsGame.MapUtils
                     */
 
                     //生成时没有巢穴，所以系数为1
-                    float steepness = GetSteepness(x, y) / 90f;//坡度[0,1]
-                    float nowheight = heightMap[x, y];//高度[0,1]
+                    float steepness = GetSteepness(y, x) / 90f;//坡度[0,1]
+                    float nowheight = heightMap[y, x];//高度[0,1]
 
                     // 岩石层（陡坡）(22.5度-67.5度)
-                    textureMap[x, y, 4] = Mathf.Clamp01(steepness * 2f - 0.5f);
+                    textureMap[y, x, 4] = Mathf.Clamp01(steepness * 2f - 0.5f);
 
                     // 沙地层（中等高度)在[0,0.5]高度逐步变为[0,1]
-                    textureMap[x, y, 1] = Mathf.Clamp01(nowheight * 2f) * (1 - textureMap[x, y, 4]);
+                    textureMap[y, x, 1] = Mathf.Clamp01(nowheight * 2f) * (1 - textureMap[y, x, 4]);
 
                     // 侵蚀层(低洼区域)在[0,0.5]高度逐步变为[1,0]
-                    textureMap[x, y, 2] = Mathf.Clamp01((1 - nowheight) * 2f) * (1 - textureMap[x, y, 4]);
+                    textureMap[y, x, 2] = Mathf.Clamp01((1 - nowheight) * 2f) * (1 - textureMap[y, x, 4]);
 
-                    textureMap[x, y, 3] = 0;
-                    textureMap[x, y, 0] = 0;
+                    textureMap[y, x, 3] = 0;
+                    textureMap[y, x, 0] = 0;
 
-                    SetPixel(preTexture, x, y, textureMap[x, y, 0], 0);
-                    SetPixel(preTexture, x, y, textureMap[x, y, 1], 1);
-                    SetPixel(preTexture, x, y, textureMap[x, y, 2], 2);
-                    SetPixel(preTexture, x, y, steepness, 3);
+                    SetPixel(preTexture, y, x, textureMap[y, x, 0], 0);
+                    SetPixel(preTexture, y, x, textureMap[y, x, 1], 1);
+                    SetPixel(preTexture, y, x, textureMap[y, x, 2], 2);
+                    SetPixel(preTexture, y, x, steepness, 3);
                 }
             }
 
@@ -398,7 +398,7 @@ namespace FpsGame.MapUtils
         {
             // 10000是因为除2次100
             int plateaus = Mathf.FloorToInt(treeProbability * width * height / 10000f);
-            int range = (int)((width - Constants.MapBorder) * 0.5f);
+            //int range = (int)((width - Constants.MapBorder) * 0.5f);
 
             //Debug.LogError("数量"+ plateaus);
             for (int i = 0; i < plateaus; i++)
@@ -549,6 +549,7 @@ namespace FpsGame.MapUtils
         [ContextMenu("重置地形")]
         public void ResetTerrain()
         {
+            Debug.LogError("重置地形");
             if (terrain != null)
             {
                 TerrainData terrainData = terrain.terrainData;

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using PEMaths;
 using Unity.BaseTool;
-#if UNITY_EDITOR
-using UnityEditor;
 using UnityEngine;
 using Utils;
 using Tool = Utils.Tool;
+#if UNITY_EDITOR
+using UnityEditor;
 #endif
 
 namespace Unity.FPS.Game

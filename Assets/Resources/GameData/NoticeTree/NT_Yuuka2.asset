@@ -260,6 +260,26 @@ MonoBehaviour:
   Type: Ready
   Space: 0
   Delay: 0
+--- !u!114 &-1803523787371596001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
+  m_Name: "\u4F18\u9999: \u8FD9\u6B21\u884C\u52A8\u8D85\u51FA\u4E86\u8BA1\u7B97\uFF0C\u73B0\u5728\u73B0\u5728\u64A4\u79BB\uFF0C\u4FDD\u5168\u6218\u529B\u3002"
+  m_EditorClassIdentifier: 
+  Desc: "\u8FD9\u6B21\u884C\u52A8\u8D85\u51FA\u4E86\u8BA1\u7B97\uFF0C\u73B0\u5728\u73B0\u5728\u64A4\u79BB\uFF0C\u4FDD\u5168\u6218\u529B\u3002"
+  Clip: {fileID: 8300000, guid: 59a10a4de2bdebc4f9bef26d285e4c2c, type: 3}
+  SourceName: "\u4F18\u9999"
+  Portrait: {fileID: 21300000, guid: 8dec51654dd1b5b4aa496fa684efc162, type: 3}
+  Priority: 101
+  Type: EvacuateFail
+  Space: 0
+  Delay: 0
 --- !u!114 &-1737479226757309832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -343,16 +363,22 @@ MonoBehaviour:
   - {fileID: 5649655110492244697}
   - {fileID: 3645699525222046451}
   - {fileID: 6871971191804362016}
+  - {fileID: 4332980369272721201}
   - {fileID: 7398774882054948896}
+  - {fileID: 709577124316577075}
+  - {fileID: -1162428953721326636}
   - {fileID: -7885161998396849358}
   - {fileID: -8948026529129781889}
   - {fileID: 7738690133228275851}
   - {fileID: 7092239832831026606}
+  - {fileID: -5888751301695378896}
   - {fileID: -4862221183071399508}
+  - {fileID: 420854901386365502}
   - {fileID: 2187906743745121368}
   - {fileID: 1833582835799199926}
   - {fileID: 258877167191749049}
   - {fileID: 7843875917742435785}
+  - {fileID: -8483288920541518678}
   - {fileID: 7937474251431463653}
   - {fileID: -1737479226757309832}
   - {fileID: -4872485436173515312}
@@ -364,12 +390,9 @@ MonoBehaviour:
   - {fileID: -229871679785898786}
   - {fileID: 9137036463162286856}
   - {fileID: -5178617903073230328}
-  - {fileID: -5888751301695378896}
-  - {fileID: -1162428953721326636}
-  - {fileID: 709577124316577075}
-  - {fileID: 420854901386365502}
-  - {fileID: 4332980369272721201}
-  - {fileID: -8483288920541518678}
+  - {fileID: -1803523787371596001}
+  - {fileID: 7177230716680538868}
+  - {fileID: 7900767564259519453}
 --- !u!114 &258877167191749049
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -630,6 +653,26 @@ MonoBehaviour:
   Type: WaveStart_Zerg
   Space: 0
   Delay: 0
+--- !u!114 &7177230716680538868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
+  m_Name: "\u4F18\u9999: \u6211\u4EEC\u5728\u8FD9\u91CC\u5931\u8D25\u4E86\u3002\u4F46\u6211\u4EEC\u8FD8\u53EF\u4EE5\u5728\u5176\u4ED6\u5730\u65B9\u83B7\u80DC\u3002"
+  m_EditorClassIdentifier: 
+  Desc: "\u6211\u4EEC\u5728\u8FD9\u91CC\u5931\u8D25\u4E86\u3002\u4F46\u6211\u4EEC\u8FD8\u53EF\u4EE5\u5728\u5176\u4ED6\u5730\u65B9\u83B7\u80DC\u3002"
+  Clip: {fileID: 8300000, guid: f8b736f2e9c94114ba35f86dd65b676d, type: 3}
+  SourceName: "\u4F18\u9999"
+  Portrait: {fileID: 21300000, guid: 8dec51654dd1b5b4aa496fa684efc162, type: 3}
+  Priority: 101
+  Type: Fail
+  Space: 0
+  Delay: 0
 --- !u!114 &7398774882054948896
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -688,6 +731,26 @@ MonoBehaviour:
   Portrait: {fileID: 21300000, guid: 8dec51654dd1b5b4aa496fa684efc162, type: 3}
   Priority: 101
   Type: WaveEnd_Zerg
+  Space: 0
+  Delay: 0
+--- !u!114 &7900767564259519453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
+  m_Name: "\u4F18\u9999: \u73B0\u5728\u79BB\u5F00\u662F\u4E3A\u4E86\u4EE5\u540E\u66F4\u597D\u7684\u56DE\u6765\u3002"
+  m_EditorClassIdentifier: 
+  Desc: "\u73B0\u5728\u79BB\u5F00\u662F\u4E3A\u4E86\u4EE5\u540E\u66F4\u597D\u7684\u56DE\u6765\u3002"
+  Clip: {fileID: 8300000, guid: 73da62e56cd9dc644ae24c297673dc51, type: 3}
+  SourceName: "\u4F18\u9999"
+  Portrait: {fileID: 21300000, guid: 8dec51654dd1b5b4aa496fa684efc162, type: 3}
+  Priority: 101
+  Type: Fail
   Space: 0
   Delay: 0
 --- !u!114 &7937474251431463653

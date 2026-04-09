@@ -33,18 +33,23 @@ Shader "LX/Texture2"
         _MoveOtherSpeed("_MoveOtherSpeed",Float) = 0
 
         _TimeScale("_TimeScale",Float) = 1
+
+        [Space(15)] 
+        [Toggle(_MY_FOG_ENABLE)] _MY_FOG_ENABLE("_UnityFogEnable", Float) = 1
     }
     HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
         #pragma shader_feature_local _UseLight
-         #pragma shader_feature_local _Transpose
+        #pragma multi_compile_fog
+        #pragma shader_feature_local _MY_FOG_ENABLE
+        #pragma shader_feature_local _Transpose
         #pragma shader_feature_local _UseFresnel
         #pragma shader_feature_local _UseMoveST
         #pragma multi_compile_instancing
 
-        //»º´æ¼õÉÙÖØ¸´Ê¹ÓÃ(·½±ãºÏ²¢)
-        CBUFFER_START(UnityPerMaterial)//»ù´¡¹²Ïí²ÎÊı
+        //ç¼“å­˜å‡å°‘é‡å¤ä½¿ç”¨(æ–¹ä¾¿åˆå¹¶)
+        CBUFFER_START(UnityPerMaterial)//åŸºç¡€å…±äº«å‚æ•°
             sampler2D _MainTex;
             float4 _MainTex_ST;
             float _FresnelScale;
@@ -58,32 +63,32 @@ Shader "LX/Texture2"
 
             float _TimeScale;
         CBUFFER_END
-        UNITY_INSTANCING_BUFFER_START(Props)//±ä»¯ÊµÀı²ÎÊı
+        UNITY_INSTANCING_BUFFER_START(Props)//å˜åŒ–å®ä¾‹å‚æ•°
                 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _HitColor)
         UNITY_INSTANCING_BUFFER_END(Props)
 
 
     //////////////////////////////////////////////////////////////////////////////////
-    //¹âÏß½á¹¹ÓÉURPÌá¹©£¬ÓÃÓÚ³éÏó¹âÏß×ÅÉ«Æ÷±äÁ¿¡£
-    //Ëü°üº¬¹âµÄ
-    //half3   direction; // ·½Ïò
-    //half3   color; // ÑÕÉ«&Ç¿¶È
-    //half    distanceAttenuation; // ¾àÀëË¥¼õ
-    //half    shadowAttenuation; // ÒõÓ°Ë¥¼õ
+    //å…‰çº¿ç»“æ„ç”±URPæä¾›ï¼Œç”¨äºæŠ½è±¡å…‰çº¿ç€è‰²å™¨å˜é‡ã€‚
+    //å®ƒåŒ…å«å…‰çš„
+    //half3   direction; // æ–¹å‘
+    //half3   color; // é¢œè‰²&å¼ºåº¦
+    //half    distanceAttenuation; // è·ç¦»è¡°å‡
+    //half    shadowAttenuation; // é˜´å½±è¡°å‡
 
-    // URP¸ù¾İ¹âÏßºÍÆ½Ì¨²ÉÈ¡²»Í¬µÄÃ÷°µ´¦Àí·½·¨¡£
-    //ÓÀÔ¶²»ÒªÔÚ×ÅÉ«Æ÷ÖĞÒıÓÃµÆ¹â×ÅÉ«Æ÷±äÁ¿£¬¶øÊÇÊ¹ÓÃ
+    // URPæ ¹æ®å…‰çº¿å’Œå¹³å°é‡‡å–ä¸åŒçš„æ˜æš—å¤„ç†æ–¹æ³•ã€‚
+    //æ°¸è¿œä¸è¦åœ¨ç€è‰²å™¨ä¸­å¼•ç”¨ç¯å…‰ç€è‰²å™¨å˜é‡ï¼Œè€Œæ˜¯ä½¿ç”¨
     // -GetMainLight()
     // -GetLight()
-    //º¯ÊıÌî³äÕâ¸ö¹â½á¹¹¡£
+    //å‡½æ•°å¡«å……è¿™ä¸ªå…‰ç»“æ„ã€‚
     //struct VertexPositionInputs
     //{
-    //    float4 positionCS; // ¶¥µãÔÚ²Ã¼ô¿Õ¼äµÄÎ»ÖÃ
-    //    float4 positionWS; // ¶¥µãÔÚÊÀ½ç¿Õ¼äµÄÎ»ÖÃ
-    //    float4 positionVS; // ¶¥µãÔÚÊÓÍ¼¿Õ¼äµÄÎ»ÖÃ
-    //    float3 viewDir;    // ´ÓÊÓÍ¼Î»ÖÃµ½¶¥µãµÄ·½Ïò
-    //    // ÆäËû¿ÉÄÜµÄÊôĞÔ
+    //    float4 positionCS; // é¡¶ç‚¹åœ¨è£å‰ªç©ºé—´çš„ä½ç½®
+    //    float4 positionWS; // é¡¶ç‚¹åœ¨ä¸–ç•Œç©ºé—´çš„ä½ç½®
+    //    float4 positionVS; // é¡¶ç‚¹åœ¨è§†å›¾ç©ºé—´çš„ä½ç½®
+    //    float3 viewDir;    // ä»è§†å›¾ä½ç½®åˆ°é¡¶ç‚¹çš„æ–¹å‘
+    //    // å…¶ä»–å¯èƒ½çš„å±æ€§
     //};
     //////////////////////////////////////////////////////////////////////////////////
 
@@ -99,13 +104,15 @@ Shader "LX/Texture2"
 
         struct v2f
         {
-            float4 vertex : SV_POSITION;
+            float4 positionCS : SV_POSITION;
             float2 uv : TEXCOORD0;
-            float4 color : TEXCOORD2;
-        #if _UseFresnel
-            float3 positionWS : TEXCOORD1;
+            float4 color : TEXCOORD1;
+
+            float3 positionWS : TEXCOORD2;
             float3 normalWS : TEXCOORD3;
-        #endif
+
+            float fogFactor : TEXCOORD4;
+
             UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
@@ -114,23 +121,27 @@ Shader "LX/Texture2"
             v2f o;
             UNITY_SETUP_INSTANCE_ID(v);
             UNITY_TRANSFER_INSTANCE_ID(v, o);
-            // »ñÈ¡¶¥µãÔÚ²Ã¼ô¿Õ¼äµÄÎ»ÖÃ
+            // è·å–é¡¶ç‚¹åœ¨è£å‰ªç©ºé—´çš„ä½ç½®
             VertexPositionInputs posInputs = GetVertexPositionInputs(v.vertex.xyz);
     
-
-            o.vertex = GetVertexPositionInputs(v.vertex.xyz).positionCS;//urpĞ´·¨
+            o.positionCS = posInputs.positionCS;//urpå†™æ³•
             o.uv = TRANSFORM_TEX(v.uv, _MainTex);
         #if _Transpose
             o.uv = float2(o.uv.y,o.uv.x); 
         #endif
             o.color = v.color;
-            //o.worldPos = mul(unity_ObjectToWorld, v.vertex);//¾É°æĞ´·¨
-            //o.positionWS = GetVertexPositionInputs(v.vertex.xyz).positionWS;//UrpĞ´·¨
+            //o.worldPos = mul(unity_ObjectToWorld, v.vertex);//æ—§ç‰ˆå†™æ³•
+            //o.positionWS = GetVertexPositionInputs(v.vertex.xyz).positionWS;//Urpå†™æ³•
         #if _UseFresnel
-             o.positionWS = TransformObjectToWorld(v.vertex);
-            //TransformObjectToWorld(v.positionOS);//²»ÖªµÀÄÇ°æµÄĞ´·¨
+             //o.positionWS = TransformObjectToWorld(v.vertex);
+            o.positionWS = posInputs.positionWS;
+            //TransformObjectToWorld(v.positionOS);//ä¸çŸ¥é“é‚£ç‰ˆçš„å†™æ³•
             o.normalWS = TransformObjectToWorldNormal(v.normal);
         #endif
+        #if _MY_FOG_ENABLE
+            o.fogFactor = ComputeFogFactor(posInputs.positionCS.z);
+        #endif
+
             return o;
         }
 
@@ -150,12 +161,12 @@ Shader "LX/Texture2"
             half4 col = tex2D(_MainTex, i.uv);
 
             col*= (UNITY_ACCESS_INSTANCED_PROP(Props, _BaseColor)+UNITY_ACCESS_INSTANCED_PROP(Props, _HitColor))*i.color; 
-#if _UseLight
+        #if _UseLight
             Light mainLight = GetMainLight();
             col.rgb *= mainLight.color;
-#endif
+        #endif
             
-#if _UseFresnel
+        #if _UseFresnel
             Light mainLight = GetMainLight();
             half3 N = i.normalWS;
             half3 L = normalize(_WorldSpaceCameraPos - i.positionWS);
@@ -172,25 +183,30 @@ Shader "LX/Texture2"
             if(_FresnelWave){
                 col.a += sin(_Time.y)*_FresnelWave;
             }
-#endif
+        #endif
+        #if _MY_FOG_ENABLE && (defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2))
+            col.rgb = MixFog(col.rgb, i.fogFactor);
+            //col.rgb =  i.fogFactor;
+        #endif
+
             return col;
         }
 
     ENDHLSL
 
     SubShader {
-        LOD 200// Ô½¿¿Ç°µÄsubshaderµÄlodÖµÓ¦Ô½´ó£¬µ«ÊÇÃ»¿´¶®ÊÇ¸ÉÂïµÄ
+        LOD 200// è¶Šé å‰çš„subshaderçš„lodå€¼åº”è¶Šå¤§ï¼Œä½†æ˜¯æ²¡çœ‹æ‡‚æ˜¯å¹²å˜›çš„
 
-        ZWrite [_ZWriteMode] // Éî¶È²»Ğ´Èë£¬Í¸Ã÷¶È»ìºÏÖĞ¶¼Ó¦¹Ø±ÕÉî¶ÈĞ´Èë
-        Cull [_CullMode] // ²»ÌŞ³ı  Cull Back ÌŞ³ı±³Ãæ£¨±³ÏòÉãÏñ»úµÄÃæ£© Cull Front ÌŞ³ıÇ°Ãæ £¨³¯ÏòÉãÏñ»úµÄÃæ£©
+        ZWrite [_ZWriteMode] // æ·±åº¦ä¸å†™å…¥ï¼Œé€æ˜åº¦æ··åˆä¸­éƒ½åº”å…³é—­æ·±åº¦å†™å…¥
+        Cull [_CullMode] // ä¸å‰”é™¤  Cull Back å‰”é™¤èƒŒé¢ï¼ˆèƒŒå‘æ‘„åƒæœºçš„é¢ï¼‰ Cull Front å‰”é™¤å‰é¢ ï¼ˆæœå‘æ‘„åƒæœºçš„é¢ï¼‰
         Blend[_SrcBlend][_DstBlend]
         ZTest[_ZTestMode]
-        //Blend SrcAlpha OneMinusSrcAlpha //´«Í³Í¸Ã÷
-        //Blend One OneMinusSrcAlpha// ±¶ÔöÍ¸Ã÷¶È
+        //Blend SrcAlpha OneMinusSrcAlpha //ä¼ ç»Ÿé€æ˜
+        //Blend One OneMinusSrcAlpha// å€å¢é€æ˜åº¦
         //Blend One One
-        //Blend OneMinusDstColor One // ÈõÌí¼Ó
-        //Blend DstColor Zero // ³Ë·¨(ÌŞ³ı°×É«)
-        //Blend DstColor SrcColor // 2x ³Ë·¨
+        //Blend OneMinusDstColor One // å¼±æ·»åŠ 
+        //Blend DstColor Zero // ä¹˜æ³•(å‰”é™¤ç™½è‰²)
+        //Blend DstColor SrcColor // 2x ä¹˜æ³•
 
         Pass{
              Stencil{
@@ -199,10 +215,11 @@ Shader "LX/Texture2"
                 //Pass Replace
             }
             HLSLPROGRAM
-                #pragma vertex vert  //¶¨µã×ÅÉ«Æ÷
-                #pragma fragment frag    //Æ¬¶Î×ÅÉ«Æ÷
+                #pragma vertex vert  //å®šç‚¹ç€è‰²å™¨
+                #pragma fragment frag    //ç‰‡æ®µç€è‰²å™¨
+
             ENDHLSL
         }
 
-    }Fallback "Texture"//±¸Ñ¡×ÅÉ«Æ÷
+    }Fallback "Texture"//å¤‡é€‰ç€è‰²å™¨
 }

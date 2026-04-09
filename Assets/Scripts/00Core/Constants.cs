@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using PEMaths;
 using UnityEngine;
 
@@ -7,17 +5,23 @@ public static class Constants
 {
     public const int LoginFrameMs = 50;
     public static PEInt LoginFrame { get; } = new(0.05f);
+    public const int FullDayDuration = 1800;
 
     public const float MinTemp = 16;
     public const float MaxTemp = 24;
     public const int MaxPlayer = 4;
 
     /// <summary>死亡高度</summary>
-    public const int KillHeight = -50;
+    public const int KillHeight = -5;
     /// <summary>
-    /// 地图边缘(直径)
+    /// 默认地图边缘(直径)
     /// </summary>
-    public const int MapBorder = 32;
+    public const int MapDefaultBorder = 128;
+
+    /// <summary>
+    /// 本次任务地图边缘(半径)
+    /// </summary>
+    public static int TaskBorder = 16;
 
     public static int k_AnimResetParameter { get; } = Animator.StringToHash("Reset");
     public static int k_AnimChatgetParameter { get; } = Animator.StringToHash("Chatget");

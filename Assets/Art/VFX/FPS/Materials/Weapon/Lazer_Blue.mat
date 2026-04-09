@@ -22,7 +22,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Lazer_Blue
   m_Shader: {fileID: 4800000, guid: 66c4b52bd1e641148b0a113c6f0c8acb, type: 3}
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _MY_FOG_ENABLE
   m_InvalidKeywords:
   - _EMISSION
   - _FLIPBOOKBLENDING_OFF
@@ -106,6 +107,7 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 1
     - _LightingEnabled: 0
+    - _MY_FOG_ENABLE: 1
     - _Metallic: 0
     - _Mode: 0
     - _MoveOtherSpeed: 0

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1939016561}
   - component: {fileID: 1939016563}
   - component: {fileID: 1939016562}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: Spot Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46,7 +46,7 @@ Light:
   m_Shape: 0
   m_Color: {r: 1, g: 0.8, b: 0.18431373, a: 1}
   m_Intensity: 100
-  m_Range: 30
+  m_Range: 45
   m_SpotAngle: 24
   m_InnerSpotAngle: 24
   m_CookieSize: 10
@@ -79,7 +79,7 @@ Light:
   m_Cookie: {fileID: 0}
   m_DrawHalo: 0
   m_Flare: {fileID: 0}
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -109,7 +109,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Version: 1
   m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
+  m_AdditionalLightsShadowResolutionTier: 0
   m_LightLayerMask: 1
   m_CustomShadowLayers: 0
   m_ShadowLayerMask: 1
@@ -184,6 +184,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: 20
+    MinRange: -1
     NoSource: 0
     DamageDirect: 5
     DamageGroupDirect:
@@ -374,6 +375,7 @@ MonoBehaviour:
   DeathDuration: 3
   BirthDuration: 2
   birthTime: 0
+  IsRemove: 0
   PathReachingRadius: 2
 --- !u!114 &8523330831985173641
 MonoBehaviour:
@@ -414,11 +416,11 @@ MonoBehaviour:
     limitRotation: 0
     barrelSetOffset: {x: 0, y: 0, z: 1, w: -0.00000004371139}
     dot: 1
-  showTryAttack: 0
-  showTryAiming: 0
   AttackStop: 0
   AttackStopDistanceRatio: 0.7
   MaintainMaxDis: 1
+  PatrolSpeed: 2
+  AiState2: 1
 --- !u!114 &-1568069395640556039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -597,11 +599,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 100
   Duration: 0
-  MeetDetectedTime: 3
+  MeetDetectedTime: 5
   Range: 24
   tag: 1
   nowCoolTime: 0
   nowDurationTime: 0
+  m_LastDetectedTarget: 0
   cilp: {fileID: 8300000, guid: 7ed7f696400707c48bf9d42a3a6e2498, type: 3}
   ps: {fileID: 8596584320823240780, guid: bacb9b0fe3f498644985c69bc7ab3a22, type: 3}
 --- !u!1 &8523330832917000864
@@ -654,10 +657,14 @@ MonoBehaviour:
   AttackRange: 20
   AlertRange: 30
   KnownTargetTimeout: 10
+  Target:
+    pos: {x: 0, y: 0, z: 0}
   IsSeeingTarget: 0
+  TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
+  showCollider: {fileID: 0}
 --- !u!1 &8523330833250684555
 GameObject:
   m_ObjectHideFlags: 0
@@ -716,6 +723,7 @@ MonoBehaviour:
   showArmorLists:
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -2370,17 +2378,17 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: eca986343d7fedc43aab2a5644508134,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: eca986343d7fedc43aab2a5644508134,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: eca986343d7fedc43aab2a5644508134,
         type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: eca986343d7fedc43aab2a5644508134,
         type: 3}

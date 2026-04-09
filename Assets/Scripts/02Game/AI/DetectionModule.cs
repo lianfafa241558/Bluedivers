@@ -176,10 +176,13 @@ namespace Unity.FPS.AI
                 //检查是否有地形障碍物
                 if (!Physics.Raycast(startPoint, (targetPos - startPoint).normalized, out hit, distance, LayerDefinition.GroundLayers))
                 {
+                     showCollider = null;
                     return true;
                 }
-                else if (hit.collider.GetComponentInParent<I_Actor>()== Target.Actor)
+                //不太可能，我们检查的是地面层
+                else if (Target.Actor!=null && hit.collider.GetComponentInParent<I_Actor>() == Target.Actor)
                 {
+                    showCollider = hit.collider.gameObject;
                     return true;
 
                 }
@@ -228,7 +231,7 @@ namespace Unity.FPS.AI
                 if (CanLook(item.CenterPos,false, out var hit)//可见反而是没有hit的
                     && (newThreat=FpsHelper.ThreatValue(CorePoint.position, item))>closestThreat)
                 {
-                    //Debug.LogError(transform.parent + "可以看见" + item, transform);
+                    //Debug.LogError(transform.parent + "可以看见" + item+"碰撞"+hit.collider, transform);
                     newTarget = item;
                     closestThreat = newThreat;
                 }
@@ -237,7 +240,7 @@ namespace Unity.FPS.AI
             if (newTarget != null)
             {
                 IsSeeingTarget = true;
-                Debug.LogWarning(transform.parent + "设置新目标从" + Target.Actor + "变为" + newTarget, transform);
+                //Debug.LogError(transform.parent + "设置新目标从" + Target.Actor + "变为" + newTarget, transform);
                 SetTargetActor(newTarget);
             }
 
@@ -255,7 +258,7 @@ namespace Unity.FPS.AI
         /// <summary>发现目标</summary>
         protected virtual void OnDetect()
         {
-            //Debug.LogWarning(gameObject+"发现目标"+TargetActor,gameObject);
+            //Debug.LogWarning(gameObject+"发现目标"+Target.Actor,gameObject);
             onDetectedTarget?.Invoke();
         }
 
@@ -319,6 +322,7 @@ namespace Unity.FPS.AI
             if (!newActor.IsValid()) return;
             if (!Target.Actor.IsValid()|| FpsHelper.ThreatValue(CorePoint.position, Target.Actor) > FpsHelper.ThreatValue(CorePoint.position, newActor))
             {
+                //Debug.LogWarning(transform.parent + "受击设置新目标" + Target.Actor + "变为" + newActor, transform);
                 SetTargetActor(newActor);
                 OnDetect();
             }

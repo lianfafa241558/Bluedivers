@@ -23,8 +23,7 @@ Material:
   m_Name: Fire2
   m_Shader: {fileID: 4800000, guid: f257f2ec0c2167c48859a067ac00b592, type: 3}
   m_ValidKeywords: []
-  m_InvalidKeywords:
-  - _UnityFogEnable
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -132,6 +131,7 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
+    - _ColorMask: 15
     - _Cull: 2
     - _CullMode: 2
     - _Cutoff: 0.5
@@ -175,18 +175,23 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 5
+    - _Stencil: 0
     - _StencilComp: 0
+    - _StencilOp: 0
+    - _StencilReadMask: 255
     - _StencilRef: 0
+    - _StencilWriteMask: 255
     - _StripeWidth: 4
     - _SupportOrthographicCamera: 0
     - _Surface: 0
     - _TimeScale: 1
     - _Transpose: 0
-    - _UnityFogEnable: 1
+    - _UnityFogEnable: 0
     - _UseFresnel: 0
     - _UseLight: 0
     - _UseMaskMap: 0
     - _UseMoveST: 0
+    - _UseUIAlphaClip: 0
     - _WorkflowMode: 1
     - _ZTest: 0
     - _ZTestMode: 4

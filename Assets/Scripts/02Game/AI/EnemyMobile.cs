@@ -30,19 +30,29 @@ namespace Unity.FPS.AI
         [CustomLabel("保持在攻击距离范围上的距离")]//目标靠近就跑，远离就追
         public bool MaintainMaxDis = false;
 
+        [CustomLabel("巡逻速度")]
+        public float PatrolSpeed = 2;
 
-        public AIState AiState;// { get; private set; }
+        public AIState AiState2 = AIState.Follow;
 
+        public AIState AiState {
+            get => AiState2;
+            set
+            {
+                //if (enableDebug) Debug.LogError($"{gameObject},原状态{AiState2}，目标状态{value}", gameObject);
 
+                AiState2 = value;
+            }
+        }
 
         protected override void Start()
         {
             base.Start();
             m_EnemyController = m_Controller as EnemyController;
-            m_EnemyController.SetPathDestinationToClosestNode();
+
             //m_EnemyController.OnDie += OnDie;
             // Start patrolling
-            AiState = AIState.Patrol;
+            SwitchState(AIState.Patrol);
 
         }
 
@@ -58,16 +68,16 @@ namespace Unity.FPS.AI
                 case AIState.Follow:
                     // 当与目标有视线连接时，转为攻击状态
                     if (m_EnemyController.IsSeeingTarget && m_EnemyController.IsTargetInAttackRange&& IsLockTarget()) {
-                        AiState = AIState.Attack;
+                        SwitchState(AIState.Attack);
                         //在这里写移动没用，下一帧就改了
                     }
 
                     break;
                 case AIState.Attack:
                     // Transition to follow when no longer a target in attack range
-                    if (!m_EnemyController.IsTargetInAttackRange)
+                    if (!m_EnemyController.IsTargetInAttackRange||!m_EnemyController.IsSeeingTarget)
                     {
-                        AiState = AIState.Follow;
+                        SwitchState(AIState.Follow);
                     }
 
                     break;
@@ -98,16 +108,21 @@ namespace Unity.FPS.AI
             // Handle logic 
             switch (AiState)
             {
+
                 case AIState.Patrol:
-                    if(m_EnemyController.UpdatePathDestination())m_EnemyController.SetNavDestination(m_EnemyController.GetDestinationOnPath());
+                    if (m_EnemyController.UpdatePathDestination())
+                    {
+                        //移除
+                        m_EnemyController.Kill(true);
+                    }
                     break;
                 case AIState.Follow:
                     m_EnemyController.SetNavDestination(TargetPosition);
                     AimTargrt();
                     break;
                 case AIState.Attack:
-                   
-                    float dis = Vector3.Distance(TargetPosition,m_EnemyController.CenterPos);
+
+                    float dis = Vector3.Distance(TargetPosition, m_EnemyController.CenterPos);
                     float stopRange = (AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange);
                     bool mustStop = AttackStop && InAttackState();
                     if (mustStop)
@@ -121,7 +136,7 @@ namespace Unity.FPS.AI
                     }
                     else if (dis < stopRange - 1 / m_EnemyController.DetectionModule.AttackRange && MaintainMaxDis)//保持最大距离的敌人会在目标接近时远离
                     {
-                        m_EnemyController.SetNavDestination(transform.position+(transform.position-TargetPosition).normalized);
+                        m_EnemyController.SetNavDestination(transform.position + (transform.position - TargetPosition).normalized);
                     }
                     else//原地
                     {
@@ -137,7 +152,7 @@ namespace Unity.FPS.AI
                     }
                     else if (AimTargrt())
                     {
-                        turrets.ForEach(item=> {
+                        turrets.ForEach(item => {
                             if (item.IsLockTarget(TargetPosition))
                             {
                                 m_EnemyController.TryAtack(item.weapon);
@@ -154,7 +169,7 @@ namespace Unity.FPS.AI
         {
             if (AiState == AIState.Patrol)
             {
-                AiState = AIState.Follow;
+                SwitchState(AIState.Follow);
             }
             m_TimeStartedDetection = Time.time;
         }
@@ -163,7 +178,7 @@ namespace Unity.FPS.AI
         {
             if (AiState == AIState.Follow || AiState == AIState.Attack)
             {
-                AiState = AIState.Patrol;
+                SwitchState(AIState.Patrol);
             }
 
             m_TimeLostDetection = Time.time;
@@ -201,8 +216,36 @@ namespace Unity.FPS.AI
 
         protected override void OnDie()
         {
-            AiState = AIState.Death;
+            SwitchState(AIState.Death);
             turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
+        }
+        //[SerializeField]
+        //private bool enableDebug;
+        private PEMaths.PEInt speedScale;
+        private void SwitchState(AIState state)
+        {
+            if (state != AiState)
+            {
+                //if (enableDebug) Debug.LogError($"{gameObject},原状态{AiState}，目标状态{state}", gameObject);
+
+                //进入巡逻
+                if (state == AIState.Patrol)
+                {
+                    speedScale = (PEMaths.PEInt)PatrolSpeed - m_EnemyController.Speed.FinalValue;
+                    m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
+                    //if(enableDebug) Debug.LogError($"{gameObject}进入巡逻，速度变化{speedScale}，最终速度{m_EnemyController.Speed.FinalValue}",gameObject);
+                }
+                //结束巡逻
+                else if (AiState == AIState.Patrol)
+                {
+                    m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, -speedScale);
+                    //if (enableDebug) Debug.LogError($"{gameObject}结束巡逻,速度变化{-speedScale}，最终速度{m_EnemyController.Speed.FinalValue}", gameObject);
+                }
+
+
+                AiState = state;
+            }
+            
         }
     }
 }

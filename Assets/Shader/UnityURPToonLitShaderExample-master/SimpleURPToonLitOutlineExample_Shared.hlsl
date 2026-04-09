@@ -95,7 +95,7 @@ CBUFFER_START(UnityPerMaterial)
     float _Expression;
     float _Column;
 
-    float _Discoloration;
+
     float _BlendingScale;
 
 
@@ -130,6 +130,7 @@ CBUFFER_START(UnityPerMaterial)
     half    _ReceiveShadowMappingAmount;
     float   _ReceiveShadowMappingPosOffset;
     half3   _ShadowMapColor;
+    half    _FogMaxValue;
 
     // outline
     float   _WhiteFocusOutline;
@@ -145,7 +146,6 @@ CBUFFER_START(UnityPerMaterial)
     float4 _ColourTex_ST;
     float4 _ColourrMaskTex_ST;
     float   _ColourScale;
-    float _ColourOutlineWidth;
 
 CBUFFER_END
 
@@ -220,7 +220,7 @@ Varyings VertexShaderWork(Attributes input)
     // packing positionWS(xyz) & fog(w) into a vector4
     output.positionWSAndFogFactor = float4(positionWS, fogFactor);
     output.normalWS = vertexNormalInput.normalWS; //normlaized already by GetVertexNormalInputs(...)
-
+     
     output.positionCS = TransformWorldToHClip(positionWS);
 
 
@@ -306,9 +306,10 @@ half4 HSVToRGB(half3 c)
 //将half3变为half2
 half2 vertexToHalf2Method1(float3 vertexPos)
 {
+    //frac在边界处会出现跳变，所以干脆不用了
     half2 uv = half2(
-		frac(vertexPos.x * 0.14159 + vertexPos.z * 0.26795),
-		frac(vertexPos.y * 0.31831 + vertexPos.x * 0.41421)
+		(vertexPos.x * 0.14159 + vertexPos.z * 0.26795),
+		(vertexPos.y * 0.31831 + vertexPos.x * 0.41421)
     );
     return uv;
 }
@@ -333,13 +334,13 @@ half4 GetFinalBaseColor(Varyings input){//计算基础颜色
   
 #if _UseAlphaClipping
     half dissolve=(_DissolveValue.r*1.2-0.1);
+#if _UseAlphaUV
+    half4 v = tex2D(_AlphaMap, input.uv).r;
+#else
     half4 v = tex2D(_AlphaMap, vertexToHalf2Method1(input.subfixVS)).r;
+#endif
     col.a = step(dissolve, v);//col.a * v;
 #endif
-
-    if (_Discoloration) {
-        col *= HSVToRGB(half3((_Time.y / 10+ input.positionWSAndFogFactor.x+ input.positionWSAndFogFactor.z) % 1, 0.5, 1));
-    }
 
     if (_BlendingScale) {
         col =col*(1-_BlendingScale) + col*_BlendingScale* (tex2D(_BlendingMap,input.uv* _BlendingMap_ST.xy)*2-1);
@@ -357,7 +358,8 @@ half3 GetFinalEmissionColor(Varyings input)//计算自发光颜色
             half3 value=tex2D(_EmissionMap, input.uv).rgb * _EmissionMapChannelMask;
             result +=  (value.r+value.g+value.b)* _EmissionColor.rgb*_EmissionScale;
         }else{
-            result += tex2D(_EmissionMap, input.uv).rgb * _EmissionMapChannelMask * _EmissionColor.rgb*_EmissionScale;
+            result +=tex2D(_EmissionMap, input.uv).rgb * _EmissionColor.rgb* _EmissionMapChannelMask*_EmissionScale;
+            //result += tex2D(_EmissionMap, input.uv).rgb * _EmissionMapChannelMask * _EmissionColor.rgb*_EmissionScale;
         }
         
     }
@@ -429,13 +431,18 @@ ToonSurfaceData InitializeSurfaceData(Varyings input)
 #if _UseAlphaClipping
 
 
-    //half v = tex2D(_AlphaMap, input.uv).r;
-    half v = tex2D(_AlphaMap, vertexToHalf2Method1(input.subfixVS)).r;
+#if _UseAlphaUV
+    half4 v = tex2D(_AlphaMap, input.uv).r;
+#else
+    half4 v = tex2D(_AlphaMap, vertexToHalf2Method1(input.subfixVS)).r;
+#endif
 
     half dissolve=(_DissolveValue.r*1.2-0.1);
     half isDissolved = step(dissolve+_EdgeWidth, v);//阶跃方法(小于dissolve时0，大于时1)
 
-    half3 edgeColor = _EdgeColor * smoothstep(dissolve+_EdgeWidth, dissolve, v);
+    //half3 edgeColor = _EdgeColor * smoothstep(dissolve+_EdgeWidth, dissolve, v);
+    //half3 edgeColor = _EdgeColor * smoothstep(dissolve+_EdgeWidth, dissolve, v);
+    half3 edgeColor = _EdgeColor * lerp(dissolve+_EdgeWidth, dissolve, v);
 
     output.albedo.rgb = lerp(output.albedo.rgb,edgeColor,1-isDissolved);
 #endif
@@ -574,9 +581,7 @@ half3 ConvertSurfaceColorToOutlineColor(half3 originalSurfaceColor, half2 uv)
 half3 ApplyFog(half3 color, Varyings input)
 {
     half fogFactor = input.positionWSAndFogFactor.w;
-    // Mix the pixel color with fogColor. You can optionaly use MixFogColor to override the fogColor
-    // with a custom one.
-    color = MixFog(color, fogFactor);
+    color = MixFog(color,fogFactor/(1+(color.r+color.g+color.b)/3)*_FogMaxValue);
 
     return color;  
 }
@@ -599,7 +604,8 @@ half4 ShadeFinalColor(Varyings input) : SV_TARGET
     half3 color = ShadeAllLights(surfaceData, lightingData);
     if(_WhiteFocusOutline)color *= 2;
 #ifdef ToonShaderIsOutline
-    color = ConvertSurfaceColorToOutlineColor(color,input.uv);//计算最终的描边颜色
+    color = min(color, ConvertSurfaceColorToOutlineColor(color,input.uv));//计算最终的描边颜色
+    color = min(color, 1);
 #endif
 
     color = ApplyFog(color, input);

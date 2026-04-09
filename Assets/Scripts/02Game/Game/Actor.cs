@@ -5,6 +5,7 @@ using Unity.BaseTool;
 using PEMaths;
 using Core;
 using GameContract;
+using UnityEngine.AI;
 
 namespace Unity.FPS.Game
 {
@@ -16,10 +17,8 @@ namespace Unity.FPS.Game
         //public event UnityAction<I_Actor> OnStateChange;
         public event UnityAction<I_Actor> OnPosChange;
         public event UnityAction<I_Actor> OnAngleChange;
-        /// <summary>
-        /// 这个死亡是倒计时结束的死亡
-        /// </summary>
-        public event UnityAction OnDeath;
+
+        //public event UnityAction OnDeath;
 
         #region 接口
         /*
@@ -63,7 +62,12 @@ namespace Unity.FPS.Game
 
         public float Threat => threat;
 
-        public override Vector3 CenterPos => AimPoint?AimPoint.position: base.CenterPos;
+        public override Vector3 CenterPos {
+            get {
+                if (this == null) return default;
+                return AimPoint != null ? AimPoint.position : base.CenterPos;
+            }
+        }
 
         public Vector3 HpPos => AimPoint.position + Vector3.up * HpHeight;
 
@@ -95,6 +99,15 @@ namespace Unity.FPS.Game
             return !(left == right);
         }
 
+        public void AddTag(ActorFlag tagToAdd)
+        {
+            flag |= tagToAdd;
+        }
+
+        public void RemoveTag(ActorFlag tagToRemove)
+        {
+            flag &= ~tagToRemove;
+        }
 
         #endregion
 
@@ -116,8 +129,9 @@ namespace Unity.FPS.Game
         private float threat = 1;
 
         [NullCheck]
+        [SerializeField]
         [CustomLabel("瞄准点")]
-        public Transform aimPoint;
+        private Transform aimPoint;
 
         [CustomLabel("显示血条")]
         public bool UseHpBar = true;
@@ -164,15 +178,24 @@ namespace Unity.FPS.Game
                 ActorsManager.Actors.Add(this);
             }
             var m_Health = GetComponent<Health>();
-            if(m_Health) m_Health.OnDie += OnDie;
+            if (m_Health)
+            {
+                m_Health.OnDie += OnDie;
+                m_Health.OnRevive += OnRevive;
+            }
 
             damageables = GetComponentsInChildren<Damageable>();
 
+            
 
+        }
+
+        private void Start()
+        {
 #if UNITY_EDITOR
             if (GameRoot.Instance.IsLocal)
             {
-                Invoke("Init", Time.fixedDeltaTime*2);
+                Invoke("Init", Time.fixedDeltaTime * 2);
                 //Init();
             }
             else
@@ -180,7 +203,7 @@ namespace Unity.FPS.Game
                 Init();
             }
 #else
-            OnStart();
+            Init();
 #endif
         }
 
@@ -209,7 +232,7 @@ namespace Unity.FPS.Game
                     GlobalEventManager.FriendCreate(this);
                     break;
                 case UnitTypeEnum.SpecUnit:
-                    GlobalEventManager.SpecUnitCreate(this);
+                    if (!HasFlag(ActorFlag.Unimportant)) GlobalEventManager.SpecUnitCreate(this);
                     //Debug.LogError("创建特殊单位"+ShowName);
                     break;
                 case UnitTypeEnum.Other:
@@ -217,11 +240,32 @@ namespace Unity.FPS.Game
                     break;
             }
         }
-
+        void OnRevive()
+        {
+            switch (type)
+            {
+                case UnitTypeEnum.Player:
+                    GlobalEventManager.PlayerRevive(this);
+                    break;
+                case UnitTypeEnum.Friend:
+                    //GlobalEventManager.FriendDead(this);
+                    break;
+                case UnitTypeEnum.Enemy:
+                    //GlobalEventManager.EnemyDead(this);
+                    break;
+                case UnitTypeEnum.SpecUnit:
+                    //GlobalEventManager.SpecUnitDead(this);
+                    break;
+                case UnitTypeEnum.Other:
+                    //if (HasFlag(ActorFlag.AutoRegister)) GlobalEventManager.SpecUnitDead(this);
+                    break;
+            }
+        }
         void OnDie(GameObject source)
         {
             //Debug.LogError("单位死亡"+gameObject,gameObject);
             GlobalEventManager.UnitDeath(this);
+            //OnDeath?.Invoke();
             ActorState = ActorState.Dead;
             if(source.IsValid()) GlobalEventManager.UnitKill(source.GetComponent<Actor>(),this);
             switch (type)
@@ -253,7 +297,7 @@ namespace Unity.FPS.Game
                 Debug.LogError("非正常死亡"+gameObject,gameObject);
                 OnStateChange?.Invoke(ActorState.Dead);
             }*/
-            OnDeath?.Invoke();
+  
             //OnStateChange = null;
             OnPosChange = null;
             OnAngleChange = null;

@@ -30,6 +30,7 @@ namespace Unity.FPS.Game
         {
             base.LogicInit();
             if (UseManyMuzzle) ShootCost = WeaponManyMuzzles.Count;
+            WantsToShoot = true;
         }
 
         public override void LogicTick()

@@ -9,7 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Sun 1
   m_Shader: {fileID: 4800000, guid: 66c4b52bd1e641148b0a113c6f0c8acb, type: 3}
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _MY_FOG_ENABLE
   m_InvalidKeywords:
   - _COLORADDSUBDIFF_ON
   - _EMISSION
@@ -100,6 +101,7 @@ Material:
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _LightingEnabled: 0
+    - _MY_FOG_ENABLE: 1
     - _Metallic: 0
     - _Mode: 0
     - _MoveOtherSpeed: 0
@@ -120,6 +122,7 @@ Material:
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
     - _TimeScale: 1
+    - _Transpose: 0
     - _UVSec: 0
     - _UseFresnel: 0
     - _UseLight: 0
@@ -136,6 +139,7 @@ Material:
     - _ColorAddSubDiff: {r: 1, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 630.346, g: 630.346, b: 630.346, a: 1}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
+    - _HitColor: {r: 0, g: 0, b: 0, a: 0}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
     - _SoftParticleFadeParams: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

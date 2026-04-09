@@ -11,20 +11,34 @@ Shader "LX/PlayerWndShield"
         _Noise ("Noise", 2D) = "white" {}
         _distortFactorTime("FactorTime",Range(0,100)) = 0.5
         _distortFactor("factor",Range(0,1)) = 0
+
+
     }
     HLSLINCLUDE
+   
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-        sampler2D _MainTex;
-        float4 _MainTex_ST;
-        float4 _Color;
-        float4 _EmissionColor;
-        sampler2D _Noise;
-        float4 _Noise_ST;
-        half _distortFactorTime;
-        half _distortFactor;
 
-        //´óÖÂ¾ÍÊÇsinº¯Êı±¶ÔöÖ®ºó¼ÓÉÏÈ¡Ğ¡ÊıµÄfracº¯Êı¿ÉÒÔ½üËÆµÃµ½Ò»ÖÖËæ»úÊıµÄĞ§¹û°É¡£
+        
+        
+        //ç¼“å­˜å‡å°‘é‡å¤ä½¿ç”¨(æ–¹ä¾¿åˆå¹¶)
+        CBUFFER_START(UnityPerMaterial)//åŸºç¡€å…±äº«å‚æ•°
+
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+
+
+            float4 _Color;
+            float4 _EmissionColor;
+            sampler2D _Noise;
+            float4 _Noise_ST;
+            half _distortFactorTime;
+            half _distortFactor;
+
+        CBUFFER_END
+
+
+        //å¤§è‡´å°±æ˜¯sinå‡½æ•°å€å¢ä¹‹ååŠ ä¸Šå–å°æ•°çš„fracå‡½æ•°å¯ä»¥è¿‘ä¼¼å¾—åˆ°ä¸€ç§éšæœºæ•°çš„æ•ˆæœå§ã€‚
         float random(float2 uv)
         {
             return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
@@ -34,7 +48,10 @@ Shader "LX/PlayerWndShield"
             float4 vertex : POSITION;
             float3 uv : TEXCOORD0;
             float3 uv2 : TEXCOORD1;
-            half4 color : COLOR;//´«µİimageµÄÑÕÉ«ÓÃ
+            half4 color : COLOR;//ä¼ é€’imageçš„é¢œè‰²ç”¨
+        #if _UseFresnel
+            float3 normal : NORMAL;
+        #endif
         };
 
         struct v2f
@@ -42,48 +59,50 @@ Shader "LX/PlayerWndShield"
             float4 vertex : SV_POSITION;
             float2 uv : TEXCOORD0;
             float2 uv2 : TEXCOORD1;
-            half4 color : COLOR;//´«µİimageµÄÑÕÉ«ÓÃ
+            half4 color : COLOR;//ä¼ é€’imageçš„é¢œè‰²ç”¨
+
         };
 
         v2f vert(a2v v)
         {
             v2f o;
-            o.vertex = GetVertexPositionInputs(v.vertex.xyz).positionCS;//urpĞ´·¨
+            VertexPositionInputs posInputs = GetVertexPositionInputs(v.vertex.xyz);
+            o.vertex = posInputs.positionCS;//urpå†™æ³•
             o.uv = TRANSFORM_TEX(v.uv, _MainTex);
             o.uv2 = o.uv;
             o.color=v.color;
+
             return o;
         }
 
         half4 frag(v2f i) : SV_Target
         {
-            //ÆÁÄ»Î»ÖÃÅ¤¶¯
+            //å±å¹•ä½ç½®æ‰­åŠ¨
             half dragOffset = sin(_Time.y * _distortFactorTime);
 
-            //i.uv2.x+=_Time.y*_distortFactor;
             i.uv2.y+=_Time.y*_distortFactor;
             i.uv.x = i.uv.x +tex2D(_Noise, i.uv2*_Noise_ST.xy+_Noise_ST.zw).r * dragOffset*_distortFactor;
-            //i.uv.y = i.uv.y -tex2D(_Noise, i.uv2*_Noise_ST).r * dragOffset*_distortFactor;
-            //½ÓÏÂÀ´ÓÃÕâ¸öÆ«ÒÆºóµÄuv×ø±êÀ´¶ÔÎÆÀí½øĞĞ²ÉÑù¡£
+
+            //æ¥ä¸‹æ¥ç”¨è¿™ä¸ªåç§»åçš„uvåæ ‡æ¥å¯¹çº¹ç†è¿›è¡Œé‡‡æ ·ã€‚
             half4 col = tex2D(_MainTex, i.uv) * _Color*i.color*_EmissionColor;
-            //half4 col = tex2D(_Noise,i.uv2*_Noise_ST.xy+_Noise_ST.zw) * _Color*i.color;
+
             return col;
         }
 
     ENDHLSL
 
     SubShader {
-        LOD 200// Ô½¿¿Ç°µÄsubshaderµÄlodÖµÓ¦Ô½´ó£¬µ«ÊÇÃ»¿´¶®ÊÇ¸ÉÂïµÄ
+        LOD 200// è¶Šé å‰çš„subshaderçš„lodå€¼åº”è¶Šå¤§ï¼Œä½†æ˜¯æ²¡çœ‹æ‡‚æ˜¯å¹²å˜›çš„
         Blend[_SrcBlend][_DstBlend]
-        ZWrite Off // Éî¶È²»Ğ´Èë£¬Í¸Ã÷¶È»ìºÏÖĞ¶¼Ó¦¹Ø±ÕÉî¶ÈĞ´Èë
-        Cull Off // ²»ÌŞ³ı  Cull Back ÌŞ³ı±³Ãæ£¨±³ÏòÉãÏñ»úµÄÃæ£© Cull Front ÌŞ³ıÇ°Ãæ £¨³¯ÏòÉãÏñ»úµÄÃæ£©
+        ZWrite Off // æ·±åº¦ä¸å†™å…¥ï¼Œé€æ˜åº¦æ··åˆä¸­éƒ½åº”å…³é—­æ·±åº¦å†™å…¥
+        Cull Off // ä¸å‰”é™¤  Cull Back å‰”é™¤èƒŒé¢ï¼ˆèƒŒå‘æ‘„åƒæœºçš„é¢ï¼‰ Cull Front å‰”é™¤å‰é¢ ï¼ˆæœå‘æ‘„åƒæœºçš„é¢ï¼‰
 
         Pass{
             HLSLPROGRAM
-                #pragma vertex vert  //¶¨µã×ÅÉ«Æ÷
-                #pragma fragment frag    //Æ¬¶Î×ÅÉ«Æ÷
+                #pragma vertex vert  //å®šç‚¹ç€è‰²å™¨
+                #pragma fragment frag    //ç‰‡æ®µç€è‰²å™¨
             ENDHLSL
         }
 
-    }Fallback "Diffuse"//±¸Ñ¡×ÅÉ«Æ÷
+    }Fallback "Diffuse"//å¤‡é€‰ç€è‰²å™¨
 }

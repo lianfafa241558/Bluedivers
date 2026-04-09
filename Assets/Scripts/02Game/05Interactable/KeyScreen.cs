@@ -38,17 +38,18 @@ public partial class KeyScreen : MonoBehaviour
     [SerializeField]
     private Animator m_anim;
     private float lastStageTime,trySwitchTime;
-    
 
+    public bool IsActive => nowStage >= 0&& nowStage < procedure.Count;
+    public bool IsEnd => nowStage >= procedure.Count;
     public Procedure nowProcedure => procedure[nowStage];
 
     private void Start()
     {
         furn = GetComponent<Furniture_General>();
-
-        for (int i=0;i<procedure.Count;++i)
+        var list = procedure.Select(item => (int)item.type).Distinct().ToList();
+        for (int i=0;i< list.Count;++i)
         {
-            var tmp = procedurePrefabs[(int)procedure[i].type];
+            var tmp = procedurePrefabs[list[i]];
             var go = Instantiate(tmp,bg);
             go.name = tmp.name;
         }
@@ -102,8 +103,10 @@ public partial class KeyScreen : MonoBehaviour
         nowStage = stage;
         OnUpdateStage?.Invoke(stage);
         lastStageTime = Time.time;
-       
-        if (stage<procedure.Count)
+
+        //有概率被OnUpdateStage事件修改
+        if (stage != nowStage) return;
+        if (stage < procedure.Count)
         {
             SetText(this.stage, (stage + 1) + "/" + procedure.Count);
             AudioManager.PlaySound(new("UI/UI_Reward2"));

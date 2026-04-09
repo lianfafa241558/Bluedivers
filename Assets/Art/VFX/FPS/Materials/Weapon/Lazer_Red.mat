@@ -9,14 +9,15 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Lazer_Red
   m_Shader: {fileID: 4800000, guid: 66c4b52bd1e641148b0a113c6f0c8acb, type: 3}
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _MY_FOG_ENABLE
   m_InvalidKeywords:
   - _EMISSION
   - _FLIPBOOKBLENDING_OFF
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses:
   - ALWAYS
@@ -93,6 +94,7 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 1
     - _LightingEnabled: 0
+    - _MY_FOG_ENABLE: 1
     - _Metallic: 0
     - _Mode: 0
     - _MoveOtherSpeed: 0
@@ -110,6 +112,7 @@ Material:
     - _SrcBlend: 3
     - _Surface: 0
     - _TimeScale: 1
+    - _Transpose: 0
     - _UVSec: 0
     - _UseFresnel: 0
     - _UseLight: 0

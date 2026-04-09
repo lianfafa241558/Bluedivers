@@ -14,11 +14,11 @@ using Tool = Utils.Tool;
 public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 {
 
-
     public int AreaCount,TaskCount;
 
     private Dictionary<MissionEnum, MissionData_SO> Missions;
     private Dictionary<EnemyVarietyType, CampData_SO> Camps;
+    public Dictionary<string, MapData_SO> MapData;
 
     [SerializeField]
     private string[] codeA, codeB;
@@ -30,7 +30,6 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     //[SerializeField]
     //private DisplayDic<string,KVP<Sprite,Sprite>> MapIcon;
 
-    public DisplayDic<string, _MapCfg> MapData;
 
 
     public TaskCfg[,] TaskCfgs;
@@ -52,16 +51,18 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         ["采集欧帕兹数量"] = 0,//这个还没做
     };
 
+
+
     public void Init()
     {
         Awake();
         Missions = Enumerable.ToDictionary(ResManager.Instance.LoadObjects<MissionData_SO>("GameData/Mission"),item => item.type);
         Camps = Enumerable.ToDictionary(ResManager.Instance.LoadObjects<CampData_SO>("GameData/Camp"),item => item.enemyVarietyType);
-
+        MapData = Enumerable.ToDictionary(ResManager.Instance.LoadObjects<MapData_SO>("GameData/Map"), item => item.name.Substring(3));
         TaskCfgs = new TaskCfg[AreaCount,TaskCount];
         nowTask = new();
         CreatAllTask();
-        //if (GameRoot.Instance.IsLocal)
+        if (GameRoot.Instance.IsLocal)
         {
             SetTask("Millennium", 0, DifficultyEnum.Insane, new int[4], 2);
 
@@ -100,9 +101,10 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         TaskRandom = new(now.Month*100+now.Day+now.Hour*100+(now.Minute/30*30));//每小时刷新
         residualCodeA = new(codeA);
         residualCodeB = new(codeB);
+        var values = MapData.Values.ToList();
         for (int i = 0; i < AreaCount; ++i)
         {
-            var enemyType = MapData.TryGetIndex(i).Value.enemyVarietyType;
+            var enemyType = values[i].enemyVarietyType;
             var camp = Camps[enemyType];
             var mainTypes = camp.mainTypes;
             var extraTypes = camp.extraTypes;
@@ -120,18 +122,24 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
                     scale = TaskRandom.Range(0, 1f),
                     main = mainType,
                     extra = CreatExtra(extraTypes, missionCfg.sizeType switch {
-                        SizeType.Small => 0,
+                        SizeType.Small => 2,
                         SizeType.Medium => 3,
                         SizeType.Large => 5,
                         _ => 0
-                    })
+                    }),
+                    nestCount = missionCfg.sizeType switch {
+                        SizeType.Small => new int[3] { 0, 0, 0 },
+                        SizeType.Medium => new int[3] { 2, 1, 0 },
+                        SizeType.Large => new int[3] { 1, 2, 1 },
+                        _ => new int[3] { 0, 0, 0 },
+                    }
                 };
             }
         }
         MissionEnum[] CreatExtra(MissionEnum[] arr,int count)
         {
             //TODO:为了方便测试
-            count = 5;
+            //count = 5;
             MissionEnum[] re = new MissionEnum[count];
             for(int i = 0; i < re.Length; ++i)
             {
@@ -224,23 +232,36 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 
     public void SetTask(string mapId,int taskIndex,DifficultyEnum difficulty,int[] extraDiff,int playMode)
     {
-        int mapIndex = MapData.Keys.FindIndex(item=>item==mapId);
+        int mapIndex = MapData.Keys.ToList().FindIndex(item=>item==mapId);
         var mapData = MapData[mapId];
         var task = nowTask;
         task.taskCfg = TaskCfgs[mapIndex, taskIndex];
         task.campData = Camps[mapData.enemyVarietyType];
         task.mapCfg = mapData;
-
+        /*
         //TODO:测试
+        var size = (Missions[MissionEnum.Explore] as MissionMainData_SO).sizeType;
         task.taskCfg = new() {
-            main = MissionEnum.SearchAndDestroy,
-            extra = task.taskCfg.extra,
+            main = MissionEnum.Explore,
+            extra = task.taskCfg.extra.Take(size switch {
+                SizeType.Small => 2,
+                SizeType.Medium => 3,
+                SizeType.Large => 5,
+                _ => 0
+            }).ToArray(),
+            //extra = task.taskCfg.extra,
+            nestCount = size switch {
+                SizeType.Small => new int[3] { 1, 1, 0 },
+                SizeType.Medium => new int[3] { 3, 1, 0 },
+                SizeType.Large => new int[3] { 2, 2, 1 },
+                _ => new int[3] { 0, 0, 0 },
+            },
             name = task.taskCfg.name,
             scale = task.taskCfg.scale,
             seed = task.taskCfg.seed,
-            enable = task.taskCfg.enable
+            enable = task.taskCfg.enable,
         };
-
+        */
 
 
 
@@ -248,28 +269,24 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         task.evacuate = new TaskItem(Missions[task.MainCfg.evacuateType]);
 
         task.extras = task.taskCfg.extra.Select(item => new TaskItem(Missions[item])).ToArray();
-
-        var nestCount = task.MainCfg.sizeType switch {
-            SizeType.Small => new int[3] { 0, 0, 0 },
-            SizeType.Medium => new int[3] { 6, 3, 0 },
-            SizeType.Large => new int[3] { 8, 4, 1 },
-            _ => new int[3] { 0, 0, 0 },
-        };
-        task.nests = nestCount.Select((count, index) =>
+        task.nests = task.taskCfg.nestCount.Select((count, index) =>
             Enumerable.Repeat(0, count)
             .Select(_ => new TaskItem(Missions[task.campData.nestTypes[index]])).ToArray()
         ).ToArray();
 
-        //task.RequiredAD = new() {10,11};
-        task.RequiredAD = new() { 10, 11, 12 };//先直接加上
+        var subTypes = (Missions[task.taskCfg.main] as MissionMainData_SO).subType;
+        if (subTypes != null) task.subs = subTypes.Select(item => new TaskItem(Missions[item])).ToArray();
+        else task.subs = new TaskItem[0];
+        task.RequiredAD = new() {10,11,16,17};
         task.RequiredAD.AddRange(task.MainCfg.RequiredAD.Select(item => item.ID));
         task.RequiredAD.AddRange(task.taskCfg.extra.SelectMany(item => Missions[item].RequiredAD).Select(item => item.ID));
+        if (subTypes != null) task.RequiredAD.AddRange(subTypes.SelectMany(item => Missions[item].RequiredAD).Select(item => item.ID));
         task.RequiredAD = task.RequiredAD.Distinct().ToList();
 
         task.difficulty = difficulty;
         System.Array.Copy(extraDiff, task.ExtraDifficulty, 4);
 
-        task.mapName = mapData.MapName;
+        task.mapName = mapData.AreaName;
         task.PlayMode = playMode;
         task.SpecialtyPropertys = mapData.product;
         task.OtherPropertys = ((OOPartEnum[])System.Enum.GetValues(typeof(OOPartEnum))).Except(mapData.product).ToArray(); ;
@@ -282,7 +299,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         {
             task.BattleData.Add(new(_DefaultBattleData));
         }
-
+        Constants.TaskBorder = task.MapBorder;
         GameRoot.GameState = GameStateEnum.Ready;
 
     }
@@ -321,7 +338,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 
         /// <summary>选择的任务</summary>
         public TaskCfg taskCfg { get; set; }
-        public _MapCfg mapCfg { get; set; }
+        public MapData_SO mapCfg { get; set; }
         public CampData_SO campData { get; set; }
 
         public Dictionary<OOPartEnum, int> collectProperty = new();
@@ -335,6 +352,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         public TaskItem evacuate;
         public TaskItem[] extras;
         public TaskItem[][] nests;
+        public TaskItem[] subs;
 
         public GameResult result { get; set; }
         public DifficultyEnum difficulty { get; set; }
@@ -346,12 +364,23 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         public OOPartEnum[] OtherPropertys { get; set; }
         public MissionMainData_SO MainCfg => (MissionMainData_SO)main.cfg;
 
-        public int MapSize => MainCfg.sizeType switch {
-            SizeType.Small => 256+Constants.MapBorder,
-            SizeType.Medium => 384+Constants.MapBorder,
-            SizeType.Large => 512 + Constants.MapBorder,
-            _ => 128+Constants.MapBorder,
+        public int MapSize => Constants.MapDefaultBorder
+        +MainCfg.sizeType switch {
+            SizeType.Small => 256,
+            SizeType.Medium => 384,
+            SizeType.Large => 512,
+            SizeType.Mini => 256,
+            _ => 128,
         };
+
+        public int CameraSize => MainCfg.sizeType switch {
+            SizeType.Mini => 192,
+            _ => MapSize - Constants.MapDefaultBorder,
+        };
+
+        /// <summary>地图边缘的半径</summary>
+        public int MapBorder => (MapSize - CameraSize) / 2;
+
         public int MapHeight => MainCfg.sizeType switch {
             SizeType.Small => 64,
             SizeType.Medium => 80,
@@ -359,8 +388,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
             _ => 64,
         };
 
-        public int CameraSize => MapSize-Constants.MapBorder;
-
+  
         public int MainReward =>main.complete ? main.reward : 0;
         public int ExtraReward => extras.Sum(item => item.complete ? item.reward : 0);
         public int NestReward {
@@ -368,7 +396,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
                 int re = 0;
                 for (int i = 0; i < nests.Length; ++i)
                 {
-                    re += nests[i].Sum(item=>item.complete?1:0*item.reward) / nests[i].Length;
+                    if(nests[i].Length>0) re += nests[i].Sum(item=>item.complete?1:0*item.reward) / nests[i].Length;
                 }
                 return re;
             }
@@ -387,8 +415,9 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         public MissionEnum main;
         public MissionEnum[] extra;
 
+        public int[] nestCount;
 
-        public string TaskType => Main.name;
+        public string TaskType => (Main as MissionMainData_SO).name;
         public string TaskDesc => Main.desc;
         public Color Color => (Main as MissionMainData_SO).color;
         public Sprite Sprite => Main.sprite;
@@ -422,31 +451,6 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     }
 
 
-   
-    [System.Serializable]
-    public struct _MapCfg
-    {
-        public string MapName;
-        public Sprite Icon, Map;
-        public MapItemInfo[] mapItemInfos;
-        [TextArea(5,10)]
-        public string AreaDesc;
-        public Sprite AreaBackground;
-        [CustomLabel("特产")]
-        public OOPartEnum[] product;
-        [CustomLabel("敌对类型")]
-        public EnemyVarietyType enemyVarietyType;
-
-        public EnemyType enemyType => enemyVarietyType.ToEnemyType();
-
-        [System.Serializable]
-        public struct MapItemInfo
-        {
-            public string name;
-            public Vector2Int pos;
-            public bool noTask;
-        }
-    }
 
 }
 
@@ -465,15 +469,15 @@ public enum MissionEnum
     /// <summary>护送</summary>
     [CustomLabel("主要/护送")] Escort,
     /// <summary>上传数据</summary>
-    [CustomLabel("主要/上传数据")] RetrieveData,
+    [CustomLabel("主要/上传数据")] RetrieveData,//√
     /// <summary>防守</summary>
-    [CustomLabel("主要/防守")]Defend,
+    [CustomLabel("主要/防守")]Defend,//√
     /// <summary>升旗</summary>
-    [CustomLabel("主要/升旗")] FlagRaising,
+    [CustomLabel("主要/升旗")] FlagRaising,//√
     /// <summary>彻底消灭</summary>
-    [CustomLabel("主要/彻底消灭")] Eradicate,
+    [CustomLabel("主要/彻底消灭")] Eradicate,//√
     /// <summary>搜索并摧毁</summary>
-    [CustomLabel("主要/搜索并摧毁")] SearchAndDestroy,
+    [CustomLabel("主要/搜索并摧毁")] SearchAndDestroy,//√
 
     /// <summary>摧毁虫蛋</summary>
     [CustomLabel("主要/摧毁虫蛋")] DestroyEggs,
@@ -534,16 +538,13 @@ public enum MissionEnum
 
 
     /// <summary>次要/黑盒子</summary>
-    [CustomLabel("次要/黑盒子")]
-    BlackBox,
+    [CustomLabel("次要/黑盒子")] BlackBox,
     /// <summary>次要/激光雷达站</summary>
-    [CustomLabel("次要/激光雷达站")]
-    RadarStation,
+    [CustomLabel("次要/激光雷达站")] RadarStation,
     /// <summary>次要/非法广播</summary>
-    [CustomLabel("次要/非法广播")]
-    Broadcast,
-    /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder1,
+    [CustomLabel("次要/非法广播")] Broadcast,
+    /// <summary>科研哨站</summary>
+    [CustomLabel("次要/科研哨站")] ScienceFacility,
     /// <summary>占位符</summary>
     [CustomLabel("次要/占位符")] Placeholder2,
     /// <summary>占位符</summary>
@@ -598,7 +599,14 @@ public enum MissionEnum
     [CustomLabel("巢穴/色彩-中")] NestColourM = 109,
     [CustomLabel("巢穴/色彩-大")] NestColourL = 110,
 
-
+    /// <summary>升旗子任务</summary>
+    [CustomLabel("子任务/升旗")] SubFlagRaising = 200,
+    /// <summary>获取高价值数据</summary>
+    [CustomLabel("子任务/获取高价值数据")] SubGetData = 201,
+    /// <summary>重启发电机</summary>
+    [CustomLabel("子任务/重启发电机")] SubRestartGenerator = 202,
+    /// <summary>连接油管</summary>
+    [CustomLabel("子任务/连接油管")] ConnectPipes = 203,
 
 }
 
@@ -639,5 +647,6 @@ public enum SizeType
     Medium,
     /// <summary> 大</summary>
     Large,
-
+    /// <summary> 迷你</summary>
+    Mini,
 }

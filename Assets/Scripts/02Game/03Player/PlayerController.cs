@@ -27,6 +27,10 @@ public class PlayerController : MonoBehaviour
     [Foldout("玩家", true)]
     [CustomLabel("玩家摄像机")]
     public Camera PlayerCamera;
+    [SerializeField]
+    [CustomLabel("玩家倒地摄像机")]
+    private Camera PlayerDownCamera;
+
     public Transform ModleRoot;
 
     [DisplayField]
@@ -192,6 +196,9 @@ public class PlayerController : MonoBehaviour
     Vector3 m_CharacterVelocity;
     Vector3 m_LatestImpactSpeed;
     float m_LastTimeJumped = 0f;
+
+    float m_CameraHorizontalAngle = 0;//死亡才用
+
     float m_CameraVerticalAngle = 0f;
     float m_FootstepDistanceCounter;
     float m_TargetCharacterHeight;
@@ -227,6 +234,7 @@ public class PlayerController : MonoBehaviour
         //PlayerCamera.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>().cameraStack.Add(WndManager.UiCamera);
         Controller.enableOverlapRecovery = true;
         Health.OnDie += OnDie;
+        Health.OnRevive += OnRevive;
         WeaponsManager.OnShoot += WeapomRecoil;
         //m_headBaseAngle = headRoot.localEulerAngles.z;
         m_printTime = -SprintCool;
@@ -276,61 +284,15 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
 
-        if (!IsDead && transform.position.y < Constants.KillHeight)
-        {
-            Health.Kill();
-        }
         //在这一帧起跳
         HasJumpedThisFrame = false;
-
         bool wasGrounded = IsGrounded;
         GroundCheck();
-
-        //落地
-        if (IsGrounded && !wasGrounded)
-        {
-            //落地伤害
-            float fallSpeed = -Mathf.Min(CharacterVelocity.y, m_LatestImpactSpeed.y);
-            float fallSpeedRatio = (fallSpeed - MinSpeedForFallDamage) /
-                                    (MaxSpeedForFallDamage - MinSpeedForFallDamage);
-            if (RecievesFallDamage && fallSpeedRatio > 0f)
-            {
-                float dmgFromFall = Mathf.Lerp(FallDamageAtMinSpeed, FallDamageAtMaxSpeed, fallSpeedRatio);
-                Health.TakeDamage(new() {new( DamageTypeEnum.Real,new(dmgFromFall)) },true, null,null,default);
-
-                // 落地伤害声
-                AudioSource.PlayOneShot(FallDamageSfx);
-            }
-            else if(Mathf.Abs(LastLand-Time.time)>0.5f)
-            {
-                LastLand = Time.time;
-                //落地声
-                AudioSource.PlayOneShot(LandSfx);
-            }
-        }
-        /*
+        UpdateFall(wasGrounded);
         // 下蹲
-        if (InputHandler.GetCrouchInputDown())
-        {
-            SetCrouchingState(!IsCrouching, false);
-        }*/
-
+        //if (InputHandler.GetCrouchInputDown())SetCrouchingState(!IsCrouching, false);
         UpdateCharacterHeight(false);
-
-        // 冲刺
-        if ((m_printTime -= Time.deltaTime) < -SprintCool && InputHandler.GetSprintInputDouble())
-        {
-            m_printTime = SprintDuration;
-            //反重力
-            float y = CharacterVelocity.y;
-
-            Vector3 worldspaceMoveInput = transform.TransformVector(InputHandler.GetMoveInput());
-            if (worldspaceMoveInput == Vector3.zero) worldspaceMoveInput = transform.forward;
-
-            Vector3 horizontalVelocity = Vector3.ProjectOnPlane(worldspaceMoveInput, Vector3.up).normalized;//在up平面的投影(Y归零)
-            CharacterVelocity = horizontalVelocity * Mathf.Max(MoveSpeedScale,0) * (IsGrounded ? MaxSpeedOnGround* SprintSpeedGroundModifier : MaxSpeedInAir* SprintSpeedAirModifier) + Vector3.up * Sprintantigravity * y;
-        }
-
+        UpodateSprint();
         HandleCharacterMovement();
         HandleKei();
     }
@@ -339,9 +301,9 @@ public class PlayerController : MonoBehaviour
 
     void HandleKei()
     {
-       if(InputHandler.GetMuleDown())
+       if(!IsDead&&InputHandler.GetMuleDown())
         {
-            GlobalEventManager.CallKai(gameObject, transform.position + transform.forward);
+            GlobalEventManager.CallKai(gameObject, transform.position);
             GlobalEventManager.PlayMeetSoeech(gameObject, SpeechTypeEnum.Kei);
         }
     }
@@ -364,13 +326,31 @@ public class PlayerController : MonoBehaviour
     void OnDie(GameObject source)
     {
         IsDead = true;
+        PlayerCamera.gameObject.SetActive(false);
+        PlayerDownCamera.gameObject.SetActive(true);
 
-        //告诉武器管理员切换到不存在的武器，以降低武器
-        WeaponsManager.SwitchToWeaponIndex(-1, true);
+        WeaponsManager.SwitchToWeaponIndex("", true,false,true);
 
-        GlobalEventManager.PlayerDead(m_Actor);
+        //GlobalEventManager.PlayerDead(m_Actor);
 
         if (GameRoot.GameState == GameStateEnum.Game) BattleManager.Instance.AddBattleDataItem(PlayerIndex, "死亡次数");
+        WeaponsManager.enabled = false;
+    }
+
+    void OnRevive()
+    {
+        IsDead = false;
+        PlayerCamera.gameObject.SetActive(true);
+        PlayerDownCamera.gameObject.SetActive(false);
+
+        WeaponsManager.enabled = true;
+        WeaponsManager.SwitchToWeaponIndex(1, true,false, true);
+        GlobalEventManager.PlayMeetSoeech(gameObject, SpeechTypeEnum.Thank);
+        m_Actor.ActorState = ActorState.Normal;
+
+        //喘息之时现在免费送
+        m_Actor.AddTag(ActorFlag.Invincible);
+        GameRoot.CreateTimer(()=>m_Actor.RemoveTag(ActorFlag.Invincible),4);
     }
 
     /// <summary>
@@ -421,7 +401,11 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     void HandleCharacterMovement()
     {
-
+        if (IsDead)
+        {
+            DownHandleCharacterMovement();
+            return;
+        }
         //以输入速度围绕其局部Y轴旋转变换
         transform.Rotate(new Vector3(0f, (InputHandler.GetLookInputsHorizontal() * RotationSpeed * RotationMultiplier), 0f), Space.Self);
 
@@ -584,8 +568,39 @@ public class PlayerController : MonoBehaviour
             CharacterVelocity = Vector3.ProjectOnPlane(CharacterVelocity, hit.normal);
         }
     }
+    /// <summary>
+    /// 倒地后的移动控制
+    /// </summary>
+    void DownHandleCharacterMovement()
+    {
 
+        float mouseX = InputHandler.GetLookInputsHorizontal();
+        float mouseY = InputHandler.GetLookInputsVertical(); // 你需要获取垂直输入
 
+        m_CameraHorizontalAngle += mouseX * RotationSpeed * RotationMultiplier / 2;
+        m_CameraVerticalAngle += mouseY * RotationSpeed * RotationMultiplier / 2;
+        m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -20f, 70f); // 限制上下角度
+
+        Quaternion rotation = Quaternion.Euler(
+            m_CameraVerticalAngle,       // 上下
+            transform.eulerAngles.y - 180 + m_CameraHorizontalAngle, // 左右
+            0
+        );
+
+        Vector3 offsetDir = rotation * Vector3.back;
+        Vector3 cameraFinalPos = CenterPos+Vector3.up + offsetDir * 4f;
+
+        // 6. 应用位置 + 注视
+        PlayerDownCamera.transform.position =Vector3.Lerp(PlayerDownCamera.transform.position, cameraFinalPos, RotationSpeed * RotationMultiplier*Time.deltaTime/2);
+        PlayerDownCamera.transform.LookAt(CenterPos);
+
+        //呼救
+        if (InputHandler.GetJumpInputDown())
+        {
+            GlobalEventManager.CallKai(gameObject, transform.position);
+            GlobalEventManager.PlayMeetSoeech(gameObject, SpeechTypeEnum.Help);
+        }
+    }
 
 
     //如果给定法线表示的倾斜角度低于角色控制器的倾斜角度限制，则返回true
@@ -612,6 +627,65 @@ public class PlayerController : MonoBehaviour
         Vector3 directionRight = Vector3.Cross(direction, transform.up);
         return Vector3.Cross(slopeNormal, directionRight).normalized;
     }
+
+
+    void UpodateSprint()
+    {
+        // 冲刺
+        if ((m_printTime -= Time.deltaTime) < -SprintCool && InputHandler.GetSprintInputDouble())
+        {
+            m_printTime = SprintDuration;
+            //反重力
+            float y = CharacterVelocity.y;
+
+            Vector3 worldspaceMoveInput = transform.TransformVector(InputHandler.GetMoveInput());
+            if (worldspaceMoveInput == Vector3.zero) worldspaceMoveInput = transform.forward;
+
+            Vector3 horizontalVelocity = Vector3.ProjectOnPlane(worldspaceMoveInput, Vector3.up).normalized;//在up平面的投影(Y归零)
+            CharacterVelocity = horizontalVelocity * Mathf.Max(MoveSpeedScale, 0) * (IsGrounded ? MaxSpeedOnGround * SprintSpeedGroundModifier : MaxSpeedInAir * SprintSpeedAirModifier) + Vector3.up * Sprintantigravity * y;
+        }
+    }
+
+    /// <summary>
+    /// 更新角色跳跃
+    /// </summary>
+    void UpdateFall(bool oldState)
+    {
+
+        if (!IsDead && transform.position.y < Constants.KillHeight)
+        {
+            //Health.Kill();
+            if (UnityEngine.AI.NavMesh.SamplePosition(transform.position+Vector3.up*100, out var hit, 10, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                transform.position = hit.position;
+            }
+        }
+
+        //落地
+        if (IsGrounded && !oldState)
+        {
+            //落地伤害
+            float fallSpeed = -Mathf.Min(CharacterVelocity.y, m_LatestImpactSpeed.y);
+            float fallSpeedRatio = (fallSpeed - MinSpeedForFallDamage) /
+                                    (MaxSpeedForFallDamage - MinSpeedForFallDamage);
+            if (RecievesFallDamage && fallSpeedRatio > 0f)
+            {
+                float dmgFromFall = Mathf.Lerp(FallDamageAtMinSpeed, FallDamageAtMaxSpeed, fallSpeedRatio);
+                Health.TakeDamage(new() { new(DamageTypeEnum.Real, new(dmgFromFall)) }, true, null, null, default);
+
+                // 落地伤害声
+                AudioSource.PlayOneShot(FallDamageSfx);
+            }
+            else if (Mathf.Abs(LastLand - Time.time) > 0.5f)
+            {
+                LastLand = Time.time;
+                //落地声
+                AudioSource.PlayOneShot(LandSfx);
+            }
+        }
+
+    }
+
 
     /// <summary>
     /// 更新角色(自己的)高度(下蹲时使用)

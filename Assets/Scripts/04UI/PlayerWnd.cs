@@ -99,10 +99,8 @@ public partial class PlayerWnd : WindowRoot
         killRoot.alpha = 0;
         m_LastKillTime = -15;
         m_KillCount = 0;
-        SetSprite(killIcon,taskManager.nowTask.campData.KillSprite);
-        SetSprite(enemyShow, taskManager.nowTask.campData.Sprite);
-        SetText(diffshow, taskManager.nowTask.difficulty.ToString());
-        m_TaskStartTime = Time.time;
+
+        m_TaskStartTime = Time.time+5;
 
         if (m_ActiveWeapon)
         {
@@ -134,13 +132,26 @@ public partial class PlayerWnd : WindowRoot
         GlobalEventManager.OnUnitKill += UnitKill;
     }
 
+
+    private void OnGameStateChange(GameStateEnum exit, GameStateEnum entry)
+    {
+        if (exit == entry) return;
+        if (entry== GameStateEnum.Game)
+        {
+            SetSprite(killIcon, taskManager.nowTask.campData.KillSprite);
+            SetSprite(enemyShow, taskManager.nowTask.campData.Sprite);
+            SetText(diffshow, taskManager.nowTask.difficulty.ToString());
+        }
+      
+    }
+
     public override void Init()
     {
-
+        GameRoot.OnGameStateChange += OnGameStateChange;
     }
     public override void UnInit()
     {
-
+        GameRoot.OnGameStateChange -= OnGameStateChange;
     }
 
     protected override void FirstShowWnd()
@@ -388,7 +399,7 @@ public partial class PlayerWnd : WindowRoot
 
     void OnDie(GameObject source)
     {
-        m_Controller = null;
+        //m_Controller = null;
 
 
     }

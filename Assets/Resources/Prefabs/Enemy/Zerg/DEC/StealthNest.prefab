@@ -42,7 +42,7 @@ GameObject:
   - component: {fileID: 4247307295061633261}
   - component: {fileID: 4247307295061633259}
   - component: {fileID: 4247307295061633260}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: Point Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5009,10 +5009,14 @@ MonoBehaviour:
   AttackRange: 0
   AlertRange: 15
   KnownTargetTimeout: 12
+  Target:
+    pos: {x: 0, y: 0, z: 0}
   IsSeeingTarget: 0
+  TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
+  showCollider: {fileID: 0}
 --- !u!1 &5247611013533635576
 GameObject:
   m_ObjectHideFlags: 0
@@ -5071,7 +5075,7 @@ MonoBehaviour:
   ExtraPortrait: {fileID: 21300000, guid: 2a8122cd519b8014cbfdf4686fa82d97, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
-  flag: 66
+  flag: 98
   type: 4
   team: 1
   threat: 0
@@ -5245,8 +5249,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   creatPoint: {fileID: 9150198892112717303}
-  creatUnits:
-  - {fileID: 1417902310742990674, guid: 9daa0085da612034281d3688be01157c, type: 3}
   creatData:
   - Key: {fileID: 1417902310742990674, guid: 9daa0085da612034281d3688be01157c, type: 3}
     Value: 20
@@ -5445,6 +5447,7 @@ MonoBehaviour:
     Value: 0.9
   - Key: 1
     Value: 0.9
+  AllArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
@@ -5488,6 +5491,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   showArmorLists: []
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -5531,6 +5535,7 @@ MonoBehaviour:
     Value: 0.6
   - Key: 1
     Value: 0.3
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -5575,6 +5580,7 @@ MonoBehaviour:
     Value: 0.9
   - Key: 1
     Value: 0.9
+  AllArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
@@ -5654,6 +5660,7 @@ MonoBehaviour:
     Value: 0.9
   - Key: 1
     Value: 0.9
+  AllArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:

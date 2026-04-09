@@ -30,6 +30,8 @@ Shader "Custom/AlphaBlend"
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("DstBlend", Float) = 10
 
         [Space(15)] 
+        [Toggle(_UnityFogEnable)] _UnityFogEnable("_UnityFogEnable", Float) = 1
+        [Space(15)] 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -70,9 +72,10 @@ Shader "Custom/AlphaBlend"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-
+            #pragma multi_compile_fog
             // 引入URP核心库
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #pragma shader_feature_local _UnityFogEnable
 
             // 顶点输入结构体
             struct Attributes
@@ -89,7 +92,8 @@ Shader "Custom/AlphaBlend"
                 float2 uv2           : TEXCOORD1;
                 float2 uv3           : TEXCOORD2;
                 // 传递时间（用于UV移动）
-                float time          : TEXCOORD4;
+                float time          : TEXCOORD3;
+                float fogFactor : TEXCOORD4;
             };
 
             // 全局属性声明
@@ -120,13 +124,16 @@ Shader "Custom/AlphaBlend"
             {
                 Varyings OUT;
                 // 转换顶点到裁剪空间
-                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                VertexPositionInputs posInputs = GetVertexPositionInputs(IN.positionOS.xyz);
+
+                OUT.positionHCS = posInputs.positionCS;
                 // 传递UV（支持缩放和平移）
                 OUT.uv = TRANSFORM_TEX(IN.uv, _MainTex);
                 OUT.uv2 = TRANSFORM_TEX(IN.uv, _AlphaTex1);
                 OUT.uv3 = TRANSFORM_TEX(IN.uv, _AlphaTex2);
                 // 传递时间（使用内置的_Time.y，单位为秒）
                 OUT.time = _Time.y;
+                OUT.fogFactor =ComputeFogFactor(posInputs.positionCS.z);
                 return OUT;
             }
 
@@ -158,6 +165,12 @@ Shader "Custom/AlphaBlend"
                 // 5. 叠加HDR颜色（主颜色 * HDR颜色 * Alpha混合结果）
                 half3 finalColor = mainTexColor.rgb * _Color.rgb * finalAlpha;
 
+            #if _UnityFogEnable&& (defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2))
+                //finalColor.rgb = MixFog(finalColor.rgb,IN.fogFactor);
+                mainTexColor.a *= saturate(1-IN.fogFactor);
+                //col.rgb = 0;
+                //col.a = 0;
+            #endif
                 // 6. 返回最终颜色（保留主纹理的Alpha通道）
                 return half4(finalColor, mainTexColor.a);
             }

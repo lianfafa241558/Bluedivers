@@ -31,6 +31,13 @@ public class ShootMapPreView : MonoBehaviour
     [SerializeField]
     RenderTexture contourRenderTexture;
 
+    [SerializeField]
+    float timeScale;
+
+    // 用来保存灯光状态
+    private Stack<Light> lights = new();
+    private Transform originalParent;
+    private int originalSiblingIndex;
 
     void Awake()
     {
@@ -43,12 +50,59 @@ public class ShootMapPreView : MonoBehaviour
 
     private void OnStartTask(GameStateEnum exit, GameStateEnum entry)
     {
-
         if( entry == GameStateEnum.Game)
         {
-           GameRoot.CreateTimer(Shoot,Time.deltaTime*2);
+            originalParent = transform.parent;
+            originalSiblingIndex = transform.GetSiblingIndex();
+            transform.SetParent(null);
+
+            StartCoroutine(TakePhotoWithoutLights());
         }
     }
+
+    IEnumerator TakePhotoWithoutLights()
+    {
+        yield return null;
+        // 1. 保存所有灯光状态，并关闭它们
+        DisableAllLightsTemporarily();
+        // 等待一帧，让灯光真正关闭
+        yield return null;
+        // 2. 执行拍照
+        Shoot();
+        //Debug.LogError("暂停！");
+        // 3. 恢复所有灯光
+        RestoreAllLights();
+
+        transform.SetParent(originalParent);
+        transform.SetSiblingIndex(originalSiblingIndex);
+    }
+
+    void DisableAllLightsTemporarily()
+    {
+        RenderSettings.fog = false;
+        Light[] allLights = FindObjectsOfType<Light>();
+        var main = RenderSettings.sun;
+        foreach (Light light in allLights)
+        {
+            if (light.enabled&&light!= main)
+            {
+                lights.Push(light);
+                light.enabled = false;
+            }
+        }
+    }
+
+    void RestoreAllLights()
+    {
+        RenderSettings.fog = true;
+        while (lights.Count > 0)
+        {
+            Light light = lights.Pop();
+            if (light != null)light.enabled = true;
+        }
+        lights=null;
+    }
+
 
     private void Shoot()
     {
@@ -81,17 +135,41 @@ public class ShootMapPreView : MonoBehaviour
         RenderSettings.fog = true;
         cam.enabled = false;
         cam.targetTexture = null;
-        Destroy(CameraObj, 01.05f);
+        Destroy(CameraObj, 0.05f);
         
 
         AddCountour();
         GetComponent<RawImage>().texture = contourRenderTexture;
     }
 
+    float[] dayStageTime = new float[] { 0f, 0.167f, 0.333f, 0.542f, 0.708f, 0.792f, 1 };
+    /// <summary>返回一天中的阶段，并且标准化</summary>
+    /// <param name="value">对应阶段的值,长度6，分别为午夜值，清晨值，正午值,正午值，黄昏值，午夜值</param>
+    float LerpScale(float[] value)
+    {
+        System.DateTime now = System.DateTime.Now;
+        float minuteSecond = 60 * now.Minute + now.Second;
+        // 对1800取模，作为初始时间
+        var t = (minuteSecond % Constants.FullDayDuration) / (Constants.FullDayDuration + 0f);
+
+        float scale;
+        for (int i = 0; i < 6; ++i)
+        {
+            if (t < dayStageTime[i + 1])
+            {
+                scale = Mathf.InverseLerp(dayStageTime[i], dayStageTime[i + 1], t);
+                return Mathf.Lerp(value[(i + 6 - 1) % 6], value[i], scale);
+            }
+        }
+        return value[0];
+    }
+
+
+
     private void AddCountour()
     {
-        //int textureSize = contourRenderTexture.width;//贴图大小，例如512
-        int textureSize = TaskManager.Instance.nowTask.CameraSize;//贴图大小
+        int textureSize = contourRenderTexture.width;//贴图大小，例如512
+        //int textureSize = TaskManager.Instance.nowTask.CameraSize;//贴图大小
         // 1. 初始化byte数组
         Texture2D contourTex = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false);
         contourTex.filterMode = FilterMode.Bilinear;
@@ -99,7 +177,10 @@ public class ShootMapPreView : MonoBehaviour
         RenderTexture.active = contourRenderTexture;//更改为激活对象
         contourTex.ReadPixels(new Rect(0, 0, textureSize, textureSize), 0, 0);
         RenderTexture.active = previousActiveRT;//恢复
-        //contourTex.Apply();
+                                                //contourTex.Apply();
+       
+        timeScale = LerpScale(new float[] { 1, 0.3f, 0,0, 0.3f, 1});
+        //Debug.LogWarning("初始时间" + currentTime+"强度"+ timeScale);
 
         int totalPixels = textureSize * textureSize;
         byte[] pixelBytes = new byte[totalPixels];//实际上byte和bool占用的字节数是一样的
@@ -111,7 +192,7 @@ public class ShootMapPreView : MonoBehaviour
         float heightmapSize = terrainData.heightmapResolution - 1;//获取高度图分辨率并减1，例如1024
         float sizeRatio = terrainSize / textureSize;//计算地形尺寸与输出纹理尺寸的比例关系:288/512=0.4x
         float ratioToSize = heightmapSize / terrainSize;//计算高度图分辨率与地形尺寸的比例关系:1024/288=3.x
-        float borderSize = Constants.MapBorder /2;
+        float borderSize = TaskManager.Instance.nowTask.MapBorder;
 
         byte GetHeight(float X,float Z)//X和Z都是[0,terrainSize]
         {
@@ -146,7 +227,8 @@ public class ShootMapPreView : MonoBehaviour
                 float terrainX = x * sizeRatio;//[0,terrainSize]
                 var color = filteredBytes[pixelIndex];
                 //filteredBytes[pixelIndex]= filteredBytes[pixelIndex].MultiplyRGB(0.7f);//降低亮度
-                color = color.MultiplyRGB(0.8f);
+                color += new Color(1,1,1,0)*timeScale * 0.2f;
+                color = color.MultiplyRGB(0.8f+ timeScale * 0.2f);
                 color *= color;
                 color = color.MultiplyRGB(0.6f);
                 // 亮的多降，暗的少降
@@ -218,11 +300,5 @@ public class ShootMapPreView : MonoBehaviour
         DestroyImmediate(contourTex);
     }
 
- 
-    // 编辑器下的测试按钮
-    [ContextMenu("生成纹理")]
-    private void GenerateContourTextureInEditor()
-    {
-        Shoot();
-    }
+
 }

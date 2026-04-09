@@ -42,8 +42,9 @@ namespace Unity.FPS.AI
 
         public bool BirthComplete=>Time.time>=birthTime+BirthDuration;
 
-        /// <summary>巡逻路径</summary>
-        public PatrolPath PatrolPath { get; set; }
+        /// <summary>巡逻目标</summary>
+        public Vector3 PatrolPos { get; set; }
+
         /// <summary>当前的目标(的AimPoint)</summary>
         public TargetData Target => DetectionModule.Target;
         /// <summary>目标是否进入攻击范围</summary>
@@ -61,7 +62,6 @@ namespace Unity.FPS.AI
 
 
 
-        int m_PathDestinationNodeIndex;
 
  
         Collider[] m_SelfColliders;
@@ -149,52 +149,23 @@ namespace Unity.FPS.AI
             }
         }
 
-        //巡逻路径
-        bool IsPathValid()
-        {
-            return PatrolPath && PatrolPath.PathNodes.Count > 0;
-        }
-        //巡逻路径
-        public void ResetPathDestination()
-        {
-            m_PathDestinationNodeIndex = 0;
-        }
-        //巡逻路径
-        public void SetPathDestinationToClosestNode()
-        {
-            if (IsPathValid())
-            {
-                int closestPathNodeIndex = 0;
-                for (int i = 0; i < PatrolPath.PathNodes.Count; i++)
-                {
-                    float distanceToPathNode = PatrolPath.GetDistanceToNode(transform.position, i);
-                    if (distanceToPathNode < PatrolPath.GetDistanceToNode(transform.position, closestPathNodeIndex))
-                    {
-                        closestPathNodeIndex = i;
-                    }
-                }
 
-                m_PathDestinationNodeIndex = closestPathNodeIndex;
-            }
-            else
-            {
-                m_PathDestinationNodeIndex = 0;
-            }
-        }
         /// <summary>
-        /// 获得下一个巡逻点
+        /// 更新巡逻路径
         /// </summary>
-        /// <returns></returns>
-        public Vector3 GetDestinationOnPath()
+        /// <param name="inverseOrder"></param>
+        public bool UpdatePathDestination()
         {
-            if (IsPathValid())
+            if (PatrolPos!=default)
             {
-                return PatrolPath.GetPositionOfPathNode(m_PathDestinationNodeIndex);
+                //检查是否到达路径目标
+                if ((Pos - PatrolPos).magnitude <= PathReachingRadius)
+                {
+                    return true;
+                }
+                SetNavDestination(PatrolPos);
             }
-            else
-            {
-                return transform.position;
-            }
+            return false;
         }
 
         /// <summary>
@@ -212,6 +183,8 @@ namespace Unity.FPS.AI
             //    }
             //}
 
+            //如果距离太小我们认为是无效的
+            if (Vector3.Distance(destination, m_lastDestination) < 1) return;
             m_lastDestination = destination;
             if (FpsHelper.HaveNavMeshAgent(NavMeshAgent)&& NavMeshAgent.isOnNavMesh)
             {
@@ -219,36 +192,7 @@ namespace Unity.FPS.AI
             }
             
         }
-        /// <summary>
-        /// 更新巡逻路径
-        /// </summary>
-        /// <param name="inverseOrder"></param>
-        public bool UpdatePathDestination(bool inverseOrder = false)
-        {
-            if (IsPathValid())
-            {
-                //检查是否到达路径目标
-                if ((transform.position - GetDestinationOnPath()).magnitude <= PathReachingRadius)
-                {
-                    //递增路径目标索引
-                    m_PathDestinationNodeIndex =
-                        inverseOrder ? (m_PathDestinationNodeIndex - 1) : (m_PathDestinationNodeIndex + 1);
-                    if (m_PathDestinationNodeIndex < 0)
-                    {
-                        m_PathDestinationNodeIndex += PatrolPath.PathNodes.Count;
-                    }
 
-                    if (m_PathDestinationNodeIndex >= PatrolPath.PathNodes.Count)
-                    {
-                        m_PathDestinationNodeIndex -= PatrolPath.PathNodes.Count;
-                    }
-                    return true;
-                }
-                
-            }
-            return false;
-        }
-   
         protected override void _OnDamaged(PEInt damage, GameObject damageSource, Collider collider,bool noSource)
         {
             
@@ -268,6 +212,10 @@ namespace Unity.FPS.AI
             {
                 NavMeshAgent.isStopped = true;
                 NavMeshAgent.enabled = false;
+            }
+            if (DetectionModule.IsValid())
+            {
+                DetectionModule.enabled = false;
             }
             /*
             for (int i = 0; i < m_Weapons.Length; i++)

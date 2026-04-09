@@ -44,12 +44,13 @@ public class ModifyTerrain : MonoBehaviour
         }
         else
         {
-            y = Mathf.Min(TerrainUtils.WSToHeight(transform.position),
-                TerrainUtils.WSToHeight(transform.position + Vector3.left * 5),
-                TerrainUtils.WSToHeight(transform.position + Vector3.right * 5),
-                TerrainUtils.WSToHeight(transform.position + Vector3.forward * 5),
-                TerrainUtils.WSToHeight(transform.position + Vector3.back * 5)
-            );
+            //Debug.LogError("修改地形"+gameObject,gameObject);
+            y = (TerrainUtils.WSToHeight(transform.position)
+                +TerrainUtils.WSToHeight(transform.position + Vector3.left * 5)
+                +TerrainUtils.WSToHeight(transform.position + Vector3.right * 5)
+                +TerrainUtils.WSToHeight(transform.position + Vector3.forward * 5)
+                +TerrainUtils.WSToHeight(transform.position + Vector3.back * 5)
+            )/5;
         }
 
         transform.position = new(transform.position.x,y,transform.position.z);

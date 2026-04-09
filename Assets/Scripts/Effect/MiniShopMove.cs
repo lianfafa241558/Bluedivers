@@ -16,11 +16,23 @@ public class MiniShopMove : MonoBehaviour
 
     private void OnGameStateChange(GameStateEnum exit, GameStateEnum entry)
     {
-        if(entry== GameStateEnum.Ready)
+        if(entry== GameStateEnum.Ready&& pointRoot!=null)
         {
-            foreach (Transform item in pointRoot)
+            if (pointRoot == null) return;
+
+            // 把子物体先转 List，避免 IL2CPP 遍历 bug
+            List<Transform> children = new List<Transform>();
+            for(int i=0;i< pointRoot.childCount; ++i)
             {
-               if( item.GetChild(1).GetComponent<TMPro.TextMeshPro>().text== TaskManager.Instance.nowTask.mapName)
+                children.Add(pointRoot.GetChild(i));
+            }
+            //foreach (Transform t in pointRoot)
+                
+
+            // 现在安全遍历
+            foreach (Transform item in children)
+            {
+                if ( item.GetChild(1).GetComponent<TMPro.TextMeshPro>().text== TaskManager.Instance.nowTask.mapName)
                 {
                     transform.position = item.GetChild(1).position+0.3f*Vector3.up;
                 }

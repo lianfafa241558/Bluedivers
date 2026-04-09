@@ -15,6 +15,12 @@ public class SubTitleShout : SubtitleBase
         base.Creat(owner, target, parent, alwaysShow);
         GlobalEventManager.OnMark += OnMark;
         GlobalEventManager.OnActorSpeech += OnActorSpeech;
+        if(owner.transform.TryGetComponent(out Health health))
+        {
+            health.OnRevive += OnRevive;
+            health.OnDie += OnDeath;
+        }
+
         baseVector = transform.GetRect().anchoredPosition;//复活后恢复位置
         SetActive(gameObject, false);
         SetActive(distance, false);
@@ -26,6 +32,11 @@ public class SubTitleShout : SubtitleBase
     {
         GlobalEventManager.OnMark -= OnMark;
         GlobalEventManager.OnActorSpeech -= OnActorSpeech;
+        if (owner.IsValid() && owner.transform.TryGetComponent(out Health health))
+        {
+            health.OnRevive += OnRevive;
+            health.OnDie += OnDeath;
+        }
     }
 
     protected override void Update()
@@ -35,7 +46,7 @@ public class SubTitleShout : SubtitleBase
             SetActive(gameObject, false);
             return;
         }
-        if(owner.ActorState == ActorState.Dead) Follow(TargetPos);
+        if(owner.ActorState == ActorState.Dead) Follow(owner.CenterPos+Vector3.up);
     }
 
     public override void TryActive(bool state)
@@ -65,9 +76,10 @@ public class SubTitleShout : SubtitleBase
 
     private void OnActorSpeech(GameObject go, NoticeData_SO data)
     {
-        if (go != owner.transform.gameObject || GetDistance() > 100) return;
+        if (go != owner.gameObject || GetDistance() > 100) return;
         SetActive(gameObject, true);
         SetText(desc, data.Desc);
+        //Debug.LogError("喊叫"+ data.Desc);
         LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)desc.parent);
         AudioManager.PlaySound(new() {
             cilp = data.Clip,
@@ -99,5 +111,15 @@ public class SubTitleShout : SubtitleBase
             default:
                 return "嘿，看这里！";
         }
+    }
+    void OnDeath(GameObject _)
+    {
+        mainCamera = Camera.main;
+        transform.GetRect().anchoredPosition = baseVector;
+    }
+    void OnRevive()
+    {
+        mainCamera = Camera.main;
+        transform.GetRect().anchoredPosition = baseVector;
     }
 }

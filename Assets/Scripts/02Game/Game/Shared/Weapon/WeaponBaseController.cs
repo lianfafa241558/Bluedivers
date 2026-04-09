@@ -55,6 +55,8 @@ namespace Unity.FPS.Game {
         public float MaxLifeTime = 5f;
         [CustomLabel("自爆引信(单位:M)")]
         public float MaxRange = -1;
+        [CustomLabel("安全引信(单位:M)")]
+        public float MinRange = -1;
         [CustomLabel("无源伤害")]
         public bool NoSource = false;
 
@@ -316,6 +318,9 @@ namespace Unity.FPS.Game {
                 audios.playOnAwake = false;
                 audios.clip = ContinuousShootLoopSfx;
                 audios.outputAudioMixerGroup = AudioManager.GetMixGroup(AudioGroups.Weapon);
+                audios.rolloffMode = AudioRolloffMode.Linear;
+                audios.minDistance = 3;
+                audios.maxDistance = SFXRange;
                 audios.loop = true;
             }
             m_Initialized = true;

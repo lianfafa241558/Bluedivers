@@ -13,7 +13,7 @@ public class PlotSubtitles : MonoBehaviour
     private TextMeshProUGUI subtitle;
     private CanvasGroup group;
     private RectTransform bg;
-    private new AudioSource audio;
+    private AudioSource audio;
 
     private float time = 0;
     public float startTime=0.7f;

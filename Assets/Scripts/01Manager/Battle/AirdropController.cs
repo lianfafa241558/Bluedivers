@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Core;
+using GameContract;
 using Unity.BaseTool;
+using Unity.FPS.Game;
 using UnityEngine;
 public class AirdropController : MonoBehaviour
 {
@@ -13,7 +15,7 @@ public class AirdropController : MonoBehaviour
 
     public List<AirdropData> useAd;
 
-
+    I_Actor Player => ActorsManager.Player;
 
     private Dictionary<int,AirdropData_SO> adDic=> ResManager.airdropDic;
 
@@ -33,7 +35,7 @@ public class AirdropController : MonoBehaviour
         InputManager.Bind(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
         GlobalEventManager.OnCancelAirdrop += OnCancel;
         GlobalEventManager.OnAirdrop += OnRelease;
-
+        GlobalEventManager.OnPlayerDead += OnDeath;
     }
 
 
@@ -92,9 +94,11 @@ public class AirdropController : MonoBehaviour
 
     private void Open()
     {
+        if (Player.ActorState == ActorState.Dead) return;
+
         GameRoot.WindowState = WindowStateEnum.Airdrop;
         inputDir.Clear();
-        OnCancel(WaitRelease);
+        OnCancel(Player.gameObject,WaitRelease);
     }
     private void Close()
     {
@@ -138,7 +142,7 @@ public class AirdropController : MonoBehaviour
         item.State = AirdropState.Wait;
         WaitRelease = item;
         Close();
-        GlobalEventManager.SelectAirdrop(item);
+        GlobalEventManager.SelectAirdrop(Player.gameObject,item);
     }
 
     /// <summary>释放战备</summary>
@@ -154,13 +158,25 @@ public class AirdropController : MonoBehaviour
     }
 
     /// <summary>取消战备</summary>
-    private void OnCancel(AirdropData item)
+    private void OnCancel(GameObject go,AirdropData item)
     {
-        if (!item.IsValid()) return;
+        if (!item.IsValid()||go !=Player.gameObject) return;
         Debug.LogError("取消准备中的战备"+item);
         item.State = AirdropState.Ready;
 
         WaitRelease = null;
+    }
+
+    void OnDeath(Actor _)
+    {
+        if (WaitRelease != null)
+        {
+            OnCancel(Player.gameObject, WaitRelease);
+        }
+        if (GameRoot.WindowState == WindowStateEnum.Airdrop)
+        {
+            Close();
+        }
     }
 
     public void Authorize(int id,bool state)
