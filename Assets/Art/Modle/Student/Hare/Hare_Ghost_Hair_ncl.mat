@@ -21,18 +21,22 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Hare_Ghost_Hair_ncl
-  m_Shader: {fileID: 4800000, guid: 242d39e501376824a90015d3ae2d01c9, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8aaac90e12a7dff498a492dc7cbbcb9c, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _MAIN_LIGHT_SHADOWS
   m_InvalidKeywords:
   - _REVERSEOCCLUSIONCOLOR_ON
   - _USEOCCLUSION_ON
+  - _USESPECULAR_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -104,6 +108,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SpecularMap:
+        m_Texture: {fileID: 2800000, guid: dfa6a20145b75a447b61ee924fc39e8c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -137,12 +145,14 @@ Material:
     - _DirectLightMultiplier: 1
     - _Discoloration: 0
     - _DstBlend: 0
+    - _EdgeWidth: 0.05
     - _EmissionMaskAddite: 0
     - _EmissionMulByBaseColor: 0
     - _EmissionScale: 1
     - _EnvironmentReflections: 1
     - _Expression: 24
     - _FixOutlineColor: 0
+    - _FogMaxValue: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.4472136
     - _GlossyReflections: 1
@@ -152,10 +162,10 @@ Material:
     - _MainLightIgnoreCelShade: 0
     - _Metallic: 0
     - _Mode: 0
-    - _OcclusionRemapEnd: 1
-    - _OcclusionRemapStart: 0
+    - _OcclusionRemapEnd: 0
+    - _OcclusionRemapStart: 1
     - _OcclusionStrength: 1
-    - _OutlineWidth: 2
+    - _OutlineWidth: 1.5
     - _OutlineZOffset: 0.0001
     - _OutlineZOffsetMaskRemapEnd: 1
     - _OutlineZOffsetMaskRemapStart: 0
@@ -167,25 +177,34 @@ Material:
     - _RenderRef: 1
     - _ReverseOcclusionColor: 1
     - _ShowX: 1
-    - _Smoothness: 0.4472136
+    - _Smoothness: 15
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SpecularMulByBaseColor: 1
+    - _SpecularOffest: -0.2
+    - _SpecularSoftness: 0.2
     - _SrcBlend: 1
     - _Surface: 0
     - _Threshold: 0
     - _UVSec: 0
     - _UseAlphaClipping: 0
+    - _UseAlphaUV: 0
+    - _UseAverNormal: 0
     - _UseColour: 0
     - _UseEmission: 0
     - _UseMosaic: 0
     - _UseMouthMap: 0
     - _UseOcclusion: 1
+    - _UseSpecular: 1
+    - _UseTangentOutlin: 1
     - _WhiteFocusOutline: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DissolveValue: {r: 0, g: 0, b: 0, a: 1}
+    - _EdgeColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionMapChannelMask: {r: 1, g: 1, b: 1, a: 0}
     - _HitColor: {r: 0, g: 0, b: 0, a: 1}
@@ -194,4 +213,5 @@ Material:
     - _OutlineColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
     - _ShadowMapColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpecularColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_BuildTextureStacks: []

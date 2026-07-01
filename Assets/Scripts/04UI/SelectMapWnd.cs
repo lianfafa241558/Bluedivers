@@ -1,11 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Core;
-using Unity.BaseTool;
+
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
-public class SelectMapWnd : WindowRoot
+public class SelectMapWnd : Window
 {
     private const float _SwitchTime=0.5f;
     private MapWndState mapState;
@@ -33,7 +34,7 @@ public class SelectMapWnd : WindowRoot
     [SerializeField]
     private RectTransform areaInfoRoot,areaInfoFactorRoot, areaInfoExtraDiffRoot;
     [SerializeField]
-    private Transform areaInfoName, areaInfoType, areaInfoIcon, 
+    private Transform areaInfoName, areaInfoType, areaInfoIcon, areaInfoEnemy,
         areaInfoMainTarget, areaInfoExtraTarget, areaInfoMainReward, areaInfoExtraReward,
         areaInfoDiffLeft,areaInfoDiffRight, areaInfoDiff, areaInfoDiffReward,
         areaInfoReady;
@@ -44,12 +45,14 @@ public class SelectMapWnd : WindowRoot
     private int[] SelectTaskExtraDiff=new int[4];
     private OOPartEnum[] product;
     private int SelectPlayMode = 2;
-    private ArchivesData_SO arch => GameRoot.Archive;
-    public override void Init()
+    private ArchivesData_SO arch => ArchiveSvc.Archive;
+    public void Init()
     {
+        WndManager.Instance.selectMapWnd = this;
     }
-    public override void UnInit()
+    public void Uninit()
     {
+        WndManager.Instance.selectMapWnd = null;
     }
     protected override void FirstShowWnd()
     {
@@ -65,7 +68,7 @@ public class SelectMapWnd : WindowRoot
             if (info.Length>0) {
                 SetActive(mapRoot.GetChild(a, 1, 3), true);
                 SetActive(mapRoot.GetChild(a, 1, 4), false);
-                for (int u = 0; u < taskManager.TaskCount; ++u) taskManager.TaskCfgs[a,u].enable &= u<info.Length&&!info[u].noTask;
+                for (int u = 0; u < taskManager.TaskCount; ++u) taskManager.TaskCfgs[a,u].enable &= u<info.Length;
             }
             else
             {
@@ -131,7 +134,7 @@ public class SelectMapWnd : WindowRoot
             wndManager.PlaySound(new("UI/UI_Bubble"));
             wndManager.CreatTip(new() { 
                 title = "未完成的功能",
-                desc = "该功能尚未完成，请等待后续更新。"
+                desc = "该功能尚未完成，请等待后续更新。",
             });
             //SelectPlayMode = 0;
         });
@@ -141,7 +144,7 @@ public class SelectMapWnd : WindowRoot
             wndManager.CreatTip(new()
             {
                 title = "未完成的功能",
-                desc = "该功能尚未完成，请等待后续更新。"
+                desc = "该功能尚未完成，请等待后续更新。",
             });
             //SelectPlayMode = 1;
         });
@@ -178,24 +181,25 @@ public class SelectMapWnd : WindowRoot
 
     protected override void ShowWnd()
     {
-        GameRoot.WindowState = WindowStateEnum.UI;
+        WindowState = WindowStateEnum.UI;
         SetActive(mapRoot, true);
         SetActive(areaRoot, false);
         SetActive(areaSelectLayout, false);
         mapState = MapWndState.Map;
         infoRoot.Play("Exit", 0, 1);
         areaInfoRoot.GetComponent<Animator>().Play("Exit", 0, 1);
-        InputManager.ListenerCancel(Cancel);
+        InputManager.AddListenerCancel(Cancel);
         SetText(areaInfoDiff, ((DifficultyEnum)SelectTaskDiff).ToString());
         RefreshDisplay();
 
-        GlobalEventManager.OnFakeBg(mapRoot.parent);
+        //GlobalEventManager.OnFakeBg(mapRoot.parent);
     }
 
     protected override void HideWnd()
     {
-        GameRoot.WindowState = WindowStateEnum.Game;
-        GlobalEventManager.OnFakeBg(null);
+        WindowState = WindowStateEnum.Game;
+        InputManager.RemoveListenerCancel(Cancel);
+        //GlobalEventManager.OnFakeBg(null);
     }
 
     private void Update()
@@ -213,7 +217,7 @@ public class SelectMapWnd : WindowRoot
 
     private bool Cancel()
     {
-        if (!State) return false;
+        if (this==null||!State) return false;
         wndManager.PlaySound(new("UI/UI_Button_Back"));
         switch (mapState)
         {
@@ -221,18 +225,18 @@ public class SelectMapWnd : WindowRoot
                 SetWndState(false);
                 break;
             case MapWndState.Switch:
-                InputManager.ListenerCancel(Cancel);
+                InputManager.AddListenerCancel(Cancel);
                 break;
             case MapWndState.Info:
                 SetActive(mapRoot, true);
                 SetActive(areaRoot, false);
                 mapState = MapWndState.Map;
                 HideAreaInfoWnd(true);
-                InputManager.ListenerCancel(Cancel);
+                InputManager.AddListenerCancel(Cancel);
                 break;
             case MapWndState.SelectTask:
                 CancelTask();
-                InputManager.ListenerCancel(Cancel);
+                InputManager.AddListenerCancel(Cancel);
                 break;
         }
 
@@ -281,7 +285,7 @@ public class SelectMapWnd : WindowRoot
     {
         var infoIcon = areaRoot.GetChild(0).RectTransform();
         var tansIcon = trans.GetChild(0).RectTransform();
-        magnifc = Mathf.Floor(Screen.height * 0.8f / trans.sizeDelta.y / trans.lossyScale.y*4)/4f;
+        magnifc = Mathf.Floor(Constants.CanvasHeight * 0.8f / trans.sizeDelta.y / trans.lossyScale.y*4)/4f;
         //Debug.LogWarning("放大倍率"+ magnifc+"屏幕高度"+(Screen.height * 0.8f)+"地图高度"+ trans.sizeDelta.y * trans.lossyScale.y);
         SetActive(mapRoot,false);
 
@@ -400,7 +404,7 @@ public class SelectMapWnd : WindowRoot
         SetText(areaInfoType, info.TaskType);
         SetText(areaInfoName, info.name);
         SetText(areaInfoMainTarget, info.TaskDesc);
-        SetText(areaInfoExtraTarget,"可选任务 * " + info.extra.Length);
+        SetText(areaInfoExtraTarget,"可选任务* " + info.extra.Length);
 
         AccountReward(index,false);
 
@@ -408,7 +412,10 @@ public class SelectMapWnd : WindowRoot
         SetColor(areaInfoIcon, info.Color);
         SetColor(areaInfoIcon.parent, info.Color);
         SetSprite(areaInfoIcon, info.Sprite);
-
+        var mapData = taskManager.MapData[mapRoot.GetChild(SelectMapIndex).name];
+        var campData = taskManager.Camps[mapData.enemyVarietyType];
+        SetSprite(areaInfoEnemy, campData.Sprite);
+        SetColor(areaInfoEnemy, campData.Color);
 
         float normScale =Mathf.Clamp01(areaInfoRoot.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).normalizedTime);
 
@@ -493,7 +500,7 @@ public class SelectMapWnd : WindowRoot
             }
             SetText(areaInfoMainReward, (int)(info.MainReward * (1 + diffScale)));
             SetText(areaInfoExtraReward, (int)(info.ExtraReward * (1 + diffScale)));
-            SetText(areaInfoDiffReward, "风险奖励：+" + Mathf.RoundToInt(diffScale * 100) + "%");
+            SetText(areaInfoDiffReward, "风险奖励:" + Mathf.RoundToInt(diffScale * 100) + "%");
         }
         else
         {

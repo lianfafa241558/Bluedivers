@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------
 // <copyright file="PhotonEditor.cs" company="Exit Games GmbH">
 //   PhotonNetwork Framework for Unity - Copyright (C) 2018 Exit Games GmbH
 // </copyright>

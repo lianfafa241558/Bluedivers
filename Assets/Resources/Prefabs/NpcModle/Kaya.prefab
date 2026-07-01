@@ -23,6 +23,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7040803193314004}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -8.479322, y: -3.8445554, z: 17.27164}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -30,13 +31,13 @@ Transform:
   m_Children:
   - {fileID: 4901296288579295119}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &4867932137745608804
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 867381350714360971}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
@@ -105,6 +106,33 @@ PrefabInstance:
       value: 6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3554798335866544253}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7416680155779244733}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1559023079955822584}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3844379985099345828}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7120019119705719100}
+    - targetCorrespondingSourceObject: {fileID: 2617798698952376788, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5919687184030598210}
   m_SourcePrefab: {fileID: 100100000, guid: f6e4436c36dcd7d4c8e6fa95f71b861a, type: 3}
 --- !u!4 &960154835122308186 stripped
 Transform:
@@ -180,15 +208,24 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5714847668342476085}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.4
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
 --- !u!95 &7416680155779244733
 Animator:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -205,7 +242,8 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorControllerStateOnDisable: 0
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &1559023079955822584
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -765,6 +803,29 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 4867932137745608804}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7483316206083092912 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2617798698952376788, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+    type: 3}
+  m_PrefabInstance: {fileID: 4867932137745608804}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5919687184030598210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7483316206083092912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65036cdd08fc446419b2ace2b74c7e83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  parent: {fileID: 0}
+  dv: {x: 0, y: 0, z: 0}
+  lastPos: {x: 0, y: 0, z: 0}
+  speed: 10
+  returnSpeed: 10
 --- !u!4 &7694225514773992849 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2974978486542870005, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,

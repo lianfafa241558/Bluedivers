@@ -1,5 +1,246 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8301432212155486874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Bombing
+  m_EditorClassIdentifier: 
+  groupName: Bombing
+  clips:
+  - audioClip: {fileID: 8300000, guid: 68d95b0c580c89345868602ac89b936c, type: 3}
+    subtitle: "\u7533\u8BF7\u8C03\u5EA6\u8F68\u9053\u7A7A\u88AD"
+  - audioClip: {fileID: 8300000, guid: d041088dabcd8024cb44f7f3e67ea106, type: 3}
+    subtitle: "\u8BF7\u6C42\u7A7A\u4E2D\u6253\u51FB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-6555105569855394665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Airdrop
+  m_EditorClassIdentifier: 
+  groupName: Airdrop
+  clips:
+  - audioClip: {fileID: 8300000, guid: 20e60d75c9fabcb47ad2d51a0dce1ee7, type: 3}
+    subtitle: "\u547C\u53EB\u6218\u5907\uFF01"
+  - audioClip: {fileID: 8300000, guid: 57576136698d0e449b9077d8127caf27, type: 3}
+    subtitle: "\u547C\u53EB\u652F\u63F4\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-5530002974907663224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Vehicle
+  m_EditorClassIdentifier: 
+  groupName: Vehicle
+  clips:
+  - audioClip: {fileID: 8300000, guid: cef9b11eaafabac44b776788800aee46, type: 3}
+    subtitle: "\u5E94\u6211\u53EC\u5524\uFF01\u54E5\u96F7\u59C6\u554A\uFF01\u4ECE\u6211\u547D\u4EE4\uFF01 "
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-5054879524940723478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_HaloBomb
+  m_EditorClassIdentifier: 
+  groupName: HaloBomb
+  clips:
+  - audioClip: {fileID: 8300000, guid: 058d3468fe48eae47820e6b6a2097a69, type: 3}
+    subtitle: "\u5149\u73AF\u70B8\u5F39\uFF0C\u70B8\u5E73\u8FD9\u91CC!"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 40
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-4341738170835284572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_NewWeapon
+  m_EditorClassIdentifier: 
+  groupName: NewWeapon
+  clips:
+  - audioClip: {fileID: 8300000, guid: b43a6c86ad25f49499a7f87d7e49e282, type: 3}
+    subtitle: "\u8FD9\u5C31\u662F......\u4F20\u8BF4\u4E2D\u7684\u5723\u5251......\u554A\uFF0C\u662F\u67AA\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-2291838349569425844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Damage
+  m_EditorClassIdentifier: 
+  groupName: Damage
+  clips:
+  - audioClip: {fileID: 8300000, guid: f5cb6c10a1dbcda4781024de944c3b8f, type: 3}
+    subtitle: "\u53D7\u51FB1"
+  - audioClip: {fileID: 8300000, guid: 3759c5f37dfe32945abc21b8c52a8eb7, type: 3}
+    subtitle: "\u53D7\u51FB2"
+  - audioClip: {fileID: 8300000, guid: 8a4c90fca6318f048973cc8a5c5b0d21, type: 3}
+    subtitle: "\u53D7\u51FB3"
+  - audioClip: {fileID: 8300000, guid: 049f89fc52a23aa46af041f2e5882efe, type: 3}
+    subtitle: "\u53D7\u51FB4"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-1340957725084711019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Kei
+  m_EditorClassIdentifier: 
+  groupName: Kei
+  clips:
+  - audioClip: {fileID: 8300000, guid: c0f6378d4890078458332c91b42a16b9, type: 3}
+    subtitle: "\u51EF\u4F0A\uFF0C\u5FEB\u70B9\u5FEB\u70B9"
+  - audioClip: {fileID: 8300000, guid: 78e36913e31dde64a86bb1e7cf2d5da6, type: 3}
+    subtitle: "\u51EF\u4F0A\uFF0C\u770B\u8FD9\u8FB9"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-1308589409051522491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Supply
+  m_EditorClassIdentifier: 
+  groupName: Supply
+  clips:
+  - audioClip: {fileID: 8300000, guid: de18f1e12fb439d419612cc1daeac271, type: 3}
+    subtitle: "\u7533\u8BF7\u8865\u7ED9"
+  - audioClip: {fileID: 8300000, guid: 80e62084b7087704ea5e235287c5214b, type: 3}
+    subtitle: "\u547C\u53EB\u8865\u7ED9!"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-1191394592291570121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Turret
+  m_EditorClassIdentifier: 
+  groupName: Turret
+  clips:
+  - audioClip: {fileID: 8300000, guid: 554c620a1965baf44b4abffda8374c14, type: 3}
+    subtitle: "\u547C\u53EB\u54E8\u6212\u70AE\uFF01"
+  - audioClip: {fileID: 8300000, guid: 93900506cedc4474695b0715f08556a7, type: 3}
+    subtitle: "\u547C\u53EB\u70AE\u5854\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50,77 +291,425 @@ MonoBehaviour:
     arr:
     - Key: 0
       Value:
-      - {fileID: 2870885717174160204, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 1080762914947633157, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 1
       Value:
-      - {fileID: 1594894588689720651, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
     - Key: 2
       Value:
-      - {fileID: -1284684346931479303, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: -2323454773782261403, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 3
       Value:
-      - {fileID: -7720778753118288996, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
     - Key: 4
       Value:
-      - {fileID: -701047479161460271, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: -3668067459606453599, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 5
       Value:
-      - {fileID: 5381951972048999745, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 2374357283348408208, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 7
       Value:
-      - {fileID: -429072849391821721, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 6671377108834088067, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 10
       Value:
-      - {fileID: -9128106890473873854, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 187578883661421440, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 88241359654724639, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 11
       Value:
-      - {fileID: 7421812934663561273, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
     - Key: 16
       Value:
-      - {fileID: 7345700988828166727, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
     - Key: 17
       Value:
-      - {fileID: 99584118565825725, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 8118676791847415805, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: -8472224980299189025, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 1740952868229992339, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 21
       Value:
-      - {fileID: 9218598510675590161, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 8948265497620121027, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 22
       Value:
-      - {fileID: -5372590153539913575, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
     - Key: 23
       Value:
-      - {fileID: 8994490143780817215, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: -3074445636627434366, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 32
       Value:
-      - {fileID: -4876900736638128364, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: -7626462025261488576, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 33
       Value:
-      - {fileID: 5932008785102832145, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 5922160610083103686, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 8
       Value:
-      - {fileID: 8676188342563432600, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
     - Key: 13
       Value:
-      - {fileID: 4166122465844323392, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: -5089708622921692701, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 4500375865475179744, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 12
       Value:
-      - {fileID: -6408314754451825579, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: -2910166404779157384, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: 246262484667389266, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+    - Key: 6
+      Value:
+      - {fileID: 0}
+      - {fileID: 0}
     meetReset: 0
+  speechGroups:
+    ShowSetting: 1
+    NoLog: 1
+    NoDefaultVale: 0
+    DefaultValue: {fileID: 0}
+    arr:
+    - Key: 0
+      Value: {fileID: -1308589409051522491}
+    - Key: 1
+      Value: {fileID: 817298089175282499}
+    - Key: 2
+      Value: {fileID: -6555105569855394665}
+    - Key: 3
+      Value: {fileID: -5530002974907663224}
+    - Key: 4
+      Value: {fileID: -1191394592291570121}
+    - Key: 5
+      Value: {fileID: -8301432212155486874}
+    - Key: 7
+      Value: {fileID: -1340957725084711019}
+    - Key: 10
+      Value: {fileID: 2994993309757788282}
+    - Key: 11
+      Value: {fileID: 7074158441209913022}
+    - Key: 16
+      Value: {fileID: 7834227566251858386}
+    - Key: 17
+      Value: {fileID: -2291838349569425844}
+    - Key: 21
+      Value: {fileID: 725341724854948546}
+    - Key: 22
+      Value: {fileID: -4341738170835284572}
+    - Key: 23
+      Value: {fileID: 9192431252904774576}
+    - Key: 32
+      Value: {fileID: 4285761113548115972}
+    - Key: 33
+      Value: {fileID: 1233894546374839440}
+    - Key: 8
+      Value: {fileID: -5054879524940723478}
+    - Key: 13
+      Value: {fileID: 4615617089841119283}
+    - Key: 12
+      Value: {fileID: 8119503840800103084}
+    - Key: 6
+      Value: {fileID: 7924031647132274471}
+    meetReset: 0
+--- !u!114 &725341724854948546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Select
+  m_EditorClassIdentifier: 
+  groupName: Select
+  clips:
+  - audioClip: {fileID: 8300000, guid: 416de6fe4e288e442a197343165146dd, type: 3}
+    subtitle: "\u7231\u4E3D\u4E1D\uFF0C\u7F16\u5165\u961F\u4F0D\u3002 "
+  - audioClip: {fileID: 8300000, guid: e326538093b55b2438b031af4ce9d639, type: 3}
+    subtitle: "\u6211\u7684\u804C\u4E1A\u662F\u8FDB\u653B\u8005\u5462\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &817298089175282499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Evacuate
+  m_EditorClassIdentifier: 
+  groupName: Evacuate
+  clips:
+  - audioClip: {fileID: 8300000, guid: 063ae6e7dc1562d4385e3c460236a023, type: 3}
+    subtitle: "\u547C\u53EB\u64A4\u79BB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 40
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &1233894546374839440
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Defeat
+  m_EditorClassIdentifier: 
+  groupName: Defeat
+  clips:
+  - audioClip: {fileID: 8300000, guid: da97389147292ea4db5e27db96a25ef1, type: 3}
+    subtitle: "\u5FC5\u706D\u8005\u554A\uFF0C\u4E0D\u80FD\u5C31\u8FD9\u6837\u653E\u5F03\u3002"
+  - audioClip: {fileID: 8300000, guid: d3d532e3a111c6a4b94765c7e5820e54, type: 3}
+    subtitle: "\u91CD\u542F\u3002\u4E0B\u6B21\u518D\u6311\u6218\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 6, y: 6}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &2994993309757788282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Help
+  m_EditorClassIdentifier: 
+  groupName: Help
+  clips:
+  - audioClip: {fileID: 8300000, guid: f39399d2def7a6c47ab2f86459fa2fe7, type: 3}
+    subtitle: "\u7231\u4E3D\u4E1D\u4E0D\u4F1A\u653E\u5F03\u2026\u2026"
+  - audioClip: {fileID: 8300000, guid: 043dec0b31dd2c841a5728eac2e32273, type: 3}
+    subtitle: "\u8840\u91CF\u6761\u5DF2\u7ECF\u5F00\u59CB\u53D8\u7EA2\u4E86\uFF01"
+  - audioClip: {fileID: 8300000, guid: 749498d981a5747478fa171975033518, type: 3}
+    subtitle: "\u7CFB\u7EDF\uFF0C\u505C\u6B62\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &4285761113548115972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Victory
+  m_EditorClassIdentifier: 
+  groupName: Victory
+  clips:
+  - audioClip: {fileID: 8300000, guid: 6a94ae1dcf2395448aa35169e462b87d, type: 3}
+    subtitle: "\u56E0\u4E3A\u6709\u540C\u4F34\uFF0C\u6240\u4EE5\u4E0D\u5BB3\u6015\u3002"
+  - audioClip: {fileID: 8300000, guid: e7081f33fd30c4a41a5c34ab2c5c7f19, type: 3}
+    subtitle: "\u52C7\u6C14\uFF0C\u662F\u6700\u5F3A\u7684\u9B54\u6CD5\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 6, y: 6}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &4615617089841119283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_CollOOParts
+  m_EditorClassIdentifier: 
+  groupName: CollOOParts
+  clips:
+  - audioClip: {fileID: 8300000, guid: 8ce2a60b0a9e8b54b8bc1b5d66362669, type: 3}
+    subtitle: "\u62BD\u53D6\u4E86\u53E4\u4EE3\u9057\u7269"
+  - audioClip: {fileID: 8300000, guid: bc2b270e7cbe02045ad0427d41160647, type: 3}
+    subtitle: "\u83B7\u5F97\u4E86\u53E4\u4EE3\u9057\u7269"
+  - audioClip: {fileID: 8300000, guid: 15d9c812bd805ec499f89b3163015d50, type: 3}
+    subtitle: "\u91C7\u96C6\u4E86\u53E4\u4EE3\u9057\u7269"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &7074158441209913022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Responded
+  m_EditorClassIdentifier: 
+  groupName: Responded
+  clips:
+  - audioClip: {fileID: 8300000, guid: 41c17f199de7912478bf2ed0f898a116, type: 3}
+    subtitle: "\u6211\u6765"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &7834227566251858386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_EnemySpotted
+  m_EditorClassIdentifier: 
+  groupName: EnemySpotted
+  clips:
+  - audioClip: {fileID: 8300000, guid: 40543d3ca02f5ab4d93b48bdcc703532, type: 3}
+    subtitle: "\u53D1\u73B0\u654C\u4EBA"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &7924031647132274471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Airstrike
+  m_EditorClassIdentifier: 
+  groupName: Airstrike
+  clips:
+  - audioClip: {fileID: 8300000, guid: 68d95b0c580c89345868602ac89b936c, type: 3}
+    subtitle: "\u7533\u8BF7\u8C03\u5EA6\u8F68\u9053\u7A7A\u88AD"
+  - audioClip: {fileID: 8300000, guid: d041088dabcd8024cb44f7f3e67ea106, type: 3}
+    subtitle: "\u8BF7\u6C42\u7A7A\u4E2D\u6253\u51FB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &8119503840800103084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Thank
+  m_EditorClassIdentifier: 
+  groupName: Thank
+  clips:
+  - audioClip: {fileID: 8300000, guid: ea4981264a9bf434aa187c62fa54a389, type: 3}
+    subtitle: "\u662FHP\u836F\u6C34\uFF01"
+  - audioClip: {fileID: 8300000, guid: 35bc9ad0924625f42bbb52e13e458980, type: 3}
+    subtitle: "\u88C5\u5907\u8010\u4E45\u5EA6\u6062\u590D\u4E86\uFF01"
+  - audioClip: {fileID: 8300000, guid: 4e390612ffdf80f4eb6b20e0a17e38f0, type: 3}
+    subtitle: "HP\u56DE\u590D\u4E86\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &9192431252904774576
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Upgrade
+  m_EditorClassIdentifier: 
+  groupName: Upgrade
+  clips:
+  - audioClip: {fileID: 8300000, guid: 6b72737c6431f354281274b741218482, type: 3}
+    subtitle: "\u7B49\u7EA7\u63D0\u5347\u3002\u83B7\u5F97\u5927\u91CF\u7ECF\u9A8C\u503C\u3002"
+  - audioClip: {fileID: 8300000, guid: fb97ac55fec971344bf3e8f60e14d131, type: 3}
+    subtitle: "\u8001\u5E08\uFF0C\u7231\u4E3D\u4E1D\u73B0\u5728\u662F\u4E16\u754C\u4E0A\u6700\u5F3A\u7684\u6218\u58EB\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0

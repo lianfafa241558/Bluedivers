@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -184,14 +184,17 @@ namespace UnityEngine.AI
         public AsyncOperation UpdateNavMesh(NavMeshData data)
         {
             var sources = CollectSources();
-
+            //修改参数
+            SuspendAutoUpdate();
             // Use unscaled bounds - this differs in behaviour from e.g. collider components.
             // But is similar to reflection probe - and since navmesh data has no scaling support - it is the right choice here.
             var sourcesBounds = new Bounds(m_Center, Abs(m_Size));
             if (m_CollectObjects == CollectObjects.All || m_CollectObjects == CollectObjects.Children)
                 sourcesBounds = CalculateWorldBounds(sources);
-
-            return NavMeshBuilder.UpdateNavMeshDataAsync(data, GetBuildSettings(), sources, sourcesBounds);
+            var re = NavMeshBuilder.UpdateNavMeshDataAsync(data, GetBuildSettings(), sources, sourcesBounds);
+            //修改参数
+            re.completed += ResumeAutoUpdate;
+            return re;
         }
 
         static void Register(NavMeshSurface surface)
@@ -418,9 +421,33 @@ namespace UnityEngine.AI
                 AddData();
             }
         }
+        #region 修改NavMesh
+        // 恢复原始注册状态
+        private bool wasRegistered;
+
+        public void SuspendAutoUpdate()
+        {
+            if (activeSurfaces.Contains(this))
+            {
+                wasRegistered = true;
+                // 从全局列表移除后，onPreUpdate 就不会触发了
+                activeSurfaces.Remove(this);
+            }
+        }
+
+        public void ResumeAutoUpdate(AsyncOperation op)
+        {
+            if (wasRegistered && !activeSurfaces.Contains(this))
+            {
+                activeSurfaces.Add(this);
+                wasRegistered = false;
+            }
+        }
+    
+    #endregion
 
 #if UNITY_EDITOR
-        bool UnshareNavMeshAsset()
+    bool UnshareNavMeshAsset()
         {
             // Nothing to unshare
             if (m_NavMeshData == null)

@@ -25,16 +25,17 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6798595318903472454}
+  serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 200, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8443615167776225877}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!120 &4832336802617195152
 LineRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -131,16 +132,20 @@ LineRenderer:
       atime6: 0
       atime7: 0
       m_Mode: 0
+      m_ColorSpace: -1
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     numCornerVertices: 0
     numCapVertices: 0
     alignment: 0
     textureMode: 0
+    textureScale: {x: 1, y: 1}
     shadowBias: 0.5
     generateLightingData: 0
+  m_MaskInteraction: 0
   m_UseWorldSpace: 0
   m_Loop: 0
+  m_ApplyActiveColorSpace: 0
 --- !u!114 &7543365807001564973
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,6 +186,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8443615167776225864}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 256.17, y: 6.83, z: 289.53}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -189,7 +195,6 @@ Transform:
   - {fileID: 4828651359265247084}
   - {fileID: 8214872477742584895}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8443615167776225867
 MonoBehaviour:
@@ -225,43 +230,31 @@ MonoBehaviour:
     MaxRange: -1
     MinRange: -1
     NoSource: 1
+    SoundRadius: 20
     DamageDirect: 2000
+    DamageGroupDirect2:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
     DamageExplosion: 2000
+    ExplosionInnerRange: 1.5
     ExplosionRange: 3
-    DamageRatioOverDis:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    DestructeRadius: 3
+    ShockwaveRadius: 0
+    DamageGroupExplosion2:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 250
-    - Key: 12
-      Value: 1
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: f4897c6a885fec74185b34e9259784f1,
@@ -269,10 +262,13 @@ MonoBehaviour:
     ImpactSfx: {fileID: 8300000, guid: 6a2953e1cb8cee249aa5b9eda0dd61ce, type: 3}
     UseHole: 0
     Hole: {fileID: 0}
+    OnlyTerrain: 0
+    UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
+    ChargeSoundScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -302,7 +298,7 @@ AudioSource:
   m_GameObject: {fileID: 8443615167776225864}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 243115921504442520, guid: 50e9e23c4eab052449cd6864362101f0,
+  OutputAudioMixerGroup: {fileID: 243914861002086086, guid: 50e9e23c4eab052449cd6864362101f0,
     type: 2}
   m_audioClip: {fileID: 8300000, guid: 50348d0ef209fe54781ae46998057333, type: 3}
   m_PlayOnAwake: 1
@@ -414,13 +410,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8616683718261057219}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: -0.000061035156, z: 0}
   m_LocalScale: {x: 1, y: 1.0000002, z: 1.0000002}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8443615167776225877}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9002530027946435727
 MonoBehaviour:
@@ -437,4 +433,5 @@ MonoBehaviour:
   searchRange: 25
   searchInterval: 1
   moveSpeed: 15
+  allowRelock: 1
   guideSource: {fileID: 4828651359265247084}

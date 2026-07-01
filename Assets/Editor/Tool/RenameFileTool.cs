@@ -1,39 +1,39 @@
-using System.Linq;
+ï»¿using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 public class RenameFile : EditorWindow
 {
 
-    //[MenuItem("Assets/ÅúÁ¿ĞŞ¸ÄÎÄ¼şÃû×Ö£¨ºó×ºĞòºÅÅÅĞò£©", false, 2)]
-    [MenuItem("Tools/ÅúÁ¿ĞŞ¸ÄÎÄ¼şÃû×Ö")]
+    //[MenuItem("Assets/æ‰¹é‡ä¿®æ”¹æ–‡ä»¶åå­—ï¼ˆåç¼€åºå·æ’åºï¼‰", false, 2)]
+    [MenuItem("Tools/æ‰¹é‡ä¿®æ”¹æ–‡ä»¶åå­—")]
     public static void SetTextureName()
     {
         head_name = Selection.objects[0].name;
-        window = GetWindow<RenameFile>(false, "ÅúÁ¿ĞŞ¸ÄÎÄ¼şÃû");
+        window = GetWindow<RenameFile>(false, "æ‰¹é‡ä¿®æ”¹æ–‡ä»¶å");
         window.Show();
     }
     static EditorWindow window;
     Object[] chooseObj;
     string[] oldName;
-    static string head_name; //Ç°×ºÃû
-    int frist_id = 1; //´ÓÕâ¸öĞòºÅ¿ªÊ¼ÅÅĞò
-    int add_num = 1;  //ÔöÁ¿ - 
-    int numCoune = 1; //ĞòºÅµÄÎ»Êı
+    static string head_name; //å‰ç¼€å
+    int frist_id = 1; //ä»è¿™ä¸ªåºå·å¼€å§‹æ’åº
+    int add_num = 1;  //å¢é‡ - 
+    int numCoune = 1; //åºå·çš„ä½æ•°
     string[] prefixType = new string[] { "[self]#", "[self]_#", "#_[self]", "[self].#", "#.[self]" };
     string[] prefixType2 = new string[] { "[self]#1_#2", "[self]_#1_#2" };
     int prefixType1_id = 1;
     int prefixType2_id = 0;
     bool foldout = true;
 
-    string[] toolbarValues = { "ºó×ºµ¥ÅÅĞò", "Ë«ÅÅĞò", "Ìæ»»" , "Ìæ»»ÎªÅÅĞò","Ç°×º" };
+    string[] toolbarValues = { "åç¼€å•æ’åº", "åŒæ’åº", "æ›¿æ¢" , "æ›¿æ¢ä¸ºæ’åº","å‰ç¼€" };
     int toolbarIndex = 0;
     private void OnGUI()
     {
         GUILayout.Space(30);
         toolbarIndex = GUILayout.Toolbar(toolbarIndex, toolbarValues, GUILayout.Height(30));
         GUILayout.Space(30);
-        if (toolbarIndex == 0) //ºó×ºÅÅĞò
+        if (toolbarIndex == 0) //åç¼€æ’åº
         {
             PrefixSort();
         }
@@ -54,27 +54,27 @@ public class RenameFile : EditorWindow
             SetPrefix();
         }
     }
-    //ºó×º ÅÅĞò
+    //åç¼€ æ’åº
     void PrefixSort()
     {
-        head_name = EditorGUILayout.TextField("Ç°×º", head_name);
-        frist_id = EditorGUILayout.IntField("³õÊ¼Êı×Ö", frist_id);
-        add_num = EditorGUILayout.IntField("ÔöÁ¿", add_num);
-        numCoune = EditorGUILayout.IntField("ĞòºÅµÄÎ»Êı", numCoune);
+        head_name = EditorGUILayout.TextField("å‰ç¼€", head_name);
+        frist_id = EditorGUILayout.IntField("åˆå§‹æ•°å­—", frist_id);
+        add_num = EditorGUILayout.IntField("å¢é‡", add_num);
+        numCoune = EditorGUILayout.IntField("åºå·çš„ä½æ•°", numCoune);
         GUILayout.Space(30);
-        GUILayout.Label("Ñ¡ÔñĞòºÅÀàĞÍ£¬[self]ÎªÇ°×º£¬# ´ú±í±àºÅ");
+        GUILayout.Label("é€‰æ‹©åºå·ç±»å‹ï¼Œ[self]ä¸ºå‰ç¼€ï¼Œ# ä»£è¡¨ç¼–å·");
         prefixType1_id = GUILayout.Toolbar(prefixType1_id, prefixType, GUILayout.Height(25));
 
-        if (GUILayout.Button("È·ÈÏĞŞ¸Ä", GUILayout.Height(40)))
+        if (GUILayout.Button("ç¡®è®¤ä¿®æ”¹", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("ÊÇ·ñĞŞ¸Ä", "ĞŞ¸Äºó¿ÉÍ¨¹ı·µ»ØĞŞ¸Ä·µ»Ø£¬µ«Ö»ÄÜ·µ»ØÒ»´Î, ÊÇ·ñĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("æ˜¯å¦ä¿®æ”¹", "ä¿®æ”¹åå¯é€šè¿‡è¿”å›ä¿®æ”¹è¿”å›ï¼Œä½†åªèƒ½è¿”å›ä¸€æ¬¡, æ˜¯å¦ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
                 if (head_name == "")
                 {
-                    Debug.LogError("²Ù×÷Ê§Îó,Ç°×º²»ÄÜÎª¿Õ£¬Èç²»ĞèÒªÇ°×º£¬ÇëÌî¡®#¡¯");
+                    Debug.LogError("æ“ä½œå¤±è¯¯,å‰ç¼€ä¸èƒ½ä¸ºç©ºï¼Œå¦‚ä¸éœ€è¦å‰ç¼€ï¼Œè¯·å¡«â€˜#â€™");
                     return;
                 }
-                //¼ÇÂ¼Ò»ÏÂ£¬±ÜÃâµã´íÁË
+                //è®°å½•ä¸€ä¸‹ï¼Œé¿å…ç‚¹é”™äº†
                 chooseObj = Selection.objects;
                 oldName = new string[chooseObj.Length];
                 for (int i = 0; i < chooseObj.Length; i++)
@@ -89,13 +89,13 @@ public class RenameFile : EditorWindow
                 }
             }
         }
-        if (GUILayout.Button("·µ»ØĞŞ¸Ä£¨Ã¿´ÎĞŞ¸ÄÖ»ÄÜ·µ»ØÒ»´Î£©", GUILayout.Height(40)))
+        if (GUILayout.Button("è¿”å›ä¿®æ”¹ï¼ˆæ¯æ¬¡ä¿®æ”¹åªèƒ½è¿”å›ä¸€æ¬¡ï¼‰", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("È¡ÏûĞŞ¸ÄĞŞ¸Ä", "È¡Ïû¸Õ¸ÕµÄĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("å–æ¶ˆä¿®æ”¹ä¿®æ”¹", "å–æ¶ˆåˆšåˆšçš„ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
                 if (chooseObj == null || oldName == null || oldName.Length == 0)
                 {
-                    Debug.LogError("»¹Ã»¿ªÊ¼ĞŞ¸Ä");
+                    Debug.LogError("è¿˜æ²¡å¼€å§‹ä¿®æ”¹");
                 }
                 for (int i = 0; i < chooseObj.Length; i++)
                 {
@@ -104,7 +104,7 @@ public class RenameFile : EditorWindow
             }
         }
         GUILayout.Space(30);
-        foldout = EditorGUILayout.Foldout(foldout, "ÎÄ¼şÃûÔ¤ÀÀ£º");
+        foldout = EditorGUILayout.Foldout(foldout, "æ–‡ä»¶åé¢„è§ˆï¼š");
         if (foldout)
         {
             GUILayout.Label($"{GetNewName(0)}");
@@ -119,7 +119,7 @@ public class RenameFile : EditorWindow
         string GetNewName(int count)
         {
             string tempName = head_name;
-            if (head_name == "#" || head_name == "££")
+            if (head_name == "#" || head_name == "ï¼ƒ")
             {
                 tempName = "";
             }
@@ -139,7 +139,7 @@ public class RenameFile : EditorWindow
                 case 2: return $"{curID_str}_{tempName}";
                 case 3: return $"{tempName}.{curID_str}";
                 case 4: return $"{curID_str}.{tempName}";
-                default: return "´íÎó";
+                default: return "é”™è¯¯";
             }
         }
     }
@@ -148,32 +148,32 @@ public class RenameFile : EditorWindow
     int add_num2 = 1;
     int numCoune2 = 1;
     int maxNum2 = 2;
-    //Ñ­»· ÅÅĞò
+    //å¾ªç¯ æ’åº
     void PrefixSort2()
     {
-        head_name = EditorGUILayout.TextField("Ç°×º", head_name);
-        frist_id = EditorGUILayout.IntField("ĞòºÅ1³õÊ¼Öµ", frist_id);
-        add_num = EditorGUILayout.IntField("ĞòºÅ1ÔöÁ¿", add_num);
-        numCoune = EditorGUILayout.IntField("ĞòºÅ1µÄÎ»Êı", numCoune);
+        head_name = EditorGUILayout.TextField("å‰ç¼€", head_name);
+        frist_id = EditorGUILayout.IntField("åºå·1åˆå§‹å€¼", frist_id);
+        add_num = EditorGUILayout.IntField("åºå·1å¢é‡", add_num);
+        numCoune = EditorGUILayout.IntField("åºå·1çš„ä½æ•°", numCoune);
         GUILayout.Space(20);
-        frist2_id = EditorGUILayout.IntField("ĞòºÅ2³õÊ¼Öµ", frist2_id);
-        add_num2 = EditorGUILayout.IntField("ĞòºÅ2ÔöÁ¿", add_num2);
-        maxNum2 = EditorGUILayout.IntField("ĞòºÅ2×î´óÖµ", maxNum2);
-        numCoune2 = EditorGUILayout.IntField("ĞòºÅ2µÄÎ»Êı", numCoune2);
+        frist2_id = EditorGUILayout.IntField("åºå·2åˆå§‹å€¼", frist2_id);
+        add_num2 = EditorGUILayout.IntField("åºå·2å¢é‡", add_num2);
+        maxNum2 = EditorGUILayout.IntField("åºå·2æœ€å¤§å€¼", maxNum2);
+        numCoune2 = EditorGUILayout.IntField("åºå·2çš„ä½æ•°", numCoune2);
         GUILayout.Space(30);
-        GUILayout.Label("Ñ¡ÔñĞòºÅÀàĞÍ£¬[self]ÎªÇ°×º£¬# ´ú±í±àºÅ");
+        GUILayout.Label("é€‰æ‹©åºå·ç±»å‹ï¼Œ[self]ä¸ºå‰ç¼€ï¼Œ# ä»£è¡¨ç¼–å·");
         prefixType2_id = GUILayout.Toolbar(prefixType2_id, prefixType2, GUILayout.Height(25));
 
-        if (GUILayout.Button("È·ÈÏĞŞ¸Ä", GUILayout.Height(40)))
+        if (GUILayout.Button("ç¡®è®¤ä¿®æ”¹", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("ÊÇ·ñĞŞ¸Ä", "ĞŞ¸Äºó¿ÉÍ¨¹ı·µ»ØĞŞ¸Ä·µ»Ø£¬µ«Ö»ÄÜ·µ»ØÒ»´Î, ÊÇ·ñĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("æ˜¯å¦ä¿®æ”¹", "ä¿®æ”¹åå¯é€šè¿‡è¿”å›ä¿®æ”¹è¿”å›ï¼Œä½†åªèƒ½è¿”å›ä¸€æ¬¡, æ˜¯å¦ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
                 if (head_name == "")
                 {
-                    Debug.LogError("²Ù×÷Ê§Îó,Ç°×º²»ÄÜÎª¿Õ£¬Èç²»ĞèÒªÇ°×º£¬ÇëÌî¡®#¡¯");
+                    Debug.LogError("æ“ä½œå¤±è¯¯,å‰ç¼€ä¸èƒ½ä¸ºç©ºï¼Œå¦‚ä¸éœ€è¦å‰ç¼€ï¼Œè¯·å¡«â€˜#â€™");
                     return;
                 }
-                //¼ÇÂ¼Ò»ÏÂ£¬±ÜÃâµã´íÁË
+                //è®°å½•ä¸€ä¸‹ï¼Œé¿å…ç‚¹é”™äº†
                 chooseObj = Selection.objects;
                 oldName = new string[chooseObj.Length];
                 for (int i = 0; i < chooseObj.Length; i++)
@@ -194,13 +194,13 @@ public class RenameFile : EditorWindow
                 }
             }
         }
-        if (GUILayout.Button("·µ»ØĞŞ¸Ä£¨Ã¿´ÎĞŞ¸ÄÖ»ÄÜ·µ»ØÒ»´Î£©", GUILayout.Height(40)))
+        if (GUILayout.Button("è¿”å›ä¿®æ”¹ï¼ˆæ¯æ¬¡ä¿®æ”¹åªèƒ½è¿”å›ä¸€æ¬¡ï¼‰", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("È¡ÏûĞŞ¸ÄĞŞ¸Ä", "È¡Ïû¸Õ¸ÕµÄĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("å–æ¶ˆä¿®æ”¹ä¿®æ”¹", "å–æ¶ˆåˆšåˆšçš„ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
                 if (chooseObj == null || oldName == null || oldName.Length == 0)
                 {
-                    Debug.LogError("»¹Ã»¿ªÊ¼ĞŞ¸Ä");
+                    Debug.LogError("è¿˜æ²¡å¼€å§‹ä¿®æ”¹");
                 }
                 for (int i = 0; i < chooseObj.Length; i++)
                 {
@@ -209,7 +209,7 @@ public class RenameFile : EditorWindow
             }
         }
         GUILayout.Space(30);
-        foldout = EditorGUILayout.Foldout(foldout, "ÎÄ¼şÃûÔ¤ÀÀ£º");
+        foldout = EditorGUILayout.Foldout(foldout, "æ–‡ä»¶åé¢„è§ˆï¼š");
         if (foldout)
         {
             int temp1 = 0;
@@ -230,7 +230,7 @@ public class RenameFile : EditorWindow
         string GetNewName(int count1, int count2)
         {
             string tempName = head_name;
-            if (head_name == "#" || head_name == "££")
+            if (head_name == "#" || head_name == "ï¼ƒ")
             {
                 tempName = "";
             }
@@ -256,28 +256,28 @@ public class RenameFile : EditorWindow
             {
                 case 0: return $"{tempName}_{curID1_str}_{curID2_str}";
                 case 1: return $"{tempName}{curID1_str}_{curID2_str}";
-                default: return "´íÎó";
+                default: return "é”™è¯¯";
             }
         }
     }
 
     string str1 = "";
     string str2 = "";
-    //Ìæ»»
+    //æ›¿æ¢
     void Replace()
     {
-        str1 = EditorGUILayout.TextField("Ìæ»»Ç°", str1);
-        str2 = EditorGUILayout.TextField("Ìæ»»ºó", str2);
-        if (GUILayout.Button("È·ÈÏĞŞ¸Ä", GUILayout.Height(40)))
+        str1 = EditorGUILayout.TextField("æ›¿æ¢å‰", str1);
+        str2 = EditorGUILayout.TextField("æ›¿æ¢å", str2);
+        if (GUILayout.Button("ç¡®è®¤ä¿®æ”¹", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("ÊÇ·ñĞŞ¸Ä", "ĞŞ¸Äºó¿ÉÍ¨¹ı·µ»ØĞŞ¸Ä·µ»Ø£¬µ«Ö»ÄÜ·µ»ØÒ»´Î, ÊÇ·ñĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("æ˜¯å¦ä¿®æ”¹", "ä¿®æ”¹åå¯é€šè¿‡è¿”å›ä¿®æ”¹è¿”å›ï¼Œä½†åªèƒ½è¿”å›ä¸€æ¬¡, æ˜¯å¦ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
                 if (head_name == "")
                 {
-                    Debug.LogError("²Ù×÷Ê§Îó");
+                    Debug.LogError("æ“ä½œå¤±è¯¯");
                     return;
                 }
-                //¼ÇÂ¼Ò»ÏÂ£¬±ÜÃâµã´íÁË
+                //è®°å½•ä¸€ä¸‹ï¼Œé¿å…ç‚¹é”™äº†
                 chooseObj = Selection.objects;
                 oldName = new string[chooseObj.Length];
                 for (int i = 0; i < chooseObj.Length; i++)
@@ -290,13 +290,13 @@ public class RenameFile : EditorWindow
                 }
             }
         }
-        if (GUILayout.Button("·µ»ØĞŞ¸Ä£¨Ã¿´ÎĞŞ¸ÄÖ»ÄÜ·µ»ØÒ»´Î£©", GUILayout.Height(40)))
+        if (GUILayout.Button("è¿”å›ä¿®æ”¹ï¼ˆæ¯æ¬¡ä¿®æ”¹åªèƒ½è¿”å›ä¸€æ¬¡ï¼‰", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("È¡ÏûĞŞ¸ÄĞŞ¸Ä", "È¡Ïû¸Õ¸ÕµÄĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("å–æ¶ˆä¿®æ”¹ä¿®æ”¹", "å–æ¶ˆåˆšåˆšçš„ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
                 if (chooseObj == null || oldName == null || oldName.Length == 0)
                 {
-                    Debug.LogError("»¹Ã»¿ªÊ¼ĞŞ¸Ä");
+                    Debug.LogError("è¿˜æ²¡å¼€å§‹ä¿®æ”¹");
                 }
                 for (int i = 0; i < chooseObj.Length; i++)
                 {
@@ -305,7 +305,7 @@ public class RenameFile : EditorWindow
             }
         }
         GUILayout.Space(30);
-        foldout = EditorGUILayout.Foldout(foldout, "ÎÄ¼şÃûÔ¤ÀÀ£º");
+        foldout = EditorGUILayout.Foldout(foldout, "æ–‡ä»¶åé¢„è§ˆï¼š");
         if (foldout)
         {
             foreach (var obj in Selection.objects)
@@ -330,29 +330,29 @@ public class RenameFile : EditorWindow
 
     string str3 = "";
 
-    //Ìæ»»²¢ÅÅĞò
+    //æ›¿æ¢å¹¶æ’åº
     void ReplaceSort()
     {
-        str3 = EditorGUILayout.TextField("Ìæ»»ÄÚÈİ", str3);
+        str3 = EditorGUILayout.TextField("æ›¿æ¢å†…å®¹", str3);
 
-        head_name = EditorGUILayout.TextField("Ìæ»»ºóÄÚÈİµÄÇ°×º", head_name);
-        frist4_id = EditorGUILayout.IntField("³õÊ¼Êı×Ö", frist4_id);
-        add_num4 = EditorGUILayout.IntField("ÔöÁ¿", add_num4);
-        numCoune4 = EditorGUILayout.IntField("ĞòºÅµÄÎ»Êı", numCoune4);
+        head_name = EditorGUILayout.TextField("æ›¿æ¢åå†…å®¹çš„å‰ç¼€", head_name);
+        frist4_id = EditorGUILayout.IntField("åˆå§‹æ•°å­—", frist4_id);
+        add_num4 = EditorGUILayout.IntField("å¢é‡", add_num4);
+        numCoune4 = EditorGUILayout.IntField("åºå·çš„ä½æ•°", numCoune4);
 
 
-        if (GUILayout.Button("È·ÈÏĞŞ¸Ä", GUILayout.Height(40)))
+        if (GUILayout.Button("ç¡®è®¤ä¿®æ”¹", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("ÊÇ·ñĞŞ¸Ä", "ĞŞ¸Äºó¿ÉÍ¨¹ı·µ»ØĞŞ¸Ä·µ»Ø£¬µ«Ö»ÄÜ·µ»ØÒ»´Î, ÊÇ·ñĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("æ˜¯å¦ä¿®æ”¹", "ä¿®æ”¹åå¯é€šè¿‡è¿”å›ä¿®æ”¹è¿”å›ï¼Œä½†åªèƒ½è¿”å›ä¸€æ¬¡, æ˜¯å¦ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
   
                 if (head_name == "")
                 {
-                    Debug.LogError("²Ù×÷Ê§Îó,Ç°×º²»ÄÜÎª¿Õ£¬Èç²»ĞèÒªÇ°×º£¬ÇëÌî¡®#¡¯");
+                    Debug.LogError("æ“ä½œå¤±è¯¯,å‰ç¼€ä¸èƒ½ä¸ºç©ºï¼Œå¦‚ä¸éœ€è¦å‰ç¼€ï¼Œè¯·å¡«â€˜#â€™");
                     return;
                 }
 
-                //¼ÇÂ¼Ò»ÏÂ£¬±ÜÃâµã´íÁË
+                //è®°å½•ä¸€ä¸‹ï¼Œé¿å…ç‚¹é”™äº†
                 chooseObj = Selection.objects;
                 oldName = new string[chooseObj.Length];
                 for (int i = 0; i < chooseObj.Length; i++)
@@ -367,13 +367,13 @@ public class RenameFile : EditorWindow
                 }
             }
         }
-        if (GUILayout.Button("·µ»ØĞŞ¸Ä£¨Ã¿´ÎĞŞ¸ÄÖ»ÄÜ·µ»ØÒ»´Î£©", GUILayout.Height(40)))
+        if (GUILayout.Button("è¿”å›ä¿®æ”¹ï¼ˆæ¯æ¬¡ä¿®æ”¹åªèƒ½è¿”å›ä¸€æ¬¡ï¼‰", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("È¡ÏûĞŞ¸ÄĞŞ¸Ä", "È¡Ïû¸Õ¸ÕµÄĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("å–æ¶ˆä¿®æ”¹ä¿®æ”¹", "å–æ¶ˆåˆšåˆšçš„ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
                 if (chooseObj == null || oldName == null || oldName.Length == 0)
                 {
-                    Debug.LogError("»¹Ã»¿ªÊ¼ĞŞ¸Ä");
+                    Debug.LogError("è¿˜æ²¡å¼€å§‹ä¿®æ”¹");
                 }
                 for (int i = 0; i < chooseObj.Length; i++)
                 {
@@ -382,7 +382,7 @@ public class RenameFile : EditorWindow
             }
         }
         GUILayout.Space(30);
-        foldout = EditorGUILayout.Foldout(foldout, "ÎÄ¼şÃûÔ¤ÀÀ£º");
+        foldout = EditorGUILayout.Foldout(foldout, "æ–‡ä»¶åé¢„è§ˆï¼š");
         if (foldout)
         {
 
@@ -401,8 +401,8 @@ public class RenameFile : EditorWindow
             string tempName = head_name;
 
 
-            //¼ÓÇ°×º
-            if (head_name == "#" || head_name == "££")
+            //åŠ å‰ç¼€
+            if (head_name == "#" || head_name == "ï¼ƒ")
             {
                 tempName = "";
             }
@@ -416,7 +416,7 @@ public class RenameFile : EditorWindow
                 }
             }
 
-            //Ìæ»»
+            //æ›¿æ¢
             if (repName.Contains(str3))
             {
                 repName = repName.Replace(str3, head_name+curID_str);
@@ -429,17 +429,17 @@ public class RenameFile : EditorWindow
     }
 
 
-    //ºó×º ÅÅĞò
+    //åç¼€ æ’åº
     void SetPrefix()
     {
-        head_name = EditorGUILayout.TextField("Ç°×º", head_name);
+        head_name = EditorGUILayout.TextField("å‰ç¼€", head_name);
         GUILayout.Space(30);
 
-        if (GUILayout.Button("È·ÈÏĞŞ¸Ä", GUILayout.Height(40)))
+        if (GUILayout.Button("ç¡®è®¤ä¿®æ”¹", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("ÊÇ·ñĞŞ¸Ä", "ĞŞ¸Äºó¿ÉÍ¨¹ı·µ»ØĞŞ¸Ä·µ»Ø£¬µ«Ö»ÄÜ·µ»ØÒ»´Î, ÊÇ·ñĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("æ˜¯å¦ä¿®æ”¹", "ä¿®æ”¹åå¯é€šè¿‡è¿”å›ä¿®æ”¹è¿”å›ï¼Œä½†åªèƒ½è¿”å›ä¸€æ¬¡, æ˜¯å¦ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
-                //¼ÇÂ¼Ò»ÏÂ£¬±ÜÃâµã´íÁË
+                //è®°å½•ä¸€ä¸‹ï¼Œé¿å…ç‚¹é”™äº†
                 chooseObj = Selection.objects;
                 oldName = new string[chooseObj.Length];
                 for (int i = 0; i < chooseObj.Length; i++)
@@ -452,13 +452,13 @@ public class RenameFile : EditorWindow
                 }
             }
         }
-        if (GUILayout.Button("·µ»ØĞŞ¸Ä£¨Ã¿´ÎĞŞ¸ÄÖ»ÄÜ·µ»ØÒ»´Î£©", GUILayout.Height(40)))
+        if (GUILayout.Button("è¿”å›ä¿®æ”¹ï¼ˆæ¯æ¬¡ä¿®æ”¹åªèƒ½è¿”å›ä¸€æ¬¡ï¼‰", GUILayout.Height(40)))
         {
-            if (EditorUtility.DisplayDialog("È¡ÏûĞŞ¸ÄĞŞ¸Ä", "È¡Ïû¸Õ¸ÕµÄĞŞ¸Ä", "È·¶¨", "È¡Ïû"))
+            if (EditorUtility.DisplayDialog("å–æ¶ˆä¿®æ”¹ä¿®æ”¹", "å–æ¶ˆåˆšåˆšçš„ä¿®æ”¹", "ç¡®å®š", "å–æ¶ˆ"))
             {
                 if (chooseObj == null || oldName == null || oldName.Length == 0)
                 {
-                    Debug.LogError("»¹Ã»¿ªÊ¼ĞŞ¸Ä");
+                    Debug.LogError("è¿˜æ²¡å¼€å§‹ä¿®æ”¹");
                 }
                 for (int i = 0; i < chooseObj.Length; i++)
                 {

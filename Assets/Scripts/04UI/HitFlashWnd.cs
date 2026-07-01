@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 using UnityEngine.UI;
 using Utils;
@@ -12,40 +12,40 @@ public partial class PlayerWnd
 
     [Foldout("受击", true)]
 
-    [CustomLabel("护盾受击闪光")]
+    [InspectorName("护盾受击闪光")]
     public CanvasGroup FlashCanvasGroupShield;
-    [CustomLabel("血量受击闪光")]
+    [InspectorName("血量受击闪光")]
     public CanvasGroup FlashCanvasGroupHp;
 
-    [CustomLabel("预警闪光")]
+    [InspectorName("预警闪光")]
     public CanvasGroup FlashCanvasGroupWarning;
 
     public AnimationCurve WarningCurve;
 
 
-    [CustomLabel("血量边缘效果")]
+    [InspectorName("血量边缘效果")]
     public CanvasGroup VignetteCanvasGroup;
 
-    [CustomLabel("濒死心跳声")]
+    [InspectorName("濒死心跳声")]
     public AudioSource DyingAudio;
 
-    [CustomLabel("边缘效果的最大透明度")]
+    [InspectorName("边缘效果的最大透明度")]
     public float CriticaHealthVignetteMaxAlpha = .8f;
 
-    [CustomLabel("濒死边缘效果脉动频率")]
+    [InspectorName("濒死边缘效果脉动频率")]
     public float PulsatingVignetteFrequency = 4f;
 
-    [CustomLabel("受击闪光的持续时间")]
+    [InspectorName("受击闪光的持续时间")]
     public float DamageFlashDuration;
 
-    [CustomLabel("受击闪光的最大透明度")]
+    [InspectorName("受击闪光的最大透明度")]
     public float DamageFlashMaxAlpha = 1f;
 
     #endregion
 
     #region 受击方向
     [Foldout("受击方向", true)]
-    [CustomLabel("受击方向的显示持续时间")]
+    [InspectorName("受击方向的显示持续时间")]
     public float HitDirDuration = 4f;
 
     HitData[] m_hitGroup;
@@ -70,71 +70,84 @@ public partial class PlayerWnd
     /// </summary>
     void UpdateFeedback()
     {
-        //血低变暗
-        if (m_Health.GetHpRatio() < 0.3f)
+        if (m_Controller.IsDead)
         {
-            VignetteCanvasGroup.gameObject.SetActive(true);
-            float vignetteAlpha =
-                (1 - ((m_Health.CurrentHealth / m_Health.MaxHealth).RawFloat /
-                      0.3f)) * CriticaHealthVignetteMaxAlpha;
-
-            VignetteCanvasGroup.alpha =
-                ((Mathf.Sin(Time.time * PulsatingVignetteFrequency) / 4) + 0.75f) * vignetteAlpha;
-
-            DyingAudio.volume = vignetteAlpha * 0.6f;
+            VignetteCanvasGroup.alpha = 0;
+            FlashCanvasGroupShield.alpha = 0f;
+            FlashCanvasGroupHp.alpha = 0f;
+            FlashCanvasGroupWarning.alpha = 0f;
+            DyingAudio.volume = 0;
+            m_FlashActive = false;
         }
         else
         {
-            VignetteCanvasGroup.gameObject.SetActive(false);
-        }
-
-        //受击闪光
-        if (m_FlashActive)
-        {
-
-            float normalizedTimeSinceDamage = (Time.time - m_LastTimeFlashStarted) / DamageFlashDuration;
-
-            if (normalizedTimeSinceDamage < 1f)
+            //血低变红
+            if (m_Health.GetHpRatio() < 0.3f)
             {
-                float flashAmount = DamageFlashMaxAlpha * (1f - normalizedTimeSinceDamage);
-                FlashCanvasGroupShield.alpha = flashAmount * m_Health.GetShieldRatio();
-                if (m_Health.GetShieldRatio() <= 0)
+                VignetteCanvasGroup.gameObject.SetActive(true);
+                float vignetteAlpha =
+                    (1 - ((m_Health.CurrentHealth / m_Health.MaxHealth).RawFloat /
+                          0.3f)) * CriticaHealthVignetteMaxAlpha;
+
+                VignetteCanvasGroup.alpha =
+                    ((Mathf.Sin(Time.time * PulsatingVignetteFrequency) / 4) + 0.75f) * vignetteAlpha;
+
+                DyingAudio.volume = vignetteAlpha * 0.6f;
+            }
+            else
+            {
+                VignetteCanvasGroup.gameObject.SetActive(false);
+            }
+
+            //受击闪光
+            if (m_FlashActive)
+            {
+
+                float normalizedTimeSinceDamage = (Time.time - m_LastTimeFlashStarted) / DamageFlashDuration;
+
+                if (normalizedTimeSinceDamage < 1f)
                 {
-                    FlashCanvasGroupHp.alpha = flashAmount * (1.2f - m_Health.GetHpRatio());
+                    float flashAmount = DamageFlashMaxAlpha * (1f - normalizedTimeSinceDamage);
+                    FlashCanvasGroupShield.alpha = flashAmount * m_Health.GetShieldRatio();
+                    if (m_Health.GetShieldRatio() <= 0)
+                    {
+                        FlashCanvasGroupHp.alpha = flashAmount * (1.2f - m_Health.GetHpRatio());
+                    }
+                }
+                else
+                {
+                    FlashCanvasGroupShield.alpha = 0f;
+                    FlashCanvasGroupHp.alpha = 0f;
+                    //FlashCanvasGroupShield.gameObject.SetActive(false);
+                    //FlashCanvasGroupHp.gameObject.SetActive(false);
+                    m_FlashActive = false;
                 }
             }
-            else
-            {
-                FlashCanvasGroupShield.alpha = 0f;
-                FlashCanvasGroupHp.alpha = 0f;
-                //FlashCanvasGroupShield.gameObject.SetActive(false);
-                //FlashCanvasGroupHp.gameObject.SetActive(false);
-                m_FlashActive = false;
-            }
-        }
 
-        //攻击预警
-        if (m_WarningActive)
-        {
-            float normalizedTimeSinceDamage = (Time.time - m_LastTimeWarningStarted) / DamageFlashDuration;
-            if (normalizedTimeSinceDamage < 1f)
+            //攻击预警
+            if (m_WarningActive)
             {
-                float flashAmount = DamageFlashMaxAlpha * (1f - normalizedTimeSinceDamage);
-                FlashCanvasGroupWarning.alpha = flashAmount;
+                float normalizedTimeSinceDamage = (Time.time - m_LastTimeWarningStarted) / DamageFlashDuration;
+                if (normalizedTimeSinceDamage < 1f)
+                {
+                    float flashAmount = DamageFlashMaxAlpha * (1f - normalizedTimeSinceDamage);
+                    FlashCanvasGroupWarning.alpha = flashAmount;
+                }
+                else
+                {
+                    m_WarningActive = false;
+                }
             }
-            else
+            //受击方向
+            for (int i = 0; i < m_hitGroup.Length; ++i)
             {
-                m_WarningActive = false;
+                if (m_hitGroup[i].image.fillAmount > 0.01f)
+                {
+                    Follow(m_hitGroup[i]);
+                }
             }
         }
-        //受击方向
-        for (int i = 0; i < m_hitGroup.Length; ++i)
-        {
-            if (m_hitGroup[i].image.fillAmount > 0.01f)
-            {
-                Follow(m_hitGroup[i]);
-            }
-        }
+        
     }
 
 
@@ -181,7 +194,7 @@ public partial class PlayerWnd
     void ResetWarning()
     {
         m_LastTimeWarningStarted = Time.time;
-        //如果同一帧玩家挨揍了就不出
+        //如果同一帧玩家挨揍了就不触发
         if (m_LastTimeFlashStarted == m_LastTimeWarningStarted) return;
         m_WarningActive = true;
         FlashCanvasGroupWarning.alpha = 0f;
@@ -192,7 +205,7 @@ public partial class PlayerWnd
         var basePos = m_Controller.PlayerCamera.transform.position;
         for (int i = 0; i < m_hitGroup.Length; ++i)
         {
-            //角度接近的
+            //角度接近
             if (Vector3.Dot((pos- basePos).normalized, (m_hitGroup[i].pos - basePos).normalized) >0.9f)
             {
                 minIndex = i;
@@ -203,7 +216,7 @@ public partial class PlayerWnd
         {
             for (int i = 0; i < m_hitGroup.Length; ++i)
             {
-                //时间到了的
+                //时间到了
                 if (m_hitGroup[i].time < Time.time - HitDirDuration)
                 {
                     minIndex = i;
@@ -215,7 +228,7 @@ public partial class PlayerWnd
                 }
             }
         }
-        //不存在=-1的情况
+        //不存在-1的情况
 
         m_hitGroup[minIndex].Reset(pos);
 
@@ -233,9 +246,9 @@ public partial class PlayerWnd
         screenPosition *= Mathf.Sign(screenPosition.z);
         screenPosition.z = 0;
 
-        //(从屏幕中点到目标的)差值
+        //(从屏幕中点到目标点差值)
         Vector3 dir = (screenPosition - center).normalized;
-        // 设置image的旋转方向与dir一致
+        // 设置image的旋转方向与dir一样
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         data.image.transform.rotation = Quaternion.Euler(0, 0, angle+90);
 

@@ -1,24 +1,32 @@
 using Core;
-using Unity.BaseTool;
+using FPSGame.Furn;
+
 using UnityEngine;
 
-//相关的设置都在项目设置-输入管理器里面
+//相关的设置都在项目-设置-输入管理器里面
 
 
 public class PlayerInputHandler : MonoBehaviour
 {
+    /// <summary>跳跃被占用</summary>
+    [InspectorName("跳跃被占用")]
+    [DisplayField]
+    public bool useJump;
+
     /// <summary>正在和物体交互</summary>
-    [CustomLabel("正在和物体交互")]
+    [InspectorName("正在和物体交互")]
     [DisplayField]
     public bool InOperation;
-    /// <summary>正在被窗口阻止</summary>
-    [CustomLabel("正在被窗口阻止")]
-    [DisplayField]
-    public bool InWndPrevent;
+    // <summary>正在被窗口阻止</summary>
+    //[InspectorName("正在被窗口阻止")]
+    //[DisplayField]
+    //public bool InWndPrevent;
+    [SerializeField]
+    private bool debugging;
 
     private float LastEndOperateTime;
 
-    PlayerController m_PlayerCharacterController;
+    //PlayerController m_PlayerCharacterController;
     /*
     private void Awake()
     {
@@ -27,23 +35,24 @@ public class PlayerInputHandler : MonoBehaviour
     */
     void Start()
     {
-        GlobalEventManager.OnFurnitureOperate += OnOperation;
-        m_PlayerCharacterController = GetComponent<PlayerController>();
-        GlobalEventManager.OnWndSwitch += OnWndSwitch;
+        GlobalEventSub.OnFurnitureOperate += OnOperation;
+        //m_PlayerCharacterController = GetComponent<PlayerController>();
+        //GlobalEventManager.OnWndSwitch += OnWndSwitch;
 
         //Cursor.lockState = CursorLockMode.Locked;
         //Cursor.visible = false;
         //Debug.LogWarning("输入组件的Start");
+        if (debugging) Cursor.lockState = CursorLockMode.Locked;
     }
     void OnDestroy()
     {
-        GlobalEventManager.OnFurnitureOperate -= OnOperation;
-        GlobalEventManager.OnWndSwitch -= OnWndSwitch;
+        GlobalEventSub.OnFurnitureOperate -= OnOperation;
+        //GlobalEventManager.OnWndSwitch -= OnWndSwitch;
     }
 
     string[] preventWnds = new string[] { "MiniMapWnd" };
     int preventWndCount;
-
+    /*
     void OnWndSwitch(string name,bool state)
     {
         //Debug.LogError("窗口切换"+name+"状态"+ state+"序号"+ System.Array.IndexOf(preventWnds, name));
@@ -58,15 +67,15 @@ public class PlayerInputHandler : MonoBehaviour
                 InWndPrevent = false;
             }
         }
-    }
+    }*/
 
 
-    void OnOperation(GameObject user,Furniture_Base furn)
+    void OnOperation(GameObject user,IFurniture furn)
     {
         bool switchState = furn.HaveFlag(FurnitureFlag.SwitchState);
         if (user == gameObject && switchState)
         {
-            InOperation = furn.inOperate;
+            InOperation = furn.InOperate;
             if (!InOperation) LastEndOperateTime = Time.time;
         }
     }
@@ -76,7 +85,7 @@ public class PlayerInputHandler : MonoBehaviour
     /// </summary>
     public bool CanProcessInput(bool allowOperation=false)
     {
-        return (allowOperation||!InOperation) && (Time.time - LastEndOperateTime)>0.5f && Cursor.lockState == CursorLockMode.Locked;
+        return debugging||((allowOperation||!InOperation) && (Time.time - LastEndOperateTime)>0.5f && Cursor.lockState == CursorLockMode.Locked);
     }
     public bool CanProcessInput(GameStateEnum state, bool allowOperation = false)
     {
@@ -84,11 +93,11 @@ public class PlayerInputHandler : MonoBehaviour
     }
     public bool CanProcessInput(WindowStateEnum winState, bool allowOperation = false)
     {
-        return CanProcessInput(allowOperation) && GameRoot.WindowState == winState;
+        return CanProcessInput(allowOperation) && WndManager.WindowState == winState;
     }
     public bool CanProcessInput(GameStateEnum gameState,WindowStateEnum winState, bool allowOperation = false)
     {
-        return CanProcessInput(allowOperation) && GameRoot.GameState == gameState &&GameRoot.WindowState == winState;
+        return CanProcessInput(allowOperation) && GameRoot.GameState == gameState &&WndManager.WindowState == winState;
     }
 
     /// <summary>
@@ -130,7 +139,23 @@ public class PlayerInputHandler : MonoBehaviour
         return CanProcessInput() && InputManager.Get(InputState.Jump);
     }
 
-   
+    /// <summary>
+    /// 长按跳跃键
+    /// </summary>
+    /// <returns></returns>
+    public bool GetJumpInputLong(float time)
+    {
+        return CanProcessInput() && InputManager.GetLong(InputState.Jump,time);
+    }
+
+    /// <summary>
+    /// 松开跳跃键
+    /// </summary>
+    public bool GetJumpInputUp(bool ignoreUse=false)
+    {
+        return CanProcessInput() &&(!useJump||ignoreUse)&& InputManager.GetUp(InputState.Jump);
+    }
+
     /// <summary>
     /// 按下开火键
     /// </summary>
@@ -294,9 +319,8 @@ public class PlayerInputHandler : MonoBehaviour
     }
 
     
-
     /// <summary>
-    /// 按下呼叫凯伊
+    /// 按下呼叫凯键
     /// </summary>
     public bool GetMuleDown()
     {
@@ -304,25 +328,26 @@ public class PlayerInputHandler : MonoBehaviour
     }
 
 
-    // <summary>按下呼叫Kei键</summary>这玩意写在kei自己里面了
-    //public bool GetMuleDown() {
-    //    return CanProcessInput() && InputManager.GetDown(InputState.Mule);
-    //}
-
     /// <summary>
-    /// 获得切换武器键(滚轮实在是用现成体系做不到)
+    /// 获得切换武器号 滚轮实在是用现成体系做不了
     /// </summary>
     /// <returns></returns>
     public int GetSwitchWeaponInput()
     {
-        if (CanProcessInput(WindowStateEnum.Game)&& !InWndPrevent)
+        if (CanProcessInput(WindowStateEnum.Game))// && !InWndPrevent)
         {
             float value= Input.GetAxis("Mouse ScrollWheel");
-            //mathf.Sigh=0时也返回1
+            //mathf.Sign=0时也返回1
+            //Debug.Log("切换成功" + value);
+
             if (value > 0) return -1;
             else if (value < 0) return 1;
-        }
-        return 0;
+         }
+        //else
+        //{
+        //    Debug.Log("切换失败" + CanProcessInput(WindowStateEnum.Game)+"  "+(InWndPrevent));
+        //}
+            return 0;
     }
 
     /// <summary>
@@ -331,6 +356,7 @@ public class PlayerInputHandler : MonoBehaviour
     /// <returns></returns>
     public int GetSelectWeaponInput()
     {
+        //也就是说大厅不能数字切换武器
         if (CanProcessInput(GameStateEnum.Game, WindowStateEnum.Game))
         {
             //真的会有人改这个键位吗？
@@ -353,31 +379,33 @@ public class PlayerInputHandler : MonoBehaviour
     private static readonly string[] AxisKeys = { "Mouse X", "Mouse Y" };
 
     /// <summary>
-    /// 获得鼠标轴
+    /// 获得鼠标输入
     /// </summary>
     /// <param name="mouseInputName"></param>
     /// <returns></returns>
     float GetMouseAxis(bool isY)
     {
         string mouseInputName = isY ? "" : "";
-        
-        if (GameRoot.WindowState != WindowStateEnum.FreeCamera&&CanProcessInput())
+        if (WndManager.WindowState == WindowStateEnum.FreeCamera || !CanProcessInput()) return 0;
+
+        int keyPrefix = isY ? 1 : 0;
+        float speed = 100;
+        float sigh = 1;
+        float inputValue = Input.GetAxisRaw(AxisKeys[keyPrefix]);
+
+        if (ArchiveSvc.Instance)
         {
-            int keyPrefix = isY ? 1 : 0;
-            
-            float speed = GameRoot.GetSetting(SensitivityKeys[keyPrefix]);
-            float sigh = GameRoot.GetSetting(InvertKeys[keyPrefix]) > 0 ? -1 : 1;
-            float inputValue = Input.GetAxisRaw(AxisKeys[keyPrefix]);
-            float i = inputValue * sigh * speed * 0.0001f;
+             speed = ArchiveSvc.GetSetting(SensitivityKeys[keyPrefix]);
+             sigh = ArchiveSvc.GetSetting(InvertKeys[keyPrefix]) > 0 ? -1 : 1;
+        }
+        float i = inputValue * sigh * speed * 0.01f;
 
 #if UNITY_WEBGL
-                // 由于鼠标加速，在WebGL中鼠标往往更敏感，因此请进一步减少它
-                i *= 0.3f;
+            // 由于鼠标加速，在WebGL中鼠标往往更敏感，因此请进一步减少它
+            i *= 0.3f;
 #endif
 
-            return i;
-        }
-
-        return 0f;
+        return i;
+  
     }
 }

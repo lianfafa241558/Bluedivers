@@ -67,12 +67,12 @@ public class DynamicBone : MonoBehaviour
     public Vector3 m_EndOffset = Vector3.zero;
 
 #if UNITY_5
-	[Tooltip("该力作用于骨骼。对角色初始姿势施加的部分力被取消。")]
+	[Tooltip("The gravity force applied to the bones.")]
 #endif
     public Vector3 m_Gravity = Vector3.zero;
 
 #if UNITY_5
-	[Tooltip("该力作用于骨骼。")]
+	[Tooltip("The force applied to the bones.")]
 #endif
     public Vector3 m_Force = Vector3.zero;
 	
@@ -454,8 +454,8 @@ public class DynamicBone : MonoBehaviour
         Vector3 force = m_Gravity;
         Vector3 fdir = m_Gravity.normalized;
         Vector3 rf = m_Root.TransformDirection(m_LocalGravity);
-        Vector3 pf = fdir * Mathf.Max(Vector3.Dot(rf, fdir), 0);	//将当前重力投影到静止重力
-        force -= pf;	//消除投影重力
+        Vector3 pf = fdir * Mathf.Max(Vector3.Dot(rf, fdir), 0);	//将骨骼局部重力在全局重力方向上的正向投影截取，防止重力反向
+        force -= pf;	//减去投影部分，防止重力叠加
         force = (force + m_Force) * m_ObjectScale;
         //force = m_Force * m_ObjectScale;
         finalGravity = force;

@@ -86,9 +86,9 @@ public class DisplayBone : MonoBehaviour
     {
         switch (direction)
         {
-            case 0: return Vector3.right;    // X轴
-            case 1: return Vector3.up;       // Y轴  
-            case 2: return Vector3.forward; // Z轴
+            case 0: return Vector3.right;    // X
+            case 1: return Vector3.up;       // Y
+            case 2: return Vector3.forward; // Z
             default: return Vector3.up;
         }
     }
@@ -100,7 +100,7 @@ public class DisplayBone : MonoBehaviour
         Vector3 forwardAxis = Vector3.Cross(upAxis, rightAxis).normalized;
         rightAxis = Vector3.Cross(forwardAxis, upAxis).normalized;
 
-        // 绘制四个连接边
+        // 绘制四个连接
         int segments = 8;
         for (int i = 0; i < segments; i++)
         {

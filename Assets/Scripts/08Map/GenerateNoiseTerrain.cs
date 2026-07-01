@@ -1,5 +1,7 @@
+﻿using System.Collections;
 using System.Collections.Generic;
-using Unity.BaseTool;
+using Core;
+using Unity.AI.Navigation;
 using UnityEngine;
 namespace FpsGame.MapUtils
 {
@@ -10,38 +12,39 @@ namespace FpsGame.MapUtils
     {
 
         public GameObject StartPoint;
-
+        [InspectorName("每帧最长阻塞时间")]
+        public float maxTimePerFrame = 0.01f;
 
         [Header("地形设置")]
         public Terrain terrain;
-        [CustomLabel("是否在Start时自动生成地形")]
+        [InspectorName("是否在Start时自动生成地形")]
         public bool generateOnStart = true;
 
         [Foldout("基础地形", true)]
-        [CustomLabel("基础地形缩放")]
+        [InspectorName("基础地形缩放")]
         public float baseScale = 200f;
-        [CustomLabel("基础地形高度")]
+        [InspectorName("基础地形高度")]
         public float baseAmplitude = 80f;
-        [CustomLabel("细节层缩放")]
+        [InspectorName("细节层缩放")]
         public float detailScale = 25f;
         public float detailAmplitude = 15f;
 
         [Foldout("高原", true)]
-        [CustomLabel("高原半径（占地形比例）")]
+        [InspectorName("高原半径（占地形比例）")]
         public float plateauRadius = 0.25f;
-        [CustomLabel("高原抬升强度")]
+        [InspectorName("高原抬升强度")]
         public float plateauIntensity = 0.5f;
-        [CustomLabel("边缘衰减幅度")]
+        [InspectorName("边缘衰减幅度")]
         public float edgeDropoff = 0.08f;
-        [CustomLabel("高原生成阈值")]
+        [InspectorName("高原生成阈值")]
         public float plateauThreshold = 0.65f;
 
-        // 高原形态控制参数
+        // 高原形态控制参
         public float plateauMaskScale = 10;      // 主噪声尺度（控制高原基本形态）
 
         [Foldout("树", true)]
         List<TreeInstance> trees;
-        [CustomLabel("树概率")]
+        [InspectorName("树概率")]
         public float treeProbability = 0.1f;
 
         [Foldout("其他", true)]
@@ -55,7 +58,7 @@ namespace FpsGame.MapUtils
         [SerializeField]
         private int width, height, size, speceHeight;
 
-        //比如分辨率1024/宽512就是2
+        //比如分辨率1024/512就是2
         private float mapscale => terrain.terrainData.heightmapResolution / terrain.terrainData.size.x;
 
         /*
@@ -70,12 +73,12 @@ namespace FpsGame.MapUtils
         /// <summary>
         /// 应用分形噪声到地形
         /// </summary>
-        public void ApplyFractalNoiseToTerrain()
+        public IEnumerator ApplyFractalNoiseToTerrain()
         {
             if (terrain == null)
             {
                 Debug.LogWarning("未指定Terrain对象");
-                return;
+                yield break;
             }
 
             //Debug.LogError("开始生成地形");
@@ -90,163 +93,67 @@ namespace FpsGame.MapUtils
             preHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
             preTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
             //preBaseHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
-            heightMap = terrainData.GetHeights(0, 0, width, height);//原始值(0-1)
-            textureMap = terrainData.GetAlphamaps(0, 0, size, size);//原始值(0-1)
+            heightMap = terrainData.GetHeights(0, 0, width, height);//原始值0-1)
+            textureMap = terrainData.GetAlphamaps(0, 0, size, size);//原始值0-1)
 
             //Debug.LogError("贴图纹理尺寸"+ textureMap.GetLength(2));
             trees = new List<TreeInstance>();
-            //textureMap =new float[width,height,4];//原始值(0-1)
+            //textureMap =new float[width,height,4];//原始值0-1)
+            // 测量激活阻塞
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+           
+
             // 生成基础地形
-            GenerateBaseTerrain();
+            yield return GenerateBaseTerrain();
+            Debug.Log($"生成基础地形时间: {sw.ElapsedMilliseconds} ms");
+            sw.Restart();
 
             // 添加侵蚀效果
-            ApplyErosionEffect();
+            yield return ApplyErosionEffect();
+            //Debug.Log($"生成细节地形时间: {sw.ElapsedMilliseconds} ms");
+            //sw.Restart();
 
             //材质
-            ApplyTextures();
+            yield return ApplyTextures();
 
-            // 应用高度图
-            terrainData.SetHeights(0, 0, heightMap);
-            terrainData.SetAlphamaps(0, 0, textureMap);
+            Debug.Log($"生成材质时间: {sw.ElapsedMilliseconds} ms");
+            sw.Restart();
 
-            //设置树
-            SpawnTrees();
+            // 应用高度图，分块提交，避免单帧卡顿
+            int chunkSize = 128; // 每帧提交 128x128
+            yield return ApplyHeightsInChunks(chunkSize);
+            yield return null;
 
-            //terrainData.treeInstances = trees.ToArray();
+            // 应用纹理图，分块提交
+            yield return ApplyAlphamapsInChunks(chunkSize);
+            yield return null;
+
+            // 设置树
+            yield return SpawnTrees();
+            yield return null;
             terrainData.SetTreeInstances(trees.ToArray(), true);
-            //terrain.Flush();
+            yield return null;
 
+            preHeight.Apply(false, false);
+            preTexture.Apply(false, false);
 
-            #region 原版的
-            /*
-            float[,] heights = terrainData.GetHeights(0, 0, width, height);//原始值(0-1)
-            heightmap = terrainData.GetHeights(0, 0, width, height);
-            float peakThreshold = 0.5f+0.5f; // 峰顶阈值，超过这个高度开始平缓
-            float maxThreshold = 0.65f + 0.5f; // 峰顶阈值，不会超过这个高度
-
-            float valleyThreshold = 0.25f + 0.5f; // 谷底阈值，超过这个高度开始平缓
-            float minThreshold = 0.1f + 0.5f; // 谷底阈值，不会超过这个高度
-
-
-            // 第一步：计算所有点的噪声高度（不考虑有效范围）
-            for (int x = 0; x < width; x++)
+            // NavMesh 异步构建并等待完成
+            yield return null;
+            var surface = GetComponent<NavMeshSurface>();
+            if (surface != null)
             {
-                for (int y = 0; y < height; y++)
+                var asyncOp = surface.UpdateNavMesh(surface.navMeshData);
+                // 等待异步操作完成（最多等 10 秒）
+                float timeout = Time.realtimeSinceStartup + 10f;
+                while (!asyncOp.isDone && Time.realtimeSinceStartup < timeout)
                 {
-                    float xCoord = noiseOffset.x + (float)x / width * noiseScale;
-                    float yCoord = noiseOffset.y + (float)y / height * noiseScale;
-
-                    heightmap[x, y] = CalculateFractalNoise(xCoord, yCoord);
-                    heightmap[x, y] = Mathf.Pow(heightmap[x, y],1.5f)+0.5f;//更抖并且抬升
-                    //tempHeights[x, y] *= tempHeights[x, y];//平方让坡度更抖
+                    yield return null;
                 }
+                if (!asyncOp.isDone)
+                    Debug.LogWarning("NavMesh 异步构建超时，可能仍在后台进行");
             }
-
-
-
-            // 第二步：根据有效范围调整高度，实现无效点缓慢下降到0
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    float dis = Vector2.Distance(center * Vector2.one, new Vector2(x, y));
-                    bool vaild = dis <= EffectiveRange * center;
-                    float heightValue = heightmap[x, y];
-
-                    if (vaild)
-                    {
-                        if (heightValue > peakThreshold)
-                        {
-                            // 计算超出阈值部分的比例
-                            float excess = (heightValue - peakThreshold) / (maxThreshold - peakThreshold);
-                            // 用SmoothStep平滑过渡到高原高度
-                            heightValue = Mathf.Lerp(peakThreshold, maxThreshold, Mathf.SmoothStep(0f, 1, excess));
-                        }
-
-                        else if(heightValue<valleyThreshold)
-                        {
-                            // 计算超出阈值部分的比例
-                            float excess = (heightValue - minThreshold) / (valleyThreshold - minThreshold);
-                            // 用SmoothStep平滑过渡到高原高度
-                            heightValue = Mathf.Lerp(minThreshold, valleyThreshold, Mathf.SmoothStep(0, 1, excess));
-                        }
-
-                        heights[x, y] = heightValue;
-                    }
-                    else if(isLand)
-                    {
-                        // 计算距离超过有效范围的部分比例，范围是[0,1]
-                        float excessRatio = Mathf.InverseLerp(EffectiveRange * center, width, dis);
-                        // 衰减系数，距离越远越接近0，这里用1 - excessRatio实现线性衰减
-                        float attenuation = Mathf.Clamp(1f - excessRatio * 2,0.2f,1);
-
-                        // 高度乘以衰减系数，实现缓慢下降到0.2
-                        heights[x, y] = heightValue * attenuation;
-                    }
-                    else
-                    {
-                        heights[x, y] = heightValue;
-
-                    }
-
-
-                }
-            }
-
-
-
-            //第三步，设置纹理
-
-            // 获取Alpha Map尺寸
-            int alphaMapWidth = terrainData.alphamapWidth;
-            int alphaMapHeight = terrainData.alphamapHeight;
-            int alphaMapLayers = terrainData.alphamapLayers;
-
-            // 获取当前所有Alpha Map数据
-            float[,,] alphaMaps = terrainData.GetAlphamaps(0, 0, alphaMapWidth, alphaMapHeight);
-
-            for (int x = 0; x < alphaMapWidth; x++)
-            {
-                for (int y = 0; y < alphaMapHeight; y++)
-                {
-                    var b = Mathf.InverseLerp(peakThreshold - 0.02f, peakThreshold+0.05f, heights[x, y]);
-                    var c = Mathf.InverseLerp(1- valleyThreshold,1-minThreshold, 1- heights[x, y]);
-                    alphaMaps[x, y, 1] = b;
-                    alphaMaps[x, y, 2] = c;
-                    alphaMaps[x, y, 0] = 1-b-c;
-                }
-            }
-
-            */
-
-
-
-            // 应用修改后的Alpha Map
-            //terrainData.SetAlphamaps(0, 0, alphaMaps);
-
-
-            // 最后一步：计算高度乘数
-            /*
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    proInfo.SetPixel(x, y, heightmap[x, y] * Color.white);
-                }
-            }*/
-            #endregion
-
-
-            preHeight.Apply(false, false);//必须加上
-            preTexture.Apply(false, false);//必须加上
-            //preBaseHeight.Apply(false, false);//必须加上
-                                              //terrainData.SetHeights(0, 0, heightMap);
-
-            var surface = GetComponent<UnityEngine.AI.NavMeshSurface>();
-            surface.UpdateNavMesh(surface.navMeshData);
-            //surface.BuildNavMesh();
-
-            //Debug.LogError("完成地形设置");
+            Debug.Log($"完成时间: {sw.ElapsedMilliseconds} ms");
+            sw.Restart();
 
         }
 
@@ -256,45 +163,62 @@ namespace FpsGame.MapUtils
         /// <summary>
         /// 基础地形
         /// </summary>
-        void GenerateBaseTerrain()
+        IEnumerator GenerateBaseTerrain()
         {
             var now = System.DateTime.Now;
-            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));//每小时刷新
+            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));//每小时刷
             float offsetX = TaskRandom.Range(0, 9999f);
             float offsetY = TaskRandom.Range(0, 9999f);
+
+            float startTime = Time.realtimeSinceStartup;
 
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
 
-                    // 基础噪声层
+                    // 基础噪声
                     float nx = offsetX + x / (float)width * baseScale;
                     float ny = offsetY + y / (float)height * baseScale;
                     var nowheight = (Mathf.Pow(Mathf.PerlinNoise(ny, nx), 2) * 0.9f + 0.1f) * baseAmplitude;
 
-                    // 细节噪声层
+                    // 细节噪声
                     float dx = offsetX + x / (float)width * detailScale;
                     float dy = offsetY + y / (float)height * detailScale;
                     nowheight += (Mathf.Pow(Mathf.PerlinNoise(dy, dx), 2) * 2 - 1) * detailAmplitude;
 
 
-                    // 标准化高度
+                    // 标准化高
                     heightMap[y, x] = nowheight / (1 + baseAmplitude + detailAmplitude);
                     SetPixel(preHeight, y, x, heightMap[y, x], 0);
                 }
+
+                // 每行结束后检查时间
+                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                {
+                    yield return null;  // 让出一帧
+                    //Debug.Log($"循环 {y} :{Time.frameCount}");
+                    startTime = Time.realtimeSinceStartup;  // 重置计时
+                }
             }
+            
         }
 
 
         /// <summary>
         /// 添加侵蚀效果
         /// </summary>
-        void ApplyErosionEffect()
+        IEnumerator ApplyErosionEffect()
         {
 
-            float plateauOffsetX = Random.Range(0f, 9999f);
-            float plateauOffsetY = Random.Range(0f, 9999f);
+            var now = System.DateTime.Now;
+            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));//每小时刷
+            float plateauOffsetX = TaskRandom.Range(0, 9999f);
+            float plateauOffsetY = TaskRandom.Range(0, 9999f);
+
+            float startTime = Time.realtimeSinceStartup;
+
+
             for (int y = 1; y < height - 1; y++)
             {
                 for (int x = 1; x < width - 1; x++)
@@ -304,7 +228,7 @@ namespace FpsGame.MapUtils
                     {
                         // 计算超出阈值部分的比例
                         float excess = (nowheight - plateauThreshold) / plateauIntensity / 2;
-                        // 用SmoothStep平滑过渡到高原高度
+                        // 用SmoothStep平滑过渡到高原高
                         heightMap[x, y] = nowheight = 0.5f * nowheight + 0.5f * Mathf.Lerp(plateauThreshold, plateauThreshold + plateauIntensity * 2, excess);
                     }
 
@@ -313,8 +237,8 @@ namespace FpsGame.MapUtils
                     float px = plateauOffsetX + x / (float)width * plateauMaskScale;
                     float py = plateauOffsetY + y / (float)height * plateauMaskScale;
                     float plateauMask = Mathf.PerlinNoise(px, py);
-                    // 噪声混合策略（强化大面积连续区域）
-                    //plateauMask = Mathf.Pow(plateauMask, 2f);
+                    // 噪声混合策略（强化大面积连续区域
+                    plateauMask = Mathf.Pow(plateauMask, 2f);
 
                     //邻居的平均高度(卷积)
                     float neighborAvg = (heightMap[x + 1, y] + heightMap[x - 1, y] +
@@ -343,15 +267,20 @@ namespace FpsGame.MapUtils
                     }
 
                 }
-
+                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                {
+                    yield return null;  // 让出一帧
+                    startTime = Time.realtimeSinceStartup;  // 重置计时
+                }
             }
         }
-
+            
         /// <summary>
         /// 设置材质
         /// </summary>
-        void ApplyTextures()
+        IEnumerator ApplyTextures()
         {
+            float startTime = Time.realtimeSinceStartup;
 
             //int size = terrain.terrainData.alphamapResolution;
             for (int y = 0; y < size; y++)
@@ -361,7 +290,7 @@ namespace FpsGame.MapUtils
                     /*
                     //高度归一化（0-1）
                     float nowheight = terrain.terrainData.GetHeight(y, x) / terrain.terrainData.size.y;
-                    //坡度值（0-1）（坡度本身返回0-90）
+                    //坡度值（0-1）（坡度本身返回0-90度）
                     float steepness = terrain.terrainData.GetSteepness(y / (float)size,
                                         x / (float)size) / 90f;
                     */
@@ -370,13 +299,13 @@ namespace FpsGame.MapUtils
                     float steepness = GetSteepness(y, x) / 90f;//坡度[0,1]
                     float nowheight = heightMap[y, x];//高度[0,1]
 
-                    // 岩石层（陡坡）(22.5度-67.5度)
+                    // 岩石层（陡坡）22.5度-67.5度）
                     textureMap[y, x, 4] = Mathf.Clamp01(steepness * 2f - 0.5f);
 
                     // 沙地层（中等高度)在[0,0.5]高度逐步变为[0,1]
                     textureMap[y, x, 1] = Mathf.Clamp01(nowheight * 2f) * (1 - textureMap[y, x, 4]);
 
-                    // 侵蚀层(低洼区域)在[0,0.5]高度逐步变为[1,0]
+                    // 侵蚀层（低洼区域）在[0,0.5]高度逐步变为[1,0]
                     textureMap[y, x, 2] = Mathf.Clamp01((1 - nowheight) * 2f) * (1 - textureMap[y, x, 4]);
 
                     textureMap[y, x, 3] = 0;
@@ -386,17 +315,75 @@ namespace FpsGame.MapUtils
                     SetPixel(preTexture, y, x, textureMap[y, x, 1], 1);
                     SetPixel(preTexture, y, x, textureMap[y, x, 2], 2);
                     SetPixel(preTexture, y, x, steepness, 3);
+
+                }
+                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                {
+                    yield return null;  // 让出一帧
+                    //Debug.Log($"循环 {y} :{Time.frameCount}");
+                    startTime = Time.realtimeSinceStartup;  // 重置计时器
                 }
             }
-
+            
         }
 
         #endregion
 
-        #region 树
-        void SpawnTrees()
+        #region 分块提交
+
+        /// <summary>
+        /// 分块提交高度图，每帧只提交一次chunk，避免SetHeights 卡帧
+        /// </summary>
+        IEnumerator ApplyHeightsInChunks(int chunkSize)
         {
-            // 10000是因为除2次100
+            for (int y = 0; y < height; y += chunkSize)
+            {
+                for (int x = 0; x < width; x += chunkSize)
+                {
+                    int blockW = Mathf.Min(chunkSize, width - x);
+                    int blockH = Mathf.Min(chunkSize, height - y);
+                    float[,] chunk = new float[blockH, blockW];
+                    for (int by = 0; by < blockH; by++)
+                        for (int bx = 0; bx < blockW; bx++)
+                            chunk[by, bx] = heightMap[y + by, x + bx];
+                    // SetHeights(xBase, yBase, heights) xBase对应x列，yBase对应y行
+                    terrain.terrainData.SetHeights(x, y, chunk);
+                    yield return null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 分块提交纹理图，避免 SetAlphamaps 卡帧
+        /// </summary>
+        IEnumerator ApplyAlphamapsInChunks(int chunkSize)
+        {
+            int layers = textureMap.GetLength(2);
+            for (int y = 0; y < size; y += chunkSize)
+            {
+                for (int x = 0; x < size; x += chunkSize)
+                {
+                    int blockW = Mathf.Min(chunkSize, size - x);
+                    int blockH = Mathf.Min(chunkSize, size - y);
+                    float[,,] chunk = new float[blockH, blockW, layers];
+                    for (int by = 0; by < blockH; by++)
+                        for (int bx = 0; bx < blockW; bx++)
+                            for (int l = 0; l < layers; l++)
+                                chunk[by, bx, l] = textureMap[y + by, x + bx, l];
+                    // SetAlphamaps(xBase, yBase, alphamaps) xBase对应x列，yBase对应y行
+                    terrain.terrainData.SetAlphamaps(x, y, chunk);
+                    yield return null;
+                }
+            }
+        }
+
+        #endregion
+
+        #region 树 
+
+        IEnumerator SpawnTrees()
+        {
+            // 10000是因为除200
             int plateaus = Mathf.FloorToInt(treeProbability * width * height / 10000f);
             //int range = (int)((width - Constants.MapBorder) * 0.5f);
 
@@ -427,6 +414,7 @@ namespace FpsGame.MapUtils
             }
             */
             //Debug.LogError("最终数量" + trees.Count);
+            yield return null;
         }
         #endregion
         #region API
@@ -441,19 +429,18 @@ namespace FpsGame.MapUtils
         /// <returns>坡度角度（0-90度）</returns>
         private float GetSteepness(int x, int y)
         {
-            float cellSize = 1 / 16f;//应该是32，但是我的地形后面 +0.5*0.5了
-                                     // 获取中心点及周边8邻域高度（处理边界时自动使用最近的有效点）
+            float cellSize = 1 / 16f;//应该是2，但是我的地形后面+0.5*0.5
+            // 获取中心点及周边8邻域高度（处理边界时自动使用最近的有效点）
             float h = heightMap[x, y];
-            float h_x0 = heightMap[Mathf.Max(0, x - 1), y];    // 左
-            float h_x1 = heightMap[Mathf.Min(width - 1, x + 1), y];  // 右
-            float h_y0 = heightMap[x, Mathf.Max(0, y - 1)];    // 下
-            float h_y1 = heightMap[x, Mathf.Min(height - 1, y + 1)]; // 上
-
+            float h_x0 = heightMap[Mathf.Max(0, x - 1), y];    
+            float h_x1 = heightMap[Mathf.Min(width - 1, x + 1), y];  
+            float h_y0 = heightMap[x, Mathf.Max(0, y - 1)];    
+            float h_y1 = heightMap[x, Mathf.Min(height - 1, y + 1)];
             // 计算x/z方向的梯度（中心差分法）
             float gradientX = (h_x1 - h_x0) / (2f * cellSize);
             float gradientZ = (h_y1 - h_y0) / (2f * cellSize);
 
-            // 计算坡度角（arctan(√(Dh/Dx2 + Dh/Dz2))）
+            // 计算坡度角（arctan(sqrt(Dh/Dx2 + Dh/Dz2))）
             float slopeRadians = Mathf.Atan(Mathf.Sqrt(gradientX * gradientX + gradientZ * gradientZ));
             float slopeDegrees = slopeRadians * Mathf.Rad2Deg;
 
@@ -464,20 +451,19 @@ namespace FpsGame.MapUtils
         private void SetPixel(Texture2D texture, int x, int y, float value, int colorMask)
         {
             Color baseColor = Color.black;
-            Color color;
+            Color color = Color.red;
+
             switch (colorMask)
             {
                 case 1:
                     color = Color.green;
-                    baseColor = texture.GetPixel(width - x, y);
+                    // 从原始黑色开始累加（避免 GPU 回读）
                     break;
                 case 2:
                     color = Color.blue;
-                    baseColor = texture.GetPixel(width - x, y);
                     break;
                 case 3:
-                    color = new(0, 0, 0, 1);
-                    baseColor = texture.GetPixel(width - x, y);
+                    color = new Color(0, 0, 0, 1);
                     break;
                 default:
                     color = Color.red;
@@ -489,7 +475,7 @@ namespace FpsGame.MapUtils
 
         /*
         /// <summary>
-        /// 计算分形噪声值
+        /// 计算分形噪声
         /// </summary>
 
         private float CalculateFractalNoise(float x, float y)
@@ -498,7 +484,6 @@ namespace FpsGame.MapUtils
             float frequency = 1f;
             float amplitude = 1f;
             float maxNoiseValue = 0f; // 用于归一化
-
             for (int i = 0; i < octaves; i++)
             {
                 float perlinValue = Mathf.PerlinNoise(x * frequency, y * frequency) * 2f - 1f; // [-1,1]
@@ -526,7 +511,7 @@ namespace FpsGame.MapUtils
             return new Vector2(dhdx, dhdz);
         }
         /// <summary>
-        /// 地形坐标转世界坐标，首先地图坐标转90度才是实际方向，所以要颠倒x和y
+        /// 地形坐标转世界坐标，首先地图坐标90度才是实际方向，所以要颠倒x和y
         /// </summary>
         /// <param name="vector"></param>
         /// <returns></returns>
@@ -557,7 +542,7 @@ namespace FpsGame.MapUtils
                 int height = terrainData.heightmapResolution;
                 terrainData.SetHeights(0, 0, new float[width, height]);
 
-                var surface = GetComponent<UnityEngine.AI.NavMeshSurface>();
+                var surface = GetComponent<NavMeshSurface>();
                 surface.UpdateNavMesh(surface.navMeshData);
             }
         }

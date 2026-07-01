@@ -1,9 +1,10 @@
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using FpsGame.MapUtils;
 using GameContract;
 using PEMaths;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -12,17 +13,70 @@ public class BattleManager : Singleton<BattleManager>
 {
     public bool IsStartBattle;
 
+    public ActorsManager ACCont;
     public AirdropController ADCont;
     public BattleRoleManager BRCont;
     public WaveManager WaveCont;
     public MissionController MissionCont;
     public PatrolContriller PatrolCont;
-
+    public PathRequestManager RequestManager;
 
     private UnitQueryGrid unitQueryGrid;
     private MapRoot mapRoot;
 
     public System.Random BattleRandom { get;private set; }
+
+    public static void Creat()
+    {
+        var manager = new GameObject("BattleManager").AddComponent<BattleManager>();
+        manager.StartCoroutine(manager.Init());
+
+    }
+    private IEnumerator Init()
+    {
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+
+        BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
+
+        yield return InitTerrain();
+        Debug.Log($"地形耗时: {sw.ElapsedMilliseconds} ms");
+        sw.Restart();
+
+
+        ACCont = new GameObject("ActorsManager").AddComponent<ActorsManager>();
+        ACCont.transform.SetParent(transform);
+
+        MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
+        MissionCont.transform.SetParent(transform);
+        Debug.Log($"开始任务");
+        yield return MissionCont.WaitForInitialization();
+        Debug.Log($"任务耗时: {sw.ElapsedMilliseconds} ms");
+        sw.Restart();
+
+        ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
+        ADCont.Init();
+        ADCont.transform.SetParent(transform);
+        BRCont = new GameObject("BattleRoleCont").AddComponent<BattleRoleManager>();
+        BRCont.transform.SetParent(transform);
+        WaveCont = new GameObject("WaveCont").AddComponent<WaveManager>();
+        WaveCont.transform.SetParent(transform);
+        PatrolCont = new GameObject("PatrolCont").AddComponent<PatrolContriller>();
+        PatrolCont.transform.SetParent(transform);
+        WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
+        RequestManager = new GameObject("RequestManager").AddComponent<PathRequestManager>();
+        RequestManager.transform.SetParent(transform);
+        Debug.LogError("完成主要内容初始?");
+        yield return null;
+
+        //ResManager.Instance.SetLoadSceneExtraProgress(1);
+        GameRoot.GameState = GameStateEnum.Game;
+        yield return null;
+        WndManager.WindowState = WindowStateEnum.Game;
+        IsStartBattle = true;
+        Debug.Log($"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
+
+
+    }
 
     void Start()
     {
@@ -31,50 +85,28 @@ public class BattleManager : Singleton<BattleManager>
         unitQueryGrid = new(new((PEVector2)pos.center, pos.size.x / 2, pos.size.z / 2), 30);
         
 
-        GlobalEventManager.OnUnitPosChange += OnUnitPosChange;
-        GlobalEventManager.OnEnemyCreate += OnEnemyCreate;
-        GlobalEventManager.OnEnemyDead += OnEnemyDeath;
-        GlobalEventManager.OnPlayerCreate += OnPlayerCreate;
-        GlobalEventManager.OnPlayerDead += OnPlayerDeath;
-        GlobalEventManager.OnOOPartCollect += OOPartCollect;
-        GlobalEventManager.OnDaySwitch += OnDatSwitch;
+        BattleEventSub.OnUnitPosChange += OnUnitPosChange;
+        BattleEventSub.OnEnemyCreate += OnEnemyCreate;
+        BattleEventSub.OnEnemyDead += OnEnemyDeath;
+        GlobalEventSub.OnPlayerCreate += OnPlayerCreate;
+        BattleEventSub.OnPlayerDead += OnPlayerDeath;
+        GlobalEventSub.OnOOPartCollect += OOPartCollect;
+        GlobalEventSub.OnDaySwitch += OnDatSwitch;
     }
     private void OnDestroy()
     {
-        GlobalEventManager.OnUnitPosChange -= OnUnitPosChange;
-        GlobalEventManager.OnEnemyCreate -= OnEnemyCreate;
-        GlobalEventManager.OnEnemyDead -= OnEnemyDeath;
-        GlobalEventManager.OnPlayerCreate -= OnPlayerCreate;
-        GlobalEventManager.OnPlayerDead -= OnPlayerDeath;
-        GlobalEventManager.OnOOPartCollect -= OOPartCollect;
-        GlobalEventManager.OnDaySwitch -= OnDatSwitch;
+        BattleEventSub.OnUnitPosChange -= OnUnitPosChange;
+        BattleEventSub.OnEnemyCreate -= OnEnemyCreate;
+        BattleEventSub.OnEnemyDead -= OnEnemyDeath;
+        GlobalEventSub.OnPlayerCreate -= OnPlayerCreate;
+        BattleEventSub.OnPlayerDead -= OnPlayerDeath;
+        GlobalEventSub.OnOOPartCollect -= OOPartCollect;
+        GlobalEventSub.OnDaySwitch -= OnDatSwitch;
     }
 
 
-    public static void Creat()
-    {
-        var manager = new GameObject("BattleManager").AddComponent<BattleManager>();
-        manager.BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
-        
-        manager.InitTerrain();
 
-        manager.MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
-        manager.MissionCont.transform.SetParent(manager.transform);
-        manager.ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
-        manager.ADCont.Init();
-        manager.ADCont.transform.SetParent(manager.transform);
-        manager.BRCont = new GameObject("BattleRoleCont").AddComponent<BattleRoleManager>();
-        manager.BRCont.transform.SetParent(manager.transform);
-        manager.WaveCont = new GameObject("WaveCont").AddComponent<WaveManager>();
-        manager.WaveCont.transform.SetParent(manager.transform);
-        manager.PatrolCont = new GameObject("PatrolCont").AddComponent<PatrolContriller>();
-        manager.PatrolCont.transform.SetParent(manager.transform);
-
-        GameRoot.CreateTimer(() => WndManager.Instance.CreatNotice("Yuuka2", "MissionStart"), 8);
-
-    }
-
-    void InitTerrain()
+    IEnumerator InitTerrain()
     {
         Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
         mapRoot = transMapRoot.GetComponent<MapRoot>();
@@ -83,19 +115,23 @@ public class BattleManager : Singleton<BattleManager>
         var cfg=TaskManager.Instance.nowTask;
         var terrainData = terrain.terrainData;
 
-        Debug.LogWarning("地图尺寸"+ cfg.MainCfg.sizeType+" 地图大小"+ cfg.MapSize);
+       
         var mapRes= cfg.MainCfg.sizeType switch {
-            SizeType.Small => 256,
-            SizeType.Medium => 512,
-            SizeType.Large => 512,
-            _ => 256 
+            SizeType.Small => 512,
+            SizeType.Medium => 1024,
+            SizeType.Large => 1024,
+            _ => 512 
         };
+        
+        terrainData.heightmapResolution = mapRes + 1;
+        terrainData.alphamapResolution = mapRes;
+        //不能调换顺序，会出问题
         terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
-        terrainData.heightmapResolution = mapRes*2 + 1;
-        terrainData.alphamapResolution = mapRes*2;
-
+        //Debug.LogWarning("地图尺寸" + cfg.MainCfg.sizeType + " 地图大小 + cfg.MapSize);
+        //Debug.LogWarning("地图真实" + mapRoot.terrain.terrainData.size);
+        //terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
         mapRoot.Init();
-        mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain();
+        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain();
 
         var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
         if (debugger.IsValid())
@@ -114,9 +150,9 @@ public class BattleManager : Singleton<BattleManager>
         return new List<I_Actor>(unitQueryGrid.QueryUnits(targetCfg, customFilter));
     }
 
-    public GameObject CreatUnit(UnitTier tier,Vector3 pos,float range,bool NoVfx=true)
+    public GameObject CreatUnit(UnitTier tier,Vector3 pos,float range,bool isFixed=true)
     {
-       return WaveCont.CreatUnit(tier, pos,range, NoVfx);
+       return WaveCont.CreatUnit(tier, pos,range, isFixed);
     }
 
     public List<GameObject> CreatPatrol(Vector3 pos)
@@ -151,10 +187,6 @@ public class BattleManager : Singleton<BattleManager>
     private void OnPlayerCreate(I_Actor unit)
     {
         unitQueryGrid.AddUnit(unit);
-        IsStartBattle = true;
-        GameRoot.GameState = GameStateEnum.Game;
-        GameRoot.WindowState = WindowStateEnum.Game;
-
     }
 
 
@@ -164,8 +196,8 @@ public class BattleManager : Singleton<BattleManager>
     }
     public void ReleaseAirdrop(Vector3 point,float angle, int id, System.Action<GameObject> action = default)
     {
-        var beacon = VFXManager.Creat(ResManager.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), point, Quaternion.Euler(0,angle, 0), null);
-        beacon.GetComponent<VFXAirdropEffect>()?.TmpAirdrop(point, ResManager.Instance.GetAirdrop(id), action);
+        var beacon = VFXManager.Creat(ResSvc.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), point, Quaternion.Euler(0,angle, 0), null);
+        beacon.GetComponent<VFXAirdropEffect>()?.TmpAirdrop(point, ResSvc.Instance.GetAirdrop(id), action);
     }
 
     public void Authorize(int id, bool state)
@@ -184,10 +216,10 @@ public class BattleManager : Singleton<BattleManager>
         if (result != GameResult.Unknow) TaskManager.Instance.nowTask.result = result;
         //GlobalEventManager.Evacuate();
         GameRoot.CreateTimer(() => {
-            ResManager.Instance.AsyncLoadScene("GameEnd", () => {
-                WndManager.Instance.movieWnd.SetWndState(false);
+            ResSvc.Instance.AsyncLoadScene("GameEnd", () => {
+                
                 GameRoot.GameState = GameStateEnum.GameEnd;
-                GameRoot.WindowState = WindowStateEnum.UI;
+                WndManager.WindowState = WindowStateEnum.UI;
             }, false);
         }, delay);
     }
@@ -196,7 +228,7 @@ public class BattleManager : Singleton<BattleManager>
     {
         var dic = TaskManager.Instance.nowTask.collectProperty;
         if (!dic.TryAdd(type, count)) dic[type]+= count;
-        if (user&&user.TryGetComponent(out PlayerController player)) AddBattleDataItem(player.PlayerIndex, "采集欧帕兹数量");
+        if (user&&user.TryGetComponent(out PlayerController player)) AddBattleDataItem(player.PlayerIndex, "采集欧帕兹数?");
     }
     private void OnDatSwitch(bool isNoon)
     {

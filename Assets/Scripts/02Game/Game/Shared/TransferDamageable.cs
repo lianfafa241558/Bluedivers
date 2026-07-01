@@ -1,9 +1,9 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Core;
 using GameContract;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 namespace Unity.FPS.Game
 {
@@ -14,7 +14,7 @@ namespace Unity.FPS.Game
     {
 
         [SerializeField]
-        [CustomLabel("弱点")]
+        [InspectorName("弱点")]
         private bool isWeakness;
 
         [HideInInspector]
@@ -27,7 +27,7 @@ namespace Unity.FPS.Game
         public GameObject ActorGo => Source.ActorGo;
 
         [Header("伤害抗性")]
-        [CustomLabel("伤害抗性")]
+        [InspectorName("伤害抗性")]
         [SerializeField]
         private DisplayDic<DamageTypeEnum, float> extraLists;
 
@@ -38,8 +38,8 @@ namespace Unity.FPS.Game
             if(!source.IsValid()) Debug.LogError("物体"+gameObject.name+"没有关联根组件",gameObject);
             return source.GetArmor(type)+re;
         }
-
-        public void InflictDamage(I_Damagable source, PEInt damage, List<KVP<DamageTypeEnum, float>> damageGroups, bool noSource, GameObject damageSource, Vector3 pos)
+         
+        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum, float>> damageGroups, bool noSource, GameObject damageSource, Vector3 pos)
         {
             Source.InflictDamage(source, damage, damageGroups, noSource, damageSource, pos);
         }

@@ -1,8 +1,8 @@
-using System;
+锘縰sing System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-[CreateAssetMenu(fileName = "new Data", menuName = "Data/更新说明")]
+[CreateAssetMenu(fileName = "new Data", menuName = "Data/鏇存柊璇存槑")]
 public class UpdateData_SO : ScriptableObject
 {
     public string title;
@@ -11,7 +11,7 @@ public class UpdateData_SO : ScriptableObject
     public string time;
 
 
-    [ContextMenu("记录时间")]
+    [ContextMenu("璁板綍鏃堕棿")]
     public void Init()
     {
         //time = DateTime.Now.ToString("yyyy-MM-dd HH:mm");

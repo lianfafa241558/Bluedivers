@@ -1,4 +1,4 @@
-/*! \mainpage
+﻿/*! \mainpage
  \image html FABRIK.png
  
  Welcome to Final %IK, the ultimate collection of inverse kinematics solutions for Unity.

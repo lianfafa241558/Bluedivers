@@ -1,5 +1,4 @@
-using Unity.BaseTool;
-using UnityEngine;
+﻿using UnityEngine;
 using Utils;
 
 public class DestroyParentAfterParticles : MonoBehaviour

@@ -13,6 +13,7 @@ public class PlotSubtitles : MonoBehaviour
     private TextMeshProUGUI subtitle;
     private CanvasGroup group;
     private RectTransform bg;
+#pragma warning disable CS0108
     private AudioSource audio;
 
     private float time = 0;
@@ -65,7 +66,7 @@ public class PlotSubtitles : MonoBehaviour
         tmpAnim.Play(name);
     }
     private void Destroy(string name) {
-        //Debug.LogError("移除了"+ transform.Find(name).gameObject);
+        //Debug.LogError("移除"+ transform.Find(name).gameObject);
         Destroy(transform.Find(name).gameObject);
     }
 

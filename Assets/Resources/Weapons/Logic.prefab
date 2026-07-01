@@ -23,13 +23,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 602813941598335379}
+  serializedVersion: 2
   m_LocalRotation: {x: 0.52834046, y: -0.48772117, z: -0.611411, w: -0.3303954}
   m_LocalPosition: {x: 0.21, y: -0.108, z: -0.106}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3910090344161347188}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: -71, y: -96, z: -160}
 --- !u!1 &3910090344161347191
 GameObject:
@@ -56,6 +56,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3910090344161347191}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -66,7 +67,6 @@ Transform:
   - {fileID: 2021470683807560322}
   - {fileID: 8814481002865679775}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7364469512513166795
 MonoBehaviour:
@@ -104,21 +104,30 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: -1
+    MinRange: -1
     NoSource: 0
+    SoundRadius: 20
     DamageDirect: 16
+    DamageGroupDirect2:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
     DamageExplosion: 0
+    ExplosionInnerRange: 0
     ExplosionRange: 0
-    DamageRatioOverDis:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion2:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -129,10 +138,13 @@ MonoBehaviour:
     ImpactSfx: {fileID: 8300000, guid: 7a665c47b0162b9448524191492108a4, type: 3}
     UseHole: 1
     Hole: {fileID: 0}
+    OnlyTerrain: 0
+    UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
+    ChargeSoundScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 4f5d4e5eaa0e5104791549cea3dc3f23,
     type: 3}
@@ -145,9 +157,11 @@ MonoBehaviour:
     type: 3}
   ContinuousShootEndSfx: {fileID: 0}
   wantsToShoot: 0
+  ShootCost: 1
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
+  showCool: 0
   ShootType: 1
   WeaponFlag: 0
   AutomaticReleaseOnCharged: 0
@@ -204,7 +218,7 @@ MonoBehaviour:
   ActiveModule: {fileID: 0}
 --- !u!95 &2094299153557988144
 Animator:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -221,7 +235,8 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorControllerStateOnDisable: 0
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &4343025572940135455
 GameObject:
   m_ObjectHideFlags: 0
@@ -245,6 +260,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4343025572940135455}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -252,7 +268,6 @@ Transform:
   m_Children:
   - {fileID: 994199408979523603}
   m_Father: {fileID: 3910090344161347188}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4474778967285940954
 GameObject:
@@ -277,13 +292,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4474778967285940954}
+  serializedVersion: 2
   m_LocalRotation: {x: -0.08715578, y: 0, z: 0, w: 0.9961947}
   m_LocalPosition: {x: 0.236, y: -0.1, z: 0.169}
   m_LocalScale: {x: 0.9, y: 0.9, z: 0.9}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 3910090344161347188}
-  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: -10, y: 0, z: 0}
 --- !u!1 &6078237136025450305
 GameObject:
@@ -308,19 +323,20 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6078237136025450305}
+  serializedVersion: 2
   m_LocalRotation: {x: 0.5358861, y: 0.22923219, z: -0.41894075, w: 0.69625235}
   m_LocalPosition: {x: -0.538, y: -0.097, z: -0.114}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3910090344161347188}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 90, y: -56, z: -90}
 --- !u!1001 &740457744206520312
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 2581177610987338259}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: df5f6f3123edf1a4d8b549d62326e16f,
@@ -439,6 +455,9 @@ PrefabInstance:
       value: Logic
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: df5f6f3123edf1a4d8b549d62326e16f, type: 3}
 --- !u!4 &994199408979523603 stripped
 Transform:

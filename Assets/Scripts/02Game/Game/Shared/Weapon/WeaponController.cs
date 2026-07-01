@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
 using GameContract;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 using UnityEngine.Events;
 using Utils;
@@ -16,19 +16,19 @@ namespace Unity.FPS.Game
     public enum WeaponShootType
     {
         /// <summary>半自动</summary>
-        [CustomLabel("半自动")]
+        [InspectorName("半自动")]
         Manual,
         /// <summary>全自动</summary>
-        [CustomLabel("全自动")]
+        [InspectorName("全自动")]
         Automatic,
         /// <summary>充能</summary>
-        [CustomLabel("充能")]
+        [InspectorName("充能")]
         Charge,
         /// <summary>激光</summary>
-        [CustomLabel("激光")]
+        [InspectorName("激光")]
         Laser,
         /// <summary>锁定</summary>
-        [CustomLabel("锁定")]
+        [InspectorName("锁定")]
         Lock,
     }
 
@@ -36,13 +36,13 @@ namespace Unity.FPS.Game
     public enum WeaponFlag
     {
         /// <summary>自动换弹</summary>
-        [CustomLabel("自动换弹")]
+        [InspectorName("自动换弹")]
         AutomaticReload = 1 << 0,
         /// <summary>禁止手动换弹</summary>
-        [CustomLabel("禁止手动换弹")]
+        [InspectorName("禁止手动换弹")]
         NoManualReload = 1 << 1,
         /// <summary>子弹耗尽死亡 敌人专用</summary>
-        [CustomLabel("子弹耗尽死亡 敌人专用")]
+        [InspectorName("子弹耗尽死亡 敌人专用")]
         AutoDeath = 1 << 2,
     }
 
@@ -52,7 +52,7 @@ namespace Unity.FPS.Game
         public UnityAction<I_Actor, bool> OnLockUpdate;
         /// <summary>充能百分比变化时</summary>
         public UnityAction<float> OnChargeRatioUpdate;
-        /// <summary>需要更新ui时</summary>
+        /// <summary>需要更新ui</summary>
         public UnityAction OnUIUpdate;
 
 
@@ -122,18 +122,20 @@ namespace Unity.FPS.Game
         #region 参数
         [Foldout("武器参数", true)]
 
-        [CustomLabel("射击类型")]
+        [InspectorName("射击类型")]
         public WeaponShootType ShootType;
-        [CustomLabel("武器标旗")]
+        [InspectorName("武器标旗")]
         public WeaponFlag WeaponFlag;
 
         [Space]
         /// <summary>满蓄自动射击</summary>
-        [CustomLabel("满蓄自动射击", "ShootType", (int)WeaponShootType.Charge, CompareOperate.Equal)]
+        [InspectorName("满蓄自动射击")]
+        [Compare("ShootType", (int)WeaponShootType.Charge, CompareOperate.Equal)]
         public bool AutomaticReleaseOnCharged;
         [Space]
         /// <summary>锁定形状</summary>
-        [CustomLabel("锁定形状", "ShootType", (int)WeaponShootType.Lock, CompareOperate.Equal)]
+        [InspectorName("锁定形状")]
+        [Compare("ShootType", (int)WeaponShootType.Lock, CompareOperate.Equal)]
         public ShapeType Lockshape = ShapeType.Circle;
 
         #endregion
@@ -143,20 +145,21 @@ namespace Unity.FPS.Game
 
         [Foldout("特效和动画", true)]
 
-        [CustomLabel("换弹音效")]
+        [InspectorName("换弹音效")]
         public AudioClip ReloadSfx;
 
-        [CustomLabel("切换此武器的音效")]
+        [InspectorName("切换此武器的音效")]
         public AudioClip ChangeWeaponSfx;
-
-        [CustomLabel("蓄力特效", "ShootType", (int)WeaponShootType.Charge, CompareOperate.Equal)]
+        [InspectorName("蓄力特效")]
+        [Compare( "ShootType", (int)WeaponShootType.Charge, CompareOperate.Equal)]
         public ChargeView ChargeVfx;
 
         /// <summary>
         /// 目前仅返回装弹的trigger OnReload 和激光/连射/蓄力状态的bool IsActive
         /// </summary>
         [Space]
-        [CustomLabel("武器动画器")]
+        [InspectorName("武器动画")]
+        [Tooltip("目前仅返回装弹的trigger OnReload 和激光/连射/蓄力状态的bool IsActive")]
         public Animator WeaponAnimator;
         #endregion
 
@@ -196,20 +199,20 @@ namespace Unity.FPS.Game
 
         #region 武器属性
         /// <summary>自动装弹延迟</summary>
-        public WeaponCurrentAttribute AutoReloadTime;
+        public GameCurrentAttribute AutoReloadTime;
 
         /// <summary>蓄力时间</summary>
-        public WeaponCurrentAttribute ChargeDuration;
+        public GameCurrentAttribute ChargeDuration;
 
         /// <summary>锁定冷却</summary>
-        public WeaponCurrentAttribute LockInterval;
+        public GameCurrentAttribute LockInterval;
         #endregion
         #region 帮助属性
 
         /// <summary>正在自动恢复子弹</summary>
         public bool InAutoReload => WeaponFlag.HasFlag(WeaponFlag.AutomaticReload) && AutoReloadTime.ScaleValue >= 1;
 
-        /// <summary> 子弹剩余百分比 </summary>
+        /// <summary> 子弹剩余百分比</summary></summary>
         public PEInt CurrentTotalAmmoRatio
         {
             get
@@ -225,11 +228,8 @@ namespace Unity.FPS.Game
         /// <summary>剩余子弹总量</summary>
         public PEInt CurrentTotalAmmo => PEMath.Max(Ammo.CurrValue, 0) + PEMath.Max(Magazine.CurrValue, 0);
 
-        public override float CurrentGravity => CurrentDamgeData.Gravity * Mathf.Lerp(1, CurrentDamgeData.ChargeGravityScale, WeaponChargeScale_D);
-        public override float CurrentSpeed => CurrentDamgeData.Speed * Mathf.Lerp(1, CurrentDamgeData.ChargeSpeedScale, WeaponChargeScale_D);
-
-        /// <summary>当前蓄力比例(离散的)(0-1但按阶段取值)</summary>
-        public override float WeaponChargeScale_D=> AttrFinal(Attr.ChargeHigheststage) == default ? 1 : ChargeDuration.StageScale.RawFloat;
+        /// <summary>当前蓄力比例(离散值)(0-1但按阶段取值)</summary></summary>
+        public override PEInt WeaponChargeScale_D=> new(AttrFinal(Attr.ChargeHigheststage) == default ? 1 : ChargeDuration.StageScale.RawFloat);
 
         #endregion
         #region 生命周期
@@ -427,7 +427,7 @@ namespace Unity.FPS.Game
             if (InCharging)
             {
                 //蓄力不够，取消
-                //StageScale在0-1时会发生问题(总是返回0),所以在这里也使用scale
+                //StageScale为-1时会发生问题(总是返回0),所以在这里也使用scale
                 if (ChargeDuration.ScaleValue * AttrFinal(Attr.ChargeHigheststage, 1) < AttrFinal(Attr.ChargeLowestStage, 1))
                 {
                     PlaySFX(ContinuousShootEndSfx);
@@ -486,9 +486,10 @@ namespace Unity.FPS.Game
         void TryUpdateLaser()
         {
             if (!InLasering)
-            {
+            { 
                 if (AllowShoot && CanShoot)
                 {
+                    Debug.LogError("激光创建自杀");
                     HandleShoot();
                     OnUIUpdate?.Invoke();
                     InLasering = true;
@@ -745,7 +746,7 @@ namespace Unity.FPS.Game
 
 
         /// <summary>
-        /// 输入射击键
+        /// 输入射击
         /// </summary>
         public virtual bool HandleShootInputs(bool inputDown, bool inputHeld, bool inputUp)
         {
@@ -789,16 +790,16 @@ namespace Unity.FPS.Game
                     WantsToShoot = inputHeld && InLasering;
 
                     if (inputUp) EndLaser();//鼠标抬起
-                    if (inputHeld) TryUpdateLaser();
-                    if (inputDown) return TryBeginLaser();
+                    else if (inputHeld) TryUpdateLaser();
+                    else if (inputDown) return TryBeginLaser();
                     return false;
 
                 case WeaponShootType.Lock:
                     WantsToShoot = inputHeld && InLock;
 
                     if (inputUp) return TryReleaseLock();
-                    if (inputHeld) return TryUpdateBeginLock();
-                    if (inputDown) return TryBeginLock();
+                    else if (inputHeld) return TryUpdateBeginLock();
+                    else if (inputDown) return TryBeginLock();
 
                     return false;
 

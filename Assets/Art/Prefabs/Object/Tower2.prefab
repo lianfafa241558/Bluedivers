@@ -5,6 +5,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 7749229aab1fc304284082624406c8b1,
@@ -73,6 +74,37 @@ PrefabInstance:
       value: Tower2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7749229aab1fc304284082624406c8b1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6916876965853587968}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7749229aab1fc304284082624406c8b1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2824768511172169911}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7749229aab1fc304284082624406c8b1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 937600081937386553}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7749229aab1fc304284082624406c8b1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2452620826725504345}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7749229aab1fc304284082624406c8b1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4903946710727697152}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7749229aab1fc304284082624406c8b1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6581116611932791912}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7749229aab1fc304284082624406c8b1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7513204239390419146}
   m_SourcePrefab: {fileID: 100100000, guid: 7749229aab1fc304284082624406c8b1, type: 3}
 --- !u!4 &1326048251443278393 stripped
 Transform:
@@ -94,9 +126,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1814037468865734787}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 1.3, y: 11, z: 1.2}
   m_Center: {x: 0, y: 5.2, z: -0.05}
 --- !u!208 &2824768511172169911
@@ -111,7 +151,7 @@ NavMeshObstacle:
   m_Shape: 1
   m_Extents: {x: 0.5, y: 5.5, z: 0.5}
   m_MoveThreshold: 0.1
-  m_Carve: 0
+  m_Carve: 1
   m_CarveOnlyStationary: 1
   m_Center: {x: 0, y: 5, z: 0.023000002}
   m_TimeToStationary: 0.5
@@ -151,6 +191,7 @@ MonoBehaviour:
   DeathDuration: 2
   BirthDuration: 0
   birthTime: 0
+  IsRemove: 0
 --- !u!114 &4903946710727697152
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,6 +266,7 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
+      m_ColorSpace: -1
       m_NumColorKeys: 3
       m_NumAlphaKeys: 2
     duration: 2
@@ -264,6 +306,7 @@ MonoBehaviour:
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
+  IsFixed: 1
   flag: 0
   type: 16
   team: -1

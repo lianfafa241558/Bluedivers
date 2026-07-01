@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using Core;
 using Core.Interface;
 using GameContract;
-using Unity.BaseTool;
+
 
 public class RoomManager : Singleton<RoomManager> ,I_GlobaManager
 {
@@ -43,7 +44,7 @@ public class RoomManager : Singleton<RoomManager> ,I_GlobaManager
     public void Init()
     {
         Awake();
-        arch = GameRoot.Archive;
+        arch = ArchiveSvc.Archive;
         arch.GetRoleLevel(arch.lastSelectRole, out int level, out var exp);
         players.Add(new() {
             name = arch.playerName,

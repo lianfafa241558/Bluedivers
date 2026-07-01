@@ -1,11 +1,11 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Utils;
 
 public class KeiExp : MonoBehaviour
 {
-
+#pragma warning disable CS0108
     public Renderer renderer;
     public float time = 0;
     public int exp=0;

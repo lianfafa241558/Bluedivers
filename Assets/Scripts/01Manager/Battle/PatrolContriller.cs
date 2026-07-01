@@ -1,10 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
 using FpsGame.Mission;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -13,26 +13,26 @@ using Utils;
 /// <summary>
 /// 巡逻队生成器
 /// 生成巡逻队需要的热度和阵营有关
-/// 每级难度会降低5%热度需求(乘算)(最高的Lunatic为35%);
-/// 每个玩家独立记录热度，每名额外的玩家会降低(所有玩家)10%的热度需求(乘算)
+/// 每级难度会降低5%热度需求(乘算)(最高的Lunatic降低75%)
+/// 每个玩家独立记录热度，每名额外的玩家会降低所有玩家10%的热度需求(乘算)
 /// 本身增加1/秒的热度
-/// 靠近“有影响力”的点时，会额外根据距离[50,150]米，产生[0.5,0]/秒的热量，影响区域不叠加。
-/// 摧毁“有影响力”的点会提高(所有玩家)5%的产热速度
-/// 完成主线任务会降低(所有玩家)20%的热度需求(乘算)，并且将撤离点设置为“有影响力”的点
+/// 靠近"有影响力"的点时，会额外根据距离[50,150]米，产生[0.5,0]/秒的热量，影响区域不叠加
+/// 摧毁"有影响力"的点会提高(所有玩家)5%的产热速度
+/// 完成主线任务会降低(所有玩家)20%的热度需求(乘算)，并且将撤离点设置为"有影响力"的点
 /// 倒地的玩家会额外产生0.5/秒的热度，呼叫增援会立即产生20%的热度
 /// 创建巡逻队有10秒的公共冷却
-/// 在50米内，每有一名其他玩家，热度产生速度变为[1/(1+其他玩家人数)](即4人分摊)
+/// 50米内，每有一名其他玩家，热度产生速度变为[1/(1+其他玩家人数)](多人分摊)
 /// 
 /// 例如:4个玩家在虫族的Lunatic清完了全图后靠近撤离点
 /// 为每名玩家刷出巡逻队的热度需求为:
 /// [180(基础)*65%(难度)*70%(人数)*80%(主线)]=66
-/// 产热速度为{[1+0.25(巢穴)+0.5(撤离点)}/4=150
-/// 也就是说在撤离点时，每名玩家每150秒(等效全队38秒)就可以产生一个巡逻队
+/// 产热速度为{[1+0.25(巢穴)+0.5(撤离点)]}/4= 0.4375 /s =150s
+/// 也就是说在撤离点时，每名玩家150s(等效全队38s)就可以产生一个巡逻队
 /// 
 /// 再例如:1个玩家在虫族Extreme清完了全图后靠近撤离点
 /// [180(基础)*80%(难度)*80%(主线)]=115.2
-/// 产热速度为{[1+0.25(巢穴)+0.5(撤离点)}=65
-/// 每65秒就可以产生一个巡逻队
+/// 产热速度为{[1+0.25(巢穴)+0.5(撤离点)]}= 1.75 /s = 65s
+/// 65秒就可以产生一个巡逻队
 /// 
 /// 当地图上的单位超过一个阈值时，将停止生成巡逻队，但热度会继续上升
 /// 定位混淆将提高25%的热度需求(乘算)
@@ -41,8 +41,8 @@ using Utils;
 /// 巡逻队将会随机选择一个巢穴作为起始点，尝试在距离玩家125米处尝试刷新(具有±25米的偏差)
 /// 在安全区内的巢穴不会作为起始点
 /// 如果没有可用的巢穴，将会尝试从距离玩家最近的地图边缘作为起始点
-/// 理论上，如果玩家在摧毁了全部的巢穴后，在靠近地图边缘的85内撤离，那么将不会生产巡逻队，
-/// 因为地图边缘在安全区内，但是实际会从反方向的90度的弧度范围内尝试刷新。
+/// 理论上，如果玩家在摧毁了全部的巢穴后，在靠近地图边缘85内撤离，那么将不会生产巡逻队
+/// 因为地图边缘在安全区内，但是实际会从反方向的90度的弧度范围内尝试刷新
 /// </summary>
 public class PatrolContriller : TickBehaviour
 {
@@ -67,19 +67,19 @@ public class PatrolContriller : TickBehaviour
     private const float MAIN_TASK_REDUCTION = 0.8f;
     /// <summary>呼叫增援+20%热度</summary>
     private const float REINFORCEMENT_INSTANT_HEAT = 0.2f;
-    /// <summary>公共冷却10秒</summary>
+    /// <summary>公共冷却10s</summary>
     private const float PATROL_COOLDOWN = 10f;
     /// <summary>地图最大单位数</summary>
     private const int MAX_MAP_UNITS = 300;
-    /// <summary>玩家安全区85米</summary>
+    /// <summary>玩家安全区85m</summary>
     private const float SAFE_AREA_RADIUS = 85f;
-    /// <summary>生成目标距离125米</summary>
+    /// <summary>生成目标距离125m</summary>
     private const float SPAWN_TARGET_DISTANCE = 125f;
-    /// <summary>生成距离偏差±25米</summary>
+    /// <summary>生成距离偏差±25m</summary>
     private const float SPAWN_DISTANCE_OFFSET = 25f;
     #endregion
 
-    // 玩家独立热度数据结构体
+    // 玩家独立热度数据结构
     [System.Serializable]
     private struct PlayerHeatData
     {
@@ -122,14 +122,14 @@ public class PatrolContriller : TickBehaviour
 
         // 读取基础热度（你已在Start实现）
         _basePatrolHeat = TaskManager.Instance.nowTask.campData.PatrolCreatValue;
-        _basePatrolHeat *= 1 - DIFFICULTY_REDUCTION_PER_LEVEL * (int)TaskManager.Instance.nowTask.difficulty;
+        _basePatrolHeat *= 1 - DIFFICULTY_REDUCTION_PER_LEVEL * (int)TaskManager.Instance.nowTask.difficulty- PLAYER_REDUCTION_PER_EXTRA*(ActorsManager.Players.Count-1);
 
         // 订阅全局事件
-        GlobalEventManager.OnMissionCreated += OnMissionCreated;
-        GlobalEventManager.OnMissionCompleted += OnMissionCompleted;
+        BattleEventSub.OnMissionStart += OnMissionCreated;
+        BattleEventSub.OnMissionCompleted += OnMissionCompleted;
 
-        GlobalEventManager.OnPlayerCreate += OnPlayerJoin;
-        GlobalEventManager.OnFriendCreate += OnPlayerJoin;
+        GlobalEventSub.OnPlayerCreate += OnPlayerJoin;
+        GlobalEventSub.OnFriendCreate += OnPlayerJoin;
 
         // 初始化玩家热度数据
         InitHeatData();
@@ -138,11 +138,11 @@ public class PatrolContriller : TickBehaviour
     private void OnDestroy()
     {
         // 取消事件订阅
-        GlobalEventManager.OnMissionCreated -= OnMissionCreated;
-        GlobalEventManager.OnMissionCompleted -= OnMissionCompleted;
+        BattleEventSub.OnMissionStart -= OnMissionCreated;
+        BattleEventSub.OnMissionCompleted -= OnMissionCompleted;
 
-        GlobalEventManager.OnPlayerCreate -= OnPlayerJoin;
-        GlobalEventManager.OnFriendCreate -= OnPlayerJoin;
+        GlobalEventSub.OnPlayerCreate -= OnPlayerJoin;
+        GlobalEventSub.OnFriendCreate -= OnPlayerJoin;
     }
 
     public override bool Tick()
@@ -155,10 +155,10 @@ public class PatrolContriller : TickBehaviour
         // 公共冷却
         if (_patrolCooldownTimer > 0) _patrolCooldownTimer -= TickTime;
 
-        // 地图单位超限 → 只涨热度不生成
+        // 地图单位超限，只涨热度不生成
         bool canSpawnPatrol = CurrentMapUnits < MAX_MAP_UNITS && _patrolCooldownTimer <= 0;
 
-        // 遍历所有玩家 → 计算产热 + 生成巡逻队
+        // 遍历所有玩家，计算产热 + 生成巡逻队
         for (int i = 0; i < _playerHeatList.Count; i++)
         {
             var playerData = _playerHeatList[i];
@@ -167,7 +167,7 @@ public class PatrolContriller : TickBehaviour
             // 累计热度
             playerData.currentHeat += heatPerSecond * TickTime;
             
-            // 满足条件 → 生成巡逻队
+            // 满足条件，生成巡逻队
             if (canSpawnPatrol && playerData.currentHeat >= playerData.requiredHeat)
             {
                 SpawnPatrol(playerData.player);
@@ -200,7 +200,7 @@ public class PatrolContriller : TickBehaviour
         // 最终产热
         float heatRate = BASE_HEAT_PER_SECOND + influenceBonus + destroyBonus;
 
-        // 玩家分摊（50米内其他玩家数量）
+        // 玩家分摊：50米内其他玩家数量
         int nearbyPlayers = Players.Count(item=> Vector3.Distance(player.Pos, item.Pos) <= 50f)-1;
         if (nearbyPlayers > 0) heatRate /= (1 + nearbyPlayers);
 
@@ -227,7 +227,7 @@ public class PatrolContriller : TickBehaviour
     }
 
     /// <summary>
-    /// 获取影响力点产热加成（距离50-150米 → 0.5-0）
+    /// 获取影响力点产热加成（距离50-150m，0.5-0）
     /// </summary>
     private float GetInfluencePointHeatBonus(I_Actor player)
     {
@@ -260,7 +260,7 @@ public class PatrolContriller : TickBehaviour
 
     #region 游戏事件
     /// <summary>
-    /// 监听任务创建 → 收集影响力点
+    /// 监听任务创建，收集影响力点
     /// </summary>
     private void OnMissionCreated(MissionBase mission)
     {
@@ -271,7 +271,7 @@ public class PatrolContriller : TickBehaviour
     }
 
     /// <summary>
-    /// 监听任务完成 → 视为影响力点被摧毁
+    /// 监听任务完成，视为影响力点被摧毁
     /// </summary>
     private void OnMissionCompleted(MissionBase mission)
     {
@@ -308,7 +308,7 @@ public class PatrolContriller : TickBehaviour
         }
     }
     /// <summary>
-    /// 玩家加入时(先填着)
+    /// 玩家加入（先填着）
     /// </summary>
     private void OnPlayerJoin(I_Actor player)
     {
@@ -317,7 +317,7 @@ public class PatrolContriller : TickBehaviour
         RefreshAllPlayerRequiredHeat();
     }
     /// <summary>
-    /// 玩家离开时(先填着)
+    /// 玩家离开（先填着）
     /// </summary>
     private void OnPlayerLeave(I_Actor player)
     {
@@ -369,13 +369,13 @@ public class PatrolContriller : TickBehaviour
     }
     #endregion
 
-    #region 巡逻队生成（核心逻辑，无地图生成）
+    #region 巡逻队生成（核心逻辑，无地图生成器）
     /// <summary>
     /// 生成巡逻队（安全区判断 + 生成点规则）
     /// </summary>
     private void SpawnPatrol(I_Actor targetPlayer)
     {
-        Debug.LogWarning($"尝试为玩家 {targetPlayer.gameObject.name} 生成巡逻队");
+        Debug.LogWarning($"尝试为玩家{targetPlayer.gameObject.name} 生成巡逻队");
 
         if (GetValidSpawnPosition(targetPlayer.Pos,out Vector3 spawnPos))
         {
@@ -415,7 +415,7 @@ public class PatrolContriller : TickBehaviour
             MissionBase randomPoint = validInfluencePoints.RandomTake(random);
             Vector2 dir = (randomPoint.pos.ToVector2() - logicPos).normalized;
             spawnPoint = (logicPos + dir * SPAWN_TARGET_DISTANCE).ToVector3();
-            Debug.LogError("有效影响力点"+ spawnPoint);
+            Debug.LogWarning("有效影响力点"+ spawnPoint);
         }
         else
         {
@@ -428,7 +428,7 @@ public class PatrolContriller : TickBehaviour
             float theta = Mathf.Atan2(dir.y, dir.x);
             var dx = random.Range(-0.785f, 0.785f);//±45度
             spawnPoint = logicPos.ToVector3() + new Vector3(Mathf.Cos(theta + dx), 0, Mathf.Sin(theta + dx)) * SPAWN_TARGET_DISTANCE;
-            Debug.LogError($"地图边界点{spawnPoint},x{Mathf.Cos(theta + dx)},y{Mathf.Sin(theta + dx)}");
+            Debug.LogWarning($"地图边界点{spawnPoint},x{Mathf.Cos(theta + dx)},y{Mathf.Sin(theta + dx)}");
         }
 
         if (UnityEngine.AI.NavMesh.SamplePosition(spawnPoint, out var hit, SPAWN_DISTANCE_OFFSET, UnityEngine.AI.NavMesh.AllAreas))

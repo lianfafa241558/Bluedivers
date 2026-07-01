@@ -1,7 +1,7 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 
 
@@ -16,11 +16,11 @@ namespace Unity.FPS.Game
         {
             // 通用属性
             { UnitAttrType.Speed, (true, AttrTag.LimitCurr, ModifierType.All) },
-            
+            { UnitAttrType.AngularSpeed, (true, AttrTag.LimitCurr, ModifierType.All) },
         };
         public static AttrTag GetTag(UnitAttrType type) => attributeConfigs[type].Item2;
 
-        public static WeaponAttribute Create(UnitAttrType type, PEInt baseValue)
+        public static GameAttribute Create(UnitAttrType type, PEInt baseValue)
         {
 
             if (!attributeConfigs.TryGetValue(type, out var cfg))
@@ -30,12 +30,12 @@ namespace Unity.FPS.Game
             }
             if (cfg.Item1)
             {
-                return new WeaponCurrentAttribute(baseValue, cfg.Item2, cfg.Item3);
+                return new GameCurrentAttribute(baseValue, cfg.Item2, cfg.Item3);
             }
             else
             {
 
-                return new WeaponAttribute(baseValue, cfg.Item2, cfg.Item3);
+                return new GameAttribute(baseValue, cfg.Item2, cfg.Item3);
             }
 
         }
@@ -44,9 +44,12 @@ namespace Unity.FPS.Game
 
     public enum UnitAttrType
     {
-        //---------通用属性-----------
+        //---------通用属性----------
         /// <summary>速度</summary>
-        [CustomLabel("速度")]
+        [InspectorName("速度")]
         Speed = 0,
+        /// <summary>转向速度</summary>
+        [InspectorName("转向速度")]
+        AngularSpeed = 1,
     }
 }

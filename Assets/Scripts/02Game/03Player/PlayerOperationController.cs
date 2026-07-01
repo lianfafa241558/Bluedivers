@@ -1,12 +1,13 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Core;
+using FPSGame.Furn;
 using UnityEngine;
 
 public class PlayerOperationController : MonoBehaviour
 {
 
-    public Furniture_Base target;
+    public IFurniture target;
 
     private Camera m_Camera;
 
@@ -17,11 +18,11 @@ public class PlayerOperationController : MonoBehaviour
     {
         m_Camera = GetComponentInChildren<Camera>();
         m_InputHandler = GetComponent<PlayerInputHandler>();
-        GameRoot.OnWindowStateChange += OnWindowStateChange;
+        WndManager.OnWindowStateChange += OnWindowStateChange;
     }
     private void OnDestroy()
     {
-        GameRoot.OnWindowStateChange -= OnWindowStateChange;
+        WndManager.OnWindowStateChange -= OnWindowStateChange;
     }
 
     void Update()
@@ -30,12 +31,12 @@ public class PlayerOperationController : MonoBehaviour
 
         if (Physics.Raycast(m_Camera.ScreenPointToRay(new(Screen.width / 2, Screen.height / 2, 0)), out var hit, 1.3f, m_Camera.cullingMask))
         {
-            var newtar = hit.transform.GetComponent<Furniture_Base>();
+            var newtar = hit.transform.GetComponent<IFurniture>();
             if(target != newtar&&(newtar==null|| newtar.CanOperate(gameObject)))
             {
-                if (target && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
+                if (target!=null && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
                 target = newtar;
-                if (!newtar)
+                if (newtar==null)
                 {
                     if (aud) { aud.Stop(); aud = null; }
                     m_InputHandler.InOperation = false;
@@ -43,21 +44,21 @@ public class PlayerOperationController : MonoBehaviour
             }
         }
         //没有获取到交互道具，但是正在操作
-        else if(target&&(!target.HaveFlag(FurnitureFlag.SwitchState)||!target.inOperate))
+        else if(target != null &&(!target.HaveFlag(FurnitureFlag.SwitchState)||!target.InOperate))
         {
             if (!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
             if (aud) { aud.Stop(); aud = null; }
             target = null;
             m_InputHandler.InOperation = false;
         }
-        if (target)
+        if (target != null)
         {
-            if (target.meetTime == 0)
+            if (target.MeetTime == 0)
             {
                 if (m_InputHandler.GetOperateDown())
                 {
                     target.Handle(gameObject);
-                    if (!target || !target.CanOperate(gameObject))
+                    if (target == null || !target.CanOperate(gameObject))
                     {
                         if (aud) { aud.Stop(); aud = null; }
                         target = null;
@@ -68,16 +69,16 @@ public class PlayerOperationController : MonoBehaviour
             {
                 if (m_InputHandler.GetOperateDown())
                 {
-                    if (target.audioPress) aud = AudioManager.PlaySound(new(target.audioPress, target.transform.position, 20, AudioGroups.General) { loop=true});
+                    if (target.AudioPress) aud = AudioSvc.PlaySound(new(target.AudioPress, target.CenterPos, 20, AudioGroups.General) { loop=true});
                 }
                 else if (m_InputHandler.GetOperateHeld())//完成操作
                 {
-                    if ((target.Press += Time.deltaTime) >= target.meetTime)
+                    if ((target.Press += Time.deltaTime) >= target.MeetTime)
                     {
                         target.Handle(gameObject);
                         if (aud) { aud.Stop(); aud = null; }
                         if (!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
-                        if (!target || !target.CanOperate(gameObject))
+                        if (target == null || !target.CanOperate(gameObject))
                         {
                             target = null;
                         }
@@ -104,7 +105,7 @@ public class PlayerOperationController : MonoBehaviour
                 enabled = true;
                 break;
             default:
-                if (target&&!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
+                if (target != null &&!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
                 if (aud) { aud.Stop(); aud = null; }
                 target = null;
                 m_InputHandler.InOperation = false;

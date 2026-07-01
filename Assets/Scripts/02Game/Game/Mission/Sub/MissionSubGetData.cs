@@ -6,7 +6,7 @@ namespace FpsGame.Mission
     /// <summary>
     /// 获取高价值信息
     /// </summary>
-    [AddComponentMenu("任务/子任务/获取高价值信息", 30)]
+    [AddComponentMenu("任务/子任任务/获取高价值信息", 30)]
     public class MissionSubGetData : MissionCompleteKeySceern
     {
         

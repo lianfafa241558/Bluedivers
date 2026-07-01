@@ -11,9 +11,9 @@ namespace FpsGame.Mission
     public class MissionRetrieveData : MissionCompleteKeySceern
     {
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
-            base.CreatMission();
+            base.StartMission();
             MaxProgress = subTask.Length;
             //Debug.LogError("子任务长度"+ MaxProgress);
             foreach (var sub in subTask)

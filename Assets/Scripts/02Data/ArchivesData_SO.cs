@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Unity.BaseTool;
+using Core;
 using Unity.FPS.Game;
 
 using UnityEngine;
@@ -10,7 +10,7 @@ using Utils;
 /// <summary>
 /// 存档信息
 /// </summary>
-public class ArchivesData_SO : BaseLibrary.ArchivesDataBase_SO
+public class ArchivesData_SO : ArchivesDataBase_SO
 {
 
     public override string Path() => "KivotosCraftArc.json";
@@ -27,7 +27,7 @@ public class ArchivesData_SO : BaseLibrary.ArchivesDataBase_SO
 
     #region 角色信息
     [Space]
-    [CustomLabel("角色信息")]
+    [InspectorName("角色信息")]
     public DisplayDic<string, ArchRoleData> roleDataDic = new(true,(id) => {
         return new() {
             ID = id,
@@ -85,14 +85,14 @@ public class ArchivesData_SO : BaseLibrary.ArchivesDataBase_SO
         level = data.Level;
         expScale = data.Exp/1000f;
 
-        GlobalEventManager.OnGainExp?.Invoke(ID, level, expScale);
+        GlobalEventSub.OnGainExp?.Invoke(ID, level, expScale);
     }
 
     #endregion
 
     #region 地图势力信息
     [Space]
-    [CustomLabel("势力信息")]
+    [InspectorName("势力信息")]
     public DisplayDic<string, List<ArchOccupierData>> occupierDic = new();
 
 
@@ -101,7 +101,7 @@ public class ArchivesData_SO : BaseLibrary.ArchivesDataBase_SO
 
     #region 武器改装
     [Space]
-    [CustomLabel("武器改装")]
+    [InspectorName("武器改装")]
     public DisplayDic<string, WeaponUpgradeData> weaponUpgradeDic = new();
 
     public int[][] GetWeaponUpgrade(string ID)
@@ -119,9 +119,18 @@ public class ArchivesData_SO : BaseLibrary.ArchivesDataBase_SO
     }
     #endregion
 
+    #region 载具改装
+
+    [Space]
+    [InspectorName("载具改装")]
+    public DisplayDic<string, ArchVehicleData> VehicleCustomDic = new();
+
+
+    #endregion
+
     #region 资源
     [Space]
-    [CustomLabel("资源和道具")]
+    [InspectorName("资源和道具")]
     [SerializeField]
     public DisplayDic<OOPartEnum, int> propertys = new();
 
@@ -136,7 +145,7 @@ public class ArchivesData_SO : BaseLibrary.ArchivesDataBase_SO
     #endregion
     #region 设置
     [Space]
-    [CustomLabel("设置")]
+    [InspectorName("设置")]
     public DisplayDic<string, ArchSettingData> settingDic;
     #endregion
 
@@ -227,6 +236,16 @@ public class ArchivesData_SO : BaseLibrary.ArchivesDataBase_SO
         }
         
 
+    }
+
+    [System.Serializable]
+    public class ArchVehicleData
+    {
+        public int leftWeaponIndex;
+        public int rightWeaponIndex;
+        public int skinIndex;
+        public int blendIndex;
+        public ArchivesFloat blendScale=0.1f;
     }
 
     [System.Serializable]

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using Photon.Pun;
-using Unity.BaseTool;
+
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
-public class ArmamentWnd : WindowRoot
+public class ArmamentWnd : Window
 {
     public Transform mapName,enemyIcon, enemyName;
 
@@ -18,20 +18,17 @@ public class ArmamentWnd : WindowRoot
 
     private bool[] ready;
     private Animator[] animators;
-    /// <summary> 当前选择配置的战备位置 </summary>
+    /// <summary> 当前选择配置的战备位置</summary>
     private int selectAirdropIndex=-1;
 
     private Transform showSelect;
     private Dictionary<Transform, int> buttons;
 
-    public override void Init()
+    public void Init()
     {
-
+        BridgeSys.Instance.armament = this;
     }
-    public override void UnInit()
-    {
 
-    }
     protected override void FirstShowWnd()
     {
         int count = Constants.MaxPlayer;
@@ -42,12 +39,13 @@ public class ArmamentWnd : WindowRoot
         {
             var go = Instantiate(prefab, armamentRoot).transform;
             var a = i;
-            if (i == 0)//自己在显示上面固定第一位
+            if (i == 0)//自己在显示上面固定第一个
             {
                 showSelect = go.Find("ShowSelect");
-                //准备
+                //装备
                 SetCilck(go.GetChild(4), () => {
                     SendPlayerReady(roomManager.SelfIndex, !ready[a]);
+                    wndManager.PlaySound(new("Bridge/"+(!ready[a]? "Ready" : "CancelReady")));
                 });
                 for (int u = 0; u < 4; ++u)
                 {
@@ -57,7 +55,8 @@ public class ArmamentWnd : WindowRoot
                         if (selectAirdropIndex == -1)
                         {
                             go.GetComponent<Animator>().Play("Expend", 0, 0);
-                            InputManager.ListenerCancel(Cancel);
+                            wndManager.PlaySound(new("Bridge/Expand"));
+                            InputManager.AddListenerCancel(Cancel);
                         }
                         SetSelectIndex(b, true);
                     });
@@ -68,11 +67,11 @@ public class ArmamentWnd : WindowRoot
             {
                 if (u<taskManager.nowTask.RequiredAD.Count)
                 {
-                    var item = ResManager.airdropDic[taskManager.nowTask.RequiredAD[u]];
+                    var item = ResSvc.airdropDic[taskManager.nowTask.RequiredAD[u]];
                     if (!item.isHide)
                     {
-                        //正常的，因为跑了4个玩家的
-                        //Debug.LogError("第"+u+"是"+ taskManager.nowTask.RequiredAD[u]);
+                        //正常的，因为跑了4个玩家
+                        //Debug.LogError("??+u+"??+ taskManager.nowTask.RequiredAD[u]);
                         buttons[armamentRoot.GetChild(i, 6, y)] = taskManager.nowTask.RequiredAD[u];
                         SetButton(armamentRoot.GetChild(i, 6, y), tipRoot, ShowTip);
                         SetSprite(armamentRoot.GetChild(i, 6, y, 0, 0), item.icon);
@@ -132,18 +131,19 @@ public class ArmamentWnd : WindowRoot
         SetColor(enemyIcon, taskManager.nowTask.campData.Color);
         SetSprite(enemyIcon, taskManager.nowTask.campData.Sprite);
         SetText(mapName, taskManager.nowTask.mapName);
-        SetText(enemyName, "由"+taskManager.nowTask.campData.ShowName+"控制");
+        SetText(enemyName, "" + taskManager.nowTask.campData.ShowName + "控制");
         for (int i = 0; i < armamentRoot.childCount; ++i)
         {
             var item = armamentRoot.GetChild(i);
             if (i < roomManager.players.Count)
             {
+                roomManager.players[i].airdrop=new int[4];
                 SetActive(item, true);
                 var showModle = resManager.CreatPrefab("Prefabs/StudentModle/" + roomManager.players[i].roleName, false);
                 showModle.transform.parent = item.GetChild(1);
-                showModle.transform.localPosition = new(0, -12, 20);
+                showModle.transform.localPosition = new(0, -2.4f, 980);
                 showModle.transform.eulerAngles = new(0, 180, 0);
-                showModle.transform.localScale = new(10, 10, 10);
+                showModle.transform.localScale = new(2, 2, 2);
                 showModle.SetChildLayer(gameObject.layer, 3);
                 var scripts = showModle.GetComponents<MonoBehaviour>();
                 foreach (var script in scripts)//关闭注视等组件
@@ -174,7 +174,7 @@ public class ArmamentWnd : WindowRoot
     private void InitPlayerAirdrop()
     {
         var layout = armamentRoot.GetChild(0, 2, 0, 0, 0);
-        var airdropList = ResManager.airdropDic.Values.OrderBy(item => item.ID).ToList();
+        var airdropList = ResSvc.airdropDic.Values.OrderBy(item => item.ID).ToList();
         for (int i = 1; i <= 7; i += 2)
         {
             var root = layout.GetChild(i);
@@ -209,7 +209,7 @@ public class ArmamentWnd : WindowRoot
     /// </summary>
     private void SelectAirdrop(Transform button)
     {
-        SendPlayerSelectAemament(roomManager.Self.index, ResManager.airdropDic[buttons[button]].ID, selectAirdropIndex);
+        SendPlayerSelectAemament(roomManager.Self.index, ResSvc.airdropDic[buttons[button]].ID, selectAirdropIndex);
     }
 
 
@@ -226,40 +226,44 @@ public class ArmamentWnd : WindowRoot
 
     protected override void HideWnd()
     {
-        for (int i = 0; i < armamentRoot.childCount; ++i)
-        {
-            if(animators[i]) Destroy(animators[i].transform.parent.gameObject);
-        }
-        UnInitPlayerAirdrop();
+        
+        //for (int i = 0; i < armamentroot.childcount; ++i)
+        //{
+        //    if(animators[i]) destroy(animators[i].transform.parent.gameobject);
+        //}
+        //UnInitPlayerAirdrop();
     }
 
     //通过动画调用
     private void FinishReady()
     {
-        GameRoot.GameState = GameStateEnum.Transition;//会因为切状态自己关的
-        AudioManager.PlayMusic("Shooting Athletes", 0.3f);
-        
+        GameState = GameStateEnum.Transition;//会因为切状态自己关??
+
 
     }
 
     private void SetButton(Transform trans,Transform tip, System.Action<Transform,Transform> action)
     {
-        SetButtonEnter(trans, (data) => {
+        var item = trans.TryGetOrAddComponent<ButtonEnterDetector>();
+        item.Enter = (data) => {
             SetActive(tip, true);
             action.Invoke(trans, tip);
-        });
-        SetButtonIn(trans, (data) => {
-            tip.position = Input.mousePosition;
-        });
-        SetButtonExit(trans, (data) => {
+        };
+
+        item.In = (data) => {
+            tip.position = UICamera.uiCamera.ScreenToWorldPoint(Input.mousePosition)+100*Vector3.forward;
+            //tip.position =new(Input.mousePosition.x, Input.mousePosition.y,tip.position.z);
+        };
+        item.Exit = (data) => {
             SetActive(tip, false);
-        });
+        };
+
     }
     private void ShowTip(Transform trans, Transform tip)
     {
         if (buttons.TryGetValue(trans, out var id))
         {
-            if (ResManager.airdropDic.TryGetValue(id, out var data))
+            if (ResSvc.airdropDic.TryGetValue(id, out var data))
             {
                 SetSprite(tip.GetChild(0, 0), data.icon);
                 SetColor(tip.GetChild(0), data.Color);
@@ -276,22 +280,27 @@ public class ArmamentWnd : WindowRoot
         SetActive(tip, false);
     }
 
-    /// <summary> 发送玩家选择战备的消息 </summary>
+    /// <summary> 发送玩家选择战备的消息</summary>
     private void SendPlayerSelectAemament(int playerIndex, int id, int index)
     {
         BridgeSys.Instance.SendPlayerSelectArmament(playerIndex, id, index);
     }
 
  
-    /// <summary> 收到玩家选择战备的回调 </summary>
+    /// <summary> 收到玩家选择战备的回调</summary>
     public void ReceivePlayerSelectAemament(int playerIndex, int id, int index)
     {
+        if(playerIndex>= roomManager.players.Count)
+        {
+            Debug.LogError("收到玩家选择战备的回调错误，玩家"+ playerIndex);
+            return;
+        }
         roomManager.players[playerIndex].airdrop[index] = id;
         buttons[armamentRoot.GetChild(playerIndex, 5, index)] = id;
-        SetSprite(armamentRoot.GetChild(playerIndex, 5, index, 0),ResManager.airdropDic[id].icon);
-        SetColor(armamentRoot.GetChild(playerIndex, 5, index), ResManager.airdropDic[id].Color);
+        SetSprite(armamentRoot.GetChild(playerIndex, 5, index, 0),ResSvc.airdropDic[id].icon);
+        SetColor(armamentRoot.GetChild(playerIndex, 5, index), ResSvc.airdropDic[id].Color);
 
-        //SetButtonInteractable(button,false);//这个战备就不能重复选了
+        //SetButtonInteractable(button,false);//这个战备就不能重复选择
         //selectAirdropIndex = -1;
         if (playerIndex == roomManager.Self.index)
         {
@@ -314,20 +323,20 @@ public class ArmamentWnd : WindowRoot
     }
 
 
-    /// <summary> 发送玩家准备的消息 </summary>
+    /// <summary> 发送玩家准备的消息</summary>
     public void SendPlayerReady(int playerIndex, bool state)
     {
         BridgeSys.Instance.SendPlayerReady(playerIndex, state);
     }
 
-    /// <summary> 收到玩家准备的回调 </summary>
+    /// <summary> 收到玩家准备的回调</summary>
     public void ReceivePlayerReady(int playerIndex, bool state)
     {
         ready[playerIndex] = state;
         //SetAlpha(go.GetChild(4, 0), ready[a] ? 0.2f : 0.01f);
         SetText(armamentRoot.GetChild(playerIndex, 4, 1), state ? "就绪" : "尚未就绪");
         armamentRoot.GetChild(playerIndex).GetComponent<Animator>().Play(state ? "Ready" : "UnReady", 1, 0);
-
+        animators[playerIndex].SetBool("IsReady",state);
         if (IEnumerableUtils.Sum(ready) == roomManager.players.Count)
         {
             GetComponent<Animator>().Play("Exit", 0, 0);

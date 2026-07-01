@@ -1,6 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using Unity.BaseTool;
+
 using UnityEngine;
 
 namespace Core
@@ -18,9 +19,9 @@ namespace Core
             public KeyCode positiveSpareValue;//备用键
             public KeyCode negativeMainValue;//反向主键
             public KeyCode negativeSpareValue;//反向备用键
-            public float lastTime;
-            public event Action OnDown; 
-
+            public float lastTime = Mathf.Infinity;
+            public event Action OnDown;
+            public event Action OnUp;
             public bool Get()
             {
                 return Input.GetKey(positiveMainValue) || (positiveSpareValue != default && Input.GetKey(positiveSpareValue));
@@ -44,7 +45,9 @@ namespace Core
                 return GetNegative() ? -1 : (Get() ? 1 : 0);
             }
 
-            public void Invoke() => OnDown?.Invoke();
+            public void Down() => OnDown?.Invoke();
+
+            public void Up() => OnUp?.Invoke();
         }
 
         private static Dictionary<W, Dictionary<T, InputItem>> inputDic = new();
@@ -59,18 +62,22 @@ namespace Core
         private static readonly W defaultState=default;//(全部)
 
         private List<System.Func<bool>> NowCancelList = new();
-        private Stack<System.Func<bool>> WaitCancelStack = new();//临时的，最后走的NowCancelList过
+        private Stack<System.Func<bool>> WaitCancelStack = new();//临时的，最后走的NowCancelList
         private bool useCancel;//这一帧是否有人使用了
-        public static void ListenerCancel(System.Func<bool> action)
+        public static void AddListenerCancel(System.Func<bool> action)
         {
             Instance.WaitCancelStack.Push(action);
+        }
+        public static void RemoveListenerCancel(System.Func<bool> action)
+        {
+            Instance.NowCancelList.Remove(action);
         }
         public static bool CancelEmpty()
         {
             return Instance.NowCancelList.Count == 0 && !Instance.useCancel;//这一帧没人使用返回
         }
-        private static List<(W, T, Action)> waitBind=new();
-        public static void Bind(W state,T key,Action action) {
+        private static List<(W, T,bool, Action)> waitBind=new();
+        public static void BindDown(W state,T key,Action action) {
             if (inputDic.TryGetValue(state,out var dic))
             {
                 if (dic.TryGetValue(key, out var output2))
@@ -80,14 +87,36 @@ namespace Core
             }
             else
             {
-                waitBind.Add(new(state,key,action));
+                waitBind.Add(new(state,key,false,action));
             }
         }
-        public static void UnBind(W state, T key, Action action)
+        public static void UnBindDown(W state, T key, Action action)
         {
             if (inputDic[state].TryGetValue(key, out var output))
             {
                 output.OnDown -= action;
+            }
+        }
+
+        public static void BindUp(W state, T key, Action action)
+        {
+            if (inputDic.TryGetValue(state, out var dic))
+            {
+                if (dic.TryGetValue(key, out var output2))
+                {
+                    output2.OnUp += action;
+                }
+            }
+            else
+            {
+                waitBind.Add(new(state, key, true, action));
+            }
+        }
+        public static void UnBindUp(W state, T key, Action action)
+        {
+            if (inputDic[state].TryGetValue(key, out var output))
+            {
+                output.OnUp -= action;
             }
         }
 
@@ -108,32 +137,46 @@ namespace Core
 
             foreach (var item in waitBind)
             {
-                Bind(item.Item1, item.Item2,item.Item3);
+                if(item.Item3)BindUp(item.Item1, item.Item2,item.Item4);
+                else BindDown(item.Item1, item.Item2, item.Item4);
             }
             waitBind.Clear();
         }
         //需要在这一帧结束之后才记录点击，否则单击也会触发双击
         private void LateUpdate()
         {
-            // 检测是否有任何键被按下
-            if (Input.anyKeyDown)
+            // 先处理defaultState
+            foreach (var item in inputDic[defaultState].Values)
             {
-                foreach (var item in inputDic[defaultState].Values)
+                if (Vaild(item))
                 {
-                    if (Vaild(item) && item.GetDown())
+                    if (item.GetDown())
                     {
                         item.lastTime = Time.time;
-                        item.Invoke();
-                        return;
+                        item.Down();
+                    }
+                    if (item.GetUp())
+                    {
+                        item.Up();
+                        item.lastTime = Mathf.Infinity;
                     }
                 }
-                foreach (var item in inputDic[NowWindowState].Values)
+            }
+
+            // 再处理NowWindowState（跳过已经在defaultState 中处理过的，避免重复
+            foreach (var item in inputDic[NowWindowState].Values)
+            {
+                if (Vaild(item) && !IsEqual(item.window, defaultState))
                 {
-                    if (Vaild(item) && item.GetDown())
+                    if (item.GetDown())
                     {
                         item.lastTime = Time.time;
-                        item.Invoke();
-                        break;
+                        item.Down();
+                    }
+                    if (item.GetUp())
+                    {
+                        item.Up();
+                        item.lastTime = Mathf.Infinity;
                     }
                 }
             }
@@ -142,7 +185,7 @@ namespace Core
         private void Update()
         {
             useCancel = false;
-            //把上一帧待添加的加入
+            //把上一帧待添加的加上
             while (WaitCancelStack.Count > 0)
             {
                 var func = WaitCancelStack.Pop();
@@ -216,9 +259,9 @@ namespace Core
             return false;
         }
 
-        public static bool GetLong(T key)
+        public static bool GetLong(T key,float time=1)
         {
-            return Find(key, out var output) && Time.time - output.lastTime > 1.5f && Get(key);
+            return Find(key, out var output) && Time.time - output.lastTime > time && Get(key);
         }
 
 

@@ -23,6 +23,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 244107709944242465}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -30,7 +31,6 @@ Transform:
   m_Children:
   - {fileID: 8092240276350944750}
   m_Father: {fileID: 865411121390596817}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1005927673039346027
 GameObject:
@@ -55,13 +55,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1005927673039346027}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0.15, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 865411121390596817}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6850334054902329769
 GameObject:
@@ -88,6 +88,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6850334054902329769}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -96,11 +97,10 @@ Transform:
   - {fileID: 7291594083123882550}
   - {fileID: 7814688944437620373}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &8724838456336507836
 Animator:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -117,7 +117,8 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorControllerStateOnDisable: 0
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &-2737578421049089695
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,21 +155,30 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
+    MinRange: -1
     NoSource: 0
+    SoundRadius: 20
     DamageDirect: 0
+    DamageGroupDirect2:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
     DamageExplosion: 0
+    ExplosionInnerRange: 0
     ExplosionRange: 0
-    DamageRatioOverDis:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 0
-      m_PostInfinity: 0
-      m_RotationOrder: 0
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion2:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -180,10 +190,13 @@ MonoBehaviour:
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
+    OnlyTerrain: 0
+    UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
+    ChargeSoundScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -193,7 +206,12 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
-  state: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
   ShootType: 0
   WeaponFlag: 3
   AutomaticReleaseOnCharged: 0
@@ -217,13 +235,6 @@ MonoBehaviour:
   AimOffset: {x: 0, y: 0, z: 0}
   playerAngle: 0
   desc: "\u5C0F\u6625\u7231\u7528\u7684\u5723\u6C34\u624B\u69B4\u5F39\u3002\n\u6295\u63B7\u540E\u7206\u88C2\uFF0C\u53EF\u4EE5\u6CBB\u7597\u53CB\u519B\uFF0C\u4E5F\u53EF\u4EE5\u4F24\u5BB3\u654C\u4EBA\uFF0C\u4F46\u662F\u8FD9\u662F\u600E\u4E48\u505A\u5230\u7684\uFF1F"
-  m_Rename:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 
-    arr: []
-    meetReset: 0
   m_RenameAttr: []
   showAttr: 000000001500000016000000
   m_UniqueAttr:
@@ -246,6 +257,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 7291594083123882550}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: ec08effe15f3c434e9b82602f443c0a7,
@@ -309,6 +321,9 @@ PrefabInstance:
       value: HolyWater
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec08effe15f3c434e9b82602f443c0a7, type: 3}
 --- !u!4 &8092240276350944750 stripped
 Transform:

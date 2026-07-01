@@ -29,6 +29,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5119575936748598836}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -80.74516, y: 29.605722, z: -44.750366}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -39,7 +40,6 @@ Transform:
   - {fileID: 1090534990177852852}
   - {fileID: 831073501730164601}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8390941765043484377
 MonoBehaviour:
@@ -53,11 +53,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3de939d976a5bb0419ccd8dbd0b6836b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  legs: []
-  InvincibleArmor: []
+  DeathDuration: 5
+  BirthDuration: 2
+  birthTime: 0
+  IsRemove: 0
   PathReachingRadius: 2
-  DeathDuration: 0
-  BirthDuration: 0
 --- !u!114 &5448675069619646816
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78,11 +78,18 @@ MonoBehaviour:
     detectionFireDelay: 0
     aimBlendTime: 1
     limitRotation: 0
+    allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 0}
     dot: 1
   AttackStop: 0
   AttackStopDistanceRatio: 1
   MaintainMaxDis: 0
+  PatrolSpeed: 2
+  BewareSpeed: 3
+  BewareReachRadius: 2
+  BewareStayDuration: 2
+  IdleMaxDuration: 120
+  AiState2: 2
 --- !u!114 &6048186989904391590
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -99,16 +106,18 @@ MonoBehaviour:
   Id: robot00
   Portrait: {fileID: 21300000, guid: 42cf8bb75fd4d004c98a9bbdcc8afcd7, type: 3}
   ExtraPortrait: {fileID: 21300000, guid: 42cf8bb75fd4d004c98a9bbdcc8afcd7, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
+  IsFixed: 0
   flag: 0
   type: 4
   team: 0
+  threat: 1
   aimPoint: {fileID: 1090534990177852852}
   UseHpBar: 1
   HpHeight: 1
   shape: 0
   rangeLength: 0.55
-  Owner: {fileID: 0}
   damageables: []
 --- !u!195 &7829438459337410565
 NavMeshAgent:
@@ -170,6 +179,7 @@ MonoBehaviour:
     DefaultValue:
       cilp: {fileID: 0}
       ps: {fileID: 0}
+      trans: {fileID: 0}
       go: []
     arr:
     - Key: 3
@@ -177,24 +187,27 @@ MonoBehaviour:
         cilp: {fileID: 8300000, guid: a7fae22399a6e1d448dc0dd2210f1dac, type: 3}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
+        trans: {fileID: 0}
         go: []
     - Key: 4
       Value:
         cilp: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
+        trans: {fileID: 0}
         go: []
     - Key: 1
       Value:
         cilp: {fileID: 8300000, guid: 25722734eeccba042a18e26e376ca542, type: 3}
         ps: {fileID: 8855434715677272938, guid: 1bc9e4f49c67a6a41af3e7cb3d30bb43,
           type: 3}
+        trans: {fileID: 0}
         go: []
     meetReset: 0
   rendererSet:
   - type: 0
     occasion: 3
-    material: {fileID: 2100000, guid: 91fb2f42cd8cb5049bd4ac3f2c870e06, type: 2}
+    material: {fileID: 2100000, guid: fbc3dc08b72402942be9c66af0377389, type: 2}
     colorName: 
     defaultColor: {r: 0, g: 0, b: 0, a: 0}
     switchOccasion: 0
@@ -226,6 +239,7 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
+      m_ColorSpace: -1
       m_NumColorKeys: 4
       m_NumAlphaKeys: 2
     duration: 0.1
@@ -255,13 +269,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6013381463413829993}
+  serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: -0.00036058843, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5496559353030372494}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &5390245358182154398
 MeshFilter:
@@ -285,11 +299,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   showArmorLists: []
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
   isMain: 0
+  showArmor: 0
 --- !u!136 &6013381463413829992
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -298,8 +314,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6013381463413829993}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.55
   m_Height: 2.2
   m_Direction: 2
@@ -328,13 +353,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6637595589422363804}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5496559353030372494}
-  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6120246114818252528
 MonoBehaviour:
@@ -348,13 +373,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 927ff0b4cb9a5dd4fb83c45166cffc50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DetectionSourcePoint: {fileID: 1090534990177852852}
+  EyePoint: {fileID: 0}
   DetectionRange: 30
+  HearingRange: 10
   AttackRange: 50
   AlertRange: 0
   KnownTargetTimeout: 4
-  TargetActor: {fileID: 0}
+  Target:
+    pos: {x: 0, y: 0, z: 0}
+  showGizmos: 0
+  IsSeeingTarget: 0
+  TimeLastSeenTarget: -Infinity
+  showTarget: {fileID: 0}
   show: 0
+  ShowTargetState: 0
+  showCollider: {fileID: 0}
 --- !u!1 &8087334739988588400
 GameObject:
   m_ObjectHideFlags: 0
@@ -378,13 +411,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8087334739988588400}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8808219350903725339}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8485885819287937377
 GameObject:
@@ -409,6 +442,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8485885819287937377}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.347, z: 0.256}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -416,7 +450,6 @@ Transform:
   m_Children:
   - {fileID: 8808219350903725339}
   m_Father: {fileID: 5496559353030372494}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8808219350903725336
 GameObject:
@@ -442,6 +475,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8808219350903725336}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -449,7 +483,6 @@ Transform:
   m_Children:
   - {fileID: 8046901174826033532}
   m_Father: {fileID: 5863263558201151377}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3068231880032129563
 MonoBehaviour:
@@ -489,7 +522,9 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
+    MinRange: -1
     NoSource: 0
+    SoundRadius: 20
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
@@ -497,13 +532,15 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     DamageExplosion: 0
+    ExplosionInnerRange: 0
     ExplosionRange: 0
-    DamageRatioOverDis:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 0
-      m_PostInfinity: 0
-      m_RotationOrder: 0
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion2:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -515,10 +552,13 @@ MonoBehaviour:
     ImpactSfx: {fileID: 0}
     UseHole: 1
     Hole: {fileID: 0}
+    OnlyTerrain: 0
+    UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
+    ChargeSoundScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -529,7 +569,12 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
-  state: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
   ShootType: 1
   WeaponFlag: 1
   AutomaticReleaseOnCharged: 0
@@ -538,13 +583,13 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
-  waitTime: 0
   animNameType: 0
 --- !u!1001 &4796268359358094092
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 5496559353030372494}
     m_Modifications:
     - target: {fileID: -8878353458188297570, guid: 0bfda4a527e76984a8c870aa74e1d08b,
@@ -1128,6 +1173,13 @@ PrefabInstance:
       value: -50.658566
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0bfda4a527e76984a8c870aa74e1d08b,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6151191508521089325}
   m_SourcePrefab: {fileID: 100100000, guid: 0bfda4a527e76984a8c870aa74e1d08b, type: 3}
 --- !u!4 &4973519714065153255 stripped
 Transform:
@@ -1149,7 +1201,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
 --- !u!95 &6151191508521089325
 Animator:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1157,7 +1209,7 @@ Animator:
   m_GameObject: {fileID: 5642638117722728029}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 6292e78fbb8fec245af236c74c9191b3, type: 2}
+  m_Controller: {fileID: 9100000, guid: d24d14fa0ef61dd4192360201ecbd6e9, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1166,7 +1218,8 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorControllerStateOnDisable: 0
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &8783567483262405880 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4942062051632932876, guid: 0bfda4a527e76984a8c870aa74e1d08b,

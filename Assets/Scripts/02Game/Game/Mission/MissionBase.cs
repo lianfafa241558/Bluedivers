@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -17,7 +17,7 @@ namespace FpsGame.Mission
 
 
     /// <summary>
-    /// 任务目标(逻辑层)
+    /// 任务目标(逻辑)
     /// </summary>
     public abstract class MissionBase : TickBehaviour  //虽然他自己不用，但是他的子类用
     {
@@ -30,47 +30,47 @@ namespace FpsGame.Mission
 
         [Foldout("标旗",true)]
 
-        [CustomLabel("标旗")]
+        [InspectorName("标旗")]
         [UnityEngine.Serialization.FormerlySerializedAs("tag")]
         public MissionTag missionTag;
 
 
         [Foldout("信息",true)]
         public MissionType missionType;
-        [CustomLabel("优先级")]
+        [InspectorName("优先级")]
         public int priority;
         //这玩意应该放着这里吗？我得想想
         [SerializeField]
         private List<GameObject> prefabs;
 
-        [DisplayField(true, false, false)]
-        [CustomLabel("标题")]
+        [DisplayField(true, false)]
+        [InspectorName("标题")]
         public string title;
-        [DisplayField(true, false, false)]
-        [CustomLabel("当前目标提示")]
+        [DisplayField(true, false)]
+        [InspectorName("当前目标提示")]
         public string tip;
-        [DisplayField(true, false, false)]
-        [CustomLabel("最大任务进度")]
+        [DisplayField(true, false)]
+        [InspectorName("最大任务进度")]
         public int MaxProgress;
-        [DisplayField(true, false, false)]
-        [CustomLabel("当前任务进度")]
+        [DisplayField(true, false)]
+        [InspectorName("当前任务进度")]
         public int NowProgress;
 
-        [CustomLabel("允许部署战备的范围")]
+        [InspectorName("允许部署战备的范围")]
         public int AirdropRange = 10;
 
-        [CustomLabel("占地面积的取值范围(半径)")]
+        [InspectorName("占地面积的取值范围（半径）")]
         public Vector2Int mapEntitySize = Vector2Int.one * 20;
 
 
-        [DisplayField(true, false, false)]
+        [DisplayField(true, false)]
         public MissionBase parent;//主任务
 
         
-        [DisplayField(true, false, false)]
+        [DisplayField(true, false)]
         public TaskManager.TaskItem data;
         [SerializeField]
-        [DisplayField(true, false, false)]
+        [DisplayField(true, false)]
         protected TaskManager.SelectTaskData root;
 
         [HideInInspector]
@@ -83,7 +83,7 @@ namespace FpsGame.Mission
         public int entitySize;//半径
 
         [DisplayField(false)]
-        public float percentage;//完成百分比(用来显示条)
+        public float percentage;//完成百分比，用来显示
 
         [Foldout("显示",true)]
         public MissionBase[] subTask;
@@ -95,18 +95,23 @@ namespace FpsGame.Mission
         /// <summary>已使用战备</summary>
         private bool allowUseAirdrop;
 
-        [HideInInspector]
+        //[HideInInspector]
         public MissionView entity;
         public bool end;
         public bool completed;
 
-        public void Init(TaskManager.SelectTaskData root, TaskManager.TaskItem data, Sprite icon, Vector3 pos, int entitySize)
+        private Transform entityParent;
+
+        public bool IsInitialized { get; set;}
+
+        public void Init(TaskManager.SelectTaskData root, TaskManager.TaskItem data, Sprite icon, Vector3 pos, int entitySize,Transform entityParent)
         {
             this.data = data;
             this.root = root;
             this.icon = icon;
             this.pos = pos;
             this.entitySize = entitySize;
+            this.entityParent = entityParent;
             manager = BattleManager.Instance;
             random = manager.BattleRandom;
             switch (missionType)
@@ -132,38 +137,25 @@ namespace FpsGame.Mission
             
             title = data.cfg.desc;
 
-            if (prefabs.Count > 0)
-            {
-                entity = Instantiate(prefabs.RandomTake(), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0)).GetComponent<MissionView>();
-                //Debug.LogError("初始化实体"+ entity);
-                entity.Init(this, this.data.cfg.RequiredAD.Select(item=>item.ID).ToArray());
-            }
-            if (data.cfg.RequiredAD.Count == 0) AirdropRange = 0;
-            
 
+            
+            /*
             GameRoot.CreateTimer(() => {
                 if (parent) GameRoot.CreateTimer(() => { EventInit(); }, 0.1f);
                 else EventInit();
 
-            },0.8f);
+            },0.8f);*/
 
-            if (data.cfg.RequiredAD.Count > 0) GlobalEventManager.OnAirdrop += OnAirdrop;
-            CreatMission();
+            if (data.cfg.RequiredAD.Count > 0) BattleEventSub.OnAirdrop += OnAirdrop;
+            InitMission();
         }
 
-        private void EventInit()
+        public void EventStart()
         {
-            GlobalEventManager.MissionCreated(this);
-            /*
-            //主任务直接显示
-            if (missionType == MissionType.Main && !HasTag(MissionTag.hideAll))
-            {
-                GlobalEventManager.MissionStateChange(this, true);
-            }*/
-            if (missionTag.HasFlag(MissionTag.StratDiscovered))
-            {
-                if (entity.IsValid()) entity.TryDiscovered();
-            }
+            StartMission();
+            BattleEventSub.MissionStart(this);
+            if (missionTag.HasFlag(MissionTag.StratDiscovered)&&entity.IsValid()) entity.TryDiscovered();
+            
         }
 
 
@@ -177,16 +169,35 @@ namespace FpsGame.Mission
         {
             if (!end) Uninit();
         }
-
-        protected virtual void CreatMission()
+        /// <summary>
+        /// 所有任务初始化完成后执行
+        /// </summary>
+        protected virtual void StartMission()
         {
             
 
         }
+        /// <summary>
+        /// 创建后就执行
+        /// </summary>
+        protected virtual void InitMission()
+        {
 
+            if (prefabs.Count > 0)
+            {
+                entity = Instantiate(prefabs.RandomTake(), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), entityParent).GetComponent<MissionView>();
+                entity.Init(this, this.data.cfg.RequiredAD.Select(item => item.ID).ToArray());
+            }
+            else
+            {
+                IsInitialized = true;
+            }
+            if (data.cfg.RequiredAD.Count == 0) AirdropRange = 0;
+
+        }
         public virtual void UpdateMission()
         {
-            GlobalEventManager.MissionUpdate(this);
+            BattleEventSub.MissionUpdate(this);
         }
 
         public virtual void CompleteMission()
@@ -194,7 +205,7 @@ namespace FpsGame.Mission
             data.complete = true;
             completed = true;
             if (missionType == MissionType.Main&&!parent) root.result = GameResult.Victory;
-            GlobalEventManager.MissionCompleted(this);
+            BattleEventSub.MissionCompleted(this);
             OnMissionCompleted?.Invoke(this);
             EndMission();
         }
@@ -202,7 +213,7 @@ namespace FpsGame.Mission
         protected virtual void FailMission()
         {
             if (missionType == MissionType.Main) root.result = GameResult.Failure;
-            GlobalEventManager.MissionFail(this);
+            BattleEventSub.MissionFail(this);
             EndMission();
         }
         protected virtual void EndMission()
@@ -215,7 +226,7 @@ namespace FpsGame.Mission
                     BattleManager.Instance.Authorize(ad.ID, false);
                 }
             }
-            GlobalEventManager.MissionEnd(this);
+            BattleEventSub.MissionEnd(this);
             OnMissionEnd?.Invoke(this);
             Uninit();
         }
@@ -223,7 +234,7 @@ namespace FpsGame.Mission
         protected virtual void Uninit()
         {
             if (entity.IsValid()) entity.Uninit();
-            if (data.cfg.RequiredAD.Count > 0) GlobalEventManager.OnAirdrop -= OnAirdrop;
+            if (data.cfg.RequiredAD.Count > 0) BattleEventSub.OnAirdrop -= OnAirdrop;
         }
 
         protected void UpdateTip(string tip)
@@ -278,19 +289,19 @@ namespace FpsGame.Mission
             return true;
         }
 
-        private void OnAirdrop(GameObject source, GameObject beacon, Vector3 point, AirdropController.AirdropData data)
+        private void OnAirdrop(GameObject source, GameObject _, Vector3 point, AirdropController.AirdropData data)
         {
             if (this.data.cfg.RequiredAD.Contains(data.cfg))
             {
                 allowUseAirdrop = true;
                 BattleManager.Instance.Authorize(data.cfg.ID, false);
-                GlobalEventManager.OnAirdrop -= OnAirdrop;
+                BattleEventSub.OnAirdrop -= OnAirdrop;
             }
         }
 
-        protected void CreatNotice(string role, string type, Func<bool> func = default, float delay = 0, float vaildTime = -1)
+        protected void CreatNotice(string role, string type, Func<bool> func = default,float vaildTime = -1)
         {
-            WndManager.Instance.CreatNotice(role, type, func, delay, vaildTime);
+            WndManager.Instance.CreatNotice(role, type, func,vaildTime);
         }
 
 

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using FpsGame.Mission;
 using FPSGame.UI;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,9 +19,9 @@ public class MissionHUDItem : MonoBehaviour
     public VerticalLayoutGroup subGroup;
 
     [Foldout("过渡", true)]
-    [CustomLabel("淡入持续时间")] 
+    [InspectorName("淡入持续时间")] 
     public float FadeInDuration = 0.5f;
-    [CustomLabel("淡出持续时间")] 
+    [InspectorName("淡出持续时间")] 
     public float FadeOutDuration = 2f;
     public MissionBase mission;
     [SerializeField]
@@ -42,12 +42,17 @@ public class MissionHUDItem : MonoBehaviour
         if(mission.missionType==MissionType.Nest)SetColor(icon, mission.color);
 
         SetActive(!mission.HasTag(MissionTag.hideSelf), icon.parent);
-        //Debug.LogError("激活状态:"+ mission.HasTag(MissionTag.IsActive)+ " tag1: " +mission.missionTag.ToString() + " tag2: " + GetMissionTagNames(mission.missionTag)+"激活"+ mission.HasTag(MissionTag.IsActive));
-        SetAlpha(canvasGroup.transform, mission.HasTag(MissionTag.IsActive) ? 1:0.3f);
+        //Debug.LogError("激活状态?"+ mission.HasTag(MissionTag.IsActive)+ " tag1: " +mission.missionTag.ToString() + " tag2: " + GetMissionTagNames(mission.missionTag)+"激活"+ mission.HasTag(MissionTag.IsActive));
+        SetAlpha(canvasGroup, mission.HasTag(MissionTag.IsActive) ? 1:0.3f);
         //隐藏，直到显示状态变化
-        allowShow = mission.HasTag(MissionTag.StratDiscovered) && !mission.HasTag(MissionTag.hideAll);
+        allowShow = (mission.HasTag(MissionTag.StratDiscovered) && mission.missionType == MissionType.Main) && !mission.HasTag(MissionTag.hideAll);
         SetActive(transform, allowShow);
         //RefreshContentSizeFitter(self);
+
+        if (mission.HasTag(MissionTag.hideSelf))
+        {
+            subGroup.padding.left = 0;
+        }
     }
 
    
@@ -108,8 +113,9 @@ public class MissionHUDItem : MonoBehaviour
         //Debug.LogError("任务更新"+ mission.title);
         SetActive(transform, allowShow&&!mission.HasTag(MissionTag.hideAll));
 
-        if (GetAlpha(transform) >=0.9f != mission.HasTag(MissionTag.IsActive))
+        if (GetAlpha(canvasGroup.transform) >=0.9f != mission.HasTag(MissionTag.IsActive))
         {
+            //Debug.LogError("任务更新" + mission.title+"已显示" +(GetAlpha(transform) >= 0.9f)+"任务激活"+ mission.HasTag(MissionTag.IsActive));
             if (!mission.HasTag(MissionTag.IsActive))
             {
                 EndOrDisable();
@@ -117,7 +123,7 @@ public class MissionHUDItem : MonoBehaviour
             }
             else
             {
-                SetAlpha(canvasGroup.transform, GetAlpha(transform),1, 500);
+                SetAlpha(canvasGroup.transform, GetAlpha(canvasGroup.transform),1, 500);
             }
         }
 
@@ -137,7 +143,7 @@ public class MissionHUDItem : MonoBehaviour
         var barDisplay = GetActive(bar.transform.parent);
         if (mission.percentage > 0 && mission.percentage < 1)
         {
-            bar.SetBar(mission.percentage);
+            bar.SetFill(mission.percentage);
             SetActive(bar.transform.parent, true);
         }
         else

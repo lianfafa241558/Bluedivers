@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -15,7 +15,7 @@ namespace FpsGame.Mission
         
         protected KeyScreen keyScreen;
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             keyScreen = entity.GetComponentInChildren<KeyScreen>();
             keyScreen.OnComple += OnComple;
@@ -58,7 +58,7 @@ namespace FpsGame.Mission
                 float dis = Vector2.Distance(ActorsManager.Player.Pos.ToVector2(), pos.ToVector2());
 
                 bool airdropRange = dis < entitySize+10;
-                UpdateTip(airdropRange?"激活终端":"");
+                UpdateTip(airdropRange ? "激活终端" : "");
 
                 return true;
             }

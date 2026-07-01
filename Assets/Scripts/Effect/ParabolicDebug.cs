@@ -1,4 +1,4 @@
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -6,7 +6,7 @@ public class ParabolicDebug : MonoBehaviour
 {
 
     [Range(0.5f, 10f)]
-    [CustomLabel("每段距离间隔")]
+    [InspectorName("每段距离间隔")]
     public float lenght = 1f;
     public Transform RayGo;
     private WeaponController m_weapon;

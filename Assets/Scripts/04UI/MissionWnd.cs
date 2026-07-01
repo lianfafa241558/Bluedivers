@@ -4,7 +4,7 @@ using Core.Interface;
 using FpsGame.Mission;
 using UnityEngine;
 
-public class MissionWnd : WindowRoot
+public class MissionWnd : Window
 {
 
     public MissionHUDItem MissionMainPrefab;
@@ -17,18 +17,11 @@ public class MissionWnd : WindowRoot
     public AudioClip m_ExtraCompletedSound;//额外任务完成时播放的声音
 
 
-    //任务和对应ui的字典
+    //任务和对应ui的字
     Dictionary<MissionBase, MissionHUDItem> m_ObjectivesDictionnary=new();
 
 
-    public override void Init()
-    {
-        
-    }
-    public override void UnInit()
-    {
-
-    }
+ 
 
     protected override void FirstShowWnd()
     {
@@ -37,25 +30,24 @@ public class MissionWnd : WindowRoot
 
     protected override void ShowWnd()
     {
-
-        GlobalEventManager.OnMissionCreated += OnObjectiveCreated;
-        GlobalEventManager.OnMissionStateChange += OnMissionShowStateChange;
-        GlobalEventManager.OnMissionUpdate += OnObjectiveUpdate;
-        GlobalEventManager.OnMissionCompleted += OnObjectiveCompleted;
-        GlobalEventManager.OnMissionFail += OnObjectiveFail;
-        GlobalEventManager.OnMissionEnd += OnObjectiveEnd;
-        GlobalEventManager.OnMissionEntityShow += OnMissionShow;
+        BattleEventSub.OnMissionStart += OnObjectiveCreated;
+        BattleEventSub.OnMissionStateChange += OnMissionShowStateChange;
+        BattleEventSub.OnMissionUpdate += OnObjectiveUpdate;
+        BattleEventSub.OnMissionCompleted += OnObjectiveCompleted;
+        BattleEventSub.OnMissionFail += OnObjectiveFail;
+        BattleEventSub.OnMissionEnd += OnObjectiveEnd;
+        BattleEventSub.OnMissionEntityShow += OnMissionShow;
     }
 
     protected override void HideWnd()
     {
-        GlobalEventManager.OnMissionCreated -= OnObjectiveCreated;
-        GlobalEventManager.OnMissionStateChange -= OnMissionShowStateChange;
-        GlobalEventManager.OnMissionUpdate -= OnObjectiveUpdate;
-        GlobalEventManager.OnMissionCompleted -= OnObjectiveCompleted;
-        GlobalEventManager.OnMissionFail -= OnObjectiveFail;
-        GlobalEventManager.OnMissionEnd -= OnObjectiveEnd;
-        GlobalEventManager.OnMissionEntityShow -= OnMissionShow;
+        BattleEventSub.OnMissionStart -= OnObjectiveCreated;
+        BattleEventSub.OnMissionStateChange -= OnMissionShowStateChange;
+        BattleEventSub.OnMissionUpdate -= OnObjectiveUpdate;
+        BattleEventSub.OnMissionCompleted -= OnObjectiveCompleted;
+        BattleEventSub.OnMissionFail -= OnObjectiveFail;
+        BattleEventSub.OnMissionEnd -= OnObjectiveEnd;
+        BattleEventSub.OnMissionEntityShow -= OnMissionShow;
     }
 
     /// <summary>
@@ -140,7 +132,7 @@ public class MissionWnd : WindowRoot
         if (m_ObjectivesDictionnary.TryGetValue(mission, out MissionHUDItem toast))
         {
             //隐藏的优先级最高
-            state |= mission.HasTag(GameContract.MissionTag.StratDiscovered);
+            state |= (mission.HasTag(GameContract.MissionTag.StratDiscovered)&& mission.missionType== MissionType.Main);
             state &= !mission.HasTag(GameContract.MissionTag.hideSelf);
             state &= !mission.HasTag(GameContract.MissionTag.hideAll);
             toast.StateChange(state);
@@ -152,8 +144,8 @@ public class MissionWnd : WindowRoot
     /// </summary>
     public void OnObjectiveCompleted(MissionBase mission)
     {
-        wndManager.PlaySound(new(mission.missionType==MissionType.Main&& mission .parent==null ? m_MainCompletedSound:m_ExtraCompletedSound, AudioGroups.UI));
-        AudioManager.Suppressed(3);
+        AudioSvc.PlaySound(new(mission.missionType==MissionType.Main&& mission .parent==null ? m_MainCompletedSound:m_ExtraCompletedSound, AudioGroups.UI));
+        AudioSvc.Suppressed(3);
         if (m_ObjectivesDictionnary.TryGetValue(mission, out MissionHUDItem toast))
         {
             toast.Completed();

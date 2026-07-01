@@ -2,48 +2,50 @@ using Core;
 using UnityEngine;
 using static WndTools.WndRootTool;
 
-public class FrontWnd : WindowRoot
+public class FrontWnd : Window
 {
-    public Transform BG;
+
     public Transform Button;
 
-    public override void Init()
-    {
-
-    }
-    public override void UnInit()
-    {
-
-    }
     protected override void FirstShowWnd()
     {
         SetCilck(Button,()=>{
             Load();
+            Debug.LogError("开始");
         });
     }
 
     protected override void ShowWnd()
     {
-        GameRoot.WindowState = WindowStateEnum.UI;
-        GlobalEventManager.OnFakeBg(BG);
+        WindowState = WindowStateEnum.UI;
+        //GlobalEventManager.OnFakeBg(BG);
         PlayAnim("Idle");
     }
     protected override void HideWnd()
     {
-        GlobalEventManager.OnFakeBg(null);
-        wndManager.loadWnd.Entry(false);
-        ResManager.Instance.AsyncLoadScene("Utnapishitim", () => {
+        //GlobalEventManager.OnFakeBg(null);
+        GameState = GameStateEnum.Load;
+        ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
+            //Debug.LogError("加载front完成");
             //GameRoot.CreateTimer(()=> GameRoot.GameState = GameStateEnum.Bridge,4);
-            GameRoot.GameState = GameStateEnum.Bridge;
-            GameRoot.WindowState = WindowStateEnum.Game;
+            GameState = GameStateEnum.Bridge;
+            WindowState = WindowStateEnum.Game;
             //AudioManager.PlaySound(new("BG_Shining_L"));
-            GlobalEventManager.OnFakeBg(null);
+            //GlobalEventManager.OnFakeBg(null);
         },true);
     }
+    public override void OnDestroy()
+    {
+        //继承就会导致被移除时再加载一次？？
+    }
+
     private void Update()
     {
-        if (Input.anyKeyDown && !Input.GetMouseButtonDown(0)&& !Input.GetMouseButtonDown(1)&&!Input.GetMouseButtonDown(2))
-        {
+        if (Input.anyKeyDown 
+            && !Input.GetMouseButtonDown(0)
+            && !Input.GetMouseButtonDown(1)
+            && !Input.GetMouseButtonDown(2)
+        ){
             Load();
         }
     }

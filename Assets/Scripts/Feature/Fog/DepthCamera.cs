@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.Rendering;
 
 [ExecuteInEditMode]
@@ -16,7 +16,7 @@ public class DepthCamera : MonoBehaviour
         RenderPipelineManager.endCameraRendering += OnBeginCameraRendering;
 
         cam = GetComponent<Camera>();
-        // ÉèÖÃÄ£Ê½ºó¾Í¿ÉÒÔÔÚShaderÖĞÍ¨¹ıÉùÃ÷_CameraDepthTexture±äÁ¿À´·ÃÎÊËü
+        // è®¾ç½®æ·±åº¦æ¨¡å¼ï¼Œè¿™æ ·Shaderå°±å¯ä»¥é€šè¿‡_CameraDepthTextureè¯»å–æ·±åº¦çº¹ç†
         cam.depthTextureMode = DepthTextureMode.Depth;
         x = cam.targetTexture = new RenderTexture(width, height, 24);
 
@@ -37,8 +37,8 @@ public class DepthCamera : MonoBehaviour
             cmd.Release();
 
             RenderTexture temp = RenderTexture.GetTemporary(cam.pixelWidth, cam.pixelHeight, 0, RenderTextureFormat.Default);
-            Graphics.Blit(x, temp, mat); // Ê¹ÓÃ²ÄÖÊ´¦Àí targetTexture
-            Graphics.Blit(temp, (RenderTexture)null); // Êä³ö´¦ÀíºóµÄ½á¹ûµ½ÆÁÄ»»òÆäËû¶ÔÏó
+            Graphics.Blit(x, temp, mat); // ä½¿ç”¨æè´¨å¤„ç† targetTexture
+            Graphics.Blit(temp, (RenderTexture)null); // å°†å¤„ç†åçš„ç»“æœæ¸²æŸ“åˆ°å±å¹•ä¸Š
 
             RenderTexture.ReleaseTemporary(temp);
 

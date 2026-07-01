@@ -20,23 +20,22 @@ public class FogFeature : ScriptableRendererFeature
         myPass = new FogPass();
         myPass.renderPassEvent = renderPass;
         myPass.layerMask = layerMask;
-        //¹ıÂË³öÎ»ÓÚ²»Í¸Ã÷¶ÓÁĞÖĞÇÒ²ã¼¶ÎªlayerMaskµÄÎïÌå£¬
+        //æ’é™¤ä½äºä¸é€æ˜ç™½åå•ä¸”å±‚çº§ä¸ºlayerMaskçš„ç‰©ä½“
         myPass.filteringSettings = new FilteringSettings(RenderQueueRange.all, ~layerMask);
 
 
     }
 
-
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
-        //Õâ¸ö±Æ¶«Î÷ÊÇÏŞÖÆÉãÏñ»úÎïÌåËùÔÚ²ã¼¶µÄ
+        //æ£€æŸ¥å½“å‰ç›¸æœºçš„å±‚çº§æ˜¯å¦åœ¨æ’é™¤å±‚çº§ä¸­
         /*
         if ((layerMask & (1 << renderingData.cameraData.camera.gameObject.layer))==0)
         {
-            return; // Èç¹ûµ±Ç°äÖÈ¾µÄ²ã¼¶²»ÔÚ excludedLayer ÖĞ£¬ÔòÌø¹ı
+            return; // å¦‚æœå½“å‰æ¸²æŸ“çš„å±‚çº§åœ¨ excludedLayer ä¸­ï¼Œåˆ™è·³è¿‡
         }*/
 
-        myPass.SetValue(renderer.cameraColorTarget, distanceMaterial,renderingData.cameraData.camera);
+        myPass.SetValue(distanceMaterial,renderingData.cameraData.camera);
         renderer.EnqueuePass(myPass);
 
 
@@ -45,8 +44,8 @@ public class FogFeature : ScriptableRendererFeature
 
 public class FogPass : ScriptableRenderPass
 {
-    private RenderTargetIdentifier source;
-    private RenderTargetHandle tempTargetHandle;
+    // ä½¿ç”¨ RTHandle æ›¿ä»£ RenderTargetHandle
+    private RTHandle tempTargetHandle;
     private Material material;
     private int fogColorId = Shader.PropertyToID(FogShaderName.FogColor);
     private int fogIntensityId = Shader.PropertyToID(FogShaderName.FogIntensity);
@@ -60,62 +59,43 @@ public class FogPass : ScriptableRenderPass
     public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
     {
         var fogVolme = VolumeManager.instance.stack.GetComponent<FogVolme>();
-        if (fogVolme.IsActive()) {
-            
-            //´´½¨Ò»¸öÃûÎª"FogCmd"µÄÃüÁî»º³åÇø
+        if (fogVolme.IsActive())
+        {
             CommandBuffer cmd = CommandBufferPool.Get("FogCmd");
-            /*
-            //ÅÅĞò¹æÔò
-            var sortingSettings = new SortingSettings(camera);
-            //äÖÈ¾ÎïÌåµÄÉèÖÃ
-            DrawingSettings drawingSettings = new DrawingSettings(shaderTagId, sortingSettings);
-            camera.TryGetCullingParameters(out var cullingParameters);
-            //½øĞĞÌŞ³ı
-            var cullingResults=context.Cull(ref cullingParameters);
-            context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
-            */
-            //CullingResults cullingResults = renderingData.cullResults;
-            //DrawingSettings drawingSettings = new DrawingSettings(shaderTagId, new SortingSettings(camera));
-
-
 
             var dec = renderingData.cameraData.cameraTargetDescriptor;
             dec.msaaSamples = 1;
             dec.depthBufferBits = 0;
-            cmd.GetTemporaryRT(tempTargetHandle.id, dec);
+
+            // ä½¿ç”¨ RenderingUtils.ReAllocateIfNeeded åˆ›å»ºä¸´æ—¶ RTHandle
+            RenderingUtils.ReAllocateIfNeeded(ref tempTargetHandle, dec, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "tempfog");
 
             material.SetColor(fogColorId, fogVolme.fogColor.value);
             material.SetFloat(fogIntensityId, fogVolme.intensity.value);
             material.SetFloat(fogDistanceId, fogVolme.distance.value);
 
-            
-            cmd.Blit(source, tempTargetHandle.Identifier(), material);
-            //context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
-            cmd.Blit(tempTargetHandle.Identifier(), source);
+            // ä½¿ç”¨ RTHandle æ›¿ä»£ nameIDï¼Œç›´æ¥ä½¿ç”¨ RTHandle
+            // æ³¨æ„ï¼šéœ€è¦è·å–å½“å‰ç›¸æœºçš„é¢œè‰²ç›®æ ‡
+            RTHandle cameraColorTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
+
+            cmd.Blit(cameraColorTarget, tempTargetHandle, material);
+            cmd.Blit(tempTargetHandle, cameraColorTarget);
 
             context.ExecuteCommandBuffer(cmd);
-            
-
             CommandBufferPool.Release(cmd);
-            cmd.ReleaseTemporaryRT(tempTargetHandle.id);
-
-            
-
         }
     }
 
     public FogPass()
     {
-        //³õÊ¼»¯Ò»¸öÁÙÊ±äÖÈ¾Ä¿±ê¾ä±ú£¨tempTargetHandle£©£¬²¢¸ø¸Ã¾ä±úÃüÃûÎª"tempfog"¡£
-        tempTargetHandle.Init("tempfog");
+        // ä¸éœ€è¦é¢å¤–åˆå§‹åŒ–ï¼Œåœ¨ Execute ä¸­åŠ¨æ€è®¾ç½®
     }
 
-    public void SetValue(RenderTargetIdentifier source, Material material,Camera camera)
+
+    public void SetValue(Material material, Camera camera)
     {
-        this.source = source;
         this.material = material;
         this.camera = camera;
     }
 }
-
 

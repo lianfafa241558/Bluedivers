@@ -1,10 +1,10 @@
-using System.Collections.Generic;
-using Unity.BaseTool;
+﻿using System.Collections.Generic;
+
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
 
-public class TipWnd : WindowRoot
+public class TipWnd : Window
 {
     Queue<TipWndInfo> quene=new();
 
@@ -14,7 +14,6 @@ public class TipWnd : WindowRoot
     private Transform optA, optB,title, desc;
     [SerializeField]
     private Transform costRoot;
-
 
     public void Creat(TipWndInfo info)
     {
@@ -36,23 +35,16 @@ public class TipWnd : WindowRoot
         }
     }
 
-    public override void Init()
-    {
-
-    }
-    public override void UnInit()
-    {
-
-    }
 
     protected override void FirstShowWnd()
     {
+
     }
 
     protected override void ShowWnd()
     {
 
-        InputManager.ListenerCancel(Listener);
+        InputManager.AddListenerCancel(Listener);
         if (quene.Count==0)
         {
             Close();
@@ -65,7 +57,7 @@ public class TipWnd : WindowRoot
     }
     private void LoadTip()
     {
-        wndManager.PlaySound(new("UI/UI_Notice"));
+        AudioSvc.PlaySound(new("UI/UI_Notice"));
         this.nowInfo = quene.Dequeue();
         if (string.IsNullOrEmpty(nowInfo.optA_Text) && string.IsNullOrEmpty(nowInfo.optB_Text)) nowInfo.optB_Text = "确认";
 

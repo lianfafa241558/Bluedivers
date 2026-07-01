@@ -22,6 +22,7 @@ Shader "SimpleDecal"
         _StencilRef("_StencilRef", Float) = 0
         [Enum(UnityEngine.Rendering.CompareFunction)]_StencilComp("_StencilComp", Float) = 0 //0 = disable
         [Enum(UnityEngine.Rendering.CullMode)]_Cull("_Cull", Float) = 1 //1 = Front
+        //[Enum(UnityEngine.Rendering.CompareFunction)]_ZTest("_ZTest", Float) = 4 //4 = LEqual
 
     }
 
@@ -51,7 +52,7 @@ Shader "SimpleDecal"
             }
 
             Cull[_Cull]
-            ZTest[_ZTest]
+            ZTest LEqual
 
             ZWrite off
             Blend[_DecalSrcBlend][_DecalDstBlend]

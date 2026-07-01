@@ -10,7 +10,7 @@ public class MiniShopMove : MonoBehaviour
 
     protected void Start()
     {
-        GameRoot.OnGameStateChange += OnGameStateChange;
+        GlobalEventSub.OnGameStateChange += OnGameStateChange;
 
     }
 
@@ -20,7 +20,7 @@ public class MiniShopMove : MonoBehaviour
         {
             if (pointRoot == null) return;
 
-            // 把子物体先转 List，避免 IL2CPP 遍历 bug
+            // 把子物体先转 List，避免IL2CPP 遍历bug
             List<Transform> children = new List<Transform>();
             for(int i=0;i< pointRoot.childCount; ++i)
             {

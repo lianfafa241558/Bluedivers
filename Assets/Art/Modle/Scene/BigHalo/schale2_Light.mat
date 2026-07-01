@@ -22,6 +22,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: schale2_Light
   m_Shader: {fileID: 4800000, guid: 36d1913c78cd38140b42f430a21c2aa8, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _EMISSION
@@ -34,6 +36,7 @@ Material:
   disabledShaderPasses:
   - DepthOnly
   - SHADOWCASTER
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -63,7 +66,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 4af1dfdb621a96a4fbf196c6b4c9100e, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 0.9, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
@@ -116,6 +119,7 @@ Material:
     - _InvFade: 1
     - _Metallic: 0
     - _Mode: 3
+    - _MoveSpeed: 0.8
     - _OcclusionStrength: 1
     - _OutlinePower: 1
     - _OutlineWidth: 0.041

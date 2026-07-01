@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -6,7 +6,7 @@ using UnityEngine.Rendering.Universal;
 
 public class MyVolumeFeature : ScriptableRendererFeature
 {
-    public Material Material; //UniversalRenderPipelineAsset_Renderer Ãæ°å£¬ÉèÖÃ²ÄÖÊ
+    public Material Material; //UniversalRenderPipelineAsset_Renderer é¢æ¿ï¼Œè®¾ç½®æè´¨
     public RenderPassEvent renderPassEvent;
     private MyVolumeFeaturePass myPass;
 
@@ -14,53 +14,70 @@ public class MyVolumeFeature : ScriptableRendererFeature
     public override void Create()
     {
         myPass = new MyVolumeFeaturePass();
-        myPass.renderPassEvent = renderPassEvent;//ÉèÖÃÊ±¼ä
+        myPass.renderPassEvent = renderPassEvent;//è®¾ç½®æ—¶é—´
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
 
         renderer.EnqueuePass(myPass);
-        myPass.SetValue(renderer.cameraColorTarget, Material); //´«µİÉãÏñ»úÍ¼Ïñ£¬ºÍ²ÄÖÊ£¬¸øPass ´¦Àí
+        myPass.SetValue(Material); //ä¼ é€’æ‘„åƒæœºå›¾åƒï¼Œå’Œæè´¨ï¼Œç»™Pass å¤„ç†
     }
 }
 
 public class MyVolumeFeaturePass : ScriptableRenderPass
 {
-    private Material material;//½ÓÊÜ´ÓFeature Ãæ°åÉèÖÃµÄ²ÄÖÊ
-    private RenderTargetIdentifier source;//½ÓÊÜÏà»úÍ¼Ïñ
+    private RTHandle tempTargetHandle;  // æ”¹ç”¨ RTHandle
+    private Material material;          // æ¥å—ä»Featureé¢æ¿è®¾ç½®çš„æè´¨
+    // ç§»é™¤ private RenderTargetIdentifier source; // ä¸å†éœ€è¦å¤–éƒ¨ä¼ å…¥source
 
     public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
     {
-        //Ö´ĞĞºó´¦Àí
+        // æ‰§è¡Œåå¤„ç†
         if (material == null)
         {
             return;
         }
-        // Ö»´¦ÀíÖ÷Ïà»ú
+        // åªå¤„ç†ä¸»ç›¸æœº
         if (!renderingData.cameraData.isDefaultViewport) return;
 
-        // »ñÈ¡Ö÷Ïà»úµÄäÖÈ¾Ä¿±ê£¨Ìæ´úÍâ²¿´«ÈëµÄsource£©
-        //var mainCameraTarget = renderingData.cameraData.renderer.cameraColorTarget;
-        //ºÃÏñ²»ĞèÒª
+        CommandBuffer cmd = CommandBufferPool.Get("MyVolumeFeaturePass");
 
-        CommandBuffer cmd = CommandBufferPool.Get();
-        //source  //Ô´Í¼Ïñ
-        var dec = renderingData.cameraData.cameraTargetDescriptor; //Ä¿±êÍ¼Ïñ
-        RenderTargetHandle tempTargetHandle = new RenderTargetHandle();
-        cmd.GetTemporaryRT(tempTargetHandle.id, dec);
-        
-        cmd.Blit(source, tempTargetHandle.Identifier(), material);
-        //ºËĞÄÃüÁîCommandBuffer
-        cmd.Blit(tempTargetHandle.Identifier(), source); //Ïàµ±ÓÚ Graphics.Blit
+        // è·å–å½“å‰ç›¸æœºçš„é¢œè‰²ç›®æ ‡ï¼ˆæ›¿ä»£å¤–éƒ¨ä¼ å…¥çš„sourceï¼‰
+        var cameraColorTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
+
+        // è·å–ç›®æ ‡å›¾åƒçš„æè¿°ç¬¦
+        var dec = renderingData.cameraData.cameraTargetDescriptor;
+        dec.msaaSamples = 1;      // åå¤„ç†é€šå¸¸ä¸éœ€è¦MSAA
+        dec.depthBufferBits = 0;  // ä¸éœ€è¦æ·±åº¦ç¼“å†²åŒº
+
+        // åˆ†é…ä¸´æ—¶RTHandleï¼ˆæ›¿ä»£ GetTemporaryRTï¼‰
+        RenderingUtils.ReAllocateIfNeeded(ref tempTargetHandle, dec,
+            FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_TempRT");
+
+        // ç¬¬ä¸€æ­¥ï¼šä»ç›¸æœºé¢œè‰²ç›®æ ‡ Blit åˆ°ä¸´æ—¶RTï¼ˆåº”ç”¨æè´¨æ•ˆæœï¼‰
+        cmd.Blit(cameraColorTarget, tempTargetHandle, material);
+
+        // ç¬¬äºŒæ­¥ï¼šä»ä¸´æ—¶RT Blit å›ç›¸æœºé¢œè‰²ç›®æ ‡ï¼ˆå°†ç»“æœè¾“å‡ºåˆ°å±å¹•ï¼‰
+        cmd.Blit(tempTargetHandle, cameraColorTarget);
 
         context.ExecuteCommandBuffer(cmd);
         CommandBufferPool.Release(cmd);
     }
 
-    public void SetValue(RenderTargetIdentifier source, Material material)
+    // å¯é€‰çš„æ¸…ç†æ–¹æ³•ï¼šåœ¨æ¯å¸§ç»“æŸæ—¶é‡Šæ”¾ä¸´æ—¶RT
+    public override void FrameCleanup(CommandBuffer cmd)
     {
-        this.material = material; //½ÓÊÜÃæ°å²ÄÖÊ
-        this.source = source;
+        if (tempTargetHandle != null)
+        {
+            tempTargetHandle.Release();
+            tempTargetHandle = null;
+        }
+    }
+
+    // æ›´æ–°SetValueæ–¹æ³•ï¼šä¸å†éœ€è¦sourceå‚æ•°
+    public void SetValue(Material material)
+    {
+        this.material = material;
     }
 }

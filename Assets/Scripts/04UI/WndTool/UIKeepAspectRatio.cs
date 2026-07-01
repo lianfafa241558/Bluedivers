@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.BaseTool;
-using UnityEngine;
+﻿using UnityEngine;
 using Utils;
 
 /// <summary>
@@ -37,7 +34,7 @@ public class UIKeepAspectRatio : MonoBehaviour
                 rect.sizeDelta = StandardSize * scaleX;
             }
             
-            //Debug.LogError("修改为"+ StandardSize * Mathf.Max(scaleX, scaleY));
+            //Debug.LogError("修改了 " + StandardSize * Mathf.Max(scaleX, scaleY));
         }
 
 

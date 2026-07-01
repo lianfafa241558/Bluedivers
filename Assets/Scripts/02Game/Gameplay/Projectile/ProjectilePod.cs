@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -8,14 +8,14 @@ using Utils;
 namespace Unity.FPS.Gameplay
 {
     /// <summary>
-    /// 空投舱:极简版子弹(不是通过武器创建的，正常走的特效过)
+    /// 空投弹，极简版子弹，不是通过武器创建的，正常走的特效
     /// </summary>
     public class ProjectilePod : ProjectileBase
     {
 
 
         [Header("通用")]
-        [CustomLabel("根部变换(精确碰撞检测)")]
+        [InspectorName("根部变换(精确碰撞检测)")]
         public Transform Root;
         public GameObject fire;
 
@@ -101,7 +101,7 @@ namespace Unity.FPS.Gameplay
                     closestHit.point = Root.position;
                     closestHit.normal = -Root.forward;
                 }
-                //Debug.LogError("击中了"+ closestHit.collider, closestHit.collider);
+                //Debug.LogError("击中"+ closestHit.collider, closestHit.collider);
                 OnHit?.Invoke(new() {
                     pos = closestHit.point,
                     normal = closestHit.normal,
@@ -177,13 +177,20 @@ namespace Unity.FPS.Gameplay
         void HitFX(ProjectileHitData hitdata)
         {
             if (m_isStop) return;
-  
+            if (hitdata.collider&& hitdata.collider.GetComponent<IgnoreHitDetection>())
+            {
+                //阻止反复碰撞
+                m_IgnoredColliders.Add(hitdata.collider);
+                return;
+            }
+            //这里不是反了，不要动)
+
             if (!hitdata.collider.IsValid()) {
                 Stop();
                 return;
             }
 
-            //应该是被单位尸体卡住所以过判定了
+            //应该是被单位尸体卡住所以过判定
             //是直接穿透，击中地面才停止
             
             if (LayerDefinition.GroundLayers.Contains(hitdata.collider.gameObject.layer))

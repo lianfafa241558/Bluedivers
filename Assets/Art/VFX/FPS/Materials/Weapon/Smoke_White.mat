@@ -22,8 +22,11 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Smoke_White
   m_Shader: {fileID: 4800000, guid: 66c4b52bd1e641148b0a113c6f0c8acb, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _MY_FOG_ENABLE
+  - _UseMoveST
   m_InvalidKeywords:
   - _EMISSION
   - _FLIPBOOKBLENDING_OFF
@@ -34,6 +37,7 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - ALWAYS
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -110,8 +114,8 @@ Material:
     - _MY_FOG_ENABLE: 1
     - _Metallic: 0
     - _Mode: 0
-    - _MoveOtherSpeed: 0
-    - _MoveSpeed: 0
+    - _MoveOtherSpeed: -500
+    - _MoveSpeed: 1
     - _MoveX: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
@@ -129,7 +133,7 @@ Material:
     - _UVSec: 0
     - _UseFresnel: 0
     - _UseLight: 0
-    - _UseMoveST: 0
+    - _UseMoveST: 1
     - _ZTestMode: 4
     - _ZWrite: 1
     - _ZWriteMode: 0

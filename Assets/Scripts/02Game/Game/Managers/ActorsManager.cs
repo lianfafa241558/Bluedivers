@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Core;
 using GameContract;
-using Unity.BaseTool;
+
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -19,10 +19,10 @@ namespace Unity.FPS.Game
         public static I_Actor Player { get; private set; }
         public void RegisterPlayer(I_Actor player)
         {
-            //Debug.LogError("玩家出生" + player+"  "+player.transform.position, player.transform);
             Player = player;
             Players.Add(player);
             OnActorCreat.Enqueue(new(UnitTypeEnum.Player, player));
+            //Debug.LogError("玩家出生" + player + "  " + player.transform.position, player.transform);
         }
         public void RegisterFriend(Actor friend)
         {
@@ -67,18 +67,19 @@ namespace Unity.FPS.Game
             Actors = new();
             Players = new();
             SpecUnits = new();
+            OnActorCreat = new();
             base.Awake();
-            GlobalEventManager.OnPlayerCreate += RegisterPlayer;
-            GlobalEventManager.OnFriendCreate += RegisterFriend;
-            GlobalEventManager.OnSpecUnitCreate += RegisterSpecUnit;
-            GlobalEventManager.OnUnitDeath += UnRegisterUnit;
+            GlobalEventSub.OnPlayerCreate += RegisterPlayer;
+            GlobalEventSub.OnFriendCreate += RegisterFriend;
+            BattleEventSub.OnSpecUnitCreate += RegisterSpecUnit;
+            BattleEventSub.OnUnitDeath += UnRegisterUnit;
         }
         private void OnDestroy()
         {
-            GlobalEventManager.OnPlayerCreate -= RegisterPlayer;
-            GlobalEventManager.OnFriendCreate -= RegisterFriend;
-            GlobalEventManager.OnSpecUnitCreate -= RegisterSpecUnit;
-            GlobalEventManager.OnUnitDeath -= UnRegisterUnit;
+            GlobalEventSub.OnPlayerCreate -= RegisterPlayer;
+            GlobalEventSub.OnFriendCreate -= RegisterFriend;
+            BattleEventSub.OnSpecUnitCreate -= RegisterSpecUnit;
+            BattleEventSub.OnUnitDeath -= UnRegisterUnit;
         }
     }
 

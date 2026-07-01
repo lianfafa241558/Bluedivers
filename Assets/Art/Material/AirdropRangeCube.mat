@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: AirdropRangeCube
   m_Shader: {fileID: 4800000, guid: 50fd006574d6aba45b999a2d8959e987, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _COLORADDSUBDIFF_ON
@@ -18,9 +20,10 @@ Material:
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2502
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -45,6 +48,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FlowLightTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -94,7 +101,14 @@ Material:
     - _EmissionEnabled: 1
     - _Emittier: 1
     - _EnableExternalAlpha: 0
+    - _ExtraInterval: 1
+    - _ExtraScale: 1
+    - _ExtraSpeed: 1
+    - _ExtraWidth: 1
     - _FlipbookMode: 0
+    - _FlowDir: 0
+    - _FlowLightSpeed: 1
+    - _FlowTrans: 0
     - _FracUVEnable: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
@@ -123,8 +137,10 @@ Material:
     - _UseTransmitColor: 0
     - _ZTest: 0
     - _ZWrite: 1
+    - _ZWriteMode: 0
     m_Colors:
     - _AlphaRemap: {r: 1, g: 1, b: 1, a: 0}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
     - _Color: {r: 1, g: 0.009412639, b: 0, a: 1}
     - _ColorAddSubDiff: {r: 1, g: 0, b: 0, a: 0}

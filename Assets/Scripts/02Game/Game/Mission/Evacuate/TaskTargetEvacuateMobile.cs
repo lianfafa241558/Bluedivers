@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 namespace FpsGame.Mission
@@ -28,7 +28,7 @@ namespace FpsGame.Mission
 
                     break;
                 case EvacuateState.Mobile:
-                    UpdateTip("前往运输船降落位置  [" + downcount + "]");
+                    UpdateTip("前往运输船降落位置 [" + downcount + "]");
                     if (downcount <= 0)
                     {
                         FailMission();

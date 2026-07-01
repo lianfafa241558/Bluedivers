@@ -1,9 +1,11 @@
+﻿using Core;
 using Core.Interface;
-using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
-using Utils;
+using UnityEngine.SceneManagement;
+
+
 
 public class VFXManager : Singleton<VFXManager> , I_GlobaManager
 {
@@ -13,13 +15,13 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
 
     public void Init()
     {
-        pool = new(ItemUpdate, ItemAdd, ItemEnqueue, 60);//没人用的池60秒销毁这个类型(每20秒未使用销毁1个项)
+        pool = new(ItemUpdate, ItemAdd, ItemEnqueue, 60);//没人用的60秒销毁这个类(60秒未使用销毁这个项)
         bulletPool = new(BulletAdd, BulletPop,BulletPush);
-        GlobalEventManager.OnSceneChange += ClearPool;
+        GlobalEventSub.OnSceneChange += ClearPool;
     }
     public void UnInit()
     {
-        GlobalEventManager.OnSceneChange -= ClearPool;
+        GlobalEventSub.OnSceneChange -= ClearPool;
     }
 
 
@@ -51,13 +53,20 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
         {
             Debug.LogError("管理器对象池返回了null对象2"+ ps,ps);
         }
-        ps.gameObject.SetActive(true);
+
+        //ps.gameObject.SetActive(false);
         ps.transform.position = pos;
         ps.transform.rotation = roation;
         ps.transform.localScale = Vector3.one;
+        ps.SetActive(true);
         while (parent!=default && (parent.gameObject.activeSelf == false || parent.localScale == Vector3.zero)) parent = parent.parent;
+        MoveBackToCurrentScene(ps);
         ps.transform.SetParent(parent);
-        
+
+        foreach (var item in ps.GetComponents<IRecyclable>())
+        {
+            item.OnShow();
+        }
         /*
         if(ps.TryGetComponent(out ParticleSystem partice))
         {
@@ -79,7 +88,6 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
         {
             ll.allowRelease=true;
         }
-
     }
     private bool ItemUpdate(GameObject go) 
     {
@@ -119,11 +127,14 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
         return false;
     }
 
+    /// <summary>
+    /// 回收
+    /// </summary>
     private void ItemEnqueue(GameObject ps) {
         if (!ps) return;
-        if (ps.TryGetComponent(out LimitedLife ll))
+        foreach (var item in ps.GetComponents<IRecyclable>())
         {
-            ll.OnEnd?.Invoke();
+            item.OnHide();
         }
         ps.SetActive(false);
         ps.transform.SetParent(transform);
@@ -161,7 +172,7 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
 
         if (!bullet) Debug.LogError("管理器对象池返回了null对象1", bullet);
         else if (!bullet.gameObject) Debug.LogError("管理器对象池返回了null对象2" + bullet, bullet);
-
+        MoveBackToCurrentScene(bullet.gameObject);
         bullet.transform.position = pos;
         bullet.transform.rotation = roation;
         bullet.transform.localScale = Vector3.one;
@@ -173,6 +184,20 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
     {
         if (!go.IsValid()) return;
         bulletPool.Release(go.Template, go);
+    }
+
+    public static void MoveBackToCurrentScene(GameObject objectToMove)
+    {
+        // 获取当前活动场景作为目标
+        Scene currentActiveScene = SceneManager.GetActiveScene();
+
+        // 确保目标场景有效且已加载
+        if (currentActiveScene.IsValid() && currentActiveScene.isLoaded)
+        {
+            objectToMove.transform.parent = null;
+            SceneManager.MoveGameObjectToScene(objectToMove, currentActiveScene);
+            //Debug.Log($"{objectToMove.name} 已移回当前活动场景 {currentActiveScene.name}");
+        }
     }
     #endregion
 }

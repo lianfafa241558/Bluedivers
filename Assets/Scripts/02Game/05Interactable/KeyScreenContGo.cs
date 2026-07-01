@@ -4,7 +4,7 @@ using Unity.FPS.Game;
 using UnityEngine;
 
 /// <summary>
-/// 通过阶段进行一些操作(没办法用任务来控制的比如地狱火才这么搞)
+/// 通过阶段进行一些操作，没办法用任务来控制的比如地狱火才这么用
 /// </summary>
 public class KeyScreenContGo : MonoBehaviour
 {
@@ -32,7 +32,7 @@ public class KeyScreenContGo : MonoBehaviour
             {
                 if (item.go) item.go.SetActive(item.state);
                 //Debug.LogError("尝试触发语音" + item.speech + (item.speech != SpeechTypeEnum.Supply));
-                if (item.speech != SpeechTypeEnum.Supply) GlobalEventManager.PlayMeetSoeech(m_keyScreen.owner, SpeechTypeEnum.HaloBomb);
+                if (item.speech != SpeechTypeEnum.Supply) GlobalEventSub.PlayMeetSpeech(m_keyScreen.owner, SpeechTypeEnum.HaloBomb);
             }
 
         }
@@ -45,6 +45,6 @@ public class KeyScreenContGo : MonoBehaviour
         public GameObject go;
         public bool state;
         public SpeechTypeEnum speech;
-        //以后用到了再加
+        //以后用到了再说
     }
 }

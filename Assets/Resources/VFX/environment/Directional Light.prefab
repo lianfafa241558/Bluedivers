@@ -129,17 +129,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fullDayDuration: 1800
-  noonIntensity: 1
-  midnightIntensity: 0.15
   noonAmbient: {r: 0.75, g: 0.72187495, b: 0.675, a: 1}
   sunsetAmbient: {r: 0.3529412, g: 0.4082106, b: 0.5019608, a: 1}
   nightAmbient: {r: 0.17078653, g: 0.22921348, b: 0.4, a: 1}
   dawnAmbient: {r: 0.4, g: 0.37414995, b: 0.2784314, a: 1}
+  enableFog: 1
   noonFog: {r: 0.69803923, g: 0.24705882, b: 0.15294118, a: 1}
   nightFog: {r: 0.09044134, g: 0.09019608, b: 0.14117648, a: 1}
   noonFogDensity: 0.01
   nightFogDensity: 0.03
-  skyboxMaterial: {fileID: 2100000, guid: f79ac4ee263483846b3e1b221dc609d0, type: 2}
+  skyboxs:
+  - {fileID: 2100000, guid: f79ac4ee263483846b3e1b221dc609d0, type: 2}
   currentTime: 0.7905333
   showFogColor: {r: 0.09044134, g: 0.09019608, b: 0.14117648, a: 1}
   showLightColor: {r: 0, g: 0, b: 0, a: 0}

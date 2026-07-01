@@ -1,4 +1,5 @@
-using Unity.BaseTool;
+﻿
+using Core;
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -17,7 +18,7 @@ namespace Unity.FPS.Game
 
         [Foldout("特效和动画")]
         [SerializeField]
-        [CustomLabel("射击时(单位)播放的动画类型")]
+        [InspectorName("射击时(单位)播放的动画类型")]
         private AttackEnum animNameType;
 
 
@@ -53,7 +54,7 @@ namespace Unity.FPS.Game
         }
 
         /// <summary>
-        /// 输入射击键
+        /// 输入射击命令
         /// </summary>
         public override bool HandleShootInputs(bool inputDown, bool inputHeld, bool inputUp)
         {
@@ -67,7 +68,7 @@ namespace Unity.FPS.Game
         {
             if (AllowShoot)
             {
-                //Debug.LogError("射击开始"+Magazine.CurrValue,gameObject);
+                //Debug.LogError("射击开始 "+Magazine.CurrValue,gameObject);
                 //Debug.LogWarning("上次射击时间"+ m_LastTimeShot+"间隔" + DelayBetweenShots+"当前时间"+ Time.time);
                 if (InfiniteMagazine)
                 {
@@ -95,7 +96,7 @@ namespace Unity.FPS.Game
         {
             Gizmos.color = Color.cyan;
             Gizmos.DrawLine(WeaponMuzzle.position, WeaponMuzzle.position+ WeaponMuzzle.forward*CurrentWeaponRange);
-            if (Damages[0].ExplosionRange > 0) Gizmos.DrawWireSphere(WeaponMuzzle.position + WeaponMuzzle.forward * CurrentWeaponRange, Damages[0].ExplosionRange);
+            if (Damages[0].GetDamageOuterRadius(1) > 0) Gizmos.DrawWireSphere(WeaponMuzzle.position + WeaponMuzzle.forward * CurrentWeaponRange, Damages[0].GetDamageOuterRadius(1).RawFloat);
         }
 
 #if UNITY_EDITOR

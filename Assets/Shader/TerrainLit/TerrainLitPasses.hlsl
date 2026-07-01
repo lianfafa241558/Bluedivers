@@ -235,68 +235,67 @@ void SplatmapFinalColor(inout half4 color, half fogCoord)
     #endif
 
     #endif
-}
 
+}
+    
+#if _EnableToon
 
 // 此功能将由所有直射灯使用(directional/point/spot)
-half3 ShadeSingleLight(half3 normalWS, Light light, bool isAdditionalLight,inout half originalStrength)
+half3 ShadeSingleLight(InputData inputData,Light light, bool isAdditionalLight,inout half originalStrength)
 {
 
+    //return half3(light.shadowAttenuation,0,0);
+    half3 N = normalize(inputData.normalWS);
+    half3 L= light.direction;//这里加负号会让效果更平滑，不加会更真实
+    half NdotL = saturate(dot(N, L));
+    //half3 litColor = smoothstep(0.05, 0.96, saturate(NdotL));
+    half3 litColor = lerp(0.2, 0.8, saturate(NdotL));
+    /*
+    half _Smoothness = 0.01;       // 过渡带的宽度
+    half thresholds[4] = {0.2, 0.4, 0.6, 0.8}; 
+    half toon =0;
+    for(int i = 0; i < 4; i++)
+    {
+        half t = smoothstep(thresholds[i] - _Smoothness,thresholds[i] + _Smoothness, NdotL);
+        toon = lerp(toon, thresholds[i], t);
+    };
+    half3 litColor =toon;
+    */
 
-    half3 N = normalize(normalWS);
-    half3 L= -light.direction;
-
-
-    half NdotL = dot(N, L);
     half distanceAttenuation = isAdditionalLight ? sqrt(light.distanceAttenuation) : light.distanceAttenuation;
-
-    // 卡通软阶（更自然，接近PBR）
-    half toon = smoothstep(0.5, 0.6, NdotL);
-
-    // 阴影只影响直接光，不压死黑
-    if(!isAdditionalLight)toon *=light.shadowAttenuation;
-
-    // 灯光强度曲线
-    half3 litColor = lerp(0.5, 1.0, toon);
-
     // 最终光照
-    half3 color = light.color * litColor * distanceAttenuation;
+    half3 color = light.color * litColor*distanceAttenuation;
+    half hardShadow = step(0.5, light.shadowAttenuation); // 0 或 1
+    color *=lerp(0.5,1,hardShadow);// 范围0.5-1，0表示完全在阴影中
+    //color *=lerp(0,distanceAttenuation,hardShadow);//在阴影中直接不享受距离衰减
 
-    // 附加光削弱
-    if (isAdditionalLight)
-        color *= 0.25;
 
     originalStrength += isAdditionalLight?0.01*max(light.color.r, max( light.color.g,  light.color.b)):0;
     return color;
 }
 
 //计算全部的附加光的效果
-half3 GetAdditionalLightSumResult(half3 positionWS,half3 normalWS,out half originalStrength){
-    half3 additionalLightSumResult=0;
-    int additionalLightsCount = GetAdditionalLightsCount();
-    for (int i = 0; i < additionalLightsCount; ++i)
-    {
-        //类似于GetMainLight()，但它采用for循环索引。这算出了每对象灯光索引，
-        //并相应地对灯光缓冲区进行采样，以初始化轻型结构。
-        //如果定义了附加光线计算阴影，它也会计算阴影。
-        //struct Light {
-        //    half3 color;
-        //    float3 direction;
-        //    float distanceAttenuation;
-        //    float shadowAttenuation;
-        //};
+half3 GetAdditionalLightSumResult(InputData inputData,out half originalStrength){
+    originalStrength=0;
+    half3 additionalLightSumResult=half3(0,0,0);
+    //这里的 Count 在 Forward+ 下返回的是屏幕空间的所有附加光数量（可能很大），
+    //但实际能参与光照的由 URP 内部的 Tile 结构自动处理。
 
-        int perObjectLightIndex = GetPerObjectLightIndex(i);
-        Light light = GetAdditionalPerObjectLight(perObjectLightIndex, positionWS); //使用原始位置WS进行照明
-        light.shadowAttenuation = AdditionalLightRealtimeShadow(perObjectLightIndex, positionWS); 
 
-        //用于遮挡附加灯光的不同功能。
-        additionalLightSumResult += ShadeSingleLight(normalWS, light, true,originalStrength);
-    }
+    uint pixelLightCount = GetAdditionalLightsCount();
+    LIGHT_LOOP_BEGIN(pixelLightCount)
+
+    Light light = GetAdditionalLight(lightIndex, inputData.positionWS,CalculateShadowMask(inputData));
+    //light.shadowAttenuation = AdditionalLightRealtimeShadow(lightIndex, shadowTestPosWS); //使用偏移位置WS进行阴影测试
+    light.shadowAttenuation = AdditionalLightRealtimeShadow(lightIndex, inputData.positionWS, light.direction);
+    additionalLightSumResult += ShadeSingleLight(inputData,light, true,originalStrength);
+    LIGHT_LOOP_END
+
+    
     return additionalLightSumResult;
 }
 
-
+#endif
 
 
 
@@ -374,7 +373,7 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
 #ifdef _ALPHATEST_ON
     ClipHoles(IN.uvMainAndLM.xy);
 #endif
-
+    
     half3 normalTS = half3(0.0h, 0.0h, 1.0h);
 #ifdef TERRAIN_SPLAT_BASEPASS
     half3 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uvMainAndLM.xy).rgb;
@@ -423,6 +422,8 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
         occlusion,
         0);
 #endif
+    
+    
 //如果使用延迟渲染
 #ifdef TERRAIN_GBUFFER
 
@@ -464,15 +465,15 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
     brdfData.reflectivity *= alpha;     // 反射率乘以透明度
     inputData.normalWS = inputData.normalWS * alpha;  // 法线也乘以透明度
 
+
     // 将处理好的BRDF数据和光照信息写入GBuffer（延迟渲染核心步骤）
     return BRDFDataToGbuffer(brdfData, inputData, 0, color.rgb, occlusion);
 
 #else//如果使用正向渲染
 
-
+    
 #if _EnableToon
-
-
+    
     //Occlusion（遮挡）只影响50%的亮度，防止画面过暗、完全变黑
     half indirectOcclusion = lerp(1,occlusion, 0.5);
     //间接照明（忽略复杂细节，保留平均色调）
@@ -485,17 +486,21 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
     // 1. 先获取UniversalFragmentPBR的阴影处理结果
     Light mainLight = GetMainLight(inputData.shadowCoord, inputData.positionWS, inputData.shadowMask);
 
-    half3 mainLightResult = ShadeSingleLight(inputData.normalWS, mainLight, false,originalStrength);
 
-
+    
+    half3 mainLightResult = ShadeSingleLight(inputData, mainLight, false,originalStrength);
+    
+    
     //2. 计算附加光源
-    half3 additionalLightSumResult = GetAdditionalLightSumResult(inputData.positionWS,inputData.normalWS, originalStrength);
+    half3 additionalLightSumResult = GetAdditionalLightSumResult(inputData, originalStrength);
 
-    half3 rawLightSum = indirectResult + mainLightResult + additionalLightSumResult;
-
+    //half3 rawLightSum = indirectResult + mainLightResult + additionalLightSumResult;
+    half3 rawLightSum = indirectResult + mainLightResult;
+    
     // 3. 直接计算最终颜色（主光漫反射 + 卡通GI）
     half NdotL = saturate(dot(normalize(inputData.normalWS),normalize(mainLight.direction)));
-    half3 diffuse = rawLightSum * albedo *lerp(0.5,1,NdotL);
+    //half3 diffuse = albedo *(lerp(0.5,1,NdotL)*rawLightSum) ;
+    half3 diffuse = albedo *(lerp(0.5,1,NdotL)*rawLightSum+additionalLightSumResult) ;
 
 
     half4 color= half4(diffuse,alpha);

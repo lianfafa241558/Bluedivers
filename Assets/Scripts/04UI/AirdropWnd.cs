@@ -5,7 +5,7 @@ using static WndTools.WndRootTool;
 using Core;
 using Utils;
 
-public class AirdropWnd : WindowRoot
+public class AirdropWnd : Window
 {
     [SerializeField]
     Transform expandRoot,showRoot;
@@ -26,17 +26,11 @@ public class AirdropWnd : WindowRoot
     float time;
 
 
-    public override void Init()
+    public void Init()
     {
-        GameRoot.OnGameStateChange += GameStateChange;
-        GameRoot.OnWindowStateChange += WindowStateChange;
-        GlobalEventManager.OnInputAirdrop += OnInput;
-    }
-    public override void UnInit()
-    {
-        GameRoot.OnGameStateChange -= GameStateChange;
-        GameRoot.OnWindowStateChange -= WindowStateChange;
-        GlobalEventManager.OnInputAirdrop -= OnInput;
+
+        gameObject.SetActive(false);
+        SetWndState(true);
     }
 
     protected override void FirstShowWnd()
@@ -54,19 +48,24 @@ public class AirdropWnd : WindowRoot
             showList.Add(showRoot.GetChild(i).GetComponent<CanvasGroup>());
             
         }
-
+        ResetAirdrop(BattleManager.Instance.ADCont);
     }
 
-    protected override void HideWnd()
-    {
-        GlobalEventManager.OnAuthorizeAirdrop -= OnAuthorizeAirdrop;
-    }
+
     protected override void ShowWnd()
     {
-        ResetAirdrop(BattleManager.Instance.ADCont);
-        GlobalEventManager.OnAuthorizeAirdrop += OnAuthorizeAirdrop;
+        GlobalEventSub.OnGameStateChange += GameStateChange;
+        WndManager.OnWindowStateChange += WindowStateChange;
+        BattleEventSub.OnInputAirdrop += OnInput;
+        BattleEventSub.OnAuthorizeAirdrop += OnAuthorizeAirdrop;
     }
-
+    protected override void HideWnd()
+    {
+        GlobalEventSub.OnGameStateChange -= GameStateChange;
+        WndManager.OnWindowStateChange -= WindowStateChange;
+        BattleEventSub.OnInputAirdrop -= OnInput;
+        BattleEventSub.OnAuthorizeAirdrop -= OnAuthorizeAirdrop;
+    }
     private void ResetAirdrop(AirdropController cont)
     {
         controller = cont;
@@ -82,12 +81,12 @@ public class AirdropWnd : WindowRoot
                 SetColor(airdropList[i].GetChild(0), ad.cfg.Color);
                 SetSprite(airdropList[i].GetChild(0, 0), ad.cfg.icon);
                 SetSizeDelta(airdropList[i].GetChild(0, 1),0,0);
-                SetActive(airdropList[i].GetChild(0, 2), ad.cfg.arriveCount>0);
-                SetText(airdropList[i].GetChild(0,2,0), ad.cfg.arriveCount);
+                SetActive(airdropList[i].GetChild(0, 2), ad.count > 0);
+                SetText(airdropList[i].GetChild(0,2,0), ad.count);
                 SetText(airdropList[i].GetChild(1), ad.cfg.showName);
                 ResetItemText(i);
 
-                SetAlpha(showList[i].transform, 0);
+                SetAlpha(showList[i], 0);
                 SetColor(showList[i].GetChild(0), ad.cfg.Color);
                 SetSprite(showList[i].GetChild(0, 0), ad.cfg.icon);
                 SetText(showList[i].GetChild(1), ad.cfg.showName);
@@ -161,6 +160,7 @@ public class AirdropWnd : WindowRoot
                     if (ad.State != AirdropState.Ready)
                     {
                         SetAlpha(airdropList[i].GetChild(1),0.35f);
+                        airdropList[i].GetComponent<CanvasGroup>().alpha = 1;//不确定
                     }
                     else
                     {
@@ -221,18 +221,21 @@ public class AirdropWnd : WindowRoot
         {
             var item = controller.useAd[i];
             SetSizeDelta(showList[i].GetChild(0, 1), 0, 32 * controller.useAd[i].TimeScale);
+            SetText(airdropList[i].GetChild(0, 2, 0), controller.useAd[i].count);
             if (showList[i].alpha < 1 && (
                 item.State == AirdropState.Wait
                 || item.State == AirdropState.Arrive 
                 || item.State == AirdropState.Sustain
-                ||(item.State == AirdropState.Cool && Tool.In(item.time, 0, 3)))
+                ||(item.State == AirdropState.Cool && Tool.In(item.time, 0, 3))//快冷却完
+                )
+                //|| (item.State == AirdropState.Cool && Tool.In(item.cool - item.time, 0, 3)))
             ){
                 showList[i].alpha = Mathf.Lerp(showList[i].alpha, 1.1f, Time.deltaTime * 3);//渐入
 
             }
             else if (showList[i].alpha > 0 && (
                 item.State == AirdropState.Ready
-                || (item.State == AirdropState.Cool && Tool.In(item.cfg.cool - item.time, 0, 1)))
+                || (item.State == AirdropState.Cool && Tool.In(item.cool - item.time, 0, 1)))
             ){
                 showList[i].alpha = Mathf.Lerp(showList[i].alpha, -0.1f, Time.deltaTime * 3);//渐出
             }
@@ -256,6 +259,9 @@ public class AirdropWnd : WindowRoot
                         break;
                     case AirdropState.Sustain:
                         re = "正在进行 " + Tool.FloatToTime(item.time);
+                        break;
+                    case AirdropState.Unavailable:
+                        re = "不可用";
                         break;
                 }
                 if(!string.IsNullOrEmpty(re))SetText(showList[i].transform.GetChild(2), re);
@@ -282,6 +288,9 @@ public class AirdropWnd : WindowRoot
                     break;
                 case AirdropState.Sustain:
                     re = "正在进行 " + Tool.FloatToTime(item.time);
+                    break;
+                case AirdropState.Unavailable:
+                    re = "不可用";
                     break;
             }
             if (!string.IsNullOrEmpty(re)) SetText(airdropList[i].transform.GetChild(2), re);
@@ -330,8 +339,8 @@ public class AirdropWnd : WindowRoot
 
                     }
                 }
-                if (have2) wndManager.PlaySound(new("UI/UI_ElementsA", AudioGroups.General, 0.4f));
-                else if (have1) wndManager.PlaySound(new("UI/UI_CountDown2", AudioGroups.General, 0.4f));
+                if (have2) AudioSvc.PlaySound(new("UI/UI_ElementsA", AudioGroups.General, 0.4f));
+                else if (have1) AudioSvc.PlaySound(new("UI/UI_CountDown2", AudioGroups.General, 0.4f));
             }
         }
         

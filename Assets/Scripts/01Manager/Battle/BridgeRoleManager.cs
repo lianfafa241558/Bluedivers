@@ -28,7 +28,7 @@ public class BridgeRoleManager : RoleManagerBase
             return;
         }
         dataList.ForEach(item => {
-            //Debug.LogWarning("加载"+ item + "模型");
+
             var show = Instantiate(modleList.Find(modle => modle.name == item.ID));
             showModleList.Add(show);
             if (selectPointGo != null) show.transform.SetParent(selectPointGo.transform, false);
@@ -38,8 +38,11 @@ public class BridgeRoleManager : RoleManagerBase
         m_nowShowIndex = m_nowSelectIndex;
 
         SetPlayerRole(m_player);
-        //仅供实验
-        GameRoot.Archive.GainRoleExp(dataList[m_nowShowIndex].ID, Random.Range(5000, 99999), out int level, out float expScale);
+        //仅供试验
+        ArchiveSvc.Archive.GainRoleExp(dataList[m_nowShowIndex].ID, Random.Range(5000, 99999), out int level, out float expScale);
+
+        GameRoot.GameState = Core.GameStateEnum.Bridge;
+        WndManager.WindowState = Core.WindowStateEnum.Game;
     }
 
     public override Vector3 GetStartPoint()
@@ -50,7 +53,7 @@ public class BridgeRoleManager : RoleManagerBase
     public override void SetPlayerRole(PlayerController player)
     {
         player.SetBody(Instantiate(resManager.LoadRes<Transform>("Prefabs/StudentModle/" + dataList[m_nowSelectIndex].ID)), dataList[m_nowSelectIndex], new() { EmptyWeapon });
-        player.WeaponsManager.SwitchWeapon(false);//切到空武器
+        player.WeaponsManager.SwitchWeapon(false);//切到空武??
         base.SetPlayerRole(player);
     }
 
@@ -85,7 +88,7 @@ public class BridgeRoleManager : RoleManagerBase
         go = showModleList[m_nowShowIndex];
         data = dataList[m_nowShowIndex];
         isNow = m_nowSelectIndex == m_nowShowIndex;
-        arch = GameRoot.Archive.GetRoleCfg(data.ID);
+        arch = ArchiveSvc.Archive.GetRoleCfg(data.ID);
         showModleList[m_nowShowIndex].gameObject.SetActive(true);
         selectPointGo.transform.GetChild(0).gameObject.SetActive(false);
         selectPointGo.transform.GetChild(0).gameObject.SetActive(true);
@@ -94,7 +97,7 @@ public class BridgeRoleManager : RoleManagerBase
     public void SelectRole()
     {
         m_nowSelectIndex = m_nowShowIndex;
-        GameRoot.Archive.lastSelectRole = dataList[m_nowShowIndex].ID;
+        ArchiveSvc.Archive.lastSelectRole = dataList[m_nowShowIndex].ID;
         selectPointGo.transform.GetChild(0).gameObject.SetActive(false);
         selectPointGo.transform.GetChild(0).gameObject.SetActive(true);
 

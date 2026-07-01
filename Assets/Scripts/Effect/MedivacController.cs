@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Core;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.Events;
@@ -15,7 +15,7 @@ public class MedivacController : TickBehaviour
     private Transform point,cam,target;
   
 
-    [CustomLabel("状态")]
+    [InspectorName("状态")]
     public MedivacState state;
     BoxCollider box;
     TaskManager taskManager;
@@ -59,7 +59,7 @@ public class MedivacController : TickBehaviour
         if (!enabled) return true;
 
         int count = 0;
-        // 获取旋转矩阵的逆矩阵（局部→世界）
+        // 获取旋转矩阵的逆矩阵（局部→世界)
         Matrix4x4 localToWorld = box.transform.localToWorldMatrix;
         Matrix4x4 worldToLocal = localToWorld.inverse;
         Vector3 colliderSize = box.size;
@@ -68,7 +68,7 @@ public class MedivacController : TickBehaviour
             // 将点转换到碰撞体局部空间
             Vector3 localPoint = worldToLocal.MultiplyPoint3x4(item.transform.position);
             //Debug.LogError("玩家位置"+ localPoint, item.gameObject);
-            // 检测局部坐标是否在[-0.5, 0.5]范围内（标准BoxCollider尺寸）
+            // 检测局部坐标是否在[-0.5, 0.5]范围内（标准BoxCollider尺寸)
             if (Mathf.Abs(localPoint.x) <= colliderSize.x * 0.5f
                 && Mathf.Abs(localPoint.y) <= colliderSize.y * 0.5f
                 && Mathf.Abs(localPoint.z) <= colliderSize.z * 0.5f
@@ -186,7 +186,7 @@ public class MedivacController : TickBehaviour
                 item.transform.parent = target;
                 item.gameObject.SetActive(false);
             }
-            BattleManager.Instance.EndGame(11);
+            BattleManager.Instance.EndGame(14);
 
         }
     }
@@ -204,7 +204,7 @@ public class MedivacController : TickBehaviour
         var lastPos = transform.position;
         float distance = Vector3.Distance(transform.position, targetPos);
 
-        // 距离足够近 → 直接到位，停止抖动
+        // 距离足够近,直接到位，停止抖动
         if (distance < 0.1f)
         {
             transform.position = targetPos;
@@ -250,10 +250,10 @@ public class MedivacController : TickBehaviour
     {
 
         /// <summary>准备</summary>
-        [CustomLabel("准备")] Ready,
+        [InspectorName("准备")] Ready,
         /// <summary>降落</summary>
-        [CustomLabel("降落")] Land,
+        [InspectorName("降落")] Land,
         /// <summary>撤离</summary>
-        [CustomLabel("撤离")] Evacuate,
+        [InspectorName("撤离")] Evacuate,
     }
 }

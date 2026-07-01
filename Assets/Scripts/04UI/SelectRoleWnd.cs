@@ -1,5 +1,6 @@
+using System;
 using Core;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -8,7 +9,7 @@ using static WndTools.WndRootTool;
 /// <summary>
 /// 选择角色界面，这个界面不应该在除舰桥模式以外的界面打开
 /// </summary>
-public class SelectRoleWnd : WindowRoot
+public class SelectRoleWnd : Window
 {
     [Foldout("配置人物",true)]
     [SerializeField]
@@ -81,11 +82,13 @@ public class SelectRoleWnd : WindowRoot
             }
         }
     }
-    public override void Init()
+    public void Init()
     {
+        WndManager.Instance.selectRoleWnd = this;
     }
-    public override void UnInit()
+    public void Uninit()
     {
+        WndManager.Instance.selectRoleWnd = null;
     }
 
     protected override void FirstShowWnd()
@@ -117,7 +120,7 @@ public class SelectRoleWnd : WindowRoot
             m_manager.SelectRole();
             meetSave = true;
             SetActive(btn_Select, false);
-            wndManager.PlaySound(new(data.Speech(SpeechTypeEnum.Select).Clip, AudioGroups.Player));
+            wndManager.PlaySoundData(data.SpeechGroup(SpeechTypeEnum.Select).Get());
         });
         #endregion
         #region 选择升级
@@ -181,9 +184,12 @@ public class SelectRoleWnd : WindowRoot
             for (int x = 0; x < 3; ++x)
             {
                 int a = y, b = x;
-                SetButtonEnter(weaponUpgradeItemLayout.GetChild(a,b), data => ShowTip(a,b));
-                SetButtonIn(weaponUpgradeItemLayout.GetChild(a, b), data => MoveTip());
-                SetButtonExit(weaponUpgradeItemLayout.GetChild(a, b), data => HideTip(a, b));
+                var item = weaponUpgradeItemLayout.GetChild(a, b).TryGetOrAddComponent<ButtonEnterDetector>();
+
+                item.Enter = data => ShowTip(a, b);
+                item.In = data => MoveTip();
+                item.Enter = data => HideTip(a, b);
+
                 SetCilck(weaponUpgradeItemLayout.GetChild(a, b), () =>
                 {
                     SelectUpgrade(a,b);
@@ -217,14 +223,14 @@ public class SelectRoleWnd : WindowRoot
             SetActive(m_SelectPoint.gameObject, true);
         }
         m_manager = FindObjectOfType<BridgeRoleManager>();
-        GameRoot.WindowState = WindowStateEnum.UI;
+        WindowState = WindowStateEnum.UI;
         ActorsManager.Player.gameObject.SetActive(false);
         m_manager.StartShowRole(out var go, out var data,out var arch, out bool isNow);
         Refresh(go, data, arch, isNow);
 
         EnterSelectWeapon(-1);
 
-        InputManager.ListenerCancel(Cancel);
+        InputManager.AddListenerCancel(Cancel);
 
         WndState = RoleWndState.Role;
     }
@@ -232,11 +238,12 @@ public class SelectRoleWnd : WindowRoot
     protected override void HideWnd()
     {
 
-        if(meetSave)GameRoot.Archive.Save();
+        if(meetSave)ArchiveSvc.Archive.Save();
         ActorsManager.Player.gameObject.SetActive(true);
-        GameRoot.WindowState = WindowStateEnum.Game;
-        SetActive(m_SelectRoleCamera.gameObject, false);
-        SetActive(m_SelectPoint.gameObject, false);
+        WindowState = WindowStateEnum.Game;
+        if (m_SelectRoleCamera) SetActive(m_SelectRoleCamera.gameObject, false);
+        if(m_SelectPoint) SetActive(m_SelectPoint.gameObject, false);
+        InputManager.RemoveListenerCancel(Cancel);
 
     }
 
@@ -284,19 +291,19 @@ public class SelectRoleWnd : WindowRoot
                 SetWndState(false);
                 break;
             case RoleWndState.Switch:
-                InputManager.ListenerCancel(Cancel);
+                InputManager.AddListenerCancel(Cancel);
                 break;
             case RoleWndState.Weapon:
                 WndState = RoleWndState.Role;
-                InputManager.ListenerCancel(Cancel);
+                InputManager.AddListenerCancel(Cancel);
                 break;
         }
         
         return true;
     }
-    #endregion
+    #endregion 
 
-    #region 人物界面武器框
+    #region 人物界面武器列表
     private void SwitchWeapon(int index,bool left)
     {
         var type = (WeaponTypeEnum)index;
@@ -309,7 +316,7 @@ public class SelectRoleWnd : WindowRoot
     }
 
     /// <summary>
-    /// 鼠标进入武器框
+    /// 鼠标进入武器列表
     /// </summary>
     private void EnterSelectWeapon(int index)
     {
@@ -329,7 +336,7 @@ public class SelectRoleWnd : WindowRoot
 
     }
     /// <summary>
-    /// 鼠标离开武器框
+    /// 鼠标离开武器列表
     /// </summary>
     private void ExitSelectWeapon(int index)
     {
@@ -349,7 +356,7 @@ public class SelectRoleWnd : WindowRoot
 
         var lenghts = weapon.UpgradeCount();
         Debug.LogError("ID"+ arch.ID + "_" + weapon.WeaponName + "升级数量" + lenghts.Length);
-        var weaponData = GameRoot.Archive.weaponUpgradeDic.TryGet(arch.ID + "_" + weapon.WeaponName, new(arch.ID + "_" + weapon.WeaponName, lenghts.Length));
+        var weaponData = ArchiveSvc.Archive.weaponUpgradeDic.TryGet(arch.ID + "_" + weapon.WeaponName, new(arch.ID + "_" + weapon.WeaponName, lenghts.Length));
         for (int x = 0; x < lenghts.Length; ++x)
         {
             if (weaponData.selectIndex[x] >= 0)
@@ -373,8 +380,8 @@ public class SelectRoleWnd : WindowRoot
         this.arch = arch;
         string stuName = m_showModleGo.GetComponent<BaseObject>().ShowName;
         SetText(txt_Name, stuName);
-        SetText(txt_Switch,"切换到"+ stuName);
-        GameRoot.Archive.GetRoleLevel(data.ID,out int level,out float exp);
+        SetText(txt_Switch,"切换"+ stuName);
+        ArchiveSvc.Archive.GetRoleLevel(data.ID,out int level,out float exp);
         SetText(txt_Level,level);
         SetActive(btn_Select, !isNow);
         var list = data.GetStartingWeapons(arch);
@@ -430,7 +437,7 @@ public class SelectRoleWnd : WindowRoot
         SetActive(tipRoot, false);
         var lenghts= weaponInst.UpgradeCount();
         var levels = weaponInst.UpgradeLevel();
-        archWeaponData = GameRoot.Archive.weaponUpgradeDic.TryGet(arch.ID+"_"+ weaponInst.WeaponName, new(arch.ID + "_" + weaponInst.WeaponName, lenghts.Length));
+        archWeaponData = ArchiveSvc.Archive.weaponUpgradeDic.TryGet(arch.ID+"_"+ weaponInst.WeaponName, new(arch.ID + "_" + weaponInst.WeaponName, lenghts.Length));
         var totleLenght = IEnumerableUtils.Sum(lenghts);
 
 
@@ -532,7 +539,7 @@ public class SelectRoleWnd : WindowRoot
         SetParameter();
     }
     /// <summary>
-    /// 鼠标在升级框上
+    /// 鼠标在升级框内
     /// </summary>
     private void MoveTip()
     {
@@ -566,7 +573,7 @@ public class SelectRoleWnd : WindowRoot
                     SetUpgradeItemButton(y, x,1);
                     SetBuyCountLayout(-1, archWeaponData.BuyCount);
                     wndManager.PlaySound(new("UI/UI_Reward", volume: 0.25f));
-                    wndManager.PlaySound(new(data.Speech(SpeechTypeEnum.Upgrade).Clip, AudioGroups.Player,1,0.5f));
+                    wndManager.PlaySoundData(data.SpeechGroup(SpeechTypeEnum.Upgrade).Get());
                     meetSave = true;
                 },
                 costs= upgrade.cost.ToArray(),
@@ -818,7 +825,6 @@ public class SelectRoleWnd : WindowRoot
         }
 
     }
-
 
 
 

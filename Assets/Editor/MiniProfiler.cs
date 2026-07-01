@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FpsGame.Mission;
 using Unity.FPS.AI;
 using Unity.FPS.Game;
@@ -191,7 +191,7 @@ namespace Unity.FPS.EditorExt
         void DisplayTips()
         {
             EditorGUILayout.HelpBox(
-                "所有永远不会移动的网格（例如，地板/墙壁网格）都应作为场景中“级别”游戏对象的子对象放置。这是因为该对象上的“网格合并器”脚本将在游戏开始时合并其下的所有网格，这减少了渲染它们的成本。渲染一个大网格比渲染许多小网格更有效，即使多边形的数量相同。",
+                "所有永远不会移动的网格（例如，地板/墙壁网格）都应作为场景中\"级别\"游戏对象的子对象放置。这是因为该对象上的\"网格合并器\"脚本将在游戏开始时合并其下的所有网格，这减少了渲染它们的成本。渲染一个大网格比渲染许多小网格更有效，即使多边形的数量相同。",
                 MessageType.None);
             EditorGUILayout.HelpBox(
                 "添加到该级别的每个灯光都会有性能成本。如果确实向标高添加了更多灯光，请考虑使它们不投射任何阴影，以减少性能影响。然而，请注意，在WebGL中，最多可以同时在屏幕上绘制4个灯光",
@@ -199,10 +199,10 @@ namespace Unity.FPS.EditorExt
             EditorGUILayout.HelpBox("透明对象的性能比不透明对象更昂贵",
                 MessageType.None);
             EditorGUILayout.HelpBox(
-                "动画3D模型（称为“蒙皮网格”）的性能比常规网格更昂贵",
+                "动画3D模型（称为\"蒙皮网格\"）的性能比常规网格更昂贵",
                 MessageType.None);
             EditorGUILayout.HelpBox(
-                "由于其人工智能逻辑，在级别中有许多敌人可能会影响性能",
+                "由于其人人工智能逻辑，在级别中有许多敌人可能会影响性能",
                 MessageType.None);
             EditorGUILayout.HelpBox("将刚体（物理对象）添加到级别可能会影响性能",
                 MessageType.None);
@@ -290,7 +290,7 @@ namespace Unity.FPS.EditorExt
             if (nonCombinedMeshCount > 50)
             {
                 m_SuggestionStrings.Add(nonCombinedMeshCount +
-                                        "场景中的网格未设置为在游戏开始时组合。请确保所有网格在游戏过程中永远不会移动、更改或删除的对象位于场景中的“级别”游戏对象下，因此可以组合它们以获得更高的性能。\n\n +请注意，有几个不会组合的网格总是正常的，例如拾取、玩家网格、敌人网格等");
+                                        "场景中的网格未设置为在游戏开始时组合。请确保所有网格在游戏过程中永远不会移动、更改或删除的对象位于场景中的\"级别\"游戏对象下，因此可以组合它们以获得更高的性能。\n\n请注意，有几个不会组合的网格总是正常的，例如拾取、玩家网格、敌人网格等");
             }
         }
 

@@ -23,13 +23,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1505875099330329527}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.38268343, w: 0.92387956}
   m_LocalPosition: {x: -0.014, y: -0.04, z: 0}
   m_LocalScale: {x: 1.3, y: 1.3, z: 1.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4957115218377682907}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 45}
 --- !u!1 &2087676078428484101
 GameObject:
@@ -56,6 +56,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2087676078428484101}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -64,11 +65,10 @@ Transform:
   - {fileID: 3664516715503459509}
   - {fileID: 6897609123851264565}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &838019565884184034
 Animator:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -85,7 +85,8 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorControllerStateOnDisable: 0
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &-546466766994314730
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -122,19 +123,26 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
+    MinRange: -1
     NoSource: 0
+    SoundRadius: 20
     DamageDirect: 40
+    DamageGroupDirect2:
+    - Key: 0
+      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     DamageExplosion: 40
+    ExplosionInnerRange: 0
     ExplosionRange: 0
-    DamageRatioOverDis:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 0
-      m_PostInfinity: 0
-      m_RotationOrder: 0
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion2:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupExplosion:
     - Key: 0
       Value: 1
@@ -144,10 +152,13 @@ MonoBehaviour:
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
+    OnlyTerrain: 0
+    UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
+    ChargeSoundScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -157,7 +168,12 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
-  state: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
   ShootType: 0
   WeaponFlag: 3
   AutomaticReleaseOnCharged: 0
@@ -181,13 +197,6 @@ MonoBehaviour:
   AimOffset: {x: 0, y: 0, z: 0}
   playerAngle: 0
   desc: "\u8FD9\u662F\u7EFF\u7B2C\u4E00\u6B21\u548C\u59D0\u59D0\u4E00\u8D77\u8D2D\u4E70\u7684\u4FBF\u643A\u5F0F\u6E38\u620F\u673A\u3002\n\u65E0\u8BBA\u662F\u5C0F\u5C0F\u7684\u4E89\u5435\u4E0E\u548C\u597D\uFF0C\u8FD8\u662F\u4EE5\u51B0\u6DC7\u6DCB\u4E3A\u8D4C\u6CE8\u7684\u5BF9\u51B3\u2026\u2026\u8FD9\u53F0\u7231\u673A\u89C1\u8BC1\u4E86\u65E0\u6570\u5171\u540C\u7684\u56DE\u5FC6\u3002\n\u53EF\u4EE5\u5BF9\u51FB\u4E2D\u7684\u76EE\u6807\u8FDB\u884C.......\u6CBB\u7597\uFF1F"
-  m_Rename:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 
-    arr: []
-    meetReset: 0
   m_RenameAttr: []
   showAttr: 0000000014000000
   m_UniqueAttr:
@@ -228,6 +237,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2721101794184479036}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -235,13 +245,13 @@ Transform:
   m_Children:
   - {fileID: 8490818971378521101}
   m_Father: {fileID: 4957115218377682907}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &8241529745118295014
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 3664516715503459509}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 31d376146f5b7b84897aedfed468bbde,
@@ -305,6 +315,9 @@ PrefabInstance:
       value: GamePad
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 31d376146f5b7b84897aedfed468bbde, type: 3}
 --- !u!4 &8490818971378521101 stripped
 Transform:

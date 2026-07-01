@@ -20,7 +20,7 @@ namespace FpsGame.Mission
         bool startDefense;
         bool lastHavePlayer = true;
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             keyScreen = entity.transform.GetComponentInChildren<KeyScreen>(true);
             keyScreen.OnUpdateStage += OnUpdateStage;
@@ -67,7 +67,7 @@ namespace FpsGame.Mission
             }
             else
             {
-                UpdateTip("请在信号发射区坚守  [" + Tool.FloatToTime(remainTime) + "]");
+                UpdateTip("请在信号发射区坚守 [" + Tool.FloatToTime(remainTime) + "]");
             }
             return true;
         }

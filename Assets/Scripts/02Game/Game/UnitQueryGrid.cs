@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using PEMaths;
 using System.Linq;
-using Unity.BaseTool;
+
 using Core;
 using GameContract;
 
@@ -259,8 +259,8 @@ public class UnitQueryGrid
 [System.Serializable]
 public class TargetCfg
 {
-    public UnitTypeEnum targetType= UnitTypeEnum.All;//可以是多类目标
-    public ActorState actorState = ActorState.Normal;//可以是多类目标
+    public UnitTypeEnum targetType= UnitTypeEnum.All;//可以是多类目
+    public ActorState actorState = ActorState.Normal;//可以是多类目
     //public float selectRange=-1;
 
     public static TargetCfg EnemyAI = new() {targetType = UnitTypeEnum.All & ~UnitTypeEnum.Other };

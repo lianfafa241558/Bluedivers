@@ -13,10 +13,10 @@ namespace FpsGame.Mission
     public class MissionDestroyNest : MissionBase
     {
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
 
-            GlobalEventManager.OnEnemyDead += OnActorDeath;
+            BattleEventSub.OnEnemyDead += OnActorDeath;
             MaxProgress = data.targetCount;
             MaxProgress /= 10;
         }
@@ -24,7 +24,7 @@ namespace FpsGame.Mission
         protected override void Uninit()
         {
             base.Uninit();
-            GlobalEventManager.OnEnemyDead -= OnActorDeath;
+            BattleEventSub.OnEnemyDead -= OnActorDeath;
         }
 
         void OnActorDeath(Actor actor)

@@ -2,18 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 namespace FpsGame.Mission
 {
-    //第一步:空投一个信标下来√播放语音√
-    //第二步:记录这个信标，等待玩家操作完成√
-    //第三步:等待倒计时√播放语音√
-    //第四步:创建运输机并检查下面有没有人，没有就滞空
-    //第五步:落地等待登机
-    //第六步:起飞
+    //第一步 空投一个信标下来√播放语音
+    //第二步 记录这个信标，等待玩家操作完成
+    //第三步 等待倒计时√播放语音
+    //第四步 创建运输机并检查下面有没有人，没有就滞空
+    //第五步 落地等待登机
+    //第六步 起飞
 
 
     [AddComponentMenu("任务/撤离/静态撤离", 30)]
@@ -47,23 +47,47 @@ namespace FpsGame.Mission
 
         MedivacController medivac;
         bool IsComplete;
+        
+        
 
-        protected override void CreatMission()
+
+        protected override void StartMission()
         {
 
+           
+
+            
+        }
+
+        protected override void InitMission()
+        {
             if (IsFast)
             {
                 m_EvacuateTime = 10;
                 m_EvacuateRange = 999;
-                entity = GameObject.FindWithTag("StartPoint").GetComponent<MissionView>();
-                entity.Init(this,new int[0]);
+                var go = GameObject.FindWithTag("StartPoint");
+                if (go)
+                {
+                    Debug.LogError("尝试设置init"+gameObject,gameObject);
+                    entity = go.GetComponent<MissionView>();
+                    entity.Init(this, new int[0]);
+                    pos = entity.Pos;
+                }
+                else
+                {
+                    base.InitMission();
+                    pos = entity.Pos;
+                }
+            }
+            else
+            {
+                base.InitMission();
                 pos = entity.Pos;
             }
-            
             area = entity.transform;
             areaPoint = area.transform.position;
-            ResManager.Instance.CreatPrefab("Prefabs/BattleBase/Kei", false, area.TransformPoint(0,0,7));
-            medivac = ResManager.Instance.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, area.TransformPoint(0, 12, 0)).GetComponent<MedivacController>();
+            ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/Kei", false, area.TransformPoint(0, 0, 7));
+            medivac = ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, area.TransformPoint(0, 12, 0)).GetComponent<MedivacController>();
             medivac.SetType(MedivacController.MedivacState.Land);
             medivac.targetPoint = area;
         }
@@ -82,8 +106,8 @@ namespace FpsGame.Mission
 
             RemoveTag(MissionTag.hideAll);
             AddTag(MissionTag.IsActive);
-            GlobalEventManager.MissionStateChange(this, true);
-            GlobalEventManager.MissionEnityShow(entity);
+            BattleEventSub.MissionStateChange(this, true);
+            BattleEventSub.MissionEnityShow(entity);
             UpdateText("激活撤离终端", "");
         }
 
@@ -94,7 +118,7 @@ namespace FpsGame.Mission
                 case EvacuateState.Activation:
                     if (--countDown == -3)
                     {
-                        CreatNotice("Yuuka2", IsComplete?"Evacuate": "EvacuateFail");
+                        CreatNotice("Yuuka", IsComplete?"Evacuate": "EvacuateFail");
                         BattleManager.Instance.ReleaseAirdrop(areaPoint, 0, InitBeacon);
                     }
                     if (IsFast && keyScreen)
@@ -108,7 +132,7 @@ namespace FpsGame.Mission
                     {
                         --countDown;
                         suspendCountDown = suspendTime;
-                        UpdateTip("请在撤离区坚守  [" + Tool.FloatToTime(countDown) + "]");
+                        UpdateTip("请在撤离区坚守 [" + Tool.FloatToTime(countDown) + "]");
                         if (countDown <= 0)
                         {
                             EndWait();
@@ -120,7 +144,7 @@ namespace FpsGame.Mission
                         keyScreen.AddTime(1);
                         if (suspendCountDown == suspendTime)
                         {
-                            CreatNotice("Ayane2", "WarnArea");
+                            CreatNotice("Ayane", "WarnArea");
                         }
                         UpdateTip("<color=#FF4040>请返回撤离区范围  [" + Tool.FloatToTime(--suspendCountDown) + "]</color>");
                         if (suspendCountDown <= 0)
@@ -158,7 +182,7 @@ namespace FpsGame.Mission
                 case EvacuateState.End:
                     if (--countDown == 0)
                     {
-                        CreatNotice("Yuuka2", IsComplete? "End":"Fail");
+                        CreatNotice("Yuuka", IsComplete? "End":"Fail");
                     }
                     break;
             }
@@ -214,18 +238,18 @@ namespace FpsGame.Mission
             stage = EvacuateState.Wait;
             UpdateText("运输船接近中", "");
             countDown = m_EvacuateTime;//如果有撤离效果就变短
-            if(IsComplete) AudioManager.PlayMusic(AudioManager.MusicGroup.Evacuate, 0.5f);
-            CreatNotice("Ayane2", "CountDownBegins", delay: 1);
+            if(IsComplete) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
+            CreatNotice("Ayane", "CountDownBegins");
 
         }
 
         private void EndWait()
         {
             stage = EvacuateState.CompleWait;
-            CreatNotice("Ayane2", "CountDownEnd");
+            CreatNotice("Ayane", "CountDownEnd");
             countDown = 5;
-            UpdateText("运输船即将着陆", "请肃清着陆点");
-            medivac = ResManager.Instance.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, areaPoint + Vector3.up * 500).GetComponent<MedivacController>();
+            UpdateText("运输船即将着陆", "请肃清着陆区");
+            medivac = ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, areaPoint + Vector3.up * 500).GetComponent<MedivacController>();
             medivac.transform.LookAt(areaPoint);
             //medivac.Init();
             medivac.Complete += End;
@@ -245,15 +269,15 @@ namespace FpsGame.Mission
             else
             {
                 stage = EvacuateState.Hover;
-                CreatNotice("Ayane2", "Hover");
-                UpdateText("运输船无法着陆", "请靠近撤离区域");
+                CreatNotice("Ayane", "Hover");
+                UpdateText("运输船无法着陆", "请靠近撤离区");
             }
 
         }
         void Landing()
         {
             stage = EvacuateState.Land;
-            CreatNotice("Ayane2", "Landing");
+            CreatNotice("Ayane", "Landing");
             countDown = 5;
             UpdateText("运输船即将着陆", "");
             beacon.GetComponent<Animator>().Play("Hide");
@@ -268,9 +292,9 @@ namespace FpsGame.Mission
 
         void Suspend()
         {
-            AudioManager.StopMusic();
+            AudioSvc.StopMusic();
             stage = EvacuateState.Activation;
-            CreatNotice("Ayane2", "Suspend");
+            CreatNotice("Ayane", "Suspend");
             UpdateText("激活撤离终端", "");
             keyScreen.SetStage(0);
 
@@ -279,7 +303,7 @@ namespace FpsGame.Mission
         void Evacuate()
         {
             stage = EvacuateState.Evacuate;
-            //CreatNotice("Ayane2", "Suspend");
+            //CreatNotice("Ayane", "Suspend");
             UpdateText("进入雨云号", "");
         }
 
@@ -287,9 +311,9 @@ namespace FpsGame.Mission
         {
             stage = EvacuateState.End;
             countDown = 6;
-            CreatNotice("Ayane2", "TakeOff");
-            WndManager.Instance.movieWnd.SetWndState(true);
-
+            CreatNotice("Ayane", "TakeOff");
+            //WndManager.Instance.movieWnd.SetWndState(true);
+            GameRoot.GameState = Core.GameStateEnum.Transition;//测试，不确定
         }
 
 

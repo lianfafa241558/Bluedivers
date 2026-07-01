@@ -1,9 +1,9 @@
-/*
+﻿/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using PEMaths;
-using Unity.BaseTool;
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
@@ -100,7 +100,7 @@ namespace Unity.FPS.Game
 
             if (attrsProp == null)
             {
-                EditorGUI.LabelField(position, "找不到 attrs 字段");
+                EditorGUI.LabelField(position, "找不到attrs 字段");
                 return;
             }
 
@@ -150,7 +150,7 @@ namespace Unity.FPS.Game
             // 遍历枚举值，绘制对应的属性
             foreach (WeaponAttrType attrType in enumValues)
             {
-                // 在 DisplayDic 中查找对应的键值对
+                // 从DisplayDic 中查找对应的键值对
                 bool found = false;
 
                 for (int i = 0; i < arrProp.arraySize; i++)
@@ -211,7 +211,7 @@ namespace Unity.FPS.Game
                     // 显示添加按钮
                     if (GUI.Button(buttonRect, "添加"))
                     {
-                        // 在数组末尾添加新的 KVP 元素
+                        // 在数组末尾添加新的KVP 元素
                         int index = arrProp.arraySize;
                         arrProp.arraySize++;
 

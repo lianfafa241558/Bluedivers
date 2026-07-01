@@ -23,13 +23,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3441499586104044934}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.729, z: 1.018}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5114223294151256787}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5114223292862620965
 GameObject:
@@ -54,6 +54,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5114223292862620965}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.347, z: 0.256}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -61,7 +62,6 @@ Transform:
   m_Children:
   - {fileID: 5114223293039882891}
   m_Father: {fileID: 5114223292933438714}
-  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5114223292933438709
 GameObject:
@@ -93,6 +93,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5114223292933438709}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -103,7 +104,6 @@ Transform:
   - {fileID: 5114223294151256787}
   - {fileID: 5114223292862620970}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5114223292933438718
 MonoBehaviour:
@@ -123,6 +123,7 @@ MonoBehaviour:
   ExtraPortrait: {fileID: 21300000, guid: 25a2e2339cffa8e449c57a6d7df0a9cc, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
+  IsFixed: 0
   flag: 0
   type: 4
   team: 1
@@ -147,7 +148,7 @@ NavMeshAgent:
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 50
-  m_StoppingDistance: 0.15
+  m_StoppingDistance: 0.3
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
@@ -170,6 +171,7 @@ MonoBehaviour:
   DeathDuration: 3
   BirthDuration: 2
   birthTime: 0
+  IsRemove: 0
   PathReachingRadius: 2
 --- !u!114 &5114223292933438715
 MonoBehaviour:
@@ -208,11 +210,18 @@ MonoBehaviour:
     detectionFireDelay: 0
     aimBlendTime: 1
     limitRotation: 0
+    allowDeviation: 0.005
     barrelSetOffset: {x: -0.70441604, y: 0.29883623, z: -0.06162837, w: 0.6408564}
     dot: 1
   AttackStop: 0
   AttackStopDistanceRatio: 1
   MaintainMaxDis: 0
+  PatrolSpeed: 2
+  BewareSpeed: 3
+  BewareReachRadius: 2
+  BewareStayDuration: 2
+  IdleMaxDuration: 120
+  AiState2: 1
 --- !u!114 &3316608398210949451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -300,9 +309,48 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
+      m_ColorSpace: -1
       m_NumColorKeys: 4
       m_NumAlphaKeys: 2
     duration: 0
+  - type: 0
+    occasion: 3
+    material: {fileID: 2100000, guid: 1970a5437d2882840bb82cdeb8ecf368, type: 2}
+    colorName: 
+    defaultColor: {r: 0, g: 0, b: 0, a: 0}
+    switchOccasion: 0
+    switchColor: {r: 0, g: 0, b: 0, a: 0}
+    gradient:
+      serializedVersion: 2
+      key0: {r: 0, g: 0, b: 0, a: 1}
+      key1: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+      key2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 15035
+      ctime2: 52428
+      ctime3: 65535
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 4
+      m_NumAlphaKeys: 2
+    duration: 0.1
   - type: 0
     occasion: 4
     material: {fileID: 2100000, guid: 1970a5437d2882840bb82cdeb8ecf368, type: 2}
@@ -337,6 +385,7 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
+      m_ColorSpace: -1
       m_NumColorKeys: 3
       m_NumAlphaKeys: 2
     duration: 3
@@ -385,6 +434,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5114223293039882890}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -392,7 +442,6 @@ Transform:
   m_Children:
   - {fileID: 5114223293744774866}
   m_Father: {fileID: 5114223292862620970}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5114223293039882888
 MonoBehaviour:
@@ -428,37 +477,23 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: 1.1
+    MinRange: -1
     NoSource: 0
+    SoundRadius: 20
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
       Value: 1
     DamageExplosion: 3
+    ExplosionInnerRange: 0.3
     ExplosionRange: 0.6
-    DamageRatioOverDis:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 0
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion2:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupExplosion:
     - Key: 0
       Value: 1
@@ -468,10 +503,13 @@ MonoBehaviour:
     ImpactSfx: {fileID: 8300000, guid: 03c62a244207b8b43a01c1a00143147e, type: 3}
     UseHole: 0
     Hole: {fileID: 0}
+    OnlyTerrain: 0
+    UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
+    ChargeSoundScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -523,13 +561,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5114223293679113977}
+  serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5114223292933438714}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &5114223293679113981
 MeshFilter:
@@ -557,6 +595,7 @@ MonoBehaviour:
     Value: 0.3
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -571,9 +610,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5114223293679113977}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.5, y: 1.2, z: 0.5}
   m_Center: {x: 0, y: 0.2, z: 0.2}
 --- !u!1 &5114223293744774861
@@ -599,13 +646,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5114223293744774861}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5114223293039882891}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5114223294151256786
 GameObject:
@@ -631,6 +678,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5114223294151256786}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -638,7 +686,6 @@ Transform:
   m_Children:
   - {fileID: 6612909353008332136}
   m_Father: {fileID: 5114223292933438714}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5114223294151256784
 MonoBehaviour:
@@ -653,15 +700,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EyePoint: {fileID: 6612909353008332136}
-  DetectionRange: 20
-  HearingRange: 10
+  DetectionRange: 30
+  HearingRange: 15
   AttackRange: 1.5
-  AlertRange: 20
+  AlertRange: 50
   KnownTargetTimeout: 8
+  Target:
+    pos: {x: 0, y: 0, z: 0}
+  showGizmos: 0
   IsSeeingTarget: 0
+  TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
+  showCollider: {fileID: 0}
 --- !u!1 &5665894347064354046
 GameObject:
   m_ObjectHideFlags: 0
@@ -685,19 +737,20 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5665894347064354046}
+  serializedVersion: 2
   m_LocalRotation: {x: -0.6032167, y: -0.37441736, z: 0.3694303, w: 0.59955204}
   m_LocalPosition: {x: -1.33, y: 0.33, z: -0.01}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8027404619447164745}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: -63.65121, y: -90.000084, z: 90.00008}
 --- !u!1001 &9162278448526284363
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 5114223292933438714}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
@@ -1396,6 +1449,113 @@ PrefabInstance:
       value: -81.794426
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 1171466198095366402, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8527464956381239370}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278450089584604}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4458183421515518649}
+    - targetCorrespondingSourceObject: {fileID: -6888181375402806873, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278449791992276}
+    - targetCorrespondingSourceObject: {fileID: -6888181375402806873, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278449791992283}
+    - targetCorrespondingSourceObject: {fileID: -7847532084044010903, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4104129843051765154}
+    - targetCorrespondingSourceObject: {fileID: -7847532084044010903, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6849917054916810380}
+    - targetCorrespondingSourceObject: {fileID: -6520070150813198240, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6723867042469103444}
+    - targetCorrespondingSourceObject: {fileID: -6520070150813198240, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4635389339364467272}
+    - targetCorrespondingSourceObject: {fileID: -1196364518757579219, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5285915251359318126}
+    - targetCorrespondingSourceObject: {fileID: -1196364518757579219, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6451146885372460771}
+    - targetCorrespondingSourceObject: {fileID: 1080647052475093603, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7219672341227339531}
+    - targetCorrespondingSourceObject: {fileID: 1080647052475093603, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4754570342502972188}
+    - targetCorrespondingSourceObject: {fileID: -5750392227807194684, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278448618662628}
+    - targetCorrespondingSourceObject: {fileID: -5750392227807194684, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278448618662629}
+    - targetCorrespondingSourceObject: {fileID: -5750392227807194684, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278448618662635}
+    - targetCorrespondingSourceObject: {fileID: 1321683245627784825, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278448791581401}
+    - targetCorrespondingSourceObject: {fileID: 1321683245627784825, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278448791581400}
+    - targetCorrespondingSourceObject: {fileID: -4748859780378760505, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278449111509396}
+    - targetCorrespondingSourceObject: {fileID: -4748859780378760505, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278449111509403}
+    - targetCorrespondingSourceObject: {fileID: 2359797319488813206, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7132288255655024918}
+    - targetCorrespondingSourceObject: {fileID: 2359797319488813206, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5472535976194403624}
+    - targetCorrespondingSourceObject: {fileID: 103675454197892742, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278449548387185}
+    - targetCorrespondingSourceObject: {fileID: 103675454197892742, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278449548387184}
+    - targetCorrespondingSourceObject: {fileID: 7888332556343286171, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278450068506404}
+    - targetCorrespondingSourceObject: {fileID: 7888332556343286171, guid: 6cd7b2a9813738e4d90ff0be5128a08a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9162278450068506411}
   m_SourcePrefab: {fileID: 100100000, guid: 6cd7b2a9813738e4d90ff0be5128a08a, type: 3}
 --- !u!1 &1171880914237689958 stripped
 GameObject:
@@ -1411,9 +1571,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1171880914237689958}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 1.8, y: 0.6, z: 0.4}
   m_Center: {x: -0.4, y: 0, z: 0}
 --- !u!114 &6451146885372460771
@@ -1434,6 +1602,7 @@ MonoBehaviour:
     Value: 0.2
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1457,8 +1626,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1323511966099951568}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 1
   m_Height: 1
   m_Direction: 1
@@ -1485,6 +1663,7 @@ MonoBehaviour:
     Value: -1
   - Key: 2
     Value: -1
+  AllArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1508,8 +1687,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4701294584939035788}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.4
   m_Height: 2.5
   m_Direction: 0
@@ -1532,6 +1720,7 @@ MonoBehaviour:
     Value: 0.5
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 50
   LineArmor: []
   armorBreakEffect:
@@ -1555,8 +1744,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5698305910347319183}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.5
   m_Height: 2
   m_Direction: 0
@@ -1569,8 +1767,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5698305910347319183}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.5
   m_Height: 2
   m_Direction: 1
@@ -1593,6 +1800,7 @@ MonoBehaviour:
     Value: -0.2
   - Key: 1
     Value: -0.2
+  AllArmor: 0
   armorValue: 30
   LineArmor: []
   armorBreakEffect:
@@ -1616,9 +1824,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6531060631708536363}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 1.8, y: 0.6, z: 0.4}
   m_Center: {x: -0.4, y: 0, z: 0}
 --- !u!114 &4635389339364467272
@@ -1639,6 +1855,7 @@ MonoBehaviour:
     Value: 0.2
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1662,9 +1879,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6867620254655653868}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 2.4, y: 0.7, z: 1.5}
   m_Center: {x: 0.5, y: -0.4, z: 0}
 --- !u!114 &9162278449791992283
@@ -1685,6 +1910,7 @@ MonoBehaviour:
     Value: -0.3
   - Key: 1
     Value: -0.3
+  AllArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1705,8 +1931,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6888638931394162397}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.5
   m_Height: 2
   m_Direction: 0
@@ -1729,6 +1964,7 @@ MonoBehaviour:
     Value: 0.2
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1752,9 +1988,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7796017451957959714}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 1.8, y: 0.6, z: 0.4}
   m_Center: {x: -0.4, y: 0, z: 0}
 --- !u!114 &6849917054916810380
@@ -1775,6 +2019,7 @@ MonoBehaviour:
     Value: 0.2
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1798,8 +2043,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7886221158299396146}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.5
   m_Height: 2
   m_Direction: 0
@@ -1822,6 +2076,7 @@ MonoBehaviour:
     Value: 0.2
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1851,9 +2106,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8203809680380232744}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 1.8, y: 0.6, z: 0.4}
   m_Center: {x: -0.4, y: 0, z: 0}
 --- !u!114 &4754570342502972188
@@ -1874,6 +2137,7 @@ MonoBehaviour:
     Value: 0.2
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1891,7 +2155,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
 --- !u!95 &9162278450089584604
 Animator:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1908,7 +2172,8 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorControllerStateOnDisable: 0
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &4458183421515518649
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1942,8 +2207,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9103648355585937613}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.4
   m_Height: 2.5
   m_Direction: 0
@@ -1966,6 +2240,7 @@ MonoBehaviour:
     Value: 0.5
   - Key: 1
     Value: 0.5
+  AllArmor: 0
   armorValue: 50
   LineArmor: []
   armorBreakEffect:

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Photon.Pun;
 using UnityEngine;
 using Utils;
@@ -6,7 +6,7 @@ using Utils;
 public class SingletonNet<T> : MonoBehaviourPunCallbacks where T : SingletonNet<T>
 {
     /// <summary>
-    /// 外部访问，公共静态成员（单例）
+    /// 外部访问，公共静态成员（单例）?
     /// </summary>
     private static T instance;
     

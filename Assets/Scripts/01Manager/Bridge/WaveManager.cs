@@ -1,20 +1,28 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Core;
+using GameContract;
+
+using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEngine;
-using System.Linq;
-using Random = System.Random;
-using Unity.BaseTool;
-using Core;
+using UnityEngine.AI;
 using Utils;
-using GameContract;
+using Random = System.Random;
 using UnitWeightCfg = CampData_SO.UnitWeightCfg;
 
 public class WaveManager : TickBehaviour
 {
+    [SerializeField]
     string Suffix;
     int WaveCool;
+
+
+
+
     Dictionary<UnitTier, List<KVP<int, UnitWeightCfg>> > TierItemWeight;
-    List<KVP<int,UnitTier>> TierWeight;
+    [SerializeField]
+    List<SKVP<int,UnitTier>> TierWeight;
 
     List<List<UnitTier>> Patrol;
     //List<Wave> waveGroup;
@@ -34,29 +42,36 @@ public class WaveManager : TickBehaviour
         random = manager.BattleRandom;
         var task = TaskManager.Instance.nowTask;
         var cfg = task.campData;
+        Debug.LogError(cfg.ShowName+" "+cfg.Suffix+ task.campData.ShowName, task.campData);
         Suffix = cfg.Suffix;
         WaveCool = cfg.WaveCool;
         WaveUseObject = cfg.WaveUseObject;
-        var tmp = cfg.Templates.Values.RandomTake();
+        var tmp = cfg.templates.RandomTake();
 
-        TierWeight = tmp.Template.Select(item => new KVP<int, UnitTier>(item.Value.weight, item.Key)).ToList();
+
+        TierWeight = tmp.template.Select(item => new SKVP<int, UnitTier>(item.weight, item.tier)).Where(item=>item.Key>0).ToList();
         
         TierItemWeight = new Dictionary<UnitTier, List<KVP<int, UnitWeightCfg>>>();
-        foreach (var kvp in tmp.Template)
+       
+        foreach (var kvp in tmp.template)
         {
-            var list = kvp.Value.unitWeights
-                .Select(cfg => new KVP<int, UnitWeightCfg>(kvp.Value.weight, cfg))
+            var list = kvp.unitWeights
+                .Select(cfg => new KVP<int, UnitWeightCfg>(kvp.weight, cfg))
                 .ToList();
 
-            if (TierItemWeight.ContainsKey(kvp.Key))
-                TierItemWeight[kvp.Key] = list;
-            else
-                TierItemWeight.Add(kvp.Key, list);
-        }
+            Debug.LogError(string.Join(",",list.Select(item=>item.Value.unit.name).ToList()));
 
-        Patrol = cfg.Patrol
-            .Where(item => tmp.PatrolTemplate.Contains(item.Key))
-            .Select(group => group.Value.Template
+            if (TierItemWeight.ContainsKey(kvp.tier))
+                TierItemWeight[kvp.tier] = list;
+            else
+                TierItemWeight.Add(kvp.tier, list);
+        }
+        
+        Debug.LogError(cfg.ShowName + "选择" + tmp.name + "模板");
+
+        Patrol = cfg.patrolCfgs
+            .Where(item => tmp.PatrolTemplate.Contains(item.name))
+            .Select(group => group.units
                 .SelectMany(item => Enumerable.Repeat(0, item.Value)
                     .Select(_ => item.Key)
                 ).ToList()
@@ -69,7 +84,7 @@ public class WaveManager : TickBehaviour
 
     public bool CreatWave(WaveCreateParams param)
     {
-        //时间没到或者不是强制刷的
+        //时间没到或者不是强制刷新
         if (!param.extraWave && Time.time < m_lastWaveTime + WaveCool) return false;
 
         m_lastWaveTime = Time.time;
@@ -114,18 +129,32 @@ public class WaveManager : TickBehaviour
         return re;
     }
 
-    public GameObject CreatUnit(UnitTier tier, Vector3 pos,float range, bool NoVfx = true)
+    public GameObject CreatUnit(UnitTier tier, Vector3 pos,float range, bool IsFixed = true)
     {
         //var random = BattleManager.Instance.BattleRandom;
         var item = TierItemWeight[tier].WeightTake(100, random);
-
-        if (UnityEngine.AI.NavMesh.SamplePosition(pos, out var hit, 10, UnityEngine.AI.NavMesh.AllAreas))
+        //先取到地点
+        if (NavMesh.SamplePosition(pos, out var hit, 50, NavMesh.AllAreas))
         {
             pos = hit.position;
         }
 
-        var go = Object.Instantiate(item.unit, pos + random.RandomVector2().ToVector3() * range, Quaternion.Euler(random.RandomVector2().ToVector3()), null);
-        if (NoVfx) go.GetComponent<I_AIController>().BirthDuration = 0;
+        //再随机偏移
+        if (NavMesh.SamplePosition(pos + random.RandomVector2().ToVector3() * range, out hit, 10, UnityEngine.AI.NavMesh.AllAreas))
+        {
+            pos = hit.position;
+        }
+        else
+        {
+            Debug.LogError("错误:创建单位的目标点"+ pos+"不存在");
+        }
+
+        var go = Object.Instantiate(item.unit, pos, Quaternion.Euler(random.RandomVector2().ToVector3()), manager.ACCont.transform);
+        if (IsFixed)
+        {
+            go.GetComponent<I_AIController>().BirthDuration = 0;
+            go.GetComponent<I_Actor>().IsFixed = true;
+        }
         return go;
     }
 
@@ -176,19 +205,19 @@ public class ZergWave :I_TickClass, System.IDisposable
         units = new();
         center = param.center;
 
-        GlobalEventManager.OnEnemyDead += OnUnitDeath;
+        BattleEventSub.OnEnemyDead += OnUnitDeath;
 
         if (param.points == null)
         {
-            perTickCreat = Mathf.Max(1, Mathf.CeilToInt(creats.Count / 45f));//保底1烟
+            perTickCreat = Mathf.Max(1, Mathf.CeilToInt(creats.Count / 45f));//保底1个
             points = new Vector3[perTickCreat];
             float theta = random.Range(0, 2 * Mathf.PI);
             for (int i = 0; i < perTickCreat; ++i)
             {
-                var dx = random.Range(-1, 1f);//约120度
+                var dx = random.Range(-1, 1f);//范围20度
                 points[i] = center + new Vector3(Mathf.Cos(theta + dx), 0, Mathf.Sin(theta + dx)) * random.Range(param.range, param.range + 10);
 
-                if (UnityEngine.AI.NavMesh.SamplePosition(points[i], out var hit, 100, UnityEngine.AI.NavMesh.AllAreas))
+                if (NavMesh.SamplePosition(points[i], out var hit, 100, NavMesh.AllAreas))
                 {
                     points[i] = hit.position;
                 }
@@ -202,12 +231,11 @@ public class ZergWave :I_TickClass, System.IDisposable
         {
             perTickCreat = param.points.Length;
             points = new Vector3[perTickCreat];
-
             for (int i = 0; i < perTickCreat; ++i)
             {
                 points[i] = param.points[i] + random.RandomVector2().ToVector3() * random.Range(0,param.range);
 
-                if (UnityEngine.AI.NavMesh.SamplePosition(points[i], out var hit, 100, UnityEngine.AI.NavMesh.AllAreas))
+                if (NavMesh.SamplePosition(points[i], out var hit, 100,NavMesh.AllAreas))
                 {
                     points[i] = hit.position;
                 }
@@ -222,7 +250,7 @@ public class ZergWave :I_TickClass, System.IDisposable
     public void Dispose()
     {
         if (IsDisposed) return;
-        GlobalEventManager.OnEnemyDead -= OnUnitDeath;
+        BattleEventSub.OnEnemyDead -= OnUnitDeath;
 
         units?.Clear();
         waveUseObject?.Clear();
@@ -269,9 +297,13 @@ public class ZergWave :I_TickClass, System.IDisposable
                         {
                             var dir = Quaternion.LookRotation(points[i]-center);
                             dir.eulerAngles = new Vector3(dir.eulerAngles.x,0, dir.eulerAngles.z);
+
                             var go=Object.Instantiate(tmp,points[i]+ random.InsideUnitCircle().ToVector3()*10, dir,null);
                             units.Add(go.GetComponent<Actor>());
-                            go.GetComponent<Unity.FPS.AI.EnemyController>().SetNavDestination(center + random.InsideUnitCircle().ToVector3() * 5);
+
+                            go.GetComponent<EnemyController>().SetNavDestination(
+                                center + random.InsideUnitCircle().ToVector3() * 5
+                            );
 
                         }
                         else
@@ -326,18 +358,18 @@ public class ZergWave :I_TickClass, System.IDisposable
         switch (state)
         {
             case WaveState.Start:
-                if(tip) WndManager.Instance.CreatNotice("Yuuka2", "WaveStart_Zerg");
+                if(tip) WndManager.Instance.CreatNotice("Yuuka", "WaveStart_Zerg");
 
-                AudioManager.PlayMusic(AudioManager.MusicGroup.Wave, 0.3f);
+                AudioSvc.PlayMusic(AudioSvc.MusicGroup.Wave, 0.3f);
                 break;
             case WaveState.Ongoing:
                 time = 0;
                 break;
             case WaveState.NearEnd:
-                if (tip) WndManager.Instance.CreatNotice("Yuuka2", "WaveEnd_Zerg");
+                if (tip) WndManager.Instance.CreatNotice("Yuuka", "WaveEnd_Zerg");
                 break;
             case WaveState.End:
-                AudioManager.PlayMusic(AudioManager.MusicGroup.Game,0.2f);
+                AudioSvc.PlayMusic(AudioSvc.MusicGroup.Game,0.2f);
                 break;
         }
     }

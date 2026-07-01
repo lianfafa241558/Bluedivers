@@ -1,4 +1,4 @@
-using Core;
+﻿using Core;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;

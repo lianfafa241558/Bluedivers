@@ -1,5 +1,5 @@
-using System.Collections.Generic;
-using Unity.BaseTool;
+﻿using System.Collections.Generic;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;

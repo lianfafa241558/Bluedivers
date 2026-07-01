@@ -1,10 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
+using Utils;
 using static WndTools.WndRootTool;
 
-public class NoticeWnd : WindowRoot
+public class NoticeWnd : Window
 {
     [SerializeField]
     private Transform portrait, noiteName, desc;
@@ -16,28 +17,51 @@ public class NoticeWnd : WindowRoot
     private float interval;
 
     private NoticeState noticeState;
-    private Queue<(NoticeData_SO, Func<bool>, float)> queue=new();
+    private Queue<(NoticeData, float vaildTime)> queue=new();
+    private List<NoticeData> wait = new();
+    private List<float> waitTimes = new();
     private int nowPriority=-1;
     private string nowSourceName;
 
-    public void Creat(NoticeData_SO data, Func<bool> func,float vaildTime=-1)
+    public struct NoticeData
     {
-        if (GameRoot.GameState == Core.GameStateEnum.GameEnd) return;
-        if (!data.IsValid()) return;
-        //Debug.LogError("新的优先级是"+ data.Priority+"当前优先级"+ nowPriority);
-        //加入队列
-        if(data.Priority <= nowPriority)
+        public RuntimeSoundData data;
+        public string sourceName;
+        public Sprite portrait;
+        public bool allowWait;
+        public Func<bool> func;
+        public float vaildTime;
+    }
+
+    public void Creat(NoticeData source)
+    {
+        if (GameState == Core.GameStateEnum.GameEnd) return;
+        if (!source.data.IsValid()) return;
+        // 检查特定方法是否有正在执行??InvokeRepeating
+        if (!IsInvoking(nameof(UpdateWait)))
         {
-            queue.Enqueue(new(data, func,Time.time+(vaildTime==-1?99: vaildTime)));
+            InvokeRepeating(nameof(UpdateWait), 0, 0.1f);
+        }
+
+        if (source.allowWait && source.data.Delay > 0)
+        {
+            wait.Add(source);
+            waitTimes.Add(source.data.Delay);
+        }
+        //Debug.LogError("新的优先级是"+ data.Priority+"当前优先??+ nowPriority);
+        //加入队列
+        else if(source.data.Cfg.priority <= nowPriority)
+        {
+            queue.Enqueue(new(source,Time.time+(source.vaildTime == -1?99: source.vaildTime)));
         }
         //直接打断
         else
         {
-            Creat(data.Desc, data.Clip, data.SourceName, data.Portrait,data.Priority);
+            Creat(source.data.Desc, source.data.Clip , source.sourceName, source.portrait, source.data.Cfg.priority);
         }
     }
 
-    public void Creat(string desc, AudioClip clip,string name,Sprite sprite,int priority)
+    private void Creat(string desc, AudioClip clip,string name,Sprite sprite,int priority)
     {
         nowPriority = priority;
         SetWndState(true);
@@ -47,7 +71,7 @@ public class NoticeWnd : WindowRoot
         time = 0.5f;
         if (clip) interval = Mathf.Min(clip.length / desc.Length, 0.3f);
         else interval = 0.35f - Mathf.Min(desc.Length * 0.01f, 0.2f);
-        //Debug.LogError("计算得出的间隔"+ interval);
+        //Debug.LogError("计算得出的间??+ interval);
         noticeState = NoticeState.Load;
         SetText(this.desc, "");
         SetSprite(portrait, sprite);
@@ -68,21 +92,14 @@ public class NoticeWnd : WindowRoot
 
     public void Clear()
     {
-        //Debug.LogError("清除");
+        //Debug.LogError("清空");
         queue.Clear();
         noticeState = NoticeState.Exit;
         SetWndState(false);
         audioSource.Stop();
         //audioSource2.Stop();
     }
-    public override void Init()
-    {
-
-    }
-    public override void UnInit()
-    {
-
-    }
+   
     protected override void FirstShowWnd()
     {
 
@@ -94,7 +111,7 @@ public class NoticeWnd : WindowRoot
     }
     protected override void ShowWnd()
     {
-        //问题出在，如果是已经显示窗口的时候启动窗口，这里不会被调用
+        //问题出在，如果是已经显示窗口的时候启动窗口，这里不会被调??
         //PlayAnim("Entry",true);
     }
 
@@ -113,9 +130,25 @@ public class NoticeWnd : WindowRoot
                     time = 0.5f;//持续0.5秒的动画
                     break;
                 case NoticeState.Exit:
-                    //Debug.LogError("退出");
+                    //Debug.LogError("退?");
                     SetWndState(false);
                     break;
+            }
+        }
+
+    }
+
+    private void UpdateWait()
+    {
+        for (int i = wait.Count - 1; i >= 0; --i)
+        {
+            if ((waitTimes[i] -= 0.1f) <= 0)
+            {
+                NoticeData temp = wait[i];
+                temp.allowWait = false;
+                Creat(temp);
+                wait.RemoveAt(i);
+                waitTimes.RemoveAt(i);
             }
         }
     }
@@ -138,24 +171,33 @@ public class NoticeWnd : WindowRoot
             while(queue.Count > 0)
             {
                 var item = queue.Dequeue();
-                if( Time.time < item.Item3 && (!item.Item2.IsValid() || item.Item2.Invoke()))
+                if( Time.time < item.Item2 && (!item.Item1.func.IsValid() || item.Item1.func.Invoke()))
                 {
                     //继续下一个
-                    Creat(item.Item1.Desc,item.Item1.Clip, item.Item1.SourceName, item.Item1.Portrait, item.Item1.Priority);
+                    var next = item.Item1;
+                    Creat(next.data.Desc, next.data.Clip, next.sourceName, next.portrait, next.data.Cfg.priority);
+
                     return;
                 }
             }
             //正常结束
             {
-                //Debug.LogError("播放完成，等待2S");
+                //Debug.LogError("播放完成，等2S");
                 //SetText(desc, nowDesc);
-                //其他进入了之后再切入end？
+                //其他进入了之后再切入end??
                 noticeState= NoticeState.End;
                 time = 2;
                 nowPriority = -1;
             }
         }
     }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        CancelInvoke();
+    }
+
 
     private enum NoticeState
     {

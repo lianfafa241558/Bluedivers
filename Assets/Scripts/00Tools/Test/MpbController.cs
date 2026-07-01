@@ -1,5 +1,6 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 namespace Utils
 {
@@ -7,28 +8,33 @@ namespace Utils
     public class MpbController
     {
         private MaterialPropertyBlock mpb;
-        private Renderer[] arr;
+        private List<Renderer> arr;
 
         public MpbController(Transform trans)
         {
-            List<Renderer> re = new();
-            re.Add(trans.GetComponentInChildren<Renderer>());
-            for (int i = 0; i < trans.childCount; i++)
-            {
-                re.Add(trans.GetChild(i).GetComponentInChildren<Renderer>());
-            }
-            arr = re.ToArray();
+            arr = trans.GetComponentsInChildren<Renderer>().ToList();
             mpb = new();
         }
         public MpbController(Renderer[] arr)
         {
-            this.arr = arr;
+            this.arr = arr.ToList();
             mpb = new();
         }
         public MpbController(Renderer item)
         {
-            this.arr = new Renderer[] { item };
+            this.arr = new () { item };
             mpb = new();
+        }
+
+        public void Add(Transform trans)
+        {
+            arr.AddRange(trans.GetComponentsInChildren<Renderer>());
+            arr = arr.Distinct().ToList();
+        }
+        public void Remove(Transform trans)
+        {
+            var re = trans.GetComponentsInChildren<Renderer>();
+            foreach(var item in re) arr.Remove(item);
         }
 
         public MpbController Set(string name, float value)
@@ -51,6 +57,11 @@ namespace Utils
             mpb.SetTexture(name, value.texture);
             return this;
         }
+        public MpbController Set(string name, Texture value)
+        {
+            mpb.SetTexture(name, value);
+            return this;
+        }
         public MpbController Set(string name, Vector4 value)
         {
             mpb.SetVector(name, value);
@@ -59,9 +70,10 @@ namespace Utils
 
         public void Apply()
         {
-            for (int i = 0, l = arr.Length; i < l; ++i)
+            for (int i = 0, l = arr.Count; i < l; ++i)
             {
-                arr[i].SetPropertyBlock(mpb);
+                if (arr[i] != null) arr[i].SetPropertyBlock(mpb);
+                else Debug.LogError("mpb的第"+i+"个渲染器为空");
             }
         }
     }

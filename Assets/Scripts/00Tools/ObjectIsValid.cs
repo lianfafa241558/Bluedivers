@@ -8,7 +8,7 @@ public static class ObjectIsValid
     public static bool IsValid(this UnityEngine.Object obj)
       => obj != null && !ReferenceEquals(obj, null) && !obj.Equals(null);
 
-    // 普通C#对象(没办法判断销毁)
+    // 普通C#对象(没办法判断销毁
     public static bool IsValid(this System.Object obj)
         => obj != null && !obj.Equals(null);
 
@@ -34,7 +34,7 @@ public static class ObjectIsValid
             return false;
         }
 
-        // 第二步：强制转换为Unity Object（已确定是Unity对象，无需判空）
+        // 第二步：强制转换为Unity Object（已确定是Unity对象，无需判空)
         UnityEngine.Object unityObj = interfaceObj as UnityEngine.Object;
 
         // 第三步：复用Unity Object的IsValid逻辑，校验是否被销毁

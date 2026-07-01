@@ -1,7 +1,7 @@
 
 using System.Collections.Generic;
 using Core.Interface;
-using Unity.BaseTool;
+
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -22,7 +22,7 @@ namespace Core
         #region 生命周期
         void I_GlobaManager.Init()
         {
-
+           
             foreach (AudioGroups item in System.Enum.GetValues(typeof(AudioGroups)))
             {
                 mixerDic.TryAdd(item, audioMixer.FindMatchingGroups(item.ToString())[0]);
@@ -121,7 +121,7 @@ namespace Core
             var cilp = info.cilp ??(!string.IsNullOrEmpty(info.path)? Instance.PathToCilp("SFX/" + info.path, info.cache):null);
             if (!cilp)
             {
-                Debug.LogError("找不到音效:"+ info.cilp+"或者"+ info.path);
+                Debug.LogError("找不到音效"+ info.cilp+"或者"+ info.path);
                 return null;
             }
             //禁止重复
@@ -313,28 +313,41 @@ namespace Core
 
         #endregion
 
-        #region 音量
-        /*
+        #region 辅助方法
+
         /// <summary>
-        /// 设置主音量
+        /// 将分贝值转换为百分比浮点数(0分贝=100)
         /// </summary>
-        /// <param name="value"></param>
-        public static void SetMasterVolume(float value)
+        public static float DBToPet(float dB)
         {
-            if (value <= 0)
-                value = 0.001f;
-            float valueInDb = Mathf.Log10(value) * 20;
-            Instance.audioMixer.SetFloat("vMaster", value);
+            return Mathf.Pow(10f, dB / 20f) * 100;
         }
         /// <summary>
-        /// 获取主音量
+        /// 将百分比浮点数转换为分贝值(1=0dB)
         /// </summary>
-        /// <returns></returns>
-        public static float GetMasterVolume()
+        public static float PetToDB(float percentage)
         {
-            Instance.audioMixer.GetFloat("vMaster", out var valueInDb);
-            return Mathf.Pow(10f, valueInDb / 20.0f);
-        }*/
+            if (percentage <= 1f)
+                return -80f;
+            return 20f * Mathf.Log10(percentage / 100);
+        }
+
+        /// <summary>
+        /// 为指定GameObject创建并配置AudioSource
+        /// </summary>
+        public static AudioSource CreatSource(GameObject gameObject, AudioGroups groups)
+        {
+            var source = gameObject.AddComponent<AudioSource>();
+            source.outputAudioMixerGroup = GetMixGroup(groups);
+            source.playOnAwake = false;
+            source.loop = true;
+            source.spatialBlend = 1.0f;
+            source.spatialize = true;
+            source.minDistance = 10f;
+            source.maxDistance = 60f;
+            return source;
+        }
+
         #endregion
 
     }
@@ -403,10 +416,6 @@ namespace Core
         Enemy,
         Player,
         UI,
+        Presenter,
     }
 }
-
-
-
-
-

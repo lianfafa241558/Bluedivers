@@ -1,6 +1,6 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;

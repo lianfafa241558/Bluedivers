@@ -1,13 +1,14 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Unity.BaseTool;
+using Core;
+using GameContract;
 using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
 
-public class HpWnd : WindowRoot
+public class HpWnd : Window
 {
     [SerializeField]
     HpItemBase SoilderPrefab, BossPrefab;
@@ -15,17 +16,11 @@ public class HpWnd : WindowRoot
     Dictionary<GameObject, HpItemBase> dic=new();
     AutoObjectPool<GameObject, HpItemBase> pool;
 
-    public override void Init()
-    {
-
-    }
-    public override void UnInit()
-    {
-
-    }
 
     protected override void FirstShowWnd()
     {
+
+
         pool = new(
             (item) =>//更新
             {
@@ -53,18 +48,20 @@ public class HpWnd : WindowRoot
         5);
 
     }
+
     protected override void ShowWnd()
     {
-        GlobalEventManager.OnEnemyCreate += OnEnemyCreate;
-        GlobalEventManager.OnEnemyDead += OnEnemyDead;
-        GlobalEventManager.OnUnitHit += OnUnitHit;
+
+        BattleEventSub.OnEnemyCreate += OnEnemyCreate;
+        BattleEventSub.OnEnemyDead += OnEnemyDead;
+        BattleEventSub.OnUnitHit += OnUnitHit;
     }
 
     protected override void HideWnd()
     {
-        GlobalEventManager.OnEnemyCreate -= OnEnemyCreate;
-        GlobalEventManager.OnEnemyDead -= OnEnemyDead;
-        GlobalEventManager.OnUnitHit -= OnUnitHit;
+        BattleEventSub.OnEnemyCreate -= OnEnemyCreate;
+        BattleEventSub.OnEnemyDead -= OnEnemyDead;
+        BattleEventSub.OnUnitHit -= OnUnitHit;
     }
     private void Update()
     {
@@ -107,7 +104,7 @@ public class HpWnd : WindowRoot
         {
             item.Refresh();
         }
-        else if(victim.GetComponent<Actor>().UseHpBar)
+        else if(victim.TryGetComponent(out Actor actor)&&actor.UseHpBar)
         {
             pool.Get(victim).Set(victim);
         }

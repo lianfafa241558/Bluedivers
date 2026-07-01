@@ -1,10 +1,9 @@
 using System;
 using System.IO;
 using System.Text;
-using Unity.BaseTool;
 using UnityEngine;
 
-namespace BaseLibrary
+namespace Core
 {
     public abstract class ArchivesDataBase_SO : ScriptableObject
     {
@@ -15,9 +14,9 @@ namespace BaseLibrary
 
 
         [Header("用户")]
-        [CustomLabel("名称")]
+        [InspectorName("名称")]
         public string playerName;
-        [CustomLabel("UID")]
+        [InspectorName("UID")]
         public int UID;
 
         #region IO
@@ -82,7 +81,7 @@ namespace BaseLibrary
         if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead))
         {
                 Permission.RequestUserPermission(Permission.ExternalStorageRead);
-            teststring += "获得到权限+\n";
+            teststring += "获得到权限\n";
         }
 #endif
             string DeletePaths = deletePath + tmp.Path();
@@ -134,7 +133,7 @@ namespace BaseLibrary
             
             //foreach (var i in propertyS)
             //{
-            //    Debug.LogWarning("名称：" + i.Name + "类型：" + i.PropertyType);
+            //    Debug.LogWarning("名称:" + i.Name + "类型:" + i.PropertyType);
             //}
             //Debug.LogError("初始化属性反射"); 
         }

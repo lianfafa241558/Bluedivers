@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using GameContract;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -11,9 +11,12 @@ namespace Unity.FPS.Game
     {
 
         [Foldout("点位和信息", true)]
-        [CustomLabel("齐射")]
+        [InspectorName("齐射")]
         public bool UseManyMuzzle;
-        [CustomLabel("发射点位")]
+        /// <summary>
+        /// 会自动根据齐射数量修改一次消耗的弹药量
+        /// </summary>
+        [InspectorName("发射点位")]
         public List<Transform> WeaponManyMuzzles;
 
 
@@ -23,6 +26,7 @@ namespace Unity.FPS.Game
             if(m_Initialized)
             {
                 Ammo.CurrValue = Ammo.FinalValue;
+                Magazine.CurrValue = Magazine.FinalValue;
             }
         }
 
@@ -30,17 +34,19 @@ namespace Unity.FPS.Game
         {
             base.LogicInit();
             if (UseManyMuzzle) ShootCost = WeaponManyMuzzles.Count;
-            WantsToShoot = true;
+            else if(WeaponManyMuzzles.Count>0) Muzzles = WeaponManyMuzzles.ToArray();
+            if (AttrFinal(Attr.StartCool) == 0) WantsToShoot = true;
         }
 
         public override void LogicTick()
         {
             base.LogicTick();
+            if (AttrFinal(Attr.StartCool) > 0) WantsToShoot = ShootInterval.CurrValue >= new PEInt(-0.1f);
             TryShoot();//每帧都尝试射击
         }
 
         /// <summary>
-        /// 进行射击(多枪口)
+        /// 进行射击(多枪管)
         /// </summary>
         /// <returns></returns>
         protected override void HandleShoot()
@@ -60,10 +66,16 @@ namespace Unity.FPS.Game
                 for (int i = 0; i < bulletsPerShotFinal; ++i)
                 {
                     Vector3 shotDirection = GetShotDirectionWithinSpread(muzzle);
-
-                    ProjectileBase newProjectile = Instantiate(ProjectilePrefab, muzzle.position,
+                    Vector3 shotPos = muzzle.position;
+                    if (AttrFinal(Attr.BulletsOffect) > 0)
+                    {
+                        Vector2 point = RandomUtils.InsideUnitCircle() * AttrFinal(Attr.BulletsOffect).RawFloat;
+                        shotPos = muzzle.TransformPoint(point);
+                    }
+                    ProjectileBase newProjectile = VFXManager.Creat(ProjectilePrefab, shotPos,
                         Quaternion.LookRotation(shotDirection));
                     newProjectile.Shoot(this);
+                    Debug.DrawLine(shotPos, muzzle.position+ shotDirection * CurrentWeaponRange,Color.red,2);
                 }
                 ShootFlash(muzzle);
             }
@@ -84,5 +96,10 @@ namespace Unity.FPS.Game
             Owner = owner;
         }
 
+
+
+        
     }
+
+   
 }

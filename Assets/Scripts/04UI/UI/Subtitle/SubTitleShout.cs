@@ -1,4 +1,4 @@
-using Core;
+﻿using Core;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -13,8 +13,8 @@ public class SubTitleShout : SubtitleBase
     public override SubtitleBase Creat(I_Actor owner, GameObject target, Transform parent,bool alwaysShow)
     {
         base.Creat(owner, target, parent, alwaysShow);
-        GlobalEventManager.OnMark += OnMark;
-        GlobalEventManager.OnActorSpeech += OnActorSpeech;
+        GlobalEventSub.OnMark += OnMark;
+        GlobalEventSub.OnActorSpeech += OnActorSpeech;
         if(owner.transform.TryGetComponent(out Health health))
         {
             health.OnRevive += OnRevive;
@@ -30,8 +30,8 @@ public class SubTitleShout : SubtitleBase
 
     private void OnDestroy()
     {
-        GlobalEventManager.OnMark -= OnMark;
-        GlobalEventManager.OnActorSpeech -= OnActorSpeech;
+        GlobalEventSub.OnMark -= OnMark;
+        GlobalEventSub.OnActorSpeech -= OnActorSpeech;
         if (owner.IsValid() && owner.transform.TryGetComponent(out Health health))
         {
             health.OnRevive += OnRevive;
@@ -74,22 +74,14 @@ public class SubTitleShout : SubtitleBase
     }
 
 
-    private void OnActorSpeech(GameObject go, NoticeData_SO data)
+    private void OnActorSpeech(GameObject go, RuntimeSoundData data)
     {
         if (go != owner.gameObject || GetDistance() > 100) return;
         SetActive(gameObject, true);
         SetText(desc, data.Desc);
         //Debug.LogError("喊叫"+ data.Desc);
         LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)desc.parent);
-        AudioManager.PlaySound(new() {
-            cilp = data.Clip,
-            vector =  go.transform.position,
-            range = 40,
-            group = AudioGroups.Player,
-            volume = 1,
-            delay=  data.Delay,
-            space = data.Space?1:0
-        });
+        AudioSvc.PlaySound(data);
         
         lastTime = Time.time;
         showTime = data.Clip.length + 2;
@@ -107,19 +99,19 @@ public class SubTitleShout : SubtitleBase
         switch (obj.ShowName)
         {
             case "蘑菇":
-                return "马喜荣!";
+                return "马喜";
             default:
                 return "嘿，看这里！";
         }
     }
     void OnDeath(GameObject _)
     {
-        mainCamera = Camera.main;
+        //mainCamera = Camera.main;
         transform.GetRect().anchoredPosition = baseVector;
     }
     void OnRevive()
     {
-        mainCamera = Camera.main;
+        //mainCamera = Camera.main;
         transform.GetRect().anchoredPosition = baseVector;
     }
 }

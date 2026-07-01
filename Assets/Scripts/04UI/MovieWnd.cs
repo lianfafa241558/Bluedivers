@@ -5,7 +5,7 @@ using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
 
-public class MovieWnd : WindowRoot
+public class MovieWnd : Window
 {
     [SerializeField]
     private Transform text;
@@ -25,9 +25,10 @@ public class MovieWnd : WindowRoot
         top.sizeDelta =new(top.sizeDelta.x,height);
         under.sizeDelta = new(top.sizeDelta.x, height);
     }
-
+    
     private void Update()
     {
+        if (!resManager.AsyncAllowSkip()) return;
         float pro = resManager.AsyncLoadSceneProgress();
         if (lastPro<100 && pro>=100)
         {
@@ -44,14 +45,7 @@ public class MovieWnd : WindowRoot
 
         WindowState = WindowStateEnum.Game;
     }
-    public override void Init()
-    {
-
-    }
-    public override void UnInit()
-    {
-
-    }
+   
     protected override void FirstShowWnd()
     {
         

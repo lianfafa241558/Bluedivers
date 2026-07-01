@@ -1,4 +1,4 @@
-// <copyright file="OnPointerOverTooltip.cs" company="Exit Games GmbH">
+﻿// <copyright file="OnPointerOverTooltip.cs" company="Exit Games GmbH">
 // </copyright>
 // <summary>
 // Set focus to a given photonView when pointed is over

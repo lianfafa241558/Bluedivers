@@ -1,4 +1,4 @@
-using GameContract;
+﻿using GameContract;
 using UnityEngine;
 
 namespace EffectComp

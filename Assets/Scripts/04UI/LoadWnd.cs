@@ -1,9 +1,9 @@
 using Core;
-using Unity.BaseTool;
+
 using UnityEngine;
 using static WndTools.WndRootTool;
 
-public class LoadWnd : WindowRoot
+public class LoadWnd : Window
 {
     public Sprite[] bgs;
     public Transform BG;
@@ -12,24 +12,20 @@ public class LoadWnd : WindowRoot
     private float time;
     [SerializeField]
     private bool loadFinal;
-    public override void Init()
-    {
-    }
-    public override void UnInit()
-    {
-    }
+
     protected override void FirstShowWnd()
     {
-
+        //GlobalEventSub.OnGameStateChange += GameStateChange;
     }
 
 
     protected override void ShowWnd()
     {
         SetSprite(BG,bgs.RandomTake());
-        GlobalEventManager.OnFakeBg(BG);
-        time = 2;//起码保持2秒
+        //GlobalEventManager.OnFakeBg(BG);
+        time = 2;//起码保持2??
         loadFinal = false;
+        anim.Play("BlackEntry", 0, 0);
     }
     protected override void HideWnd()
     {
@@ -42,22 +38,34 @@ public class LoadWnd : WindowRoot
         {
             anim.Play("Exit", 0, 0);
             loadFinal = true;
-            AudioManager.StopMusic();
+            
+            AudioSvc.StopMusic();
         }
     }
+
+    /// <summary>
+    /// 动画事件
+    /// </summary>
+    private void HideBg()
+    {
+        //WndManager.WindowState = WindowStateEnum.Game;
+        resManager.AsyncContinueLoadScene();
+        //GlobalEventManager.OnFakeBg(null);
+    }
+    /*
     public void Entry(bool isWhite)
     {
-        GameRoot.GameState = GameStateEnum.Load;
+        
         SetWndState(true);
         anim.Play(isWhite? "WhiteEntry": "BlackEntry", 0, 0);
     }
 
-    private void HideBg()
-    {
-        //GameRoot.WindowState = WindowStateEnum.Game;
-        resManager.AsyncContinueLoadScene();
-        //GlobalEventManager.OnFakeBg(null);
-    }
 
+    private void GameStateChange(GameStateEnum exit, GameStateEnum entry)
+    {
+        if(entry == GameStateEnum.Load) Entry(false);
+        else if(exit == GameStateEnum.Load) SetWndState(false);
+    }
+    */
 
 }

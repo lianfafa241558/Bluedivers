@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using static GameRoot;
 using static Core.InputManagerBase<InputState, Core.WindowStateEnum>;
-using Unity.BaseTool;
+
 using Core;
 using Tool = Utils.Tool;
 
@@ -16,48 +16,49 @@ public class InputManager : InputManagerBase<InputState, WindowStateEnum>
     public WindowStateEnum nowState;
     public List<InputItem> InputList => inputList;
 
-    public override WindowStateEnum NowWindowState => GameRoot.WindowState;
+    public override WindowStateEnum NowWindowState => WndManager.WindowState;
 
 }
 
 
 public enum InputState
 {
-    [CustomLabel("设置界面")] Esc,
-    [CustomLabel("水平轴")] Horizontal,
-    [CustomLabel("垂直轴")] Vertical,
-    [CustomLabel("奔跑")] Shift,
-    [CustomLabel("跳跃")] Jump,
-    [CustomLabel("交互")] Operate,
-    [CustomLabel("投掷")] Throw,
-    [CustomLabel("装弹")] Reload,
-    [CustomLabel("开火")] Fire,
-    [CustomLabel("瞄准")] Aim,
-    [CustomLabel("下蹲")] Crouch,
+    [InspectorName("设置界面")] Esc,
+    [InspectorName("水平")] Horizontal,
+    [InspectorName("垂直")] Vertical,
+    [InspectorName("奔跑")] Shift,
+    [InspectorName("跳跃")] Jump,
+    [InspectorName("交互")] Operate,
+    [InspectorName("投掷")] Throw,
+    [InspectorName("装弹")] Reload,
+    [InspectorName("开火")] Fire,
+    [InspectorName("瞄准")] Aim,
+    [InspectorName("下蹲")] Crouch,
 
-    [CustomLabel("武器1")] Weapon1,
-    [CustomLabel("武器2")] Weapon2,
-    [CustomLabel("武器3")] Weapon3,
-    [CustomLabel("武器4")] Weapon4,
+    [InspectorName("武器1")] Weapon1,
+    [InspectorName("武器2")] Weapon2,
+    [InspectorName("武器3")] Weapon3,
+    [InspectorName("武器4")] Weapon4,
 
-    [CustomLabel("轨道支援面板")] Airdrop,
-    [CustomLabel("左")] Left,
-    [CustomLabel("上")] Up,
-    [CustomLabel("右")] Right,
-    [CustomLabel("下")] Down,
+    [InspectorName("轨道支援面板")] Airdrop,
+    [InspectorName("左")] Left,
+    [InspectorName("上")] Up,
+    [InspectorName("右")] Right,
+    [InspectorName("下")] Down,
 
-    [CustomLabel("上升")] Rise,
-    [CustomLabel("下降")] Fall,
+    [InspectorName("上升")] Rise,
+    [InspectorName("下降")] Fall,
+    [InspectorName("丢弃装备")] Equip,
 
-    [CustomLabel("呼叫Kei")] Mule,
+    [InspectorName("呼叫Kei")] Mule,
 
-    [CustomLabel("显示-隐藏")] H,
-    [CustomLabel("暂停-运行")] J,
+    [InspectorName("显示-隐藏")] H,
+    [InspectorName("暂停-运行")] J,
 
-    [CustomLabel("加速")] Acceler,
-    [CustomLabel("减速")] Deceler,
+    [InspectorName("加速")] Acceler,
+    [InspectorName("减速")] Deceler,
 
-    [CustomLabel("小地图")] MiniMap,
+    [InspectorName("小地图")] MiniMap,
 }
 
 #if UNITY_EDITOR
@@ -85,7 +86,7 @@ class InputManagerEditor : Editor
         //KVP<InputState, InputItem> data = (KVP<InputState, InputItem>)Convert.ChangeType(target, typeof(KVP<InputState, InputItem>));
 
         float originalLabelWidth = EditorGUIUtility.labelWidth;
-        EditorGUIUtility.labelWidth = 80; // 设置标签宽度为0，即不显示标签文本
+        EditorGUIUtility.labelWidth = 80; // 设置标签宽度，即不显示标签文本
         EditorGUILayout.PropertyField(state, new GUIContent("界面"), GUILayout.Width(200));
         EditorGUIUtility.labelWidth = originalLabelWidth; // 恢复原始标签宽度
 
@@ -107,7 +108,7 @@ class InputManagerEditor : Editor
             if (state.intValue != window.intValue) continue;
 
             EditorGUILayout.Space();
-            //Debug.LogWarning("第" + i + "个数据" + foldouts[i][0]);
+            //Debug.LogWarning("?" + i + "个数" + foldouts[i][0]);
             foldouts[i][0] = EditorGUILayout.Foldout(foldouts[i][0], (Tool.GetEnumString((InputState)typeProp.intValue)));
             if (!foldouts[i][0])
             {
@@ -119,14 +120,14 @@ class InputManagerEditor : Editor
                 SerializedProperty negativeMainValueProp = elementProp.FindPropertyRelative("negativeMainValue");
                 SerializedProperty negativeMpareValueProp = elementProp.FindPropertyRelative("negativeSpareValue");
 
-                EditorGUIUtility.labelWidth = 100; // 设置标签宽度为0，即不显示标签文本
-                EditorGUILayout.PropertyField(positivemainValueProp, new GUIContent("主键"), GUILayout.Width(200));//总宽200-100标签
+                EditorGUIUtility.labelWidth = 100; // 设置标签宽度，即不显示标签文本
+                EditorGUILayout.PropertyField(positivemainValueProp, new GUIContent("主键"), GUILayout.Width(200));
                 EditorGUILayout.PropertyField(positivespareValueProp, new GUIContent("备用键"), GUILayout.Width(200));
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.Space(105);
-                EditorGUILayout.PropertyField(negativeMainValueProp, new GUIContent("主键-否定"), GUILayout.Width(200));//总宽200-100标签
-                EditorGUILayout.PropertyField(negativeMpareValueProp, new GUIContent("备用键-否定"), GUILayout.Width(200));
+                EditorGUILayout.PropertyField(negativeMainValueProp, new GUIContent("主键/否键"), GUILayout.Width(200));
+                EditorGUILayout.PropertyField(negativeMpareValueProp, new GUIContent("备用键/否键"), GUILayout.Width(200));
 
                 EditorGUIUtility.labelWidth = originalLabelWidth; // 恢复原始标签宽度
                 EditorGUILayout.EndHorizontal();

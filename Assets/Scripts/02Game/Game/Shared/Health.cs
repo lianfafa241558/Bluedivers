@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Core;
 using GameContract;
 using PEMaths;
-using Unity.BaseTool;
+
 using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -13,18 +13,18 @@ using Utils;
 namespace Unity.FPS.Game {
     public abstract class Health : MonoBehaviour {
         /// <summary>最大生命值</summary>
-        [CustomLabel("最大生命值")]
+        [InspectorName("最大生命值")]
         public int MaxHealth = 100;
         /// <summary>最大生命值</summary>
-        [CustomLabel("最大护盾值")] 
+        [InspectorName("最大护盾值")] 
         public int MaxShield;
 
         /// <summary>主体部位</summary>
-        [CustomLabel("主体部位")]
+        [InspectorName("主体部位")]
         public Damageable MainPart;
 
 
-        /// <summary>收到伤害时 值，来源，受击点,无源伤害</summary>
+        /// <summary>收到伤害时,值，来源，受击点,无源伤害</summary>
         public UnityAction<PEInt, GameObject, Collider,bool> OnDamaged;
 
         /// <summary>被击中时 来源，受击点</summary>
@@ -33,8 +33,10 @@ namespace Unity.FPS.Game {
         /// <summary>是否是破盾伤害</summary>
         public UnityAction<bool> OnShieldDamaged;
 
-        /// <summary>收到治疗时</summary>
+        /// <summary>收到治疗时 治疗值</summary>
         public UnityAction<PEInt> OnHealed;
+        /// <summary>恢复护盾时 恢复值</summary>
+        public UnityAction<PEInt> OnRestoreShield;
         /// <summary>死亡时</summary>
         public UnityAction<GameObject> OnDie;
 
@@ -43,7 +45,7 @@ namespace Unity.FPS.Game {
 
         [Space]
         [DisplayField]
-        [CustomLabel("剩余生命值")]
+        [InspectorName("剩余生命值")]
         [SerializeField]
         public int showHealth;
 
@@ -81,6 +83,19 @@ namespace Unity.FPS.Game {
             PEInt trueHealAmount = CurrentHealth - healthBefore;
             if (trueHealAmount > 0) {
                 OnHealed?.Invoke(trueHealAmount);
+            }
+        }
+        /// <summary>恢复护盾</summary>
+        public void RestoreShield(float healAmount)
+        {
+            PEInt healthBefore = CurrentShield;
+            CurrentShield += (PEInt)(healAmount);
+            CurrentShield = PEMath.Clamp(CurrentShield, 0, MaxShield);
+
+            PEInt trueHealAmount = CurrentShield - healthBefore;
+            if (trueHealAmount > 0)
+            {
+                OnRestoreShield?.Invoke(trueHealAmount);
             }
         }
 
@@ -123,7 +138,7 @@ namespace Unity.FPS.Game {
                 OnDamaged?.Invoke(trueDamageAmount, damageSource,damageAffected, noSource);
                 OnHit?.Invoke(damageSource,pos);
                 if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
-                GlobalEventManager.UnitHit(gameObject, damageSource);
+                BattleEventSub.UnitHit(gameObject, damageSource);
             }
             showHealth = CurrentHealth.RawInt;
             HandleDeath(damageSource);
@@ -135,8 +150,6 @@ namespace Unity.FPS.Game {
             switch (type) {
                 case DamageTypeEnum.Destruction:
                     return 0;//护甲破坏不计入伤害量
-                case DamageTypeEnum.Terrain:
-                    return 0;//地形破坏不计入伤害量
                 case DamageTypeEnum.Weakness:
                     return 0;//弱点加成不计入伤害量
                 default:
@@ -171,7 +184,7 @@ namespace Unity.FPS.Game {
 
             // call OnDie action
             if (CurrentHealth <= 0) {
-                Debug.Log(gameObject+"单位死亡",gameObject);
+                //Debug.Log(gameObject+"单位死亡",gameObject);
                 m_IsDead = true;
                 OnDie?.Invoke(source);
             }

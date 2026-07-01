@@ -1,21 +1,20 @@
-using Core.Interface;
-using Unity.BaseTool;
+﻿using Core.Interface;
 using UnityEngine;
 namespace Core
 {
     public class BaseObject : BaseMono, I_Entity
     {
         [Foldout("信息", true)]
-        [CustomLabel("名称")]
+        [InspectorName("名称")]
         public string ShowName;
 
         public string Id;
-        [CustomLabel("头像")]
+        [InspectorName("头像")]
         public Sprite Portrait;
-        [CustomLabel("额外图标")]
+        [InspectorName("额外图标")]
         public Sprite ExtraPortrait;
 
-        [CustomLabel("颜色")]
+        [InspectorName("颜色")]
         public Color Color = Color.white;
 
         public virtual float HalfRange => 1;

@@ -13,7 +13,7 @@ namespace FpsGame.Mission
         I_AIController tower;
         KeyScreen keyScreen;
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             var towerGo = entity.transform.Find("BroadcastTower");
             tower = towerGo.GetComponent<I_AIController>();

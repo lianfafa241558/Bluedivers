@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Core.Interface;
 using GameContract;
@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class NetManager : SingletonNet<NetManager>, I_GlobaManager
 {
-    //按理说这个应该是由(服务器)房主发的?
+    //按理说这个应该是服务器或者房主发的
     private PEInt lastTime;
 
     private List<I_Login> list;

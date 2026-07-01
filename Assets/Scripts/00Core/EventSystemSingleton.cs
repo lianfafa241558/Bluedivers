@@ -1,5 +1,4 @@
-using Unity.BaseTool;
-namespace Core
+﻿namespace Core
 {
     public class EventSystemSingleton : Singleton<EventSystemSingleton>
     {

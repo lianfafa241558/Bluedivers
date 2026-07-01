@@ -1,6 +1,6 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Unity.BaseTool;
+
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -10,7 +10,7 @@ namespace Unity.FPS.Game
     public class WeaponModuleData_SO : ScriptableObject
     {
         public new string name;
-        [CustomLabel("模组类型")]
+        [InspectorName("模组类型")]
         public ModuleType type;
         public Sprite icon;
 
@@ -20,7 +20,7 @@ namespace Unity.FPS.Game
         public List<ModifyAttrData> modifys;
 
 
-        public Sprite frame => ResManager.Instance.LoadSprite("Icon/Frame_Module"+ type.ToString(),true);
+        public Sprite frame => ResSvc.Instance.LoadSprite("Icon/Frame_Module"+ type.ToString(),true);
 
         public string typeName => type switch {
             ModuleType.Clean => "无暇改装模组",
@@ -37,16 +37,16 @@ namespace Unity.FPS.Game
 
         public enum ModuleType
         {
-            [CustomLabel("无")]
+            [InspectorName("无")]
             /// <summary>无</summary>
             None,
-            [CustomLabel("无暇")]
+            [InspectorName("无暇")]
             /// <summary>无暇</summary>
             Clean,
-            [CustomLabel("平衡")]
+            [InspectorName("平衡")]
             /// <summary>平衡</summary>
             Balanced,
-            [CustomLabel("危险")]
+            [InspectorName("危险")]
             /// <summary>危险</summary>
             Unstable,
         }

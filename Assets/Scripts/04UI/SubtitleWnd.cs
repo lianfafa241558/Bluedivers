@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using Core;
+using FPSGame.Furn;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +10,7 @@ using Utils;
 using static WndTools.WndRootTool;
 
 
-public class SubtitleWnd : WindowRoot
+public class SubtitleWnd : Window
 {
     [Foldout("喊话", true)]
 
@@ -18,9 +19,9 @@ public class SubtitleWnd : WindowRoot
     [SerializeField]
     private SubtitleAirdrop AirdropPrefab;
 
-    [Foldout("交互点", true)]
+    [Foldout("交互预制件", true)] 
     [SerializeField]
-    private Image ConcernPrefab;//与家具交互显示的点
+    private Image ConcernPrefab;//与家具交互显示的预制件
 
     [Foldout("获得物品提示", true)]
     [SerializeField]
@@ -40,12 +41,6 @@ public class SubtitleWnd : WindowRoot
 
 
 
-    public override void Init()
-    {
-    }
-    public override void UnInit()
-    {
-    }
     protected override void FirstShowWnd()
     {
         GainObjectQueen = new();
@@ -59,33 +54,35 @@ public class SubtitleWnd : WindowRoot
 
         GainObjectTipRoot.alpha = 0;
 
-        GlobalEventManager.OnAirdrop += OnAirdrop;
-        GlobalEventManager.OnSettingCange += OnSettingCange;
-        GlobalEventManager.OnUnitDeath += OnActorDeath;
-        GlobalEventManager.OnOOPartCollect += OOPartCollect;
     }
-    private void OnDestroy()
-    {
-        GlobalEventManager.OnAirdrop -= OnAirdrop;
-        GlobalEventManager.OnSettingCange -= OnSettingCange;
-        GlobalEventManager.OnUnitDeath -= OnActorDeath;
-        GlobalEventManager.OnOOPartCollect -= OOPartCollect;
-    }
+
 
     protected override void ShowWnd()
     {
+
+        BattleEventSub.OnAirdrop += OnAirdrop;
+        GlobalEventSub.OnSettingCange += OnSettingCange;
+        BattleEventSub.OnUnitDeath += OnActorDeath;
+        GlobalEventSub.OnOOPartCollect += OOPartCollect;
+        //GlobalEventManager.OnSceneChange += OnSceneChange;
         GainObjectTime = -5;
     }
 
     protected override void HideWnd()
     {
-
+        BattleEventSub.OnAirdrop -= OnAirdrop;
+        GlobalEventSub.OnSettingCange -= OnSettingCange;
+        BattleEventSub.OnUnitDeath -= OnActorDeath;
+        GlobalEventSub.OnOOPartCollect -= OOPartCollect;
+        //GlobalEventManager.OnSceneChange -= OnSceneChange;
+        OnSceneChange(null);
     }
 
 
     private void Update()
     {
-        if (ActorsManager.Player != null && ActorsManager.OnActorCreat.Count > 0) OnActorCreat(ActorsManager.OnActorCreat.Dequeue());
+        if ((GameState== GameStateEnum.Game|| GameState == GameStateEnum.Bridge) && ActorsManager.OnActorCreat.Count > 0) OnActorCreat(ActorsManager.OnActorCreat.Dequeue());
+        //if (ActorsManager.Player != null && ActorsManager.OnActorCreat.Count > 0) OnActorCreat(ActorsManager.OnActorCreat.Dequeue());
         var camera = Camera.main;
         var pos = camera.transform.position;
         var forward = camera.transform.forward;
@@ -93,7 +90,7 @@ public class SubtitleWnd : WindowRoot
         show.Clear();
 
         if (ActorsManager.Player == null) return;
-        foreach (var item in Furniture_Base.list.Values)
+        foreach (var item in Furniture_Attached.list.Values)
         {
             if (!item.CanOperate(ActorsManager.Player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
             float dis = Vector3.Distance(item.CenterPos, pos);
@@ -101,9 +98,9 @@ public class SubtitleWnd : WindowRoot
             {
                 float angle = Vector3.Angle(forward, item.Forward);
                 var viewPos = camera.WorldToViewportPoint(item.CenterPos);
-                show.Add(new(item.gameObject, viewPos));
+                
 
-                if (((angle > 120 && viewPos.z > 0) || item.HaveFlag(FurnitureFlag.AnyAngle)) && Tool.In2D(viewPos, Vector3.zero, Vector3.one))
+                if ((angle > 120 || item.HaveFlag(FurnitureFlag.AnyAngle)) && Tool.In2D(viewPos, Vector3.zero, Vector3.one) && viewPos.z > 0)
                 {
                     if (useIndex < 8)
                     {
@@ -111,6 +108,7 @@ public class SubtitleWnd : WindowRoot
                         Concerns[useIndex].transform.position = camera.WorldToScreenPoint(item.CenterPos);
                         Concerns[useIndex].color = new Color(1, 1, 1, (1.5f - dis / 6));
                         ++useIndex;
+                        show.Add(new(item.gameObject, viewPos));
                     }
                 }
             }
@@ -168,6 +166,7 @@ public class SubtitleWnd : WindowRoot
         switch (item.Key)
         {
             case UnitTypeEnum.Player:
+                Debug.LogError("创建玩家框体"+ item.Value);
                 Subtitles.Add(Instantiate(ShoutPrefab).Creat(item.Value, item.Value.gameObject, transform, alwaysShow));
                 Subtitles.Add(Instantiate(MarkPrefab).Creat(item.Value, null, transform, alwaysShow));
 
@@ -177,7 +176,7 @@ public class SubtitleWnd : WindowRoot
                 Subtitles.Add(Instantiate(RolePrefab).Creat(item.Value, item.Value.gameObject, transform, alwaysShow));
                 break;
             case UnitTypeEnum.SpecUnit:
-                //Debug.LogError($"创建特殊单位,玩家{ActorsManager.Player}，目标{item.Value}");
+                //Debug.LogError($"创建特殊单位玩家{ActorsManager.Player}，目标{item.Value}");
                 //Debug.LogError($"目标的单位{item.Value.gameObject}");
                 Subtitles.Add(Instantiate(SpecUnitPrefab).Creat(ActorsManager.Player, item.Value.gameObject, transform, alwaysShow));
                 break;
@@ -201,7 +200,7 @@ public class SubtitleWnd : WindowRoot
 
     private void OOPartCollect(GameObject user, OOPartEnum type, int count)
     {
-        //Debug.LogError("采集样本 来源"+user+"玩家"+ ActorsManager.Player.gameObject);
+        //Debug.LogError("采集样本 来自 "+user+"玩家 "+ ActorsManager.Player.gameObject);
         if (user != null && user != ActorsManager.Player.gameObject) return;
         string name = propertyManager.GetName(type);
         Sprite icon = propertyManager.GetIcon(type);
@@ -232,7 +231,7 @@ public class SubtitleWnd : WindowRoot
             info.count >= 0 ? "+" : "",
             ColorUtility.ToHtmlStringRGB(info.count >= 0 ? new(0.2f, 1, 0.2f) : new(1, 0.2f, 0.2f)),
         info.count));
-        SetText(GainType, info.count >= 0 ? "已获取" : "已掉落");
+        SetText(GainType, info.count >= 0 ? "已获得" : "");
         RefreshLayout(GainObjectTipRoot.transform);
     }
     void UpdateGainObject()
@@ -273,6 +272,21 @@ public class SubtitleWnd : WindowRoot
         var subtitle = AirDropSubtitlesPool.Get();
         subtitle.OnAirdrop(owner, target, point);
     }
+
+    /// <summary>
+    /// 切换场景时直接移除旧??
+    /// </summary>
+    /// <param name="_"></param>
+    public void OnSceneChange(string _)
+    {
+        //Debug.LogError("切换场景，清空组??+ Subtitles.Count);
+        foreach (var item in Subtitles)
+        {
+            Tool.Destroy(item.gameObject);
+        }
+        Subtitles.Clear();
+    }
+
 
     struct GainObjectInfo
     {

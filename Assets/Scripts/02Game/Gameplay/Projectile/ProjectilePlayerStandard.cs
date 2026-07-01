@@ -1,4 +1,4 @@
-using Unity.BaseTool;
+
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
@@ -11,10 +11,10 @@ namespace Unity.FPS.Gameplay
 
         [Header("运动")]
         [Tooltip("投射物将修正其轨迹以适应预期轨迹的距离（用于将投射物漂移到第一人称视图的屏幕中心）。在值小于0时，不进行修正")]
-        [CustomLabel("轨迹修正时间")]
+        [InspectorName("轨迹修正时间")]
         public float TrajectoryCorrectionTime = -1;
 
-        /// <summary> 需要轨迹矫正(只有玩家武器且矫正系数！=-1) </summary>
+        /// <summary> 需要轨迹矫正（只有玩家武器且矫正系数！=-1） </summary>
         bool m_HasTrajectoryOverride;
         Vector3 m_TrajectoryCorrectionVector;
         /// <summary>还没有矫正完成时的矫正朝向</summary>
@@ -28,7 +28,7 @@ namespace Unity.FPS.Gameplay
             //Collider[] ownerColliders = Owner.GetComponentsInChildren<Collider>();
             //if (ownerColliders.IsValid()) m_IgnoredColliders.AddRange(ownerColliders);
 
-            //处理玩家射击的情况（使投射物不穿过墙壁，并记住屏幕轨迹的中心）
+            //处理玩家射击的情况（使投射物不穿过墙壁，并记住屏幕轨迹的中心点
             PlayerWeaponsManager playerWeaponsManager = Owner.GetComponent<PlayerWeaponsManager>();
             if (playerWeaponsManager)
             {
@@ -68,7 +68,7 @@ namespace Unity.FPS.Gameplay
             if (m_isStop) return;
             //这个还不是制导，只是偏移
             //向轨迹超控方向漂移（这是为了使弹丸能够居中
-            //即使实际武器偏移，也要以相机中心为准）
+            //即使实际武器偏移，也要以相机中心为准心
             if (m_HasTrajectoryOverride && m_ConsumedTrajectoryCorrectionVector.sqrMagnitude <
                 m_TrajectoryCorrectionVector.sqrMagnitude)
             {
@@ -79,7 +79,7 @@ namespace Unity.FPS.Gameplay
                 correctionThisFrame = Vector3.ClampMagnitude(correctionThisFrame, correctionLeft.magnitude);
                 m_ConsumedTrajectoryCorrectionVector += correctionThisFrame;
 
-                // 检测校正结束
+                // 检测校正结果
                 if (m_ConsumedTrajectoryCorrectionVector.sqrMagnitude == m_TrajectoryCorrectionVector.sqrMagnitude)
                 {
                     m_HasTrajectoryOverride = false;

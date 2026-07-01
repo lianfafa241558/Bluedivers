@@ -1,4 +1,4 @@
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -6,7 +6,7 @@ public class Parabolic : MonoBehaviour
 {
 
     [Range(0.1f, 2f)]
-    [CustomLabel("每段距离间隔")]
+    [InspectorName("每段距离间隔")]
     public float lenght = 1f;
     //[HideInInspector]
     public Transform RayGo;
@@ -58,7 +58,7 @@ public class Parabolic : MonoBehaviour
             {
                 line.SetPosition(i, posList[i]);
             }
-            //保底有1位（自己的位置）
+            //保底1位（自己的位置）
             sphere.position = posList[count - 1];
 
         }

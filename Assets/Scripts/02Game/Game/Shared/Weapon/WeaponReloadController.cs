@@ -1,4 +1,4 @@
-using PEMaths;
+﻿using PEMaths;
 using UnityEngine;
 using Utils;
 
@@ -15,13 +15,13 @@ namespace Unity.FPS.Game
 
         #region 属性
         /// <summary>弹匣弹量</summary>
-        public WeaponCurrentAttribute Magazine;
+        public GameCurrentAttribute Magazine;
         /// <summary>射击间隔</summary>
-        public WeaponCurrentAttribute ShootInterval;
+        public GameCurrentAttribute ShootInterval;
         /// <summary>后备弹量</summary>
-        public WeaponCurrentAttribute Ammo;
+        public GameCurrentAttribute Ammo;
         /// <summary>手动装弹时间</summary>
-        public WeaponCurrentAttribute ReloadTime;
+        public GameCurrentAttribute ReloadTime;
 
         #endregion
 
@@ -71,12 +71,12 @@ namespace Unity.FPS.Game
 
         }
 
-        protected bool TrySet(Attr type, out WeaponCurrentAttribute attr, bool autoCreat=false)
+        protected bool TrySet(Attr type, out GameCurrentAttribute attr, bool autoCreat=false)
         {
-            attr = cfg[type] as WeaponCurrentAttribute;
+            attr = cfg[type] as GameCurrentAttribute;
             if (autoCreat && !attr.IsValid())
             {
-                attr = cfg.Add(type, 0) as WeaponCurrentAttribute;
+                attr = cfg.Add(type, 0) as GameCurrentAttribute;
             }
             return attr.IsValid();
         }
@@ -124,7 +124,7 @@ namespace Unity.FPS.Game
         {
             if (!InfiniteMagazine)//需要消耗子弹
             {
-                if (count > Magazine.CurrValue)//不够的从备弹扣
+                if (count > Magazine.CurrValue)//不够的从备弹取
                 {
                     count -= Magazine.CurrValue.RawInt;//自动约束
                     Magazine.CurrValue = 0;

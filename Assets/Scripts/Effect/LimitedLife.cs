@@ -1,34 +1,29 @@
-using Unity.BaseTool;
+
 using UnityEngine;
 using UnityEngine.Events;
 using Utils;
-
-public class LimitedLife : MonoBehaviour
+using Core.Interface;
+public class LimitedLife : MonoBehaviour,IRecyclable
 {
     [SerializeField]
-    private bool IsDestroy;
+    private bool IsDestroy;//这玩意目前还没效果
     [SerializeField]
     private float LiftTime;
-    [CustomLabel("提前释放系数，1=不允许")]
+    [InspectorName("提前释放系数1=不允许")]
     [SerializeField]
     [Range(0, 1)]
     private float PreRelease = 1;
-    [CustomLabel("允许可见时释放")]
+    [InspectorName("允许可见时释放")]
     [SerializeField]
     private bool allowSeeRelease;
 
     private float CreatTime;
-    [CustomLabel("允许释放")]
+    [InspectorName("允许释放")]
     public bool allowRelease;
     public bool useDebug;
     public UnityAction OnEnd;
     public float showScale;
 
-    private void OnEnable()
-    {
-        CreatTime = Time.time;
-        allowRelease = false;
-    }
     public bool IsAlive()
     {
         showScale = (Time.time - CreatTime) / LiftTime;
@@ -46,5 +41,16 @@ public class LimitedLife : MonoBehaviour
     {
         CreatTime = Time.time;
         LiftTime = lift;
+    }
+
+    public void OnShow()
+    {
+        CreatTime = Time.time;
+        allowRelease = false;
+    }
+
+    public void OnHide()
+    {
+        OnEnd?.Invoke();
     }
 }

@@ -1,10 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FpsGame.Mission;
 using UnityEngine;
 using static WndTools.WndRootTool;
 
-public class MissionCompleteWnd : WindowRoot
+public class MissionCompleteWnd : Window
 {
     [SerializeField]
     Animator anim;
@@ -18,24 +18,21 @@ public class MissionCompleteWnd : WindowRoot
     [SerializeField]
     Transform desc, item1, item2;
 
-    private void Awake()
+    public void Init()
     {
-        //临时的，以后再想办法创建
-        gameObject.SetActive(false);
-
-
-        SetWndState(true);
+        BattleEventSub.OnMissionCompleted += MissionCompleted;
         SetWndState(false);
     }
 
     protected override void FirstShowWnd()
     {
-        GlobalEventManager.OnMissionCompleted += MissionCompleted;
+        
 
     }
-    private void OnDestroy()
+    public override void OnDestroy()
     {
-        GlobalEventManager.OnMissionCompleted -= MissionCompleted;
+        base.OnDestroy();
+        BattleEventSub.OnMissionCompleted -= MissionCompleted;
 
     }
 
@@ -51,10 +48,6 @@ public class MissionCompleteWnd : WindowRoot
         SetText(item2, mission.data.reward/5);
         anim.Play("Entry",0,0);
     }
-
-
-
-    
 
     IEnumerator CloseWndAfterDelay()
     {
@@ -72,7 +65,5 @@ public class MissionCompleteWnd : WindowRoot
 
     }
 
-    public override void Init() { }
-    public override void UnInit() { }
 
 }

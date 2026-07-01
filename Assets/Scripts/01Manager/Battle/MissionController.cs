@@ -1,7 +1,9 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using FpsGame.Mission;
-using Unity.BaseTool;
+
 using UnityEngine;
 using Utils;
 using TaskItem = TaskManager.TaskItem;
@@ -15,46 +17,100 @@ public class MissionController : MonoBehaviour
 
 
     List<TaskItem> waitMissions;
+    List<MissionBase> missions;
     List<(Vector2 Pos,int Range)> missionCreatPoints;
 
+    private bool isInitialized;
+    private Transform EntityRoot;
 
 
     void Start()
     {
+        StartCoroutine(InitializeAsync());
+    }
+
+    private IEnumerator InitializeAsync()
+    {
         manager = BattleManager.Instance;
         root = TaskManager.Instance.nowTask;
+
+        EntityRoot = new GameObject("EntityRoot").transform;
+
+        // 安全初始化
         waitMissions = new();
         missionCreatPoints = new();
+        missions = new();
         waitMissions.Add(root.main);
         waitMissions.Add(root.evacuate);
         waitMissions.AddRange(root.extras);
         waitMissions.AddRange(root.nests.SelectMany(nestItem => nestItem));
         waitMissions.AddRange(root.subs);
-        InitAllMission();
-        InitInterestPoint();
-        //missionCreatPoints = null;
-        //上面都折腾完了再刷新
-        TerrainUtils.Refresh(true);
-        //Debug.LogError("更新了地形" + gameObject);
-        //TODO:为了方便测试
+        Debug.Log("开始生成任务");
+        yield return InitAllMission();
+        Debug.Log("开始生成兴趣点");
+        yield return InitInterestPoint();
+
+        var async=TerrainUtils.AsyncRefresh(true);
+        while (!async.isDone)
+        {
+            yield return null;
+        }
+        //TODO:为了方便测试。这个不该扔到战备控制器里
         /*
         foreach (var ad in root.RequiredAD)
         {
             BattleManager.Instance.Authorize(ad, true);
         }*/
+        isInitialized = true;
+        while (!manager.IsStartBattle)
+        {
+            yield return null;
+        }
+        foreach (var item in missions)
+        {
+            if (!item.parent)
+            {
+                item.enabled = true;
+                item.EventStart();
+
+            }
+        }
+        yield return null;
+        foreach (var item in missions)
+        {
+            if (item.parent)
+            {
+                item.enabled = true;
+                item.EventStart();
+            }
+        }
+        waitMissions = null;
+        //missionCreatPoints = null;
+        //missions = null;
+
+        yield break;
     }
 
-   
+    public IEnumerator WaitForInitialization()
+    {
+        while (!isInitialized)
+            yield return null;
+    }
+
+
     /// <summary>
     /// 创建任务
     /// </summary>
-    MissionBase CreatMission(TaskItem task)
+    IEnumerator CreatMission(TaskItem task,Action<MissionBase> onComplete)
     {
-        var go = Instantiate(task.cfg.controller, transform);
-        var size = RandomUtils.Range(random, go.mapEntitySize.x, go.mapEntitySize.y);
         
-        go.Init(root, task, task.cfg.sprite, GenerateNewMissionPoint(size), size);
-        return go;
+        MissionBase go = Instantiate(task.cfg.controller, transform);
+        var size = RandomUtils.Range(random, go.mapEntitySize.x, go.mapEntitySize.y);
+        go.Init(root, task, task.cfg.sprite, GenerateNewMissionPoint(size), size, EntityRoot);
+        while (!go.IsInitialized) yield return null;
+        missions.Add(go);
+        go.enabled = false;
+        onComplete?.Invoke(go);
     }
 
 
@@ -63,7 +119,7 @@ public class MissionController : MonoBehaviour
     /// 处理创建了，但是等待初始化的任务
     /// 最后按大小排列生成（优先刷大的，保证正确刷出）
     /// </summary>
-    void InitAllMission() 
+    IEnumerator InitAllMission() 
     {
         foreach(var task in waitMissions)
         {
@@ -72,17 +128,21 @@ public class MissionController : MonoBehaviour
                 Debug.LogError("类型" + task.cfg.type + Tool.GetEnumString(task.cfg.type) + "没有控制器");
             }
         }
-
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
         waitMissions = waitMissions.Where(task=>task.cfg.controller).OrderByDescending(task => task.cfg.controller.mapEntitySize.y).ToList();
         //这里的实现就很丑陋了，但是没办法，不能让主任务直接生成
         MissionBase main=null, evacuate = null;
         List<MissionBase> subs=new();
         foreach (var task in waitMissions)
         {
-            var go=CreatMission(task);
+            MissionBase go=null;
+            yield return CreatMission(task, (re) => go = re);
             if (task == root.main) main = go;
             else if (task == root.evacuate) evacuate = go;
             else if (root.subs.Contains(task)) subs.Add(go);
+            Debug.Log($"创建任务{go.name}耗时: {sw.ElapsedMilliseconds} ms");
+            sw.Restart();
+            yield return null;
         }           
         //让撤离任务链接主任务
         evacuate.Link(main);
@@ -92,23 +152,23 @@ public class MissionController : MonoBehaviour
         }
         main.subTask = subs.ToArray();
 
-        waitMissions = null;
+        //waitMissions = null;
     }
     /// <summary>
     /// 创建兴趣点
     /// </summary>
-    void InitInterestPoint()
+    IEnumerator InitInterestPoint()
     {
         int count = random.Range(6,(int)Mathf.Sqrt(root.CameraSize));
-        //Debug.LogWarning("兴趣点数量"+count);
+        //Debug.LogWarning("兴趣点数"+count);
         int totleWeight = root.mapCfg.interestPoints.Sum(item=>item.Value);
         //GameObject[] objects= new GameObject[count];
         for (int i =0;i< count;++i)
         {
             var pos = GenerateNewMissionPoint(8);
             if (pos == default) { Debug.LogWarning("兴趣点数量" + i); break; }
-            Instantiate(root.mapCfg.interestPoints.WeightTake(totleWeight, random), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), null);
-            
+            Instantiate(root.mapCfg.interestPoints.WeightTake(totleWeight, random), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), EntityRoot);
+            yield return null;
         }
     }
 
@@ -125,12 +185,12 @@ public class MissionController : MonoBehaviour
         // 步骤1：将地图划分为网格，保证均匀分布（网格大小为“最小安全间距”）
         float gridSize = newRange * 2; // 新点与其他点的最小安全间距（避免相切）
         int gridCount = Mathf.CeilToInt(mapRadius * 2 / gridSize); // 网格数量
-        //Debug.LogError("创建半径:"+newRange+"网格数量"+ gridCount+"随机数"+ RandomUtils.Range(random, 0, gridCount));
-        //比如地图半径128，newrange=64，那gridCount=2;取值会在[0,2)，最后随机为[0.5,1.5] +- 0.3
-        //但是实际上最大只能是[0.5-1.5],[0.2,0.5)和 (1.5,1.8]是无效的
-        //应该做范围限制为[0.5,那gridCount-0.5]
-        //Debug.LogError("取值范围:[" + 0.5f+","+ (gridCount - 0.5f)+"]");
-        for (int attemptCount=0; attemptCount < 100; ++attemptCount)
+
+        // 收集多个符合条件的候选点，然后选最平坦的
+        const int candidateCount = 4;
+        List<Vector2> candidates = new(candidateCount);
+
+        for (int attemptCount=0; attemptCount < 100 && candidates.Count < candidateCount; ++attemptCount)
         {
             float gridX = Mathf.Clamp(RandomUtils.Range(random, 0, gridCount) +0.5f + RandomUtils.Range(random, -0.3f, 0.3f),0.5f, gridCount-0.5f) * gridSize;
             float gridY = Mathf.Clamp(RandomUtils.Range(random, 0, gridCount) +0.5f + RandomUtils.Range(random, -0.3f, 0.3f), 0.5f, gridCount - 0.5f) * gridSize;
@@ -139,20 +199,63 @@ public class MissionController : MonoBehaviour
             if (Vector2.Distance(candidatePos, center)+ newRange <= Mathf.Max( mapRadius - 5, newRange) //没超出地图范围
                 && !IsOverlapWithExistingPoints(candidatePos, (int)(newRange*(100- attemptCount) /100f)))//没和其他任务实体相交
             {
-                //Debug.LogError("创建位置:" + candidatePos);
-                missionCreatPoints.Add((candidatePos, newRange));
-                return new Vector3(candidatePos.x, TerrainUtils.WSToHeight(candidatePos), candidatePos.y);
+                candidates.Add(candidatePos);
             }
         }
-        Debug.LogError("没有找到可用的点");
-        return Vector3.zero;
+
+        if (candidates.Count == 0)
+        {
+            Debug.LogError("没有找到可用的点");
+            return Vector3.zero;
+        }
+
+        // 选最平坦的点：在候选点周围采样高度，计算标准差
+        Vector2 bestPoint = candidates[0];
+        float bestFlatness = float.MaxValue;
+        int sampleStep = Mathf.Max(2, newRange / 4); // 采样间距
+
+        foreach (var pos in candidates)
+        {
+            float mean = 0;
+            int sampleCount = 0;
+            // 从 -range/2 到 +range/2 范围内均匀采样
+            for (float dx = -newRange * 0.5f; dx <= newRange * 0.5f; dx += sampleStep)
+            {
+                for (float dy = -newRange * 0.5f; dy <= newRange * 0.5f; dy += sampleStep)
+                {
+                    mean += TerrainUtils.WSToHeight(pos + new Vector2(dx, dy));
+                    sampleCount++;
+                }
+            }
+            mean /= sampleCount;
+
+            float variance = 0;
+            for (float dx = -newRange * 0.5f; dx <= newRange * 0.5f; dx += sampleStep)
+            {
+                for (float dy = -newRange * 0.5f; dy <= newRange * 0.5f; dy += sampleStep)
+                {
+                    float h = TerrainUtils.WSToHeight(pos + new Vector2(dx, dy));
+                    variance += (h - mean) * (h - mean);
+                }
+            }
+            variance /= sampleCount;
+
+            if (variance < bestFlatness)
+            {
+                bestFlatness = variance;
+                bestPoint = pos;
+            }
+        }
+
+        missionCreatPoints.Add((bestPoint, newRange));
+        return new Vector3(bestPoint.x, TerrainUtils.WSToHeight(bestPoint), bestPoint.y);
     }
 
     bool IsOverlapWithExistingPoints(Vector2 candidatePos, int newRange)
     {
         foreach (var existing in missionCreatPoints)
         {
-            // 如果横坐标/纵坐标差值已超过半径和，直接跳过（减少距离计算）
+            // 如果横坐标、纵坐标差值已超过半径和，直接跳过（减少距离计算）
             float dx = Mathf.Abs(candidatePos.x - existing.Pos.x);
             float dy = Mathf.Abs(candidatePos.y - existing.Pos.y);
             float sumRadius = newRange + existing.Range+5;//至少间隔5

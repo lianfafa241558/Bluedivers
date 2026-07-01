@@ -29,6 +29,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5512607945900794717}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -3.446, z: 23.668}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -36,7 +37,6 @@ Transform:
   m_Children:
   - {fileID: 7803665880614463286}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2066808039
 MonoBehaviour:
@@ -131,6 +131,7 @@ MonoBehaviour:
   - {fileID: 6820960187611415487, guid: 7bc28262d86fc2a4e9f9ea0d580415c0, type: 2}
   - {fileID: -8316520142789051573, guid: 7bc28262d86fc2a4e9f9ea0d580415c0, type: 2}
   - {fileID: -1981836993643360160, guid: 7bc28262d86fc2a4e9f9ea0d580415c0, type: 2}
+  callSound: {fileID: 11400000, guid: fe80750b0b12b70429294882f1714ff2, type: 2}
   callPoint: {fileID: 2393499853092318471, guid: c5043470050053142b706b26181f2f86,
     type: 3}
   moveCilps:
@@ -166,6 +167,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 1345662598768953272}
     m_Modifications:
     - target: {fileID: -8855293859114191178, guid: e9eb1672267638f4d85f3b4529c87395,
@@ -584,6 +586,29 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 9100000, guid: 1f4ce7ddb983d1c42ad46a4300de0bb1, type: 2}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e9eb1672267638f4d85f3b4529c87395,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2655068675470623585}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e9eb1672267638f4d85f3b4529c87395,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1343525273}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e9eb1672267638f4d85f3b4529c87395,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5391737926225521759}
+    - targetCorrespondingSourceObject: {fileID: 2617798698952376788, guid: e9eb1672267638f4d85f3b4529c87395,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7766046034641324604}
+    - targetCorrespondingSourceObject: {fileID: -4261960768833000180, guid: e9eb1672267638f4d85f3b4529c87395,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9103958719997557145}
   m_SourcePrefab: {fileID: 100100000, guid: e9eb1672267638f4d85f3b4529c87395, type: 3}
 --- !u!4 &345941032447101737 stripped
 Transform:
@@ -648,8 +673,17 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7424149253618679180}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
+  serializedVersion: 2
   m_Radius: 0.75
   m_Height: 2
   m_Direction: 1

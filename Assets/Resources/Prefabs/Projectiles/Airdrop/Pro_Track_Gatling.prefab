@@ -46,15 +46,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de99b30e1e73fd14e98cc5371da25d12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Radius: 0.2
+  Radius: 1
   Root: {fileID: 3659995153115176982}
   Tip: {fileID: 1135791333161367127}
-  HittableLayers:
-    serializedVersion: 2
-    m_Bits: 8057
-  TrajectoryCorrectionTime: -1
-  RadiusColor: {r: 0, g: 1, b: 0.9007921, a: 1}
-  m_Velocity: {x: 0, y: 0, z: 0}
+  Trails: []
+  TrailWidth: 0
+  LiftTime: 1.5
 --- !u!1 &5564024855854763701
 GameObject:
   m_ObjectHideFlags: 0

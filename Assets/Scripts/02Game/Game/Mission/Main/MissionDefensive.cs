@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -23,7 +23,7 @@ namespace FpsGame.Mission
         public int time;
         int m_TargetCount;
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             UpdateText("防守任务目标", "");
             TickTime = 1;
@@ -64,7 +64,7 @@ namespace FpsGame.Mission
             {
                 var smallCount = time % 120;
                 if (smallCount == 0) keyScreen.SetStage(1);//显示进度条
-                //每120miso作为一个大端，50秒一个小波，持续2波，30秒休息
+                //每 20miso作为一个大端，50秒一个小波，持续2波，30秒休息
                 if (smallCount >= 0) percentage = smallCount / 120f;//显示进度条
                 if (smallCount >= 0 && smallCount < 100 && smallCount % 50 == 0)
                 {
@@ -77,7 +77,7 @@ namespace FpsGame.Mission
                     BattleManager.Instance.CreatWave(WaveCreateParams.Defensive.Set(pos, points).Scale((0.4f + (time / 120) * 0.1f)* playerCountScale));
 
                 }
-                UpdateTip(time < 0 ? "做好防御准备  [" + Tool.FloatToTime(-time) + "]" : "坚持到撤离  [" + Tool.FloatToTime(840 - time) + "]");
+                UpdateTip(time < 0 ? "做好防御准备  [" + Tool.FloatToTime(-time) + "]" : "坚持到撤离 [" + Tool.FloatToTime(840 - time) + "]");
             }
             //上面已经处理了，完成了就不会再执行
             if (time >= 840)

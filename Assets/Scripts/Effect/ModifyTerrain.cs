@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using Core;
 using GameContract;
-using Unity.BaseTool;
+
 using UnityEngine;
 
 public class ModifyTerrain : MonoBehaviour
@@ -14,17 +15,17 @@ public class ModifyTerrain : MonoBehaviour
     float transitionDistance=5;
 
     [SerializeField]
-    [CustomLabel("测试时使用:在start修改地形")]
+    [InspectorName("测试时使用，在start修改地形")]
     bool StartModify;
     private void Awake()
     {
-        if(!StartModify) Modify();
+        if(!StartModify) StartCoroutine(nameof(Modify));
     }
     private void Start()
     {
-        Modify();
+        if (StartModify) StartCoroutine(nameof(Modify));
     }
-    private void Modify()
+    private IEnumerator Modify()
     {
         float y = 0;
         if (additionTerrain)
@@ -32,15 +33,13 @@ public class ModifyTerrain : MonoBehaviour
             var size = additionTerrain.terrainData.size.x * -0.5f;
             additionTerrain.transform.position = transform.position + (new Vector3(size, additionTerrain.transform.localPosition.y, size));
 
-            for(int i = -2; i <= 2; ++i)
-            {
-                for (int u = -2; u <= 2; ++u)
-                {
-                    y += TerrainUtils.WSToHeight(transform.position + new Vector3(i, 0, u) * size/2);
-                }
-            }
-            y /= 25;
-           
+            // 采样中心点附近5米范围的平均高度，让transform紧贴地面
+            y = (TerrainUtils.WSToHeight(transform.position)
+                + TerrainUtils.WSToHeight(transform.position + Vector3.left * 5)
+                + TerrainUtils.WSToHeight(transform.position + Vector3.right * 5)
+                + TerrainUtils.WSToHeight(transform.position + Vector3.forward * 5)
+                + TerrainUtils.WSToHeight(transform.position + Vector3.back * 5)
+            ) / 5;
         }
         else
         {
@@ -54,7 +53,7 @@ public class ModifyTerrain : MonoBehaviour
         }
 
         transform.position = new(transform.position.x,y,transform.position.z);
-        //if (additionTerrain) Debug.LogError("点0,0的高度为"+ additionTerrain.WSToHeight(additionTerrain.GetPosition()+5*Vector3.one), gameObject);
+        //if (additionTerrain) Debug.LogError("贴图,0的高度为"+ additionTerrain.WSToHeight(additionTerrain.GetPosition()+5*Vector3.one), gameObject);
 
         //Debug.LogError("修改高度" + transform.position);
         if (BattleManager.Instance)
@@ -63,18 +62,19 @@ public class ModifyTerrain : MonoBehaviour
             {
                 Vector3 pos = transform.TransformPoint(data.localPos);
                 //Debug.LogError("修改高度"+ pos+"  "+ data.outerRadius,gameObject);
-                TerrainUtils.ModifyHeightMap(pos, data.innerRadius, data.outerRadius, data.depth, ShapeType.Circle, true, false);
+                yield return TerrainUtils.ModifyHeightMap(pos, data.innerRadius, data.outerRadius, data.depth, ShapeType.Circle, true, false);
                 //Debug.LogError("修改了地形" + gameObject);
             }
             if (additionTerrain)
             {
                 //好像那边和世界的概念不一样，要用负数
                 //这里不刷新
-                TerrainUtils.AdditionTerrain(additionTerrain, transitionDistance, 360 - transform.eulerAngles.y, false);
+                yield return TerrainUtils.AdditionTerrain(additionTerrain, transitionDistance, 360 - transform.eulerAngles.y, false);
                 Destroy(additionTerrain.gameObject);
                 //Debug.LogError("附加了地形" + gameObject);
             }
         }
+
         Destroy(this);
     }
 

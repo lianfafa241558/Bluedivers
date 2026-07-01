@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using Core;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 using Utils;
 
@@ -29,7 +30,7 @@ namespace Unity.FPS.Game
 
         [Foldout("升级", true)]
         [Header("重命名属性")]
-        //[CustomLabel("重命名属性")]
+        //[InspectorName("重命名属性")]
         //[SerializeField]
         //private DisplayDic<WeaponAttrType, string> m_Rename;
         [SerializeField]
@@ -37,12 +38,12 @@ namespace Unity.FPS.Game
 
 
         [Header("显示的属性")]
-        [CustomLabel("显示的属性")]
+        [InspectorName("显示的属性")]
         [SerializeField]
         List<WeaponAttrType> showAttr;
 
         [Header("专有属性")]
-        //[CustomLabel("专有属性")]
+        //[InspectorName("专有属性")]
         [SerializeField]
         private List<UniqueAttrData> m_UniqueAttr;
 
@@ -54,7 +55,7 @@ namespace Unity.FPS.Game
 
         public List<WeaponModuleData_SO> Modules;
 
-        [CustomLabel("当前使用的模组")]
+        [InspectorName("当前使用的模块")]
         public WeaponModuleData_SO ActiveModule;
 
         public WeaponModuleData_SO SetModule(int index)
@@ -156,9 +157,9 @@ namespace Unity.FPS.Game
         }
 
         /// <summary>
-        /// 显示武器界面右下角的参数值
+        /// 显示武器界面右下角的参数
         /// </summary>
-        /// <param name="info">名称,值,是否是原始值,是否受影响</param>
+        /// <param name="info">名称,类型,是否是原始值,是否受影响/param>
         public void ShowText(out List<(string,string,bool,bool)> info)
         {
             List<(string, string, bool, bool)> special=new();
@@ -265,8 +266,8 @@ namespace Unity.FPS.Game
         /// <returns></returns>
         private float MaxThrowRange()
         {
-            //1.v0不只是水平速度，而是v0x/cos(θ),此时简化为v0x*√2
-            //2.射程公式: R = (v0*v0* sin(2θ)) / g，其中θ=45°时,简化为v0*v0/g
+            //1.v0不只是水平速度，而是v0x/cos(θ),此时简化为v0x*角度系数
+            //2.射程公式: R = (v0*v0* sin(2θ)) / g，其中θ=45°时简化为v0*v0/g
             //结合12:R=2*V0x*v0x/g
             var data = CurrentDamgeData;
             return 2*(data.Speed * data.Speed) / data.Gravity;
@@ -277,16 +278,18 @@ namespace Unity.FPS.Game
         {
             
             /// <summary>类型</summary>
-            [CustomLabel("类型")]
+            [InspectorName("类型")]
             public WeaponAttrType typeEnum;
             /// <summary>名称</summary>
-            [CustomLabel("名称", "typeEnum",(int)WeaponAttrType.Special, CompareOperate.Equal)]
+            [InspectorName("名称")]
+            [Compare("typeEnum",(int)WeaponAttrType.Special, CompareOperate.Equal)]
             public string name;
             /// <summary> 默认值</summary>
-            [CustomLabel("默认值", "typeEnum", (int)WeaponAttrType.Special, CompareOperate.NotEqual)]
+            [InspectorName("默认值")]
+            [Compare("typeEnum", (int)WeaponAttrType.Special, CompareOperate.NotEqual)]
             public float defaultValue;
 
-            WeaponAttribute attr;
+            GameAttribute attr;
             public AttrTag tag;//info的实际tag是可能和挂靠的属性不一样的
 
             public AttrInfo(WeaponPlayerController weapon, WeaponAttrType type,string name)
@@ -301,7 +304,7 @@ namespace Unity.FPS.Game
             public AttrInfo(string name,float value, AttrTag flag)
             {
                 typeEnum = WeaponAttrType.Special;
-                attr = new WeaponAttribute(new(value),flag, ModifierType.All);
+                attr = new GameAttribute(new(value),flag, ModifierType.All);
                 tag = flag;
                 this.name = name;
                 ChangeValue = value;
@@ -387,7 +390,7 @@ namespace Unity.FPS.Game
             public void TryModify(ModifyAttrData oldData,ModifyAttrData newData)
             {
                 Debug.LogError(oldData.type+"旧修饰类型" + oldData.modifier + "值" + oldData.value);
-                Debug.LogError("新修饰类型" + newData.modifier + "值" + newData.value);
+                Debug.LogError("新修饰类型" + newData.modifier + " " + newData.value);
                 Modify(oldData.modifier, -oldData.value);//-10
                 Modify(newData.modifier, newData.value);//+0
                 ChangeValue = Value;
@@ -406,9 +409,10 @@ namespace Unity.FPS.Game
     [System.Serializable]
     public struct ModifyAttrData
     {
-        [CustomLabel("名称", "type", (int)WeaponAttrType.Special, CompareOperate.Equal)]
+        [InspectorName("名称")]
+        [Compare("type", (int)WeaponAttrType.Special, CompareOperate.Equal)]
         public string name;
-        [CustomLabel("类型")]
+        [InspectorName("类型")]
         public WeaponAttrType type;
         public ModifierType modifier;
         public float value;
@@ -419,7 +423,7 @@ namespace Unity.FPS.Game
     {
         public string name;
         public float value;
-        [CustomLabel("标旗")]
+        [InspectorName("标旗")]
         public AttrTag tag;
     }
 
@@ -427,11 +431,11 @@ namespace Unity.FPS.Game
     public struct RenameAttrData
     {
         public string name;
-        [CustomLabel("类型")]
+        [InspectorName("类型")]
         public WeaponAttrType type;
-        [CustomLabel("添加标旗")]
+        [InspectorName("添加标旗")]
         public AttrTag addTag;
-        [CustomLabel("移除标旗")]
+        [InspectorName("移除标旗")]
         public AttrTag removeTag;
     }
 }

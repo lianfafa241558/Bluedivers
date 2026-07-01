@@ -1,4 +1,5 @@
 using System;
+using Core;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -71,15 +72,15 @@ namespace WndTools
 
         public static float GetFill(Transform trans)
         {
-            return GetOrAddComponent<Image>(trans.gameObject).fillAmount;
+            return trans.gameObject.GetComponent<Image>().fillAmount;
         }
         public static void SetFill(Transform trans, float value)
         {
-            GetOrAddComponent<Image>(trans.gameObject).fillAmount = value;
+            trans.gameObject.GetComponent<Image>().fillAmount = value;
         }
         public static void SetFill(Transform trans, float value, float speed)
         {
-            var image = GetOrAddComponent<Image>(trans.gameObject);
+            var image = trans.gameObject.GetComponent<Image>();
             image.fillAmount = Mathf.Lerp(image.fillAmount, value, speed);
         }
 
@@ -285,14 +286,56 @@ namespace WndTools
                 linkComp.link.ForEach(item => item.color = color);
             }
         }
-        public static void SetAlpha(Transform trans, float start, float target, int timeMs,Action action=null)
+        public static bool SetAlpha(Transform trans, float start, float target, int timeMs,Action action=null)
+        {
+            if (trans.TryGetComponent<CanvasGroup>(out var group)) return SetAlpha(group, start, target, timeMs, action);
+            else if (trans.TryGetComponent<Image>(out var image)) return SetAlpha(image, start, target, timeMs, action);
+            else if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu)) return SetAlpha(tmpu, start, target, timeMs, action);
+
+            SetAlpha(trans, start);
+            viewTimer.CreateTimer((count) => SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => {
+                SetAlpha(trans, target);
+                action?.Invoke();
+            });
+            return true;
+        }
+
+        public static bool SetAlpha(Image trans, float start, float target, int timeMs, Action action = null)
         {
             SetAlpha(trans, start);
             viewTimer.CreateTimer((count) => SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => {
                 SetAlpha(trans, target);
                 action?.Invoke();
             });
+            return true;
         }
+        public static bool SetAlpha(CanvasGroup trans, float start, float target, int timeMs, Action action = null)
+        {
+            //Debug.LogError("检查 "+ trans+"设置 "+ start);
+            SetAlpha(trans, start);
+            viewTimer.CreateTimer((count) => {
+                SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs));
+                //Debug.LogError("变为"+ Mathf.Lerp(start, target, count * 20f / timeMs));
+            }, 0.02f, timeMs / 20, () => {
+                SetAlpha(trans, target);
+                //Debug.LogError(trans + "完成设置");
+                action?.Invoke();
+            });
+            return true;
+        }
+
+        public static bool SetAlpha(TMPro.TextMeshProUGUI trans, float start, float target, int timeMs, Action action = null)
+        {
+            SetAlpha(trans, start);
+            viewTimer.CreateTimer((count) => SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => {
+                SetAlpha(trans, target);
+                action?.Invoke();
+            });
+            return true;
+        }
+
+
+
         public static void SetText(Transform trans, int start, int target, int timeMs)
         {
             SetText(trans, start);
@@ -319,36 +362,33 @@ namespace WndTools
             if (trans==null) return;
             if (trans.TryGetComponent<LinkColor>(out var linkComp))
             {
-
                 var color2 = value + (linkComp.overlay.a - 0.5f);
                 linkComp.link.ForEach(item => item.color = new(item.color.r, item.color.g, item.color.b, color2));
             }
+            if (trans.TryGetComponent<CanvasGroup>(out var group)) SetAlpha(group, value);
+            else if (trans.TryGetComponent<Image>(out var image)) SetAlpha(image, value);
+            else if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu)) SetAlpha(tmpu, value);
+            else if (trans.TryGetComponent<TMPro.TextMeshPro>(out var tmp)) tmp.color = new(tmp.color.r, tmp.color.g, tmp.color.b, value);
 
-            if (trans.TryGetComponent<CanvasGroup>(out var group))
-            {
-                group.alpha = value;
-                return;
-            }
-
-
-            if (trans.TryGetComponent<Image>(out var image))
-            {
-                image.color = new(image.color.r, image.color.g, image.color.b, value);
-                return;
-            }
-
-            if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu))
-            {
-                tmpu.color = new(tmpu.color.r, tmpu.color.g, tmpu.color.b, value);
-                return;
-            }
-
-            if (trans.TryGetComponent<TMPro.TextMeshPro>(out var tmp))
-            {
-                tmp.color = new(tmp.color.r, tmp.color.g, tmp.color.b, value);
-                return;
-            }
         }
+
+        public static void SetAlpha(CanvasGroup group, float value)
+        {
+            if (group != null) group.alpha = value;
+
+        }
+        public static void SetAlpha(Image image, float value)
+        {
+            if (image != null) image.color = new(image.color.r, image.color.g, image.color.b, value);
+            
+        }
+        public static void SetAlpha(TMPro.TextMeshProUGUI tmpu, float value)
+        {
+            if (tmpu == null) return;
+            tmpu.color = new(tmpu.color.r, tmpu.color.g, tmpu.color.b, value);
+        }
+
+
         public static float GetAlpha(Transform trans)
         {
             if (trans.TryGetComponent<CanvasGroup>(out var group))
@@ -381,13 +421,15 @@ namespace WndTools
 
         public static void SetButtonInteractable(Transform btn, bool state) => btn.GetComponent<Button>().interactable = state;
 
-        public static void SetButtonEnter(Transform btn, Action<UnityEngine.EventSystems.PointerEventData> action) => btn.GetComponent<ButtonEnterDetector>().Enter = action;
 
-        public static void SetButtonExit(Transform btn, Action<UnityEngine.EventSystems.PointerEventData> action) => btn.GetComponent<ButtonEnterDetector>().Exit = action;
+        public static void SetSlider(Transform btn, UnityAction<float> action)
+        {
+            var slider = btn.GetComponent<Slider>();
+            slider.onValueChanged.AddListener(action);
+        }
 
-        public static void SetButtonIn(Transform btn, Action<UnityEngine.EventSystems.PointerEventData> action) => btn.GetComponent<ButtonEnterDetector>().In = action;
 
-        public static T TryGetOrAddComponent<T>(Transform trans) where T : MonoBehaviour
+        public static T TryGetOrAddComponent<T>(this Transform trans) where T : MonoBehaviour
         {
 
             if (trans.TryGetComponent<T>(out var re))

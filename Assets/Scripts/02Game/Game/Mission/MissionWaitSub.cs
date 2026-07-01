@@ -10,7 +10,7 @@ namespace FpsGame.Mission
     [AddComponentMenu("任务/完成全部子任务", 30)]
     public class MissionWaitSub : MissionBase
     {
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             MaxProgress = subTask.Length;
             foreach (var sub in subTask)

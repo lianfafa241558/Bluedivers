@@ -9,16 +9,19 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: AirdropGeneric_ncl
   m_Shader: {fileID: 4800000, guid: 242d39e501376824a90015d3ae2d01c9, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _MAIN_LIGHT_SHADOWS
+  m_InvalidKeywords:
   - _UseAlphaClipping
-  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -32,7 +35,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _BlendingMap:
         m_Texture: {fileID: 2800000, guid: 94a933ee9350f174f95e8caff3f3b0f7, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 3, y: 3}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
@@ -90,6 +93,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SpecularMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -143,7 +150,7 @@ Material:
     - _OcclusionRemapEnd: 1
     - _OcclusionRemapStart: 0
     - _OcclusionStrength: 1
-    - _OutlineWidth: 3
+    - _OutlineWidth: 4
     - _OutlineZOffset: 0.0001
     - _OutlineZOffsetMaskRemapEnd: 1
     - _OutlineZOffsetMaskRemapStart: 0
@@ -158,17 +165,23 @@ Material:
     - _Smoothness: 0.4472136
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SpecularMulByBaseColor: 0
+    - _SpecularOffest: 0
+    - _SpecularSoftness: 0.05
     - _SrcBlend: 1
     - _Surface: 0
     - _Threshold: 0
     - _UVSec: 0
     - _UseAlphaClipping: 1
     - _UseAlphaUV: 0
+    - _UseAverNormal: 1
     - _UseColour: 0
     - _UseEmission: 0
     - _UseMosaic: 0
     - _UseMouthMap: 0
     - _UseOcclusion: 0
+    - _UseSpecular: 0
+    - _UseTangentOutlin: 1
     - _WhiteFocusOutline: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
@@ -185,6 +198,7 @@ Material:
     - _OutlineColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
     - _ShadowMapColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &7504634037148637864
 MonoBehaviour:

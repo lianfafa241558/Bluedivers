@@ -1,25 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
+using FPSGame.Furn;
 using Unity.FPS.Game;
 using UnityEngine;
 using static WndTools.WndRootTool;
 
-public class OperationWnd : WindowRoot
+public class OperationWnd : Window
 {
     [SerializeField]
     private Transform operRoot,textDesc, textOpteType, barRoot,bar;
 
 
     private PlayerOperationController m_Player;
-    public Furniture_Base furn;
+    public IFurniture furn;
 
-    public override void Init()
+    public void Init()
     {
-        GlobalEventManager.OnFurnitureOperate += RefreshDisplay;
+        GlobalEventSub.OnFurnitureOperate += RefreshDisplay;
     }
-    public override void UnInit()
+    public void UnInit()
     {
-        GlobalEventManager.OnFurnitureOperate -= RefreshDisplay;
+        GlobalEventSub.OnFurnitureOperate -= RefreshDisplay;
     }
 
     protected override void FirstShowWnd()
@@ -44,11 +45,11 @@ public class OperationWnd : WindowRoot
     {
         if (!m_Player && ActorsManager.Player.IsValid()) TryPlayer();
         if (!m_Player) return;
-        if (furn !=m_Player.target)
+        if (furn != m_Player.target)
         {
             furn = m_Player.target;
             
-            if (furn)
+            if (furn != null)
             {
                 RefreshDisplay(m_Player.gameObject, furn);
             }
@@ -58,14 +59,18 @@ public class OperationWnd : WindowRoot
             }
 
         }
-        if (furn)
+        if (furn!=null)
         {
             SetActive(barRoot, GetFill(bar)>0.01f);
-            if(furn.meetTime>0) SetFill(bar, furn.Press/ furn.meetTime, 5 * Time.deltaTime);
+            if(furn.MeetTime > 0) SetFill(bar, furn.Press/ furn.MeetTime, 5 * Time.deltaTime);
+        }
+        else if(GetActive(operRoot))
+        {
+            SetActive(operRoot, false);
         }
 
     }
-    void RefreshDisplay(GameObject user,Furniture_Base furn)
+    void RefreshDisplay(GameObject user,IFurniture furn)
     {
         if (user != m_Player.gameObject) return;
         if(!furn.CanOperate(user))
@@ -79,14 +84,14 @@ public class OperationWnd : WindowRoot
             if (!string.IsNullOrEmpty(furn.Desc))
             {
                 SetActive(textOpteType.parent, true);
-                SetText(textOpteType, furn.meetTime > 0 ? "长按" : "按");
+                SetText(textOpteType, furn.MeetTime > 0 ? "长按" : "按");
             }
             else
             {
                 SetActive(textOpteType.parent, false);
             }
             SetActive(barRoot, false);
-            if (furn.meetTime > 0) SetFill(bar, furn.Press / furn.meetTime);
+            if (furn.MeetTime > 0) SetFill(bar, furn.Press / furn.MeetTime);
             else SetFill(bar, 0);
         }
 

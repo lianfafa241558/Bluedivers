@@ -1,21 +1,21 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using Unity.FPS.Game;
-using PEMaths;
 using System.Linq;
-using BaseLibrary;
-using Unity.BaseTool;
 using Core;
-using Utils;
+using Core.Interface;
 using GameContract;
+using PEMaths;
+
+using Unity.FPS.Game;
+using UnityEngine;
 using UnityEngine.AI;
+using Utils;
 
 public static class FpsHelper
 {
     static FpsHelper()
     {
-        bulletHoles = ResManager.Instance.LoadObjects<GameObject>("VFX/Weapon/BulletHole/Base");    
+        //bulletHoles = ResSvc.Instance.LoadObjects<GameObject>("VFX/Weapon/BulletHole/Base");
+        bulletHoles = Resources.LoadAll<GameObject>("VFX/Weapon/BulletHole/Base").ToList();
     }
 
 
@@ -40,6 +40,8 @@ public static class FpsHelper
     /// </summary>
     public static void Hit(ProjectileHitData hitData)
     {
+ 
+
         //真的会有这种情况吗？？？
         if (!hitData.data.IsValid()) {
             Debug.LogError("没有伤害组件"+ hitData.owner + hitData.pos);
@@ -47,17 +49,22 @@ public static class FpsHelper
         }
         Vector3 point = hitData.pos;
         Vector3 normal = hitData.normal;
-        Collider collider = hitData.collider;//要考虑碰撞体为空(爆炸)
-        float charg = hitData.chargeScale;
+        Collider collider = hitData.collider;//要考虑碰撞体为空（爆炸）
+        PEInt charg = hitData.chargeScale;
         GameObject owner = hitData.owner;
         
         var damageData = hitData.data;
-        PEInt damageRange = damageData.GetExplosionRange(charg); 
+        PEInt damageOuterRadius = damageData.GetDamageOuterRadius(charg);
+        PEInt damageInnerRadius = damageData.GetDamageInnerRadius(charg);
+        PEInt shockwave = damageData.GetShockwaveRadius(charg);
+        PEInt destructe = damageData.GetDestructeRadius(charg);
+        PEInt soundRadius = damageData.GetSoundRadius(charg);
+
         PEInt damageScale= (hitData.useDiffScale ? DiffDamageScale() : 1);
-        //Debug.LogWarning(collider + "蓄力" + charg + "最终范围" + damageRange+"伤害组成数量"+ damageData.DamageGroup.Count, collider);
+        //Debug.LogWarning(collider + "蓄力" + charg + "最终范范围 + damageRange+"伤害组成数量"+ damageData.DamageGroup.Count, collider);
 
         //直击
-        if (damageData.DamageDirect>0&&collider.IsValid()&& collider.TryGetComponent(out I_Damagable comp)&& comp.Source.IsValid())
+        if (damageData.GetDirectDamage(1)>0&&collider.IsValid()&& collider.TryGetComponent(out I_Damagable comp)&& comp.Source.IsValid())
         {
             //Debug.LogWarning("对" + collider.gameObject.name, collider.gameObject);
             //Debug.LogWarning("造成直击伤害" + damageData.GetDirectDamage(charg), collider.gameObject);
@@ -66,63 +73,90 @@ public static class FpsHelper
             comp.InflictDamage(comp, damageData.GetDirectDamage(charg)* damageScale, damageData.DamageGroupDirect, damageData.NoSource || !owner, owner, point);
             
         }
+         
         //爆炸
-        if (damageRange > 0&&GameRoot.GameState == GameStateEnum.Game)
+        if (BattleManager.Instance.IsValid() && damageOuterRadius > 0)
         {
-            var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, damageRange), new());
+            var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new());
             if (hitData.IgnoreSelf) unitList.Remove(owner.GetComponent<I_Actor>());
             var list= unitList.Select(item => item.Damageables)
                 .SelectMany(item => item)
                 .ToList();
 
             //Debug.LogWarning("范围"+ damageRange + "内的目标数量"+ list.Count);
-            foreach (Damageable item in list)
+            foreach (Damageable item in list)//每一个伤害组件
             {
-                if(item.ExplosionBlocking(point,out var hitCollider))
+                PEInt value = 0;
+
+                if (PEVector3.Distance((PEVector3)item.transform.position, (PEVector3)point)<= damageInnerRadius)
                 {
-                    //float distance = Vector3.Distance(hitCollider.bounds.center, point);
+                    value = damageData.GetExplosionDamage(charg, 0) * damageScale;
+                }
+                else if(item.ExplosionBlocking(point, out var hitCollider))
+                {
                     float distance = Vector3.Distance(hitCollider.ClosestPointOnBounds(point), point);
-                    PEInt value = damageData.GetExplosionDamage(charg, (PEInt)distance) * damageScale;
-                    if (value > 0)
+                    value = damageData.GetExplosionDamage(charg, (PEInt)distance) * damageScale;
+                }
+                if (value > 0)
+                {
+                    //Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value + " 基础伤害" + damageData.DamageExplosion + "距离" + distance + "直击:" + (collider.gameObject == item.gameObject));
+                    item.InflictDamage(item, value, damageData.DamageGroupExplosion2, damageData.NoSource || !owner, owner, point);
+                }
+            }
+            if (shockwave>0) {
+                foreach (var item in unitList)
+                {
+                    if (item.transform.TryGetComponent(out IPhysical physical))
                     {
-                        //Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value + " 基础伤害" + damageData.DamageExplosion + "距离" + distance + "直击:" + (collider.gameObject == item.gameObject));
-                        item.InflictDamage(item, value, damageData.DamageGroupExplosion, damageData.NoSource || !owner, owner, point);
+                        var distance = PEVector3.Distance((PEVector3)item.transform.position, (PEVector3)point);
+                        PEVector3 vector = (PEVector3)(item.CenterPos - point).normalized * (1 - (distance / shockwave)) * 100;
+                        vector.y *= 4;
+                        physical.ApplyForce(vector);
+                        //Debug.LogError("对物体" + item.gameObject + "施加力" + vector);
                     }
                 }
             }
-            
         }
 
         //特效
         if (damageData.ImpactVfx)
         {
-            var ps = VFXManager.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, collider.IsValid()? collider.transform:null);
-            ps.GetComponentInChildren<VfxEffect>()?.SetOwner(owner,hitData.weapon.gameObject, collider, point);
+            var ps = VFXManager.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
+            ps.GetComponentInChildren<VfxEffect>()?.SetOwner(owner, hitData.weapon.IsValid()?hitData.weapon.gameObject:null, collider, point);
             ps.GetComponentInChildren<ProjectileBase>()?.Shoot(hitData.weapon);
         }
         //音效
         if (damageData.ImpactSfx)
         {
-            AudioManager.PlaySound(new(damageData.ImpactSfx, point, hitData.sfxRange,AudioGroups.Impact));
+            AudioSvc.PlaySound(new(damageData.ImpactSfx, point, hitData.sfxRange,AudioGroups.Impact));
         }
         //弹痕
         if (damageData.UseHole)
         {
-            VFXManager.Creat(damageData.Hole.IsValid() ? damageData.Hole : bulletHoles.RandomTake(), point, Quaternion.LookRotation(normal), collider.IsValid() ? collider.transform : null);
+            VFXManager.Creat(damageData.Hole.IsValid() ? damageData.Hole : bulletHoles.RandomTake(), point, Quaternion.LookRotation(normal),(collider.IsValid()&& (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
         }
+
 
         //地形破坏
-        var terrainItem = hitData.data.DamageGroupExplosion.Find(item => item.Key == DamageTypeEnum.Terrain);
-        if (terrainItem.IsValid())
+        if (destructe > 0)
         {
-            var range = (PEInt)terrainItem.Value * PEMath.Max(damageRange, 1);
-            TerrainUtils.ModifyHeightMap(point, (int)(range.RawInt/1.5f), range.RawInt, range.RawFloat/5, ShapeType.Circle,false);
+            TerrainUtils.ModifyHeightMap(point, (destructe/new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe/5).RawFloat, ShapeType.Circle,false);
         }
 
-        if (!hitData.data.NoSource&&(!collider.IsValid() || collider.GetComponent<I_Damagable>()==null))
+        if (BattleManager.Instance.IsValid()&&!hitData.data.NoSource&&(!collider.IsValid() || collider.GetComponent<I_Damagable>()==null)&& soundRadius>0)
         {
+            var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, soundRadius), TargetCfg.Enemy);
+            foreach (var item in unitList)
+            {
+                if (item.transform.TryGetComponent(out I_AIController physical))
+                {
+                  
+                }
+            }
+
             //if (collider.transform.TryGetComponentInParent(out Actor actor) && actor != ActorsManager.Player) GlobalEventManager.BulletHit(owner, point);
-            GlobalEventManager.BulletHit(owner, point);
+            BattleEventSub.BulletHit(owner, point);
+
         }
     }
 
@@ -227,9 +261,9 @@ public static class FpsHelper
     /// <summary>
     /// 根据根骨骼和末端骨骼，手动更新蒙皮网格的包围盒
     /// </summary>
-    /// <param name="smr">目标蒙皮网格渲染器</param>
+    /// <param name="smr">目标蒙皮网格渲染</param>
     /// <param name="endBone">管道末端骨骼</param>
-    /// <param name="boundsExpand">包围盒向外扩大值（适配管道粗细）</param>
+    /// <param name="boundsExpand">包围盒向外扩大值（适配管道粗细</param>
     public static void UpdatePipeBounds(SkinnedMeshRenderer smr, Transform endBone, float expand = 1f)
     {
         // 参数校验
@@ -255,6 +289,76 @@ public static class FpsHelper
         bounds.Expand(expand);
         smr.localBounds = bounds;
     }
+
+    public static void TryMove(this CharacterController Controller,Vector3 value,bool isTeleport=false)
+    {
+        if (Controller.enabled)
+        {
+            if (isTeleport) Controller.Teleport(value);
+            else Controller.Move(value);
+        }
+    }
+
+
+   
+    /// <summary>
+    /// 向指定方向传送，忽略路径障碍，允许空中，但避免卡进地下
+    /// </summary>
+    public static void Teleport(this CharacterController controller, Vector3 direction)
+    {
+
+        Vector3 targetPosition = controller.transform.position + direction;
+        // 直接移动到目标点
+        controller.transform.position = targetPosition;
+
+        // 检测是否卡进地下，如果是则向上修正
+        Vector3 finalPosition = PreventUnderground(controller, targetPosition);
+        controller.transform.position = finalPosition;
+
+    }
+
+    /// <summary>
+    /// 防止角色卡进地下（修正Y 轴位置）
+    /// </summary>
+    private static Vector3 PreventUnderground(CharacterController controller, Vector3 position)
+    {
+        // 从角色中心向下检测
+        Vector3 origin = position + Vector3.up * controller.height * 0.5f;
+        float maxCheckDistance = controller.height * 0.5f + 100f;
+
+        RaycastHit hit;
+        LayerMask groundMask = LayerDefinition.GroundLayers;
+
+        if (Physics.Raycast(origin, Vector3.down, out hit, maxCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
+        {
+            // 检查是否卡进地下（地面距离太近）
+            float groundDistance = hit.distance - controller.height * 0.5f;
+
+            if (groundDistance < 0)
+            {
+                // 卡进地下了，修正到地上
+                float correctedY = hit.point.y + controller.height * 0.5f + 0.01f; // 加一点偏移防止抖动
+                return new Vector3(position.x, correctedY, position.z);
+            }
+        }
+        else
+        {
+            // 如果没有检测到地面，检查是否在地下（从脚底向上检测）
+            origin = position + Vector3.up * 0.1f;
+            if (Physics.Raycast(origin, Vector3.up, out hit, controller.height + 100f, groundMask, QueryTriggerInteraction.Ignore))
+            {
+                // 说明在地下，穿到地面之上
+                float correctedY = hit.point.y + controller.height * 0.5f + 0.01f;
+                return new Vector3(position.x, correctedY, position.z);
+            }
+        }
+
+        return position;
+    }
+
+
+
+
 
 }
 

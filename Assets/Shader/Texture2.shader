@@ -28,6 +28,7 @@ Shader "LX/Texture2"
         _FresnelWaveTime("_FresnelWaveTime", Range(0,5)) = 5
         [Space(15)] 
         [Toggle(_UseMoveST)]_UseMoveST("_UseMoveST", Float) = 0
+
         [Toggle]_MoveX("_MoveX", Float) = 0
         _MoveSpeed("_MoveSpeed", Float) = 0
         _MoveOtherSpeed("_MoveOtherSpeed",Float) = 0
@@ -48,6 +49,7 @@ Shader "LX/Texture2"
         #pragma shader_feature_local _UseMoveST
         #pragma multi_compile_instancing
 
+        
         //缓存减少重复使用(方便合并)
         CBUFFER_START(UnityPerMaterial)//基础共享参数
             sampler2D _MainTex;

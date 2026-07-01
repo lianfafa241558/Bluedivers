@@ -5,6 +5,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: c95ecafec8f894849858c9f9a1dd2d5a,
@@ -65,14 +66,26 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: c95ecafec8f894849858c9f9a1dd2d5a,
         type: 3}
       propertyPath: m_Name
-      value: Plane
+      value: AbydosPlane1
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c95ecafec8f894849858c9f9a1dd2d5a,
         type: 3}
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c95ecafec8f894849858c9f9a1dd2d5a,
+        type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c95ecafec8f894849858c9f9a1dd2d5a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8791361022943079531}
   m_SourcePrefab: {fileID: 100100000, guid: c95ecafec8f894849858c9f9a1dd2d5a, type: 3}
 --- !u!1 &1952547408104719442 stripped
 GameObject:
@@ -88,8 +101,16 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1952547408104719442}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 20.000004, y: 2, z: 10.000002}
   m_Center: {x: 0, y: 0, z: -0.00000023841864}

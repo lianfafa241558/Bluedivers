@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 /// <summary>
-/// 控制只保留一个AudioListener的(这玩意留两个会疯狂跳log)
+/// 控制只保留一个AudioListener 这玩意留两个会疯狂跳log)
 /// </summary>
 public class AudioListenerController : MonoBehaviour
 {
@@ -13,7 +13,7 @@ public class AudioListenerController : MonoBehaviour
     [Range(0,100)]
     public int priority;
     AudioListener listener;
-    private void Start()
+    private void Awake()
     {
         listener = GetComponent<AudioListener>();
         all.Add(this);

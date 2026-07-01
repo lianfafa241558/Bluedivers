@@ -13,7 +13,7 @@ namespace FpsGame.Mission
     {
         KeyScreen keyScreen;
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             keyScreen = entity.transform.GetComponentInChildren<KeyScreen>();
             keyScreen.OnComple += OnKeyScreenComple;

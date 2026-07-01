@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 using AirdropState = AirdropController.AirdropState;
 using Unity.FPS.Gameplay;
-using Unity.BaseTool;
+
 using Core;
 using Utils;
 using GameContract;
@@ -16,6 +16,11 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
 
     [SerializeField]
     private GameObject normalPod;
+    [SerializeField]
+    private GameObject eagle;
+    [SerializeField]
+    private GameObject neoNimbusVehicle;
+
     //[SerializeField]
     //private List<NoticeData_SO> warning;
     //[Display(true,false,true)]
@@ -47,7 +52,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
         {
             transform.position = point = hit.point;
         }
-        GlobalEventManager.Airdrop(owner, gameObject, point, data);
+        BattleEventSub.Airdrop(owner, gameObject, point, data);
         
         transform.parent = null;
         transform.eulerAngles = new(0, owner.transform.eulerAngles.y, 0);
@@ -57,19 +62,13 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
     }
     public void TmpAirdrop(Vector3 point, AirdropData_SO data, System.Action<GameObject> action)
     {
-        this.data = new() {
-            cfg = data,
-            isGift = true,
-            State = AirdropState.Arrive,
-            time = data.arriveTime,
-            isTmp =true,
-        };
+        this.data = new(data);
 
         if (Physics.Raycast(point + Vector3.up * 100, Vector3.down, out var hit, 150, LayerDefinition.GroundLayers))
         {
             transform.position = point = hit.point;
         }
-        GlobalEventManager.Airdrop(null, gameObject, point, this.data);
+        BattleEventSub.Airdrop(null, gameObject, point, this.data);
 
         transform.parent = null;
         //transform.eulerAngles = Vector3.zero;
@@ -95,6 +94,9 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
             case AirdropDeliveryEnum.Jet:
                 StartJet();
                 break;
+            case AirdropDeliveryEnum.Medivac:
+                StartMedivac();
+                break;
         }
     }
 
@@ -112,6 +114,9 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
                 break;
             case AirdropDeliveryEnum.Jet:
                 UpdateJet();
+                break;
+            case AirdropDeliveryEnum.Medivac:
+                UpdateMedivac();
                 break;
         }
         TryWarning();
@@ -132,6 +137,9 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
             case AirdropDeliveryEnum.Jet:
                 EndJet();
                 break;
+            case AirdropDeliveryEnum.Medivac:
+                EndMedivac();
+                break;
         }
         if (m_creatObject&&m_creatObject.TryGetComponent(out ProjectileBase pro))
         {
@@ -148,10 +156,10 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
     #region 空投舱系
     void StartPod()
     {
-        //重力加速度取20,公式是s=1/2*g*t^2=10*t^2;
-        //反转取时间就是t=(s/5)开根
+        //重力加速度g=10,公式h=1/2*g*t^2=5*t^2;
+        //反转取时间就是t=sqrt(s/5)开根号
         m_ExpectedDuration = Mathf.Sqrt(data.cfg.arriveHeight * 0.1f)+0.5f;
-        if (m_ExpectedDuration > data.cfg.arriveTime) { Debug.LogError(data.cfg.showName + "设置的高度不足以使其在限时内自由落体落地"+"预计需要的时间"+m_ExpectedDuration); }
+        if (m_ExpectedDuration > data.arriveTime) { Debug.LogError(data.cfg.showName + "设置的高度不足以使其在限时内自由落体落地"+"预计需要的时间"+m_ExpectedDuration); }
     }
     void UpdatePod()
     {
@@ -160,7 +168,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
             
             if (data.time < m_ExpectedDuration)
             {
-                AudioManager.PlaySound(new("AirDrop/PodIntA_1", transform.position + 10 * Vector3.up, 50, AudioGroups.Weapon,0.8f));
+                AudioSvc.PlaySound(new("AirDrop/PodIntA_1", transform.position + 10 * Vector3.up, 50, AudioGroups.Weapon,0.8f));
                 //使用标准空投舱
                 if (data.cfg.useNormalPod)
                 {
@@ -169,16 +177,17 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
                     {
                         anim.enabled = false;
                     }
-                    if (m_creatObject.TryGetComponent(out ProjectileBase pro))
+                    if (m_creatObject.TryGetComponent(out ProjectileBase pro))//补给舱
                     {
                         pro.Shoot(m_weapon,2);
                         pro.OnHit += PodHit;
                     }
                 }
-                //直接使用自定义物体
+                //直接使用自定义物??
                 else
                 {
                     m_creatObject = Instantiate(data.cfg.creatObect, transform.position + Vector3.up * data.cfg.arriveHeight, transform.rotation).transform;
+                    DontDestroyOnLoad(this);
                     if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
                     {
                         weapon.Owner = m_owner;
@@ -187,7 +196,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
                     {
                         anim.enabled = false;
                     }
-                    if (m_creatObject.TryGetComponent(out ProjectileBase pro))
+                    if (m_creatObject.TryGetComponent(out ProjectileBase pro))//补给舱
                     {
                         pro.Shoot(m_weapon, 2);
                         pro.OnHit += PodHit;
@@ -214,15 +223,15 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
     {
         if (hitData.collider&&!LayerDefinition.GroundLayers.Contains(1<<hitData.collider.gameObject.layer))
         {
-            //Debug.LogError("截断:撞击的物体"+ hitData.collider.gameObject + " 层级是"+hitData.collider.gameObject.layer +"  "+ System.Convert.ToString((1<<hitData.collider.gameObject.layer),2)+" 地面层级是 " + System.Convert.ToString(LayerDefinition.GroundLayers.value,2), hitData.collider.gameObject);
+            //Debug.LogError("截获撞击的物体 "+ hitData.collider.gameObject + " 层级 "+hitData.collider.gameObject.layer +"  "+ System.Convert.ToString((1<<hitData.collider.gameObject.layer),2)+" 地面层级 " + System.Convert.ToString(LayerDefinition.GroundLayers.value,2), hitData.collider.gameObject);
             return;
         }
-        AudioManager.Stop("PodIntA_1");
+        AudioSvc.Stop("PodIntA_1");
 
         //AudioManager.PlaySound(new("AirDrop/PodDoor_Stop_1", transform.position, 50, AudioGroups.WeaponShoot));
-        AudioManager.PlaySound(new("AirDrop/SupplyPod/SupplyPodSpawnImpactCombinedA_1", hitData.pos, 50, AudioGroups.Weapon,0.25f));
-        //直接在落地的时候就该创建创建而不是结束
-        //Debug.LogError("落地位置"+ m_creatObject.position+"标记位置"+ transform.position+"碰撞位置"+hitData.pos);
+        AudioSvc.PlaySound(new("AirDrop/SupplyPod/SupplyPodSpawnImpactCombinedA_1", hitData.pos, 50, AudioGroups.Weapon,0.25f));
+            //直接在落地的时候就该创建而不是结束
+            //Debug.LogError("落地位置 "+ m_creatObject.position+"标记位置"+ transform.position+"碰撞位置"+hitData.pos);
         m_creatObject.position = transform.position;
         
         if (m_creatObject.TryGetComponent(out Animator anim))
@@ -253,10 +262,10 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
             {
                 weapon.Owner = m_owner;
             }
-            if (go.TryGetComponent(out Actor actor))
+            if (go.TryGetComponent(out I_Actor actor))
             {
-                actor.Team = m_owner.GetComponent<Actor>().Team;
-                actor.Owner = m_owner.GetComponent<Actor>();
+                actor.Team = m_owner.GetComponent<I_Actor>().Team;
+                actor.Owner = m_owner.GetComponent<I_Actor>();
             }
         }
         else
@@ -277,7 +286,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
 
     #endregion
 
-    #region 轰炸系
+    #region 轰炸区
 
     void StartBomb()
     {
@@ -311,11 +320,35 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
 
     #endregion
 
-    #region 飞鹰系
+    #region 飞鹰区
 
     void StartJet()
     {
-
+        var size = data.cfg.showRange;
+        Quaternion rotation= transform.rotation;
+        if (size.y > 0&& size.x > size.y)//横向
+        {
+            rotation*=Quaternion.Euler(0, 90, 0);
+        }
+        //Debug.LogError("创建位置"+ transform.position);
+        var go= VFXManager.Creat(eagle, transform.position, rotation, null).transform;
+        m_creatObject = Instantiate(data.cfg.creatObect, go.TransformPoint(0,-5,-2), rotation,go).transform;
+        if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
+        {
+            weapon.Owner = m_owner;
+        }
+        //重新设置引导物体的位置
+        foreach (var item in m_creatObject.GetComponentsInChildren<GuidedShelling>())
+        {
+            item.transform.position = transform.position;
+        }
+        
+        if (data.cfg.sustainHideBeacon)
+        {
+            transform.ForEach(item => item.gameObject.SetActive(false));
+        }
+        
+        
     }
     void UpdateJet()
     {
@@ -323,18 +356,62 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
     }
     void EndJet()
     {
-
+        Tool.Destroy(m_creatObject.gameObject,2);
+        transform.ForEach(item => item.gameObject.SetActive(true));
     }
 
     #endregion
 
+    #region 运输机系
+
+    void StartMedivac()
+    {
+        var size = data.cfg.showRange;
+        Quaternion rotation = transform.rotation;
+        var go = VFXManager.Creat(neoNimbusVehicle, transform.position, rotation, null).transform;
+        var comp = data.cfg.creatObect.GetComponent<CharacterController> ();
+        m_creatObject = Instantiate(data.cfg.creatObect, go.TransformPoint(0, -2.5f+comp.center.y-comp.height, 1.5f), rotation, go).transform;
+        m_creatObject.GetComponent<CharacterController>().enabled = false;
+        m_creatObject.GetComponent<BaseSelfController>().enabled = false;
+        
+
+
+        if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
+        {
+            weapon.Owner = m_owner;
+        }
+
+        if (data.cfg.sustainHideBeacon)
+        {
+            transform.ForEach(item => item.gameObject.SetActive(false));
+        }
+
+
+    }
+    void UpdateMedivac()
+    {
+        //Debug.LogWarning("状态 "+ data.State+"父级 "+ m_creatObject.transform.parent);
+        if (data.State == AirdropState.Sustain && m_creatObject.transform.parent!=null)
+        {
+            Debug.LogError("卸载");
+            m_creatObject.transform.parent = null;
+            m_creatObject.GetComponent<CharacterController>().enabled = true;
+            m_creatObject.GetComponent<BaseSelfController>().enabled = true;
+        }
+    }
+    void EndMedivac()
+    {
+        transform.ForEach(item => item.gameObject.SetActive(true));
+    }
+
+    #endregion
 
     void SetDisplay()
     {
-        AudioManager.PlaySound(new ("AirDrop/superbeacon_impact",transform.position,60, AudioGroups.Weapon,0.5f));
+        AudioSvc.PlaySound(new ("AirDrop/superbeacon_impact",transform.position,60, AudioGroups.Weapon,0.5f));
         m_Lift = GetComponent<LimitedLife>();
         //Debug.LogError("持续时间"+ (data.cfg.arriveTime + data.cfg.sustainTime));
-        m_Lift.SetLift(data.cfg.arriveTime + data.cfg.sustainTime);
+        m_Lift.SetLift(data.arriveTime + data.cfg.sustainTime);
         //var main = m_particle.main;
         //main.startLifetime = new(data.cfg.arriveTime + data.cfg.sustainTime);
         //main.duration = data.cfg.arriveTime + data.cfg.sustainTime;
@@ -342,12 +419,13 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
         Color color = Color.LerpUnclamped(Color.white * data.cfg.Color.GetValue(), data.cfg.Color,1.7f);
         for (int i = 1; i < 5; ++i)
         {
-            transform.GetChild(i).gameObject.SetActive(data.cfg.arriveTime>0);
+            transform.GetChild(i).gameObject.SetActive(data.arriveTime>0);
         }
         transform.ForEach(item => SetColor(item, color));
         light.color = color;
 
         var size = data.cfg.showRange;
+        //Debug.LogError("空袭的显示范??+size);
         if (size.x > 0 && size.y > 0)
         {//矩形
             if (size.y > size.x)
@@ -358,9 +436,15 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
                 size.x = tmp;
                 effectRangeCube.localPosition = new(0, 0, size.x * 0.9f);
             }
+            else
+            {
+                effectRangeCube.localEulerAngles = new(-90, 0, 0);
+                effectRangeCube.localPosition = new(0, 0, 0);
+            }
             effectRangeCube.gameObject.SetActive(true);
             effectRangeCircle.gameObject.SetActive(false);
-            effectRangeCube.localScale = new(2 * size.x, 2 * size.y, 2 * size.y);
+            effectRangeCube.localScale = new(2 * size.x, 2 * size.y, size.x+size.y);
+            //ebug.LogError("尺寸数据"+size+"实际数据"+ effectRangeCube.localScale);
         }
         else if (size.x > 0)
         {//圆形
@@ -382,12 +466,13 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
         if (meetWarn)
         {
             m_lastWarnTime = Time.time;
-            WndManager.Instance.CreatNotice("Yuuka2","Warning", InRange,vaildTime:5);
+            WndManager.Instance.CreatNotice("Yuuka","Warning", InRange,vaildTime:5);
         }
     }
     private bool InRange()
     {
-        Vector3 pos = ActorsManager.Player.transform.position;
+        if (GameRoot.GameState != GameStateEnum.Game||!ActorsManager.Player.IsValid()||!data.IsValid()) return false;
+         Vector3 pos = ActorsManager.Player.transform.position;
         bool meetWarn = false;
         var size = data.cfg.showRange;
         if (size.x > 0 && size.y > 0)
@@ -409,7 +494,7 @@ public class VFXAirdropEffect : MonoBehaviour, VfxEffect
     }
 
 
-    /// <summary>设置信标组件的颜色 </summary>
+    /// <summary>设置信标组件的颜色</summary>
     protected void SetColor(Transform transform,Color color) {
         if (transform.TryGetComponent(out ParticleSystem ps)) {
             var main = ps.main;

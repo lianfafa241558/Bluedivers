@@ -1,7 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Core;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -10,24 +11,24 @@ using static WndTools.WndRootTool;
 namespace Unity.FPS.UI
 {
     /// <summary>
-    /// 制作图标连到锁定目标上(这个是ui，连线是另一个组件)
+    /// 制作图标连到锁定目标,这个是ui，连线是另一个组件
     /// </summary>
     public class SightLockToTarget : MonoBehaviour
     {
         [SerializeField]
-        [CustomLabel("使用连线")]
+        [InspectorName("使用连线")]
         bool UseLine;
         [SerializeField]
-        [CustomLabel("1层时显示文本")]
+        [InspectorName("1层时显示文本")]
         bool OnceDisplyNumber;
         [SerializeField]
         GameObject targetPrefab;
 
         [SerializeField]
-        [CustomLabel("使用填充计数器")]
+        [InspectorName("使用填充计数器")]
         Transform FillImage;
         [SerializeField]
-        [CustomLabel("每层对应的填充值")]
+        [InspectorName("每层对应的填充值")]
         float EachValue;
 
         CrosshairManager manager;
@@ -76,7 +77,7 @@ namespace Unity.FPS.UI
         {
             if (state)//添加锁定
             {
-                //Debug.LogError("为" + actor + "添加锁定");
+                //Debug.LogError("给 " + actor + "添加锁定");
                 if (dic.TryGetValue(actor, out var group))
                 {
                     dic[actor] = (group.Item1, ++group.Item2);
@@ -96,7 +97,7 @@ namespace Unity.FPS.UI
             }
             else//移除锁定
             {
-                //Debug.LogError("为" + actor + "移除锁定");
+                //Debug.LogError("给 " + actor + "移除锁定");
                 if (dic.TryGetValue(actor, out var group))
                 {
                     --group.Item2;
@@ -170,7 +171,7 @@ namespace Unity.FPS.UI
                 ++count;
                 if (Vector3.Distance(posList[i],end)<1)
                 {
-                    //Debug.LogError("从"+ posList[i]+"到"+end+"距离"+ Vector3.Distance(posList[i], end));
+                    //Debug.LogError("从 "+ posList[i]+"到 "+end+"距离"+ Vector3.Distance(posList[i], end));
                     ++count;
                     posList[i + 1] = end;
                     break;

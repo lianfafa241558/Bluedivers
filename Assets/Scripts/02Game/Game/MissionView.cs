@@ -1,10 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Linq;
 using Core;
 using GameContract;
 using Utils;
 using Unity.FPS.Game;
-using Unity.BaseTool;
+
+using System.Collections;
 
 namespace FpsGame.Mission
 {
@@ -36,10 +37,15 @@ namespace FpsGame.Mission
         private bool discovered { get; set; }
 
 
-        private float areaRange;//会变化
-        [HideInInspector]
+        private float areaRange;//会变的
+        //[HideInInspector]
         public MissionBase mission;//仅用来触发事件
         private int[] requiredAD;
+
+        public void Start()
+        {
+            StartCoroutine(nameof(Wait));
+        }
 
         public void Init(MissionBase mission, int[] requiredAD)
         {
@@ -48,20 +54,37 @@ namespace FpsGame.Mission
             this.discovered = HaveTag(MissionTag.StratDiscovered);
             areaRange = HaveTag(MissionTag.IsArea) ? mission.entitySize : 0;
 
-            GlobalEventManager.OnMark += Mark;
-            if (requiredAD.Length > 0) GlobalEventManager.OnAirdrop += OnAirdrop;
+            GlobalEventSub.OnMark += Mark;
+            if (requiredAD.Length > 0) BattleEventSub.OnAirdrop += OnAirdrop;
+            Debug.Log("InitMissionView"+name, gameObject);
         }
 
         public void Uninit()
         {
-            if (!discovered) GlobalEventManager.OnMark -= Mark;
-            if (requiredAD.Length > 0) GlobalEventManager.OnAirdrop -= OnAirdrop;
+            if (!discovered) GlobalEventSub.OnMark -= Mark;
+            if (requiredAD.Length > 0) BattleEventSub.OnAirdrop -= OnAirdrop;
             enabled = false;
+        }
+
+        private IEnumerator Wait()
+        {
+            while (GetComponent<ModifyTerrain>())
+            {
+                yield return null;
+            }
+            while (!mission)
+            {
+                yield return null;
+            }
+            mission.IsInitialized = true;
         }
 
         private void Update()
         {
             if (!BattleManager.Instance.IsStartBattle) return;
+
+            if (!mission.IsInitialized) return;
+ 
 
             var dis = ActorsManager.Players.Min(item => Vector2.Distance(item.Pos.ToVector2(), Pos.ToVector2()));
 
@@ -78,7 +101,7 @@ namespace FpsGame.Mission
                 if (entityRange != InHalfRange)
                 {
                     InHalfRange = entityRange;
-                    GlobalEventManager.MissionStateChange(mission, entityRange);
+                    BattleEventSub.MissionStateChange(mission, entityRange);
                 }
             }
 
@@ -107,17 +130,17 @@ namespace FpsGame.Mission
 
         protected void CreatNotice(string role, string type, System.Func<bool> func = default, float delay = 0, float vaildTime = -1)
         {
-            WndManager.Instance.CreatNotice(role, type, func, delay, vaildTime);
+            WndManager.Instance.CreatNotice(role, type, func,vaildTime);
         }
 
         public void TryDiscovered()
         {
             discovered = true;
-            GlobalEventManager.MissionEnityShow(this);
-            GlobalEventManager.OnMark -= Mark;
+            BattleEventSub.MissionEnityShow(this);
+            GlobalEventSub.OnMark -= Mark;
             if (HaveTag(MissionTag.OneDiscovered))
             {
-                GlobalEventManager.MissionStateChange(mission, true);
+                BattleEventSub.MissionStateChange(mission, true);
             }
         }
         private void Mark(GameObject owner, GameObject target, Vector3 point)
@@ -130,12 +153,12 @@ namespace FpsGame.Mission
             }
         }
 
-        private void OnAirdrop(GameObject source, GameObject beacon, Vector3 point, AirdropController.AirdropData data)
+        private void OnAirdrop(GameObject source, GameObject _, Vector3 point, AirdropController.AirdropData data)
         {
             if (requiredAD.Contains(data.cfg.ID))
             {
                 allowUseAirdrop = true;
-                GlobalEventManager.OnAirdrop -= OnAirdrop;
+                BattleEventSub.OnAirdrop -= OnAirdrop;
             }
         }
     }

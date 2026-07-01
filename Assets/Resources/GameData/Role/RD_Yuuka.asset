@@ -1,5 +1,240 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6357173447338295353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_NewWeapon
+  m_EditorClassIdentifier: 
+  groupName: NewWeapon
+  clips:
+  - audioClip: {fileID: 8300000, guid: 348843cbecb2df742983ead696ea8e20, type: 3}
+    subtitle: "\u8FD9\u662F\u2026\u2026\u5341\u5206\u7ED9\u529B\u7684\u4E1C\u897F\u554A\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-6096136593592897735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Victory
+  m_EditorClassIdentifier: 
+  groupName: Victory
+  clips:
+  - audioClip: {fileID: 8300000, guid: 7a873d10cfa354542bf905f5a0f2fa2c, type: 3}
+    subtitle: "\u5B8C\u7F8E\uFF5E\u4E0E\u8BA1\u7B97\u4E00\u81F4\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 6, y: 6}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-5632710249488756580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Vehicle
+  m_EditorClassIdentifier: 
+  groupName: Vehicle
+  clips:
+  - audioClip: {fileID: 8300000, guid: ba3fc6c87da7bec43baeafc7ce94ee9c, type: 3}
+    subtitle: "\u547C\u53EB\u652F\u63F4\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-5005465925329857397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_CollOOParts
+  m_EditorClassIdentifier: 
+  groupName: CollOOParts
+  clips:
+  - audioClip: {fileID: 8300000, guid: a9c69a2e272d9c846b8cf1f27998f14a, type: 3}
+    subtitle: "\u62BD\u53D6\u4E86\u53E4\u4EE3\u9057\u7269"
+  - audioClip: {fileID: 8300000, guid: 742159c73ebf4a44db8ce1b06f8c3498, type: 3}
+    subtitle: "\u91C7\u96C6\u4E86\u53E4\u4EE3\u9057\u7269"
+  - audioClip: {fileID: 8300000, guid: 8635c083cfb53024f9c8f8510f989b87, type: 3}
+    subtitle: "\u83B7\u5F97\u4E86\u53E4\u4EE3\u9057\u7269"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 30
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-4886428530083088603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Defeat
+  m_EditorClassIdentifier: 
+  groupName: Defeat
+  clips:
+  - audioClip: {fileID: 8300000, guid: 24caa0ac1971f4642a8d10313076e227, type: 3}
+    subtitle: "\u8BA1\u7B97\u673A\u2026\u2026\u6CA1\u60F3\u5230\u5C45\u7136\u574F\u4E86\u2026\u2026"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 6, y: 6}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-4451136591197534325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Airdrop
+  m_EditorClassIdentifier: 
+  groupName: Airdrop
+  clips:
+  - audioClip: {fileID: 8300000, guid: 20e60d75c9fabcb47ad2d51a0dce1ee7, type: 3}
+    subtitle: "\u547C\u53EB\u6218\u5907\uFF01"
+  - audioClip: {fileID: 8300000, guid: 57576136698d0e449b9077d8127caf27, type: 3}
+    subtitle: "\u547C\u53EB\u652F\u63F4\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-3413208456826428307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Help
+  m_EditorClassIdentifier: 
+  groupName: Help
+  clips:
+  - audioClip: {fileID: 8300000, guid: e15de876a169bad42b35a272715b77c4, type: 3}
+    subtitle: "\u53D8\u6570\uFF0C\u592A\u591A\u4E86\u3002"
+  - audioClip: {fileID: 8300000, guid: 24c9d0cbcffbb0542ba193a5c0b00659, type: 3}
+    subtitle: "\u563F\uFF01\u6709\u4EBA\u5417"
+  - audioClip: {fileID: 8300000, guid: 501e404ac0e580b449aa5875cef6d717, type: 3}
+    subtitle: "\u6551\u6551\u6211"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-1373364826059644577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_EnemySpotted
+  m_EditorClassIdentifier: 
+  groupName: EnemySpotted
+  clips:
+  - audioClip: {fileID: 8300000, guid: 056a6d47d3cfb6240b33b8cac58e3103, type: 3}
+    subtitle: "\u53D1\u73B0\u654C\u4EBA"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-632809214496067941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Responded
+  m_EditorClassIdentifier: 
+  groupName: Responded
+  clips:
+  - audioClip: {fileID: 8300000, guid: 9df607e32a16d28479fc48175ad18df3, type: 3}
+    subtitle: "\u6211\u6765"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48,74 +283,422 @@ MonoBehaviour:
     arr:
     - Key: 0
       Value:
-      - {fileID: 3500450672149777672, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: 1080762914947633157, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 1
       Value:
-      - {fileID: -9029758904852670521, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
     - Key: 2
       Value:
-      - {fileID: -1284684346931479303, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
-      - {fileID: -2323454773782261403, guid: 3d74c9d3904aab548aec1fd641cd930e, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 3
       Value:
-      - {fileID: -2323454773782261403, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
     - Key: 4
       Value:
-      - {fileID: -3668067459606453599, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -701047479161460271, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 5
       Value:
-      - {fileID: 5381951972048999745, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: 2374357283348408208, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 7
       Value:
-      - {fileID: -9028552732193513889, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -1436832295197112020, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 10
       Value:
-      - {fileID: 5999499399769440535, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: 5750008314694842834, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -6303319468734195359, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 11
       Value:
-      - {fileID: 7421812934663561273, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
     - Key: 16
       Value:
-      - {fileID: 7345700988828166727, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
     - Key: 17
       Value:
-      - {fileID: -1888079216740419359, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: 1653901630126122141, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -6559268843991672039, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 21
       Value:
-      - {fileID: 3528587764512499482, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -4616963868513289225, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 22
       Value:
-      - {fileID: 3579261376905438427, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
     - Key: 23
       Value:
-      - {fileID: -5709464413973612344, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: 411629705319517330, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 32
       Value:
-      - {fileID: 292478628695560636, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
     - Key: 33
       Value:
-      - {fileID: 1309435584974955910, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
     - Key: 8
       Value:
-      - {fileID: 3245337724272485253, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
     - Key: 13
       Value:
-      - {fileID: 2581532861240125709, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -4481224851886452046, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -4113541167962598251, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
     - Key: 12
       Value:
-      - {fileID: -6163976213205591382, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -1956738570582040064, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
-      - {fileID: -1929164523413442391, guid: 3b960265b5bab4c4189585ec74604669, type: 2}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+    - Key: 6
+      Value:
+      - {fileID: 0}
+      - {fileID: 0}
     meetReset: 0
+  speechGroups:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue: {fileID: 0}
+    arr:
+    - Key: 0
+      Value: {fileID: 345053142933966265}
+    - Key: 1
+      Value: {fileID: 9163025715794690103}
+    - Key: 2
+      Value: {fileID: -4451136591197534325}
+    - Key: 3
+      Value: {fileID: -5632710249488756580}
+    - Key: 4
+      Value: {fileID: 4464241219312020922}
+    - Key: 5
+      Value: {fileID: 1314646774243135247}
+    - Key: 7
+      Value: {fileID: 8666584888788879033}
+    - Key: 10
+      Value: {fileID: -3413208456826428307}
+    - Key: 11
+      Value: {fileID: -632809214496067941}
+    - Key: 16
+      Value: {fileID: -1373364826059644577}
+    - Key: 17
+      Value: {fileID: 4223763852681259120}
+    - Key: 21
+      Value: {fileID: 996169984624210051}
+    - Key: 22
+      Value: {fileID: -6357173447338295353}
+    - Key: 23
+      Value: {fileID: 1632524432933970021}
+    - Key: 32
+      Value: {fileID: -6096136593592897735}
+    - Key: 33
+      Value: {fileID: -4886428530083088603}
+    - Key: 8
+      Value: {fileID: 1082071378830030979}
+    - Key: 13
+      Value: {fileID: -5005465925329857397}
+    - Key: 12
+      Value: {fileID: 1956834907679798162}
+    - Key: 6
+      Value: {fileID: 7461272970445793654}
+    meetReset: 0
+--- !u!114 &345053142933966265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Supply
+  m_EditorClassIdentifier: 
+  groupName: Supply
+  clips:
+  - audioClip: {fileID: 8300000, guid: 118b0232bd798914d93c1f97cf51b077, type: 3}
+    subtitle: "\u8BF7\u6C42\u8865\u7ED9"
+  - audioClip: {fileID: 8300000, guid: 0675a616101c96748bb4f7347163a70b, type: 3}
+    subtitle: "\u547C\u53EB\u8865\u7ED9!"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &996169984624210051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Select
+  m_EditorClassIdentifier: 
+  groupName: Select
+  clips:
+  - audioClip: {fileID: 8300000, guid: 0b4a2e51559e7a4449f38173ae8bf6c6, type: 3}
+    subtitle: "\u660E\u667A\u7684\u9009\u62E9"
+  - audioClip: {fileID: 8300000, guid: c367fa4b829db0e4992ef056398e4db1, type: 3}
+    subtitle: "\u641E\u8FD9\u4E2A\u6709\u62A5\u916C\u5417\uFF1F"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &1082071378830030979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_HaloBomb
+  m_EditorClassIdentifier: 
+  groupName: HaloBomb
+  clips:
+  - audioClip: {fileID: 8300000, guid: 404bb962c21e6644195bab1ed3aaafa7, type: 3}
+    subtitle: "\u5149\u73AF\u70B8\u5F39\uFF0C\u70B8\u5E73\u8FD9\u91CC!"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 40
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &1314646774243135247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Bombing
+  m_EditorClassIdentifier: 
+  groupName: Bombing
+  clips:
+  - audioClip: {fileID: 8300000, guid: 61dcea44584d52147975ab646aaf87d3, type: 3}
+    subtitle: "\u7533\u8BF7\u8C03\u5EA6\u8F68\u9053\u7A7A\u88AD"
+  - audioClip: {fileID: 8300000, guid: 61dcea44584d52147975ab646aaf87d3, type: 3}
+    subtitle: "\u8BF7\u6C42\u7A7A\u4E2D\u6253\u51FB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &1632524432933970021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Upgrade
+  m_EditorClassIdentifier: 
+  groupName: Upgrade
+  clips:
+  - audioClip: {fileID: 8300000, guid: bf5fb5201c4b8554283f3b2ba4f85230, type: 3}
+    subtitle: "\u7EC8\u4E8E\u7B49\u5230\u5C55\u793A\u6210\u679C\u7684\u673A\u4F1A\u4E86\uFF01"
+  - audioClip: {fileID: 8300000, guid: 2382131c71288944fa77d2ddfad328ea, type: 3}
+    subtitle: "\u5728\u4E0B\u4E2A\u4EFB\u52A1\u91CC\u597D\u597D\u671F\u5F85\u76C8\u4F59\u5427\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &1956834907679798162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Thank
+  m_EditorClassIdentifier: 
+  groupName: Thank
+  clips:
+  - audioClip: {fileID: 8300000, guid: 84e1d028b11afbd469c98ce8b7cf7a92, type: 3}
+    subtitle: "\u55EF\uFF0C\u56DE\u590D\u91CF\u521A\u521A\u597D\u5462\u3002"
+  - audioClip: {fileID: 8300000, guid: 3ee794476822cb64b8b593da389066ba, type: 3}
+    subtitle: "\u8BA1\u7B97\u4E4B\u5916\u7684\u8865\u7ED9\uFF0C\u975E\u5E38\u611F\u8C22\u3002"
+  - audioClip: {fileID: 8300000, guid: 94a468156237ac741b7165bdbb4004f4, type: 3}
+    subtitle: "\u611F\u89C9\u53D8\u5F97\u7CBE\u795E\u70B9\u4E86\uFF0C\u8C22\u8C22\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &4223763852681259120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Damage
+  m_EditorClassIdentifier: 
+  groupName: Damage
+  clips:
+  - audioClip: {fileID: 8300000, guid: 268badfb8db5bf64d8f024c611755489, type: 3}
+    subtitle: "\u53D7\u51FB1"
+  - audioClip: {fileID: 8300000, guid: 776c00049882adb4f9e55dc897ffb16c, type: 3}
+    subtitle: "\u53D7\u51FB2"
+  - audioClip: {fileID: 8300000, guid: a2becfa734a22ce4f9c9d343d8ab1ef8, type: 3}
+    subtitle: "\u53D7\u51FB3"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 30
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &4464241219312020922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Turret
+  m_EditorClassIdentifier: 
+  groupName: Turret
+  clips:
+  - audioClip: {fileID: 8300000, guid: e1831c9768ebfbe4e914b294c890943d, type: 3}
+    subtitle: "\u547C\u53EB\u70AE\u5854\uFF01"
+  - audioClip: {fileID: 8300000, guid: 9de73568d83503542acb71f41dcc0c36, type: 3}
+    subtitle: "\u547C\u53EB\u54E8\u6212\u70AE\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &7461272970445793654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Airstrike
+  m_EditorClassIdentifier: 
+  groupName: Airstrike
+  clips:
+  - audioClip: {fileID: 8300000, guid: 61dcea44584d52147975ab646aaf87d3, type: 3}
+    subtitle: "\u7533\u8BF7\u8C03\u5EA6\u8F68\u9053\u7A7A\u88AD"
+  - audioClip: {fileID: 8300000, guid: 61dcea44584d52147975ab646aaf87d3, type: 3}
+    subtitle: "\u8BF7\u6C42\u7A7A\u4E2D\u6253\u51FB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &8666584888788879033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Kei
+  m_EditorClassIdentifier: 
+  groupName: Kei
+  clips:
+  - audioClip: {fileID: 8300000, guid: ae6bec51d91a88a47a5e17779b4147e1, type: 3}
+    subtitle: "\u51EF\u4F0A\uFF0C\u6765\u8FD9\u91CC"
+  - audioClip: {fileID: 8300000, guid: a297729b3d3569445a7c559e0d1f6568, type: 3}
+    subtitle: "\u51EF\u4F0A\uFF0C\u770B\u8FD9\u8FB9"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 40
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &9163025715794690103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_Evacuate
+  m_EditorClassIdentifier: 
+  groupName: Evacuate
+  clips:
+  - audioClip: {fileID: 8300000, guid: f516a239d903b444c83cc652358ed87d, type: 3}
+    subtitle: "\u547C\u53EB\u64A4\u79BB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0.5, y: 0.5}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8

@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Core;
+using FPSGame.Furn;
 using RootMotion.FinalIK;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.Events;
@@ -32,58 +33,58 @@ namespace Unity.FPS.Gameplay
 
 
         [Foldout("点位", true)]
-        [CustomLabel("用于避免看到武器投掷几何形状的辅助摄像头")]
+        [InspectorName("用于避免看到武器投掷几何形状的辅助摄像机")]
         public Camera WeaponCamera;
-        [CustomLabel("第一人称武器根")]
+        [InspectorName("第一人称武器槽")]
         public Transform FirstPersonSocket;
-        [CustomLabel("武器根")]
+        [InspectorName("武器父")]
         public Transform WeaponParentSocket;
-        [CustomLabel("未瞄准时的位置")]
+        [InspectorName("未瞄准时的位置")]
         public Transform DefaultWeaponPosition;
-        [CustomLabel("瞄准时的位置")]
+        [InspectorName("瞄准时的位置")]
         public Transform AimingWeaponPosition;
-        [CustomLabel("放下时的位置")]//新的武器从这个点位移动到WeaponParentSocket
+        [InspectorName("放下时的位置")]//新的武器从这个点位移动到WeaponParentSocket
         public Transform DownWeaponPosition;
 
 
 
         [Foldout("摆动", true)]
-        [CustomLabel("移动时武器在屏幕上移动的频率")]
+        [InspectorName("移动时武器在屏幕上移动的频率")]
         public float BobFrequency = 10f;
 
-        [CustomLabel("武器摆锤的速度")]
+        [InspectorName("武器摆锤的速度")]
         public float BobSharpness = 10f;
 
-        [CustomLabel("不瞄准时武器摆动的距离")]
+        [InspectorName("不瞄准时武器摆动的距离")]
         public float DefaultBobAmount = 0.05f;
 
-        [CustomLabel("瞄准时武器摆动的距离")]
+        [InspectorName("瞄准时武器摆动的距离")]
         public float AimingBobAmount = 0.02f;
 
         [Foldout("后坐力", true)]
-        [CustomLabel("这将影响后坐力移动武器的速度，值越大，速度越快")]
+        [InspectorName("这将影响后坐力移动武器的速度，值越大，速度越快")]
         public float RecoilSharpness = 50f;
 
-        [CustomLabel("后坐力可以影响武器的最大距离")]
+        [InspectorName("后坐力可以影响武器的最大距离")]
         public float MaxRecoilDistance = 0.5f;
 
-        [CustomLabel("反冲结束后，武器返回原始位置的速度有多快")]
+        [InspectorName("反冲结束后，武器返回原始位置的速度有多快")]
         public float RecoilRestitutionSharpness = 10f;
 
         [Foldout("其他", true)]
-        [CustomLabel("播放瞄准动画的速度")]
+        [InspectorName("播放瞄准动画的速度")]
         public float AimingAnimationSpeed = 10f;
 
-        [CustomLabel("不瞄准时的视野")]
+        [InspectorName("不瞄准时的视野")]
         public float DefaultFov = 60f;
 
-        [CustomLabel("应用于武器相机的常规视场部分")]
+        [InspectorName("应用于武器相机的常规视场部分")]
         public float WeaponFovMultiplier = 1f;
 
-        [CustomLabel("在第二次切换武器之前延迟，以避免从鼠标滚轮接收多个输入")]
+        [InspectorName("在第二次切换武器之前延迟，以避免从鼠标滚轮接收多个输入")]
         public float WeaponSwitchDelay = 1f;
 
-        [CustomLabel("将FPS武器游戏对象设置为的图层")]
+        [InspectorName("将FPS武器游戏对象设置为的图层")]
         public LayerMask FpsWeaponLayer;
 
         private bool m_isAiming;
@@ -106,7 +107,7 @@ namespace Unity.FPS.Gameplay
         public int ActiveWeaponIndex  = -1;
         public int ActiveSecWeaponIndex = -1;
 
-        public event UnityAction<WeaponPlayerController,bool> OnSwitchedToWeapon;//武器数据，是否是副手
+        public event UnityAction<WeaponPlayerController,bool> OnSwitchedToWeapon;//武器数据，是否是副武器
         public event UnityAction<bool> OnAim;
         public event UnityAction<WeaponPlayerController, int> OnAddedWeapon;
         public event UnityAction<WeaponPlayerController, int> OnRemovedWeapon;
@@ -146,12 +147,12 @@ namespace Unity.FPS.Gameplay
             //m_WeaponSwitchState = WeaponSwitchState.Down;
             OnSwitchedToWeapon += OnWeaponSwitched;
             OnAim += OnAiming;
-            GameRoot.OnWindowStateChange += OnAirdrop;
+            WndManager.OnWindowStateChange += OnAirdrop;
 
-            GlobalEventManager.OnSelectAirdrop += OnInputCompletedAirdrop;
-            GlobalEventManager.OnCancelAirdrop += OnCancelAirdrop;
-            GlobalEventManager.OnAirdrop += OnAirdrop;
-            GlobalEventManager.OnFurnitureOperate += OnOperation;
+            BattleEventSub.OnSelectAirdrop += OnInputCompletedAirdrop;
+            BattleEventSub.OnCancelAirdrop += OnCancelAirdrop;
+            BattleEventSub.OnAirdrop += OnAirdrop;
+            GlobalEventSub.OnFurnitureOperate += OnOperation;
         }
 
         void Start()
@@ -169,11 +170,11 @@ namespace Unity.FPS.Gameplay
         {
             OnSwitchedToWeapon -= OnWeaponSwitched;
             OnAim -= OnAiming;
-            GameRoot.OnWindowStateChange -= OnAirdrop;
-            GlobalEventManager.OnSelectAirdrop -= OnInputCompletedAirdrop;
-            GlobalEventManager.OnCancelAirdrop -= OnCancelAirdrop;
-            GlobalEventManager.OnAirdrop -= OnAirdrop;
-            GlobalEventManager.OnFurnitureOperate -= OnOperation;
+            WndManager.OnWindowStateChange -= OnAirdrop;
+            BattleEventSub.OnSelectAirdrop -= OnInputCompletedAirdrop;
+            BattleEventSub.OnCancelAirdrop -= OnCancelAirdrop;
+            BattleEventSub.OnAirdrop -= OnAirdrop;
+            GlobalEventSub.OnFurnitureOperate -= OnOperation;
         }
 
         void Update()
@@ -193,7 +194,7 @@ namespace Unity.FPS.Gameplay
                     closeAimDelay = 0;
                 }
             }
-            // 判断是否在瞄准(完全不缩放的武器无法瞄准)
+            // 判断是否在瞄准，完全不缩放的武器无法瞄准
             if(activeWeapon != null && !activeWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
             {
                 IsAiming = !activeSecWeapon && activeWeapon.AimZoomRatio < 1 && m_InputHandler.GetAimInputHeld();
@@ -225,7 +226,7 @@ namespace Unity.FPS.Gameplay
                 if (ActiveWeaponIndex == (int)WeaponTypeEnum.Grenade) return;
 
                 bool hasFired = false;
-                if (!GetActiveSecWeapon())//单持武器时,正常左键射击
+                if (!GetActiveSecWeapon())//单持武器时，正常左键射击
                 {
                     hasFired = activeWeapon.HandleShootInputs(
                        m_InputHandler.GetFireInputDown(),
@@ -267,7 +268,7 @@ namespace Unity.FPS.Gameplay
                     return;
                 }
 
-                //为了不那么反直觉，双持武器时，右键发射右侧(主武器)
+                //为了不那么反直觉，双持武器时，右键发射右手主武器
                 bool hasFired = activeSecWeapon.HandleShootInputs(
                     m_InputHandler.GetFireInputDown(),
                     m_InputHandler.GetFireInputHeld(),
@@ -293,28 +294,30 @@ namespace Unity.FPS.Gameplay
         {
             //切换武器
             //1.不在瞄准
-            //2.手上没有武器或者武器没有在蓄力(去掉)
+            //2.手上没有武器或者武器没有在蓄力（去掉）
             //3.武器切换状态为UP或者Down
             if (!IsAiming &&
                 (m_WeaponSwitchState == WeaponSwitchState.Up || m_WeaponSwitchState == WeaponSwitchState.Down))
             {
-
-                //优先滚轮切换
-                int switchWeaponInput = m_InputHandler.GetSwitchWeaponInput();
-                if (switchWeaponInput != 0)
+                if (m_PlayerCharacterController.enabled)//进载具了就不能切
                 {
-                    bool switchUp = switchWeaponInput > 0;
-                    SwitchWeapon(switchUp);
-                }
-                else
-                {
-                   
-                    switchWeaponInput = m_InputHandler.GetSelectWeaponInput();
+                    //优先滚轮切换
+                    int switchWeaponInput = m_InputHandler.GetSwitchWeaponInput();
                     if (switchWeaponInput != 0)
                     {
-                        //然后尝试数字键切换(因为这里输入是1-9，但是武器槽实际上是0-8)
-                        if (GetWeaponAtSlotIndex(switchWeaponInput - 1) != null)
-                            SwitchToWeaponIndex(switchWeaponInput - 1,false,true);
+                        bool switchUp = switchWeaponInput > 0;
+                        SwitchWeapon(switchUp);
+                    }
+                    else
+                    {
+
+                        switchWeaponInput = m_InputHandler.GetSelectWeaponInput();
+                        if (switchWeaponInput != 0)
+                        {
+                            //然后尝试数字键切换（因为这里输入1-9，但是武器槽实际上是0-8）
+                            if (GetWeaponAtSlotIndex(switchWeaponInput - 1) != null)
+                                SwitchToWeaponIndex(switchWeaponInput - 1, false, true);
+                        }
                     }
                 }
             }
@@ -325,12 +328,13 @@ namespace Unity.FPS.Gameplay
         {
             //投掷不会打断指示器
             if (m_InputHandler.GetThrow()) return;
+            if (!m_PlayerCharacterController.enabled) return;
             if (m_InputHandler.GetCrouchDown())
             {
                 if (ActiveWeaponIndex != (int)WeaponTypeEnum.FlareGun) m_LastWeaponIndex = ActiveWeaponIndex;
                 SwitchToWeaponIndex((int)WeaponTypeEnum.FlareGun, true,false,false);
             }
-            if (m_InputHandler.GetCrouchUp())
+            else if (m_InputHandler.GetCrouchUp())
             {
                 //信号枪重置原武器
                 SwitchToWeaponIndex(m_LastWeaponIndex, true, false, false);
@@ -360,7 +364,7 @@ namespace Unity.FPS.Gameplay
         }
         
 
-        #region 手臂/身体位置
+        #region 手部/身体位置
         //在LateUpdate中更新各种动画功能，因为它需要覆盖动画手臂位置
         void LateUpdate()
         {
@@ -370,7 +374,7 @@ namespace Unity.FPS.Gameplay
             UpdateWeaponRecoil();
             UpdateWeaponSwitching();
 
-            m_PlayerCharacterController.ModleRoot.localEulerAngles = new(0,Mathf.Lerp(m_PlayerCharacterController.ModleRoot.localEulerAngles.y,m_PlayerAngle, Time.deltaTime * 5), 0);
+            if(m_PlayerCharacterController&& m_PlayerCharacterController.ModleRoot) m_PlayerCharacterController.ModleRoot.localEulerAngles = new(0,Mathf.Lerp(m_PlayerCharacterController.ModleRoot.localEulerAngles.y,m_PlayerAngle, Time.deltaTime * 5), 0);
         
             //根据所有组合动画影响设置最终武器插座位置
             WeaponParentSocket.localPosition = Vector3.Lerp(WeaponParentSocket.localPosition, m_WeaponMainLocalPosition + m_WeaponBobLocalPosition + m_WeaponRecoilLocalPosition,Time.deltaTime* BobSharpness);
@@ -432,20 +436,20 @@ namespace Unity.FPS.Gameplay
                     isStatic = true;
                 }
                 playerCharacterVelocity /= Time.deltaTime;
-                //根据我们与最大地面运动速度的接近程度计算平滑的武器摆锤量
+                //根据我们与最大地面运动速度的接近程度计算平滑的武器摆锤
                 float characterMovementFactor = 0f;
                 if (m_PlayerCharacterController.IsGrounded)
                 {
                     characterMovementFactor =
                         Mathf.Clamp01(playerCharacterVelocity.magnitude /
                                       (m_PlayerCharacterController.MaxSpeedOnGround *
-                                       m_PlayerCharacterController.SprintSpeedGroundModifier));
+                                       m_PlayerCharacterController.SprintSpeedModifier));
                 }
                 //摆锤幅度(即使停下也会保持一小段时间)
                 m_WeaponBobFactor =
                     Mathf.Lerp(m_WeaponBobFactor, characterMovementFactor, BobSharpness * Time.deltaTime);
 
-                //基于正弦函数计算垂直和水平武器摆锤值
+                //基于正弦函数计算垂直和水平武器摆锤
                 float bobAmount = IsAiming ? AimingBobAmount : DefaultBobAmount;
                 float frequency = BobFrequency *(isStatic?0.1f:1);
                 float hBobValue = Mathf.Sin(Time.time * frequency) * bobAmount * m_WeaponBobFactor;
@@ -479,11 +483,11 @@ namespace Unity.FPS.Gameplay
         }
 
         /// <summary>
-        /// 更新切换武器的动画过渡
+        /// 更新切换武器的动画过程
         /// </summary>
         void UpdateWeaponSwitching()
         {
-            //计算武器开关触发后的时间比（0-1）
+            //计算武器开关触发后的时间比例（0-1）
             float switchingTimeFactor = 0f;
             if (WeaponSwitchDelay == 0f)
             {
@@ -541,7 +545,7 @@ namespace Unity.FPS.Gameplay
                 }
             }
 
-            // 处理 移动武器插座位置，以切换动画武器
+            // 处理移动武器插座位置，以切换动画武器
             if (m_WeaponSwitchState == WeaponSwitchState.PutDownPrevious)
             {
                 m_WeaponMainLocalPosition = Vector3.Lerp(DefaultWeaponPosition.localPosition,
@@ -554,7 +558,7 @@ namespace Unity.FPS.Gameplay
             }
         }
         /// <summary>
-        /// 替换武器(并关闭副手武器)
+        /// 替换武器并关闭副手武器
         /// </summary>
         /// <param name="oldWeapon"></param>
         /// <param name="newWeapon"></param>
@@ -587,7 +591,7 @@ namespace Unity.FPS.Gameplay
             }
             else
             {
-                //如果新武器是空的，不要坚持把武器放回原处
+                //如果新武器是空的，不要坚持把武器放回原位
                 m_WeaponSwitchState = WeaponSwitchState.Down;
             }
         }
@@ -603,8 +607,8 @@ namespace Unity.FPS.Gameplay
             m_TimeStartedWeaponSwitch = Time.time;
             m_WeaponSwitchState = WeaponSwitchState.PutUpNew;
 
-            //Debug.LogWarning("尝试双持武器:是副手"+ isSec+"   被替换的旧武器"+oldWeapon + "  另一把没被替换的武器"+oldOtherWeapon + "  新装备的武器"+newWeapon);
-            //副手武器作为主要武器时尝试切换至自己时
+            //Debug.LogWarning("尝试双持武器，是副手"+ isSec+"   被替换的旧武器"+oldWeapon + "  另一把没被替换的武器"+oldOtherWeapon + "  新装备的武器"+newWeapon);
+            //副手武器作为主要武器时尝试切换至自己
             if (isSec&& oldOtherWeapon== newWeapon)
             {
                 return;
@@ -616,7 +620,7 @@ namespace Unity.FPS.Gameplay
                 return;
             }
             // 停用旧武器
-            //bug情况:主手的武器是副手用的时，装备新主手武器时，没有把武器挪到副手再装备，而是直接下掉
+            //bug情况：主手的武器是副手用的时，装备新主手武器时，没有把武器挪到副手再装备，而是直接下掉
             //此时副手为空，应该将当前武器改为副手，然后装备主手
             if (!oldOtherWeapon.IsValid())
             {
@@ -625,7 +629,7 @@ namespace Unity.FPS.Gameplay
             }
             else if (oldWeapon != null)
             {
-                Debug.LogWarning("停用旧武器:" + oldWeapon.WeaponName);
+                Debug.LogWarning("停用旧武器" + oldWeapon.WeaponName);
                 SetWeaponState(oldWeapon, false);
             }
 
@@ -633,7 +637,7 @@ namespace Unity.FPS.Gameplay
             {
                 //替换副手武器
                 ActiveSecWeaponIndex = isDown ? -1: m_SwitchNewWeaponIndex;
-                Debug.LogWarning("替换副手武器:" + ActiveSecWeaponIndex);
+                Debug.LogWarning("替换副手武器" + ActiveSecWeaponIndex);
                 if(!isDown) OnSwitchedToWeapon?.Invoke(newWeapon, true);
                 else OnSwitchedToWeapon?.Invoke(oldOtherWeapon, false);
             }
@@ -645,14 +649,14 @@ namespace Unity.FPS.Gameplay
                     //另外的武器变成主手，副手置空
                     ActiveWeaponIndex = ActiveSecWeaponIndex;
                     ActiveSecWeaponIndex = -1;
-                    //Debug.LogWarning("放下主武器:" + ActiveWeaponIndex);
+                    //Debug.LogWarning("放下主武器" + ActiveWeaponIndex);
                     OnSwitchedToWeapon?.Invoke(oldOtherWeapon, false);
                 }
                 else //替换主武器
                 {
                     ActiveSecWeaponIndex = ActiveWeaponIndex;
                     ActiveWeaponIndex = m_SwitchNewWeaponIndex;
-                    Debug.LogWarning("替换主武器:" + ActiveWeaponIndex);
+                    Debug.LogWarning("替换主武器" + ActiveWeaponIndex);
                     OnSwitchedToWeapon?.Invoke(newWeapon, false);
                     //不能直接直接用oldOtherWeapon，因为部分情况会是用的oldWeapon
                     OnSwitchedToWeapon?.Invoke(oldOtherWeapon.IsValid() ?oldOtherWeapon :oldWeapon, true) ;
@@ -689,7 +693,7 @@ namespace Unity.FPS.Gameplay
         {
             m_fullIk = GetComponentInChildren<FullBodyBipedIK>();
             //Debug.LogWarning("重设FullBodyBipedIK:" + m_fullIk);
-            //Debug.LogWarning("重置武器:" + StartingWeapons.Count);
+            //Debug.LogWarning("重置武器" + StartingWeapons.Count);
             for (int i = 0; i < m_WeaponSlots.Length; i++)
             {
                 if (m_WeaponSlots[i] != null)
@@ -706,7 +710,7 @@ namespace Unity.FPS.Gameplay
         }
 
         /// <summary>
-        /// 找到下一个要切换到的有效武器(一般是滚轮使用)
+        /// 找到下一个要切换到的有效武器（一般是滚轮使用）
         /// </summary>
         public void SwitchWeapon(bool ascendingOrder)
         {
@@ -714,8 +718,8 @@ namespace Unity.FPS.Gameplay
             int closestSlotDistance = m_WeaponSlots.Length;
             for (int i = 0; i < (GameRoot.GameState == GameStateEnum.Game ? 3 : m_WeaponSlots.Length); ++i)
             {
-                //如果此插槽的武器有效，则计算其与活动插槽索引的“距离”（按升序或降序排列）
-                //如果距离最近，请选择它
+                //如果此插槽的武器有效，则计算其与活动插槽索引的"距离"（按升序或降序排列）
+                //如果距离最近，请选择
                 if (i != ActiveWeaponIndex && GetWeaponAtSlotIndex(i) != null)
                 {
                     int distanceToActiveIndex = GetDistanceBetweenWeaponSlots(ActiveWeaponIndex, i, ascendingOrder);
@@ -741,10 +745,10 @@ namespace Unity.FPS.Gameplay
         {
             //1.强制
             //2.武器和主手的不一样且不为空
-            //3.允许双持且 (“武器和主手不一样”或者"武器和主手一样，但是有副手")
+            //3.允许双持？("武器和主手不一样"或者"武器和主手一样，但是有副手")
             if (force || (newWeaponIndex != ActiveWeaponIndex && newWeaponIndex >= 0)||(allowDual&&GetActiveSecWeapon()))
             {
-                if (ActiveWeaponIndex == (int)WeaponTypeEnum.FlareGun && WaitRelease.IsValid()) GlobalEventManager.CancelAirdrop(gameObject,WaitRelease);
+                if (ActiveWeaponIndex == (int)WeaponTypeEnum.FlareGun && WaitRelease.IsValid()) BattleEventSub.CancelAirdrop(gameObject,WaitRelease);
                 //存储与武器切换动画相关的数据
                 m_SwitchNewWeaponIndex = newWeaponIndex;
                 m_TimeStartedWeaponSwitch = Time.time;
@@ -828,7 +832,7 @@ namespace Unity.FPS.Gameplay
                 if (m_WeaponSlots[i] == null)
                 {
                     // 将武器预制件作为武器插座的子对象生成
-                    //但是因为切人物时人物隐藏，因此必须先创建，再移动到武器根下
+                    //但是因为切人物时人物隐藏，因此必须先创建，再移动到武器根
                     WeaponPlayerController weaponInstance = Instantiate(weaponPrefab);
                     weaponInstance.transform.SetParent(WeaponParentSocket);
                     weaponInstance.transform.localPosition = Vector3.zero;
@@ -850,9 +854,9 @@ namespace Unity.FPS.Gameplay
                     m_WeaponSlots[i] = weaponInstance;
                     
                     OnAddedWeapon?.Invoke(weaponInstance, i);
-                    var arch = GameRoot.Archive.GetRoleCfg(m_PlayerCharacterController.Id);
+                    var arch = ArchiveSvc.Archive.GetRoleCfg(m_PlayerCharacterController.Id);
                     var lenghts = weaponInstance.UpgradeCount();
-                    var archWeaponData = GameRoot.Archive.weaponUpgradeDic.TryGet(arch.ID + "_" + weaponInstance.WeaponName, new(arch.ID + "_" + weaponInstance.WeaponName, lenghts.Length));
+                    var archWeaponData = ArchiveSvc.Archive.weaponUpgradeDic.TryGet(arch.ID + "_" + weaponInstance.WeaponName, new(arch.ID + "_" + weaponInstance.WeaponName, lenghts.Length));
                     weaponInstance.ApplyUpgrade(archWeaponData.selectIndex, archWeaponData.selectModuleIndex);
 
                     if (GetActiveWeapon() == null)
@@ -965,8 +969,8 @@ namespace Unity.FPS.Gameplay
             return null;
         }
 
-        //计算两个武器槽索引之间的“距离”
-        //例如：如果我们有5个武器插槽，插槽#2和#4之间的距离按升序排列为2，按降序排列为3
+        //计算两个武器槽索引之间的"距离"
+        //例如：如果我们有5个武器插槽，插槽2和4之间的距离按升序排列是2，按降序排列是3
         int GetDistanceBetweenWeaponSlots(int fromSlotIndex, int toSlotIndex, bool ascendingOrder)
         {
             int distanceBetweenSlots = 0;
@@ -1065,7 +1069,7 @@ namespace Unity.FPS.Gameplay
             var weapon = GetWeaponAtSlotIndex((int)WeaponTypeEnum.FlareGun);
             weapon.UseDamageIndex = 0;
         }
-        public void OnAirdrop(GameObject owner, GameObject target, Vector3 point, AirdropData data)
+        public void OnAirdrop(GameObject owner, GameObject _, Vector3 point, AirdropData data)
         {
             if (owner==gameObject)
             {
@@ -1076,12 +1080,12 @@ namespace Unity.FPS.Gameplay
         }
 
 
-        void OnOperation(GameObject user, Furniture_Base furn)
+        void OnOperation(GameObject user, IFurniture furn)
         {
             bool switchState = furn.HaveFlag(FurnitureFlag.SwitchState);
             if (user != gameObject || !switchState) return;
 
-            if (furn.inOperate)
+            if (furn.InOperate)
             {
                 m_LastWeaponIndex = ActiveWeaponIndex;
                 SwitchToWeaponIndex((int)WeaponTypeEnum.FlareGun+1, false, false, false);

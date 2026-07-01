@@ -24,6 +24,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5559020829316086320}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -31,7 +32,6 @@ Transform:
   m_Children:
   - {fileID: 6909279826328415098}
   m_Father: {fileID: 3519047440612575070}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1782529315326728618
 MonoBehaviour:
@@ -61,43 +61,28 @@ MonoBehaviour:
     MaxRange: -1
     MinRange: -1
     NoSource: 1
+    SoundRadius: 20
     DamageDirect: 0
-    DamageGroupDirect: []
+    DamageGroupDirect2:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageExplosion: 30
+    ExplosionInnerRange: 0
     ExplosionRange: 2
-    DamageRatioOverDis:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0.33333334
-      - serializedVersion: 3
-        time: 0.5
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 136
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      - serializedVersion: 3
-        time: 1
-        value: 0
-        inSlope: -2
-        outSlope: -2
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 0
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion2:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -112,10 +97,13 @@ MonoBehaviour:
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
+    OnlyTerrain: 0
+    UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
+    ChargeSoundScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -150,6 +138,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6477049171594848137}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -157,7 +146,6 @@ Transform:
   m_Children:
   - {fileID: 7253862646559491661}
   m_Father: {fileID: 8771126716963581160}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7248787927196116803
 MonoBehaviour:
@@ -198,19 +186,20 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7093523400574363358}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7253862646559491661}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &9093880604317977347
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 2399adf1b1d1c1444b8ed24100573d62,
@@ -274,6 +263,41 @@ PrefabInstance:
       value: OilDrum Variant
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2399adf1b1d1c1444b8ed24100573d62,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3519047440612575070}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2399adf1b1d1c1444b8ed24100573d62,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8760425310562119041}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2399adf1b1d1c1444b8ed24100573d62,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2500207499672244983}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2399adf1b1d1c1444b8ed24100573d62,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 823497979}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2399adf1b1d1c1444b8ed24100573d62,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 823497980}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2399adf1b1d1c1444b8ed24100573d62,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 823497981}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2399adf1b1d1c1444b8ed24100573d62,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 823497982}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2399adf1b1d1c1444b8ed24100573d62,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8407787992181933803}
   m_SourcePrefab: {fileID: 100100000, guid: 2399adf1b1d1c1444b8ed24100573d62, type: 3}
 --- !u!1 &8282856299717015122 stripped
 GameObject:
@@ -289,11 +313,35 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8282856299717015122}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.66216743, y: 0.6621676, z: 0.9372916}
   m_Center: {x: -0.0000027865171, y: -0.0000027865178, z: 0.4685753}
+--- !u!208 &2500207499672244983
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8282856299717015122}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 0
+  m_Extents: {x: 0.469, y: 0.33100003, z: 0.469}
+  m_MoveThreshold: 0.1
+  m_Carve: 0
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0, z: 0.469}
+  m_TimeToStationary: 0.5
 --- !u!114 &823497979
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -368,9 +416,11 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
+      m_ColorSpace: -1
       m_NumColorKeys: 3
       m_NumAlphaKeys: 2
     duration: 3
+  UseAttack: 0
 --- !u!114 &823497980
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -386,6 +436,7 @@ MonoBehaviour:
   DeathDuration: 3
   BirthDuration: 0
   birthTime: 0
+  IsRemove: 0
 --- !u!114 &823497981
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -443,6 +494,7 @@ MonoBehaviour:
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
+  IsFixed: 1
   flag: 16
   type: 16
   team: -1
@@ -453,22 +505,6 @@ MonoBehaviour:
   shape: 0
   rangeLength: 0.6
   damageables: []
---- !u!208 &2500207499672244983
-NavMeshObstacle:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8282856299717015122}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Shape: 0
-  m_Extents: {x: 0.469, y: 0.33100003, z: 0.469}
-  m_MoveThreshold: 0.1
-  m_Carve: 0
-  m_CarveOnlyStationary: 1
-  m_Center: {x: 0, y: 0, z: 0.469}
-  m_TimeToStationary: 0.5
 --- !u!4 &8771126716963581160 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2399adf1b1d1c1444b8ed24100573d62,

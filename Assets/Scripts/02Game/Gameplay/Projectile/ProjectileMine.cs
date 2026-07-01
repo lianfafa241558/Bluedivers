@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Core;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -14,9 +14,9 @@ namespace Unity.FPS.Gameplay
     public class ProjectileMine : ProjectileBase
     {
         [Header("通用")]
-        [CustomLabel("根部变换")]
+        [InspectorName("根部变换")]
         public Transform Root;
-        [CustomLabel("触发范围")]
+        [InspectorName("触发范围")]
         public float TriggerRange=0.7f;
 
         public static Color RadiusColor = Color.red;
@@ -63,7 +63,7 @@ namespace Unity.FPS.Gameplay
         void TryHit()
         {
 
-            Collider[] hits = Physics.OverlapSphere(Root.position,DamageData.ExplosionRange, FpsHelper.GetHittableLayers(0)- LayerDefinition.GroundLayers,k_TriggerInteraction);
+            Collider[] hits = Physics.OverlapSphere(Root.position,DamageData.GetDamageOuterRadius(1).RawFloat, FpsHelper.GetHittableLayers(0)- LayerDefinition.GroundLayers,k_TriggerInteraction);
             foreach (var hit in hits)
             {
                 if (IsHitValid(hit) && hit.Distance(m_collider) < TriggerRange)
@@ -143,7 +143,7 @@ namespace Unity.FPS.Gameplay
             Gizmos.color = RadiusColor;
             if (DamageData.IsValid())
             {
-                Gizmos.DrawWireSphere(Root.position, DamageData.ExplosionRange);
+                Gizmos.DrawWireSphere(Root.position, DamageData.GetDamageOuterRadius(1).RawFloat);
             }
         }
 

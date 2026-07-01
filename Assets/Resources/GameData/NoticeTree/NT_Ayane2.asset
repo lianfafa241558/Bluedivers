@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-9126946031150803841
+--- !u!114 &-8284411881639961656
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -9,18 +9,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u96E8\u4E91\u53F7\u672A\u53D1\u73B0\u5C0F\u961F\uFF0C\u6B63\u4FDD\u6301\u9AD8\u5EA6\u7B49\u5F85\u5C0F\u961F\u9760\u8FD1\u3002"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane2_WarnArea
   m_EditorClassIdentifier: 
-  Desc: "\u96E8\u4E91\u53F7\u672A\u53D1\u73B0\u5C0F\u961F\uFF0C\u6B63\u4FDD\u6301\u9AD8\u5EA6\u7B49\u5F85\u5C0F\u961F\u9760\u8FD1\u3002"
-  Clip: {fileID: 8300000, guid: 87898f3605c67b841930106a139ab4cc, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 50
-  Type: Hover
-  Space: 0
-  Delay: 0
---- !u!114 &-4268026695600091867
+  groupName: WarnArea
+  clips:
+  - audioClip: {fileID: 8300000, guid: b9634fb8ff17e8645bd775413febb1b8, type: 3}
+    subtitle: "\u8BF7\u4E0D\u8981\u8FDC\u79BB\u64A4\u79BB\u533A\u57DF\u3002"
+  - audioClip: {fileID: 8300000, guid: 7b9ceef2a222dc948947f94eca86f0a1, type: 3}
+    subtitle: "\u6211\u65E0\u6CD5\u68C0\u6D4B\u5230\u5C0F\u961F\uFF0C\u8BF7\u7ACB\u5373\u8FD4\u56DE\u64A4\u79BB\u533A\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 50
+  group: 8
+  flags: 0
+--- !u!114 &-7862145429025243397
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -29,18 +36,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u8FD9\u91CC\u662F\u51CC\u97F3\uFF0C\u6211\u5DF2\u7ECF\u5230\u63A5\u5E94\u4F4D\u7F6E\u3002"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane2_CountDownEnd
   m_EditorClassIdentifier: 
-  Desc: "\u8FD9\u91CC\u662F\u51CC\u97F3\uFF0C\u6211\u5DF2\u7ECF\u5230\u63A5\u5E94\u4F4D\u7F6E\u3002"
-  Clip: {fileID: 8300000, guid: 6f1b3f01af23823408db1daa7de9c183, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 100
-  Type: CountDownEnd
-  Space: 0
-  Delay: 0
---- !u!114 &-4228436735682293972
+  groupName: CountDownEnd
+  clips:
+  - audioClip: {fileID: 8300000, guid: 5912921f1528db94099eeb7d1c47ec91, type: 3}
+    subtitle: "\u96E8\u4E91\u53F7\u5230\u8FBE\u64A4\u79BB\u70B9\u3002"
+  - audioClip: {fileID: 8300000, guid: 6f1b3f01af23823408db1daa7de9c183, type: 3}
+    subtitle: "\u8FD9\u91CC\u662F\u51CC\u97F3\uFF0C\u6211\u5DF2\u7ECF\u5230\u63A5\u5E94\u4F4D\u7F6E\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 100
+  group: 8
+  flags: 0
+--- !u!114 &-6786377225643221165
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -49,18 +63,27 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u8BF7\u4E0D\u8981\u8FDC\u79BB\u64A4\u79BB\u533A\u57DF\u3002"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane2_Suspend
   m_EditorClassIdentifier: 
-  Desc: "\u8BF7\u4E0D\u8981\u8FDC\u79BB\u64A4\u79BB\u533A\u57DF\u3002"
-  Clip: {fileID: 8300000, guid: b9634fb8ff17e8645bd775413febb1b8, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 50
-  Type: WarnArea
-  Space: 0
-  Delay: 0
---- !u!114 &-3295864842950500555
+  groupName: Suspend
+  clips:
+  - audioClip: {fileID: 8300000, guid: 285d121660aa6f94da33725acaa434f5, type: 3}
+    subtitle: "\u8FD9\u91CC\u662F\u96E8\u4E91\u53F7\uFF0C\u6CA1\u770B\u89C1\u5927\u5BB6\uFF0C\u62B1\u6B49\uFF0C\u53EA\u80FD\u5148\u8FD4\u56DE\u4E86\u3002"
+  - audioClip: {fileID: 8300000, guid: 621499c486ca98a4da1e3a84c05bfd8d, type: 3}
+    subtitle: "\u64A4\u79BB\u70B9\u672A\u53D1\u73B0\u5C0F\u961F\u6210\u5458\uFF0C\u96E8\u4E91\u53F7\u7740\u9646\u4E2D\u6B62\uFF0C\u5404\u4F4D\u8BF7\u6293\u7D27\u65F6\u95F4\uFF01"
+  - audioClip: {fileID: 8300000, guid: bb66f89d895a3764faa56137fbfed4ca, type: 3}
+    subtitle: "\u5C0F\u961F\u79BB\u5F00\u64A4\u79BB\u70B9\uFF0C\u96E8\u4E91\u53F7\u4E2D\u6B62\u63A5\u5E94\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 50
+  group: 8
+  flags: 0
+--- !u!114 &-6499332562827233741
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -69,18 +92,27 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u8FD9\u91CC\u662F\u96E8\u4E91\u53F7\uFF0C\u51C6\u5907\u7740\u9646\u3002"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane2_Landing
   m_EditorClassIdentifier: 
-  Desc: "\u8FD9\u91CC\u662F\u96E8\u4E91\u53F7\uFF0C\u51C6\u5907\u7740\u9646\u3002"
-  Clip: {fileID: 8300000, guid: 7cadec847aac44c4db1df54208dd2b15, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 100
-  Type: Landing
-  Space: 0
-  Delay: 0
---- !u!114 &-2197796045677455373
+  groupName: Landing
+  clips:
+  - audioClip: {fileID: 8300000, guid: 6f38015c3eed5c54daf40b7c63c5be6a, type: 3}
+    subtitle: "\u96E8\u4E91\u53F7\u542F\u52A8\u7740\u9646\u7A0B\u5E8F\uFF0C\u5927\u5BB6\u6CE8\u610F\u8EB2\u907F\u3002"
+  - audioClip: {fileID: 8300000, guid: 7cadec847aac44c4db1df54208dd2b15, type: 3}
+    subtitle: "\u8FD9\u91CC\u662F\u96E8\u4E91\u53F7\uFF0C\u51C6\u5907\u7740\u9646\u3002"
+  - audioClip: {fileID: 8300000, guid: 1d6d2a648b919ed4789fde40937774e7, type: 3}
+    subtitle: "\u6211\u5DF2\u7ECF\u5230\u8FBE\u76EE\u6807\u70B9\uFF0C\u8BF7\u5404\u4F4D\u540C\u5B66\u8D76\u7D27\u8FDB\u6765\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 100
+  group: 8
+  flags: 0
+--- !u!114 &-6062258871928886837
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -89,18 +121,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u8FD9\u91CC\u662F\u51CC\u97F3\uFF0C\u8BF7\u786E\u4FDD\u5C0F\u961F\u4F4D\u4E8E\u64A4\u79BB\u534A\u5F84\u5185\u3002"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane2_Vehicle
   m_EditorClassIdentifier: 
-  Desc: "\u8FD9\u91CC\u662F\u51CC\u97F3\uFF0C\u8BF7\u786E\u4FDD\u5C0F\u961F\u4F4D\u4E8E\u64A4\u79BB\u534A\u5F84\u5185\u3002"
-  Clip: {fileID: 8300000, guid: 144498b5c992c4340b2413a4ce82b4f7, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 50
-  Type: Hover
-  Space: 0
-  Delay: 0
---- !u!114 &-217882171486568574
+  groupName: Vehicle
+  clips:
+  - audioClip: {fileID: 8300000, guid: 7aed258cc198025478311f2c535caa03, type: 3}
+    subtitle: "\u540E\u65B9\u652F\u63F4\u5230\u8FBE\uFF01"
+  - audioClip: {fileID: 8300000, guid: 925cd8732d5b73342a6e1f98a02c0cc6, type: 3}
+    subtitle: "\u4E0D\u53EA\u662F\u5728\u8FDC\u5904\u652F\u63F4\uFF0C\u6211\u4E5F\u8981\u4E0A\u4E86\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 10, y: 10}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 8
+  flags: 0
+--- !u!114 &-3353116320954551144
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -109,17 +148,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u64A4\u79BB\u70B9\u672A\u53D1\u73B0\u5C0F\u961F\u6210\u5458\uFF0C\u96E8\u4E91\u53F7\u7740\u9646\u4E2D\u6B62\uFF0C\u5404\u4F4D\u8BF7\u6293\u7D27\u65F6\u95F4\uFF01"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane2_TakeOff
   m_EditorClassIdentifier: 
-  Desc: "\u64A4\u79BB\u70B9\u672A\u53D1\u73B0\u5C0F\u961F\u6210\u5458\uFF0C\u96E8\u4E91\u53F7\u7740\u9646\u4E2D\u6B62\uFF0C\u5404\u4F4D\u8BF7\u6293\u7D27\u65F6\u95F4\uFF01"
-  Clip: {fileID: 8300000, guid: 621499c486ca98a4da1e3a84c05bfd8d, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 50
-  Type: Suspend
-  Space: 0
-  Delay: 0
+  groupName: TakeOff
+  clips:
+  - audioClip: {fileID: 8300000, guid: 2d2b15faab08e6542a216be77e06d474, type: 3}
+    subtitle: "\u88C5\u8F7D\u5B8C\u6210\uFF0C\u51C6\u5907\u8D77\u98DE\u3002"
+  - audioClip: {fileID: 8300000, guid: 82ea1e42d5a00e245ad311892b2894e2, type: 3}
+    subtitle: "\u56DE\u6536\u5B8C\u6210\uFF0C\u96E8\u4E91\u53F7\u6B63\u5728\u6298\u8FD4\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 102
+  group: 8
+  flags: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -133,26 +179,19 @@ MonoBehaviour:
   m_Name: NT_Ayane2
   m_EditorClassIdentifier: 
   SourceName: "\u51CC\u97F3"
+  ID: Ayane
   Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
   UseResLoad: 1
-  nodes:
-  - {fileID: 8857995449826390072}
-  - {fileID: 5761525898355573156}
-  - {fileID: -4268026695600091867}
-  - {fileID: 335392214268397190}
-  - {fileID: 3562416200468496884}
-  - {fileID: -3295864842950500555}
-  - {fileID: 8636818661619356787}
-  - {fileID: -2197796045677455373}
-  - {fileID: -9126946031150803841}
-  - {fileID: -217882171486568574}
-  - {fileID: 915375599962245693}
-  - {fileID: 1348579125935318977}
-  - {fileID: 4145123390306655816}
-  - {fileID: 2438014125119673219}
-  - {fileID: -4228436735682293972}
-  - {fileID: 8247218593001872196}
---- !u!114 &335392214268397190
+  sounds:
+  - {fileID: 4621325969631382690}
+  - {fileID: -6499332562827233741}
+  - {fileID: -7862145429025243397}
+  - {fileID: -6786377225643221165}
+  - {fileID: -8284411881639961656}
+  - {fileID: -3353116320954551144}
+  - {fileID: 921317011421383427}
+  - {fileID: -6062258871928886837}
+--- !u!114 &921317011421383427
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -161,18 +200,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u96E8\u4E91\u53F7\u542F\u52A8\u7740\u9646\u7A0B\u5E8F\uFF0C\u5927\u5BB6\u6CE8\u610F\u8EB2\u907F\u3002"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane2_CountDownBegins
   m_EditorClassIdentifier: 
-  Desc: "\u96E8\u4E91\u53F7\u542F\u52A8\u7740\u9646\u7A0B\u5E8F\uFF0C\u5927\u5BB6\u6CE8\u610F\u8EB2\u907F\u3002"
-  Clip: {fileID: 8300000, guid: 6f38015c3eed5c54daf40b7c63c5be6a, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 100
-  Type: Landing
-  Space: 0
-  Delay: 0
---- !u!114 &915375599962245693
+  groupName: CountDownBegins
+  clips:
+  - audioClip: {fileID: 8300000, guid: 3b822bd2f973246489526990512f1d17, type: 3}
+    subtitle: "\u5750\u6807\u5DF2\u63A5\u6536\uFF0C\u6211\u6B63\u5728\u8FC7\u6765\u7684\u8DEF\u4E0A\uFF0C\u5404\u4F4D\u575A\u6301\u4F4F"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 1, y: 1}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 100
+  group: 8
+  flags: 0
+--- !u!114 &4621325969631382690
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -181,174 +225,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u8FD9\u91CC\u662F\u96E8\u4E91\u53F7\uFF0C\u6CA1\u770B\u89C1\u5927\u5BB6\uFF0C\u62B1\u6B49\uFF0C\u53EA\u80FD\u5148\u8FD4\u56DE\u4E86\u3002"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane2_Hover
   m_EditorClassIdentifier: 
-  Desc: "\u8FD9\u91CC\u662F\u96E8\u4E91\u53F7\uFF0C\u6CA1\u770B\u89C1\u5927\u5BB6\uFF0C\u62B1\u6B49\uFF0C\u53EA\u80FD\u5148\u8FD4\u56DE\u4E86\u3002"
-  Clip: {fileID: 8300000, guid: 285d121660aa6f94da33725acaa434f5, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 50
-  Type: Suspend
-  Space: 0
-  Delay: 0
---- !u!114 &1348579125935318977
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u5C0F\u961F\u79BB\u5F00\u64A4\u79BB\u70B9\uFF0C\u96E8\u4E91\u53F7\u4E2D\u6B62\u63A5\u5E94\u3002"
-  m_EditorClassIdentifier: 
-  Desc: "\u5C0F\u961F\u79BB\u5F00\u64A4\u79BB\u70B9\uFF0C\u96E8\u4E91\u53F7\u4E2D\u6B62\u63A5\u5E94\u3002"
-  Clip: {fileID: 8300000, guid: bb66f89d895a3764faa56137fbfed4ca, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 50
-  Type: Suspend
-  Space: 0
-  Delay: 0
---- !u!114 &2438014125119673219
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u56DE\u6536\u5B8C\u6210\uFF0C\u96E8\u4E91\u53F7\u6B63\u5728\u6298\u8FD4\u3002"
-  m_EditorClassIdentifier: 
-  Desc: "\u56DE\u6536\u5B8C\u6210\uFF0C\u96E8\u4E91\u53F7\u6B63\u5728\u6298\u8FD4\u3002"
-  Clip: {fileID: 8300000, guid: 82ea1e42d5a00e245ad311892b2894e2, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 102
-  Type: TakeOff
-  Space: 0
-  Delay: 0
---- !u!114 &3562416200468496884
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u6211\u5DF2\u7ECF\u5230\u8FBE\u76EE\u6807\u70B9\uFF0C\u8BF7\u5404\u4F4D\u540C\u5B66\u8D76\u7D27\u8FDB\u6765\u3002"
-  m_EditorClassIdentifier: 
-  Desc: "\u6211\u5DF2\u7ECF\u5230\u8FBE\u76EE\u6807\u70B9\uFF0C\u8BF7\u5404\u4F4D\u540C\u5B66\u8D76\u7D27\u8FDB\u6765\u3002"
-  Clip: {fileID: 8300000, guid: 1d6d2a648b919ed4789fde40937774e7, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 100
-  Type: Landing
-  Space: 0
-  Delay: 0
---- !u!114 &4145123390306655816
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u88C5\u8F7D\u5B8C\u6210\uFF0C\u51C6\u5907\u8D77\u98DE\u3002"
-  m_EditorClassIdentifier: 
-  Desc: "\u88C5\u8F7D\u5B8C\u6210\uFF0C\u51C6\u5907\u8D77\u98DE\u3002"
-  Clip: {fileID: 8300000, guid: 2d2b15faab08e6542a216be77e06d474, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 102
-  Type: TakeOff
-  Space: 0
-  Delay: 0
---- !u!114 &5761525898355573156
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u96E8\u4E91\u53F7\u5230\u8FBE\u64A4\u79BB\u70B9\u3002"
-  m_EditorClassIdentifier: 
-  Desc: "\u96E8\u4E91\u53F7\u5230\u8FBE\u64A4\u79BB\u70B9\u3002"
-  Clip: {fileID: 8300000, guid: 5912921f1528db94099eeb7d1c47ec91, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 100
-  Type: CountDownEnd
-  Space: 0
-  Delay: 0
---- !u!114 &8247218593001872196
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u6211\u65E0\u6CD5\u68C0\u6D4B\u5230\u5C0F\u961F\uFF0C\u8BF7\u7ACB\u5373\u8FD4\u56DE\u64A4\u79BB\u533A\u3002"
-  m_EditorClassIdentifier: 
-  Desc: "\u6211\u65E0\u6CD5\u68C0\u6D4B\u5230\u5C0F\u961F\uFF0C\u8BF7\u7ACB\u5373\u8FD4\u56DE\u64A4\u79BB\u533A\u3002"
-  Clip: {fileID: 8300000, guid: 7b9ceef2a222dc948947f94eca86f0a1, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 50
-  Type: WarnArea
-  Space: 0
-  Delay: 0
---- !u!114 &8636818661619356787
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u96E8\u4E91\u53F7\u5DF2\u7ECF\u5230\u8FBE\u64A4\u79BB\u70B9\uFF0C\u4F46\u662F\u6CA1\u6709\u770B\u89C1\u5C0F\u961F\uFF0C\u5404\u4F4D\u6293\u7D27\u65F6\u95F4\uFF01"
-  m_EditorClassIdentifier: 
-  Desc: "\u96E8\u4E91\u53F7\u5DF2\u7ECF\u5230\u8FBE\u64A4\u79BB\u70B9\uFF0C\u4F46\u662F\u6CA1\u6709\u770B\u89C1\u5C0F\u961F\uFF0C\u5404\u4F4D\u6293\u7D27\u65F6\u95F4\uFF01"
-  Clip: {fileID: 8300000, guid: b27513b5899f84449870068f813eebaf, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 50
-  Type: Hover
-  Space: 0
-  Delay: 0
---- !u!114 &8857995449826390072
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u51CC\u97F3: \u5750\u6807\u5DF2\u63A5\u6536\uFF0C\u6211\u6B63\u5728\u8FC7\u6765\u7684\u8DEF\u4E0A\uFF0C\u5404\u4F4D\u575A\u6301\u4F4F"
-  m_EditorClassIdentifier: 
-  Desc: "\u5750\u6807\u5DF2\u63A5\u6536\uFF0C\u6211\u6B63\u5728\u8FC7\u6765\u7684\u8DEF\u4E0A\uFF0C\u5404\u4F4D\u575A\u6301\u4F4F"
-  Clip: {fileID: 8300000, guid: 3b822bd2f973246489526990512f1d17, type: 3}
-  SourceName: "\u51CC\u97F3"
-  Portrait: {fileID: 21300000, guid: b9adf19af227de742ac6fcca556aba74, type: 3}
-  Priority: 100
-  Type: CountDownBegins
-  Space: 0
-  Delay: 0
+  groupName: Hover
+  clips:
+  - audioClip: {fileID: 8300000, guid: 87898f3605c67b841930106a139ab4cc, type: 3}
+    subtitle: "\u96E8\u4E91\u53F7\u672A\u53D1\u73B0\u5C0F\u961F\uFF0C\u6B63\u4FDD\u6301\u9AD8\u5EA6\u7B49\u5F85\u5C0F\u961F\u9760\u8FD1\u3002"
+  - audioClip: {fileID: 8300000, guid: b27513b5899f84449870068f813eebaf, type: 3}
+    subtitle: "\u96E8\u4E91\u53F7\u5DF2\u7ECF\u5230\u8FBE\u64A4\u79BB\u70B9\uFF0C\u4F46\u662F\u6CA1\u6709\u770B\u89C1\u5C0F\u961F\uFF0C\u5404\u4F4D\u6293\u7D27\u65F6\u95F4\uFF01"
+  - audioClip: {fileID: 8300000, guid: 144498b5c992c4340b2413a4ce82b4f7, type: 3}
+    subtitle: "\u8FD9\u91CC\u662F\u51CC\u97F3\uFF0C\u8BF7\u786E\u4FDD\u5C0F\u961F\u4F4D\u4E8E\u64A4\u79BB\u534A\u5F84\u5185\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 50
+  group: 8
+  flags: 0

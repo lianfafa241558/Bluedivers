@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+ï»¿#if UNITY_EDITOR
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -99,37 +99,37 @@ namespace CustomEditorWindow
         #region Rename Function
         private void Rename(string t_name, int t_index)
         {
-            string name = t_name.Trim();//È¥³ıÍ·Î²¿Õ°××Ö·û´®
+            string name = t_name.Trim();//å»é™¤å¤´å°¾ç©ºç™½å­—ç¬¦ä¸²
             int index = t_index;
-            if ((name + index) != string.Empty)//ÈôÃû×Ö²»Îª¿Õ
+            if ((name + index) != string.Empty)//è‹¥åå­—ä¸ä¸ºç©º
             {
-                bool isAssetsObject = false;//flag, ÊÇ·ñÊÇassetsÎÄ¼ş¼ĞµÄ×ÊÔ´
+                bool isAssetsObject = false;//flag, æ˜¯å¦æ˜¯assetsæ–‡ä»¶å¤¹çš„èµ„æº
 
                 foreach (Object o in Selection.objects)
                 {
-                    string path_g = AssetDatabase.GetAssetPath(o);//»ñµÃÑ¡ÖĞÎïµÄÂ·¾¶
-                    //²é¿´Â·¾¶ºó×º
-                    if (Path.GetExtension(path_g) != "")//Èôºó×º²»Îª¿Õ, ÔòÎªassetsÎÄ¼ş¼ĞÎïÌå
+                    string path_g = AssetDatabase.GetAssetPath(o);//è·å¾—é€‰ä¸­ç‰©çš„è·¯å¾„
+                    //æŸ¥çœ‹è·¯å¾„åç¼€
+                    if (Path.GetExtension(path_g) != "")//è‹¥åç¼€ä¸ä¸ºç©º, åˆ™ä¸ºassetsæ–‡ä»¶å¤¹ç‰©ä½“
                     {
-                        if (name.Length >= 2 && name.Substring(0, 2) == "m_")// m_ ¿ªÍ·»á±»ÍÌ
+                        if (name.Length >= 2 && name.Substring(0, 2) == "m_")// m_ å¼€å¤´ä¼šè¢«å
                         {
-                            //ÓÃ M_ ĞŞÕı
+                            //ç”¨ M_ ä¿®æ­£
                             string temp_name = name.Remove(0, 1);
                             name = temp_name.Insert(0, "M");
                         }
-                        AssetDatabase.RenameAsset(path_g, name + index);//¸ÄÃûAPI
+                        AssetDatabase.RenameAsset(path_g, name + index);//æ”¹åAPI
                         if (!isAssetsObject)
                         {
-                            isAssetsObject = true;//ĞŞ¸Äflag
+                            isAssetsObject = true;//ä¿®æ”¹flag
                         }
                     }
-                    else//ºó×ºÎª¿Õ, ÊÇ³¡¾°ÎïÌå
+                    else//åç¼€ä¸ºç©º, æ˜¯åœºæ™¯ç‰©ä½“
                     {
                         o.name = name + index;
                     }
                     index++;
                 }
-                if (isAssetsObject)//ÈôÊÇassetsÎÄ¼ş¼Ğ×ÊÔ´, ÔòË¢ĞÂassets
+                if (isAssetsObject)//è‹¥æ˜¯assetsæ–‡ä»¶å¤¹èµ„æº, åˆ™åˆ·æ–°assets
                 {
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
@@ -180,7 +180,7 @@ public class RemoveUnderline: EditorWindow
 
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("Ìæ»»ÊıÁ¿: ");
+                    GUILayout.Label("æ›¿æ¢æ•°é‡: ");
                     GUILayout.FlexibleSpace();
                     startNum_str = GUILayout.TextField(startNum_str, GUILayout.Width(60));
                     try
@@ -211,7 +211,7 @@ public class RemoveUnderline: EditorWindow
                 {
                     if (GUILayout.Button("Rename"))
                     {
-                        //·µ»ØµÄÆäÊµÊÇindex
+                        //è¿”å›çš„å…¶å®æ˜¯index
                         Rename(startNum_int-1);
                     }
                 }
@@ -227,31 +227,31 @@ public class RemoveUnderline: EditorWindow
     private void Rename(int count)
     {
 
-        bool isAssetsObject = false;//flag, ÊÇ·ñÊÇassetsÎÄ¼ş¼ĞµÄ×ÊÔ´
+        bool isAssetsObject = false;//flag, æ˜¯å¦æ˜¯assetsæ–‡ä»¶å¤¹çš„èµ„æº
         foreach (Object o in Selection.objects){
-            string path_g = AssetDatabase.GetAssetPath(o);//»ñµÃÑ¡ÖĞÎïµÄÂ·¾¶
-                                                              //²é¿´Â·¾¶ºó×º
-            if (Path.GetExtension(path_g) != "")//Èôºó×º²»Îª¿Õ, ÔòÎªassetsÎÄ¼ş¼ĞÎïÌå
+            string path_g = AssetDatabase.GetAssetPath(o);//è·å¾—é€‰ä¸­ç‰©çš„è·¯å¾„
+                                                              //æŸ¥çœ‹è·¯å¾„åç¼€
+            if (Path.GetExtension(path_g) != "")//è‹¥åç¼€ä¸ä¸ºç©º, åˆ™ä¸ºassetsæ–‡ä»¶å¤¹ç‰©ä½“
             {
-                if (name.Length >= 2 && name.Substring(0, 2) == "m_")// m_ ¿ªÍ·»á±»ÍÌ
+                if (name.Length >= 2 && name.Substring(0, 2) == "m_")// m_ å¼€å¤´ä¼šè¢«å
                 {
-                    //ÓÃ M_ ĞŞÕı
+                    //ç”¨ M_ ä¿®æ­£
                     string temp_name = name.Remove(0, 1);
                     name = temp_name.Insert(0, "M");
                 }
-                //AssetDatabase.RenameAsset(path_g, name.Replace("_", " "));//¸ÄÃûAPI
+                //AssetDatabase.RenameAsset(path_g, name.Replace("_", " "));//æ”¹åAPI
                 if (!isAssetsObject)
                 {
-                        isAssetsObject = true;//ĞŞ¸Äflag
+                        isAssetsObject = true;//ä¿®æ”¹flag
                 }
                 }
-                else//ºó×ºÎª¿Õ, ÊÇ³¡¾°ÎïÌå
+                else//åç¼€ä¸ºç©º, æ˜¯åœºæ™¯ç‰©ä½“
                 {
                     o.name = Replace(o.name, "_", " ", count);
                 }
 
                 }
-            //if (isAssetsObject)//ÈôÊÇassetsÎÄ¼ş¼Ğ×ÊÔ´, ÔòË¢ĞÂassets
+            //if (isAssetsObject)//è‹¥æ˜¯assetsæ–‡ä»¶å¤¹èµ„æº, åˆ™åˆ·æ–°assets
             //{
             //    AssetDatabase.SaveAssets();
             //    AssetDatabase.Refresh();

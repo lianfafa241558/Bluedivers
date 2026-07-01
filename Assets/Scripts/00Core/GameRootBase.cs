@@ -1,7 +1,7 @@
 using System;
 using Core.Interface;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 //using UnityEngine.Rendering.Universal;
 
@@ -20,12 +20,13 @@ namespace Core
         public override void Awake()
         {
             base.Awake();
+
             if (Instance != this) return;
             Screen.fullScreen = false;
             
             _timerSystem = gameObject.AddComponent<ViewTimerController>();
             DontDestroyOnLoad(this);
-            
+
             //ArchivesData_SO.playArchive = ShowArchive;
 
             var managers = GetComponents<I_GlobaManager>();
@@ -63,13 +64,13 @@ namespace Core
         /// <param name="cb">每次回调函数</param>
         /// <param name="endcb">结束回调函数</param>
         /// <param name="waitTime">每次计时时间(单位：秒)</param>
-        public static LoginTimer CreateTimer(Action cb, float waitTime, int counter = 1, Action endcb = null) => Instance._timerSystem.CreateTimer(cb, waitTime, counter, endcb);
-        public static LoginTimer CreateTimer(Action<int> cb, float waitTime, int counter = 1, Action endcb = null) => Instance._timerSystem.CreateTimer(cb, waitTime, counter, endcb);
-        public static LoginTimer CreatePerTimer(Action percb, float waitTime,Action endcb = null) => Instance._timerSystem.CreatePerTimer(percb, waitTime, endcb);
+        public static LogicTimer CreateTimer(Action cb, float waitTime, int counter = 1, Action endcb = null) => Instance._timerSystem.CreateTimer(cb, waitTime, counter, endcb);
+        public static LogicTimer CreateTimer(Action<int> cb, float waitTime, int counter = 1, Action endcb = null) => Instance._timerSystem.CreateTimer(cb, waitTime, counter, endcb);
+        public static LogicTimer CreatePerTimer(Action percb, float waitTime,Action endcb = null) => Instance._timerSystem.CreatePerTimer(percb, waitTime, endcb);
 
         public static void ClearTimer() => Instance._timerSystem.ClearTimer();
 
-        public static void RemoveTimer(LoginTimer cb) => Instance._timerSystem.RemoveTimer(cb);
+        public static void RemoveTimer(LogicTimer cb) => Instance._timerSystem.RemoveTimer(cb);
 
     }
 

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.FPS.Game;
@@ -40,5 +40,10 @@ public class Furniture_Door : Furniture_Base
             PlaySound(audioClose);
             inOperate = false;
         }
+    }
+
+    public void Lock()
+    {
+        lockState = true;
     }
 }

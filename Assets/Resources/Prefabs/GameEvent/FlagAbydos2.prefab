@@ -5,6 +5,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 27421028b99e9ba4c8828a353fb9e3dc,
@@ -115,7 +116,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
         type: 3}
       propertyPath: m_Name
-      value: Flag (2)
+      value: FlagAbydos2
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
         type: 3}
@@ -148,6 +149,41 @@ PrefabInstance:
       value: 6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3051820897648686381}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8041185447079310744}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8304771594507919657}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 326898663238727696}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5269107684709678245}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7652821928508844647}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8171297999310573003}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 27421028b99e9ba4c8828a353fb9e3dc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8756122751582913105}
   m_SourcePrefab: {fileID: 100100000, guid: 27421028b99e9ba4c8828a353fb9e3dc, type: 3}
 --- !u!1 &347787035047136597 stripped
 GameObject:
@@ -163,9 +199,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 347787035047136597}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.2, y: 6, z: 0.2}
   m_Center: {x: 0, y: 4.1, z: 0}
 --- !u!65 &8041185447079310744
@@ -176,9 +220,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 347787035047136597}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 2.3, y: 1.8, z: 0.2}
   m_Center: {x: 1.3, y: 6.3, z: 0}
 --- !u!65 &8304771594507919657
@@ -189,9 +241,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 347787035047136597}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.7, y: 1.5, z: 0.7}
   m_Center: {x: 0, y: 0.3, z: 0}
 --- !u!114 &326898663238727696
@@ -280,6 +340,7 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
+      m_ColorSpace: -1
       m_NumColorKeys: 3
       m_NumAlphaKeys: 2
     duration: 3
@@ -341,6 +402,7 @@ MonoBehaviour:
   DeathDuration: 4
   BirthDuration: 0
   birthTime: 0
+  IsRemove: 0
 --- !u!114 &8756122751582913105
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -359,6 +421,7 @@ MonoBehaviour:
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
+  IsFixed: 1
   flag: 48
   type: 16
   team: -1

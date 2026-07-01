@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 根据玩家所距离的距离来放大/缩小线的宽度(顺带了一个顶部碰撞)
+/// 根据玩家所距离的距离来放大/缩小线的宽度(顺带了一个顶部碰撞检测
 /// </summary>
 public class AdjustLineOnDistance : MonoBehaviour
 {
@@ -20,11 +20,11 @@ public class AdjustLineOnDistance : MonoBehaviour
     void Update()
     {
         if (!Camera.main) return;
-        //例:scale=0.01;距离100宽度+10*0.01=0.1
+        //scale=0.01;距离100宽度+10*0.01=0.1
         m_line.startWidth = m_line.endWidth = baseWidth+Mathf.Sqrt(Vector3.Distance(Camera.main.transform.position,transform.position))* disScale;
         Vector3 dir = useForward ? transform.forward : transform.up;
         Vector3 dir2= useForward ? Vector3.forward : Vector3.up;
-        if (Physics.Raycast(transform.position + dir, dir, out hit, 500))
+        if (Physics.Raycast(transform.position + dir, dir, out hit, 500,1<<0|1<<3))
         {
             m_line.SetPosition(1, dir2 * (hit.distance+1));
         }

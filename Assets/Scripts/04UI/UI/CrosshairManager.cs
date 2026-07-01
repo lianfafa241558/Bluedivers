@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
@@ -12,7 +12,7 @@ namespace Unity.FPS.UI
     public class CrosshairManager : CrosshairManagerBase
     {
 
-
+        [SerializeField]
         protected PlayerWeaponsManager m_WeaponsManager;
         protected Dictionary<WeaponPlayerController, Animator> m_DicSightGo = new();
 #pragma warning disable CS0414
@@ -23,23 +23,24 @@ namespace Unity.FPS.UI
         protected override void Start()
         {
             base.Start();
+
             m_WeaponsManager = GameObject.FindObjectOfType<PlayerWeaponsManager>();
             if (m_WeaponsManager)
             {
+                //Debug.LogError("提前找到新玩家" + m_WeaponsManager.gameObject, m_WeaponsManager.gameObject);
                 OnPlayerCreate(null);
                 isStartHave = true;
             }
             else
             {
-                GlobalEventManager.OnPlayerCreate += OnPlayerCreate;
                 isStartHave = false;
             }
-
+            GlobalEventSub.OnPlayerCreate += OnPlayerCreate;
         }
 
         protected override void OnDestroy()
         {
-            GlobalEventManager.OnPlayerCreate -= OnPlayerCreate;
+            GlobalEventSub.OnPlayerCreate -= OnPlayerCreate;
             if (m_WeaponsManager)
             {
                 m_WeaponsManager.OnSwitchedToWeapon -= SwitchWeapon;
@@ -50,8 +51,9 @@ namespace Unity.FPS.UI
 
         private void OnPlayerCreate(I_Actor go)
         {
+            
             if(go.IsValid()) m_WeaponsManager = go.transform.GetComponent<PlayerWeaponsManager>();
-
+            //Debug.LogError("准星更新为新玩家" + m_WeaponsManager.gameObject, m_WeaponsManager.gameObject);
             m_WeaponsManager.OnSwitchedToWeapon += SwitchWeapon;
             m_WeaponsManager.OnAim += OnAim;
             SwitchWeapon(m_WeaponsManager.GetActiveWeapon(), false);

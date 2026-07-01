@@ -1,9 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Unity.FPS.Game
 {
     /// <summary>
-    /// TODO:限时生命，这玩意现在不用了，到时候删了
+    /// TODO:限时生命，这玩意现在不用了，到时候删除
     /// </summary>
     public class TimedSelfDestruct : MonoBehaviour
     {

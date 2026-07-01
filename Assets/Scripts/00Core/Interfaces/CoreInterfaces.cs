@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using PEMaths;
 using UnityEngine;
 
@@ -28,11 +26,35 @@ namespace Core.Interface
         Vector3 Pos { get; set; }
         Vector3 Angles { get; }
 
+        Vector3 Forward { get; }
+
         /// <summary>单位半径</summary>
         public float HalfRange { get;}
 
         public Transform transform { get; }
         public GameObject gameObject { get; }
+    }
+    /// <summary>
+    /// 可回收接口 对象
+    /// </summary>
+    public interface IRecyclable
+    {
+        public void OnShow();
+
+        public void OnHide();
+
+    }
+
+    /// <summary>
+    /// 应用物理效果接口
+    /// </summary>
+    public interface IPhysical
+    {
+        /// <summary>应用力</summary>
+        void ApplyForce(PEVector3 vector);
+
+        /// <summary>应用重力</summary>
+        void ApplyGravity();
     }
 
 }

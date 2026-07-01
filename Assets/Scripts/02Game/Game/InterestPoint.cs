@@ -1,10 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using Core;
-using FpsGame.Mission;
 using GameContract;
-using Newtonsoft.Json;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -22,6 +18,15 @@ public class InterestPoint : BaseObject, I_MissionPoint
 
     /// <summary>已被发现</summary>
     private bool discovered { get; set; }
+
+    private void Awake()
+    {
+        GlobalEventSub.OnMark += Mark;
+    }
+    private void OnDestroy()
+    {
+        GlobalEventSub.OnMark -= Mark;
+    }
 
 
     private void Update()
@@ -42,15 +47,24 @@ public class InterestPoint : BaseObject, I_MissionPoint
 
     }
 
-    protected void CreatNotice(string role, string type, System.Func<bool> func = default, float delay = 0, float vaildTime = -1)
+    protected void CreatNotice(string role, string type, System.Func<bool> func = default,  float vaildTime = -1)
     {
-        WndManager.Instance.CreatNotice(role, type, func, delay, vaildTime);
+        WndManager.Instance.CreatNotice(role, type, func,vaildTime);
     }
 
     public void TryDiscovered()
     {
         discovered = true;
-        GlobalEventManager.MissionEnityShow(this);
+        BattleEventSub.MissionEnityShow(this);
+    }
+    private void Mark(GameObject owner, GameObject target, Vector3 point)
+    {
+        if (!target) return;
+
+        if (!discovered && target && target.transform.IsChildOf(transform))
+        {
+            TryDiscovered();
+        }
     }
 
 

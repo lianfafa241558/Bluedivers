@@ -1,7 +1,7 @@
-using Unity.BaseTool;
+using PEMaths;
+
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.ProBuilder;
 using Utils;
 
 namespace Unity.FPS.Game
@@ -22,14 +22,14 @@ namespace Unity.FPS.Game
         public Vector3 InheritedMuzzleVelocity { get; private set; }
 
         /// <summary>充能系数?</summary>
-        public float Charge { get; private set; }
+        public PEInt Charge { get; private set; }
         /// <summary>音效范围</summary>
         public float SFXRange { get; private set; }
 
-        /// <summary>最大射程/自爆引信</summary>
+        /// <summary>最大射程 自爆引信</summary>
         public float MaxRange { get; private set; }
 
-        /// <summary>最小射程/安全引信</summary>
+        /// <summary>最小射程 安全引信</summary>
         public float MinRange { get; private set; }
         
 
@@ -61,7 +61,7 @@ namespace Unity.FPS.Game
             SFXRange = controller.SFXRange;
             MaxRange = controller.CurrentWeaponRange;
             MinRange = DamageData.MinRange;
-            Gravity = controller.CurrentGravity*Mathf.Lerp(1,DamageData.ChargeGravityScale, Charge);
+            Gravity = controller.CurrentGravity;
             BulletFlag = controller.BulletFlag;
             IgnoredColliders = controller.IgnoredColliders;
 
@@ -84,12 +84,19 @@ namespace Unity.FPS.Game
     public struct ProjectileHitData {
         public Vector3 pos, normal; 
         public Collider collider;
-        public DamageData data;
-        public float chargeScale;
+        /// <summary>伤害来源</summary>
         public GameObject owner;
-        public float sfxRange;
-        public bool useDiffScale;
+        /// <summary>伤害信息</summary>
+        public DamageData data;
+        /// <summary>武器引用，只有击中特效依然是子弹的时候使用（？想办法去掉？）</summary>
         public WeaponBaseController weapon;
+        /// <summary>充能系数</summary>
+        public PEInt chargeScale;
+        /// <summary>音效范围</summary>
+        public float sfxRange;
+        /// <summary>只有敌人使用，基于难度修正</summary>
+        public bool useDiffScale;
+        /// <summary>不会自伤</summary>
         public bool IgnoreSelf;
     }
 }

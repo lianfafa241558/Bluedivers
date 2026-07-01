@@ -1,8 +1,8 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using GameContract;
 using PEMaths;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.AI;
@@ -71,7 +71,7 @@ namespace Unity.FPS.AI
 
             if (didFire && OnAttack != null)
             {
-                OnAttack.Invoke(weapon);
+                OnAttack?.Invoke(weapon);
             }
             return didFire;
         }

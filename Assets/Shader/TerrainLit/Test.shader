@@ -29,6 +29,7 @@ Shader "Universal Render Pipeline/Terrain/TerrainLit"
 
         [ToggleUI] _EnableInstancedPerPixelNormal("Enable Instanced per-pixel normal", Float) = 1.0
 
+        [Toggle(_EnableToon)] _EnableToon("_EnableToon", Float) = 0
     }
 
     HLSLINCLUDE
@@ -54,16 +55,20 @@ Shader "Universal Render Pipeline/Terrain/TerrainLit"
             //#define _METALLICSPECGLOSSMAP 1
             //#define _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A 1
             //没办法，他只能显示那两个参数
-            #define _EnableToon 1
+            #pragma multi_compile _ _EnableToon
            
             // -------------------------------------
             // Universal Pipeline keywords
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _FORWARD_PLUS
              //自动urp附加光
             //#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
              //禁用附加光
             //#pragma multi_compile _ _DISABLE_ADDITIONAL_LIGHTS
 
+            //#pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+
+            #pragma multi_compile_local _ _TERRAIN_8_LAYERS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
@@ -144,6 +149,7 @@ Shader "Universal Render Pipeline/Terrain/TerrainLit"
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             //#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             //#pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
+
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
@@ -264,11 +270,11 @@ Shader "Universal Render Pipeline/Terrain/TerrainLit"
 
         UsePass "Hidden/Nature/Terrain/Utilities/PICKING"
     }
-    Dependency "AddPassShader" = "Hidden/Universal Render Pipeline/Terrain/Lit (Add Pass)"
-    Dependency "BaseMapShader" = "Hidden/Universal Render Pipeline/Terrain/Lit (Base Pass)"
-    Dependency "BaseMapGenShader" = "Hidden/Universal Render Pipeline/Terrain/Lit (Basemap Gen)"
+    Dependency "AddPassShader" = "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Add Pass)"
+    Dependency "BaseMapShader" = "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Base Pass)"
+    Dependency "BaseMapGenShader" = "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Basemap Gen)"
 
-    CustomEditor "UnityEditor.Rendering.Universal.TerrainLitShaderGUI"
+    //CustomEditor "UnityEditor.Rendering.Universal.TerrainLitShaderGUI"
 
     Fallback "Hidden/Universal Render Pipeline/FallbackError"
 }

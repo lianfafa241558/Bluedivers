@@ -1,4 +1,4 @@
-using PEMaths;
+﻿using PEMaths;
 using UnityEngine;
 
 public class UnitQueryGridDebugger : MonoBehaviour {
@@ -40,7 +40,7 @@ public class UnitQueryGridDebugger : MonoBehaviour {
                 count += item.Value.Count;
             }
             UnityEditor.Handles.Label(center + new Vector3(0, 0, 1), "数量:" + count.ToString(), style);
-            UnityEditor.Handles.Label(center - new Vector3(0, 0, 1), $"点:({node.x},{node.y})", style);
+            UnityEditor.Handles.Label(center - new Vector3(0, 0, 1), $"坐标({node.x},{node.y})", style);
         }
 
     }

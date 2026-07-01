@@ -18,20 +18,20 @@ public class PlayerSpeechManager : MonoBehaviour
     {
         m_health = GetComponent<HealthPlayer>();
         m_health.OnDamaged += OnDamage;
-        GlobalEventManager.OnMark += OnMark;
-        GlobalEventManager.OnAirdrop += OnAirdrop;
+        GlobalEventSub.OnMark += OnMark;
+        BattleEventSub.OnAirdrop += OnAirdrop;
         //GlobalEventManager.OnCallKai += CallKai;
         //GlobalEventManager.OnFurnitureOperate += OnFurnitureOperate;
-        GlobalEventManager.OnPlayMeetSoeech += OnMeetSpeech;
+        GlobalEventSub.OnPlayMeetSpeech += OnMeetSpeech;
     }
     private void OnDestroy()
     {
         m_health.OnDamaged -= OnDamage;
-        GlobalEventManager.OnMark -= OnMark;
-        GlobalEventManager.OnAirdrop -= OnAirdrop;
+        GlobalEventSub.OnMark -= OnMark;
+        BattleEventSub.OnAirdrop -= OnAirdrop;
         //GlobalEventManager.OnCallKai -= CallKai;
         //GlobalEventManager.OnFurnitureOperate -= OnFurnitureOperate;
-        GlobalEventManager.OnPlayMeetSoeech -= OnMeetSpeech;
+        GlobalEventSub.OnPlayMeetSpeech -= OnMeetSpeech;
     }
 
     bool CanSpeech(SpeechTypeEnum type)
@@ -44,13 +44,10 @@ public class PlayerSpeechManager : MonoBehaviour
         {
             lastSpeechTime = Time.time;
             lastSpeechType = type;
-            var item = Cfg.Speech(type);
-            //Debug.LogError("找到的语句"+item,item);
-            if (item)
-            {
-                speechShowTime = item.Clip.length;
-                GlobalEventManager.ActorSpeech(gameObject, item);
-            }
+            var item = Cfg.SpeechGroup(type).Get(transform.position);
+            //Debug.LogError("找到的语音"+item,item);
+            speechShowTime = item.Clip.length;
+            GlobalEventSub.ActorSpeech(gameObject, item);
         }
     }
 
@@ -60,7 +57,7 @@ public class PlayerSpeechManager : MonoBehaviour
         if (owner != gameObject) return;
         Speech(SpeechTypeEnum.EnemySpotted);
     }
-    void OnAirdrop(GameObject source, GameObject beacon, Vector3 point, AirdropController.AirdropData data)
+    void OnAirdrop(GameObject source, GameObject _, Vector3 point, AirdropController.AirdropData data)
     {
 
         if (!source.IsValid()) return;
@@ -89,7 +86,8 @@ public class PlayerSpeechManager : MonoBehaviour
         {
             state = SpeechTypeEnum.Supply;
         }
-        GlobalEventManager.ActorSpeech(source, Cfg.Speech(state));
+
+        GlobalEventSub.ActorSpeech(source, Cfg.SpeechGroup(state).Get(transform.position));
 
         if (data.cfg.type == AirdropData_SO.AirdropType.Greed)
         {
@@ -108,16 +106,19 @@ public class PlayerSpeechManager : MonoBehaviour
         }
         else if (data.cfg.type == AirdropData_SO.AirdropType.Orange)
         {
-            Notice("Kotama", "Airdrop");
+            Notice("Ayane", "Vehicle");
         }
-        else if (data.cfg.ID == 10)
+        else if (data.cfg.ID == Constants.SupplyId)
         {
             Notice("Kotama", "Supply");
         }
-
+        else if (data.cfg.ID == Constants.EagleReloadId)
+        {
+            Notice("Moe", "Reload");
+        }
         void Notice(string name,string type)
         {
-            WndManager.Instance.CreatNotice(name, type, delay: 2, vaildTime: data.cfg.arriveTime);
+            WndManager.Instance.CreatNotice(name, type, vaildTime: data.arriveTime);
         }
     }
 
@@ -140,11 +141,12 @@ public class PlayerSpeechManager : MonoBehaviour
         {
             lastSpeechTime = Time.time;
             lastSpeechType = type;
-            var item = Cfg.Speech(type);
-            if (item)
+            var item = Cfg.SpeechGroup(type);
+            if (item!=null)
             {
-                speechShowTime = item.Clip.length;
-                AudioManager.PlaySound(new(Cfg.Speech(type).Clip, transform.position, 40, AudioGroups.Player,1));
+                var re = item.Get(transform.position);
+                speechShowTime = re.Clip.length;
+                AudioSvc.PlaySound(re);
             }
         }
  

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,7 +11,7 @@ using static WndTools.WndRootTool;
 /// <summary>
 /// 战后结算界面
 /// </summary>
-public class GameEndWnd : WindowRoot
+public class GameEndWnd : Window
 {
     public const float _Dim = 0.3f;
 
@@ -27,6 +27,8 @@ public class GameEndWnd : WindowRoot
     bool IsExpend;
     float[] expendState;
 
+
+
     private void Start()
     {
         SetWndState(false);
@@ -36,21 +38,14 @@ public class GameEndWnd : WindowRoot
 
     }
 
-    public override void Init()
-    {
-
-    }
-    public override void UnInit()
-    {
-
-    }
     protected override void FirstShowWnd()
     {
+
 
         var task = taskManager.nowTask;
         var players = roomManager.players;
         int count = players.Count;
-        AudioManager.PlayMusic(task.result == GameResult.Victory ? AudioManager.MusicGroup.End : AudioManager.MusicGroup.Fail, 0.5f);
+        AudioSvc.PlayMusic(task.result == GameResult.Victory ? AudioSvc.MusicGroup.End : AudioSvc.MusicGroup.Fail, 0.5f);
         switch (task.result)
         {
             case GameResult.Victory:
@@ -88,7 +83,7 @@ public class GameEndWnd : WindowRoot
             }
             actors[i] = showModle.transform.GetComponent<Animator>();
             
-            if(i==roomManager.SelfIndex) wndManager.PlaySound(new (Resources.Load<RoleData_SO>("GameData/Role/RD_" + roomManager.players[i].roleName).Speech(taskManager.nowTask.main.complete? SpeechTypeEnum.Victory: SpeechTypeEnum.Defeat).Clip, AudioGroups.Player, 1, 6));
+            if(i==roomManager.SelfIndex) AudioSvc.PlaySound(Resources.Load<RoleData_SO>("GameData/Role/RD_" + roomManager.players[i].roleName).SpeechGroup(taskManager.nowTask.main.complete? SpeechTypeEnum.Victory: SpeechTypeEnum.Defeat).Get());
 
             var go = Instantiate(prefab, UIRoot).transform;
             GameRoot.CreateTimer(() => {
@@ -116,6 +111,8 @@ public class GameEndWnd : WindowRoot
                     SetPlayerInfoState(u, true,false);
                 }
             });
+
+
             SetButtonEnter(go.GetChild(1, 2), (e) => {
                 PlaySount(5);
                 SetPlayerInfoState(a, true,true);
@@ -135,7 +132,7 @@ public class GameEndWnd : WindowRoot
                 PlaySount(6);
                 SetPlayerInfoState(a, false,true);
             });
-            //将折叠按钮挪到最后一位
+            //将折叠按钮挪到最后一个
             SetCilck(infoRoot.GetChild(0), () => {
                 PlaySount(6);
                 for (int u = 0; u < UIRoot.childCount; ++u)
@@ -231,17 +228,17 @@ public class GameEndWnd : WindowRoot
                 PlaySount(10);
                 SetText(button.GetChild(0), "继续[0" + (5-count) + "]");
             },
-            1,4,
+            1,5,
             ()=>{
-                wndManager?.loadWnd?.Entry(false);
+                GameState = GameStateEnum.Load;
                 SetWndState(false);
-                ResManager.Instance.AsyncLoadScene("Utnapishitim", () => {
-                    GameRoot.GameState = GameStateEnum.Bridge;
-                    GameRoot.WindowState = WindowStateEnum.Game;
-                    GlobalEventManager.OnFakeBg(null);
+                ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
+                    //GameState = GameStateEnum.Bridge;
+                    //WindowState = WindowStateEnum.Game;
+                    //GlobalEventManager.OnFakeBg(null);
                 }, true);
             });
-            GameRoot.CreateTimer(ResManager.Instance.AsyncContinueLoadScene,8);
+            //GameRoot.CreateTimer(ResManager.Instance.AsyncContinueLoadScene,8);
         });
     }
 
@@ -291,14 +288,18 @@ public class GameEndWnd : WindowRoot
     {
         var task = taskManager.nowTask;
         var info = task.taskCfg;
- 
 
-        SetText(rightRoot.GetChild(1, 3), 0);
-        SetText(rightRoot.GetChild(1, 4), 0);
-        SetText(rightRoot.GetChild(1, 5), 0);
-        SetText(rightRoot.GetChild(2, 3), 0);
-        SetText(rightRoot.GetChild(2, 4), 0);
-        SetText(rightRoot.GetChild(2, 5), 0);
+        SetActive(rightRoot.GetChild(1, 2), task.NestReward > 0);
+        SetActive(rightRoot.GetChild(2, 2), task.NestReward > 0);
+        SetActive(rightRoot.GetChild(1, 1), task.ExtraReward > 0);
+        SetActive(rightRoot.GetChild(2, 1), task.ExtraReward > 0);
+
+        SetText(rightRoot.GetChild(1, 0,1), 0);
+        SetText(rightRoot.GetChild(1, 0, 1), 0);
+        SetText(rightRoot.GetChild(1, 1, 1), 0);
+        SetText(rightRoot.GetChild(2, 1, 1), 0);
+        SetText(rightRoot.GetChild(2, 2, 1), 0);
+        SetText(rightRoot.GetChild(2, 2, 1), 0);
 
 
         SetText(rightRoot.GetChild(0, 0), "");
@@ -338,7 +339,7 @@ public class GameEndWnd : WindowRoot
     }
     void PlaySount(int index)
     {
-        wndManager.PlaySound(new(index switch{
+        AudioSvc.PlaySound(new(index switch{
             1=> "UI/UI_Bubble",
             2=> "UI/CleanUIB_1",
             3 => "UI/CleanUIC_1",
@@ -375,13 +376,21 @@ public class GameEndWnd : WindowRoot
         PlaySount(1);
         for (int i = 0; i < task.nests.Length; ++i)
         {
-            int count = task.nests[i].Count(item => item.complete);
-            if (count == task.nests[i].Length)
+            if (task.nests[i].Length > 0)
             {
-                SetAlpha(leftRoot.GetChild(5, i, 0), 1);
-                SetAlpha(leftRoot.GetChild(5, i, 1), 1);
+                int count = task.nests[i].Count(item => item.complete);
+                if (count == task.nests[i].Length)
+                {
+                    SetAlpha(leftRoot.GetChild(5, i, 0), 1);
+                    SetAlpha(leftRoot.GetChild(5, i, 1), 1);
+                }
+                SetText(leftRoot.GetChild(5, i, 1), count + "/" + task.nests[i].Length);
             }
-            SetText(leftRoot.GetChild(5, i, 1), count + "/" + task.nests[i].Length);
+            else
+            {
+                SetActive(leftRoot.GetChild(5, i), false);
+            }
+            
         }
        
         yield return new WaitForSeconds(0.6f);
@@ -407,8 +416,8 @@ public class GameEndWnd : WindowRoot
         SetAlpha(leftRoot2.GetChild(0),0,1,200);
         yield return new WaitForSeconds(0.2f);
         PlaySount(4);
-        SetText(rightRoot.GetChild(1, 3), 0, task.MainReward, 500);
-        SetText(rightRoot.GetChild(2, 3), 0, task.MainReward/5, 500);
+        SetText(rightRoot.GetChild(1, 0, 1), 0, task.MainReward, 500);
+        SetText(rightRoot.GetChild(2, 0, 1), 0, task.MainReward/5, 500);
 
         yield return new WaitForSeconds(0.2f);
         //额外奖励
@@ -420,8 +429,8 @@ public class GameEndWnd : WindowRoot
         }
         yield return new WaitForSeconds(0.2f);
         PlaySount(4);
-        SetText(rightRoot.GetChild(1, 4), 0, task.ExtraReward, 500);
-        SetText(rightRoot.GetChild(2, 4), 0, task.ExtraReward / 5, 500);
+        SetText(rightRoot.GetChild(1, 1, 1), 0, task.ExtraReward, 500);
+        SetText(rightRoot.GetChild(2, 1, 1), 0, task.ExtraReward / 5, 500);
 
         yield return new WaitForSeconds(0.2f);
         //巢穴奖励
@@ -434,9 +443,9 @@ public class GameEndWnd : WindowRoot
         }
         yield return new WaitForSeconds(0.2f);
         PlaySount(4);
-        SetText(rightRoot.GetChild(1, 5), 0, task.NestReward, 500);
-        SetText(rightRoot.GetChild(2, 5), 0, task.NestReward / 5, 500);
 
+        SetText(rightRoot.GetChild(1, 2, 1), 0, task.NestReward, 500);
+        SetText(rightRoot.GetChild(2, 2, 1), 0, task.NestReward / 5, 500);
 
         yield return new WaitForSeconds(0.5f);
         PlaySount(2);
@@ -506,7 +515,7 @@ public class GameEndWnd : WindowRoot
         
         yield return new WaitForSeconds(0.1f);
         PlaySount(1);
-        //计算最终奖励
+        //计算最终奖??
         for (int i = 0; i < 4; ++i)
         {
             if (task.ExtraDifficulty[i] > 0)
@@ -515,13 +524,15 @@ public class GameEndWnd : WindowRoot
                 SetText(rightRoot.GetChild(0, 2, i, 0), Tool.IntToRoman(task.ExtraDifficulty[i]));
             }
         }
+
+
         var scale = 1+taskManager.FinalDiffScale();
-        SetText(rightRoot.GetChild(1, 3),  (int)(task.MainReward * scale));
-        SetText(rightRoot.GetChild(2, 3),  (int)(task.MainReward / 5 * scale));
-        SetText(rightRoot.GetChild(1, 4),  (int)(task.ExtraReward * scale));
-        SetText(rightRoot.GetChild(2, 4),  (int)(task.ExtraReward / 5 * scale));
-        SetText(rightRoot.GetChild(1, 5),  (int)(task.NestReward * scale));
-        SetText(rightRoot.GetChild(2, 5),  (int)(task.NestReward / 5 * scale));
+        SetText(rightRoot.GetChild(1, 0, 1),  (int)(task.MainReward * scale));
+        SetText(rightRoot.GetChild(2, 0, 1),  (int)(task.MainReward / 5 * scale));
+        SetText(rightRoot.GetChild(1, 1, 1),  (int)(task.ExtraReward * scale));
+        SetText(rightRoot.GetChild(2, 1, 1),  (int)(task.ExtraReward / 5 * scale));
+        SetText(rightRoot.GetChild(1, 2, 1),  (int)(task.NestReward * scale));
+        SetText(rightRoot.GetChild(2, 2, 1),  (int)(task.NestReward / 5 * scale));
 
     }
 

@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -56,7 +56,12 @@ public class Furniture_General : Furniture_Base
                 furn.BaseOp();
             }
         },
-
+        ["SelectVehicle"] = new() {
+            _Operate = (furn) => {
+                wndManager.vehicleWnd.SetWndState(true);
+                furn.BaseOp();
+            }
+        },
         ["KeyScreen"] = new (){
             _Operate = (Furniture_General furn) => {
                 furn.gameObject.GetComponent<KeyScreen>().SetOwener(furn.inOperate || !furn.owner ? null: furn.owner.gameObject);
@@ -75,7 +80,7 @@ public class Furniture_General : Furniture_Base
                     if (Vector3.Distance(point.position,owner.position)>0.15f) {
                         if (furn.owner.TryGetComponent(out CharacterController Controller))
                         {
-                            Controller.Move((point.position - owner.position) * Time.deltaTime * 4);
+                            Controller.TryMove((point.position - owner.position) * Time.deltaTime * 4);
                         }
                         else
                         {
@@ -124,6 +129,8 @@ public class Furniture_General : Furniture_Base
                 furn.BaseOp();
             }
         },
+
+
     };
 
 
@@ -139,14 +146,15 @@ public class Furniture_General : Furniture_Base
     private bool BaseCanOp(GameObject unit) => base.CanOperate(unit);
     private void BaseOp() => base.Operate();
     
-    private void Start()
+    protected override void Start()
     {
-        furnData.TryGetValue(Id,out action);
-        action ??= new();
+        base.Start();
+        if(!furnData.TryGetValue(Id,out action))
+        {
+            action = new();
+        }
         action._Start?.Invoke(this);
     }
-
-    //protected override void Operate()=> action._Operate?.Invoke(this);
 
     public override void Operate() {
         //Debug.LogWarning(cfg.furnitureId + " "+ action._Operate);

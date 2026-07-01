@@ -1,4 +1,5 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -8,14 +9,33 @@ using Tool = Utils.Tool;
 public static class CopyUtils
 {
 
+
+
+
+
     [MenuItem("CONTEXT/MonoBehaviour/粘贴组件到同物体子类", priority = -1)]
     static void ResetComponentConfig(MenuCommand command)
     {
         MonoBehaviour source = (MonoBehaviour)command.context;
-        //Debug.LogError("组件的类型"+ source.GetType());
-        var arr = source.GetComponents(source.GetType());
+        System.Type sourceType = source.GetType();
 
-        if (arr.Length==1)
+        //Debug.LogError("组件的类型" + source.GetType());
+        // 获取当前物体上所有组件
+        MonoBehaviour[] allComponents = source.GetComponents<MonoBehaviour>();
+        List<MonoBehaviour> arr = new();
+        foreach (var component in allComponents)
+        {
+            if (component == null) continue;
+            if (component == source) continue; // 跳过源组件
+            //Debug.LogError("组件的类型" + component.GetType()+"相关"+ sourceType.IsAssignableFrom(component.GetType()));
+            // 检查是否是源组件的子类或相同类型
+            if (sourceType.IsAssignableFrom(component.GetType()))
+            {
+                arr.Add(component);
+            }
+        }
+
+        if (arr.Count==0)
         {
             Debug.LogError("目标组件不存在");
             return;
@@ -47,7 +67,7 @@ public static class CopyUtils
     static GameObject source;
 
 
-    [MenuItem("GameObject/辅助功能/选择复制源", priority = -100)]
+    [MenuItem("GameObject/辅助功能/选择复制", priority = -100)]
     static void CopyComponents()
     {
         source = Selection.activeGameObject;
@@ -94,7 +114,7 @@ public static class CopyUtils
         PasteComp<Collider>();
     }
 
-    [MenuItem("GameObject/辅助功能/生成到下一级的碰撞箱",priority = -100)]
+    [MenuItem("GameObject/辅助功能/生成到下一级的碰撞体", priority = -100)]
     static void AutoCollider()
     {
         for (int u = 0; u < Selection.gameObjects.Length; ++u)
@@ -138,18 +158,18 @@ public static class CopyUtils
             EditorUtility.CopySerialized(item, targetComp);
         }
     }
-    // 修改点2：新增专门处理接口的方法（泛型约束改为 class + 接口）
+    // 修改说明：新增专门处理接口的方法（泛型约束改为 class + 接口）
     static void PasteCompForInterface<T>() where T : class
     {
         var target = Selection.activeGameObject;
-        // 修改点3：获取所有实现了 T 接口的 Component
+        // 修改说明：获取所有实现了 T 接口的 Component
         var list = source.GetComponentsInChildren<Component>()
                          .OfType<T>() // 筛选实现了 I_Damagable 接口的组件
                          .ToList();
 
         foreach (var item in list)
         {
-            // 确保 item 是 Component（因为只有 Component 能挂载到 GameObject）
+            // 确保 item 是 Component（因为只有 Component 能挂载到 GameObject 上）
             if (item is not Component itemComp) continue;
 
             Transform targetChildren = target.GetComponentsInChildren<Transform>()
@@ -165,7 +185,7 @@ public static class CopyUtils
                 targetChildren.localScale = itemComp.transform.localScale;
             }
 
-            // 修改点4：添加组件时使用实际类型，而非接口
+            // 修改说明：添加组件时使用实际类型，而非接口
             Component targetComp = targetChildren.gameObject.AddComponent(itemComp.GetType());
             // 复制序列化数据（保留原有逻辑）
             EditorUtility.CopySerialized(itemComp, targetComp);

@@ -10,9 +10,9 @@ public class GuidedShelling : MonoBehaviour
 {
 
     [Header("基础设置")]
-    [Tooltip("没有目标时，搜索敌人的范围 A")]
+    [Tooltip("没有目标时，搜索敌人的范围")]
     [SerializeField]
-    private float searchRange = 30f;
+    private float searchRange = 75f;
     [SerializeField]
     private float searchInterval = 1f; 
 
@@ -20,57 +20,72 @@ public class GuidedShelling : MonoBehaviour
     [SerializeField]
     private float moveSpeed = 5f;
 
-    [Header("基础设置")]
+    [Tooltip("允许重新锁定")]
     [SerializeField]
-    private Transform guideSource;//炮击引导源
+    private bool allowRelock = true;
+
+    [Header("额外设置")]
+    [SerializeField]
+    private Transform guideSource;//炮击引导点
 
     private I_Actor currentTarget;
 
     private float searchTimer = 0;
 
+    private Vector3 lastPoint;//不受父级物体影响
+
+    private void Start()
+    {
+        lastPoint = transform.position;
+        //Debug.LogError("初始位置"+ lastPoint,gameObject);
+    }
+
     private void Update()
     {
-
-        if (currentTarget == null|| currentTarget.ActorState== Core.ActorState.Dead)
+        transform.position = lastPoint;
+        if (currentTarget == null|| currentTarget.ActorState == Core.ActorState.Dead)
         {
             searchTimer += Time.deltaTime;
-            if (searchTimer >= searchInterval)
+            if (searchTimer >= searchInterval && (!currentTarget.IsValid()||allowRelock))
             {
                 SearchEnemy();
                 searchTimer = 0;
             }
+            guideSource.LookAt(lastPoint);
         }
         else
         {
             guideSource.LookAt(transform);
         }
+        lastPoint = transform.position;
     }
 
     private void FixedUpdate()
     {
+        
         if (currentTarget != null)
         {
             // 向目标移动
             MoveToTarget();
         }
+        
     }
 
     /// <summary>
-    /// 搜索范围内的敌人（使用你提供的接口）
+    /// 搜索范围内的敌人
     /// </summary>
     private void SearchEnemy()
     {
-        // 你项目里的搜索接口
         List<I_Actor> units = BattleManager.Instance.FindUnits(
             new PECircle(new(transform.position.ToVector2()), new(searchRange)),
             TargetCfg.Enemy
         );
 
-        // 找到敌人 → 锁定第一个
+        // 找到敌人 锁定第一个
         if (units != null && units.Count > 0)
         {
             //优先锁大型敌人，建筑的权重降低
-            currentTarget=units.OrderByDescending(item=>item.HalfRange*(item.HasFlag(Core.ActorFlag.Nest)?0.2f:1)).FirstOrDefault();
+            currentTarget=units.OrderByDescending(item=>item.HalfRange*(item.HasFlag(Core.ActorFlag.Nest)?0.5f:1)).FirstOrDefault();
             //currentTarget = units[0];
         }
     }
@@ -84,9 +99,9 @@ public class GuidedShelling : MonoBehaviour
         // 目标丢失
         if (!currentTarget.IsValid()) return;
 
-        float distance = Vector3.Distance(transform.position, currentTarget.Pos);
+        float distance = Vector3.Distance(lastPoint, currentTarget.Pos);
 
-        // 距离足够近 → 直接到位，停止抖动
+        // 距离足够时，直接到位，停止抖动
         if (distance < 0.25f)
         {
             transform.position = currentTarget.Pos;
@@ -96,9 +111,9 @@ public class GuidedShelling : MonoBehaviour
         }
         else
         {
-            transform.position = Vector3.SmoothDamp(
-                transform.position,
-                currentTarget.Pos,
+            lastPoint = transform.position = Vector3.SmoothDamp(
+                lastPoint,
+                currentTarget.CenterPos,
                 ref _vel,
                 0.2f,
                 moveSpeed

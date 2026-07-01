@@ -13,7 +13,7 @@ namespace FpsGame.Mission
         public List<Furniture_Pipe> pipes;
         Furniture_Base furniture;
         int count;
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             furniture = entity.GetComponentInChildren<Furniture_Base>();
             furniture.OnOperate += OnOperate;
@@ -28,7 +28,7 @@ namespace FpsGame.Mission
         private void OnOperate()
         {
             furniture.OnOperate -= OnOperate;
-            UpdateTip("建造全部管线");
+            UpdateTip("建造全部管道");
             pipes = furniture.relatedTrans.GetComponent<Furniture_Pipe>().GetAllPipes();
             count = 0;
             foreach (var item in pipes)

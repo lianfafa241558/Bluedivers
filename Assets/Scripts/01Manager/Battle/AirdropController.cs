@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using GameContract;
-using Unity.BaseTool;
 using Unity.FPS.Game;
 using UnityEngine;
 public class AirdropController : MonoBehaviour
@@ -17,7 +16,7 @@ public class AirdropController : MonoBehaviour
 
     I_Actor Player => ActorsManager.Player;
 
-    private Dictionary<int,AirdropData_SO> adDic=> ResManager.airdropDic;
+    private Dictionary<int,AirdropData_SO> adDic=> ResSvc.airdropDic;
 
     [SerializeField]
     private List<DirectionEnum> inputDir;
@@ -31,27 +30,28 @@ public class AirdropController : MonoBehaviour
     private void Start()
     {
 
-        InputManager.Bind(WindowStateEnum.Game,InputState.Airdrop, Open);
-        InputManager.Bind(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
-        GlobalEventManager.OnCancelAirdrop += OnCancel;
-        GlobalEventManager.OnAirdrop += OnRelease;
-        GlobalEventManager.OnPlayerDead += OnDeath;
+        InputManager.BindDown(WindowStateEnum.Game,InputState.Airdrop, Open);
+        InputManager.BindDown(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
+        BattleEventSub.OnCancelAirdrop += OnCancel;
+        BattleEventSub.OnAirdrop += OnRelease;
+        BattleEventSub.OnPlayerDead += OnDeath;
     }
 
 
     private void OnDestroy()
     {
-        InputManager.UnBind(WindowStateEnum.Game, InputState.Airdrop, Open);
-        InputManager.UnBind(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
-        GlobalEventManager.OnCancelAirdrop -= OnCancel;
-        GlobalEventManager.OnAirdrop -= OnRelease;
+        InputManager.UnBindDown(WindowStateEnum.Game, InputState.Airdrop, Open);
+        InputManager.UnBindDown(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
+        BattleEventSub.OnCancelAirdrop -= OnCancel;
+        BattleEventSub.OnAirdrop -= OnRelease;
+        BattleEventSub.OnPlayerDead -= OnDeath;
     }
 
 
     void Update()
     {
 
-        if(GameRoot.WindowState == WindowStateEnum.Airdrop)
+        if(WndManager.WindowState == WindowStateEnum.Airdrop)
         {
             if (InputManager.GetDown(InputState.Left)) Input(DirectionEnum.Left);
             else if (InputManager.GetDown(InputState.Up)) Input(DirectionEnum.Up);
@@ -74,19 +74,22 @@ public class AirdropController : MonoBehaviour
         for (int i = 0; i < required.Count; ++i)
         {
             //Debug.LogError("添加任务所需战备"+ ResManager.airdropDic[required[i]].showName);
-            useAd.Add(new() {
-                cfg = ResManager.airdropDic[required[i]],
-                isGift = true,
-            });
+            useAd.Add(new(ResSvc.airdropDic[required[i]], true));
         }
         //读取玩家携带的战备
         var arr = RoomManager.Instance.Self.airdrop;
-        for (int i=0;i< arr.Length; ++i)
+        if(arr.Any(id=> ResSvc.airdropDic[id].deliveryType == AirdropDeliveryEnum.Jet))
         {
-            useAd.Add(new() {
-                cfg = ResManager.airdropDic[arr[i]],
-                isGift = false,
-            });
+            useAd.Add(new(ResSvc.airdropDic[Constants.EagleReloadId],true));
+        }
+        for (int i = 0; i < arr.Length; ++i)
+        {
+            useAd.Add(new(ResSvc.airdropDic[arr[i]],false));
+        }
+
+        foreach(var item in useAd)
+        {
+            item.OnStateChange += OnAirdropStateChange;//这样只有自己叫的才考虑
         }
 
     }
@@ -94,30 +97,31 @@ public class AirdropController : MonoBehaviour
 
     private void Open()
     {
-        if (Player.ActorState == ActorState.Dead) return;
+        if (Player.ActorState == ActorState.Dead|| Player.ActorState == ActorState.Hide) return;
 
-        GameRoot.WindowState = WindowStateEnum.Airdrop;
+        WndManager.WindowState = WindowStateEnum.Airdrop;
         inputDir.Clear();
         OnCancel(Player.gameObject,WaitRelease);
     }
     private void Close()
     {
-        GameRoot.WindowState = WindowStateEnum.Game;
+        WndManager.WindowState = WindowStateEnum.Game;
     }
 
     private void Input(DirectionEnum dir)
     {
         inputDir.Add(dir);
-        //如果和目前战备全都不符合就清空
+        //如果和当前战备全部不符合就清空
         bool keep = false;
         foreach (var item in useAd) 
         {
             if (!item.IsAuthorize) continue;//没有授权的战备跳过
+            if (item.State == AirdropState.Unavailable) continue; //次数用尽的战备跳过
             bool state = item.State==AirdropState.Ready && item.cfg.opter.Compare(inputDir);
             keep |= state;
-            if(state&& inputDir.Count == item.cfg.opter.Length)
+            if(state && inputDir.Count == item.cfg.opter.Length)
             {
-                AudioManager.PlaySound(new("AirDrop/superbeacon_active"));
+                AudioSvc.PlaySound(new("AirDrop/superbeacon_active"));
                 OnWaitRelease(item);
                 inputDir.Clear();
                 return;
@@ -126,14 +130,14 @@ public class AirdropController : MonoBehaviour
 
         if (keep)
         {
-            AudioManager.PlaySound(new("AirDrop/superbeacon_button"));
+            AudioSvc.PlaySound(new("AirDrop/superbeacon_button"));
         }
         else
         {
             inputDir.Clear();
-            AudioManager.PlaySound(new("AirDrop/superbeacon_throw"));
+            AudioSvc.PlaySound(new("AirDrop/superbeacon_throw"));
         }
-        GlobalEventManager.InputAirdrop(inputDir);
+        BattleEventSub.InputAirdrop(inputDir);
 
     }
     /// <summary>完成输入，等待释放</summary>
@@ -142,19 +146,32 @@ public class AirdropController : MonoBehaviour
         item.State = AirdropState.Wait;
         WaitRelease = item;
         Close();
-        GlobalEventManager.SelectAirdrop(Player.gameObject,item);
+        BattleEventSub.SelectAirdrop(Player.gameObject,item);
+
+        if (item.cfg.isDirect)//直接释放（飞鹰装填和升旗）
+        {
+            item.State = AirdropState.Ready;
+            WaitRelease = null;
+        }
+        //else if (Player.ActorState == ActorState.Hide)
+        //{
+        //    OnRelease(Player.gameObject, GameObject target, Vector3 point, item);
+        //}
+
     }
 
     /// <summary>释放战备</summary>
     private void OnRelease(GameObject owner, GameObject target, Vector3 point, AirdropData data)
     {
         if (owner == null) return;
+        data.State = AirdropState.Arrive;
         if (GameRoot.GameState == GameStateEnum.Game && owner.TryGetComponent(out PlayerController player))
         {
             BattleManager.Instance.AddBattleDataItem(player.PlayerIndex, "呼叫战备次数");
+
+            WaitRelease = null;
         }
-        data.State = AirdropState.Arrive;
-        WaitRelease = null;
+
     }
 
     /// <summary>取消战备</summary>
@@ -173,7 +190,7 @@ public class AirdropController : MonoBehaviour
         {
             OnCancel(Player.gameObject, WaitRelease);
         }
-        if (GameRoot.WindowState == WindowStateEnum.Airdrop)
+        if (WndManager.WindowState == WindowStateEnum.Airdrop)
         {
             Close();
         }
@@ -185,38 +202,137 @@ public class AirdropController : MonoBehaviour
         var ad=useAd.Find(item =>item.cfg.ID==id);
         if (ad != null)
         {
-            ad.authorizeCounter += state ? 1 : -1;
-            if ((state && ad.authorizeCounter==1)||(!state&& ad.authorizeCounter == 0)) GlobalEventManager.AuthorizeAirdrop();
-            //Debug.LogError(ad.cfg.showName+"授权状态"+ad.authorizeCounter+ " "+ad.IsAuthorize);
+            _Authorize(ad, state);
         }
     }
+    private void _Authorize(AirdropData data,bool state)
+    {
+        data.authorizeCounter += state ? 1 : -1;
+        if ((state && data.authorizeCounter == 1) || (!state && data.authorizeCounter == 0)) BattleEventSub.AuthorizeAirdrop();
+        //Debug.LogError(ad.cfg.showName+"授权状态"+ad.authorizeCounter+ " "+ad.IsAuthorize);
+    }
+
+    private void OnAirdropStateChange(AirdropData data,AirdropState state)
+    {
+
+        switch (state)
+        {
+            case AirdropState.Unavailable:
+                //飞鹰自动重新装填
+                if (data.cfg.deliveryType == AirdropDeliveryEnum.Jet)
+                {
+                    bool haveVaild = useAd.Any(item=>item.cfg.deliveryType == AirdropDeliveryEnum.Jet&&item.State != AirdropState.Unavailable);
+                    if (!haveVaild) OnWaitRelease(useAd.FirstOrDefault(item=> item.cfg.ID == Constants.EagleReloadId));
+                }
+                break;
+            case AirdropState.Wait:
+                if (data.cfg.ID == Constants.EagleReloadId)//飞鹰装填
+                {
+                    _Authorize(data, false);
+                    foreach (var item in useAd)
+                    {
+                        if (item.cfg.deliveryType == AirdropDeliveryEnum.Jet)
+                        {
+                            Debug.LogError("所有飞鹰重新装填");
+                            item.State = AirdropState.Cool;//所有飞鹰共装填
+                            item.time = data.cool;
+                            item.count = item.arriveCount;
+                        }
+                    }
+                }
+                break;
+            case AirdropState.Arrive:
+                if (data.cfg.deliveryType == AirdropDeliveryEnum.Jet)
+                {
+                    //飞鹰共CD
+                    foreach (var item in useAd)
+                    {
+                        if (item.cfg.ID == Constants.EagleReloadId && !item.IsAuthorize)
+                        {
+                            _Authorize(item, true);
+                        }
+                        else if (item != data && item.cfg.deliveryType == AirdropDeliveryEnum.Jet)
+                        {
+                            //Debug.LogError("所有飞鹰共CD");
+                            if (item.State != AirdropState.Unavailable) item.State = AirdropState.Cool;//鎵€鏈夐楣板叡CD
+                            item.time = item.cool;//因为正常cd阶段是减去了持续和呼叫时间
+                        }
+                    }
+                }
+                break;
+        }
+        
+
+    }
+
+
+
 
 
     [System.Serializable]
     public class AirdropData {
+        public event System.Action<AirdropData, AirdropState> OnStateChange;
+
         public AirdropData_SO cfg;
         public bool isGift;
         public float time;
+        public int count;
         public bool isTmp;
+
+        [InspectorName("冷却时间")]
+        public int cool;
+        [InspectorName("部署时间")]
+        public int arriveTime;
+        [InspectorName("部署次数")]
+        public int arriveCount;
+
+        public AirdropData(AirdropData_SO cfg,bool isGift)
+        {
+            this.cfg = cfg;
+            this.isGift = isGift;
+            count = cfg.arriveCount;
+            cool = cfg.cool;
+            arriveTime = cfg.arriveTime;
+            arriveCount = cfg.arriveCount;
+        }
+
+        public AirdropData(AirdropData_SO cfg):this(cfg,true)
+        {
+            isTmp = true;
+            State = AirdropState.Arrive;
+        }
+
+
         /// <summary>
-        /// 允许使用的计数器，=0时无法使用(只对cfg.Authorize有效)
+        /// 允许使用的计数器 0=隐藏和无法使用 只对cfg.Authorize有效
         /// </summary>
         public int authorizeCounter;
 
+        /// <summary>
+        /// UI显示的时间进度[0-1]
+        /// </summary>
         public float TimeScale
         {
             get
             {
+                float re;
                 switch (state)
                 {
                     case AirdropState.Cool:
-                        return time/cfg.cool;
+                        re= time/Mathf.Max(cool,0.1f);
+                        break;
                     case AirdropState.Arrive:
-                        return time / cfg.arriveTime;
+                        re = time / Mathf.Max(arriveTime, 0.1f);
+                        break;
                     case AirdropState.Sustain:
-                        return time /cfg.sustainTime;
-                    default: return 0;
+                        re = time / Mathf.Max(cfg.sustainTime, 0.1f);
+                        break;
+                    case AirdropState.Unavailable:
+                        return 1;
+                    default:
+                        return 0;
                 }
+                return Mathf.Clamp01(re);
             }
         }
 
@@ -233,10 +349,10 @@ public class AirdropController : MonoBehaviour
                 {
 
                     case AirdropState.Cool:
-                        time = cfg.cool;
+                        time = cool- cfg.sustainTime- arriveTime;//真的吗（woc好像是真的）
                         break;
                     case AirdropState.Arrive:
-                        time = cfg.arriveTime;
+                        time = arriveTime;
                         break;
                     case AirdropState.Sustain:
                         time = cfg.sustainTime;
@@ -247,7 +363,11 @@ public class AirdropController : MonoBehaviour
                     case AirdropState.Wait:
 
                         break;
+                    case AirdropState.Unavailable:
+
+                        break;
                 }
+                OnStateChange?.Invoke(this, value);
             }
         }
         public void Update()
@@ -265,7 +385,15 @@ public class AirdropController : MonoBehaviour
                             State = AirdropState.Sustain;
                             break;
                         case AirdropState.Sustain:
-                            State = AirdropState.Cool;
+                            if (arriveCount>0 &&--count<=0)
+                            {
+                                State = AirdropState.Unavailable;
+                            }
+                            else
+                            {
+                                //Debug.LogError(cfg.name+"正常进CD");
+                                State = AirdropState.Cool;
+                            }
                             break;
                     }
                 }
@@ -274,14 +402,16 @@ public class AirdropController : MonoBehaviour
     }
     public enum AirdropState {
         /// <summary>就绪</summary>
-        [CustomLabel("就绪")] Ready,
+        [InspectorName("就绪")] Ready,
         /// <summary>冷却</summary>
-        [CustomLabel("冷却")] Cool,
+        [InspectorName("冷却")] Cool,
         /// <summary>等待释放</summary>
-        [CustomLabel("等待释放")] Wait,
+        [InspectorName("等待释放")] Wait,
         /// <summary>即将抵达</summary>
-        [CustomLabel("即将抵达")] Arrive,
+        [InspectorName("即将抵达")] Arrive,
         /// <summary>正在持续</summary>
-        [CustomLabel("正在持续")] Sustain,
+        [InspectorName("正在持续")] Sustain,
+        /// <summary>不可用</summary>
+        [InspectorName("不可用")] Unavailable,
     }
 }

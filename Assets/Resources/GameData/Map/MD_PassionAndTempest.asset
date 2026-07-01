@@ -13,11 +13,42 @@ MonoBehaviour:
   m_Name: MD_PassionAndTempest
   m_EditorClassIdentifier: 
   AreaName: "\u72C2\u730E\u827A\u672F\u5B66\u9662"
-  mapItemInfos: []
-  AreaDesc: "\u53D7\u5341\u5B57\u795E\u660E\u51B2\u51FB\u800C\u53D8\u6210\u4E00\u7247\u5E9F\u589F\u7684\u524D\u72C2\u730E\u827A\u672F\u5B66\u9662\u3002"
+  mapItemInfos:
+  - name: "\u5C3C\u83AB\u753B\u5ECA"
+    pos: {x: -330, y: 240}
+    enemyVarietyType: 6
+  - name: "\u963F\u4F69\u51EF\u83B1\u949F\u697C"
+    pos: {x: 120, y: 200}
+    enemyVarietyType: 6
+  - name: "\u987F\u609F\u5E7F\u573A"
+    pos: {x: 350, y: 150}
+    enemyVarietyType: 6
+  - name: "\u72C2\u730E\u4E3B\u697C"
+    pos: {x: -100, y: 120}
+    enemyVarietyType: 6
+  - name: "\u827A\u672F\u8D44\u8BAF\u9986"
+    pos: {x: -400, y: 50}
+    enemyVarietyType: 6
+  - name: "\u7B2C3\u5BBF\u820D\u697C"
+    pos: {x: -280, y: -125}
+    enemyVarietyType: 6
+  AreaDesc: "\u53D7\u65E0\u540D\u4F17\u795E\u81EA\u52A8\u673A\u51B2\u51FB\u800C\u53D8\u6210\u4E00\u7247\u5E9F\u589F\u7684\u524D\u72C2\u730E\u827A\u672F\u5B66\u9662\u3002"
   AreaBackground: {fileID: 21300000, guid: dab962e253408924ca44eec4f2a9787e, type: 3}
   Icon: {fileID: 21300000, guid: efa092ce0ef6c084d907e9da1dfb2156, type: 3}
   Map: {fileID: 21300000, guid: 1b089a3ad3b665842b70691de9f44497, type: 3}
-  product: 
-  enemyVarietyType: 5
-  interestPoints: []
+  color: {r: 0.9019608, g: 1, b: 0.81960785, a: 1}
+  enemyVarietyType: 6
+  product: 020000000100000005000000
+  interestPoints:
+  - Key: {fileID: 1826518615125622148, guid: 7e556cc142313804ebf707b435d60d9f, type: 3}
+    Value: 10
+  - Key: {fileID: 4252756687723068181, guid: a509a294ae69aff4ebde73c647822cad, type: 3}
+    Value: 60
+  - Key: {fileID: 5196571325329302849, guid: 66956573c8a7a574abadada208b5ba3b, type: 3}
+    Value: 20
+  - Key: {fileID: 5706469834003650477, guid: 74fb42066095dfe4d91a11747b16168a, type: 3}
+    Value: 15
+  - Key: {fileID: 3396989222530088960, guid: bd727d164e0c067418b2f7fd41cc92a7, type: 3}
+    Value: 5
+  - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a, type: 3}
+    Value: 5

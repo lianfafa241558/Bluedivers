@@ -1,13 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core;
-using Unity.BaseTool;
+
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
 
 
-public class BridgeWnd : WindowRoot
+public class BridgeWnd : Window
 {
     [Foldout("玩家", true)]
     [SerializeField]
@@ -22,37 +22,22 @@ public class BridgeWnd : WindowRoot
         taskMap,taskDiff, taskDiffReward,tastExtraDiffRoot, tastPropuctRoot;
 
 
-
-    private void Awake()
-    {
-
-    }
-    public override void Init()
-    {
-    }
-    public override void UnInit()
-    {
-    }
-
     protected override void FirstShowWnd()
     {
-
+        SetActive(taskRoot, false);
     }
+
 
     protected override void ShowWnd()
     {
-        GameRoot.OnGameStateChange += OnGameStateChange;
-        GlobalEventManager.OnGainExp += OnGainExp;
-        GlobalEventManager.OnSwitchRole += OnSwitchRole;
-
-        SetActive(taskRoot, false);
+        GlobalEventSub.OnGainExp += OnGainExp;
+        GlobalEventSub.OnSwitchRole += OnSwitchRole;
     }
 
     protected override void HideWnd()
     {
-        GameRoot.OnGameStateChange -= OnGameStateChange;
-        GlobalEventManager.OnGainExp -= OnGainExp;
-        GlobalEventManager.OnSwitchRole -= OnSwitchRole;
+        GlobalEventSub.OnGainExp -= OnGainExp;
+        GlobalEventSub.OnSwitchRole -= OnSwitchRole;
     }
 
     void Update()
@@ -60,21 +45,7 @@ public class BridgeWnd : WindowRoot
         
     }
 
-    private void OnGameStateChange(GameStateEnum exit, GameStateEnum entry)
-    {
-        switch (entry)
-        {
-            case GameStateEnum.Bridge:
 
-                break;
-            case GameStateEnum.Ready:
-                DisplayTask();
-                break;
-            case GameStateEnum.Transition:
-
-                break;
-        }
-    }
 
     private void OnGainExp(string ID,int level,float expScale)
     {
@@ -86,15 +57,18 @@ public class BridgeWnd : WindowRoot
         SetText(selfName, player.PlayerName);
         SetSprite(selfIcon, player.Portrait);
 
-        GameRoot.Archive.GetRoleLevel(player.Id,out int level,out float expScale);
+        ArchiveSvc.Archive.GetRoleLevel(player.Id,out int level,out float expScale);
         SetText(selfLevel, level);
         SetFill(selfExp, expScale);
     }
 
     
-
-    private void DisplayTask()
+    /// <summary>
+    /// 事件控制
+    /// </summary>
+    public void DisplayTask()
     {
+        WndManager.Instance.CreatNotice("Yuuka", "Ready");
         var task = taskManager.nowTask;
         var info = task.taskCfg;
         var cfg = task.MainCfg;
@@ -102,13 +76,13 @@ public class BridgeWnd : WindowRoot
         
         SetActive(friendRoot, task.PlayMode !=2);
 
+        SetActive(taskRoot, true);
         taskRoot.GetComponent<Animator>().Play("Entry",0,0);
-        SetActive(taskRoot,true);
         SetText(taskType, cfg.name);
         SetText(taskName, info.name);
 
         SetText(taskMainTarget, cfg.desc);
-        SetText(taskExtraTarget,"可选目标 * " +info.extra.Length);
+        SetText(taskExtraTarget,"可选目标* " +info.extra.Length);
         SetText(taskMainReward, (int)(info.MainReward* diffScale));
         SetText(taskExtraReward, (int)(info.ExtraReward* diffScale));
         SetColor(taskIcon, info.Color);

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Core;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +9,7 @@ using Utils;
 using static ArchivesData_SO;
 using static WndTools.WndRootTool;
 
-public class SettingWnd : WindowRoot
+public class SettingWnd : Window
 {
     public Image BG;
     public Transform expandRoot, layoutRoot;
@@ -37,20 +37,33 @@ public class SettingWnd : WindowRoot
     bool haveSettingChagne;
 
     [SerializeField]
+    private Camera uiCamera;
+
+    [SerializeField]
     private GameObject showModle;
+
+    private GameObject lookPoint;
 
     private float justClosed;
     private bool selfChangeState;
 
-    public override void Init()
+    public void Init()
     {
-        //这玩意一般是那种需要关了也能触发的需求才用的 update改用就用
-        InputManager.Bind(WindowStateEnum.All, InputState.Esc, OnEsc);
+        //先尝试移除绑定,如果没有那就什么都不发生
+        UnInit();
+        //这玩意一般是那种需要关了也能触发的需求才用的 update改用就行
+        InputManager.BindDown(WindowStateEnum.All, InputState.Esc, OnEsc);
         //Debug.LogError("绑定");
     }
-    public override void UnInit()
+
+    public override void OnDestroy()
     {
-        InputManager.UnBind(WindowStateEnum.All, InputState.Esc, OnEsc);
+        base.OnDestroy();
+        UnInit();
+    }
+    public void UnInit()
+    {
+        InputManager.UnBindDown(WindowStateEnum.All, InputState.Esc, OnEsc);
     }
 
 
@@ -58,7 +71,7 @@ public class SettingWnd : WindowRoot
     {
         m_UpdateDataArr = resManager.LoadObjects<UpdateData_SO>("GameData/Update");
         SetUpdate(false);
-        GameRoot.Archive.settingDic.ForEach(CreatItem);
+        ArchiveSvc.Archive.settingDic.ForEach(CreatItem);
 
 
         SetCilck(layoutRoot.GetChild(0), () => SwitchNextExpand(false));
@@ -69,8 +82,11 @@ public class SettingWnd : WindowRoot
         SetCilck(rebirth, TryRebirth);
         SetCilck(exitGame, TryExitGame);
         
-        GameRoot.OnWindowStateChange += OnWindowStateChange;
+        WndManager.OnWindowStateChange += OnWindowStateChange;
 
+        lookPoint = new GameObject("LookPoint");
+        lookPoint.transform.parent = transform;
+        lookPoint.transform.position = uiCamera.ScreenToWorldPoint(Input.mousePosition);
     }
 
     protected override void ShowWnd()
@@ -80,34 +96,35 @@ public class SettingWnd : WindowRoot
         WindowState = WindowStateEnum.UI;
         selfChangeState = false;
 
-        wndManager.WndUI.gameObject.SetActive(false);
+        //wndManager.WndUI.gameObject.SetActive(false);
         //feature.SetActive(true);
         if(roomManager.IsSingle&&GameState == GameStateEnum.Game)TimeScale = 0.01f;//TODO:如果是单机的话
                                                            // 创建临时Texture2D
         BG.sprite = CameraCaptureToSprite(Camera.main);
         BG.material.SetFloat("_TimeScale", TimeScale);
-        GlobalEventManager.OnFakeBg(BG.transform);
+        //GlobalEventManager.OnFakeBg(BG.transform);
         haveSettingChagne = false;
-        SetActive(returnShop,GameRoot.GameState == GameStateEnum.Game);
-        SetActive(rebirth, GameRoot.GameState == GameStateEnum.Bridge);
+        SetActive(returnShop,GameState == GameStateEnum.Game);
+        SetActive(rebirth, GameState == GameStateEnum.Bridge);
         SetActive(freeCamera, roomManager.IsSingle);
 
         SetStateRoot();
-        InputManager.ListenerCancel(Cancel);
+        InputManager.AddListenerCancel(Cancel);
     }
     protected override void HideWnd()
     {
         WindowState = oldStste;
-        wndManager.WndUI.gameObject.SetActive(true);
+        //wndManager.WndUI.gameObject.SetActive(true);
         //feature.SetActive(false);
         if (roomManager.IsSingle && GameState == GameStateEnum.Game) TimeScale = 1;//TODO:如果是单机的话
         BG.material.SetFloat("_TimeScale", TimeScale);
-        GlobalEventManager.OnFakeBg(null);
+        //GlobalEventManager.OnFakeBg(null);
         if (haveSettingChagne)
         {
-            GameRoot.Archive.Save();
+            ArchiveSvc.Archive.Save();
         }
         Tool.Destroy(showModle);
+
     }
 
     void Update()
@@ -120,6 +137,10 @@ public class SettingWnd : WindowRoot
         {
             SwitchNextExpand(true);
         }
+        if (lookPoint)
+        {
+            lookPoint.transform.position = uiCamera.ScreenToWorldPoint(Input.mousePosition);
+        }
     }
 
 
@@ -128,14 +149,14 @@ public class SettingWnd : WindowRoot
     private void OnWindowStateChange(WindowStateEnum oldState, WindowStateEnum state)
     {
         if (selfChangeState) return;//是自己干的就不管
-        //selfChangeState = true;//表面在打开设置界面期间有人改变了界面状态
+        //selfChangeState = true;//表面在打开设置界面期间有人改变了界面状??
         oldStste = state;
     }
 
     private void OnEsc()
     {
-        //Debug.LogError("当前状态"+ GameRoot.GameState +"目标组"+ (GameStateEnum.Front | GameStateEnum.Transition | GameStateEnum.Load | GameStateEnum.GameEnd));
-        if(justClosed<Time.time&&(GameRoot.GameState & (GameStateEnum.Front| GameStateEnum.Transition| GameStateEnum.Load| GameStateEnum.GameEnd)) == 0)
+        //Debug.LogError("当前状态"+ GameRoot.GameState +"目标 "+ (GameStateEnum.Front | GameStateEnum.Transition | GameStateEnum.Load | GameStateEnum.GameEnd));
+        if(justClosed<Time.time&&(GameState & (GameStateEnum.Front| GameStateEnum.Transition| GameStateEnum.Load| GameStateEnum.GameEnd)) == 0)
         {
             if (InputManager.CancelEmpty() && !State) SetWndState(true);
         }
@@ -160,7 +181,7 @@ public class SettingWnd : WindowRoot
         Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.one * 0.5f);
         targetCamera.targetTexture = null;
         //targetCamera.cullingMask = rewordMask;
-        sprite.name = "抓拍";
+        sprite.name = "抓取";
         return sprite;
     }
 
@@ -187,7 +208,7 @@ public class SettingWnd : WindowRoot
         SetText(updateTitle, m_UpdateDataArr[nowUpdateIndex].title);
         SetText(updateDesc, m_UpdateDataArr[nowUpdateIndex].desc);
         SetText(updateTime, m_UpdateDataArr[nowUpdateIndex].time);
-        SetText(updateCount,"（"+(nowUpdateIndex+1) +"/"+ m_UpdateDataArr.Count + "）");
+        SetText(updateCount, "" + (nowUpdateIndex+1) + "/" + m_UpdateDataArr.Count + "");
         
     }
 
@@ -206,20 +227,20 @@ public class SettingWnd : WindowRoot
                 SetText(textD, data.showTexts[data.value.RawInt]);
                 left.onClick.AddListener(() => {
                     
-                    Debug.Log("点击左"+ (data.value.RawInt - 1)+"  "+ data.showTexts.Length);
+                    Debug.Log("点击" + (data.value.RawInt - 1)+"  "+ data.showTexts.Length);
                     data.value = Tool.PositiveRemainder(data.value.RawInt - 1, data.showTexts.Length);
                     SetText(textD, data.showTexts[data.value.RawInt]);
                     haveSettingChagne = true;
-                    GlobalEventManager.SettingCange(name, data.value.RawInt);
+                    GlobalEventSub.SettingCange(name, data.value.RawInt);
                     wndManager.PlaySound(new("UI/UI_Bubble"));
                 });
                 right.onClick.AddListener(() => {
                     
-                    Debug.Log("点击右" + (data.value.RawInt + 1) + "  " + data.showTexts.Length);
+                    Debug.Log("点击 " + (data.value.RawInt + 1) + "  " + data.showTexts.Length);
                     data.value = Tool.PositiveRemainder(data.value.RawInt + 1, data.showTexts.Length);
                     SetText(textD, data.showTexts[data.value.RawInt]);
                     haveSettingChagne = true;
-                    GlobalEventManager.SettingCange(name, data.value.RawInt);
+                    GlobalEventSub.SettingCange(name, data.value.RawInt);
                     wndManager.PlaySound(new("UI/UI_Bubble"));
                 });
                 break;
@@ -231,7 +252,7 @@ public class SettingWnd : WindowRoot
 
                     data.value = value?1:0;
                     haveSettingChagne = true;
-                    GlobalEventManager.SettingCange(name, data.value.RawInt);
+                    GlobalEventSub.SettingCange(name, data.value.RawInt);
                     wndManager.PlaySound(new("UI/UI_Bubble"));
                 });
                 break;
@@ -248,7 +269,7 @@ public class SettingWnd : WindowRoot
                     data.value = value;
                     haveSettingChagne = true;
                     SetText(textS, (int)value + data.sliderSuffix);
-                    GlobalEventManager.SettingCange(name, data.value.RawInt);
+                    GlobalEventSub.SettingCange(name, data.value.RawInt);
                     //AudioManager.PlaySound(new("UI/UI_Bubble"));
                 });
                 break;
@@ -309,16 +330,19 @@ public class SettingWnd : WindowRoot
         showModle = resManager.CreatPrefab("Prefabs/StudentModle/" + player.Id, false);
         //var lookAtController = showModle.GetComponentInChildren<LookAtIK>();
         //lookAtController.enabled = false;
-        showModle.transform.position = new(600, -650, -1800);
-        showModle.transform.eulerAngles = new(0, -80, 0);
+        showModle.transform.position = transform.TransformPoint(new(600, -650, 700));
+        showModle.transform.eulerAngles = new(0, -170, 0);
         //showModle.transform.GetChild(0).localScale = new(550, 550, 550);
         showModle.transform.localScale = new(550, 550, 550);
         showModle.SetChildLayer(gameObject.layer,3);
+        var comp = showModle.GetComponent<RootMotion.FinalIK.LookAtController>();
+        comp.ik.solver.bodyWeight = 0;
+        comp.target = lookPoint.transform;
 
 
         SetText(selfName, player.ShowName);
         SetSprite(selfIcon, player.Portrait);
-        GameRoot.Archive.GetRoleLevel(player.Id, out int level, out float expScale);
+        ArchiveSvc.Archive.GetRoleLevel(player.Id, out int level, out float expScale);
 
         SetText(selfLevel, level);
         SetFill(selfExp, expScale);
@@ -327,7 +351,7 @@ public class SettingWnd : WindowRoot
     /// <summary>返回舰船</summary>
     void TryReturnShop()
     {
-        //不需要判定状态，已经隐藏了
+        //不需要判定状态，已经隐藏??
         
         wndManager.CreatTip(new() {
             title = "中止任务",
@@ -343,10 +367,10 @@ public class SettingWnd : WindowRoot
         });
 
     }
-    /// <summary>(在舰船上)重生</summary>
+    /// <summary>(在舰船上)重置</summary>
     void TryRebirth()
     {
-        //不需要判定状态，已经隐藏了
+        //不需要判定状态，已经隐藏??
         //其实按理说应该是传送回房间的，但是现在没做
         ActorsManager.Player.Pos = Vector3.zero;
         SetWndState(false);
@@ -354,7 +378,7 @@ public class SettingWnd : WindowRoot
 
     void EnterFreeCamera()
     {
-        GameRoot.WindowState = WindowStateEnum.FreeCamera;
+        WindowState = WindowStateEnum.FreeCamera;
         SetWndState(false);
     }
     /// <summary>退出游戏</summary>

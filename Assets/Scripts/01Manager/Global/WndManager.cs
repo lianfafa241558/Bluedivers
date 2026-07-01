@@ -1,177 +1,79 @@
+﻿using System.Collections.Generic;
 using Core;
-using Unity.BaseTool;
+
 using UnityEngine;
+using UnityEngine.Events;
 using Utils;
+using static NoticeWnd;
 using static WndTools.WndRootTool;
 
-public class WndManager : WndManagerBase<WndManager>
+public class WndManager : Singleton<WndManager>
 {
-    public FrontWnd frontWnd;
-    public LoadWnd loadWnd;
-    public PlayerWnd playerWnd;
-    public MissionWnd missionWnd;
-    public JetpackWnd jetpackWnd;
-    public AirdropWnd airdropWnd;
-    public SelectRoleWnd selectRoleWnd;
+    public static WindowStateEnum WindowState
+    {
+        get => Instance ? Instance.windowState : WindowStateEnum.Game;
+        set
+        {
+            var oldState = Instance.windowState;
+            if (oldState != value)
+            {
+                Instance.windowState = value;
+                OnWindowStateChange?.Invoke(oldState, value);
+            }
+        }
+    }
+    public static event UnityAction<WindowStateEnum, WindowStateEnum> OnWindowStateChange;
+
+    [InspectorName("界面状态")]
+    [SerializeField]
+    private WindowStateEnum windowState = WindowStateEnum.UI;
+
     public OperationWnd operationWnd;
-    public SelectMapWnd selectMapWnd;
     public TipWnd tipWnd;
     public NoticeWnd noticeWnd;
-    public BridgeWnd bridgeWnd;
-    public CountDownWnd countDownWnd;
-    public SubtitleWnd subtitleWnd;
-    public HpWnd hpWnd;
-    public SettingWnd settingWnd;
-    public MovieWnd movieWnd;
-    public ArmamentWnd armamentWnd;
 
-    [SerializeField]
-    private Transform GameUI,VecticalWnds;
-    public Transform WndUI;//只有设置界面用
+    //[HideInInspector]
+    public SelectMapWnd selectMapWnd;
+    //[HideInInspector]
+    public SelectRoleWnd selectRoleWnd;
+
+    public VehicleWnd vehicleWnd;
+
     public Sprite empty;
 
     public override void Awake()
     {
         base.Awake();
-        GameRoot.OnGameStateChange += OnGameStateChange;
-        GameRoot.OnWindowStateChange += OnWindowStateChange;
-        GlobalEventManager.OnSettingCange += OnSettingCange;
 
+        OnWindowStateChange += OnWindowStateChangeHandler;
+        GlobalEventSub.OnSettingCange += OnSettingCange;
     }
 
-
-    protected override void Start()
+    protected void Start()
     {
-        base.Start();
-        SetActive(GameUI);
-        SetActive(WndUI);
-        SetActive(VecticalWnds);
-        //foreach (var wnd in Tool.GetComponentsInChildren<Wnd>(transform, 2, false)) { wnd.Init(); }
-        foreach (var wnd in TransformUtils.GetComponentsInChildren<WindowRoot>(transform, 2, false)) { wnd.Init(); wnd.gameObject.SetActive(false); }
-
-
-        if (!GameRoot.Instance.IsLocal)
-        {
-            frontWnd.SetWndState(true);
-        }
-        else
-        {
-            //GameRoot.WindowState = WindowStateEnum.Game;
-            //GameRoot.GameState = GameStateEnum.Game;
-        }
+        // 界面状态/游戏状态已迁移到 WndManager/GameStateManager
     }
+
     void OnDestroy()
     {
-        foreach (var wnd in transform.GetComponentsInChildren<Wnd>()) wnd.UnInit();
-
-        GameRoot.OnGameStateChange -= OnGameStateChange;
-        GameRoot.OnWindowStateChange -= OnWindowStateChange;
-        GlobalEventManager.OnSettingCange -= OnSettingCange;
-
+        OnWindowStateChange -= OnWindowStateChangeHandler;
+        GlobalEventSub.OnSettingCange -= OnSettingCange;
     }
 
-    private void OnGameStateChange(GameStateEnum exit, GameStateEnum entry)
-    {
-        if (exit == entry) return;
-        switch (exit)
-        {
-            case GameStateEnum.Bridge:
-
-                break;
-            case GameStateEnum.Ready:
-                countDownWnd.SetWndState(false);
-                bridgeWnd.SetWndState(false);
-                playerWnd.SetWndState(false);
-                subtitleWnd.SetWndState(false);
-                operationWnd.SetWndState(false);
-                break;
-            case GameStateEnum.Armament:
-                armamentWnd.SetWndState(false);
-                break;
-            case GameStateEnum.Transition:
-                movieWnd.SetWndState(false);
-                break;
-            case GameStateEnum.Load:
-                
-                break;
-            case GameStateEnum.Game:
-                playerWnd.SetWndState(false);
-                jetpackWnd.SetWndState(false);
-                airdropWnd.SetWndState(false);
-                operationWnd.SetWndState(false);
-                hpWnd.SetWndState(false);
-                missionWnd.SetWndState(false);
-                break;
-            case GameStateEnum.GameEnd:
-
-                break;
-        }
-        switch (entry)
-        {
-            case GameStateEnum.Bridge:
-                playerWnd.SetWndState(true);
-                jetpackWnd.SetWndState(true);
-                operationWnd.SetWndState(true);
-                bridgeWnd.SetWndState(true);
-                subtitleWnd.SetWndState(true);
-                break;
-            case GameStateEnum.Ready:
-                countDownWnd.SetWndState(true);
-                CreatNotice("Yuuka2", "Ready");
-                break;
-            case GameStateEnum.Armament:
-                armamentWnd.SetWndState(true);
-                break;
-            case GameStateEnum.Transition:
-                movieWnd.SetWndState(true);
-                break;
-            case GameStateEnum.Load:
-
-                break;
-            case GameStateEnum.Game:
-                Debug.LogWarning("进入战斗");
-                playerWnd.SetWndState(true);
-                jetpackWnd.SetWndState(true);
-                airdropWnd.SetWndState(true);
-                operationWnd.SetWndState(true);
-                subtitleWnd.SetWndState(true);
-                hpWnd.SetWndState(true);
-                missionWnd.SetWndState(true);
-                /*
-                if (GameRoot.Instance.IsLocal)
-                {
-                    AudioManager.PlayMusic(AudioManager.MusicGroup.Game, 0.2f);
-                }*/
-                
-                break;
-            case GameStateEnum.GameEnd:
-
-                break;
-        }
-    }
-
-    //LoginTimer contAlpha;
-    private void OnWindowStateChange(WindowStateEnum oldState, WindowStateEnum state)
+    private void OnWindowStateChangeHandler(WindowStateEnum oldState, WindowStateEnum state)
     {
         switch (state)
         {
             case WindowStateEnum.Game:
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
-                if (oldState != WindowStateEnum.Airdrop)
-                {
-                    SetActive(GameUI, true);
-                    GameUI.GetComponent<CanvasGroup>().alpha = 0;
-                    //if (contAlpha.IsValid()) contAlpha.Stop();
-                    SetAlpha(GameUI,0,1,500);
-                    //contAlpha = GameRoot.CreateTimer((count) => GameUI.GetComponent<CanvasGroup>().alpha = 0.02f * count, 0.02f, 50);
-                }
+
                 break;
             case WindowStateEnum.UI:
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
                 UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
-                SetActive(GameUI, false);
+
                 break;
             case WindowStateEnum.Airdrop:
 
@@ -192,7 +94,11 @@ public class WndManager : WndManagerBase<WndManager>
         }
         if (key == "UI缩放系数")
         {
-            GetComponent<UnityEngine.UI.CanvasScaler>().scaleFactor = value / 100f;
+            for(var i=0;i< transform.childCount;++i)
+            {
+                transform.GetChild(i).GetComponent<UnityEngine.UI.CanvasScaler>().scaleFactor = value / 100f;
+            }
+           
         }
     }
 
@@ -200,16 +106,19 @@ public class WndManager : WndManagerBase<WndManager>
     {
         tipWnd.Creat(info);
     }
-    public void CreatNotice(NoticeData_SO data, System.Func<bool> func = default,float delay=0)
-    {
-        if (delay==0) noticeWnd.Creat(data, func);
-        else GameRoot.CreateTimer(() => { noticeWnd.Creat(data, func); }, delay);
 
-    }
-    public void CreatNotice(string role, string type, System.Func<bool> func = default,float delay=0,float vaildTime=-1)
+    public void CreatNotice(string role, string type, System.Func<bool> func = default,float vaildTime=-1)
     {
-        if (delay == 0) noticeWnd.Creat(ResManager.Instance.GetVoice(role,type), func);
-        else GameRoot.CreateTimer(() => { noticeWnd.Creat(ResManager.Instance.GetVoice(role, type), func, vaildTime); }, delay);
+        ResSvc.Instance.GetVoice(role, type,out var data,out var sourceName,out var portrait);
+        var noticeData = new NoticeData() {
+            data = data.Get(),
+            sourceName = sourceName,
+            portrait = portrait,
+            func= func,
+            allowWait=true,
+            vaildTime = vaildTime
+        };
+        noticeWnd.Creat(noticeData);
     }
 
     public void ClearNotice()
@@ -224,9 +133,11 @@ public class WndManager : WndManagerBase<WndManager>
 
     public void PlaySound(AudioPlayInfo info)
     {
-        AudioManager.PlaySound(info);
+        AudioSvc.PlaySound(info);
+    }
+
+    public void PlaySoundData(RuntimeSoundData group)
+    {
+        AudioSvc.PlaySound(group);
     }
 }
-
-
-

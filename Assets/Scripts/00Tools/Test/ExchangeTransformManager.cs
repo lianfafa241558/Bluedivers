@@ -1,8 +1,8 @@
 using System.Collections;
-using System.Collections.Generic;
+using Core;
 using UnityEngine;
-namespace Unity.BaseTool {
-    public class ExchangeTransformManager : MonoBehaviour {
+
+public class ExchangeTransformManager : MonoBehaviour {
         private ObjectPool<ExchangeTransformComp> pool;
 
         void Start() {
@@ -10,7 +10,7 @@ namespace Unity.BaseTool {
 
         }
         public void Exchange(Transform source) {
-            StartCoroutine(nameof(_Exchange));
+            if(enabled&&gameObject.activeInHierarchy)StartCoroutine(_Exchange(source));
         }
 
 
@@ -18,7 +18,7 @@ namespace Unity.BaseTool {
             yield return null;
             var comp = pool.Get();
             comp.Revert += Revert;
-            //Debug.LogError("尝试交换"+comp+"和"+source);
+            //Debug.LogError("尝试交换"+comp+" "+source);
             comp.Exchange(source);
             comp.enabled = true;
         }
@@ -47,4 +47,3 @@ namespace Unity.BaseTool {
 
 
     }
-}

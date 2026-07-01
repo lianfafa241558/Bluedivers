@@ -1,7 +1,7 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Core;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -16,9 +16,9 @@ namespace FpsGame.Mission
 
         public int freeCount;
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
-            GlobalEventManager.OnEnemyDead += EnemyDead;
+            BattleEventSub.OnEnemyDead += EnemyDead;
             var task = TaskManager.Instance.nowTask;
             MaxProgress = root.campData.enemyVarietyType.ToEnemyType() switch {
                 EnemyType.Kaiser => 70,
@@ -59,7 +59,7 @@ namespace FpsGame.Mission
             else
             {
                 CompleteMission();
-                GlobalEventManager.OnEnemyDead -= EnemyDead;
+                BattleEventSub.OnEnemyDead -= EnemyDead;
             }
         }
 

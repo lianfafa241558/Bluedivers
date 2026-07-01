@@ -1,12 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
+using Core;
 using GameContract;
 using RootMotion.FinalIK;
-using Unity.BaseTool;
+
 using UnityEngine;
 using static UnityEngine.Rendering.DebugUI;
 
-//4个状态:Pipe 投影状态-PipeLink 等待连接状态-PipeWait 等待安装状态-PipeComplete 完成状态
+//4个状状态
+//Pipe 投影状态
+//PipeLink 等待连接态
+//PipeWait 等待安装态
+//PipeComplete 完成态
 
 
 
@@ -169,7 +174,7 @@ public class Furniture_Pipe : Furniture_Base
         if (lastPipeline)
         {
             Id = "PipeWait";
-            desc = "建造管线";
+            desc = "建造管道";
             inOperate = false;
             meetTime = 3;
         }

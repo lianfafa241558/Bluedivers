@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7812317309875698345}
   - component: {fileID: 3362407735338617287}
   - component: {fileID: 6249764702321255123}
+  - component: {fileID: -3260468636936922790}
   m_Layer: 0
   m_Name: AbydosWall2
   m_TagString: Untagged
@@ -25,6 +26,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1784311354514398124}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 198.99489, y: 9, z: 228.86961}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -32,7 +34,6 @@ Transform:
   m_Children:
   - {fileID: 7768275214084821593}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &3362407735338617287
 BoxCollider:
@@ -42,9 +43,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1784311354514398124}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.78, y: 6.85, z: 4}
   m_Center: {x: 0, y: 2.9, z: 0}
 --- !u!114 &6249764702321255123
@@ -64,11 +73,28 @@ MonoBehaviour:
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
+--- !u!208 &-3260468636936922790
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1784311354514398124}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.39, y: 3.425, z: 2}
+  m_MoveThreshold: 0.1
+  m_Carve: 0
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 2.9, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1001 &7801585147106702770
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 7812317309875698345}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: c053688bdcb619a45828627df694b603,
@@ -131,7 +157,15 @@ PrefabInstance:
       propertyPath: m_Name
       value: Wall2
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c053688bdcb619a45828627df694b603,
+        type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c053688bdcb619a45828627df694b603, type: 3}
 --- !u!4 &7768275214084821593 stripped
 Transform:

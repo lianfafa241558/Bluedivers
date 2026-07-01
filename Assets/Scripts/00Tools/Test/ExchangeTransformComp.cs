@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Unity.BaseTool {
+
     /// <summary>
-    /// 用来把换到置换区的物体换回来用的(具有这个组件的预制体必须一开始是隐藏的)
+    /// 用来把换到置换区的物体换回来用的(具有这个组件的预制体必须一开始是隐藏的
     /// </summary>
     public class ExchangeTransformComp : MonoBehaviour {
         public UnityAction<ExchangeTransformComp> Revert;
@@ -17,7 +17,7 @@ namespace Unity.BaseTool {
         }
 
         /// <summary>
-        /// 完成两个物体位置的交换(把目标物体换到置换区)
+        /// 完成两个物体位置的交换把目标物体换到置换区)
         /// </summary>
         public void Exchange(Transform go) {
             var exchangeArea = transform.parent;
@@ -38,4 +38,3 @@ namespace Unity.BaseTool {
 
 
     }
-}

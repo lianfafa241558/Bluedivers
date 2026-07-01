@@ -3,7 +3,7 @@ using System.Linq;
 using Core;
 using GameContract;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 using UnityEngine.Events;
 using Utils;
@@ -13,7 +13,7 @@ namespace Unity.FPS.Game
  
 
     /// <summary>
-    /// 可以被攻击(没有这个组件就不造成伤害)
+    /// 可以被攻击 没有这个组件就不造成伤害)
     /// </summary>
     public class Damageable : TickBehaviour, I_Damagable
     {
@@ -21,20 +21,20 @@ namespace Unity.FPS.Game
         private const float SensibilityToSelfdamage = 0.5f;
 
         [SerializeField]
-        [CustomLabel("弱点")]
+        [InspectorName("弱点")]
         private bool isWeakness;
 
         [Header("伤害抗性")]
-        [CustomLabel("伤害抗性")]
+        [InspectorName("伤害抗性")]
         [SerializeField]
         private List<KVP<DamageTypeEnum, float>> showArmorLists;
 
         [SerializeField]
-        [CustomLabel("全抗性")]
+        [InspectorName("全抗性")]
         private float AllArmor;
 
 
-        [CustomLabel("基础护甲值")]
+        [InspectorName("基础护甲值")]
         public int armorValue;
         [Header("关联护甲")]
         [SerializeField]
@@ -43,7 +43,7 @@ namespace Unity.FPS.Game
         [Header("护甲破坏效果")]
         [SerializeField]
         private List<ArmorBreakEffect> armorBreakEffect;
-        [CustomLabel("流血速度")]
+        [InspectorName("流血速度")]
         public int BleedValue;
 
         public event UnityAction<Damageable> OnDamage;
@@ -53,7 +53,7 @@ namespace Unity.FPS.Game
 
 
 
-        /// <summary>护甲破坏者(计算流血)</summary>
+        /// <summary>护甲破坏(计算流血)</summary>
         private GameObject ArmorBreaker;
 
         bool I_Damagable.IsWeakness => isWeakness;
@@ -119,7 +119,7 @@ namespace Unity.FPS.Game
             {
                 armors.Add(type,1);
             }
-            //比如护甲里面填0.5，收到的伤害就-50%
+            //比如护甲里面填0.5，收到的伤害-50%
             foreach (var item in showArmorLists)
             {
                 armors[item.Key]-=item.Value-AllArmor;
@@ -149,7 +149,7 @@ namespace Unity.FPS.Game
         /// <summary>
         /// 检查自己是否被遮挡(爆炸判定)
         /// </summary>
-        /// <param name="sourcePoint">来源点</param>
+        /// <param name="sourcePoint">来源</param>
         /// <returns>是否被遮挡</returns>
         public bool ExplosionBlocking(Vector3 sourcePoint,out Collider collider)
         {
@@ -163,7 +163,7 @@ namespace Unity.FPS.Game
             if (armors[DamageTypeEnum.Explosion] <= 0) return false;
 
             RaycastHit hit;
-            // 批量射线检测
+            // 批量射线检查
             foreach (var item in m_colliders)
             {
                 Vector3 direction = item.bounds.center - sourcePoint;
@@ -188,7 +188,7 @@ namespace Unity.FPS.Game
 
 
 
-        public void InflictDamage(I_Damagable source, PEInt damage, List<KVP<DamageTypeEnum,float>> damageGroups,bool noSource, GameObject damageSource,Vector3 pos) {
+        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum,float>> damageGroups,bool noSource, GameObject damageSource,Vector3 pos) {
             if (!Health) return;
 
             Actor SourceActor=null;
@@ -200,7 +200,7 @@ namespace Unity.FPS.Game
             // 友军减伤
             if (Actor && SourceActor && Actor.Team == SourceActor.Team)
             {
-                //Debug.LogWarning("友军减伤"+ damage+"→"+ damage * SensibilityToSelfdamage);
+                //Debug.LogWarning("友军减伤"+ damage+" "+ damage * SensibilityToSelfdamage);
                 damage *= (PEInt)SensibilityToSelfdamage;
             }
             if (isWeakness)
@@ -267,6 +267,7 @@ namespace Unity.FPS.Game
             LineArmor = transform.GetComponentsInChildren<TransferDamageable>().ToList();
             if (armorValue > 0) armorBreakEffect.Add(new() { go=gameObject});
         }
+
 #endif
 
 

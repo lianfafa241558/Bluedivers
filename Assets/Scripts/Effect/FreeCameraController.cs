@@ -60,8 +60,8 @@ public class FreeCameraController : MonoBehaviour
     {
         int keyPrefix = isY ? 1 : 0;
 
-        float speed = GameRoot.GetSetting(SensitivityKeys[keyPrefix]);
-        float sigh = GameRoot.GetSetting(InvertKeys[keyPrefix]) > 0 ? -1 : 1;
+        float speed = ArchiveSvc.GetSetting(SensitivityKeys[keyPrefix]);
+        float sigh = ArchiveSvc.GetSetting(InvertKeys[keyPrefix]) > 0 ? -1 : 1;
         float inputValue = Input.GetAxisRaw(AxisKeys[keyPrefix]);
         float i = inputValue * sigh * speed * 0.0001f;
 

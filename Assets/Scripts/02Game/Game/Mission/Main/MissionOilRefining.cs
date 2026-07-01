@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using GameContract;
-using Unity.BaseTool;
+
 using UnityEngine;
 namespace FpsGame.Mission
 {
@@ -27,7 +27,7 @@ namespace FpsGame.Mission
         private List<int> errorTimes;
         private List<MissionSubConnectPipes> subCP;
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             //base.CreatMission();
             subCP = new();
@@ -84,7 +84,7 @@ namespace FpsGame.Mission
                         {
                             manager.ReleaseAirdrop(item.position,item.eulerAngles.y, 14);
                         }
-                        UpdateTip($"寻找油泵并连接管线  [{NowProgress}/{MaxProgress}]");
+                        UpdateTip($"寻找油泵并连接管道 [{NowProgress}/{MaxProgress}]");
                         state = MissionState.Wait;
                     }
                     break;
@@ -147,7 +147,7 @@ namespace FpsGame.Mission
             }
             else
             {
-                UpdateTip($"寻找油泵并连接管线  [{NowProgress}/{MaxProgress}]");
+                UpdateTip($"寻找油泵并连接管道 [{NowProgress}/{MaxProgress}]");
             }
             
         }

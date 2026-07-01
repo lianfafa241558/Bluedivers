@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -32,7 +32,7 @@ namespace Utils
 
         public static Transform GetChild(this Transform transform, params int[] values)
         {
-            //故意让他报错显示的
+            //故意让他报错显示内容
             //可以阻止，但是还是会null或者出现不正确的结果，所以还不如让他报错
             Transform re = transform;
             for (int i = 0; i < values.Length; ++i)
@@ -44,7 +44,7 @@ namespace Utils
                 }
                 else
                 {
-                    Debug.LogError("找不到" + transform + "的" + values + " 停留在" + re);
+                    Debug.LogError("找不到" + transform + "下" + values + " 停留在" + re);
                     re = null;
                 }
             }

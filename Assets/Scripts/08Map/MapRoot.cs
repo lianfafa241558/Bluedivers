@@ -1,5 +1,5 @@
+using Unity.AI.Navigation;
 using UnityEngine;
-using UnityEngine.AI;
 using Utils;
 namespace FpsGame.MapUtils
 {
@@ -15,6 +15,7 @@ namespace FpsGame.MapUtils
 
         public void Init()
         {
+            //Debug.LogError("maprootInit的大小" + terrain.terrainData.size);
             //TerrainUtils.Main = terrain;
             GenerateTerrainRect();
             CreatAirWall();
@@ -38,9 +39,12 @@ namespace FpsGame.MapUtils
         [ContextMenu("生成Rect")]
         public void GenerateTerrainRect()
         {
+
+           
             var border = Constants.TaskBorder;
             var locpos = terrain.GetPosition();
             var size = terrain.terrainData.size;
+            //Debug.LogError("maproot地形生成的大小"+ size);
             Vector3Int startPos = (locpos + border * new Vector3(1,0,1)).ToInt();
             Vector3Int rectSize = size.ToInt() - border * new Vector3Int(2, 0, 2);
 

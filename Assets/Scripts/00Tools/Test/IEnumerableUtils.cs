@@ -1,7 +1,7 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.BaseTool;
+using Core;
 using UnityEngine;
 using Random = System.Random;
 namespace Utils
@@ -23,6 +23,33 @@ namespace Utils
             return list[0].Value;
         }
         public static T WeightTake<T>(this KVP<T, int>[] list, int totleWeight, Random random)
+        {
+            int randomValue = random.Range(1, totleWeight + 1);
+            for (int i = 0, v = 0; i < list.Length; ++i)
+            {
+                v += list[i].Value;
+                if (randomValue < v)
+                {
+                    return list[i].Key;
+                }
+            }
+            return list[0].Key;
+        }
+
+        public static T WeightTake<T>(this List<SKVP<int, T>> list, int totleWeight, Random random)
+        {
+            int randomValue = random.Range(1, totleWeight + 1);
+            for (int i = 0, v = 0; i < list.Count; ++i)
+            {
+                v += list[i].Key;
+                if (randomValue < v)
+                {
+                    return list[i].Value;
+                }
+            }
+            return list[0].Value;
+        }
+        public static T WeightTake<T>(this SKVP<T, int>[] list, int totleWeight, Random random)
         {
             int randomValue = random.Range(1, totleWeight + 1);
             for (int i = 0, v = 0; i < list.Length; ++i)
@@ -83,7 +110,7 @@ namespace Utils
             dic.Keys.CopyTo(keys, 0);
             return keys;
         }
-
+          
         public static List<KVP<K, V>> ToList<K, V>(this DisplayDic<K, V> dis)
         {
             List<KVP<K, V>> list = new();
@@ -145,7 +172,7 @@ namespace Utils
             kvps.ForEach(item => dic.Add(item.Key, item.Value));
             //kvps.Clear();
             return dic;
-        }
+        } 
         public static Dictionary<K, V> ToDictionary<K, V>(this IEnumerable<V> list, System.Func<V, K> func)
         {
             Dictionary<K, V> dic = new();
@@ -169,6 +196,14 @@ namespace Utils
             if (re.IsValid()) return re.Value;
             return default;
         }
+        public static V GetValue<K, V>(this List<SKVP<K, V>> list, K key)
+            where K : struct
+            where V : struct
+        {
+            var re = list.Find(item => item.Key.Equals(key));
+            if (re.IsValid()) return re.Value;
+            return default;
+        }
 
         public static void SetValue<K, V>(this List<KVP<K, V>> list, K key, V value)
         {
@@ -176,6 +211,15 @@ namespace Utils
             if (re.IsValid()) re.Value = value;
             else list.Add(new(key, value));
         }
+        public static void SetValue<K, V>(this List<SKVP<K, V>> list, K key, V value)
+            where K : struct
+            where V : struct
+        {
+            var re = list.Find(item => item.Key.Equals(key));
+            if (re.IsValid()) re.Value = value;
+            else list.Add(new(key, value));
+        }
+
 
 
         public static string ToString<T>(this IEnumerable<T> list, string interval)

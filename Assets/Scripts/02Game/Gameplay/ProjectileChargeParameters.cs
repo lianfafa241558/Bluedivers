@@ -1,4 +1,4 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
@@ -18,10 +18,10 @@ namespace Unity.FPS.Gameplay
             m_ProjectileBase = GetComponent<ProjectileBase>();
             DebugUtility.HandleErrorIfNullGetComponent<ProjectileBase, ProjectileChargeParameters>(m_ProjectileBase,
                 this, gameObject);
-
+             
             m_ProjectileBase.OnShoot += OnShoot;
         }
-
+         
         void OnShoot()
         {
             // Apply the parameters based on projectile charge

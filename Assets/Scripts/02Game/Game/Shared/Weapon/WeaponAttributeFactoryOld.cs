@@ -1,10 +1,10 @@
-/*
+﻿/*
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -56,7 +56,7 @@ namespace Unity.FPS.Game
                 return default;
             }
 
-            // 1. 获取或编译 AttributeBase 子类的构造函数委托
+            // 1. 获取或编译AttributeBase 子类的构造函数委托
             var attributeCtor = attributeCtorCache.GetOrAdd(typeof(T), RegisterCtor);
 
             // 调用缓存的构造函数委托
@@ -72,7 +72,7 @@ namespace Unity.FPS.Game
                 return default;
             }
 
-            // 获取或编译 AttributeBase 子类的构造函数委托
+            // 获取或编译AttributeBase 子类的构造函数委托
             var attributeCtor = attributeCtorCache.GetOrAdd(cfg.Item1, RegisterCtor);
 
             // 调用缓存的构造函数委托
@@ -90,7 +90,7 @@ namespace Unity.FPS.Game
 
             if (ctor == null)
             {
-                Debug.LogError($"未能获取到构造函数:{type.Name}");
+                Debug.LogError($"未能获取到构造函数{type.Name}");
             }
 
             // 编译表达式树生成委托
@@ -111,7 +111,7 @@ namespace Unity.FPS.Game
     }
 
 
-    /// <summary>修饰符枚举,没继续拓展是因为现在这三种情况已经极端复杂了，甚至都没必要要额外值其实</summary>
+    /// <summary>修饰符枚举，没继续拓展是因为现在这三种情况已经极端复杂了，甚至都没必要要额外值其他</summary>
     [Flags]
     public enum ModifierType
     {
@@ -132,11 +132,11 @@ namespace Unity.FPS.Game
     {
         /// <summary> 无</summary>
         None = 0,
-        /// <summary> 显示百分数</summary>
+        /// <summary> 显示百分比</summary>
         Percentage = 1 << 0,
         /// <summary> 显示倒数(例如射速)</summary>
         Reciprocal = 1 << 1,
-        /// <summary> 反转加成显示(绿/红)</summary>
+        /// <summary> 反转加成显示(加→减)</summary>
         FlipPlus = 1 << 2,
         /// <summary> 默认值时隐藏</summary>
         DefaultHide = 1 << 3,
@@ -146,79 +146,79 @@ namespace Unity.FPS.Game
 
 
     /// <summary>
-    /// 武器的属性类型，会塞进字典的，所以只能每人一份
+    /// 武器的属性类型，会塞进字典的，所以只能每人一个
     /// 我在想要不要全部字典化，根据选择的射击类型自动初始化属性字典
     /// </summary>
     public enum WeaponAttrType
     {
-        //---------通用属性-----------
+        //---------通用属性----------
         /// <summary>后备弹量</summary>
-        [CustomLabel("后备弹量")]
+        [InspectorName("后备弹量")]
         Ammo = 0,
         /// <summary>弹匣容量</summary>
-        [CustomLabel("弹匣容量")]
+        [InspectorName("弹匣容量")]
         Magazine = 1,
         /// <summary>射击间隔</summary>
-        [CustomLabel("射击间隔")]
+        [InspectorName("射击间隔")]
         ShootInterval = 2,
         /// <summary>弹射次数</summary>
-        [CustomLabel("弹射次数")]
+        [InspectorName("弹射次数")]
         Catapult = 3,
 
         /// <summary>弹丸数量</summary>
-        [CustomLabel("弹丸数量")]
+        [InspectorName("弹丸数量")]
         BulletsPerShot = 6,
         /// <summary>子弹散布角度</summary>
-        [CustomLabel("子弹散布角度")]
+        [InspectorName("子弹散布角度")]
         BulletsSpreadAngle = 7,
 
         /// <summary>手动装弹时间</summary>
-        [CustomLabel("手动装弹时间")]
+        [InspectorName("手动装弹时间")]
         ReloadTime = 10,
         /// <summary>自动装弹延迟</summary>
-        [CustomLabel("自动装弹延迟")]
+        [InspectorName("自动装弹延迟")]
         AutoReloadTime = 11,
         /// <summary>自动装弹速度</summary>
-        [CustomLabel("自动装弹速度")]
+        [InspectorName("自动装弹速度")]
         AutoReloadSpeed = 12,
 
-        //---------激光武器属性-----------
+        //---------激光武器属性----------
         /// <summary>激光预热时间</summary>
-        [CustomLabel("激光预热时间")]
+        [InspectorName("激光预热时间")]
         LaserWaitTime = 40,
 
-        //---------蓄力武器属性-----------
-        /// <summary>最低(能释放的)蓄力段数</summary>
-        [CustomLabel("最低(能释放的)蓄力段数")]
+        //---------蓄力武器属性----------
+        /// <summary>最低（能释放的）蓄力段数</summary>
+        [InspectorName("最低（能释放的）蓄力段数")]
         ChargeLowestStage = 50,
         /// <summary>最高蓄力段数</summary>
-        [CustomLabel("最高蓄力段数")]
+        [InspectorName("最高蓄力段数")]
         ChargeHigheststage = 51,
         /// <summary>最低蓄消耗弹药</summary>
-        [CustomLabel("最低蓄消耗弹药")]
+        [InspectorName("最低蓄消耗弹药")]
         ChargeAmmoOnLowest = 52,
         /// <summary>满蓄消耗弹药</summary>
-        [CustomLabel("满蓄消耗弹药")]
+        [InspectorName("满蓄消耗弹药")]
         ChargeAmmoOnHighest = 53,
         /// <summary>蓄力时间</summary>
-        [CustomLabel("蓄力时间")]
+        [InspectorName("蓄力时间")]
         ChargeDuration = 54,
 
-        //---------锁定武器属性-----------
+        //---------锁定武器属性----------
         /// <summary>锁定距离</summary>
-        [CustomLabel("锁定距离")]
+        [InspectorName("锁定距离")]
         LockDistance = 60,
         /// <summary>锁定半径</summary>
-        [CustomLabel("锁定半径")]
+        [InspectorName("锁定半径")]
         LockRange = 61,
         /// <summary>最大锁定层数</summary>
-        [CustomLabel("最大锁定层数")]
+        [InspectorName("最大锁定层数")]
         LockLayers = 62,
         /// <summary>每个敌人的最大锁定层数</summary>
-        [CustomLabel("每个敌人的最大锁定层数")]
+        [InspectorName("每个敌人的最大锁定层数")]
         LockPerCount = 63,
         /// <summary>锁定间隔</summary>
-        [CustomLabel("锁定间隔")]
+        [InspectorName("锁定间隔")]
         LockInterval = 64,
     }
 
@@ -267,7 +267,7 @@ namespace Unity.FPS.Game
 
 
  
-        //没继续拓展是因为现在这三种情况已经极端复杂了，绝对够用了。
+        //没继续拓展是因为现在这三种情况已经极端复杂了，绝对够用了的
         public void AddModifier(ModifierType modifier, PEInt value)
         {
             if (!allowModifier.HasFlag(modifier))
@@ -321,7 +321,7 @@ namespace Unity.FPS.Game
                 OnCurrValueChange?.Invoke(value);
             }
         }
-        /// <summary>属性的当前值与最终值的比值 [0,1] (连续的)</summary>
+        /// <summary>属性的当前值与最终值的比值[0,1] (连续值)</summary>
         public PEInt ScaleValue
         {
             get
@@ -345,7 +345,7 @@ namespace Unity.FPS.Game
     }
 
     /// <summary>
-    /// 带有段数值的属性(蓄力段数等)
+    /// 带有段数值的属性(蓄力段数)
     /// 阶段数直接就是CurrentValue
     /// </summary>
     public class WeaponStageAttribute : WeaponAttribute
@@ -356,7 +356,7 @@ namespace Unity.FPS.Game
 
         private PEInt currValue;
 
-        /// <summary>段数值 [0,Final](连续的)</summary>
+        /// <summary>段数值[0,Final](连续值)</summary>
         public PEInt CurrValue
         {
             get => currValue;
@@ -371,11 +371,11 @@ namespace Unity.FPS.Game
                 }
             }
         }
-        /// <summary>当前阶段  [0,Final](离散的)</summary>
+        /// <summary>当前阶段  [0,Final](离散值)</summary>
         public PEInt StageValue => PEMath.Floor(CurrValue);
 
 
-        /// <summary>段数百分比 [0,1] (连续的)</summary>
+        /// <summary>段数百分比[0,1] (连续值)</summary>
         public PEInt CurrScale
         {
             get
@@ -385,7 +385,7 @@ namespace Unity.FPS.Game
             }
         }
 
-        /// <summary>段数百分比 [0-1] (离散的)</summary>
+        /// <summary>段数百分比[0-1] (离散值)</summary>
         public PEInt StageScale
         {
             get

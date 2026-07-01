@@ -1,41 +1,49 @@
-using Core;
+﻿using Core;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 namespace Unity.FPS.Game
 {
     public class HealthPlayer : Health 
     {
 
-        [CustomLabel("生命恢复范围")] public float HealthRestoreScale;
-        [CustomLabel("生命恢复速度")] public float HealthRestoreSpeed;
+        [InspectorName("生命恢复范围")] public float HealthRestoreScale;
+        [InspectorName("生命恢复速度")] public float HealthRestoreSpeed;
 
-        [CustomLabel("护盾恢复速度")] public float ShieldRestoreSpeed;
-        [CustomLabel("护盾恢复延迟")] public float ShieldDelay;
+        [InspectorName("护盾恢复速度")] public float ShieldRestoreSpeed;
+        [InspectorName("护盾恢复延迟")] public float ShieldDelay;
 
-        [SerializeField] [CustomLabel("护盾恢复音效")] AudioClip ShieldRestore;
-        [SerializeField] [CustomLabel("护盾回满音效")] AudioClip ShieldFull;
-        [SerializeField] [CustomLabel("护盾破碎音效")] AudioClip ShieldBreak;
-        [SerializeField] [Tooltip("护盾受击音效")] AudioClip[] ShieldDamage;
+        [SerializeField] [InspectorName("护盾恢复音效")] AudioClip ShieldRestore;
+        [SerializeField] [InspectorName("护盾回满音效")] AudioClip ShieldFull;
+        [SerializeField] [InspectorName("护盾破碎音效")] AudioClip ShieldBreak;
+        [SerializeField] [InspectorName("护盾受击音效")] AudioClip[] ShieldDamage; 
 
         AudioSource m_Audio;
-     
+
+        [Space]
+        [DisplayField]
+        [InspectorName("剩余护盾值")]
+        [SerializeField]
+        public int showShield;
+
         protected override void Start() {
             base.Start();
-            CurrentShield = MaxShield;
+            CurrentShield = showShield=MaxShield;
             OnShieldDamaged += _OnDamaged;
-            m_Audio=AudioManager.CreatSource(gameObject,AudioGroups.General);
+            m_Audio=AudioSvc.CreatSource(gameObject,AudioGroups.General);
             m_Audio.clip = ShieldRestore;
+            InvokeRepeating(nameof(Restore),Constants.LoginFrame.RawFloat, Constants.LoginFrame.RawFloat);
         }
         private void OnDestroy()
         {
             OnShieldDamaged -= _OnDamaged;
         }
 
-        private void FixedUpdate() {
+        private void Restore() {
             if (m_IsDead) return;
+
             if (ShieldRestoreSpeed > 0 && CurrentShield < MaxShield && Time.time > m_LastHitTime + ShieldDelay) {
-                CurrentShield += (PEInt)(Time.fixedDeltaTime * ShieldRestoreSpeed);
+                RestoreShield(Time.fixedDeltaTime * ShieldRestoreSpeed);
                 if (!m_Audio.isPlaying) m_Audio.Play();
             }
             if (CurrentShield >= MaxShield&& m_Audio.isPlaying)
@@ -46,6 +54,7 @@ namespace Unity.FPS.Game
             if (HealthRestoreSpeed > 0 && GetHpRatio() < HealthRestoreScale) {
                 CurrentHealth += (PEInt)(Time.deltaTime * HealthRestoreSpeed);
             }
+            showShield = CurrentShield.RawInt;
         }
 
 
@@ -60,13 +69,14 @@ namespace Unity.FPS.Game
             {
                 m_Audio.PlayOneShot(ShieldDamage.RandomTake());
             }
+            showShield=CurrentShield.RawInt;
 
         }
 
         /// <summary>复活</summary>
         public override void Revive()
         {
-            CurrentHealth = MaxHealth/10;
+            CurrentHealth = Mathf.Max(MaxHealth/10,1);
             CurrentShield = 0;
             OnRevive?.Invoke();
             m_IsDead = false;

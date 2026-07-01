@@ -1,4 +1,4 @@
-using Unity.FPS.Game;
+﻿using Unity.FPS.Game;
 using UnityEngine;
 using static WndTools.WndRootTool;
 using UnityEngine.UI;
@@ -18,12 +18,12 @@ public class SubtitleSpecUnit : SubtitleBase
         SetText(title, tarActor.ShowName);
         SetSprite(halo, tarActor.ExtraPortrait);
         SetActive(gameObject, tarActor != ActorsManager.Player);
-        GlobalEventManager.OnActorSpeech += OnActorSpeech;
+        GlobalEventSub.OnActorSpeech += OnActorSpeech;
         return this;
     }
     void OnDestroy()
     {
-        GlobalEventManager.OnActorSpeech -= OnActorSpeech;
+        GlobalEventSub.OnActorSpeech -= OnActorSpeech;
     }
 
     float lastSpeechTime = Mathf.NegativeInfinity;
@@ -36,21 +36,13 @@ public class SubtitleSpecUnit : SubtitleBase
         //SetActive(gameObject, state);
         targetState = state;
     }
-    private void OnActorSpeech(GameObject go, NoticeData_SO data)
+    private void OnActorSpeech(GameObject go, RuntimeSoundData data)
     {
         if (go != target|| GetDistance()>100) return;
         SetText(desc ,data.Desc);
         LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)desc.parent);
 
-        AudioManager.PlaySound(new() {
-            cilp = data.Clip,
-            vector = go.transform.position,
-            range = 40,
-            group = AudioGroups.Player,
-            volume = 1,
-            delay = data.Delay,
-            space = data.Space ? 1 : 0
-        });
+        AudioSvc.PlaySound(data);
         lastSpeechTime = Time.time;
         showTime = data.Clip.length+2;
     }

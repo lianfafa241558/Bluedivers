@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -16,11 +16,11 @@ namespace Unity.FPS.Gameplay
         public float ShootSpeed { get; private set; }
 
         [Header("通用")]
-        [CustomLabel("碰撞半径")]
+        [InspectorName("碰撞半径")]
         public float Radius = 0.01f;
 
         [Header("特效")]
-        [CustomLabel("创建终点物体")]
+        [InspectorName("创建终点物体")]
         public List<GameObject> EndObject;
 
         protected float m_ShootTime;
@@ -36,13 +36,13 @@ namespace Unity.FPS.Gameplay
 
         protected virtual void _OnShoot()
         {
-            //这里可以有武器，但是update里面得脱钩
+            //这里可以有武器，但是update里面得脱落
             ShootSpeed = WeaponBase.AttrFinal(WeaponAttrType.ShootInterval, new(0.1f)).RawFloat;
             m_ShootTime = Time.time;
             //直接设置父级就不用处理移动了
             transform.parent = WeaponBase.WeaponMuzzle;
 
-            //忽略发射者的碰撞箱
+            //忽略发射者的碰撞
             m_IgnoredColliders = new List<Collider>();
             Collider[] weaponColliders = Owner.GetComponentsInChildren<Collider>();
             if (weaponColliders.IsValid()) m_IgnoredColliders.AddRange(weaponColliders);
@@ -99,7 +99,7 @@ namespace Unity.FPS.Gameplay
         protected virtual void TryHit(RaycastHit hit)
         {
             //这样会导致前面射空了后，新击中目标立即造成伤害，属于无伤大雅的小bug，不管
-            //每 ShootSpeed 秒 1Hit
+            //每ShootSpeed 1Hit
             if (Time.time< m_ShootTime + ShootSpeed) return;
             m_ShootTime = Time.time;
 
@@ -111,7 +111,7 @@ namespace Unity.FPS.Gameplay
                     hit.point = transform.position;
                     hit.normal = -transform.forward;
                 }
-                //Debug.LogError("击中了"+ closestHit.collider.name);
+                //Debug.LogError("击中"+ closestHit.collider.name);
                 OnHit?.Invoke(new() {
                     pos = hit.point,
                     normal = hit.normal,

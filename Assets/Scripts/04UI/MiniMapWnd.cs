@@ -17,9 +17,9 @@ using static WndTools.WndRootTool;
 /// <summary>
 /// 小地图，仅战斗阶段创建，结束销毁
 /// </summary>
-public class MiniMapWnd : WindowRoot
+public class MiniMapWnd : Window
 {
-    private float areaMultScale = 4;
+    private float areaMultScale = 3;
 
 
     [SerializeField]
@@ -63,9 +63,13 @@ public class MiniMapWnd : WindowRoot
     I_Actor player;
     float border;
 
-    public override void Init(){}
+    public void Init()
+    {
+        gameObject.SetActive(false);
+        SetWndState(true);
+        SetWndState(false);
+    }
 
-    public override void UnInit(){}
 
     protected override void FirstShowWnd()
     {
@@ -85,31 +89,50 @@ public class MiniMapWnd : WindowRoot
         center = new(Vector2.one * (TaskManager.Instance.nowTask.MapSize) / 2, 8, 0.1f, Vector2.Lerp, Vector2.Distance);
         //Debug.LogError("中心"+center.Target);
 
-        InputManager.Bind(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
+        InputManager.BindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
 
-        GlobalEventManager.OnPlayerCreate += PlayerCreat;
-        GlobalEventManager.OnFriendCreate += FriendCreat;
-        GlobalEventManager.OnSpecUnitCreate += OtherCreat;
-        GlobalEventManager.OnSpecUnitDead += OtherDeath;
-        GlobalEventManager.OnMissionCreated += MissionPointCreat;
-        GlobalEventManager.OnMissionEntityShow += OnMissionShow;
-        GlobalEventManager.OnMissionUpdate += OnMissionUpdate;
-        GlobalEventManager.OnMissionEnd += MissionPointEnd;
+        foreach (var item in ActorsManager.Players)
+        {
+            switch (item.Type)
+            {
+                case UnitTypeEnum.Player:
+                    PlayerCreat(item);
+                    break;
+                case UnitTypeEnum.Friend:
+                    FriendCreat(item);
+                    break;
+                default:
+                    break;
+            }
+        }
+        //此时玩家已经诞生
+        //GlobalEventManager.OnPlayerCreate += PlayerCreat;
+        //GlobalEventManager.OnFriendCreate += FriendCreat;
+        //应该还有盟友离开游戏?
+        BattleEventSub.OnSpecUnitCreate += OtherCreat;
+        BattleEventSub.OnSpecUnitDead += OtherDeath;
+        BattleEventSub.OnMissionStart += MissionPointCreat;
+        BattleEventSub.OnMissionEntityShow += OnMissionShow;
+        BattleEventSub.OnMissionUpdate += OnMissionUpdate;
+        BattleEventSub.OnMissionEnd += MissionPointEnd;
 
         SetActive(gameObject, false);
+
     }
-    private void OnDestroy()
+    public override void OnDestroy()
     {
-        InputManager.UnBind(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
-        GlobalEventManager.OnPlayerCreate -= PlayerCreat;
-        GlobalEventManager.OnFriendCreate -= FriendCreat;
-        GlobalEventManager.OnSpecUnitCreate -= OtherCreat;
-        GlobalEventManager.OnSpecUnitDead -= OtherDeath;
-        GlobalEventManager.OnMissionCreated -= MissionPointCreat;
-        GlobalEventManager.OnMissionEntityShow -= OnMissionShow;
-        GlobalEventManager.OnMissionUpdate -= OnMissionUpdate;
-        GlobalEventManager.OnMissionEnd -= MissionPointEnd;
-        GameRoot.OnWindowStateChange -= OnWindowStateChange;
+        base.OnDestroy();
+        InputManager.UnBindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
+        //GlobalEventManager.OnPlayerCreate -= PlayerCreat;
+        //GlobalEventManager.OnFriendCreate -= FriendCreat;
+        //应该还有盟友离开游戏?
+        BattleEventSub.OnSpecUnitCreate -= OtherCreat;
+        BattleEventSub.OnSpecUnitDead -= OtherDeath;
+        BattleEventSub.OnMissionStart -= MissionPointCreat;
+        BattleEventSub.OnMissionEntityShow -= OnMissionShow;
+        BattleEventSub.OnMissionUpdate -= OnMissionUpdate;
+        BattleEventSub.OnMissionEnd -= MissionPointEnd;
+        WndManager.OnWindowStateChange -= OnWindowStateChange;
 
         ActorPoint = null;
         EnemyPoint = null;
@@ -122,8 +145,8 @@ public class MiniMapWnd : WindowRoot
         //InputManager.Bind(WindowStateEnum.Game, InputState.Airdrop, GameSwitch);
         //InputManager.Bind(WindowStateEnum.Airdrop, InputState.Airdrop, CloseWnd);
         //Debug.LogError("注册事件");
-        GameRoot.OnWindowStateChange += OnWindowStateChange;
-        GlobalEventManager.OnPlayerDead += OnPlayerDown;
+        WndManager.OnWindowStateChange += OnWindowStateChange;
+        BattleEventSub.OnPlayerDead += OnPlayerDown;
     }
 
     protected override void HideWnd()
@@ -131,19 +154,11 @@ public class MiniMapWnd : WindowRoot
         //InputManager.UnBind(WindowStateEnum.Game, InputState.Airdrop, GameSwitch);
         //InputManager.UnBind(WindowStateEnum.Airdrop, InputState.Airdrop, CloseWnd);
         //Debug.LogError("注销事件");
-        GameRoot.OnWindowStateChange -= OnWindowStateChange;
-        GlobalEventManager.OnPlayerDead -= OnPlayerDown;
+        WndManager.OnWindowStateChange -= OnWindowStateChange;
+        BattleEventSub.OnPlayerDead -= OnPlayerDown;
     }
 
 
-    private void Awake()
-    {
-        //临时的，以后再想办法创建
-        gameObject.SetActive(false);
-
-        SetWndState(true);
-        SetWndState(false);
-    }
 
     private void Update()
     {
@@ -210,7 +225,7 @@ public class MiniMapWnd : WindowRoot
         }
     }
 
-    //临时的
+    //临时
     private void OnWindowStateChange(WindowStateEnum oldState, WindowStateEnum state)
     {
         if (state == WindowStateEnum.UI)
@@ -266,7 +281,7 @@ public class MiniMapWnd : WindowRoot
         //Debug.LogError("原位置"+vector);
         //var zeroPoint = new Vector2(Mathf.Clamp(targetCenter.x- targetNowMapSize,0,mapSize-targetNowMapSize), Mathf.Clamp(targetCenter.y - targetNowMapSize, 0, mapSize - targetNowMapSize));
         //Debug.LogError("零点" + targetZeroPoint);
-        Vector2 re=(vector - zeroPoint);//计算出对于零点的偏移量
+        Vector2 re=(vector - zeroPoint);//计算出对于零点的偏移
         //Debug.LogError("偏移" + re+"映射系数"+(UISize/(float)targetNowMapSize));
         return re/ NowMapSize * UISize;//重映射为anchPos
     }
@@ -307,21 +322,21 @@ public class MiniMapWnd : WindowRoot
     /// </summary>
     void OnGenericMove(I_Entity entity)
     {
-        ActorPoint[entity].anchoredPosition = WorldPosToMapPos(entity.Pos.ToVector2());
+        if(entity.IsValid()) ActorPoint[entity].anchoredPosition = WorldPosToMapPos(entity.Pos.ToVector2());
     }
     /// <summary>
     /// 通用的设置旋转
     /// </summary>
     void OnGenericRotate(I_Entity entity)
     {
-        ActorPoint[entity].GetChild(0).eulerAngles = new(0, 0, -entity.Angles.y);
+        if (entity.IsValid()) ActorPoint[entity].GetChild(0).eulerAngles = new(0, 0, -entity.Angles.y);
     }
 
     #region 玩家控制
     void PlayerCreat(I_Actor actor)
     {
         player = actor;
-        //Debug.LogError("设置玩家"+player);
+        Debug.LogError("设置玩家"+player);
         ActorPoint.Add(actor, Instantiate(PlayerPrefab, PlayerRoot).transform.GetRect());
         SetColor(ActorPoint[actor].GetChild(0), actor.Color);
         SetSprite(ActorPoint[actor].GetChild(1), actor.ExtraPortrait);
@@ -342,8 +357,9 @@ public class MiniMapWnd : WindowRoot
         ActorPoint.Add(actor, Instantiate(FriendPrefab, PlayerRoot).transform.GetRect());
         SetColor(ActorPoint[actor].GetChild(0), actor.Color);
         SetSprite(ActorPoint[actor].GetChild(1),actor.ExtraPortrait);
-        actor.OnPosChange += OnGenericRotate;
-        actor.OnAngleChange += OnGenericMove;
+        actor.OnPosChange += OnGenericMove;
+        actor.OnAngleChange += OnGenericRotate;
+
         OnGenericRotate(actor);
         OnGenericMove(actor);
     }
@@ -368,9 +384,11 @@ public class MiniMapWnd : WindowRoot
         
         if (ActorPoint.TryGetValue(actor,out var rect))
         {
-            //姑且如此，以后再搞池
+            //姑且如此，以后再搞好
             Tool.Destroy(rect.gameObject);
             ActorPoint.Remove(actor);
+            actor.OnPosChange -= OnGenericMove;
+            actor.OnAngleChange -= OnGenericRotate;
         }
         
     }
@@ -383,10 +401,10 @@ public class MiniMapWnd : WindowRoot
         I_MissionPoint entity = mission.entity;
         if (entity == null)
         {
-            Debug.LogWarning("警告:任务"+mission.name+"没有实体");
+            Debug.LogWarning("警告任务"+mission.name+"没有实体");
             return;
         }
-
+        //Debug.LogError("任务" + mission.title+"实体"+ entity, entity.gameObject);
         if (!ActorPoint.TryGetValue(entity, out var go))
         {
            
@@ -398,7 +416,7 @@ public class MiniMapWnd : WindowRoot
 
             //*2.5是因为要稍微往外拓一点
             int size = Mathf.CeilToInt(entity.AreaRange * areaMultScale / mapScale.Now);
-            //Debug.LogError("任务" + mission.title + "尺寸"+size+" 区域范围"+ entity.AreaRange);
+            //Debug.LogError("任务" + mission.title + "区域"+size+"像素 区域范围"+ entity.AreaRange);
             SetSizeDelta(go.GetChild(0), size, size);
             if (mission.entity.HaveTag(MissionTag.FollowAreaScale))
             {
@@ -441,7 +459,7 @@ public class MiniMapWnd : WindowRoot
         }
         else
         {
-            Debug.LogWarning("警告:任务" + mission.name + "重复注册?");
+            Debug.LogError("警告任务" + mission.name + "重复注册？");
         }
 
     }
@@ -484,7 +502,7 @@ public class MiniMapWnd : WindowRoot
         {
             go = Instantiate(InterestPointPrefab, MissionPointRoot).transform.GetRect();
             go.gameObject.name = "Inter" + entity.gameObject.name;
-
+            Debug.LogError("添加"+ entity.Id+" "+entity.gameObject);
             ActorPoint.Add(entity, go);
             OnGenericMove(entity);
         }
@@ -528,7 +546,7 @@ public class MiniMapWnd : WindowRoot
         float max = mapSize - radius + border;
 
 
-        //Debug.LogError("半径"+radius+"坐标"+ pos+"限制:"+ min+" , "+max);
+        //Debug.LogError("半径"+radius+"坐标"+ pos+"限制"+ min+" , "+max);
         center.Target = new Vector2(Mathf.Clamp(pos.x, min, max), Mathf.Clamp(pos.z, min, max));
 
         //rawImage.uvRect = new((targetZeroPoint - Vector2.one * border) / mapSize, Vector2.one * mapScale);
@@ -563,7 +581,7 @@ public class MiniMapWnd : WindowRoot
         /// <summary>
         /// 更新
         /// </summary>
-        /// <returns>是否已经回正</returns>
+        /// <returns>是否已经回归</returns>
         public bool Update()
         {
             if (!Comple)

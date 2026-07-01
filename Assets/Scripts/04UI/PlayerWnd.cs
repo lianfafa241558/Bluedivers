@@ -4,14 +4,14 @@ using Core;
 using FPSGame.UI;
 using GameContract;
 using PEMaths;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
 
-public partial class PlayerWnd : WindowRoot
+public partial class PlayerWnd : Window
 {
     public RectTransform CompasRect;
     public int VisibilityAngle = 180;
@@ -20,25 +20,25 @@ public partial class PlayerWnd : WindowRoot
 
     List<CanvasGroup> dirList;
 
-    #region 血条
-    [Foldout("血条", true)]
+    #region 血量
+    [Foldout("血量", true)]
     [SerializeField]
     private Transform playerRoot,playerName,portrait, frame;
     [SerializeField]
     DynamicBar healthBar, shieldBar, ammoBar;
     #endregion
 
-    #region 武器1
-    [Foldout("武器1", true)]
+    #region 武器R
+    [Foldout("武器R", true)]
     [SerializeField]
     private Transform weaponNameR,weaponTypeR,nowAmmoR,remainAmmoR,grenadeCountR, grenadeKeyR;
 
     [SerializeField]
     CanvasGroup weaponList;
     #endregion
-    #region 武器2
+    #region 武器L
     
-    [Foldout("武器2", true)]
+    [Foldout("武器L", true)]
     [SerializeField]
     private Transform weaponNameL, weaponTypeL, nowAmmoL, remainAmmoL;
 
@@ -58,7 +58,7 @@ public partial class PlayerWnd : WindowRoot
     private float m_TaskStartTime;
     #endregion
 
-    #region
+    #region 击杀
     [Foldout("击杀", true)]
     [SerializeField]
     private CanvasGroup killRoot;
@@ -111,7 +111,7 @@ public partial class PlayerWnd : WindowRoot
         SetText(playerName, m_Controller.PlayerName);
         SetSprite(portrait, m_Controller.Portrait);
         SetColor(frame, m_Controller.Color); 
-        bool isNormal = GameRoot.GameState == GameStateEnum.Game;
+        bool isNormal = GameState == GameStateEnum.Game;
         SetActive(weaponList.gameObject, isNormal);
         SetActive(playerRoot, isNormal);
         SetActive(timeShow.parent, isNormal);
@@ -128,31 +128,22 @@ public partial class PlayerWnd : WindowRoot
         m_Health.OnDie += OnDie;
         m_Health.OnHit += OnTakeDamage;
         m_Health.OnHealed += OnHealed;
-        GlobalEventManager.OnBulletHit += BulletHit;
-        GlobalEventManager.OnUnitKill += UnitKill;
+        BattleEventSub.OnBulletHit += BulletHit;
+        BattleEventSub.OnUnitKill += UnitKill;
+    }
+
+    /// <summary>
+    /// 事件调用
+    /// </summary>
+    public void RefreshMissionIcon()
+    {
+        SetWndState(true);
+        SetSprite(killIcon, taskManager.nowTask.campData.KillSprite);
+        SetSprite(enemyShow, taskManager.nowTask.campData.Sprite);
+        SetText(diffshow, taskManager.nowTask.difficulty.ToString());
     }
 
 
-    private void OnGameStateChange(GameStateEnum exit, GameStateEnum entry)
-    {
-        if (exit == entry) return;
-        if (entry== GameStateEnum.Game)
-        {
-            SetSprite(killIcon, taskManager.nowTask.campData.KillSprite);
-            SetSprite(enemyShow, taskManager.nowTask.campData.Sprite);
-            SetText(diffshow, taskManager.nowTask.difficulty.ToString());
-        }
-      
-    }
-
-    public override void Init()
-    {
-        GameRoot.OnGameStateChange += OnGameStateChange;
-    }
-    public override void UnInit()
-    {
-        GameRoot.OnGameStateChange -= OnGameStateChange;
-    }
 
     protected override void FirstShowWnd()
     {
@@ -192,18 +183,14 @@ public partial class PlayerWnd : WindowRoot
 
     protected override void ShowWnd()
     {
-
+        SetActive(CompasRect,GameState == GameStateEnum.Game);
     }
 
-    private void OnDestroy()
-    {
-        //UnInitWnd();
-    }
 
     protected override void HideWnd()
     {
-        GlobalEventManager.OnBulletHit -= BulletHit;
-        GlobalEventManager.OnUnitKill -= UnitKill;
+        BattleEventSub.OnBulletHit -= BulletHit;
+        BattleEventSub.OnUnitKill -= UnitKill;
         if (m_WeaponsManager)
         {
             m_WeaponsManager.OnAddedWeapon -= AddWeapon;
@@ -306,9 +293,9 @@ public partial class PlayerWnd : WindowRoot
             SetText(remainAmmoL, m_ActiveSecWeapon.Ammo.CurrValue.RawInt);
         }
 
-        shieldBar.SetBar(m_Health.GetShieldRatio());
-        healthBar.SetBar(m_Health.GetHpRatio());
-        ammoBar.SetBar(m_WeaponsManager.TotalRemainAmmoRatio());
+        shieldBar.SetFill(m_Health.GetShieldRatio());
+        healthBar.SetFill(m_Health.GetHpRatio());
+        ammoBar.SetFill(m_WeaponsManager.TotalRemainAmmoRatio());
 
         //武器栏的显示
         float delay = Time.time - m_LastChangeTime;
@@ -338,7 +325,7 @@ public partial class PlayerWnd : WindowRoot
     /// <param name="isSec"></param>
     void ChangeWeapon(WeaponPlayerController weapon, bool isSec = false)
     {
-        //Debug.LogError("窗口显示武器:"+weapon+"是副手"+isSec);
+        //Debug.LogError("窗口显示武器"+weapon+"是副手"+isSec);
         if (isSec) 
         {
             m_ActiveSecWeapon = weapon;
@@ -412,7 +399,7 @@ public partial class PlayerWnd : WindowRoot
         //击杀其他单位不算
         if (victim.Type == UnitTypeEnum.Other) return;
         //Debug.LogError(attacker);
-        //故意不判定队伍的，这样子友军击毙也能算头
+        //故意不判定队伍的，这样子友军击毙也能算
         //不需要判定是玩家几，只要知道是本机玩家就行
         if ((attacker as I_Actor) == ActorsManager.Player || attacker.Owner == ActorsManager.Player)
         {

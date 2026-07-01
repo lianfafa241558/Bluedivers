@@ -1,12 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using Core;
-using Unity.BaseTool;
+using FPSGame.Furn;
+
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;
 public partial class KeyScreen
 {
+    private const string ErrorS = "Beacon/Beacon_Error";
+    private const string ActionS = "Beacon/Beacon_Action";
+    private const string FinishS = "Beacon/Beacon_Finish1";
+
+
     Dictionary<ProcedureType, (System.Action<Procedure>, System.Func<bool>)> dic;
 
     List<DirectionEnum> nowInput, targetInput;
@@ -40,7 +46,7 @@ public partial class KeyScreen
         };
     }
 
-    void PlaySound(AudioPlayInfo info) => AudioManager.PlaySound(info);
+    void PlaySound(AudioPlayInfo info) => AudioSvc.PlaySound(info);
     #region 输入
     void InputInit(Procedure now)
     {
@@ -86,7 +92,7 @@ public partial class KeyScreen
             {
                 //更新文本
                 SetText(inputs, targetInput.OpterColorString(nowInput.Count - 1, _LightColor, _LightColor, Color.white));
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlayInputCilp();
                 if (nowInput.Count == targetInput.Count)
                 {
                     return true;
@@ -96,7 +102,7 @@ public partial class KeyScreen
             {
                 nowInput.Clear();
                 SetText(inputs, targetInput.OpterTMPString());
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlaySound(new(ErrorS));
             }
 
         }
@@ -124,7 +130,7 @@ public partial class KeyScreen
     bool LoadUpdate()
     {
         var nowTime = Time.time - lastStageTime;
-        if(string.IsNullOrEmpty(nowProcedure.tip))SetText(tip, "加载倒计时:" + Tool.FloatToTime(nowProcedure.time - nowTime));
+        if(string.IsNullOrEmpty(nowProcedure.tip))SetText(tip, "加载倒计时" + Tool.FloatToTime(nowProcedure.time - nowTime));
         SetFill(load.GetChild(0), nowTime / nowProcedure.time);
         SetText(load.GetChild(1), Mathf.Round(nowTime / nowProcedure.time * 100) + "%");
         return nowTime > nowProcedure.time;
@@ -166,7 +172,7 @@ public partial class KeyScreen
             }
         }
         itemState[4] = false;
-        GlobalEventManager.OnFurnitureOperate += OnFurnitureOperate;
+        GlobalEventSub.OnFurnitureOperate += OnFurnitureOperate;
     }
 
     bool ActionItemUpdate()
@@ -175,23 +181,23 @@ public partial class KeyScreen
         {
             if (itemState[4])
             {
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlaySound(new(ActionS));
                 actionItem.GetChild(1).GetComponent<Animator>().SetBool("Active", true);
                 return true;
             }
             else
             {
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlaySound(new(ErrorS));
             }
         }
         return false;
     }
 
-    void OnFurnitureOperate(GameObject user, Furniture_Base furniture)
+    void OnFurnitureOperate(GameObject user, IFurniture furniture)
     {
         bool switchState = furniture.HaveFlag(FurnitureFlag.SwitchState);
         var now = nowProcedure;
-        var index = now.furns.FindIndex(item => item == furniture);
+        var index = now.furns.FindIndex(item => item.NumberID == furniture.NumberID);
         if (index > -1)
         {
             itemState[index] = true;
@@ -208,8 +214,8 @@ public partial class KeyScreen
             if (complete)
             {
                 itemState[4] = true;
-                GlobalEventManager.OnFurnitureOperate -= OnFurnitureOperate;
-                PlaySound(new("UI/UI_Reward2"));
+                GlobalEventSub.OnFurnitureOperate -= OnFurnitureOperate;
+                PlaySound(new(FinishS));
                 SetColor(actionItem.GetChild(1), _LightColor);
             }
         }
@@ -332,7 +338,7 @@ public partial class KeyScreen
 
     bool DirectionUpdate()
     {
-        //实际上应该是控制广播塔
+        //实际上应该是控制广播
         if (InputManager.Get(InputState.Left))
         {
             //Debug.LogError("按住左键"+ (int)(itemValue[0] + 2000 * Time.deltaTime) % 36000);
@@ -350,13 +356,13 @@ public partial class KeyScreen
         {
             if (itemState[0])
             {
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlaySound(new(FinishS));
                 direction.GetChild(1).GetComponent<Animator>().SetBool("Active", true);
                 return true;
             }
             else
             {
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlaySound(new(ErrorS));
             }
         }
         return false;
@@ -376,7 +382,7 @@ public partial class KeyScreen
                 SetColor(direction.GetChild(0, 1), green);
                 SetColor(direction.GetChild(0, 3), green);
                 SetColor(direction.GetChild(1), _LightColor);
-                PlaySound(new("UI/UI_Reward2"));
+                PlaySound(new(ActionS));
 
             }
 
@@ -389,7 +395,7 @@ public partial class KeyScreen
             SetColor(direction.GetChild(0, 1), Color.white);
             SetColor(direction.GetChild(0, 3), new(1, 0.2f, 0.2f));
             SetColor(direction.GetChild(1), Color.white);
-            PlaySound(new("UI/PerformanceLevelNewRewardUnlockedA_1"));
+            PlaySound(new(ErrorS));
         }
     }
 
@@ -425,35 +431,35 @@ public partial class KeyScreen
         {
             if (nowSelectIndex > 0)
             {
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlayInputCilp();
                 SetColor(unlock.GetChild(nowSelectIndex), Color.white);
                 --nowSelectIndex;
                 SetColor(unlock.GetChild(nowSelectIndex), _LightColor);
             }
             else
             {
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlaySound(new(ErrorS));
             }
         }
         else if (InputManager.GetDown(InputState.Right))
         {
             if (nowSelectIndex < nowPro.UnlockItem.Count - 1)
             {
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlayInputCilp();
                 SetColor(unlock.GetChild(nowSelectIndex), Color.white);
                 ++nowSelectIndex;
                 SetColor(unlock.GetChild(nowSelectIndex), _LightColor);
             }
             else
             {
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlaySound(new(ErrorS));
             }
         }
         else if (InputManager.GetDown(InputState.Up))
         {
             if (itemState[nowSelectIndex] == false)
             {
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlaySound(new(ActionS));
                 unlock.GetChild(nowSelectIndex).GetComponent<Animator>().SetBool("Active", true);
                 itemState[nowSelectIndex] = true;
                 int count = 0;
@@ -472,20 +478,20 @@ public partial class KeyScreen
             }
             else
             {
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlayInputCilp();
             }
         }
         else if (InputManager.GetDown(InputState.Down))
         {
             if (itemState[nowSelectIndex] == true)
             {
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlayInputCilp();
                 unlock.GetChild(nowSelectIndex).GetComponent<Animator>().SetBool("Active", false);
                 itemState[nowSelectIndex] = false;
             }
             else
             {
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlayInputCilp();
             }
         }
 
@@ -516,7 +522,7 @@ public partial class KeyScreen
         {
             if (nowSelectIndex > 0)
             {
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlayInputCilp();
                 SetColor(password.GetChild(0, nowSelectIndex, 0), Color.white);
                 --nowSelectIndex;
                 SetColor(password.GetChild(0, nowSelectIndex, 0), _LightColor);
@@ -524,14 +530,14 @@ public partial class KeyScreen
             }
             else
             {
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlaySound(new(ErrorS));
             }
         }
         else if (InputManager.GetDown(InputState.Right))
         {
             if (nowSelectIndex < 4)
             {
-                PlaySound(new("AirDrop/superbeacon_button"));
+                PlayInputCilp();
                 SetColor(password.GetChild(0, nowSelectIndex, 0), Color.white);
                 ++nowSelectIndex;
                 SetColor(password.GetChild(0, nowSelectIndex, 0), _LightColor);
@@ -539,28 +545,29 @@ public partial class KeyScreen
             }
             else
             {
-                PlaySound(new("AirDrop/superbeacon_throw"));
+                PlaySound(new(ErrorS));
             }
         }
         else if (InputManager.GetDown(InputState.Up))
         {
-            PlaySound(new("AirDrop/superbeacon_button"));
+            PlayInputCilp();
+
             itemValue[nowSelectIndex] = (itemValue[nowSelectIndex] + 1) % 10;
             SetText(password.GetChild(0, nowSelectIndex, 0), itemValue[nowSelectIndex]);
             if (itemValue[nowSelectIndex] ==targetValue[nowSelectIndex])
             {
-                PlaySound(new("UI/UI_ElementsA"));
+                PlaySound(new(FinishS));
             }
             haveInput = true;
         }
         else if (InputManager.GetDown(InputState.Down))
         {
-            PlaySound(new("AirDrop/superbeacon_button"));
+            PlayInputCilp();
             itemValue[nowSelectIndex] = (itemValue[nowSelectIndex] + 9) % 10;
             SetText(password.GetChild(0, nowSelectIndex, 0), itemValue[nowSelectIndex]);
             if (itemValue[nowSelectIndex] == targetValue[nowSelectIndex])
             {
-                PlaySound(new("UI/UI_ElementsA"));
+                PlaySound(new(FinishS));
             }
             haveInput = true;
         }
@@ -573,4 +580,8 @@ public partial class KeyScreen
 
     #endregion
 
+    private void PlayInputCilp()
+    {
+        PlaySound(new("Beacon/Beacon_Input" + Random.Range(1, 5)));
+    }
 }

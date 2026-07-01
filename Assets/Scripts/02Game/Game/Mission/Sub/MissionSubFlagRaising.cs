@@ -23,9 +23,9 @@ namespace FpsGame.Mission
 
         private float nowTime;
         int adID;
-        protected override void CreatMission()
+        protected override void StartMission()
         {
-            GlobalEventManager.OnSelectAirdrop += OnSelectAirdrop;
+            BattleEventSub.OnSelectAirdrop += OnSelectAirdrop;
             adID = data.cfg.RequiredAD[0].ID;
         }
 
@@ -79,7 +79,7 @@ namespace FpsGame.Mission
                 lastHavePlayer = !lastHavePlayer;
                 if (!lastHavePlayer)
                 {
-                    //TODO:临时的
+                    //TODO:临时
                     CreatNotice("Kotama", "TaskPodUnvaildAble", () => !lastHavePlayer);
                 }
             }
@@ -109,11 +109,11 @@ namespace FpsGame.Mission
 
         private void OnSelectAirdrop(GameObject go,AirdropController.AirdropData data)
         {
-            //这里多人情况下也得同步（现在没办法获取其他玩家按）
+            //这里多人情况下也得同步（现在没办法获取其他玩家按
             if (adID == data.cfg.ID&& Vector3.Distance(go.transform.position,pos)<=AirdropRange)
             {
-                GlobalEventManager.OnSelectAirdrop -= OnSelectAirdrop;
-                GlobalEventManager.CancelAirdrop(go, data);//取消战备
+                BattleEventSub.OnSelectAirdrop -= OnSelectAirdrop;
+ 
                 BattleManager.Instance.ReleaseAirdrop(entity.Pos, adID, InitFlag);
             }
         }

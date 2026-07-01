@@ -1,10 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Core;
 using Unity.FPS.Game;
 using UnityEngine;
 using static WndTools.WndRootTool;
-public class CountDownWnd : WindowRoot
+public class CountDownWnd : Window
 {
     [SerializeField]
     Transform txt;
@@ -15,17 +15,14 @@ public class CountDownWnd : WindowRoot
     [SerializeField]
     int countDown = 0;
 
-    public override void Init()
-    {
-
-    }
-    public override void UnInit()
-    {
-
-    }
+    int height;
+  
     protected override void FirstShowWnd()
     {
         countDown = 16;
+        var rect = transform.RectTransform();
+        height = (int)rect.rect.height;
+        rect.sizeDelta = new(rect.rect.width,0);
     }
 
     protected override void ShowWnd()
@@ -41,10 +38,12 @@ public class CountDownWnd : WindowRoot
     // Update is called once per frame
     void Update()
     {
-        int nowcd = taskManager.nowTask.Countdown;
+        int nowcd = TaskManager.Instance.nowTask.Countdown;
         if (nowcd < 16!=GetActive(anim.transform))
         {
             SetActive(anim.transform, nowcd < 16);
+            var rect = transform.RectTransform();
+            rect.sizeDelta = new(rect.rect.width, nowcd < 16?height:0);
         }
 
         if (nowcd < 16 && countDown != nowcd)
@@ -52,7 +51,7 @@ public class CountDownWnd : WindowRoot
             countDown = nowcd;
             anim.Play("Idle",0,0);
             SetText(txt,string.Format("00:{0:D2}", countDown));
-            wndManager.PlaySound(new(warning,AudioGroups.UI));
+            AudioSvc.PlaySound(new(warning,AudioGroups.UI));
         }
 
     }

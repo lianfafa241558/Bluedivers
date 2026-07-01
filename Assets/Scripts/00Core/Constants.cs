@@ -3,9 +3,11 @@ using UnityEngine;
 
 public static class Constants
 {
-    public const int LoginFrameMs = 50;
-    public static PEInt LoginFrame { get; } = new(0.05f);
-    public const int FullDayDuration = 1800;
+    public const int CanvasWidth = 1920;
+    public const int CanvasHeight = 1080;
+
+    public const int LoginFrameMs = 20;
+    public static PEInt LoginFrame { get; } = new(0.02f);
 
     public const float MinTemp = 16;
     public const float MaxTemp = 24;
@@ -23,6 +25,15 @@ public static class Constants
     /// </summary>
     public static int TaskBorder = 16;
 
+    /// <summary>
+    /// 一天的时间:午夜0点，清晨4点，上午8点，正午12点，黄昏18点，午夜20点
+    /// </summary>
+    public static float[] DayStageTime = new float[] { 0f, 0.167f, 0.333f, 0.542f, 0.708f, 0.792f, 1 };
+    /// <summary>
+    /// 一天总时长（秒），默认800秒30分钟
+    /// </summary>
+    public const float FullDayDuration = 1800f;
+
     public static int k_AnimResetParameter { get; } = Animator.StringToHash("Reset");
     public static int k_AnimChatgetParameter { get; } = Animator.StringToHash("Chatget");
     public static int k_AnimChatgetSpeedParameter { get; } = Animator.StringToHash("ChatgetSpeed");
@@ -39,5 +50,8 @@ public static class Constants
 
     public static int k_AnimEntry { get; } = Animator.StringToHash("Entry");
 
-
+    /// <summary>飞鹰重新装填ID</summary>
+    public static int EagleReloadId = 1;
+    /// <summary>补给ID</summary>
+    public static int SupplyId = 1;
 }

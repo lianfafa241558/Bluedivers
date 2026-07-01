@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Core;
 using Core.Interface;
 using PEMaths;
-using Unity.BaseTool;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -19,7 +18,7 @@ namespace GameContract
     {
         I_Damagable Source { get; }
         float GetArmor(DamageTypeEnum type);
-        public void InflictDamage(I_Damagable source, PEInt damage, List<KVP<DamageTypeEnum, float>> damageGroups, bool noSource, GameObject damageSource, Vector3 pos);
+        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum, float>> damageGroups, bool noSource, GameObject damageSource, Vector3 pos);
         GameObject ActorGo { get; }
         bool IsWeakness { get; }
     }
@@ -42,48 +41,52 @@ namespace GameContract
     public enum MissionTag
     {
         /// <summary>跟随地图缩放</summary>
-        [CustomLabel("初始暴露")] StratDiscovered = 1 << 0,
-        /// <summary>显示一个区域</summary>
-        [CustomLabel("显示一个区域")] IsArea = 1 << 1,
+        [InspectorName("初始暴露")] StratDiscovered = 1 << 0,
+        /// <summary>显示一个区域/summary>
+        [InspectorName("显示一个区域")] IsArea = 1 << 1,
         /// <summary>跟随地图缩放</summary>
-        [CustomLabel("跟随地图缩放")] FollowAreaScale = 1 << 2,
-        /// <summary>完成时隐藏图标</summary>
-        [CustomLabel("完成时隐藏图标")] CompleHide = 1 << 3,
+        [InspectorName("跟随地图缩放")] FollowAreaScale = 1 << 2,
+        /// <summary>完成时隐藏图标/summary>
+        [InspectorName("完成时隐藏图标")] CompleHide = 1 << 3,
         /// <summary>显示边框</summary>
-        [CustomLabel("显示边框")] DisplayFrame = 1 << 4,
+        [InspectorName("显示边框")] DisplayFrame = 1 << 4,
         /// <summary>暴露后不隐藏</summary>
-        [CustomLabel("暴露后不隐藏")] OneDiscovered = 1 << 5,
+        [InspectorName("暴露后不隐藏")] OneDiscovered = 1 << 5,
         /// <summary>产生热度</summary>
-        [CustomLabel("产生热度")] HeatPoint = 1 << 6,
-        [CustomLabel("占位符3")] placeholder3 = 1 << 7,
-        [CustomLabel("占位符4")] placeholder4 = 1 << 8,
-        [CustomLabel("占位符5")] placeholder5 = 1 << 9,
-        /// <summary>是否隐藏和子任务(在ui上)</summary>
-        [CustomLabel("是否隐藏和子任务(在ui上)")] hideAll = 1 << 10,
-        /// <summary>是否隐藏自身(在ui上)</summary>
-        [CustomLabel("是否隐藏自身(在ui上)")] hideSelf = 1 << 11,
-        /// <summary>显示进度值</summary>
-        [CustomLabel("显示进度值")] DisplayProgress = 1 << 12,
-        /// <summary>激活</summary>
-        [CustomLabel("激活")] IsActive = 1 << 13,
+        [InspectorName("产生热度")] HeatPoint = 1 << 6,
+        [InspectorName("占位符")] placeholder3 = 1 << 7,
+        [InspectorName("占位符")] placeholder4 = 1 << 8,
+        [InspectorName("占位符")] placeholder5 = 1 << 9,
+        /// <summary>是否隐藏和子任务(在ui层)</summary>
+        [InspectorName("是否隐藏和子任务(在ui层)")] hideAll = 1 << 10,
+        /// <summary>是否隐藏自身(在uui层)</summary>
+        [InspectorName("是否隐藏自身(在ui层)")] hideSelf = 1 << 11,
+        /// <summary>显示进度条/summary>
+        [InspectorName("显示进度条")] DisplayProgress = 1 << 12,
+        /// <summary>激活<summary>
+        [InspectorName("激活")] IsActive = 1 << 13,
     }
 
     public enum UnitTier
     {
-        /// <summary>无</summary>
-        [CustomLabel("无")] None = 0,
+        /// <summary>无/summary>
+        [InspectorName("无")] None = 0,
         /// <summary>小型单位</summary>
-        [CustomLabel("小型单位")] Small = 1,
+        [InspectorName("小型单位")] Small = 1,
         /// <summary>中型单位</summary>
-        [CustomLabel("中型单位")] Medium = 2,
+        [InspectorName("中型单位")] Medium = 2,
         /// <summary>精英单位</summary>
-        [CustomLabel("精英单位")] Elite = 3,
+        [InspectorName("精英单位")] Elite = 3,
         /// <summary>重型单位</summary>
-        [CustomLabel("重型单位")] Heavy = 4,
+        [InspectorName("重型单位")] Heavy = 4,
         /// <summary>巨型单位</summary>
-        [CustomLabel("巨型单位")] Giant = 5,
+        [InspectorName("巨型单位")] Giant = 5,
         /// <summary>警戒单位</summary>
-        [CustomLabel("警戒单位")] Alert = 6,
+        [InspectorName("警戒单位")] Alert = 6,
+        /// <summary>特殊单位1</summary>
+        [InspectorName("特殊单位1")] Special1 = 7,
+        /// <summary>特殊单位2</summary>
+        [InspectorName("特殊单位2")] Special2 = 8,
     }
 
     public interface I_Actor: I_Entity
@@ -91,13 +94,15 @@ namespace GameContract
         //public event UnityAction<I_Actor> OnStateChange;
         public event UnityAction<I_Actor> OnPosChange;
         public event UnityAction<I_Actor> OnAngleChange;
-        //public event UnityAction OnDeath;
+        public event UnityAction OnDeath;
 
         public int IndexID { get; }
 
         public UnitTypeEnum Type { get; }
         public IPERange Range { get; }
         public ActorState ActorState { get; set; }
+
+        public I_Actor Owner { get; set; }
 
         public int Team { get; set; }
 
@@ -110,6 +115,9 @@ namespace GameContract
 
         public List<UnitQueryGridNode> GridNodes { get; }
         public I_Damagable[] Damageables { get; }
+
+        /// <summary>是否为固定单位只对EnemyMoble有效</summary>
+        bool IsFixed { get; set; }
 
         public bool HasFlag(ActorFlag flag);
 
@@ -193,11 +201,10 @@ namespace GameContract
         public bool IsVaild() => rect.x != 0 && rect.y != 0;
 
         /// <summary>
-        /// 基于x/y坐标判等（IEquatable接口实现，无装箱）
-        /// </summary>
+        /// 基于x/y坐标判等（IEquatable接口实现，无装箱)        /// </summary>
         public bool Equals(UnitQueryGridNode other)
         {
-            // 两个节点坐标相同，即为同一个节点
+            // 两个节点坐标相同，即为同一个节
             return x == other.x && y == other.y;
         }
 
@@ -209,7 +216,7 @@ namespace GameContract
 
         public override int GetHashCode()
         {
-            return System.HashCode.Combine(x, y);
+            return System.HashCode.Combine((int)x * 1000, (int)y * 1000);
         }
 
     }

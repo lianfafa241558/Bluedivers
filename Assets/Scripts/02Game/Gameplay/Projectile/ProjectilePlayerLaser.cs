@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.BaseTool;
+
 using UnityEngine;
 namespace Unity.FPS.Gameplay
 {
@@ -11,8 +11,8 @@ namespace Unity.FPS.Gameplay
     {
 
         [Header("运动")]
-        [Tooltip("投射物将修正其轨迹以适应预期轨迹的距离（用于将投射物漂移到第一人称视图的屏幕中心）。在值小于0时，不进行修正")]
-        [CustomLabel("轨迹修正距离")]
+        [Tooltip("投射物将修正其轨迹以适应预期轨迹的距离（用于将投射物漂移到第一人称视图的屏幕中心）。在值小时，不进行修正")]
+        [InspectorName("轨迹修正距离")]
         public float TrajectoryCorrectionTime = -1;
 
 

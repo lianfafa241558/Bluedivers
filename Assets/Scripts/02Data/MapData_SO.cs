@@ -1,5 +1,4 @@
 using Core;
-using Unity.BaseTool;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/地图")]
@@ -9,25 +8,37 @@ public class MapData_SO : ScriptableObject
 
 
     public string AreaName;
+    [InspectorName("任务点")]
     public MapItemInfo[] mapItemInfos;
+
+
     [TextArea(4,10)]
     public string AreaDesc;
-    public Sprite AreaBackground;
-    public Sprite Icon, Map;
-    [CustomLabel("特产")]
-    public OOPartEnum[] product;
 
-    [CustomLabel("敌对类型")]
+
+    [SpritePreview(8,4)]
+    public Sprite AreaBackground;
+    [SpritePreview]
+    public Sprite Icon, Map;
+    public Color color;
+    [InspectorName("敌对类型")]
     public EnemyVarietyType enemyVarietyType;
-    [Header("兴趣点")]
-    public KVP<GameObject, int>[] interestPoints;
+
+    [InspectorName("特产")]
+    public OOPartEnum[] product;
+    [InspectorName("兴趣点")]
+    public SKVP<GameObject, int>[] interestPoints;
 
     [System.Serializable]
+    [Singleline]
     public struct MapItemInfo
     {
+        [InspectorName("名称")]
         public string name;
+        [InspectorName("坐标")]
         public Vector2Int pos;
-        public bool noTask;
+        [InspectorName("敌对")]
+        public EnemyVarietyType enemyVarietyType;
     }
 
     /*
@@ -36,7 +47,7 @@ public class MapData_SO : ScriptableObject
     [ContextMenu("拷贝")]
     void _Copy()
     {
-        // 1. 复制基础字符串字段
+        // 1. 复制基础字符串字
         AreaName = source.MapName;
         AreaDesc = source.AreaDesc;
 
@@ -62,7 +73,7 @@ public class MapData_SO : ScriptableObject
             };
         }
 
-        // 6. 复制兴趣点数组 KVP
+        // 6. 复制兴趣点数 KVP
         interestPoints = new KVP<GameObject, int>[source.interestPoints.Length];
         for (int i = 0; i < source.interestPoints.Length; i++)
         {

@@ -1,0 +1,470 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8294480112547899562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Responded
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 8476f5974617d8b498194d642a76e416, type: 3}
+    subtitle: "\u6211\u6765"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-5529365266526765292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Defeat
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: e8904cb1105bf3c40a345451733ffffd, type: 3}
+    subtitle: "\u597D\u50CF\u51C6\u5907\u8FD8\u6709\u6240\u4E0D\u8DB3\u3002"
+  - audioClip: {fileID: 8300000, guid: c4eba0a803c9f4c48a78f4fa7230c46c, type: 3}
+    subtitle: "\u5B9E\u529B\u6709\u70B9\u4E0D\u591F\u5417\u3002"
+  - audioClip: {fileID: 8300000, guid: 71bdeaaabffcb8245b1fa0e0e9d68b86, type: 3}
+    subtitle: "\u62B1\u6B49\uFF0C\u8BA9\u4E8B\u60C5\u53D8\u6210\u8FD9\u6837\u2026"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-5048042538969019001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Turret
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 87b17ce0b6a828043a5ecf03bb3c0598, type: 3}
+    subtitle: "\u547C\u53EB\u70AE\u5854\uFF01"
+  - audioClip: {fileID: 8300000, guid: ae42e3c4a80e3a749b08e7ba9745741a, type: 3}
+    subtitle: "\u547C\u53EB\u54E8\u6212\u70AE\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-4990266761711838359
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_HaloBomb
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: f647fe500abb071428f0a8a74b41469f, type: 3}
+    subtitle: "\u5149\u73AF\u70B8\u5F39\uFF0C\u70B8\u5E73\u8FD9\u91CC!"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-4835170273923728933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Victory
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 71f0c0fee95e68343933601854249e58, type: 3}
+    subtitle: Clear.
+  - audioClip: {fileID: 8300000, guid: 5b3ee1e81fb9bdd4f9444f7370713985, type: 3}
+    subtitle: "\u6218\u672F\u80DC\u5229\u4E86\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-2736386365437006838
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Kei
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 1bfa1d849f8513b4d8194115161cacc2, type: 3}
+    subtitle: "\u51EF\u4F0A\uFF0C\u770B\u8FD9\u8FB9\uFF01"
+  - audioClip: {fileID: 8300000, guid: 12e2ccdae5893cd46b70507e56cb0a37, type: 3}
+    subtitle: "\u51EF\u4F0A\uFF0C\u8FD9\u91CC\uFF01"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &-2063190417540698865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Evacuate
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 8fcaf6a839c99eb44aebcfb5c89d048a, type: 3}
+    subtitle: "\u547C\u53EB\u64A4\u79BB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-1665468562056297654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Airdrop
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips: []
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d058008a7052304095184240d3f24f5, type: 3}
+  m_Name: NT_Shiroko
+  m_EditorClassIdentifier: 
+  SourceName: "\u767D\u5B50"
+  ID: 
+  Portrait: {fileID: 21300000, guid: da9ab7345b4683e40b1d6cc7fc911ecc, type: 3}
+  UseResLoad: 0
+  sounds: []
+--- !u!114 &142061744820335876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Select
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 2d7873aecafe41b479714d005b18b7a2, type: 3}
+    subtitle: "\u55EF\uFF0C\u5DF2\u7ECF\u51C6\u5907\u597D\u4E86\u3002"
+  - audioClip: {fileID: 8300000, guid: ddb721114116be44b90e8661acaf9ac1, type: 3}
+    subtitle: "\u6211\uFF1F\u660E\u767D\u4E86\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &1412302455361562066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Help
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 9410cb5a5c3a0194196d086d08cbeb8f, type: 3}
+    subtitle: "\u5927\u5BB6\u90FD\u53BB\u54EA\u91CC\u4E86\uFF1F"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &1647487729117616286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Supply
+  m_EditorClassIdentifier: 
+  groupName: Supply
+  clips:
+  - audioClip: {fileID: 8300000, guid: 59ac5f02186fa764e8c4b0db19387c6a, type: 3}
+    subtitle: "\u547C\u53EB\u8865\u7ED9!"
+  - audioClip: {fileID: 8300000, guid: 6e07bea1392a6454094b57628e0b3359, type: 3}
+    subtitle: "\u7533\u8BF7\u8865\u7ED9!"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &3298171245768248913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Upgrade
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 9e8252ec252b92d4a9e7a8691662f242, type: 3}
+    subtitle: "\u4E00\u5B9A\u4E0D\u80FD\u758F\u4E8E\u8BAD\u7EC3\u3002\u5FC5\u987B\u8981\u53D8\u5F97\u66F4\u5F3A\u66F4\u5F3A\u3002"
+  - audioClip: {fileID: 8300000, guid: 9a346b9c7cb084242a40b1346895f37e, type: 3}
+    subtitle: "\u611F\u53D7\u5230\u4E86\u953B\u70BC\u7684\u6210\u679C\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &6519159613897467141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_NewWeapon
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 2502d1c872592554581039c2e9d15778, type: 3}
+    subtitle: "\u6211\u4E5F\u53D8\u5F3A\u4E86\u70B9\u5427\u3002\u55EF\uFF0C\u8FD9\u6837\u7684\u8BDD\uFF0C\u5C31\u80FD\u6210\u4E3A\u5927\u5BB6\u7684\u529B\u91CF\u4E86\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &6634793860893582698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Damage
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 5935aa8b7a9f2464aa6e8af2261908ec, type: 3}
+    subtitle: "\u53D7\u51FB1"
+  - audioClip: {fileID: 8300000, guid: 9d81adb02c43bfc4596ce1cc23f2f9e3, type: 3}
+    subtitle: "\u53D7\u51FB2"
+  - audioClip: {fileID: 8300000, guid: 4ffdd86286d48804cb8bfe6be92a690a, type: 3}
+    subtitle: "\u53D7\u51FB3"
+  - audioClip: {fileID: 8300000, guid: 0ad6f628f467a7a41b6b0353a9b1e3c2, type: 3}
+    subtitle: "\u53D7\u51FB4"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &7545633555199036248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_CollOOParts
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: d1da153fcaeb11d4db16012bb978dfd8, type: 3}
+    subtitle: "\u83B7\u5F97\u4E86\u53E4\u4EE3\u9057\u7269"
+  - audioClip: {fileID: 8300000, guid: 273f6865e6bbf454998605139b0380e5, type: 3}
+    subtitle: "\u91C7\u96C6\u4E86\u53E4\u4EE3\u9057\u7269"
+  - audioClip: {fileID: 8300000, guid: e3f6b631421e69846bd98f93bedbe705, type: 3}
+    subtitle: "\u62BD\u53D6\u4E86\u53E4\u4EE3\u9057\u7269"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &8387886822155220187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_EnemySpotted
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: c99d9b3067c73164db26a7932d352c2e, type: 3}
+    subtitle: "\u53D1\u73B0\u654C\u4EBA"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 8
+--- !u!114 &8452795174943820391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Shiroko_Airstrike
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 509cc2bce40745640b40c6f8271a658e, type: 3}
+    subtitle: "\u7533\u8BF7\u8C03\u5EA6\u8F68\u9053\u7A7A\u88AD"
+  - audioClip: {fileID: 8300000, guid: c7cee2c5e3071db47ab42dbcd8d8230e, type: 3}
+    subtitle: "\u8BF7\u6C42\u7A7A\u4E2D\u6253\u51FB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  priority: 0
+  group: 6
+  flags: 0

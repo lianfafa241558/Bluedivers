@@ -14,27 +14,27 @@ public abstract class RoleManagerBase : MonoBehaviour
     protected PlayerController m_player;
     [SerializeField]
     protected int m_nowSelectIndex;
-    protected ResManager resManager;
+    protected ResSvc resManager;
     protected WeaponPlayerController EmptyWeapon;
 
     protected virtual void Start()
     {
-        resManager = ResManager.Instance;
-        PlayerPrefab = resManager.LoadRes<GameObject>("Prefabs/Player");
+        resManager = ResSvc.Instance;
+        PlayerPrefab = resManager.LoadRes<GameObject>("Prefabs/BattleBase/Player");
         dataList = resManager.LoadObjects<RoleData_SO>("GameData/Role");
 
-        m_nowSelectIndex = dataList.FindIndex(item => item.ID == GameRoot.Archive.lastSelectRole);
+        m_nowSelectIndex = dataList.FindIndex(item => item.ID == ArchiveSvc.Archive.lastSelectRole);
 
         var player = Instantiate(PlayerPrefab, GetStartPoint(), default,null);
         m_player = player.GetComponent<PlayerController>();
         m_player.Init(RoomManager.Instance.SelfIndex);
-        EmptyWeapon = resManager.LoadRes<GameObject>("Weapons/Empty").GetComponent<WeaponPlayerController>();
+        EmptyWeapon = resManager.LoadRes<GameObject>("Weapons/WeaponEmpty").GetComponent<WeaponPlayerController>();
 
     }
 
     public virtual void SetPlayerRole(PlayerController player)
     {
-        GlobalEventManager.OnSwitchRole?.Invoke(player);
+        GlobalEventSub.OnSwitchRole?.Invoke(player);
     }
 
     public abstract Vector3 GetStartPoint();

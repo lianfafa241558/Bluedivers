@@ -34,11 +34,11 @@ namespace Unity.FPS.Gameplay
 
         void OnShoot()
         {
-            ChargingObject.transform.localScale = Scale.GetValueFromRatio(m_ProjectileBase.Charge);
+            ChargingObject.transform.localScale = Scale.GetValueFromRatio(m_ProjectileBase.Charge.RawFloat);
 
             foreach (var ren in m_AffectedRenderers)
             {
-                ren.sharedMaterial.SetColor("_Color", Color.GetValueFromRatio(m_ProjectileBase.Charge));
+                ren.sharedMaterial.SetColor("_Color", Color.GetValueFromRatio(m_ProjectileBase.Charge.RawFloat));
             }
         }
     }

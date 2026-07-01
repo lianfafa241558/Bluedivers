@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PEMaths;
-using Unity.BaseTool;
+
 using UnityEngine;
 using Utils;
 using Tool = Utils.Tool;
@@ -18,9 +18,9 @@ namespace Unity.FPS.Game
         [SerializeField]
         private List<KVP<WeaponAttrType, float>> _fakeAttrs = new();
 
-        private Dictionary<WeaponAttrType, WeaponAttribute> attrs;
+        private Dictionary<WeaponAttrType, GameAttribute> attrs;
 
-        public WeaponAttribute this[WeaponAttrType type] {
+        public GameAttribute this[WeaponAttrType type] {
             get
             {
                 if (attrs == null) Init();
@@ -47,7 +47,7 @@ namespace Unity.FPS.Game
           
         }
 
-        public WeaponAttribute Add(WeaponAttrType type, float value)
+        public GameAttribute Add(WeaponAttrType type, float value)
         {
             var item = WeaponAttributeFactory.Create(type, new(value));
             attrs.Add(type, item);
@@ -298,8 +298,8 @@ namespace Unity.FPS.Game
         public string GetEnumString(System.Enum value)
         {
             var fieldInfo = value.GetType().GetField(value.ToString());
-            var attribute = fieldInfo.GetCustomAttributes(typeof(CustomLabelAttribute), false);
-            return attribute.Length > 0 ? ((CustomLabelAttribute)attribute[0]).name : value.ToString();
+            var attribute = fieldInfo.GetCustomAttributes(typeof(InspectorNameAttribute), false);
+            return attribute.Length > 0 ? ((InspectorNameAttribute)attribute[0]).displayName : value.ToString();
 
         }
     }

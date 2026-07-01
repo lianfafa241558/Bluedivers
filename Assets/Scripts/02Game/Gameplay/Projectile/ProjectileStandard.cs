@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -15,19 +15,19 @@ namespace Unity.FPS.Gameplay
 
 
         [Header("通用")]
-        [CustomLabel("碰撞半径")]
+        [InspectorName("碰撞半径")]
         public float Radius = 0.01f;
-        [CustomLabel("根部变换(精确碰撞检测)")]
+        [InspectorName("根部变换(精确碰撞检测)")]
         public Transform Root;
-        [CustomLabel("尖端变换(精确碰撞检测)")]
+        [InspectorName("尖端变换(精确碰撞检测)")]
         public Transform Tip;
 
         [Header("尾迹")]
-        [CustomLabel("尾迹")]
+        [InspectorName("尾迹")]
         public List<GameObject> Trails;
-        [CustomLabel("尾迹宽度")]
+        [InspectorName("尾迹宽度")]
         public float TrailWidth = 0f;
-        [CustomLabel("尾迹持续时间")]
+        [InspectorName("尾迹持续时间")]
         public float LiftTime = 1.5f;
 
 
@@ -55,12 +55,12 @@ namespace Unity.FPS.Gameplay
 
         protected virtual void _OnShoot()
         {
-            //这里可以有武器，但是update里面得脱钩
+            //这里可以有武器，但是update里面得脱离
             m_hasHits = new();
             m_isStop = false;
             m_ShootTime = Time.time;
             m_LastRootPosition = Root.position;
-            m_Velocity = transform.forward * DamageData.Speed*Mathf.Lerp(1,DamageData.ChargeSpeedScale,Charge);
+            m_Velocity = transform.forward * WeaponBase.CurrentSpeed;
             //m_IgnoredColliders = new List<Collider>();
             transform.position += InheritedMuzzleVelocity * Time.deltaTime;
             m_Trails.Clear();
@@ -90,12 +90,12 @@ namespace Unity.FPS.Gameplay
 
             //Debug.LogError("创建了" + gameObject.name, gameObject);
             //忽略武器的碰撞箱
-            //Debug.LogError("所有者"+ Owner);
+            //Debug.LogError("所有" + Owner);
             /*
             Collider[] weaponColliders = Owner.GetComponentsInChildren<Collider>();
             if (weaponColliders.IsValid()) m_IgnoredColliders.AddRange(weaponColliders);
             */
-            if (WeaponBase.CurrentLife > 0) StartCoroutine(nameof(DelayedRelese), WeaponBase.CurrentLife);
+            if (WeaponBase.CurrentLife > 0) StartCoroutine(DelayedRelese(WeaponBase.CurrentLife));
             m_lastTime = Time.time;
         }
 
@@ -109,7 +109,7 @@ namespace Unity.FPS.Gameplay
             {
                 m_isStop = true;
                 //GlobalEventManager.BulletHit(Owner,transform.position);
-                Debug.LogError("落空了"+gameObject.name,gameObject);
+                Debug.LogError("落空"+gameObject.name,gameObject);
                 OnHit?.Invoke(new() {
                     pos = transform.position,
                     normal = transform.forward,
@@ -184,8 +184,8 @@ namespace Unity.FPS.Gameplay
                 closestHit.point = Root.position;
                 closestHit.normal = -transform.forward;
             }
-            //Debug.LogError("击中了" + gameObject.name, gameObject);
-            //Debug.LogError("击中了"+ closestHit.collider.name, closestHit.collider);
+            //Debug.LogError("击中于" + gameObject.name, gameObject);
+            //Debug.LogError("击中了 "+ closestHit.collider.name, closestHit.collider);
             OnHit?.Invoke(new() {
                 pos = closestHit.point,
                 normal = closestHit.normal,
@@ -209,7 +209,7 @@ namespace Unity.FPS.Gameplay
             transform.position += (m_Velocity + InheritedMuzzleVelocity) * tick;
 
             //朝向速度(仅仅为展示方向，与逻辑速度无关)
-            transform.forward = m_Velocity.normalized;
+            if(m_Velocity!=Vector3.zero) transform.forward = m_Velocity.normalized;
             
             // 下坠速度
             if (Gravity > 0)
@@ -256,7 +256,7 @@ namespace Unity.FPS.Gameplay
                 return false;
             }*/
 
-            //前1m不进行碰撞
+            //小于0.01m不进行碰撞
             if ((Time.time- m_ShootTime) * (m_Velocity + InheritedMuzzleVelocity).magnitude<1f)
             {
                 //Debug.LogError("自碰撞忽略" + hit.collider);
@@ -276,14 +276,14 @@ namespace Unity.FPS.Gameplay
         /// <summary>击中 </summary>
         void HitFX(ProjectileHitData hitdata)
         {
-            //目标没有碰撞箱(真的有这个可能吗?)
+            //目标没有碰撞箱,真的有这个可能吗
             if (!hitdata.collider.IsValid()) {
                 TryStop();
                 return;
             }
             bool damageable = hitdata.collider.GetComponent<I_Damagable>().IsValid();
             //可以伤害说明是单位
-            //Debug.LogError("是单位:"+ damageable+"有穿透单位标签"+ BulletFlag.HasFlag(BulletFlag.PenetrateUnits)+"有穿透地形标签"+ BulletFlag.HasFlag(BulletFlag.PenetrateTerrain));
+            //Debug.LogError("是单位?"+ damageable+"有穿透单位标记"+ BulletFlag.HasFlag(BulletFlag.PenetrateUnits)+"有穿透地形标记"+ BulletFlag.HasFlag(BulletFlag.PenetrateTerrain));
 
 
             if ((damageable && !BulletFlag.HasFlag(BulletFlag.PenetrateUnits))
@@ -329,7 +329,7 @@ namespace Unity.FPS.Gameplay
         }
 
  
-        System.Collections.IEnumerator DelayedRelese(float time)
+        protected virtual System.Collections.IEnumerator DelayedRelese(float time)
         {
             yield return new WaitForSeconds(time);
             OnHit?.Invoke(new() {

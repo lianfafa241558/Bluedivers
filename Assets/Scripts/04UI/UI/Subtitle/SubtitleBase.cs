@@ -1,10 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Unity.FPS.Game;
 using UnityEngine;
 using static WndTools.WndRootTool;
 using static Utils.Tool;
-using Unity.BaseTool;
+
 using GameContract;
 
 public abstract class SubtitleBase : MonoBehaviour
@@ -25,7 +25,8 @@ public abstract class SubtitleBase : MonoBehaviour
     [SerializeField]
     protected Transform title, desc, halo, distance, direction;
     Actor targetActor;
-    protected Camera mainCamera;
+    //[SerializeField]
+    protected Camera mainCamera=> Camera.main;
     [SerializeField]
     protected bool targetState,completeTrans;
 
@@ -34,7 +35,7 @@ public abstract class SubtitleBase : MonoBehaviour
         this.owner = owner;
         this.target = target;
         targetActor = target?.GetComponent<Actor>();
-        mainCamera = Camera.main;
+        //mainCamera = Camera.main;
         transform.SetParent(parent,false);
         if(direction) SetActive(direction, false);
         root = (RectTransform)transform;
@@ -97,7 +98,7 @@ public abstract class SubtitleBase : MonoBehaviour
 
         //这个计算方式还是有点不对
         Vector3 modiflyPos = screenPosition;
-        //(从屏幕中点到目标的)差值
+        //(从屏幕中点到目标的差值)
         Vector3 dir = (screenPosition - ScreenSize * 0.5f);
         //从一个椭圆形改成一个圆角矩形的限制(或者说是一个矢量和这个矩形的交点)
         Vector3 limit = ClampRoundedRectangle(dir, new Vector2(0.5f, 0.45f) * ScreenSize2D, new Vector2(0.425f, 0.4f) * ScreenSize2D);

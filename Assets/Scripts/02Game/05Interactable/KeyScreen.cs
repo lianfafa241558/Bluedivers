@@ -4,7 +4,7 @@ using UnityEngine;
 using static WndTools.WndRootTool;
 using System.Linq;
 using UnityEngine.Events;
-using Unity.BaseTool;
+
 using Utils;
 
 #if UNITY_EDITOR
@@ -86,7 +86,8 @@ public partial class KeyScreen : MonoBehaviour
                 }
                 else
                 {
-                    AudioManager.PlaySound(new("UI/UI_ElementsA"));
+
+                    AudioSvc.PlaySound(new("Beacon/Beacon_StartLoad"));
                 }
                 GameRoot.CreateTimer(() => SetStage(0), LoadTime);
                 //Debug.LogError("开始操作");
@@ -109,7 +110,7 @@ public partial class KeyScreen : MonoBehaviour
         if (stage < procedure.Count)
         {
             SetText(this.stage, (stage + 1) + "/" + procedure.Count);
-            AudioManager.PlaySound(new("UI/UI_Reward2"));
+            AudioSvc.PlaySound(new("Beacon/Beacon_Finish1"));
             var now = nowProcedure;
             SetActive(false, inputs, load, wait, actionItem, paraModify, direction, unlock, password, end);
             SetText(tip, now.tip);
@@ -118,6 +119,7 @@ public partial class KeyScreen : MonoBehaviour
         }
         else//完成
         {
+            AudioSvc.PlaySound(new("Beacon/Beacon_Finish2"));
             OnComple?.Invoke();
             SetActive(false, inputs, load, wait, actionItem, paraModify, direction, unlock, password);
             SetActive(end);
@@ -168,7 +170,7 @@ public partial class KeyScreen : MonoBehaviour
 
     [System.Serializable]
     public class Procedure{
-        [CustomLabel("类型")]
+        [InspectorName("类型")]
         public ProcedureType type;
         public string tip;
         public bool eject;//是否弹出玩家 加载/等待
@@ -182,28 +184,28 @@ public partial class KeyScreen : MonoBehaviour
     public enum ProcedureType
     {
         /// <summary>输入</summary>
-        [CustomLabel("输入")]
+        [InspectorName("输入")]
         Input,
         /// <summary>加载</summary>
-        [CustomLabel("加载")]
+        [InspectorName("加载")]
         Load,
         /// <summary>等待</summary>
-        [CustomLabel("等待")]
+        [InspectorName("等待")]
         Wait,
         /// <summary>操作特定物体</summary>
-        [CustomLabel("操作特定物体")]
+        [InspectorName("操作特定物体")]
         ActionItem,
         /// <summary>调整系数</summary>
-        [CustomLabel("调整系数")]
+        [InspectorName("调整系数")]
         ParaModify,
         /// <summary>旋转方向</summary>
-        [CustomLabel("旋转方向")]
+        [InspectorName("旋转方向")]
         Direction,
         /// <summary>解除锁定</summary>
-        [CustomLabel("解除锁定")]
+        [InspectorName("解除锁定")]
         Unlock,
         /// <summary>密码</summary>
-        [CustomLabel("密码")]
+        [InspectorName("密码")]
         Password,
     }
 }
@@ -222,7 +224,7 @@ public class ProcedureEditor : PropertyDrawer
         var typeProp = property.FindPropertyRelative("type");
         var typeValue = (KeyScreen.ProcedureType)typeProp.enumValueIndex;
 
-        // 绘制折叠箭头和标签
+        // 绘制折叠箭头和标志
         property.isExpanded = EditorGUI.Foldout(
             new Rect(position.x, position.y, position.width, lineHeight),
             property.isExpanded, label);
@@ -375,7 +377,7 @@ public class ProcedureEditor : PropertyDrawer
             return lineIntervalAndHeight;
 
         var typeProp = property.FindPropertyRelative("type");
-        int lineCount = 2; // 基础属性(occasion+material+type)
+        int lineCount = 2; // 基础属性 occasion+material+type)
         switch ((KeyScreen.ProcedureType)typeProp.enumValueIndex)
         {
             case KeyScreen.ProcedureType.Input:

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,16 +18,25 @@ public abstract class LogicBehaviour : MonoBehaviour ,I_Login
     protected virtual void Awake()
     {
 #if UNITY_EDITOR
-        if (GameRoot.Instance.IsLocal) GameRoot.CreateTimer(()=>NetManager.Instance.Add(this), Time.deltaTime);
-        else NetManager.Instance.Add(this);
+        if (GameRoot.Instance&&GameRoot.Instance.IsLocal) StartCoroutine("Wait");
+        else NetManager.Instance?.Add(this);
 #else
         NetManager.Instance.Add(this);
 #endif
         LogicInit();
     }
+
+#if UNITY_EDITOR
+    IEnumerable Wait()
+    {
+        yield return null;
+        NetManager.Instance?.Add(this);
+    }
+#endif
+
     protected virtual void OnDestroy()
     {
-        NetManager.Instance.Remove(this);
+        NetManager.Instance?.Remove(this);
         LogicUnInit();
     }
 

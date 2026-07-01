@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using GameContract;
@@ -12,9 +12,9 @@ public class VFXHaloEffect : MonoBehaviour,VfxEffect
     {
         if (!collider)
         {
-            Debug.LogError("目标物体不存在?"+collider+" owner"+owner,gameObject);
+            Debug.LogError("目标物体不存在 "+collider+" owner"+owner,gameObject);
         }
-        else GlobalEventManager.Mark(owner, collider.gameObject, point);
+        else GlobalEventSub.Mark(owner, collider.gameObject, point);
     }
     
 

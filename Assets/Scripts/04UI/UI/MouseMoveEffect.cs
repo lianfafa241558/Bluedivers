@@ -5,27 +5,27 @@ using static WndTools.WndRootTool;
 
 public class MouseMoveEffect : MonoBehaviour
 {
-    public Camera UICamera;
+    //public Camera UICamera;
     public TrailRenderer trail;
     public ParticleSystem particle;
     public ParticleSystem clickA, clickB;
-    public SpriteRenderer sprite;
-    public Material baseMaterial;
+    //public SpriteRenderer sprite;
+    //public Material baseMaterial;
     private float resetEmitting;
 
     public Vector2 size,input;
     void Awake()
     {
-        GameRoot.OnWindowStateChange += OnWindowStateChange;
-        GameRoot.OnTimeScaleChange += OnTimeScaleChange;
-        GlobalEventManager.OnFakeBg += OnFakeBG;
+        //WndManager.OnWindowStateChange += OnWindowStateChange;
+        GlobalEventSub.OnTimeScaleChange += OnTimeScaleChange;
+        //GlobalEventManager.OnFakeBg += OnFakeBG;
     }
 
     private void OnDestroy()
     {
-        GameRoot.OnWindowStateChange -= OnWindowStateChange;
-        GameRoot.OnTimeScaleChange -= OnTimeScaleChange;
-        GlobalEventManager.OnFakeBg -= OnFakeBG;
+        //WndManager.OnWindowStateChange -= OnWindowStateChange;
+        GlobalEventSub.OnTimeScaleChange -= OnTimeScaleChange;
+        //GlobalEventManager.OnFakeBg -= OnFakeBG;
     }
 
     void LateUpdate()
@@ -68,13 +68,19 @@ public class MouseMoveEffect : MonoBehaviour
 
 
     }
+    private void OnDisable()
+    {
+        Stop();
+    }
+
+    /*
     private void OnFakeBG(Transform trans)
     {
         //Debug.LogWarning("执行");
         if (trans == null)
         {
             //Debug.LogWarning("关闭");
-            //不能直接关是因为还有鼠标点击的特效
+            //不能直接关是因为还有鼠标点击的特
             //UICamera.gameObject.SetActive(false);
             SetActive(sprite.transform,false);
             UICamera.depth = -1;
@@ -110,8 +116,8 @@ public class MouseMoveEffect : MonoBehaviour
         {
             toComp.enabled = false;
         }
-    }
-
+    }*/
+    /*
     private void OnWindowStateChange(WindowStateEnum oldSstate, WindowStateEnum state)
     {
         switch (state)
@@ -129,7 +135,7 @@ public class MouseMoveEffect : MonoBehaviour
                 break;
         }
     }
-
+    */
     private void OnTimeScaleChange(float oldScale,float newScale)
     {
         trail.time *= (newScale / oldScale);

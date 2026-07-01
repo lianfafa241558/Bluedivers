@@ -1,8 +1,9 @@
 using Core;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using static WndTools.WndRootTool;
 
-public class FreeCameraWnd : WindowRoot, Wnd
+public class FreeCameraWnd : Window
 {
     public Transform Tip,showTime;
 
@@ -29,17 +30,6 @@ public class FreeCameraWnd : WindowRoot, Wnd
 
     }
 
-    public override void Init()
-    {
-        GameRoot.OnWindowStateChange += OnWindowStateChange;
-        SetActive(camera,false);
-        SetWndState(false);
-    }
-    public override void UnInit()
-    {
-        GameRoot.OnWindowStateChange -= OnWindowStateChange;
-    }
-
     protected override void FirstShowWnd()
     {
         
@@ -47,7 +37,7 @@ public class FreeCameraWnd : WindowRoot, Wnd
 
     protected override void ShowWnd()
     {
-        GameRoot.CreateTimer(()=> { GameRoot.TimeScale = 0.005f; },0.1f);
+        //GameRoot.CreateTimer(()=> { GameRoot.TimeScale = 0.005f; },0.1f);
         
         var main = Camera.main.transform;
         var forward = main.forward;
@@ -58,25 +48,29 @@ public class FreeCameraWnd : WindowRoot, Wnd
         SetActive(camera, true);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        GameRoot.TimeScale = 0.005f;
+
+        var baseCameraData = camera.GetComponent<Camera>().GetUniversalAdditionalCameraData();
+        // 3. 如果UI相机不在堆栈中，则添加
+        if (!baseCameraData.cameraStack.Contains(UICamera.uiCamera))
+        {
+            baseCameraData.cameraStack.Add(UICamera.uiCamera);
+            Debug.Log($"[相机管理]  {UICamera.uiCamera.name} 添加 {camera.name} 的堆栈中");
+        }
     }
 
     protected override void HideWnd()
     {
         SetActive(camera, false);
-    }
-
-
-    private void OnWindowStateChange(WindowStateEnum oldState, WindowStateEnum state)
-    {
-        switch (state)
+        GameRoot.TimeScale = 1f;
+        var baseCameraData = camera.GetComponent<Camera>().GetUniversalAdditionalCameraData();
+        if (baseCameraData.cameraStack.Contains(UICamera.uiCamera))
         {
-            case WindowStateEnum.FreeCamera:
-                SetWndState(true);
-
-                break;
-            default:
-                SetWndState(false);
-                break;
+            baseCameraData.cameraStack.Remove(UICamera.uiCamera);
+            Debug.Log($"[相机管理]  {UICamera.uiCamera.name} 移除 {camera.name} 的堆栈中");
         }
     }
+
+
+ 
 }

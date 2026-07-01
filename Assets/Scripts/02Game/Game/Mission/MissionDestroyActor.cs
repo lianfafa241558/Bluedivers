@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using GameContract;
-using Unity.BaseTool;
+
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -15,7 +15,7 @@ namespace FpsGame.Mission
     public class MissionDestroyActor : MissionBase
     {
         [Foldout("标旗")]
-        [CustomLabel("显示进度条")]
+        [InspectorName("显示进度条")]
         [SerializeField]
         bool useBar;
 
@@ -25,7 +25,7 @@ namespace FpsGame.Mission
         [SerializeField]
         string[] actorNames;
 
-        protected override void CreatMission()
+        protected override void StartMission()
         {
             //Debug.LogError("实体" + entity);
             //Debug.LogError("变换" + entity.transform);
@@ -44,7 +44,7 @@ namespace FpsGame.Mission
 
         void OnActorDeath()
         {
-            //这里就不做取消绑定了，因为不知道是谁死了，只能计数
+            //这里就不做取消绑定了，因为不知道是谁死了，只能计
             if (++NowProgress < MaxProgress)
             {
                 percentage = NowProgress / (MaxProgress + 0f);

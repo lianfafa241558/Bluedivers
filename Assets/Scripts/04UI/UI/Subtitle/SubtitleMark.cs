@@ -1,4 +1,4 @@
-using Core;
+﻿using Core;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -13,7 +13,7 @@ public class SubtitleMark : SubtitleBase
     public override SubtitleBase Creat(I_Actor owner, GameObject target, Transform parent, bool alwaysShow)
     {
         base.Creat(owner, target, parent, alwaysShow);
-        GlobalEventManager.OnMark += OnMark;
+        GlobalEventSub.OnMark += OnMark;
 
         SetActive(gameObject, false);
         return this;
@@ -21,7 +21,7 @@ public class SubtitleMark : SubtitleBase
 
     private void OnDestroy()
     {
-        GlobalEventManager.OnMark -= OnMark;
+        GlobalEventSub.OnMark -= OnMark;
     }
 
     protected override void Update()

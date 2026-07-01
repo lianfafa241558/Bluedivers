@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------
 // <copyright file="AccountService.cs" company="Exit Games GmbH">
 //   Photon Cloud Account Service - Copyright (C) 2012 Exit Games GmbH
 // </copyright>
