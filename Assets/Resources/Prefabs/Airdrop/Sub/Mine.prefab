@@ -93,7 +93,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Root: {fileID: 5481125740443102742}
-  TriggerRange: 0.7
+  TriggerRange: 0.5
 --- !u!114 &3884080132440999546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -132,6 +132,23 @@ MonoBehaviour:
   MainPart: {fileID: 3884080132440999546}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr:
+  - Key: 4
+    Value: 50
+  - Key: 5
+    Value: 100
+  - Key: 6
+    Value: 100
+  - Key: 7
+    Value: 100
+  - Key: 8
+    Value: 100
+  - Key: 9
+    Value: 100
+  - Key: 10
+    Value: 10
+  - Key: 11
+    Value: 100
   AutoDestroy: 0
 --- !u!114 &2810349685958166275
 MonoBehaviour:
@@ -5029,17 +5046,17 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 0.7
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.8
+      value: 0.56
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 0.7
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}
@@ -5090,6 +5107,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
+        type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}

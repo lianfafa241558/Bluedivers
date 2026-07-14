@@ -274,11 +274,11 @@ MonoBehaviour:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
   IsSeeingTarget: 0
+  obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
-  showCollider: {fileID: 0}
   RespondMark: 1
 --- !u!1 &2297857680751814583
 GameObject:
@@ -372,9 +372,9 @@ GameObject:
   - component: {fileID: 5120966618015412794}
   - component: {fileID: 2099006185159274221}
   - component: {fileID: 5238317223544972681}
-  - component: {fileID: -8147849878265687758}
   - component: {fileID: 3650264035900970055}
   - component: {fileID: -6346691286985588002}
+  - component: {fileID: 7276606273339162089}
   m_Layer: 0
   m_Name: Turret_Rocket
   m_TagString: Untagged
@@ -521,7 +521,24 @@ MonoBehaviour:
   MainPart: {fileID: 1088666010}
   showHealth: 0
   m_IsDead: 0
---- !u!114 &-8147849878265687758
+  AboGaugeArr: []
+--- !u!208 &3650264035900970055
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2960153488762769001}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 0
+  m_Extents: {x: 1, y: 2, z: 1}
+  m_MoveThreshold: 0.1
+  m_Carve: 0
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0, z: 0}
+  m_TimeToStationary: 0.5
+--- !u!114 &-6346691286985588002
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -530,10 +547,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 2960153488762769001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 143e44d708581ac4bafae0081debc465, type: 3}
+  m_Script: {fileID: 11500000, guid: 7936b68bdf0faf94c91c084774623fc8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Animator: {fileID: 5904997438229641963}
+  data: {fileID: 11400000, guid: ecb0257a60cd1d040b841bf09614fe72, type: 2}
+  weaponPointL: {fileID: 0}
+  weaponPointR: {fileID: 0}
+  LookPoint: {fileID: 0}
+--- !u!114 &7276606273339162089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2960153488762769001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 531719c9934cdc647bacfd252c11ff06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 0}
   BirthMaterial: {fileID: 0}
   fxDic:
     ShowSetting: 0
@@ -547,15 +580,15 @@ MonoBehaviour:
     arr:
     - Key: 3
       Value:
-        cilp: {fileID: 0}
+        cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
         go: []
     - Key: 4
       Value:
-        cilp: {fileID: 8300000, guid: 25991f9234f6aed4286e237922012984, type: 3}
-        ps: {fileID: 8950624839484268202, guid: 45ce85b82008be84287f2c7e5bf07647,
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
         go: []
@@ -599,39 +632,45 @@ MonoBehaviour:
       m_NumColorKeys: 4
       m_NumAlphaKeys: 2
     duration: 0.1
+  - type: 0
+    occasion: 4
+    material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
+    colorName: _DissolveValue
+    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
+    switchOccasion: 2
+    switchColor: {r: 0, g: 0, b: 0, a: 0}
+    gradient:
+      serializedVersion: 2
+      key0: {r: 0, g: 0, b: 0, a: 1}
+      key1: {r: 0, g: 0, b: 0, a: 1}
+      key2: {r: 1, g: 1, b: 1, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 8867
+      ctime2: 65535
+      ctime3: 65535
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 3
+      m_NumAlphaKeys: 2
+    duration: 3
   UseAttack: 0
---- !u!208 &3650264035900970055
-NavMeshObstacle:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2960153488762769001}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Shape: 0
-  m_Extents: {x: 1, y: 2, z: 1}
-  m_MoveThreshold: 0.1
-  m_Carve: 0
-  m_CarveOnlyStationary: 1
-  m_Center: {x: 0, y: 0, z: 0}
-  m_TimeToStationary: 0.5
---- !u!114 &-6346691286985588002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2960153488762769001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7936b68bdf0faf94c91c084774623fc8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  data: {fileID: 11400000, guid: ecb0257a60cd1d040b841bf09614fe72, type: 2}
-  weaponPointL: {fileID: 0}
-  weaponPointR: {fileID: 0}
-  LookPoint: {fileID: 0}
 --- !u!1 &3354735218691219545
 GameObject:
   m_ObjectHideFlags: 0
@@ -891,27 +930,18 @@ MonoBehaviour:
     MinRange: 1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 40
     DamageDirect: 110
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
-    DamageExplosion: 40
+    WeaknessBonus: 0
     ExplosionInnerRange: 1.5
     ExplosionRange: 3
     DestructeRadius: 1.5
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1

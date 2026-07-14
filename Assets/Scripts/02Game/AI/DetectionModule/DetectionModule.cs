@@ -1,5 +1,6 @@
 using System.Linq;
 using Core;
+using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 
@@ -54,8 +55,12 @@ namespace Unity.FPS.AI
         /// <summary>目标是否可见</summary>
         public bool IsSeeingTarget;// { get; private set; }
 
+
         [SerializeField]
+        private GameObject obstacle;
+
         /// <summary>上次丢失目标的时间</summary>
+        [SerializeField]
         protected float TimeLastSeenTarget = Mathf.NegativeInfinity;
 
         protected Actor m_Actor;
@@ -165,7 +170,6 @@ namespace Unity.FPS.AI
 
         }
 
-        public GameObject showCollider;
         protected bool CanLook(Vector3 targetPos, bool ignoreAngle, out RaycastHit hit)
         {
             Vector3 startPoint = CorePoint.position;
@@ -187,19 +191,24 @@ namespace Unity.FPS.AI
                 //检查是否有地形/雾障碍物
                 if (!Physics.Raycast(startPoint, (targetPos - startPoint).normalized, out hit, distance, LayerDefinition.UnitSeeLayers))
                 { 
-                    showCollider = null;
+                    obstacle = null;
                     return true;
                 }
-                //不太可能，我们检查的是地面层
                 else if (Target.Actor != null && hit.collider.GetComponentInParent<I_Actor>() == Target.Actor)
                 {
-                    showCollider = hit.collider.gameObject;
+                    obstacle = hit.collider.gameObject;
                     return true;
+
+                }else if (LayerDefinition.SmokeLayers.Contains(hit.collider.gameObject.layer))
+                {
+                    //立即丢失目标
+                    obstacle = hit.collider.gameObject;
+                    TimeLastSeenTarget = Mathf.NegativeInfinity;
 
                 }
                 else
                 {
-                    showCollider = hit.collider.gameObject;
+                    obstacle = hit.collider.gameObject;
                 }
             }
 
@@ -437,6 +446,7 @@ namespace Unity.FPS.AI
             else if (angle < 0) angle *= -1;
             return angleScale[Mathf.FloorToInt(angle / 15)];
         }
+        /*
         [ContextMenu("计算偏移")]
         private void Test()
         {
@@ -444,7 +454,7 @@ namespace Unity.FPS.AI
             {
                 Debug.Log(i+"度"+DetectionAngleScale(i));
             }
-        }
+        }*/
 
 
         /// <summary>

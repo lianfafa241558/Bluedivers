@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Unity.FPS.AI
 {
     [RequireComponent(typeof(EnemyController))]
-    public class EnemyMobile : AIInputUnitController
+    public partial class EnemyMobile : AIInputUnitController
     {
 
         public bool AttackStop;
@@ -89,6 +89,13 @@ namespace Unity.FPS.AI
             {
                 SwitchState(AIState.Idle);
             }
+
+            InitAboStateListener();
+        }
+
+        private void OnDestroy()
+        {
+            OnDestroyAboState();
         }
 
 
@@ -97,6 +104,9 @@ namespace Unity.FPS.AI
         /// <summary>状态机切换</summary>
         protected override void UpdateAiStateTransitions()
         {
+            // Vertigo/Terror 期间冻结状态切换
+            if (_vertigoActive || _terrorActive) return;
+
             // Handle transitions 
             switch (AiState)
             {
@@ -176,6 +186,43 @@ namespace Unity.FPS.AI
         protected override void UpdateCurrentAiState()
         {
             if (!m_EnemyController.BirthComplete) return;
+
+            // Vertigo：完全禁止移动，强制停止导航
+            if (IsMoveLocked)
+            {
+                m_EnemyController.StopNav();
+                return;
+            }
+
+            // Hacker：每帧尝试锁定同队伍单位
+            UpdateHackerTarget();
+
+            // Toxicity：乱走+持续攻击
+            if (IsForcedAttack)
+            {
+                if (Time.time >= _toxicityWanderNextTime)
+                {
+                    RefreshToxicityWanderDestination();
+                }
+                m_EnemyController.SetNavDestination(_toxicityWanderDestination);
+                // 持续攻击：无目标也尝试对炮台朝向方向开火
+                turrets.ForEach(item =>
+                {
+                    if (item.weapon != null)
+                    {
+                        m_EnemyController.TryAtack(item.weapon);
+                    }
+                });
+                return;
+            }
+
+            // Terror：持续往远离伤害源方向跑，跳过原状态机逻辑
+            if (_terrorActive)
+            {
+                m_EnemyController.SetNavDestination(_terrorFleeDestination);
+                return;
+            }
+
             // Handle logic 
             switch (AiState)
             {
@@ -238,6 +285,11 @@ namespace Unity.FPS.AI
                         turrets.ForEach(item => {
                             if (item.IsLockTarget(TargetPosition)) m_EnemyController.TryStop(item.weapon);
                         });
+                    }
+                    else if (IsAttackLocked)
+                    {
+                        // Vertigo/Terror：禁止攻击，停止武器
+                        turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
                     }
                     else if (AimTargrt())
                     {
@@ -347,11 +399,11 @@ namespace Unity.FPS.AI
                 //退出旧状态
                 if (AiState == AIState.Patrol)
                 {
-                    m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, -speedScale);
+                    m_EnemyController.Speed?.AddModifier(Game.ModifierType.Extra, -speedScale);
                 }
                 else if (AiState == AIState.Beware || AiState == AIState.Return)
                 {
-                    m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, -speedScale);
+                    m_EnemyController.Speed?.AddModifier(Game.ModifierType.Extra, -speedScale);
                 }
 
                 //进入新状态
@@ -360,12 +412,12 @@ namespace Unity.FPS.AI
                     m_IdleStartTime = Time.time;
                     m_EnemyController.StopNav();
                 }
-                else if (state == AIState.Patrol)
+                else if (state == AIState.Patrol && m_EnemyController.Speed != null)
                 {
                     speedScale = (PEMaths.PEInt)PatrolSpeed - m_EnemyController.Speed.FinalValue;
                     m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
                 }
-                else if (state == AIState.Beware)
+                else if (state == AIState.Beware && m_EnemyController.Speed != null)
                 {
                     var bewarePoint = m_EnemyController.DetectionModule.BewarePoint;
                     m_BewareDestination = bewarePoint.HasValue ? bewarePoint.Value : m_OriginPos;
@@ -373,7 +425,7 @@ namespace Unity.FPS.AI
                     speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
                     m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
                 }
-                else if (state == AIState.Return)
+                else if (state == AIState.Return && m_EnemyController.Speed != null)
                 {
                     speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
                     m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);

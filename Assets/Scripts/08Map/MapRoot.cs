@@ -1,16 +1,15 @@
+using FPSGame.Attribute;
 using Unity.AI.Navigation;
 using UnityEngine;
-using Utils;
 namespace FpsGame.MapUtils
 {
-
     public class MapRoot : MonoBehaviour
     {
-        //[Foldout("地形设置", true)]
+        [Foldout("地形设置", true)] 
         public Terrain terrain;
         [Header("里面的位置是指起点，不是指中心！")]
         public BoundsInt rect;
-        [Header("空气墙")]
+        [InspectorName("空气墙")]
         public GameObject wallPrefab;
 
         public void Init()
@@ -33,6 +32,9 @@ namespace FpsGame.MapUtils
             TerrainUtils.Main = null;
         }
 
+        public static Vector3Int ToInt(Vector3 a) => new Vector3Int(Mathf.RoundToInt(a.x), Mathf.RoundToInt(a.y), Mathf.RoundToInt(a.z));
+
+
         /// <summary>
         /// 生成Rect并且同步到NavMeshSurface
         /// </summary>
@@ -45,8 +47,8 @@ namespace FpsGame.MapUtils
             var locpos = terrain.GetPosition();
             var size = terrain.terrainData.size;
             //Debug.LogError("maproot地形生成的大小"+ size);
-            Vector3Int startPos = (locpos + border * new Vector3(1,0,1)).ToInt();
-            Vector3Int rectSize = size.ToInt() - border * new Vector3Int(2, 0, 2);
+            Vector3Int startPos =ToInt((locpos + border * new Vector3(1, 0, 1)));
+            Vector3Int rectSize = ToInt(size) - border * new Vector3Int(2, 0, 2);
 
             rect = new(startPos, rectSize);
             var sur = GetComponent<NavMeshSurface>();

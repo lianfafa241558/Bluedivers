@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using GameContract;
 using TMPro;
 using UnityEngine;
 
-public class VFXHaloEffect : MonoBehaviour,VfxEffect
+public class VFXHaloEffect : MonoBehaviour,IVfxEffect
 {
 
     public void SetOwner(GameObject owner, GameObject weaponRoot, Collider collider,Vector3 point)

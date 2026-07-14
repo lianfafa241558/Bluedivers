@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Core;
+using Core.Interface;
 using GameContract;
 
 using Unity.FPS.AI;
@@ -24,7 +25,7 @@ public class WaveManager : TickBehaviour
     [SerializeField]
     List<SKVP<int,UnitTier>> TierWeight;
 
-    List<List<UnitTier>> Patrol;
+    List<KVP<int,List<UnitTier>>> Patrol;
     //List<Wave> waveGroup;
     List<GameObject> WaveUseObject;
 
@@ -35,6 +36,7 @@ public class WaveManager : TickBehaviour
 
     Random random;
     BattleManager manager;
+    EnemyVarietyType enemyVarietyType;
 
     private void Awake()
     {
@@ -42,10 +44,11 @@ public class WaveManager : TickBehaviour
         random = manager.BattleRandom;
         var task = TaskManager.Instance.nowTask;
         var cfg = task.campData;
-        Debug.LogError(cfg.ShowName+" "+cfg.Suffix+ task.campData.ShowName, task.campData);
+        Debug.Log(cfg.ShowName+" "+cfg.Suffix+ task.campData.ShowName, task.campData);
         Suffix = cfg.Suffix;
         WaveCool = cfg.WaveCool;
         WaveUseObject = cfg.WaveUseObject;
+        enemyVarietyType = cfg.enemyVarietyType;
         var tmp = cfg.templates.RandomTake();
 
 
@@ -59,7 +62,7 @@ public class WaveManager : TickBehaviour
                 .Select(cfg => new KVP<int, UnitWeightCfg>(kvp.weight, cfg))
                 .ToList();
 
-            Debug.LogError(string.Join(",",list.Select(item=>item.Value.unit.name).ToList()));
+            //Debug.LogError(string.Join(",",list.Select(item=>item.Value.unit.name).ToList()));
 
             if (TierItemWeight.ContainsKey(kvp.tier))
                 TierItemWeight[kvp.tier] = list;
@@ -67,15 +70,21 @@ public class WaveManager : TickBehaviour
                 TierItemWeight.Add(kvp.tier, list);
         }
         
-        Debug.LogError(cfg.ShowName + "选择" + tmp.name + "模板");
+        //Debug.LogError(cfg.ShowName + "选择" + tmp.name + "模板");
 
-        Patrol = cfg.patrolCfgs
-            .Where(item => tmp.PatrolTemplate.Contains(item.name))
-            .Select(group => group.units
-                .SelectMany(item => Enumerable.Repeat(0, item.Value)
-                    .Select(_ => item.Key)
-                ).ToList()
-            )
+        Patrol = tmp.patrolTemplate
+            .Where(kvp => kvp.Value > 0)
+            .Select(kvp =>
+            {
+                var patrolCfg = cfg.patrolCfgs.FirstOrDefault(p => p.name == kvp.Key);
+                if (patrolCfg == null) return null;
+                var units = patrolCfg.units
+                    .SelectMany(item => Enumerable.Repeat(0, item.Value)
+                        .Select(_ => (UnitTier)item.Key)
+                    ).ToList();
+                return new KVP<int, List<UnitTier>>(kvp.Value, units);
+            })
+            .Where(kvp => kvp != null)
             .ToList();
 
 
@@ -86,10 +95,20 @@ public class WaveManager : TickBehaviour
     {
         //时间没到或者不是强制刷新
         if (!param.extraWave && Time.time < m_lastWaveTime + WaveCool) return false;
-
         m_lastWaveTime = Time.time;
-        var item = new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject);
-        ticks.Add(item);
+        switch (enemyVarietyType.ToEnemyType())
+        {
+            case EnemyType.Kaiser:
+                ticks.Add(new RobotWave(param, InitWaveUnits(param.scale), WaveUseObject));
+                break;
+            case EnemyType.Decagrammaton:
+                ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject));
+                break;
+            case EnemyType.Colour:
+                ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject));
+                break;
+        }
+
         return true;
     }
 
@@ -161,7 +180,7 @@ public class WaveManager : TickBehaviour
     public List<GameObject> CreatPatrol(Vector3 pos)
     {
         var re = new List<GameObject>();
-        var temp = Patrol.RandomTake(random);
+        var temp = Patrol.WeightTake(100,random);
         temp.ForEach(item=> re.Add(CreatUnit(item,pos,5,false)));
         return re;
     }
@@ -374,4 +393,323 @@ public class ZergWave :I_TickClass, System.IDisposable
         }
     }
 
+}
+
+public class RobotWave : I_TickClass, System.IDisposable
+{
+    List<GameObject> waveUseObject;
+    Stack<GameObject> creats;
+    List<Actor> units;
+    List<EagleGroupInfo> groups;
+
+    WaveState state;
+    int time;
+    Vector3 center;
+    Vector3[] points;
+    float range;
+    bool completeCreat;
+    bool tip;
+    bool IsDisposed;
+
+    System.Random random;
+
+    float lastGroupSpawnTime;
+    float spawnInterval;
+
+    static readonly Vector3[] s_RelativePositions = new Vector3[]
+    {
+        new Vector3(-7, -1, -5),
+        new Vector3(7, -1, -5),
+        new Vector3(-7, -1, 0),
+        new Vector3(7, -1, 0),
+        new Vector3(-7, -1, 5),
+        new Vector3(7, -1, 5)
+    };
+
+    class EagleGroupInfo
+    {
+        public GameObject eagle;
+        public List<GameObject> unitObjects;
+        public float waitStartTime; // -1表示尚未进入等待阶段
+        public bool dropped;
+    }
+
+    public RobotWave(WaveCreateParams param, Stack<GameObject> creats, List<GameObject> waveUseObject)
+    {
+        random = new Random(RandomUtils.Range(0, 1000));
+        this.waveUseObject = new(waveUseObject);
+        this.creats = creats;
+        this.tip = param.tip;
+        range = param.range;
+        points = param.points;
+        units = new();
+        groups = new();
+        center = param.center;
+
+        spawnInterval = Mathf.Max(1f, 360f / Mathf.Max(1, creats.Count));
+        lastGroupSpawnTime = Time.time;
+
+        BattleEventSub.OnEnemyDead += OnUnitDeath;
+
+        Trans(WaveState.Start);
+    }
+
+    public void Dispose()
+    {
+        if (IsDisposed) return;
+        BattleEventSub.OnEnemyDead -= OnUnitDeath;
+
+        foreach (var g in groups)
+        {
+            if (g.eagle && g.eagle.TryGetComponent(out PhoenixEagleController ctrl))
+            {
+                ctrl.onWait.RemoveAllListeners();
+            }
+        }
+        groups?.Clear();
+        units?.Clear();
+        waveUseObject?.Clear();
+        creats?.Clear();
+
+        waveUseObject = null;
+        creats = null;
+        units = null;
+        groups = null;
+        random = null;
+
+        IsDisposed = true;
+    }
+
+    public bool Tick()
+    {
+        --time;
+        switch (state)
+        {
+            case WaveState.Start:
+                if (time == -10)
+                {
+                    Trans(WaveState.Ongoing);
+                }
+                break;
+
+            case WaveState.Ongoing:
+                // 检查鹰群是否需要投放单位（等待阶段开始后3秒）
+                for (int i = groups.Count - 1; i >= 0; --i)
+                {
+                    var g = groups[i];
+                    if (g.dropped) continue;
+                    if (g.waitStartTime > 0 && Time.time - g.waitStartTime >= 3f)
+                    {
+                        DropGroupUnits(g);
+                        g.dropped = true;
+                    }
+                }
+
+                // 周期性生成新鹰群
+                if (creats.Count > 0)
+                {
+                    if (Time.time - lastGroupSpawnTime >= spawnInterval)
+                    {
+                        lastGroupSpawnTime = Time.time;
+                        SpawnGroup();
+                    }
+                }
+                else if (!completeCreat)
+                {
+                    completeCreat = true;
+                }
+                else if (time % 5 == 0)
+                {
+                    if (units.Count <= 3)
+                    {
+                        Trans(WaveState.NearEnd);
+                    }
+                }
+                break;
+
+            case WaveState.NearEnd:
+                if (time % 5 == 0)
+                {
+                    if (units.Count == 0)
+                    {
+                        Trans(WaveState.End);
+                    }
+                }
+                break;
+
+            case WaveState.End:
+                Dispose();
+                return false;
+        }
+        return true;
+    }
+
+    void SpawnGroup()
+    {
+        // 从栈取出最多6个单位
+        int count = Mathf.Min(6, creats.Count);
+        List<GameObject> popped = new();
+        for (int i = 0; i < count; ++i)
+        {
+            if (creats.TryPop(out var tmp))
+            {
+                popped.Add(tmp);
+            }
+        }
+
+        if (popped.Count == 0) return;
+
+        // 检查是否有大型单位（HalfRange >= 1）
+        int bigIndex = -1;
+        for (int i = 0; i < popped.Count; ++i)
+        {
+            var entity = popped[i].GetComponent<I_Entity>();
+            if (entity != null && entity.HalfRange >= 1f)
+            {
+                bigIndex = i;
+                break;
+            }
+        }
+        Vector3 eaglePos;
+        if (points == null)
+        {
+            // 在center附近创建waveUseObject[0]
+            eaglePos = FpsHelper.GetNavMeshPoint(VectorUtils.GetRandomPointInCircle(center, range+5, range + 15));
+        }
+        else
+        {
+            // 在points附近创建waveUseObject[0]
+            eaglePos = FpsHelper.GetNavMeshPoint(VectorUtils.GetRandomPointInCircle(points.RandomTake(), range, range + 10));
+        }
+       
+        var eagle = VFXManager.Creat(waveUseObject[0], eaglePos, Quaternion.AngleAxis(RandomUtils.Range(0f, 360f), Vector3.up), null);
+        if (!eagle) return;
+
+        var eagleCtrl = eagle.GetComponent<PhoenixEagleController>();
+        if (eagleCtrl)
+        {
+            // 订阅等待阶段开始事件
+            eagleCtrl.onWait.RemoveAllListeners();
+            eagleCtrl.onWait.AddListener(() =>
+            {
+                var g = groups.Find(x => x.eagle == eagle);
+                if (g != null)
+                {
+                    g.waitStartTime = Time.time;
+                }
+            });
+        }
+
+        EagleGroupInfo group = new()
+        {
+            eagle = eagle,
+            unitObjects = new(),
+            waitStartTime = -1,
+            dropped = false
+        };
+
+        if (bigIndex >= 0)
+        {
+            // 只实例化大型单位，其余重新入栈
+            var bigUnit = popped[bigIndex];
+            for (int i = 0; i < popped.Count; ++i)
+            {
+                if (i != bigIndex)
+                {
+                    creats.Push(popped[i]);
+                }
+            }
+
+            var go = Object.Instantiate(bigUnit,FpsHelper.GetNavMeshPoint(center),default,null);
+            foreach (var item in go.GetComponents<Behaviour>()) item.enabled = false;
+
+            go.transform.parent = eagle.transform;
+            go.transform.localPosition = new Vector3(0, -10, 0);
+            group.unitObjects.Add(go);
+
+            var actor = go.GetComponent<Actor>();
+            if (actor) units.Add(actor);
+
+            // 禁用Animator（挂在飞行器上时不应播放落地动画）
+            var fx = go.GetComponent<EnemyControllerFX>();
+            if (fx && fx.Animator)
+            {
+                fx.Animator.enabled = false;
+            }
+        }
+        else
+        {
+            // 正常创建6个单位，挂在鹰上
+            int actualCount = Mathf.Min(popped.Count, s_RelativePositions.Length);
+            for (int i = 0; i < actualCount; ++i)
+            {
+                var go = Object.Instantiate(popped[i],FpsHelper.GetNavMeshPoint(center), default, null);
+                //Debug.LogWarning("运输船坐标" + eagle.transform.position+"创建坐标"+go.transform.position,go);
+                foreach (var item in go.GetComponents<Behaviour>()) item.enabled = false;
+                go.transform.parent = eagle.transform;
+                go.transform.localPosition = s_RelativePositions[i];
+                //Debug.LogWarning("修改后坐标" + go.transform.position+"相对坐标"+ go.transform.localPosition, go);
+                group.unitObjects.Add(go);
+
+                var actor = go.GetComponent<Actor>();
+                if (actor) units.Add(actor);
+
+                var fx = go.GetComponent<EnemyControllerFX>();
+                if (fx && fx.Animator)
+                {
+                    fx.Animator.enabled = false;
+                }
+            }
+        }
+
+        groups.Add(group);
+    }
+
+    void DropGroupUnits(EagleGroupInfo group)
+    {
+        if (!group.eagle) return;
+
+        foreach (var unit in group.unitObjects)
+        {
+            if (!unit) continue;
+
+            unit.transform.SetParent(null);
+            var pos = unit.transform.position;
+            unit.transform.position = FpsHelper.GetNavMeshPoint(pos);
+            foreach (var item in unit.GetComponents<Behaviour>()) item.enabled = true;
+            // 启用Animator（开始落地动画）
+            var fx = unit.GetComponent<EnemyControllerFX>();
+            if (fx && fx.Animator)
+            {
+                fx.Animator.enabled = true;
+            }
+        }
+    }
+
+    void OnUnitDeath(Actor actor)
+    {
+        units.Remove(actor);
+    }
+
+    void Trans(WaveState state)
+    {
+        this.state = state;
+        switch (state)
+        {
+            case WaveState.Start:
+                //TODO:现在没有对应的语音
+                if (tip) WndManager.Instance.CreatNotice("Yuuka", "WaveStart_Zerg");
+                AudioSvc.PlayMusic(AudioSvc.MusicGroup.Wave, 0.3f);
+                break;
+            case WaveState.Ongoing:
+                time = 0;
+                break;
+            case WaveState.NearEnd:
+                if (tip) WndManager.Instance.CreatNotice("Yuuka", "WaveEnd_Zerg");
+                break;
+            case WaveState.End:
+                AudioSvc.PlayMusic(AudioSvc.MusicGroup.Game, 0.2f);
+                break;
+        }
+    }
 }

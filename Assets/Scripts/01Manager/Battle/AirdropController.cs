@@ -164,6 +164,9 @@ public class AirdropController : MonoBehaviour
     private void OnRelease(GameObject owner, GameObject target, Vector3 point, AirdropData data)
     {
         if (owner == null) return;
+        if (data == null) {
+            Debug.LogError("战备丢失");
+            return; }
         data.State = AirdropState.Arrive;
         if (GameRoot.GameState == GameStateEnum.Game && owner.TryGetComponent(out PlayerController player))
         {
@@ -195,7 +198,11 @@ public class AirdropController : MonoBehaviour
             Close();
         }
     }
-
+    /// <summary>
+    /// 为战备提供授权
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="state"></param>
     public void Authorize(int id,bool state)
     {
         //Debug.LogError("尝试授权"+id+state);

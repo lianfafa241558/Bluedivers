@@ -4961,6 +4961,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8396670001580682531, guid: 1f5c1ede6311fa54c98f2c26776e0317,
         type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.56
+      objectReference: {fileID: 0}
+    - target: {fileID: -8396670001580682531, guid: 1f5c1ede6311fa54c98f2c26776e0317,
+        type: 3}
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
@@ -5079,8 +5084,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 2.6, z: 1}
-  m_Center: {x: 0, y: 1.4, z: 0}
+  m_Size: {x: 1, y: 2.4, z: 1}
+  m_Center: {x: 0, y: 1.3, z: 0}
 --- !u!95 &6598632099354668363
 Animator:
   serializedVersion: 5
@@ -5194,11 +5199,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d1a73430ee99de4296c185ee351d18b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u8865\u7ED9"
-  Id: Supply
-  Portrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
   meetTime: 2
   audioPress: {fileID: 8300000, guid: f9280a16484b172438c7841db3260e34, type: 3}
   audioOper: {fileID: 0}
@@ -5208,18 +5208,23 @@ MonoBehaviour:
   canOperate: 1
   inOperate: 0
   desc: "\u8865\u7ED9(+50%)"
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 2
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
   anim: {fileID: 0}
-  obs: {fileID: 0}
   audio: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
+  ShowName: "\u8865\u7ED9"
+  Id: Supply
+  Portrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 2
+  ExtBoolParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
 --- !u!1 &2951881783652281794 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2816738252164182904, guid: 1f5c1ede6311fa54c98f2c26776e0317,
@@ -5259,11 +5264,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d1a73430ee99de4296c185ee351d18b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u8865\u7ED9"
-  Id: Supply
-  Portrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
   meetTime: 2
   audioPress: {fileID: 8300000, guid: f9280a16484b172438c7841db3260e34, type: 3}
   audioOper: {fileID: 0}
@@ -5273,18 +5273,23 @@ MonoBehaviour:
   canOperate: 1
   inOperate: 0
   desc: "\u8865\u7ED9(+50%)"
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 3
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
   anim: {fileID: 0}
-  obs: {fileID: 0}
   audio: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
+  ShowName: "\u8865\u7ED9"
+  Id: Supply
+  Portrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 3
+  ExtBoolParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
 --- !u!1 &5499555290561574222 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4878093519459232756, guid: 1f5c1ede6311fa54c98f2c26776e0317,
@@ -5324,11 +5329,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d1a73430ee99de4296c185ee351d18b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u8865\u7ED9"
-  Id: Supply
-  Portrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
   meetTime: 2
   audioPress: {fileID: 8300000, guid: f9280a16484b172438c7841db3260e34, type: 3}
   audioOper: {fileID: 0}
@@ -5338,18 +5338,23 @@ MonoBehaviour:
   canOperate: 1
   inOperate: 0
   desc: "\u8865\u7ED9(+50%)"
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
   anim: {fileID: 0}
-  obs: {fileID: 0}
   audio: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
+  ShowName: "\u8865\u7ED9"
+  Id: Supply
+  Portrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  ExtBoolParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
 --- !u!1 &6382657992951353718 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6301628738834927564, guid: 1f5c1ede6311fa54c98f2c26776e0317,
@@ -5389,11 +5394,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d1a73430ee99de4296c185ee351d18b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u8865\u7ED9"
-  Id: Supply
-  Portrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
   meetTime: 2
   audioPress: {fileID: 8300000, guid: f9280a16484b172438c7841db3260e34, type: 3}
   audioOper: {fileID: 0}
@@ -5403,18 +5403,23 @@ MonoBehaviour:
   canOperate: 1
   inOperate: 0
   desc: "\u8865\u7ED9(+50%)"
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 1
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
   anim: {fileID: 0}
-  obs: {fileID: 0}
   audio: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
+  ShowName: "\u8865\u7ED9"
+  Id: Supply
+  Portrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: e1f7c2a9e97616f44baf1f5ebd40a865, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 1
+  ExtBoolParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
 --- !u!1001 &3382733478816813484
 PrefabInstance:
   m_ObjectHideFlags: 0

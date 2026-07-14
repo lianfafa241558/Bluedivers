@@ -82,7 +82,7 @@ MonoBehaviour:
       Value: 4
   ProjectilePrefab: {fileID: 828996816448062211, guid: e606251cb8bfb024caf249b34dbf2ee3,
     type: 3}
-  BulletFlag: 0
+  BulletFlag: 1
   Damages:
   - Speed: 100
     Gravity: 0
@@ -92,37 +92,29 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 10
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
-    DamageExplosion: 20
+    WeaknessBonus: 0
     ExplosionInnerRange: 0.5
     ExplosionRange: 1
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 5
       Value: 1
-    UseCollisionDirection: 0
+    UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 0}
+    ImpactVfx: {fileID: 8167516518492074666, guid: 8d2c8a537bc7f3a419846a33ed0d318a,
+      type: 3}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
-    OnlyTerrain: 0
+    OnlyTerrain: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0

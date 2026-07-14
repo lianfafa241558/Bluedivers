@@ -1,6 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Core;
-
+using FPSGame.Attribute;
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -509,25 +510,35 @@ public class VehicleWnd : Window
         SetSprite(tipIcon, data.icon);
         var select = archWeaponData.selectIndex[y];
 
-        //如果没选择就是new，否则正常使用
-        var oldData = select != -1 && select != x ? showWeapon.GetUpgrade(y, select).modifys : new();
-        //如果进入的不是选择的，那就使用
-        var newData = select != x ? data.modifys : new();
+        showWeapon.ResetAllChangeValues();
+
+        List<ModifyAttrData> oldData, newData;
+        if (select == -1)
+        {
+            oldData = new();
+            newData = data.modifys;
+        }
+        else if (select == x)
+        {
+            oldData = showWeapon.GetUpgrade(y, select).modifys;
+            newData = new();
+        }
+        else
+        {
+            oldData = showWeapon.GetUpgrade(y, select).modifys;
+            newData = data.modifys;
+        }
         showWeapon.TryUpgrade(oldData, newData);
         
-
     }
     /// <summary>
     /// 鼠标离开升级框
     /// </summary>
     private void HideTip(int y, int x)
     {
+        if (!GetActive(tipRoot)) return;
         SetActive(tipRoot, false);
-        var select = archWeaponData.selectIndex[y];
-
-        var oldData = showWeapon.GetUpgrade(y, x).modifys;
-        var newData = select != -1 ? showWeapon.GetUpgrade(y, select).modifys : oldData;
-        showWeapon.TryUpgrade(oldData, newData);
+        showWeapon.ResetAllChangeValues();
     }
     /// <summary>
     /// 鼠标在升级框内

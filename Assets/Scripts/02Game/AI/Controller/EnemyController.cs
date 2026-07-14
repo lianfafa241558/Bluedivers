@@ -54,8 +54,8 @@ namespace Unity.FPS.AI
         /// <summary>目标是否可见</summary>
         public bool IsSeeingTarget => DetectionModule.IsSeeingTarget;
 
-        public GameAttribute Speed;
-        public GameAttribute AngularSpeed;
+        public GameAttribute Speed=>GetAttribute(UnitAttrType.Speed);
+
 
         public Vector3 Velocity => NavMeshAgent ? NavMeshAgent.velocity : Vector3.zero;
         
@@ -113,13 +113,27 @@ namespace Unity.FPS.AI
                 EyePoint = AimPoint;
             }
 
-            Speed = UnitAttributeFactory.Create(UnitAttrType.Speed, FpsHelper.HaveNavMeshAgent(NavMeshAgent) ? (PEInt)NavMeshAgent.speed : 0);
-            if(Speed.PrimeValue > 0)Speed.OnFinalValueChange += (value) => { NavMeshAgent.speed = value.RawFloat; };
-            AngularSpeed = UnitAttributeFactory.Create(UnitAttrType.AngularSpeed, FpsHelper.HaveNavMeshAgent(NavMeshAgent) ? (PEInt)NavMeshAgent.angularSpeed : 0);
-            if (AngularSpeed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.angularSpeed = value.RawFloat; };
+         }
+
+        public override void InitAttribute()
+        {
+            if (!FpsHelper.HaveNavMeshAgent(NavMeshAgent))
+            {
+                base.InitAttribute();
+            }
+            else
+            {
+                attrs = UnitAttributeFactory.CreateBaseUnit(new Dictionary<UnitAttrType, PEInt> {
+                    [UnitAttrType.Speed] = (PEInt)NavMeshAgent.speed ,
+                    [UnitAttrType.AngularSpeed] = (PEInt)NavMeshAgent.angularSpeed,
+                });
+                var Speed = GetAttribute(UnitAttrType.Speed);
+                if (Speed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.speed = value.RawFloat; };
+                var AngularSpeed = GetAttribute(UnitAttrType.AngularSpeed);
+                if (AngularSpeed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.angularSpeed = value.RawFloat; };
+            }
+
         }
-
-
         protected override void Start()
         {
             base.Start();
@@ -267,7 +281,7 @@ namespace Unity.FPS.AI
         }
         public void TryStop(WeaponEnemyController weapon)
         {
-            weapon.HandleShootInputs(false, false, true);
+            weapon.ShootInputs(false, false, true);
         }
 
 

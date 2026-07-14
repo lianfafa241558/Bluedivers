@@ -69,7 +69,7 @@ namespace Unity.FPS.Game
             OnShoot?.Invoke();
         }
         public void Release()
-        {
+        { 
             //Debug.Log("释放" + gameObject, gameObject);
             VFXManager.Release(this);
         }
@@ -87,7 +87,7 @@ namespace Unity.FPS.Game
         /// <summary>伤害来源</summary>
         public GameObject owner;
         /// <summary>伤害信息</summary>
-        public DamageData data;
+        public IDamageData data;
         /// <summary>武器引用，只有击中特效依然是子弹的时候使用（？想办法去掉？）</summary>
         public WeaponBaseController weapon;
         /// <summary>充能系数</summary>

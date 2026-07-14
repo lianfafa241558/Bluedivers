@@ -76,20 +76,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 30
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 30
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 3
     ShockwaveRadius: 6
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 0
       Value: 1
@@ -117,6 +113,7 @@ MonoBehaviour:
     type: 3}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -180,18 +177,18 @@ MonoBehaviour:
   EyePoint: {fileID: 7024828909445759603}
   DetectionRange: 15
   HearingRange: 10
-  AttackRange: 1.5
+  AttackRange: 2
   AlertRange: 20
   KnownTargetTimeout: 8
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
   IsSeeingTarget: 0
+  obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
-  showCollider: {fileID: 0}
 --- !u!1 &1952393941738511828
 GameObject:
   m_ObjectHideFlags: 0
@@ -425,6 +422,7 @@ GameObject:
   - component: {fileID: 5165929648284215754}
   - component: {fileID: 7262347484315347917}
   - component: {fileID: 8782697207922320284}
+  - component: {fileID: 2873316324195368614}
   m_Layer: 0
   m_Name: Dec_Bane
   m_TagString: Untagged
@@ -535,6 +533,7 @@ MonoBehaviour:
   MainPart: {fileID: 7294819889606588922}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
 --- !u!114 &7262347484315347917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -696,6 +695,43 @@ MonoBehaviour:
       m_NumColorKeys: 4
       m_NumAlphaKeys: 2
     duration: 0.1
+--- !u!114 &2873316324195368614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7853988172940581589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c38bd72727a07134aaba57de6aef07e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  delayTime: 0.5
+  selfExplosionTime: 0
+  weapon: {fileID: 7153386031895443982}
+  go: {fileID: 7853988172940581589}
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 0
+    ExplosionInnerRange: 0
+    ExplosionRange: 0
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 20
+    NoSource: 0
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
 --- !u!1 &7952776792086792693
 GameObject:
   m_ObjectHideFlags: 0
@@ -735,6 +771,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3069427250665485912}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.8
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -784,6 +835,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
+        type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8062998637075213972, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
         type: 3}
@@ -996,10 +1052,6 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 7294819889606588922}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1003567152017950705}
     - targetCorrespondingSourceObject: {fileID: 3444206323734141805, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
         type: 3}
       insertIndex: -1
@@ -1016,10 +1068,6 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 603294473642215235}
-    - targetCorrespondingSourceObject: {fileID: -3029032871660112297, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 997297333684831077}
   m_SourcePrefab: {fileID: 100100000, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce, type: 3}
 --- !u!4 &90588614820522401 stripped
 Transform:
@@ -1027,33 +1075,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 5823165085149965355}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &371194490811423356 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -3029032871660112297, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
-    type: 3}
-  m_PrefabInstance: {fileID: 5823165085149965355}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &997297333684831077
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 371194490811423356}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: e710e5f0eccbd7f43a1da87bd21c7049, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &670528406709479411 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -2765707415047894056, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,
@@ -1329,22 +1350,6 @@ MonoBehaviour:
   BleedValue: 0
   isMain: 0
   showArmor: 0
---- !u!114 &1003567152017950705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6634189395255562618}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c38bd72727a07134aaba57de6aef07e6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  delayTime: 0.5
-  selfExplosionTime: 0
-  controller: {fileID: 9169869160202831676}
-  weapon: {fileID: 7153386031895443982}
 --- !u!4 &6784626200552204999 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8144799096848595220, guid: 3ac9c3abcc4f0ee4b9149e396c3528ce,

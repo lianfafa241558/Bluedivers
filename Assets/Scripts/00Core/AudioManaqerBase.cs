@@ -138,7 +138,20 @@ namespace Core
                 //距离越远允许偏差的越大
                 //一定要group相等！！！
                 var group = GetMixGroup(info.group);
-                var distance = Mathf.Sqrt(Vector3.Distance(info.vector, Camera.main.transform.position));//100m可以偏差10格
+                var cam = Camera.main;
+                if (!cam)
+                {
+                    foreach (var c in Camera.allCameras)
+                    {
+                        if (c.enabled && c.gameObject.activeInHierarchy)
+                        {
+                            cam = c;
+                            break;
+                        }
+                    }
+                }
+                var camPos = cam ? cam.transform.position : Vector3.zero;
+                var distance = Mathf.Sqrt(Vector3.Distance(info.vector, camPos));//100m可以偏差10格
                 var tmpSource = sourcePool.Find(item => Vector3.Distance(item.transform.position,info.vector)<Mathf.Max(2, distance) && group == item.outputAudioMixerGroup);
                 if (tmpSource)
                 {
@@ -213,6 +226,7 @@ namespace Core
 
         public static void PlayMusic(AudioClip clip, float volume = 1, float speed = 1)
         {
+            if (!clip) return;
             //Debug.LogWarning("切换播放" + clip);
             bool completed = false;
             for (int i = 0; i < audMusics.Length; i++)

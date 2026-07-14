@@ -13,6 +13,7 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager
     private static Dictionary<string, Sprite> sprDic = new();//缓存纹理
     public static Dictionary<int, AirdropData_SO> airdropDic;//缓存空投
     public static Dictionary<string, NoticeTree_SO> voiceDic;//缓存台词
+    public static Dictionary<DamageTypeEnum, AboStateData_SO> aboStateDic;//缓存异常状态
 
 
     public void Init()
@@ -25,7 +26,7 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager
         {
             voiceDic.Add(role.ID, role);
         }
-
+        aboStateDic = LoadObjects<AboStateData_SO>("GameData/AboState").ToDictionary(item => item.typeEnum);
     }
     public void UnInit()
     {

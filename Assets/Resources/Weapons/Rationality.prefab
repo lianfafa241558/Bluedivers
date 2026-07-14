@@ -107,27 +107,18 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 16
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -158,6 +149,7 @@ MonoBehaviour:
   ContinuousShootLoopSfx: {fileID: 8300000, guid: 1a5ea9a2cacc07c4b8e1d17185c18252,
     type: 3}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -175,6 +167,7 @@ MonoBehaviour:
   PlayerIndex: 0
   WeaponName: "\u7406\u6027"
   WeaponType: "\u7A81\u51FB\u6B66\u5668"
+  WeaponTypeEnum: 1
   WeaponIcon: {fileID: 21300000, guid: 286dd0db6d9fd924b8d052cd650e6f82, type: 3}
   Sight: {fileID: 1123618372036048713, guid: 3020ce05020c7a640908f4e4c246cbbe, type: 3}
   ScopeGo: {fileID: 0}
@@ -186,6 +179,7 @@ MonoBehaviour:
   AimZoomRatio: 0.7
   AimOffset: {x: 0, y: 0.08, z: 0}
   playerAngle: 0
+  _showAttrInfo: 
   desc: "\u4F18\u9999\u4F7F\u7528\u7684\u53CC\u6301\u51B2\u950B\u67AA\u4E4B\u4E00\u3002\r\n\u5728\u91CD\u8981\u7684\u65F6\u673A\u3001\u4EE5\u53CA\u9700\u8981\u9002\u5F53\u5E94\u5BF9\u7684\u65F6\u5019\uFF0C\u5B83\u4EEC\u4F1A\u5E2E\u52A9\u4F18\u9999\u505A\u51FA\u5408\u7406\u7684\u5224\u65AD\u3002"
   m_RenameAttr: []
   showAttr: 14000000020000000100000000000000

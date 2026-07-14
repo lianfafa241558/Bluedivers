@@ -1,4 +1,6 @@
 using Core;
+using FpsGame.MapUtils;
+using FPSGame.Attribute;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/地图")]
@@ -29,6 +31,8 @@ public class MapData_SO : ScriptableObject
     [InspectorName("兴趣点")]
     public SKVP<GameObject, int>[] interestPoints;
 
+    public TerrainItemInfo[] TerrainItem;
+
     [System.Serializable]
     [Singleline]
     public struct MapItemInfo
@@ -39,7 +43,11 @@ public class MapData_SO : ScriptableObject
         public Vector2Int pos;
         [InspectorName("敌对")]
         public EnemyVarietyType enemyVarietyType;
+        [InspectorName("地形")]
+        public TerrainType terrainType;
     }
+
+
 
     /*
     public static TaskManager._MapCfg source;
@@ -91,4 +99,17 @@ public class MapData_SO : ScriptableObject
     }
     */
 
+}
+
+
+
+
+[System.Serializable]
+[Singleline]
+public struct TerrainItemInfo
+{
+    [InspectorName("纹理")]
+    public Texture diffuseTexture;
+    [InspectorName("大小")]
+    public Vector2 tileSize;
 }

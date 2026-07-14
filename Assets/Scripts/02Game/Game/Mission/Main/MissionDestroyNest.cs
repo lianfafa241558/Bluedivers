@@ -18,7 +18,7 @@ namespace FpsGame.Mission
 
             BattleEventSub.OnEnemyDead += OnActorDeath;
             MaxProgress = data.targetCount;
-            MaxProgress /= 10;
+            //MaxProgress /= 10;
         }
 
         protected override void Uninit()

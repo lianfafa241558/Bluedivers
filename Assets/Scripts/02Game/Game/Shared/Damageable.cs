@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Core;
+using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 
@@ -146,6 +147,11 @@ namespace Unity.FPS.Game
             return closest;
         }
 
+        public bool IsExplosionImmunity()
+        {
+            return armors[DamageTypeEnum.Explosion] <= 0;
+        }
+
         /// <summary>
         /// 检查自己是否被遮挡(爆炸判定)
         /// </summary>
@@ -188,8 +194,9 @@ namespace Unity.FPS.Game
 
 
 
-        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum,float>> damageGroups,bool noSource, GameObject damageSource,Vector3 pos) {
+        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum,float>> damageGroups,PEInt WeaknessBonus, bool noSource, GameObject damageSource,Vector3 pos) {
             if (!Health) return;
+            if (!damageGroups.IsValid()|| damageGroups.Count==0) return;
 
             Actor SourceActor=null;
             if (damageSource)
@@ -205,10 +212,10 @@ namespace Unity.FPS.Game
             }
             if (isWeakness)
             {
-                damage *= (1+(PEInt)damageGroups.GetValue(DamageTypeEnum.Weakness));
+                damage *= (1+ WeaknessBonus);
             }
 
-            List<KVP<DamageTypeEnum, PEInt>> finalDamageGroups = new();
+            List<SKVP<DamageTypeEnum, PEInt>> finalDamageGroups = new();
             if (damageGroups.Count == 0) {
                 finalDamageGroups.Add(new(DamageTypeEnum.Gun, (damage * (PEInt)source.GetArmor(DamageTypeEnum.Gun))));
             }
@@ -223,7 +230,7 @@ namespace Unity.FPS.Game
                 }
             }
             
-            Health.TakeDamage(finalDamageGroups, noSource, damageSource, ClosestCollider(pos), pos);
+            Health.TakeDamage(finalDamageGroups, noSource, damageSource, ClosestCollider(pos), pos,true);
             
         }
 
@@ -255,7 +262,7 @@ namespace Unity.FPS.Game
         {
             if (armorValue>0&&remainArmor <= 0)
             {
-                Health.TakeDamage(new() {new( DamageTypeEnum.Real,BleedValue)}, true, ArmorBreaker, m_colliders[0], m_colliders[0].bounds.center);
+                Health.TakeDamage(new() {new( DamageTypeEnum.Real,BleedValue)}, true, ArmorBreaker, m_colliders[0], m_colliders[0].bounds.center,true);
             }
             return true;
         }

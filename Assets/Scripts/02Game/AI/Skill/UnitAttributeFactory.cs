@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using PEMaths;
 
@@ -37,7 +37,16 @@ namespace Unity.FPS.Game
 
                 return new GameAttribute(baseValue, cfg.Item2, cfg.Item3);
             }
-
+          
+        }
+        public static Dictionary<UnitAttrType, GameAttribute> CreateBaseUnit(Dictionary<UnitAttrType, PEInt> baseValues)
+        {
+            var result = new Dictionary<UnitAttrType, GameAttribute>();
+            foreach (var kv in baseValues)
+            {
+                result[kv.Key] = Create(kv.Key, kv.Value);
+            }
+            return result;
         }
 
     }

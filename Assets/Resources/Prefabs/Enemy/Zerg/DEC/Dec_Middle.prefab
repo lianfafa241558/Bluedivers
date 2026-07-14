@@ -190,20 +190,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 5
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -404,6 +400,7 @@ MonoBehaviour:
   MainPart: {fileID: 8523330833250684558}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
 --- !u!114 &8523330831985173645
 MonoBehaviour:
   m_ObjectHideFlags: 0

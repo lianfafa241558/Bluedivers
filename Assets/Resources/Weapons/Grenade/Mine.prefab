@@ -158,23 +158,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 100
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 100
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -202,23 +195,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 100
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 100
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -264,6 +250,7 @@ MonoBehaviour:
   PlayerIndex: 0
   WeaponName: "\u53CD\u6B65\u5175\u5730\u96F7"
   WeaponType: "\u6295\u63B7\u6B66\u5668"
+  WeaponTypeEnum: 3
   WeaponIcon: {fileID: 21300000, guid: ade4034f3989acb46910b4acc984818d, type: 3}
   Sight: {fileID: 4066082357213353509, guid: 682987df4a63fd641bcafdf118cf811e, type: 3}
   ScopeGo: {fileID: 0}

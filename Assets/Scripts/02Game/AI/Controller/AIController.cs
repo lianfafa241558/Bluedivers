@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Core;
 using GameContract;
 using PEMaths;
@@ -8,6 +9,15 @@ using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.Events;
 using Utils;
+
+public interface IUnit
+{
+    public GameAttribute GetAttribute(UnitAttrType type);
+    public T GetAttribute<T>(UnitAttrType type) where T: GameAttribute;
+
+    public void InitAttribute();
+
+}
 
 /// <summary>
 /// 武器还没抽象化，所以塞不进去程序集
@@ -34,6 +44,8 @@ public interface I_AIController
     /// 使这个单位警惕
     /// </summary>
     public void Beware(Vector3 point,bool spread);
+
+
 }
 
 
@@ -41,7 +53,7 @@ public interface I_AIController
 /// <summary>
 /// 这个只是基础单位控制器
 /// </summary>
-public class AIController : MonoBehaviour, I_AIController
+public abstract class AIController : MonoBehaviour, I_AIController, IUnit
 {
 
     public Transform AimPoint => m_Actor.AimPoint;
@@ -94,9 +106,13 @@ public class AIController : MonoBehaviour, I_AIController
     [HideInInspector]
     public bool IsRemove;
 
+
+    protected Dictionary<UnitAttrType, GameAttribute> attrs;
+
     private void Awake()
     {
         InitComponent();
+        InitAttribute();
     }
 
     protected virtual void InitComponent()
@@ -166,5 +182,30 @@ public class AIController : MonoBehaviour, I_AIController
         {
             item.enabled = false;
         }
+    }
+
+    public GameAttribute GetAttribute(UnitAttrType type)
+    {
+        if (attrs.TryGetValue(type,out var attr)){
+            return attr;
+        }
+        return null;
+    }
+
+    public T GetAttribute<T>(UnitAttrType type) where T : GameAttribute
+    {
+        if (attrs.TryGetValue(type, out var attr))
+        {
+            return attr as T;
+        }
+        return null;
+    }
+
+    public virtual void InitAttribute()
+    {
+        attrs = UnitAttributeFactory.CreateBaseUnit(new Dictionary<UnitAttrType, PEInt> {
+            [UnitAttrType.Speed] = 0,
+            [UnitAttrType.AngularSpeed] = 0,
+        }); ;
     }
 }

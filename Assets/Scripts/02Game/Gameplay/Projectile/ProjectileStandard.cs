@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using GameContract;
 
 using Unity.FPS.Game;
@@ -109,7 +109,7 @@ namespace Unity.FPS.Gameplay
             {
                 m_isStop = true;
                 //GlobalEventManager.BulletHit(Owner,transform.position);
-                Debug.LogError("落空"+gameObject.name,gameObject);
+                Debug.Log("落空"+gameObject.name,gameObject);
                 OnHit?.Invoke(new() {
                     pos = transform.position,
                     normal = transform.forward,
@@ -156,7 +156,7 @@ namespace Unity.FPS.Gameplay
                     //这里不控制停止，只考虑击中伤害
                     //穿透地面直接写ishitVaild里面了，因为反正不用考虑对地面进行控制（大概吧）
                     I_Damagable damagable = hit.collider.GetComponent<I_Damagable>();
-                    if (BulletFlag.HasFlag(BulletFlag.PenetrateUnits) && damagable.IsValid() && !m_hasHits.Contains(damagable.ActorGo))
+                    if (BulletFlag.HasFlag(BulletFlag.PenetrateUnits) && damagable.IsValid() && damagable.Source.IsValid() && !m_hasHits.Contains(damagable.ActorGo))
                     {
                         m_hasHits.Add(damagable.ActorGo);
                         Hit(hit);

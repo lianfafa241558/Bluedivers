@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Core;
+using FPSGame.Attribute;
 using FPSGame.Furn;
 using RootMotion.FinalIK;
 
@@ -225,10 +226,9 @@ namespace Unity.FPS.Gameplay
                 //拿手雷的时候不能左键射击
                 if (ActiveWeaponIndex == (int)WeaponTypeEnum.Grenade) return;
 
-                bool hasFired = false;
                 if (!GetActiveSecWeapon())//单持武器时，正常左键射击
                 {
-                    hasFired = activeWeapon.HandleShootInputs(
+                    activeWeapon.HandleShootInputs(
                        m_InputHandler.GetFireInputDown(),
                        m_InputHandler.GetFireInputHeld(),
                        m_InputHandler.GetFireInputReleased(),
@@ -236,20 +236,11 @@ namespace Unity.FPS.Gameplay
                 }
                 else //双持武器时，反向控制
                 {
-                    hasFired = activeWeapon.HandleShootInputs(
+                    activeWeapon.HandleShootInputs(
                         m_InputHandler.GetAimInputDown(),
                         m_InputHandler.GetAimInputHeld(),
                         m_InputHandler.GetAimInputReleased(),
                         IsAiming);
-                }
-                // handle shooting
-   
-
-                // Handle accumulating recoil
-                if (hasFired)
-                {
-                    m_AccumulatedRecoil += Vector3.back * activeWeapon.RecoilForce;
-                    m_AccumulatedRecoil = Vector3.ClampMagnitude(m_AccumulatedRecoil, MaxRecoilDistance);
                 }
             }
 
@@ -269,18 +260,11 @@ namespace Unity.FPS.Gameplay
                 }
 
                 //为了不那么反直觉，双持武器时，右键发射右手主武器
-                bool hasFired = activeSecWeapon.HandleShootInputs(
+                activeSecWeapon.HandleShootInputs(
                     m_InputHandler.GetFireInputDown(),
                     m_InputHandler.GetFireInputHeld(),
                     m_InputHandler.GetFireInputReleased(),
                     IsAiming);
-
-                // Handle accumulating recoil
-                if (hasFired)
-                {
-                    m_AccumulatedRecoil += Vector3.back * activeSecWeapon.RecoilForce;
-                    m_AccumulatedRecoil = Vector3.ClampMagnitude(m_AccumulatedRecoil, MaxRecoilDistance);
-                }
             }
 
         }
@@ -994,19 +978,30 @@ namespace Unity.FPS.Gameplay
         #endregion
 
         #region 事件
-        void OnWeaponSwitched(WeaponPlayerController newWeapon,bool isSec=false)
+        void OnWeaponSwitched(WeaponPlayerController newWeapon, bool isSec = false)
         {
             if (newWeapon != null)
             {
                 //Debug.LogWarning("切换到新武器"+newWeapon);
                 SetWeaponState(newWeapon, true);
 
-                m_fullIk.solver.leftHandEffector.target = newWeapon.LHand;
-                m_fullIk.solver.rightHandEffector.target = newWeapon.RHand;
-                m_fullIk.solver.leftHandEffector.positionWeight = newWeapon.LHand ? 1 : 0;
-                m_fullIk.solver.rightHandEffector.positionWeight = newWeapon.RHand ? 1 : 0;
-                m_fullIk.solver.leftHandEffector.rotationWeight = newWeapon.LHand ? 1 : 0;
-                m_fullIk.solver.rightHandEffector.rotationWeight = newWeapon.RHand ? 1 : 0;
+                if (isSec)
+                {
+                    // 副武器（左手武器）：只设置左手 IK，不覆盖主武器的右手 IK
+                    m_fullIk.solver.leftHandEffector.target = newWeapon.LHand;
+                    m_fullIk.solver.leftHandEffector.positionWeight = newWeapon.LHand ? 1 : 0;
+                    m_fullIk.solver.leftHandEffector.rotationWeight = newWeapon.LHand ? 1 : 0;
+                }
+                else
+                {
+                    // 主武器：设置左右手 IK（单手持或双手持都会完整设置）
+                    m_fullIk.solver.leftHandEffector.target = newWeapon.LHand;
+                    m_fullIk.solver.rightHandEffector.target = newWeapon.RHand;
+                    m_fullIk.solver.leftHandEffector.positionWeight = newWeapon.LHand ? 1 : 0;
+                    m_fullIk.solver.rightHandEffector.positionWeight = newWeapon.RHand ? 1 : 0;
+                    m_fullIk.solver.leftHandEffector.rotationWeight = newWeapon.LHand ? 1 : 0;
+                    m_fullIk.solver.rightHandEffector.rotationWeight = newWeapon.RHand ? 1 : 0;
+                }
 
                 //newWeapon.LHand.parent = transform;
                 //newWeapon.RHand.parent = transform;
@@ -1098,9 +1093,18 @@ namespace Unity.FPS.Gameplay
 
 
 
-        void _OnShoot(WeaponBaseController weapon) {
-            OnShoot?.Invoke(weapon as WeaponPlayerController);
-            if (GameRoot.GameState == GameStateEnum.Game && !string.IsNullOrEmpty(weapon.name) && weapon.name!="信号枪") BattleManager.Instance.AddBattleDataItem(m_PlayerCharacterController.PlayerIndex, "开火次数");
+        void _OnShoot(WeaponBaseController weapon)
+        {
+            var wpc = weapon as WeaponPlayerController;
+            OnShoot?.Invoke(wpc);
+            if (GameRoot.GameState == GameStateEnum.Game && !string.IsNullOrEmpty(weapon.name) && weapon.name!="信号枪")
+                BattleManager.Instance.AddBattleDataItem(m_PlayerCharacterController.PlayerIndex, "开火次数");
+
+            if (wpc != null)
+            {
+                m_AccumulatedRecoil += Vector3.back * wpc.RecoilForce;
+                m_AccumulatedRecoil = Vector3.ClampMagnitude(m_AccumulatedRecoil, MaxRecoilDistance);
+            }
         }
         #endregion
     }

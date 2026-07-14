@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using Core;
+using FPSGame.Attribute;
 using PEMaths;
-
+using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 
@@ -23,33 +24,34 @@ namespace Unity.FPS.Game
 
         private Dictionary<string, AttrInfo> m_Parameter;
 
+        [Foldout("点位和信息", true)]
+        [InspectorName("属性调试")]
+        [TextArea(3, 10)]
+        [SerializeField]
+        private string _showAttrInfo;
 
         [Foldout("点位和信息", true)]
         [TextArea(3,5)]
         public string desc;
 
         [Foldout("升级", true)]
-        [Header("重命名属性")]
+        [InspectorName("重命名属性")]
         //[InspectorName("重命名属性")]
         //[SerializeField]
         //private DisplayDic<WeaponAttrType, string> m_Rename;
-        [SerializeField]
-        private List<RenameAttrData> m_RenameAttr;
+        //[SerializeField]
+        public List<RenameAttrData> m_RenameAttr;
 
-
-        [Header("显示的属性")]
         [InspectorName("显示的属性")]
         [SerializeField]
         List<WeaponAttrType> showAttr;
 
-        [Header("专有属性")]
-        //[InspectorName("专有属性")]
+        [InspectorName("专有属性(必须在这里吧可能出现的特色属性都注册了!)")]
         [SerializeField]
         private List<UniqueAttrData> m_UniqueAttr;
 
 
-        [Header("改装")]
-
+        [InspectorName("改装")]
         [SerializeField]
         private List<KVP<int,List<WeaponUpgradeData_SO>>> Upgrade;
 
@@ -60,16 +62,22 @@ namespace Unity.FPS.Game
 
         public WeaponModuleData_SO SetModule(int index)
         {
-            if(Tool.In(index, -1, Modules.Count))
+            if (Modules.Count == 0)
             {
-                ApplyModule(Modules.FindIndex(item=>item==ActiveModule), index);
+                Debug.LogError("武器" + WeaponName + "没有可用模组");
+                return null;
+            }
+            if (Tool.In(index, -1, Modules.Count))
+            {
+                int oldIndex = Modules.FindIndex(item => item == ActiveModule);
+                ApplyModule(oldIndex >= 0 ? oldIndex : 0, index);
+                RefreshDebugAttrInfo();
                 return ActiveModule = Modules[index];
             }
             else
             {
-                Debug.LogError("武器"+WeaponName+"设置的模组下标越界"+index);
-                ApplyModule(Modules.FindIndex(item => item == ActiveModule), 0);
-                return ActiveModule = Modules[0];
+                Debug.LogError("武器" + WeaponName + "设置的模组下标越界" + index);
+                return ActiveModule;
             }
         }
 
@@ -80,18 +88,27 @@ namespace Unity.FPS.Game
         /// <param name="module"></param>
         public void ApplyUpgrade(int[] select,int module)
         {
-            m_Parameter = new();
+            if (m_Parameter == null)
+            {
+                m_Parameter = new Dictionary<string, AttrInfo>();
+            }
+            else
+            {
+                m_Parameter.Clear();
+            }
             for (var i = 0; i < showAttr.Count; ++i)
             {
                 var item = showAttr[i];
                 var name = GetAttrName(item);
-                if(string.IsNullOrEmpty(name))Debug.LogError("错误"+""+item+"转为的name为空");
+                if(string.IsNullOrEmpty(name))Debug.LogError("错误" + item + "转为的name为空");
                 m_Parameter[name] = NewAttr(item, name);
             }
             //额外属性是直接新建的不入cfg
-            m_UniqueAttr.ForEach(item => {
-                m_Parameter[item.name] = new AttrInfo(item.name,item.value,item.tag);
-            });
+            for (int i = 0; i < m_UniqueAttr.Count; ++i)
+            {
+                var item = m_UniqueAttr[i];
+                m_Parameter[item.name] = new AttrInfo(item.name, item.value, item.tag);
+            }
 
             for (int i = 0; i < select.Length; ++i)
             {
@@ -99,11 +116,13 @@ namespace Unity.FPS.Game
             }
             if (Modules.IsValid() && Modules.Count > 0)
             {
+                int oldIndex = Modules.FindIndex(item => item == ActiveModule);
                 ActiveModule = Modules[module];
-                ApplyModule(0, module);
+                ApplyModule(oldIndex >= 0 ? oldIndex : 0, module);
             }
 
             WeaponUniqueAttributeApplier.Apply(this, m_Parameter);
+            RefreshDebugAttrInfo();
         }
 
 
@@ -128,57 +147,72 @@ namespace Unity.FPS.Game
         {
             foreach (var item in data)
             {
-                if (item.type== WeaponAttrType.Special)
+                if (item.type == WeaponAttrType.Special)
                 {
-                    if (isAdd)
+                    if(m_Parameter.TryGetValue(GetModifyDataName(item),out var info))
                     {
-                        m_Parameter.TryAdd(GetModifyDataName(item), NewAttr(item.type,GetAttrName(item.type)));
+                        info.Modify(item.modifier, (isAdd ? 1 : -1) * item.value);
+                        info.ResetChangeValue();
                     }
                     else
                     {
-                        m_Parameter.Remove(GetModifyDataName(item));
+                        Debug.LogError($"在属性字典里面没有找到自定义属性{GetModifyDataName(item)}");
                     }
                 }
                 else
                 {
-                    //在try中就加上了可能添加的属性，这里是一定有的
-                    m_Parameter[GetModifyDataName(item)].Modify(item.modifier, (isAdd ? 1 : -1) * item.value);
-                    /*
+                    ////在try中就加上了可能添加的属性，这里是一定有的
+                    //m_Parameter[GetModifyDataName(item)].Modify(item.modifier, (isAdd ? 1 : -1) * item.value);
+                    
                     //这里是可能存在不在字典的情况的，原展示属性里面没有，但是模组加上
                     if (!m_Parameter.TryGetValue(GetModifyDataName(item),out var para))
                     {
                         para = new(this, item.type, GetModifyDataName(item));
                         m_Parameter.Add(GetModifyDataName(item), para);
+                        Debug.Log($"新建了基础属性{item.type} {GetModifyDataName(item)}");
                     }
                     para.Modify(item.modifier, (isAdd ? 1 : -1) * item.value);
-                    */
+                    para.ResetChangeValue();
+                    
                 }
+                    
+                
             }
         }
 
         /// <summary>
         /// 显示武器界面右下角的参数
         /// </summary>
-        /// <param name="info">名称,类型,是否是原始值,是否受影响/param>
+        /// <param name="info">名称,类型,是否是原始值,是否受影响</param>
         public void ShowText(out List<(string,string,bool,bool)> info)
         {
-            List<(string, string, bool, bool)> special=new();
-            info = new();
+            var normal = new List<(string, string, bool, bool)>();
+            var textOnly = new List<(string, string, bool, bool)>();
 
-            var list = m_Parameter.GetKeys();
-            for (var i = 0; i < m_Parameter.Count; ++i)
+            foreach (var kvp in m_Parameter)
             {
-                var re = m_Parameter[list[i]];
-                if (re.typeEnum == WeaponAttrType.Special&&re.Value==0)
+                var re = kvp.Value;
+                var name = kvp.Key;
+                if (re.typeEnum == WeaponAttrType.Special && re.Value == 0 && re.ChangeValue == 0)
                 {
-                    special.Add(new(list[i],"",true,false));
+                    continue;
                 }
-                else if (!re.IsHide())
+                if (re.HasFlag(AttrTag.TextOnly))
                 {
-                    info.Add(new(list[i], re.ToString(), re.ChangeValue != re.PrimeValue,re.ChangeValue!= re.Value));
+                    if (re.ChangeValue > 0)
+                        //Item3=true表示预览新增(绿色)，false表示已拥有(青色)
+                        textOnly.Add(new(name, "+", re.Value == 0, false));
+                    else if (re.Value > 0)
+                        textOnly.Add(new(name, "-", false, false));
+                    continue;
+                }
+                if (!re.IsHide())
+                {
+                    normal.Add(new(name, re.ToString(), re.ChangeValue != re.PrimeValue, re.ChangeValue != re.Value));
                 }
             }
-            info.AddRange(special);
+            normal.AddRange(textOnly);
+            info = normal;
         }
 
         public WeaponUpgradeData_SO GetUpgrade(int y,int x)
@@ -212,14 +246,14 @@ namespace Unity.FPS.Game
             }
             else
             {
-                return type.GetEnumString();
+                return type.GetEnumString().TrimStartPrefix();
             }
             
         }
         
         private string GetModifyDataName(ModifyAttrData data)
         {
-            return string.IsNullOrEmpty(data.name) ? GetAttrName(data.type) : data.name;
+            return data.type!= WeaponAttrType.Special ||string.IsNullOrEmpty(data.name) ? GetAttrName(data.type) : data.name;
         }
 
 
@@ -244,20 +278,49 @@ namespace Unity.FPS.Game
                 }
             }
 
-            var list = m_Parameter.GetKeys();
-            for (var i = 0; i < list.Length; ++i)
+            foreach (var kvp in m_Parameter)
             {
-                var baseItem = m_Parameter[list[i]];
+                var key = kvp.Key;
+                var baseItem = kvp.Value;
 
                 bool have = false;
                 ModifyAttrData oldValue = default, newValue = default;
-                have |= oldUpAttrDic.TryGetValue(list[i], out oldValue);
-                have |= newUpAttrDic.TryGetValue(list[i], out newValue);
+                have |= oldUpAttrDic.TryGetValue(key, out oldValue);
+                have |= newUpAttrDic.TryGetValue(key, out newValue);
                 //两个里面起码得有一个具有这个属性
                 if (have) baseItem.TryModify(oldValue, newValue);
                 else baseItem.ResetChangeValue();
             }
             //ShowText(out var info);
+            RefreshDebugAttrInfo();
+        }
+
+        /// <summary>重置所有属性的ChangeValue到当前Value，确保基线干净</summary>
+        public void ResetAllChangeValues()
+        {
+            if (m_Parameter == null) return;
+            foreach (var kvp in m_Parameter)
+            {
+                kvp.Value.ResetChangeValue();
+            }
+        }
+
+        /// <summary>
+        /// 刷新属性调试信息
+        /// </summary>
+        private void RefreshDebugAttrInfo()
+        {
+            if (m_Parameter == null)
+            {
+                _showAttrInfo = "(null)";
+                return;
+            }
+            var sb = new System.Text.StringBuilder();
+            foreach (var kvp in m_Parameter)
+            {
+                sb.AppendLine($"{kvp.Key}: Value={kvp.Value.Value:F2}, ChangeValue={kvp.Value.ChangeValue:F2}");
+            }
+            _showAttrInfo = sb.ToString();
         }
 
         /// <summary>
@@ -270,7 +333,11 @@ namespace Unity.FPS.Game
             //2.射程公式: R = (v0*v0* sin(2θ)) / g，其中θ=45°时简化为v0*v0/g
             //结合12:R=2*V0x*v0x/g
             var data = CurrentDamgeData;
-            return 2*(data.Speed * data.Speed) / data.Gravity;
+            if (data.Gravity == 0)
+            {
+                return float.MaxValue;
+            }
+            return 2 * (data.Speed * data.Speed) / data.Gravity;
         }
 
         [System.Serializable]
@@ -294,6 +361,7 @@ namespace Unity.FPS.Game
 
             public AttrInfo(WeaponPlayerController weapon, WeaponAttrType type,string name)
             {
+                //Debug.LogError($"创建属性info{type} {name}");
                 typeEnum = type;
                 attr = weapon.cfg[type];
                 tag = WeaponAttributeFactory.GetTag(type);
@@ -303,9 +371,10 @@ namespace Unity.FPS.Game
 
             public AttrInfo(string name,float value, AttrTag flag)
             {
+                //Debug.LogError($"创建自定义属性info{name}");
                 typeEnum = WeaponAttrType.Special;
                 attr = new GameAttribute(new(value),flag, ModifierType.All);
-                tag = flag;
+                tag = flag| AttrTag.DefaultHide;
                 this.name = name;
                 ChangeValue = value;
             }
@@ -324,6 +393,7 @@ namespace Unity.FPS.Game
 
             public bool IsHide()
             {
+                if (HasFlag(AttrTag.IsHide)) return true;
                 if (HasFlag(AttrTag.DefaultHide))
                 {
                     return Value == attr.PrimeValue.RawFloat && ChangeValue == Value;
@@ -342,8 +412,8 @@ namespace Unity.FPS.Game
                 var fv = Value;
                 if (HasFlag(AttrTag.Reciprocal))
                 {
-                    cv = 1 / cv;
-                    fv = 1 / fv;
+                    cv = cv != 0 ? 1 / cv : float.MaxValue;
+                    fv = fv != 0 ? 1 / fv : float.MaxValue;
                 }
                 if (HasFlag(AttrTag.Percentage))
                 {
@@ -354,15 +424,15 @@ namespace Unity.FPS.Game
                     }
                     else
                     {
-                        cv = Tool.Round(cv/ PrimeValue * 100);
-                        fv = Tool.Round(fv/ PrimeValue * 100);
+                        cv = Tool.Round(cv * 100);
+                        fv = Tool.Round(fv * 100);
                     }
                     
                 }
 
-                if (cv != fv)
+                var diff = Tool.Round(cv - fv);
+                if (diff != 0)
                 {
-                    var value = cv - fv;
                     Color Positive = new(0.2f, 1, 0.2f), Negative = new(1, 0.2f, 0.2f);
                     if (HasFlag(AttrTag.FlipPlus))
                     {
@@ -371,12 +441,13 @@ namespace Unity.FPS.Game
                         Positive = tmp;
                     }
                     re = string.Format("<color=#{1}>{0}{2}</color>",
-                        value > 0 ? "+" : "", 
-                        ColorUtility.ToHtmlStringRGB(value > 0 ? Positive : Negative),
-                        Tool.Round(value) + (HasFlag(AttrTag.Percentage) ? "%" : ""));
+                        diff > 0 ? "+" : "", 
+                        ColorUtility.ToHtmlStringRGB(diff > 0 ? Positive : Negative),
+                        diff + (HasFlag(AttrTag.Percentage) ? "%" : ""));
                 }
                 var baseString = (Tool.Round(cv).ToString() + (HasFlag(AttrTag.Percentage) ? "%" : ""));
-                re += baseString.PadLeft(15-Tool.TextLength(baseString,2,1,0.5f,2));
+                var padWidth = Mathf.Max(0, 15 - Tool.TextLength(baseString, 2, 1, 0.5f, 2));
+                re += baseString.PadLeft(padWidth);
                
                 return re;
             }
@@ -389,14 +460,13 @@ namespace Unity.FPS.Game
 
             public void TryModify(ModifyAttrData oldData,ModifyAttrData newData)
             {
-                Debug.LogError(oldData.type+"旧修饰类型" + oldData.modifier + "值" + oldData.value);
-                Debug.LogError("新修饰类型" + newData.modifier + " " + newData.value);
-                Modify(oldData.modifier, -oldData.value);//-10
-                Modify(newData.modifier, newData.value);//+0
+                Modify(oldData.modifier, -oldData.value);
+                Modify(newData.modifier, newData.value);
                 ChangeValue = Value;
-                Modify(oldData.modifier, oldData.value);//-10
-                Modify(newData.modifier, -newData.value);//+0
+                Modify(oldData.modifier, oldData.value);
+                Modify(newData.modifier, -newData.value);
             }
+            
             public void ResetChangeValue()
             {
                 ChangeValue = Value;
@@ -405,19 +475,21 @@ namespace Unity.FPS.Game
         }
 
     }
-
+    //[Singleline]
     [System.Serializable]
     public struct ModifyAttrData
     {
         [InspectorName("名称")]
-        [Compare("type", (int)WeaponAttrType.Special, CompareOperate.Equal)]
+        //[Compare("type", (int)WeaponAttrType.Special, CompareOperate.Equal)]
         public string name;
         [InspectorName("类型")]
         public WeaponAttrType type;
+        [InspectorName("修正")]
         public ModifierType modifier;
+        [InspectorName("值")]
         public float value;
     }
-
+    [Singleline]
     [System.Serializable]
     public struct UniqueAttrData
     {
@@ -427,6 +499,7 @@ namespace Unity.FPS.Game
         public AttrTag tag;
     }
 
+    [Singleline]
     [System.Serializable]
     public struct RenameAttrData
     {

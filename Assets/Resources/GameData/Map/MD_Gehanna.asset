@@ -17,18 +17,23 @@ MonoBehaviour:
   - name: "\u5730\u4E0B\u9ED1\u5E02"
     pos: {x: 180, y: 150}
     enemyVarietyType: 0
+    terrainType: 4
   - name: "\u98CE\u7EAA\u59D4\u5458\u4F1A\u9057\u5740"
     pos: {x: 60, y: -30}
     enemyVarietyType: 0
+    terrainType: 3
   - name: "\u5E0C\u8BFA\u59C6\u706B\u5C71"
     pos: {x: -200, y: 65}
     enemyVarietyType: 0
+    terrainType: 1
   - name: "\u683C\u8D6B\u5A1C\u7B2C1\u673A\u573A"
     pos: {x: -50, y: 220}
     enemyVarietyType: 3
+    terrainType: 0
   - name: "\u65E0\u6CD5\u5730\u5E26"
     pos: {x: -35, y: -200}
     enemyVarietyType: 3
+    terrainType: 6
   AreaDesc: "\"\u51EF\u6492\u96C6\u56E2\"\u6CBB\u4E0B\u7684\u4F01\u4E1A\u90FD\u5E02\u3002\u66FE\u7ECF\u7684\u57FA\u6C83\u6258\u65AF\u4E09\u5927\u5B66\u9662\u4E4B\u4E00\u3002\n\u5C3D\u7BA1\u51EF\u6492\u5F97\u5230\u4E86\u5176\u540D\u4E49\u4E0A\u7684\u7EDF\u6CBB\u6743\uFF0C\u4F46\u7531\u4E8E\u683C\u9ED1\u90A3\u8FC7\u4E8E\u6DF7\u4E71\u4E0E\u65E0\u5E8F\uFF0C\u957F\u671F\u5904\u4E8E\u52A8\u8361\u7684\u72B6\u6001\u3002"
   AreaBackground: {fileID: 21300000, guid: 68b245c58b3e5c84381ee5c12a2c083e, type: 3}
   Icon: {fileID: 21300000, guid: 36f7f64a6c0c406438da5398507da4f4, type: 3}
@@ -49,3 +54,16 @@ MonoBehaviour:
     Value: 5
   - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a, type: 3}
     Value: 5
+  TerrainItem:
+  - diffuseTexture: {fileID: 2800000, guid: 3e7f04fb425d2a74187a712860f69cda, type: 3}
+    tileSize: {x: 5, y: 8}
+  - diffuseTexture: {fileID: 2800000, guid: 3e7f04fb425d2a74187a712860f69cda, type: 3}
+    tileSize: {x: 16, y: 16}
+  - diffuseTexture: {fileID: 2800000, guid: fc0a2752338f60941a852ca02a7cfc7f, type: 3}
+    tileSize: {x: 32, y: 32}
+  - diffuseTexture: {fileID: 2800000, guid: d9194ddd69f2d4049b638601c871a997, type: 3}
+    tileSize: {x: 4, y: 4}
+  - diffuseTexture: {fileID: 2800000, guid: 883f3f610503acb40bf37c771c24b342, type: 3}
+    tileSize: {x: 8, y: 8}
+  - diffuseTexture: {fileID: 2800000, guid: 21c84cd87fa42c74fa57a0ff67df14e3, type: 3}
+    tileSize: {x: 20, y: 20}

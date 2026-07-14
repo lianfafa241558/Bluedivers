@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Core;
 using Core.Interface;
+using FPSGame.Attribute;
 using FPSGame.Furn;
 
 using Unity.FPS.Game;
@@ -21,7 +22,7 @@ public class Furniture_Base : Furniture_Attached, IFurniture, I_Entity
 
     public new string Id;
     [InspectorName("头像")]
-    public new Sprite Portrait;
+    public Sprite Portrait;
     [InspectorName("额外图标")]
     public Sprite ExtraPortrait;
 

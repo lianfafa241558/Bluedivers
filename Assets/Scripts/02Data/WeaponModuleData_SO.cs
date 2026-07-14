@@ -1,6 +1,6 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
-
+using FPSGame.Attribute;
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -12,11 +12,12 @@ namespace Unity.FPS.Game
         public new string name;
         [InspectorName("模组类型")]
         public ModuleType type;
+        [SpritePreview(3,3)]
         public Sprite icon;
 
-        public List<KVP<bool, string>> desc;
+        public List<SKVP<bool, string>> desc;
 
-        [Header("修改属性")]
+        [InspectorName("修改属性")]
         public List<ModifyAttrData> modifys;
 
 

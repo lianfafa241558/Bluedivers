@@ -27,7 +27,7 @@ public static class GameMenuUtil
 
         var health = go.GetComponent<HealthOther>();
         health.MainPart = damageData;
-        go.AddComponent<EnemyFXControllerBuilding>();
+        go.AddComponent<BuildingFXController>();
     }
 
     /// <summary>

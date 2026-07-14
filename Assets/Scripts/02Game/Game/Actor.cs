@@ -7,6 +7,7 @@ using Core;
 using GameContract;
 using UnityEngine.AI;
 using System.Collections;
+using FPSGame.Attribute;
 
 namespace Unity.FPS.Game
 {
@@ -232,7 +233,7 @@ namespace Unity.FPS.Game
                     BattleEventSub.EnemyCreate(this);
                     break;
                 case UnitTypeEnum.Player:
-                    Debug.LogError("创建了玩家"+this.gameObject,this.gameObject);
+                    Debug.Log("创建了玩家"+this.gameObject,this.gameObject);
                     GlobalEventSub.PlayerCreate(this);
                     break;
                 case UnitTypeEnum.Friend:

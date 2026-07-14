@@ -1,3 +1,4 @@
+using FPSGame.Attribute;
 using UnityEditor;
 using UnityEngine;
 

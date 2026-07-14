@@ -13,6 +13,8 @@ namespace Unity.FPS.Gameplay
     /// </summary>
     public class ProjectileMine : ProjectileBase
     {
+        private const float _waitTime = 2;
+
         [Header("通用")]
         [InspectorName("根部变换")]
         public Transform Root;
@@ -27,6 +29,7 @@ namespace Unity.FPS.Gameplay
         Health m_health;
         Collider m_collider;
         LimitedLife m_limitedLife;
+        float m_creatTime;
         void OnEnable()
         {
             m_health = GetComponent<Health>();
@@ -38,6 +41,7 @@ namespace Unity.FPS.Gameplay
             m_health.OnDie += Explosion;
             OnShoot += _OnShoot;
             OnHit += HitFX;
+            m_creatTime= Time.time;
         }
         
         private void OnDisable()
@@ -56,6 +60,7 @@ namespace Unity.FPS.Gameplay
 
         void Update()
         {
+            if (Time.time < m_creatTime + _waitTime) return;
             TryHit();
         }
 
@@ -70,8 +75,8 @@ namespace Unity.FPS.Gameplay
                 {
                     //Explosion();
                     //如果直接炸会因为死了再炸一次造成两次伤害
-                    Release();
-                    //m_health.Kill();
+                    m_health.Kill();
+                    //Release();
                     break;
                 }
             }

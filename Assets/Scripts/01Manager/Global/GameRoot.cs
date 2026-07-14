@@ -34,6 +34,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
             if (oldState != value)
             {
                 Instance.gameState = value;
+                Debug.LogWarning("游戏状态被设置为" + value);
                 GlobalEventSub.SceneChange(oldState, value);
             }
         }

@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Core;
+using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 
@@ -39,8 +40,10 @@ namespace Unity.FPS.Game {
     /// </summary>
     public class WeaponBaseController : LogicBehaviour
     {
-        public event UnityAction<ProjectileBase> OnBulletShoot;
-        public event UnityAction<WeaponBaseController> OnShoot;
+        //给子类继承来控制每一发子弹的
+        protected event UnityAction<ProjectileBase> OnBulletShoot;
+        /// <summary> 每"次"射击，多弹丸和齐射也一样只触发一次 </summary>
+        public UnityAction<WeaponBaseController> OnShoot;
         public event UnityAction<WeaponBaseController,bool> OnWantShootChange;
 
 
@@ -112,6 +115,24 @@ namespace Unity.FPS.Game {
         protected AudioClip ContinuousShootEndSfx;
 
         protected AudioSource m_ContinuousShootAudioSource = null;
+
+        #endregion
+
+        #region 热量系统
+
+        /// <summary>当前热量 (0-100)</summary>
+        [SerializeField]
+        [InspectorName("当前热量")]
+        private float _currentHeat;
+
+        /// <summary>是否过热</summary>
+        public bool IsOverheated { get; private set; }
+
+        /// <summary>散热冷却计时器</summary>
+        private float _coolTimer;
+
+        /// <summary>过热持续时间计时器</summary>
+        private float _overheatTimer;
 
         #endregion
 
@@ -228,6 +249,7 @@ namespace Unity.FPS.Game {
         protected virtual void Update()
         {
             UpdateContinuousShootSound();
+            UpdateHeatSystem();
         }
 
         public override void LogicTick()
@@ -296,6 +318,11 @@ namespace Unity.FPS.Game {
         /// <returns></returns>
         protected virtual void HandleShoot()
         {
+            // 过热时不能射击
+            if (IsOverheated)
+            {
+                return;
+            }
 
             //发射数量，如果以后做了蓄力会更多弹丸数量再说
             int bulletsPerShotFinal = AttrFinal(Attr.BulletsPerShot,1).RawInt;
@@ -325,6 +352,21 @@ namespace Unity.FPS.Game {
                 PlaySFX(ShootSfx);
             }
             OnShoot?.Invoke(this);
+
+            // 热量系统：每次射击增加热量，蓄力武器受蓄力热量倍率影响
+            var heatPerShot = AttrFinal(Attr.HeatPerShot).RawFloat;
+            if (heatPerShot > 0f)
+            {
+                var chargeHeatScale = PEMath.Lerp(1, AttrFinal(Attr.ChargeHeatScale, 1), WeaponChargeScale_D);
+                _currentHeat += heatPerShot * chargeHeatScale.RawFloat;
+                _coolTimer = AttrFinal(Attr.CoolDelay).RawFloat;
+                if (_currentHeat >= 100f)
+                {
+                    _currentHeat = 100f;
+                    IsOverheated = true;
+                    _overheatTimer = AttrFinal(Attr.OverheatDuration).RawFloat;
+                }
+            }
         }
 
         protected void ShootFlash(Transform point)
@@ -367,6 +409,47 @@ namespace Unity.FPS.Game {
         {
             HandleShoot();
         }
+        #endregion
+
+        #region 热量系统
+
+        /// <summary>
+        /// 更新热量散热逻辑
+        /// </summary>
+        private void UpdateHeatSystem()
+        {
+            if (IsOverheated)
+            {
+                // 过热期间热量线性归零，时间到才解除过热
+                _overheatTimer -= Time.deltaTime;
+                if (_overheatTimer <= 0f)
+                {
+                    _currentHeat = 0f;
+                    IsOverheated = false;
+                }
+                else
+                {
+                    var totalDuration = AttrFinal(Attr.OverheatDuration).RawFloat;
+                    if (totalDuration > 0f)
+                    {
+                        _currentHeat = 100f * (_overheatTimer / totalDuration);
+                    }
+                }
+            }
+            else if (_coolTimer > 0f)
+            {
+                _coolTimer -= Time.deltaTime;
+            }
+            else if (_currentHeat > 0f)
+            {
+                _currentHeat -= AttrFinal(Attr.CoolSpeed).RawFloat * Time.deltaTime;
+                if (_currentHeat <= 0f)
+                {
+                    _currentHeat = 0f;
+                }
+            }
+        }
+
         #endregion
     }
 

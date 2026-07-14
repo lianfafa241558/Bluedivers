@@ -1,6 +1,6 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
-
+using FPSGame.Attribute;
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -11,12 +11,13 @@ namespace Unity.FPS.Game
 
         public new string name;
         public string type;
+        [SpritePreview(3,3)]
         public Sprite icon;
         [TextArea(3, 5)]
         public string desc;
 
         [Header("费用")]
-        public List<KVP<OOPartEnum, int>> cost;
+        public List<SKVP<OOPartEnum, int>> cost = new() {new(OOPartEnum.Pyroxene,1000) };
 
         [Header("修改属性")]
         public List<ModifyAttrData> modifys;

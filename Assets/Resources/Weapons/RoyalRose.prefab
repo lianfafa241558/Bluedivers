@@ -90,11 +90,11 @@ MonoBehaviour:
     - Key: 1
       Value: 8
     - Key: 2
-      Value: 0.33
+      Value: 0.24
     - Key: 7
-      Value: 0.2
+      Value: 2
     - Key: 10
-      Value: 1
+      Value: 2.5
     - Key: 51
       Value: 1
     - Key: 52
@@ -107,6 +107,8 @@ MonoBehaviour:
       Value: 0.5
     - Key: 9
       Value: 0.5
+    - Key: 50
+      Value: 0
   ProjectilePrefab: {fileID: -2543320375086203945, guid: 3f7bc4773bb505a4e8d27b8077f9bd83,
     type: 3}
   BulletFlag: 0
@@ -119,27 +121,18 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 55
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 0.3
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 0.3
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -169,6 +162,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -186,6 +180,7 @@ MonoBehaviour:
   PlayerIndex: 0
   WeaponName: "\u7687\u5BA4\u8537\u8587"
   WeaponType: "\u7CBE\u786E\u6B65\u67AA"
+  WeaponTypeEnum: 0
   WeaponIcon: {fileID: 21300000, guid: 860383b4909acef4a876a11ee81e09b8, type: 3}
   Sight: {fileID: 1123618372036048713, guid: c42e49e158f5b29408f7c3ffde10079a, type: 3}
   ScopeGo: {fileID: 0}
@@ -197,6 +192,7 @@ MonoBehaviour:
   AimZoomRatio: 0.4
   AimOffset: {x: 0, y: 0.075, z: 0}
   playerAngle: 50
+  _showAttrInfo: 
   desc: "\u6E1A\u4F7F\u7528\u7684\u8336\u4F1A\u7684\u5236\u5F0F\u6B65\u67AA\u3002\r\n\u9020\u578B\u53E4\u6734\u4F18\u96C5\uFF0C\u4F46\u5E73\u65F6\u4EC5\u4F5C\u4E3A\u4EEA\u5F0F\u7528\u67AA\u3002\n\u5728\u88AB\u8D1D\u963F\u7279\u5229\u5207\u9010\u51FA\u4E09\u4E00\u540E,\r\n\u6E1A\u53D1\u8A93\u8981\u7528\u5B83\u6765\u6062\u590D\u5723\u4E09\u4E00\u7684\u8363\u5149\u3002"
   m_RenameAttr:
   - name: "\u7784\u51C6\u6A21\u5F0F\u79FB\u901F"
@@ -212,36 +208,32 @@ MonoBehaviour:
   Upgrade:
   - Key: 2
     Value:
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
+    - {fileID: 11400000, guid: c8099339ccac7da44b7a51951096ef04, type: 2}
+    - {fileID: 11400000, guid: ba50776a5e8b6534a85429031db5ffa8, type: 2}
   - Key: 4
     Value:
-    - {fileID: 11400000, guid: ff1c4ffaf08c0784f872d4c8dee192ef, type: 2}
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
+    - {fileID: 11400000, guid: a7d190d0937cddc45ad8f669e1a18439, type: 2}
+    - {fileID: 11400000, guid: 98ff404de436d6b4ca93566cd8decb57, type: 2}
+    - {fileID: 11400000, guid: def6fe9129106ad48885db300e4c7e58, type: 2}
   - Key: 8
     Value:
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
+    - {fileID: 11400000, guid: 89e5390393ffe844193fa393d403e5c9, type: 2}
+    - {fileID: 11400000, guid: 23c28f01818ac3147b70f576eac6daaf, type: 2}
   - Key: 12
     Value:
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
+    - {fileID: 11400000, guid: 0a63ae9141dbab842b647a7a42e1f4a1, type: 2}
+    - {fileID: 11400000, guid: a7d190d0937cddc45ad8f669e1a18439, type: 2}
   - Key: 16
     Value:
+    - {fileID: 11400000, guid: 25b941f738951c143a021fa6501de1c9, type: 2}
     - {fileID: 11400000, guid: ff1c4ffaf08c0784f872d4c8dee192ef, type: 2}
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
   Modules:
   - {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
   - {fileID: 11400000, guid: 6c266e1bfc7ec434499bab6c90516cd8, type: 2}
   - {fileID: 11400000, guid: 2bd106ea5f171a24299288258986b6c1, type: 2}
   - {fileID: 11400000, guid: ff9575d616caf9c4fa573bb2f72b2067, type: 2}
   - {fileID: 11400000, guid: c17ec4f36bc13af4793b19f205e6dabe, type: 2}
-  ActiveModule: {fileID: 0}
+  ActiveModule: {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
 --- !u!95 &4586378315149872786
 Animator:
   serializedVersion: 5

@@ -80,20 +80,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 5
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 5
+    WeaknessBonus: 0
     ExplosionInnerRange: 0.5
     ExplosionRange: 1
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 0
       Value: 1
@@ -120,6 +116,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -205,20 +202,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 7
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -245,6 +238,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -520,11 +514,11 @@ MonoBehaviour:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
   IsSeeingTarget: 0
+  obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
-  showCollider: {fileID: 0}
 --- !u!1 &310874619371631314
 GameObject:
   m_ObjectHideFlags: 0
@@ -619,6 +613,7 @@ MonoBehaviour:
   MainPart: {fileID: 310874619998118166}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
 --- !u!114 &310874619415933554
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -937,7 +932,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 45
   Duration: 0
-  MeetDetectedTime: 3
+  MeetDetectedTime: 4
   Range: 20
   tag: 2
   nowCoolTime: 0
@@ -3925,7 +3920,7 @@ MonoBehaviour:
   isWeakness: 0
   showArmorLists:
   - Key: 1
-    Value: 0.6
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -3978,7 +3973,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -4030,14 +4027,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
+  isWeakness: 1
   showArmorLists:
-  - Key: 0
-    Value: -0.2
   - Key: 1
-    Value: -0.2
-  - Key: 3
-    Value: -0.2
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor: []
@@ -4087,16 +4080,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
+  isWeakness: 1
   showArmorLists:
-  - Key: 0
-    Value: -1
   - Key: 1
-    Value: 0.5
-  - Key: 3
-    Value: -1
-  - Key: 2
-    Value: -1
+    Value: 1
   AllArmor: 0
   armorValue: 200
   LineArmor: []
@@ -4147,7 +4134,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -4298,7 +4287,7 @@ MonoBehaviour:
   isWeakness: 0
   showArmorLists:
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -4359,7 +4348,7 @@ MonoBehaviour:
   isWeakness: 0
   showArmorLists:
   - Key: 1
-    Value: 0.6
+    Value: 1
   AllArmor: 0
   armorValue: 240
   LineArmor:
@@ -4618,7 +4607,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -4836,7 +4827,7 @@ MonoBehaviour:
   isWeakness: 0
   showArmorLists:
   - Key: 1
-    Value: 0.6
+    Value: 1
   AllArmor: 0
   armorValue: 240
   LineArmor:
@@ -5074,7 +5065,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -5289,7 +5282,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -5498,7 +5493,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -5865,7 +5862,7 @@ MonoBehaviour:
   isWeakness: 0
   showArmorLists:
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:
@@ -6028,7 +6025,7 @@ MonoBehaviour:
   isWeakness: 0
   showArmorLists:
   - Key: 1
-    Value: 0.6
+    Value: 1
   AllArmor: 0
   armorValue: 150
   LineArmor:

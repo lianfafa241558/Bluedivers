@@ -1,3 +1,4 @@
+
 Shader "Environment/BigHalo"
 {
     Properties
@@ -13,7 +14,8 @@ Shader "Environment/BigHalo"
         Tags 
         {
             "RenderType" = "Background"
-            "Queue" = "Background+50"
+            //"Queue" = "Background+50"
+            "Queue" = "Transparent"
             "RenderPipeline" = "UniversalPipeline"
         }
 

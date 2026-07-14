@@ -1,5 +1,6 @@
 
 using Core;
+using FPSGame.Attribute;
 using UnityEngine;
 public enum DirectionEnum
 {

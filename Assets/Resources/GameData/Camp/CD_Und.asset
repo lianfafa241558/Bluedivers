@@ -65,14 +65,17 @@ MonoBehaviour:
           type: 3}
         weight: 100
         size: 1
-    PatrolTemplate:
-    - "\u8DF3\u866B\u5DE1\u903B\u961F"
-    - "\u8DF3\u866B\u5DE1\u903B\u961F"
-    - "\u6218\u58EB\u5DE1\u903B\u961F"
-    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-    - "\u7206\u866B\u5DE1\u903B\u961F"
-    - "\u7206\u866B\u5DE1\u903B\u961F"
-    - "\u91CD\u578B\u5DE1\u903B\u961F"
+    patrolTemplate:
+    - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
+      Value: 45
+    - Key: "\u6218\u58EB\u5DE1\u903B\u961F"
+      Value: 30
+    - Key: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u91CD\u578B\u5DE1\u903B\u961F"
+      Value: 5
+    - Key: "\u7206\u866B\u5DE1\u903B\u961F"
+      Value: 10
   - name: "\u6218\u58EB\u6A21\u677F"
     template:
     - tier: 1
@@ -111,24 +114,28 @@ MonoBehaviour:
     - tier: 4
       weight: 3
       unitWeights:
-      - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+      - unit: {fileID: 753218668971608280, guid: d0015fa88a2c09840a0f21835a998cff,
           type: 3}
         weight: 100
         size: 5
     - tier: 7
       weight: 0
       unitWeights:
-      - unit: {fileID: 7853988172940581589, guid: 626228c0ff990e144b362ba1f7dcc7a0,
+      - unit: {fileID: 7139459595067775346, guid: 92f7fe3016db3c445982d7c62334d2a6,
           type: 3}
         weight: 100
         size: 1
-    PatrolTemplate:
-    - "\u8DF3\u866B\u5DE1\u903B\u961F"
-    - "\u6218\u58EB\u5DE1\u903B\u961F"
-    - "\u6218\u58EB\u5DE1\u903B\u961F"
-    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-    - "\u91CD\u578B\u5DE1\u903B\u961F"
-    - "\u7206\u866B\u5DE1\u903B\u961F"
+    patrolTemplate:
+    - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
+      Value: 30
+    - Key: "\u6218\u58EB\u5DE1\u903B\u961F"
+      Value: 45
+    - Key: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u91CD\u578B\u5DE1\u903B\u961F"
+      Value: 5
+    - Key: "\u7206\u866B\u5DE1\u903B\u961F"
+      Value: 10
   PatrolCreatValue: 160
   patrolCfgs:
   - name: "\u6218\u58EB\u5DE1\u903B\u961F"
@@ -164,6 +171,9 @@ MonoBehaviour:
   Color: {r: 1, g: 0.45882356, b: 0.5734786, a: 1}
   Suffix: Zerg
   Desc: "\u6B8B\u4F59\u7684\u65E0\u540D\u4F17\u795E\u9020\u7269\uFF0C\u4ECD\u5728\u6267\u884C\u6700\u540E\u4E00\u6761\u6536\u5230\u7684\u6307\u4EE4:\u6BC1\u706D\u4E00\u5207\u751F\u7075\u3002"
+  NestTerrainItem:
+    diffuseTexture: {fileID: 2800000, guid: 3e7f04fb425d2a74187a712860f69cda, type: 3}
+    tileSize: {x: 4, y: 4}
   mainTypes: 0400000006000000050000000700000008000000
   extraTypes: 220000002300000024000000250000002800000029000000
   nestTypes: 640000006500000066000000

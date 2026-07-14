@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 
@@ -7,7 +8,7 @@ using UnityEngine;
 namespace Unity.FPS.Game
 {
     using Attr = WeaponAttrType;
-    public class WeaponTemporaryController : WeaponReloadController, VfxEffect
+    public class WeaponTemporaryController : WeaponReloadController, IVfxEffect
     {
 
         [Foldout("点位和信息", true)]
@@ -81,7 +82,7 @@ namespace Unity.FPS.Game
             }
 
             ResetInterval();
-
+            OnShoot?.Invoke(this);
             if (!UseContinuousShootSound)
             {
                 PlaySFX(ShootSfx);

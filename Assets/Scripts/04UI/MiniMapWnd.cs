@@ -336,7 +336,7 @@ public class MiniMapWnd : Window
     void PlayerCreat(I_Actor actor)
     {
         player = actor;
-        Debug.LogError("设置玩家"+player);
+        Debug.Log("设置玩家"+player);
         ActorPoint.Add(actor, Instantiate(PlayerPrefab, PlayerRoot).transform.GetRect());
         SetColor(ActorPoint[actor].GetChild(0), actor.Color);
         SetSprite(ActorPoint[actor].GetChild(1), actor.ExtraPortrait);
@@ -502,7 +502,7 @@ public class MiniMapWnd : Window
         {
             go = Instantiate(InterestPointPrefab, MissionPointRoot).transform.GetRect();
             go.gameObject.name = "Inter" + entity.gameObject.name;
-            Debug.LogError("添加"+ entity.Id+" "+entity.gameObject);
+            Debug.Log("添加"+ entity.Id+" "+entity.gameObject);
             ActorPoint.Add(entity, go);
             OnGenericMove(entity);
         }

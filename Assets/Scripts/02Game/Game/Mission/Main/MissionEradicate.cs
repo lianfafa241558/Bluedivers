@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 
@@ -27,7 +27,7 @@ namespace FpsGame.Mission
                 _ => 70
             };
             MaxProgress = (int)(MaxProgress * Mathf.Sqrt((int)task.difficulty) * (1 + 0.3f * task.ExtraDifficulty[2]));
-            MaxProgress /= 100;
+            //MaxProgress /= 100;
             UpdateText("消灭敌方部队", "");
             TickTime = 5;
 

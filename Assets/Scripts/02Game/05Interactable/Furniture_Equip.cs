@@ -1,4 +1,5 @@
-﻿
+
+using FPSGame.Attribute;
 using UnityEngine;
 namespace FPSGame.Furn
 {

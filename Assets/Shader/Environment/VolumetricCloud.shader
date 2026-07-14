@@ -16,6 +16,10 @@ Shader "WalkingFat/VolumetricCloud_URP_Fixed"
         _MorphSpeed ("Morph Speed", float) = 0.3
         _MorphScale ("Morph Scale", float) = 0.5
         _MorphStrength ("Morph Strength", range(0, 1)) = 0.4
+
+        [Space(15)] 
+        [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("SrcBlend", Float) = 5
+        [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("DstBlend", Float) = 10
     }
     SubShader
     {
@@ -29,7 +33,7 @@ Shader "WalkingFat/VolumetricCloud_URP_Fixed"
         Pass
         {
             Tags { "LightMode" = "UniversalForward" }
-            Blend SrcAlpha One
+       Blend[_SrcBlend][_DstBlend]
             Cull Off
             ZWrite Off
             ZClip Off
@@ -123,7 +127,7 @@ Shader "WalkingFat/VolumetricCloud_URP_Fixed"
                 skyColor *= _CloudTintColor.rgb * _CloudExposure;
                 
                 float alpha = saturate(finalDensity * 2);
-                return half4(skyColor, alpha/5);
+                return half4(skyColor, alpha);
             }
             ENDHLSL
         }

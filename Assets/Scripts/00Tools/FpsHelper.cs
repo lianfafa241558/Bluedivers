@@ -70,24 +70,24 @@ public static class FpsHelper
             //Debug.LogWarning("造成直击伤害" + damageData.GetDirectDamage(charg), collider.gameObject);
             //Debug.LogWarning(" 基础伤害" + damageData.DamageDirect, collider.gameObject);
 
-            comp.InflictDamage(comp, damageData.GetDirectDamage(charg)* damageScale, damageData.DamageGroupDirect, damageData.NoSource || !owner, owner, point);
+            comp.InflictDamage(comp, damageData.GetDirectDamage(charg)* damageScale, damageData.DamageGroupDirect, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
             
         }
          
         //爆炸
-        if (BattleManager.Instance.IsValid() && damageOuterRadius > 0)
+        if (BattleManager.Instance.IsValid() && damageData.UseExplode)
         {
             var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new());
             if (hitData.IgnoreSelf) unitList.Remove(owner.GetComponent<I_Actor>());
             var list= unitList.Select(item => item.Damageables)
                 .SelectMany(item => item)
+                .Where(item=>!item.IsExplosionImmunity())
                 .ToList();
 
             //Debug.LogWarning("范围"+ damageRange + "内的目标数量"+ list.Count);
             foreach (Damageable item in list)//每一个伤害组件
             {
-                PEInt value = 0;
-
+                PEInt value = 0; 
                 if (PEVector3.Distance((PEVector3)item.transform.position, (PEVector3)point)<= damageInnerRadius)
                 {
                     value = damageData.GetExplosionDamage(charg, 0) * damageScale;
@@ -100,9 +100,11 @@ public static class FpsHelper
                 if (value > 0)
                 {
                     //Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value + " 基础伤害" + damageData.DamageExplosion + "距离" + distance + "直击:" + (collider.gameObject == item.gameObject));
-                    item.InflictDamage(item, value, damageData.DamageGroupExplosion2, damageData.NoSource || !owner, owner, point);
+                    item.InflictDamage(item, value, damageData.DamageGroupExplosion, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
                 }
             }
+
+            //冲击波
             if (shockwave>0) {
                 foreach (var item in unitList)
                 {
@@ -116,14 +118,33 @@ public static class FpsHelper
                     }
                 }
             }
+
+
+            //地形破坏
+            if (destructe > 0)
+            {
+                TerrainUtils.ModifyHeightMap(point, (destructe / new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe / 5).RawFloat, ShapeType.Circle, false);
+            }
+
+           
+
         }
 
         //特效
         if (damageData.ImpactVfx)
         {
-            var ps = VFXManager.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
-            ps.GetComponentInChildren<VfxEffect>()?.SetOwner(owner, hitData.weapon.IsValid()?hitData.weapon.gameObject:null, collider, point);
-            ps.GetComponentInChildren<ProjectileBase>()?.Shoot(hitData.weapon);
+            if (damageData.ImpactVfx.TryGetComponent(out ProjectileBase projectile))
+            {
+                var ps = VFXManager.Creat(projectile, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default);
+                ps.GetComponentInChildren<IVfxEffect>()?.SetOwner(owner, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+                ps.GetComponentInChildren<ProjectileBase>()?.Shoot(hitData.weapon);
+            }
+            else
+            {
+                var ps = VFXManager.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
+                ps.GetComponentInChildren<IVfxEffect>()?.SetOwner(owner, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+            }
+
         }
         //音效
         if (damageData.ImpactSfx)
@@ -136,21 +157,15 @@ public static class FpsHelper
             VFXManager.Creat(damageData.Hole.IsValid() ? damageData.Hole : bulletHoles.RandomTake(), point, Quaternion.LookRotation(normal),(collider.IsValid()&& (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
         }
 
-
-        //地形破坏
-        if (destructe > 0)
-        {
-            TerrainUtils.ModifyHeightMap(point, (destructe/new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe/5).RawFloat, ShapeType.Circle,false);
-        }
-
-        if (BattleManager.Instance.IsValid()&&!hitData.data.NoSource&&(!collider.IsValid() || collider.GetComponent<I_Damagable>()==null)&& soundRadius>0)
+        //警告
+        if (BattleManager.Instance.IsValid()&&!hitData.data.NoSource && (!collider.IsValid() || collider.GetComponent<I_Damagable>() == null) && soundRadius > 0)
         {
             var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, soundRadius), TargetCfg.Enemy);
             foreach (var item in unitList)
             {
                 if (item.transform.TryGetComponent(out I_AIController physical))
                 {
-                  
+
                 }
             }
 
@@ -158,6 +173,7 @@ public static class FpsHelper
             BattleEventSub.BulletHit(owner, point);
 
         }
+
     }
 
 
@@ -191,6 +207,24 @@ public static class FpsHelper
     }
 
     public static bool HaveNavMeshAgent(NavMeshAgent navMeshAgent) => navMeshAgent && navMeshAgent.isActiveAndEnabled;
+
+
+    public static Vector3 GetNavMeshPoint(Vector3 pos)
+    {
+        // 用 TerrainUtils 获取地面高度
+        float groundHeight = TerrainUtils.WSToHeight(pos);
+        Vector3 dropPos = new Vector3(pos.x, groundHeight, pos.z);
+
+        // 用 NavMesh.SamplePosition 找最近的可用点
+        if (NavMesh.SamplePosition(dropPos, out var hit, 2f, NavMesh.AllAreas))
+        {
+            return hit.position;
+        }
+        else
+        {
+            return dropPos;
+        }
+    }
 
 
 
@@ -322,40 +356,86 @@ public static class FpsHelper
     /// </summary>
     private static Vector3 PreventUnderground(CharacterController controller, Vector3 position)
     {
-        // 从角色中心向下检测
-        Vector3 origin = position + Vector3.up * controller.height * 0.5f;
-        float maxCheckDistance = controller.height * 0.5f + 100f;
-
-        RaycastHit hit;
+        float halfHeight = controller.height * 0.5f;
+        float radius = controller.radius * 0.9f; // 用角色半径的90%，避免边缘碰撞
+        float skinWidth = 0.01f;
+        float maxCheckDistance = 100f;
         LayerMask groundMask = LayerDefinition.GroundLayers;
 
-        if (Physics.Raycast(origin, Vector3.down, out hit, maxCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
-        {
-            // 检查是否卡进地下（地面距离太近）
-            float groundDistance = hit.distance - controller.height * 0.5f;
+        RaycastHit hit;
 
+        // ========== 第一步：向下检测（处理正常情况）==========
+        // 从角色中心稍上位置发射 SphereCast
+        Vector3 origin = position + Vector3.up * (halfHeight + radius);
+
+        if (Physics.SphereCast(
+            origin,
+            radius,
+            Vector3.down,
+            out hit,
+            maxCheckDistance,
+            groundMask,
+            QueryTriggerInteraction.Ignore))
+        {
+            // 计算地面距离
+            float groundDistance = hit.distance - halfHeight - radius;
+
+            // 如果卡进地下了（地面距离为负）
             if (groundDistance < 0)
             {
-                // 卡进地下了，修正到地上
-                float correctedY = hit.point.y + controller.height * 0.5f + 0.01f; // 加一点偏移防止抖动
+                // 修正到地面之上
+                float correctedY = hit.point.y + halfHeight + skinWidth;
                 return new Vector3(position.x, correctedY, position.z);
             }
-        }
-        else
-        {
-            // 如果没有检测到地面，检查是否在地下（从脚底向上检测）
-            origin = position + Vector3.up * 0.1f;
-            if (Physics.Raycast(origin, Vector3.up, out hit, controller.height + 100f, groundMask, QueryTriggerInteraction.Ignore))
+
+            // 如果太靠近地面，也稍微修正一下防止抖动
+            if (groundDistance < skinWidth)
             {
-                // 说明在地下，穿到地面之上
-                float correctedY = hit.point.y + controller.height * 0.5f + 0.01f;
+                float correctedY = hit.point.y + halfHeight + skinWidth;
                 return new Vector3(position.x, correctedY, position.z);
             }
+
+            //return position;
         }
 
+
+        origin = position + Vector3.up * (radius + 0.01f);
+
+        if (Physics.SphereCast(
+            origin,
+            radius,
+            Vector3.up,
+            out hit,
+            maxCheckDistance,
+            groundMask,
+            QueryTriggerInteraction.Ignore))
+        {
+            // 说明在地下，修正到地面之上
+            float correctedY = hit.point.y + halfHeight + skinWidth;
+            Debug.Log($"从地下 {position.y:F2} 修正到地面 {correctedY:F2}");
+            return new Vector3(position.x, correctedY, position.z);
+        }
+        /*
+        origin = position + Vector3.up * 100f;
+
+        if (Physics.SphereCast(
+            origin,
+            radius,
+            Vector3.down,
+            out hit,
+            200f,
+            groundMask,
+            QueryTriggerInteraction.Ignore))
+        {
+            float correctedY = hit.point.y + halfHeight + skinWidth;
+            Debug.Log($"从高空找到地面，修正到 {correctedY:F2}");
+            return new Vector3(position.x, correctedY, position.z);
+        }*/
+
+        // 真的找不到地面，返回原位置
+        Debug.LogWarning("PreventUnderground: 无法检测到地面，位置保持不变");
         return position;
     }
-
 
 
 

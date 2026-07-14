@@ -11,7 +11,9 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6ca232bd9d76084429573425d2832e2c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _MY_FOG_ENABLE
+  - _UseLight
   m_InvalidKeywords:
   - _FLOWTRANS_ON
   m_LightmapFlags: 4
@@ -39,7 +41,9 @@ Material:
     - _FlowLightSpeed: 0.5
     - _FlowTrans: 1
     - _InvFade: 1
+    - _MY_FOG_ENABLE: 1
     - _SrcBlend: 5
+    - _UseLight: 1
     - _ZWriteMode: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}

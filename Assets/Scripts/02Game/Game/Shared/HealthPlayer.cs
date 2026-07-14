@@ -1,4 +1,5 @@
-﻿using Core;
+using Core;
+using FPSGame.Attribute;
 using PEMaths;
 
 using UnityEngine;

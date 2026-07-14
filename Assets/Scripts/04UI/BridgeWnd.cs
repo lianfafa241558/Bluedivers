@@ -1,9 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
 using Core;
-
+using FPSGame.Attribute;
+using GameContract;
+using Photon.Realtime;
+using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 using static WndTools.WndRootTool;
 
 
@@ -12,7 +14,7 @@ public class BridgeWnd : Window
     [Foldout("玩家", true)]
     [SerializeField]
     private Transform selfRoot, friendRoot,
-        selfLevel,selfName,selfIcon,selfExp;
+        selfLevel,selfName,selfIcon,selfExp, selfFrame;
 
 
     [Foldout("任务",true)]
@@ -32,18 +34,18 @@ public class BridgeWnd : Window
     {
         GlobalEventSub.OnGainExp += OnGainExp;
         GlobalEventSub.OnSwitchRole += OnSwitchRole;
+        GlobalEventSub.OnSelectRolePreview += OnSelectRolePreview;
+        GlobalEventSub.OnPlayerCreate += SwitchRolePreview;
     }
 
     protected override void HideWnd()
     {
         GlobalEventSub.OnGainExp -= OnGainExp;
         GlobalEventSub.OnSwitchRole -= OnSwitchRole;
+        GlobalEventSub.OnSelectRolePreview -= OnSelectRolePreview;
+        GlobalEventSub.OnPlayerCreate -= SwitchRolePreview;
     }
 
-    void Update()
-    {
-        
-    }
 
 
 
@@ -60,6 +62,24 @@ public class BridgeWnd : Window
         ArchiveSvc.Archive.GetRoleLevel(player.Id,out int level,out float expScale);
         SetText(selfLevel, level);
         SetFill(selfExp, expScale);
+    }
+
+    private void OnSelectRolePreview(RoleData_SO data)
+    {
+        var go = resManager.LoadPrefab("StudentModle/" + data.ID);
+        SwitchRolePreview(go.GetComponent<I_Actor>());
+    }
+
+    private void SwitchRolePreview(I_Actor player)
+    {
+        SetText(selfName, player.ShowName);
+        SetSprite(selfIcon, player.Portrait);
+        SetColor(selfFrame, player.Color);
+        ArchiveSvc.Archive.GetRoleLevel(player.Id, out int level, out float expScale);
+        SetText(selfLevel, level);
+        SetFill(selfExp, expScale);
+        Color.RGBToHSV(player.Color, out var h, out var s, out var v);
+        SetColor(selfExp, Color.HSVToRGB(h, s * 0.5f, v));
     }
 
     

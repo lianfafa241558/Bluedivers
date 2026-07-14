@@ -160,7 +160,7 @@ GameObject:
   - component: {fileID: 1919249678}
   - component: {fileID: 6480810310264185121}
   - component: {fileID: 1340381673224083611}
-  - component: {fileID: 2930959803213143613}
+  - component: {fileID: 4477625876514983552}
   m_Layer: 0
   m_Name: BroadcastTower
   m_TagString: Untagged
@@ -252,6 +252,7 @@ MonoBehaviour:
   MainPart: {fileID: 994554564314660960}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 0
 --- !u!114 &1340381673224083611
 MonoBehaviour:
@@ -269,7 +270,7 @@ MonoBehaviour:
   BirthDuration: 0
   birthTime: 0
   IsRemove: 0
---- !u!114 &2930959803213143613
+--- !u!114 &4477625876514983552
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -278,10 +279,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 868765759860672841}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 143e44d708581ac4bafae0081debc465, type: 3}
+  m_Script: {fileID: 11500000, guid: 531719c9934cdc647bacfd252c11ff06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Animator: {fileID: 535495981}
+  Animator: {fileID: 0}
   BirthMaterial: {fileID: 0}
   fxDic:
     ShowSetting: 0
@@ -302,37 +303,19 @@ MonoBehaviour:
         go: []
     - Key: 4
       Value:
-        cilp: {fileID: 8300000, guid: 7329c39568a7f3e43b77ceb0b99d0918, type: 3}
-        ps: {fileID: 8950624839484268202, guid: 45ce85b82008be84287f2c7e5bf07647,
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
-        trans: {fileID: 9046822353849747673}
-        go:
-        - go: {fileID: 250251699}
-          state: 0
-          scale: 1
-        - go: {fileID: 3782099293029178414}
-          state: 0
-          scale: 1
-    - Key: 5
-      Value:
-        cilp: {fileID: 0}
-        ps: {fileID: 0}
         trans: {fileID: 0}
-        go:
-        - go: {fileID: 250251699}
-          state: 1
-          scale: 1
-        - go: {fileID: 3782099293029178414}
-          state: 1
-          scale: 1
+        go: []
     meetReset: 0
   rendererSet:
   - type: 0
     occasion: 3
-    material: {fileID: 2100000, guid: fa99c7d3a0ccf1640b5ba9d627c47b9e, type: 2}
+    material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
     colorName: 
-    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
-    switchOccasion: 2
+    defaultColor: {r: 0, g: 0, b: 0, a: 0}
+    switchOccasion: 0
     switchColor: {r: 0, g: 0, b: 0, a: 0}
     gradient:
       serializedVersion: 2
@@ -364,48 +347,10 @@ MonoBehaviour:
       m_ColorSpace: -1
       m_NumColorKeys: 4
       m_NumAlphaKeys: 2
-    duration: 0.15
-  - type: 0
-    occasion: 3
-    material: {fileID: 2100000, guid: dc0b1d40a65bf734db8e431917e027fd, type: 2}
-    colorName: 
-    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
-    switchOccasion: 2
-    switchColor: {r: 0, g: 0, b: 0, a: 0}
-    gradient:
-      serializedVersion: 2
-      key0: {r: 0, g: 0, b: 0, a: 1}
-      key1: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-      key2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
-      key7: {r: 0, g: 0, b: 0, a: 0}
-      ctime0: 0
-      ctime1: 15035
-      ctime2: 52428
-      ctime3: 65535
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
-      ctime7: 0
-      atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
-      atime5: 0
-      atime6: 0
-      atime7: 0
-      m_Mode: 0
-      m_ColorSpace: -1
-      m_NumColorKeys: 4
-      m_NumAlphaKeys: 2
-    duration: 0.15
+    duration: 0.1
   - type: 0
     occasion: 4
-    material: {fileID: 2100000, guid: b69389e857fcadf408e791fec1d24e9b, type: 2}
+    material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
     colorName: _DissolveValue
     defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
     switchOccasion: 2
@@ -439,84 +384,9 @@ MonoBehaviour:
       m_Mode: 0
       m_ColorSpace: -1
       m_NumColorKeys: 3
-      m_NumAlphaKeys: 2
-    duration: 10
-  - type: 0
-    occasion: 4
-    material: {fileID: 2100000, guid: fa99c7d3a0ccf1640b5ba9d627c47b9e, type: 2}
-    colorName: _DissolveValue
-    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
-    switchOccasion: 2
-    switchColor: {r: 0, g: 0, b: 0, a: 0}
-    gradient:
-      serializedVersion: 2
-      key0: {r: 0, g: 0, b: 0, a: 1}
-      key1: {r: 0, g: 0, b: 0, a: 1}
-      key2: {r: 1, g: 1, b: 1, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
-      key7: {r: 0, g: 0, b: 0, a: 0}
-      ctime0: 0
-      ctime1: 8867
-      ctime2: 65535
-      ctime3: 65535
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
-      ctime7: 0
-      atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
-      atime5: 0
-      atime6: 0
-      atime7: 0
-      m_Mode: 0
-      m_ColorSpace: -1
-      m_NumColorKeys: 3
-      m_NumAlphaKeys: 2
-    duration: 10
-  - type: 0
-    occasion: 4
-    material: {fileID: 2100000, guid: dc0b1d40a65bf734db8e431917e027fd, type: 2}
-    colorName: _BaseColor
-    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
-    switchOccasion: 2
-    switchColor: {r: 0, g: 0, b: 0, a: 0}
-    gradient:
-      serializedVersion: 2
-      key0: {r: 1, g: 1, b: 1, a: 1}
-      key1: {r: 0, g: 0, b: 0, a: 1}
-      key2: {r: 1, g: 1, b: 1, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
-      key7: {r: 0, g: 0, b: 0, a: 0}
-      ctime0: 0
-      ctime1: 65535
-      ctime2: 65535
-      ctime3: 65535
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
-      ctime7: 0
-      atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
-      atime5: 0
-      atime6: 0
-      atime7: 0
-      m_Mode: 0
-      m_ColorSpace: -1
-      m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     duration: 3
+  UseAttack: 0
 --- !u!1 &3782099293029178414
 GameObject:
   m_ObjectHideFlags: 0

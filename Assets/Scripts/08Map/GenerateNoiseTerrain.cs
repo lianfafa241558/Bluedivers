@@ -1,13 +1,120 @@
-﻿using System.Collections;
+using System;
+using System.Collections;
 using System.Collections.Generic;
-using Core;
+using FPSGame.Attribute;
 using Unity.AI.Navigation;
 using UnityEngine;
+using Random = UnityEngine.Random;
 namespace FpsGame.MapUtils
 {
+
+    public enum TerrainType
+    {
+        /// <summary>沙漠</summary>
+        [InspectorName("沙漠")]
+        Desert,
+        /// <summary>高原</summary>
+        [InspectorName("高原")]
+        Plateau,
+        /// <summary>雨林</summary>
+        [InspectorName("雨林")]
+        Rainforest,
+        /// <summary>丘陵</summary>
+        [InspectorName("丘陵")]
+        Hills,
+        /// <summary>盆地</summary>
+        [InspectorName("盆地")]
+        Basin,
+        /// <summary>平原</summary>
+        [InspectorName("平原")]
+        Plains,
+        /// <summary>山地</summary>
+        [InspectorName("山地")]
+        Mountains,
+    }
+
+    /// <summary>
+    /// 地形预设参数，每种 TerrainType 对应一组完整的地形生成参数
+    /// </summary>
+    [Serializable]
+    public struct TerrainPresetData
+    {
+        // ---- 分形噪声参数 ----
+        [InspectorName("基础缩放")]
+        public float baseScale;
+        [InspectorName("基础振幅")]
+        public float baseAmplitude;
+        [InspectorName("倍频数")]
+        public int octaves;
+        [InspectorName("间隙度")]
+        public float lacunarity;
+        [InspectorName("持续度")]
+        public float persistence;
+        [InspectorName("细节缩放")]
+        public float detailScale;
+        [InspectorName("细节振幅")]
+        public float detailAmplitude;
+
+        // ---- 高度重塑 ----
+        [InspectorName("高度幂次曲线")]
+        public float heightPower;
+
+        // ---- 后处理参数 ----
+        [InspectorName("高原抬升强度")]
+        public float plateauIntensity;
+        [InspectorName("高原阈值")]
+        public float plateauThreshold;
+        [InspectorName("高原噪声缩放")]
+        public float plateauMaskScale;
+        [InspectorName("边缘衰减")]
+        public float edgeDropoff;
+        [InspectorName("侵蚀迭代次数")]
+        public int erosionIterations;
+
+        // ---- 纹理映射（索引对应 TerrainLayer） ----
+        [InspectorName("沙地层索引")]
+        public int sandLayerIndex;
+        [InspectorName("草地层索引")]
+        public int grassLayerIndex;
+        [InspectorName("岩石层索引")]
+        public int rockLayerIndex;
+        [InspectorName("雪地层索引")]
+        public int snowLayerIndex;
+
+        // ---- 植被 ----
+        [InspectorName("树生成概率")]
+        public float treeProbability;
+        [InspectorName("树原型索引范围")]
+        public Vector2Int treePrototypeRange;
+        [InspectorName("树最小坡度")]
+        public float treeMinSlope;
+        [InspectorName("树最大坡度")]
+        public float treeMaxSlope;
+        [InspectorName("树最小高度")]
+        public float treeMinHeight;
+        [InspectorName("树最大高度")]
+        public float treeMaxHeight;
+
+        // ---- 细节植被 ----
+        [InspectorName("草密度")]
+        public float detailDensity;
+        [InspectorName("花密度")]
+        public float detailFlowerDensity;
+        [InspectorName("草最小坡度")]
+        public float detailMinSlope;
+        [InspectorName("草最大坡度")]
+        public float detailMaxSlope;
+        [InspectorName("草最小高度")]
+        public float detailMinHeight;
+        [InspectorName("草最大高度")]
+        public float detailMaxHeight;
+    }
+
+
     /// <summary>
     /// 生成地形，只从terraindata拿数据，和其他组件不挂钩
     /// </summary>
+
     public class GenerateNoiseTerrain : MonoBehaviour
     {
 
@@ -20,24 +127,31 @@ namespace FpsGame.MapUtils
         [InspectorName("是否在Start时自动生成地形")]
         public bool generateOnStart = true;
 
+        [InspectorName("地形类型")]
+        [SerializeField] private TerrainType _terrainType = TerrainType.Desert;
+
+        [Header("手动覆盖（仅调试用，日常请通过地形类型预设控制）")]
+        [InspectorName("覆盖预设参数")]
+        [SerializeField] private bool _overridePreset = false;
+
         [Foldout("基础地形", true)]
         [InspectorName("基础地形缩放")]
-        public float baseScale = 200f;
+        public float baseScale = 5;
         [InspectorName("基础地形高度")]
-        public float baseAmplitude = 80f;
+        public float baseAmplitude = 1f;
         [InspectorName("细节层缩放")]
-        public float detailScale = 25f;
-        public float detailAmplitude = 15f;
+        public float detailScale = 40;
+        public float detailAmplitude = 0.05f;
 
         [Foldout("高原", true)]
         [InspectorName("高原半径（占地形比例）")]
-        public float plateauRadius = 0.25f;
+        public float plateauRadius = 0f;
         [InspectorName("高原抬升强度")]
-        public float plateauIntensity = 0.5f;
+        public float plateauIntensity = 0.03f;
         [InspectorName("边缘衰减幅度")]
-        public float edgeDropoff = 0.08f;
+        public float edgeDropoff = 0.1f;
         [InspectorName("高原生成阈值")]
-        public float plateauThreshold = 0.65f;
+        public float plateauThreshold = 0.6f;
 
         // 高原形态控制参
         public float plateauMaskScale = 10;      // 主噪声尺度（控制高原基本形态）
@@ -60,20 +174,293 @@ namespace FpsGame.MapUtils
 
         //比如分辨率1024/512就是2
         private float mapscale => terrain.terrainData.heightmapResolution / terrain.terrainData.size.x;
-
         /*
-        void Awake()
+        private void Start()
         {
             if (generateOnStart && terrain != null)
             {
-                ApplyFractalNoiseToTerrain();
+                StartCoroutine(ApplyFractalNoiseToTerrain(_terrainType));
+            }
+        }*/
+
+        /// <summary>
+        /// 根据地形类型获取预设参数
+        /// </summary>
+        private TerrainPresetData GetTerrainPreset(TerrainType type)
+        {
+            switch (type)
+            {
+                case TerrainType.Desert:
+                    return new TerrainPresetData
+                    {
+                        baseScale = 5f,
+                        baseAmplitude = 1.0f,
+                        octaves = 4,
+                        lacunarity = 2.0f,
+                        persistence = 0.5f,
+                        detailScale = 40f,
+                        detailAmplitude = 0.05f,
+                        heightPower = 0.8f,
+                        plateauIntensity = 0f,
+                        plateauThreshold = 0.99f,
+                        plateauMaskScale = 10f,
+                        edgeDropoff = 0.05f,
+                        erosionIterations = 2,
+                        sandLayerIndex = 1,
+                        grassLayerIndex = -1,
+                        rockLayerIndex = 4,
+                        snowLayerIndex = -1,
+                        treeProbability = 0.03f,
+                        treePrototypeRange = new Vector2Int(0, 1),
+                        treeMinSlope = 0f,
+                        treeMaxSlope = 30f,
+                        treeMinHeight = 0.1f,
+                        treeMaxHeight = 0.7f,
+                        detailDensity = 0.02f,
+                        detailFlowerDensity = 0f,
+                        detailMinSlope = 0f,
+                        detailMaxSlope = 15f,
+                        detailMinHeight = 0f,
+                        detailMaxHeight = 0.3f
+                    };
+
+                case TerrainType.Plateau:
+                    return new TerrainPresetData
+                    {
+                        baseScale = 3f,
+                        baseAmplitude = 1.5f,
+                        octaves = 5,
+                        lacunarity = 2.5f,
+                        persistence = 0.35f,
+                        detailScale = 30f,
+                        detailAmplitude = 0.015f,
+                        heightPower = 1.2f,
+                        plateauIntensity = 0.1f,
+                        plateauThreshold = 0.5f,
+                        plateauMaskScale = 12f,
+                        edgeDropoff = 0.06f,
+                        erosionIterations = 1,
+                        sandLayerIndex = -1,
+                        grassLayerIndex = 0,
+                        rockLayerIndex = 4,
+                        snowLayerIndex = -1,
+                        treeProbability = 0.08f,
+                        treePrototypeRange = new Vector2Int(0, 3),
+                        treeMinSlope = 0f,
+                        treeMaxSlope = 40f,
+                        treeMinHeight = 0.3f,
+                        treeMaxHeight = 0.9f,
+                        detailDensity = 0.08f,
+                        detailFlowerDensity = 0.02f,
+                        detailMinSlope = 0f,
+                        detailMaxSlope = 30f,
+                        detailMinHeight = 0.25f,
+                        detailMaxHeight = 0.85f
+                    };
+
+                case TerrainType.Rainforest:
+                    return new TerrainPresetData
+                    {
+                        baseScale = 8f,
+                        baseAmplitude = 1.2f,
+                        octaves = 4,
+                        lacunarity = 2.5f,
+                        persistence = 0.4f,
+                        detailScale = 40f,
+                        detailAmplitude = 0.04f,
+                        heightPower = 1.0f,
+                        plateauIntensity = 0f,
+                        plateauThreshold = 0.99f,
+                        plateauMaskScale = 8f,
+                        edgeDropoff = 0.03f,
+                        erosionIterations = 4,
+                        sandLayerIndex = -1,
+                        grassLayerIndex = 0,
+                        rockLayerIndex = 4,
+                        snowLayerIndex = -1,
+                        treeProbability = 0.25f,
+                        treePrototypeRange = new Vector2Int(0, 5),
+                        treeMinSlope = 0f,
+                        treeMaxSlope = 50f,
+                        treeMinHeight = 0.1f,
+                        treeMaxHeight = 0.95f,
+                        detailDensity = 0.2f,
+                        detailFlowerDensity = 0.06f,
+                        detailMinSlope = 0f,
+                        detailMaxSlope = 50f,
+                        detailMinHeight = 0f,
+                        detailMaxHeight = 0.9f
+                    };
+
+                case TerrainType.Hills:
+                    return new TerrainPresetData
+                    {
+                        baseScale = 6f,
+                        baseAmplitude = 1.5f,
+                        octaves = 4,
+                        lacunarity = 2.0f,
+                        persistence = 0.5f,
+                        detailScale = 35f,
+                        detailAmplitude = 0.08f,
+                        heightPower = 1.0f,
+                        plateauIntensity = 0f,
+                        plateauThreshold = 0.99f,
+                        plateauMaskScale = 8f,
+                        edgeDropoff = 0.06f,
+                        erosionIterations = 2,
+                        sandLayerIndex = 1,
+                        grassLayerIndex = 0,
+                        rockLayerIndex = 4,
+                        snowLayerIndex = -1,
+                        treeProbability = 0.12f,
+                        treePrototypeRange = new Vector2Int(0, 3),
+                        treeMinSlope = 0f,
+                        treeMaxSlope = 35f,
+                        treeMinHeight = 0.1f,
+                        treeMaxHeight = 0.85f,
+                        detailDensity = 0.1f,
+                        detailFlowerDensity = 0.04f,
+                        detailMinSlope = 0f,
+                        detailMaxSlope = 40f,
+                        detailMinHeight = 0f,
+                        detailMaxHeight = 0.8f
+                    };
+
+                case TerrainType.Basin:
+                    return new TerrainPresetData
+                    {
+                        baseScale = 4f,
+                        baseAmplitude = 2.5f,
+                        octaves = 4,
+                        lacunarity = 2.0f,
+                        persistence = 0.45f,
+                        detailScale = 30f,
+                        detailAmplitude = 0.06f,
+                        heightPower = 2.0f,
+                        plateauIntensity = 0f,
+                        plateauThreshold = 0.99f,
+                        plateauMaskScale = 6f,
+                        edgeDropoff = 0.08f,
+                        erosionIterations = 1,
+                        sandLayerIndex = 1,
+                        grassLayerIndex = 0,
+                        rockLayerIndex = 4,
+                        snowLayerIndex = -1,
+                        treeProbability = 0.10f,
+                        treePrototypeRange = new Vector2Int(0, 3),
+                        treeMinSlope = 0f,
+                        treeMaxSlope = 40f,
+                        treeMinHeight = 0.05f,
+                        treeMaxHeight = 0.8f,
+                        detailDensity = 0.1f,
+                        detailFlowerDensity = 0.03f,
+                        detailMinSlope = 0f,
+                        detailMaxSlope = 40f,
+                        detailMinHeight = 0f,
+                        detailMaxHeight = 0.85f
+                    };
+
+                case TerrainType.Plains:
+                    return new TerrainPresetData
+                    {
+                        baseScale = 12f,
+                        baseAmplitude = 0.25f,
+                        octaves = 3,
+                        lacunarity = 2.0f,
+                        persistence = 0.4f,
+                        detailScale = 60f,
+                        detailAmplitude = 0.02f,
+                        heightPower = 0.8f,
+                        plateauIntensity = 0f,
+                        plateauThreshold = 0.99f,
+                        plateauMaskScale = 8f,
+                        edgeDropoff = 0.05f,
+                        erosionIterations = 2,
+                        sandLayerIndex = 1,
+                        grassLayerIndex = 0,
+                        rockLayerIndex = 4,
+                        snowLayerIndex = -1,
+                        treeProbability = 0.03f,
+                        treePrototypeRange = new Vector2Int(0, 2),
+                        treeMinSlope = 0f,
+                        treeMaxSlope = 10f,
+                        treeMinHeight = 0.1f,
+                        treeMaxHeight = 0.6f,
+                        detailDensity = 0.15f,
+                        detailFlowerDensity = 0.1f,
+                        detailMinSlope = 0f,
+                        detailMaxSlope = 15f,
+                        detailMinHeight = 0f,
+                        detailMaxHeight = 0.6f
+                    };
+
+                case TerrainType.Mountains:
+                    return new TerrainPresetData
+                    {
+                        baseScale = 1.5f,
+                        baseAmplitude = 12.0f,
+                        octaves = 7,
+                        lacunarity = 2.5f,
+                        persistence = 0.45f,
+                        detailScale = 20f,
+                        detailAmplitude = 0.04f,
+                        heightPower = 1.4f,
+                        plateauIntensity = 0f,
+                        plateauThreshold = 0.99f,
+                        plateauMaskScale = 6f,
+                        edgeDropoff = 0.08f,
+                        erosionIterations = 2,
+                        sandLayerIndex = -1,
+                        grassLayerIndex = 0,
+                        rockLayerIndex = 4,
+                        snowLayerIndex = -1,
+                        treeProbability = 0.02f,
+                        treePrototypeRange = new Vector2Int(0, 2),
+                        treeMinSlope = 0f,
+                        treeMaxSlope = 25f,
+                        treeMinHeight = 0f,
+                        treeMaxHeight = 0.4f,
+                        detailDensity = 0.03f,
+                        detailFlowerDensity = 0f,
+                        detailMinSlope = 0f,
+                        detailMaxSlope = 20f,
+                        detailMinHeight = 0f,
+                        detailMaxHeight = 0.35f
+                    };
+
+                default:
+                    return GetTerrainPreset(TerrainType.Desert);
             }
         }
-        */
+
+        public IEnumerator SetTextures(Texture[] Texture,Vector2[] sizes)
+        {
+            TerrainData terrainData = terrain.terrainData;
+            TerrainLayer[] layers = terrainData.terrainLayers;
+            for (int i=0;i<Mathf.Min(terrainData.terrainLayers.Length,Texture.Length); ++i)
+            {
+                TerrainLayer layer = layers[i];
+                layer.diffuseTexture = (Texture2D)Texture[i];
+                layer.tileSize = sizes[i];
+                terrainData.terrainLayers = layers;
+            }
+            yield return null;
+        }
+
+
+        /// <summary>
+        /// 应用分形噪声到地形（使用 Inspector 中设置的地形类型）
+        /// </summary>
+        public IEnumerator ApplyFractalNoiseToTerrain()
+        {
+            yield return ApplyFractalNoiseToTerrain(_terrainType);
+        }
+
         /// <summary>
         /// 应用分形噪声到地形
         /// </summary>
-        public IEnumerator ApplyFractalNoiseToTerrain()
+        /// <param name="terrainType">地形类型预设</param>
+        public IEnumerator ApplyFractalNoiseToTerrain(TerrainType terrainType)
         {
             if (terrain == null)
             {
@@ -81,57 +468,56 @@ namespace FpsGame.MapUtils
                 yield break;
             }
 
-            //Debug.LogError("开始生成地形");
             TerrainData terrainData = terrain.terrainData;
             width = terrainData.heightmapResolution;
             height = terrainData.heightmapResolution;
             size = terrain.terrainData.alphamapResolution;
             speceHeight = (int)terrain.terrainData.size.y;
-            //Debug.LogError("有效范围"+ (size-Constants.MapBorder*mapscale) + "中心/半径"+ center);
-            //Debug.LogError("贴图尺寸" + terrain.terrainData.heightmapResolution + " 地图大小" + terrain.terrainData.size);
+
+            // 获取预设参数
+            TerrainPresetData preset = GetTerrainPreset(terrainType);
+            Debug.Log($"使用地形预设: {terrainType} | 噪声层数={preset.octaves} | 树概率={preset.treeProbability}");
 
             preHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
             preTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
-            //preBaseHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
-            heightMap = terrainData.GetHeights(0, 0, width, height);//原始值0-1)
-            textureMap = terrainData.GetAlphamaps(0, 0, size, size);//原始值0-1)
+            heightMap = terrainData.GetHeights(0, 0, width, height);
+            textureMap = terrainData.GetAlphamaps(0, 0, size, size);
 
-            //Debug.LogError("贴图纹理尺寸"+ textureMap.GetLength(2));
             trees = new List<TreeInstance>();
-            //textureMap =new float[width,height,4];//原始值0-1)
-            // 测量激活阻塞
-            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-           
 
-            // 生成基础地形
-            yield return GenerateBaseTerrain();
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+
+            // 生成基础地形（fBm 分形噪声）
+            yield return GenerateBaseTerrain(preset);
             Debug.Log($"生成基础地形时间: {sw.ElapsedMilliseconds} ms");
             sw.Restart();
 
-            // 添加侵蚀效果
-            yield return ApplyErosionEffect();
-            //Debug.Log($"生成细节地形时间: {sw.ElapsedMilliseconds} ms");
-            //sw.Restart();
+            // 地形后处理（根据类型执行不同策略）
+            yield return ApplyTerrainPostProcess(preset);
+            Debug.Log($"后处理时间: {sw.ElapsedMilliseconds} ms");
+            sw.Restart();
 
-            //材质
+            // 材质
             yield return ApplyTextures();
-
             Debug.Log($"生成材质时间: {sw.ElapsedMilliseconds} ms");
             sw.Restart();
 
             // 应用高度图，分块提交，避免单帧卡顿
-            int chunkSize = 128; // 每帧提交 128x128
+            int chunkSize = 128;
             yield return ApplyHeightsInChunks(chunkSize);
             yield return null;
 
-            // 应用纹理图，分块提交
             yield return ApplyAlphamapsInChunks(chunkSize);
             yield return null;
 
             // 设置树
-            yield return SpawnTrees();
+            yield return SpawnTrees(preset);
             yield return null;
             terrainData.SetTreeInstances(trees.ToArray(), true);
+            yield return null;
+
+            // 设置草（细节）
+            yield return SpawnDetails(preset);
             yield return null;
 
             preHeight.Apply(false, false);
@@ -143,7 +529,6 @@ namespace FpsGame.MapUtils
             if (surface != null)
             {
                 var asyncOp = surface.UpdateNavMesh(surface.navMeshData);
-                // 等待异步操作完成（最多等 10 秒）
                 float timeout = Time.realtimeSinceStartup + 10f;
                 while (!asyncOp.isDone && Time.realtimeSinceStartup < timeout)
                 {
@@ -152,23 +537,51 @@ namespace FpsGame.MapUtils
                 if (!asyncOp.isDone)
                     Debug.LogWarning("NavMesh 异步构建超时，可能仍在后台进行");
             }
-            Debug.Log($"完成时间: {sw.ElapsedMilliseconds} ms");
-            sw.Restart();
-
+            Debug.Log($"完成总时间: {sw.ElapsedMilliseconds} ms");
         }
 
 
         #region 步骤
 
         /// <summary>
-        /// 基础地形
+        /// 分形布朗运动（fBm）噪声采样，替代原来的简单双层 PerlinNoise
         /// </summary>
-        IEnumerator GenerateBaseTerrain()
+        private float SampleFbmNoise(float x, float y, int octaves, float lacunarity, float persistence)
+        {
+            float value = 0f;
+            float amplitude = 1f;
+            float frequency = 1f;
+            float maxValue = 0f;
+
+            for (int i = 0; i < octaves; i++)
+            {
+                value += Mathf.PerlinNoise(x * frequency, y * frequency) * amplitude;
+                maxValue += amplitude;
+                amplitude *= persistence;
+                frequency *= lacunarity;
+            }
+
+            return value / maxValue;
+        }
+
+        /// <summary>
+        /// 生成基础地形（使用 fBm 分形噪声）
+        /// </summary>
+        IEnumerator GenerateBaseTerrain(TerrainPresetData preset)
         {
             var now = System.DateTime.Now;
-            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));//每小时刷
+            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));
             float offsetX = TaskRandom.Range(0, 9999f);
             float offsetY = TaskRandom.Range(0, 9999f);
+
+            float effectiveBaseScale = _overridePreset ? baseScale : preset.baseScale;
+            float effectiveBaseAmplitude = _overridePreset ? baseAmplitude : preset.baseAmplitude;
+            int effectiveOctaves = _overridePreset ? 4 : preset.octaves;
+            float effectiveLacunarity = _overridePreset ? 2.0f : preset.lacunarity;
+            float effectivePersistence = _overridePreset ? 0.5f : preset.persistence;
+            float effectiveDetailScale = _overridePreset ? detailScale : preset.detailScale;
+            float effectiveDetailAmplitude = _overridePreset ? detailAmplitude : preset.detailAmplitude;
+            float effectiveHeightPower = _overridePreset ? 1.0f : preset.heightPower;
 
             float startTime = Time.realtimeSinceStartup;
 
@@ -176,102 +589,324 @@ namespace FpsGame.MapUtils
             {
                 for (int x = 0; x < width; x++)
                 {
+                    // 主噪声层（fBm）：先用 heightPower 重塑噪声分布，再乘以振幅
+                    //   heightPower>1 → 低噪声被压缩向下，只有高噪声才能产生高度 → 适合山地
+                    //   heightPower<1 → 低噪声被拉高，地面整体偏高 → 适合平原
+                    float nx = offsetX + x / (float)width * effectiveBaseScale;
+                    float ny = offsetY + y / (float)height * effectiveBaseScale;
+                    float baseNoise = SampleFbmNoise(nx, ny, effectiveOctaves, effectiveLacunarity, effectivePersistence);
+                    float reshapedNoise = Mathf.Pow(baseNoise, effectiveHeightPower);
+                    float nowheight = reshapedNoise * effectiveBaseAmplitude;
 
-                    // 基础噪声
-                    float nx = offsetX + x / (float)width * baseScale;
-                    float ny = offsetY + y / (float)height * baseScale;
-                    var nowheight = (Mathf.Pow(Mathf.PerlinNoise(ny, nx), 2) * 0.9f + 0.1f) * baseAmplitude;
+                    // 细节噪声层
+                    float dx = offsetX + x / (float)width * effectiveDetailScale;
+                    float dy = offsetY + y / (float)height * effectiveDetailScale;
+                    float detailNoise = SampleFbmNoise(dx, dy, 3, 2.0f, 0.5f);
+                    nowheight += (detailNoise * 2f - 1f) * effectiveDetailAmplitude;
 
-                    // 细节噪声
-                    float dx = offsetX + x / (float)width * detailScale;
-                    float dy = offsetY + y / (float)height * detailScale;
-                    nowheight += (Mathf.Pow(Mathf.PerlinNoise(dy, dx), 2) * 2 - 1) * detailAmplitude;
-
-
-                    // 标准化高
-                    heightMap[y, x] = nowheight / (1 + baseAmplitude + detailAmplitude);
+                    heightMap[y, x] = nowheight / (1f + effectiveBaseAmplitude + effectiveDetailAmplitude);
                     SetPixel(preHeight, y, x, heightMap[y, x], 0);
                 }
 
-                // 每行结束后检查时间
                 if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                 {
-                    yield return null;  // 让出一帧
-                    //Debug.Log($"循环 {y} :{Time.frameCount}");
-                    startTime = Time.realtimeSinceStartup;  // 重置计时
+                    yield return null;
+                    startTime = Time.realtimeSinceStartup;
                 }
             }
-            
         }
 
 
         /// <summary>
-        /// 添加侵蚀效果
+        /// 地形后处理——根据地形类型执行不同的处理策略
         /// </summary>
-        IEnumerator ApplyErosionEffect()
+        IEnumerator ApplyTerrainPostProcess(TerrainPresetData preset)
         {
+            float effectivePlateauIntensity = _overridePreset ? plateauIntensity : preset.plateauIntensity;
+            float effectivePlateauThreshold = _overridePreset ? plateauThreshold : preset.plateauThreshold;
+            float effectivePlateauMaskScale = _overridePreset ? plateauMaskScale : preset.plateauMaskScale;
+            float effectiveEdgeDropoff = _overridePreset ? edgeDropoff : preset.edgeDropoff;
+            int effectiveErosionIterations = _overridePreset ? 1 : preset.erosionIterations;
 
             var now = System.DateTime.Now;
-            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));//每小时刷
-            float plateauOffsetX = TaskRandom.Range(0, 9999f);
-            float plateauOffsetY = TaskRandom.Range(0, 9999f);
+            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));
+            float noiseOffsetX = TaskRandom.Range(0, 9999f);
+            float noiseOffsetY = TaskRandom.Range(0, 9999f);
 
             float startTime = Time.realtimeSinceStartup;
 
+            switch (_terrainType)
+            {
+                case TerrainType.Desert:
+                    // 沙漠：风蚀平滑 + 沙丘塑形
+                    yield return ApplyWindErosion(effectiveErosionIterations, startTime);
+                    break;
 
+                case TerrainType.Plateau:
+                    // 高原：高度钳制 + 悬崖锐化 + 高原抬升
+                    yield return ApplyPlateauProcess(effectivePlateauThreshold, effectivePlateauIntensity,
+                        effectivePlateauMaskScale, effectiveEdgeDropoff, noiseOffsetX, noiseOffsetY, startTime);
+                    break;
+
+                case TerrainType.Rainforest:
+                    // 雨林：水力侵蚀 + 山谷雕刻
+                    yield return ApplyHydraulicErosion(effectiveErosionIterations, startTime);
+                    break;
+
+                case TerrainType.Hills:
+                    // 丘陵：温和侵蚀平滑
+                    yield return ApplyGentleSmoothing(effectiveErosionIterations, startTime);
+                    break;
+
+                case TerrainType.Basin:
+                    // 盆地：径向凹陷 + 水力侵蚀
+                    yield return ApplyBasinDepression(effectiveErosionIterations, startTime);
+                    break;
+
+                case TerrainType.Plains:
+                    // 平原：温和平滑
+                    yield return ApplyGentleSmoothing(effectiveErosionIterations, startTime);
+                    break;
+
+                case TerrainType.Mountains:
+                    // 山地：水力侵蚀雕刻山谷
+                    yield return ApplyHydraulicErosion(effectiveErosionIterations, startTime);
+                    // 峰值拉伸：高于 0.35 的区域按差值比例拉升，让低谷更洼、尖峰更尖
+                    yield return StretchHeightPeaks(0.35f, 1.2f);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 沙漠风蚀处理：定向平滑模拟风蚀效果
+        /// </summary>
+        IEnumerator ApplyWindErosion(int iterations, float startTime)
+        {
+            float[,] buffer = new float[height, width];
+            for (int iter = 0; iter < iterations; iter++)
+            {
+                // 风向角度（模拟盛行风）
+                float windAngle = 0.3f + iter * 0.5f;
+                float windX = Mathf.Cos(windAngle);
+                float windZ = Mathf.Sin(windAngle);
+
+                for (int y = 1; y < height - 1; y++)
+                {
+                    for (int x = 1; x < width - 1; x++)
+                    {
+                        // 迎风面采样
+                        int sx = Mathf.Clamp(x - (int)(windX * 2), 1, width - 2);
+                        int sy = Mathf.Clamp(y - (int)(windZ * 2), 1, height - 2);
+
+                        float current = heightMap[x, y];
+                        float windward = heightMap[sx, sy];
+                        // 迎风面侵蚀，背风面沉积
+                        float diff = current - windward;
+                        buffer[x, y] = current - diff * 0.15f;
+                    }
+
+                    if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                    {
+                        yield return null;
+                        startTime = Time.realtimeSinceStartup;
+                    }
+                }
+
+                // 回写并 clamp
+                for (int y = 1; y < height - 1; y++)
+                    for (int x = 1; x < width - 1; x++)
+                        heightMap[x, y] = Mathf.Clamp01(buffer[x, y]);
+            }
+        }
+
+        /// <summary>
+        /// 高原处理：高度钳制 + 悬崖锐化
+        /// </summary>
+        IEnumerator ApplyPlateauProcess(float threshold, float intensity, float maskScale,
+            float dropoff, float offsetX, float offsetY, float startTime)
+        {
             for (int y = 1; y < height - 1; y++)
             {
                 for (int x = 1; x < width - 1; x++)
                 {
-                    float nowheight = heightMap[x, y];
-                    if (nowheight > plateauThreshold)
+                    float h = heightMap[x, y];
+
+                    // 高出阈值 → 钳制并平滑过渡到高原面
+                    if (h > threshold)
                     {
-                        // 计算超出阈值部分的比例
-                        float excess = (nowheight - plateauThreshold) / plateauIntensity / 2;
-                        // 用SmoothStep平滑过渡到高原高
-                        heightMap[x, y] = nowheight = 0.5f * nowheight + 0.5f * Mathf.Lerp(plateauThreshold, plateauThreshold + plateauIntensity * 2, excess);
+                        float excess = (h - threshold) / (intensity * 2f + 0.001f);
+                        heightMap[x, y] = Mathf.Lerp(h,
+                            threshold + intensity * 2f * Mathf.Clamp01(excess), 0.5f);
                     }
 
+                    // 高原噪声蒙版
+                    float px = offsetX + x / (float)width * maskScale;
+                    float py = offsetY + y / (float)height * maskScale;
+                    float plateauMask = Mathf.Pow(Mathf.PerlinNoise(px, py), 2f);
 
-                    // 高原噪声采样
-                    float px = plateauOffsetX + x / (float)width * plateauMaskScale;
-                    float py = plateauOffsetY + y / (float)height * plateauMaskScale;
-                    float plateauMask = Mathf.PerlinNoise(px, py);
-                    // 噪声混合策略（强化大面积连续区域
-                    plateauMask = Mathf.Pow(plateauMask, 2f);
-
-                    //邻居的平均高度(卷积)
                     float neighborAvg = (heightMap[x + 1, y] + heightMap[x - 1, y] +
-                                       heightMap[x, y + 1] + heightMap[x, y - 1]) / 4f;
+                                         heightMap[x, y + 1] + heightMap[x, y - 1]) / 4f;
 
-                    // 高原生成条件
-                    if (plateauMask > plateauThreshold && (neighborAvg > plateauThreshold || nowheight > plateauThreshold))
+                    if (plateauMask > threshold && (neighborAvg > threshold || h > threshold))
                     {
-                        // 高原高度计算
-                        float plateauBoost = plateauIntensity;
-                        //抬升系数:离高原阈值越高，这个系数越低(原本的限制在0-1之间)edgeDropoff越低越快归零
-                        float edgeAttenuation = 1 - Mathf.Clamp01((nowheight - plateauThreshold) / edgeDropoff);
-
-                        // 应用高原抬升
+                        float plateauBoost = intensity;
+                        float edgeAttenuation = 1f - Mathf.Clamp01((h - threshold) / (dropoff + 0.001f));
                         heightMap[x, y] += plateauBoost * edgeAttenuation;
-                        //heightmap[x, y] =(1- 0.5f) * heightmap[x, y] + 0.5f * Mathf.SmoothStep(plateauThreshold, plateauThreshold+ plateauIntensity, heightmap[x, y]);
 
-                        // 边缘陡峭处理
-                        //计算悬崖陡峭程度(平滑1陡峭)
-                        float cliffDrop = Mathf.Clamp01((nowheight - neighborAvg) * 5f);
-                        //越陡峭的点，高度增高越多
-                        heightMap[x, y] += cliffDrop * edgeDropoff;
+                        // 悬崖陡峭处理
+                        float cliffDrop = Mathf.Clamp01((h - neighborAvg) * 8f);
+                        heightMap[x, y] += cliffDrop * dropoff * 2f;
 
-
-                        SetPixel(preHeight, x, y, (heightMap[x, y] - plateauThreshold) / plateauIntensity, 1);
+                        SetPixel(preHeight, x, y, (heightMap[x, y] - threshold) / (intensity + 0.001f), 1);
                     }
-
                 }
+
                 if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                 {
-                    yield return null;  // 让出一帧
-                    startTime = Time.realtimeSinceStartup;  // 重置计时
+                    yield return null;
+                    startTime = Time.realtimeSinceStartup;
                 }
+            }
+        }
+
+        /// <summary>
+        /// 水力侵蚀：模拟雨水冲刷，高处侵蚀低处沉积
+        /// </summary>
+        IEnumerator ApplyHydraulicErosion(int iterations, float startTime)
+        {
+            float[,] sediment = new float[height, width];
+            for (int iter = 0; iter < iterations; iter++)
+            {
+                for (int y = 2; y < height - 2; y++)
+                {
+                    for (int x = 2; x < width - 2; x++)
+                    {
+                        float h = heightMap[x, y];
+
+                        // 找最低邻居
+                        float minNeighbor = h;
+                        int minX = x, minY = y;
+                        for (int dy = -1; dy <= 1; dy++)
+                        {
+                            for (int dx = -1; dx <= 1; dx++)
+                            {
+                                if (dx == 0 && dy == 0) continue;
+                                float nh = heightMap[x + dx, y + dy];
+                                if (nh < minNeighbor) { minNeighbor = nh; minX = x + dx; minY = y + dy; }
+                            }
+                        }
+
+                        // 高处侵蚀、低处沉积
+                        float diff = h - minNeighbor;
+                        if (diff > 0)
+                        {
+                            float erodeAmount = diff * 0.1f;
+                            heightMap[x, y] -= erodeAmount;
+                            sediment[minY, minX] += erodeAmount;
+                        }
+                    }
+
+                    if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                    {
+                        yield return null;
+                        startTime = Time.realtimeSinceStartup;
+                    }
+                }
+
+                // 沉积物沉降
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        heightMap[x, y] = Mathf.Clamp01(heightMap[x, y] + sediment[x, y] * 0.5f);
+                        sediment[x, y] *= 0.5f;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 温和平滑：多次邻域平均，适合丘陵类地形
+        /// </summary>
+        IEnumerator ApplyGentleSmoothing(int iterations, float startTime)
+        {
+            float[,] buffer = new float[height, width];
+            for (int iter = 0; iter < iterations; iter++)
+            {
+                for (int y = 1; y < height - 1; y++)
+                {
+                    for (int x = 1; x < width - 1; x++)
+                    {
+                        buffer[x, y] = (heightMap[x, y] * 0.4f +
+                                        heightMap[x + 1, y] * 0.15f +
+                                        heightMap[x - 1, y] * 0.15f +
+                                        heightMap[x, y + 1] * 0.15f +
+                                        heightMap[x, y - 1] * 0.15f);
+                    }
+
+                    if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                    {
+                        yield return null;
+                        startTime = Time.realtimeSinceStartup;
+                    }
+                }
+
+                for (int y = 1; y < height - 1; y++)
+                    for (int x = 1; x < width - 1; x++)
+                        heightMap[x, y] = buffer[x, y];
+            }
+        }
+
+        /// <summary>
+        /// 盆地凹陷：中心到边缘径向抬升
+        /// </summary>
+        IEnumerator ApplyBasinDepression(int erosionIterations, float startTime)
+        {
+            float centerX = width * 0.5f;
+            float centerY = height * 0.5f;
+            float maxDist = Mathf.Sqrt(centerX * centerX + centerY * centerY);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    // 径向距离（归一化）
+                    float dx = x - centerX;
+                    float dy = y - centerY;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy) / maxDist;
+
+                    // 边缘抬升、中心保持低洼
+                    float basinFactor = Mathf.Pow(dist, 1.5f) * 0.5f;
+                    heightMap[x, y] = Mathf.Clamp01(heightMap[x, y] * 0.9f + basinFactor);
+                }
+
+                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                {
+                    yield return null;
+                    startTime = Time.realtimeSinceStartup;
+                }
+            }
+
+            // 盆地也可以叠加一次水力侵蚀让过渡更自然
+            yield return ApplyHydraulicErosion(erosionIterations, startTime);
+        }
+
+        /// <summary>
+        /// 渐进式拉伸高度峰值：高于 threshold 的区域按 (h - threshold) 比例递增拉升
+        /// 越高的点拉伸越多，低洼区域不受影响
+        /// </summary>
+        IEnumerator StretchHeightPeaks(float threshold, float boostIntensity)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    float h = heightMap[x, y];
+                    if (h > threshold)
+                        heightMap[x, y] = Mathf.Clamp01(h * (1f + (h - threshold) * boostIntensity));
+                }
+                if (y % 8 == 0)
+                    yield return null;
             }
         }
             
@@ -282,30 +917,20 @@ namespace FpsGame.MapUtils
         {
             float startTime = Time.realtimeSinceStartup;
 
-            //int size = terrain.terrainData.alphamapResolution;
             for (int y = 0; y < size; y++)
             {
                 for (int x = 0; x < size; x++)
                 {
-                    /*
-                    //高度归一化（0-1）
-                    float nowheight = terrain.terrainData.GetHeight(y, x) / terrain.terrainData.size.y;
-                    //坡度值（0-1）（坡度本身返回0-90度）
-                    float steepness = terrain.terrainData.GetSteepness(y / (float)size,
-                                        x / (float)size) / 90f;
-                    */
+                    float steepness = GetSteepness(y, x) / 90f;
+                    float nowheight = heightMap[y, x];
 
-                    //生成时没有巢穴，所以系数为1
-                    float steepness = GetSteepness(y, x) / 90f;//坡度[0,1]
-                    float nowheight = heightMap[y, x];//高度[0,1]
-
-                    // 岩石层（陡坡）22.5度-67.5度）
+                    // 岩石层（陡坡）
                     textureMap[y, x, 4] = Mathf.Clamp01(steepness * 2f - 0.5f);
 
-                    // 沙地层（中等高度)在[0,0.5]高度逐步变为[0,1]
+                    // 沙地层（中等高度）
                     textureMap[y, x, 1] = Mathf.Clamp01(nowheight * 2f) * (1 - textureMap[y, x, 4]);
 
-                    // 侵蚀层（低洼区域）在[0,0.5]高度逐步变为[1,0]
+                    // 侵蚀层（低洼区域）
                     textureMap[y, x, 2] = Mathf.Clamp01((1 - nowheight) * 2f) * (1 - textureMap[y, x, 4]);
 
                     textureMap[y, x, 3] = 0;
@@ -315,16 +940,14 @@ namespace FpsGame.MapUtils
                     SetPixel(preTexture, y, x, textureMap[y, x, 1], 1);
                     SetPixel(preTexture, y, x, textureMap[y, x, 2], 2);
                     SetPixel(preTexture, y, x, steepness, 3);
-
                 }
+
                 if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                 {
-                    yield return null;  // 让出一帧
-                    //Debug.Log($"循环 {y} :{Time.frameCount}");
-                    startTime = Time.realtimeSinceStartup;  // 重置计时器
+                    yield return null;
+                    startTime = Time.realtimeSinceStartup;
                 }
             }
-            
         }
 
         #endregion
@@ -381,40 +1004,121 @@ namespace FpsGame.MapUtils
 
         #region 树 
 
-        IEnumerator SpawnTrees()
+        IEnumerator SpawnTrees(TerrainPresetData preset)
         {
-            // 10000是因为除200
-            int plateaus = Mathf.FloorToInt(treeProbability * width * height / 10000f);
-            //int range = (int)((width - Constants.MapBorder) * 0.5f);
+            float effectiveTreeProb = _overridePreset ? treeProbability : preset.treeProbability;
+            int totalCells = width * height;
+            int targetCount = Mathf.FloorToInt(effectiveTreeProb * totalCells / 10000f);
 
-            //Debug.LogError("数量"+ plateaus);
-            for (int i = 0; i < plateaus; i++)
+            int maxAttempts = targetCount * 5;
+            int attempts = 0;
+
+            for (int i = 0; i < targetCount && attempts < maxAttempts; attempts++)
             {
-                Vector3Int pos = new Vector3Int(
-                    Random.Range(0, width),
-                    0,
-                    Random.Range(0, height)
-                );
-                //pos.y = terrain.SampleHeight(pos);
+                int tx = Random.Range(1, width - 1);
+                int tz = Random.Range(1, height - 1);
+
+                float h = heightMap[tx, tz];
+                float slope = GetSteepness(tx, tz);
+
+                // 坡度约束
+                if (slope < preset.treeMinSlope || slope > preset.treeMaxSlope) continue;
+                // 高度约束
+                if (h < preset.treeMinHeight || h > preset.treeMaxHeight) continue;
 
                 TreeInstance tree = new TreeInstance();
-                tree.position = new Vector3(pos.x / (float)width, heightMap[pos.x, pos.z], pos.z / (float)height); // 转换为归一化坐标
-                tree.widthScale = Random.Range(0.5f, 2);
-                tree.heightScale = Random.Range(0.5f, 2);
-                //tree.prototypeIndex = 0; // 使用第一个树木原型
-                tree.prototypeIndex = Random.Range(0, 5);
+                tree.position = new Vector3(tx / (float)width, h, tz / (float)height);
+                tree.widthScale = Random.Range(0.7f, 1.5f);
+                tree.heightScale = Random.Range(0.7f, 1.5f);
+                tree.prototypeIndex = Random.Range(preset.treePrototypeRange.x,
+                    Mathf.Min(preset.treePrototypeRange.y + 1, terrain.terrainData.treePrototypes.Length));
 
                 trees.Add(tree);
+                i++;
             }
-            /*
-            foreach(var item in nests)
-            {
-                var pos = new Vector3(item.Item1.x/(float)width,0, item.Item1.y / (float)height);
-                trees.RemoveAll(tree =>Vector3.Distance(pos, new(tree.position.x,0,tree.position.z))<item.Item2/ (float)width);
-            }
-            */
-            //Debug.LogError("最终数量" + trees.Count);
             yield return null;
+        }
+
+        /// <summary>
+        /// 生成草（细节植被），基于坡度和高度约束，使用 Terrain Detail 系统
+        /// </summary>
+        /// <summary>
+        /// 生成草和花（细节植被），支持多种原型混合：
+        ///   草原型索引：0-2, 9-11
+        ///   花原型索引：3-8
+        /// </summary>
+        IEnumerator SpawnDetails(TerrainPresetData preset)
+        {
+            int detailRes = terrain.terrainData.detailResolution;
+            int protoCount = terrain.terrainData.detailPrototypes.Length;
+            if (protoCount == 0) yield break;
+
+            // 索引分组
+            int[] validGrass = { 0, 1, 2, 9, 10, 11 };
+            int[] validFlowers = { 3, 4, 5, 6, 7, 8 };
+            validGrass = Array.FindAll(validGrass, i => i < protoCount);
+            validFlowers = Array.FindAll(validFlowers, i => i < protoCount);
+            if (validGrass.Length == 0 && validFlowers.Length == 0) yield break;
+
+            // 为每个原型创建独立细节地图
+            var layers = new List<(int, int[,])>();
+            foreach (int i in validGrass)
+                layers.Add((i, new int[detailRes, detailRes]));
+            foreach (int i in validFlowers)
+                layers.Add((i, new int[detailRes, detailRes]));
+
+            float mapToDetail = width / (float)detailRes;
+            float grassScale = preset.detailDensity * 60f;
+            float flowerScale = preset.detailFlowerDensity * 60f;
+            bool hasGrass = validGrass.Length > 0 && preset.detailDensity > 0f;
+            bool hasFlowers = validFlowers.Length > 0 && preset.detailFlowerDensity > 0f;
+
+            float startTime = Time.realtimeSinceStartup;
+
+            for (int dy = 0; dy < detailRes; dy++)
+            {
+                for (int dx = 0; dx < detailRes; dx++)
+                {
+                    int hx = Mathf.Clamp(Mathf.RoundToInt(dx * mapToDetail), 1, width - 2);
+                    int hz = Mathf.Clamp(Mathf.RoundToInt(dy * mapToDetail), 1, height - 2);
+
+                    float h = heightMap[hx, hz];
+                    float slope = GetSteepness(hx, hz);
+
+                    bool inRange = h >= preset.detailMinHeight && h <= preset.detailMaxHeight
+                        && slope >= preset.detailMinSlope && slope <= preset.detailMaxSlope;
+
+                    if (!inRange) continue;
+
+                    if (hasGrass && Random.value < preset.detailDensity)
+                    {
+                        int idx = validGrass[Random.Range(0, validGrass.Length)];
+                        int val = Mathf.CeilToInt(grassScale * Random.Range(0.3f, 1.0f));
+                        int[,] map = layers.Find(l => l.Item1 == idx).Item2;
+                        map[dx, dy] = Mathf.Clamp(val, 1, 16);
+                    }
+
+                    if (hasFlowers && Random.value < preset.detailFlowerDensity)
+                    {
+                        int idx = validFlowers[Random.Range(0, validFlowers.Length)];
+                        int val = Mathf.CeilToInt(flowerScale * Random.Range(0.3f, 1.0f));
+                        int[,] map = layers.Find(l => l.Item1 == idx).Item2;
+                        map[dx, dy] = Mathf.Clamp(val, 1, 16);
+                    }
+                }
+
+                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                {
+                    yield return null;
+                    startTime = Time.realtimeSinceStartup;
+                }
+            }
+
+            foreach (var (protoIdx, map) in layers)
+            {
+                terrain.terrainData.SetDetailLayer(0, 0, protoIdx, map);
+                yield return null;
+            }
         }
         #endregion
         #region API
@@ -528,22 +1232,32 @@ namespace FpsGame.MapUtils
         [ContextMenu("生成分形噪声地形")]
         public void GenerateTerrain()
         {
-            ApplyFractalNoiseToTerrain();
+            StartCoroutine(ApplyFractalNoiseToTerrain(_terrainType));
+        }
+
+        /// <summary>
+        /// 使用指定地形类型生成（可在 Inspector 中通过 TerrainType 下拉选择，或代码调用）
+        /// </summary>
+        public void GenerateTerrainWithType(TerrainType terrainType)
+        {
+            _terrainType = terrainType;
+            StartCoroutine(ApplyFractalNoiseToTerrain(terrainType));
         }
 
         [ContextMenu("重置地形")]
         public void ResetTerrain()
         {
-            Debug.LogError("重置地形");
+            Debug.Log("重置地形");
             if (terrain != null)
             {
                 TerrainData terrainData = terrain.terrainData;
-                int width = terrainData.heightmapResolution;
-                int height = terrainData.heightmapResolution;
-                terrainData.SetHeights(0, 0, new float[width, height]);
+                int w = terrainData.heightmapResolution;
+                int h = terrainData.heightmapResolution;
+                terrainData.SetHeights(0, 0, new float[w, h]);
 
                 var surface = GetComponent<NavMeshSurface>();
-                surface.UpdateNavMesh(surface.navMeshData);
+                if (surface != null)
+                    surface.UpdateNavMesh(surface.navMeshData);
             }
         }
         #endregion

@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Core;
-
+using FPSGame.Attribute;
 using UnityEditor;
 using UnityEngine;
-using static DynamicBoneColliderBase;
 
 
 [CreateAssetMenu(fileName = "NT_", menuName = "Data/角色台词")]
 public class SoundGroup_SO: ScriptableObject
 {
+    static Dictionary<string, int> orderNumber=new();
+
     [InspectorName("名称")]
     public string groupName;
 
@@ -34,7 +35,8 @@ public class SoundGroup_SO: ScriptableObject
     [InspectorName("播放范围")]
     [Compare("flags",(int)SoundFlag.Space, CompareOperate.Contain)]
     public float range = 60;
-
+    [InspectorName("有序的")]
+    public bool isOrder; 
 
     [InspectorName("优先级")]
     public int priority;
@@ -45,7 +47,19 @@ public class SoundGroup_SO: ScriptableObject
 
     public RuntimeSoundData Get(Vector3 point=default)
     {
-        var selectedItem = clips.RandomTake();
+        SoundItem selectedItem;
+        if (isOrder)
+        {
+            int number=0;
+            number=orderNumber.GetValueOrDefault(name, 0);
+            orderNumber[name]= number+1;
+            selectedItem = clips[number%clips.Count];
+
+        }
+        else
+        {
+            selectedItem = clips.RandomTake();
+        }
         return new RuntimeSoundData {
             Clip = selectedItem.audioClip,
             Desc = selectedItem.subtitle,
@@ -157,6 +171,8 @@ public class SoundGroup_SO: ScriptableObject
 #endif
 #endregion
 }
+
+
 
 [System.Flags]
 public enum SoundFlag

@@ -96,15 +96,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 76f5e3eb4ea74f147af77d62036e9563,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5394287602632535378}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 76f5e3eb4ea74f147af77d62036e9563,
-        type: 3}
-      insertIndex: -1
       addedObject: {fileID: 6275066579827483105}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 76f5e3eb4ea74f147af77d62036e9563,
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 7170420925426566989}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 76f5e3eb4ea74f147af77d62036e9563,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5546190301712955609}
   m_SourcePrefab: {fileID: 100100000, guid: 76f5e3eb4ea74f147af77d62036e9563, type: 3}
 --- !u!1 &8162108673125224392 stripped
 GameObject:
@@ -166,6 +166,7 @@ MonoBehaviour:
   MainPart: {fileID: 7170420925426566989}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 0
 --- !u!114 &4312858893604458648
 MonoBehaviour:
@@ -196,84 +197,6 @@ MonoBehaviour:
   shape: 0
   rangeLength: 2
   damageables: []
---- !u!114 &5394287602632535378
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8162108673125224392}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 143e44d708581ac4bafae0081debc465, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
-  fxDic:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue:
-      cilp: {fileID: 0}
-      ps: {fileID: 0}
-      trans: {fileID: 0}
-      go: []
-    arr:
-    - Key: 3
-      Value:
-        cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
-        ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
-          type: 3}
-        trans: {fileID: 0}
-        go: []
-    - Key: 4
-      Value:
-        cilp: {fileID: 8300000, guid: d3be401aece5dca44af7923a0b79eeb1, type: 3}
-        ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
-          type: 3}
-        trans: {fileID: 0}
-        go: []
-    meetReset: 0
-  rendererSet:
-  - type: 0
-    occasion: 4
-    material: {fileID: 2100000, guid: 40b458756a88ea44fbc477f415280896, type: 2}
-    colorName: _DissolveValue
-    defaultColor: {r: 0, g: 0, b: 0, a: 0}
-    switchOccasion: 0
-    switchColor: {r: 0, g: 0, b: 0, a: 0}
-    gradient:
-      serializedVersion: 2
-      key0: {r: 0, g: 0, b: 0, a: 1}
-      key1: {r: 0, g: 0, b: 0, a: 1}
-      key2: {r: 1, g: 1, b: 1, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
-      key7: {r: 0, g: 0, b: 0, a: 0}
-      ctime0: 0
-      ctime1: 8867
-      ctime2: 65535
-      ctime3: 0
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
-      ctime7: 0
-      atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
-      atime5: 0
-      atime6: 0
-      atime7: 0
-      m_Mode: 0
-      m_ColorSpace: -1
-      m_NumColorKeys: 3
-      m_NumAlphaKeys: 2
-    duration: 3
 --- !u!114 &6275066579827483105
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -315,6 +238,123 @@ MonoBehaviour:
   BleedValue: 0
   isMain: 0
   showArmor: 0
+--- !u!114 &5546190301712955609
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8162108673125224392}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 531719c9934cdc647bacfd252c11ff06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 0}
+  BirthMaterial: {fileID: 0}
+  fxDic:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      cilp: {fileID: 0}
+      ps: {fileID: 0}
+      trans: {fileID: 0}
+      go: []
+    arr:
+    - Key: 3
+      Value:
+        cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
+        ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
+          type: 3}
+        trans: {fileID: 0}
+        go: []
+    - Key: 4
+      Value:
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
+          type: 3}
+        trans: {fileID: 0}
+        go: []
+    meetReset: 0
+  rendererSet:
+  - type: 0
+    occasion: 3
+    material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
+    colorName: 
+    defaultColor: {r: 0, g: 0, b: 0, a: 0}
+    switchOccasion: 0
+    switchColor: {r: 0, g: 0, b: 0, a: 0}
+    gradient:
+      serializedVersion: 2
+      key0: {r: 0, g: 0, b: 0, a: 1}
+      key1: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+      key2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 15035
+      ctime2: 52428
+      ctime3: 65535
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 4
+      m_NumAlphaKeys: 2
+    duration: 0.1
+  - type: 0
+    occasion: 4
+    material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
+    colorName: _DissolveValue
+    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
+    switchOccasion: 2
+    switchColor: {r: 0, g: 0, b: 0, a: 0}
+    gradient:
+      serializedVersion: 2
+      key0: {r: 0, g: 0, b: 0, a: 1}
+      key1: {r: 0, g: 0, b: 0, a: 1}
+      key2: {r: 1, g: 1, b: 1, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 8867
+      ctime2: 65535
+      ctime3: 65535
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 3
+      m_NumAlphaKeys: 2
+    duration: 3
+  UseAttack: 0
 --- !u!4 &8795092722000319858 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 76f5e3eb4ea74f147af77d62036e9563,

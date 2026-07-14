@@ -307,6 +307,7 @@ MonoBehaviour:
   MainPart: {fileID: 1417902311298751949}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
 --- !u!114 &1417902310742990671
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -844,7 +845,7 @@ MonoBehaviour:
   - Key: 0
     Value: 0.3
   - Key: 1
-    Value: 0.3
+    Value: 1
   AllArmor: 0
   armorValue: 0
   LineArmor:
@@ -1052,23 +1053,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 13
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 13
+    WeaknessBonus: 0
     ExplosionInnerRange: 0.5
     ExplosionRange: 1
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -1414,7 +1408,7 @@ MonoBehaviour:
   - Key: 0
     Value: -1
   - Key: 1
-    Value: -1
+    Value: 1
   - Key: 2
     Value: -1
   - Key: 3
@@ -2461,7 +2455,7 @@ MonoBehaviour:
   - Key: 0
     Value: -1
   - Key: 1
-    Value: 0.5
+    Value: 1
   - Key: 3
     Value: -1
   - Key: 2
@@ -2522,7 +2516,7 @@ MonoBehaviour:
   - Key: 0
     Value: -0.3
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 100
   LineArmor:
@@ -2637,7 +2631,7 @@ MonoBehaviour:
   - Key: 0
     Value: -0.3
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 100
   LineArmor:
@@ -2905,7 +2899,7 @@ MonoBehaviour:
   - Key: 0
     Value: -0.3
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 100
   LineArmor:
@@ -3260,7 +3254,7 @@ MonoBehaviour:
   - Key: 0
     Value: -0.3
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 100
   LineArmor:

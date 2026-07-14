@@ -1,9 +1,9 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
 using Utils;
-
+[AddComponentMenu("创建场景物体/样品")]
 public class CreatOOPart : MonoBehaviour
 {
     [SerializeField]

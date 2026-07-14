@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using FPSGame.Attribute;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -136,8 +137,19 @@ namespace Pixeye.Unity
 
                 void Child(int i)
                 {
-                    string label = InspectorNames.TryGetValue(cache.props[i].name, out var cl) ? cl : ObjectNames.NicifyVariableName(cache.props[i].name);
-                    EditorGUILayout.PropertyField(cache.props[i], new GUIContent(label), true);
+                    var prop = cache.props[i];
+                    if (IsInlineField(prop))
+                    {
+                        if (prop.isArray)
+                            DrawInlineArrayNative(prop);
+                        else
+                            DrawInlineObject(prop);
+                    }
+                    else
+                    {
+                        string label = InspectorNames.TryGetValue(prop.name, out var cl) ? cl : ObjectNames.NicifyVariableName(prop.name);
+                        EditorGUILayout.PropertyField(prop, new GUIContent(label), true);
+                    }
                 }
             }
 

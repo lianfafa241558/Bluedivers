@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using UnityEngine;
@@ -72,7 +72,7 @@ public class UICamera : Singleton<UICamera>
         if (uiCameraData.renderType != CameraRenderType.Overlay)
         {
             uiCameraData.renderType = CameraRenderType.Overlay;
-            Debug.Log($"[相机管理] {uiCamera.name} 切换到 Overlay 模式");
+            //Debug.Log($"[相机管理] {uiCamera.name} 切换到 Overlay 模式");
         }
 
         // 2. 获取目标相机的堆栈数据
@@ -90,7 +90,7 @@ public class UICamera : Singleton<UICamera>
 
             baseCameraData.cameraStack.Add(uiCamera);
             currentBaseCamera = baseCamera;
-            Debug.Log($"[相机管理] 将 {uiCamera.name} 添加到 {baseCamera.name} 的堆栈中");
+            //Debug.Log($"[相机管理] 将 {uiCamera.name} 添加到 {baseCamera.name} 的堆栈中");
         }
     }
 

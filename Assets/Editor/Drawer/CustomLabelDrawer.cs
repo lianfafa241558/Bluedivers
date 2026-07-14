@@ -1,6 +1,8 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 using Core;
+using FPSGame.Attribute;
+
 
 #if UNITY_EDITOR
 using System.Reflection;
@@ -9,7 +11,8 @@ using System;
 
 #if UNITY_EDITOR
 /// <summary>
-/// 瀹氫箟瀵瑰甫鏈?`CustomLabelAttribute` 鐗规€х殑瀛楁鐨勯潰鏉垮唴瀹圭殑缁樺埗琛屼负銆?/// </summary>
+/// 定义对带有`CustomLabelAttribute`特性的字段的面板内容的绘制行为。
+/// </summary>
 [CustomPropertyDrawer(typeof(CompareAttribute))]
 public class CustomLabelDrawer : PropertyDrawer
 {
@@ -38,7 +41,7 @@ public class CustomLabelDrawer : PropertyDrawer
 
         if (fieldInfo != null)
         {
-            // 妫€鏌ユ槸鍚﹀簲鐢ㄤ簡FlagsAttribute涓斾笉妫€鏌ョ户鎵块摼
+            // 检查是否应用了FlagsAttribute且不检查继承链
             return Attribute.IsDefined(fieldInfo.FieldType, typeof(FlagsAttribute), false);
         }
 
@@ -56,13 +59,13 @@ public class CustomLabelDrawer : PropertyDrawer
     {
         if (string.IsNullOrEmpty(attr.contField)) return true;
 
-        // 鑾峰彇褰撳墠灞炴€х殑鐖剁骇瀵硅薄
+        // 获取当前属性的父级对象
         var parentPath = property.propertyPath;
 
         var lastDot = parentPath.LastIndexOf('.');
         parentPath = lastDot > 0 ? parentPath.Substring(0, lastDot) : "";
-        // 鏋勫缓瀹屾暣鎺у埗灞炴€ц矾寰?        //鑻ョ埗绾ц矾寰勪负绌猴紙椤跺眰灞炴€э級锛岀洿鎺ヤ娇鐢╟ontField锛堝test2锛夛紱
-        //鍚﹀垯鎷兼帴鐖惰矾寰勶紙濡侻issionCfg.test2锛?
+        // 构建完整控制属性路径        //若父级路径为空（顶层属性），直接使用contField（如test2）；
+        //否则拼接父路径（如MissionCfg.test2）
         var fullPath = string.IsNullOrEmpty(parentPath)
             ? attr.contField
             : $"{parentPath}.{attr.contField}";
@@ -77,24 +80,23 @@ public class CustomLabelDrawer : PropertyDrawer
         switch (controlProp.propertyType)
         {
             case SerializedPropertyType.Boolean:
-                return Calculate(attr.operate,controlProp.boolValue?1:0, attr.enumValue);
+                return Calculate(attr.operate, controlProp.boolValue ? 1 : 0, attr.enumValue);
             case SerializedPropertyType.Integer:
                 return Calculate(attr.operate, controlProp.intValue, attr.enumValue);
             case SerializedPropertyType.Float:
-                return Calculate(attr.operate,controlProp.floatValue, attr.enumValue);
-
+                return Calculate(attr.operate, controlProp.floatValue, attr.enumValue);
             case SerializedPropertyType.Enum:
-                bool havFlags = HasFlagsAttribute(controlProp);
-                //int value = havFlags ? controlProp.intValue : controlProp.enumValueIndex;//GetEnumValue(controlProp);
                 int value = controlProp.intValue;
                 return Calculate(attr.operate, value, attr.enumValue);
+            default:
+                // 其他类型根据是否不为 null 进行判定
+                return Calculate(attr.operate, controlProp.objectReferenceValue != null ? 1 : 0, attr.enumValue);
         }
-        return true;
     }
     public bool Calculate(CompareOperate operate, float source, float target)
     {
         return operate switch {
-            CompareOperate.Equal => Mathf.Approximately(source, target),//杩欎釜鏄浉浼肩殑鏂规硶
+            CompareOperate.Equal => Mathf.Approximately(source, target),//使用近似比较
             CompareOperate.NotEqual => !Mathf.Approximately(source, target),
             CompareOperate.Less => source < target,
             CompareOperate.LessEqual => source <= target,
@@ -180,19 +182,20 @@ public class PEIntDrawer : PropertyDrawer
     {
         EditorGUI.BeginProperty(position, label, property);
         
-        // 鑾峰彇scaledValue瀛楁
+        // 获取scaledValue字段
         SerializedProperty scaledValueProperty = property.FindPropertyRelative("scaledValue");
 
-        // 璁＄畻鏍囩鍜岃緭鍏ユ鐨勪綅缃?        Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height);
+        // 计算标签和输入框的位置
+        Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height);
         Rect fieldRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y,
                                  position.width - EditorGUIUtility.labelWidth, position.height);
 
-        // 澶勭悊CustomLabel
+        // 处理CustomLabel
         GUIContent customLabel = label;
-        // 缁樺埗鏍囩
+        // 绘制标签
         EditorGUI.LabelField(labelRect, label);
 
-        // 妫€鏌?scaledValueProperty 鏄惁涓?null
+        // 检查scaledValueProperty是否为null
         if (scaledValueProperty == null)
         {
             Debug.LogError("scaledValueProperty is null in PEIntDrawer");
@@ -200,12 +203,14 @@ public class PEIntDrawer : PropertyDrawer
         }
 
 
-        // 缁樺埗鏁板瓧杈撳叆妗?        long oldValue = scaledValueProperty.longValue / PEMaths.PEInt.MULTIPLIER_FACTOR;
+        // 绘制数字输入框
+        long oldValue = scaledValueProperty.longValue / PEMaths.PEInt.MULTIPLIER_FACTOR;
         string newValueStr = EditorGUI.TextField(fieldRect, oldValue.ToString());
         
-        // 楠岃瘉杈撳叆鏄惁涓烘暟瀛?        if (long.TryParse(newValueStr, out long parsedValue))
+        // 验证输入是否为数字
+        if (long.TryParse(newValueStr, out long parsedValue))
         {
-            // 鍊煎彂鐢熷彉鍖栨椂鏇存柊
+            // 值发生变化时更新
             if (parsedValue != oldValue)
             {
                 scaledValueProperty.longValue = parsedValue * PEMaths.PEInt.MULTIPLIER_FACTOR;
@@ -214,19 +219,21 @@ public class PEIntDrawer : PropertyDrawer
         }
         else if (!string.IsNullOrEmpty(newValueStr))
         {
-            // 杈撳叆鏃犳晥鏃舵仮澶嶆棫鍊?            EditorGUI.LabelField(fieldRect, oldValue.ToString());
+            // 输入无效时恢复旧值
+            EditorGUI.LabelField(fieldRect, oldValue.ToString());
         }
 
         EditorGUI.EndProperty();
     }
 
-    // 鍊煎彉鍖栨椂璋冪敤鐨勬柟娉?    private void OnValueChanged(SerializedProperty property)
+    // 值变化时调用的方法
+    private void OnValueChanged(SerializedProperty property)
     {
-        // 鑾峰彇鎵€灞炵殑鑴氭湰瀵硅薄
+        // 获取所属的脚本对象
         UnityEngine.Object targetObject = property.serializedObject.targetObject;
         Debug.Log($"PEInt value changed in {targetObject.name}: {property.DisplayFieldName}");
 
-        // 搴旂敤淇敼
+        // 应用修改
         property.serializedObject.ApplyModifiedProperties();
     }
 }

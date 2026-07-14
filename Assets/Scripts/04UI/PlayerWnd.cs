@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core;
+using FPSGame.Attribute;
 using FPSGame.UI;
 using GameContract;
 using PEMaths;

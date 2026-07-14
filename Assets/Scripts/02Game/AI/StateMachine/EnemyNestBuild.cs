@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FPSGame.Attribute;
 using UnityEngine;
 namespace Unity.FPS.AI
 {

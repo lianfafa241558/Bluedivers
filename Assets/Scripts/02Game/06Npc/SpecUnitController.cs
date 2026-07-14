@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using GameContract;
 using PEMaths;
@@ -46,7 +46,25 @@ namespace Unity.FPS.AI
             }
 
         }
+        public override void InitAttribute()
+        {
+            if (!FpsHelper.HaveNavMeshAgent(NavMeshAgent))
+            {
+                base.InitAttribute();
+            }
+            else
+            {
+                attrs = UnitAttributeFactory.CreateBaseUnit(new Dictionary<UnitAttrType, PEInt> {
+                    [UnitAttrType.Speed] = (PEInt)NavMeshAgent.speed,
+                    [UnitAttrType.AngularSpeed] = (PEInt)NavMeshAgent.angularSpeed,
+                });
+                var Speed = GetAttribute(UnitAttrType.Speed);
+                if (Speed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.speed = value.RawFloat; };
+                var AngularSpeed = GetAttribute(UnitAttrType.AngularSpeed);
+                if (AngularSpeed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.angularSpeed = value.RawFloat; };
+            }
 
+        }
         /// <summary>
         /// 设置目标点
         /// </summary>
@@ -78,7 +96,7 @@ namespace Unity.FPS.AI
         /// <summary>使某个武器停止攻击</summary>
         public void TryStop(WeaponEnemyController weapon)
         {
-            weapon.HandleShootInputs(false, false, true);
+            weapon.ShootInputs(false, false, true);
         }
 
 

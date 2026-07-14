@@ -8,7 +8,7 @@ using Utils;
 namespace Unity.FPS.AI
 {
 
-    public abstract class EnemyControllerFX : MonoBehaviour {
+    public abstract partial class EnemyControllerFX : MonoBehaviour {
 
         public Animator Animator;
         [Header("特效")]
@@ -43,6 +43,7 @@ namespace Unity.FPS.AI
 
             InitRS();
             if(m_Controller.BirthDuration>0) TriggerFX(OccasionTypeEnum.Birth, m_Controller.Pos, Quaternion.identity, transform);
+            InitAboStateFxListener();
             
         }
         private void OnDestroy()
@@ -53,6 +54,7 @@ namespace Unity.FPS.AI
             m_Controller.OnLostTarget -= OnLostTarget;
             m_Controller.OnDamaged -= OnDamaged;
             m_Controller.OnDie -= OnDie;
+            OnDestroyAboStateFx();
 
         }
 

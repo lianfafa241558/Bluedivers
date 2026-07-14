@@ -1,4 +1,5 @@
-﻿using PEMaths;
+using FPSGame.Attribute;
+using PEMaths;
 using UnityEngine;
 using Utils;
 
@@ -44,13 +45,16 @@ namespace Unity.FPS.Game
         #endregion
 
         public bool IsReloading { get; protected set; }
-
+        [DisplayField]
         [SerializeField]
         private int showAmmo;
+        [DisplayField]
         [SerializeField]
         private bool showInReload;
+        [DisplayField]
         [SerializeField]
         private float showReloadTime;
+        [DisplayField]
         [SerializeField]
         private float showCool;
 

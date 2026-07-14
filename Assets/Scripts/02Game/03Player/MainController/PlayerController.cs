@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using Core;
 using Core.Interface;
+using FPSGame.Attribute;
 using GameContract;
+using PEMaths;
 using RootMotion.FinalIK;
 
 using Unity.FPS.Game;
@@ -60,8 +62,6 @@ public class PlayerController : BaseSelfMoveableController
 
     public Transform ModleRoot { get; private set; }
 
-    public override float RotationMultiplier => WeaponsManager.IsAiming ? AimingRotationMultiplier : 1;
-    
     public PlayerWeaponsManager WeaponsManager { get; private set; }
 
 
@@ -77,6 +77,13 @@ public class PlayerController : BaseSelfMoveableController
     {
         base.Awake();
         WeaponsManager = GetComponent<PlayerWeaponsManager>();
+        WeaponsManager.OnAim+= OnAim;
+    }
+
+    private void OnDestroy()
+    {
+        if (!WeaponsManager) return;
+        WeaponsManager.OnAim -= OnAim;
     }
 
     protected override void Start()
@@ -99,6 +106,11 @@ public class PlayerController : BaseSelfMoveableController
     {
         int mainCameraIgnore = LayerMask.NameToLayer("MainCameraIgnore");
         PlayerCamera.cullingMask |= (1 << mainCameraIgnore);
+    }
+
+    public void OnAim(bool state)
+    {
+        GetAttribute(UnitAttrType.AngularSpeed).AddModifier(ModifierType.Factor, (state?-1:1)*(1-(PEInt)AimingRotationMultiplier));
     }
 
 
@@ -208,8 +220,8 @@ public class PlayerController : BaseSelfMoveableController
         float mouseX = InputHandler.GetLookInputsHorizontal();
         float mouseY = InputHandler.GetLookInputsVertical(); // 你需要获取垂直输入
 
-        m_CameraHorizontalAngle += mouseX * RotationSpeed * RotationMultiplier / 4;
-        m_CameraVerticalAngle += mouseY * RotationSpeed * RotationMultiplier / 4;
+        m_CameraHorizontalAngle += mouseX * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat / 4;
+        m_CameraVerticalAngle += mouseY * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat / 4;
         m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -20f, 70f); // 限制上下角度
 
         Quaternion rotation = Quaternion.Euler(
@@ -222,7 +234,7 @@ public class PlayerController : BaseSelfMoveableController
         Vector3 cameraFinalPos = CenterPos+Vector3.up + offsetDir * 4f;
 
         // 6. 应用位置 + 注意
-        PlayerDownCamera.transform.position =Vector3.Lerp(PlayerDownCamera.transform.position, cameraFinalPos, RotationSpeed * RotationMultiplier*Time.deltaTime/2);
+        PlayerDownCamera.transform.position =Vector3.Lerp(PlayerDownCamera.transform.position, cameraFinalPos, GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * Time.deltaTime/2);
         PlayerDownCamera.transform.LookAt(CenterPos);
 
         //呼叫
@@ -276,9 +288,24 @@ public class PlayerController : BaseSelfMoveableController
     /// </summary>
     public void UseSupply()
     {
+        UseCaisson();
+        UseMedicalBag();
+    }
+    /// <summary>
+    /// 使用弹药箱
+    /// </summary>
+    public void UseCaisson()
+    {
         WeaponsManager.UseSupply();
+    }
+    /// <summary>
+    /// 使用医疗包
+    /// </summary>
+    public void UseMedicalBag()
+    {
         Health.Heal(Health.MaxHealth / 2);
     }
+
 
 }
 

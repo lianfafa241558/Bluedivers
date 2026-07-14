@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Gameplay;
@@ -62,8 +62,8 @@ public class ShieldBag : BagBase
 
     public void Hit(GameObject _, Vector3 point)
     {
-        OnFillChange?.Invoke(false, m_health.CurrentShield.RawFloat / m_health.MaxShield);
-        OnTextChange?.Invoke(false, m_health.CurrentShield.RawInt + "/" + m_health.MaxShield);
+        OnFillChange?.Invoke(true, m_health.CurrentShield.RawFloat / m_health.MaxShield);
+        OnTextChange?.Invoke(true, m_health.CurrentShield.RawInt + "/" + m_health.MaxShield);
 
         OnStateChange?.Invoke(true);
         m_LastTimeOfUse=Time.time;
@@ -71,8 +71,8 @@ public class ShieldBag : BagBase
 
     public void RestoreShield(PEInt _)
     {
-        OnFillChange?.Invoke(false, m_health.CurrentShield.RawFloat / m_health.MaxShield);
-        OnTextChange?.Invoke(false, m_health.CurrentShield.RawInt + "/" + m_health.MaxShield);
+        OnFillChange?.Invoke(true, m_health.CurrentShield.RawFloat / m_health.MaxShield);
+        OnTextChange?.Invoke(true, m_health.CurrentShield.RawInt + "/" + m_health.MaxShield);
     }
     private void Die(GameObject _)
     {

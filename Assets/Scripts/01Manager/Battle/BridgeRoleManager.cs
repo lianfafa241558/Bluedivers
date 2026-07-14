@@ -31,7 +31,12 @@ public class BridgeRoleManager : RoleManagerBase
 
             var show = Instantiate(modleList.Find(modle => modle.name == item.ID));
             showModleList.Add(show);
-            if (selectPointGo != null) show.transform.SetParent(selectPointGo.transform, false);
+            if (selectPointGo != null)
+            {
+                show.transform.SetParent(selectPointGo.transform, false);
+                show.transform.localPosition = default;
+                show.transform.localRotation = Quaternion.identity;
+            }
             show.SetActive(false);
         });
 
@@ -97,11 +102,21 @@ public class BridgeRoleManager : RoleManagerBase
     public void SelectRole()
     {
         m_nowSelectIndex = m_nowShowIndex;
-        ArchiveSvc.Archive.lastSelectRole = dataList[m_nowShowIndex].ID;
+        var newRoleId = dataList[m_nowShowIndex].ID;
+        ArchiveSvc.Archive.lastSelectRole = newRoleId;
         selectPointGo.transform.GetChild(0).gameObject.SetActive(false);
         selectPointGo.transform.GetChild(0).gameObject.SetActive(true);
 
         SetPlayerRole(m_player);
+
+        // 同步更新 roomManager.players 中的角色数据，确保其他窗口（GameEndWnd、ArmamentWnd 等）能获取到正确的角色
+        ArchiveSvc.Archive.GetRoleLevel(newRoleId, out int level, out float exp);
+        var selfData = RoomManager.Instance.players[RoomManager.Instance.SelfIndex];
+        selfData.roleName = newRoleId;
+        selfData.roleLevel = level;
+        selfData.roleExp = exp;
+        selfData.weapons = ArchiveSvc.Archive.GetWeaponSelect(newRoleId);
+        selfData.Upgrades = ArchiveSvc.Archive.GetWeaponUpgrade(newRoleId);
     }
     #endregion
 }

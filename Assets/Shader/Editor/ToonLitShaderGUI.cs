@@ -143,27 +143,27 @@ public class ToonLitMainShaderGUI : ShaderGUI
         {
             EditorGUI.indentLevel++;
             MaterialProperty useAlphaClipping = FindProperty("_UseAlphaClipping", properties);
-            materialEditor.ShaderProperty(useAlphaClipping, "浣跨敤婧惰В");
+            materialEditor.ShaderProperty(useAlphaClipping, "使用溶解");
 
             MaterialProperty useAlphaUV = FindProperty("_UseAlphaUV", properties);
-            materialEditor.ShaderProperty(useAlphaUV, "浣跨敤UV杩涜婧惰В");
+            materialEditor.ShaderProperty(useAlphaUV, "使用UV进行溶解");
 
             MaterialProperty alphaMap = FindProperty("_AlphaMap", properties);
             MaterialProperty edgeColor = FindProperty("_EdgeColor", properties);
-            materialEditor.TexturePropertySingleLine(new GUIContent("婧惰В璐村浘", "婧惰В璐村浘"), alphaMap, edgeColor);
+            materialEditor.TexturePropertySingleLine(new GUIContent("溶解贴图", "溶解贴图"), alphaMap, edgeColor);
 
-            // _DissolveValue 鏄?Color 绫诲瀷锛屽疄闄呭彧浣跨敤 R 鍒嗛噺锛岀粯鍒朵负 Float Slider
+            // _DissolveValue 是 Color 类型，实际只使用 R 分量，绘制为 Float Slider
             MaterialProperty dissolveValue = FindProperty("_DissolveValue", properties);
             float dissolve = dissolveValue.colorValue.r;
             EditorGUI.BeginChangeCheck();
-            dissolve = EditorGUILayout.Slider("婧惰В绯绘暟", dissolve, 0f, 1f);
+            dissolve = EditorGUILayout.Slider("溶解系数", dissolve, 0f, 1f);
             if (EditorGUI.EndChangeCheck())
             {
                 dissolveValue.colorValue = new Color(dissolve, 0, 0, 0);
             }
 
             MaterialProperty edgeWidth = FindProperty("_EdgeWidth", properties);
-            materialEditor.ShaderProperty(edgeWidth, "杈圭紭瀹藉害");
+            materialEditor.ShaderProperty(edgeWidth, "边缘宽度");
             EditorGUI.indentLevel--;
             
         }
@@ -218,7 +218,7 @@ public class ToonLitMainShaderGUI : ShaderGUI
             materialEditor.ShaderProperty(useEmission, "使用自发光");
             
             MaterialProperty emissionMaskAddite = FindProperty("_EmissionMaskAddite", properties);
-            materialEditor.ShaderProperty(emissionMaskAddite, "浣跨敤姣忎釜閫氶亾浣滀负钂欑増");
+            materialEditor.ShaderProperty(emissionMaskAddite, "使用每个通道作为蒙版");
 
             if (emissionMaskAddite.floatValue>0.5f)
             {
@@ -342,7 +342,7 @@ public class ToonLitMainShaderGUI : ShaderGUI
         {
             EditorGUI.indentLevel++;
             //MaterialProperty mainLightShadows = FindProperty("_MAIN_LIGHT_SHADOWS", properties);
-            //materialEditor.ShaderProperty(mainLightShadows, "浣跨敤闃村奖");
+            //materialEditor.ShaderProperty(mainLightShadows, "使用阴影");
 
             MaterialProperty celShadeMidPoint = FindProperty("_CelShadeMidPoint", properties);
             materialEditor.ShaderProperty(celShadeMidPoint, "阴影切面的系数");

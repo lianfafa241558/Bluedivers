@@ -1,5 +1,6 @@
-﻿
+
 using Core;
+using FPSGame.Attribute;
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -63,6 +64,14 @@ namespace Unity.FPS.Game
             return base.HandleShootInputs(inputDown, inputHeld, inputUp);
            
         }
+        /// <summary>
+        /// 输入射击命令(不关心结果)
+        /// </summary>
+        public void ShootInputs(bool inputDown, bool inputHeld, bool inputUp)
+        {
+            HandleShootInputs(inputDown, inputHeld, inputUp);
+        }
+
 
         protected override bool TryShoot()
         {

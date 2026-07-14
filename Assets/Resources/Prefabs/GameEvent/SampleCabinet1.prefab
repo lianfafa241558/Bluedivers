@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 2510337950519941844}
   - component: {fileID: 3589081610111363312}
   - component: {fileID: 9100623597354690326}
-  - component: {fileID: 1477308952976104034}
+  - component: {fileID: 3072664268627213978}
   m_Layer: 3
   m_Name: SampleCabinet1
   m_TagString: Untagged
@@ -162,6 +162,7 @@ MonoBehaviour:
   MainPart: {fileID: 9100623597354690326}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 0
 --- !u!114 &3589081610111363312
 MonoBehaviour:
@@ -200,7 +201,7 @@ MonoBehaviour:
   BleedValue: 0
   isMain: 0
   showArmor: 0
---- !u!114 &1477308952976104034
+--- !u!114 &3072664268627213978
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -209,7 +210,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4868674726927771394}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 143e44d708581ac4bafae0081debc465, type: 3}
+  m_Script: {fileID: 11500000, guid: 531719c9934cdc647bacfd252c11ff06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
@@ -226,24 +227,23 @@ MonoBehaviour:
     arr:
     - Key: 3
       Value:
-        cilp: {fileID: 8300000, guid: f3755869312979b43a02699e69a25394, type: 3}
+        cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
         go: []
     - Key: 4
       Value:
-        cilp: {fileID: 8300000, guid: f3755869312979b43a02699e69a25394, type: 3}
-        ps: {fileID: 8950624839484268202, guid: 45ce85b82008be84287f2c7e5bf07647,
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
-        trans: {fileID: 6772694407517703427, guid: 3016bdeaf1139fd44a7cd80feadf5ab1,
-          type: 3}
+        trans: {fileID: 0}
         go: []
     meetReset: 0
   rendererSet:
   - type: 0
     occasion: 3
-    material: {fileID: 2100000, guid: d817dc4a51f9bde4b84c686a5a0b950f, type: 2}
+    material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
     colorName: 
     defaultColor: {r: 0, g: 0, b: 0, a: 0}
     switchOccasion: 0
@@ -281,10 +281,10 @@ MonoBehaviour:
     duration: 0.1
   - type: 0
     occasion: 4
-    material: {fileID: 2100000, guid: d817dc4a51f9bde4b84c686a5a0b950f, type: 2}
+    material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
     colorName: _DissolveValue
-    defaultColor: {r: 0, g: 0, b: 0, a: 0}
-    switchOccasion: 0
+    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
+    switchOccasion: 2
     switchColor: {r: 0, g: 0, b: 0, a: 0}
     gradient:
       serializedVersion: 2
@@ -316,7 +316,8 @@ MonoBehaviour:
       m_ColorSpace: -1
       m_NumColorKeys: 3
       m_NumAlphaKeys: 2
-    duration: 2
+    duration: 3
+  UseAttack: 0
 --- !u!1 &5715182344933686280
 GameObject:
   m_ObjectHideFlags: 0

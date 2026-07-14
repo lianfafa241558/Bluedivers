@@ -3,6 +3,7 @@ using Core;
 using GameContract;
 using System.Linq;
 using UnityEngine;
+using FPSGame.Attribute;
 
 
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/阵营配置")]
@@ -56,6 +57,8 @@ public class CampData_SO : ScriptableObject
     /// <summary>描述</summary>
     [TextArea(3, 5)]
     public string Desc;
+    [InspectorName("巢穴纹理")]
+    public TerrainItemInfo NestTerrainItem;
 
 
     [Foldout("任务", true)]
@@ -71,9 +74,18 @@ public class CampData_SO : ScriptableObject
     [InspectorName("备份的主线类型")]
     public MissionEnum[] mainTypesBackup;
 
-
-
     /*
+    [ContextMenu("转换")]
+    public void trans()
+    {
+        foreach (var temp in templates)
+        {
+            temp.patrolTemplate = temp.PatrolTemplate.Select(item=>new SKVP<string,int>(item,(int)(100f/ temp.PatrolTemplate.Count))).ToList();
+
+        }
+       
+    }
+    
     [ContextMenu("转换")]
     public void trans()
     {
@@ -103,7 +115,7 @@ public class CampData_SO : ScriptableObject
         public List<TierCfg> template;
 
         [InspectorName("巡逻队类型")]
-        public List<string> PatrolTemplate;
+        public List<SKVP<string,int>> patrolTemplate;
 
     }
 

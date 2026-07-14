@@ -54,17 +54,21 @@ MonoBehaviour:
   cfg:
     _fakeAttrs:
     - Key: 0
-      Value: 180
-    - Key: 1
-      Value: 22
+      Value: 0
     - Key: 2
-      Value: 0.083
-    - Key: 6
-      Value: 1
-    - Key: 11
+      Value: 0.08
+    - Key: 7
+      Value: 3
+    - Key: 13
+      Value: 4.5
+    - Key: 14
       Value: 0.3
-    - Key: 12
-      Value: 50
+    - Key: 15
+      Value: 110
+    - Key: 16
+      Value: 2.5
+    - Key: 1
+      Value: 350
   ProjectilePrefab: {fileID: 6427322605795972283, guid: 38aa19c9c455044469210cff8480ccb7,
     type: 3}
   BulletFlag: 0
@@ -77,23 +81,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 10
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion: []
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
@@ -122,6 +119,7 @@ MonoBehaviour:
     type: 3}
   ContinuousShootEndSfx: {fileID: 8300000, guid: b2804c2e99f02d54c9cd8b36ab673f9e,
     type: 3}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -139,6 +137,7 @@ MonoBehaviour:
   PlayerIndex: 0
   WeaponName: "\u5149\u4E4B\u5251\uFF1A\u8D85\u65B0\u661F for \u963F\u6BD4\u8212"
   WeaponType: "\u91CD\u578B\u6B66\u5668"
+  WeaponTypeEnum: 1
   WeaponIcon: {fileID: 21300000, guid: dce615cb8552bf44ba282efd271565f2, type: 3}
   Sight: {fileID: 1123618372036048713, guid: b72539764b0dbef469852ef17c048765, type: 3}
   ScopeGo: {fileID: 0}
@@ -150,38 +149,41 @@ MonoBehaviour:
   AimZoomRatio: 0.4
   AimOffset: {x: -0.077, y: 0.15, z: 0}
   playerAngle: 0
+  _showAttrInfo: 
   desc: "\u7ECF\u8FC7\u8F7B\u91CF\u5316\u5904\u7406\u5E76\u80FD\u591F\u8FDE\u7EED\u5C04\u51FB\u7684\u5B9A\u5236\u578B\u7535\u78C1\u70AE\u7A81\u51FB\u6B65\u67AA\u3002\r\n\u901A\u8FC7\u83B7\u5F97\u4F20\u8BF4\u4E2D\u7684\u5251\uFF0C\u5C11\u5973\u6210\u4E3A\u4E86\u52C7\u8005\u3002\u6CA1\u9519\uFF0C\u7231\u4E3D\u4E1D\u7684\u5192\u9669\u4E5F\u662F\u4ECE\u8FD9\u91CC\u5F00\u59CB\u7684\u3002"
-  m_RenameAttr: []
-  showAttr: 14000000020000000100000000000000
+  m_RenameAttr:
+  - name: "\u7535\u6C60\u5BB9\u91CF"
+    type: 1
+    addTag: 0
+    removeTag: 0
+  showAttr: 140000000200000001000000
   m_UniqueAttr: []
   Upgrade:
   - Key: 2
     Value:
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
+    - {fileID: 11400000, guid: 5ebf954f20800484aabf2f745e4a0833, type: 2}
+    - {fileID: 11400000, guid: 284a780f7b464d245a9fd33d84d4a390, type: 2}
+    - {fileID: 11400000, guid: 16626fbf58f111242970da4e71639327, type: 2}
   - Key: 4
     Value:
-    - {fileID: 11400000, guid: ff1c4ffaf08c0784f872d4c8dee192ef, type: 2}
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
+    - {fileID: 11400000, guid: 203f6be8ac5e2054aad574a1e52f4c6d, type: 2}
     - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
   - Key: 8
     Value:
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
+    - {fileID: 11400000, guid: 7ed10fc46ce932a439ab5b2de734c27a, type: 2}
+    - {fileID: 11400000, guid: 6c9e857303cadb04dad05e2ad757a2fb, type: 2}
   - Key: 12
     Value:
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
-  - Key: 16
-    Value:
-    - {fileID: 11400000, guid: ff1c4ffaf08c0784f872d4c8dee192ef, type: 2}
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-  Modules: []
-  ActiveModule: {fileID: 0}
+    - {fileID: 11400000, guid: 9f7daaa50f7c2a6428c03ac7b487e9dd, type: 2}
+    - {fileID: 11400000, guid: 94326231c47d6fd48906128c96fecb83, type: 2}
+    - {fileID: 11400000, guid: def6fe9129106ad48885db300e4c7e58, type: 2}
+  Modules:
+  - {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
+  - {fileID: 11400000, guid: caf58bc0071d7064a971407ba253667e, type: 2}
+  - {fileID: 11400000, guid: 2c4dba7286dce56408ad1a14140a45a2, type: 2}
+  - {fileID: 11400000, guid: 12970916417a22448ab869b085102fb8, type: 2}
+  - {fileID: 11400000, guid: 7e37c30b96e41f044904ec5cbfe3f6e9, type: 2}
+  ActiveModule: {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
 --- !u!1 &5377400619327638754
 GameObject:
   m_ObjectHideFlags: 0

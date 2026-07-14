@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using Core;
+using FPSGame.Attribute;
 using PEMaths;
 
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine;
 namespace Unity.FPS.Game
 {
     using Attr = WeaponAttrType;
-
+    
     public partial class WeaponPlayerController : WeaponController
     {
         [Foldout("点位和信息", true)]
@@ -20,6 +21,10 @@ namespace Unity.FPS.Game
         [InspectorName("武器类型")]
         public string WeaponType;
 
+        [InspectorName("武器类型枚举")]
+        public WeaponTypeEnum WeaponTypeEnum;
+
+        [SpritePreview(5,3)]
         [InspectorName("武器图标")]
         public Sprite WeaponIcon;
 
@@ -96,12 +101,41 @@ namespace Unity.FPS.Game
 
             Set(Attr.DirectDestruction, damages.SetDirectDestruction);
             Set(Attr.ExplosionDestruction, damages.SetExplosionDestruction);
-            Set(Attr.DirectWeakness, damages.SetDirectWeakness);
-            Set(Attr.ExplosionWeakness, damages.SetExplosionWeakness);
+            Set(Attr.WeaknessBonus, damages.SetWeaknessBonus);
 
             Set(Attr.BulletSpeed, damages.SetSpeed);
+            Set(Attr.LifeTime, damages.SetLifeTime);
             Set(Attr.ChargeDamageScale, damages.SetChargeDamageScale);
             Set(Attr.ChargeExplosionRangeScale, damages.SetChargeExplosionRangeScale);
+            Set(Attr.ChargeHeatScale, damages.SetChargeHeatScale);
+
+            // 伤害类型系数
+            Set(Attr.DamageTypeGun, damages.SetDamageTypeGun);
+            Set(Attr.DamageTypeExplosion, damages.SetDamageTypeExplosion);
+            Set(Attr.DamageTypeDestruction, damages.SetDamageTypeDestruction);
+            Set(Attr.DamageTypeReal, damages.SetDamageTypeReal);
+            Set(Attr.DamageTypeToxicity, damages.SetDamageTypeToxicity);
+            Set(Attr.DamageTypeBurn, damages.SetDamageTypeBurn);
+            Set(Attr.DamageTypeFreeze, damages.SetDamageTypeFreeze);
+            Set(Attr.DamageTypeElectric, damages.SetDamageTypeElectric);
+            Set(Attr.DamageTypeVertigo, damages.SetDamageTypeVertigo);
+            Set(Attr.DamageTypeTerror, damages.SetDamageTypeTerror);
+            Set(Attr.DamageTypeRadiation, damages.SetDamageTypeRadiation);
+            Set(Attr.DamageTypeHacker, damages.SetDamageTypeHacker);
+
+            // 伤害类型系数（爆炸伤害组）
+            Set(Attr.ExplosionTypeGun, damages.SetExplosionTypeGun);
+            Set(Attr.ExplosionTypeExplosion, damages.SetExplosionTypeExplosion);
+            Set(Attr.ExplosionTypeDestruction, damages.SetExplosionTypeDestruction);
+            Set(Attr.ExplosionTypeReal, damages.SetExplosionTypeReal);
+            Set(Attr.ExplosionTypeToxicity, damages.SetExplosionTypeToxicity);
+            Set(Attr.ExplosionTypeBurn, damages.SetExplosionTypeBurn);
+            Set(Attr.ExplosionTypeFreeze, damages.SetExplosionTypeFreeze);
+            Set(Attr.ExplosionTypeElectric, damages.SetExplosionTypeElectric);
+            Set(Attr.ExplosionTypeVertigo, damages.SetExplosionTypeVertigo);
+            Set(Attr.ExplosionTypeTerror, damages.SetExplosionTypeTerror);
+            Set(Attr.ExplosionTypeRadiation, damages.SetExplosionTypeRadiation);
+            Set(Attr.ExplosionTypeHacker, damages.SetExplosionTypeHacker);
 
         }
 
@@ -115,12 +149,42 @@ namespace Unity.FPS.Game
 
             _cfg[Attr.DirectDestruction].OnFinalValueChange -= damages.SetDirectDestruction;
             _cfg[Attr.ExplosionDestruction].OnFinalValueChange -= damages.SetExplosionDestruction;
-            _cfg[Attr.DirectWeakness].OnFinalValueChange -= damages.SetDirectWeakness;
-            _cfg[Attr.ExplosionWeakness].OnFinalValueChange -= damages.SetExplosionWeakness;
+            _cfg[Attr.WeaknessBonus].OnFinalValueChange -= damages.SetWeaknessBonus;
+
 
             _cfg[Attr.BulletSpeed].OnFinalValueChange -= damages.SetSpeed;
+            _cfg[Attr.LifeTime].OnFinalValueChange -= damages.SetLifeTime;
             _cfg[Attr.ChargeDamageScale].OnFinalValueChange -= damages.SetChargeDamageScale;
             _cfg[Attr.ChargeExplosionRangeScale].OnFinalValueChange -= damages.SetChargeExplosionRangeScale;
+            _cfg[Attr.ChargeHeatScale].OnFinalValueChange -= damages.SetChargeHeatScale;
+
+            // 伤害类型系数
+            _cfg[Attr.DamageTypeGun].OnFinalValueChange -= damages.SetDamageTypeGun;
+            _cfg[Attr.DamageTypeExplosion].OnFinalValueChange -= damages.SetDamageTypeExplosion;
+            _cfg[Attr.DamageTypeDestruction].OnFinalValueChange -= damages.SetDamageTypeDestruction;
+            _cfg[Attr.DamageTypeReal].OnFinalValueChange -= damages.SetDamageTypeReal;
+            _cfg[Attr.DamageTypeToxicity].OnFinalValueChange -= damages.SetDamageTypeToxicity;
+            _cfg[Attr.DamageTypeBurn].OnFinalValueChange -= damages.SetDamageTypeBurn;
+            _cfg[Attr.DamageTypeFreeze].OnFinalValueChange -= damages.SetDamageTypeFreeze;
+            _cfg[Attr.DamageTypeElectric].OnFinalValueChange -= damages.SetDamageTypeElectric;
+            _cfg[Attr.DamageTypeVertigo].OnFinalValueChange -= damages.SetDamageTypeVertigo;
+            _cfg[Attr.DamageTypeTerror].OnFinalValueChange -= damages.SetDamageTypeTerror;
+            _cfg[Attr.DamageTypeRadiation].OnFinalValueChange -= damages.SetDamageTypeRadiation;
+            _cfg[Attr.DamageTypeHacker].OnFinalValueChange -= damages.SetDamageTypeHacker;
+
+            // 伤害类型系数（爆炸伤害组）
+            _cfg[Attr.ExplosionTypeGun].OnFinalValueChange -= damages.SetExplosionTypeGun;
+            _cfg[Attr.ExplosionTypeExplosion].OnFinalValueChange -= damages.SetExplosionTypeExplosion;
+            _cfg[Attr.ExplosionTypeDestruction].OnFinalValueChange -= damages.SetExplosionTypeDestruction;
+            _cfg[Attr.ExplosionTypeReal].OnFinalValueChange -= damages.SetExplosionTypeReal;
+            _cfg[Attr.ExplosionTypeToxicity].OnFinalValueChange -= damages.SetExplosionTypeToxicity;
+            _cfg[Attr.ExplosionTypeBurn].OnFinalValueChange -= damages.SetExplosionTypeBurn;
+            _cfg[Attr.ExplosionTypeFreeze].OnFinalValueChange -= damages.SetExplosionTypeFreeze;
+            _cfg[Attr.ExplosionTypeElectric].OnFinalValueChange -= damages.SetExplosionTypeElectric;
+            _cfg[Attr.ExplosionTypeVertigo].OnFinalValueChange -= damages.SetExplosionTypeVertigo;
+            _cfg[Attr.ExplosionTypeTerror].OnFinalValueChange -= damages.SetExplosionTypeTerror;
+            _cfg[Attr.ExplosionTypeRadiation].OnFinalValueChange -= damages.SetExplosionTypeRadiation;
+            _cfg[Attr.ExplosionTypeHacker].OnFinalValueChange -= damages.SetExplosionTypeHacker;
 
         }
 

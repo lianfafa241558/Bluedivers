@@ -167,7 +167,7 @@ MonoBehaviour:
     - Key: 10
       Value: 0.132
     - Key: 60
-      Value: 2.4
+      Value: 2.6
     - Key: 61
       Value: 8
   ProjectilePrefab: {fileID: 7785816051124341128, guid: 1a806ccfaddf13a46bbbc4218fb923f6,
@@ -182,23 +182,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 100
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -226,23 +219,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 20
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 100
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -299,8 +285,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowName: "\u5E03\u96F7\u5668"
   Id: MineLauncher
-  Portrait: {fileID: 21300000, guid: 5b8041c2f5a7d6e43b09ab878fb408ad, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 5b8041c2f5a7d6e43b09ab878fb408ad, type: 3}
+  Portrait: {fileID: 21300000, guid: 89b8063e5f1640f4fa2d4632dc5a42d1, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 89b8063e5f1640f4fa2d4632dc5a42d1, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
   IsFixed: 0
@@ -331,6 +317,7 @@ MonoBehaviour:
   MainPart: {fileID: 0}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 1
 --- !u!114 &4932906196024244537
 MonoBehaviour:

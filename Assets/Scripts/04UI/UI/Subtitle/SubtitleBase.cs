@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -6,6 +6,7 @@ using static WndTools.WndRootTool;
 using static Utils.Tool;
 
 using GameContract;
+using FPSGame.Attribute;
 
 public abstract class SubtitleBase : MonoBehaviour
 {

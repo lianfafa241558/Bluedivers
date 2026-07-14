@@ -52,7 +52,7 @@ Shader "SimpleDecal"
             }
 
             Cull[_Cull]
-            ZTest LEqual
+            ZTest Off
 
             ZWrite off
             Blend[_DecalSrcBlend][_DecalDstBlend]

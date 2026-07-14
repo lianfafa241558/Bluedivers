@@ -101,20 +101,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 5
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -459,20 +455,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 7
     DamageDirect: 2
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 7
+    WeaknessBonus: 0
     ExplosionInnerRange: 2.5
     ExplosionRange: 5
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 0.5
@@ -788,6 +780,7 @@ MonoBehaviour:
   MainPart: {fileID: 1478053612840412110}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
 --- !u!114 &6731495466205310905
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2612,7 +2605,7 @@ MonoBehaviour:
   - Key: 0
     Value: 0.2
   - Key: 1
-    Value: 0.8
+    Value: 1
   AllArmor: 0
   armorValue: 0
   LineArmor:
@@ -2676,7 +2669,7 @@ MonoBehaviour:
   - Key: 0
     Value: 0.1
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 90
   LineArmor:
@@ -2781,7 +2774,7 @@ MonoBehaviour:
   - Key: 0
     Value: 0.1
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 70
   LineArmor:
@@ -2993,7 +2986,7 @@ MonoBehaviour:
   - Key: 0
     Value: 0.1
   - Key: 1
-    Value: 0.1
+    Value: 1
   AllArmor: 0
   armorValue: 70
   LineArmor:
@@ -3218,7 +3211,7 @@ MonoBehaviour:
   - Key: 0
     Value: 0.1
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 70
   LineArmor:
@@ -3434,7 +3427,7 @@ MonoBehaviour:
   - Key: 0
     Value: 0.1
   - Key: 1
-    Value: 0.1
+    Value: 1
   AllArmor: 0
   armorValue: 70
   LineArmor:
@@ -3491,7 +3484,7 @@ MonoBehaviour:
   - Key: 0
     Value: -0.5
   - Key: 1
-    Value: -0.5
+    Value: 1
   - Key: 3
     Value: -0.5
   AllArmor: 0
@@ -3898,7 +3891,7 @@ MonoBehaviour:
   - Key: 0
     Value: 0.1
   - Key: 1
-    Value: 0.5
+    Value: 1
   AllArmor: 0
   armorValue: 90
   LineArmor:

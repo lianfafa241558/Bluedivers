@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Core;
 
 using UnityEngine;
@@ -38,6 +38,8 @@ public class WndManager : Singleton<WndManager>
     public SelectRoleWnd selectRoleWnd;
 
     public VehicleWnd vehicleWnd;
+
+    public SettingWnd settingWnd;
 
     public Sprite empty;
 

@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using FPSGame.Attribute;
 
 /// <summary>
 /// 结构体约束的键值对（更严格，序列化更友好）

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core;
+using FPSGame.Attribute;
 using FPSGame.Furn;
 using GameContract;
 
@@ -166,7 +167,7 @@ public class SubtitleWnd : Window
         switch (item.Key)
         {
             case UnitTypeEnum.Player:
-                Debug.LogError("创建玩家框体"+ item.Value);
+                Debug.Log("创建玩家框体"+ item.Value);
                 Subtitles.Add(Instantiate(ShoutPrefab).Creat(item.Value, item.Value.gameObject, transform, alwaysShow));
                 Subtitles.Add(Instantiate(MarkPrefab).Creat(item.Value, null, transform, alwaysShow));
 

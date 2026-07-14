@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core;
+using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 
@@ -11,13 +12,19 @@ using UnityEngine.Events;
 using Utils;
 
 namespace Unity.FPS.Game {
-    public abstract class Health : MonoBehaviour {
+    public abstract partial class Health : MonoBehaviour {
+
+
+
+
         /// <summary>最大生命值</summary>
         [InspectorName("最大生命值")]
         public int MaxHealth = 100;
         /// <summary>最大生命值</summary>
         [InspectorName("最大护盾值")] 
         public int MaxShield;
+
+
 
         /// <summary>主体部位</summary>
         [InspectorName("主体部位")]
@@ -69,9 +76,15 @@ namespace Unity.FPS.Game {
 
         protected float m_LastHitTime = Mathf.NegativeInfinity;
 
+        private float m_Time;
+
+        /// <summary>标记当前 TakeDamage 调用来自异常状态 tick，HandleDamage 据此跳过积蓄槽更新</summary>
+        private bool _isAboTickDamage;
+
         protected virtual void Start() {
             CurrentHealth = MaxHealth;
             if(MainPart.IsValid()) MainPart.isMain = true;
+            InitAboState();
         }
         /// <summary>受到治疗</summary>
         public void Heal(float healAmount) {
@@ -100,17 +113,39 @@ namespace Unity.FPS.Game {
         }
 
         /// <summary>受到伤害</summary>
-        public void TakeDamage(List<KVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource,Collider damageAffected,Vector3 pos) {
+        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource,Collider damageAffected,Vector3 pos,bool response=true) {
             if (Invincible)
                 return;
             bool haveshield= CurrentShield > 0, isBreakShield=false;
             PEInt finaldamgage = 0;
-            damageGroups.ForEach(item => finaldamgage += HandleDamage(item.Key,PEMath.Max(item.Value,0)));
-            //Debug.LogWarning("最终伤害" + finaldamgage + "血量" + CurrentHealth);
+            foreach(var item in damageGroups)
+            {
+                var re= HandleDamage(item.Key, PEMath.Max(item.Value, 0), damageSource, _isAboTickDamage);
+                finaldamgage += re;
 #if UNITY_EDITOR
-            if(damageAffected) Tool.DrawLabel(damageAffected.RandomPoint(out var normal),""+Tool.Round(finaldamgage.RawFloat), 3, Color.red);
-            else Tool.DrawLabel(transform.position+RandomUtils.RandomVector3(), "" + Tool.Round(finaldamgage.RawFloat), 3, Color.red);
+                if (re.RawFloat>=0.5f)
+                {
+                    Color dmgColor = Color.white;
+                    if (ResSvc.aboStateDic != null)
+                    {
+                        foreach (var grp in damageGroups)
+                        {
+                            if (ResSvc.aboStateDic.TryGetValue(grp.Key, out var aboState) && aboState != null)
+                            {
+                                dmgColor = aboState.color;
+                                break;
+                            }
+                        }
+                    }
+                    if (damageAffected) Tool.DrawLabel(damageAffected.RandomPoint(out var normal), "" + Tool.Round(finaldamgage.RawFloat), 3, dmgColor);
+                    else Tool.DrawLabel(transform.position + RandomUtils.RandomVector3XZ(), "" + Tool.Round(finaldamgage.RawFloat), 3, dmgColor);
+                }
 #endif
+
+            }
+
+            //Debug.LogWarning("最终伤害" + finaldamgage + "血量" + CurrentHealth);
+
 
             PEInt healthBefore = CurrentHealth, shieldBefore = CurrentShield;
             if (shieldBefore > 0) {
@@ -136,25 +171,56 @@ namespace Unity.FPS.Game {
             if (trueDamageAmount > 0) {
                 m_LastHitTime = Time.time;
                 OnDamaged?.Invoke(trueDamageAmount, damageSource,damageAffected, noSource);
-                OnHit?.Invoke(damageSource,pos);
+                if(response)OnHit?.Invoke(damageSource,pos);
                 if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
+                //这个是控制hpui的，所以总是响应
                 BattleEventSub.UnitHit(gameObject, damageSource);
             }
             showHealth = CurrentHealth.RawInt;
             HandleDeath(damageSource);
         }
 
-        private PEInt HandleDamage(DamageTypeEnum type, PEInt value) {
+        private PEInt HandleDamage(DamageTypeEnum type, PEInt value, GameObject damageSource, bool isAboTick = false) {
             //只有需求特殊处理的才单独写，目前没有状态槽，直接全部默认
             //Debug.LogWarning("对"+gameObject.name+"伤害:类型"+type+"值"+value);
+            // 异常状态 tick 伤害：不更新积蓄槽（Current/LastGainTime），直接造成对应类型伤害
+            if (isAboTick) {
+                return type == DamageTypeEnum.Destruction ? 0 : value;
+            }
+            // Freeze 满槽：受到的 Gun/Explosion/Real 伤害变为 3 倍
+            if (IsAboStateFull(DamageTypeEnum.Freeze)
+                && (type == DamageTypeEnum.Gun || type == DamageTypeEnum.Explosion || type == DamageTypeEnum.Real))
+            {
+                value *= 3;
+            }
             switch (type) {
                 case DamageTypeEnum.Destruction:
                     return 0;//护甲破坏不计入伤害量
-                case DamageTypeEnum.Weakness:
-                    return 0;//弱点加成不计入伤害量
+                case DamageTypeEnum.Burn:
+                case DamageTypeEnum.Freeze:
+                case DamageTypeEnum.Electric:
+                case DamageTypeEnum.Radiation:
+                    AddAboGauge(type, value, damageSource);
+                    return value;//燃烧/冰冻/雷击/辐射 伤害计入伤害量
+                case DamageTypeEnum.Toxicity:
+                case DamageTypeEnum.Hacker:
+                case DamageTypeEnum.Terror:
+                case DamageTypeEnum.Vertigo:
+                    AddAboGauge(type, value, damageSource);
+                    return 0;//毒/骇入/恐慌/眩晕不计入伤害量
+
                 default:
                     return value;
             }
+        }
+
+        private void Update()
+        {
+            if (Time.time >= m_Time)
+            {
+                AboTick();
+            }
+
         }
 
 

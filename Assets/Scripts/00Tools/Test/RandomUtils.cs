@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -90,12 +90,12 @@ using UnityEngine;
             return list.OrderBy((T item) => rand.Range(0, 100)).ToList();
         }
 
-        public static Vector3 RandomVector3()
+        public static Vector3 RandomVector3XZ()
         {
             return new Vector3(Range(0f, 1f), 0f, Range(0f, 1f)).normalized;
         }
 
-        public static Vector3 RandomVector3(this System.Random rand)
+        public static Vector3 RandomVector3XZ(this System.Random rand)
         {
             return new Vector3(rand.Range(0f, 1f), 0f, rand.Range(0f, 1f)).normalized;
         }

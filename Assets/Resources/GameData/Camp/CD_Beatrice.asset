@@ -26,7 +26,7 @@ MonoBehaviour:
         weight: 100
         size: 1
     - tier: 2
-      weight: 20
+      weight: 21
       unitWeights:
       - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
           type: 3}
@@ -34,14 +34,14 @@ MonoBehaviour:
         size: 2
       - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
           type: 3}
-        weight: 25
+        weight: 30
         size: 2
       - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
           type: 3}
-        weight: 25
+        weight: 20
         size: 2
     - tier: 3
-      weight: 7
+      weight: 6
       unitWeights:
       - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
           type: 3}
@@ -68,14 +68,17 @@ MonoBehaviour:
           type: 3}
         weight: 100
         size: 1
-    PatrolTemplate:
-    - "\u8DF3\u866B\u5DE1\u903B\u961F"
-    - "\u8DF3\u866B\u5DE1\u903B\u961F"
-    - "\u6218\u58EB\u5DE1\u903B\u961F"
-    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-    - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-    - "\u7206\u866B\u5DE1\u903B\u961F"
-    - "\u7206\u866B\u5DE1\u903B\u961F"
+    patrolTemplate:
+    - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
+      Value: 40
+    - Key: "\u6218\u58EB\u5DE1\u903B\u961F"
+      Value: 20
+    - Key: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u7206\u866B\u5DE1\u903B\u961F"
+      Value: 20
   - name: "\u6218\u58EB\u6A21\u677F"
     template:
     - tier: 1
@@ -94,11 +97,11 @@ MonoBehaviour:
         size: 2
       - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
           type: 3}
-        weight: 25
+        weight: 30
         size: 2
       - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
           type: 3}
-        weight: 25
+        weight: 20
         size: 2
     - tier: 3
       weight: 7
@@ -128,13 +131,19 @@ MonoBehaviour:
           type: 3}
         weight: 100
         size: 1
-    PatrolTemplate:
-    - "\u8DF3\u866B\u5DE1\u903B\u961F"
-    - "\u6218\u58EB\u5DE1\u903B\u961F"
-    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-    - "\u91CD\u578B\u5DE1\u903B\u961F"
-    - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-    - "\u7206\u866B\u5DE1\u903B\u961F"
+    patrolTemplate:
+    - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
+      Value: 15
+    - Key: "\u6218\u58EB\u5DE1\u903B\u961F"
+      Value: 35
+    - Key: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u91CD\u578B\u5DE1\u903B\u961F"
+      Value: 15
+    - Key: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u7206\u866B\u5DE1\u903B\u961F"
+      Value: 15
   - name: "\u5BBF\u4E3B\u6A21\u677F"
     template:
     - tier: 1
@@ -149,11 +158,11 @@ MonoBehaviour:
         weight: 20
         size: 1
     - tier: 2
-      weight: 25
+      weight: 26
       unitWeights:
       - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
           type: 3}
-        weight: 45
+        weight: 50
         size: 2
       - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
           type: 3}
@@ -161,14 +170,14 @@ MonoBehaviour:
         size: 2
       - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
           type: 3}
-        weight: 25
+        weight: 20
         size: 2
       - unit: {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
           type: 3}
         weight: 10
         size: 2
     - tier: 3
-      weight: 7
+      weight: 6
       unitWeights:
       - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
           type: 3}
@@ -202,12 +211,17 @@ MonoBehaviour:
           type: 3}
         weight: 100
         size: 3
-    PatrolTemplate:
-    - "\u53CC\u80D6\u5DE1\u903B\u961F"
-    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-    - "\u91CD\u578B\u5DE1\u903B\u961F"
-    - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-    - "\u7206\u866B\u5DE1\u903B\u961F"
+    patrolTemplate:
+    - Key: "\u53CC\u80D6\u5DE1\u903B\u961F"
+      Value: 50
+    - Key: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u91CD\u578B\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u7206\u866B\u5DE1\u903B\u961F"
+      Value: 20
   - name: "\u70B9\u706B\u866B\u6A21\u677F"
     template:
     - tier: 1
@@ -222,7 +236,7 @@ MonoBehaviour:
         weight: 20
         size: 1
     - tier: 2
-      weight: 25
+      weight: 26
       unitWeights:
       - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
           type: 3}
@@ -241,7 +255,7 @@ MonoBehaviour:
         weight: 10
         size: 2
     - tier: 3
-      weight: 7
+      weight: 6
       unitWeights:
       - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
           type: 3}
@@ -275,12 +289,17 @@ MonoBehaviour:
           type: 3}
         weight: 100
         size: 3
-    PatrolTemplate:
-    - "\u53CC\u80D6\u5DE1\u903B\u961F"
-    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-    - "\u91CD\u578B\u5DE1\u903B\u961F"
-    - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-    - "\u7206\u866B\u5DE1\u903B\u961F"
+    patrolTemplate:
+    - Key: "\u53CC\u80D6\u5DE1\u903B\u961F"
+      Value: 50
+    - Key: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u91CD\u578B\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+      Value: 10
+    - Key: "\u7206\u866B\u5DE1\u903B\u961F"
+      Value: 20
   PatrolCreatValue: 120
   patrolCfgs:
   - name: "\u6218\u58EB\u5DE1\u903B\u961F"
@@ -346,6 +365,9 @@ MonoBehaviour:
   Color: {r: 0.71798027, g: 0.45882356, b: 1, a: 1}
   Suffix: Colour
   Desc: "\u6B8B\u4F59\u7684\u65E0\u540D\u4F17\u795E\u9020\u7269\uFF0C\u4ECD\u5728\u6267\u884C\u6700\u540E\u4E00\u6761\u6536\u5230\u7684\u6307\u4EE4:\u6BC1\u706D\u4E00\u5207\u751F\u7075\u3002"
+  NestTerrainItem:
+    diffuseTexture: {fileID: 2800000, guid: aa0b608a7682081499437a90ab97d64d, type: 3}
+    tileSize: {x: 4, y: 4}
   mainTypes: 0400000006000000050000000700000008000000
   extraTypes: 22000000230000002400000025000000
   nestTypes: 640000006500000066000000

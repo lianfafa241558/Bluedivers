@@ -9,7 +9,7 @@ using Core;
 using Utils;
 using GameContract;
 
-public class VFXAirdropEffect : MonoBehaviour, VfxEffect 
+public class VFXAirdropEffect : MonoBehaviour, IVfxEffect 
 {
 
     public System.Action<GameObject> OnCreatObject;

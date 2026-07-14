@@ -17,21 +17,27 @@ MonoBehaviour:
   - name: "\u5C3C\u83AB\u753B\u5ECA"
     pos: {x: -330, y: 240}
     enemyVarietyType: 6
+    terrainType: 3
   - name: "\u963F\u4F69\u51EF\u83B1\u949F\u697C"
     pos: {x: 120, y: 200}
     enemyVarietyType: 6
+    terrainType: 6
   - name: "\u987F\u609F\u5E7F\u573A"
     pos: {x: 350, y: 150}
     enemyVarietyType: 6
+    terrainType: 3
   - name: "\u72C2\u730E\u4E3B\u697C"
     pos: {x: -100, y: 120}
     enemyVarietyType: 6
+    terrainType: 1
   - name: "\u827A\u672F\u8D44\u8BAF\u9986"
     pos: {x: -400, y: 50}
     enemyVarietyType: 6
+    terrainType: 1
   - name: "\u7B2C3\u5BBF\u820D\u697C"
     pos: {x: -280, y: -125}
     enemyVarietyType: 6
+    terrainType: 3
   AreaDesc: "\u53D7\u65E0\u540D\u4F17\u795E\u81EA\u52A8\u673A\u51B2\u51FB\u800C\u53D8\u6210\u4E00\u7247\u5E9F\u589F\u7684\u524D\u72C2\u730E\u827A\u672F\u5B66\u9662\u3002"
   AreaBackground: {fileID: 21300000, guid: dab962e253408924ca44eec4f2a9787e, type: 3}
   Icon: {fileID: 21300000, guid: efa092ce0ef6c084d907e9da1dfb2156, type: 3}
@@ -52,3 +58,16 @@ MonoBehaviour:
     Value: 5
   - Key: {fileID: 5937501648714262811, guid: 16df67b868a9cc342bd6f99d40a7219a, type: 3}
     Value: 5
+  TerrainItem:
+  - diffuseTexture: {fileID: 2800000, guid: 883f3f610503acb40bf37c771c24b342, type: 3}
+    tileSize: {x: 5, y: 8}
+  - diffuseTexture: {fileID: 2800000, guid: 99fada34a53f15a4b958aa49964ae333, type: 3}
+    tileSize: {x: 16, y: 16}
+  - diffuseTexture: {fileID: 2800000, guid: 98f2daaa2158cf94ba01192e69105343, type: 3}
+    tileSize: {x: 32, y: 32}
+  - diffuseTexture: {fileID: 2800000, guid: 3e7f04fb425d2a74187a712860f69cda, type: 3}
+    tileSize: {x: 4, y: 4}
+  - diffuseTexture: {fileID: 2800000, guid: a72687892b449e24081e73d5fc0673ed, type: 3}
+    tileSize: {x: 8, y: 8}
+  - diffuseTexture: {fileID: 2800000, guid: fa0655240c9906f4fb0979edc6f9440a, type: 3}
+    tileSize: {x: 20, y: 20}

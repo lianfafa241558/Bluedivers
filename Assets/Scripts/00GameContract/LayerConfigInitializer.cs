@@ -39,7 +39,7 @@ namespace GameContract
             LayerDefinition.GroundLayers = groundLayers;
             LayerDefinition.WeaponLayers = weaponLayers;
             LayerDefinition.AirWallLayers = airWallLayers;
-
+            LayerDefinition.SmokeLayers = smokeLayers;
             Destroy(this);  // 配置完立即销毁
         }
     }
@@ -66,6 +66,9 @@ namespace GameContract
         public static LayerMask WeaponLayers { get; set; }
         /// <summary>空气墙层</summary>
         public static LayerMask AirWallLayers { get; set; }
+
+        /// <summary>烟雾层</summary>
+        public static LayerMask SmokeLayers { get; set; }
 
     }
 

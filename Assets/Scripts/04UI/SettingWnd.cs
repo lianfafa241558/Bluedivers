@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core;
+using FPSGame.Attribute;
 using GameContract;
 
 using Unity.FPS.Game;
@@ -19,7 +20,7 @@ public class SettingWnd : Window
     public Transform stateActiveRoot,stateHideRoot,mapName,mapImage,mapIcon,
         taskName,taskDiff,taskType,taskTypeIcon,
         taskMainDesc, taskExtraDesc, taskMainReward, taskExtraReward, tastExtraDiffRoot,
-        selfIcon,selfName,selfLevel,selfExp;
+        selfIcon,selfName,selfLevel,selfExp, selfFrame;
 
     [Foldout("右上按钮", true)]
     public Transform freeCamera, rebirth,returnShop, exitGame;
@@ -54,6 +55,8 @@ public class SettingWnd : Window
         //这玩意一般是那种需要关了也能触发的需求才用的 update改用就行
         InputManager.BindDown(WindowStateEnum.All, InputState.Esc, OnEsc);
         //Debug.LogError("绑定");
+        //此时还没初始化
+        WndManager.Instance.settingWnd = this;
     }
 
     public override void OnDestroy()
@@ -343,10 +346,11 @@ public class SettingWnd : Window
         SetText(selfName, player.ShowName);
         SetSprite(selfIcon, player.Portrait);
         ArchiveSvc.Archive.GetRoleLevel(player.Id, out int level, out float expScale);
-
+        SetColor(selfFrame, player.Color);
         SetText(selfLevel, level);
         SetFill(selfExp, expScale);
-
+        Color.RGBToHSV(player.Color, out var h, out var s, out var v);
+        SetColor(selfExp, Color.HSVToRGB(h, s * 0.5f, v));
     }
     /// <summary>返回舰船</summary>
     void TryReturnShop()

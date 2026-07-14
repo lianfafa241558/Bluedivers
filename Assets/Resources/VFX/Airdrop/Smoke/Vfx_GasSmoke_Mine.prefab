@@ -10,7 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 6397819666833770909}
   - component: {fileID: 463613415186403480}
+  - component: {fileID: 1747318275169365809}
   - component: {fileID: 5327649513418464192}
+  - component: {fileID: 2266113864980879777}
   m_Layer: 14
   m_Name: Vfx_GasSmoke_Mine
   m_TagString: Untagged
@@ -4745,6 +4747,41 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &1747318275169365809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3577755781743022927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b72e5c4e2526a5e4cb512fc1d8fc9397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Collider: {fileID: 2266113864980879777}
+  TickInterval: 0.5
+  UseDiffScale: 0
+  DamageData:
+    DamageExplosion: 40
+    ExplosionInnerRange: 3
+    ExplosionRange: 4
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 4
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 4
+    NoSource: 1
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
 --- !u!199 &5327649513418464192
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -4819,3 +4856,24 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!135 &2266113864980879777
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3577755781743022927}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 4
+  m_Center: {x: 0, y: 0.5, z: 0}

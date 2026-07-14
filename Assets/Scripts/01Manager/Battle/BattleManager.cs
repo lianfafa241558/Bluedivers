@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Core;
 using FpsGame.MapUtils;
 using GameContract;
@@ -65,7 +66,7 @@ public class BattleManager : Singleton<BattleManager>
         WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
         RequestManager = new GameObject("RequestManager").AddComponent<PathRequestManager>();
         RequestManager.transform.SetParent(transform);
-        Debug.LogError("完成主要内容初始?");
+        Debug.Log("完成主要内容初始?");
         yield return null;
 
         //ResManager.Instance.SetLoadSceneExtraProgress(1);
@@ -131,7 +132,12 @@ public class BattleManager : Singleton<BattleManager>
         //Debug.LogWarning("地图真实" + mapRoot.terrain.terrainData.size);
         //terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
         mapRoot.Init();
-        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain();
+        List<TerrainItemInfo> infos = new(TaskManager.Instance.nowTask.mapCfg.TerrainItem);
+        var nestinfo = TaskManager.Instance.nowTask.campData.NestTerrainItem;
+        infos[3] = nestinfo;
+        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().SetTextures(infos.Select(item=>item.diffuseTexture).ToArray(), infos.Select(item => item.tileSize).ToArray());
+
+        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain(cfg.taskCfg.terrainType);
 
         var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
         if (debugger.IsValid())
@@ -228,7 +234,7 @@ public class BattleManager : Singleton<BattleManager>
     {
         var dic = TaskManager.Instance.nowTask.collectProperty;
         if (!dic.TryAdd(type, count)) dic[type]+= count;
-        if (user&&user.TryGetComponent(out PlayerController player)) AddBattleDataItem(player.PlayerIndex, "采集欧帕兹数?");
+        if (user&&user.TryGetComponent(out PlayerController player)) AddBattleDataItem(player.PlayerIndex, "采集欧帕兹数量");
     }
     private void OnDatSwitch(bool isNoon)
     {

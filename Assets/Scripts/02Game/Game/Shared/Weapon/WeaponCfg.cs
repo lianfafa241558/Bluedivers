@@ -86,7 +86,9 @@ namespace Unity.FPS.Game
         {
             var re = new List<WeaponAttrType>(){ 
                 WeaponAttrType.Ammo, WeaponAttrType.Magazine, WeaponAttrType.ShootInterval,
-                WeaponAttrType.BulletsSpreadAngle,WeaponAttrType.ReloadTime
+                WeaponAttrType.BulletsSpreadAngle,WeaponAttrType.ReloadTime,
+                WeaponAttrType.HeatPerShot, WeaponAttrType.CoolDelay, WeaponAttrType.CoolSpeed,
+                WeaponAttrType.OverheatDuration, WeaponAttrType.LifeTime
             };
             switch (type)
             {

@@ -53,7 +53,7 @@ public class UnitWeightCfgDrawer : PropertyDrawer
 }
 
 /// <summary>
-/// PatrolCfg 缁樺埗鍣細骞抽摵 units 鍒楄〃锛堜笉鏄剧ず榛樿鎶樺彔锛夛紝姣忛」鍙宠竟鍔犲垹闄ゆ寜閽紝鍙充笅瑙掑姞娣诲姞鎸夐挳
+/// PatrolCfg 绘制器：平铺 units 列表（不显示默认折叠），每项右边加删除按钮，右下角加添加按钮
 /// </summary>
 [CustomPropertyDrawer(typeof(CampData_SO.PatrolCfg))]
 public class PatrolCfgDrawer : PropertyDrawer
@@ -66,10 +66,10 @@ public class PatrolCfgDrawer : PropertyDrawer
         SerializedProperty unitsProp = property.FindPropertyRelative("units");
         if (unitsProp != null)
         {
-            h += lineHeight; // 鏍囬
+            h += lineHeight; // 标题
             for (int i = 0; i < unitsProp.arraySize; i++)
             {
-                h += lineHeight + EditorGUIUtility.standardVerticalSpacing; // SKVP 鍥哄畾鍗曡
+                h += lineHeight + EditorGUIUtility.standardVerticalSpacing; // SKVP 固定单行
             }
             h += lineHeight; // 添加按钮行
         }
@@ -92,12 +92,12 @@ public class PatrolCfgDrawer : PropertyDrawer
         EditorGUI.PropertyField(nameRect, nameProp, new GUIContent("名称"));
         y += lineHeight + spacing;
 
-        // ======== units 骞抽摵 ========
+        // ======== units 平铺 ========
         SerializedProperty unitsProp = property.FindPropertyRelative("units");
 
-        // 鏍囬
+        // 标题
         Rect titleRect = new Rect(x, y, w, lineHeight);
-        EditorGUI.LabelField(titleRect, "鍗曚綅閰嶇疆", EditorStyles.boldLabel);
+        EditorGUI.LabelField(titleRect, "单位配置", EditorStyles.boldLabel);
         y += lineHeight + spacing;
 
         for (int i = 0; i < unitsProp.arraySize; i++)
@@ -109,7 +109,7 @@ public class PatrolCfgDrawer : PropertyDrawer
             float innerW = w - 56;
             float curX = x + 2;
 
-            // 灞傜骇 鏍囩 + 瀛楁
+            // 层级 标签 + 字段
             float keyLabelW = GUI.skin.label.CalcSize(new GUIContent("层级")).x + 4f;
             EditorGUI.LabelField(new Rect(curX, y, keyLabelW, lineHeight), "层级");
             curX += keyLabelW;
@@ -117,14 +117,14 @@ public class PatrolCfgDrawer : PropertyDrawer
             EditorGUI.PropertyField(new Rect(curX, y, keyFieldW, lineHeight), keyProp, GUIContent.none);
             curX += keyFieldW + 5f;
 
-            // 鏁伴噺 鏍囩 + 瀛楁
+            // 数量 标签 + 字段
             float valueLabelW = GUI.skin.label.CalcSize(new GUIContent("数量")).x + 4f;
             EditorGUI.LabelField(new Rect(curX, y, valueLabelW, lineHeight), "数量");
             curX += valueLabelW;
             float valueFieldW = innerW - (curX - (x + 2));
             EditorGUI.PropertyField(new Rect(curX, y, valueFieldW, lineHeight), valueProp, GUIContent.none);
 
-            // 鍒犻櫎鎸夐挳锛堝彸渚э級
+            // 删除按钮（右侧）
             Rect delBtnRect = new Rect(x + w - 52, y + 2, 50, lineHeight);
             if (GUI.Button(delBtnRect, "删除")) 
             {
@@ -151,7 +151,7 @@ public class PatrolCfgDrawer : PropertyDrawer
 }
 
 /// <summary>
-/// TierCfg 鐨勭粯鍒跺櫒锛氬钩閾?unitWeights 鍒楄〃锛堜笉鏄剧ず榛樿鎶樺彔锛夛紝姣忛」鍙宠竟鍔犲垹闄ゆ寜閽紝鍙充笅瑙掑姞娣诲姞鎸夐挳
+/// TierCfg 的绘制器：平铺 unitWeights 列表（不显示默认折叠），每项右边加删除按钮，右下角加添加按钮
 /// </summary>
 [CustomPropertyDrawer(typeof(CampData_SO.TierCfg))]
 public class TierCfgDrawer : PropertyDrawer
@@ -174,7 +174,7 @@ public class TierCfgDrawer : PropertyDrawer
             // 添加按钮行
             h += lineHeight;
         }
-        h += EditorGUIUtility.singleLineHeight;//鐣欑┖
+        h += EditorGUIUtility.singleLineHeight;//留空
         return h;
     }
 
@@ -198,7 +198,7 @@ public class TierCfgDrawer : PropertyDrawer
         float fieldW = (w - tierLabelW - weightLabelW - 10) / 2;
         float curX = x;
 
-        // tier 鏍囩 + 瀛楁
+        // tier 标签 + 字段
         EditorGUI.LabelField(new Rect(curX, y, tierLabelW, lineHeight), "层级");
         curX += tierLabelW;
         EditorGUI.PropertyField(new Rect(curX, y, fieldW, lineHeight), tierProp, GUIContent.none);
@@ -210,10 +210,10 @@ public class TierCfgDrawer : PropertyDrawer
         weightProp.intValue = EditorGUI.IntField(new Rect(curX, y, fieldW, lineHeight), GUIContent.none, weightProp.intValue);
         y += lineHeight + spacing;
 
-        // ======== unitWeights 骞抽摵 ========
+        // ======== unitWeights 平铺 ========
         SerializedProperty uwProp = property.FindPropertyRelative("unitWeights");
 
-        // 鏍囬
+        // 标题
         Rect uwTitleRect = new Rect(x, y, w, lineHeight);
         EditorGUI.LabelField(uwTitleRect, "单位类型", EditorStyles.boldLabel);
         y += lineHeight + spacing;
@@ -224,15 +224,16 @@ public class TierCfgDrawer : PropertyDrawer
             SerializedProperty itemProp = uwProp.GetArrayElementAtIndex(i);
             float itemH = EditorGUI.GetPropertyHeight(itemProp);
             /*
-            // 鑳屾櫙妗?            Rect bgRect = new Rect(x, y, w, itemH);
+            // 背景框
+            Rect bgRect = new Rect(x, y, w, itemH);
             EditorGUI.HelpBox(bgRect, "", MessageType.None);
             */
-            // 鍐呭鍖哄煙锛堢暀鍑哄垹闄ゆ寜閽┖闂达級
+            // 内容区域（留出删除按钮空间）
             float innerW = w - 56;
             Rect itemRect = new Rect(x + 2, y, innerW, itemH);
             EditorGUI.PropertyField(itemRect, itemProp, GUIContent.none);
 
-            // 鍒犻櫎鎸夐挳锛堝彸渚э級
+            // 删除按钮（右侧）
             Rect delBtnRect = new Rect(x + w - 52, y + 2, 50, lineHeight);
             if (GUI.Button(delBtnRect, "删除"))
             {
@@ -259,7 +260,8 @@ public class TierCfgDrawer : PropertyDrawer
 }
 
 /// <summary>
-/// CampTemplate 缁樺埗鍣細鍙嚜瀹氫箟 PatrolTemplate 涓轰笅鎷夋锛宯ame 鍜?template 璧伴粯璁?/// </summary>
+/// CampTemplate 绘制器：只自定义 PatrolTemplate 为下拉框，name 和 template 走默认
+/// </summary>
 [CustomPropertyDrawer(typeof(CampData_SO.CampTemplate))]
 public class CampTemplateDrawer : PropertyDrawer
 {
@@ -300,13 +302,13 @@ public class CampTemplateDrawer : PropertyDrawer
             h += EditorGUI.GetPropertyHeight(templateProp, true);
         }
 
-        SerializedProperty patrolTemplateProp = property.FindPropertyRelative("PatrolTemplate");
+        SerializedProperty patrolTemplateProp = property.FindPropertyRelative("patrolTemplate");
         if (patrolTemplateProp != null)
         {
-            h += lineHeight; // 鏍囬
+            h += lineHeight; // 标题
             for (int i = 0; i < patrolTemplateProp.arraySize; i++)
             {
-                h += lineHeight; // 姣忚涓嬫媺妗?
+                h += lineHeight; // 每行 SKVP
              }
             h += lineHeight; // 添加按钮行
         }
@@ -340,28 +342,28 @@ public class CampTemplateDrawer : PropertyDrawer
             return;
         }
 
-        // name锛堝凡浣滀负鏍囬鏄剧ず锛岃繖閲岀敤缂╄繘鍐嶆樉绀轰竴娆℃柟渚跨紪杈戯級
+        // name（已作为标题显示，这里用缩进再显示一次方便编辑）
         EditorGUI.indentLevel++;
         Rect nameRect = new Rect(x, y, w, lineHeight);
         EditorGUI.PropertyField(nameRect, nameProp, new GUIContent("名称"));
         y += lineHeight + spacing;
 
-        // template (List<TierCfg>) 鈥?璧伴粯璁わ紝鐢?TierCfgDrawer 澶勭悊
+        // template (List<TierCfg>) — 走默认，由 TierCfgDrawer 处理
         SerializedProperty templateProp = property.FindPropertyRelative("template");
         float templateH = EditorGUI.GetPropertyHeight(templateProp, true);
         Rect templateRect = new Rect(x, y, w, templateH);
         EditorGUI.PropertyField(templateRect, templateProp, new GUIContent("单位模板"), true);
         y += templateH + spacing;
 
-        // ======== PatrolTemplate (List<string>) 涓嬫媺妗?========
-        SerializedProperty patrolTemplateProp = property.FindPropertyRelative("PatrolTemplate");
+        // ======== patrolTemplate (List<SKVP<string,int>>) ========
+        SerializedProperty patrolTemplateProp = property.FindPropertyRelative("patrolTemplate");
 
-        // 鏍囬
+        // 标题
         Rect ptTitleRect = new Rect(x, y, w, lineHeight);
         EditorGUI.LabelField(ptTitleRect, "巡逻队类型", EditorStyles.boldLabel);
         y += lineHeight + spacing;
 
-        // 鑾峰彇 patrolCfgs 鐨?name 鍒楄〃
+        // 获取 patrolCfgs 的 name 列表
         SerializedProperty patrolCfgsProp = property.serializedObject.FindProperty("patrolCfgs");
         string[] patrolNames = new string[patrolCfgsProp.arraySize];
         for (int i = 0; i < patrolCfgsProp.arraySize; i++)
@@ -375,12 +377,16 @@ public class CampTemplateDrawer : PropertyDrawer
         for (int i = 0; i < patrolNames.Length; i++)
             options[i + 1] = patrolNames[i];
 
+        float delBtnW = 54;
+
         for (int i = 0; i < patrolTemplateProp.arraySize; i++)
         {
             SerializedProperty itemProp = patrolTemplateProp.GetArrayElementAtIndex(i);
+            SerializedProperty keyProp = itemProp.FindPropertyRelative("Key");
+            SerializedProperty valueProp = itemProp.FindPropertyRelative("Value");
 
             int selectedIdx = 0;
-            string curVal = itemProp.stringValue;
+            string curVal = keyProp.stringValue;
             for (int j = 0; j < patrolNames.Length; j++)
             {
                 if (patrolNames[j] == curVal)
@@ -390,16 +396,36 @@ public class CampTemplateDrawer : PropertyDrawer
                 }
             }
 
-            Rect itemRect = new Rect(x + 10, y, w - 70, lineHeight);
-            Rect delRect = new Rect(x + w - 54, y, 50, lineHeight);
+            // 名称下拉框
+            float keyLabelW = 48;
+            Rect keyLabelRect = new Rect(x + 2, y, keyLabelW, lineHeight);
+            EditorGUI.LabelField(keyLabelRect, "巡逻队");
 
-            int newIdx = EditorGUI.Popup(itemRect, "巡逻队", selectedIdx, options);
+            float valueLabelW = 38;
+            float remainingW = w - keyLabelW - valueLabelW - delBtnW - 20;
+            float keyFieldW = remainingW * 0.5f;
+            float valueFieldW = remainingW * 0.5f;
+            float curX = x + 2 + keyLabelW;
+
+            Rect keyFieldRect = new Rect(curX, y, keyFieldW, lineHeight);
+            int newIdx = EditorGUI.Popup(keyFieldRect, selectedIdx, options);
             if (newIdx != selectedIdx)
             {
-                itemProp.stringValue = newIdx == 0 ? "" : patrolNames[newIdx - 1];
-                itemProp.serializedObject.ApplyModifiedProperties();
+                keyProp.stringValue = newIdx == 0 ? "" : patrolNames[newIdx - 1];
+                keyProp.serializedObject.ApplyModifiedProperties();
             }
+            curX += keyFieldW + 5;
 
+            // 权重字段
+            Rect valueLabelRect = new Rect(curX, y, valueLabelW, lineHeight);
+            EditorGUI.LabelField(valueLabelRect, "权重");
+            curX += valueLabelW;
+
+            Rect valueFieldRect = new Rect(curX, y, valueFieldW, lineHeight);
+            valueProp.intValue = EditorGUI.IntField(valueFieldRect, valueProp.intValue);
+
+            // 删除按钮（右侧）
+            Rect delRect = new Rect(x + w - delBtnW, y + 2, 50, lineHeight);
             if (GUI.Button(delRect, "删除"))
             {
                 patrolTemplateProp.DeleteArrayElementAtIndex(i);

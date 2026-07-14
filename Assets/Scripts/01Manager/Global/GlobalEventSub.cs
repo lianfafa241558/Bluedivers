@@ -74,6 +74,12 @@ public static class GlobalEventSub
     /// </summary>
     public static Action<PlayerController> OnSwitchRole;
 
+    /// <summary>
+    /// 舰桥选人界面切换角色预览
+    /// </summary>
+    public static event Action<RoleData_SO> OnSelectRolePreview;
+    public static void SelectRolePreview(RoleData_SO data) => OnSelectRolePreview?.Invoke(data);
+
 
     /// <summary>
     /// 交互家具

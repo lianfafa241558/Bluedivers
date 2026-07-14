@@ -6,6 +6,8 @@ using System.Linq;
 using UnityEngine.Events;
 
 using Utils;
+using FPSGame.Attribute;
+
 
 #if UNITY_EDITOR
 using UnityEditor;

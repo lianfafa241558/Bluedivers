@@ -1,7 +1,7 @@
 fileFormatVersion: 2
 guid: e8cfe05e9f4731f4ab9039124756f450
 ModelImporter:
-  serializedVersion: 21300
+  serializedVersion: 22200
   internalIDToNameTable:
   - first:
       74: -6764825094889370452
@@ -75,7 +75,17 @@ ModelImporter:
   - first:
       74: -1825370589295896047
     second: Aparche_Vital_Panic
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: EnemyTSS_Aparche_Blackmarket
+    second: {fileID: 2100000, guid: 960d363f372231949b013c821b3c2c33, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: FX_Apache_propeller
+    second: {fileID: 2100000, guid: c29c58d6ae9853a49a81528c4969ce49, type: 2}
   materials:
     materialImportMode: 1
     materialName: 0
@@ -489,6 +499,7 @@ ModelImporter:
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
+    importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
     importCameras: 1
@@ -516,6 +527,7 @@ ModelImporter:
     secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
     useFileScale: 1
+    strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 0
@@ -548,6 +560,7 @@ ModelImporter:
   humanoidOversampling: 1
   avatarSetup: 0
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 0
   remapMaterialsIfMaterialImportModeIsNone: 0
   additionalBone: 0
   userData: 

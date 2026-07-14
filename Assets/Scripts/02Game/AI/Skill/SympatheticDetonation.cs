@@ -1,7 +1,12 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
+using Core;
+using FPSGame.Attribute;
+using GameContract;
+using JetBrains.Annotations;
 using Unity.FPS.Game;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 namespace Unity.FPS.AI
 {
@@ -11,30 +16,50 @@ namespace Unity.FPS.AI
     [AddComponentMenu("技能/殉爆和自爆", 30)]
     public class SympatheticDetonation : MonoBehaviour
     {
+        [InspectorName("殉爆延时")]
         [SerializeField]
         float delayTime = 0;
+        [InspectorName("自爆时间")]
         [SerializeField]
         float selfExplosionTime = 0;
-        [SerializeField]
-        AIController controller;
+
+        [InspectorName("使用武器爆炸")]
         [SerializeField]
         WeaponBaseController weapon;
+
+        [InspectorName("actor的物体")]
+        [SerializeField]
+        GameObject go;
+
+        [SerializeField]
+        I_AIController controller => go.GetComponent<I_AIController>();
+        [InspectorName("使用难度增幅")]
+        [SerializeField]
+        private bool UseDiffScale = true;
+
+        [Compare("weapon",0, CompareOperate.Equal)]
+        [SerializeField]
+        protected SustainedDamageData DamageData;
 
         Coroutine m_Coroutine;
         private void OnEnable()
         {
-            controller.OnDie += TryExplode;
-            if (selfExplosionTime > 0)
+            if (go != null)
             {
-                m_Coroutine = StartCoroutine(nameof(SelfExplode));
+                controller.OnDie += TryExplode;
+                if (selfExplosionTime > 0)
+                {
+                    m_Coroutine = StartCoroutine(nameof(SelfExplode));
+                }
             }
         }
         private void OnDisable()
         {
-            controller.OnDie -= TryExplode;
-            if (m_Coroutine != null)
+           
+            if (go != null)
             {
-                StopCoroutine(m_Coroutine);
+                controller.OnDie -= TryExplode;
+                if(m_Coroutine!=null) StopCoroutine(m_Coroutine);
             }
         }
         IEnumerator SelfExplode()
@@ -45,12 +70,32 @@ namespace Unity.FPS.AI
         IEnumerator DelayExplode()
         {
             yield return new WaitForSeconds(delayTime);
-            weapon.Shoot();
+            ApplyEffect();
         }
 
         void TryExplode()
         {
             StartCoroutine(nameof(DelayExplode));
         }
+
+        /// <summary>对范围内所有目标施加一次效果(范围伤害，不产生直击伤害)</summary>
+        void ApplyEffect()
+        {
+            AudioSvc.PlaySound(new(DamageData.ImpactSfx, transform.position, DamageData.SoundRadius, AudioGroups.Weapon));
+            VFXManager.Creat(DamageData.ImpactVfx, transform.position, transform.rotation, null);
+            FpsHelper.Hit(new ProjectileHitData {
+                pos = controller.CenterPos,
+                normal = Vector3.up,
+                collider = null,//不产生直击伤害，仅范围伤害
+                data = DamageData,
+                chargeScale = 1,
+                owner = go,
+                sfxRange = DamageData.SoundRadius,
+                weapon = null,
+                useDiffScale = UseDiffScale,
+                IgnoreSelf = false,
+            });
+        }
+
     }
 }

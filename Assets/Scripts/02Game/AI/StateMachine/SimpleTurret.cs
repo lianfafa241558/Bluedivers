@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 
 using Unity.FPS.AI;
@@ -68,7 +68,7 @@ namespace FPSGame.AI
         public void TryStop(Turret turret)
         {
             if (!turret.weapon) return;
-            turret.weapon.HandleShootInputs(false, false, true);
+            turret.weapon.ShootInputs(false, false, true);
         }
 
         void IdleUpdate()
@@ -117,7 +117,7 @@ namespace FPSGame.AI
             float dis = Vector3.Distance(turret.barrel.position, DetectionTargetPos);
             if (dis <= turret.weapon.CurrentWeaponExtremeRange)
             {
-                turret.weapon.HandleShootInputs(true, true, false);
+                turret.weapon.ShootInputs(true, true, false);
             }
         }
         #endregion

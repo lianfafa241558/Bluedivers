@@ -1,6 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Core;
-
+using FPSGame.Attribute;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -21,7 +22,7 @@ public class SelectRoleWnd : Window
     [SerializeField]
     private Transform weaponRoot,weaponName,weaponType,
         weaponitemListLayout, weaponUpgradeItemLayout,weaponUpgradeSelectLayout,weaponUpgradeBuyLayout,
-        weaponParameterRoot,weaponParameterLayout, weaponDescRoot,weaponDescText,
+        weaponParameterRoot, weaponDescRoot,weaponDescText,
         showDescButton, showParameterButton;
     [SerializeField]
     private Sprite buyIcon, unbuyIcon;
@@ -188,7 +189,7 @@ public class SelectRoleWnd : Window
 
                 item.Enter = data => ShowTip(a, b);
                 item.In = data => MoveTip();
-                item.Enter = data => HideTip(a, b);
+                item.Exit = data => HideTip(a, b);
 
                 SetCilck(weaponUpgradeItemLayout.GetChild(a, b), () =>
                 {
@@ -239,7 +240,7 @@ public class SelectRoleWnd : Window
     {
 
         if(meetSave)ArchiveSvc.Archive.Save();
-        ActorsManager.Player.gameObject.SetActive(true);
+        if(ActorsManager.Player.IsValid()) ActorsManager.Player.gameObject.SetActive(true);
         WindowState = WindowStateEnum.Game;
         if (m_SelectRoleCamera) SetActive(m_SelectRoleCamera.gameObject, false);
         if(m_SelectPoint) SetActive(m_SelectPoint.gameObject, false);
@@ -355,7 +356,7 @@ public class SelectRoleWnd : Window
         SetSprite(weaponListRoot.GetChild(index, 2), weapon.WeaponIcon);
 
         var lenghts = weapon.UpgradeCount();
-        Debug.LogError("ID"+ arch.ID + "_" + weapon.WeaponName + "升级数量" + lenghts.Length);
+        //Debug.Log("ID"+ arch.ID + "_" + weapon.WeaponName + "升级数量" + lenghts.Length);
         var weaponData = ArchiveSvc.Archive.weaponUpgradeDic.TryGet(arch.ID + "_" + weapon.WeaponName, new(arch.ID + "_" + weapon.WeaponName, lenghts.Length));
         for (int x = 0; x < lenghts.Length; ++x)
         {
@@ -384,6 +385,7 @@ public class SelectRoleWnd : Window
         ArchiveSvc.Archive.GetRoleLevel(data.ID,out int level,out float exp);
         SetText(txt_Level,level);
         SetActive(btn_Select, !isNow);
+        GlobalEventSub.SelectRolePreview(data);
         var list = data.GetStartingWeapons(arch);
 
         for(int i = 0; i < 6; ++i)
@@ -509,7 +511,7 @@ public class SelectRoleWnd : Window
     private void ShowTip(int y,int x)
     {
         SetActive(tipRoot, true);
-        tipRoot.position = new(tipRoot.position.x, Input.mousePosition.y-50);
+        tipRoot.position = new(tipRoot.position.x, Input.mousePosition.y-50,transform.position.z);
         var data = showWeapon.GetUpgrade(y,x);
         SetText(tipName, data.name);
         SetText(tipType, data.type);
@@ -517,10 +519,28 @@ public class SelectRoleWnd : Window
         SetSprite(tipIcon,data.icon);
         var select = archWeaponData.selectIndex[y];
 
-        //如果没选择就是new，否则正常使用
-        var oldData = select != -1 && select !=x? showWeapon.GetUpgrade(y, select).modifys : new();
-        //如果进入的不是选择的，那就使用
-        var newData = select != x ? data.modifys : new();
+        //重置所有ChangeValue到当前真实值，确保预览从干净基线开始
+        showWeapon.ResetAllChangeValues();
+
+        List<ModifyAttrData> oldData, newData;
+        if (select == -1)
+        {
+            //无选择：预览添加鼠标项
+            oldData = new();
+            newData = data.modifys;
+        }
+        else if (select == x)
+        {
+            //鼠标悬停在已选项上：预览卸载该项
+            oldData = showWeapon.GetUpgrade(y, select).modifys;
+            newData = new();
+        }
+        else
+        {
+            //已选A，鼠标在B上：预览卸载A换上B
+            oldData = showWeapon.GetUpgrade(y, select).modifys;
+            newData = data.modifys;
+        }
         showWeapon.TryUpgrade(oldData, newData);
         SetParameter();
         
@@ -531,11 +551,7 @@ public class SelectRoleWnd : Window
     private void HideTip(int y, int x)
     {
         SetActive(tipRoot, false);
-        var select = archWeaponData.selectIndex[y];
-
-        var oldData = showWeapon.GetUpgrade(y, x).modifys;
-        var newData = select != -1 ? showWeapon.GetUpgrade(y, select).modifys : oldData;
-        showWeapon.TryUpgrade(oldData, newData);
+        showWeapon.ResetAllChangeValues();
         SetParameter();
     }
     /// <summary>
@@ -543,7 +559,7 @@ public class SelectRoleWnd : Window
     /// </summary>
     private void MoveTip()
     {
-        tipRoot.position = new(tipRoot.position.x, Input.mousePosition.y-50);
+        tipRoot.position = new(tipRoot.position.x, Input.mousePosition.y-50, transform.position.z);
     }
     /// <summary>
     /// 点击升级
@@ -673,31 +689,46 @@ public class SelectRoleWnd : Window
         //showWeapon.ShowText(out showParameterType, out showParameterValue);
         showWeapon.ShowText(out var parameters);
         
-        for (int i=0; i<parameters.Count;++i)
+        int displayIndex = 0;
+        for (int i = 0; i < parameters.Count; ++i)
         {
-            if (weaponParameterLayout.childCount < parameters.Count)
+            if ((weaponParameterRoot.childCount-1) <= displayIndex)
             {
-                Instantiate(weaponParameterLayout.GetChild(0), weaponParameterLayout);
+                Transform newObj = Instantiate(weaponParameterRoot.GetChild(0), weaponParameterRoot);
+                int lastIndex = weaponParameterRoot.childCount - 1;
+                newObj.SetSiblingIndex(lastIndex - 1);  // 倒数第二个
             }
-            SetActive(weaponParameterLayout.GetChild(i),true);
-            if (string.IsNullOrEmpty(parameters[i].Item2))
+            var child = weaponParameterRoot.GetChild(displayIndex);
+            SetActive(child, true);
+            if (parameters[i].Item2 == "+" || parameters[i].Item2 == "-")
             {
-                SetText(weaponParameterLayout.GetChild(i, 0), string.Format("<color=#{1}>+{0}</color>",parameters[i].Item1, ColorUtility.ToHtmlStringRGB(new(0.6f, 1, 1))));
-                SetText(weaponParameterLayout.GetChild(i,1), "");
+                //仅文本属性：+/−名称
+                //+已拥有:青色 +预览新增:绿色 -卸载:红色
+                var signColor = parameters[i].Item2[0] == '+' 
+                    ? (parameters[i].Item3 ? new Color(0.2f, 1, 0.2f) : new Color(0.6f, 1, 1))
+                    : new Color(1, 0.3f, 0.3f);
+                SetText(child.GetChild(0), string.Format("<color=#{0}>{1}{2}</color>", ColorUtility.ToHtmlStringRGB(signColor), parameters[i].Item2, parameters[i].Item1));
+                SetText(child.GetChild(1), "");
+            }
+            else if (string.IsNullOrEmpty(parameters[i].Item2))
+            {
+                SetText(child.GetChild(0), parameters[i].Item1);
+                SetText(child.GetChild(1), "");
             }
             else
             {
-                SetText(weaponParameterLayout.GetChild(i, 0), parameters[i].Item1);
-                SetText(weaponParameterLayout.GetChild(i, 1), parameters[i].Item2);
-                SetColor(weaponParameterLayout.GetChild(i, 1), parameters[i].Item3 ? new(0.6f, 1, 1) : new(0.5f, 0.8f, 1));
+                SetText(child.GetChild(0), parameters[i].Item1);
+                SetText(child.GetChild(1), parameters[i].Item2);
+                SetColor(child.GetChild(1), parameters[i].Item3 ? new(0.6f, 1, 1) : new(0.5f, 0.8f, 1));
             }
-            SetColor(weaponParameterLayout.GetChild(i), parameters[i].Item4 ? new(0, 0, 0,0.5f) : new(0, 0, 0,0));
+            SetColor(child, parameters[i].Item4 ? new(0, 0, 0, 0.5f) : new(0, 0, 0, 0));
+            ++displayIndex;
         }
-        for (int i = parameters.Count; i < weaponParameterLayout.childCount; ++i)
+        for (int i = displayIndex; i < weaponParameterRoot.childCount-1; ++i)
         {
-            SetActive(weaponParameterLayout.GetChild(i), false);
+            SetActive(weaponParameterRoot.GetChild(i), false);
         }
-        RefreshLayout(weaponParameterLayout);
+        RefreshLayout(weaponParameterRoot);
 
     }
 
@@ -735,12 +766,15 @@ public class SelectRoleWnd : Window
             var a = i;
             var root = moduleOpterLayout.GetChild(i);
             SetCilck(root, () => {
-                nowSelectModule = a + 1;
+                //点击当前已选中的模组：卸载，切回第0个空模组
+                if (a + 1 == nowSelectModule)
+                    nowSelectModule = 0;
+                else
+                    nowSelectModule = a + 1;
                 showWeapon.SetModule(nowSelectModule);
+                SetModuleToTrans(showWeapon.Modules[nowSelectModule], moduleFrame, true);
                 SetActive(moduleOpterLayout, false);
 
-                //showWeapon.TryUpgrade(showWeapon.Modules[a + 1].modifys, showWeapon.Modules[a + 1].modifys);
-                //showWeapon.ApplyModule(archWeaponData.selectModuleIndex, nowSelectModule);
                 SetParameter();
                 archWeaponData.selectModuleIndex = nowSelectModule;
                 meetSave = true;
@@ -748,7 +782,9 @@ public class SelectRoleWnd : Window
 
             SetButtonEnter(root, (e) => {
                 SetModuleToTrans(showWeapon.Modules[a + 1], moduleFrame, true);
-                showWeapon.TryUpgrade(showWeapon.ActiveModule.modifys, showWeapon.Modules[a + 1].modifys);
+                //悬停在已选中的模组上：预览卸载(切到空模组)；否则预览换成鼠标模组
+                var newMods = (a + 1 == nowSelectModule) ? showWeapon.Modules[0].modifys : showWeapon.Modules[a + 1].modifys;
+                showWeapon.TryUpgrade(showWeapon.ActiveModule.modifys, newMods);
                 SetParameter();
 
             });

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Core;
 using Core.Interface;
+using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 using RootMotion.FinalIK;
@@ -28,7 +29,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     public float GravityDownForce = 20f;
 
     [InspectorName("触底距离")]
-    public float GroundCheckDistance = 1;//0.05f;
+    public float GroundCheckDistance = 0.1f;//0.05f;
 
     [Foldout("移动", true)]
     [InspectorName("落地时的最大移动速度（非短跑时）")]
@@ -191,7 +192,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
 
             //脚步声
             float chosenFootstepSfxFrequency = FootstepSfxFrequency * MoveSpeedScale;
-            if (m_FootstepDistanceCounter >= 1f / chosenFootstepSfxFrequency)
+            if (m_FootstepDistanceCounter >= 1f / Mathf.Max(chosenFootstepSfxFrequency,0.1f))
             {
                 m_FootstepDistanceCounter = 0f;
 
@@ -273,7 +274,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
                     if(!lastState) OnLand();
                     IsGrounded = true;
                     JumpCount = 0;
-                    grounderIK.weight = 1;
+                    if(grounderIK) grounderIK.weight = 1;
                     //如果没有贴地，吸附到地面
                     if (hit.distance > Controller.skinWidth)
                     {
@@ -283,7 +284,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
                 }
                 else
                 {
-                    grounderIK.weight = 0;
+                    if (grounderIK) grounderIK.weight = 0;
                 }
             }
         }
@@ -320,7 +321,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         if (RecievesFallDamage && fallSpeedRatio > 0)
         {
             PEInt dmgFromFall = PEMath.Lerp(FallDamageAtMinSpeed, FallDamageAtMaxSpeed, fallSpeedRatio);
-            Health.TakeDamage(new() { new(DamageTypeEnum.Real, new(dmgFromFall.RawInt)) }, true, null, null, default);
+            Health.TakeDamage(new() { new(DamageTypeEnum.Real, new(dmgFromFall.RawInt)) }, true, null, null, default,false);
 
             // 落地伤害
             if (Time.time >= m_LastTimeLand + k_JumpGroundingPreventionTime) AudioSource.PlayOneShot(FallDamageSfx);
@@ -427,7 +428,11 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         {
             CharacterVelocity = (PEVector3)Vector3.ProjectOnPlane(totalVelocity.RawVector3, hit.normal);
         }
-
+        if (transform.position.y < -50)
+        {
+            if(GameRoot.GameState== GameStateEnum.Game) transform.position = transform.position + Vector3.up * (TerrainUtils.WSToHeight(transform.position)+2- transform.position.y);
+            else transform.position = transform.position + Vector3.up * ( 2 - transform.position.y);
+        }
     }
      
     void GroundMove()

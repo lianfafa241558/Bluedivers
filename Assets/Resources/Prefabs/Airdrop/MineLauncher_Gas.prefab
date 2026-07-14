@@ -167,7 +167,7 @@ MonoBehaviour:
     - Key: 10
       Value: 0.132
     - Key: 60
-      Value: 2.4
+      Value: 2.6
     - Key: 61
       Value: 8
   ProjectilePrefab: {fileID: 7915639550885872354, guid: 2b15051832bc94848b4cf2565a8a4827,
@@ -182,20 +182,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 100
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -223,25 +219,21 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 10
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 10
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
+      Value: 0.5
+    - Key: 4
+      Value: 0.5
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 3577755781743022927, guid: 6d2a5fa267dd5d74b97cee8e92d47ab2,
@@ -293,8 +285,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowName: "\u5E03\u96F7\u5668"
   Id: MineLauncher
-  Portrait: {fileID: 21300000, guid: 5b8041c2f5a7d6e43b09ab878fb408ad, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 5b8041c2f5a7d6e43b09ab878fb408ad, type: 3}
+  Portrait: {fileID: 21300000, guid: 80d02f3292eff4d47abfae1a2d07219d, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 80d02f3292eff4d47abfae1a2d07219d, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
   IsFixed: 0
@@ -325,6 +317,7 @@ MonoBehaviour:
   MainPart: {fileID: 0}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 1
 --- !u!114 &4932906196024244537
 MonoBehaviour:

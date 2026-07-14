@@ -1,4 +1,4 @@
-﻿using Core.Interface;
+using Core.Interface;
 
 using UnityEngine;
 using UnityEngine.Events;
@@ -54,18 +54,19 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
     private float smoothTime = 0.3f;
 
 
+    [Header("其他")]
+    [InspectorName("如果是在场景中直接测试要勾上")]
+    [SerializeField]
+    private bool useAwake = false;
     [Header("事件")]
 
     [SerializeField]
     private UnityEvent onDiving;
     [SerializeField]
-    private UnityEvent onWait;
+    public UnityEvent onWait;
     [SerializeField]
     private UnityEvent onClimbing;
 
-    [Header("其他")]
-    [SerializeField]
-    private bool useAwake;
 
     // 目标点
     [SerializeField]
@@ -98,17 +99,17 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
     float time;
     public void OnShow()
     {
-        Debug.LogError("创建点" + transform.position);
+        //Debug.Log("创建点" + transform.position);
 
         InitializePoints();
-        Debug.LogError("初始点" + startPoint);
-        Debug.LogError("轰炸点" + targetA);
-        Debug.LogError("拉升目标" + targetB);
+        //Debug.Log("初始点" + startPoint);
+        //Debug.Log("轰炸点" + targetA);
+        //Debug.Log("拉升目标" + targetB);
 
         currentPhase = FlightPhase.Diving;
         initialClimbSpeed = 0f;
         progress = 0;
-        Debug.LogError("传送到初始点" + startPoint);
+        //Debug.Log("传送到初始点" + startPoint);
         transform.position = startPoint;
         _vel = Vector3.zero;
         lastPos = transform.position - transform.forward;
@@ -204,7 +205,7 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
         lastPos.y = transform.position.y;//保证水平
         currentPhase = FlightPhase.Wait;
         progress = 0f;
-        Debug.LogError("到点用时" + (Time.time - time));
+        //Debug.Log("到点用时" + (Time.time - time));
         onWait?.Invoke();
     }
 

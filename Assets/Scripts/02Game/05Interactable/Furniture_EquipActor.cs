@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core.Interface;
+using FPSGame.Attribute;
 using FPSGame.Furn;
 
 using UnityEngine;

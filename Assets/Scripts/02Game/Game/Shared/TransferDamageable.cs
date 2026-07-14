@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using GameContract;
@@ -39,11 +39,12 @@ namespace Unity.FPS.Game
             return source.GetArmor(type)+re;
         }
          
-        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum, float>> damageGroups, bool noSource, GameObject damageSource, Vector3 pos)
+        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum, float>> damageGroups,PEInt weaknessBouns, bool noSource, GameObject damageSource, Vector3 pos)
         {
-            Source.InflictDamage(source, damage, damageGroups, noSource, damageSource, pos);
+            Source.InflictDamage(source, damage, damageGroups, weaknessBouns, noSource, damageSource, pos);
         }
 
+        public bool IsExplosionImmunity() => true;
 
     }
 }

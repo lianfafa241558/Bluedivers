@@ -69,7 +69,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1638966311901769318}
   - {fileID: 9119432680618553596}
   m_Father: {fileID: 5900522125226825037}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -87,248 +86,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   delayTime: 0
   selfExplosionTime: 10
-  controller: {fileID: 5900522125226825038}
-  weapon: {fileID: 6199672516484169779}
---- !u!1 &3509427278372450213
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2565110355779996790}
-  m_Layer: 0
-  m_Name: Root
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2565110355779996790
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3509427278372450213}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1638966311901769318}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &4266164488513034198
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1638966311901769318}
-  - component: {fileID: 8515454403163218571}
-  - component: {fileID: 6199672516484169779}
-  m_Layer: 0
-  m_Name: Weapon
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1638966311901769318
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4266164488513034198}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2565110355779996790}
-  m_Father: {fileID: 7124901890417361325}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!82 &8515454403163218571
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4266164488513034198}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 4a1e9fe93a5bc89408a1cc01f70ef718, type: 3}
-  m_PlayOnAwake: 1
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 80
-  Pan2D: 0
-  rolloffMode: 1
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
---- !u!114 &6199672516484169779
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4266164488513034198}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b816effe12903f14faca310da805ceb3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  WeaponRoot: {fileID: 3509427278372450213}
-  WeaponMuzzle: {fileID: 2565110355779996790}
-  WeaponMuzzle2: {fileID: 0}
-  cfg:
-    _fakeAttrs: []
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: 3f9f9ac86f4261047b5b1b8ccd1bb5a6,
-    type: 3}
-  BulletFlag: 0
-  Damages:
-  - Speed: 0
-    Gravity: 0
-    InheritWeaponSpeed: 0
-    MaxLifeTime: 0.1
-    MaxRange: -1
-    MinRange: -1
-    NoSource: 1
-    SoundRadius: 20
-    DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
-    DamageGroupDirect:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
+  weapon: {fileID: 0}
+  go: {fileID: 0}
+  UseDiffScale: 0
+  DamageData:
     DamageExplosion: 3000
     ExplosionInnerRange: 12.5
     ExplosionRange: 25
     DestructeRadius: 25
-    ShockwaveRadius: 0
-    DamageGroupExplosion2:
+    ShockwaveRadius: 30
+    DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
-    DamageGroupExplosion:
-    - Key: 3
-      Value: 1
-    - Key: 2
-      Value: 0.33
+    SoundRadius: 80
+    NoSource: 1
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 665100303325612391, guid: 4a251ccafda82a644accfe3c2b5efebf,
       type: 3}
-    ImpactSfx: {fileID: 0}
+    ImpactSfx: {fileID: 8300000, guid: b1b223bdf0531c946825b724fae6c90f, type: 3}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    UseCharge: 0
-    ChargeDamageScale: 0
-    ChargeAOERangeScale: 0
-    ChargeSpeedScale: 1
-    ChargeGravityScale: 1
-    ChargeSoundScale: 1
-  UseDamageIndex: 0
-  MuzzleFlashPrefab: {fileID: 0}
-  UnparentMuzzleFlash: 0
-  SFXRange: 80
-  ShootSfx: {fileID: 8300000, guid: b1b223bdf0531c946825b724fae6c90f, type: 3}
-  UseContinuousShootSound: 0
-  ContinuousShootStartSfx: {fileID: 0}
-  ContinuousShootLoopSfx: {fileID: 0}
-  ContinuousShootEndSfx: {fileID: 0}
-  wantsToShoot: 0
 --- !u!1 &5900522124904462587
 GameObject:
   m_ObjectHideFlags: 0
@@ -372,8 +153,8 @@ GameObject:
   - component: {fileID: 5900522125226825036}
   - component: {fileID: 5900522125226825039}
   - component: {fileID: 5900522125226825038}
-  - component: {fileID: 5900522125226825033}
   - component: {fileID: -1483106873899361680}
+  - component: {fileID: 9088260183482219502}
   m_Layer: 0
   m_Name: HaloBomb
   m_TagString: Untagged
@@ -446,6 +227,7 @@ MonoBehaviour:
   MainPart: {fileID: 5900522125013508120}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 0
 --- !u!114 &5900522125226825038
 MonoBehaviour:
@@ -463,7 +245,7 @@ MonoBehaviour:
   BirthDuration: 0
   birthTime: 0
   IsRemove: 0
---- !u!114 &5900522125226825033
+--- !u!114 &-1483106873899361680
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -472,7 +254,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 5900522125226825032}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 143e44d708581ac4bafae0081debc465, type: 3}
+  m_Script: {fileID: 11500000, guid: 7936b68bdf0faf94c91c084774623fc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  data: {fileID: 11400000, guid: 3e51c9ffe6060b64f9c93f783729a6bd, type: 2}
+  weaponPointL: {fileID: 0}
+  weaponPointR: {fileID: 0}
+  LookPoint: {fileID: 0}
+--- !u!114 &9088260183482219502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5900522125226825032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 531719c9934cdc647bacfd252c11ff06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
@@ -494,14 +292,21 @@ MonoBehaviour:
           type: 3}
         trans: {fileID: 0}
         go: []
+    - Key: 4
+      Value:
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
+          type: 3}
+        trans: {fileID: 0}
+        go: []
     meetReset: 0
   rendererSet:
   - type: 0
     occasion: 3
     material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
     colorName: 
-    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
-    switchOccasion: 2
+    defaultColor: {r: 0, g: 0, b: 0, a: 0}
+    switchOccasion: 0
     switchColor: {r: 0, g: 0, b: 0, a: 0}
     gradient:
       serializedVersion: 2
@@ -533,24 +338,46 @@ MonoBehaviour:
       m_ColorSpace: -1
       m_NumColorKeys: 4
       m_NumAlphaKeys: 2
-    duration: 0.15
+    duration: 0.1
+  - type: 0
+    occasion: 4
+    material: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
+    colorName: _DissolveValue
+    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
+    switchOccasion: 2
+    switchColor: {r: 0, g: 0, b: 0, a: 0}
+    gradient:
+      serializedVersion: 2
+      key0: {r: 0, g: 0, b: 0, a: 1}
+      key1: {r: 0, g: 0, b: 0, a: 1}
+      key2: {r: 1, g: 1, b: 1, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 8867
+      ctime2: 65535
+      ctime3: 65535
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 3
+      m_NumAlphaKeys: 2
+    duration: 3
   UseAttack: 0
---- !u!114 &-1483106873899361680
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5900522125226825032}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7936b68bdf0faf94c91c084774623fc8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  data: {fileID: 11400000, guid: 3e51c9ffe6060b64f9c93f783729a6bd, type: 2}
-  weaponPointL: {fileID: 0}
-  weaponPointR: {fileID: 0}
-  LookPoint: {fileID: 0}
 --- !u!1001 &522461915341328083
 PrefabInstance:
   m_ObjectHideFlags: 0

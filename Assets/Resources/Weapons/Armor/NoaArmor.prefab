@@ -24,13 +24,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2225486910712267859}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &-4617824497123580505
 MonoBehaviour:
@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 0}
   WeaponMuzzle: {fileID: 0}
+  WeaponMuzzle2: {fileID: 0}
   cfg:
     _fakeAttrs:
     - Key: 0
@@ -56,10 +57,6 @@ MonoBehaviour:
       Value: 0.5
     - Key: 10
       Value: 2
-  DelayBetweenShots: 0.5
-  BulletsPerShot: 1
-  BulletSpreadAngle: 0
-  MaxAmmo: 8
   ProjectilePrefab: {fileID: 0}
   BulletFlag: 0
   Damages: []
@@ -72,40 +69,24 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
-  nowAmmo: 0
-  remainBullets: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
   ShootType: 0
   WeaponFlag: 0
-  ClipSize: 30
-  AmmoReloadRate: 1
-  AmmoReloadDelay: 2
-  ChargeSpeedScale: 1
-  ChargeGravityScale: 1
-  WaitTime: 0
   AutomaticReleaseOnCharged: 0
-  ChargeLowestStage: 0
-  Chargestage: 0
-  MaxChargeDuration: 2
-  AmmoUsedOnStartCharge: 1
-  AmmoUsageRateWhileCharging: 1
-  LockDistance: 0
   Lockshape: 0
-  LockRange: 64
-  LockLayers: 1
-  LockInterval: 1
-  ActorMaxLockCount: 1
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
-  HasPhysicalBullets: 0
-  ShellCasing: {fileID: 0}
-  EjectionPort: {fileID: 0}
-  ShellCasingEjectionForce: 2
-  ShellPoolSize: 1
   PlayerIndex: 0
   WeaponName: "\u7279\u79CD\u6218\u6597\u670D"
   WeaponType: "\u88C5\u7532"
+  WeaponTypeEnum: 5
   WeaponIcon: {fileID: 21300000, guid: 6f2206b0e303cb84292a62f6da0a2f0c, type: 3}
   Sight: {fileID: 4066082357213353509, guid: 682987df4a63fd641bcafdf118cf811e, type: 3}
   ScopeGo: {fileID: 0}
@@ -118,21 +99,27 @@ MonoBehaviour:
   AimOffset: {x: 0, y: 0, z: 0}
   playerAngle: 0
   desc: 
-  showAttr: []
-  Upgrade: []
+  m_RenameAttr: []
+  showAttr: 
   m_UniqueAttr:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue:
-      noValue: 0
-      value: 0
-      percentage: 0
-      flipPlus: 0
-      defaultHide: 0
-      defaultValue: 0
-      extraValue: 0
-    arr: []
-    meetReset: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  Upgrade: []
   Modules: []
   ActiveModule: {fileID: 0}

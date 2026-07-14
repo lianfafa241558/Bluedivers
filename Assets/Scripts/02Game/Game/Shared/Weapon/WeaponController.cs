@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
+using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 
@@ -436,9 +437,12 @@ namespace Unity.FPS.Game
                 else
                 {
                     HandleShoot();
+                    //Debug.LogError("开始射击" + gameObject + "蓄力最大值" + ChargeDuration.FinalValue + "当前值" + ChargeDuration.CurrValue + " 系数" + ChargeDuration.ScaleValue, gameObject);
+
+                    //Debug.LogError("开始射击" + gameObject + "蓄力" + ChargeDuration.StageScale +"连续值" + ChargeDuration.CurrValue , gameObject);
+
                     UseMagazine(PEMath.Lerp(AttrFinal(Attr.ChargeAmmoOnLowest), AttrFinal(Attr.ChargeAmmoOnHighest), ChargeDuration.StageScale).RawInt);
                     EndCharge();//射击完毕
-                    //Debug.LogError("开始射击"+gameObject,gameObject);
                 }
             }
             return false;
@@ -781,6 +785,9 @@ namespace Unity.FPS.Game
                         TryReleaseCharge();//总是false
                         return false;
                     }
+                    //这里开始出现了分歧点，敌人我们希望开始蓄力的时候就播放动画
+                    //而玩家武器我们希望释放的时候才true
+                    //或者我们改一下，用事件过
                     //只有开始的时候有一次true
                     if (inputDown) return TryBeginCharge();
 

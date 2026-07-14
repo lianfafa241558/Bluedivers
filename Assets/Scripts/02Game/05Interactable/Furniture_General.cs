@@ -62,6 +62,12 @@ public class Furniture_General : Furniture_Base
                 furn.BaseOp();
             }
         },
+        ["SettingWnd"] = new() {
+            _Operate = (furn) => {
+                wndManager.settingWnd.SetWndState(true);
+                furn.BaseOp();
+            }
+        },
         ["KeyScreen"] = new (){
             _Operate = (Furniture_General furn) => {
                 furn.gameObject.GetComponent<KeyScreen>().SetOwener(furn.inOperate || !furn.owner ? null: furn.owner.gameObject);
@@ -129,7 +135,22 @@ public class Furniture_General : Furniture_Base
                 furn.BaseOp();
             }
         },
-
+        ["Caisson"] = new() {
+            _Operate = (Furniture_General furn) => {
+                //furn.transform.parent.parent.GetComponent<Animator>().Play("Exit", (int)furn.ExtFloatParameter, 0);
+                furn.owner.GetComponent<PlayerController>().UseCaisson();
+                furn.BaseOp();
+                Tool.Destroy(furn.gameObject);
+            }
+        },
+        ["MedicalBag"] = new() {
+            _Operate = (Furniture_General furn) => {
+                //furn.transform.parent.parent.GetComponent<Animator>().Play("Exit", (int)furn.ExtFloatParameter, 0);
+                furn.owner.GetComponent<PlayerController>().UseMedicalBag();
+                furn.BaseOp();
+                Tool.Destroy(furn.gameObject);
+            }
+        },
 
     };
 

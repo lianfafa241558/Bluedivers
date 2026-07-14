@@ -27,29 +27,11 @@ public class ModifyTerrain : MonoBehaviour
     }
     private IEnumerator Modify()
     {
-        float y = 0;
+        float y = TerrainUtils.WSToHeight(transform.position);
         if (additionTerrain)
         {
             var size = additionTerrain.terrainData.size.x * -0.5f;
             additionTerrain.transform.position = transform.position + (new Vector3(size, additionTerrain.transform.localPosition.y, size));
-
-            // 采样中心点附近5米范围的平均高度，让transform紧贴地面
-            y = (TerrainUtils.WSToHeight(transform.position)
-                + TerrainUtils.WSToHeight(transform.position + Vector3.left * 5)
-                + TerrainUtils.WSToHeight(transform.position + Vector3.right * 5)
-                + TerrainUtils.WSToHeight(transform.position + Vector3.forward * 5)
-                + TerrainUtils.WSToHeight(transform.position + Vector3.back * 5)
-            ) / 5;
-        }
-        else
-        {
-            //Debug.LogError("修改地形"+gameObject,gameObject);
-            y = (TerrainUtils.WSToHeight(transform.position)
-                +TerrainUtils.WSToHeight(transform.position + Vector3.left * 5)
-                +TerrainUtils.WSToHeight(transform.position + Vector3.right * 5)
-                +TerrainUtils.WSToHeight(transform.position + Vector3.forward * 5)
-                +TerrainUtils.WSToHeight(transform.position + Vector3.back * 5)
-            )/5;
         }
 
         transform.position = new(transform.position.x,y,transform.position.z);
@@ -73,6 +55,10 @@ public class ModifyTerrain : MonoBehaviour
                 Destroy(additionTerrain.gameObject);
                 //Debug.LogError("附加了地形" + gameObject);
             }
+
+            // 地形修改完成后重新贴地，避免因地形变化导致根物体悬浮
+            float newY = TerrainUtils.WSToHeight(transform.position);
+            //transform.position = new(transform.position.x, newY, transform.position.z);
         }
 
         Destroy(this);

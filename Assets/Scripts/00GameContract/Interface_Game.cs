@@ -8,7 +8,7 @@ using UnityEngine.Events;
 
 namespace GameContract
 {
-    public interface VfxEffect
+    public interface IVfxEffect
     {
         public void SetOwner(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point);
 
@@ -18,10 +18,12 @@ namespace GameContract
     {
         I_Damagable Source { get; }
         float GetArmor(DamageTypeEnum type);
-        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum, float>> damageGroups, bool noSource, GameObject damageSource, Vector3 pos);
+        bool IsExplosionImmunity();
+
+        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum, float>> damageGroups,PEInt WeaknessBonus,bool noSource, GameObject damageSource, Vector3 pos);
         GameObject ActorGo { get; }
         bool IsWeakness { get; }
-    }
+    }   
 
 
 
@@ -116,7 +118,7 @@ namespace GameContract
         public List<UnitQueryGridNode> GridNodes { get; }
         public I_Damagable[] Damageables { get; }
 
-        /// <summary>是否为固定单位只对EnemyMoble有效</summary>
+        /// <summary>是否为地图单位只对EnemyMoble有效</summary>
         bool IsFixed { get; set; }
 
         public bool HasFlag(ActorFlag flag);
@@ -124,6 +126,7 @@ namespace GameContract
         public bool Equals(I_Actor obj);
 
         public int GetHashCode();
+
 
         // 转换为布尔值的转换函数
         //public static implicit operator bool(I_Actor obj);

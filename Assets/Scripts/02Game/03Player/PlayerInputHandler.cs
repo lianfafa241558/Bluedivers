@@ -1,4 +1,5 @@
 using Core;
+using FPSGame.Attribute;
 using FPSGame.Furn;
 
 using UnityEngine;

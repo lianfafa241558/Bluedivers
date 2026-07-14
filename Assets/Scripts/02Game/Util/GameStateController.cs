@@ -19,9 +19,9 @@ public class GameStateController : MonoBehaviour
     }
 
     private void GameStateChange(GameStateEnum exit, GameStateEnum entry)
-    {
+    { 
         for (int i = 0; i < arr.Length; ++i)
-        {
+        { 
             if (exit == arr[i].state && arr[i].isExit)
             {
                 //Debug.LogError("退出状态" + exit + gameObject, gameObject);

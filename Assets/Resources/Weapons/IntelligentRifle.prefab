@@ -89,9 +89,9 @@ MonoBehaviour:
     - Key: 1
       Value: 36
     - Key: 2
-      Value: 0.2
+      Value: 0.08
     - Key: 7
-      Value: 4
+      Value: 3
     - Key: 10
       Value: 3
     - Key: 60
@@ -118,27 +118,18 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 21
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -168,6 +159,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -185,6 +177,7 @@ MonoBehaviour:
   PlayerIndex: 0
   WeaponName: "\"\u963F\u6CE2\u7F57\"\u667A\u80FD\u6B65\u67AA"
   WeaponType: "\u667A\u80FD\u6B65\u67AA"
+  WeaponTypeEnum: 0
   WeaponIcon: {fileID: 21300000, guid: f73f633d398e27c449482e9cf373aa68, type: 3}
   Sight: {fileID: 1123618372036048713, guid: 57ff5acee374a174ab615095c9412217, type: 3}
   ScopeGo: {fileID: 0}
@@ -196,10 +189,31 @@ MonoBehaviour:
   AimZoomRatio: 1
   AimOffset: {x: 0, y: 0, z: 0}
   playerAngle: 50
-  desc: 
+  _showAttrInfo: 
+  desc: "\u6674\u4F7F\u7528\u7684\u7A81\u51FB\u6B65\u67AA\u3002\r\n\u867D\u7136\u642D\u8F7D\u4E86\u5404\u79CD\u6700\u5C16\u7AEF\u7684\u529F\u80FD\uFF0C\u6BD4\u5982\u81EA\u52A8\u7784\u51C6\u529F\u80FD\u7B49\u7B49\uFF0C\u4F46\u662F\u51E0\u4E4E\u5F88\u5C11\u4F7F\u7528\u7684\u6837\u5B50\u3002"
   m_RenameAttr:
   - name: "\u5C04\u901F"
     type: 2
+    addTag: 0
+    removeTag: 0
+  - name: "\u6700\u5927\u76EE\u6807"
+    type: 62
+    addTag: 0
+    removeTag: 0
+  - name: "\u8303\u56F4\u4F24\u5BB3"
+    type: 21
+    addTag: 64
+    removeTag: 0
+  - name: "\u4F5C\u7528\u534A\u5F84"
+    type: 22
+    addTag: 64
+    removeTag: 0
+  - name: "\u6050\u60E7\u6548\u679C"
+    type: 209
+    addTag: 0
+    removeTag: 1
+  - name: "\u9501\u5B9A\u901F\u5EA6"
+    type: 64
     addTag: 0
     removeTag: 0
   showAttr: 140000000200000001000000000000003e000000400000003c0000003f000000
@@ -209,33 +223,26 @@ MonoBehaviour:
     Value:
     - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
     - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
   - Key: 4
     Value:
-    - {fileID: 11400000, guid: ff1c4ffaf08c0784f872d4c8dee192ef, type: 2}
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
+    - {fileID: 11400000, guid: e20993f7fe7ac1d4182c6ec7f8aa7371, type: 2}
+    - {fileID: 11400000, guid: 74ecda0574076d642b4164a88be69320, type: 2}
   - Key: 8
-    Value:
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
+    Value: []
   - Key: 12
     Value:
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
-    - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
+    - {fileID: 11400000, guid: 11263dec80557044c9c3e73f12441d31, type: 2}
+    - {fileID: 11400000, guid: ad1d193b1af542c458dbb461aa2a8ce5, type: 2}
   - Key: 16
     Value:
-    - {fileID: 11400000, guid: ff1c4ffaf08c0784f872d4c8dee192ef, type: 2}
-    - {fileID: 11400000, guid: d46dbdfaa5e25b94e807d673ab3ea835, type: 2}
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
+    - {fileID: 11400000, guid: 8e81daad126449942bee23e8dd12d4e3, type: 2}
+    - {fileID: 11400000, guid: 0b773a3f0c4a5bb49a2f4e9aaf9186e6, type: 2}
   Modules:
   - {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
   - {fileID: 11400000, guid: a1a0b8598a88fb34785ec83f76bb153a, type: 2}
   - {fileID: 11400000, guid: 9caf501c2d4b0624880d95a9a57ceafa, type: 2}
   - {fileID: 11400000, guid: 8ec02c296d707b148a407899648b093d, type: 2}
-  ActiveModule: {fileID: 11400000, guid: 8ec02c296d707b148a407899648b093d, type: 2}
+  ActiveModule: {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
 --- !u!1 &3449202590007305420
 GameObject:
   m_ObjectHideFlags: 0

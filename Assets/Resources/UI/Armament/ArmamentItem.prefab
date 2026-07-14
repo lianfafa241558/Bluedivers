@@ -537,15 +537,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a69cb2d2d96b664aa79885d7ed8b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onEnter:
-    m_PersistentCalls:
-      m_Calls: []
-  onExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onIn:
-    m_PersistentCalls:
-      m_Calls: []
+  isTrigger: 0
   EnterScale: 1.05
   ScaleSpeed: 5
   ControlGo: []
@@ -760,15 +752,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a69cb2d2d96b664aa79885d7ed8b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onEnter:
-    m_PersistentCalls:
-      m_Calls: []
-  onExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onIn:
-    m_PersistentCalls:
-      m_Calls: []
+  isTrigger: 0
   EnterScale: 1.05
   ScaleSpeed: 5
   ControlGo: []
@@ -983,15 +967,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a69cb2d2d96b664aa79885d7ed8b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onEnter:
-    m_PersistentCalls:
-      m_Calls: []
-  onExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onIn:
-    m_PersistentCalls:
-      m_Calls: []
+  isTrigger: 0
   EnterScale: 1.05
   ScaleSpeed: 5
   ControlGo: []
@@ -1521,6 +1497,7 @@ GameObject:
   - component: {fileID: 1597174108532740737}
   - component: {fileID: 1597174108532740736}
   - component: {fileID: 1597174108532740739}
+  - component: {fileID: 4626666827138053611}
   m_Layer: 5
   m_Name: RawImage
   m_TagString: Untagged
@@ -1678,6 +1655,20 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &4626666827138053611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1597174108532740741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 772de16427fd63e478b414bab968aa93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  goArr:
+  - {fileID: 364759841303066750}
 --- !u!1 &1597174108581905035
 GameObject:
   m_ObjectHideFlags: 0
@@ -2157,15 +2148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a69cb2d2d96b664aa79885d7ed8b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onEnter:
-    m_PersistentCalls:
-      m_Calls: []
-  onExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onIn:
-    m_PersistentCalls:
-      m_Calls: []
+  isTrigger: 0
   EnterScale: 1.05
   ScaleSpeed: 5
   ControlGo: []
@@ -2438,15 +2421,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a69cb2d2d96b664aa79885d7ed8b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onEnter:
-    m_PersistentCalls:
-      m_Calls: []
-  onExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onIn:
-    m_PersistentCalls:
-      m_Calls: []
+  isTrigger: 0
   EnterScale: 1.05
   ScaleSpeed: 5
   ControlGo: []
@@ -2953,15 +2928,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a69cb2d2d96b664aa79885d7ed8b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onEnter:
-    m_PersistentCalls:
-      m_Calls: []
-  onExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onIn:
-    m_PersistentCalls:
-      m_Calls: []
+  isTrigger: 0
   EnterScale: 1.05
   ScaleSpeed: 5
   ControlGo: []
@@ -3175,15 +3142,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a69cb2d2d96b664aa79885d7ed8b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onEnter:
-    m_PersistentCalls:
-      m_Calls: []
-  onExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onIn:
-    m_PersistentCalls:
-      m_Calls: []
+  isTrigger: 0
   EnterScale: 1.05
   ScaleSpeed: 5
   ControlGo: []

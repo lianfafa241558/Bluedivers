@@ -1,18 +1,14 @@
 using System.Collections.Generic;
-using Core;
-using GameContract;
-
+using FPSGame.Attribute;
+using PEMaths;
 using Unity.FPS.Game;
-using Unity.FPS.Gameplay;
 using UnityEngine;
-using UnityEngine.Events;
-using Utils;
 
 /// <summary>
 /// 基础的玩家操作控制器，可以旋转，无法移动和跳跃炮台)
 /// </summary>
 [RequireComponent(typeof(PlayerInputHandler), typeof(AudioSource))]
-public class BaseSelfController : MonoBehaviour
+public class BaseSelfController : MonoBehaviour, IUnit
 {
     public Vector3 CenterPos => m_Actor.CenterPos;
     public string PlayerName => m_Actor.ShowName;
@@ -60,7 +56,8 @@ public class BaseSelfController : MonoBehaviour
     [SerializeField]
     protected float m_CameraVerticalAngle = 0;
 
-    public virtual float RotationMultiplier => 1;
+
+    protected Dictionary<UnitAttrType, GameAttribute> attrs;
 
     protected virtual void Awake()
     {
@@ -69,11 +66,19 @@ public class BaseSelfController : MonoBehaviour
         m_Actor = GetComponent<Actor>();
         m_Anim = GetComponent<Animator>();
         if (!AudioSource) AudioSource = GetComponent<AudioSource>();
+        InitAttribute();
     }
 
     protected virtual void Update()
     {
         HandleRotation();
+    }
+    public virtual void InitAttribute()
+    {
+        attrs = UnitAttributeFactory.CreateBaseUnit(new Dictionary<UnitAttrType, PEInt> {
+            [UnitAttrType.Speed] = 0,
+            [UnitAttrType.AngularSpeed] = (PEInt)RotationSpeed,
+        });
     }
 
     /// <summary>
@@ -83,10 +88,10 @@ public class BaseSelfController : MonoBehaviour
     {
 
         //以输入速度围绕其局部Y轴旋转变化
-        transform.Rotate(new Vector3(0f, (InputHandler.GetLookInputsHorizontal() * RotationSpeed * RotationMultiplier*Time.deltaTime), 0f), Space.World);
+        transform.Rotate(new Vector3(0f, (InputHandler.GetLookInputsHorizontal() * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat *Time.deltaTime), 0f), Space.World);
 
         //为相机的垂直角度添加垂直输入
-        m_CameraVerticalAngle += InputHandler.GetLookInputsVertical() * RotationSpeed * RotationMultiplier * Time.deltaTime;
+        m_CameraVerticalAngle += InputHandler.GetLookInputsVertical() * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * Time.deltaTime;
 
 
         //后坐力恢复
@@ -112,5 +117,22 @@ public class BaseSelfController : MonoBehaviour
 
     }
 
+    public GameAttribute GetAttribute(UnitAttrType type)
+    {
+        if (attrs.TryGetValue(type, out var attr))
+        {
+            return attr;
+        }
+        return null;
+    }
+
+    public T GetAttribute<T>(UnitAttrType type) where T : GameAttribute
+    {
+        if (attrs.TryGetValue(type, out var attr))
+        {
+            return attr as T;
+        }
+        return null;
+    }
 
 }

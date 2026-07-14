@@ -1,4 +1,5 @@
-﻿using Core.Interface;
+using Core.Interface;
+using FPSGame.Attribute;
 using UnityEngine;
 namespace Core
 {

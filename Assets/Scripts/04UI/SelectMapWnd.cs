@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Core;
-
+using FPSGame.Attribute;
 using UnityEngine;
 using Utils;
 using static WndTools.WndRootTool;

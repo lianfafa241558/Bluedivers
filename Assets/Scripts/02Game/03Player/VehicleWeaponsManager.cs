@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using FPSGame.Attribute;
 using FPSGame.UI;
 using TMPro;
 

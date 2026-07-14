@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -30,45 +30,84 @@ namespace Unity.FPS.Game
             { WeaponAttrType.ReloadTime, (true, AttrTag.FlipPlus, ModifierType.All) },
             { WeaponAttrType.AutoReloadTime, (true, AttrTag.FlipPlus|AttrTag.UpdateToZero, ModifierType.Extra) },
             { WeaponAttrType.AutoReloadSpeed, (false, default, ModifierType.All) },
+            { WeaponAttrType.HeatPerShot, (false, AttrTag.FlipPlus, ModifierType.All) },
+            { WeaponAttrType.CoolDelay, (false, AttrTag.FlipPlus, ModifierType.All) },
+            { WeaponAttrType.CoolSpeed, (false, default, ModifierType.All) },
+            { WeaponAttrType.OverheatDuration, (false, AttrTag.FlipPlus, ModifierType.All) },
+            { WeaponAttrType.LifeTime, (false, AttrTag.FlipPlus, ModifierType.All) },
 
             //伤害属性
             { WeaponAttrType.DirectDamage, (false, default, ModifierType.All) },
             { WeaponAttrType.ExplosionDamage, (false, default, ModifierType.All) },
             { WeaponAttrType.ExplosionRange, (false, default, ModifierType.All) },
-            { WeaponAttrType.BulletSpeed, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.BulletSpeed, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.Factor) },
             //{ WeaponAttrType.MaxDistance, (false, default, ModifierType.All) },
 
             // 激光武器属性
             { WeaponAttrType.LaserWaitTime, (false, default, ModifierType.All) },
 
             // 蓄力武器属性
-            { WeaponAttrType.ChargeLowestStage, (false, AttrTag.OnlyInt, ModifierType.Extra) },
-            { WeaponAttrType.ChargeHigheststage, (false, AttrTag.OnlyInt | AttrTag.UpdateToZero, ModifierType.All) },
+            { WeaponAttrType.ChargeLowestStage, (false, AttrTag.FlipPlus|AttrTag.OnlyInt, ModifierType.Base) },
+            { WeaponAttrType.ChargeHigheststage, (false, AttrTag.OnlyInt | AttrTag.UpdateToZero, ModifierType.Base) },
             { WeaponAttrType.ChargeAmmoOnLowest, (false, AttrTag.FlipPlus | AttrTag.OnlyInt, ModifierType.All) },
             { WeaponAttrType.ChargeAmmoOnHighest, (false, AttrTag.FlipPlus|AttrTag.OnlyInt, ModifierType.All) },
             { WeaponAttrType.ChargeDuration, (true,  AttrTag.FlipPlus|AttrTag.LimitCurr | AttrTag.UpdateToZero, ModifierType.All) },
             { WeaponAttrType.ChargeDamageScale, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.ChargeExplosionRangeScale, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ChargeHeatScale, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
 
 
             // 锁定武器属性
             { WeaponAttrType.LockDistance, (false, AttrTag.OnlyInt, ModifierType.All) },
-            { WeaponAttrType.LockRange, (false, AttrTag.OnlyInt | AttrTag.Percentage | AttrTag.OneHide, ModifierType.Factor) },
+            { WeaponAttrType.LockRange, (false, AttrTag.OnlyInt | AttrTag.OneHide, ModifierType.Factor) },
             { WeaponAttrType.LockLayers, (false, AttrTag.OnlyInt | AttrTag.UpdateToZero, ModifierType.Extra) },
             { WeaponAttrType.LockPerCount, (false, AttrTag.OnlyInt, ModifierType.Extra) },
-            { WeaponAttrType.LockInterval, (true, AttrTag.Percentage| AttrTag.UpdateToZero| AttrTag.FlipPlus, ModifierType.All) },
+            { WeaponAttrType.LockInterval, (true, AttrTag.Reciprocal| AttrTag.UpdateToZero, ModifierType.All) },
 
 
             // 伤害组成属性
             { WeaponAttrType.DirectDestruction, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.ExplosionDestruction, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
-            { WeaponAttrType.DirectWeakness, (false, AttrTag.Percentage | AttrTag.DefaultHide, ModifierType.All) },
-            { WeaponAttrType.ExplosionWeakness, (false, AttrTag.Percentage | AttrTag.DefaultHide, ModifierType.All) },
+            { WeaponAttrType.WeaknessBonus, (false, AttrTag.Percentage | AttrTag.DefaultHide, ModifierType.Extra) },
 
+            // 伤害类型系数（直击伤害组）
+            { WeaponAttrType.DamageTypeGun, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeExplosion, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeDestruction, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeReal, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeToxicity, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeBurn, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeFreeze, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeElectric, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeVertigo, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeTerror, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeRadiation, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeHacker, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
 
+            // 伤害类型系数（爆炸伤害组）
+            { WeaponAttrType.ExplosionTypeGun, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeExplosion, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeDestruction, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeReal, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeToxicity, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeBurn, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeFreeze, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeElectric, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeVertigo, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeTerror, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeRadiation, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeHacker, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
 
         };
-        public static AttrTag GetTag(WeaponAttrType type) => attributeConfigs[type].Item2;
+        public static AttrTag GetTag(WeaponAttrType type)
+        {
+            if (attributeConfigs.TryGetValue(type ,out var item))
+            {
+                return item.Item2;
+            }
+            //特殊机制
+            return default;
+        }
 
         public static GameAttribute Create(WeaponAttrType type, PEInt baseValue)
         {
@@ -126,7 +165,12 @@ namespace Unity.FPS.Game
         /// <summary> 1时隐藏</summary>
         [InspectorName("1时隐藏")]
         OneHide = 1 << 4,
-
+        /// <summary> 仅文本(>0时以+名称形式显示在末尾，专为Special设计)</summary>
+        [InspectorName("仅文本")]
+        TextOnly = 1 << 5,
+        /// <summary> 始终隐藏(不在参数预览中显示)</summary>
+        [InspectorName("始终隐藏")]
+        IsHide = 1 << 6,
 
         /// <summary> (Final)必须整数</summary>
         OnlyInt = 1 << 10,
@@ -145,56 +189,73 @@ namespace Unity.FPS.Game
     {
         //---------通用属性----------
         /// <summary>后备弹量</summary>
-        [InspectorName("后备弹量")]
+        [InspectorName("通用/后备弹量")]
         Ammo = 0,
         /// <summary>弹匣容量</summary>
-        [InspectorName("弹匣容量")]
+        [InspectorName("通用/弹匣容量")]
         Magazine = 1,
         /// <summary>射击间隔</summary>
-        [InspectorName("射击间隔")]
+        [InspectorName("通用/射击间隔")]
         ShootInterval = 2,
         /// <summary>弹射次数</summary>
-        [InspectorName("弹射次数")]
+        [InspectorName("通用/弹射次数")]
         Catapult = 3,
         /// <summary>初始冷却</summary>
-        [InspectorName("初始冷却")]
+        [InspectorName("通用/初始冷却")]
         StartCool = 4,
+        /// <summary>子弹生命周期</summary>
+        [InspectorName("通用/生命周期")]
+        LifeTime = 5,
 
         /// <summary>弹丸数量</summary>
-        [InspectorName("弹丸数量")]
+        [InspectorName("通用/弹丸数量")]
         BulletsPerShot = 6,
         /// <summary>子弹散布角度</summary>
-        [InspectorName("子弹散布角度")]
+        [InspectorName("通用/子弹散布角度")]
         BulletsSpreadAngle = 7,
         /// <summary>子弹随机偏移</summary>
-        [InspectorName("子弹随机偏移")]
+        [InspectorName("通用/子弹随机偏移")]
         BulletsOffect = 8,
         /// <summary>射击时移动速度</summary>
-        [InspectorName("射击时移动速度")]
+        [InspectorName("通用/射击时移动速度")]
         MoveSpeedToShoot = 9,
         /// <summary>手动装弹时间</summary>
-        [InspectorName("手动装弹时间")]
+        [InspectorName("通用/手动装弹时间")]
         ReloadTime = 10,
         /// <summary>自动装弹延迟</summary>
-        [InspectorName("自动装弹延迟")]
+        [InspectorName("通用/自动装弹延迟")]
         AutoReloadTime = 11,
         /// <summary>自动装弹速度</summary>
-        [InspectorName("自动装弹速度")]
+        [InspectorName("通用/自动装弹速度")]
         AutoReloadSpeed = 12,
+
+        //---------散热属性----------
+        /// <summary>射击热量</summary>
+        [InspectorName("热量/射击热量")]
+        HeatPerShot = 13,
+        /// <summary>散热延迟</summary>
+        [InspectorName("热量/散热延迟")]
+        CoolDelay = 14,
+        /// <summary>散热速度</summary>
+        [InspectorName("热量/散热速度")]
+        CoolSpeed = 15,
+        /// <summary>过热时间</summary>
+        [InspectorName("热量/过热时间")]
+        OverheatDuration = 16,
 
 
         //---------伤害属性----------
         /// <summary>直击伤害</summary>
-        [InspectorName("直击伤害")]
+        [InspectorName("伤害/直击伤害")]
         DirectDamage = 20,
         /// <summary>范围伤害</summary>
-        [InspectorName("范围伤害")]
+        [InspectorName("伤害/范围伤害")]
         ExplosionDamage = 21,
         /// <summary>作用半径</summary>
-        [InspectorName("作用半径")]
+        [InspectorName("伤害/作用半径")]
         ExplosionRange = 22,
         /// <summary>投射物速度</summary>
-        [InspectorName("投射物速度")]
+        [InspectorName("通用/投射物速度")]
         BulletSpeed = 23,
 
         // / <summary>最大射程</summary>
@@ -203,62 +264,138 @@ namespace Unity.FPS.Game
 
         //---------激光武器属性----------
         /// <summary>预热时间</summary>
-        [InspectorName("预热时间")]
+        [InspectorName("激光/预热时间")]
         LaserWaitTime = 40,
 
         //---------蓄力武器属性----------
         /// <summary>最低(能释放的)蓄力段数</summary>
-        [InspectorName("最低(能释放的)蓄力段数")]
+        [InspectorName("蓄力/最低蓄力段数")]
         ChargeLowestStage = 50,
         /// <summary>最高蓄力段数</summary>
-        [InspectorName("最高蓄力段数")]
+        [InspectorName("蓄力/最高蓄力段数")]
         ChargeHigheststage = 51,
         /// <summary>最低蓄消耗弹药</summary>
-        [InspectorName("最低蓄消耗弹药")]
+        [InspectorName("蓄力/最低蓄消耗弹药")]
         ChargeAmmoOnLowest = 52,
         /// <summary>满蓄消耗弹药</summary>
-        [InspectorName("满蓄消耗弹药")]
+        [InspectorName("蓄力/满蓄消耗弹药")]
         ChargeAmmoOnHighest = 53,
         /// <summary>蓄力时间</summary>
-        [InspectorName("蓄力时间")]
+        [InspectorName("蓄力/蓄力时间")]
         ChargeDuration = 54,
         /// <summary>蓄力伤害倍率</summary>
-        [InspectorName("蓄力伤害倍率")]
+        [InspectorName("蓄力/伤害倍率")]
         ChargeDamageScale =55,
         /// <summary>蓄力作用半径倍率</summary>
-        [InspectorName("蓄力作用半径倍率")]
+        [InspectorName("蓄力/作用半径倍率")]
         ChargeExplosionRangeScale =56,
+        /// <summary>蓄力热量倍率</summary>
+        [InspectorName("蓄力/热量倍率")]
+        ChargeHeatScale =57,
 
         //---------锁定武器属性----------
         /// <summary>锁定距离</summary>
-        [InspectorName("锁定距离")]
+        [InspectorName("锁定/锁定距离")]
         LockDistance = 60,
         /// <summary>锁定半径</summary>
-        [InspectorName("锁定半径")]
+        [InspectorName("锁定/锁定半径")]
         LockRange = 61,
         /// <summary>最大锁定层数</summary>
-        [InspectorName("最大锁定层数")]
+        [InspectorName("锁定/锁定最大层数")]
         LockLayers = 62,
         /// <summary>每个敌人的最大锁定层数</summary>
-        [InspectorName("每个敌人的最大锁定层数")]
+        [InspectorName("锁定/锁定每敌最大层数")]
         LockPerCount = 63,
         /// <summary>锁定间隔</summary>
-        [InspectorName("锁定间隔")]
+        [InspectorName("锁定/锁定间隔")]
         LockInterval = 64,
 
         /// <summary>直击-护甲破坏系数</summary>
-        [InspectorName("直击护甲破坏")]
+        [InspectorName("直击/护甲破坏")]
         DirectDestruction = 100,
         /// <summary>爆炸-护甲破坏系数</summary>
-        [InspectorName("范围护甲破坏")]
+        [InspectorName("爆炸/护甲破坏")]
         ExplosionDestruction = 101,
 
         /// <summary>弱点伤害加成</summary>
-        [InspectorName("直击弱点伤害加成")]
-        DirectWeakness = 102,
-        /// <summary>弱点伤害加成</summary>
-        [InspectorName("范围弱点伤害加成")]
-        ExplosionWeakness = 103,
+        [InspectorName("伤害/弱点加成")]
+        WeaknessBonus = 102,
+
+        //---------伤害类型系数（直击伤害组）----------
+        /// <summary>伤害类型-动能系数</summary>
+        [InspectorName("直击/直击动能伤害")]
+        DamageTypeGun = 200,
+        /// <summary>伤害类型-爆炸系数</summary>
+        [InspectorName("直击/直击爆炸伤害")]
+        DamageTypeExplosion = 201,
+        /// <summary>伤害类型-护甲破坏系数</summary>
+        [InspectorName("直击/直击护甲破坏伤害")]
+        DamageTypeDestruction = 202,
+        /// <summary>伤害类型-真实系数</summary>
+        [InspectorName("直击/直击真实伤害")]
+        DamageTypeReal = 203,
+        /// <summary>伤害类型-毒系数</summary>
+        [InspectorName("直击/直击毒伤害")]
+        DamageTypeToxicity = 204,
+        /// <summary>伤害类型-燃烧系数</summary>
+        [InspectorName("直击/直击燃烧伤害")]
+        DamageTypeBurn = 205,
+        /// <summary>伤害类型-冰冻系数</summary>
+        [InspectorName("直击/直击冰冻伤害")]
+        DamageTypeFreeze = 206,
+        /// <summary>伤害类型-电击系数</summary>
+        [InspectorName("直击/直击电击伤害")]
+        DamageTypeElectric = 207,
+        /// <summary>伤害类型-眩晕系数</summary>
+        [InspectorName("直击/直击眩晕伤害")]
+        DamageTypeVertigo = 208,
+        /// <summary>伤害类型-恐惧系数</summary>
+        [InspectorName("直击/直击恐惧伤害")]
+        DamageTypeTerror = 209,
+        /// <summary>伤害类型-辐射系数</summary>
+        [InspectorName("直击/直击辐射伤害")]
+        DamageTypeRadiation = 210,
+        /// <summary>伤害类型-骇入系数</summary>
+        [InspectorName("直击/直击骇入伤害")]
+        DamageTypeHacker = 211,
+
+        //---------伤害类型系数（爆炸伤害组）----------
+        /// <summary>伤害类型-动能系数(爆炸)</summary>
+        [InspectorName("爆炸/范围动能伤害")]
+        ExplosionTypeGun = 220,
+        /// <summary>伤害类型-爆炸系数(爆炸)</summary>
+        [InspectorName("爆炸/范围爆炸伤害")]
+        ExplosionTypeExplosion = 221,
+        /// <summary>伤害类型-护甲破坏系数(爆炸)</summary>
+        [InspectorName("爆炸/范围护甲破坏伤害")]
+        ExplosionTypeDestruction = 222,
+        /// <summary>伤害类型-真实系数(爆炸)</summary>
+        [InspectorName("爆炸/范围真实伤害")]
+        ExplosionTypeReal = 223,
+        /// <summary>伤害类型-毒系数(爆炸)</summary>
+        [InspectorName("爆炸/范围毒伤害")]
+        ExplosionTypeToxicity = 224,
+        /// <summary>伤害类型-燃烧系数(爆炸)</summary>
+        [InspectorName("爆炸/范围燃烧伤害")]
+        ExplosionTypeBurn = 225,
+        /// <summary>伤害类型-冰冻系数(爆炸)</summary>
+        [InspectorName("爆炸/范围冰冻伤害")]
+        ExplosionTypeFreeze = 226,
+        /// <summary>伤害类型-电击系数(爆炸)</summary>
+        [InspectorName("爆炸/范围电击伤害")]
+        ExplosionTypeElectric = 227,
+        /// <summary>伤害类型-眩晕系数(爆炸)</summary>
+        [InspectorName("爆炸/范围眩晕伤害")]
+        ExplosionTypeVertigo = 228,
+        /// <summary>伤害类型-恐惧系数(爆炸)</summary>
+        [InspectorName("爆炸/范围恐惧伤害")]
+        ExplosionTypeTerror = 229,
+        /// <summary>伤害类型-辐射系数(爆炸)</summary>
+        [InspectorName("爆炸/范围辐射伤害")]
+        ExplosionTypeRadiation = 230,
+        /// <summary>伤害类型-骇入系数(爆炸)</summary>
+        [InspectorName("爆炸/范围骇入伤害")]
+        ExplosionTypeHacker = 231,
 
         /// <summary>特殊机制</summary>
         [InspectorName("特殊机制")]
@@ -398,7 +535,14 @@ namespace Unity.FPS.Game
             get
             {
                 if (FinalValue == 0) return 0;
-                return currValue.RawInt / FinalValue;
+
+                // 1. 先算连续百分比
+                var progress = ScaleValue;
+
+                // 2. 总段数 = 向上取整(final)
+                var totalSegments = PEMath.Ceil(FinalValue);
+
+                return PEMath.Floor(progress * totalSegments) / totalSegments;
             }
         }
 

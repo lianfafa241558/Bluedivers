@@ -167,7 +167,7 @@ MonoBehaviour:
     - Key: 10
       Value: 0.132
     - Key: 60
-      Value: 2.4
+      Value: 2.6
     - Key: 61
       Value: 8
   ProjectilePrefab: {fileID: 2049506503512976613, guid: 3c7b1e7f4c3474c4da05ce0ffcebdb41,
@@ -182,20 +182,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 100
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -208,7 +204,7 @@ MonoBehaviour:
     ImpactSfx: {fileID: 8300000, guid: 3aade14b736a5d34999cd9b4a09334e2, type: 3}
     UseHole: 0
     Hole: {fileID: 0}
-    OnlyTerrain: 0
+    OnlyTerrain: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -223,28 +219,24 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 10
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 100
+    WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
+      Value: 0.5
+    - Key: 5
+      Value: 0.5
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
-    ImpactVfx: {fileID: 6513570022818009108, guid: db88a36f795988344bf2dd4e9120fdbb,
+    ImpactVfx: {fileID: 8167516518492074666, guid: 4a7139f81905c6d4bb2476226c226a62,
       type: 3}
     ImpactSfx: {fileID: 8300000, guid: f51c4637af2c5444cb6ae43fd10e5a8f, type: 3}
     UseHole: 0
@@ -293,8 +285,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowName: "\u5E03\u96F7\u5668"
   Id: MineLauncher
-  Portrait: {fileID: 21300000, guid: 5b8041c2f5a7d6e43b09ab878fb408ad, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 5b8041c2f5a7d6e43b09ab878fb408ad, type: 3}
+  Portrait: {fileID: 21300000, guid: 62149bd766297664d9e570ecf4ed1e87, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 62149bd766297664d9e570ecf4ed1e87, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
   IsFixed: 0
@@ -325,6 +317,7 @@ MonoBehaviour:
   MainPart: {fileID: 0}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 1
 --- !u!114 &4932906196024244537
 MonoBehaviour:

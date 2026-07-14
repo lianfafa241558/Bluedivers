@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using FpsGame.Mission;
+using FPSGame.Attribute;
 using FPSGame.UI;
 using GameContract;
 
