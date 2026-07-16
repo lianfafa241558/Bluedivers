@@ -12,6 +12,260 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fa3084c78287f94190363f9312ba760, type: 3}
   m_Name: CD_Kaiser_Mengsk
   m_EditorClassIdentifier: 
+  WaveCool: 240
+  WaveUseObject:
+  - {fileID: 2675460735055145210, guid: 6a25c09697f01a64c8ca92c8f1e6d11c, type: 3}
+  templates:
+  - name: "\u8DF3\u866B\u6A21\u677F"
+    template:
+    - tier: 1
+      weight: 70
+      unitWeights:
+      - unit: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
+          type: 3}
+        weight: 100
+        size: 1
+    - tier: 2
+      weight: 23
+      unitWeights:
+      - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
+          type: 3}
+        weight: 50
+        size: 3
+      - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
+          type: 3}
+        weight: 25
+        size: 3
+      - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
+          type: 3}
+        weight: 25
+        size: 3
+    - tier: 3
+      weight: 5
+      unitWeights:
+      - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
+          type: 3}
+        weight: 100
+        size: 6
+    - tier: 4
+      weight: 2
+      unitWeights:
+      - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+          type: 3}
+        weight: 100
+        size: 8
+    - tier: 6
+      weight: 0
+      unitWeights:
+      - unit: {fileID: 8523330831985173639, guid: d034ca4ef27e4e941970784e717d59fd,
+          type: 3}
+        weight: 100
+        size: 1
+    PatrolTemplate:
+    - "\u8DF3\u866B\u5DE1\u903B\u961F"
+    - "\u6218\u58EB\u5DE1\u903B\u961F"
+    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+  - name: "\u6218\u58EB\u6A21\u677F"
+    template:
+    - tier: 1
+      weight: 20
+      unitWeights:
+      - unit: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
+          type: 3}
+        weight: 100
+        size: 1
+    - tier: 2
+      weight: 70
+      unitWeights:
+      - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
+          type: 3}
+        weight: 30
+        size: 3
+      - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
+          type: 3}
+        weight: 45
+        size: 3
+      - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
+          type: 3}
+        weight: 25
+        size: 3
+    - tier: 3
+      weight: 8
+      unitWeights:
+      - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
+          type: 3}
+        weight: 100
+        size: 6
+    - tier: 4
+      weight: 2
+      unitWeights:
+      - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+          type: 3}
+        weight: 100
+        size: 8
+    - tier: 6
+      weight: 0
+      unitWeights:
+      - unit: {fileID: 8523330831985173639, guid: d034ca4ef27e4e941970784e717d59fd,
+          type: 3}
+        weight: 100
+        size: 1
+    PatrolTemplate:
+    - "\u8DF3\u866B\u5DE1\u903B\u961F"
+    - "\u6218\u58EB\u5DE1\u903B\u961F"
+    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+  - name: "\u5BBF\u4E3B\u6A21\u677F"
+    template:
+    - tier: 1
+      weight: 30
+      unitWeights:
+      - unit: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
+          type: 3}
+        weight: 100
+        size: 1
+    - tier: 2
+      weight: 60
+      unitWeights:
+      - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
+          type: 3}
+        weight: 10
+        size: 3
+      - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
+          type: 3}
+        weight: 10
+        size: 3
+      - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
+          type: 3}
+        weight: 10
+        size: 3
+      - unit: {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+          type: 3}
+        weight: 70
+        size: 3
+    - tier: 3
+      weight: 6
+      unitWeights:
+      - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
+          type: 3}
+        weight: 100
+        size: 6
+    - tier: 4
+      weight: 4
+      unitWeights:
+      - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+          type: 3}
+        weight: 100
+        size: 8
+    - tier: 6
+      weight: 0
+      unitWeights:
+      - unit: {fileID: 8523330831985173639, guid: d034ca4ef27e4e941970784e717d59fd,
+          type: 3}
+        weight: 100
+        size: 1
+    PatrolTemplate:
+    - "\u53CC\u80D6\u5DE1\u903B\u961F"
+    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+  - name: "\u70B9\u706B\u866B\u6A21\u677F"
+    template:
+    - tier: 1
+      weight: 40
+      unitWeights:
+      - unit: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
+          type: 3}
+        weight: 100
+        size: 1
+    - tier: 2
+      weight: 100
+      unitWeights:
+      - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
+          type: 3}
+        weight: 10
+        size: 3
+      - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
+          type: 3}
+        weight: 30
+        size: 3
+      - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
+          type: 3}
+        weight: 10
+        size: 3
+      - unit: {fileID: 6731495466205310902, guid: bc235516cb7a542479405b035086c116,
+          type: 3}
+        weight: 50
+        size: 3
+    - tier: 3
+      weight: 5
+      unitWeights:
+      - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
+          type: 3}
+        weight: 100
+        size: 6
+    - tier: 4
+      weight: 3
+      unitWeights:
+      - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
+          type: 3}
+        weight: 100
+        size: 8
+    - tier: 6
+      weight: 0
+      unitWeights:
+      - unit: {fileID: 8523330831985173639, guid: d034ca4ef27e4e941970784e717d59fd,
+          type: 3}
+        weight: 100
+        size: 1
+    PatrolTemplate:
+    - "\u53CC\u80D6\u5DE1\u903B\u961F"
+    - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+  PatrolCreatValue: 240
+  patrolCfgs:
+  - name: "\u6218\u58EB\u5DE1\u903B\u961F"
+    units:
+    - Key: 2
+      Value: 7
+    - Key: 6
+      Value: 1
+  - name: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
+    units:
+    - Key: 3
+      Value: 3
+    - Key: 6
+      Value: 1
+  - name: "\u53CC\u80D6\u5DE1\u903B\u961F"
+    units:
+    - Key: 2
+      Value: 4
+    - Key: 1
+      Value: 6
+    - Key: 6
+      Value: 1
+  - name: "\u91CD\u578B\u5DE1\u903B\u961F"
+    units:
+    - Key: 1
+      Value: 3
+    - Key: 2
+      Value: 3
+    - Key: 4
+      Value: 1
+    - Key: 6
+      Value: 1
+  - name: "\u8DF3\u866B\u5DE1\u903B\u961F"
+    units:
+    - Key: 1
+      Value: 8
+    - Key: 2
+      Value: 1
+    - Key: 6
+      Value: 1
+  - name: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
+    units:
+    - Key: 6
+      Value: 1
   enemyVarietyType: 2
   ShowName: "\u51EF\u6492\"\u5E1D\u56FD\u536B\u961F\""
   Sprite: {fileID: 21300000, guid: 66b0d2f8f19b0954680b372697eab0b8, type: 3}
@@ -19,305 +273,6 @@ MonoBehaviour:
   Color: {r: 0.6901961, g: 0.32156867, b: 0.41802427, a: 1}
   Suffix: Zerg
   Desc: "\u51EF\u6492\u96C6\u56E2\u7684\u6838\u5FC3\u519B\u4E8B\u529B\u91CF\uFF0C\u7528\u4E8E\u9547\u5B88\u8054\u90A6\u5B66\u751F\u4F1A\u6709\u9650\u516C\u53F8\u3002"
-  WaveCool: 240
-  WaveUseObject:
-  - {fileID: 2675460735055145210, guid: 6a25c09697f01a64c8ca92c8f1e6d11c, type: 3}
-  Templates:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue:
-      Template: []
-      PatrolTemplate: []
-    arr:
-    - Key: "\u8DF3\u866B\u6A21\u677F"
-      Value:
-        Template:
-        - Key: 1
-          Value:
-            weight: 70
-            unitWeights:
-            - unit: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
-                type: 3}
-              weight: 100
-              size: 1
-        - Key: 2
-          Value:
-            weight: 23
-            unitWeights:
-            - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
-                type: 3}
-              weight: 50
-              size: 3
-            - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
-                type: 3}
-              weight: 25
-              size: 3
-            - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
-                type: 3}
-              weight: 25
-              size: 3
-        - Key: 3
-          Value:
-            weight: 5
-            unitWeights:
-            - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
-                type: 3}
-              weight: 100
-              size: 6
-        - Key: 4
-          Value:
-            weight: 2
-            unitWeights:
-            - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
-                type: 3}
-              weight: 100
-              size: 8
-        - Key: 6
-          Value:
-            weight: 0
-            unitWeights:
-            - unit: {fileID: 8523330831985173639, guid: d034ca4ef27e4e941970784e717d59fd,
-                type: 3}
-              weight: 100
-              size: 1
-        PatrolTemplate:
-        - "\u8DF3\u866B\u5DE1\u903B\u961F"
-        - "\u6218\u58EB\u5DE1\u903B\u961F"
-        - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-        - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-    - Key: "\u6218\u58EB\u6A21\u677F"
-      Value:
-        Template:
-        - Key: 1
-          Value:
-            weight: 20
-            unitWeights:
-            - unit: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
-                type: 3}
-              weight: 100
-              size: 1
-        - Key: 2
-          Value:
-            weight: 70
-            unitWeights:
-            - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
-                type: 3}
-              weight: 30
-              size: 3
-            - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
-                type: 3}
-              weight: 45
-              size: 3
-            - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
-                type: 3}
-              weight: 25
-              size: 3
-        - Key: 3
-          Value:
-            weight: 8
-            unitWeights:
-            - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
-                type: 3}
-              weight: 100
-              size: 6
-        - Key: 4
-          Value:
-            weight: 2
-            unitWeights:
-            - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
-                type: 3}
-              weight: 100
-              size: 8
-        - Key: 6
-          Value:
-            weight: 0
-            unitWeights:
-            - unit: {fileID: 8523330831985173639, guid: d034ca4ef27e4e941970784e717d59fd,
-                type: 3}
-              weight: 100
-              size: 1
-        PatrolTemplate:
-        - "\u8DF3\u866B\u5DE1\u903B\u961F"
-        - "\u6218\u58EB\u5DE1\u903B\u961F"
-        - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-        - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-    - Key: "\u5BBF\u4E3B\u6A21\u677F"
-      Value:
-        Template:
-        - Key: 1
-          Value:
-            weight: 30
-            unitWeights:
-            - unit: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
-                type: 3}
-              weight: 100
-              size: 1
-        - Key: 2
-          Value:
-            weight: 60
-            unitWeights:
-            - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
-                type: 3}
-              weight: 10
-              size: 3
-            - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
-                type: 3}
-              weight: 10
-              size: 3
-            - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
-                type: 3}
-              weight: 10
-              size: 3
-            - unit: {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
-                type: 3}
-              weight: 70
-              size: 3
-        - Key: 3
-          Value:
-            weight: 6
-            unitWeights:
-            - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
-                type: 3}
-              weight: 100
-              size: 6
-        - Key: 4
-          Value:
-            weight: 4
-            unitWeights:
-            - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
-                type: 3}
-              weight: 100
-              size: 8
-        - Key: 6
-          Value:
-            weight: 0
-            unitWeights:
-            - unit: {fileID: 8523330831985173639, guid: d034ca4ef27e4e941970784e717d59fd,
-                type: 3}
-              weight: 100
-              size: 1
-        PatrolTemplate:
-        - "\u53CC\u80D6\u5DE1\u903B\u961F"
-        - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-        - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-    - Key: "\u70B9\u706B\u866B\u6A21\u677F"
-      Value:
-        Template:
-        - Key: 1
-          Value:
-            weight: 40
-            unitWeights:
-            - unit: {fileID: 6976885803080383985, guid: 8571af00eb74c0149aeb3b2b55018783,
-                type: 3}
-              weight: 100
-              size: 1
-        - Key: 2
-          Value:
-            weight: 100
-            unitWeights:
-            - unit: {fileID: 5114223292933438709, guid: 6f1b1e83859066147805935784fca32c,
-                type: 3}
-              weight: 10
-              size: 3
-            - unit: {fileID: 4751518862940398534, guid: cf6baa5d02fa55148acf6c352954d341,
-                type: 3}
-              weight: 30
-              size: 3
-            - unit: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
-                type: 3}
-              weight: 10
-              size: 3
-            - unit: {fileID: 6731495466205310902, guid: bc235516cb7a542479405b035086c116,
-                type: 3}
-              weight: 50
-              size: 3
-        - Key: 3
-          Value:
-            weight: 5
-            unitWeights:
-            - unit: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b,
-                type: 3}
-              weight: 100
-              size: 6
-        - Key: 4
-          Value:
-            weight: 3
-            unitWeights:
-            - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
-                type: 3}
-              weight: 100
-              size: 8
-        - Key: 6
-          Value:
-            weight: 0
-            unitWeights:
-            - unit: {fileID: 8523330831985173639, guid: d034ca4ef27e4e941970784e717d59fd,
-                type: 3}
-              weight: 100
-              size: 1
-        PatrolTemplate:
-        - "\u53CC\u80D6\u5DE1\u903B\u961F"
-        - "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-        - "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-    meetReset: 0
-  Patrol:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue:
-      Template: []
-    arr:
-    - Key: "\u6218\u58EB\u5DE1\u903B\u961F"
-      Value:
-        Template:
-        - Key: 2
-          Value: 7
-        - Key: 6
-          Value: 1
-    - Key: "\u6307\u6325\u5B98\u5DE1\u903B\u961F"
-      Value:
-        Template:
-        - Key: 3
-          Value: 3
-        - Key: 6
-          Value: 1
-    - Key: "\u53CC\u80D6\u5DE1\u903B\u961F"
-      Value:
-        Template:
-        - Key: 2
-          Value: 4
-        - Key: 1
-          Value: 6
-        - Key: 6
-          Value: 1
-    - Key: "\u91CD\u578B\u5DE1\u903B\u961F"
-      Value:
-        Template:
-        - Key: 1
-          Value: 3
-        - Key: 2
-          Value: 3
-        - Key: 4
-          Value: 1
-        - Key: 6
-          Value: 1
-    - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
-      Value:
-        Template:
-        - Key: 1
-          Value: 8
-        - Key: 2
-          Value: 1
-        - Key: 6
-          Value: 1
-    - Key: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
-      Value:
-        Template:
-        - Key: 6
-          Value: 1
-    meetReset: 0
-  PatrolCreatValue: 240
   mainTypes: 0400000006000000050000000700000008000000
   extraTypes: 22000000230000002400000025000000
   nestTypes: 640000006500000066000000

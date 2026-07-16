@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: BlackHole
   m_Shader: {fileID: 4800000, guid: 66c4b52bd1e641148b0a113c6f0c8acb, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _MY_FOG_ENABLE
   - _UseFresnel
@@ -19,6 +21,7 @@ Material:
   m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -103,7 +106,7 @@ Material:
     - _FlowDir: 0
     - _FlowLightSpeed: 1
     - _FlowTrans: 0
-    - _FresnelDecay: 3.7
+    - _FresnelDecay: 0
     - _FresnelScale: 1
     - _FresnelWave: 0
     - _FresnelWaveTime: 5

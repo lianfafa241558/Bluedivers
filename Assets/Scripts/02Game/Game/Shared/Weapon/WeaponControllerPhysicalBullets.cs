@@ -10,16 +10,16 @@ namespace Unity.FPS.Game
 
         [Foldout("子弹参数", true)]
 
-        [CustomLabel("子弹壳预制体")]
+        [InspectorName("子弹壳预制体")]
         public GameObject ShellCasing;
-        [CustomLabel("弹子弹的点位")]
+        [InspectorName("弹子弹的点位")]
         public Transform EjectionPort;
-        [CustomLabel("施加在壳体上的力")]
+        [InspectorName("施加在壳体上的力")]
         [Range(0.0f, 5.0f)]
         public float ShellCasingEjectionForce = 2.0f;
-        [CustomLabel("实体子弹池的初始数量")]
+        [InspectorName("实体子弹池的初始数量")]
         [Range(1, 30)] public int ShellPoolSize = 1;
-        [CustomLabel("持续时间")]
+        [InspectorName("持续时间")]
         [Range(1, 30)] public int ShellDuration = 5;
 
         private AutoObjectPool<KVP<Rigidbody,float>> m_PhysicalAmmoPool;

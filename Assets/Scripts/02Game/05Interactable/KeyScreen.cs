@@ -168,7 +168,7 @@ public partial class KeyScreen : MonoBehaviour
 
     [System.Serializable]
     public class Procedure{
-        [CustomLabel("类型")]
+        [InspectorName("类型")]
         public ProcedureType type;
         public string tip;
         public bool eject;//是否弹出玩家 加载/等待
@@ -182,28 +182,28 @@ public partial class KeyScreen : MonoBehaviour
     public enum ProcedureType
     {
         /// <summary>输入</summary>
-        [CustomLabel("输入")]
+        [InspectorName("输入")]
         Input,
         /// <summary>加载</summary>
-        [CustomLabel("加载")]
+        [InspectorName("加载")]
         Load,
         /// <summary>等待</summary>
-        [CustomLabel("等待")]
+        [InspectorName("等待")]
         Wait,
         /// <summary>操作特定物体</summary>
-        [CustomLabel("操作特定物体")]
+        [InspectorName("操作特定物体")]
         ActionItem,
         /// <summary>调整系数</summary>
-        [CustomLabel("调整系数")]
+        [InspectorName("调整系数")]
         ParaModify,
         /// <summary>旋转方向</summary>
-        [CustomLabel("旋转方向")]
+        [InspectorName("旋转方向")]
         Direction,
         /// <summary>解除锁定</summary>
-        [CustomLabel("解除锁定")]
+        [InspectorName("解除锁定")]
         Unlock,
         /// <summary>密码</summary>
-        [CustomLabel("密码")]
+        [InspectorName("密码")]
         Password,
     }
 }

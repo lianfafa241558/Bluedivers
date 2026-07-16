@@ -10,7 +10,7 @@ public class CreatEnemy : MonoBehaviour
     [SerializeField]
     float range, probability = 50;
     [SerializeField]
-    [CustomLabel("类型")]
+    [InspectorName("类型")]
     UnitTier tier;
 
     void Start()

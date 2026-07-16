@@ -30,36 +30,36 @@ namespace FpsGame.Mission
 
         [Foldout("标旗",true)]
 
-        [CustomLabel("标旗")]
+        [InspectorName("标旗")]
         [UnityEngine.Serialization.FormerlySerializedAs("tag")]
         public MissionTag missionTag;
 
 
         [Foldout("信息",true)]
         public MissionType missionType;
-        [CustomLabel("优先级")]
+        [InspectorName("优先级")]
         public int priority;
         //这玩意应该放着这里吗？我得想想
         [SerializeField]
         private List<GameObject> prefabs;
 
         [DisplayField(true, false, false)]
-        [CustomLabel("标题")]
+        [InspectorName("标题")]
         public string title;
         [DisplayField(true, false, false)]
-        [CustomLabel("当前目标提示")]
+        [InspectorName("当前目标提示")]
         public string tip;
         [DisplayField(true, false, false)]
-        [CustomLabel("最大任务进度")]
+        [InspectorName("最大任务进度")]
         public int MaxProgress;
         [DisplayField(true, false, false)]
-        [CustomLabel("当前任务进度")]
+        [InspectorName("当前任务进度")]
         public int NowProgress;
 
-        [CustomLabel("允许部署战备的范围")]
+        [InspectorName("允许部署战备的范围")]
         public int AirdropRange = 10;
 
-        [CustomLabel("占地面积的取值范围(半径)")]
+        [InspectorName("占地面积的取值范围(半径)")]
         public Vector2Int mapEntitySize = Vector2Int.one * 20;
 
 

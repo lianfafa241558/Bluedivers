@@ -64,8 +64,6 @@ namespace Unity.FPS.Game
             { WeaponAttrType.DirectWeakness, (false, AttrTag.Percentage | AttrTag.DefaultHide, ModifierType.All) },
             { WeaponAttrType.ExplosionWeakness, (false, AttrTag.Percentage | AttrTag.DefaultHide, ModifierType.All) },
 
-
-
         };
         public static AttrTag GetTag(WeaponAttrType type) => attributeConfigs[type].Item2;
 
@@ -111,19 +109,19 @@ namespace Unity.FPS.Game
     public enum AttrTag
     {
         /// <summary> 显示百分数</summary>
-        [CustomLabel("显示百分数")]
+        [InspectorName("显示百分数")]
         Percentage = 1 << 0,
         /// <summary> 显示倒数(例如射速)</summary>
-        [CustomLabel("显示倒数")]
+        [InspectorName("显示倒数")]
         Reciprocal = 1 << 1,
         /// <summary> 反转加成显示(绿/红)</summary>
-        [CustomLabel("反转加成显示(绿-红)")]
+        [InspectorName("反转加成显示(绿-红)")]
         FlipPlus = 1 << 2,
         /// <summary> 默认值时隐藏</summary>
-        [CustomLabel("默认值时隐藏")]
+        [InspectorName("默认值时隐藏")]
         DefaultHide = 1 << 3,
         /// <summary> 1时隐藏</summary>
-        [CustomLabel("1时隐藏")]
+        [InspectorName("1时隐藏")]
         OneHide = 1 << 4,
 
 
@@ -144,123 +142,123 @@ namespace Unity.FPS.Game
     {
         //---------通用属性-----------
         /// <summary>后备弹量</summary>
-        [CustomLabel("后备弹量")]
+        [InspectorName("后备弹量")]
         Ammo = 0,
         /// <summary>弹匣容量</summary>
-        [CustomLabel("弹匣容量")]
+        [InspectorName("弹匣容量")]
         Magazine = 1,
         /// <summary>射击间隔</summary>
-        [CustomLabel("射击间隔")]
+        [InspectorName("射击间隔")]
         ShootInterval = 2,
         /// <summary>弹射次数</summary>
-        [CustomLabel("弹射次数")]
+        [InspectorName("弹射次数")]
         Catapult = 3,
         /// <summary>初始冷却</summary>
-        [CustomLabel("初始冷却")]
+        [InspectorName("初始冷却")]
         StartCool = 4,
 
         /// <summary>弹丸数量</summary>
-        [CustomLabel("弹丸数量")]
+        [InspectorName("弹丸数量")]
         BulletsPerShot = 6,
         /// <summary>子弹散布角度</summary>
-        [CustomLabel("子弹散布角度")]
+        [InspectorName("子弹散布角度")]
         BulletsSpreadAngle = 7,
         /// <summary>子弹随机偏移</summary>
-        [CustomLabel("子弹随机偏移")]
+        [InspectorName("子弹随机偏移")]
         BulletsOffect = 8,
         /// <summary>射击时移动速度</summary>
-        [CustomLabel("射击时移动速度")]
+        [InspectorName("射击时移动速度")]
         MoveSpeedToShoot = 9,
         /// <summary>手动装弹时间</summary>
-        [CustomLabel("手动装弹时间")]
+        [InspectorName("手动装弹时间")]
         ReloadTime = 10,
         /// <summary>自动装弹延迟</summary>
-        [CustomLabel("自动装弹延迟")]
+        [InspectorName("自动装弹延迟")]
         AutoReloadTime = 11,
         /// <summary>自动装弹速度</summary>
-        [CustomLabel("自动装弹速度")]
+        [InspectorName("自动装弹速度")]
         AutoReloadSpeed = 12,
 
 
         //---------伤害属性-----------
         /// <summary>直击伤害</summary>
-        [CustomLabel("直击伤害")]
+        [InspectorName("直击伤害")]
         DirectDamage = 20,
         /// <summary>范围伤害</summary>
-        [CustomLabel("范围伤害")]
+        [InspectorName("范围伤害")]
         ExplosionDamage = 21,
         /// <summary>作用半径</summary>
-        [CustomLabel("作用半径")]
+        [InspectorName("作用半径")]
         ExplosionRange = 22,
         /// <summary>投射物速度</summary>
-        [CustomLabel("投射物速度")]
+        [InspectorName("投射物速度")]
         BulletSpeed = 23,
 
         // / <summary>最大射程</summary>
-        //[CustomLabel("最大射程")]
+        //[InspectorName("最大射程")]
         //MaxDistance = 24,
 
         //---------激光武器属性-----------
         /// <summary>预热时间</summary>
-        [CustomLabel("预热时间")]
+        [InspectorName("预热时间")]
         LaserWaitTime = 40,
 
         //---------蓄力武器属性-----------
         /// <summary>最低(能释放的)蓄力段数</summary>
-        [CustomLabel("最低(能释放的)蓄力段数")]
+        [InspectorName("最低(能释放的)蓄力段数")]
         ChargeLowestStage = 50,
         /// <summary>最高蓄力段数</summary>
-        [CustomLabel("最高蓄力段数")]
+        [InspectorName("最高蓄力段数")]
         ChargeHigheststage = 51,
         /// <summary>最低蓄消耗弹药</summary>
-        [CustomLabel("最低蓄消耗弹药")]
+        [InspectorName("最低蓄消耗弹药")]
         ChargeAmmoOnLowest = 52,
         /// <summary>满蓄消耗弹药</summary>
-        [CustomLabel("满蓄消耗弹药")]
+        [InspectorName("满蓄消耗弹药")]
         ChargeAmmoOnHighest = 53,
         /// <summary>蓄力时间</summary>
-        [CustomLabel("蓄力时间")]
+        [InspectorName("蓄力时间")]
         ChargeDuration = 54,
         /// <summary>蓄力伤害倍率</summary>
-        [CustomLabel("蓄力伤害倍率")]
+        [InspectorName("蓄力伤害倍率")]
         ChargeDamageScale =55,
         /// <summary>蓄力作用半径倍率</summary>
-        [CustomLabel("蓄力作用半径倍率")]
+        [InspectorName("蓄力作用半径倍率")]
         ChargeExplosionRangeScale =56,
 
         //---------锁定武器属性-----------
         /// <summary>锁定距离</summary>
-        [CustomLabel("锁定距离")]
+        [InspectorName("锁定距离")]
         LockDistance = 60,
         /// <summary>锁定半径</summary>
-        [CustomLabel("锁定半径")]
+        [InspectorName("锁定半径")]
         LockRange = 61,
         /// <summary>最大锁定层数</summary>
-        [CustomLabel("最大锁定层数")]
+        [InspectorName("最大锁定层数")]
         LockLayers = 62,
         /// <summary>每个敌人的最大锁定层数</summary>
-        [CustomLabel("每个敌人的最大锁定层数")]
+        [InspectorName("每个敌人的最大锁定层数")]
         LockPerCount = 63,
         /// <summary>锁定间隔</summary>
-        [CustomLabel("锁定间隔")]
+        [InspectorName("锁定间隔")]
         LockInterval = 64,
 
         /// <summary>直击-护甲破坏系数</summary>
-        [CustomLabel("直击护甲破坏")]
+        [InspectorName("直击护甲破坏")]
         DirectDestruction = 100,
         /// <summary>爆炸-护甲破坏系数</summary>
-        [CustomLabel("范围护甲破坏")]
+        [InspectorName("范围护甲破坏")]
         ExplosionDestruction = 101,
 
         /// <summary>弱点伤害加成</summary>
-        [CustomLabel("直击弱点伤害加成")]
+        [InspectorName("直击弱点伤害加成")]
         DirectWeakness = 102,
         /// <summary>弱点伤害加成</summary>
-        [CustomLabel("范围弱点伤害加成")]
+        [InspectorName("范围弱点伤害加成")]
         ExplosionWeakness = 103,
 
         /// <summary>特殊机制</summary>
-        [CustomLabel("特殊机制")]
+        [InspectorName("特殊机制")]
         Special = 999,
     }
 

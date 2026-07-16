@@ -8,7 +8,7 @@ namespace Unity.FPS.AI
 {
     public class DetectionModuleTurret : DetectionModule
     {
-        [CustomLabel("响应玩家标记")]
+        [InspectorName("响应玩家标记")]
         public bool RespondMark;
 
         protected override void Start()

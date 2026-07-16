@@ -266,8 +266,8 @@ namespace Unity.FPS.Game
         public string GetEnumString(System.Enum value)
         {
             var fieldInfo = value.GetType().GetField(value.ToString());
-            var attribute = fieldInfo.GetCustomAttributes(typeof(CustomLabelAttribute), false);
-            return attribute.Length > 0 ? ((CustomLabelAttribute)attribute[0]).name : value.ToString();
+            var attribute = fieldInfo.GetCustomAttributes(typeof(InspectorNameAttribute), false);
+            return attribute.Length > 0 ? ((InspectorNameAttribute)attribute[0]).name : value.ToString();
 
         }
     }

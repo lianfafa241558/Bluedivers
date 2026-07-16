@@ -14,7 +14,7 @@ namespace Unity.FPS.Game
     {
 
         [SerializeField]
-        [CustomLabel("弱点")]
+        [InspectorName("弱点")]
         private bool isWeakness;
 
         [HideInInspector]
@@ -27,7 +27,7 @@ namespace Unity.FPS.Game
         public GameObject ActorGo => Source.ActorGo;
 
         [Header("伤害抗性")]
-        [CustomLabel("伤害抗性")]
+        [InspectorName("伤害抗性")]
         [SerializeField]
         private DisplayDic<DamageTypeEnum, float> extraLists;
 

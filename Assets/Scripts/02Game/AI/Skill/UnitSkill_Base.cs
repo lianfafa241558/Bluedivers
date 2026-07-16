@@ -11,16 +11,16 @@ namespace Unity.FPS.AI
     public abstract class UnitSkill_Base : TickBehaviour
     {
 
-        [CustomLabel("冷却")]
+        [InspectorName("冷却")]
         public int Cool;
-        [CustomLabel("技能持续")]
+        [InspectorName("技能持续")]
         public int Duration;
-        [CustomLabel("需要接战时间")]
+        [InspectorName("需要接战时间")]
         public int MeetDetectedTime;
-        [CustomLabel("触发范围")]
+        [InspectorName("触发范围")]
         public float Range;
 
-        [CustomLabel("标旗")]
+        [InspectorName("标旗")]
         [SerializeField]
         protected new SkillTag tag;
 
@@ -163,17 +163,17 @@ namespace Unity.FPS.AI
         protected enum SkillTag
         {
             /// <summary>只对玩家释放</summary>
-            [CustomLabel("只对玩家释放")] TargetIsPlayer = 1 << 2,
+            [InspectorName("只对玩家释放")] TargetIsPlayer = 1 << 2,
             /// <summary>离开范围重置接战时间</summary>
-            [CustomLabel("离开范围重置接战时间")] MeetTargetInRange = 1 << 4,
+            [InspectorName("离开范围重置接战时间")] MeetTargetInRange = 1 << 4,
 
             /// <summary>丢失目标时重新冷却</summary>
-            //[CustomLabel("丢失目标时重新冷却")]LostTargetReset = 1 << 0,
+            //[InspectorName("丢失目标时重新冷却")]LostTargetReset = 1 << 0,
             /// <summary>发现目标时重新冷却</summary>
-            //[CustomLabel("发现目标时重新冷却")] DetectedTargetReset = 1 << 1,
+            //[InspectorName("发现目标时重新冷却")] DetectedTargetReset = 1 << 1,
 
             /// <summary>冷却需要目标</summary>
-            //[CustomLabel("冷却需要目标")] CoolMeetTarget = 1 << 3,
+            //[InspectorName("冷却需要目标")] CoolMeetTarget = 1 << 3,
 
         }
 

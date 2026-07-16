@@ -26,7 +26,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
         }
     }
     public static event UnityAction<WindowStateEnum,WindowStateEnum> OnWindowStateChange;
-    [CustomLabel("界面状态")][SerializeField]
+    [InspectorName("界面状态")][SerializeField]
     private WindowStateEnum windowState = WindowStateEnum.Game;
 
 
@@ -45,7 +45,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
 
     public static event UnityAction<GameStateEnum,GameStateEnum> OnGameStateChange;
 
-    [CustomLabel("游戏状态")][SerializeField]
+    [InspectorName("游戏状态")][SerializeField]
     private GameStateEnum gameState = GameStateEnum.Front;
 
     public static float TimeScale
@@ -61,7 +61,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
     }
     public static event UnityAction<float, float> OnTimeScaleChange;
 
-    [CustomLabel("时间刻度")]
+    [InspectorName("时间刻度")]
     [SerializeField]
     private float timeScale;
 
@@ -69,30 +69,30 @@ public partial class GameRoot : GameRootBase<GameRoot>
     public bool IsLocal;
     /// <summary>高速子弹碰撞层</summary>
     [SerializeField]
-    [CustomLabel("高速子弹碰撞层")]
+    [InspectorName("高速子弹碰撞层")]
     private LayerMask hittableHighSpeedLayers = -1;
 
     
 
     /// <summary>武器层</summary>
     [SerializeField]
-    [CustomLabel("武器层")]
+    [InspectorName("武器层")]
     private LayerMask weaponLayers = -1;
 
     /// <summary>地面层</summary>
     [SerializeField]
-    [CustomLabel("地面层")]
+    [InspectorName("地面层")]
     private LayerMask groundLayers = -1;
 
     /// <summary>单位层</summary>
     [SerializeField]
-    [CustomLabel("单位层")]
+    [InspectorName("单位层")]
     private LayerMask unitLayers = -1;
 
 
     /// <summary>空气墙层</summary>
     [SerializeField]
-    [CustomLabel("空气墙层")]
+    [InspectorName("空气墙层")]
     private LayerMask airWallLayers = -1;
     #endregion
 

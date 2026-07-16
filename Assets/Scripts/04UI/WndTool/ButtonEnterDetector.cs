@@ -7,6 +7,9 @@ using UnityEngine.EventSystems;
 public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     public Action<PointerEventData> Enter,Exit,In;
+    [SerializeField]
+    private bool isTrigger = false;
+
     [Range(0, 2)]
     [SerializeField]
     private float EnterScale = 1;
@@ -28,7 +31,8 @@ public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointer
         get => isButtonEnter;
         set
         {
-            isButtonEnter = value;
+            if (value) _OnPointerEnter(null);
+            else _OnPointerExit(null);
         }
     }
 
@@ -36,7 +40,19 @@ public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointer
     public bool GetExit() => exitTime == Time.time;
     public bool GetEnter() => enterTime==Time.time;
 
-    public void OnPointerEnter(PointerEventData eventData)
+    public void OnPointerEnter(PointerEventData _)
+    {
+        if (isTrigger) return;
+        _OnPointerEnter(_);
+    }
+
+    public void OnPointerExit(PointerEventData _)
+    {
+        if (isTrigger) return;
+        _OnPointerExit(_);
+    }
+
+    private void _OnPointerEnter(PointerEventData _)
     {
         enterTime = Time.time;
         isButtonEnter = true;
@@ -44,10 +60,10 @@ public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointer
         {
             item.SetActive(true);
         }
-        Enter?.Invoke(eventData);
+        Enter?.Invoke(_);
     }
 
-    public void OnPointerExit(PointerEventData eventData)
+    private void _OnPointerExit(PointerEventData _)
     {
         isButtonEnter = false;
         exitTime = Time.time;
@@ -55,9 +71,11 @@ public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointer
         {
             item.SetActive(false);
         }
-        Exit?.Invoke(eventData);
+        Exit?.Invoke(_);
         //if (EnterScale != 1) transform.localScale /= EnterScale;
     }
+
+
 
     private void Update()
     {

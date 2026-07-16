@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Core;
+
 
 
 #if UNITY_EDITOR
@@ -15,8 +17,175 @@ public class NoticeTree_SO : ScriptableObject
     public Sprite Portrait;
     public bool UseResLoad;
     public List<NoticeData_SO> nodes = new List<NoticeData_SO>();
+    public List<SoundGroup_SO> groups = new List<SoundGroup_SO>();
 
 #if UNITY_EDITOR
+    [ContextMenu("转换为SoundGroup子资源")]
+    public void ConvertToSoundGroups()
+    {
+        NoticeTree_SO sourceTree = this;
+        if (sourceTree == null)
+        {
+            Debug.LogError("转换失败：目标对象不是 NoticeTree_SO！");
+            return;
+        }
+
+        if (sourceTree.nodes == null || sourceTree.nodes.Count == 0)
+        {
+            Debug.LogWarning($"台词树 '{sourceTree.name}' 没有任何节点！");
+            return;
+        }
+
+        // 按 Type 分组
+        var groupedNodes = sourceTree.nodes
+            .Where(node => node != null && !string.IsNullOrEmpty(node.Type))
+            .GroupBy(node => node.Type)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        if (groupedNodes.Count == 0)
+        {
+            Debug.LogWarning("没有找到有效 Type 的节点！");
+            return;
+        }
+
+        // 获取原资产路径
+        string sourcePath = AssetDatabase.GetAssetPath(sourceTree);
+
+        
+
+        AssetDatabase.ImportAsset(sourcePath);
+
+        int createdCount = 0;
+        List<SoundGroup_SO> createdGroups = new List<SoundGroup_SO>();
+
+        foreach (var kvp in groupedNodes)
+        {
+            string typeName = kvp.Key;
+            List<NoticeData_SO> nodesOfType = kvp.Value;
+
+            // 创建 SoundGroup_SO 实例
+            SoundGroup_SO soundGroup = CreateInstance<SoundGroup_SO>();
+            soundGroup.name = $"{sourceTree.name}_{typeName}";
+            soundGroup.clips = new List<SoundItem>();
+            soundGroup.group = default;
+            soundGroup.flags = SoundGroup_SO.SoundFlag.Space;
+            soundGroup.groupName = typeName;
+            // 将 NoticeData 转换为 SoundItem
+            foreach (var node in nodesOfType)
+            {
+                if (node.Clip == null) continue;
+
+                SoundItem item = new SoundItem {
+                    audioClip = node.Clip,
+                    subtitle = node.Desc ?? string.Empty
+                };
+                soundGroup.clips.Add(item);
+            }
+
+            if (soundGroup.clips.Count == 0)
+            {
+                Debug.LogWarning($"类型 '{typeName}' 没有有效的 AudioClip，跳过生成。");
+                DestroyImmediate(soundGroup);
+                continue;
+            }
+
+            // 从第一个节点继承属性
+            var firstNode = nodesOfType.First();
+            soundGroup.priority = firstNode.Priority;
+            if (firstNode.Space)
+            {
+                soundGroup.flags |= SoundGroup_SO.SoundFlag.Space;
+            }
+            else
+            {
+                soundGroup.flags &= ~SoundGroup_SO.SoundFlag.Space;
+            }
+
+            // 添加为子资源
+            AssetDatabase.AddObjectToAsset(soundGroup, sourcePath);
+            createdGroups.Add(soundGroup);
+            createdCount++;
+
+
+            // 删除现有的所有 NoticeData_SO 子资源
+            var existingSubAssets = AssetDatabase.LoadAllAssetsAtPath(sourcePath)
+                .Where(asset => asset != sourceTree && asset is NoticeData_SO)
+                .ToArray();
+
+            foreach (var subAsset in existingSubAssets)
+            {
+                DestroyImmediate(subAsset, true);
+            }
+
+            Debug.Log($"已添加子资源: {soundGroup.name} (包含 {soundGroup.clips.Count} 个音频，Type: {typeName})");
+        }
+        groups = createdGroups;
+        nodes = null;
+
+        // 保存并刷新
+        EditorUtility.SetDirty(sourceTree);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.ImportAsset(sourcePath);
+
+        // 选中源文件，在检视面板中可以看到子资源
+        Selection.activeObject = sourceTree;
+
+        Debug.Log($"转换完成！共生成 {createdCount} 个 SoundGroup 子资源，已添加到源文件 '{sourceTree.name}' 中。");
+    }
+
+
+    [ContextMenu("删除所有SoundGroup子资源")]
+    private void DeleteAllSoundGroupSubAssets()
+    {
+        NoticeTree_SO sourceTree = this;
+        if (sourceTree == null)
+        {
+            Debug.LogError("操作失败：目标对象不是 NoticeTree_SO！");
+            return;
+        }
+
+        // 获取原资产路径
+        string sourcePath = AssetDatabase.GetAssetPath(sourceTree);
+
+        // 查找所有 SoundGroup_SO 子资源
+        var soundGroupSubAssets = AssetDatabase.LoadAllAssetsAtPath(sourcePath)
+            .Where(asset => asset != sourceTree && asset is NoticeData_SO)
+            .ToArray();
+
+        if (soundGroupSubAssets.Length == 0)
+        {
+            Debug.Log($"文件 '{sourceTree.name}' 中没有找到任何 SoundGroup 子资源。");
+            return;
+        }
+
+        // 确认删除对话框
+        if (!EditorUtility.DisplayDialog("确认删除",
+            $"确定要删除文件 '{sourceTree.name}' 中的 {soundGroupSubAssets.Length} 个 SoundGroup 子资源吗？\n\n此操作不可撤销！",
+            "确认删除", "取消"))
+        {
+            return;
+        }
+
+
+        foreach (var subAsset in soundGroupSubAssets)
+        {
+            DestroyImmediate(subAsset, true);
+            //Debug.Log($"已删除子资源: {subAsset.name}");
+        }
+
+        // 保存并刷新
+        EditorUtility.SetDirty(sourceTree);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.ImportAsset(sourcePath);
+
+        // 选中源文件
+        Selection.activeObject = sourceTree;
+
+        Debug.Log($"已删除 {soundGroupSubAssets.Length} 个 SoundGroup 子资源。");
+    }
+
+
+    /*
     [ContextMenu("添加节点")]
     public NoticeData_SO CreateNode()
     {
@@ -56,14 +225,14 @@ public class NoticeTree_SO : ScriptableObject
         }
 
         Debug.Log($"已删除节点: {node.name}");
-    }
+    }*/
 #endif
 }
 
 
 
 
-
+/*
 #if UNITY_EDITOR
 [CustomEditor(typeof(NoticeTree_SO))]
 public class NoticeTree_SOEditor : Editor
@@ -274,4 +443,4 @@ public class NoticeTree_SOEditor : Editor
     }
 }
 
-#endif
+#endif*/

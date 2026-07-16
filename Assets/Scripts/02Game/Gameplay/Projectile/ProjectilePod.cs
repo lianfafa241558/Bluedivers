@@ -15,7 +15,7 @@ namespace Unity.FPS.Gameplay
 
 
         [Header("通用")]
-        [CustomLabel("根部变换(精确碰撞检测)")]
+        [InspectorName("根部变换(精确碰撞检测)")]
         public Transform Root;
         public GameObject fire;
 

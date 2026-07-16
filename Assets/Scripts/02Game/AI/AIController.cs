@@ -72,10 +72,10 @@ public class AIController : MonoBehaviour, I_AIController
     event UnityAction onDie;
 
 
-    [CustomLabel("死亡后延迟，GameObject被销毁（以允许动画）")]
+    [InspectorName("死亡后延迟，GameObject被销毁（以允许动画）")]
     public float DeathDuration = 0f;
 
-    [CustomLabel("诞生后延迟（以允许动画）")]
+    [InspectorName("诞生后延迟（以允许动画）")]
     public float BirthDuration = 0f;
 
     //protected WeaponCurrentAttribute speed;

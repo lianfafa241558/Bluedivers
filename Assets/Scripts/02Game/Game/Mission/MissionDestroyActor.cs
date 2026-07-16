@@ -15,7 +15,7 @@ namespace FpsGame.Mission
     public class MissionDestroyActor : MissionBase
     {
         [Foldout("标旗")]
-        [CustomLabel("显示进度条")]
+        [InspectorName("显示进度条")]
         [SerializeField]
         bool useBar;
 

@@ -21,20 +21,20 @@ namespace Unity.FPS.Game
         private const float SensibilityToSelfdamage = 0.5f;
 
         [SerializeField]
-        [CustomLabel("弱点")]
+        [InspectorName("弱点")]
         private bool isWeakness;
 
         [Header("伤害抗性")]
-        [CustomLabel("伤害抗性")]
+        [InspectorName("伤害抗性")]
         [SerializeField]
         private List<KVP<DamageTypeEnum, float>> showArmorLists;
 
         [SerializeField]
-        [CustomLabel("全抗性")]
+        [InspectorName("全抗性")]
         private float AllArmor;
 
 
-        [CustomLabel("基础护甲值")]
+        [InspectorName("基础护甲值")]
         public int armorValue;
         [Header("关联护甲")]
         [SerializeField]
@@ -43,7 +43,7 @@ namespace Unity.FPS.Game
         [Header("护甲破坏效果")]
         [SerializeField]
         private List<ArmorBreakEffect> armorBreakEffect;
-        [CustomLabel("流血速度")]
+        [InspectorName("流血速度")]
         public int BleedValue;
 
         public event UnityAction<Damageable> OnDamage;

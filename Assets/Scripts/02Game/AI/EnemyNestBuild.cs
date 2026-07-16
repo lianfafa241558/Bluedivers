@@ -15,13 +15,13 @@ namespace Unity.FPS.AI
             Death,
         }
 
-        [CustomLabel("创建点")]
+        [InspectorName("创建点")]
         public Transform creatPoint;
 
-        [CustomLabel("生产单位")]
+        [InspectorName("生产单位")]
         public List<KVP<GameObject,int>> creatData;
 
-        [CustomLabel("脱战时间")]
+        [InspectorName("脱战时间")]
         public int damagedTime=12;
         [SerializeField]
         [DisplayField(true,false,true)]

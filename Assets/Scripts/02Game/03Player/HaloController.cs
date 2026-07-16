@@ -14,10 +14,10 @@ public class HaloController : MonoBehaviour
     public Vector3 lastPos;
 
 
-    [CustomLabel("速度")]
+    [InspectorName("速度")]
     public float speed =10;
 
-    [CustomLabel("回正速度")]
+    [InspectorName("回正速度")]
     public float returnSpeed =10;
 
     /*

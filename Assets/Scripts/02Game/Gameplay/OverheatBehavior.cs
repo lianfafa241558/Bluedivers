@@ -23,7 +23,7 @@ namespace Unity.FPS.Gameplay
         }
 
         [Header("视觉效果")]
-        [CustomLabel("根据弹药比例调整生成率的VFX")]
+        [InspectorName("根据弹药比例调整生成率的VFX")]
         public ParticleSystem SteamVfx;
 
         [Tooltip("完全过热时效果的发射率")]
@@ -31,17 +31,17 @@ namespace Unity.FPS.Gameplay
 
         //将渐变字段设置为HDR
         [GradientUsage(true)]
-        [CustomLabel("根据弹药比例的过热颜色")]
+        [InspectorName("根据弹药比例的过热颜色")]
         public Gradient OverheatGradient;
 
-        [CustomLabel("用于过热颜色动画的材质")]
+        [InspectorName("用于过热颜色动画的材质")]
         public Material OverheatingMaterial;
 
         [Header("声音")]
-        [CustomLabel("电池冷却时播放的声音")]
+        [InspectorName("电池冷却时播放的声音")]
         public AudioClip CoolingCellsSound;
 
-        [CustomLabel("弹药与音量比例的曲线")]
+        [InspectorName("弹药与音量比例的曲线")]
         public AnimationCurve AmmoToVolumeRatioCurve;
 
 

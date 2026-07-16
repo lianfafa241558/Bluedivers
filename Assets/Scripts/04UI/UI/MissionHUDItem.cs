@@ -19,9 +19,9 @@ public class MissionHUDItem : MonoBehaviour
     public VerticalLayoutGroup subGroup;
 
     [Foldout("过渡", true)]
-    [CustomLabel("淡入持续时间")] 
+    [InspectorName("淡入持续时间")] 
     public float FadeInDuration = 0.5f;
-    [CustomLabel("淡出持续时间")] 
+    [InspectorName("淡出持续时间")] 
     public float FadeOutDuration = 2f;
     public MissionBase mission;
     [SerializeField]

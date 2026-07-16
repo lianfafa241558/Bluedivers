@@ -7,14 +7,14 @@ namespace Unity.FPS.AI
     public partial class EnemyController
     {
 
-        [Foldout("µ÷ÊÔÏÔÊ¾", true)]
-        [CustomLabel("±íÊ¾Â·¾¶µ½´ï·¶Î§µÄÇòÌåĞ¡¹¤¾ßÑÕÉ«")]
+        [Foldout("è°ƒè¯•æ˜¾ç¤º", true)]
+        [InspectorName("è¡¨ç¤ºè·¯å¾„åˆ°è¾¾èŒƒå›´çš„çƒä½“å°å·¥å…·é¢œè‰²")]
         public Color PathReachingRangeColor = Color.yellow;
 
-        [CustomLabel("±íÊ¾¹¥»÷·¶Î§µÄÇòÌåĞ¡¹¤¾ßÑÕÉ«")]
+        [InspectorName("è¡¨ç¤ºæ”»å‡»èŒƒå›´çš„çƒä½“å°å·¥å…·é¢œè‰²")]
         public Color AttackRangeColor = Color.red;
 
-        [CustomLabel("±íÊ¾¼ì²â·¶Î§µÄÇòÌåĞ¡¹¤¾ßÑÕÉ«")]
+        [InspectorName("è¡¨ç¤ºæ£€æµ‹èŒƒå›´çš„çƒä½“å°å·¥å…·é¢œè‰²")]
         public Color DetectionRangeColor = Color.blue;
 
 

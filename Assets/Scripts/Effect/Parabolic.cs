@@ -6,7 +6,7 @@ public class Parabolic : MonoBehaviour
 {
 
     [Range(0.1f, 2f)]
-    [CustomLabel("每段距离间隔")]
+    [InspectorName("每段距离间隔")]
     public float lenght = 1f;
     //[HideInInspector]
     public Transform RayGo;

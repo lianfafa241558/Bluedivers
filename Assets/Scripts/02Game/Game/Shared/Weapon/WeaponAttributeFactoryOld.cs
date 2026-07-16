@@ -153,72 +153,72 @@ namespace Unity.FPS.Game
     {
         //---------通用属性-----------
         /// <summary>后备弹量</summary>
-        [CustomLabel("后备弹量")]
+        [InspectorName("后备弹量")]
         Ammo = 0,
         /// <summary>弹匣容量</summary>
-        [CustomLabel("弹匣容量")]
+        [InspectorName("弹匣容量")]
         Magazine = 1,
         /// <summary>射击间隔</summary>
-        [CustomLabel("射击间隔")]
+        [InspectorName("射击间隔")]
         ShootInterval = 2,
         /// <summary>弹射次数</summary>
-        [CustomLabel("弹射次数")]
+        [InspectorName("弹射次数")]
         Catapult = 3,
 
         /// <summary>弹丸数量</summary>
-        [CustomLabel("弹丸数量")]
+        [InspectorName("弹丸数量")]
         BulletsPerShot = 6,
         /// <summary>子弹散布角度</summary>
-        [CustomLabel("子弹散布角度")]
+        [InspectorName("子弹散布角度")]
         BulletsSpreadAngle = 7,
 
         /// <summary>手动装弹时间</summary>
-        [CustomLabel("手动装弹时间")]
+        [InspectorName("手动装弹时间")]
         ReloadTime = 10,
         /// <summary>自动装弹延迟</summary>
-        [CustomLabel("自动装弹延迟")]
+        [InspectorName("自动装弹延迟")]
         AutoReloadTime = 11,
         /// <summary>自动装弹速度</summary>
-        [CustomLabel("自动装弹速度")]
+        [InspectorName("自动装弹速度")]
         AutoReloadSpeed = 12,
 
         //---------激光武器属性-----------
         /// <summary>激光预热时间</summary>
-        [CustomLabel("激光预热时间")]
+        [InspectorName("激光预热时间")]
         LaserWaitTime = 40,
 
         //---------蓄力武器属性-----------
         /// <summary>最低(能释放的)蓄力段数</summary>
-        [CustomLabel("最低(能释放的)蓄力段数")]
+        [InspectorName("最低(能释放的)蓄力段数")]
         ChargeLowestStage = 50,
         /// <summary>最高蓄力段数</summary>
-        [CustomLabel("最高蓄力段数")]
+        [InspectorName("最高蓄力段数")]
         ChargeHigheststage = 51,
         /// <summary>最低蓄消耗弹药</summary>
-        [CustomLabel("最低蓄消耗弹药")]
+        [InspectorName("最低蓄消耗弹药")]
         ChargeAmmoOnLowest = 52,
         /// <summary>满蓄消耗弹药</summary>
-        [CustomLabel("满蓄消耗弹药")]
+        [InspectorName("满蓄消耗弹药")]
         ChargeAmmoOnHighest = 53,
         /// <summary>蓄力时间</summary>
-        [CustomLabel("蓄力时间")]
+        [InspectorName("蓄力时间")]
         ChargeDuration = 54,
 
         //---------锁定武器属性-----------
         /// <summary>锁定距离</summary>
-        [CustomLabel("锁定距离")]
+        [InspectorName("锁定距离")]
         LockDistance = 60,
         /// <summary>锁定半径</summary>
-        [CustomLabel("锁定半径")]
+        [InspectorName("锁定半径")]
         LockRange = 61,
         /// <summary>最大锁定层数</summary>
-        [CustomLabel("最大锁定层数")]
+        [InspectorName("最大锁定层数")]
         LockLayers = 62,
         /// <summary>每个敌人的最大锁定层数</summary>
-        [CustomLabel("每个敌人的最大锁定层数")]
+        [InspectorName("每个敌人的最大锁定层数")]
         LockPerCount = 63,
         /// <summary>锁定间隔</summary>
-        [CustomLabel("锁定间隔")]
+        [InspectorName("锁定间隔")]
         LockInterval = 64,
     }
 

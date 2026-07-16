@@ -29,7 +29,7 @@ namespace Unity.FPS.Game
 
         [Foldout("升级", true)]
         [Header("重命名属性")]
-        //[CustomLabel("重命名属性")]
+        //[InspectorName("重命名属性")]
         //[SerializeField]
         //private DisplayDic<WeaponAttrType, string> m_Rename;
         [SerializeField]
@@ -37,12 +37,12 @@ namespace Unity.FPS.Game
 
 
         [Header("显示的属性")]
-        [CustomLabel("显示的属性")]
+        [InspectorName("显示的属性")]
         [SerializeField]
         List<WeaponAttrType> showAttr;
 
         [Header("专有属性")]
-        //[CustomLabel("专有属性")]
+        //[InspectorName("专有属性")]
         [SerializeField]
         private List<UniqueAttrData> m_UniqueAttr;
 
@@ -54,7 +54,7 @@ namespace Unity.FPS.Game
 
         public List<WeaponModuleData_SO> Modules;
 
-        [CustomLabel("当前使用的模组")]
+        [InspectorName("当前使用的模组")]
         public WeaponModuleData_SO ActiveModule;
 
         public WeaponModuleData_SO SetModule(int index)
@@ -277,7 +277,7 @@ namespace Unity.FPS.Game
         {
             
             /// <summary>类型</summary>
-            [CustomLabel("类型")]
+            [InspectorName("类型")]
             public WeaponAttrType typeEnum;
             /// <summary>名称</summary>
             [CustomLabel("名称", "typeEnum",(int)WeaponAttrType.Special, CompareOperate.Equal)]
@@ -406,9 +406,9 @@ namespace Unity.FPS.Game
     [System.Serializable]
     public struct ModifyAttrData
     {
-        [CustomLabel("名称", "type", (int)WeaponAttrType.Special, CompareOperate.Equal)]
+        //[CustomLabel("名称", "type", (int)WeaponAttrType.Special, CompareOperate.Equal)]
         public string name;
-        [CustomLabel("类型")]
+        //[InspectorName("类型")]
         public WeaponAttrType type;
         public ModifierType modifier;
         public float value;
@@ -419,7 +419,7 @@ namespace Unity.FPS.Game
     {
         public string name;
         public float value;
-        [CustomLabel("标旗")]
+        [InspectorName("标旗")]
         public AttrTag tag;
     }
 
@@ -427,11 +427,13 @@ namespace Unity.FPS.Game
     public struct RenameAttrData
     {
         public string name;
-        [CustomLabel("类型")]
+        [InspectorName("类型")]
         public WeaponAttrType type;
-        [CustomLabel("添加标旗")]
+        [InspectorName("添加标旗")]
         public AttrTag addTag;
-        [CustomLabel("移除标旗")]
+        [InspectorName("移除标旗")]
         public AttrTag removeTag;
     }
+
+
 }

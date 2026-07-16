@@ -4,6 +4,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.BaseTool;
+using Unity.FPS.Game;
+
 #if UNITY_EDITOR
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -48,12 +50,7 @@ public class CustomLabelDrawer : PropertyDrawer
         bool isElement = Regex.IsMatch(displayName, "Element \\d+");
         //判断是否为枚举类型
         bool isEnum = property != null && property.propertyType == SerializedPropertyType.Enum;
-        //我好像懂了，这个属性本身是加到了每一项上面，而不是数组本体上面，所以对本体无效，反而他对每一项有效
-        // 判断是否为集合类型
-        /*
-        bool isCollection = property != null && property.propertyType == SerializedPropertyType.ArraySize ||
-                                property.propertyType == SerializedPropertyType.Generic;
-        */
+
         if (_label == null)
         {
             GetPropertyHeight(property, label);
@@ -519,4 +516,7 @@ public class PEIntDrawer : PropertyDrawer
     }
 }
 */
+
+
 #endif
+

@@ -15,7 +15,7 @@ public class MedivacController : TickBehaviour
     private Transform point,cam,target;
   
 
-    [CustomLabel("状态")]
+    [InspectorName("状态")]
     public MedivacState state;
     BoxCollider box;
     TaskManager taskManager;
@@ -250,10 +250,10 @@ public class MedivacController : TickBehaviour
     {
 
         /// <summary>准备</summary>
-        [CustomLabel("准备")] Ready,
+        [InspectorName("准备")] Ready,
         /// <summary>降落</summary>
-        [CustomLabel("降落")] Land,
+        [InspectorName("降落")] Land,
         /// <summary>撤离</summary>
-        [CustomLabel("撤离")] Evacuate,
+        [InspectorName("撤离")] Evacuate,
     }
 }

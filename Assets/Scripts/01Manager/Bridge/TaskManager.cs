@@ -461,152 +461,152 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 public enum MissionEnum
 {
     /// <summary>歼灭</summary>
-    [CustomLabel("主要/歼灭")]Annihilation,
+    [InspectorName("主要/歼灭")]Annihilation,
     /// <summary>解救</summary>
-    [CustomLabel("主要/解救")]Rescue,
+    [InspectorName("主要/解救")]Rescue,
     /// <summary>采油</summary>
-    [CustomLabel("主要/采油")]Explore,
+    [InspectorName("主要/采油")]Explore,
     /// <summary>护送</summary>
-    [CustomLabel("主要/护送")] Escort,
+    [InspectorName("主要/护送")] Escort,
     /// <summary>上传数据</summary>
-    [CustomLabel("主要/上传数据")] RetrieveData,//√
+    [InspectorName("主要/上传数据")] RetrieveData,//√
     /// <summary>防守</summary>
-    [CustomLabel("主要/防守")]Defend,//√
+    [InspectorName("主要/防守")]Defend,//√
     /// <summary>升旗</summary>
-    [CustomLabel("主要/升旗")] FlagRaising,//√
+    [InspectorName("主要/升旗")] FlagRaising,//√
     /// <summary>彻底消灭</summary>
-    [CustomLabel("主要/彻底消灭")] Eradicate,//√
+    [InspectorName("主要/彻底消灭")] Eradicate,//√
     /// <summary>搜索并摧毁</summary>
-    [CustomLabel("主要/搜索并摧毁")] SearchAndDestroy,//√
+    [InspectorName("主要/搜索并摧毁")] SearchAndDestroy,//√
 
     /// <summary>摧毁虫蛋</summary>
-    [CustomLabel("主要/摧毁虫蛋")] DestroyEggs,
+    [InspectorName("主要/摧毁虫蛋")] DestroyEggs,
     /// <summary>采集虫蛋</summary>
-    [CustomLabel("主要/采集虫蛋")] CollectEggs,
+    [InspectorName("主要/采集虫蛋")] CollectEggs,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/钻机摧毁工厂")] NukeNursery,
+    [InspectorName("主要/钻机摧毁工厂")] NukeNursery,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder23,
+    [InspectorName("主要/占位符23")] Placeholder23,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder24,
+    [InspectorName("主要/占位符24")] Placeholder24,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder25,
+    [InspectorName("主要/占位符25")] Placeholder25,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder26,
+    [InspectorName("主要/占位符26")] Placeholder26,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder27,
+    [InspectorName("主要/占位符27")] Placeholder27,
 
     /// <summary>占位符</summary>
-    [CustomLabel("主要/摧毁空军基地")] Airport,
+    [InspectorName("主要/摧毁空军基地")] Airport,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/拦截车队")] Motorcade,
+    [InspectorName("主要/拦截车队")] Motorcade,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder30,
+    [InspectorName("主要/占位符30")] Placeholder30,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder31,
+    [InspectorName("主要/占位符31")] Placeholder31,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder32,
+    [InspectorName("主要/占位符32")] Placeholder32,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder33,
+    [InspectorName("主要/占位符33")] Placeholder33,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder34,
+    [InspectorName("主要/占位符34")] Placeholder34,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder35,
+    [InspectorName("主要/占位符35")] Placeholder35,
 
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder36,
+    [InspectorName("主要/占位符36")] Placeholder36,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder37,
+    [InspectorName("主要/占位符37")] Placeholder37,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder38,
+    [InspectorName("主要/占位符38")] Placeholder38,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder39,
+    [InspectorName("主要/占位符39")] Placeholder39,
 
 
-    [CustomLabel("主要/战役")]
+    [InspectorName("主要/战役")]
     /// <summary>主要/战役</summary>
     Campaign,
 
     /// <summary>撤离/迅速撤离</summary>
-    [CustomLabel("撤离/迅速撤离")] EvacuateFast,
+    [InspectorName("撤离/迅速撤离")] EvacuateFast,
     /// <summary>撤离/动态撤离</summary>
-    [CustomLabel("撤离/动态撤离")] EvacuateMove,
+    [InspectorName("撤离/动态撤离")] EvacuateMove,
     /// <summary>撤离/静态撤离</summary>
-    [CustomLabel("撤离/静态撤离")] EvacuateStatic,
+    [InspectorName("撤离/静态撤离")] EvacuateStatic,
     /// <summary>占位符</summary>
-    [CustomLabel("主要/占位符")] Placeholder40,
+    [InspectorName("主要/占位符40")] Placeholder40,
 
 
     /// <summary>次要/黑盒子</summary>
-    [CustomLabel("次要/黑盒子")] BlackBox,
+    [InspectorName("次要/黑盒子")] BlackBox,
     /// <summary>次要/激光雷达站</summary>
-    [CustomLabel("次要/激光雷达站")] RadarStation,
+    [InspectorName("次要/激光雷达站")] RadarStation,
     /// <summary>次要/非法广播</summary>
-    [CustomLabel("次要/非法广播")] Broadcast,
+    [InspectorName("次要/非法广播")] Broadcast,
     /// <summary>科研哨站</summary>
-    [CustomLabel("次要/科研哨站")] ScienceFacility,
+    [InspectorName("次要/科研哨站")] ScienceFacility,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder2,
+    [InspectorName("次要/占位符2")] Placeholder2,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder3,
+    [InspectorName("次要/占位符3")] Placeholder3,
 
     /// <summary>次要/飞龙塔</summary>
-    [CustomLabel("次要/飞龙塔")] SpireNest,
+    [InspectorName("次要/飞龙塔")] SpireNest,
     /// <summary>次要/隐刀巢穴</summary>
-    [CustomLabel("次要/隐刀巢穴")] StealthNest,
+    [InspectorName("次要/隐刀巢穴")] StealthNest,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder4,
+    [InspectorName("次要/占位符4")] Placeholder4,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder5,
+    [InspectorName("次要/占位符5")] Placeholder5,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder6,
+    [InspectorName("次要/占位符6")] Placeholder6,
 
 
     /// <summary>次要/直升机制造厂</summary>
-    [CustomLabel("次要/直升机制造厂")]
+    [InspectorName("次要/直升机制造厂")]
     HelicopterFactory,
     /// <summary>次要/干扰塔(机器人)</summary>
-    [CustomLabel("次要/干扰塔(机器人)")]
+    [InspectorName("次要/干扰塔(机器人)")]
     JammingTowerRoBot,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder7,
+    [InspectorName("次要/占位符7")] Placeholder7,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder8,
+    [InspectorName("次要/占位符8")] Placeholder8,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder9,
+    [InspectorName("次要/占位符9")] Placeholder9,
 
     /// <summary>次要/干扰塔(色彩)</summary>
-    [CustomLabel("次要/干扰塔(色彩)")]
+    [InspectorName("次要/干扰塔(色彩)")]
     JammingTowerColour,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder10,
+    [InspectorName("次要/占位符10")] Placeholder10,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder11,
+    [InspectorName("次要/占位符11")] Placeholder11,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder12,
+    [InspectorName("次要/占位符12")] Placeholder12,
     /// <summary>占位符</summary>
-    [CustomLabel("次要/占位符")] Placeholder13,
+    [InspectorName("次要/占位符13")] Placeholder13,
 
-    [CustomLabel("巢穴/十字神明-小")] NestDecS = 100,
-    [CustomLabel("巢穴/十字神明-中")] NestDecM = 101,
-    [CustomLabel("巢穴/十字神明-大")] NestDecL = 102,
+    [InspectorName("巢穴/十字神明-小")] NestDecS = 100,
+    [InspectorName("巢穴/十字神明-中")] NestDecM = 101,
+    [InspectorName("巢穴/十字神明-大")] NestDecL = 102,
 
-    [CustomLabel("巢穴/凯撒-小")] NestKaiserS = 104,
-    [CustomLabel("巢穴/凯撒-中")] NestKaiserM = 105,
-    [CustomLabel("巢穴/凯撒-大")] NestKaiserL = 106,
+    [InspectorName("巢穴/凯撒-小")] NestKaiserS = 104,
+    [InspectorName("巢穴/凯撒-中")] NestKaiserM = 105,
+    [InspectorName("巢穴/凯撒-大")] NestKaiserL = 106,
 
-    [CustomLabel("巢穴/色彩-小")] NestColourS = 108,
-    [CustomLabel("巢穴/色彩-中")] NestColourM = 109,
-    [CustomLabel("巢穴/色彩-大")] NestColourL = 110,
+    [InspectorName("巢穴/色彩-小")] NestColourS = 108,
+    [InspectorName("巢穴/色彩-中")] NestColourM = 109,
+    [InspectorName("巢穴/色彩-大")] NestColourL = 110,
 
     /// <summary>升旗子任务</summary>
-    [CustomLabel("子任务/升旗")] SubFlagRaising = 200,
+    [InspectorName("子任务/升旗")] SubFlagRaising = 200,
     /// <summary>获取高价值数据</summary>
-    [CustomLabel("子任务/获取高价值数据")] SubGetData = 201,
+    [InspectorName("子任务/获取高价值数据")] SubGetData = 201,
     /// <summary>重启发电机</summary>
-    [CustomLabel("子任务/重启发电机")] SubRestartGenerator = 202,
+    [InspectorName("子任务/重启发电机")] SubRestartGenerator = 202,
     /// <summary>连接油管</summary>
-    [CustomLabel("子任务/连接油管")] ConnectPipes = 203,
+    [InspectorName("子任务/连接油管")] ConnectPipes = 203,
 
 }
 
@@ -628,13 +628,13 @@ public enum DifficultyEnum
 public enum GameResult
 {
     /// <summary>未知</summary>
-    [CustomLabel("未知")] Unknow,
+    [InspectorName("未知")] Unknow,
     /// <summary>胜利</summary>
-    [CustomLabel("胜利")] Victory,
+    [InspectorName("胜利")] Victory,
     /// <summary>失败</summary>
-    [CustomLabel("失败")] Failure,
+    [InspectorName("失败")] Failure,
     /// <summary>中止</summary>
-    [CustomLabel("中止")] Interrupt,
+    [InspectorName("中止")] Interrupt,
 }
 /// <summary>
 /// 尺寸大小(复用)

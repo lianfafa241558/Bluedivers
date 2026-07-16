@@ -8,11 +8,11 @@ using UnityEngine;
 public class PlayerInputHandler : MonoBehaviour
 {
     /// <summary>正在和物体交互</summary>
-    [CustomLabel("正在和物体交互")]
+    [InspectorName("正在和物体交互")]
     [DisplayField]
     public bool InOperation;
     /// <summary>正在被窗口阻止</summary>
-    [CustomLabel("正在被窗口阻止")]
+    [InspectorName("正在被窗口阻止")]
     [DisplayField]
     public bool InWndPrevent;
 

@@ -15,12 +15,10 @@ MonoBehaviour:
   SourceName: "\u840C\u7ED8"
   Portrait: {fileID: 21300000, guid: fa93b76ee658aa343b4ea6c7b01702a4, type: 3}
   UseResLoad: 1
-  nodes:
-  - {fileID: 3468251684320824673}
-  - {fileID: 836774777095073090}
-  - {fileID: 8653611858246449799}
-  - {fileID: 41537244550554276}
---- !u!114 &41537244550554276
+  nodes: []
+  groups:
+  - {fileID: 5505350911291986427}
+--- !u!114 &5505350911291986427
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -29,74 +27,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u840C\u7ED8: \u5495\u563F\u563F\u2026\u6211\u53EF\u662F\u7B49\u5F88\u4E45\u4E86\u2026"
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Moe_Attack
   m_EditorClassIdentifier: 
-  Desc: "\u5495\u563F\u563F\u2026\u6211\u53EF\u662F\u7B49\u5F88\u4E45\u4E86\u2026"
-  Clip: {fileID: 8300000, guid: 3dde2a563acde464db8ba326449d9fee, type: 3}
-  SourceName: "\u840C\u7ED8"
-  Portrait: {fileID: 21300000, guid: fa93b76ee658aa343b4ea6c7b01702a4, type: 3}
-  Priority: 0
-  Type: Attack
-  Space: 0
-  Delay: 0
---- !u!114 &836774777095073090
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u840C\u7ED8: RABBIT3\uFF0C\u5141\u8BB8\u653B\u51FB\uFF01"
-  m_EditorClassIdentifier: 
-  Desc: "RABBIT3\uFF0C\u5141\u8BB8\u653B\u51FB\uFF01"
-  Clip: {fileID: 8300000, guid: 237496032489e014ab87d1548d0eaa52, type: 3}
-  SourceName: "\u840C\u7ED8"
-  Portrait: {fileID: 21300000, guid: fa93b76ee658aa343b4ea6c7b01702a4, type: 3}
-  Priority: 0
-  Type: Attack
-  Space: 0
-  Delay: 0
---- !u!114 &3468251684320824673
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u840C\u7ED8: \u786E\u8BA4\u76EE\u6807\u4F4D\u7F6E\uFF0C\u706B\u529BMAX\uFF01"
-  m_EditorClassIdentifier: 
-  Desc: "\u786E\u8BA4\u76EE\u6807\u4F4D\u7F6E\uFF0C\u706B\u529BMAX\uFF01"
-  Clip: {fileID: 8300000, guid: a6c6263da21344e40a0b3820b8f357b7, type: 3}
-  SourceName: "\u840C\u7ED8"
-  Portrait: {fileID: 21300000, guid: fa93b76ee658aa343b4ea6c7b01702a4, type: 3}
-  Priority: 0
-  Type: Attack
-  Space: 0
-  Delay: 0
---- !u!114 &8653611858246449799
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c40bf86c5c07e62459d0c3895b58f3f2, type: 3}
-  m_Name: "\u840C\u7ED8: \u6240\u4EE5\uFF0C\u73B0\u5728\u8981\u4ECE\u54EA\u91CC\u5F00\u59CB\u7206\u7834\uFF1F"
-  m_EditorClassIdentifier: 
-  Desc: "\u6240\u4EE5\uFF0C\u73B0\u5728\u8981\u4ECE\u54EA\u91CC\u5F00\u59CB\u7206\u7834\uFF1F"
-  Clip: {fileID: 8300000, guid: 86e5402ff2bde3e41ae01c1d8050cd18, type: 3}
-  SourceName: "\u840C\u7ED8"
-  Portrait: {fileID: 21300000, guid: fa93b76ee658aa343b4ea6c7b01702a4, type: 3}
-  Priority: 0
-  Type: Attack
-  Space: 0
-  Delay: 0
+  groupName: AAA
+  clips:
+  - audioClip: {fileID: 8300000, guid: a6c6263da21344e40a0b3820b8f357b7, type: 3}
+    subtitle: "\u786E\u8BA4\u76EE\u6807\u4F4D\u7F6E\uFF0C\u706B\u529BMAX\uFF01"
+  - audioClip: {fileID: 8300000, guid: 237496032489e014ab87d1548d0eaa52, type: 3}
+    subtitle: "RABBIT3\uFF0C\u5141\u8BB8\u653B\u51FB\uFF01"
+  - audioClip: {fileID: 8300000, guid: 86e5402ff2bde3e41ae01c1d8050cd18, type: 3}
+    subtitle: "\u6240\u4EE5\uFF0C\u73B0\u5728\u8981\u4ECE\u54EA\u91CC\u5F00\u59CB\u7206\u7834\uFF1F"
+  - audioClip: {fileID: 8300000, guid: 3dde2a563acde464db8ba326449d9fee, type: 3}
+    subtitle: "\u5495\u563F\u563F\u2026\u6211\u53EF\u662F\u7B49\u5F88\u4E45\u4E86\u2026"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  priority: 0
+  group: 0
+  flags: 0

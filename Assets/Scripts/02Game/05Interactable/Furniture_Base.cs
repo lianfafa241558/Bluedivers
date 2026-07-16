@@ -11,23 +11,23 @@ using UnityEngine.AI;
 public enum FurnitureFlag
 {
     /// <summary>自动操作</summary>
-    [CustomLabel("自动操作")] AutoOperate=1<<0,
+    [InspectorName("自动操作")] AutoOperate=1<<0,
     /// <summary>切换状态</summary>
-    [CustomLabel("切换状态")] SwitchState = 1 << 1,
+    [InspectorName("切换状态")] SwitchState = 1 << 1,
     /// <summary>瞬间完成操作</summary>
-    [CustomLabel("瞬间完成操作")] Immediately = 1 << 2,
+    [InspectorName("瞬间完成操作")] Immediately = 1 << 2,
     /// <summary>一次性</summary>
-    [CustomLabel("一次性")] Disposable = 1 << 3,
+    [InspectorName("一次性")] Disposable = 1 << 3,
     /// <summary>(完成操作后)播放动画</summary>
-    [CustomLabel("播放动画")] PlayAnim = 1 << 4,
+    [InspectorName("播放动画")] PlayAnim = 1 << 4,
     /// <summary>喊话</summary>
-    [CustomLabel("喊话")] Speech = 1 << 5,
+    [InspectorName("喊话")] Speech = 1 << 5,
     /// <summary>离开保留进度</summary>
-    [CustomLabel("保留进度")] KeepPress = 1 << 6,
+    [InspectorName("保留进度")] KeepPress = 1 << 6,
     /// <summary>长按时控制动画</summary>
-    [CustomLabel("长按时控制动画")] ControlAnim = 1 << 7,
+    [InspectorName("长按时控制动画")] ControlAnim = 1 << 7,
     /// <summary>任意角度</summary>
-    [CustomLabel("任意角度")] AnyAngle = 1 << 8,
+    [InspectorName("任意角度")] AnyAngle = 1 << 8,
 }
 
 public class Furniture_Base : BaseObject
@@ -41,32 +41,32 @@ public class Furniture_Base : BaseObject
 
     [Foldout("配置", true)]
 
-    [CustomLabel("长按时间")]
+    [InspectorName("长按时间")]
     public float meetTime;
 
     [CustomLabel("长按音效", "meetTime",0,CompareOperate.Greater)]
     public AudioClip audioPress;
 
-    [CustomLabel("开启音效")]
+    [InspectorName("开启音效")]
     public AudioClip audioOper;
 
-    [CustomLabel("关闭音效")]
+    [InspectorName("关闭音效")]
     public AudioClip audioClose;
 
 
     [SerializeField]
-    [CustomLabel("标旗")]
+    [InspectorName("标旗")]
     protected FurnitureFlag flags;
 
 
     [SerializeField]
-    [CustomLabel("已按时间")]
+    [InspectorName("已按时间")]
     [DisplayField]
     private float pressTime;
 
-    [CustomLabel("可以操作")]
+    [InspectorName("可以操作")]
     public bool canOperate = true;
-    [CustomLabel("正在运行")]
+    [InspectorName("正在运行")]
     public bool inOperate;
     [SerializeField]
     protected string desc = "进行交互";
@@ -77,9 +77,9 @@ public class Furniture_Base : BaseObject
     public Transform relatedTrans;
     [SerializeField]
     protected Transform relatedTrans2;
-    [CustomLabel("外部浮点数参数")]
+    [InspectorName("外部浮点数参数")]
     public float ExtFloatParameter;
-    [CustomLabel("外部布尔参数")]
+    [InspectorName("外部布尔参数")]
     public bool ExtBoolParameter;
 
     [DisplayField(true, false, true)]

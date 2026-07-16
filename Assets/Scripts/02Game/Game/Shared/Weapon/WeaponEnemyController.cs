@@ -17,7 +17,7 @@ namespace Unity.FPS.Game
 
         [Foldout("特效和动画")]
         [SerializeField]
-        [CustomLabel("射击时(单位)播放的动画类型")]
+        [InspectorName("射击时(单位)播放的动画类型")]
         private AttackEnum animNameType;
 
 

@@ -46,7 +46,7 @@ namespace Unity.FPS.Game
     {
         //---------通用属性-----------
         /// <summary>速度</summary>
-        [CustomLabel("速度")]
+        [InspectorName("速度")]
         Speed = 0,
     }
 }

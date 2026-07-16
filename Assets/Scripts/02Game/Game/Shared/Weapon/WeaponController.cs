@@ -16,19 +16,19 @@ namespace Unity.FPS.Game
     public enum WeaponShootType
     {
         /// <summary>半自动</summary>
-        [CustomLabel("半自动")]
+        [InspectorName("半自动")]
         Manual,
         /// <summary>全自动</summary>
-        [CustomLabel("全自动")]
+        [InspectorName("全自动")]
         Automatic,
         /// <summary>充能</summary>
-        [CustomLabel("充能")]
+        [InspectorName("充能")]
         Charge,
         /// <summary>激光</summary>
-        [CustomLabel("激光")]
+        [InspectorName("激光")]
         Laser,
         /// <summary>锁定</summary>
-        [CustomLabel("锁定")]
+        [InspectorName("锁定")]
         Lock,
     }
 
@@ -36,13 +36,13 @@ namespace Unity.FPS.Game
     public enum WeaponFlag
     {
         /// <summary>自动换弹</summary>
-        [CustomLabel("自动换弹")]
+        [InspectorName("自动换弹")]
         AutomaticReload = 1 << 0,
         /// <summary>禁止手动换弹</summary>
-        [CustomLabel("禁止手动换弹")]
+        [InspectorName("禁止手动换弹")]
         NoManualReload = 1 << 1,
         /// <summary>子弹耗尽死亡 敌人专用</summary>
-        [CustomLabel("子弹耗尽死亡 敌人专用")]
+        [InspectorName("子弹耗尽死亡 敌人专用")]
         AutoDeath = 1 << 2,
     }
 
@@ -122,9 +122,9 @@ namespace Unity.FPS.Game
         #region 参数
         [Foldout("武器参数", true)]
 
-        [CustomLabel("射击类型")]
+        [InspectorName("射击类型")]
         public WeaponShootType ShootType;
-        [CustomLabel("武器标旗")]
+        [InspectorName("武器标旗")]
         public WeaponFlag WeaponFlag;
 
         [Space]
@@ -143,10 +143,10 @@ namespace Unity.FPS.Game
 
         [Foldout("特效和动画", true)]
 
-        [CustomLabel("换弹音效")]
+        [InspectorName("换弹音效")]
         public AudioClip ReloadSfx;
 
-        [CustomLabel("切换此武器的音效")]
+        [InspectorName("切换此武器的音效")]
         public AudioClip ChangeWeaponSfx;
 
         [CustomLabel("蓄力特效", "ShootType", (int)WeaponShootType.Charge, CompareOperate.Equal)]
@@ -156,7 +156,7 @@ namespace Unity.FPS.Game
         /// 目前仅返回装弹的trigger OnReload 和激光/连射/蓄力状态的bool IsActive
         /// </summary>
         [Space]
-        [CustomLabel("武器动画器")]
+        [InspectorName("武器动画器")]
         public Animator WeaponAnimator;
         #endregion
 

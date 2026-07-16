@@ -12,40 +12,40 @@ public partial class PlayerWnd
 
     [Foldout("受击", true)]
 
-    [CustomLabel("护盾受击闪光")]
+    [InspectorName("护盾受击闪光")]
     public CanvasGroup FlashCanvasGroupShield;
-    [CustomLabel("血量受击闪光")]
+    [InspectorName("血量受击闪光")]
     public CanvasGroup FlashCanvasGroupHp;
 
-    [CustomLabel("预警闪光")]
+    [InspectorName("预警闪光")]
     public CanvasGroup FlashCanvasGroupWarning;
 
     public AnimationCurve WarningCurve;
 
 
-    [CustomLabel("血量边缘效果")]
+    [InspectorName("血量边缘效果")]
     public CanvasGroup VignetteCanvasGroup;
 
-    [CustomLabel("濒死心跳声")]
+    [InspectorName("濒死心跳声")]
     public AudioSource DyingAudio;
 
-    [CustomLabel("边缘效果的最大透明度")]
+    [InspectorName("边缘效果的最大透明度")]
     public float CriticaHealthVignetteMaxAlpha = .8f;
 
-    [CustomLabel("濒死边缘效果脉动频率")]
+    [InspectorName("濒死边缘效果脉动频率")]
     public float PulsatingVignetteFrequency = 4f;
 
-    [CustomLabel("受击闪光的持续时间")]
+    [InspectorName("受击闪光的持续时间")]
     public float DamageFlashDuration;
 
-    [CustomLabel("受击闪光的最大透明度")]
+    [InspectorName("受击闪光的最大透明度")]
     public float DamageFlashMaxAlpha = 1f;
 
     #endregion
 
     #region 受击方向
     [Foldout("受击方向", true)]
-    [CustomLabel("受击方向的显示持续时间")]
+    [InspectorName("受击方向的显示持续时间")]
     public float HitDirDuration = 4f;
 
     HitData[] m_hitGroup;

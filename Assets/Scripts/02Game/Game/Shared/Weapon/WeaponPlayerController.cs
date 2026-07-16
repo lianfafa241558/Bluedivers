@@ -14,51 +14,51 @@ namespace Unity.FPS.Game
     {
         [Foldout("点位和信息", true)]
         [DisplayField]
-        [CustomLabel("所属玩家")]
+        [InspectorName("所属玩家")]
         public int PlayerIndex;
 
-        [CustomLabel("武器名称")]
+        [InspectorName("武器名称")]
         public string WeaponName;
-        [CustomLabel("武器类型")]
+        [InspectorName("武器类型")]
         public string WeaponType;
 
-        [CustomLabel("武器图标")]
+        [InspectorName("武器图标")]
         public Sprite WeaponIcon;
 
 
-        [CustomLabel("准星预制体")]
+        [InspectorName("准星预制体")]
         public Animator Sight;
 
 
-        [CustomLabel("瞄准视野物体")]
+        [InspectorName("瞄准视野物体")]
         public GameObject ScopeGo;
 
-        [CustomLabel("左手")]
+        [InspectorName("左手")]
         public Transform LHand;
-        [CustomLabel("右手")]
+        [InspectorName("右手")]
         public Transform RHand;
-        [CustomLabel("展示点位")]
+        [InspectorName("展示点位")]
         public GameObject ShowRoot;
 
 
 
         [Foldout("武器参数", true)]
         [Space]
-        [CustomLabel("后坐力")]
+        [InspectorName("后坐力")]
         [Range(0f, 2f)]
         public float RecoilForce = 1;
 
-        [CustomLabel("瞄准时隐藏准星")]
+        [InspectorName("瞄准时隐藏准星")]
         public bool AimingHideCrosshair = true;
 
-        [CustomLabel("瞄准时放大倍率")]
+        [InspectorName("瞄准时放大倍率")]
         [Range(0f, 1f)]
         public float AimZoomRatio = 1f;
 
-        [CustomLabel("瞄准时的偏移")]
+        [InspectorName("瞄准时的偏移")]
         public Vector3 AimOffset;
 
-        [CustomLabel("装备时玩家模型旋转角度")]
+        [InspectorName("装备时玩家模型旋转角度")]
         [Range(-90, 90)]
         public float playerAngle;
 

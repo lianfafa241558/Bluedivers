@@ -7,15 +7,15 @@ namespace Unity.FPS.Game
     public class HealthPlayer : Health 
     {
 
-        [CustomLabel("生命恢复范围")] public float HealthRestoreScale;
-        [CustomLabel("生命恢复速度")] public float HealthRestoreSpeed;
+        [InspectorName("生命恢复范围")] public float HealthRestoreScale;
+        [InspectorName("生命恢复速度")] public float HealthRestoreSpeed;
 
-        [CustomLabel("护盾恢复速度")] public float ShieldRestoreSpeed;
-        [CustomLabel("护盾恢复延迟")] public float ShieldDelay;
+        [InspectorName("护盾恢复速度")] public float ShieldRestoreSpeed;
+        [InspectorName("护盾恢复延迟")] public float ShieldDelay;
 
-        [SerializeField] [CustomLabel("护盾恢复音效")] AudioClip ShieldRestore;
-        [SerializeField] [CustomLabel("护盾回满音效")] AudioClip ShieldFull;
-        [SerializeField] [CustomLabel("护盾破碎音效")] AudioClip ShieldBreak;
+        [SerializeField] [InspectorName("护盾恢复音效")] AudioClip ShieldRestore;
+        [SerializeField] [InspectorName("护盾回满音效")] AudioClip ShieldFull;
+        [SerializeField] [InspectorName("护盾破碎音效")] AudioClip ShieldBreak;
         [SerializeField] [Tooltip("护盾受击音效")] AudioClip[] ShieldDamage;
 
         AudioSource m_Audio;

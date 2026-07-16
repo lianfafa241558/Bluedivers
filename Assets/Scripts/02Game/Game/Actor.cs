@@ -45,7 +45,7 @@ namespace Unity.FPS.Game
             } 
         }
         [SerializeField]
-        [CustomLabel("状态")]
+        [InspectorName("状态")]
         private ActorState actorState = ActorState.Normal;
         public UnitTypeEnum Type => type;
         public IPERange Range=> range;
@@ -113,27 +113,27 @@ namespace Unity.FPS.Game
 
         #region 属性
         [SerializeField]
-        [CustomLabel("标旗")]
+        [InspectorName("标旗")]
         private ActorFlag flag;
 
-        [CustomLabel("类型")]
+        [InspectorName("类型")]
         [SerializeField]
         private UnitTypeEnum type;
 
         [SerializeField]
-        [CustomLabel("队伍")]
+        [InspectorName("队伍")]
         private int team;
 
         [SerializeField]
-        [CustomLabel("仇恨系数")]
+        [InspectorName("仇恨系数")]
         private float threat = 1;
 
         [NullCheck]
         [SerializeField]
-        [CustomLabel("瞄准点")]
+        [InspectorName("瞄准点")]
         private Transform aimPoint;
 
-        [CustomLabel("显示血条")]
+        [InspectorName("显示血条")]
         public bool UseHpBar = true;
         [CustomLabel("血条的额外高度", "UseHpBar",1,CompareOperate.Equal)]
         public float HpHeight=1;
@@ -143,11 +143,11 @@ namespace Unity.FPS.Game
         [Foldout("逻辑碰撞", true)]
         public ShapeType shape= ShapeType.Circle;
         [SerializeField]
-        [CustomLabel("半径/半长度")]
+        [InspectorName("半径/半长度")]
         private float rangeLength;
 
         [DisplayField]
-        [CustomLabel("召唤者")]
+        [InspectorName("召唤者")]
         public I_Actor Owner;
 
         private Vector3 lastAngle;

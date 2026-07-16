@@ -12,7 +12,7 @@ namespace Unity.FPS.AI
 
         public bool PreJudgment = true;
 
-        //[CustomLabel("每秒旋转度数")]
+        //[InspectorName("每秒旋转度数")]
         public float RotationSpeed = 30f;
 
         public enum AIState

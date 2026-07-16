@@ -11,7 +11,7 @@ namespace Unity.FPS.Gameplay
 
         [Header("运动")]
 
-        [CustomLabel("转向速度")]
+        [InspectorName("转向速度")]
         public float SteeringSpeed = 5;
 
         private Transform target;

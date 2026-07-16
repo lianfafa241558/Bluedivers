@@ -7,10 +7,10 @@ namespace Unity.FPS.AI
 {
     public class DieLoot : MonoBehaviour
     {
-        [CustomLabel("此敌人死亡时可以掉落的物体")]
+        [InspectorName("此敌人死亡时可以掉落的物体")]
         public GameObject LootPrefab;
 
-        [CustomLabel("物体掉落的数量")]
+        [InspectorName("物体掉落的数量")]
         public Vector2Int DropRate = Vector2Int.zero;
         //创建时就已决定
         private int lootCount;

@@ -12,7 +12,7 @@ namespace Unity.FPS.AI
 
         public Animator Animator;
         [Header("特效")]
-        [CustomLabel("初始材质")]
+        [InspectorName("初始材质")]
         [SerializeField]
         private Material BirthMaterial;
 

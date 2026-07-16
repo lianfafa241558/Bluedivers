@@ -15,19 +15,19 @@ namespace Unity.FPS.UI
     public class SightLockToTarget : MonoBehaviour
     {
         [SerializeField]
-        [CustomLabel("使用连线")]
+        [InspectorName("使用连线")]
         bool UseLine;
         [SerializeField]
-        [CustomLabel("1层时显示文本")]
+        [InspectorName("1层时显示文本")]
         bool OnceDisplyNumber;
         [SerializeField]
         GameObject targetPrefab;
 
         [SerializeField]
-        [CustomLabel("使用填充计数器")]
+        [InspectorName("使用填充计数器")]
         Transform FillImage;
         [SerializeField]
-        [CustomLabel("每层对应的填充值")]
+        [InspectorName("每层对应的填充值")]
         float EachValue;
 
         CrosshairManager manager;

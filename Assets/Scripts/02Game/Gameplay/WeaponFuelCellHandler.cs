@@ -8,16 +8,16 @@ namespace Unity.FPS.Gameplay
     [RequireComponent(typeof(WeaponController))]
     public class WeaponFuelCellHandler : MonoBehaviour
     {
-        [CustomLabel("同时收回所有燃料电池")]
+        [InspectorName("同时收回所有燃料电池")]
         public bool SimultaneousFuelCellsUsage = false;
 
-        [CustomLabel("表示武器上燃料电池的GameObject列表")]
+        [InspectorName("表示武器上燃料电池的GameObject列表")]
         public GameObject[] FuelCells;
 
-        [CustomLabel("使用时电池的局部位置")]
+        [InspectorName("使用时电池的局部位置")]
         public Vector3 FuelCellUsedPosition;
 
-        [CustomLabel("使用前电池的局部位置")]
+        [InspectorName("使用前电池的局部位置")]
         public Vector3 FuelCellUnusedPosition = new Vector3(0f, -0.1f, 0f);
 
         WeaponController m_Weapon;

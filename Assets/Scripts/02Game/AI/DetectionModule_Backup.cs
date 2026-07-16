@@ -16,20 +16,20 @@ namespace Unity.FPS.AI
         /// <summary>必须在不碰撞自身的地方</summary>
         [NullCheck]
         [SerializeField]
-        [CustomLabel("单位眼睛的点")]
+        [InspectorName("单位眼睛的点")]
         protected Transform EyePoint;
 
-        [CustomLabel("索敌距离")]
+        [InspectorName("索敌距离")]
         public float DetectionRange = 20f;
 
-        [CustomLabel("攻击距离")]
+        [InspectorName("攻击距离")]
         public float AttackRange = 10f;
 
-        [CustomLabel("警告距离")]
+        [InspectorName("警告距离")]
         public float AlertRange = 0;
 
         /// <summary>丢失目标时间</summary>
-        [CustomLabel("丢失目标时间")]
+        [InspectorName("丢失目标时间")]
         public float KnownTargetTimeout = 4f;
 
         public UnityAction onDetectedTarget;

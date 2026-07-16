@@ -23,41 +23,41 @@ public class InputManager : InputManagerBase<InputState, WindowStateEnum>
 
 public enum InputState
 {
-    [CustomLabel("设置界面")] Esc,
-    [CustomLabel("水平轴")] Horizontal,
-    [CustomLabel("垂直轴")] Vertical,
-    [CustomLabel("奔跑")] Shift,
-    [CustomLabel("跳跃")] Jump,
-    [CustomLabel("交互")] Operate,
-    [CustomLabel("投掷")] Throw,
-    [CustomLabel("装弹")] Reload,
-    [CustomLabel("开火")] Fire,
-    [CustomLabel("瞄准")] Aim,
-    [CustomLabel("下蹲")] Crouch,
+    [InspectorName("设置界面")] Esc,
+    [InspectorName("水平轴")] Horizontal,
+    [InspectorName("垂直轴")] Vertical,
+    [InspectorName("奔跑")] Shift,
+    [InspectorName("跳跃")] Jump,
+    [InspectorName("交互")] Operate,
+    [InspectorName("投掷")] Throw,
+    [InspectorName("装弹")] Reload,
+    [InspectorName("开火")] Fire,
+    [InspectorName("瞄准")] Aim,
+    [InspectorName("下蹲")] Crouch,
 
-    [CustomLabel("武器1")] Weapon1,
-    [CustomLabel("武器2")] Weapon2,
-    [CustomLabel("武器3")] Weapon3,
-    [CustomLabel("武器4")] Weapon4,
+    [InspectorName("武器1")] Weapon1,
+    [InspectorName("武器2")] Weapon2,
+    [InspectorName("武器3")] Weapon3,
+    [InspectorName("武器4")] Weapon4,
 
-    [CustomLabel("轨道支援面板")] Airdrop,
-    [CustomLabel("左")] Left,
-    [CustomLabel("上")] Up,
-    [CustomLabel("右")] Right,
-    [CustomLabel("下")] Down,
+    [InspectorName("轨道支援面板")] Airdrop,
+    [InspectorName("左")] Left,
+    [InspectorName("上")] Up,
+    [InspectorName("右")] Right,
+    [InspectorName("下")] Down,
 
-    [CustomLabel("上升")] Rise,
-    [CustomLabel("下降")] Fall,
+    [InspectorName("上升")] Rise,
+    [InspectorName("下降")] Fall,
 
-    [CustomLabel("呼叫Kei")] Mule,
+    [InspectorName("呼叫Kei")] Mule,
 
-    [CustomLabel("显示-隐藏")] H,
-    [CustomLabel("暂停-运行")] J,
+    [InspectorName("显示-隐藏")] H,
+    [InspectorName("暂停-运行")] J,
 
-    [CustomLabel("加速")] Acceler,
-    [CustomLabel("减速")] Deceler,
+    [InspectorName("加速")] Acceler,
+    [InspectorName("减速")] Deceler,
 
-    [CustomLabel("小地图")] MiniMap,
+    [InspectorName("小地图")] MiniMap,
 }
 
 #if UNITY_EDITOR

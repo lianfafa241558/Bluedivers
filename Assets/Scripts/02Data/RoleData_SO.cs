@@ -40,128 +40,128 @@ namespace Unity.FPS.Game
     public enum WeaponTypeEnum
     {
         /// <summary>主武器</summary>
-        [CustomLabel("主武器")]
+        [InspectorName("主武器")]
         Primary,
         /// <summary>副武器</summary>
-        [CustomLabel("副武器")]
+        [InspectorName("副武器")]
         Secondary,
         /// <summary>特殊武器</summary>
-        [CustomLabel("特殊武器")]
+        [InspectorName("特殊武器")]
         Special,
         /// <summary>投掷物</summary>
-        [CustomLabel("投掷物")]
+        [InspectorName("投掷物")]
         Grenade,
         /// <summary>信号枪</summary>
-        [CustomLabel("信号枪")]
+        [InspectorName("信号枪")]
         FlareGun,
         /// <summary>护甲</summary>
-        [CustomLabel("护甲")]
+        [InspectorName("护甲")]
         Armor,
     }
 
     public enum SpeechTypeEnum
     {
         /// <summary>呼叫补给</summary>
-        [CustomLabel("战斗/呼叫补给")]
+        [InspectorName("战斗/呼叫补给")]
         Supply,
         /// <summary>呼叫撤离</summary>
-        [CustomLabel("战斗/呼叫撤离")]
+        [InspectorName("战斗/呼叫撤离")]
         Evacuate,
         /// <summary>呼叫战备</summary>
-        [CustomLabel("战斗/呼叫战备")]
+        [InspectorName("战斗/呼叫战备")]
         Airdrop,
         /// <summary>呼叫载具</summary>
-        [CustomLabel("战斗/呼叫载具")]
+        [InspectorName("战斗/呼叫载具")]
         Vehicle,
         /// <summary>呼叫炮台</summary>
-        [CustomLabel("战斗/呼叫炮台")]
+        [InspectorName("战斗/呼叫炮台")]
         Turret,
         /// <summary>呼叫轨道轰炸</summary>
-        [CustomLabel("战斗/呼叫轨道轰炸")]
+        [InspectorName("战斗/呼叫轨道轰炸")]
         Bombing,
         /// <summary>呼叫飞鹰</summary>
-        [CustomLabel("战斗/呼叫飞鹰")]
+        [InspectorName("战斗/呼叫飞鹰")]
         Airstrike,
         /// <summary>呼叫凯伊</summary>
-        [CustomLabel("战斗/呼叫凯伊")]
+        [InspectorName("战斗/呼叫凯伊")]
         Kei,
         /// <summary>战斗/呼叫炸弹</summary>
-        [CustomLabel("战斗/呼叫炸弹")]
+        [InspectorName("战斗/呼叫炸弹")]
         HaloBomb,
         /// <summary>占位符2</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder2,
         /// <summary>求救</summary>
-        [CustomLabel("战斗/求救")]
+        [InspectorName("战斗/求救")]
         Help,
         /// <summary>马上到</summary>
-        [CustomLabel("战斗/马上到")]
+        [InspectorName("战斗/马上到")]
         Responded,
         /// <summary>复活感谢</summary>
-        [CustomLabel("战斗/复活感谢")]
+        [InspectorName("战斗/复活感谢")]
         Thank,
         /// <summary>采集遗物</summary>
-        [CustomLabel("战斗/采集遗物")]
+        [InspectorName("战斗/采集遗物")]
         CollOOParts,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder5,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder6,
         /// <summary>发现敌人</summary>
-        [CustomLabel("战斗/发现敌人")]
+        [InspectorName("战斗/发现敌人")]
         EnemySpotted,
         /// <summary>受击</summary>
-        [CustomLabel("战斗/受击")]
+        [InspectorName("战斗/受击")]
         Damage,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder7,
         /// <summary>占位符5</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder8,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder9,
         /// <summary>选择</summary>
-        [CustomLabel("大厅/选择")]
+        [InspectorName("大厅/选择")]
         Select,
         /// <summary>新武器</summary>
-        [CustomLabel("大厅/新武器")]
+        [InspectorName("大厅/新武器")]
         NewWeapon,
         /// <summary>解锁升级</summary>
-        [CustomLabel("大厅/解锁升级")]
+        [InspectorName("大厅/解锁升级")]
         Upgrade,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder10,
         /// <summary>占位符5</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder11,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder12,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder13,
         /// <summary>占位符5</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder14,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder15,
         /// <summary>占位符5</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder16,
         /// <summary>占位符</summary>
-        [CustomLabel("占位符")]
+        [InspectorName("占位符")]
         Placeholder17,
         /// <summary>胜利</summary>
-        [CustomLabel("结算/胜利")]
+        [InspectorName("结算/胜利")]
         Victory,
         /// <summary>失败</summary>
-        [CustomLabel("结算/失败")]
+        [InspectorName("结算/失败")]
         Defeat,
     }
 }

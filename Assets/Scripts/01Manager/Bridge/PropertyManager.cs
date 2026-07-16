@@ -39,20 +39,20 @@ public class PropertyManager : Singleton<PropertyManager>
 public enum OOPartEnum
 {
     /// <summary>青辉石</summary>
-    [CustomLabel("青辉石")]Pyroxene,
+    [InspectorName("青辉石")]Pyroxene,
     /// <summary>电池</summary>
-    [CustomLabel("电池")] Battery,
+    [InspectorName("电池")] Battery,
     /// <summary>埴轮</summary>
-    [CustomLabel("埴轮")] Crystal,
+    [InspectorName("埴轮")] Crystal,
     /// <summary>十二面体</summary>
-    [CustomLabel("十二面体")] Dodecahedron,
+    [InspectorName("十二面体")] Dodecahedron,
     /// <summary>以太</summary>
-    [CustomLabel("以太")] Ether,
+    [InspectorName("以太")] Ether,
     /// <summary>透镜</summary>
-    [CustomLabel("透镜")] Glasses,
+    [InspectorName("透镜")] Glasses,
     /// <summary>圆盘</summary>
-    [CustomLabel("圆盘")] Pendant,
+    [InspectorName("圆盘")] Pendant,
     /// <summary>手稿</summary>
-    [CustomLabel("手稿")] Voynich,
+    [InspectorName("手稿")] Voynich,
 }
 

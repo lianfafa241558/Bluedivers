@@ -15,19 +15,19 @@ namespace Unity.FPS.Gameplay
 
 
         [Header("通用")]
-        [CustomLabel("碰撞半径")]
+        [InspectorName("碰撞半径")]
         public float Radius = 0.01f;
-        [CustomLabel("根部变换(精确碰撞检测)")]
+        [InspectorName("根部变换(精确碰撞检测)")]
         public Transform Root;
-        [CustomLabel("尖端变换(精确碰撞检测)")]
+        [InspectorName("尖端变换(精确碰撞检测)")]
         public Transform Tip;
 
         [Header("尾迹")]
-        [CustomLabel("尾迹")]
+        [InspectorName("尾迹")]
         public List<GameObject> Trails;
-        [CustomLabel("尾迹宽度")]
+        [InspectorName("尾迹宽度")]
         public float TrailWidth = 0f;
-        [CustomLabel("尾迹持续时间")]
+        [InspectorName("尾迹持续时间")]
         public float LiftTime = 1.5f;
 
 

@@ -49,24 +49,24 @@ namespace Unity.FPS.AI
         protected class Turret {
 
 
-            [CustomLabel("底盘")]//左右Y
+            [InspectorName("底盘")]//左右Y
             public Transform chassis;
 
-            [CustomLabel("炮管(上下X)")]//上下X
+            [InspectorName("炮管(上下X)")]//上下X
             public Transform barrel;
 
-            [CustomLabel("绑定武器")]
+            [InspectorName("绑定武器")]
             public WeaponEnemyController weapon;
 
             public Transform firePoint=> weapon.WeaponMuzzle;
 
-            [CustomLabel("瞄准旋转锐度")]
+            [InspectorName("瞄准旋转锐度")]
             public float aimSharpness = 5f;
-            [CustomLabel("侦测开火延迟")]
+            [InspectorName("侦测开火延迟")]
             public float detectionFireDelay = 1f;
-            [CustomLabel("瞄准时间")]
+            [InspectorName("瞄准时间")]
             public float aimBlendTime = 1f;
-            [CustomLabel("限制旋转角度")]
+            [InspectorName("限制旋转角度")]
             [Range(0, 90)]
             /// <summary> 限制旋转角度 </summary>
             public int limitRotation;
@@ -81,7 +81,7 @@ namespace Unity.FPS.AI
 
             /// <summary>炮管手动偏移</summary>
             [SerializeField]
-            [CustomLabel("炮管手动偏移")]
+            [InspectorName("炮管手动偏移")]
             public Quaternion barrelSetOffset;
 
             /// <summary>炮管目标旋转</summary>
@@ -142,7 +142,7 @@ namespace Unity.FPS.AI
                 return new Vector3(targetPos.x, firePoint.position.y + height, targetPos.z);
             }
             [SerializeField]
-            [CustomLabel("瞄准就绪度")]
+            [InspectorName("瞄准就绪度")]
             private float dot = 1;
             public void Look(Vector3 targetPos) {
                 //修正重力因素

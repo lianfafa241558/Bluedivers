@@ -21,28 +21,28 @@ namespace Unity.FPS.AI {
     }
     public enum OccasionTypeEnum {
         /// <summary>攻击时</summary>
-        [CustomLabel("攻击时")]
+        [InspectorName("攻击时")]
         Attack,
         /// <summary>发现目标</summary>
-        [CustomLabel("发现目标")]
+        [InspectorName("发现目标")]
         DetectedTarget,
         /// <summary>丢失目标</summary>
-        [CustomLabel("丢失目标")]
+        [InspectorName("丢失目标")]
         LostTarget,
         /// <summary>受击时</summary>
-        [CustomLabel("受击时")]
+        [InspectorName("受击时")]
         Hit,
         /// <summary>死亡时</summary>
-        [CustomLabel("死亡时")]
+        [InspectorName("死亡时")]
         Die,
         /// <summary>诞生时</summary>
-        [CustomLabel("诞生时")]
+        [InspectorName("诞生时")]
         Birth,
         /// <summary>移动时</summary>
-        [CustomLabel("移动时")]
+        [InspectorName("移动时")]
         Movement,
         /// <summary>闲置时</summary>
-        [CustomLabel("闲置时")]
+        [InspectorName("闲置时")]
         Free,
     }
 
@@ -67,7 +67,7 @@ namespace Unity.FPS.AI {
 
         [GradientUsage(true)]
         public Gradient gradient;
-        [CustomLabel("持续时间")]
+        [InspectorName("持续时间")]
         public float duration = 0.1f;
 
         public float lastTriggerTime { get;set; }= float.NegativeInfinity;

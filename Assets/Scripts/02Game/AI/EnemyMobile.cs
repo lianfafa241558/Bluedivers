@@ -23,14 +23,14 @@ namespace Unity.FPS.AI
         }
 
 
-        [CustomLabel("停止移动时攻击范围的系数")]
+        [InspectorName("停止移动时攻击范围的系数")]
         [Tooltip("攻击范围指侦测模块的攻击范围")]
         [Range(0f, 1f)]
         public float AttackStopDistanceRatio = 0.5f;
-        [CustomLabel("保持在攻击距离范围上的距离")]//目标靠近就跑，远离就追
+        [InspectorName("保持在攻击距离范围上的距离")]//目标靠近就跑，远离就追
         public bool MaintainMaxDis = false;
 
-        [CustomLabel("巡逻速度")]
+        [InspectorName("巡逻速度")]
         public float PatrolSpeed = 2;
 
         public AIState AiState2 = AIState.Follow;

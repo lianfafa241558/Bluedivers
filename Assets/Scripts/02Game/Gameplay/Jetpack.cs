@@ -12,38 +12,38 @@ namespace Unity.FPS.Gameplay
     public class Jetpack : MonoBehaviour
     {
         [Foldout("关联组件")]
-        [CustomLabel("音频源")]
+        [InspectorName("音频源")]
         public AudioSource AudioSource;
 
-        [CustomLabel("喷气背包特效的粒子系统")]
+        [InspectorName("喷气背包特效的粒子系统")]
         public ParticleSystem[] JetpackVfx;
 
         [Foldout("参数")]
-        [CustomLabel("初始解锁")]
+        [InspectorName("初始解锁")]
         public bool IsJetpackUnlockedAtStart = false;
 
-        [CustomLabel("喷气力度")]
+        [InspectorName("喷气力度")]
         public float JetpackAcceleration = 7f;
 
         [Range(0f, 1f)]
-        [CustomLabel("抵消重力值的程度")]
+        [InspectorName("抵消重力值的程度")]
         public float JetpackDownwardVelocityCancelingFactor = 1f;
 
         [Foldout("持续时间")]
-        [CustomLabel("喷气维持时间")]
+        [InspectorName("喷气维持时间")]
         public float ConsumeDuration = 3f;
 
-        [CustomLabel("在地面补充所需的时间")]
+        [InspectorName("在地面补充所需的时间")]
         public float RefillDurationGrounded = 15f;
 
-        [CustomLabel("在空中补充所需的时间")]
+        [InspectorName("在空中补充所需的时间")]
         public float RefillDurationInTheAir = 15f;
 
-        [CustomLabel("开始补充前的延迟时间")]
+        [InspectorName("开始补充前的延迟时间")]
         public float RefillDelay = 1f;
 
         [Foldout("音频")]
-        [CustomLabel("使用喷气背包时播放的声音")]
+        [InspectorName("使用喷气背包时播放的声音")]
         public AudioClip JetpackSfx;
 
         bool m_CanUseJetpack;

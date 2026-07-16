@@ -16,19 +16,19 @@ namespace Unity.FPS.Game {
     {
 
         /// <summary>穿透单位</summary>
-        [CustomLabel("穿透单位")]
+        [InspectorName("穿透单位")]
         PenetrateUnits = 1 << 0,
         /// <summary>穿透地形</summary>
-        [CustomLabel("穿透地形")]
+        [InspectorName("穿透地形")]
         PenetrateTerrain = 1 << 1,
         /// <summary>命中保留</summary>
-        [CustomLabel("命中保留")]
+        [InspectorName("命中保留")]
         RetainOnHit = 1 << 2,
         /// <summary>享受敌人强化</summary>
-        [CustomLabel("享受敌人强化")]
+        [InspectorName("享受敌人强化")]
         EnemyIntensify = 1 << 3,
         /// <summary>允许伤害自身(也没用了)</summary>
-        [CustomLabel("允许伤害自身(也没用了)")]
+        [InspectorName("允许伤害自身(也没用了)")]
         AttackOneself = 1 << 4,
         //Everything = -1,
     }
@@ -43,67 +43,67 @@ namespace Unity.FPS.Game {
 
 
         [Header("运动")]
-        [CustomLabel("投射物的速度")]
+        [InspectorName("投射物的速度")]
         public float Speed = 20f;
         /// <summary>下坠速度</summary>
-        [CustomLabel("下坠速度")]
+        [InspectorName("下坠速度")]
         public float Gravity = 0f;
         /// <summary>继承武器初速度</summary>
-        [CustomLabel("是否继承武器初速度")]
+        [InspectorName("是否继承武器初速度")]
         public bool InheritWeaponSpeed = false;
-        [CustomLabel("生命周期")]
+        [InspectorName("生命周期")]
         public float MaxLifeTime = 5f;
-        [CustomLabel("自爆引信(单位:M)")]
+        [InspectorName("自爆引信(单位:M)")]
         public float MaxRange = -1;
-        [CustomLabel("安全引信(单位:M)")]
+        [InspectorName("安全引信(单位:M)")]
         public float MinRange = -1;
-        [CustomLabel("无源伤害")]
+        [InspectorName("无源伤害")]
         public bool NoSource = false;
 
         [Header("直击伤害")]
-        [CustomLabel("直击伤害值")]
+        [InspectorName("直击伤害值")]
         public float DamageDirect;
-        [CustomLabel("伤害成分")]
+        [InspectorName("伤害成分")]
         public List<KVP<DamageTypeEnum, float>> DamageGroupDirect = new() { new(DamageTypeEnum.Gun, 1), new(DamageTypeEnum.Destruction, 1) };
 
         [Header("爆炸伤害")]
-        [CustomLabel("爆炸伤害值")]
+        [InspectorName("爆炸伤害值")]
         public float DamageExplosion;
         [CustomLabel("伤害范围", "DamageExplosion", 0, CompareOperate.Greater)]
         public float ExplosionRange = 0;
         [SerializeField]
         [CustomLabel("伤害衰减", "DamageExplosion", 0, CompareOperate.Greater)]
         private AnimationCurve DamageRatioOverDis;
-        [CustomLabel("伤害成分")]
+        [InspectorName("伤害成分")]
         public List<KVP<DamageTypeEnum, float>> DamageGroupExplosion = new() { new(DamageTypeEnum.Explosion, 1), new(DamageTypeEnum.Destruction, 1) };
 
 
         [Header("碰撞")]
-        [CustomLabel("特效使用碰撞点的朝向")]
+        [InspectorName("特效使用碰撞点的朝向")]
         public bool UseCollisionDirection = true;
-        [CustomLabel("特效沿法线偏移量")]
+        [InspectorName("特效沿法线偏移量")]
         public float ImpactVfxSpawnOffset = 0.1f;
 
-        [CustomLabel("碰撞特效")]
+        [InspectorName("碰撞特效")]
         public GameObject ImpactVfx;
-        [CustomLabel("碰撞音效")]
+        [InspectorName("碰撞音效")]
         public AudioClip ImpactSfx;
-        [CustomLabel("创建弹坑")]
+        [InspectorName("创建弹坑")]
         public bool UseHole;
-        [CustomLabel("弹坑/不填使用默认")]
+        [InspectorName("弹坑/不填使用默认")]
         public GameObject Hole;
 
         [Header("蓄力")]
         [SerializeField]
-        [CustomLabel("满蓄伤害倍率")]
+        [InspectorName("满蓄伤害倍率")]
         private float ChargeDamageScale = 1;
         [SerializeField]
-        [CustomLabel("满蓄溅射范围倍率")]
+        [InspectorName("满蓄溅射范围倍率")]
         private float ChargeAOERangeScale = 1;
 
-        [CustomLabel("满蓄子弹速度")]
+        [InspectorName("满蓄子弹速度")]
         public float ChargeSpeedScale = 1;
-        [CustomLabel("满蓄子弹重力")]
+        [InspectorName("满蓄子弹重力")]
         public float ChargeGravityScale = 1;
 
         public PEInt GetExplosionDamage(float ChargeScale, PEInt distance)
@@ -169,13 +169,13 @@ namespace Unity.FPS.Game {
 
         #region 点位
         [Foldout("点位和信息", true)]
-        [CustomLabel("武器根对象")]
+        [InspectorName("武器根对象")]
         public GameObject WeaponRoot;
 
-        [CustomLabel("发射点位")]
+        [InspectorName("发射点位")]
         public Transform WeaponMuzzle;
 
-        [CustomLabel("发射点位2")]
+        [InspectorName("发射点位2")]
         public Transform WeaponMuzzle2;
 
         #endregion
@@ -185,9 +185,9 @@ namespace Unity.FPS.Game {
 
         [Foldout("子弹参数", true)]
 
-        [CustomLabel("子弹预制件")]
+        [InspectorName("子弹预制件")]
         public ProjectileBase ProjectilePrefab;
-        [CustomLabel("子弹标旗")]
+        [InspectorName("子弹标旗")]
         public BulletFlag BulletFlag;
 
         public List<DamageData> Damages;
@@ -200,21 +200,21 @@ namespace Unity.FPS.Game {
         #region 特效
         [Foldout("特效和动画", true)]
 
-        [CustomLabel("枪口闪光的预制")]
+        [InspectorName("枪口闪光的预制")]
         public GameObject MuzzleFlashPrefab;
 
         /// <summary>闪光不附着于枪口</summary>
-        [CustomLabel("闪光不附着于枪口")]
+        [InspectorName("闪光不附着于枪口")]
         public bool UnparentMuzzleFlash;
 
-        [CustomLabel("音效范围")]
+        [InspectorName("音效范围")]
         public float SFXRange=20;
         [CustomLabel("射击音效", "UseContinuousShootSound", 0, CompareOperate.Equal)]
         public AudioClip ShootSfx;
 
         /// <summary>使用连续射击音效</summary>
         [SerializeField]
-        [CustomLabel("使用连续射击音效")]
+        [InspectorName("使用连续射击音效")]
         protected bool UseContinuousShootSound = false;
         /// <summary>连续射击初始音效</summary>
         [SerializeField]

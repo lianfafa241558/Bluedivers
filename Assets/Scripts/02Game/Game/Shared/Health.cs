@@ -13,14 +13,14 @@ using Utils;
 namespace Unity.FPS.Game {
     public abstract class Health : MonoBehaviour {
         /// <summary>最大生命值</summary>
-        [CustomLabel("最大生命值")]
+        [InspectorName("最大生命值")]
         public int MaxHealth = 100;
         /// <summary>最大生命值</summary>
-        [CustomLabel("最大护盾值")] 
+        [InspectorName("最大护盾值")] 
         public int MaxShield;
 
         /// <summary>主体部位</summary>
-        [CustomLabel("主体部位")]
+        [InspectorName("主体部位")]
         public Damageable MainPart;
 
 
@@ -43,7 +43,7 @@ namespace Unity.FPS.Game {
 
         [Space]
         [DisplayField]
-        [CustomLabel("剩余生命值")]
+        [InspectorName("剩余生命值")]
         [SerializeField]
         public int showHealth;
 

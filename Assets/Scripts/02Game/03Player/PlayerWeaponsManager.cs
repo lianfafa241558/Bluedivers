@@ -32,58 +32,58 @@ namespace Unity.FPS.Gameplay
 
 
         [Foldout("点位", true)]
-        [CustomLabel("用于避免看到武器投掷几何形状的辅助摄像头")]
+        [InspectorName("用于避免看到武器投掷几何形状的辅助摄像头")]
         public Camera WeaponCamera;
-        [CustomLabel("第一人称武器根")]
+        [InspectorName("第一人称武器根")]
         public Transform FirstPersonSocket;
-        [CustomLabel("武器根")]
+        [InspectorName("武器根")]
         public Transform WeaponParentSocket;
-        [CustomLabel("未瞄准时的位置")]
+        [InspectorName("未瞄准时的位置")]
         public Transform DefaultWeaponPosition;
-        [CustomLabel("瞄准时的位置")]
+        [InspectorName("瞄准时的位置")]
         public Transform AimingWeaponPosition;
-        [CustomLabel("放下时的位置")]//新的武器从这个点位移动到WeaponParentSocket
+        [InspectorName("放下时的位置")]//新的武器从这个点位移动到WeaponParentSocket
         public Transform DownWeaponPosition;
 
 
 
         [Foldout("摆动", true)]
-        [CustomLabel("移动时武器在屏幕上移动的频率")]
+        [InspectorName("移动时武器在屏幕上移动的频率")]
         public float BobFrequency = 10f;
 
-        [CustomLabel("武器摆锤的速度")]
+        [InspectorName("武器摆锤的速度")]
         public float BobSharpness = 10f;
 
-        [CustomLabel("不瞄准时武器摆动的距离")]
+        [InspectorName("不瞄准时武器摆动的距离")]
         public float DefaultBobAmount = 0.05f;
 
-        [CustomLabel("瞄准时武器摆动的距离")]
+        [InspectorName("瞄准时武器摆动的距离")]
         public float AimingBobAmount = 0.02f;
 
         [Foldout("后坐力", true)]
-        [CustomLabel("这将影响后坐力移动武器的速度，值越大，速度越快")]
+        [InspectorName("这将影响后坐力移动武器的速度，值越大，速度越快")]
         public float RecoilSharpness = 50f;
 
-        [CustomLabel("后坐力可以影响武器的最大距离")]
+        [InspectorName("后坐力可以影响武器的最大距离")]
         public float MaxRecoilDistance = 0.5f;
 
-        [CustomLabel("反冲结束后，武器返回原始位置的速度有多快")]
+        [InspectorName("反冲结束后，武器返回原始位置的速度有多快")]
         public float RecoilRestitutionSharpness = 10f;
 
         [Foldout("其他", true)]
-        [CustomLabel("播放瞄准动画的速度")]
+        [InspectorName("播放瞄准动画的速度")]
         public float AimingAnimationSpeed = 10f;
 
-        [CustomLabel("不瞄准时的视野")]
+        [InspectorName("不瞄准时的视野")]
         public float DefaultFov = 60f;
 
-        [CustomLabel("应用于武器相机的常规视场部分")]
+        [InspectorName("应用于武器相机的常规视场部分")]
         public float WeaponFovMultiplier = 1f;
 
-        [CustomLabel("在第二次切换武器之前延迟，以避免从鼠标滚轮接收多个输入")]
+        [InspectorName("在第二次切换武器之前延迟，以避免从鼠标滚轮接收多个输入")]
         public float WeaponSwitchDelay = 1f;
 
-        [CustomLabel("将FPS武器游戏对象设置为的图层")]
+        [InspectorName("将FPS武器游戏对象设置为的图层")]
         public LayerMask FpsWeaponLayer;
 
         private bool m_isAiming;

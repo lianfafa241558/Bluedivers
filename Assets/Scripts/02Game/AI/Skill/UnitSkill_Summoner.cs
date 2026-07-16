@@ -14,7 +14,7 @@ namespace Unity.FPS.AI
     {
         public AudioClip cilp;
         [Header("召唤物")]
-        [CustomLabel("召唤物")]
+        [InspectorName("召唤物")]
         public List<KVP<GameObject,Vector3>> summoned;
 
         protected override void SkillStart()

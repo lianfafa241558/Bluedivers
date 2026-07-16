@@ -25,84 +25,84 @@ public class PlayerController : MonoBehaviour
     public Color Color => m_Actor.Color;
 
     [Foldout("玩家", true)]
-    [CustomLabel("玩家摄像机")]
+    [InspectorName("玩家摄像机")]
     public Camera PlayerCamera;
     [SerializeField]
-    [CustomLabel("玩家倒地摄像机")]
+    [InspectorName("玩家倒地摄像机")]
     private Camera PlayerDownCamera;
 
     public Transform ModleRoot;
 
     [DisplayField]
-    [CustomLabel("所属玩家")]
+    [InspectorName("所属玩家")]
     public int PlayerIndex;
 
 
-    [CustomLabel("音频源")]
+    [InspectorName("音频源")]
     public AudioSource AudioSource;
 
     [Foldout("一般", true)]
-    [CustomLabel("重力")]
+    [InspectorName("重力")]
     public float GravityDownForce = 10f;
 
-    [CustomLabel("触底距离")]
+    [InspectorName("触底距离")]
     public float GroundCheckDistance = 0.05f;
 
     [Foldout("移动", true)]
-    [CustomLabel("落地时的最大移动速度（非短跑时）")]
+    [InspectorName("落地时的最大移动速度（非短跑时）")]
     public float MaxSpeedOnGround = 10f;
 
-    [CustomLabel("(移动平滑度)落地时动作的锐度，低值会使玩家缓慢加速和减速，高值则相反")]
+    [InspectorName("(移动平滑度)落地时动作的锐度，低值会使玩家缓慢加速和减速，高值则相反")]
     public float MovementSharpnessOnGround = 15;
 
-    [CustomLabel("蹲下时的最大移动速度")]
+    [InspectorName("蹲下时的最大移动速度")]
     [Range(0, 1)]
     public float MaxSpeedCrouchedRatio = 0.5f;
 
-    [CustomLabel("未接地时的最大移动速度")]
+    [InspectorName("未接地时的最大移动速度")]
     public float MaxSpeedInAir = 10f;
 
-    [CustomLabel("空中加速速度")]
+    [InspectorName("空中加速速度")]
     /// <summary>空中加速速度</summary>
     public float AccelerationSpeedInAir = 25f;
 
 
-    [CustomLabel("移动时上下晃动幅度")]
+    [InspectorName("移动时上下晃动幅度")]
     [Range(0, 0.1f)]
     public float ShakeSpeed = 0f;
 
     [Foldout("旋转", true)]
-    [CustomLabel("镜头旋转速度")]
+    [InspectorName("镜头旋转速度")]
     public float RotationSpeed = 200f;
 
     [Range(0.1f, 1f)]
-    [CustomLabel("瞄准时的旋转速度倍率")]
+    [InspectorName("瞄准时的旋转速度倍率")]
     public float AimingRotationMultiplier = 0.4f;
 
     [Foldout("跳跃", true)]
-    [CustomLabel("跳跃强度")]
+    [InspectorName("跳跃强度")]
     public float JumpForce = 9f;
-    [CustomLabel("允许跳跃次数")]
+    [InspectorName("允许跳跃次数")]
     public int AllowJumpCount = 1;
 
     [Foldout("冲刺", true)]
-    [CustomLabel("冲刺持续时间")]
+    [InspectorName("冲刺持续时间")]
     /// <summary>冲刺持续时间</summary>
     public float SprintDuration = 1f;
 
-    [CustomLabel("冲刺倍数(地面)")]
+    [InspectorName("冲刺倍数(地面)")]
     /// <summary>冲刺倍数(地面)</summary>
     public float SprintSpeedGroundModifier = 3f;
 
-    [CustomLabel("冲刺倍数(空中)")]
+    [InspectorName("冲刺倍数(空中)")]
     /// <summary>冲刺倍数(空中)</summary>
     public float SprintSpeedAirModifier = 1.5f;
 
-    [CustomLabel("冲刺冷却")]
+    [InspectorName("冲刺冷却")]
     /// <summary>冲刺冷却</summary>
     public float SprintCool = 15f;
 
-    [CustomLabel("冲刺反重力程度")]
+    [InspectorName("冲刺反重力程度")]
     /// <summary>冲刺反重力程度</summary>
     [Range(0, 1f)]
     public float Sprintantigravity = 0.5f;
@@ -110,50 +110,50 @@ public class PlayerController : MonoBehaviour
 
     [Foldout("站立", true)]
     [Range(0, 1f)]
-    [CustomLabel("摄像机所在位置的角色高度比")]
+    [InspectorName("摄像机所在位置的角色高度比")]
     public float CameraHeightRatio = 0.9f;
 
-    [CustomLabel("站立高度")]
+    [InspectorName("站立高度")]
     public float CapsuleHeightStanding = 1.8f;
 
-    [CustomLabel("下蹲高度")]
+    [InspectorName("下蹲高度")]
     public float CapsuleHeightCrouching = 0.9f;
 
-    [CustomLabel("蹲下过渡的速度")]
+    [InspectorName("蹲下过渡的速度")]
     public float CrouchingSharpness = 10f;
 
     [Foldout("音频", true)]
-    [CustomLabel("移动一米时播放的脚步声量")]
+    [InspectorName("移动一米时播放的脚步声量")]
     public float FootstepSfxFrequency = 1f;
 
-    [CustomLabel("短跑时移动一米时发出的脚步声数量")]
+    [InspectorName("短跑时移动一米时发出的脚步声数量")]
     public float FootstepSfxFrequencyWhileSprinting = 1f;
 
-    [CustomLabel("脚步声")]
+    [InspectorName("脚步声")]
     public AudioClip FootstepSfx;
 
-    [CustomLabel("跳跃声")]
+    [InspectorName("跳跃声")]
     public AudioClip JumpSfx;
-    [CustomLabel("落地声")]
+    [InspectorName("落地声")]
     public AudioClip LandSfx;
 
-    [CustomLabel("掉落伤害声")]
+    [InspectorName("掉落伤害声")]
     public AudioClip FallDamageSfx;
 
     [Foldout("掉落伤害", true)]
-    [CustomLabel("是否收到掉落伤害")]
+    [InspectorName("是否收到掉落伤害")]
     public bool RecievesFallDamage;
 
-    [CustomLabel("触发时的最低速度")]
+    [InspectorName("触发时的最低速度")]
     public float MinSpeedForFallDamage = 10f;
 
-    [CustomLabel("触发计算的最高速度")]
+    [InspectorName("触发计算的最高速度")]
     public float MaxSpeedForFallDamage = 30f;
 
-    [CustomLabel("以最低速度坠落时受到的伤害")]
+    [InspectorName("以最低速度坠落时受到的伤害")]
     public float FallDamageAtMinSpeed = 10f;
 
-    [CustomLabel("以最高速度坠落时受到的伤害")]
+    [InspectorName("以最高速度坠落时受到的伤害")]
     public float FallDamageAtMaxSpeed = 50f;
 
     public UnityAction<bool> OnStanceChanged;

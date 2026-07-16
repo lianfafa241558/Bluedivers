@@ -37,7 +37,7 @@ namespace Unity.FPS.AI
             }
         }
 
-        [CustomLabel("敌人认为已到达当前路径目标点的距离")]
+        [InspectorName("敌人认为已到达当前路径目标点的距离")]
         public float PathReachingRadius = 2f;
 
         public bool BirthComplete=>Time.time>=birthTime+BirthDuration;

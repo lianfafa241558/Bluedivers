@@ -19,10 +19,10 @@ namespace Unity.FPS.Game {
 
         #region 点位
         [Foldout("点位和信息", true)]
-        [CustomLabel("武器根对象")]
+        [InspectorName("武器根对象")]
         public GameObject WeaponRoot;
 
-        [CustomLabel("发射点位")]
+        [InspectorName("发射点位")]
         public Transform WeaponMuzzle;
 
         #endregion
@@ -36,17 +36,17 @@ namespace Unity.FPS.Game {
 
         [Foldout("武器参数", true)]
         
-        [CustomLabel("射击间隔/射速")]
+        [InspectorName("射击间隔/射速")]
         /// <summary>射击间隔/射速</summary>
         public float DelayBetweenShots = 0.5f;
 
-        [CustomLabel("弹丸数量")]
+        [InspectorName("弹丸数量")]
         public int BulletsPerShot = 1;
 
-        [CustomLabel("子弹散布角度(0=无散布)")]
+        [InspectorName("子弹散布角度(0=无散布)")]
         public float BulletSpreadAngle = 0f;
 
-        [CustomLabel("弹匣容量")]
+        [InspectorName("弹匣容量")]
         /// <summary>弹匣容量</summary>
         public int MaxAmmo = 8;
 
@@ -56,9 +56,9 @@ namespace Unity.FPS.Game {
 
         [Foldout("子弹参数", true)]
 
-        [CustomLabel("子弹预制件")]
+        [InspectorName("子弹预制件")]
         public ProjectileBase ProjectilePrefab;
-        [CustomLabel("子弹标旗")]
+        [InspectorName("子弹标旗")]
         public BulletFlag BulletFlag;
 
         public List<DamageData> Damages;
@@ -71,21 +71,21 @@ namespace Unity.FPS.Game {
         #region 特效
         [Foldout("特效和动画", true)]
 
-        [CustomLabel("枪口闪光的预制")]
+        [InspectorName("枪口闪光的预制")]
         public GameObject MuzzleFlashPrefab;
 
         /// <summary>闪光不附着于枪口</summary>
-        [CustomLabel("闪光不附着于枪口")]
+        [InspectorName("闪光不附着于枪口")]
         public bool UnparentMuzzleFlash;
 
-        [CustomLabel("音效范围")]
+        [InspectorName("音效范围")]
         public float SFXRange=20;
-        [CustomLabel("射击音效")]
+        [InspectorName("射击音效")]
         public AudioClip ShootSfx;
 
         /// <summary>使用连续射击音效</summary>
         [SerializeField]
-        [CustomLabel("使用连续射击音效")]
+        [InspectorName("使用连续射击音效")]
         protected bool UseContinuousShootSound = false;
         /// <summary>连续射击初始音效</summary>
         [SerializeField]
@@ -108,11 +108,11 @@ namespace Unity.FPS.Game {
 
         [Foldout("特殊", true)]
         [DisplayField(true, false, false)]
-        [CustomLabel("剩余当前弹药")]
+        [InspectorName("剩余当前弹药")]
         [SerializeField]
         protected float nowAmmo ;
         /// <summary>剩余后备弹量</summary>
-        [CustomLabel("剩余后备弹量")]
+        [InspectorName("剩余后备弹量")]
         [DisplayField(true, false, false)]
         [SerializeField]
         protected float remainBullets;

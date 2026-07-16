@@ -14,9 +14,9 @@ namespace Unity.FPS.Gameplay
     public class ProjectileMine : ProjectileBase
     {
         [Header("通用")]
-        [CustomLabel("根部变换")]
+        [InspectorName("根部变换")]
         public Transform Root;
-        [CustomLabel("触发范围")]
+        [InspectorName("触发范围")]
         public float TriggerRange=0.7f;
 
         public static Color RadiusColor = Color.red;

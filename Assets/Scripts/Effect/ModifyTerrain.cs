@@ -14,7 +14,7 @@ public class ModifyTerrain : MonoBehaviour
     float transitionDistance=5;
 
     [SerializeField]
-    [CustomLabel("测试时使用:在start修改地形")]
+    [InspectorName("测试时使用:在start修改地形")]
     bool StartModify;
     private void Awake()
     {

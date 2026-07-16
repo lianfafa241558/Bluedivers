@@ -274,14 +274,14 @@ public class AirdropController : MonoBehaviour
     }
     public enum AirdropState {
         /// <summary>就绪</summary>
-        [CustomLabel("就绪")] Ready,
+        [InspectorName("就绪")] Ready,
         /// <summary>冷却</summary>
-        [CustomLabel("冷却")] Cool,
+        [InspectorName("冷却")] Cool,
         /// <summary>等待释放</summary>
-        [CustomLabel("等待释放")] Wait,
+        [InspectorName("等待释放")] Wait,
         /// <summary>即将抵达</summary>
-        [CustomLabel("即将抵达")] Arrive,
+        [InspectorName("即将抵达")] Arrive,
         /// <summary>正在持续</summary>
-        [CustomLabel("正在持续")] Sustain,
+        [InspectorName("正在持续")] Sustain,
     }
 }

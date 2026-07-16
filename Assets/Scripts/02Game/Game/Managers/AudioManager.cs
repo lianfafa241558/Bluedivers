@@ -15,7 +15,7 @@ public class AudioManager : AudioManaqerBase<AudioManager>
     public override void Awake()
     {
         base.Awake();
-        musicDic = musicList.ToDictionary();
+        //musicDic = musicList.ToDictionary();
         musicList.Clear();
         //全局管理器不用考虑死亡时注销的问题
         GameRoot.OnGameStateChange += InGameStateChange;
@@ -128,25 +128,25 @@ public class AudioManager : AudioManaqerBase<AudioManager>
     public enum MusicGroup
     {
         /// <summary>舰桥</summary>
-        [CustomLabel("舰桥")]Bridge,
+        [InspectorName("舰桥")]Bridge,
         /// <summary>准备</summary>
-        [CustomLabel("准备")] Ready,
+        [InspectorName("准备")] Ready,
         //<summary>转场</summary>
-        //[CustomLabel("转场")]Transition,
+        //[InspectorName("转场")]Transition,
         /// <summary>加载</summary>
-        [CustomLabel("加载")] Load,
+        [InspectorName("加载")] Load,
         ///<summary>游戏</summary>
-        [CustomLabel("游戏")]Game,
+        [InspectorName("游戏")]Game,
         /// <summary>波次</summary>
-        [CustomLabel("波次")]Wave,
+        [InspectorName("波次")]Wave,
         /// <summary>通用Boss</summary>
-        [CustomLabel("通用Boss")]Boss,
+        [InspectorName("通用Boss")]Boss,
         /// <summary>开始撤离</summary>
-        [CustomLabel("开始撤离")]Evacuate,
+        [InspectorName("开始撤离")]Evacuate,
         /// <summary>完成撤离</summary>
-        [CustomLabel("完成撤离")] End,
+        [InspectorName("完成撤离")] End,
         /// <summary>任务失败</summary>
-        [CustomLabel("任务失败")] Fail,
+        [InspectorName("任务失败")] Fail,
     }
 
 }

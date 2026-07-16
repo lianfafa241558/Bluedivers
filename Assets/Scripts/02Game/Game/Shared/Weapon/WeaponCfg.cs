@@ -35,7 +35,7 @@ namespace Unity.FPS.Game
         public void SetPara(WeaponAttrType type, float value)
         {
 
-            var index = _fakeAttrs.Index(type);
+            var index = 0;
             if (index>-1)
             {
                 _fakeAttrs[index].Value=value;
@@ -129,10 +129,10 @@ namespace Unity.FPS.Game
             }
             foreach(var item in re)
             {
-                if (!_fakeAttrs.Contains(item))
-                {
-                    _fakeAttrs.Add(new(item,0));
-                }
+                //if (!_fakeAttrs.Contains(item))
+                //{
+                //    _fakeAttrs.Add(new(item,0));
+                //}
             }
             
         }
@@ -298,8 +298,8 @@ namespace Unity.FPS.Game
         public string GetEnumString(System.Enum value)
         {
             var fieldInfo = value.GetType().GetField(value.ToString());
-            var attribute = fieldInfo.GetCustomAttributes(typeof(CustomLabelAttribute), false);
-            return attribute.Length > 0 ? ((CustomLabelAttribute)attribute[0]).name : value.ToString();
+            var attribute = fieldInfo.GetCustomAttributes(typeof(InspectorNameAttribute), false);
+            return attribute.Length > 0 ? ((InspectorNameAttribute)attribute[0]).displayName : value.ToString();
 
         }
     }

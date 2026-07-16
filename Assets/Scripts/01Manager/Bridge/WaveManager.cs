@@ -14,7 +14,7 @@ public class WaveManager : TickBehaviour
     string Suffix;
     int WaveCool;
     Dictionary<UnitTier, List<KVP<int, UnitWeightCfg>> > TierItemWeight;
-    List<KVP<int,UnitTier>> TierWeight;
+    List<SKVP<int,UnitTier>> TierWeight;
 
     List<List<UnitTier>> Patrol;
     //List<Wave> waveGroup;
@@ -37,26 +37,26 @@ public class WaveManager : TickBehaviour
         Suffix = cfg.Suffix;
         WaveCool = cfg.WaveCool;
         WaveUseObject = cfg.WaveUseObject;
-        var tmp = cfg.Templates.Values.RandomTake();
+        var tmp = cfg.templates.RandomTake();
 
-        TierWeight = tmp.Template.Select(item => new KVP<int, UnitTier>(item.Value.weight, item.Key)).ToList();
+        TierWeight = tmp.template.Select(item => new SKVP<int, UnitTier>(item.weight, item.tier)).ToList();
         
         TierItemWeight = new Dictionary<UnitTier, List<KVP<int, UnitWeightCfg>>>();
-        foreach (var kvp in tmp.Template)
+        foreach (var kvp in tmp.template)
         {
-            var list = kvp.Value.unitWeights
-                .Select(cfg => new KVP<int, UnitWeightCfg>(kvp.Value.weight, cfg))
+            var list = kvp.unitWeights
+                .Select(cfg => new KVP<int, UnitWeightCfg>(kvp.weight, cfg))
                 .ToList();
 
-            if (TierItemWeight.ContainsKey(kvp.Key))
-                TierItemWeight[kvp.Key] = list;
+            if (TierItemWeight.ContainsKey(kvp.tier))
+                TierItemWeight[kvp.tier] = list;
             else
-                TierItemWeight.Add(kvp.Key, list);
+                TierItemWeight.Add(kvp.tier, list);
         }
 
-        Patrol = cfg.Patrol
-            .Where(item => tmp.PatrolTemplate.Contains(item.Key))
-            .Select(group => group.Value.Template
+        Patrol = cfg.patrolCfgs
+            .Where(item => tmp.PatrolTemplate.Contains(item.name))
+            .Select(group => group.units
                 .SelectMany(item => Enumerable.Repeat(0, item.Value)
                     .Select(_ => item.Key)
                 ).ToList()

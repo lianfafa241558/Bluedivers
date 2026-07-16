@@ -16,11 +16,11 @@ namespace Unity.FPS.Gameplay
         public float ShootSpeed { get; private set; }
 
         [Header("通用")]
-        [CustomLabel("碰撞半径")]
+        [InspectorName("碰撞半径")]
         public float Radius = 0.01f;
 
         [Header("特效")]
-        [CustomLabel("创建终点物体")]
+        [InspectorName("创建终点物体")]
         public List<GameObject> EndObject;
 
         protected float m_ShootTime;

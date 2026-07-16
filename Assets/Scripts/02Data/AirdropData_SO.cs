@@ -2,22 +2,22 @@ using Unity.BaseTool;
 using UnityEngine;
 public enum DirectionEnum
 {
-    [CustomLabel("左")]
+    [InspectorName("左")]
     Left,
-    [CustomLabel("上")]
+    [InspectorName("上")]
     Up,
-    [CustomLabel("右")]
+    [InspectorName("右")]
     Right,
-    [CustomLabel("下")]
+    [InspectorName("下")]
     Down
 }
 public enum AirdropDeliveryEnum
 {
-    [CustomLabel("空投舱")]
+    [InspectorName("空投舱")]
     Pod,
-    [CustomLabel("轰炸")]
+    [InspectorName("轰炸")]
     Bomb,
-    [CustomLabel("飞鹰")]
+    [InspectorName("飞鹰")]
     Jet,
 }
 
@@ -25,51 +25,51 @@ public enum AirdropDeliveryEnum
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/战备")]
 public class AirdropData_SO : ScriptableObject
 {
-    [CustomLabel("隐藏战备")]
+    [InspectorName("隐藏战备")]
     public bool isHide;
     public int ID;
     public string showName;
     [TextArea]
     public string desc;
-    [CustomLabel("图标")]
+    [InspectorName("图标")]
     public Sprite icon;
-    [CustomLabel("操作")]
+    [InspectorName("操作")]
     public DirectionEnum[] opter;
-    [CustomLabel("类型")]
+    [InspectorName("类型")]
     public AirdropType type;
-    [CustomLabel("投送方式")]
+    [InspectorName("投送方式")]
     public AirdropDeliveryEnum deliveryType;
-    [CustomLabel("冷却")]
+    [InspectorName("冷却")]
     public int cool;
 
-    [CustomLabel("部署时间")]
+    [InspectorName("部署时间")]
     [Range(0, 20)]
     public int arriveTime=8;
 
     [CustomLabel("部署高度", "deliveryType", (int)AirdropDeliveryEnum.Pod, CompareOperate.Equal)]
     public int arriveHeight;
 
-    [CustomLabel("部署次数")]
+    [InspectorName("部署次数")]
     [Range(0, 20)]
     public int arriveCount = 0;
 
-    [CustomLabel("影响范围的显示")]
+    [InspectorName("影响范围的显示")]
     public Vector2 showRange;
 
-    [CustomLabel("持续时间")]
+    [InspectorName("持续时间")]
     public int sustainTime;
-    [CustomLabel("创建的物体")]
+    [InspectorName("创建的物体")]
     public GameObject creatObect;
     [CustomLabel("使用标准空投舱", "deliveryType", (int)AirdropDeliveryEnum.Pod, CompareOperate.Equal)]
     public bool useNormalPod;
-    [CustomLabel("持续时间时隐藏信标")]
+    [InspectorName("持续时间时隐藏信标")]
     public bool sustainHideBeacon;
-    [CustomLabel("危险警告")]
+    [InspectorName("危险警告")]
     public bool useWarning;
     [CustomLabel("空投舱永久存在", "useNormalPod")]
     public bool permanentPod;
 
-    [CustomLabel("需要允许部署")]
+    [InspectorName("需要允许部署")]
     public bool authorize;
 
     public Color Color { 
@@ -99,15 +99,15 @@ public class AirdropData_SO : ScriptableObject
 
 
     public enum AirdropType{
-        [CustomLabel("轰炸")]
+        [InspectorName("轰炸")]
         Red,
-        [CustomLabel("装备")]
+        [InspectorName("装备")]
         Blue,
-        [CustomLabel("炮台")]
+        [InspectorName("炮台")]
         Greed,
-        [CustomLabel("载具")]
+        [InspectorName("载具")]
         Orange,
-        [CustomLabel("补给")]
+        [InspectorName("补给")]
         Yellow,
     }
 }

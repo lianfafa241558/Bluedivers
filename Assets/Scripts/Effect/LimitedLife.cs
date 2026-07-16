@@ -9,16 +9,16 @@ public class LimitedLife : MonoBehaviour
     private bool IsDestroy;
     [SerializeField]
     private float LiftTime;
-    [CustomLabel("提前释放系数，1=不允许")]
+    [InspectorName("提前释放系数，1=不允许")]
     [SerializeField]
     [Range(0, 1)]
     private float PreRelease = 1;
-    [CustomLabel("允许可见时释放")]
+    [InspectorName("允许可见时释放")]
     [SerializeField]
     private bool allowSeeRelease;
 
     private float CreatTime;
-    [CustomLabel("允许释放")]
+    [InspectorName("允许释放")]
     public bool allowRelease;
     public bool useDebug;
     public UnityAction OnEnd;

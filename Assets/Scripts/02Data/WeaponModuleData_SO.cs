@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.BaseTool;
+using UnityEditor;
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -10,13 +11,14 @@ namespace Unity.FPS.Game
     public class WeaponModuleData_SO : ScriptableObject
     {
         public new string name;
-        [CustomLabel("模组类型")]
+        [InspectorName("模组类型")]
         public ModuleType type;
         public Sprite icon;
 
-        public List<KVP<bool, string>> desc;
+        [InspectorName("描述")]
+        public List<SKVP<bool, string>> desc;
 
-        [Header("修改属性")]
+        [InspectorName("修改属性")]
         public List<ModifyAttrData> modifys;
 
 
@@ -37,19 +39,88 @@ namespace Unity.FPS.Game
 
         public enum ModuleType
         {
-            [CustomLabel("无")]
+            [InspectorName("无")]
             /// <summary>无</summary>
             None,
-            [CustomLabel("无暇")]
+            [InspectorName("无暇")]
             /// <summary>无暇</summary>
             Clean,
-            [CustomLabel("平衡")]
+            [InspectorName("平衡")]
             /// <summary>平衡</summary>
             Balanced,
-            [CustomLabel("危险")]
+            [InspectorName("危险")]
             /// <summary>危险</summary>
             Unstable,
         }
 
     }
+
+#if UNITY_EDITOR
+
+    [CustomPropertyDrawer(typeof(ModifyAttrData))]
+    public class ModifyAttrDataDrawer : PropertyDrawer
+    {
+        private const int SpecialValue = 999;
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+
+            SerializedProperty nameProp = property.FindPropertyRelative("name");
+            SerializedProperty typeProp = property.FindPropertyRelative("type");
+            SerializedProperty modifierProp = property.FindPropertyRelative("modifier");
+            SerializedProperty valueProp = property.FindPropertyRelative("value");
+
+            bool isSpecial = typeProp.intValue == SpecialValue;
+
+            float spacing = 3f;
+            float lineHeight = EditorGUIUtility.singleLineHeight;
+            float labelW = 22f;
+            float x = position.x;
+
+            if (isSpecial)
+            {
+                // Show name + type + modifier + value
+                float nameW = position.width * 0.22f;
+                float typeW = position.width * 0.18f;
+                float modW = 60f;
+                float valW = position.width - nameW - typeW - modW - spacing * 4 - labelW * 2;
+
+                EditorGUI.LabelField(new Rect(x, position.y, labelW, lineHeight), "名");
+                x += labelW;
+                EditorGUI.PropertyField(new Rect(x, position.y, nameW - labelW, lineHeight), nameProp, GUIContent.none);
+                x += nameW - labelW + spacing;
+
+                EditorGUI.LabelField(new Rect(x, position.y, labelW, lineHeight), "型");
+                x += labelW;
+                EditorGUI.PropertyField(new Rect(x, position.y, typeW - labelW, lineHeight), typeProp, GUIContent.none);
+                x += typeW - labelW + spacing;
+
+                EditorGUI.PropertyField(new Rect(x, position.y, modW, lineHeight), modifierProp, GUIContent.none);
+                x += modW + spacing;
+
+                EditorGUI.PropertyField(new Rect(x, position.y, valW, lineHeight), valueProp, GUIContent.none);
+            }
+            else
+            {
+                // Hide name, only show type + modifier + value
+                float typeW = position.width * 0.22f;
+                float modW = 60f;
+                float valW = position.width - typeW - modW - spacing * 3 - labelW;
+
+                EditorGUI.LabelField(new Rect(x, position.y, labelW, lineHeight), "型");
+                x += labelW;
+                EditorGUI.PropertyField(new Rect(x, position.y, typeW - labelW, lineHeight), typeProp, GUIContent.none);
+                x += typeW - labelW + spacing;
+
+                EditorGUI.PropertyField(new Rect(x, position.y, modW, lineHeight), modifierProp, GUIContent.none);
+                x += modW + spacing;
+
+                EditorGUI.PropertyField(new Rect(x, position.y, valW, lineHeight), valueProp, GUIContent.none);
+            }
+
+            EditorGUI.EndProperty();
+        }
+    }
+#endif
 }

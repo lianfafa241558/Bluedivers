@@ -1,5 +1,4 @@
 using Core;
-using Unity.BaseTool;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/地图")]
@@ -9,20 +8,34 @@ public class MapData_SO : ScriptableObject
 
 
     public string AreaName;
+    [InspectorName("任务点")]
     public MapItemInfo[] mapItemInfos;
+
+
+    public MapItemInfo Test;
+
+    [InspectorName("任务点")]
+    public SKVP<string, Vector2Int>[] mapItemInfos2;
+
     [TextArea(4,10)]
     public string AreaDesc;
-    public Sprite AreaBackground;
-    public Sprite Icon, Map;
-    [CustomLabel("特产")]
-    public OOPartEnum[] product;
 
-    [CustomLabel("敌对类型")]
+
+    [SpritePreview(8,4)]
+    public Sprite AreaBackground;
+    [SpritePreview]
+    public Sprite Icon, Map;
+    public Color color;
+    [InspectorName("敌对类型")]
     public EnemyVarietyType enemyVarietyType;
-    [Header("兴趣点")]
-    public KVP<GameObject, int>[] interestPoints;
+
+    [InspectorName("特产")]
+    public OOPartEnum[] product;
+    [InspectorName("兴趣点")]
+    public SKVP<GameObject, int>[] interestPoints;
 
     [System.Serializable]
+    [Inline]
     public struct MapItemInfo
     {
         public string name;

@@ -11,9 +11,9 @@ namespace Unity.FPS.Game
     {
 
         [Foldout("点位和信息", true)]
-        [CustomLabel("齐射")]
+        [InspectorName("齐射")]
         public bool UseManyMuzzle;
-        [CustomLabel("发射点位")]
+        [InspectorName("发射点位")]
         public List<Transform> WeaponManyMuzzles;
 
 
