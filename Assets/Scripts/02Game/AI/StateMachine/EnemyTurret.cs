@@ -1,4 +1,4 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.AI
@@ -26,6 +26,18 @@ namespace Unity.FPS.AI
 
         private Vector3 lastTargetPos;//上一帧目标的位置
 
+        [ContextMenu("重置")]
+        private void ResetQu()
+        {
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                if (turrets[i].barrelSetOffset.w == 0)
+                {
+                    Debug.LogError("炮塔的w=0    " + i);
+                    turrets[i].barrelSetOffset = new Quaternion(turrets[i].barrelSetOffset.x, turrets[i].barrelSetOffset.y, turrets[i].barrelSetOffset.z, 1);
+                }
+            }
+        }
         protected override void Start()
         {
             base.Start();

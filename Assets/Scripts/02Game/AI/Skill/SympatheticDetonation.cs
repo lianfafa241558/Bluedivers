@@ -27,7 +27,7 @@ namespace Unity.FPS.AI
         [SerializeField]
         WeaponBaseController weapon;
 
-        [InspectorName("actor的物体")]
+        [InspectorName("controller的物体")]
         [SerializeField]
         GameObject go;
 
@@ -81,8 +81,8 @@ namespace Unity.FPS.AI
         /// <summary>对范围内所有目标施加一次效果(范围伤害，不产生直击伤害)</summary>
         void ApplyEffect()
         {
-            AudioSvc.PlaySound(new(DamageData.ImpactSfx, transform.position, DamageData.SoundRadius, AudioGroups.Weapon));
-            VFXManager.Creat(DamageData.ImpactVfx, transform.position, transform.rotation, null);
+            if(DamageData.ImpactSfx) AudioSvc.PlaySound(new(DamageData.ImpactSfx, transform.position, DamageData.SoundRadius, AudioGroups.Weapon));
+            if (DamageData.ImpactVfx) VFXManager.Creat(DamageData.ImpactVfx, transform.position, transform.rotation, null);
             FpsHelper.Hit(new ProjectileHitData {
                 pos = controller.CenterPos,
                 normal = Vector3.up,

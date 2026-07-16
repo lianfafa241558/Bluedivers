@@ -40,8 +40,8 @@ Shader "LX/MaskTexture"
         half4 frag(v2f i) : SV_Target
         {
             half4 col = tex2D(_MainTex, i.uv)*_Color;
-            half3 mask = tex2D(_AlphaMask, i.uv* _AlphaMask_ST.rg+ _AlphaMask_ST.ba)*_MaskColor;
-            col.a *= mask.r+ mask.g+ mask.b;
+            half3 mask = (tex2D(_AlphaMask, i.uv * _AlphaMask_ST.rg + _AlphaMask_ST.ba) * _MaskColor).rgb;
+            col.a *= mask.r + mask.g + mask.b;
             //col.a = 0;
             //col.g = 0;
             //col.b = 0;

@@ -51,10 +51,15 @@ namespace Core
                 if (!NoLog)
                 {
                     Key val = key;
-                    Debug.LogError("错误：没找到Key:" + val?.ToString() + "初始设置:" + (DefaultSet != null));
+                    Debug.LogWarning("错误：没找到Key:" + val?.ToString() + "初始设置:" + (DefaultSet != null));
                 }
 
                 value = ((DefaultSet != null) ? DefaultSet(key) : DefaultValue);
+                // 引用类型需深拷贝，避免所有条目共享同一个 DefaultValue 实例
+                if (value != null && !typeof(Value).IsValueType)
+                {
+                    value = JsonUtility.FromJson<Value>(JsonUtility.ToJson(value));
+                }
                 arr.Add(new KVP<Key, Value>(key, value));
                 dic[key] = value;
                 return value;
@@ -213,7 +218,7 @@ namespace Core
                 Key key = arr[i].Key;
                 string obj = key?.ToString();
                 Value value = arr[i].Value;
-                Debug.LogError("Key:" + obj + " Value:" + value);
+                Debug.LogWarning ("Key:" + obj + " Value:" + value);
             }
         }
 

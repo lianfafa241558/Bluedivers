@@ -494,9 +494,9 @@ MonoBehaviour:
   - chassis: {fileID: 5560756813387852849}
     barrel: {fileID: 2084379261350283370}
     weapon: {fileID: 5377719761346034959}
-    aimSharpness: 3
-    detectionFireDelay: 0
-    aimBlendTime: 2
+    aimSharpness: 4
+    detectionFireDelay: 2
+    aimBlendTime: 1
     limitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 1, w: -0.00000004371139}
@@ -725,6 +725,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -735,6 +736,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -867,11 +869,11 @@ MonoBehaviour:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
   IsSeeingTarget: 0
+  obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
-  showCollider: {fileID: 0}
 --- !u!1 &6330040145805174349
 GameObject:
   m_ObjectHideFlags: 0

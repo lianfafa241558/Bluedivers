@@ -513,7 +513,10 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
     half3 emissive = lerp(albedo,0.2,0.9) * darkFactor * 0.08; // 10%自发光
     color.rgb += emissive;
 
-    SplatmapFinalColor(color, inputData.fogCoord*1.9/(1+originalStrength));
+    // 受光强度越高雾越淡，使用 NdotL * 主光亮度 做平滑渐变
+    // originalStrength 反映附加光强度，主光亮度由 mainLightResult 灰度体现
+    half lightIntensity = saturate(NdotL * Luminance(mainLightResult) * 2.0 + originalStrength);
+    SplatmapFinalColor(color, inputData.fogCoord * 1.9 / (1.0 + lightIntensity));
     return half4(color.rgb, 1.0h);
 
 #else

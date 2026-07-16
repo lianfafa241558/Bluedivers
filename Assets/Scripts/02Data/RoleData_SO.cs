@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
@@ -21,16 +21,19 @@ namespace Unity.FPS.Game
         DisplayDic<SpeechTypeEnum,SoundGroup_SO> speechGroups=new DisplayDic<SpeechTypeEnum, SoundGroup_SO>();
         public List<WeaponPlayerController> GetStartingWeapons(ArchivesData_SO.ArchRoleData arch)
         {
-            List<WeaponPlayerController> re=new() { 
-                weapons[WeaponTypeEnum.Primary][arch.weaponSelect[WeaponTypeEnum.Primary]] , 
-                weapons[WeaponTypeEnum.Secondary][arch.weaponSelect[WeaponTypeEnum.Secondary]],
-                weapons[WeaponTypeEnum.Special][arch.weaponSelect[WeaponTypeEnum.Special]],
-                weapons[WeaponTypeEnum.Grenade][arch.weaponSelect[WeaponTypeEnum.Grenade]],
-                weapons[WeaponTypeEnum.FlareGun][arch.weaponSelect[WeaponTypeEnum.FlareGun]],
+            List<WeaponPlayerController> re = new() {
+                GetWeapon(WeaponTypeEnum.Primary,arch.weaponSelect[WeaponTypeEnum.Primary]),
+                GetWeapon(WeaponTypeEnum.Secondary,arch.weaponSelect[WeaponTypeEnum.Secondary]),
+                GetWeapon(WeaponTypeEnum.Special,arch.weaponSelect[WeaponTypeEnum.Special]),
+                GetWeapon(WeaponTypeEnum.Grenade,arch.weaponSelect[WeaponTypeEnum.Grenade]),
+                GetWeapon(WeaponTypeEnum.FlareGun,arch.weaponSelect[WeaponTypeEnum.FlareGun]),
             };
             return re;
         }
-       
+        public WeaponPlayerController GetWeapon(WeaponTypeEnum type, int index)
+        {
+            return weapons[type][index % weapons[type].Count];
+        }
         public SoundGroup_SO SpeechGroup(SpeechTypeEnum type)
         {
             if (speechGroups.TryGet(type, out var list))

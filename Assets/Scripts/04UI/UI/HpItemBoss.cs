@@ -1,4 +1,4 @@
-﻿using Unity.FPS.AI;
+using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -14,7 +14,7 @@ public class HpItemBoss : HpItemBase
         base.Set(enemy);
         this.enemy = enemy.GetComponent<PartController>();
         lenght = this.enemy.invincibleArmor.Length;
-        Debug.LogError("长度"+ lenght);
+        Debug.Log("长度"+ lenght);
         int i=0;
         for (i=0; i< lenght; ++i)
         {

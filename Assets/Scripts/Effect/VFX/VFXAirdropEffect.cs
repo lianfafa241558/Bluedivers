@@ -393,7 +393,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         //Debug.LogWarning("状态 "+ data.State+"父级 "+ m_creatObject.transform.parent);
         if (data.State == AirdropState.Sustain && m_creatObject.transform.parent!=null)
         {
-            Debug.LogError("卸载");
+            Debug.Log("卸载");
             m_creatObject.transform.parent = null;
             m_creatObject.GetComponent<CharacterController>().enabled = true;
             m_creatObject.GetComponent<BaseSelfController>().enabled = true;

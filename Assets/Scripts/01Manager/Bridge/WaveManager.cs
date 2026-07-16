@@ -30,6 +30,7 @@ public class WaveManager : TickBehaviour
     List<GameObject> WaveUseObject;
 
     float m_lastWaveTime=Mathf.NegativeInfinity;
+    [SerializeField]
     int waveValue;
 
     public int WaveCount => ticks.Count - 1;
@@ -151,7 +152,19 @@ public class WaveManager : TickBehaviour
     public GameObject CreatUnit(UnitTier tier, Vector3 pos,float range, bool IsFixed = true)
     {
         //var random = BattleManager.Instance.BattleRandom;
-        var item = TierItemWeight[tier].WeightTake(100, random);
+        if (!TierItemWeight.TryGetValue(tier, out var weightList) || weightList.Count == 0)
+        {
+            // 降级：如果指定 tier 不存在，尝试使用字典中任意可用的 tier
+            Debug.LogWarning($"CreatUnit: tier '{tier}' 在当前模板配置中不存在，降级到默认 tier");
+            var firstKvp = TierItemWeight.FirstOrDefault();
+            if (firstKvp.Value == null || firstKvp.Value.Count == 0)
+            {
+                Debug.LogError("CreatUnit: 模板配置中没有可用的 tier，无法创建单位");
+                return null;
+            }
+            weightList = firstKvp.Value;
+        }
+        var item = weightList.WeightTake(100, random);
         //先取到地点
         if (NavMesh.SamplePosition(pos, out var hit, 50, NavMesh.AllAreas))
         {
@@ -446,7 +459,7 @@ public class RobotWave : I_TickClass, System.IDisposable
         groups = new();
         center = param.center;
 
-        spawnInterval = Mathf.Max(1f, 360f / Mathf.Max(1, creats.Count));
+        spawnInterval = Mathf.Max(1f, 480f / Mathf.Max(1, creats.Count));
         lastGroupSpawnTime = Time.time;
 
         BattleEventSub.OnEnemyDead += OnUnitDeath;
@@ -461,7 +474,7 @@ public class RobotWave : I_TickClass, System.IDisposable
 
         foreach (var g in groups)
         {
-            if (g.eagle && g.eagle.TryGetComponent(out PhoenixEagleController ctrl))
+            if (g.eagle && !g.dropped && g.eagle.TryGetComponent(out PhoenixEagleController ctrl))
             {
                 ctrl.onWait.RemoveAllListeners();
             }
@@ -494,6 +507,7 @@ public class RobotWave : I_TickClass, System.IDisposable
 
             case WaveState.Ongoing:
                 // 检查鹰群是否需要投放单位（等待阶段开始后3秒）
+                bool hasPendingDrop = false;
                 for (int i = groups.Count - 1; i >= 0; --i)
                 {
                     var g = groups[i];
@@ -502,6 +516,10 @@ public class RobotWave : I_TickClass, System.IDisposable
                     {
                         DropGroupUnits(g);
                         g.dropped = true;
+                    }
+                    else
+                    {
+                        hasPendingDrop = true;
                     }
                 }
 
@@ -518,7 +536,9 @@ public class RobotWave : I_TickClass, System.IDisposable
                 {
                     completeCreat = true;
                 }
-                else if (time % 5 == 0)
+
+                // 所有单位已生成完毕，且没有待投放的单位，才检查是否进入 NearEnd
+                if (completeCreat && !hasPendingDrop && time % 5 == 0)
                 {
                     if (units.Count <= 3)
                     {
@@ -528,6 +548,18 @@ public class RobotWave : I_TickClass, System.IDisposable
                 break;
 
             case WaveState.NearEnd:
+                // NearEnd 阶段仍需检查投放（可能有鹰刚到达等待点）
+                for (int i = groups.Count - 1; i >= 0; --i)
+                {
+                    var g = groups[i];
+                    if (g.dropped) continue;
+                    if (g.waitStartTime > 0 && Time.time - g.waitStartTime >= 3f)
+                    {
+                        DropGroupUnits(g);
+                        g.dropped = true;
+                    }
+                }
+
                 if (time % 5 == 0)
                 {
                     if (units.Count == 0)
@@ -585,21 +617,6 @@ public class RobotWave : I_TickClass, System.IDisposable
         var eagle = VFXManager.Creat(waveUseObject[0], eaglePos, Quaternion.AngleAxis(RandomUtils.Range(0f, 360f), Vector3.up), null);
         if (!eagle) return;
 
-        var eagleCtrl = eagle.GetComponent<PhoenixEagleController>();
-        if (eagleCtrl)
-        {
-            // 订阅等待阶段开始事件
-            eagleCtrl.onWait.RemoveAllListeners();
-            eagleCtrl.onWait.AddListener(() =>
-            {
-                var g = groups.Find(x => x.eagle == eagle);
-                if (g != null)
-                {
-                    g.waitStartTime = Time.time;
-                }
-            });
-        }
-
         EagleGroupInfo group = new()
         {
             eagle = eagle,
@@ -607,6 +624,28 @@ public class RobotWave : I_TickClass, System.IDisposable
             waitStartTime = -1,
             dropped = false
         };
+
+        var eagleCtrl = eagle.GetComponent<PhoenixEagleController>();
+        if (eagleCtrl)
+        {
+            // 先Add再注册回调，确保onWait触发时group已在列表中
+            groups.Add(group);
+
+            // 直接用 group 闭包引用，避免 groups.Find 找到其他复用同一鹰实例的旧 group
+            EagleGroupInfo capturedGroup = group;
+            eagleCtrl.onWait.RemoveAllListeners();
+            eagleCtrl.onWait.AddListener(() =>
+            {
+                if (!capturedGroup.dropped)
+                {
+                    capturedGroup.waitStartTime = Time.time;
+                }
+            });
+        }
+        else
+        {
+            groups.Add(group);
+        }
 
         if (bigIndex >= 0)
         {
@@ -621,7 +660,7 @@ public class RobotWave : I_TickClass, System.IDisposable
             }
 
             var go = Object.Instantiate(bigUnit,FpsHelper.GetNavMeshPoint(center),default,null);
-            foreach (var item in go.GetComponents<Behaviour>()) item.enabled = false;
+            foreach (var item in go.GetComponents<Behaviour>())if(item is not Health) item.enabled = false;
 
             go.transform.parent = eagle.transform;
             go.transform.localPosition = new Vector3(0, -10, 0);
@@ -645,7 +684,7 @@ public class RobotWave : I_TickClass, System.IDisposable
             {
                 var go = Object.Instantiate(popped[i],FpsHelper.GetNavMeshPoint(center), default, null);
                 //Debug.LogWarning("运输船坐标" + eagle.transform.position+"创建坐标"+go.transform.position,go);
-                foreach (var item in go.GetComponents<Behaviour>()) item.enabled = false;
+                foreach (var item in go.GetComponents<Behaviour>()) if (item is not Health) item.enabled = false;
                 go.transform.parent = eagle.transform;
                 go.transform.localPosition = s_RelativePositions[i];
                 //Debug.LogWarning("修改后坐标" + go.transform.position+"相对坐标"+ go.transform.localPosition, go);
@@ -661,8 +700,6 @@ public class RobotWave : I_TickClass, System.IDisposable
                 }
             }
         }
-
-        groups.Add(group);
     }
 
     void DropGroupUnits(EagleGroupInfo group)
@@ -676,14 +713,18 @@ public class RobotWave : I_TickClass, System.IDisposable
             unit.transform.SetParent(null);
             var pos = unit.transform.position;
             unit.transform.position = FpsHelper.GetNavMeshPoint(pos);
-            foreach (var item in unit.GetComponents<Behaviour>()) item.enabled = true;
+            foreach (var item in unit.GetComponents<Behaviour>()) if (item is not Health) item.enabled = true;
             // 启用Animator（开始落地动画）
             var fx = unit.GetComponent<EnemyControllerFX>();
             if (fx && fx.Animator)
             {
                 fx.Animator.enabled = true;
             }
+            unit.GetComponent<EnemyController>().SetNavDestination(
+                center + random.InsideUnitCircle().ToVector3() * 5
+            );
         }
+
     }
 
     void OnUnitDeath(Actor actor)

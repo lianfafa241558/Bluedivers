@@ -335,11 +335,14 @@ public class ArmamentWnd : Window
         ready[playerIndex] = state;
         //SetAlpha(go.GetChild(4, 0), ready[a] ? 0.2f : 0.01f);
         SetText(armamentRoot.GetChild(playerIndex, 4, 1), state ? "就绪" : "尚未就绪");
-        armamentRoot.GetChild(playerIndex).GetComponent<Animator>().Play(state ? "Ready" : "UnReady", 1, 0);
+        //Debug.LogError("让"+ armamentRoot.GetChild(playerIndex)+"播放"+(state ? "Ready" : "UnReady"), armamentRoot.GetChild(playerIndex));
+        //armamentRoot.GetChild(playerIndex).GetComponent<Animator>().Play(state ? "Ready" : "UnReady", 1, 0);
+        //Debug.LogError("让" + animators[playerIndex].gameObject + "Bool IsReady", animators[playerIndex].gameObject);
         animators[playerIndex].SetBool("IsReady",state);
         if (IEnumerableUtils.Sum(ready) == roomManager.players.Count)
         {
             GetComponent<Animator>().Play("Exit", 0, 0);
+            //Debug.LogError("让" + gameObject + "播放 Exit", gameObject);
         }
 
     }

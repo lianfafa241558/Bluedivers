@@ -1,13 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Core;
 using Core.Interface;
 using FPSGame.Attribute;
 using FPSGame.Furn;
-
-using Unity.FPS.Game;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.AI;
 

@@ -169,7 +169,7 @@ namespace Unity.FPS.Game
                     {
                         para = new(this, item.type, GetModifyDataName(item));
                         m_Parameter.Add(GetModifyDataName(item), para);
-                        Debug.Log($"新建了基础属性{item.type} {GetModifyDataName(item)}");
+                        //Debug.Log($"新建了基础属性{item.type} {GetModifyDataName(item)}");
                     }
                     para.Modify(item.modifier, (isAdd ? 1 : -1) * item.value);
                     para.ResetChangeValue();
@@ -400,6 +400,10 @@ namespace Unity.FPS.Game
                 }
                 if (HasFlag(AttrTag.OneHide))
                 {
+                    if (HasFlag(AttrTag.ScaleFromPrime))
+                    {
+                        return Value == attr.PrimeValue.RawFloat && ChangeValue == Value;
+                    }
                     return Value == 1 && ChangeValue == 1;
                 }
                 return false;
@@ -424,10 +428,19 @@ namespace Unity.FPS.Game
                     }
                     else
                     {
-                        cv = Tool.Round(cv * 100);
-                        fv = Tool.Round(fv * 100);
+                        cv = Tool.Round(cv / PrimeValue * 100);
+                        fv = Tool.Round(fv / PrimeValue * 100);
                     }
                     
+                }
+                if (HasFlag(AttrTag.ScaleFromPrime))
+                {
+                    var prime = PrimeValue;
+                    if (prime != 0)
+                    {
+                        cv = Tool.Round(cv / prime * 100);
+                        fv = Tool.Round(fv / prime * 100);
+                    }
                 }
 
                 var diff = Tool.Round(cv - fv);
@@ -443,9 +456,9 @@ namespace Unity.FPS.Game
                     re = string.Format("<color=#{1}>{0}{2}</color>",
                         diff > 0 ? "+" : "", 
                         ColorUtility.ToHtmlStringRGB(diff > 0 ? Positive : Negative),
-                        diff + (HasFlag(AttrTag.Percentage) ? "%" : ""));
+                        diff + (HasFlag(AttrTag.ScaleFromPrime) ? "%" : HasFlag(AttrTag.Percentage) ? "%" : ""));
                 }
-                var baseString = (Tool.Round(cv).ToString() + (HasFlag(AttrTag.Percentage) ? "%" : ""));
+                var baseString = (Tool.Round(cv).ToString() + (HasFlag(AttrTag.ScaleFromPrime) ? "%" : HasFlag(AttrTag.Percentage) ? "%" : ""));
                 var padWidth = Mathf.Max(0, 15 - Tool.TextLength(baseString, 2, 1, 0.5f, 2));
                 re += baseString.PadLeft(padWidth);
                

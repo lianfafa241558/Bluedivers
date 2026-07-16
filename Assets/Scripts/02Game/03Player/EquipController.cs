@@ -37,7 +37,7 @@ public class EquipController : MonoBehaviour
             var toUninstall = equips.Where(kv => kv.Key.NeedUninstall(equip) && kv.Key != equip).ToList();
             foreach (var item in toUninstall)
             {
-                Debug.LogError("尝试卸载"+item.Key.ID);
+                Debug.Log("尝试卸载"+item.Key.ID);
                 item.Value.Operate();
             }
 

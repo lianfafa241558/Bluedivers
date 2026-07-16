@@ -63,6 +63,9 @@ namespace Unity.FPS.AI
         [SerializeField]
         protected float TimeLastSeenTarget = Mathf.NegativeInfinity;
 
+        /// <summary>上一帧是否看见目标（用于检测重新发现）</summary>
+        private bool m_WasSeeingTargetLastFrame;
+
         protected Actor m_Actor;
 
         public GameObject showTarget;
@@ -157,8 +160,8 @@ namespace Unity.FPS.AI
             IsTargetInAttackRange = haveNewTarget && Vector3.Distance(CorePoint.position, Target.Pos) <= AttackRange + Target.Actor.HalfRange;
    
 
-            //发现目标
-            if ((!haveOldTarget && haveNewTarget))
+            //发现目标（从无到有，或重新看见旧目标）
+            if ((!haveOldTarget && haveNewTarget) || (haveNewTarget && !m_WasSeeingTargetLastFrame && IsSeeingTarget))
             {
                 OnDetect();
             }
@@ -167,6 +170,8 @@ namespace Unity.FPS.AI
             {
                 OnLostTarget();
             }
+
+            m_WasSeeingTargetLastFrame = IsSeeingTarget;
 
         }
 

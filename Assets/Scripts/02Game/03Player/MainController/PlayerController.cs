@@ -220,8 +220,8 @@ public class PlayerController : BaseSelfMoveableController
         float mouseX = InputHandler.GetLookInputsHorizontal();
         float mouseY = InputHandler.GetLookInputsVertical(); // 你需要获取垂直输入
 
-        m_CameraHorizontalAngle += mouseX * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat / 4;
-        m_CameraVerticalAngle += mouseY * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat / 4;
+        m_CameraHorizontalAngle += mouseX * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * Time.deltaTime;
+        m_CameraVerticalAngle += mouseY * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * Time.deltaTime;
         m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -20f, 70f); // 限制上下角度
 
         Quaternion rotation = Quaternion.Euler(

@@ -69,7 +69,7 @@ Terrain:
   m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
   m_GroupingID: 0
   m_RenderingLayerMask: 1
-  m_AllowAutoConnect: 1
+  m_AllowAutoConnect: 0
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
   m_TreeMotionVectorModeOverride: 3
@@ -449,7 +449,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   datas: []
   additionTerrain: {fileID: 6102391514508308164}
-  transitionDistance: 12
+  transitionDistance: 8
   StartModify: 0
 --- !u!114 &-661018551947443034
 MonoBehaviour:
@@ -2115,6 +2115,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8422535507869070560, guid: 8fd11c40b860de64db0ab091cbb72a8f,
+        type: 3}
+      propertyPath: flag
+      value: 16
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2905,6 +2910,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8422535507869070560, guid: 8fd11c40b860de64db0ab091cbb72a8f,
+        type: 3}
+      propertyPath: flag
+      value: 16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7174,6 +7184,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: RobotTower
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ed90c475cfe409949bb3a149e796cc67,
+        type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8842,6 +8857,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: RobotTower (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ed90c475cfe409949bb3a149e796cc67,
+        type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -9202,6 +9222,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: RobotTower (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ed90c475cfe409949bb3a149e796cc67,
+        type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

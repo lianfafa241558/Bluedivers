@@ -61,6 +61,7 @@ Shader "GlowTexture2"{
             half flowLightOffset = (_Time.y * _FlowLightSpeed % 3);
 			o.texcoord2+=half2(_FlowDir?0:flowLightOffset,_FlowDir?flowLightOffset:0);
 			o.color = v.color;
+			o.fogFactor = 0;
             #if _MY_FOG_ENABLE
             o.fogFactor = ComputeFogFactor(v.vertex.z);
             #endif

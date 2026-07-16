@@ -71,15 +71,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 6532111930710303637}
-    barrel: {fileID: 6532111930710303637}
+  - chassis: {fileID: 4940711550288143294}
+    barrel: {fileID: 4940711550288143294}
     weapon: {fileID: 4031239350501215660}
     aimSharpness: 5
     detectionFireDelay: 0.5
     aimBlendTime: 1
     limitRotation: 0
     allowDeviation: 0.005
-    barrelSetOffset: {x: 0, y: 0, z: 0, w: 0}
+    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
   AttackStop: 0
   AttackStopDistanceRatio: 1
@@ -186,7 +186,7 @@ MonoBehaviour:
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: a7fae22399a6e1d448dc0dd2210f1dac, type: 3}
-        ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
+        ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
         go: []
@@ -358,8 +358,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EyePoint: {fileID: 2941726500748240150}
-  DetectionRange: 30
-  HearingRange: 10
+  DetectionRange: 50
+  HearingRange: 25
   AttackRange: 20
   AlertRange: 30
   KnownTargetTimeout: 4
@@ -569,9 +569,9 @@ MonoBehaviour:
   cfg:
     _fakeAttrs:
     - Key: 1
-      Value: 1
+      Value: 2
     - Key: 2
-      Value: 0.1
+      Value: 0.5
     - Key: 7
       Value: 5
     - Key: 11
@@ -582,17 +582,17 @@ MonoBehaviour:
       Value: -1
   ProjectilePrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
     type: 3}
-  BulletFlag: 0
+  BulletFlag: 8
   Damages:
-  - Speed: 0
+  - Speed: 60
     Gravity: 0
     InheritWeaponSpeed: 0
-    MaxLifeTime: 0
-    MaxRange: 0
+    MaxLifeTime: 1
+    MaxRange: -1
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
-    DamageExplosion: 0
+    DamageExplosion: 5
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
@@ -600,11 +600,15 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     WeaknessBonus: 0
-    ExplosionInnerRange: 0
-    ExplosionRange: 0
+    ExplosionInnerRange: 1
+    ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion: []
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
@@ -618,6 +622,7 @@ MonoBehaviour:
     ChargeSpeedScale: 0
     ChargeGravityScale: 0
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -668,14 +673,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7540915039818301142}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.347, z: 0.256}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7446788449480016556}
   m_Father: {fileID: 933230869835747230}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7880919396944296135
 GameObject:
   m_ObjectHideFlags: 0
@@ -915,9 +920,3 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!4 &6532111930710303637 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -7368752424343738432, guid: 2a5e25fbcfcf1f744951c1422787892d,
-    type: 3}
-  m_PrefabInstance: {fileID: 4835273387840717909}
-  m_PrefabAsset: {fileID: 0}

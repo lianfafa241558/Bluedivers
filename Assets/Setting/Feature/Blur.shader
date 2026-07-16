@@ -60,7 +60,7 @@ Shader "LX/Blur"
             // 方法原理 o.uv = v.texcoord.xy * _MainTex_ST.xy + _MainTex_ST.zw;
             //_MainTex_ST 是纹理的属性值，写法是固定的为 纹理名+_ST(就是后面那个4个参数填缩放和偏移的)
             //o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);//但是这里不需要进行处理缩放啥的
-            o.uv = v.texcoord;
+            o.uv = v.texcoord.xy;
             o.color = v.color;
             return o;
         }

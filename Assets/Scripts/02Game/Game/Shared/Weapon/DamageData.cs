@@ -46,7 +46,7 @@ namespace Unity.FPS.Game
 
 
         //[Header("运动")]
-        /// <summary>下坠速度</summary>
+        /// <summary>速度</summary>
         public float Speed = 20f;
         /// <summary>下坠速度</summary>
         public float Gravity = 0f;

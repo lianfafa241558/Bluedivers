@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using GameContract;
@@ -50,6 +50,7 @@ namespace Unity.FPS.AI
         }
         private void OnDestroy()
         {
+            if (m_Controller == null) return;
             m_Controller.OnDetectedTarget -= OnDetectedTarget;
             m_Controller.OnLostTarget -= OnLostTarget;
             m_Controller.OnDie -= OnDeath;

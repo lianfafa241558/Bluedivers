@@ -2,6 +2,7 @@ using System.Linq;
 using Core;
 using GameContract;
 using Unity.FPS.Game;
+using UnityEditor;
 using UnityEngine;
 namespace Unity.FPS.AI
 {
@@ -74,6 +75,18 @@ namespace Unity.FPS.AI
             }
         }
 
+        [ContextMenu("重置")]
+        private void ResetQu()
+        {
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                if (turrets[i].barrelSetOffset.w == 0)
+                {
+                    Debug.LogError("炮塔的w=0    "+i);
+                    turrets[i].barrelSetOffset = new Quaternion(turrets[i].barrelSetOffset.x, turrets[i].barrelSetOffset.y, turrets[i].barrelSetOffset.z, 1);
+                }
+            }
+        }
         protected override void Start()
         {
             base.Start();
@@ -104,6 +117,8 @@ namespace Unity.FPS.AI
         /// <summary>状态机切换</summary>
         protected override void UpdateAiStateTransitions()
         {
+            // 死亡后不再进行状态切换
+            if (AiState == AIState.Death) return;
             // Vertigo/Terror 期间冻结状态切换
             if (_vertigoActive || _terrorActive) return;
 
@@ -186,6 +201,9 @@ namespace Unity.FPS.AI
         protected override void UpdateCurrentAiState()
         {
             if (!m_EnemyController.BirthComplete) return;
+
+            // 死亡后不再执行任何行为
+            if (AiState == AIState.Death) return;
 
             // Vertigo：完全禁止移动，强制停止导航
             if (IsMoveLocked)

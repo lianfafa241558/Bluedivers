@@ -56,10 +56,14 @@ public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointer
     {
         enterTime = Time.time;
         isButtonEnter = true;
-        foreach (var item in ControlGo)
+        if (ControlGo!=null)
         {
-            item.SetActive(true);
+            foreach (var item in ControlGo)
+            {
+                item.SetActive(true);
+            }
         }
+
         Enter?.Invoke(_);
     }
 
@@ -67,9 +71,12 @@ public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointer
     {
         isButtonEnter = false;
         exitTime = Time.time;
-        foreach (var item in ControlGo)
+        if (ControlGo != null)
         {
-            item.SetActive(false);
+            foreach (var item in ControlGo)
+            {
+                item.SetActive(false);
+            }
         }
         Exit?.Invoke(_);
         //if (EnterScale != 1) transform.localScale /= EnterScale;

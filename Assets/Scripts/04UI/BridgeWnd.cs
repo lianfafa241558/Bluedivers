@@ -1,4 +1,5 @@
 using Core;
+using Core.Interface;
 using FPSGame.Attribute;
 using GameContract;
 using Photon.Realtime;
@@ -66,11 +67,12 @@ public class BridgeWnd : Window
 
     private void OnSelectRolePreview(RoleData_SO data)
     {
+        //Debug.LogError("实体路径" + "StudentModle/" + data.ID);
         var go = resManager.LoadPrefab("StudentModle/" + data.ID);
-        SwitchRolePreview(go.GetComponent<I_Actor>());
+        SwitchRolePreview(go.GetComponent<I_Entity>());
     }
 
-    private void SwitchRolePreview(I_Actor player)
+    private void SwitchRolePreview(I_Entity player)
     {
         SetText(selfName, player.ShowName);
         SetSprite(selfIcon, player.Portrait);

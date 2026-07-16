@@ -110,6 +110,7 @@ namespace Unity.FPS.Game
         protected virtual bool TryShoot()
         {
             if (!AllowShoot) return false;
+            if (IsOverheated) return false;
             if (CanShoot)
             {
                 HandleShoot();

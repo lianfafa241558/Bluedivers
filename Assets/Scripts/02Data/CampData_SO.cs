@@ -40,10 +40,12 @@ public class CampData_SO : ScriptableObject
     [InspectorName("名称")]
     public string ShowName;
     /// <summary>图标</summary>
+    [SpritePreview(4, 3)]
     [InspectorName("图标")]
     public Sprite Sprite;
     /// <summary>击杀图标</summary>
     [InspectorName("击杀图标")]
+    [SpritePreview(4, 3)]
     public Sprite KillSprite;
 
     /// <summary>颜色</summary>

@@ -132,6 +132,9 @@ Shader "LX/Texture2"
             o.uv = float2(o.uv.y,o.uv.x); 
         #endif
             o.color = v.color;
+            o.positionWS = float3(0, 0, 0);
+            o.normalWS = float3(0, 0, 0);
+            o.fogFactor = 0;
             //o.worldPos = mul(unity_ObjectToWorld, v.vertex);//旧版写法
             //o.positionWS = GetVertexPositionInputs(v.vertex.xyz).positionWS;//Urp写法
         #if _UseFresnel

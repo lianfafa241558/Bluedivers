@@ -106,13 +106,15 @@ Shader "LX/Stealth"
 				v2f o;
 				VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
 				o.vertex = vertexInput.positionCS;
+				o.uvgrab = float4(0, 0, 0, 0);
 				o.uvmain = TRANSFORM_TEX(v.texcoord, _NormalTex);
+				o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
 			#if _UseFresnel
 				
 				
 			#endif
 			#if _UseFresnel||_UseAlphaClipping
-				o.positionWS = TransformObjectToWorld(v.vertex);
+				o.positionWS = TransformObjectToWorld(v.vertex.xyz);
 			#endif
 			#if _UseFresnel
 				o.normalWS = TransformObjectToWorldNormal(v.normal);
@@ -129,14 +131,14 @@ Shader "LX/Stealth"
 				//noise effect
 				half4 offsetColor1 = tex2D(_NormalTex, i.uvmain + _Time.xz * _HeatTime);
 				half4 offsetColor2 = tex2D(_NormalTex, i.uvmain - _Time.yx * _HeatTime);
-				half distortX = ((offsetColor1.r + offsetColor2.r) - 1) * _HeatForce * strengthTex;
-				half distorty = ((offsetColor1.g + offsetColor2.g) - 1) * _HeatForce * strengthTex;
+				half distortX = ((offsetColor1.r + offsetColor2.r) - 1) * _HeatForce * strengthTex.r;
+				half distorty = ((offsetColor1.g + offsetColor2.g) - 1) * _HeatForce * strengthTex.r;
 
 				half2 screenUV = (i.vertex.xy / _ScreenParams.xy) + float2(distortX, distorty);
 
 				half4 col = tex2D(_CameraOpaqueTexture, screenUV);
 
-				half3 mainTex = tex2D(_MainTex,i.uvmain);
+				half3 mainTex = tex2D(_MainTex, i.uvmain).rgb;
 				half3 extraCol = mainTex.rgb*saturate(_HitColor.rgb+_DissolveValue.rgb*10);
 				
 #if _UseFresnel

@@ -1,7 +1,6 @@
 using FPSGame.Attribute;
 using FPSGame.Furn;
 using UnityEngine;
-using static UnityEditor.Progress;
 
 public class Furniture_NPCChat : Furniture_Attached
 {

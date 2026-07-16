@@ -112,7 +112,8 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         var data = Resources.Load<RoleData_SO>("GameData/Role/RD_"+ ID).weapons;
         for(int i = 0; i < 6; ++i)
         {
-            var weapon = data[(WeaponTypeEnum)i][role.weaponSelect[(WeaponTypeEnum)i]];
+            //如果超出范围自动回滚
+            var weapon = data[(WeaponTypeEnum)i][role.weaponSelect[(WeaponTypeEnum)i]%data[(WeaponTypeEnum)i].Count];
             re[i]=weaponUpgradeDic.TryGet(ID + "_" + weapon.WeaponName,new(ID + "_" + weapon.WeaponName, weapon.UpgradeCount().Length)).selectIndex;
         }
         return re;

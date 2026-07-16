@@ -68,7 +68,7 @@ namespace FpsGame.Mission
                 var go = GameObject.FindWithTag("StartPoint");
                 if (go)
                 {
-                    Debug.LogError("尝试设置init"+gameObject,gameObject);
+                    Debug.LogWarning("尝试设置init"+gameObject,gameObject);
                     entity = go.GetComponent<MissionView>();
                     entity.Init(this, new int[0]);
                     pos = entity.Pos;

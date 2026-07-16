@@ -311,7 +311,7 @@ public class SelectRoleWnd : Window
 
         int count = data.weapons[type].Count;
         arch.weaponSelect[type] = (arch.weaponSelect[type] + count + (left ? -1 : 1)) % count;
-        SetWeaponPreView(index, data.weapons[type][arch.weaponSelect[type]]);
+        SetWeaponPreView(index, data.GetWeapon(type,arch.weaponSelect[type]));
         SetText(weaponListRoot.GetChild(index, 4), (1 + arch.weaponSelect[type]) + "/" + count);
         meetSave = true;
     }
@@ -393,11 +393,11 @@ public class SelectRoleWnd : Window
             var type = (WeaponTypeEnum)i;
             int index = arch.weaponSelect[type], count = data.weapons[type].Count;
 
-            SetWeaponPreView(i, data.weapons[type][index]);
+            SetWeaponPreView(i, data.GetWeapon(type, index));
             SetActive(weaponListRoot.GetChild(i, 4), count > 1);
             SetText(weaponListRoot.GetChild(i, 4), (1 + index) + "/" + count);
 
-            var lenghts = data.weapons[type][index].UpgradeCount();
+            var lenghts = data.GetWeapon(type, index).UpgradeCount();
             for (int x = 0; x < weaponListRoot.GetChild(i, 5).childCount; ++x)
             {
                 SetActive(weaponListRoot.GetChild(i, 5, x), x < lenghts.Length);
@@ -413,7 +413,8 @@ public class SelectRoleWnd : Window
     private void ShowWeaponWnd()
     {
         var type = (WeaponTypeEnum)nowSelectWeapon;
-        var weaponTemp = data.weapons[type][arch.weaponSelect[type]];
+        
+        var weaponTemp = data.GetWeapon(type, arch.weaponSelect[type]);
         var weaponInst= showWeapon = Instantiate(weaponTemp, m_SelectWeaponCamera.transform.GetChild(0));
         if (weaponInst.ShowRoot)
         {
@@ -431,7 +432,7 @@ public class SelectRoleWnd : Window
         {
             if (SetActive(weaponitemListLayout.GetChild(i), i < count))
             {
-                SetSprite(weaponitemListLayout.GetChild(i,0), data.weapons[type][i].WeaponIcon);
+                SetSprite(weaponitemListLayout.GetChild(i,0), data.GetWeapon(type,i).WeaponIcon);
             }
         }
 

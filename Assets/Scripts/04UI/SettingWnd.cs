@@ -30,7 +30,7 @@ public class SettingWnd : Window
     public Transform settingRoot,updateTitle, updateTime, updateDesc, updateCount, updateLeft, updateRight;
     
     private List<UpdateData_SO> m_UpdateDataArr;
-    private int nowUpdateIndex=1;
+    private int nowUpdateIndex=0;
     private int nowExpandIndex=1;
     //[SerializeField]
     //private MyVolumeFeature feature;
@@ -408,6 +408,14 @@ public class SettingWnd : Window
         //鼠标按esc不锁是unity编辑器的特殊情况，无视就行（编译没这个问题）
         return true;
     }
+
+
+    // 这个方法会被按钮的OnClick事件调用
+    public void _OpenURL(string url)
+    {
+        Application.OpenURL(url);
+    }
+
 
 }
 

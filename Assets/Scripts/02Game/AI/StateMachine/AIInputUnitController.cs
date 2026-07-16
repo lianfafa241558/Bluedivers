@@ -1,21 +1,21 @@
+using System;
 using System.Collections.Generic;
 using Core;
-
+using FPSGame.Attribute;
 using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.AI
 {
+
     /// <summary>
     /// 属于外挂组件，其他人不引用
     /// </summary>
     public abstract class AIInputUnitController : AIInputBaseController
     {
-
+        [InspectorName("炮台")]
         [SerializeField]
         protected List<Turret> turrets=new();
-
-
 
         protected override void Start()
         {
@@ -88,7 +88,7 @@ namespace Unity.FPS.AI
             /// <summary>炮管手动偏移</summary>
             [SerializeField]
             [InspectorName("炮管手动偏移")]
-            public Quaternion barrelSetOffset;
+            public Quaternion barrelSetOffset = Quaternion.identity;
 
             /// <summary>炮管目标旋转</summary>
             protected Quaternion barrelRotation { get; set; }
@@ -114,9 +114,9 @@ namespace Unity.FPS.AI
                 //记录Y轴旋转的反向处理
                 //barrelOffset = (noChassis ? chassisOffset : Quaternion.identity) * Quaternion.Inverse(firePoint.rotation) * barrel.rotation;
                 if(HaveBarrel) barrelOffset = Quaternion.Inverse(firePoint.rotation) * barrel.rotation;
-
+                //Debug.Log($"[Turret Init] firePoint={(firePoint != null ? firePoint.name : "NULL")}, barrelOffset={barrelOffset.eulerAngles}");
                 //将当前旋转记录
-                chassisStartRotation=chassisRotation = chassis.rotation;
+                chassisStartRotation =chassisRotation = chassis.rotation;
                 if (HaveBarrel) barrelStartRotation =barrelRotation = barrel.rotation;
 
             }
@@ -189,6 +189,7 @@ namespace Unity.FPS.AI
 
                 //看向目标X轴加上原本偏移方向的修正(未受限制的
                 Quaternion tarUnlimitBarrelRotation = Quaternion.LookRotation(unlimitBarrelDir) * barrelOffset * barrelSetOffset;
+                //Debug.Log($"barrelSetOffset=({barrelSetOffset.x},{barrelSetOffset.y},{barrelSetOffset.z},{barrelSetOffset.w}), tarUnlimit=({tarUnlimitBarrelRotation.x:F4},{tarUnlimitBarrelRotation.y:F4},{tarUnlimitBarrelRotation.z:F4},{tarUnlimitBarrelRotation.w:F4}), dot={Mathf.Abs(Quaternion.Dot(tarUnlimitBarrelRotation, barrelRotation)):F4}");
 
 
                 if (!integrated)chassisRotation = Quaternion.Slerp(chassisRotation, tarChassisRotation, aimSharpness * Time.deltaTime);

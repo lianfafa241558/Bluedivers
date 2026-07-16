@@ -26,6 +26,8 @@
 
 ## 修复记录
 - ModifyTerrain.cs：根物体悬浮 bug — Modify() 协程中先在旧地形高度贴地，再 yield return ModifyHeightMap 修改地形，地形改变后根物体 Y 未更新。修复：在地形修改和 AdditionTerrain 完成后重新采样高度并贴地。
+- WaveManager.cs：CreatUnit 访问 `TierItemWeight[tier]` 时，若 tier（如 Giant）在当前模板配置中不存在，抛出 KeyNotFoundException。修复：改用 TryGetValue + FirstOrDefault 降级兜底。
+- ObjectPool.cs：`AutoObjectPool<K,V>.Release(K key)` 错误调用 `_Pop` 而非 `_Push`，导致 HpWnd 血条回收时 `SetActive(false)` 不执行，血条 UI 卡在屏幕上不消失。修复：`_Pop?.Invoke(item)` → `_Push?.Invoke(item)`。
 
 ## 协作偏好
 - 遇到不确定/有疑问的情况时，应先暂停、总结当前状态并向用户询问，而不是自行做大量全局搜索去推断。优先问清楚再行动。

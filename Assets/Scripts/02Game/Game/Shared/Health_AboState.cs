@@ -26,7 +26,7 @@ namespace Unity.FPS.Game
         private List<SKVP<DamageTypeEnum, int>> AboGaugeArr = new();
 
         /// <summary>异常状态积蓄槽</summary>
-        protected Dictionary<DamageTypeEnum, AboGaugeEntry> AboGauge;
+        protected Dictionary<DamageTypeEnum, AboGaugeEntry> AboGauge = new();
 
         /// <summary>复用的异常状态 tick 伤害缓冲，避免 Update 中分配</summary>
         private static readonly List<SKVP<DamageTypeEnum, PEInt>> _AboDmgBuffer = new ();
@@ -36,7 +36,7 @@ namespace Unity.FPS.Game
 
         private void InitAboState()
         {
-            AboGauge = new();
+            AboGauge.Clear();
             foreach (var item in AboGaugeArr)
             {
                 AboGauge.Add(item.Key, new AboGaugeEntry { Current = 0, Max = item.Value });

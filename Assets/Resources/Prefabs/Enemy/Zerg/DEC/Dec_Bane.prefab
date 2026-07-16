@@ -87,7 +87,9 @@ MonoBehaviour:
     DestructeRadius: 3
     ShockwaveRadius: 6
     DamageGroupExplosion:
-    - Key: 0
+    - Key: 1
+      Value: 1
+    - Key: 1
       Value: 1
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
@@ -103,6 +105,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -550,8 +553,8 @@ MonoBehaviour:
   - chassis: {fileID: 3069427250665485912}
     barrel: {fileID: 7105274076505407050}
     weapon: {fileID: 7153386031895443982}
-    aimSharpness: 10
-    detectionFireDelay: 0
+    aimSharpness: 4
+    detectionFireDelay: 2
     aimBlendTime: 1
     limitRotation: 0
     allowDeviation: 0.005

@@ -91,6 +91,7 @@ namespace Unity.FPS.AI
             NavMeshAgent = GetComponent<NavMeshAgent>();
             m_SelfColliders = GetComponentsInChildren<Collider>();
 
+            if(NavMeshAgent) NavMeshAgent.updateRotation = true;
             //NavMeshAgent.enabled = true;
             //NavMeshAgent.Warp(transform.position);
             /*
@@ -99,7 +100,7 @@ namespace Unity.FPS.AI
                 NavMeshAgent.Warp(hit.position);
                 //transform.position = hit.position;
             }*/
-            
+
             DetectionModule = GetComponentInChildren<DetectionModule>();
             if (DetectionModule.IsValid()) {
                 DetectionModule.SetActor((Actor)m_Actor);
@@ -141,7 +142,7 @@ namespace Unity.FPS.AI
             FindAndInitializeAllWeapons();
             GetCurrentWeapon();
             Invoke(nameof(BirthEnd), BirthDuration+0.1f);
-
+            Speed.AddModifier(ModifierType.Factor,-1);
         }
 
 
@@ -156,7 +157,7 @@ namespace Unity.FPS.AI
         void BirthEnd()
         {
             if (m_lastDestination!=default) SetNavDestination(m_lastDestination);
-
+            Speed.AddModifier(ModifierType.Factor, 1);
         }
 
 
@@ -211,7 +212,7 @@ namespace Unity.FPS.AI
         {
             if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
             {
-                NavMeshAgent.ResetPath();
+                NavMeshAgent?.ResetPath();
             }
         }
 
@@ -230,7 +231,7 @@ namespace Unity.FPS.AI
         {
             base._OnDie(source);
 
-            if (NavMeshAgent && NavMeshAgent.isActiveAndEnabled)
+            if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
             {
                 NavMeshAgent.isStopped = true;
                 NavMeshAgent.enabled = false;
@@ -239,6 +240,7 @@ namespace Unity.FPS.AI
             {
                 DetectionModule.enabled = false;
             }
+            Speed.AddModifier(ModifierType.Factor, -1);
             /*
             for (int i = 0; i < m_Weapons.Length; i++)
             {

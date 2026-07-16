@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static UnityEditor.Progress;
 
 namespace Core
 {
@@ -520,7 +518,7 @@ namespace Core
         {
             if (useObjects.TryGetValue(key, out var item))
             {
-                _Pop?.Invoke(item);
+                _Push?.Invoke(item);
                 freeObjects.Push(item);
                 useObjects.Remove(key);
             }

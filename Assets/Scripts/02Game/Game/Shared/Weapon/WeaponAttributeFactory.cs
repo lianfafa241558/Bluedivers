@@ -40,7 +40,7 @@ namespace Unity.FPS.Game
             { WeaponAttrType.DirectDamage, (false, default, ModifierType.All) },
             { WeaponAttrType.ExplosionDamage, (false, default, ModifierType.All) },
             { WeaponAttrType.ExplosionRange, (false, default, ModifierType.All) },
-            { WeaponAttrType.BulletSpeed, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.Factor) },
+            { WeaponAttrType.BulletSpeed, (false, AttrTag.ScaleFromPrime | AttrTag.OneHide, ModifierType.Factor) },
             //{ WeaponAttrType.MaxDistance, (false, default, ModifierType.All) },
 
             // 激光武器属性
@@ -165,12 +165,16 @@ namespace Unity.FPS.Game
         /// <summary> 1时隐藏</summary>
         [InspectorName("1时隐藏")]
         OneHide = 1 << 4,
+
         /// <summary> 仅文本(>0时以+名称形式显示在末尾，专为Special设计)</summary>
         [InspectorName("仅文本")]
         TextOnly = 1 << 5,
         /// <summary> 始终隐藏(不在参数预览中显示)</summary>
         [InspectorName("始终隐藏")]
         IsHide = 1 << 6,
+        /// <summary> 相对于原始值百分比显示</summary>
+        [InspectorName("相对于原始值百分比")]
+        ScaleFromPrime = 1 << 7,
 
         /// <summary> (Final)必须整数</summary>
         OnlyInt = 1 << 10,

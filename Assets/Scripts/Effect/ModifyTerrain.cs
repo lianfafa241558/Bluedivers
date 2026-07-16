@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core;
-using GameContract;
 
 using UnityEngine;
 
@@ -56,9 +55,12 @@ public class ModifyTerrain : MonoBehaviour
                 //Debug.LogError("附加了地形" + gameObject);
             }
 
-            // 地形修改完成后重新贴地，避免因地形变化导致根物体悬浮
-            float newY = TerrainUtils.WSToHeight(transform.position);
-            //transform.position = new(transform.position.x, newY, transform.position.z);
+            // 地形修改完成后用 Raycast 重新贴地，确保读到物理世界真实高度
+            if (Physics.Raycast(transform.position + Vector3.up * 100, Vector3.down, out var hit, 200, LayerMask.GetMask("Ground")))
+            {
+                float newY = hit.point.y;
+                if (newY < transform.position.y) transform.position = new(transform.position.x, newY, transform.position.z);
+            }
         }
 
         Destroy(this);

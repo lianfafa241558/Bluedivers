@@ -110,7 +110,7 @@ public class UICamera : Singleton<UICamera>
         if (uiCameraData.renderType != CameraRenderType.Base)
         {
             uiCameraData.renderType = CameraRenderType.Base;
-            Debug.Log($"[相机管理] {uiCamera.name} 切换到 Base 模式（无其他相机，作为主相机）");
+            //Debug.Log($"[相机管理] {uiCamera.name} 切换到 Base 模式（无其他相机，作为主相机）");
         }
 
         // 确保清空自己的堆栈（避免死循环引用自身？一般不需要，但清空更安全）

@@ -413,7 +413,7 @@ public class SelectMapWnd : Window
         SetColor(areaInfoIcon.parent, info.Color);
         SetSprite(areaInfoIcon, info.Sprite);
         var mapData = taskManager.MapData[mapRoot.GetChild(SelectMapIndex).name];
-        var campData = taskManager.Camps[mapData.enemyVarietyType];
+        var campData = taskManager.Camps[mapData.mapItemInfos[index].enemyVarietyType];
         SetSprite(areaInfoEnemy, campData.Sprite);
         SetColor(areaInfoEnemy, campData.Color);
 

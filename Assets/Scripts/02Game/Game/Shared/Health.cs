@@ -114,7 +114,7 @@ namespace Unity.FPS.Game {
 
         /// <summary>受到伤害</summary>
         public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource,Collider damageAffected,Vector3 pos,bool response=true) {
-            if (Invincible)
+            if (Invincible || m_IsDead)
                 return;
             bool haveshield= CurrentShield > 0, isBreakShield=false;
             PEInt finaldamgage = 0;

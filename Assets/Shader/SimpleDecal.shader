@@ -24,6 +24,8 @@ Shader "SimpleDecal"
         [Enum(UnityEngine.Rendering.CullMode)]_Cull("_Cull", Float) = 1 //1 = Front
         //[Enum(UnityEngine.Rendering.CompareFunction)]_ZTest("_ZTest", Float) = 4 //4 = LEqual
 
+        //[Toggle(_UseFog)] _UseFog("Use Unity Fog", Float) = 1
+
     }
 
     SubShader
@@ -191,6 +193,9 @@ Shader "SimpleDecal"
 
                 //unity的雾气效果
                 col.rgb = MixFog(col.rgb, i.cameraPosOSAndFogFactor.a);
+
+                // 预乘 Alpha：确保透明区域完全不影响背景（保留背景雾效）
+                col.rgb *= col.a;
 
                 return col;
             }

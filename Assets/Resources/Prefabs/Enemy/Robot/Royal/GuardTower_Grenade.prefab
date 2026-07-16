@@ -225,7 +225,7 @@ MonoBehaviour:
       Value: -1
   ProjectilePrefab: {fileID: 8924682559891268397, guid: 6d4e5671e640839468a79d4ff7063e57,
     type: 3}
-  BulletFlag: 0
+  BulletFlag: 8
   Damages:
   - Speed: 100
     Gravity: 0
@@ -265,6 +265,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637058727625}
   UnparentMuzzleFlash: 0
@@ -520,7 +521,7 @@ MonoBehaviour:
   - chassis: {fileID: 6764436568306652342}
     barrel: {fileID: 5872593030746331117}
     weapon: {fileID: 1708645017}
-    aimSharpness: 10
+    aimSharpness: 5
     detectionFireDelay: 1.1
     aimBlendTime: 1
     limitRotation: 0

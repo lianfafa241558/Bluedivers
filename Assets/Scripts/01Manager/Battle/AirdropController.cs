@@ -181,7 +181,7 @@ public class AirdropController : MonoBehaviour
     private void OnCancel(GameObject go,AirdropData item)
     {
         if (!item.IsValid()||go !=Player.gameObject) return;
-        Debug.LogError("取消准备中的战备"+item);
+        Debug.LogWarning("取消准备中的战备"+item);
         item.State = AirdropState.Ready;
 
         WaitRelease = null;
@@ -240,7 +240,7 @@ public class AirdropController : MonoBehaviour
                     {
                         if (item.cfg.deliveryType == AirdropDeliveryEnum.Jet)
                         {
-                            Debug.LogError("所有飞鹰重新装填");
+                            Debug.Log("所有飞鹰重新装填");
                             item.State = AirdropState.Cool;//所有飞鹰共装填
                             item.time = data.cool;
                             item.count = item.arriveCount;

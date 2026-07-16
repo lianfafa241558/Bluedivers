@@ -493,7 +493,7 @@ namespace Unity.FPS.Game
             { 
                 if (AllowShoot && CanShoot)
                 {
-                    Debug.LogError("激光创建自杀");
+                    //Debug.LogError("激光创建自杀");
                     HandleShoot();
                     OnUIUpdate?.Invoke();
                     InLasering = true;

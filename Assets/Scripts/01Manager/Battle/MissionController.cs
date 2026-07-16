@@ -205,7 +205,7 @@ public class MissionController : MonoBehaviour
 
         if (candidates.Count == 0)
         {
-            Debug.LogError("没有找到可用的点");
+            Debug.LogWarning("没有找到可用的点");
             return Vector3.zero;
         }
 

@@ -64,7 +64,7 @@ namespace FPSGame.AI
         {
             var list = new List<IEquippable>(GetEquippableList()).FindAll(item => item.ID.Contains("Dog"));
             var index = list.FindIndex(item => ReferenceEquals(item, this));
-            Debug.LogError($"当前装备列表中共有{list.Count}个GuardDog，当前装备位于第{index}个");
+            Debug.Log($"当前装备列表中共有{list.Count}个GuardDog，当前装备位于第{index}个");
             // 基础方向在Owner 右侧 45度，第n个偏移角度= 360/n
             int count = list.Count;
             float angle = 360f / count * (index + 1);

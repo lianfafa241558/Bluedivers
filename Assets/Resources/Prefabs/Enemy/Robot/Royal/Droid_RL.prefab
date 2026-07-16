@@ -64,7 +64,7 @@ MonoBehaviour:
       Value: -1
   ProjectilePrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
     type: 3}
-  BulletFlag: 0
+  BulletFlag: 8
   Damages:
   - Speed: 100
     Gravity: 10
@@ -155,13 +155,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 647721159250667805}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.12886, y: -0.12886, z: -0.6952662, w: 0.6952662}
+  m_LocalRotation: {x: 0.1349223, y: -0.1349223, z: -0.6941153, w: 0.6941153}
   m_LocalPosition: {x: -0.000047454832, y: 0.000031585696, z: 1.1116328}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1274457981293757952}
-  m_LocalEulerAnglesHint: {x: 0, y: -21, z: -90}
+  m_LocalEulerAnglesHint: {x: 0, y: -22, z: -90}
 --- !u!1 &790177999155148812
 GameObject:
   m_ObjectHideFlags: 0
@@ -271,7 +271,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EyePoint: {fileID: 8449289266165682237}
   DetectionRange: 50
-  HearingRange: 10
+  HearingRange: 25
   AttackRange: 50
   AlertRange: 30
   KnownTargetTimeout: 4
@@ -745,18 +745,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 1274457981293757952}
-    barrel: {fileID: 8968079531062296686}
+  - chassis: {fileID: 8968079531062296686}
+    barrel: {fileID: 1274457981293757952}
     weapon: {fileID: 6169973437940763510}
     aimSharpness: 5
     detectionFireDelay: 0.5
     aimBlendTime: 1
     limitRotation: 0
     allowDeviation: 0.005
-    barrelSetOffset: {x: 0, y: 1, z: 0, w: -0.00000004371139}
+    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
   AttackStop: 0
-  AttackStopDistanceRatio: 1
+  AttackStopDistanceRatio: 0.5
   MaintainMaxDis: 0
   PatrolSpeed: 2
   BewareSpeed: 3

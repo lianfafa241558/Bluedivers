@@ -46,14 +46,15 @@ Shader "LX/Warping"
 					sampler2D _StrengthTex;
 					SAMPLER(_CameraOpaqueTexture);
 
-					v2f vert(appdata_t v)
-					{
-						v2f o;
-						VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
-						o.vertex = vertexInput.positionCS;
-						o.uvmain = TRANSFORM_TEX(v.texcoord, _NormalTex);
-						return o;
-					}
+				v2f vert(appdata_t v)
+				{
+					v2f o;
+					VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
+					o.vertex = vertexInput.positionCS;
+					o.uvgrab = float4(0, 0, 0, 0);
+					o.uvmain = TRANSFORM_TEX(v.texcoord, _NormalTex);
+					return o;
+				}
 
 					half4 frag(v2f i) : SV_Target
 					{
@@ -62,8 +63,8 @@ Shader "LX/Warping"
 						//noise effect
 						half4 offsetColor1 = tex2D(_NormalTex, i.uvmain + _Time.xz * _HeatTime);
 						half4 offsetColor2 = tex2D(_NormalTex, i.uvmain - _Time.yx * _HeatTime);
-						half distortX = ((offsetColor1.r + offsetColor2.r) - 1) * _HeatForce * strengthTex;
-						half distorty = ((offsetColor1.g + offsetColor2.g) - 1) * _HeatForce * strengthTex;
+						half distortX = ((offsetColor1.r + offsetColor2.r) - 1) * _HeatForce * strengthTex.r;
+						half distorty = ((offsetColor1.g + offsetColor2.g) - 1) * _HeatForce * strengthTex.r;
 
 						half2 screenUV = (i.vertex.xy / _ScreenParams.xy) + float2(distortX, distorty);
 

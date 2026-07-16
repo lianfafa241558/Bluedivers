@@ -13,9 +13,12 @@ namespace FpsGame.Mission
     [AddComponentMenu("任务/主要/彻底消灭", 30)]
     public class MissionEradicate : MissionBase
     {
-
-        public int freeCount;
-
+        [SerializeField]
+        private int LastWaveTickCount;
+        [SerializeField]
+        private int freeCount;
+        [SerializeField]
+        private int showCount;
         protected override void StartMission()
         {
             BattleEventSub.OnEnemyDead += EnemyDead;
@@ -38,12 +41,14 @@ namespace FpsGame.Mission
             //主线不用
             //base.Tick();
             if (data.complete) return true;
-            if (BattleManager.Instance.WaveCont.WaveCount == 0)
+            showCount = BattleManager.Instance.WaveCont.WaveCount;
+            if (TickCount - LastWaveTickCount >20|| BattleManager.Instance.WaveCont.WaveCount == 0)
             {
                 if (++freeCount >= 4)
                 {
                     BattleManager.Instance.CreatWave(WaveCreateParams.Extra.Set(ActorsManager.Players.RandomTake().Pos).Scale(0.8f));
                     freeCount = 0;
+                    LastWaveTickCount = TickCount;
                 }
 
             }

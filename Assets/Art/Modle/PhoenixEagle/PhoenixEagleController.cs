@@ -38,7 +38,7 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
 
     [SerializeField]
     [InspectorName("停留时间")]
-    private float waitTime = 0;
+    public float waitTime = 0;
 
     [Header("轨迹控制")]
     [SerializeField]

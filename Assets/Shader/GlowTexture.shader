@@ -60,7 +60,7 @@ Shader "GlowTexture"{
 		half4 frag(v2f i) : SV_Target
 		{
 			half Offest = (_Time.y * _FlowLightSpeed % 1);
-			half2 uv= (i.texcoord.x+(_FlowDir?0:Offest),i.texcoord.y+(_FlowDir?Offest:0));
+			half2 uv = half2(i.texcoord.x + (_FlowDir ? 0 : Offest), i.texcoord.y + (_FlowDir ? Offest : 0));
 			half4 col = tex2D(_MainTex,uv)*i.color;
 			
 			half value=_FlowDir?i.texcoord.y:i.texcoord.x;

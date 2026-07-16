@@ -43,8 +43,10 @@ public class BridgeRoleManager : RoleManagerBase
         m_nowShowIndex = m_nowSelectIndex;
 
         SetPlayerRole(m_player);
+#if UNITY_EDITOR
         //仅供试验
         ArchiveSvc.Archive.GainRoleExp(dataList[m_nowShowIndex].ID, Random.Range(5000, 99999), out int level, out float expScale);
+#endif
 
         GameRoot.GameState = Core.GameStateEnum.Bridge;
         WndManager.WindowState = Core.WindowStateEnum.Game;

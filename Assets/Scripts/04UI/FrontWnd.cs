@@ -11,19 +11,21 @@ public class FrontWnd : Window
     [SerializeField]
     VideoPlayer videoPlayer;
 
+    float startTime = 0;
     protected void Start()
     {
         // 组合得到视频的完整路径
         string videoPath = Path.Combine(Application.streamingAssetsPath, "StartCG.mp4");
         videoPlayer.url = videoPath;
         videoPlayer.Play();
+        startTime = Time.time;
     }
 
     protected override void FirstShowWnd()
     {
         SetCilck(Button,()=>{
             Load();
-            Debug.LogError("开始");
+            //Debug.LogError("开始");
         });
 
     }
@@ -56,7 +58,8 @@ public class FrontWnd : Window
 
     private void Update()
     {
-        if (Input.anyKeyDown 
+        if (Time.time-startTime >1
+            && Input.anyKeyDown 
             && !Input.GetMouseButtonDown(0)
             && !Input.GetMouseButtonDown(1)
             && !Input.GetMouseButtonDown(2)
