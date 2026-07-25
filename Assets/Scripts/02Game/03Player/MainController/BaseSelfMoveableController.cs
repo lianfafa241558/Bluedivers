@@ -101,8 +101,9 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
 
 
     /// <summary>记录脚步声的行进距离(纯表现层)</summary>
-    float m_FootstepDistanceCounter;
-
+    protected float m_FootstepDistanceCounter;
+    [InspectorName("跳跃键被占用")]
+    public bool UseUpJump = false;
     /// <summary>是否在这一帧起跳(喷气包用)</summary>
     public bool HasJumpedThisFrame { get; private set; }
 
@@ -338,13 +339,18 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     }
 
 
+    protected bool JumpInput()
+    {
+        return UseUpJump ? InputHandler.GetJumpInputUp() : InputHandler.GetJumpInputDown();
+    }
+
     //玩家控制器的时候记得继承然后改成如果没死亡才能执行
     /// <summary>
     /// 尝试跳跃
     /// </summary>
     protected virtual void TryJump()
     {
-        if (JumpCount < AllowJumpCount && InputHandler.GetJumpInputUp())
+        if (JumpCount < AllowJumpCount && JumpInput())
         {
             //Debug.LogError(gameObject+"尝试跳跃",gameObject);
             if (!HaveObstacle())

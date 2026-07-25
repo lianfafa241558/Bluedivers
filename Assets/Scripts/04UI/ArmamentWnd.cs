@@ -75,6 +75,7 @@ public class ArmamentWnd : Window
                         buttons[armamentRoot.GetChild(i, 6, y)] = taskManager.nowTask.RequiredAD[u];
                         SetButton(armamentRoot.GetChild(i, 6, y), tipRoot, ShowTip);
                         SetSprite(armamentRoot.GetChild(i, 6, y, 0, 0), item.icon);
+                        SetColor(armamentRoot.GetChild(i, 6, y, 0, 0), item.IconColor);
                         SetActive(armamentRoot.GetChild(i, 6, y, 0), true);
                         ++y;
                     }
@@ -184,6 +185,7 @@ public class ArmamentWnd : Window
             {
                 var button=Instantiate(buttonPrefab, root).transform;
                 SetSprite(button.GetChild(0),list[u].icon);
+                SetColor(button.GetChild(0), list[u].IconColor);
                 SetColor(button, list[u].Color);
                 buttons.Add(button, list[u].ID);
 
@@ -266,6 +268,7 @@ public class ArmamentWnd : Window
             if (ResSvc.airdropDic.TryGetValue(id, out var data))
             {
                 SetSprite(tip.GetChild(0, 0), data.icon);
+                SetColor(tip.GetChild(0, 0), data.IconColor);
                 SetColor(tip.GetChild(0), data.Color);
                 SetText(tip.GetChild(1), data.showName);
                 SetText(tip.GetChild(2), data.TypeName);
@@ -296,9 +299,11 @@ public class ArmamentWnd : Window
             return;
         }
         roomManager.players[playerIndex].airdrop[index] = id;
-        buttons[armamentRoot.GetChild(playerIndex, 5, index)] = id;
-        SetSprite(armamentRoot.GetChild(playerIndex, 5, index, 0),ResSvc.airdropDic[id].icon);
-        SetColor(armamentRoot.GetChild(playerIndex, 5, index), ResSvc.airdropDic[id].Color);
+        var child = armamentRoot.GetChild(playerIndex, 5, index);
+        buttons[child] = id;
+        SetSprite(child.GetChild(0),ResSvc.airdropDic[id].icon);
+        SetColor(child.GetChild(0), ResSvc.airdropDic[id].IconColor);
+        SetColor(child, ResSvc.airdropDic[id].Color);
 
         //SetButtonInteractable(button,false);//这个战备就不能重复选择
         //selectAirdropIndex = -1;

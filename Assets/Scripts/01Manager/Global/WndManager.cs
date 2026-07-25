@@ -15,13 +15,17 @@ public class WndManager : Singleton<WndManager>
         set
         {
             var oldState = Instance.windowState;
+            Instance.windowState = value;
+            OnWindowStateSet?.Invoke(oldState, value);
             if (oldState != value)
             {
-                Instance.windowState = value;
                 OnWindowStateChange?.Invoke(oldState, value);
             }
         }
     }
+    /// <summary>WindowState 设置时无条件触发（oldState==value 也触发），用于窗口间感知彼此的 UI 状态变更</summary>
+    public static event UnityAction<WindowStateEnum, WindowStateEnum> OnWindowStateSet;
+    /// <summary>WindowState 改变时触发（oldState!=value）</summary>
     public static event UnityAction<WindowStateEnum, WindowStateEnum> OnWindowStateChange;
 
     [InspectorName("界面状态")]
@@ -36,6 +40,8 @@ public class WndManager : Singleton<WndManager>
     public SelectMapWnd selectMapWnd;
     //[HideInInspector]
     public SelectRoleWnd selectRoleWnd;
+
+    public GuideWnd guideWnd;
 
     public VehicleWnd vehicleWnd;
 

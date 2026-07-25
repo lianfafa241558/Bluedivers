@@ -1,5 +1,3 @@
-﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -7,10 +5,20 @@ using UnityEngine;
 /// </summary>
 public class StartNearTerrain : MonoBehaviour
 {
-
     void Start()
     {
+        StartCoroutine(ExecuteAfterDelay());
+    }
+
+    System.Collections.IEnumerator ExecuteAfterDelay()
+    {
+        // 等待1秒
+        yield return new WaitForSeconds(1f);
+
+        // 执行原来的逻辑
         transform.position = TerrainUtils.WSToTS(transform.position);
+
+        // 执行完后销毁自己
         Destroy(this);
     }
 }

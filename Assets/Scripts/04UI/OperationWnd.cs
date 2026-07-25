@@ -14,13 +14,24 @@ public class OperationWnd : Window
     private PlayerOperationController m_Player;
     public IFurniture furn;
 
+    private bool m_IsThirdPerson;
+
     public void Init()
     {
         GlobalEventSub.OnFurnitureOperate += RefreshDisplay;
+        GlobalEventSub.OnViewSwitch += OnViewSwitch;
     }
     public void UnInit()
     {
         GlobalEventSub.OnFurnitureOperate -= RefreshDisplay;
+        GlobalEventSub.OnViewSwitch -= OnViewSwitch;
+    }
+
+    private void OnViewSwitch(bool isThirdPerson)
+    {
+        m_IsThirdPerson = isThirdPerson;
+        if (isThirdPerson)
+            SetActive(operRoot, false);
     }
 
     protected override void FirstShowWnd()
@@ -43,6 +54,7 @@ public class OperationWnd : Window
 
     private void Update()
     {
+        if (m_IsThirdPerson) return;
         if (!m_Player && ActorsManager.Player.IsValid()) TryPlayer();
         if (!m_Player) return;
         if (furn != m_Player.target)
@@ -72,6 +84,7 @@ public class OperationWnd : Window
     }
     void RefreshDisplay(GameObject user,IFurniture furn)
     {
+        if (m_IsThirdPerson) { SetActive(operRoot, false); return; }
         if (user != m_Player.gameObject) return;
         if(!furn.CanOperate(user))
         {

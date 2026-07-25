@@ -37,7 +37,7 @@ namespace Unity.FPS.Gameplay
             m_Actor = GetComponent<Actor>();
             m_limitedLife = GetComponent<LimitedLife>();
 
-            m_limitedLife.OnEnd += Recovery;
+            m_limitedLife.OnEnd.AddListener(Recovery);
             m_health.OnDie += Explosion;
             OnShoot += _OnShoot;
             OnHit += HitFX;
@@ -46,7 +46,7 @@ namespace Unity.FPS.Gameplay
         
         private void OnDisable()
         {
-            m_limitedLife.OnEnd -= Recovery;
+            m_limitedLife.OnEnd.RemoveListener(Recovery);
             m_health.OnDie -= Explosion;
             OnShoot -= _OnShoot;
             OnHit -= HitFX;

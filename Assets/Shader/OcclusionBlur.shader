@@ -2,6 +2,7 @@ Shader "Custom/OcclusionBlur"
 {
     Properties
     {
+        _MainTex ("Main Texture", 2D) = "white" {}
         _Color ("Main Color", Color) = (1, 1, 1, 0.3)
         _BlurRadius ("Blur Radius", Range(0, 0.05)) = 0.01
         [IntRange]_BlurCount ("_BlurPower", Range(1, 4)) = 1

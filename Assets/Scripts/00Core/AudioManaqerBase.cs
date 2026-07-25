@@ -56,6 +56,7 @@ namespace Core
                     aud.transform.parent = transform;
                     aud.maxDistance = 25;
                     aud.rolloffMode = AudioRolloffMode.Linear;
+                    aud.gameObject.SetActive(false);
                     return aud;
                 },
                 (item) => {

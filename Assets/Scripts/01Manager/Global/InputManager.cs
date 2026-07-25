@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 using UnityEngine;
-using static GameRoot;
 using static Core.InputManagerBase<InputState, Core.WindowStateEnum>;
 
 using Core;

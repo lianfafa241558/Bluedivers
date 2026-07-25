@@ -17,11 +17,18 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
     {
         pool = new(ItemUpdate, ItemAdd, ItemEnqueue, 60);//没人用的60秒销毁这个类(60秒未使用销毁这个项)
         bulletPool = new(BulletAdd, BulletPop,BulletPush);
-        GlobalEventSub.OnSceneChange += ClearPool;
+        // 在场景卸载前清空池，此时池中对象尚未被销毁，清理是安全的
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
     }
     public void UnInit()
     {
-        GlobalEventSub.OnSceneChange -= ClearPool;
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
+    }
+
+    /// <summary>场景卸载前清空对象池，避免残留已销毁对象的引用</summary>
+    private void OnSceneUnloaded(Scene scene)
+    {
+        ClearPool(scene.name);
     }
 
 
@@ -31,8 +38,14 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
 
     private void ClearPool(string name)
     {
-        bulletPool.Clear();
-        pool.Clear();
+        if (bulletPool != null)
+        {
+            bulletPool.Clear();
+        }
+        if (pool != null)
+        {
+            pool.Clear();
+        }
     }
 
     #region 特效

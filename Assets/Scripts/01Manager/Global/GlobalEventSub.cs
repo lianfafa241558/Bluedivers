@@ -86,7 +86,13 @@ public static class GlobalEventSub
     /// </summary>
     public static event Action<GameObject, IFurniture> OnFurnitureOperate;
     public static void FurnitureOperate(GameObject user, IFurniture furniture) => OnFurnitureOperate?.Invoke(user, furniture);
-    
+
+    /// <summary>
+    /// 玩家视角切换（第一/第三人称）
+    /// </summary>
+    public static event Action<bool> OnViewSwitch;
+    public static void ViewSwitch(bool isThirdPerson) => OnViewSwitch?.Invoke(isThirdPerson);
+
     /// <summary>
     /// 收集道具
     /// </summary>

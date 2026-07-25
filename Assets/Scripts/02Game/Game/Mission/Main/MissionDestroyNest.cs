@@ -17,7 +17,13 @@ namespace FpsGame.Mission
         {
 
             BattleEventSub.OnEnemyDead += OnActorDeath;
-            MaxProgress = data.targetCount;
+            MaxProgress = (int)(data.targetCount* root.campData.enemyVarietyType.ToEnemyType() switch {
+                Core.EnemyType.Kaiser => 0.625f,
+                Core.EnemyType.Decagrammaton => 1,
+                Core.EnemyType.Colour => 0.75f,
+                _ => 1,
+            });
+
             //MaxProgress /= 10;
         }
 

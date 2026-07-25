@@ -15834,7 +15834,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c21e985d197512f4889c5dfa80e6d996, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isHUD: 0
+  isHUD: 1
   isCameraMode: 0
   inIEnumerator: 0
 --- !u!1 &6295012675982360981
@@ -15918,7 +15918,7 @@ Transform:
   m_GameObject: {fileID: 6295012676562894285}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -15961,6 +15961,9 @@ MonoBehaviour:
   airWallLayers:
     serializedVersion: 2
     m_Bits: 8192
+  firstPersonIgnoreLayers:
+    serializedVersion: 2
+    m_Bits: 5120
 --- !u!114 &9044407380725780217
 MonoBehaviour:
   m_ObjectHideFlags: 0

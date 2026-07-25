@@ -27,7 +27,6 @@ namespace Unity.FPS.UI
             m_WeaponsManager = GameObject.FindObjectOfType<PlayerWeaponsManager>();
             if (m_WeaponsManager)
             {
-                //Debug.LogError("提前找到新玩家" + m_WeaponsManager.gameObject, m_WeaponsManager.gameObject);
                 OnPlayerCreate(null);
                 isStartHave = true;
             }
@@ -36,11 +35,13 @@ namespace Unity.FPS.UI
                 isStartHave = false;
             }
             GlobalEventSub.OnPlayerCreate += OnPlayerCreate;
+            GlobalEventSub.OnViewSwitch += OnViewSwitch;
         }
 
         protected override void OnDestroy()
         {
             GlobalEventSub.OnPlayerCreate -= OnPlayerCreate;
+            GlobalEventSub.OnViewSwitch -= OnViewSwitch;
             if (m_WeaponsManager)
             {
                 m_WeaponsManager.OnSwitchedToWeapon -= SwitchWeapon;
@@ -51,31 +52,36 @@ namespace Unity.FPS.UI
 
         private void OnPlayerCreate(I_Actor go)
         {
-            
             if(go.IsValid()) m_WeaponsManager = go.transform.GetComponent<PlayerWeaponsManager>();
-            //Debug.LogError("准星更新为新玩家" + m_WeaponsManager.gameObject, m_WeaponsManager.gameObject);
             m_WeaponsManager.OnSwitchedToWeapon += SwitchWeapon;
             m_WeaponsManager.OnAim += OnAim;
             SwitchWeapon(m_WeaponsManager.GetActiveWeapon(), false);
-
         }
+
+        private void OnViewSwitch(bool isThirdPerson)
+        {
+            RefreshCrosshairVisibility(m_WeaponsManager.IsAiming);
+        }
+        protected override void SwitchWeapon(WeaponPlayerController weapon, bool isSec = false)
+        {
+            base.SwitchWeapon(weapon, isSec);
+            // 切武器后刷新准星（考虑第三人称状态）
+            RefreshCrosshairVisibility(m_WeaponsManager.IsAiming);
+        }
+
         protected override void SetAnimGo()
         {
             //如果是新插入进创建一个实例，已有就隐藏现在的，切过去
             if (m_DicSightGo.TryGetValue(m_Weapons, out var animator))
             {
                 if (m_ActiveSightGo) m_ActiveSightGo.transform.SetParent(Tool.GetExchangeArea(), true);
-                //if (m_ActiveSightGo) m_ActiveSightGo.gameObject.SetActive(false);
                 m_ActiveSightGo = animator;
                 animator.transform.SetParent(transform, true);
-                //animator.gameObject.SetActive(true);
                 animator.SetTrigger(Constants.k_AnimResetParameter);
-
             }
             else
             {
-                if (m_ActiveSightGo) m_ActiveSightGo.transform.SetParent(Tool.GetExchangeArea(),true);
-                //if (m_ActiveSightGo) m_ActiveSightGo.gameObject.SetActive(false);
+                if (m_ActiveSightGo) m_ActiveSightGo.transform.SetParent(Tool.GetExchangeArea(), true);
                 m_ActiveSightGo = Instantiate(m_Weapons.Sight, transform);
                 m_DicSightGo.Add(m_Weapons, m_ActiveSightGo);
             }
@@ -83,23 +89,36 @@ namespace Unity.FPS.UI
         }
 
         /// <summary>
-        /// 只要是开镜就隐藏准星
+        /// 开镜时隐藏准星（第三人称时反转：非瞄准显示，瞄准隐藏）
         /// </summary>
-        /// <param name="state"></param>
         void OnAim(bool state)
         {
-            if (m_Weapons.AimingHideCrosshair)
+            RefreshCrosshairVisibility(state);
+        }
+
+        private void RefreshCrosshairVisibility(bool aimState)
+        {
+            if (m_Weapons == null || m_ActiveSightGo == null) return;
+
+            bool isThirdPerson = m_WeaponsManager.GetComponent<PlayerController>().IsThirdPerson;
+            bool hideCrosshair;
+
+            if (isThirdPerson)
             {
-                if (state)
-                {
-                    m_ActiveSightGo.transform.SetParent(Tool.GetExchangeArea(), true);
-                }
-                else
-                {
-                    m_ActiveSightGo.transform.SetParent(transform, true);
-                }
-                //m_ActiveSightGo.gameObject.SetActive(!state);
+                // 第三人称：非瞄准隐藏，瞄准显示
+                hideCrosshair = !aimState;
             }
+            else
+            {
+                // 第一人称：原逻辑
+                if (!m_Weapons.AimingHideCrosshair) return;
+                hideCrosshair = aimState;
+            }
+
+            if (hideCrosshair)
+                m_ActiveSightGo.transform.SetParent(Tool.GetExchangeArea(), true);
+            else
+                m_ActiveSightGo.transform.SetParent(transform, true);
         }
     }
 }

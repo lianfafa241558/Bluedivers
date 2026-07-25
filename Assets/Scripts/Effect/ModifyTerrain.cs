@@ -48,18 +48,9 @@ public class ModifyTerrain : MonoBehaviour
             }
             if (additionTerrain)
             {
-                //好像那边和世界的概念不一样，要用负数
-                //这里不刷新
-                yield return TerrainUtils.AdditionTerrain(additionTerrain, transitionDistance, 360 - transform.eulerAngles.y, false);
+                yield return TerrainUtils.AdditionTerrain(additionTerrain, transitionDistance, 360 - transform.eulerAngles.y, y, false);
                 Destroy(additionTerrain.gameObject);
                 //Debug.LogError("附加了地形" + gameObject);
-            }
-
-            // 地形修改完成后用 Raycast 重新贴地，确保读到物理世界真实高度
-            if (Physics.Raycast(transform.position + Vector3.up * 100, Vector3.down, out var hit, 200, LayerMask.GetMask("Ground")))
-            {
-                float newY = hit.point.y;
-                if (newY < transform.position.y) transform.position = new(transform.position.x, newY, transform.position.z);
             }
         }
 

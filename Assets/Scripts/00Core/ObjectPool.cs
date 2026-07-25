@@ -6,17 +6,22 @@ using UnityEngine;
 namespace Core
 {
     /// <summary>
-    /// 手动对象池
+    /// 手动对象池，需外部自行管理回收时机
     /// </summary>
+    /// <typeparam name="T">池中对象类型</typeparam>
     public class ObjectPool<T>
     {
-        protected Func<T> _Add;
-        protected Action<T> _Pop;
-        protected Action<T> _Push;
-        protected Stack<T> freeObjects;
-        public int Count;
-        private List<T> useObjects;
+        protected Func<T> _Add;                            // 工厂方法，创建新对象
+        protected Action<T> _Pop;                          // 取出回调：在 Get() 中调用，用于激活对象
+        protected Action<T> _Push;                         // 回收回调：在 Release() 中调用，用于休眠对象
+        protected Stack<T> freeObjects;                    // 空闲对象栈
+        public int Count;                                  // 创建过的对象总数
+        private List<T> useObjects;                        // 正在使用的对象列表
 
+        /// <summary>构造手动对象池（无取出回调版本）</summary>
+        /// <param name="add">工厂方法，创建新对象</param>
+        /// <param name="push">回收回调：对象归还池时调用（如 SetActive(false)）。注意：初始预创建的对象不会调用此回调，工厂应自行设置初始状态</param>
+        /// <param name="startCount">初始预创建数量</param>
         public ObjectPool(Func<T> add, Action<T> push, int startCount)
         {
             _Add = add;
@@ -29,6 +34,11 @@ namespace Core
             useObjects = new List<T>();
         }
 
+        /// <summary>构造手动对象池（完整版本）</summary>
+        /// <param name="add">工厂方法，创建新对象</param>
+        /// <param name="pop">取出回调：Get() 时调用（如 SetActive(true)）</param>
+        /// <param name="push">回收回调：Release() 时调用（如 SetActive(false)）</param>
+        /// <param name="startCount">初始预创建数量</param>
         public ObjectPool(Func<T> add, Action<T> pop, Action<T> push, int startCount)
         {
             _Add = add;
@@ -48,6 +58,7 @@ namespace Core
             return _Add();
         }
 
+        /// <summary>从池中取出一个对象（优先复用空闲对象，无空闲时新建）</summary>
         public T Get()
         {
             T val = (freeObjects.Count > 0) ? freeObjects.Pop() : Add();
@@ -56,6 +67,7 @@ namespace Core
             return val;
         }
 
+        /// <summary>归还单个对象到池中</summary>
         public void Release(T item)
         {
             _Push?.Invoke(item);
@@ -63,11 +75,13 @@ namespace Core
             freeObjects.Push(item);
         }
 
+        /// <summary>检查使用列表中是否存在匹配项</summary>
         public bool Contains(Predicate<T> match)
         {
             return useObjects.Find(match) != null;
         }
 
+        /// <summary>归还所有使用中的对象（不触发 _Push 回调）</summary>
         public void Release()
         {
             useObjects.ForEach(delegate (T item)
@@ -77,6 +91,7 @@ namespace Core
             useObjects.Clear();
         }
 
+        /// <summary>按条件归还匹配的对象</summary>
         public void Release(Predicate<T> match)
         {
             useObjects.FindAll(match).ForEach(delegate (T item)
@@ -85,10 +100,11 @@ namespace Core
             });
         }
 
+        /// <summary>卸载对象池，归还所有对象并销毁</summary>
         public void UnInit()
         {
             Release();
-            for (int i = 0; i < freeObjects.Count; i++)
+            while (freeObjects.Count > 0)
             {
                 Remove();
             }
@@ -96,16 +112,23 @@ namespace Core
             useObjects = null;
         }
 
+        /// <summary>从空闲栈中移除并销毁一个对象</summary>
         public void Remove()
         {
             T val = freeObjects.Pop();
             if (val is GameObject obj)
             {
-                UnityEngine.Object.Destroy(obj);
+                if (obj != null)
+                {
+                    UnityEngine.Object.Destroy(obj);
+                }
             }
             else if (val is Component component)
             {
-                UnityEngine.Object.Destroy(component.gameObject);
+                if (component != null && component.gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(component.gameObject);
+                }
             }
         }
     }
@@ -185,17 +208,18 @@ namespace Core
     }
 
     /// <summary>
-    /// 自动对象池的基类
+    /// 自动对象池基类，通过 _ItemUpdate 谓词自动回收"已完成任务"的对象
     /// </summary>
     public abstract class AutoObjectPoolBase<T>
     {
-        protected Func<T, bool> _ItemUpdate;
-        protected Func<T> _Add;//创建时执行
-        protected Action<T> _Pop;//释放时执行
-        protected Action<T> _Push;//取出时执行
+        protected Func<T, bool> _ItemUpdate;               // 存活判断：返回 false 时自动回收对象
+        protected Func<T> _Add;                            // 工厂方法，创建新对象
+        protected Action<T> _Pop;                          // 取出回调：Get() 时调用（如 SetActive(true)）
+        protected Action<T> _Push;                         // 回收回调：Release() 时调用（如 SetActive(false)）
         protected Stack<T> freeObjects;
         public int Count;
 
+        /// <summary>构造自动对象池（无取出回调版本）</summary>
         public AutoObjectPoolBase(Func<T, bool> itemUpdate, Func<T> add, Action<T> push, int startCount)
         {
             _ItemUpdate = itemUpdate;
@@ -208,6 +232,7 @@ namespace Core
             }
         }
 
+        /// <summary>构造自动对象池（完整版本）</summary>
         public AutoObjectPoolBase(Func<T, bool> itemUpdate, Func<T> add, Action<T> pop, Action<T> push, int startCount)
         {
             _ItemUpdate = itemUpdate;
@@ -229,7 +254,9 @@ namespace Core
     }
 
     /// <summary>
-    /// 无映射的对象池
+    /// 自动对象池：Update() 中根据 _ItemUpdate 谓词自动回收对象
+    /// 用法：_ItemUpdate 返回 true 表示对象仍在"使用中"（如 AudioSource.isPlaying），
+    /// 返回 false 时自动调用 Release 回收
     /// </summary>
     public class AutoObjectPool<T> : AutoObjectPoolBase<T>
     {
@@ -271,11 +298,13 @@ namespace Core
             return val;
         }
 
+        /// <summary>检测对象引用是否已丢失（== null 或已 Destroy）</summary>
         private bool IsEmpty(T re)
         {
             return re as UnityEngine.Object == null || re == null;
         }
 
+        /// <summary>归还单个对象到池中</summary>
         public void Release(T item)
         {
             _Push(item);
@@ -286,6 +315,7 @@ namespace Core
             }
         }
 
+        /// <summary>每帧检查：_ItemUpdate 返回 false 的对象自动回收</summary>
         public void Update()
         {
             for (int num = useObjects.Count - 1; num >= 0; num--)
@@ -307,11 +337,13 @@ namespace Core
             }
         }
 
+        /// <summary>检查使用列表中是否存在匹配项</summary>
         public bool Contains(Predicate<T> match)
         {
             return useObjects.Find(match) != null;
         }
 
+        /// <summary>归还所有使用中的对象</summary>
         public void Release()
         {
             for (int num = useObjects.Count - 1; num >= 0; num--)
@@ -320,6 +352,7 @@ namespace Core
             }
         }
 
+        /// <summary>按条件归还匹配的对象</summary>
         public void Release(Predicate<T> match)
         {
             useObjects.FindAll(match).ForEach(delegate (T item)
@@ -328,21 +361,25 @@ namespace Core
             });
         }
 
+        /// <summary>遍历所有使用中的对象</summary>
         public void Foreach(Action<T> action)
         {
             useObjects.ForEach(action);
         }
 
+        /// <summary>查找第一个匹配项</summary>
         public T Find(Predicate<T> match)
         {
             return useObjects.Find(match);
         }
 
+        /// <summary>查找所有匹配项</summary>
         public List<T> FindAll(Predicate<T> match)
         {
             return useObjects.FindAll(match);
         }
 
+        /// <summary>从空闲栈中移除并销毁一个对象</summary>
         public void Remove()
         {
             T val = freeObjects.Pop();
@@ -358,10 +395,11 @@ namespace Core
             }
         }
 
+        /// <summary>卸载对象池，归还所有对象并销毁</summary>
         public void UnInit()
         {
             Release();
-            for (int i = 0; i < freeObjects.Count; i++)
+            while (freeObjects.Count > 0)
             {
                 Remove();
             }
@@ -369,16 +407,19 @@ namespace Core
             useObjects = null;
         }
 
+        /// <summary>对象池是否完全为空（无空闲、无使用中）</summary>
         public bool IsVoid()
         {
             return freeObjects.Count == 0 && useObjects.Count == 0;
         }
 
+        /// <summary>检测 Unity Object 是否有效（未被 Destroy）</summary>
         private bool IsValid(UnityEngine.Object obj)
         {
             return obj != null && !obj.Equals(null);
         }
 
+        /// <summary>检测普通对象是否有效</summary>
         private bool IsValid(object obj)
         {
             return obj != null && !obj.Equals(null);
@@ -386,13 +427,13 @@ namespace Core
     }
 
     /// <summary>
-    /// 自动字典对象池
+    /// 自动字典对象池：按 Key 分组管理，每组是一个 AutoObjectPool，Update 自动回收
     /// </summary>
     public class AutoDicPool<K, V>
     {
-        protected Func<V, bool> _ItemUpdate;
-        protected Func<K, V> _Add;
-        protected Action<V> _Enqueue;
+        protected Func<V, bool> _ItemUpdate;                // 存活判断
+        protected Func<K, V> _Add;                         // 工厂方法
+        protected Action<V> _Enqueue;                      // 回收回调
         private Dictionary<K, AutoObjectPool<V>> dic;
         private List<K> keysToRemove;
         private float destructionTime;
@@ -494,7 +535,7 @@ namespace Core
 
 
 
-    /// <summary>一对一的对象池 </summary>
+    /// <summary>一对一的对象池：每个 Key 对应一个对象，Update 自动回收</summary>
     public class AutoObjectPool<K, V> : AutoObjectPoolBase<V>
     {
         private Dictionary<K, V> useObjects;
@@ -568,7 +609,7 @@ namespace Core
         }
     }
 
-    /// <summary>一对多的对象池 </summary>
+    /// <summary>一对多的对象池：每个 Key 对应一组对象（G 为 List 容器），Update 自动回收</summary>
     public class AutoObjectPool<K, V, G> : AutoObjectPoolBase<V>
         where G : List<V>, new()
     {

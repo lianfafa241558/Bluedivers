@@ -32,98 +32,102 @@ public class VehicleController : BaseSelfMoveableController,IDrivable
 {
     public event UnityAction<bool> OnSetOwner;
 
-
-    [Foldout("一般", true)]
     //[SerializeField]
-    //private Transform CameraPoint;
-
-
-    //[SerializeField]
-    private GameObject owner;
+    private GameObject _owner;
+    private bool _wasThirdPersonOnEnter;
 
     Camera IDrivable.PlayerCamera => PlayerCamera;
-    //Vector3 IDrivable.CameraBasePoint=CameraBasePoint;
 
     protected Vector3 RecordCameraBasePoint { get; set; }
 
-    //public int PlayerIndex{ get; private set; }
     public bool TryExit() => InputHandler.GetOperateDown();
+
     public void SetOwener(GameObject owner)
     {
-
         if (owner)
         {
             var comp = owner.GetComponent<PlayerController>();
             PlayerCamera = comp.PlayerCamera;
-             //PlayerIndex = comp.PlayerIndex;
+            _wasThirdPersonOnEnter = comp.IsThirdPerson;
+
+            // 阻止 PlayerController.OnDisable 在第三人称下关闭相机
+            comp.SkipCameraDeactivateOnDisable = true;
             comp.enabled = false;
+            comp.SkipCameraDeactivateOnDisable = false;
+
             comp.Controller.enabled = false;
-            owner.GetComponent<I_Actor>().ActorState= ActorState.Hide;
-            owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled=false;
+            owner.GetComponent<I_Actor>().ActorState = ActorState.Hide;
+            owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled = false;
             comp.GetComponentInChildren<LookAtController>().enabled = false;
 
             RecordCameraBasePoint = PlayerCamera.transform.localPosition;
-            //CameraBasePoint = transform.InverseTransformPoint(CameraPoint.position);
-            //Controller.enabled = true;
+
             Health.OnDie += OnDie;
         }
         else
         {
             PlayerCamera = null;
-            //PlayerIndex = -1;
-            if (this.owner)
+
+            if (_owner)
             {
-                var comp = this.owner.GetComponent<PlayerController>();
+                var comp = _owner.GetComponent<PlayerController>();
                 comp.enabled = true;
                 comp.Controller.enabled = true;
-                this.owner.transform.parent = null;
+                _owner.transform.parent = null;
                 comp.PlayerCamera.transform.localPosition = RecordCameraBasePoint;
                 comp.GetComponentInChildren<LookAtController>().enabled = true;
-                this.owner.GetComponent<I_Actor>().ActorState = ActorState.Normal;
-                this.owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled = true;
+                _owner.GetComponent<I_Actor>().ActorState = ActorState.Normal;
+
+                // 第三人称下武器相机应保持关闭
+                if (!_wasThirdPersonOnEnter)
+                {
+                    _owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled = true;
+                }
             }
+
             Health.OnDie -= OnDie;
         }
 
-        this.owner = owner;
+        _owner = owner;
         OnSetOwner?.Invoke(owner);
     }
 
     void IDrivable.ResetCameraBasePoint(Vector3 vector)
     {
-        CameraBasePoint = transform.InverseTransformPoint(vector); 
+        CameraBasePoint = transform.InverseTransformPoint(vector);
     }
 
     void OnDie(GameObject _)
     {
         SetOwener(null);
-
     }
 
-
-    
     protected override void LateUpdate()
     {
         base.LateUpdate();
-        if (!owner) return;
+        if (!_owner) return;
 
+        // 防御：第三人称下相机若被意外关闭则重新激活
+        if (PlayerCamera && !PlayerCamera.gameObject.activeSelf)
+        {
+            PlayerCamera.gameObject.SetActive(true);
+        }
     }
 
     public override Vector3 GetInputMove()
     {
-        return !owner ? Vector3.zero : base.GetInputMove();
+        return !_owner ? Vector3.zero : base.GetInputMove();
     }
-
 
     protected override void TryJump()
     {
-        if (!owner) return;
+        if (!_owner) return;
         base.TryJump();
     }
 
     protected override void HandleRotation()
     {
-        if (!owner) return;
+        if (!_owner) return;
         base.HandleRotation();
     }
 

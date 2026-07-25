@@ -78,6 +78,7 @@ public class BaseSelfController : MonoBehaviour, IUnit
         attrs = UnitAttributeFactory.CreateBaseUnit(new Dictionary<UnitAttrType, PEInt> {
             [UnitAttrType.Speed] = 0,
             [UnitAttrType.AngularSpeed] = (PEInt)RotationSpeed,
+            [UnitAttrType.Size] = (PEInt)m_Actor.HalfRange,
         });
     }
 

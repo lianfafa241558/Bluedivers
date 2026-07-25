@@ -1011,6 +1011,8 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 4f5d4e5eaa0e5104791549cea3dc3f23,
     type: 3}
@@ -1021,6 +1023,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -1405,6 +1408,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7361764783371040475, guid: 39b8c71588284b1499ebba8e4ffcc69a,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.038
+      objectReference: {fileID: 0}
+    - target: {fileID: -7361764783371040475, guid: 39b8c71588284b1499ebba8e4ffcc69a,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 2.592
       objectReference: {fileID: 0}
     - target: {fileID: -7361764783371040475, guid: 39b8c71588284b1499ebba8e4ffcc69a,
         type: 3}

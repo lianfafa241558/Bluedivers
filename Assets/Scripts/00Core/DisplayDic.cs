@@ -223,18 +223,20 @@ namespace Core
         }
 
         /// <summary>
-        /// 非覆盖的合并/同步
+        /// 非覆盖的合并/同步，新增项保持 source 中的顺序
         /// </summary>
         public bool Synchronize(DisplayDic<Key, Value> source)
         {
+            TryInit();
+            source.TryInit();
             bool re = false;
-            source.ForEach(delegate (Key key, Value item)
+            foreach (var kvp in source.arr)
             {
-                if (Add(key, item))
+                if (Add(kvp.Key, kvp.Value))
                 {
                     re = true;
                 }
-            });
+            }
             return re;
         }
 

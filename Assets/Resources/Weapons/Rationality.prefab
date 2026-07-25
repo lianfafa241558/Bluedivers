@@ -138,6 +138,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 4f5d4e5eaa0e5104791549cea3dc3f23,
     type: 3}
@@ -181,7 +182,11 @@ MonoBehaviour:
   playerAngle: 0
   _showAttrInfo: 
   desc: "\u4F18\u9999\u4F7F\u7528\u7684\u53CC\u6301\u51B2\u950B\u67AA\u4E4B\u4E00\u3002\r\n\u5728\u91CD\u8981\u7684\u65F6\u673A\u3001\u4EE5\u53CA\u9700\u8981\u9002\u5F53\u5E94\u5BF9\u7684\u65F6\u5019\uFF0C\u5B83\u4EEC\u4F1A\u5E2E\u52A9\u4F18\u9999\u505A\u51FA\u5408\u7406\u7684\u5224\u65AD\u3002"
-  m_RenameAttr: []
+  m_RenameAttr:
+  - name: "\u5C04\u901F"
+    type: 2
+    addTag: 0
+    removeTag: 0
   showAttr: 14000000020000000100000000000000
   m_UniqueAttr: []
   Upgrade:

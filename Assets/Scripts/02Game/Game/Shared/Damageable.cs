@@ -235,18 +235,21 @@ namespace Unity.FPS.Game
         }
 
         //计算护甲破坏
-        private void ArmorDestruction(PEInt value,GameObject source)
+        private void ArmorDestruction(PEInt value, GameObject source)
         {
             if (remainArmor > 0)
             {
                 remainArmor -= value;
                 showArmor = remainArmor.RawFloat;
-                if (remainArmor<=0)
+                if (remainArmor <= 0)
                 {
                     foreach (var item in armorBreakEffect)
                     {
-                        item.go.SetActive(item.state);
-                        item.go.transform.localScale *= item.scale;
+                        if (item.go != null)
+                        {
+                            item.go.SetActive(item.state);
+                            item.go.transform.localScale *= item.scale;
+                        }
                     }
                     ArmorBreaker = source;
                     OnDestroyPart?.Invoke();
@@ -256,7 +259,6 @@ namespace Unity.FPS.Game
                     OnDamage?.Invoke(this);
                 }
             }
-
         }
         public override bool Tick()
         {

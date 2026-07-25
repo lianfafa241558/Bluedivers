@@ -17,6 +17,7 @@ namespace Unity.FPS.Game
             // 通用属性
             { UnitAttrType.Speed, (true, AttrTag.LimitCurr, ModifierType.All) },
             { UnitAttrType.AngularSpeed, (true, AttrTag.LimitCurr, ModifierType.All) },
+            { UnitAttrType.Size, (true, AttrTag.LimitCurr, ModifierType.All) },
         };
         public static AttrTag GetTag(UnitAttrType type) => attributeConfigs[type].Item2;
 
@@ -60,5 +61,8 @@ namespace Unity.FPS.Game
         /// <summary>转向速度</summary>
         [InspectorName("转向速度")]
         AngularSpeed = 1,
+        /// <summary>大小</summary>
+        [InspectorName("大小")]
+        Size = 2,
     }
 }

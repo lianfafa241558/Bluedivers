@@ -127,6 +127,7 @@ namespace Unity.FPS.AI
                 attrs = UnitAttributeFactory.CreateBaseUnit(new Dictionary<UnitAttrType, PEInt> {
                     [UnitAttrType.Speed] = (PEInt)NavMeshAgent.speed ,
                     [UnitAttrType.AngularSpeed] = (PEInt)NavMeshAgent.angularSpeed,
+                    [UnitAttrType.Size] = (PEInt)m_Actor.HalfRange,
                 });
                 var Speed = GetAttribute(UnitAttrType.Speed);
                 if (Speed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.speed = value.RawFloat; };
@@ -186,6 +187,16 @@ namespace Unity.FPS.AI
                     return true;
                 }
                 SetNavDestination(PatrolPos);
+
+                if (FpsHelper.HaveNavMeshAgent(NavMeshAgent) && NavMeshAgent.hasPath)
+                {
+                    Vector3 steerDir = NavMeshAgent.steeringTarget - transform.position;
+                    steerDir.y = 0;
+                    if (steerDir.sqrMagnitude > 0.01f)
+                    {
+                        transform.rotation = Quaternion.LookRotation(steerDir);
+                    }
+                }
             }
             return false;
         }
@@ -214,6 +225,8 @@ namespace Unity.FPS.AI
             {
                 NavMeshAgent?.ResetPath();
             }
+
+            m_lastDestination = default;
         }
 
         protected override void _OnDamaged(PEInt damage, GameObject damageSource, Collider collider,bool noSource)

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 
 using Unity.FPS.Game;
@@ -13,7 +13,7 @@ public class SimpleAimCrosshairManager : CrosshairManagerBase
 
     private void OnDisable()
     {
-        if(!m_Weapons) SwitchWeapon(GetComponentInParent<WeaponPlayerController>(), false);
+        //if(!m_Weapons) SwitchWeapon(GetComponentInParent<WeaponPlayerController>(), false);
         //只能在自己被隐藏的时候吧自己扔出去，但是要怎么获得到父级被重新显示了呢？大概只能原地创建另一个组件，来置换了
         Tool.Exchange(transform);
     }
@@ -24,6 +24,11 @@ public class SimpleAimCrosshairManager : CrosshairManagerBase
         base.Start();
         SwitchWeapon(GetComponentInParent<WeaponPlayerController>(), false);
     }*/
+    private void OnEnable()
+    {
+        if (!m_Weapons) SwitchWeapon(GetComponentInParent<WeaponPlayerController>(), false);
+        else SetAnimGo();
+    }
 
     protected override void SetAnimGo()
     {

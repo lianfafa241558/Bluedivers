@@ -11,6 +11,7 @@ namespace Unity.FPS.Game
     {
         public static Queue<KVP<UnitTypeEnum, I_Actor>> OnActorCreat=new();//用来创建跟随UI的
 
+        public static List<I_Actor> Enemys { get; private set; } = new();
         public static List<I_Actor> Actors { get; private set; } = new();
         public static List<I_Actor> Players { get; private set; } = new();
         public static List<I_Actor> SpecUnits { get; private set; } = new();
@@ -35,7 +36,11 @@ namespace Unity.FPS.Game
             SpecUnits.Add(specUnit);
             OnActorCreat.Enqueue(new(UnitTypeEnum.SpecUnit, specUnit));
         }
-
+        public void RegisterEnemy(Actor specUnit)
+        {
+            //Debug.LogError("特殊单位出生"+ specUnit, specUnit);
+            Enemys.Add(specUnit);
+        }
         public void UnRegisterUnit(Actor actor)
         {
             switch (actor.Type)
@@ -47,6 +52,7 @@ namespace Unity.FPS.Game
                     //Players.Remove(actor);
                     break;
                 case UnitTypeEnum.Enemy:
+                    Enemys.Remove(actor);
                     Actors.Remove(actor);
                     break;
                 case UnitTypeEnum.SpecUnit:
@@ -73,6 +79,7 @@ namespace Unity.FPS.Game
             GlobalEventSub.OnFriendCreate += RegisterFriend;
             BattleEventSub.OnSpecUnitCreate += RegisterSpecUnit;
             BattleEventSub.OnUnitDeath += UnRegisterUnit;
+            BattleEventSub.OnEnemyCreate += RegisterEnemy;
         }
         private void OnDestroy()
         {
@@ -80,6 +87,7 @@ namespace Unity.FPS.Game
             GlobalEventSub.OnFriendCreate -= RegisterFriend;
             BattleEventSub.OnSpecUnitCreate -= RegisterSpecUnit;
             BattleEventSub.OnUnitDeath -= UnRegisterUnit;
+            BattleEventSub.OnEnemyCreate -= RegisterEnemy;
         }
     }
 

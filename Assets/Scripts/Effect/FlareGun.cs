@@ -1,4 +1,4 @@
-﻿using Core;
+using Core;
 using UnityEngine;
 using UnityEngine.UI;
 using static WndTools.WndRootTool;
@@ -15,6 +15,8 @@ public class FlareGun : MonoBehaviour
 
     private AirdropController.AirdropData data;
     private int state;
+    [SerializeField]
+    private Material material;
     void Update()
     {
         if (AirdropController.WaitRelease!= data)
@@ -25,7 +27,11 @@ public class FlareGun : MonoBehaviour
             if (data!=null)
             {
                 SetSprite(icon1, data.cfg.icon);
+                icon1.color = data.cfg.IconColor;
                 SetSprite(icon2, data.cfg.icon);
+                icon1.color = data.cfg.IconColor;
+                icon1.material = material;
+                icon2.material = material;
                 SetText(tip,"点击设置空投");
                 SetText(itemName, data.cfg.showName);
             }
@@ -33,6 +39,10 @@ public class FlareGun : MonoBehaviour
             {
                 SetSprite(icon1, empty);
                 SetSprite(icon2, empty);
+                icon1.color = Color.white;
+                icon2.color = Color.white;
+                icon1.material = null;
+                icon2.material = null;
                 SetText(tip,"点击进行标记");
                 SetText(itemName, "");
             }

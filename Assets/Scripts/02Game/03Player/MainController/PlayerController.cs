@@ -16,7 +16,7 @@ using Utils;
 /// 主控制器
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(PlayerInputHandler), typeof(AudioSource))]
-public class PlayerController : BaseSelfMoveableController
+public partial class PlayerController : BaseSelfMoveableController
 {
 
     [Foldout("一般", true)]
@@ -31,9 +31,54 @@ public class PlayerController : BaseSelfMoveableController
     [InspectorName("站立高度")]
     public float CapsuleHeightStanding = 1.8f;
 
+    [Foldout("第三人称", true)]
+    [InspectorName("第三人称相机基准点")]
+    [Tooltip("控制第三人称相机的偏移位置，相对于角色Transform")]
+    [SerializeField] private Transform _thirdPersonCameraPoint;
+
+    [InspectorName("第三人称瞄准相机点")]
+    [Tooltip("瞄准时相机的偏移位置")]
+    [SerializeField] private Transform _thirdPersonAimCameraPoint;
+
+    [InspectorName("相机跟随平滑度")]
+    [Range(1f, 20f)]
+    [SerializeField] private float _thirdPersonSmoothSpeed = 8f;
+
+    [InspectorName("遮挡检测层")]
+    [SerializeField] private LayerMask _thirdPersonOcclusionLayers = -1;
+
+    [InspectorName("遮挡时最小距离")]
+    [Range(0.5f, 3f)]
+    [SerializeField] private float _thirdPersonMinDistance = 1f;
+
+    [InspectorName("最大上仰角")]
+    [Range(0f, 89f)]
+    [SerializeField] private float _thirdPersonUpperLimit = 70f;
+
+    [InspectorName("最大下俯角")]
+    [Range(0f, 89f)]
+    [SerializeField] private float _thirdPersonLowerLimit = 70f;
+
+    [InspectorName("旋转灵敏度")]
+    [Range(0.1f, 1f)]
+    [SerializeField] private float _thirdPersonRotationSensitivity = 0.5f;
+
     [DisplayField]
     [InspectorName("所属玩家")]
     public int PlayerIndex;
+
+    /// <summary>
+    /// 是否处于第三人称视角
+    /// </summary>
+    [DisplayField]
+    [InspectorName("第三人称")]
+    [SerializeField] private bool _isThirdPerson;
+
+    public bool IsThirdPerson
+    {
+        get => _isThirdPerson;
+        private set => _isThirdPerson = value;
+    }
 
 
     [Foldout("冲刺", true)]
@@ -95,17 +140,85 @@ public class PlayerController : BaseSelfMoveableController
         m_sprintTime = -SprintCool;
         if (GameRoot.GameState == GameStateEnum.Bridge) Health.Invincible = true;
 
+        // 根据存档中的"默认操作视角"设置初始化视角（0=第一人称，1=第三人称）
+        bool defaultThirdPerson = ArchiveSvc.GetSetting("默认操作视角") == 1;
+        if (IsThirdPerson != defaultThirdPerson)
+        {
+            IsThirdPerson = defaultThirdPerson;
+            ApplyViewMode();
+        }
+    }
+
+    /// <summary>
+    /// 根据 IsThirdPerson 状态应用视角切换效果
+    /// </summary>
+    private void ApplyViewMode()
+    {
+        if (IsThirdPerson)
+        {
+            PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
+            WeaponsManager.WeaponCamera.enabled = false;
+
+            var lookAt = GetComponentInChildren<RootMotion.FinalIK.LookAtController>();
+            if (lookAt) lookAt.enabled = false;
+            var lookAtIK = GetComponentInChildren<RootMotion.FinalIK.LookAtIK>();
+            if (lookAtIK) lookAtIK.enabled = false;
+        }
+        else
+        {
+            PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
+            WeaponsManager.WeaponCamera.enabled = true;
+            RestoreCameraParent();
+
+            var lookAt = GetComponentInChildren<RootMotion.FinalIK.LookAtController>();
+            if (lookAt) lookAt.enabled = true;
+            var lookAtIK = GetComponentInChildren<RootMotion.FinalIK.LookAtIK>();
+            if (lookAtIK) lookAtIK.enabled = true;
+        }
+
+        GlobalEventSub.ViewSwitch(IsThirdPerson);
     }
     private void OnEnable()
     {
-        int mainCameraIgnore = LayerMask.NameToLayer("MainCameraIgnore");
-        PlayerCamera.cullingMask &= ~(1 << mainCameraIgnore);
+        if (!PlayerCamera) return;
+
+        if (IsThirdPerson)
+        {
+            // 第三人称：显示 FirstPersonIgnoreLayers（头部等），激活相机
+            PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
+            if (!PlayerCamera.gameObject.activeSelf)
+                PlayerCamera.gameObject.SetActive(true);
+        }
+        else
+        {
+            // 第一人称：隐藏 FirstPersonIgnoreLayers
+            PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
+        }
     }
-    //组件关闭（进载具之类的第三人称），重新显示脑袋
+
+    /// <summary>
+    /// 载具等外部系统接管相机时设为 true，跳过 OnDisable 中的相机隐藏
+    /// </summary>
+    [HideInInspector]
+    public bool SkipCameraDeactivateOnDisable;
+
     private void OnDisable()
     {
-        int mainCameraIgnore = LayerMask.NameToLayer("MainCameraIgnore");
-        PlayerCamera.cullingMask |= (1 << mainCameraIgnore);
+        if (!PlayerCamera) return;
+
+        PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
+
+        // 组件关闭时恢复相机父级并重置视角
+        if (IsThirdPerson)
+        {
+            RestoreCameraParent();
+            // 第三人称相机已脱离父级，需要手动隐藏，确保 UICamera 能正确切换
+            // 载具接管时跳过隐藏，由 VehicleController 管理相机生命周期
+            if (!SkipCameraDeactivateOnDisable)
+            {
+                PlayerCamera.gameObject.SetActive(false);
+            }
+        }
     }
 
     public void OnAim(bool state)
@@ -117,8 +230,11 @@ public class PlayerController : BaseSelfMoveableController
     public void SetBody(Transform modleRoot, RoleData_SO cfg, List<WeaponPlayerController> extraWeapons)
     {
         if (ModleRoot) {
-            DestroyImmediate(ModleRoot.gameObject); 
+            DestroyImmediate(ModleRoot.gameObject);
+            _aimIK = null;
+            _aimController = null;
         }
+    
 
 
         ModleRoot = modleRoot;
@@ -151,12 +267,28 @@ public class PlayerController : BaseSelfMoveableController
         WeaponsManager.SetStatrtWeapon(StartingWeapons);
 
         grounderIK = modleRoot.GetComponent<GrounderFBBIK>();
+
+        // 第三人称时关闭新模型的头部IK组件
+        if (IsThirdPerson)
+        {
+            var lookAt = modleRoot.GetComponent<RootMotion.FinalIK.LookAtController>();
+            if (lookAt) lookAt.enabled = false;
+            var lookAtIK = modleRoot.GetComponent<RootMotion.FinalIK.LookAtIK>();
+            if (lookAtIK) lookAtIK.enabled = false;
+
+            _aimIK = modleRoot.GetComponent<RootMotion.FinalIK.AimIK>();
+            if (_aimIK) _aimIK.enabled = false;
+            _aimController = modleRoot.GetComponent<RootMotion.FinalIK.AimController>();
+            if (_aimController) _aimController.enabled = false;
+        }
     }
 
 
     public override Vector3 GetInputMove()
     {
-        return IsDead?Vector3.zero:base.GetInputMove();
+        if (IsDead) return Vector3.zero;
+        if (IsThirdPerson) return GetInputMoveThirdPerson();
+        return base.GetInputMove();
     }
 
     protected override void Update()
@@ -165,15 +297,81 @@ public class PlayerController : BaseSelfMoveableController
         DownHandleCharacterMovement();
         base.Update();
         UpdateSprint();
-        //base.Update();
         HandleKei();
+        HandleToggleView();
 
         
     }
+    private bool _wasThirdPersonLastFrame;
+
     protected override void LateUpdate()
     {
-        base.LateUpdate();
-        WeaponsManager.FirstPersonSocket.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0, 0);
+        // 刚切换到第三人称时，瞬间跳转到第三人称相机位置
+        if (IsThirdPerson && !_wasThirdPersonLastFrame && !IsDead && PlayerCamera && _thirdPersonCameraPoint)
+        {
+            float xOffset = _thirdPersonCameraPoint.localPosition.x;
+            float height = _thirdPersonCameraPoint.localPosition.y;
+            float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z);
+            Quaternion rotation = Quaternion.Euler(m_CameraVerticalAngle, _cameraYaw, 0);
+            Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
+            PlayerCamera.transform.position = CenterPos + offset;
+            PlayerCamera.transform.rotation = rotation;
+        }
+
+        if (IsThirdPerson && !IsDead)
+        {
+            HandleThirdPersonCamera();
+        }
+        else
+        {
+            // 刚从第三人称切回第一人称时，瞬间跳转到第一人称位置，避免看到头部消失
+            if (_wasThirdPersonLastFrame && PlayerCamera)
+            {
+                PlayerCamera.transform.position = transform.TransformPoint(CameraBasePoint);
+                PlayerCamera.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0, 0);
+            }
+            base.LateUpdate();
+        }
+
+        // 动画器移动参数（第一/第三人称都需要）
+        var targetVelocity = CharacterVelocity;
+        targetVelocity.y = 0;
+        if (targetVelocity.Magnitude.RawFloat > 0.5f)
+        {
+            m_Anim?.SetBool("IsMove", true);
+            m_Anim?.SetFloat("Speed", targetVelocity.Magnitude.RawFloat / 5 * Mathf.Sign(transform.InverseTransformDirection(CharacterVelocity.RawVector3).z));
+        }
+        else
+        {
+            m_Anim?.SetBool("IsMove", false);
+            m_Anim?.SetFloat("Speed", 1);
+        }
+
+        // 脚步声（第一/第三人称都需要）
+        if (IsGrounded)
+        {
+            m_FootstepDistanceCounter += targetVelocity.Magnitude.RawFloat * Time.deltaTime;
+            float chosenFootstepSfxFrequency = FootstepSfxFrequency * MoveSpeedScale;
+            if (m_FootstepDistanceCounter >= 1f / Mathf.Max(chosenFootstepSfxFrequency, 0.1f))
+            {
+                m_FootstepDistanceCounter = 0f;
+                AudioSource.PlayOneShot(FootstepSfx);
+            }
+        }
+
+        if (IsThirdPerson)
+        {
+            // 第三人称时用世界旋转同步武器朝向（瞄准时瞄准相机方向，非瞄准时跟随角色）
+            if (WeaponsManager.IsAiming)
+            {
+                WeaponsManager.FirstPersonSocket.transform.rotation = Quaternion.Euler(m_CameraVerticalAngle, transform.eulerAngles.y, 0);
+            }
+        }
+        else
+        {
+            WeaponsManager.FirstPersonSocket.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0, 0);
+        }
+        _wasThirdPersonLastFrame = IsThirdPerson;
     }
 
     protected override void TryJump()
@@ -185,6 +383,11 @@ public class PlayerController : BaseSelfMoveableController
     protected override void HandleRotation()
     {
         if (IsDead) return;
+        if (IsThirdPerson)
+        {
+            HandleRotationThirdPerson();
+            return;
+        }
         base.HandleRotation();
     }
     void UpdateSprint()
@@ -245,15 +448,16 @@ public class PlayerController : BaseSelfMoveableController
         }
     }
 
+    private bool _wasThirdPersonBeforeDeath;
+
     void OnDie(GameObject source)
     {
         IsDead = true;
+        _wasThirdPersonBeforeDeath = IsThirdPerson;
         PlayerCamera.gameObject.SetActive(false);
         PlayerDownCamera.gameObject.SetActive(true);
-
+        m_Anim.SetBool("IsDeath", true);
         WeaponsManager.SwitchToWeaponIndex("", true, false, true);
-
-        //GlobalEventManager.PlayerDead(m_Actor);
 
         if (GameRoot.GameState == GameStateEnum.Game) BattleManager.Instance.AddBattleDataItem(PlayerIndex, "死亡次数");
         WeaponsManager.enabled = false;
@@ -269,10 +473,25 @@ public class PlayerController : BaseSelfMoveableController
         WeaponsManager.SwitchToWeaponIndex(1, true, false, true);
         GlobalEventSub.PlayMeetSpeech(gameObject, SpeechTypeEnum.Thank);
         m_Actor.ActorState = ActorState.Normal;
-
+        m_Anim.SetBool("IsDeath",false);
         //喘息之时现在免费送
         m_Actor.AddTag(ActorFlag.Invincible);
         GameRoot.CreateTimer(() => m_Actor.RemoveTag(ActorFlag.Invincible), 4);
+
+        // 恢复死亡前的视角状态
+        if (_wasThirdPersonBeforeDeath)
+        {
+            IsThirdPerson = true;
+            PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
+            WeaponsManager.WeaponCamera.enabled = false;
+            GlobalEventSub.ViewSwitch(true);
+        }
+        else
+        {
+            IsThirdPerson = false;
+            PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
+        }
+        _wasThirdPersonBeforeDeath = false;
     }
     void HandleKei()
     {

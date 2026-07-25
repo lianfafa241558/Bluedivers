@@ -12,18 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dfe521d3dbee1e44a48bd0994d06029, type: 3}
   m_Name: ADSO_R_GhostBomb
   m_EditorClassIdentifier: 
+  isHide: 0
   ID: 99
   showName: "\u8F68\u9053\u8F70\u70B8"
   desc: "\u4ECE\u8F68\u9053\u9AD8\u7A7A\u53D1\u5C04\u8F68\u9053\u8F70\u70B8\uFF0C\u5BF9\u5C0F\u8303\u56F4\u7684\u654C\u4EBA\u9020\u6210\u5DE8\u91CF\u4F24\u5BB3\u3002"
-  icon: {fileID: 21300000, guid: 0acb8f03f2afd4b4aa4ffe7ce3427bea, type: 3}
+  icon: {fileID: 21300000, guid: d252c371a301d4b4398499a3f92fa43f, type: 3}
   opter: 0200000003000000010000000200000001000000
-  type: 0
+  type: 4
   deliveryType: 1
-  cost: 8
-  cool: 140
+  cool: 60
   arriveTime: 2
   arriveHeight: 200
-  arriveCount: 3
+  arriveCount: 0
   showRange: {x: 6, y: 0}
   sustainTime: 4
   creatObect: {fileID: 4897136665420811966, guid: 55c4b04d95edcc14f9377ceb6592bc2d,
@@ -31,3 +31,6 @@ MonoBehaviour:
   useNormalPod: 0
   sustainHideBeacon: 1
   useWarning: 1
+  permanentPod: 0
+  authorize: 0
+  isDirect: 0

@@ -41,6 +41,7 @@ public class EquipController : MonoBehaviour
                 item.Value.Operate();
             }
 
+            UpdateJumpKeyOccupied();
         }
     }
 
@@ -53,6 +54,19 @@ public class EquipController : MonoBehaviour
         {
             equip.OnUninstall();
             equip.OnEquipDestroy -= HandleEquipDestroy;
+            UpdateJumpKeyOccupied();
+        }
+    }
+
+    /// <summary>
+    /// 更新跳跃键占用状态：遍历所有装备，若有装备带 UseSpace 标志则占用跳跃键
+    /// </summary>
+    private void UpdateJumpKeyOccupied()
+    {
+        var controller = GetComponent<BaseSelfMoveableController>();
+        if (controller != null)
+        {
+            controller.UseUpJump = equips.Keys.Any(kv => kv.HaveFlag(EquippableFlagEnum.UseSpace));
         }
     }
 

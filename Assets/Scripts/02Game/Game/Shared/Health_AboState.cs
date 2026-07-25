@@ -198,11 +198,15 @@ namespace Unity.FPS.Game
         {
             if (entry.VfxInstance != null) return;
             if (stateData.vfx == null || entry.Source == null) return;
+            if (m_Unit == null) return;
+            var attr = m_Unit.GetAttribute(UnitAttrType.Size);
+            if (attr == null) return;
             entry.VfxInstance = VFXManager.Creat(
                 stateData.vfx,
                 transform.position,
-                Quaternion.identity,
+                transform.rotation,
                 transform);
+            entry.VfxInstance.transform.localScale = Vector3.one * attr.FinalValue.RawFloat*2;
         }
 
         /// <summary>释放已挂载的异常状态特效</summary>

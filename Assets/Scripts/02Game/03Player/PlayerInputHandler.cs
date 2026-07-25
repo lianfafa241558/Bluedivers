@@ -328,6 +328,14 @@ public class PlayerInputHandler : MonoBehaviour
         return CanProcessInput(WindowStateEnum.Game) && InputManager.GetDown(InputState.Mule);
     }
 
+    /// <summary>
+    /// 按下切换视角键（T键）
+    /// </summary>
+    public bool GetToggleViewDown()
+    {
+        return CanProcessInput(WindowStateEnum.Game) && Input.GetKeyDown(KeyCode.T);
+    }
+
 
     /// <summary>
     /// 获得切换武器号 滚轮实在是用现成体系做不了

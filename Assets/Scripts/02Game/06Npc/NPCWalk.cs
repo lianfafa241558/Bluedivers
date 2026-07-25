@@ -55,6 +55,8 @@ public class NPCWalk : MonoBehaviour
 
     public void StartWandering()
     {
+        if (!gameObject.activeInHierarchy)
+            return;
         if (wanderCoroutine != null)
             StopCoroutine(wanderCoroutine);
         wanderCoroutine = StartCoroutine(WanderRoutine());

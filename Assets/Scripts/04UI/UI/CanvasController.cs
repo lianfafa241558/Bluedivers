@@ -18,6 +18,7 @@ public class CanvasController : MonoBehaviour
         }
         GlobalEventSub.OnSettingCange += OnSettingCange;
         if (isHUD) WndManager.OnWindowStateChange += OnWindowStateChange;
+        if (isHUD && ArchiveSvc.GetSetting("沉浸模式") > 0) SetAlpha(transform, 0);
 
     }
 
@@ -37,6 +38,7 @@ public class CanvasController : MonoBehaviour
             }
 
         }
+        else if (isHUD && key == "沉浸模式"&&value > 0) SetAlpha(transform, 0);
     }
 
 
@@ -45,10 +47,20 @@ public class CanvasController : MonoBehaviour
         switch (state)
         {
             case WindowStateEnum.Game:
-                //Debug.LogError("设置淡入"+"旧状??+ oldState);
-                if (!inIEnumerator &&oldState != WindowStateEnum.Airdrop)
+                if (ArchiveSvc.GetSetting("沉浸模式") > 0)
                 {
-                    SetAlpha(transform, 0, 1, 500, () => SetActive(transform, true));
+                    SetActive(transform, true);
+                    SetAlpha(transform, 0);
+                }
+                else
+                {
+                    SetActive(transform, true);
+                    //Debug.LogError("设置淡入"+"旧状??+ oldState);
+                    if (!inIEnumerator && oldState != WindowStateEnum.Airdrop)
+                    {
+                        SetAlpha(transform, 0, 1, 500);
+                    }
+
                 }
                 break;
             case WindowStateEnum.UI:
@@ -59,8 +71,16 @@ public class CanvasController : MonoBehaviour
     
     public void OnGameStart()
     {
-        //Debug.LogError("游戏开始");
-        StartCoroutine(_OnGameStart());
+        if (ArchiveSvc.GetSetting("沉浸模式") > 0)
+        {
+            SetActive(transform, true);
+            SetAlpha(transform, 0);
+        }
+        else
+        {
+            //Debug.LogError("游戏开始");
+            StartCoroutine(_OnGameStart());
+        }
     }
 
     IEnumerator _OnGameStart()

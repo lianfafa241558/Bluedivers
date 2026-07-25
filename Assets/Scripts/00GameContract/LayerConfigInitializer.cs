@@ -70,6 +70,9 @@ namespace GameContract
         /// <summary>烟雾层</summary>
         public static LayerMask SmokeLayers { get; set; }
 
+        /// <summary>第一人称忽略层</summary>
+        public static LayerMask FirstPersonIgnoreLayers { get; set; }
+
     }
 
 }

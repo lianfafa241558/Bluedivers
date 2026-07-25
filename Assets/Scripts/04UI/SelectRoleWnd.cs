@@ -45,6 +45,9 @@ public class SelectRoleWnd : Window
     private Camera m_SelectRoleCamera, m_SelectWeaponCamera;
     private Transform m_SelectPoint,m_ShowWeaponPoint;
 
+    private RectTransform _tipRect;
+    private Canvas _canvas;
+
     private BridgeRoleManager m_manager;
     private Transform m_showModleGo;
 
@@ -512,7 +515,7 @@ public class SelectRoleWnd : Window
     private void ShowTip(int y,int x)
     {
         SetActive(tipRoot, true);
-        tipRoot.position = new(tipRoot.position.x, Input.mousePosition.y-50,transform.position.z);
+        UpdateTipPosition();
         var data = showWeapon.GetUpgrade(y,x);
         SetText(tipName, data.name);
         SetText(tipType, data.type);
@@ -560,7 +563,30 @@ public class SelectRoleWnd : Window
     /// </summary>
     private void MoveTip()
     {
-        tipRoot.position = new(tipRoot.position.x, Input.mousePosition.y-50, transform.position.z);
+        UpdateTipPosition();
+    }
+
+    /// <summary>
+    /// 更新提示框位置，适配不同分辨率（anchor 顶部对齐，pivot (0.5,0)）
+    /// </summary>
+    private void UpdateTipPosition()
+    {
+        if (_tipRect == null)
+        {
+            _tipRect = tipRoot as RectTransform;
+            _canvas = _tipRect.GetComponentInParent<Canvas>();
+        }
+
+        var parentRect = _tipRect.parent as RectTransform;
+
+        // 将屏幕坐标转为父级本地坐标（原点在父级 pivot，默认中心）
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            parentRect, Input.mousePosition, _canvas.worldCamera, out var pos);
+
+        // 父级本地坐标 → anchoredPosition：anchor 在顶部，0=顶部，负值向下
+        // pivot (0.5,0) 在底部，减去自身高度让 tip 底部在鼠标上方 50
+        _tipRect.anchoredPosition = new(_tipRect.anchoredPosition.x,
+            pos.y - parentRect.rect.height * 0.5f - _tipRect.rect.height - 50);
     }
     /// <summary>
     /// 点击升级
@@ -587,8 +613,15 @@ public class SelectRoleWnd : Window
                 optA_Click = () =>
                 {
                     archWeaponData.SetBuy(y, x);
-                    SetUpgradeItemButton(y, x,1);
                     SetBuyCountLayout(-1, archWeaponData.BuyCount);
+                    if (archWeaponData.selectIndex[y] == -1)
+                    {
+                        SetUpgradeSelectButton(archWeaponData.selectIndex, y, x, true);
+                    }
+                    else
+                    {
+                        SetUpgradeItemButton(y, x, 1);
+                    }
                     wndManager.PlaySound(new("UI/UI_Reward", volume: 0.25f));
                     wndManager.PlaySoundData(data.SpeechGroup(SpeechTypeEnum.Upgrade).Get());
                     meetSave = true;

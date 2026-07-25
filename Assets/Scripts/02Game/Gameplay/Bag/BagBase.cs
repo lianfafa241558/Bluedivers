@@ -32,6 +32,8 @@ namespace FPSGame.Gameplay
         [Range(0, 5)]
         public float RefillDelay = 1f;
 
+        [SerializeField]
+        private EquippableFlagEnum flag;
 
         public I_Actor Owner { get; private set; }
         string IEquippable.ID => GetComponent<IFurniture>().Id;
@@ -104,6 +106,11 @@ namespace FPSGame.Gameplay
             }
 
 
+        }
+
+        public bool HaveFlag(EquippableFlagEnum flag)
+        {
+           return this.flag.HasFlag(flag);
         }
     }
 }

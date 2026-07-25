@@ -57,6 +57,7 @@ namespace Unity.FPS.AI
                 attrs = UnitAttributeFactory.CreateBaseUnit(new Dictionary<UnitAttrType, PEInt> {
                     [UnitAttrType.Speed] = (PEInt)NavMeshAgent.speed,
                     [UnitAttrType.AngularSpeed] = (PEInt)NavMeshAgent.angularSpeed,
+                    [UnitAttrType.Size] = (PEInt)m_Actor.HalfRange,
                 });
                 var Speed = GetAttribute(UnitAttrType.Speed);
                 if (Speed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.speed = value.RawFloat; };

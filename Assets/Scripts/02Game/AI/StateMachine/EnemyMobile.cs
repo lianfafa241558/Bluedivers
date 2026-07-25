@@ -271,7 +271,21 @@ namespace Unity.FPS.AI
                     m_EnemyController.SetNavDestination(m_OriginPos);
                     break;
                 case AIState.Follow:
-                    m_EnemyController.SetNavDestination(TargetPosition);
+                    float followDis = Vector3.Distance(TargetPosition, m_EnemyController.CenterPos);
+                    float followStopRange = AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange;
+                    if (followDis >= followStopRange + 1 / m_EnemyController.DetectionModule.AttackRange)
+                    {
+                        m_EnemyController.SetNavDestination(TargetPosition);
+                    }
+                    else if (followDis < followStopRange - 1 / m_EnemyController.DetectionModule.AttackRange && MaintainMaxDis)
+                    {
+                        m_EnemyController.SetNavDestination(transform.position + (transform.position - TargetPosition).normalized);
+                    }
+                    else
+                    {
+                        m_EnemyController.StopNav();
+                    }
+
                     AimTargrt();
                     break;
                 case AIState.Attack:

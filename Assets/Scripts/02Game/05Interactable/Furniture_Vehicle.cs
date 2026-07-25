@@ -11,11 +11,16 @@ using Utils;
 public class Furniture_Vehicle : Furniture_Base
 {
 
-    IDrivable controller;
-    I_Actor actor;
+    private IDrivable controller;
+    private I_Actor actor;
+    private bool isDead;
 
     public override void Operate()
     {
+        if (isDead)
+        {
+            return;
+        }
         base.Operate();
         controller = relatedTrans2.GetComponent<IDrivable>();
         actor = relatedTrans2.GetComponent<I_Actor>();
@@ -24,7 +29,7 @@ public class Furniture_Vehicle : Furniture_Base
         if (owner)
         {
             owner.transform.parent = relatedTrans2;
-            actor.OnDeath += Operate;
+            actor.OnDeath += OnActorDeath;
         }
     }
 
@@ -47,9 +52,36 @@ public class Furniture_Vehicle : Furniture_Base
             if (owner && controller.TryExit())
             {
                 Operate();
-                actor.OnDeath -= Operate;
+                actor.OnDeath -= OnActorDeath;
             }
         }
+    }
+
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        isDead = false;
+    }
+
+    private void OnActorDeath()
+    {
+        actor.OnDeath -= OnActorDeath;
+        Operate();
+        isDead = true;
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        if (actor != null)
+        {
+            actor.OnDeath -= OnActorDeath;
+        }
+    }
+
+    public override bool CanOperate(GameObject unit)
+    {
+        return !isDead && base.CanOperate(unit);
     }
 
 

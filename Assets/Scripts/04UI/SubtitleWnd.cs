@@ -16,13 +16,15 @@ public class SubtitleWnd : Window
     [Foldout("喊话", true)]
 
     [SerializeField]
-    private SubtitleBase ShoutPrefab, MarkPrefab, SpecUnitPrefab, RolePrefab;
+    private SubtitleBase ShoutPrefab, MarkPrefab, SpecUnitPrefab, RolePrefab,NPCPrefab;
     [SerializeField]
     private SubtitleAirdrop AirdropPrefab;
 
     [Foldout("交互预制件", true)] 
     [SerializeField]
     private Image ConcernPrefab;//与家具交互显示的预制件
+    [SerializeField]
+    private Transform ThirdPersonConcernPrefab;//第三人称交互提示预制件
 
     [Foldout("获得物品提示", true)]
     [SerializeField]
@@ -32,6 +34,8 @@ public class SubtitleWnd : Window
 
     List<SubtitleBase> Subtitles;
     List<Image> Concerns;
+    private Transform m_ThirdPersonConcernInstance;
+    private bool m_IsThirdPerson;
     AutoObjectPool<SubtitleAirdrop> AirDropSubtitlesPool;
     bool alwaysShow = true;
     Queue<GainObjectInfo> GainObjectQueen;
@@ -51,6 +55,11 @@ public class SubtitleWnd : Window
         {
             Concerns.Add(Instantiate(ConcernPrefab, transform));
         }
+        if (ThirdPersonConcernPrefab)
+        {
+            m_ThirdPersonConcernInstance = Instantiate(ThirdPersonConcernPrefab, transform);
+            m_ThirdPersonConcernInstance.gameObject.SetActive(false);
+        }
         AirDropSubtitlesPool = new(AirdropPoolUpdate, AirdropPoolAdd, AirdropPoolEnqueue, 0);
 
         GainObjectTipRoot.alpha = 0;
@@ -60,12 +69,12 @@ public class SubtitleWnd : Window
 
     protected override void ShowWnd()
     {
-
         BattleEventSub.OnAirdrop += OnAirdrop;
         GlobalEventSub.OnSettingCange += OnSettingCange;
         BattleEventSub.OnUnitDeath += OnActorDeath;
         GlobalEventSub.OnOOPartCollect += OOPartCollect;
-        //GlobalEventManager.OnSceneChange += OnSceneChange;
+        GlobalEventSub.OnSceneChange += OnSceneChange;
+        GlobalEventSub.OnViewSwitch += OnViewSwitch;
         GainObjectTime = -5;
     }
 
@@ -75,8 +84,14 @@ public class SubtitleWnd : Window
         GlobalEventSub.OnSettingCange -= OnSettingCange;
         BattleEventSub.OnUnitDeath -= OnActorDeath;
         GlobalEventSub.OnOOPartCollect -= OOPartCollect;
-        //GlobalEventManager.OnSceneChange -= OnSceneChange;
+        GlobalEventSub.OnSceneChange -= OnSceneChange;
+        GlobalEventSub.OnViewSwitch -= OnViewSwitch;
         OnSceneChange(null);
+    }
+
+    private void OnViewSwitch(bool isThirdPerson)
+    {
+        m_IsThirdPerson = isThirdPerson;
     }
 
 
@@ -85,54 +100,109 @@ public class SubtitleWnd : Window
         if ((GameState== GameStateEnum.Game|| GameState == GameStateEnum.Bridge) && ActorsManager.OnActorCreat.Count > 0) OnActorCreat(ActorsManager.OnActorCreat.Dequeue());
         //if (ActorsManager.Player != null && ActorsManager.OnActorCreat.Count > 0) OnActorCreat(ActorsManager.OnActorCreat.Dequeue());
         var camera = Camera.main;
+        if (camera == null) return;
         var pos = camera.transform.position;
         var forward = camera.transform.forward;
         int useIndex = 0;
         show.Clear();
 
         if (ActorsManager.Player == null) return;
-        foreach (var item in Furniture_Attached.list.Values)
-        {
-            if (!item.CanOperate(ActorsManager.Player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
-            float dis = Vector3.Distance(item.CenterPos, pos);
-            if (dis < 20 && item != wndManager.operationWnd.furn)
-            {
-                float angle = Vector3.Angle(forward, item.Forward);
-                var viewPos = camera.WorldToViewportPoint(item.CenterPos);
-                
 
-                if ((angle > 120 || item.HaveFlag(FurnitureFlag.AnyAngle)) && Tool.In2D(viewPos, Vector3.zero, Vector3.one) && viewPos.z > 0)
+        // 显示交互提示（第一/第三人称共用 Concerns）
+        {
+            foreach (var item in Furniture_Attached.list.Values)
+            {
+                if (!item.CanOperate(ActorsManager.Player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
+                float dis = Vector3.Distance(item.CenterPos, pos);
+                if (dis < 20 && item != wndManager.operationWnd.furn)
                 {
-                    if (useIndex < 8)
+                    float angle = Vector3.Angle(forward, item.Forward);
+                    var viewPos = camera.WorldToViewportPoint(item.CenterPos);
+                    if ((angle > 120 || item.HaveFlag(FurnitureFlag.AnyAngle)) && Tool.In2D(viewPos, Vector3.zero, Vector3.one) && viewPos.z > 0)
                     {
-                        SetActive(Concerns[useIndex], true);
-                        Concerns[useIndex].transform.position = camera.WorldToScreenPoint(item.CenterPos);
-                        Concerns[useIndex].color = new Color(1, 1, 1, (1.5f - dis / 6));
-                        ++useIndex;
-                        show.Add(new(item.gameObject, viewPos));
+                        if (useIndex < 8)
+                        {
+                            SetActive(Concerns[useIndex], true);
+                            Concerns[useIndex].transform.position = camera.WorldToScreenPoint(item.CenterPos);
+                            Concerns[useIndex].color = new Color(1, 1, 1, (1.5f - dis / 6));
+                            ++useIndex;
+                            show.Add(new(item.gameObject, viewPos));
+                        }
                     }
                 }
             }
+            for (; useIndex < 8; ++useIndex)
+            {
+                SetActive(Concerns[useIndex], false);
+            }
         }
-        for (; useIndex < 8; ++useIndex)
+
+        if (m_IsThirdPerson)
         {
-            SetActive(Concerns[useIndex], false);
+            // 第三人称额外：近距离时显示 ThirdPersonConcernPrefab 增强提示
+            // 使用 PlayerOperationController.target 确保 UI 提示与实际交互目标一致
+            var playerOp = ActorsManager.Player.transform.GetComponent<PlayerOperationController>();
+            IFurniture nearest = playerOp ? playerOp.target : null;
+            if (nearest != null && m_ThirdPersonConcernInstance)
+            {
+                m_ThirdPersonConcernInstance.gameObject.SetActive(true);
+                m_ThirdPersonConcernInstance.position = camera.WorldToScreenPoint(nearest.CenterPos);
+
+                var descText = m_ThirdPersonConcernInstance.GetChild(0);
+                SetText(descText, nearest.Desc);
+                SetActive(descText.parent, !string.IsNullOrEmpty(nearest.Desc));
+
+                var barRoot = m_ThirdPersonConcernInstance.GetChild(1);
+                var bar = barRoot.GetChild(0);
+                if (nearest.MeetTime > 0 && playerOp && playerOp.target == nearest)
+                {
+                    SetActive(barRoot, true);
+                    SetFill(bar, nearest.Press / nearest.MeetTime);
+                }
+                else
+                {
+                    SetActive(barRoot, false);
+                }
+
+                var typeText = m_ThirdPersonConcernInstance.GetChild(2).GetChild(0);
+                SetText(typeText, nearest.MeetTime > 0 ? "长按" : "按");
+            }
+            else if (m_ThirdPersonConcernInstance)
+            {
+                m_ThirdPersonConcernInstance.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            if (m_ThirdPersonConcernInstance)
+                m_ThirdPersonConcernInstance.gameObject.SetActive(false);
         }
 
         AirDropSubtitlesPool.Update();
 
+
         if (InputManager.GetDown(InputState.Crouch) && !alwaysShow)
         {
-            foreach (var item in Subtitles)
+            for (int i = Subtitles.Count - 1; i >= 0; --i)
             {
-                item.TryActive(true);
+                if (Subtitles[i] == null)
+                {
+                    Subtitles.RemoveAt(i);
+                    continue;
+                }
+                Subtitles[i].TryActive(true);
             }
         }
         else if (InputManager.GetUp(InputState.Crouch) && !alwaysShow)
         {
-            foreach (var item in Subtitles)
+            for (int i = Subtitles.Count - 1; i >= 0; --i)
             {
-                item.TryActive(false);
+                if (Subtitles[i] == null)
+                {
+                    Subtitles.RemoveAt(i);
+                    continue;
+                }
+                Subtitles[i].TryActive(false);
             }
         }
 
@@ -151,9 +221,14 @@ public class SubtitleWnd : Window
                     alwaysShow = false;
                     break;
             }
-            foreach (var item in Subtitles)
+            for (int i = Subtitles.Count - 1; i >= 0; --i)
             {
-                item.SetShow(alwaysShow);
+                if (Subtitles[i] == null)
+                {
+                    Subtitles.RemoveAt(i);
+                    continue;
+                }
+                Subtitles[i].SetShow(alwaysShow);
             }
         }
     }
@@ -179,7 +254,7 @@ public class SubtitleWnd : Window
             case UnitTypeEnum.SpecUnit:
                 //Debug.LogError($"创建特殊单位玩家{ActorsManager.Player}，目标{item.Value}");
                 //Debug.LogError($"目标的单位{item.Value.gameObject}");
-                Subtitles.Add(Instantiate(SpecUnitPrefab).Creat(ActorsManager.Player, item.Value.gameObject, transform, alwaysShow));
+                Subtitles.Add(Instantiate(GameRoot.GameState== GameStateEnum.Bridge? NPCPrefab: SpecUnitPrefab).Creat(ActorsManager.Player, item.Value.gameObject, transform, alwaysShow));
                 break;
         }
 

@@ -66,7 +66,8 @@ public class SoundGroup_SO: ScriptableObject
             Cfg=this,
             Volume = Random.Range(volumeRange.x, volumeRange.y),
             Pitch = Random.Range(pitchRange.x, pitchRange.y),
-            Delay = Random.Range(delayRange.x, delayRange.y)
+            Delay = Random.Range(delayRange.x, delayRange.y),
+            Point = point,
         };
 
     }

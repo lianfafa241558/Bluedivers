@@ -96,6 +96,8 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 100006, guid: 1cfb0135c414e5943bf0918321a2fcf7, type: 3}
   UnparentMuzzleFlash: 0
@@ -105,6 +107,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -720,6 +723,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1971562727815215155}
     m_Modifications:
+    - target: {fileID: 1252925192032879908, guid: 099387833863da74a904343ca5a1ee14,
+        type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2728093770282251633, guid: 099387833863da74a904343ca5a1ee14,
         type: 3}
       propertyPath: InitialModule.startSize.scalar

@@ -183,6 +183,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 9f671b22f25370048a18fb1f821294ec,
     type: 3}
@@ -193,6 +194,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -222,8 +224,13 @@ MonoBehaviour:
   AimZoomRatio: 0.7
   AimOffset: {x: 0, y: 0.08, z: 0}
   playerAngle: 30
+  _showAttrInfo: 
   desc: "\u7231\u4E3D\u4E1D\u4F7F\u7528\u7684\u5145\u80FD\u624B\u67AA\u3002\r\n\u5728\u5DE5\u7A0B\u90E8\u5145\u5206\u7684\u7814\u7A76\u4E86\u56DE\u6536\u7684\u65E0\u540D\u4F17\u795E\u9057\u4EA7\u540E\uFF0C\u7EC8\u4E8E\u5C06\u5149\u4E4B\u5251\u7684\u5C0F\u578B\u5316\u4EA7\u7269\u3002"
-  m_RenameAttr: []
+  m_RenameAttr:
+  - name: "\u5C04\u901F"
+    type: 2
+    addTag: 0
+    removeTag: 0
   showAttr: 14000000020000000100000000000000
   m_UniqueAttr: []
   Upgrade:

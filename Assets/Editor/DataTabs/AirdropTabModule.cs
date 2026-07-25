@@ -37,9 +37,17 @@ public sealed class AirdropTabModule : DataTabModule<AirdropData_SO>
 
         var iconRect = EditorGUILayout.GetControlRect(GUILayout.Width(40), GUILayout.Height(40));
         if (data.icon != null)
-            GUI.DrawTexture(iconRect, data.icon.texture, ScaleMode.ScaleToFit);
+        {
+            Texture2D maskTex = GetOrCreateMaskTexture(data.icon.texture, data.IconColor);
+            if (maskTex != null)
+                GUI.DrawTexture(iconRect, maskTex, ScaleMode.ScaleToFit);
+            else
+                GUI.DrawTexture(iconRect, data.icon.texture, ScaleMode.ScaleToFit);
+        }
         else
+        {
             GUI.Box(iconRect, "");
+        }
 
         EditorGUILayout.BeginVertical();
         {
@@ -63,5 +71,73 @@ public sealed class AirdropTabModule : DataTabModule<AirdropData_SO>
         }
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
+    }
+
+    private static readonly Dictionary<(int, Color), Texture2D> _maskCache = new Dictionary<(int, Color), Texture2D>();
+
+    private static Texture2D GetOrCreateMaskTexture(Texture2D icon, Color color)
+    {
+        if (icon == null)
+        {
+            return null;
+        }
+
+        var key = (icon.GetInstanceID(), color);
+        if (_maskCache.TryGetValue(key, out Texture2D cached))
+        {
+            return cached;
+        }
+
+        // 通过 RenderTexture 读取像素
+        RenderTexture rt = RenderTexture.GetTemporary(icon.width, icon.height, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Linear);
+        Graphics.Blit(icon, rt);
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = rt;
+
+        Texture2D readable = new Texture2D(icon.width, icon.height, TextureFormat.RGBA32, false);
+        readable.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        readable.Apply();
+
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(rt);
+
+        // 应用遮罩规则：R * color + G * white
+        Color[] pixels = readable.GetPixels();
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            Color c = pixels[i];
+            if (c.a < 0.01f)
+            {
+                pixels[i] = new Color(0f, 0f, 0f, 0f);
+            }
+            else
+            {
+                pixels[i] = color*c.r+Color.white*c.g;
+            }
+        }
+
+        Texture2D result = new Texture2D(icon.width, icon.height, TextureFormat.RGBA32, false);
+        result.SetPixels(pixels);
+        result.Apply();
+
+        //DestroyImmediate(readable);
+        _maskCache[key] = result;
+        return result;
+    }
+
+    /// <summary>刷新时清理遮罩纹理缓存</summary>
+    protected override void RefreshData()
+    {
+        ClearMaskCache();
+        base.RefreshData();
+    }
+
+    private static void ClearMaskCache()
+    {
+        foreach (var tex in _maskCache.Values)
+        {
+            //Object.DestroyImmediate(tex);
+        }
+        _maskCache.Clear();
     }
 }

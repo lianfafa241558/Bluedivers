@@ -1,4 +1,4 @@
-﻿using Core;
+using Core;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -14,6 +14,10 @@ public class SubtitleMark : SubtitleBase
     {
         base.Creat(owner, target, parent, alwaysShow);
         GlobalEventSub.OnMark += OnMark;
+
+        SetText(title, owner.ShowName);
+        SetSprite(halo, owner.ExtraPortrait);
+        SetSprite(halo2, owner.ExtraPortrait);
 
         SetActive(gameObject, false);
         return this;

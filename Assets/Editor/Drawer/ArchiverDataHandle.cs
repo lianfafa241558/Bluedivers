@@ -12,20 +12,20 @@ public class ArchivesFloatDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
-        // 鑾峰彇value灞炴€?
+        // 获取value属性
         SerializedProperty valueProp = property.FindPropertyRelative("value");
 
-        // 鐩存帴鍦ㄥ悓涓€涓鏄剧ずlabel鍜寁alue瀛楁
+        // 直接在同一行显示label和value字段
         EditorGUI.PropertyField(position, valueProp, label, true);
     }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        // 杩斿洖鏍囧噯鍗曡楂樺害
+        // 返回标准单行高度
         return EditorGUIUtility.singleLineHeight;
     }
 }
-//涓嶇煡閬撲负浠€涔堜笉鑳藉鐞唋ist<KVP>涓殑
+//不知道为什么不能处理List<KVP>中的
 [CustomPropertyDrawer(typeof(ArchSettingData))]
 public class ArchSettingDataDrawer : PropertyDrawer
 {
@@ -36,15 +36,15 @@ public class ArchSettingDataDrawer : PropertyDrawer
     {
         EditorGUI.BeginProperty(position, label, property);
 
-        // 澶勭悊鏁扮粍鍏冪礌鐨勬儏鍐碉紙褰揚ropertyDrawer鐢ㄤ簬List涓殑鍏冪礌鏃讹級
+        // 处理数组元素的情况（当PropertyDrawer用于List中的元素时）
         if (property.propertyType == SerializedPropertyType.Generic && property.isArray)
         {
-            // 濡傛灉鏄暟缁勫厓绱狅紝鍒欑洿鎺ョ粯鍒惰鍏冪礌
+            // 如果是数组元素，则直接绘制该元素
             DrawSingleProperty(position, property, label);
         }
         else
         {
-            // 鏅€氬瓧娈电殑缁樺埗閫昏緫
+            // 普通字段的绘制逻辑
             DrawSingleProperty(position, property, label);
         }
 
@@ -53,7 +53,7 @@ public class ArchSettingDataDrawer : PropertyDrawer
 
     private void DrawSingleProperty(Rect position, SerializedProperty property, GUIContent label)
     {
-        // 璁剧疆鎶樺彔鐘舵€?
+        // 设置折叠状态
         property.isExpanded = EditorGUI.Foldout(
             new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight),
             property.isExpanded,
@@ -66,7 +66,7 @@ public class ArchSettingDataDrawer : PropertyDrawer
             EditorGUI.indentLevel++;
             position.y += EditorGUIUtility.singleLineHeight + LineSpacing;
 
-            // 鑾峰彇鎵€鏈夊簭鍒楀寲灞炴€?
+            // 获取所有序列化属性
             SerializedProperty titleProp = property.FindPropertyRelative("titile");
             SerializedProperty typeProp = property.FindPropertyRelative("type");
             SerializedProperty valueProp = property.FindPropertyRelative("value");
@@ -74,7 +74,7 @@ public class ArchSettingDataDrawer : PropertyDrawer
             SerializedProperty sliderRangeProp = property.FindPropertyRelative("sliderRange");
             SerializedProperty sliderSuffixProp = property.FindPropertyRelative("sliderSuffix");
 
-            // 缁樺埗鏍囬锛堝甫缂╄繘锛?
+            // 绘制标题（带缩进）
             Rect currentPosition = new Rect(
                 position.x + FoldoutIndent,
                 position.y,
@@ -85,27 +85,27 @@ public class ArchSettingDataDrawer : PropertyDrawer
             EditorGUI.PropertyField(currentPosition, titleProp);
             currentPosition.y += EditorGUIUtility.singleLineHeight + LineSpacing;
 
-            // 缁樺埗绫诲瀷
+            // 绘制类型
             EditorGUI.PropertyField(currentPosition, typeProp);
             currentPosition.y += EditorGUIUtility.singleLineHeight + LineSpacing;
 
-            // 缁樺埗鍊?
+            // 绘制值
             EditorGUI.PropertyField(currentPosition, valueProp);
             currentPosition.y += EditorGUIUtility.singleLineHeight + LineSpacing;
 
-            // 鏍规嵁绫诲瀷鏄剧ず涓嶅悓鐨勫瓧娈?
+            // 根据类型显示不同的字段
             SettingBtnType type = (SettingBtnType)typeProp.enumValueIndex;
 
             if (type == SettingBtnType.Dropdown)
             {
-                EditorGUI.PropertyField(currentPosition, showTextsProp, new GUIContent("鏄剧ず鏂囨湰鍒楄〃"));
+                EditorGUI.PropertyField(currentPosition, showTextsProp, new GUIContent("显示文本列表"));
                 currentPosition.y += EditorGUIUtility.singleLineHeight + LineSpacing;
             }
             else if (type == SettingBtnType.Slider)
             {
-                EditorGUI.PropertyField(currentPosition, sliderRangeProp, new GUIContent("婊戝姩鑼冨洿"));
+                EditorGUI.PropertyField(currentPosition, sliderRangeProp, new GUIContent("滑动范围"));
                 currentPosition.y += EditorGUIUtility.singleLineHeight + LineSpacing;
-                EditorGUI.PropertyField(currentPosition, sliderSuffixProp, new GUIContent("婊戝姩鍚庣紑"));
+                EditorGUI.PropertyField(currentPosition, sliderSuffixProp, new GUIContent("滑动后缀"));
                 currentPosition.y += EditorGUIUtility.singleLineHeight + LineSpacing;
             }
 
@@ -115,17 +115,17 @@ public class ArchSettingDataDrawer : PropertyDrawer
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        float height = EditorGUIUtility.singleLineHeight; // 鎶樺彔琛岄珮搴?
+        float height = EditorGUIUtility.singleLineHeight; // 折叠行高度
 
         if (property.isExpanded)
         {
-            height += EditorGUIUtility.singleLineHeight * 3; // 鍩虹瀛楁锛氭爣棰樸€佺被鍨嬨€佸€?
+            height += EditorGUIUtility.singleLineHeight * 3; // 基础字段：标题、类型、值
             height += LineSpacing * 3;
 
             SerializedProperty typeProp = property.FindPropertyRelative("type");
             SettingBtnType type = (SettingBtnType)typeProp.enumValueIndex;
             
-            // 鏍规嵁绫诲瀷娣诲姞棰濆楂樺害
+            // 根据类型添加额外高度
             if (type == SettingBtnType.Dropdown)
             {
                 var count = property.FindPropertyRelative("showTexts").CountInProperty()+1;

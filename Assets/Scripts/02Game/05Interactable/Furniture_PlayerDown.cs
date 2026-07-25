@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Furn;
 using Unity.FPS.Game;
@@ -34,6 +34,7 @@ namespace FPSGame.Furn
             Health.Revive();
             canOperate = false;
             //PlaySound(audioOper);
+            BattleManager.Instance.Authorize(Constants.HealBag, false);
         }
 
 
@@ -41,6 +42,7 @@ namespace FPSGame.Furn
         {
             canOperate = true;
             PlaySound(audioClose);
+            BattleManager.Instance.Authorize(Constants.HealBag, true);
         }
     }
 }

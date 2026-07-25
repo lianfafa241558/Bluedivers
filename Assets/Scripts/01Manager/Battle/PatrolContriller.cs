@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
@@ -94,13 +94,18 @@ public class PatrolContriller : TickBehaviour
     [SerializeField]
     private List<MissionBase> _influencePoints = new List<MissionBase>(); // 影响力点（巢穴）
     private float _basePatrolHeat;  // 基础生成热度（Start已计算）
+    [SerializeField]
     private float _patrolCooldownTimer;
     private bool _isMainTaskCompleted;
     private int _destroyedInfluencePointsCount;
 
     // 外部引用
     private List<I_Actor> Players => ActorsManager.Players;
-    private int CurrentMapUnits => ActorsManager.Actors.Count;
+    private int CurrentMapUnits => ActorsManager.Enemys.Count;
+
+
+
+
 
     Vector2 mapCenter;
     float mapRadius;
@@ -148,7 +153,7 @@ public class PatrolContriller : TickBehaviour
     public override bool Tick()
     {
         if (Players == null || Players.Count == 0) return true;
-
+        
         // 刷新玩家列表（防止玩家进出）
         //RefreshPlayerHeatData();
 
@@ -166,7 +171,6 @@ public class PatrolContriller : TickBehaviour
 
             // 累计热度
             playerData.currentHeat += heatPerSecond * TickTime;
-            
             // 满足条件，生成巡逻队
             if (canSpawnPatrol && playerData.currentHeat >= playerData.requiredHeat)
             {

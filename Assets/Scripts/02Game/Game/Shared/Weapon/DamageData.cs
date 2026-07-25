@@ -150,6 +150,9 @@ namespace Unity.FPS.Game
         /// <summary>满蓄热量倍率</summary>
         [SerializeField]
         private float ChargeHeatScale = 1;
+        /// <summary>满蓄散布倍率</summary>
+        [SerializeField]
+        private float ChargeSpreadScale = 1;
 
         #region 获取
 
@@ -189,6 +192,8 @@ namespace Unity.FPS.Game
         public PEInt GetGravity(PEInt ChargeScale) => _HandleValue(Gravity, ChargeGravityScale, ChargeScale);
         /// <summary>音量</summary>
         public PEInt GetSoundRadius(PEInt ChargeScale) => _HandleValue(SoundRadius, ChargeSoundScale, ChargeScale);
+        /// <summary>散布</summary>
+        public PEInt GetSpread(PEInt ChargeScale) => _HandleValue(1, ChargeSpreadScale, ChargeScale);
 
         //private PEInt _HandleValue(PEInt baseValue, PEInt scaleValue, PEInt charge)=> (PEInt)(baseValue * (UseCharge ? PEMath.Lerp(1, scaleValue, charge) : 1));
 

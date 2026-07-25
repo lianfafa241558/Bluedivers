@@ -100,6 +100,12 @@ namespace Unity.FPS.Gameplay
             }
         }
 
+        /// <summary>
+        /// 外部强制瞄准（如第三人称交互时自动切瞄准）
+        /// </summary>
+        [HideInInspector]
+        public bool ForceAim;
+
         //private bool IsDown => m_PlayerCharacterController.IsDead;
         /*
         public int ActiveWeaponIndex { get; private set; } = -1;
@@ -195,10 +201,11 @@ namespace Unity.FPS.Gameplay
                     closeAimDelay = 0;
                 }
             }
-            // 判断是否在瞄准，完全不缩放的武器无法瞄准
+            // 判断是否在瞄准，完全不缩放的武器无法瞄准（第三人称除外）
             if(activeWeapon != null && !activeWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
             {
-                IsAiming = !activeSecWeapon && activeWeapon.AimZoomRatio < 1 && m_InputHandler.GetAimInputHeld();
+                bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
+                IsAiming = !activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld());
             }
 
 
@@ -357,11 +364,30 @@ namespace Unity.FPS.Gameplay
             UpdateWeaponBob();
             UpdateWeaponRecoil();
             UpdateWeaponSwitching();
+            UpdateWeaponThirdPersonAim();
 
             if(m_PlayerCharacterController&& m_PlayerCharacterController.ModleRoot) m_PlayerCharacterController.ModleRoot.localEulerAngles = new(0,Mathf.Lerp(m_PlayerCharacterController.ModleRoot.localEulerAngles.y,m_PlayerAngle, Time.deltaTime * 5), 0);
         
             //根据所有组合动画影响设置最终武器插座位置
             WeaponParentSocket.localPosition = Vector3.Lerp(WeaponParentSocket.localPosition, m_WeaponMainLocalPosition + m_WeaponBobLocalPosition + m_WeaponRecoilLocalPosition,Time.deltaTime* BobSharpness);
+        }
+
+        /// <summary>
+        /// 第三人称瞄准时将屏幕中心目标点注入所有武器，非瞄准时使用枪口方向
+        /// </summary>
+        private void UpdateWeaponThirdPersonAim()
+        {
+            Vector3 target = (m_PlayerCharacterController.IsThirdPerson && IsAiming)
+                ? m_PlayerCharacterController.ScreenCenterTargetPoint
+                : default;
+
+            for (int i = 0; i < m_WeaponSlots.Length; i++)
+            {
+                if (m_WeaponSlots[i] != null)
+                {
+                    m_WeaponSlots[i].ThirdPersonAimTarget = target;
+                }
+            }
         }
         private void UpdatePlayerAngle()
         {
@@ -392,8 +418,14 @@ namespace Unity.FPS.Gameplay
                     m_WeaponMainLocalPosition = Vector3.Lerp(m_WeaponMainLocalPosition,
                         AimingWeaponPosition.localPosition + activeWeapon.AimOffset,
                         AimingAnimationSpeed * Time.deltaTime);
+
+                    float zoomRatio = activeWeapon.AimZoomRatio;
+                    if (m_PlayerCharacterController.IsThirdPerson)
+                    {
+                        zoomRatio = 1f;
+                    }
                     SetFov(Mathf.Lerp(m_PlayerCharacterController.PlayerCamera.fieldOfView,
-                        activeWeapon.AimZoomRatio * DefaultFov, AimingAnimationSpeed * Time.deltaTime));
+                        zoomRatio * DefaultFov, AimingAnimationSpeed * Time.deltaTime));
                 }
                 else
                 {
@@ -1036,6 +1068,15 @@ namespace Unity.FPS.Gameplay
         {
             var weapon = GetActiveWeapon();
             if(weapon.ScopeGo) weapon.ScopeGo.SetActive(state);
+        }
+
+        /// <summary>
+        /// 强制触发一次准星刷新（视角切换时用）
+        /// </summary>
+        public void RefreshAimState()
+        {
+            if (OnAim != null)
+                OnAim.Invoke(IsAiming);
         }
 
         private int m_LastWeaponIndex;

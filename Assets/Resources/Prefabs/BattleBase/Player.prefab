@@ -209,7 +209,7 @@ Transform:
   m_GameObject: {fileID: 430049189319810795}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.24, y: -0.5, z: 0.24}
+  m_LocalPosition: {x: 0.24, y: -0.25, z: 0.24}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -291,6 +291,8 @@ Transform:
   - {fileID: 5560478006769237563}
   - {fileID: 5899615051199895412}
   - {fileID: 1992909112774647112}
+  - {fileID: 7724981111999742206}
+  - {fileID: 3941019779098024387}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3850946683794362275
@@ -400,6 +402,7 @@ MonoBehaviour:
   MaxSpeedForFallDamage: 40
   FallDamageAtMinSpeed: 10
   FallDamageAtMaxSpeed: 30
+  UseUpJump: 0
   IsGrounded: 0
   JumpCount: 0
   m_LastTimeJumped: 0
@@ -409,11 +412,23 @@ MonoBehaviour:
   PlayerDownCamera: {fileID: 5585641297476069604}
   CameraHeightRatio: 0.85
   CapsuleHeightStanding: 1.8
+  _thirdPersonCameraPoint: {fileID: 7724981111999742206}
+  _thirdPersonAimCameraPoint: {fileID: 3941019779098024387}
+  _thirdPersonSmoothSpeed: 8
+  _thirdPersonOcclusionLayers:
+    serializedVersion: 2
+    m_Bits: 9
+  _thirdPersonMinDistance: 1
+  _thirdPersonUpperLimit: 80
+  _thirdPersonLowerLimit: 50
+  _thirdPersonRotationSensitivity: 0.5
   PlayerIndex: 0
+  _isThirdPerson: 0
   SprintDuration: 1
   SprintSpeedModifier: 2
   SprintCool: 5
   SprintGravity: 0.2
+  SkipCameraDeactivateOnDisable: 0
 --- !u!114 &7469861678843619888
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -679,17 +694,48 @@ MonoBehaviour:
   audioPress: {fileID: 8300000, guid: 23f5b0610a1ee914f9a4b1071bc082b5, type: 3}
   audioOper: {fileID: 8300000, guid: 93ad50821722b5246a515b8ee803d561, type: 3}
   audioClose: {fileID: 8300000, guid: 2f7352a4434ea4a4a93e8cf1bcaf22fb, type: 3}
-  flags: 256
+  flags: 260
   pressTime: 0
   canOperate: 1
   inOperate: 0
   desc: "\u6276\u8D77\u540C\u5B66"
   anim: {fileID: 0}
-  audio: {fileID: 0}
+  _audioSource: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
+--- !u!1 &2232355963688029884
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7724981111999742206}
+  m_Layer: 0
+  m_Name: ThirdPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7724981111999742206
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2232355963688029884}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.8, y: 1, z: -5.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1940326680950215327}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2497298513342654888
 GameObject:
   m_ObjectHideFlags: 0
@@ -873,6 +919,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   priority: 89
+--- !u!1 &4364909338254387679
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3941019779098024387}
+  m_Layer: 0
+  m_Name: ThirdAimPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3941019779098024387
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4364909338254387679}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.7, y: 0.7, z: -1.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1940326680950215327}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4519113713251330864
 GameObject:
   m_ObjectHideFlags: 0
@@ -1093,7 +1170,7 @@ Transform:
   m_GameObject: {fileID: 7397764265410329833}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 5}
+  m_LocalPosition: {x: 0, y: 0, z: 200}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

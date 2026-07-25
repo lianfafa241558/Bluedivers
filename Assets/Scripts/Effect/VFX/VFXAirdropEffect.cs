@@ -369,12 +369,29 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         var size = data.cfg.showRange;
         Quaternion rotation = transform.rotation;
         var go = VFXManager.Creat(neoNimbusVehicle, transform.position, rotation, null).transform;
-        var comp = data.cfg.creatObect.GetComponent<CharacterController> ();
-        m_creatObject = Instantiate(data.cfg.creatObect, go.TransformPoint(0, -2.5f+comp.center.y-comp.height, 1.5f), rotation, go).transform;
-        m_creatObject.GetComponent<CharacterController>().enabled = false;
-        m_creatObject.GetComponent<BaseSelfController>().enabled = false;
-        
+        //TODO:单位暂时还不能回收
+        if (data.cfg.creatObect.GetComponent<I_Actor>().IsValid())
+        {
+            var comp = data.cfg.creatObect.GetComponent<CharacterController>();
+            m_creatObject = Instantiate(data.cfg.creatObect, go.TransformPoint(0, -2.5f + comp.center.y - comp.height, 1.5f), rotation, go).transform;
+            m_creatObject.GetComponent<CharacterController>().enabled = false;
+            if (m_creatObject.TryGetComponent(out BaseSelfController bsc)) bsc.enabled = false;
 
+        }
+        else//TODO:小型道具比如复活可以回收
+        {
+            var comp = data.cfg.creatObect.GetComponent<CharacterController>();
+            m_creatObject = VFXManager.Creat(data.cfg.creatObect, go.TransformPoint(0, -2.5f + comp.center.y - comp.height, 1.5f), rotation, go).transform;
+            m_creatObject.GetComponent<CharacterController>().enabled = false;
+        }
+
+        // 根据 arriveTime 调整运输机俯冲时长：俯冲阶段 = arriveTime - 2 秒
+        const float diveArriveOffset = 2f;
+        float targetDiveDuration = data.arriveTime - diveArriveOffset;
+        if (go.TryGetComponent(out PhoenixEagleController eagleController))
+        {
+            eagleController.SetDiveDuration(targetDiveDuration);
+        }
 
         if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
         {
@@ -388,15 +405,16 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
 
 
     }
+
     void UpdateMedivac()
     {
-        //Debug.LogWarning("状态 "+ data.State+"父级 "+ m_creatObject.transform.parent);
-        if (data.State == AirdropState.Sustain && m_creatObject.transform.parent!=null)
+        // 俯冲 = arriveTime - 2 秒，到达后停滞 2 秒，总计 arriveTime 秒后进入 Sustain 状态，此时卸载
+        if (data.State == AirdropState.Sustain && m_creatObject.IsValid() && m_creatObject.transform.parent != null)
         {
             Debug.Log("卸载");
             m_creatObject.transform.parent = null;
             m_creatObject.GetComponent<CharacterController>().enabled = true;
-            m_creatObject.GetComponent<BaseSelfController>().enabled = true;
+            if (m_creatObject.TryGetComponent(out BaseSelfController bsc)) bsc.enabled = true;
         }
     }
     void EndMedivac()

@@ -100,6 +100,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SpecularMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -139,7 +143,7 @@ Material:
     - _EmissionScale: 1
     - _EnvironmentReflections: 1
     - _Expression: 24
-    - _FixOutlineColor: 0
+    - _FixOutlineColor: 1
     - _FlowDir: 0
     - _FlowLightSpeed: 1
     - _FlowTrans: 0
@@ -171,18 +175,24 @@ Material:
     - _Smoothness: 0.4472136
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SpecularMulByBaseColor: 0
+    - _SpecularOffest: 0
+    - _SpecularSoftness: 0.05
     - _SrcBlend: 1
     - _Surface: 1
     - _Threshold: 0
     - _UVSec: 0
     - _UseAlphaClipping: 0
     - _UseAlphaUV: 0
+    - _UseAverNormal: 1
     - _UseColour: 0
     - _UseEmission: 0
     - _UseMosaic: 0
     - _UseMouthMap: 0
     - _UseOcclusion: 0
+    - _UseSpecular: 0
     - _UseTangentOutlin: 1
+    - _UseUV1: 0
     - _WhiteFocusOutline: 0
     - _WorkflowMode: 1
     - _ZWrite: 0
@@ -197,9 +207,10 @@ Material:
     - _HitColor: {r: 0, g: 0, b: 0, a: 1}
     - _IndirectLightMinColor: {r: 0.09999997, g: 0.09999997, b: 0.09999997, a: 1}
     - _OcclusionMapChannelMask: {r: 1, g: 0, b: 0, a: 0}
-    - _OutlineColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _OutlineColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _ShadowMapColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &3640899440168914321
 MonoBehaviour:

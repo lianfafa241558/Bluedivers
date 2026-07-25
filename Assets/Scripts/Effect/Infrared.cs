@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,6 +19,7 @@ public class Infrared : MonoBehaviour
     void Start()
     {
         line = GetComponent<LineRenderer>();
+        line.useWorldSpace = true;
         line.positionCount = 2;
         if (transform.childCount > 0)
         {

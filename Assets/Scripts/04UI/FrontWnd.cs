@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.CompilerServices;
 using Core;
 using UnityEngine;
 using UnityEngine.Video;
@@ -10,7 +11,7 @@ public class FrontWnd : Window
     Transform Button;
     [SerializeField]
     VideoPlayer videoPlayer;
-
+    bool IsLoad = false;
     float startTime = 0;
     protected void Start()
     {
@@ -58,8 +59,7 @@ public class FrontWnd : Window
 
     private void Update()
     {
-        if (Time.time-startTime >1
-            && Input.anyKeyDown 
+        if (Input.anyKeyDown 
             && !Input.GetMouseButtonDown(0)
             && !Input.GetMouseButtonDown(1)
             && !Input.GetMouseButtonDown(2)
@@ -71,7 +71,8 @@ public class FrontWnd : Window
     private void Load()
     {
         //PlayAnim("Exit");
-
+        if (IsLoad) return;
+        IsLoad = true;
         ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
             GameState = GameStateEnum.Bridge;
             WindowState = WindowStateEnum.Game;

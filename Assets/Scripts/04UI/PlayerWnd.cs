@@ -78,7 +78,7 @@ public partial class PlayerWnd : Window
     #endregion
 
     [Foldout("其他", true)]
-
+    bool initPlayer;
     [SerializeField]
     PlayerController m_Controller;
     Health m_Health;
@@ -91,6 +91,7 @@ public partial class PlayerWnd : Window
 
     private void TryPlayer()
     {
+        initPlayer = true;
         m_Controller = ActorsManager.Player.transform.GetComponent<PlayerController>();
         m_WeaponsManager = m_Controller.WeaponsManager;
         m_Health = m_Controller.Health;
@@ -190,6 +191,7 @@ public partial class PlayerWnd : Window
 
     protected override void HideWnd()
     {
+        initPlayer = false;
         BattleEventSub.OnBulletHit -= BulletHit;
         BattleEventSub.OnUnitKill -= UnitKill;
         if (m_WeaponsManager)
@@ -212,8 +214,8 @@ public partial class PlayerWnd : Window
 #if UNITY_EDITOR
         UpdateDebug();
 #endif
-        if (!m_Controller && ActorsManager.Player!=null&& ActorsManager.Player.transform != null) TryPlayer();
-        if(!m_Controller) return;
+        if (!initPlayer && ActorsManager.Player!=null&& ActorsManager.Player.transform != null) TryPlayer();
+        if(!initPlayer) return;
 
 
 
@@ -285,7 +287,7 @@ public partial class PlayerWnd : Window
         SetText(remainAmmoR, m_ActiveWeapon.Ammo.CurrValue.RawInt);
         var grenade = m_WeaponsManager.GetWeaponAtSlotIndex((int)WeaponTypeEnum.Grenade);
            
-        SetText(GrenadeCount, (grenade.AttrFinal(WeaponAttrType.Ammo) + grenade.AttrFinal(WeaponAttrType.Magazine)).RawInt);
+        SetText(GrenadeCount, grenade.Ammo.CurrValue.RawInt + grenade.Magazine.CurrValue.RawInt);
          
 
         if (m_ActiveSecWeapon)

@@ -269,6 +269,7 @@ namespace Unity.FPS.Game
 
         void OnRevive()
         {
+            ActorState = ActorState.Normal;
             switch (type)
             {
                 case UnitTypeEnum.Player:
@@ -294,7 +295,12 @@ namespace Unity.FPS.Game
             BattleEventSub.UnitDeath(this);
             OnDeath?.Invoke();
             ActorState = ActorState.Dead;
-            if(source.IsValid()) BattleEventSub.UnitKill(source.GetComponent<Actor>(),this);
+            var m_Health = GetComponent<Health>();
+            if (m_Health&&m_Health.CurrentHealth>0)
+            {
+                Debug.LogError($"[Health] 单位死亡时生命值>0！CurrentHealth={m_Health.CurrentHealth.RawFloat}, MaxHealth={m_Health.MaxHealth}", gameObject);
+            }
+            if (source.IsValid()) BattleEventSub.UnitKill(source.GetComponent<Actor>(),this);
             switch (type)
             {
                 case UnitTypeEnum.Player:

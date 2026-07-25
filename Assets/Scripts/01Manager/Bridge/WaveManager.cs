@@ -88,8 +88,19 @@ public class WaveManager : TickBehaviour
             .Where(kvp => kvp != null)
             .ToList();
 
-
-        waveValue = (int)((int)(task.difficulty) * 35 * (1 + 0.33f * task.ExtraDifficulty[2]));
+        waveValue = (int)((1 + 0.15f * task.ExtraDifficulty[2]) * 100
+            * task.difficulty switch {
+                DifficultyEnum.Normal   => 0.6f,
+                DifficultyEnum.Hard     => 0.75f,
+                DifficultyEnum.VeryHard => 0.9f,
+                DifficultyEnum.HardCode => 1.0f,
+                DifficultyEnum.Extreme  => 1.1f,
+                DifficultyEnum.Insane   => 1.2f,
+                DifficultyEnum.Torment  => 1.3f,
+                DifficultyEnum.Lunatic  => 1.5f,
+                _ => 1f,
+            });
+        //理论上的极限是100*1.5*1.45=217，之前的极限是35*7*2=490
     }
 
     public bool CreatWave(WaveCreateParams param)
@@ -112,7 +123,7 @@ public class WaveManager : TickBehaviour
 
         return true;
     }
-
+#if UNITY_EDITOR
 
     protected override void Update()
     {
@@ -128,6 +139,7 @@ public class WaveManager : TickBehaviour
             });
         }
     }
+#endif
 
     public override bool Tick()
     {
@@ -429,15 +441,7 @@ public class RobotWave : I_TickClass, System.IDisposable
     float lastGroupSpawnTime;
     float spawnInterval;
 
-    static readonly Vector3[] s_RelativePositions = new Vector3[]
-    {
-        new Vector3(-7, -1, -5),
-        new Vector3(7, -1, -5),
-        new Vector3(-7, -1, 0),
-        new Vector3(7, -1, 0),
-        new Vector3(-7, -1, 5),
-        new Vector3(7, -1, 5)
-    };
+
 
     class EagleGroupInfo
     {
@@ -451,7 +455,7 @@ public class RobotWave : I_TickClass, System.IDisposable
     {
         random = new Random(RandomUtils.Range(0, 1000));
         this.waveUseObject = new(waveUseObject);
-        this.creats = creats;
+        this.creats = creats;//机器人平均人口2.23左右
         this.tip = param.tip;
         range = param.range;
         points = param.points;
@@ -499,7 +503,7 @@ public class RobotWave : I_TickClass, System.IDisposable
         switch (state)
         {
             case WaveState.Start:
-                if (time == -10)
+                if (time == -4)
                 {
                     Trans(WaveState.Ongoing);
                 }
@@ -576,22 +580,45 @@ public class RobotWave : I_TickClass, System.IDisposable
         return true;
     }
 
+    /// <summary>计算单位人口：Drone=1, HalfRange>=1=16, 其他=2</summary>
+    static int GetUnitPopulation(GameObject prefab)
+    {
+        var entity = prefab.GetComponent<I_Entity>();
+        if (entity == null) return 2;
+
+        if (entity.HalfRange >= 1f) return 16;
+        if (entity.Id != null && entity.Id.Contains("Drone", System.StringComparison.OrdinalIgnoreCase))
+            return 1;
+
+        return 2;
+    }
+
     void SpawnGroup()
     {
-        // 从栈取出最多6个单位
-        int count = Mathf.Min(6, creats.Count);
+        // 按人口取单位，每船16人口上限
+        const int maxPopulation = 16;
         List<GameObject> popped = new();
-        for (int i = 0; i < count; ++i)
+        int totalPopulation = 0;
+
+        while (creats.Count > 0 && totalPopulation < maxPopulation)
         {
-            if (creats.TryPop(out var tmp))
+            if (!creats.TryPop(out var tmp)) break;
+
+            int pop = GetUnitPopulation(tmp);
+            // 如果加入这个单位会超出上限且已经有单位了，则放回并停止
+            if (totalPopulation + pop > maxPopulation && popped.Count > 0)
             {
-                popped.Add(tmp);
+                creats.Push(tmp);
+                break;
             }
+
+            popped.Add(tmp);
+            totalPopulation += pop;
         }
 
         if (popped.Count == 0) return;
 
-        // 检查是否有大型单位（HalfRange >= 1）
+        // 检查是否有大型单位（HalfRange >= 1，人口=16）
         int bigIndex = -1;
         for (int i = 0; i < popped.Count; ++i)
         {
@@ -602,18 +629,17 @@ public class RobotWave : I_TickClass, System.IDisposable
                 break;
             }
         }
+
         Vector3 eaglePos;
         if (points == null)
         {
-            // 在center附近创建waveUseObject[0]
-            eaglePos = FpsHelper.GetNavMeshPoint(VectorUtils.GetRandomPointInCircle(center, range+5, range + 15));
+            eaglePos = FpsHelper.GetNavMeshPoint(VectorUtils.GetRandomPointInCircle(center, range + 5, range + 15));
         }
         else
         {
-            // 在points附近创建waveUseObject[0]
             eaglePos = FpsHelper.GetNavMeshPoint(VectorUtils.GetRandomPointInCircle(points.RandomTake(), range, range + 10));
         }
-       
+
         var eagle = VFXManager.Creat(waveUseObject[0], eaglePos, Quaternion.AngleAxis(RandomUtils.Range(0f, 360f), Vector3.up), null);
         if (!eagle) return;
 
@@ -628,10 +654,7 @@ public class RobotWave : I_TickClass, System.IDisposable
         var eagleCtrl = eagle.GetComponent<PhoenixEagleController>();
         if (eagleCtrl)
         {
-            // 先Add再注册回调，确保onWait触发时group已在列表中
             groups.Add(group);
-
-            // 直接用 group 闭包引用，避免 groups.Find 找到其他复用同一鹰实例的旧 group
             EagleGroupInfo capturedGroup = group;
             eagleCtrl.onWait.RemoveAllListeners();
             eagleCtrl.onWait.AddListener(() =>
@@ -649,7 +672,7 @@ public class RobotWave : I_TickClass, System.IDisposable
 
         if (bigIndex >= 0)
         {
-            // 只实例化大型单位，其余重新入栈
+            // 大型单位：只实例化它，其余重新入栈
             var bigUnit = popped[bigIndex];
             for (int i = 0; i < popped.Count; ++i)
             {
@@ -659,8 +682,8 @@ public class RobotWave : I_TickClass, System.IDisposable
                 }
             }
 
-            var go = Object.Instantiate(bigUnit,FpsHelper.GetNavMeshPoint(center),default,null);
-            foreach (var item in go.GetComponents<Behaviour>())if(item is not Health) item.enabled = false;
+            var go = Object.Instantiate(bigUnit, FpsHelper.GetNavMeshPoint(center), default, null);
+            foreach (var item in go.GetComponents<Behaviour>()) if (item is not Health) item.enabled = false;
 
             go.transform.parent = eagle.transform;
             go.transform.localPosition = new Vector3(0, -10, 0);
@@ -669,7 +692,6 @@ public class RobotWave : I_TickClass, System.IDisposable
             var actor = go.GetComponent<Actor>();
             if (actor) units.Add(actor);
 
-            // 禁用Animator（挂在飞行器上时不应播放落地动画）
             var fx = go.GetComponent<EnemyControllerFX>();
             if (fx && fx.Animator)
             {
@@ -678,16 +700,29 @@ public class RobotWave : I_TickClass, System.IDisposable
         }
         else
         {
-            // 正常创建6个单位，挂在鹰上
-            int actualCount = Mathf.Min(popped.Count, s_RelativePositions.Length);
+            // 正常创建，相对偏移计算（2列布局，根据数量均匀分布）
+            const float columnOffsetX = 7f;
+            const float totalLengthZ = 12f;
+            const float heightY = -1f;
+            const int columnCount = 2;
+
+            int actualCount = popped.Count;
+            int rowCount = (actualCount + columnCount - 1) / columnCount;
+            float startZ = -totalLengthZ / 2f;
+            float rowSpacingZ = rowCount > 1 ? totalLengthZ / (rowCount - 1) : 0f;
+
             for (int i = 0; i < actualCount; ++i)
             {
-                var go = Object.Instantiate(popped[i],FpsHelper.GetNavMeshPoint(center), default, null);
-                //Debug.LogWarning("运输船坐标" + eagle.transform.position+"创建坐标"+go.transform.position,go);
+                int col = i % columnCount;
+                int row = i / columnCount;
+                float x = col == 0 ? -columnOffsetX : columnOffsetX;
+                float z = startZ + row * rowSpacingZ;
+                Vector3 relativePos = new(x, heightY, z);
+
+                var go = Object.Instantiate(popped[i], FpsHelper.GetNavMeshPoint(center), default, null);
                 foreach (var item in go.GetComponents<Behaviour>()) if (item is not Health) item.enabled = false;
                 go.transform.parent = eagle.transform;
-                go.transform.localPosition = s_RelativePositions[i];
-                //Debug.LogWarning("修改后坐标" + go.transform.position+"相对坐标"+ go.transform.localPosition, go);
+                go.transform.localPosition = relativePos;
                 group.unitObjects.Add(go);
 
                 var actor = go.GetComponent<Actor>();
@@ -714,6 +749,13 @@ public class RobotWave : I_TickClass, System.IDisposable
             var pos = unit.transform.position;
             unit.transform.position = FpsHelper.GetNavMeshPoint(pos);
             foreach (var item in unit.GetComponents<Behaviour>()) if (item is not Health) item.enabled = true;
+
+            // 确保所有Collider处于启用状态（Animator关键帧可能在启用后将其关闭）
+            foreach (var col in unit.GetComponentsInChildren<Collider>())
+            {
+                col.enabled = true;
+            }
+
             // 启用Animator（开始落地动画）
             var fx = unit.GetComponent<EnemyControllerFX>();
             if (fx && fx.Animator)

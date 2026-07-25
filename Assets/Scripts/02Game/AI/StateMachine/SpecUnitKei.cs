@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using FPSGame.Furn;
@@ -82,6 +82,10 @@ namespace Unity.FPS.AI
                 m_Controller.SetNavDestination(m_Target);
                 mpb.Set("_Expression", 20).Apply();
             }
+            else
+            {
+                HelpPlayer();
+            }
             if (Time.time > speechShowTime + lastSpeechTime)
             {
                 lastSpeechTime = Time.time;
@@ -131,18 +135,23 @@ namespace Unity.FPS.AI
                         AiState = AIState.Wait;
                         mpb.Set("_Expression", 1).Apply();
                         if(m_callInstance) m_callInstance.GetComponent<LimitedLife>().allowRelease = true;
-                        //到目标点了，尝试对着拉人
-                        ActorsManager.Players.ForEach((item)=> {
-                            if (Vector3.Distance(item.Pos, transform.position)<=2
-                                &&item.transform.TryGetComponent(out Furniture_PlayerDown furn))
-                            {
-                                furn.Handle(gameObject);
-                            }
-                        });
-                        
+
+                        HelpPlayer();
                     }
                     break;
             }
+        }
+
+        private void HelpPlayer()
+        {
+            //到目标点了，尝试对着拉人
+            ActorsManager.Players.ForEach((item) => {
+                if (Vector3.Distance(item.Pos, transform.position) <= 2
+                    && item.transform.TryGetComponent(out Furniture_PlayerDown furn))
+                {
+                    furn.Handle(gameObject);
+                }
+            });
         }
 
         private bool IsLockTarget()

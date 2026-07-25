@@ -36,7 +36,7 @@ namespace FpsGame.Mission
 
         void OnTowerDeath()
         {
-            Debug.LogError("单位死亡，完成" + gameObject + entity.transform, entity.transform);
+            Debug.Log("单位死亡，完成" + gameObject + entity.transform, entity.transform);
             tower.OnDie -= OnTowerDeath;
             keyScreen.furn.canOperate = false;
             CompleteMission();

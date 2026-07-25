@@ -61,6 +61,7 @@ public class DamageDataDrawer : PropertyDrawer
         y = DrawPropertyOrPaired(property, useCharge, "Gravity", "ChargeGravityScale", "下坠速度", "蓄力倍率", position, y);
         y = DrawPropertyOrPaired(property, useCharge, "SoundRadius", "ChargeSoundScale", "发出的声音影响范围", "蓄力倍率", position, y);
         y = DrawProperty(property, "ChargeHeatScale", "满蓄热量倍率", position, y);
+        y = DrawProperty(property, "ChargeSpreadScale", "满蓄散布倍率", position, y);
         y = DrawPairedProperties(property, "MinRange", "安全引信(单位:M)", "MaxRange", "自爆引信(单位:M)", position, y);
         y = DrawProperty(property, "MaxLifeTime", "生命周期", position, y);
         y = DrawProperty(property, "InheritWeaponSpeed", "继承武器初速度", position, y);
@@ -73,7 +74,7 @@ public class DamageDataDrawer : PropertyDrawer
 
     private float GetSectionHeight_Motion(SerializedProperty property)
     {
-        return SectionHeaderHeight + 10 * (LineHeight + 2) + Padding;
+        return SectionHeaderHeight + 11 * (LineHeight + 2) + Padding;
     }
 
     #endregion

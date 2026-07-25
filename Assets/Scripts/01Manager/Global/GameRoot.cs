@@ -90,6 +90,12 @@ public partial class GameRoot : GameRootBase<GameRoot>
     [SerializeField]
     [InspectorName("空气墙层")]
     private LayerMask airWallLayers = -1;
+
+
+    /// <summary>第一人称忽略层</summary>
+    [SerializeField]
+    [InspectorName("第一人称忽略层")]
+    private LayerMask firstPersonIgnoreLayers=-1;
     #endregion
 
 
@@ -103,7 +109,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
         LayerDefinition.GroundLayers = groundLayers;
         LayerDefinition.WeaponLayers = weaponLayers;
         LayerDefinition.AirWallLayers = airWallLayers;
-
+        LayerDefinition.FirstPersonIgnoreLayers = firstPersonIgnoreLayers;
 
 
         base.Awake();

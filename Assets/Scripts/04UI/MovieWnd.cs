@@ -2,15 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using Core;
 using UnityEngine;
+using UnityEngine.UI;
 using Utils;
 using static WndTools.WndRootTool;
 
 public class MovieWnd : Window
 {
+    private const float MovieAspectRatio = 2.2f;
+    private const float MinBlackBarHeight = 100f;
+
     [SerializeField]
     private Transform text;
     [SerializeField]
-    private RectTransform top,under;
+    private RectTransform top, under;
     [SerializeField]
     private float lastPro;
 
@@ -19,11 +23,21 @@ public class MovieWnd : Window
         lastPro = 0;
         SetAlpha(text, 0);
         WindowState = WindowStateEnum.UI;
-        Vector2 size = Tool.ScreenSize2D;
-        //Debug.LogWarning("当前高度"+ size.y +"修改比例后的应该的高度"+ (size.x / 2.2f / 2)+"最后高度"+(size.y - (size.x / 2.2f / 2)));
-        float height = Mathf.Max((size.y-(size.x / 2.2f))/2,100);
-        top.sizeDelta =new(top.sizeDelta.x,height);
-        under.sizeDelta = new(top.sizeDelta.x, height);
+        AdaptBlackBars();
+    }
+
+    private void AdaptBlackBars()
+    {
+        CanvasScaler scaler = GetComponentInParent<CanvasScaler>();
+        float scaleFactor = scaler != null ? scaler.referenceResolution.y / Tool.ScreenSize2D.y : 1f;
+
+        float canvasWidth = Constants.CanvasWidth;
+        float canvasHeight = Constants.CanvasHeight;
+        float movieHeight = canvasWidth / MovieAspectRatio;
+        float height = Mathf.Max((canvasHeight - movieHeight) / 2f, MinBlackBarHeight);
+
+        top.sizeDelta = new Vector2(top.sizeDelta.x, height);
+        under.sizeDelta = new Vector2(under.sizeDelta.x, height);
     }
     
     private void Update()

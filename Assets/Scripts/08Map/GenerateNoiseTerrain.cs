@@ -134,6 +134,9 @@ namespace FpsGame.MapUtils
         [InspectorName("覆盖预设参数")]
         [SerializeField] private bool _overridePreset = false;
 
+        [InspectorName("调试：写 preHeight/preTexture")]
+        [SerializeField] private bool _debugPreTexture = false;
+
         [Foldout("基础地形", true)]
         [InspectorName("基础地形缩放")]
         public float baseScale = 5;
@@ -273,7 +276,7 @@ namespace FpsGame.MapUtils
                         plateauThreshold = 0.99f,
                         plateauMaskScale = 8f,
                         edgeDropoff = 0.03f,
-                        erosionIterations = 4,
+                        erosionIterations = 3,
                         sandLayerIndex = -1,
                         grassLayerIndex = 0,
                         rockLayerIndex = 4,
@@ -398,13 +401,13 @@ namespace FpsGame.MapUtils
                     return new TerrainPresetData
                     {
                         baseScale = 1.5f,
-                        baseAmplitude = 12.0f,
+                        baseAmplitude = 15.0f,
                         octaves = 7,
                         lacunarity = 2.5f,
-                        persistence = 0.45f,
+                        persistence = 0.4f,
                         detailScale = 20f,
-                        detailAmplitude = 0.04f,
-                        heightPower = 1.4f,
+                        detailAmplitude = 0.02f,
+                        heightPower = 2.0f,
                         plateauIntensity = 0f,
                         plateauThreshold = 0.99f,
                         plateauMaskScale = 6f,
@@ -493,7 +496,7 @@ namespace FpsGame.MapUtils
             sw.Restart();
 
             // 地形后处理（根据类型执行不同策略）
-            yield return ApplyTerrainPostProcess(preset);
+            yield return ApplyTerrainPostProcess(preset, terrainType);
             Debug.Log($"后处理时间: {sw.ElapsedMilliseconds} ms");
             sw.Restart();
 
@@ -605,10 +608,10 @@ namespace FpsGame.MapUtils
                     nowheight += (detailNoise * 2f - 1f) * effectiveDetailAmplitude;
 
                     heightMap[y, x] = nowheight / (1f + effectiveBaseAmplitude + effectiveDetailAmplitude);
-                    SetPixel(preHeight, y, x, heightMap[y, x], 0);
+                    if (_debugPreTexture) SetPixel(preHeight, y, x, heightMap[y, x], 0);
                 }
 
-                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                if (y % 8 == 0 && y % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                 {
                     yield return null;
                     startTime = Time.realtimeSinceStartup;
@@ -620,7 +623,7 @@ namespace FpsGame.MapUtils
         /// <summary>
         /// 地形后处理——根据地形类型执行不同的处理策略
         /// </summary>
-        IEnumerator ApplyTerrainPostProcess(TerrainPresetData preset)
+        IEnumerator ApplyTerrainPostProcess(TerrainPresetData preset, TerrainType terrainType)
         {
             float effectivePlateauIntensity = _overridePreset ? plateauIntensity : preset.plateauIntensity;
             float effectivePlateauThreshold = _overridePreset ? plateauThreshold : preset.plateauThreshold;
@@ -635,7 +638,7 @@ namespace FpsGame.MapUtils
 
             float startTime = Time.realtimeSinceStartup;
 
-            switch (_terrainType)
+            switch (terrainType)
             {
                 case TerrainType.Desert:
                     // 沙漠：风蚀平滑 + 沙丘塑形
@@ -669,10 +672,11 @@ namespace FpsGame.MapUtils
                     break;
 
                 case TerrainType.Mountains:
-                    // 山地：水力侵蚀雕刻山谷
+                    // 山地：压低低洼 → 水力侵蚀 → 峰值拉伸 → 基准高度 0.1
+                    yield return DepressLowlands(0.4f, 0.7f, startTime);
                     yield return ApplyHydraulicErosion(effectiveErosionIterations, startTime);
-                    // 峰值拉伸：高于 0.35 的区域按差值比例拉升，让低谷更洼、尖峰更尖
-                    yield return StretchHeightPeaks(0.35f, 1.2f);
+                    yield return StretchToMax(0.15f, 1.05f);
+                    yield return ApplyBaselineHeight(0.1f);
                     break;
             }
         }
@@ -705,7 +709,7 @@ namespace FpsGame.MapUtils
                         buffer[x, y] = current - diff * 0.15f;
                     }
 
-                    if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                    if (y % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                     {
                         yield return null;
                         startTime = Time.realtimeSinceStartup;
@@ -757,11 +761,12 @@ namespace FpsGame.MapUtils
                         float cliffDrop = Mathf.Clamp01((h - neighborAvg) * 8f);
                         heightMap[x, y] += cliffDrop * dropoff * 2f;
 
-                        SetPixel(preHeight, x, y, (heightMap[x, y] - threshold) / (intensity + 0.001f), 1);
+                        if (_debugPreTexture)
+                            SetPixel(preHeight, x, y, (heightMap[x, y] - threshold) / (intensity + 0.001f), 1);
                     }
                 }
 
-                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                if (y % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                 {
                     yield return null;
                     startTime = Time.realtimeSinceStartup;
@@ -783,18 +788,18 @@ namespace FpsGame.MapUtils
                     {
                         float h = heightMap[x, y];
 
-                        // 找最低邻居
+                        // 找最低邻居（展开 8 方向，省去循环开销）
                         float minNeighbor = h;
                         int minX = x, minY = y;
-                        for (int dy = -1; dy <= 1; dy++)
-                        {
-                            for (int dx = -1; dx <= 1; dx++)
-                            {
-                                if (dx == 0 && dy == 0) continue;
-                                float nh = heightMap[x + dx, y + dy];
-                                if (nh < minNeighbor) { minNeighbor = nh; minX = x + dx; minY = y + dy; }
-                            }
-                        }
+                        float nh;
+                        nh = heightMap[x - 1, y - 1]; if (nh < minNeighbor) { minNeighbor = nh; minX = x - 1; minY = y - 1; }
+                        nh = heightMap[x, y - 1];     if (nh < minNeighbor) { minNeighbor = nh; minX = x; minY = y - 1; }
+                        nh = heightMap[x + 1, y - 1]; if (nh < minNeighbor) { minNeighbor = nh; minX = x + 1; minY = y - 1; }
+                        nh = heightMap[x - 1, y];     if (nh < minNeighbor) { minNeighbor = nh; minX = x - 1; minY = y; }
+                        nh = heightMap[x + 1, y];     if (nh < minNeighbor) { minNeighbor = nh; minX = x + 1; minY = y; }
+                        nh = heightMap[x - 1, y + 1]; if (nh < minNeighbor) { minNeighbor = nh; minX = x - 1; minY = y + 1; }
+                        nh = heightMap[x, y + 1];     if (nh < minNeighbor) { minNeighbor = nh; minX = x; minY = y + 1; }
+                        nh = heightMap[x + 1, y + 1]; if (nh < minNeighbor) { minNeighbor = nh; minX = x + 1; minY = y + 1; }
 
                         // 高处侵蚀、低处沉积
                         float diff = h - minNeighbor;
@@ -806,7 +811,7 @@ namespace FpsGame.MapUtils
                         }
                     }
 
-                    if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                    if (y % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                     {
                         yield return null;
                         startTime = Time.realtimeSinceStartup;
@@ -844,7 +849,7 @@ namespace FpsGame.MapUtils
                                         heightMap[x, y - 1] * 0.15f);
                     }
 
-                    if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                    if (y % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                     {
                         yield return null;
                         startTime = Time.realtimeSinceStartup;
@@ -880,7 +885,7 @@ namespace FpsGame.MapUtils
                     heightMap[x, y] = Mathf.Clamp01(heightMap[x, y] * 0.9f + basinFactor);
                 }
 
-                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                if (y % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                 {
                     yield return null;
                     startTime = Time.realtimeSinceStartup;
@@ -909,7 +914,84 @@ namespace FpsGame.MapUtils
                     yield return null;
             }
         }
-            
+
+        /// <summary>
+        /// 压低低洼地形：低于 threshold 的高度向 0 压缩，压缩幅度由 strength 控制（0~1）
+        /// </summary>
+        IEnumerator DepressLowlands(float threshold, float strength, float startTime)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    float h = heightMap[x, y];
+                    if (h < threshold)
+                    {
+                        // 低于阈值的部分按 strength 比例压向 0
+                        float ratio = (threshold - h) / threshold; // 0~1，越接近0越大
+                        heightMap[x, y] = Mathf.Lerp(h, 0f, ratio * strength);
+                    }
+                }
+                if (y % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                    yield return null;
+            }
+        }
+
+        /// <summary>
+        /// 将高度图线性拉伸，使最高的点达到 targetMax，低于 threshold 的区域不变
+        /// 允许高度 >1，后续在提交高度图时统一 Clamp01
+        /// </summary>
+        IEnumerator StretchToMax(float threshold, float targetMax)
+        {
+            float currentMax = 0f;
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                    currentMax = Mathf.Max(currentMax, heightMap[x, y]);
+
+            if (currentMax <= threshold) yield break;
+
+            float scale = (targetMax - threshold) / (currentMax - threshold);
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    float h = heightMap[x, y];
+                    if (h > threshold)
+                        heightMap[x, y] = threshold + (h - threshold) * scale;
+                    // 不做 Clamp01，让数据可以 >1
+                }
+                if (y % 8 == 0)
+                    yield return null;
+            }
+        }
+
+        /// <summary>
+        /// 基准高度：将 [actualMin, actualMax] 线性映射到 [baseHeight, 1]，保证最低点 = baseHeight
+        /// </summary>
+        IEnumerator ApplyBaselineHeight(float baseHeight)
+        {
+            float actualMin = 1f, actualMax = 0f;
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    float h = heightMap[x, y];
+                    if (h < actualMin) actualMin = h;
+                    if (h > actualMax) actualMax = h;
+                }
+
+            float range = actualMax - actualMin;
+            if (range <= 0f) yield break;
+            float scale = (1f - baseHeight) / range;
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                    heightMap[x, y] = baseHeight + (heightMap[x, y] - actualMin) * scale;
+                if (y % 8 == 0)
+                    yield return null;
+            }
+        }
+
         /// <summary>
         /// 设置材质
         /// </summary>
@@ -921,7 +1003,13 @@ namespace FpsGame.MapUtils
             {
                 for (int x = 0; x < size; x++)
                 {
-                    float steepness = GetSteepness(y, x) / 90f;
+                    // 快速梯度替代 GetSteepness
+                    int x0 = Mathf.Max(0, x - 1), x1 = Mathf.Min(width - 1, x + 1);
+                    int y0 = Mathf.Max(0, y - 1), y1 = Mathf.Min(height - 1, y + 1);
+                    float gx = heightMap[x1, y] - heightMap[x0, y];
+                    float gz = heightMap[x, y1] - heightMap[x, y0];
+                    float grad = Mathf.Sqrt(gx * gx + gz * gz);
+                    float steepness = grad < 0.1f ? grad * 10f : 1f;
                     float nowheight = heightMap[y, x];
 
                     // 岩石层（陡坡）
@@ -936,13 +1024,16 @@ namespace FpsGame.MapUtils
                     textureMap[y, x, 3] = 0;
                     textureMap[y, x, 0] = 0;
 
-                    SetPixel(preTexture, y, x, textureMap[y, x, 0], 0);
-                    SetPixel(preTexture, y, x, textureMap[y, x, 1], 1);
-                    SetPixel(preTexture, y, x, textureMap[y, x, 2], 2);
-                    SetPixel(preTexture, y, x, steepness, 3);
+                    if (_debugPreTexture)
+                    {
+                        SetPixel(preTexture, y, x, textureMap[y, x, 0], 0);
+                        SetPixel(preTexture, y, x, textureMap[y, x, 1], 1);
+                        SetPixel(preTexture, y, x, textureMap[y, x, 2], 2);
+                        SetPixel(preTexture, y, x, steepness, 3);
+                    }
                 }
 
-                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                if (y % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                 {
                     yield return null;
                     startTime = Time.realtimeSinceStartup;
@@ -968,8 +1059,7 @@ namespace FpsGame.MapUtils
                     float[,] chunk = new float[blockH, blockW];
                     for (int by = 0; by < blockH; by++)
                         for (int bx = 0; bx < blockW; bx++)
-                            chunk[by, bx] = heightMap[y + by, x + bx];
-                    // SetHeights(xBase, yBase, heights) xBase对应x列，yBase对应y行
+                            chunk[by, bx] = Mathf.Clamp01(heightMap[y + by, x + bx]);
                     terrain.terrainData.SetHeights(x, y, chunk);
                     yield return null;
                 }
@@ -1107,7 +1197,7 @@ namespace FpsGame.MapUtils
                     }
                 }
 
-                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                if (dy % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
                 {
                     yield return null;
                     startTime = Time.realtimeSinceStartup;

@@ -4,6 +4,23 @@ using Core;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
+
+/// <summary>
+/// 战备控制器，管理战备的输入、释放与状态切换。
+/// 
+/// 战备释放有两种流程：
+/// 
+/// 【普通释放】（isDirect = false）
+///   Open → Input（输入方向键）→ OnWaitRelease（state=Wait）→ 关闭面板
+///   → 玩家选点 → VFXAirdropEffect.SetOwner → BattleEventSub.Airdrop
+///   → OnRelease（state=Arrive）→ 落地 → state=Sustain → 结束 → state=Cool/Unavailable
+/// 
+/// 【直接释放】（isDirect = true，如飞鹰装填、HealBag）
+///   Open → Input（输入方向键）→ OnWaitRelease（state=Wait）→ 关闭面板
+///   → 触发 OnStateChange(Wait) 回调执行效果 → state=Ready（不经过 VFX/OnRelease）
+/// 
+/// 直接释放的效果逻辑写在 OnAirdropStateChange 的 AirdropState.Wait 分支中。
+/// </summary>
 public class AirdropController : MonoBehaviour
 {
 
@@ -34,7 +51,7 @@ public class AirdropController : MonoBehaviour
         InputManager.BindDown(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
         BattleEventSub.OnCancelAirdrop += OnCancel;
         BattleEventSub.OnAirdrop += OnRelease;
-        BattleEventSub.OnPlayerDead += OnDeath;
+        BattleEventSub.OnPlayerDead += OnPlayerDeath;
     }
 
 
@@ -44,7 +61,7 @@ public class AirdropController : MonoBehaviour
         InputManager.UnBindDown(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
         BattleEventSub.OnCancelAirdrop -= OnCancel;
         BattleEventSub.OnAirdrop -= OnRelease;
-        BattleEventSub.OnPlayerDead -= OnDeath;
+        BattleEventSub.OnPlayerDead -= OnPlayerDeath;
     }
 
 
@@ -97,8 +114,10 @@ public class AirdropController : MonoBehaviour
 
     private void Open()
     {
-        if (Player.ActorState == ActorState.Dead|| Player.ActorState == ActorState.Hide) return;
-
+        if (Player.ActorState == ActorState.Hide) return;
+        // 死亡状态下，只有存在 deathEnable 战备时才允许打开面板
+        if (Player.ActorState == ActorState.Dead && !useAd.Any(item => item.IsCurrentlyAvailable(Player)))
+            return;
         WndManager.WindowState = WindowStateEnum.Airdrop;
         inputDir.Clear();
         OnCancel(Player.gameObject,WaitRelease);
@@ -115,8 +134,7 @@ public class AirdropController : MonoBehaviour
         bool keep = false;
         foreach (var item in useAd) 
         {
-            if (!item.IsAuthorize) continue;//没有授权的战备跳过
-            if (item.State == AirdropState.Unavailable) continue; //次数用尽的战备跳过
+            if (!item.IsCurrentlyAvailable(Player)) continue;//当前不可用的战备跳过
             bool state = item.State==AirdropState.Ready && item.cfg.opter.Compare(inputDir);
             keep |= state;
             if(state && inputDir.Count == item.cfg.opter.Length)
@@ -146,10 +164,12 @@ public class AirdropController : MonoBehaviour
         item.State = AirdropState.Wait;
         WaitRelease = item;
         Close();
+        //通过这个事件来让对应的类调用来直接强制释放
         BattleEventSub.SelectAirdrop(Player.gameObject,item);
 
         if (item.cfg.isDirect)//直接释放（飞鹰装填和升旗）
         {
+            //通过 item.OnStateChange事件来执行对应效果 
             item.State = AirdropState.Ready;
             WaitRelease = null;
         }
@@ -187,7 +207,7 @@ public class AirdropController : MonoBehaviour
         WaitRelease = null;
     }
 
-    void OnDeath(Actor _)
+    void OnPlayerDeath(Actor _)
     {
         if (WaitRelease != null)
         {
@@ -198,6 +218,7 @@ public class AirdropController : MonoBehaviour
             Close();
         }
     }
+
     /// <summary>
     /// 为战备提供授权
     /// </summary>
@@ -247,6 +268,22 @@ public class AirdropController : MonoBehaviour
                         }
                     }
                 }
+                // HealBag：直接释放，对每个死亡玩家位置释放治疗包
+                if (data.cfg.ID == Constants.HealBag)
+                {
+                    foreach (var player in ActorsManager.Players)
+                    {
+                        if (player.ActorState == ActorState.Dead)
+                        {
+                            BattleManager.Instance.ReleaseAirdrop(player.Pos, Constants.HealBag);
+                        }
+                    }
+                    // 扣一次使用次数
+                    if (data.arriveCount > 0)
+                        data.count--;
+                    if (data.count <= 0)
+                        data.State = AirdropState.Unavailable;
+                }
                 break;
             case AirdropState.Arrive:
                 if (data.cfg.deliveryType == AirdropDeliveryEnum.Jet)
@@ -261,7 +298,7 @@ public class AirdropController : MonoBehaviour
                         else if (item != data && item.cfg.deliveryType == AirdropDeliveryEnum.Jet)
                         {
                             //Debug.LogError("所有飞鹰共CD");
-                            if (item.State != AirdropState.Unavailable) item.State = AirdropState.Cool;//鎵€鏈夐楣板叡CD
+                            if (item.State != AirdropState.Unavailable) item.State = AirdropState.Cool;
                             item.time = item.cool;//因为正常cd阶段是减去了持续和呼叫时间
                         }
                     }
@@ -344,6 +381,45 @@ public class AirdropController : MonoBehaviour
         }
 
         public bool IsAuthorize => !cfg.authorize || authorizeCounter > 0;
+
+        /// <summary>
+        /// UI 是否应该显示此战备。
+        /// 有授权：始终显示；
+        /// 无授权但 unAuthorizeVisible：显示（虚化）；
+        /// 无授权且无 unAuthorizeVisible：隐藏。
+        /// </summary>
+        public bool IsVisible => IsAuthorize || cfg.unAuthorizeVisible;
+
+        /// <summary>
+        /// 根据玩家死亡状态判断当前战备是否可用。
+        /// deathEnable 战备：dead 时也可用（活着时正常可用）；
+        /// 普通战备：dead 时不可用，非 dead 时可用。
+        /// </summary>
+        public bool IsCurrentlyAvailable(I_Actor player)
+        {
+            if (State == AirdropState.Unavailable)
+                return false;
+            if (!IsAuthorize)
+                return false;
+            bool isDead = player != null && player.ActorState == ActorState.Dead;
+            if (isDead && !cfg.deathEnable)
+                return false; // 死亡时，只有 deathEnable 战备可用
+            return true;
+        }
+
+        /// <summary>
+        /// 是否仅因死亡状态而不可用（授权和 State 都 OK，只是死亡且没有 deathEnable）。
+        /// 用于 UI 判断：授权不满足时隐藏，死亡不可用时虚化显示。
+        /// </summary>
+        public bool IsOnlyDeathMismatch(I_Actor player)
+        {
+            if (State == AirdropState.Unavailable)
+                return false;
+            if (!IsAuthorize)
+                return false;
+            bool isDead = player != null && player.ActorState == ActorState.Dead;
+            return isDead && !cfg.deathEnable;
+        }
 
         [SerializeField]
         private AirdropState state;

@@ -1,8 +1,6 @@
-﻿using Unity.FPS.Game;
 using UnityEngine;
 using static WndTools.WndRootTool;
 using UnityEngine.UI;
-using Core;
 using GameContract;
 
 public class SubtitleSpecUnit : SubtitleBase
@@ -17,7 +15,7 @@ public class SubtitleSpecUnit : SubtitleBase
         //unimportant = tarActor.HasFlag(ActorFlag.Unimportant);
         SetText(title, tarActor.ShowName);
         SetSprite(halo, tarActor.ExtraPortrait);
-        SetActive(gameObject, tarActor != ActorsManager.Player);
+        SetActive(gameObject, tarActor != owner);
         GlobalEventSub.OnActorSpeech += OnActorSpeech;
         return this;
     }
@@ -63,9 +61,9 @@ public class SubtitleSpecUnit : SubtitleBase
         if (targetState&&completeTrans)
         {
             var dis = GetDistance();
-            show = Mathf.Clamp01((dis - 60) / 40);
-            float scale = 1 - Mathf.Clamp01((dis - 60) / 40);
-            if (dis<7) scale = Mathf.Clamp01(dis-3 / 4);
+            show = Mathf.Clamp01((dis - 60) / 40f);
+            float scale = 1 - Mathf.Clamp01((dis - 60) / 40f);
+            if (dis<7) scale = Mathf.Clamp01((dis-3) / 4f);
             SetAlpha(transform,Mathf.Lerp(GetAlpha(transform), scale, Time.deltaTime*2));
         }
     }

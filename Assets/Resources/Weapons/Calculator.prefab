@@ -426,6 +426,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -475,14 +476,23 @@ MonoBehaviour:
   - name: "\u5145\u80FD\u65F6\u95F4"
     type: 2
     addTag: 0
-    removeTag: 0
+    removeTag: 2
   showAttr: 0000000002000000
-  m_UniqueAttr: []
+  m_UniqueAttr:
+  - name: "\u62A4\u76FE\u534A\u5F84"
+    value: 5
+    tag: 0
+  - name: "\u6301\u7EED\u65F6\u95F4"
+    value: 8
+    tag: 0
+  - name: "\u8131\u79BB\u540E\u77ED\u6682\u7EF4\u6301\u6548\u679C"
+    value: 0
+    tag: 32
   Upgrade:
   - Key: 4
     Value:
     - {fileID: 11400000, guid: 8d3b349f01a843b44940a0491484572a, type: 2}
-    - {fileID: 11400000, guid: 5ea7bee684b5d164f8e6022a628201a3, type: 2}
+    - {fileID: 11400000, guid: 83f09c0213a881c43a3224c41e4f61be, type: 2}
   - Key: 8
     Value:
     - {fileID: 11400000, guid: 9dd0ee838302cbe43a52f6dccadcc354, type: 2}

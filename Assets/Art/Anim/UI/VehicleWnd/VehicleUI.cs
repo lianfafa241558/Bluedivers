@@ -4,6 +4,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using static WndTools.WndRootTool;
+using static WndManager;
+using Core;
 
 public interface IVehicleUIController
 {
@@ -24,7 +27,6 @@ public class VehicleUI : MonoBehaviour
 {
     [SerializeField]
     GameObject contGo;
- 
 
     [SerializeField]
     Animator anim;
@@ -41,8 +43,12 @@ public class VehicleUI : MonoBehaviour
     public Image weaponMainIcon;
     public Image weaponSecIcon;
 
-   IVehicleUIController controller;
+    IVehicleUIController controller;
 
+    /// <summary>
+    /// 载具UI是否应该显示（由载具状态驱动）
+    /// </summary>
+    private bool _shouldShow;
 
     private void Awake()
     {
@@ -51,7 +57,6 @@ public class VehicleUI : MonoBehaviour
         //anim.enabled = false;
         //Canvas.alpha = 0;
         //anim.enabled = true;
-
 
         controller = contGo.GetComponent<IVehicleUIController>();
         if (controller == null) return;
@@ -62,8 +67,8 @@ public class VehicleUI : MonoBehaviour
         controller.OnTextChange += TextChange;
         controller.OnIconChange += IconChange;
 
+        OnWindowStateChange += OnWindowStateChangeHandler;
     }
-
 
     private void OnDestroy()
     {
@@ -75,6 +80,35 @@ public class VehicleUI : MonoBehaviour
         controller.OnTextChange -= TextChange;
         controller.OnIconChange -= IconChange;
         controller = null;
+
+        OnWindowStateChange -= OnWindowStateChangeHandler;
+    }
+
+    /// <summary>
+    /// 窗口状态变化时控制载具UI的显隐
+    /// 进入UI/自由相机界面时隐藏，退出时用alpha在一秒内恢复
+    /// </summary>
+    private void OnWindowStateChangeHandler(WindowStateEnum oldState, WindowStateEnum state)
+    {
+        switch (state)
+        {
+            case WindowStateEnum.UI:
+            case WindowStateEnum.FreeCamera:
+                // 进入UI或自由相机时立即隐藏
+                SetAlpha(Canvas, 0);
+                break;
+            case WindowStateEnum.Game:
+                // 退出UI/自由相机时渐入恢复
+                if (_shouldShow)
+                {
+                    float targetAlpha = ArchiveSvc.GetSetting("沉浸模式") > 0 ? 0 : 1;
+                    if (targetAlpha > 0)
+                    {
+                        SetAlpha(Canvas, 0, targetAlpha, 1000);
+                    }
+                }
+                break;
+        }
     }
 
     void ColorChange(bool isMain, Color color)
@@ -87,8 +121,13 @@ public class VehicleUI : MonoBehaviour
     }
     void StateChange(bool state)
     {
-        //Canvas.alpha = state ? 1 : 0;
+        _shouldShow = state;
         anim.SetBool(Constants.k_AnimIsActiveParameter, state);
+
+        if (WindowState == WindowStateEnum.Game)
+        {
+            Canvas.alpha = ArchiveSvc.GetSetting("沉浸模式") > 0 ? 0 : 1;
+        }
     }
     void TextChange(bool isMain, string text)
     {
@@ -96,7 +135,7 @@ public class VehicleUI : MonoBehaviour
     }
     void IconChange(bool isMain, Sprite icon)
     {
-        (isMain ? weaponMainIcon : weaponSecIcon).sprite= icon;
+        (isMain ? weaponMainIcon : weaponSecIcon).sprite = icon;
     }
     void SetWeaponState(bool isMain, bool state)
     {

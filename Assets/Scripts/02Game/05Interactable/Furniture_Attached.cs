@@ -62,7 +62,6 @@ namespace FPSGame.Furn
     {
         public static Dictionary<int, IFurniture> list = new();
 
-
         private static int nowID = 0;
         private static int GetID => ++nowID;
 
@@ -104,7 +103,9 @@ namespace FPSGame.Furn
         public Animator anim;
 
         [DisplayField(true, false)]
-        public new AudioSource audio;
+        [SerializeField]
+        [InspectorName("音频源")]
+        private AudioSource _audioSource;
 
 
         [Foldout("状态", true)]
@@ -120,14 +121,16 @@ namespace FPSGame.Furn
         [SerializeField]
         protected int count;
 
+        private I_Actor _actor;
+
         public int NumberID { get; private set; }
         
-        public virtual string ShowName { get => GetComponent<I_Actor>().ShowName; }
-        public virtual string Id { get => GetComponent<I_Actor>().Id; }
+        public virtual string ShowName { get => _actor.ShowName; }
+        public virtual string Id { get => _actor.Id; }
 
         Sprite IFurniture.Portrait => Icon; 
 
-        protected virtual Sprite Icon { get => GetComponent<I_Actor>().Portrait; }
+        protected virtual Sprite Icon { get => _actor.Portrait; }
 
         public bool InOperate => inOperate; 
         public float MeetTime=> meetTime; 
@@ -138,7 +141,11 @@ namespace FPSGame.Furn
         {
             get
             {
-                if (TryGetComponent<Collider>(out var collider))
+                // 防止对象已被销毁后访问（切场景等情况）
+                if (this == null || gameObject == null)
+                    return Vector3.zero;
+
+                if (TryGetComponent<Collider>(out var collider) && collider != null)
                     return collider.bounds.center;
                 else
                     return transform.position + Vector3.up;
@@ -155,21 +162,31 @@ namespace FPSGame.Furn
             set
             {
                 pressTime = value;
-                if (pressTime > 0 && HaveFlag(FurnitureFlag.ControlAnim))
+                if (pressTime > 0 && HaveFlag(FurnitureFlag.ControlAnim) && anim != null)
                     anim.Play(Constants.k_AnimEntry, 0, value / meetTime);
             }
         }
 
         protected virtual void Awake()
         {
-            audio = GetComponent<AudioSource>();
+            _audioSource = GetComponent<AudioSource>();
+            _actor = GetComponent<I_Actor>();
             if (!anim) anim = GetComponent<Animator>();
-        }
-        protected virtual void Start()
-        {
-            list.Add(NumberID = GetID, this);
+
+            // 首次分配唯一ID
+            if (NumberID == 0)
+                NumberID = GetID;
         }
 
+        protected virtual void OnEnable()
+        {
+            list[NumberID] = this;
+        }
+
+        protected virtual void OnDisable()
+        {
+            list.Remove(NumberID);
+        }
 
         private void OnDestroy()
         {
@@ -180,10 +197,6 @@ namespace FPSGame.Furn
         protected virtual void Update()
         {
             if (inOperate) InOperateUpdate();
-            if (HaveFlag(FurnitureFlag.ControlAnim))
-            {
-
-            }
         }
 
 
@@ -204,7 +217,7 @@ namespace FPSGame.Furn
 
         }
         /// <summary>
-        /// 直接强制交互(以上一个交互者
+        /// 执行家具交互操作（使用上一次 Handle 时记录的交互者）
         /// </summary>
         public virtual void Operate()
         {
@@ -214,28 +227,34 @@ namespace FPSGame.Furn
                 inOperate = !inOperate;
                 if (!inOperate) owner = null;
             }
-            else inOperate = true;
+            else
+            {
+                inOperate = true;
+            }
+
             if (HaveFlag(FurnitureFlag.Disposable))
             {
                 canOperate = false;
                 inOperate = false;
+                owner = null;
             }
             else if (HaveFlag(FurnitureFlag.Immediately))
             {
                 inOperate = false;
             }
-            ;
+
             if (HaveFlag(FurnitureFlag.PlayAnim) && anim)
             {
                 anim.enabled = true;
                 anim.Play(Constants.k_AnimEntry);
             }
+
             if (HaveFlag(FurnitureFlag.Speech))
             {
                 GlobalEventSub.PlayMeetSpeech(user, SpeechTypeEnum.Responded);
             }
+
             if (audioOper) PlaySound(audioOper);
-            //if (cfg.provideProp) BattleManager.Player.PickUpProp(Instantiate(cfg.provideProp));
             lastOperatetime = Time.time;
             GlobalEventSub.FurnitureOperate(user, this);
             OnOperate?.Invoke();
@@ -282,9 +301,9 @@ namespace FPSGame.Furn
             anim.enabled = false;
         }
 
-        protected void PlaySound(AudioClip path)
+        protected void PlaySound(AudioClip clip)
         {
-            AudioSvc.PlaySound(new(path, Pos) { importance = true });
+            AudioSvc.PlaySound(new(clip, Pos) { importance = true });
         }
 
 

@@ -62,6 +62,13 @@ public class Furniture_General : Furniture_Base
                 furn.BaseOp();
             }
         },
+        ["GuideWnd"] = new() {
+            _Operate = (furn) => {
+                wndManager.guideWnd.SetWndState(true);
+                furn.BaseOp();
+            }
+        },
+        
         ["SettingWnd"] = new() {
             _Operate = (furn) => {
                 wndManager.settingWnd.SetWndState(true);
@@ -114,9 +121,15 @@ public class Furniture_General : Furniture_Base
         ["Supply"] = new() {
             _Operate = (Furniture_General furn) => {
                 furn.transform.parent.parent.GetComponent<Animator>().Play("Exit",(int)furn.ExtFloatParameter,0);
-                furn.owner.GetComponent<PlayerController>().UseSupply();
-                furn.BaseOp();
-                if(furn.owner.TryGetComponent(out PlayerController player)) BattleManager.Instance.AddBattleDataItem(player.PlayerIndex,"使用补给次数");
+                if (furn.owner != null && furn.owner.TryGetComponent(out PlayerController player))
+                {
+                    player.UseSupply();
+                    furn.BaseOp();
+                    if (BattleManager.Instance != null)
+                    {
+                        BattleManager.Instance.AddBattleDataItem(player.PlayerIndex, "使用补给次数");
+                    }
+                }
             }
         },
         ["BlackBox"] = new() {
@@ -167,9 +180,8 @@ public class Furniture_General : Furniture_Base
     private bool BaseCanOp(GameObject unit) => base.CanOperate(unit);
     private void BaseOp() => base.Operate();
     
-    protected override void Start()
+    private void Start()
     {
-        base.Start();
         if(!furnData.TryGetValue(Id,out action))
         {
             action = new();
@@ -178,7 +190,6 @@ public class Furniture_General : Furniture_Base
     }
 
     public override void Operate() {
-        //Debug.LogWarning(cfg.furnitureId + " "+ action._Operate);
         action._Operate?.Invoke(this);
     }
 

@@ -4,6 +4,7 @@ using AirdropState = AirdropController.AirdropState;
 using static WndTools.WndRootTool;
 using Core;
 using Utils;
+using Unity.FPS.Game;
 
 public class AirdropWnd : Window
 {
@@ -74,12 +75,14 @@ public class AirdropWnd : Window
             for (int i = 0; i < controller.useAd.Count; ++i)
             {
                 var ad = controller.useAd[i];
-                SetActive(airdropList[i].transform, ad.IsAuthorize);
-                SetActive(showList[i].transform, ad.IsAuthorize);
+                // IsVisible: 有授权或 unAuthorizeVisible 则显示，否则隐藏
+                SetActive(airdropList[i].transform, ad.IsVisible);
+                SetActive(showList[i].transform, ad.IsVisible);
 
                 SetSprite(airdropList[i].GetChild(0), ad.isGift? giftSprite: normalSprite);
                 SetColor(airdropList[i].GetChild(0), ad.cfg.Color);
                 SetSprite(airdropList[i].GetChild(0, 0), ad.cfg.icon);
+                SetColor(airdropList[i].GetChild(0, 0), ad.cfg.IconColor);
                 SetSizeDelta(airdropList[i].GetChild(0, 1),0,0);
                 SetActive(airdropList[i].GetChild(0, 2), ad.count > 0);
                 SetText(airdropList[i].GetChild(0,2,0), ad.count);
@@ -89,6 +92,7 @@ public class AirdropWnd : Window
                 SetAlpha(showList[i], 0);
                 SetColor(showList[i].GetChild(0), ad.cfg.Color);
                 SetSprite(showList[i].GetChild(0, 0), ad.cfg.icon);
+                SetColor(showList[i].GetChild(0, 0), ad.cfg.IconColor);
                 SetText(showList[i].GetChild(1), ad.cfg.showName);
 
             }
@@ -153,14 +157,18 @@ public class AirdropWnd : Window
                 for (int i = 0; i < controller.useAd.Count; ++i)
                 {
                     var ad = controller.useAd[i];
-                    //SetActive(airdropList[i].transform, ad.IsAuthorize);
-                    //SetActive(showList[i].transform, ad.IsAuthorize);
+                    if (!ad.IsVisible) continue; // 不显示的跳过
 
                     showList[i].alpha = 0;
-                    if (ad.State != AirdropState.Ready)
+                    if (!ad.IsCurrentlyAvailable(ActorsManager.Player))
                     {
                         SetAlpha(airdropList[i].GetChild(1),0.35f);
-                        airdropList[i].GetComponent<CanvasGroup>().alpha = 1;//不确定
+                        airdropList[i].GetComponent<CanvasGroup>().alpha = 0.25f;
+                    }
+                    else if (ad.State != AirdropState.Ready)
+                    {
+                        SetAlpha(airdropList[i].GetChild(1),0.35f);
+                        airdropList[i].GetComponent<CanvasGroup>().alpha = 1;
                     }
                     else
                     {
@@ -177,9 +185,14 @@ public class AirdropWnd : Window
     {
         for (int i = 0; i < controller.useAd.Count; ++i)
         {
-            var state = controller.useAd[i].IsAuthorize;
-            SetActive(airdropList[i].transform, state);
-            SetActive(showList[i].transform, state);
+            var ad = controller.useAd[i];
+            SetActive(airdropList[i].transform, ad.IsVisible);
+            SetActive(showList[i].transform, ad.IsVisible);
+            if (!ad.IsCurrentlyAvailable(ActorsManager.Player))
+            {
+                airdropList[i].GetComponent<CanvasGroup>().alpha = 0.25f;
+                SetAlpha(airdropList[i].GetChild(1), 0.35f);
+            }
         }
     }
 
@@ -194,19 +207,27 @@ public class AirdropWnd : Window
     }
     void CheckInput(int index)
     {
-        if (opterlist.Count == 0)
+        var ad = controller.useAd[index];
+        if (!ad.IsVisible) return; // 不显示的跳过
+
+        if (!ad.IsCurrentlyAvailable(ActorsManager.Player))
+        {
+            airdropList[index].GetComponent<CanvasGroup>().alpha = 0.25f;
+            ResetItemText(index);
+        }
+        else if (opterlist == null || opterlist.Count == 0)
         {
             airdropList[index].GetComponent<CanvasGroup>().alpha = 1;
             ResetItemText(index);
         }
-        else if (controller.useAd[index].State != AirdropState.Ready)//不会考虑冷却中的
+        else if (ad.State != AirdropState.Ready)//不会考虑冷却中的
         {
 
         }
-        else if (controller.useAd[index].cfg.opter.Compare(opterlist))
+        else if (ad.cfg.opter.Compare(opterlist))
         {
             airdropList[index].GetComponent<CanvasGroup>().alpha = 1;//符合条件的显示
-            SetText(airdropList[index].GetChild(2), controller.useAd[index].cfg.opter.OpterColorString(opterlist.Count, new(1, 1, 1, 0.15f), new(1, 1, 1, 1), new(1, 1, 1, 0.55f)));
+            SetText(airdropList[index].GetChild(2), ad.cfg.opter.OpterColorString(opterlist.Count, new(1, 1, 1, 0.15f), new(1, 1, 1, 1), new(1, 1, 1, 0.55f)));
         }
         else if (airdropList[index].GetComponent<CanvasGroup>().alpha > 0.25f)
         {
@@ -220,8 +241,19 @@ public class AirdropWnd : Window
         for (int i = 0; i < controller.useAd.Count; ++i)
         {
             var item = controller.useAd[i];
-            SetSizeDelta(showList[i].GetChild(0, 1), 0, 32 * controller.useAd[i].TimeScale);
-            SetText(airdropList[i].GetChild(0, 2, 0), controller.useAd[i].count);
+            if (!item.IsVisible) continue; // 不显示的跳过
+
+            SetSizeDelta(showList[i].GetChild(0, 1), 0, 32 * item.TimeScale);
+            SetText(airdropList[i].GetChild(0, 2, 0), item.count);
+
+            if (!item.IsCurrentlyAvailable(ActorsManager.Player))
+            {
+                // 当前不可用时渐出
+                if (showList[i].alpha > 0)
+                    showList[i].alpha = Mathf.Lerp(showList[i].alpha, -0.1f, Time.deltaTime * 3);
+                continue;
+            }
+
             if (showList[i].alpha < 1 && (
                 item.State == AirdropState.Wait
                 || item.State == AirdropState.Arrive 
@@ -273,33 +305,47 @@ public class AirdropWnd : Window
         for (int i = 0; i < controller.useAd.Count; ++i)
         {
             var item = controller.useAd[i];
-            SetSizeDelta(airdropList[i].GetChild(0, 1), 0, 32 * controller.useAd[i].TimeScale);
-            string re = default;
-            switch (item.State)
-            {
-                case AirdropState.Cool:
-                    re = "正在冷却 " + Tool.FloatToTime(item.time);
-                    break;
-                case AirdropState.Wait:
-                    re = "正在启动";
-                    break;
-                case AirdropState.Arrive:
-                    re = "即将抵达 " + Tool.FloatToTime(item.time);
-                    break;
-                case AirdropState.Sustain:
-                    re = "正在进行 " + Tool.FloatToTime(item.time);
-                    break;
-                case AirdropState.Unavailable:
-                    re = "不可用";
-                    break;
-            }
-            if (!string.IsNullOrEmpty(re)) SetText(airdropList[i].transform.GetChild(2), re);
+            if (!item.IsVisible) continue; // 不显示的跳过
 
-            if (item.State == AirdropState.Ready&& GetAlpha(airdropList[i].GetChild(1)) <= 0.35f)
+            SetSizeDelta(airdropList[i].GetChild(0, 1), 0, 32 * item.TimeScale);
+
+            if (!item.IsCurrentlyAvailable(ActorsManager.Player))
             {
-                SetAlpha(airdropList[i].GetChild(1), 1);
-                //尝试校验
-                CheckInput(i);
+                SetText(airdropList[i].transform.GetChild(2), "不可用");
+                if (GetAlpha(airdropList[i].GetChild(1)) > 0.35f)
+                {
+                    SetAlpha(airdropList[i].GetChild(1), 0.35f);
+                }
+            }
+            else
+            {
+                string re = default;
+                switch (item.State)
+                {
+                    case AirdropState.Cool:
+                        re = "正在冷却 " + Tool.FloatToTime(item.time);
+                        break;
+                    case AirdropState.Wait:
+                        re = "正在启动";
+                        break;
+                    case AirdropState.Arrive:
+                        re = "即将抵达 " + Tool.FloatToTime(item.time);
+                        break;
+                    case AirdropState.Sustain:
+                        re = "正在进行 " + Tool.FloatToTime(item.time);
+                        break;
+                    case AirdropState.Unavailable:
+                        re = "不可用";
+                        break;
+                }
+                if (!string.IsNullOrEmpty(re)) SetText(airdropList[i].transform.GetChild(2), re);
+
+                if (item.State == AirdropState.Ready && GetAlpha(airdropList[i].GetChild(1)) <= 0.35f)
+                {
+                    SetAlpha(airdropList[i].GetChild(1), 1);
+                    //尝试校验
+                    CheckInput(i);
+                }
             }
         }
     }

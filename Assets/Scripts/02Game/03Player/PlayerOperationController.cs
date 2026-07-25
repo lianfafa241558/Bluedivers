@@ -10,13 +10,15 @@ public class PlayerOperationController : MonoBehaviour
     public IFurniture target;
 
     private Camera m_Camera;
+    private PlayerController m_PlayerController;
 
     private PlayerInputHandler m_InputHandler;
     private AudioSource aud;
 
     void Start()
     {
-        m_Camera = GetComponentInChildren<Camera>();
+        m_PlayerController = GetComponent<PlayerController>();
+        m_Camera = m_PlayerController.PlayerCamera;
         m_InputHandler = GetComponent<PlayerInputHandler>();
         WndManager.OnWindowStateChange += OnWindowStateChange;
     }
@@ -27,30 +29,59 @@ public class PlayerOperationController : MonoBehaviour
 
     void Update()
     {
-        
-
-        if (Physics.Raycast(m_Camera.ScreenPointToRay(new(Screen.width / 2, Screen.height / 2, 0)), out var hit, 1.3f, m_Camera.cullingMask))
+        if (m_PlayerController.IsThirdPerson)
         {
-            var newtar = hit.transform.GetComponent<IFurniture>();
-            if(target != newtar&&(newtar==null|| newtar.CanOperate(gameObject)))
+            // 第三人称：检测角色前方近距离的交互物，取距离最近的可交互物
+            Vector3 checkPos = m_PlayerController.CenterPos + Vector3.up * 0.5f + transform.forward * 0.5f;
+            Collider[] colliders = Physics.OverlapSphere(checkPos, 1.2f, -1, QueryTriggerInteraction.Collide);
+            IFurniture newtar = null;
+            float nearestDist = float.MaxValue;
+            foreach (var col in colliders)
             {
-                if (target!=null && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
+                var furn = col.GetComponent<IFurniture>();
+                if (furn != null && furn.CanOperate(gameObject))
+                {
+                    float dist = Vector3.Distance(col.transform.position, checkPos);
+                    if (dist < nearestDist)
+                    {
+                        nearestDist = dist;
+                        newtar = furn;
+                    }
+                }
+            }
+            if (target != newtar)
+            {
+                if (target != null && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
                 target = newtar;
-                if (newtar==null)
+                if (newtar == null)
                 {
                     if (aud) { aud.Stop(); aud = null; }
                     m_InputHandler.InOperation = false;
                 }
             }
+            else if (newtar == null)
+            {
+                ClearTarget();
+            }
+
+            // 第三人称有交互目标时自动切瞄准模式
+            m_PlayerController.WeaponsManager.ForceAim = target != null;
         }
-        //没有获取到交互道具，但是正在操作
-        else if(target != null &&(!target.HaveFlag(FurnitureFlag.SwitchState)||!target.InOperate))
+        else if (Physics.Raycast(m_Camera.ScreenPointToRay(new(Screen.width / 2, Screen.height / 2, 0)), out var hit, 1.3f, m_Camera.cullingMask))
         {
-            if (!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
-            if (aud) { aud.Stop(); aud = null; }
-            target = null;
-            m_InputHandler.InOperation = false;
+            TrySetTarget(hit);
         }
+        else
+        {
+            ClearTarget();
+        }
+
+        // 非第三人称时取消强制瞄准
+        if (!m_PlayerController.IsThirdPerson)
+        {
+            m_PlayerController.WeaponsManager.ForceAim = false;
+        }
+
         if (target != null)
         {
             if (target.MeetTime == 0)
@@ -95,6 +126,32 @@ public class PlayerOperationController : MonoBehaviour
 
         }
 
+    }
+
+    private void TrySetTarget(RaycastHit hit)
+    {
+        var newtar = hit.transform.GetComponent<IFurniture>();
+        if(target != newtar && (newtar == null || newtar.CanOperate(gameObject)))
+        {
+            if (target != null && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
+            target = newtar;
+            if (newtar == null)
+            {
+                if (aud) { aud.Stop(); aud = null; }
+                m_InputHandler.InOperation = false;
+            }
+        }
+    }
+
+    private void ClearTarget()
+    {
+        if (target != null && (!target.HaveFlag(FurnitureFlag.SwitchState) || !target.InOperate))
+        {
+            if (!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
+            if (aud) { aud.Stop(); aud = null; }
+            target = null;
+            m_InputHandler.InOperation = false;
+        }
     }
 
     private void OnWindowStateChange(WindowStateEnum oldState,WindowStateEnum state)

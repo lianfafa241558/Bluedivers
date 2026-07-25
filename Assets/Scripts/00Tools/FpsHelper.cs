@@ -130,6 +130,23 @@ public static class FpsHelper
 
         }
 
+        //警告
+        if (BattleManager.Instance.IsValid()&&!hitData.data.NoSource && (!collider.IsValid() || collider.GetComponent<I_Damagable>() == null) && soundRadius > 0)
+        {
+            var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, soundRadius), TargetCfg.Enemy);
+            foreach (var item in unitList)
+            {
+                if (item.transform.TryGetComponent(out I_AIController physical))
+                {
+
+                }
+            }
+
+            //if (collider.transform.TryGetComponentInParent(out Actor actor) && actor != ActorsManager.Player) GlobalEventManager.BulletHit(owner, point);
+            BattleEventSub.BulletHit(owner, point);
+
+        }
+
         //特效
         if (damageData.ImpactVfx)
         {
@@ -149,31 +166,13 @@ public static class FpsHelper
         //音效
         if (damageData.ImpactSfx)
         {
-            AudioSvc.PlaySound(new(damageData.ImpactSfx, point, hitData.sfxRange,AudioGroups.Impact));
+            AudioSvc.PlaySound(new(damageData.ImpactSfx, point, hitData.sfxRange, AudioGroups.Impact));
         }
         //弹痕
         if (damageData.UseHole)
         {
-            VFXManager.Creat(damageData.Hole.IsValid() ? damageData.Hole : bulletHoles.RandomTake(), point, Quaternion.LookRotation(normal),(collider.IsValid()&& (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
+            VFXManager.Creat(damageData.Hole.IsValid() ? damageData.Hole : bulletHoles.RandomTake(), point, Quaternion.LookRotation(normal), (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
         }
-
-        //警告
-        if (BattleManager.Instance.IsValid()&&!hitData.data.NoSource && (!collider.IsValid() || collider.GetComponent<I_Damagable>() == null) && soundRadius > 0)
-        {
-            var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, soundRadius), TargetCfg.Enemy);
-            foreach (var item in unitList)
-            {
-                if (item.transform.TryGetComponent(out I_AIController physical))
-                {
-
-                }
-            }
-
-            //if (collider.transform.TryGetComponentInParent(out Actor actor) && actor != ActorsManager.Player) GlobalEventManager.BulletHit(owner, point);
-            BattleEventSub.BulletHit(owner, point);
-
-        }
-
     }
 
 
@@ -262,7 +261,7 @@ public static class FpsHelper
 
     public static PEInt DiffDamageScale()
     {
-        PEInt scale = 1 + (TaskManager.Instance.nowTask.ExtraDifficulty[0] * (PEInt)0.334f)+(ActorsManager.Players.Count-1)*(PEInt)0.05f;
+        PEInt scale = 1 + (TaskManager.Instance.nowTask.ExtraDifficulty[0] * (PEInt)0.15f)+(ActorsManager.Players.Count-1)*(PEInt)0.05f;
         switch (TaskManager.Instance.nowTask.difficulty)
         {
             case DifficultyEnum.Normal:
@@ -283,10 +282,10 @@ public static class FpsHelper
                 scale *= (PEInt)2;
                 break;
             case DifficultyEnum.Torment:
-                scale *= (PEInt)3;
+                scale *= (PEInt)2.5f;
                 break;
             case DifficultyEnum.Lunatic:
-                scale *= (PEInt)4;
+                scale *= (PEInt)3;
                 break;
         }
         return scale;

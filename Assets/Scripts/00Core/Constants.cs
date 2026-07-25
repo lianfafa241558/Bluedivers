@@ -52,6 +52,10 @@ public static class Constants
 
     /// <summary>飞鹰重新装填ID</summary>
     public static int EagleReloadId = 1;
+    /// <summary>飞鹰重新装填ID</summary>
+    public static int HealBag = 9;
     /// <summary>补给ID</summary>
-    public static int SupplyId = 1;
+    public static int SupplyId = 10;
+    /// <summary>飞鹰重新装填ID</summary>
+    public static int SOSId = 11;
 }

@@ -7,6 +7,7 @@ using Core.Interface;
 using FpsGame.MapUtils;
 using GameContract;
 
+using Unity.FPS.Game;
 using UnityEditor;
 using UnityEngine;
 using Utils;
@@ -99,7 +100,8 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     private void CreatAllTask()
     {
         var now = System.DateTime.Now;
-        TaskRandom = new(now.Month*100+now.Day+now.Hour*100+(now.Minute/30*30));//ÿСʱˢ��
+        //TaskRandom = new(now.Month*100+now.Day+now.Hour*100+(now.Minute/30*30));//半小时刷新一次
+        TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 5 * 5));//半小时刷新一次
         residualCodeA = new(codeA);
         residualCodeB = new(codeB);
         var values = MapData.Values.ToList();
@@ -129,9 +131,9 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
                         _ => 0
                     }),
                     nestCount = missionCfg.sizeType switch {
-                        SizeType.Small => new int[3] { 0, 0, 0 },
+                        SizeType.Small => new int[3] { 1, 0, 0 },
                         SizeType.Medium => new int[3] { 2, 1, 0 },
-                        SizeType.Large => new int[3] { 1, 2, 1 },
+                        SizeType.Large => new int[3] { 2, 2, 1 },
                         _ => new int[3] { 0, 0, 0 },
                     },
                     terrainType = values[i].mapItemInfos[u].terrainType,
@@ -281,10 +283,18 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         var subTypes = (Missions[task.taskCfg.main] as MissionMainData_SO).subType;
         if (subTypes != null) task.subs = subTypes.Select(item => new TaskItem(Missions[item])).ToArray();
         else task.subs = new TaskItem[0];
-        task.RequiredAD = new() {10,11,16,17};
+        //task.RequiredAD = new() {10,11,16,17};
+        task.RequiredAD = new() { 10,16, 17 };
         task.RequiredAD.AddRange(task.MainCfg.RequiredAD.Select(item => item.ID));
         task.RequiredAD.AddRange(task.taskCfg.extra.SelectMany(item => Missions[item].RequiredAD).Select(item => item.ID));
         if (subTypes != null) task.RequiredAD.AddRange(subTypes.SelectMany(item => Missions[item].RequiredAD).Select(item => item.ID));
+
+        // 加入当前角色默认战备ID
+        var roleDataList = ResSvc.Instance.LoadObjects<RoleData_SO>("GameData/Role");
+        var roleData = roleDataList.Find(r => r.ID == ArchiveSvc.Archive.lastSelectRole);
+        if (roleData != null && roleData.DefaultAirdropIDs != null)
+            task.RequiredAD.AddRange(roleData.DefaultAirdropIDs);
+
         task.RequiredAD = task.RequiredAD.Distinct().ToList();
 
         task.difficulty = difficulty;

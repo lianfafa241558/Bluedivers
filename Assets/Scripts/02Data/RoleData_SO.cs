@@ -14,11 +14,14 @@ namespace Unity.FPS.Game
     public class RoleData_SO : ScriptableObject
     {
         public string ID;
-        
+
         public DisplayDic<WeaponTypeEnum, List<WeaponPlayerController>> weapons;
 
         [SerializeField]
         DisplayDic<SpeechTypeEnum,SoundGroup_SO> speechGroups=new DisplayDic<SpeechTypeEnum, SoundGroup_SO>();
+
+        /// <summary>角色默认携带的战备ID列表</summary>
+        public int[] DefaultAirdropIDs;
         public List<WeaponPlayerController> GetStartingWeapons(ArchivesData_SO.ArchRoleData arch)
         {
             List<WeaponPlayerController> re = new() {

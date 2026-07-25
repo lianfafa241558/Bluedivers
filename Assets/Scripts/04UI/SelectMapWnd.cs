@@ -529,6 +529,7 @@ public class SelectMapWnd : Window
         //现在暂时只能单人
         taskManager.SetTask(mapRoot.GetChild(SelectMapIndex).name, SelectTaskIndex,(DifficultyEnum)SelectTaskDiff, SelectTaskExtraDiff,SelectPlayMode);
         SetWndState(false);
+
     }
 
 

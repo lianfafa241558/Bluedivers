@@ -116,6 +116,7 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
         time = Time.time;
         diveStartTime = Time.time;
         onDiving?.Invoke();
+        ComputeDiveSpeedScale();
     }
 
     public void OnHide()
@@ -166,6 +167,8 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
 
     private float waitStartTime;
     private float diveStartTime;
+    private float _diveSpeedScale = 1f;
+    private float _diveTargetDuration = -1f;
     private void UpdateMovement()
     {
         float diveDuration = CalculateDuration(diveSpeed, startPoint, targetA);
@@ -229,7 +232,7 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
     }
     private void UpdateDivingMovement()
     {
-        float currentSpeed = GetDivingSpeed(progress);
+        float currentSpeed = GetDivingSpeed(progress) * _diveSpeedScale;
         float step = currentSpeed * Time.deltaTime;
         float totalDistance = Vector3.Distance(startPoint, targetA);
         float progressDelta = step / totalDistance;
@@ -310,6 +313,56 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
     {
         float distance = Vector3.Distance(start, end);
         return distance / speed;
+    }
+
+    /// <summary>
+    /// 设置俯冲阶段持续时间，通过速度缩放使俯冲刚好在指定时间内到达目标点
+    /// </summary>
+    /// <param name="time">目标俯冲时间（秒）</param>
+    public void SetDiveDuration(float time)
+    {
+        if (time <= 0f)
+        {
+            _diveSpeedScale = 1f;
+            _diveTargetDuration = -1f;
+            return;
+        }
+        _diveTargetDuration = time;
+        ComputeDiveSpeedScale();
+    }
+
+    private void ComputeDiveSpeedScale()
+    {
+        if (_diveTargetDuration <= 0f)
+        {
+            _diveSpeedScale = 1f;
+            return;
+        }
+        float arcLength = CalculateDiveArcLength();
+        if (arcLength <= 0f)
+        {
+            return;
+        }
+        float baseDuration = arcLength / diveSpeed;
+        _diveSpeedScale = baseDuration / _diveTargetDuration;
+    }
+
+    /// <summary>
+    /// 采样计算俯冲贝塞尔曲线的近似弧长
+    /// </summary>
+    private float CalculateDiveArcLength()
+    {
+        const int segments = 20;
+        float length = 0f;
+        Vector3 prevPoint = CalculateBezierPosition(FlightPhase.Diving, 0f);
+        for (int i = 1; i <= segments; i++)
+        {
+            float t = (float)i / segments;
+            Vector3 currentPoint = CalculateBezierPosition(FlightPhase.Diving, t);
+            length += Vector3.Distance(prevPoint, currentPoint);
+            prevPoint = currentPoint;
+        }
+        return length;
     }
 
     private void OnFlightComplete()

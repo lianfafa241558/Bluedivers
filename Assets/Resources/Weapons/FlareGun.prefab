@@ -385,6 +385,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   - Speed: 1000
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -420,6 +421,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   - Speed: 1000
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -457,6 +459,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -466,6 +469,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -495,6 +499,7 @@ MonoBehaviour:
   AimZoomRatio: 0.5
   AimOffset: {x: 0, y: 0.08, z: 0}
   playerAngle: 0
+  _showAttrInfo: 
   desc: "\u751F\u547D\u5B88\u62A4\u8005\u53F7\u4E0A\u5236\u5F0F\u7684\u6FC0\u5149\u6307\u793A\u5668\uFF0C\u53EF\u4EE5\u9644\u52A0\u5404\u79CD\u6539\u88C5"
   m_RenameAttr: []
   showAttr: 
@@ -1398,6 +1403,7 @@ MonoBehaviour:
   itemName: {fileID: 522632905526646570}
   distance: {fileID: 4919973674004935622}
   tip: {fileID: 2266133977403658101}
+  material: {fileID: 2100000, guid: dbb5b1f3922b375438d3582a5d113d48, type: 2}
 --- !u!95 &7557473558205675446
 Animator:
   serializedVersion: 5

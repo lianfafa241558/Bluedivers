@@ -7,18 +7,27 @@ using UnityEngine;
 [AddComponentMenu("昼夜系统/交替事件模块")]
 public class DayNightTriggerModule: MonoBehaviour, IDayNightModule
 {
+    [InspectorName("白天偏移")]
+    [Range(-0.5f, 0.5f)]
+    [SerializeField]
+    private float dayOffect;
+
+    [InspectorName("夜晚偏移")]
+    [Range(-0.5f,0.5f)]
+    [SerializeField]
+    private float nightOffect;
 
     bool isNoon;
 
     public void Initialize(DayNightState state)
     {
-        GlobalEventSub.DaySwitch(isNoon=(state.NormalizedTime >= 0f && state.NormalizedTime < 0.5f));
+        GlobalEventSub.DaySwitch(isNoon = IsNoon(state));
     }
 
 
     public void Tick(DayNightState state, float deltaTime)
     {
-       if(state.NormalizedTime >= 0f && state.NormalizedTime < 0.5f)
+       if(IsNoon(state))
        {
            if (!isNoon)
            {
@@ -39,4 +48,23 @@ public class DayNightTriggerModule: MonoBehaviour, IDayNightModule
     }
 
     public void Dispose() { }
+
+
+    private bool IsNoon(DayNightState state)
+    {
+        float dayStart = Mathf.Repeat(dayOffect, 1f);
+        float nightStart = Mathf.Repeat(0.5f + nightOffect, 1f);
+        float t = state.NormalizedTime;
+
+        if (dayStart < nightStart)
+        {
+            // 白天区间不跨零点：dayStart <= t < nightStart
+            return t >= dayStart && t < nightStart;
+        }
+        else
+        {
+            // 白天区间跨零点：t >= dayStart 或 t < nightStart
+            return t >= dayStart || t < nightStart;
+        }
+    }
 }

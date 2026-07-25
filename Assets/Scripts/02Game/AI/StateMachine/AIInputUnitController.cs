@@ -206,28 +206,24 @@ namespace Unity.FPS.AI
                 if (integrated) return;//一体式炮塔不吃这套
                 angle *= rotateDir;
 
-                //底盘旋转后的四元数
-                Quaternion chassisDir = (chassisRotation * Quaternion.AngleAxis(angle, Vector3.up));
-                
+                // 绕世界 Y 轴旋转（左乘 = 世界空间旋转；右乘 = 局部空间旋转）
+                Quaternion nextRotation = Quaternion.AngleAxis(angle, Vector3.up) * chassisRotation;
+
                 if (limitRotation > 0)
                 {
-                    // 获取原始根节点水平方向
-                    Vector3 rootForwardXZ = chassisStartRotation * Vector3.forward;
-                    // 获取当前根节点水平方向
-                    Vector3 chassisForwardXZ = Vector3.ProjectOnPlane(chassisDir * chassisOffset * Vector3.forward, Vector3.up).normalized;
-                    //反方向
+                    // 获取底盘初始朝向的水平方向
+                    Vector3 rootForwardXZ = Vector3.ProjectOnPlane(chassisStartRotation * Vector3.forward, Vector3.up).normalized;
+                    // 获取旋转后底盘的水平方向
+                    Vector3 chassisForwardXZ = Vector3.ProjectOnPlane(nextRotation * Vector3.forward, Vector3.up).normalized;
+                    // 达到限制则反向
                     if (Vector3.Angle(rootForwardXZ, chassisForwardXZ) >= limitRotation)
                     {
                         rotateDir *= -1;
-                        chassisDir = (chassisRotation * Quaternion.AngleAxis(angle, Vector3.up));
+                        nextRotation = Quaternion.AngleAxis(angle, Vector3.up) * chassisRotation;
                     }
-
                 }
 
-                // 计算绕世界Y轴旋转angle后的目标旋转
-                Quaternion tarChassisRotation = chassisDir * chassisOffset;
-
-                chassisRotation = tarChassisRotation;
+                chassisRotation = nextRotation;
                 chassis.rotation = chassisRotation;
             }
 

@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
 using GameContract;
 
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
-using static UnityEngine.ParticleSystem;
 using static WndTools.WndRootTool;
 
 public class SubtitleAirdrop : SubtitleBase
@@ -57,7 +54,7 @@ public class SubtitleAirdrop : SubtitleBase
         
         SetText(title, ownerObj.ShowName);
         SetSprite(halo, data.cfg.icon);
-
+        SetColor(halo,data.cfg.IconColor);
         SetActive(gameObject, true);
     }
     protected override void Follow(Vector3 point)

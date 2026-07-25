@@ -9,7 +9,7 @@ public class FreeCameraWnd : Window
 
 
     new public Transform camera;
-    private float speed = 4;
+    private float speed = 10;
 
     public void Update()
     {
@@ -23,8 +23,12 @@ public class FreeCameraWnd : Window
         {
             GameRoot.TimeScale= GameRoot.TimeScale>0.1?0.01f:1f;
         }
-        if (InputManager.GetDown(InputState.Acceler))speed = Mathf.Min(speed + 0.5f, 15);
-        if (InputManager.GetDown(InputState.Deceler))speed = Mathf.Max(speed - 0.5f, 1);
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            RenderSettings.fog = !RenderSettings.fog;
+        }
+        if (InputManager.GetDown(InputState.Acceler))speed = Mathf.Min(speed + 1f, 35);
+        if (InputManager.GetDown(InputState.Deceler))speed = Mathf.Max(speed - 1f, 1);
 
         SetText(showTime, string.Format("移动速度: {0}\n位置: ({1:F2}, {2:F2}, {3:F2})", speed, camera.position.x, camera.position.y, camera.position.z));
 

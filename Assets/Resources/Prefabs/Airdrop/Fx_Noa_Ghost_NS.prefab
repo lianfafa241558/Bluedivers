@@ -6193,6 +6193,8 @@ MonoBehaviour:
       Value: 1.6
     - Key: 1
       Value: 1
+    - Key: 2
+      Value: 0.1
   ProjectilePrefab: {fileID: 8924682559891268397, guid: 3f9f9ac86f4261047b5b1b8ccd1bb5a6,
     type: 3}
   BulletFlag: 1
@@ -6205,23 +6207,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 400
     DamageDirect: 2000
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 400
-    ExplosionInnerRange: 1.5
-    ExplosionRange: 3
+    WeaknessBonus: 0
+    ExplosionInnerRange: 2
+    ExplosionRange: 4
     DestructeRadius: 0
-    ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
+    ShockwaveRadius: 8
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -6238,6 +6233,7 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -6247,6 +6243,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0

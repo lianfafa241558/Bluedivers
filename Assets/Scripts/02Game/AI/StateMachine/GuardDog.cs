@@ -28,8 +28,10 @@ namespace FPSGame.AI
         [InspectorName("出击范围")]
         public float attackRaudius;
 
-       //public bool AttackStop;
+        //public bool AttackStop;
 
+        [SerializeField]
+        private EquippableFlagEnum flag;
 
         Vector3 targetPoint;
         private Vector3 _formationOffset;
@@ -43,7 +45,10 @@ namespace FPSGame.AI
         private Func<IEnumerable<IEquippable>> GetEquippableList;
         public event Action<IEquippable> OnEquipDestroy;
 
-
+        public bool HaveFlag(EquippableFlagEnum flag)
+        {
+            return this.flag.HasFlag(flag);
+        }
         public void OnInstall(I_Actor actor, Func<IEnumerable<IEquippable>> getEquippableList)
         {
             GetEquippableList = getEquippableList;

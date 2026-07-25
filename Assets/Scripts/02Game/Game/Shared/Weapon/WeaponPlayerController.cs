@@ -8,7 +8,8 @@ using UnityEngine;
 namespace Unity.FPS.Game
 {
     using Attr = WeaponAttrType;
-    
+    using Random = UnityEngine.Random;
+
     public partial class WeaponPlayerController : WeaponController
     {
         [Foldout("点位和信息", true)]
@@ -196,6 +197,32 @@ namespace Unity.FPS.Game
         {
             m_InAiming = inputAiming;
             return base.HandleShootInputs(inputDown, inputHeld, inputUp);
+        }
+
+        /// <summary>
+        /// 第三人称瞄准目标点（由 PlayerWeaponsManager 注入），
+        /// 非零时子弹从枪口指向此点（屏幕中心对应的世界位置）
+        /// </summary>
+        public Vector3 ThirdPersonAimTarget { get; set; }
+
+        /// <summary>
+        /// 获取射击方向（含散布）。
+        /// 第三人称时子弹从枪口指向屏幕中心对应的世界目标点，确保准星即命中点
+        /// </summary>
+        public override Vector3 GetShotDirectionWithinSpread(Transform shootTransform)
+        {
+            if (ThirdPersonAimTarget != default)
+            {
+                Vector3 baseDirection = (ThirdPersonAimTarget - shootTransform.position).normalized;
+
+                var bsa = AttrFinal(WeaponAttrType.BulletsSpreadAngle);
+                if (bsa == 0) return baseDirection;
+                PEInt chargeSpreadScale = CurrentDamgeData.GetSpread(WeaponChargeScale_D);
+                PEInt spreadAngleRatio = bsa / 180 * (PEInt)(m_InAiming ? 0.3f : 1) * chargeSpreadScale;
+                return Vector3.Slerp(baseDirection, Random.insideUnitSphere, spreadAngleRatio.RawFloat);
+            }
+
+            return base.GetShotDirectionWithinSpread(shootTransform);
         }
 
         /// <summary>

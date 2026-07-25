@@ -94,6 +94,7 @@ provider:
 - **【推荐】** 需要在 Inspector 暴露的字段**优先使用 `[SerializeField] private`**，而非 `public` 字段。
   - 项目现状：`public` 字段与 `[SerializeField] private` 并存且 `public` 字段较多。**新增字段优先用 `[SerializeField] private`**；存量 `public` 字段在重构时逐步迁移，避免无理由新增 `public` 字段。
 - **【推荐】** 使用 `[InspectorName("中文名")]` 为 Inspector 字段提供中文显示名（项目已有约定，如 `Actor.cs`、`Damageable.cs`），保持 UI 字段可读。
+- **【必须】** `[InspectorName]` 和 `[DisplayField]` 特性**仅对字段（field）声明有效**，不能用于属性（`get; set;` / `get; private set;`）。若属性需要在 Inspector 中显示，应改为 `[SerializeField] private` 字段 + 属性封装。
 
 ### 4.3 生命周期方法
 
@@ -117,6 +118,7 @@ provider:
 ### 6.1 性能相关
 
 - **【必须】** `Update`/`FixedUpdate`/`LateUpdate` 中避免使用 `new` 分配内存（包括闭包、临时集合、字符串拼接）。
+- **【必须】** `Update`/`FixedUpdate`/`LateUpdate` 等高频调用方法中**禁止**使用 `GetComponent`、`FindObjectOfType`、`Find` 等查找操作，引用应在 `Awake`/`Start` 中缓存。
 - **【必须】** 频繁调用的方法中避免字符串拼接，使用 `StringBuilder` 或字符串缓存。
 - **【推荐】** 频繁创建/销毁的对象使用对象池（项目 `00Core/ObjectPool<T>` 已提供基础设施）。
 - **【推荐】** 标签比较使用 `CompareTag` 而非字符串相等比较。

@@ -59,19 +59,19 @@ namespace Unity.FPS.Game
         }
 
 
-        void _OnDamaged(bool isBreak)
+        private void _OnDamaged(bool isBreak)
         {
-            if(m_Audio.isPlaying) m_Audio.Stop();
+            if (m_Audio.isPlaying) m_Audio.Stop();
             if (isBreak)
             {
-                m_Audio.PlayOneShot(ShieldBreak);
+                if (ShieldBreak != null) m_Audio.PlayOneShot(ShieldBreak);
             }
             else
             {
-                m_Audio.PlayOneShot(ShieldDamage.RandomTake());
+                var clip = ShieldDamage.RandomTake();
+                if (clip != null) m_Audio.PlayOneShot(clip);
             }
-            showShield=CurrentShield.RawInt;
-
+            showShield = CurrentShield.RawInt;
         }
 
         /// <summary>复活</summary>

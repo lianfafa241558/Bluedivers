@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Linq;
 using Core;
 using GameContract;
@@ -112,7 +112,7 @@ namespace FpsGame.Mission
                 CreatNotice("Kotama", "ApproachingTarget", () => !InAirdropRange);
             }
 
-            bool inAirdropRange = dis < mission.AirdropRange;
+            bool inAirdropRange = dis < mission.AirdropRange&& mission.data.cfg.RequiredAD.Count>0;
             if (inAirdropRange != InAirdropRange)
             {
                 InAirdropRange = inAirdropRange;

@@ -36,7 +36,7 @@ public class HaloController : MonoBehaviour
     void LateUpdate()
     {
         Vector3 target = parent.TransformPoint(dv)+(lastPos - parent.position);
-        if (Vector3.Distance(target,parent.position)<3) {
+        if (Vector3.Distance(target,parent.position)<6) {
             //跟随玩家移动
             transform.position = Vector3.Lerp(transform.position, target, returnSpeed * Time.deltaTime);
 

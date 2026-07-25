@@ -10,7 +10,7 @@ using Utils;
 using static ArchivesData_SO;
 using static WndTools.WndRootTool;
 
-public class SettingWnd : Window
+public partial class SettingWnd : Window
 {
     public Image BG;
     public Transform expandRoot, layoutRoot;
@@ -28,10 +28,15 @@ public class SettingWnd : Window
     [Foldout("设置",true)]
     public GameObject tempTitle, tempDrop, tempToggle, tempSilder;
     public Transform settingRoot,updateTitle, updateTime, updateDesc, updateCount, updateLeft, updateRight;
-    
+    public Transform secondaryLayoutRoot;
+    public RectTransform nowsecondarySelect;
+
     private List<UpdateData_SO> m_UpdateDataArr;
     private int nowUpdateIndex=0;
     private int nowExpandIndex=1;
+    private int _secondaryIndex = 0;
+    private List<string> _secondaryTitles = new();
+    private List<List<KVP<string, ArchSettingData>>> _secondaryGroups = new();
     //[SerializeField]
     //private MyVolumeFeature feature;
     WindowStateEnum oldStste;
@@ -74,18 +79,44 @@ public class SettingWnd : Window
     {
         m_UpdateDataArr = resManager.LoadObjects<UpdateData_SO>("GameData/Update");
         SetUpdate(false);
-        ArchiveSvc.Archive.settingDic.ForEach(CreatItem);
+        BuildSettingGroups();
+        BuildKeyCodeDict();
+
+        // 首次打开时隐藏次级菜单和选中高亮
+        SetActive(secondaryLayoutRoot, false);
+        if (nowsecondarySelect != null)
+        {
+            nowsecondarySelect.gameObject.SetActive(false);
+        }
+
+        // 首次默认显示第一个分组
+        if (_secondaryGroups.Count > 0)
+        {
+            RefreshSettingContentByTitle(_secondaryTitles[0]);
+        }
 
 
         SetCilck(layoutRoot.GetChild(0), () => SwitchNextExpand(false));
         SetCilck(layoutRoot.GetChild(layoutRoot.childCount-1), () => SwitchNextExpand(true));
+
+        // 次级layout的Z/C按钮点击（使用 Find 获取引用，避免 siblingIndex 变化后引用错乱）
+        if (secondaryLayoutRoot != null && secondaryLayoutRoot.childCount >= 3)
+        {
+            var zBtn = secondaryLayoutRoot.GetChild(0);
+            var cBtn = secondaryLayoutRoot.GetChild(secondaryLayoutRoot.childCount - 1);
+            // 先清除可能已有的 Inspector 绑定
+            ClearButton(zBtn);
+            ClearButton(cBtn);
+            SetCilck(zBtn, () => SwitchSecondaryIndex(false));
+            SetCilck(cBtn, () => SwitchSecondaryIndex(true));
+        }
 
         SetCilck(freeCamera, EnterFreeCamera);
         SetCilck(returnShop, TryReturnShop);
         SetCilck(rebirth, TryRebirth);
         SetCilck(exitGame, TryExitGame);
         
-        WndManager.OnWindowStateChange += OnWindowStateChange;
+        WndManager.OnWindowStateSet += OnWindowStateChange;
 
         lookPoint = new GameObject("LookPoint");
         lookPoint.transform.parent = transform;
@@ -132,13 +163,28 @@ public class SettingWnd : Window
 
     void Update()
     {
-        if (InputManager.GetDown(InputState.Left))
+        if (IsKeyCodeModuleActive)
         {
-            SwitchNextExpand(false);
+            HandleKeyCodeInput();
         }
-        else if (InputManager.GetDown(InputState.Right))
+        else
         {
-            SwitchNextExpand(true);
+            if (Input.GetKeyDown(KeyCode.A))
+            {
+                SwitchNextExpand(false);
+            }
+            else if (Input.GetKeyDown(KeyCode.D))
+            {
+                SwitchNextExpand(true);
+            }
+            if (Input.GetKeyDown(KeyCode.Z))
+            {
+                SwitchSecondaryIndex(false);
+            }
+            else if (Input.GetKeyDown(KeyCode.C))
+            {
+                SwitchSecondaryIndex(true);
+            }
         }
         if (lookPoint)
         {
@@ -202,6 +248,9 @@ public class SettingWnd : Window
         expandRoot.ForEach(item =>SetActive(item,false));
         SetActive(go, true);
         wndManager.PlaySound(new("UI/UI_Notice"));
+
+        // 切换到非设置子界面时隐藏次级layout
+        RefreshSecondaryLayoutVisibility();
     }
 
 
@@ -213,6 +262,179 @@ public class SettingWnd : Window
         SetText(updateTime, m_UpdateDataArr[nowUpdateIndex].time);
         SetText(updateCount, "" + (nowUpdateIndex+1) + "/" + m_UpdateDataArr.Count + "");
         
+    }
+
+    /// <summary>
+    /// 根据settingDic的titile分组。出现某个title后，后续项都属于该title，直到下一个title出现
+    /// </summary>
+    private void BuildSettingGroups()
+    {
+        _secondaryTitles.Clear();
+        _secondaryGroups.Clear();
+
+        string currentTitle = "其他";
+        List<KVP<string, ArchSettingData>> currentGroup = null;
+
+        ArchiveSvc.Archive.settingDic.ForEach((key, data) =>
+        {
+            // 有非空title → 开启新分组
+            if (!string.IsNullOrEmpty(data.titile))
+            {
+                currentTitle = data.titile;
+                currentGroup = new List<KVP<string, ArchSettingData>>();
+                _secondaryTitles.Add(currentTitle);
+                _secondaryGroups.Add(currentGroup);
+            }
+
+            // 第一个分组还没建立时（第一条数据没有title），创建默认分组
+            if (currentGroup == null)
+            {
+                currentGroup = new List<KVP<string, ArchSettingData>>();
+                _secondaryTitles.Add(currentTitle);
+                _secondaryGroups.Add(currentGroup);
+            }
+
+            currentGroup.Add(new KVP<string, ArchSettingData>(key, data));
+        });
+    }
+
+    /// <summary>
+    /// 刷新次级layout的显示状态
+    /// </summary>
+    private void RefreshSecondaryLayoutVisibility()
+    {
+        if (secondaryLayoutRoot == null) return;
+
+        // 判断当前选中的是否是设置子界面（settingRoot 所在的 expandRoot 子项）
+        bool isSettingTab = false;
+        if (expandRoot != null && expandRoot.childCount > nowExpandIndex)
+        {
+            var currentExpand = expandRoot.GetChild(nowExpandIndex);
+            isSettingTab = settingRoot != null && settingRoot.IsChildOf(currentExpand);
+        }
+
+        SetActive(secondaryLayoutRoot, isSettingTab);
+        if (nowsecondarySelect != null)
+        {
+            nowsecondarySelect.gameObject.SetActive(isSettingTab);
+        }
+
+        if (isSettingTab)
+        {
+            InitSecondaryLayoutItems();
+            RefreshSecondaryContent();
+            // 显示时重置到第一项，会同步高亮位置
+            RefreshSettingContentByTitle(_secondaryTitles[0]);
+        }
+    }
+
+    /// <summary>
+    /// 初始化次级layout的子项（index 0=Z按钮, index 1=模板, 最后一项=C按钮）
+    /// </summary>
+    private void InitSecondaryLayoutItems()
+    {
+        if (secondaryLayoutRoot == null || secondaryLayoutRoot.childCount < 3) return;
+
+        var template = secondaryLayoutRoot.GetChild(1);
+        var neededCount = _secondaryTitles.Count;
+        // 除去首尾按钮，当前内容项数量
+        var currentContentCount = secondaryLayoutRoot.childCount - 2;
+
+        // 补足缺少的项（插入到C按钮之前）
+        while (currentContentCount < neededCount)
+        {
+            var newItem = Instantiate(template.gameObject, secondaryLayoutRoot);
+            newItem.transform.SetSiblingIndex(secondaryLayoutRoot.childCount - 2);
+            currentContentCount++;
+        }
+
+        // 隐藏多余的项，首尾按钮始终显示
+        for (int i = 0; i < secondaryLayoutRoot.childCount; ++i)
+        {
+            bool isButton = i == 0 || i == secondaryLayoutRoot.childCount - 1;
+            bool isContent = i > 0 && i < secondaryLayoutRoot.childCount - 1;
+            if (isButton)
+            {
+                SetActive(secondaryLayoutRoot.GetChild(i), true);
+            }
+            else if (isContent)
+            {
+                var contentIndex = i - 1;
+                SetActive(secondaryLayoutRoot.GetChild(i), contentIndex < neededCount);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 刷新次级layout每个内容项的名称和点击事件（第0个子物体是text），跳过首尾按钮，并同步选中高亮到当前项
+    /// </summary>
+    private void RefreshSecondaryContent()
+    {
+        if (secondaryLayoutRoot == null || secondaryLayoutRoot.childCount < 3) return;
+
+        var lastIndex = secondaryLayoutRoot.childCount - 1;
+        for (int i = 0; i < _secondaryTitles.Count; ++i)
+        {
+            var contentIndex = i + 1; // 跳过 index 0 的 Z 按钮
+            if (contentIndex >= lastIndex) break;
+            var item = secondaryLayoutRoot.GetChild(contentIndex);
+            SetText(item.GetChild(0), _secondaryTitles[i]);
+
+            // 绑定内容项按钮点击（按钮在 item 本体上）
+            ClearButton(item);
+            var titleIndex = i; // 闭包捕获
+            SetCilck(item, () => RefreshSettingContentByTitle(_secondaryTitles[titleIndex]));
+        }
+
+        // 同步 nowsecondarySelect 位置到当前选中项
+        if (nowsecondarySelect != null && _secondaryIndex >= 0 && _secondaryIndex < _secondaryTitles.Count)
+        {
+            var selectTarget = (RectTransform)secondaryLayoutRoot.GetChild(_secondaryIndex + 1);
+            nowsecondarySelect.position = selectTarget.position;
+            nowsecondarySelect.sizeDelta = selectTarget.sizeDelta;
+        }
+    }
+
+    /// <summary>
+    /// 切换次级tab
+    /// </summary>
+    private void SwitchSecondaryIndex(bool isAdd)
+    {
+        if (_secondaryTitles.Count == 0) return;
+        _secondaryIndex = Tool.PositiveRemainder(_secondaryIndex + (isAdd ? 1 : -1), _secondaryTitles.Count);
+        RefreshSettingContentByTitle(_secondaryTitles[_secondaryIndex]);
+        wndManager.PlaySound(new("UI/UI_Notice"));
+    }
+
+    /// <summary>
+    /// 根据次级tab的title显示对应的设置项内容
+    /// </summary>
+    public void RefreshSettingContentByTitle(string title)
+    {
+        if (_secondaryGroups.Count == 0 || secondaryLayoutRoot == null) return;
+
+        var index = _secondaryTitles.IndexOf(title);
+        if (index < 0) return;
+
+        _secondaryIndex = index;
+
+        // 移动次级选中高亮到对应内容项（跳过 index 0 的 Z 按钮）
+        if (nowsecondarySelect != null && secondaryLayoutRoot.childCount > index + 1)
+        {
+            var selectTarget = (RectTransform)secondaryLayoutRoot.GetChild(index + 1);
+            nowsecondarySelect.position = selectTarget.position;
+            nowsecondarySelect.sizeDelta = selectTarget.sizeDelta;
+        }
+
+        // 清除settingRoot旧内容
+        settingRoot.ForEach(child => Destroy(child.gameObject));
+
+        // 重新创建对应分组的设置项
+        var group = _secondaryGroups[index];
+        foreach (var kvp in group)
+        {
+            CreatItem(kvp.Key, kvp.Value);
+        }
     }
 
 
@@ -333,7 +555,7 @@ public class SettingWnd : Window
         showModle = resManager.CreatPrefab("Prefabs/StudentModle/" + player.Id, false);
         //var lookAtController = showModle.GetComponentInChildren<LookAtIK>();
         //lookAtController.enabled = false;
-        showModle.transform.position = transform.TransformPoint(new(600, -650, 700));
+        showModle.transform.position = transform.TransformPoint(new(600, -650, 600));
         showModle.transform.eulerAngles = new(0, -170, 0);
         //showModle.transform.GetChild(0).localScale = new(550, 550, 550);
         showModle.transform.localScale = new(550, 550, 550);

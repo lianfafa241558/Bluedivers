@@ -14,9 +14,8 @@ namespace FPSGame.Furn
         public GameObject[] ContGo;
         IEquippable equip;
 
-        protected override void Start()
+        private void Start()
         {
-            base.Start();
             equip= GetComponent<IEquippable>();
         }
 

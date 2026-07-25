@@ -72,6 +72,7 @@ MonoBehaviour:
   ExtraPortrait: {fileID: 21300000, guid: 7a6fdf90ad5a30d4ca1f53c4f1efd6b1, type: 3}
   Color: {r: 1, g: 0.6179245, b: 0.6179245, a: 1}
   actorState: 1
+  IsFixed: 0
   flag: 1
   type: 8
   team: 0
@@ -99,6 +100,23 @@ MonoBehaviour:
   MainPart: {fileID: 0}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr:
+  - Key: 4
+    Value: 50
+  - Key: 5
+    Value: 100
+  - Key: 6
+    Value: 100
+  - Key: 7
+    Value: 100
+  - Key: 8
+    Value: 100
+  - Key: 9
+    Value: 100
+  - Key: 10
+    Value: 10
+  - Key: 11
+    Value: 100
 --- !u!114 &4114667942546815185
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -126,11 +144,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   turrets: []
   renderer: {fileID: 9036251493842804111}
-  call:
-  - {fileID: 6412781791872908932, guid: 7bc28262d86fc2a4e9f9ea0d580415c0, type: 2}
-  - {fileID: 6820960187611415487, guid: 7bc28262d86fc2a4e9f9ea0d580415c0, type: 2}
-  - {fileID: -8316520142789051573, guid: 7bc28262d86fc2a4e9f9ea0d580415c0, type: 2}
-  - {fileID: -1981836993643360160, guid: 7bc28262d86fc2a4e9f9ea0d580415c0, type: 2}
   callSound: {fileID: 11400000, guid: fe80750b0b12b70429294882f1714ff2, type: 2}
   callPoint: {fileID: 2393499853092318471, guid: c5043470050053142b706b26181f2f86,
     type: 3}
@@ -150,9 +163,9 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: -334000983
   m_Radius: 0.65
-  m_Speed: 3.5
+  m_Speed: 6
   m_Acceleration: 8
-  avoidancePriority: 50
+  avoidancePriority: 1
   m_AngularSpeed: 120
   m_StoppingDistance: 0
   m_AutoTraverseOffMeshLink: 1

@@ -34,7 +34,6 @@ RectTransform:
   m_Children:
   - {fileID: 4316413230491439955}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -135,6 +134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a69cb2d2d96b664aa79885d7ed8b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isTrigger: 0
   EnterScale: 1.05
   ScaleSpeed: 5
   ControlGo: []
@@ -170,7 +170,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7705393553841607518}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -197,8 +196,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Material: {fileID: 2100000, guid: dbb5b1f3922b375438d3582a5d113d48, type: 2}
+  m_Color: {r: 1, g: 0.91115, b: 0.3254717, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

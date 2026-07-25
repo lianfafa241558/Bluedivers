@@ -132,6 +132,10 @@ public static class BattleEventSub
     public static event Action<Actor> OnFriendDead;
     public static void FriendDead(Actor unit) => OnFriendDead?.Invoke(unit);
 
+    /// <summary>盟友复活 </summary>
+    public static event Action<Actor> OnFriendRevive;
+    public static void FriendRevive(Actor unit) => OnFriendRevive?.Invoke(unit);
+
     /// <summary>玩家倒地</summary>
     public static event Action<Actor> OnPlayerDead;
     public static void PlayerDead(Actor unit) => OnPlayerDead?.Invoke(unit);

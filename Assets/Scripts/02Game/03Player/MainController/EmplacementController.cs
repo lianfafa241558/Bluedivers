@@ -22,6 +22,7 @@ public class EmplacementController : BaseSelfController, IDrivable
     //[SerializeField]
     private GameObject owner;
     private Camera PlayerCamera;
+    private bool _wasThirdPersonOnEnter;
 
     Camera IDrivable.PlayerCamera => PlayerCamera;
     Vector3 CameraBasePoint { get; set; }
@@ -37,7 +38,13 @@ public class EmplacementController : BaseSelfController, IDrivable
         {
             var comp = owner.GetComponent<PlayerController>();
             PlayerCamera = comp.PlayerCamera;
+            _wasThirdPersonOnEnter = comp.IsThirdPerson;
+
+            // 阻止 PlayerController.OnDisable 在第三人称下关闭相机
+            comp.SkipCameraDeactivateOnDisable = true;
             comp.enabled = false;
+            comp.SkipCameraDeactivateOnDisable = false;
+
             comp.Controller.enabled = false;
             owner.GetComponent<I_Actor>().ActorState = ActorState.Hide;
             owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled = false;
@@ -57,7 +64,12 @@ public class EmplacementController : BaseSelfController, IDrivable
                 comp.PlayerCamera.transform.localPosition = RecordCameraBasePoint;
 
                 this.owner.GetComponent<I_Actor>().ActorState = ActorState.Normal;
-                this.owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled = true;
+
+                // 第三人称下武器相机应保持关闭
+                if (!_wasThirdPersonOnEnter)
+                {
+                    this.owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled = true;
+                }
             }
             Health.OnDie -= OnDie;
         }
@@ -75,6 +87,13 @@ public class EmplacementController : BaseSelfController, IDrivable
     protected void LateUpdate()
     {
         if (!owner) return;
+        if (!PlayerCamera) return;
+
+        // 防御：第三人称下相机若被意外关闭则重新激活
+        if (!PlayerCamera.gameObject.activeSelf)
+        {
+            PlayerCamera.gameObject.SetActive(true);
+        }
 
         var target = transform.TransformPoint(CameraBasePoint);
         float dis = Vector3.Distance(PlayerCamera.transform.position, target);

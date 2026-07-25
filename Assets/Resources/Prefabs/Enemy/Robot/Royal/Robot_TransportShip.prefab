@@ -192,7 +192,7 @@ AudioSource:
   m_GameObject: {fileID: 2324861531809103965}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 243914861002086086, guid: 50e9e23c4eab052449cd6864362101f0,
+  OutputAudioMixerGroup: {fileID: 243168019308506752, guid: 50e9e23c4eab052449cd6864362101f0,
     type: 2}
   m_audioClip: {fileID: 8300000, guid: db3826a2549c1b54ab2a5a85b028ca17, type: 3}
   m_PlayOnAwake: 1
@@ -751,7 +751,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0.2, g: 0, b: 0, a: 1}
+      maxColor: {r: 1, g: 0, b: 0, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -815,7 +815,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 1
+      scalar: 2
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -868,7 +868,7 @@ ParticleSystem:
     startSizeY:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 1
+      scalar: 2
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -921,7 +921,7 @@ ParticleSystem:
     startSizeZ:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 1
+      scalar: 2
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -5866,7 +5866,8 @@ AudioSource:
   m_GameObject: {fileID: 8696549652338815514}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 243168019308506752, guid: 50e9e23c4eab052449cd6864362101f0,
+    type: 2}
   m_audioClip: {fileID: 8300000, guid: d9cbacf3b4cbd8546b0454599fb6adf1, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1

@@ -75,11 +75,17 @@ public class AirdropData_SO : ScriptableObject
     [Compare("useNormalPod")]
     public bool permanentPod;
 
-    [InspectorName("需要允许部署")]
+    [InspectorName("需要授权")]
     public bool authorize;
+
+    [InspectorName("未授权时可见")]
+    public bool unAuthorizeVisible;
 
     [InspectorName("直接释放")]
     public bool isDirect;
+
+    [InspectorName("死亡时可用")]
+    public bool deathEnable;
 
     public Color Color { 
         get
@@ -87,7 +93,16 @@ public class AirdropData_SO : ScriptableObject
             return colors[(int)type];
         }
     }
-    private static readonly Color[] colors = new Color[] { new Color(1f, 0.5f, 0.5f), new Color(0.5f, 0.8f, 1f), new Color(0.5f, 0.8f, 0.5f), new Color(1, 0.7f, 0.5f), new Color(1f, 1f, 0.5f), Color.white };
+    public Color IconColor
+    {
+        get
+        {
+            return iconColors[(int)type];
+        }
+    }
+    private static readonly Color[] colors = new Color[] { new Color(1f,0.5f, 0.5f), new Color(0.5f, 0.8f, 1f), new Color(0.73f, 1f, 0.6f), new Color(1, 0.7f, 0.5f), new Color(0.86f, 0.81f, 0.61f), Color.white };
+
+    private static readonly Color[] iconColors = new Color[] { new Color(0.9f, 0.36f, 0.36f), new Color(0.32f, 0.72f, 0.9f), new Color(0.44f, 0.6f, 0.36f), new Color(1, 0.57f, 0.3f), new Color(0.86f, 0.78f, 0.43f), Color.white };
 
     private static readonly string[] typeName=new string[] { "进攻型战略配备", "支援型战略配备", "防御型战略配备", "载具型战略配备", "特殊型战略配备" };
     private const string attrName = "部署时间\n使用次数\n冷却时间";

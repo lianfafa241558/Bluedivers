@@ -167,6 +167,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48f22a420493bcf4a8ca3e259797484f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  RefillDurationGrounded: 15
+  RefillDelay: 1
+  flag: -1
+  currentFillRatio: 1
   JetpackVfx:
   - {fileID: 3550187146245108903}
   - {fileID: 4783914741403088093}
@@ -175,8 +179,6 @@ MonoBehaviour:
   JetpackDownwardVelocityCancelingFactor: 0.5
   JetpackAcceleration: 7
   ConsumeDuration: 6
-  RefillDurationGrounded: 15
-  RefillDelay: 1
 --- !u!114 &5432209882212260516
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -88,6 +88,9 @@ namespace Unity.FPS.Game {
         }
         /// <summary>受到治疗</summary>
         public void Heal(float healAmount) {
+            if (m_IsDead)
+                return;
+
             PEInt healthBefore = CurrentHealth;
             CurrentHealth += (PEInt)healAmount;
             CurrentHealth = PEMath.Clamp(CurrentHealth, 0, MaxHealth);
@@ -216,6 +219,7 @@ namespace Unity.FPS.Game {
 
         private void Update()
         {
+            if (m_Unit == null) return;
             if (Time.time >= m_Time)
             {
                 AboTick();
@@ -229,8 +233,9 @@ namespace Unity.FPS.Game {
         {
             CurrentHealth = MaxHealth;
             CurrentShield = MaxShield;
-            OnRevive?.Invoke();
+            showHealth = CurrentHealth.RawInt;
             m_IsDead = false;
+            OnRevive?.Invoke();
         }
 
         /// <summary>代码杀</summary>
@@ -252,8 +257,12 @@ namespace Unity.FPS.Game {
             if (CurrentHealth <= 0) {
                 //Debug.Log(gameObject+"单位死亡",gameObject);
                 m_IsDead = true;
+                // 确保血量不超过0，防止异常恢复导致僵尸单位
+                CurrentHealth = 0;
+                showHealth = 0;
                 OnDie?.Invoke(source);
             }
+
         }
 
     }

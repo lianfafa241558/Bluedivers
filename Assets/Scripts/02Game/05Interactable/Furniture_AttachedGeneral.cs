@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 namespace FPSGame.Furn
@@ -49,9 +49,8 @@ namespace FPSGame.Furn
         private bool BaseCanOp(GameObject unit) => base.CanOperate(unit);
         private void BaseOp() => base.Operate();
 
-        protected override void Start()
+        protected void Start()
         {
-            base.Start();
             if (!furnData.TryGetValue(Id, out action))
             {
                 action = new();

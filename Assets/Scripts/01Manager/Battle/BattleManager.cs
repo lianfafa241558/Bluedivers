@@ -126,8 +126,12 @@ public class BattleManager : Singleton<BattleManager>
         
         terrainData.heightmapResolution = mapRes + 1;
         terrainData.alphamapResolution = mapRes;
+        // 分辨率变更后重新设置Main，同步静态缓存
+        TerrainUtils.Main = terrain;
         //不能调换顺序，会出问题
         terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
+        // size.y 变更后刷新 terrainHeight 缓存，否则 AdditionTerrain 高度计算使用旧值
+        TerrainUtils.Main = terrain;
         //Debug.LogWarning("地图尺寸" + cfg.MainCfg.sizeType + " 地图大小 + cfg.MapSize);
         //Debug.LogWarning("地图真实" + mapRoot.terrain.terrainData.size);
         //terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
@@ -222,6 +226,8 @@ public class BattleManager : Singleton<BattleManager>
         if (result != GameResult.Unknow) TaskManager.Instance.nowTask.result = result;
         //GlobalEventManager.Evacuate();
         GameRoot.CreateTimer(() => {
+            // 先切到 UI 状态，让 PlayerWnd/SubtitleWnd 的 Update 不再执行，避免场景卸载期间 NRE
+            WndManager.WindowState = WindowStateEnum.UI;
             ResSvc.Instance.AsyncLoadScene("GameEnd", () => {
                 
                 GameRoot.GameState = GameStateEnum.GameEnd;

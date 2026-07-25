@@ -16,6 +16,11 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 
 ## 架构约定
 
+### 解耦与事件
+- **降低耦合度**：避免组件之间直接互相获取引用（如 `GetComponent<PlayerController>()`）。跨模块/跨层通知优先使用事件机制。
+- 全局事件（非战斗相关）在 `GlobalEventSub` 中定义（`Assets/Scripts/01Manager/Global/GlobalEventSub.cs`）；战斗相关事件在 `BattleEventSub` 中定义。
+- 新增跨多组件通知的功能时，优先在 `GlobalEventSub` 或 `BattleEventSub` 中加 `static event` 和对应的 `static` 触发方法。
+
 ### 数字前缀模块划分
 
 脚本位于 `Assets/Scripts/`，按数字前缀编号划分模块，编号体现程序集依赖顺序。上层模块（编号大）可引用下层模块（编号小），反之禁止：
@@ -101,7 +106,7 @@ Inspector 字段暴露示例：
 
 ## 性能注意事项
 
-- `Update`/`FixedUpdate`/`LateUpdate` 中禁止 `new` 分配、字符串拼接、`GetComponent`/`Find`。
+- `Update`/`FixedUpdate`/`LateUpdate` 等高频方法中禁止 `new` 分配、字符串拼接、`GetComponent`/`FindObjectOfType`/`Find`，引用在 `Awake`/`Start` 缓存。
 - 组件引用在 `Awake`/`Start` 中缓存。
 - 频繁创建/销毁的对象使用 `00Core/ObjectPool<T>` 对象池。
 - 标签比较使用 `CompareTag`，大数组遍历用 `for` 而非 `foreach`。

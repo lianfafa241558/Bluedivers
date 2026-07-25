@@ -21,7 +21,8 @@ public class LimitedLife : MonoBehaviour,IRecyclable
     [InspectorName("允许释放")]
     public bool allowRelease;
     public bool useDebug;
-    public UnityAction OnEnd;
+
+    public UnityEvent OnEnd;
     public float showScale;
 
     public bool IsAlive()

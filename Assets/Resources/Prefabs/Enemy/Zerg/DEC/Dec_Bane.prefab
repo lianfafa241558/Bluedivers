@@ -712,15 +712,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   delayTime: 0.5
   selfExplosionTime: 0
-  weapon: {fileID: 7153386031895443982}
+  weapon: {fileID: 0}
   go: {fileID: 7853988172940581589}
   UseDiffScale: 1
   DamageData:
-    DamageExplosion: 0
+    DamageExplosion: 5
     ExplosionInnerRange: 0
     ExplosionRange: 0
-    DestructeRadius: 0
-    ShockwaveRadius: 0
+    DestructeRadius: 1
+    ShockwaveRadius: 0.2
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -729,9 +729,10 @@ MonoBehaviour:
     SoundRadius: 20
     NoSource: 0
     UseCollisionDirection: 1
-    ImpactVfxSpawnOffset: 0.1
-    ImpactVfx: {fileID: 0}
-    ImpactSfx: {fileID: 0}
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 5911405891695202493, guid: 57e46722276d42e48a0bf2d1bd68ad15,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: 29518048e79d4dc439ba5b15d5a1a2e8, type: 3}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
