@@ -44,7 +44,11 @@ public class SubtitleWnd : Window
 
     public List<KVP<GameObject, Vector3>> show;
 
-
+    //检视器调用
+    public void Init()
+    {
+        OnViewSwitch(ArchiveSvc.GetSetting("默认操作视角")>0);
+    }
 
     protected override void FirstShowWnd()
     {
@@ -61,7 +65,8 @@ public class SubtitleWnd : Window
             m_ThirdPersonConcernInstance.gameObject.SetActive(false);
         }
         AirDropSubtitlesPool = new(AirdropPoolUpdate, AirdropPoolAdd, AirdropPoolEnqueue, 0);
-
+        GlobalEventSub.OnViewSwitch += OnViewSwitch;
+        GlobalEventSub.OnSceneChange += OnSceneChange;
         GainObjectTipRoot.alpha = 0;
 
     }
@@ -73,8 +78,8 @@ public class SubtitleWnd : Window
         GlobalEventSub.OnSettingCange += OnSettingCange;
         BattleEventSub.OnUnitDeath += OnActorDeath;
         GlobalEventSub.OnOOPartCollect += OOPartCollect;
-        GlobalEventSub.OnSceneChange += OnSceneChange;
-        GlobalEventSub.OnViewSwitch += OnViewSwitch;
+
+        
         GainObjectTime = -5;
     }
 
@@ -84,9 +89,14 @@ public class SubtitleWnd : Window
         GlobalEventSub.OnSettingCange -= OnSettingCange;
         BattleEventSub.OnUnitDeath -= OnActorDeath;
         GlobalEventSub.OnOOPartCollect -= OOPartCollect;
+        //OnSceneChange(null);
+    }
+
+    public override void OnDestroy()
+    {
         GlobalEventSub.OnSceneChange -= OnSceneChange;
         GlobalEventSub.OnViewSwitch -= OnViewSwitch;
-        OnSceneChange(null);
+        base.OnDestroy();
     }
 
     private void OnViewSwitch(bool isThirdPerson)
@@ -108,13 +118,17 @@ public class SubtitleWnd : Window
 
         if (ActorsManager.Player == null) return;
 
+        // 第三人称时提前获取最近目标，避免 ConcernPrefab 与 ThirdPersonConcernPrefab 重叠
+        var playerOp = m_IsThirdPerson ? ActorsManager.Player.transform.GetComponent<PlayerOperationController>() : null;
+        IFurniture thirdPersonTarget = playerOp ? playerOp.target : null;
+
         // 显示交互提示（第一/第三人称共用 Concerns）
         {
             foreach (var item in Furniture_Attached.list.Values)
             {
                 if (!item.CanOperate(ActorsManager.Player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
                 float dis = Vector3.Distance(item.CenterPos, pos);
-                if (dis < 20 && item != wndManager.operationWnd.furn)
+                if (dis < 20 && item != wndManager.operationWnd.furn && !item.InOperate && item != thirdPersonTarget)
                 {
                     float angle = Vector3.Angle(forward, item.Forward);
                     var viewPos = camera.WorldToViewportPoint(item.CenterPos);
@@ -139,25 +153,24 @@ public class SubtitleWnd : Window
 
         if (m_IsThirdPerson)
         {
-            // 第三人称额外：近距离时显示 ThirdPersonConcernPrefab 增强提示
-            // 使用 PlayerOperationController.target 确保 UI 提示与实际交互目标一致
-            var playerOp = ActorsManager.Player.transform.GetComponent<PlayerOperationController>();
-            IFurniture nearest = playerOp ? playerOp.target : null;
-            if (nearest != null && m_ThirdPersonConcernInstance)
+            if (thirdPersonTarget != null && m_ThirdPersonConcernInstance)
             {
                 m_ThirdPersonConcernInstance.gameObject.SetActive(true);
-                m_ThirdPersonConcernInstance.position = camera.WorldToScreenPoint(nearest.CenterPos);
+                var screenPos = camera.WorldToScreenPoint(thirdPersonTarget.CenterPos);
+                screenPos.x = Mathf.Round(screenPos.x);
+                screenPos.y = Mathf.Round(screenPos.y);
+                m_ThirdPersonConcernInstance.position = screenPos;
 
                 var descText = m_ThirdPersonConcernInstance.GetChild(0);
-                SetText(descText, nearest.Desc);
-                SetActive(descText.parent, !string.IsNullOrEmpty(nearest.Desc));
+                SetText(descText, thirdPersonTarget.Desc);
+                SetActive(descText.parent, !string.IsNullOrEmpty(thirdPersonTarget.Desc));
 
                 var barRoot = m_ThirdPersonConcernInstance.GetChild(1);
                 var bar = barRoot.GetChild(0);
-                if (nearest.MeetTime > 0 && playerOp && playerOp.target == nearest)
+                if (thirdPersonTarget.MeetTime > 0 && playerOp && playerOp.target == thirdPersonTarget)
                 {
                     SetActive(barRoot, true);
-                    SetFill(bar, nearest.Press / nearest.MeetTime);
+                    SetFill(bar, thirdPersonTarget.Press / thirdPersonTarget.MeetTime);
                 }
                 else
                 {
@@ -165,7 +178,7 @@ public class SubtitleWnd : Window
                 }
 
                 var typeText = m_ThirdPersonConcernInstance.GetChild(2).GetChild(0);
-                SetText(typeText, nearest.MeetTime > 0 ? "长按" : "按");
+                SetText(typeText, thirdPersonTarget.MeetTime > 0 ? "长按" : "按");
             }
             else if (m_ThirdPersonConcernInstance)
             {

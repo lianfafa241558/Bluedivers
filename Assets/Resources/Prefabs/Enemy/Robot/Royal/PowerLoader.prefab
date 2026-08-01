@@ -93,7 +93,7 @@ MonoBehaviour:
       Value: 100
     - Key: 0
       Value: -1
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
+  ProjectilePrefab: {fileID: 828996816448062211, guid: 6af942e200f11d247825ba65533e069e,
     type: 3}
   BulletFlag: 8
   Damages:
@@ -136,6 +136,7 @@ MonoBehaviour:
     ChargeGravityScale: 0
     ChargeSoundScale: 0
     ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -224,7 +225,7 @@ MonoBehaviour:
       Value: 100
     - Key: 0
       Value: -1
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
+  ProjectilePrefab: {fileID: 828996816448062211, guid: 6af942e200f11d247825ba65533e069e,
     type: 3}
   BulletFlag: 8
   Damages:
@@ -267,6 +268,7 @@ MonoBehaviour:
     ChargeGravityScale: 0
     ChargeSoundScale: 0
     ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -429,6 +431,7 @@ MonoBehaviour:
     ChargeGravityScale: 0
     ChargeSoundScale: 0
     ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -485,7 +488,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1684818866296470350}
-  - {fileID: 5754403923040351014}
   - {fileID: 852066672852584430}
   - {fileID: 852066672332520567}
   m_Father: {fileID: 2385512101110434523}
@@ -593,43 +595,51 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 7364493806497457528}
+  - type: 0
+    chassis: {fileID: 7364493806497457528}
     barrel: {fileID: 7364493806497457528}
     weapon: {fileID: 5172443144082732110}
-    aimSharpness: 10
+    aimSharpness: 45
     detectionFireDelay: 0.5
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
-  - chassis: {fileID: 1843365226887618622}
+  - type: 0
+    chassis: {fileID: 1843365226887618622}
     barrel: {fileID: 1843365226887618622}
     weapon: {fileID: 852066672852584431}
-    aimSharpness: 10
+    aimSharpness: 45
     detectionFireDelay: 1
     aimBlendTime: 1
     limitRotation: 30
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
-  - chassis: {fileID: 2004224140537280617}
+  - type: 0
+    chassis: {fileID: 2004224140537280617}
     barrel: {fileID: 2004224140537280617}
     weapon: {fileID: 852066672332520520}
-    aimSharpness: 10
+    aimSharpness: 45
     detectionFireDelay: 1
     aimBlendTime: 1
     limitRotation: 30
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
-  - chassis: {fileID: 2385512101110434523}
+  - type: 1
+    chassis: {fileID: 2385512101110434523}
     barrel: {fileID: 0}
-    weapon: {fileID: 8382670604093266369}
-    aimSharpness: 10
+    weapon: {fileID: 0}
+    aimSharpness: 45
     detectionFireDelay: 1
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
@@ -1023,162 +1033,6 @@ CapsuleCollider:
   m_Height: 2.2
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &5242284547717535883
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5754403923040351014}
-  - component: {fileID: 8382670604093266369}
-  m_Layer: 6
-  m_Name: Weapon_Fake
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5754403923040351014
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5242284547717535883}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4777692123248694453}
-  m_Father: {fileID: 4324236458022808004}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8382670604093266369
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5242284547717535883}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1925424471e3fe949a952edf108dc17b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  WeaponRoot: {fileID: 8312925265322433656}
-  WeaponMuzzle: {fileID: 7097359421311024097}
-  WeaponMuzzle2: {fileID: 0}
-  cfg:
-    _fakeAttrs:
-    - Key: 1
-      Value: -1
-    - Key: 2
-      Value: 1
-    - Key: 0
-      Value: -1
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
-    type: 3}
-  BulletFlag: 8
-  Damages:
-  - Speed: 100
-    Gravity: 10
-    InheritWeaponSpeed: 0
-    MaxLifeTime: 2
-    MaxRange: 1
-    MinRange: -1
-    NoSource: 0
-    SoundRadius: 20
-    DamageExplosion: 0
-    DamageDirect: 0
-    DamageGroupDirect:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
-    WeaknessBonus: 0
-    ExplosionInnerRange: 1
-    ExplosionRange: 2
-    DestructeRadius: 0
-    ShockwaveRadius: 4
-    DamageGroupExplosion:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
-    UseCollisionDirection: 0
-    ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 0}
-    ImpactSfx: {fileID: 0}
-    UseHole: 1
-    Hole: {fileID: 0}
-    OnlyTerrain: 0
-    UseCharge: 0
-    ChargeDamageScale: 0
-    ChargeAOERangeScale: 0
-    ChargeSpeedScale: 0
-    ChargeGravityScale: 0
-    ChargeSoundScale: 0
-    ChargeHeatScale: 1
-  UseDamageIndex: 0
-  MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
-    type: 3}
-  UnparentMuzzleFlash: 0
-  SFXRange: 20
-  ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
-  UseContinuousShootSound: 0
-  ContinuousShootStartSfx: {fileID: 0}
-  ContinuousShootLoopSfx: {fileID: 0}
-  ContinuousShootEndSfx: {fileID: 0}
-  _currentHeat: 0
-  wantsToShoot: 0
-  ShootCost: 1
-  showAmmo: 0
-  showInReload: 0
-  showReloadTime: 0
-  showCool: 0
-  ShootType: 1
-  WeaponFlag: 1
-  AutomaticReleaseOnCharged: 0
-  Lockshape: 0
-  ReloadSfx: {fileID: 0}
-  ChangeWeaponSfx: {fileID: 0}
-  ChargeVfx: {fileID: 0}
-  WeaponAnimator: {fileID: 0}
-  animNameType: 0
---- !u!1 &6386108487651388900
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4777692123248694453}
-  m_Layer: 6
-  m_Name: GunRoot
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4777692123248694453
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6386108487651388900}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 5754403923040351014}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7026255309937828050
 GameObject:
   m_ObjectHideFlags: 0

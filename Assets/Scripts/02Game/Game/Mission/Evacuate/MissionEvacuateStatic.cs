@@ -32,6 +32,8 @@ namespace FpsGame.Mission
             End
         }
         public bool IsFast;
+        [SerializeField]
+        private Transform _startPointEntity;
 
         private EvacuateState stage;
         private int countDown;
@@ -61,35 +63,44 @@ namespace FpsGame.Mission
 
         protected override void InitMission()
         {
+            if (!entity)
+            {
+                if (IsFast)
+                {
+
+                    var go = GameObject.FindWithTag("StartPoint");
+                    if (go)
+                    {
+                        Debug.LogWarning("尝试设置init" + gameObject, gameObject);
+                        entity = go.GetComponent<MissionView>();
+                        entity.Init(this, new int[0]);
+                    }
+                    else
+                    {
+                        base.InitMission();
+                    }
+                }
+                else
+                {
+                    base.InitMission(); 
+                }
+            }
+
+
             if (IsFast)
             {
                 m_EvacuateTime = 10;
                 m_EvacuateRange = 999;
-                var go = GameObject.FindWithTag("StartPoint");
-                if (go)
-                {
-                    Debug.LogWarning("尝试设置init"+gameObject,gameObject);
-                    entity = go.GetComponent<MissionView>();
-                    entity.Init(this, new int[0]);
-                    pos = entity.Pos;
-                }
-                else
-                {
-                    base.InitMission();
-                    pos = entity.Pos;
-                }
             }
-            else
-            {
-                base.InitMission();
-                pos = entity.Pos;
-            }
+            pos = entity.Pos;
             area = entity.transform;
             areaPoint = area.transform.position;
-            ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/Kei", false, area.TransformPoint(0, 0, 7));
-            medivac = ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, area.TransformPoint(0, 12, 0)).GetComponent<MedivacController>();
+            Transform point = _startPointEntity ?? area;
+
+            ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/Kei", false, point.TransformPoint(0, 0, 10));
+            medivac = ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, point.TransformPoint(0, 12, 0)).GetComponent<MedivacController>();
             medivac.SetType(MedivacController.MedivacState.Land);
-            medivac.targetPoint = area;
+            medivac.targetPoint = point;
         }
 
         public override void Link(MissionBase mission)

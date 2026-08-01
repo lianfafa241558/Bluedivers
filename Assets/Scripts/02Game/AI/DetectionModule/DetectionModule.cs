@@ -78,11 +78,12 @@ namespace Unity.FPS.AI
 
         protected override void Start()
         {
+            /*
             if (!BattleManager.Instance)
             {
                 enabled = false;
                 return;
-            }
+            }*/
             base.Start();
             CorePoint = GetCorePoint();
             //不知道为什么=无效，只能老老实实if

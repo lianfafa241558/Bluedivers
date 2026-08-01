@@ -663,18 +663,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 6956483940404566212}
+  - type: 0
+    chassis: {fileID: 6956483940404566212}
     barrel: {fileID: 7788371159317437343}
     weapon: {fileID: 5480837832389392961}
-    aimSharpness: 5
+    aimSharpness: 45
+    autoRotateSpeed: 30
     detectionFireDelay: 1.1
     aimBlendTime: 1
-    limitRotation: 0
+    limitRotation: 90
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     dot: 1
   PreJudgment: 1
-  RotationSpeed: 0
   AiState: 0
 --- !u!114 &4283997241310039972
 MonoBehaviour:

@@ -25,6 +25,8 @@ public partial class PlayerController : BaseSelfMoveableController
     [InspectorName("玩家倒地摄像机")]
     private Camera PlayerDownCamera;
 
+    private Vector3 _downCameraVelocity;
+
     [Range(0, 1f)]
     [InspectorName("摄像机所在位置的角色高度")]
     public float CameraHeightRatio = 0.9f;
@@ -154,14 +156,13 @@ public partial class PlayerController : BaseSelfMoveableController
     /// </summary>
     private void ApplyViewMode()
     {
+        var lookAt = GetComponentInChildren<RootMotion.FinalIK.LookAtController>();
+        var lookAtIK = GetComponentInChildren<RootMotion.FinalIK.LookAtIK>();
         if (IsThirdPerson)
         {
             PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
             WeaponsManager.WeaponCamera.enabled = false;
-
-            var lookAt = GetComponentInChildren<RootMotion.FinalIK.LookAtController>();
             if (lookAt) lookAt.enabled = false;
-            var lookAtIK = GetComponentInChildren<RootMotion.FinalIK.LookAtIK>();
             if (lookAtIK) lookAtIK.enabled = false;
         }
         else
@@ -169,10 +170,7 @@ public partial class PlayerController : BaseSelfMoveableController
             PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
             WeaponsManager.WeaponCamera.enabled = true;
             RestoreCameraParent();
-
-            var lookAt = GetComponentInChildren<RootMotion.FinalIK.LookAtController>();
             if (lookAt) lookAt.enabled = true;
-            var lookAtIK = GetComponentInChildren<RootMotion.FinalIK.LookAtIK>();
             if (lookAtIK) lookAtIK.enabled = true;
         }
 
@@ -239,11 +237,11 @@ public partial class PlayerController : BaseSelfMoveableController
 
         ModleRoot = modleRoot;
         BaseObject baseMono = modleRoot.GetComponent<BaseObject>();
-        m_Actor.ShowName = baseMono.ShowName;
-        m_Actor.Id = baseMono.Id;
-        m_Actor.Portrait = baseMono.Portrait;
-        m_Actor.ExtraPortrait = baseMono.ExtraPortrait;
-        m_Actor.Color = baseMono.Color;
+        Actor.ShowName = baseMono.ShowName;
+        Actor.Id = baseMono.Id;
+        Actor.Portrait = baseMono.Portrait;
+        Actor.ExtraPortrait = baseMono.ExtraPortrait;
+        Actor.Color = baseMono.Color;
         m_Anim = modleRoot.GetComponent<Animator>();
 
 
@@ -261,8 +259,8 @@ public partial class PlayerController : BaseSelfMoveableController
         hand.GetComponent<SkinnedMeshRenderer>().updateWhenOffscreen = true;
 
         this.Cfg = cfg;
-        modleRoot.GetComponent<RootMotion.FinalIK.LookAtController>().target = PlayerCamera.transform.GetChild(0);
-        List<WeaponPlayerController> StartingWeapons=new(cfg.GetStartingWeapons(ArchiveSvc.Archive.GetRoleCfg(m_Actor.Id)));
+        modleRoot.GetComponent<LookAtController>().target = PlayerCamera.transform.GetChild(0);
+        List<WeaponPlayerController> StartingWeapons=new(cfg.GetStartingWeapons(ArchiveSvc.Archive.GetRoleCfg(Actor.Id)));
         StartingWeapons.AddRange(extraWeapons);
         WeaponsManager.SetStatrtWeapon(StartingWeapons);
 
@@ -271,14 +269,14 @@ public partial class PlayerController : BaseSelfMoveableController
         // 第三人称时关闭新模型的头部IK组件
         if (IsThirdPerson)
         {
-            var lookAt = modleRoot.GetComponent<RootMotion.FinalIK.LookAtController>();
+            var lookAt = modleRoot.GetComponent<LookAtController>();
             if (lookAt) lookAt.enabled = false;
-            var lookAtIK = modleRoot.GetComponent<RootMotion.FinalIK.LookAtIK>();
+            var lookAtIK = modleRoot.GetComponent<LookAtIK>();
             if (lookAtIK) lookAtIK.enabled = false;
 
-            _aimIK = modleRoot.GetComponent<RootMotion.FinalIK.AimIK>();
+            _aimIK = modleRoot.GetComponent<AimIK>();
             if (_aimIK) _aimIK.enabled = false;
-            _aimController = modleRoot.GetComponent<RootMotion.FinalIK.AimController>();
+            _aimController = modleRoot.GetComponent<AimController>();
             if (_aimController) _aimController.enabled = false;
         }
     }
@@ -415,32 +413,44 @@ public partial class PlayerController : BaseSelfMoveableController
     }
 
     /// <summary>
-    /// 倒地后的移动控制
+    /// 倒地后的相机控制（与第三人称一致的轨道旋转方式）
     /// </summary>
     void DownHandleCharacterMovement()
     {
         if (!IsDead) return;
-        float mouseX = InputHandler.GetLookInputsHorizontal();
-        float mouseY = InputHandler.GetLookInputsVertical(); // 你需要获取垂直输入
 
-        m_CameraHorizontalAngle += mouseX * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * Time.deltaTime;
-        m_CameraVerticalAngle += mouseY * GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * Time.deltaTime;
-        m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -20f, 70f); // 限制上下角度
+        float angSpeed = GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat;
+        float dt = Time.deltaTime;
 
-        Quaternion rotation = Quaternion.Euler(
-            m_CameraVerticalAngle,       // 上下
-            transform.eulerAngles.y - 180 + m_CameraHorizontalAngle, // 左右
-            0
-        );
+        // 更新旋转角度（与第三人称 HandleThirdPersonCamera 一致：累积 _cameraYaw）
+        _cameraYaw += InputHandler.GetLookInputsHorizontal() * angSpeed * dt;
+        m_CameraVerticalAngle += InputHandler.GetLookInputsVertical() * angSpeed * dt;
+        m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -_thirdPersonUpperLimit, _thirdPersonLowerLimit);
 
-        Vector3 offsetDir = rotation * Vector3.back;
-        Vector3 cameraFinalPos = CenterPos+Vector3.up + offsetDir * 4f;
+        // 相机位置：围绕 CenterPos 轨道旋转（与第三人称一致的公式）
+        Quaternion rotation = Quaternion.Euler(m_CameraVerticalAngle, _cameraYaw, 0);
+        Vector3 offset = rotation * new Vector3(0, 1f, -4f);
+        Vector3 desiredPosition = CenterPos + offset;
 
-        // 6. 应用位置 + 注意
-        PlayerDownCamera.transform.position =Vector3.Lerp(PlayerDownCamera.transform.position, cameraFinalPos, GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * Time.deltaTime/2);
-        PlayerDownCamera.transform.LookAt(CenterPos);
+        // 遮挡检测（与第三人称一致）
+        Vector3 origin = CenterPos;
+        Vector3 dir = (desiredPosition - origin).normalized;
+        float maxDist = Vector3.Distance(origin, desiredPosition);
+        if (Physics.Raycast(origin, dir, out RaycastHit hit, maxDist, _thirdPersonOcclusionLayers, QueryTriggerInteraction.Ignore))
+        {
+            float occludedDist = Mathf.Max(hit.distance - 0.3f, _thirdPersonMinDistance);
+            desiredPosition = origin + dir * occludedDist;
+        }
 
-        //呼叫
+        // 平滑位置（SmoothDamp 替代 Lerp）
+        PlayerDownCamera.transform.position = Vector3.SmoothDamp(
+            PlayerDownCamera.transform.position, desiredPosition, ref _downCameraVelocity, 1f / _thirdPersonSmoothSpeed);
+
+        // 平滑旋转（Slerp 替代 LookAt）
+        PlayerDownCamera.transform.rotation = Quaternion.Slerp(
+            PlayerDownCamera.transform.rotation, rotation, dt * _thirdPersonSmoothSpeed);
+
+        // 呼叫
         if (InputHandler.GetJumpInputUp())
         {
             BattleEventSub.CallKai(gameObject, transform.position);
@@ -454,6 +464,14 @@ public partial class PlayerController : BaseSelfMoveableController
     {
         IsDead = true;
         _wasThirdPersonBeforeDeath = IsThirdPerson;
+        _downCameraVelocity = Vector3.zero;
+
+        // 第一人称死亡时 _cameraYaw 未更新，初始化为角色后方
+        if (!IsThirdPerson)
+        {
+            _cameraYaw = transform.eulerAngles.y - 180;
+        }
+
         PlayerCamera.gameObject.SetActive(false);
         PlayerDownCamera.gameObject.SetActive(true);
         m_Anim.SetBool("IsDeath", true);
@@ -466,17 +484,18 @@ public partial class PlayerController : BaseSelfMoveableController
     void OnRevive()
     {
         IsDead = false;
+        _downCameraVelocity = Vector3.zero;
         PlayerCamera.gameObject.SetActive(true);
         PlayerDownCamera.gameObject.SetActive(false);
 
         WeaponsManager.enabled = true;
         WeaponsManager.SwitchToWeaponIndex(1, true, false, true);
         GlobalEventSub.PlayMeetSpeech(gameObject, SpeechTypeEnum.Thank);
-        m_Actor.ActorState = ActorState.Normal;
+        Actor.ActorState = ActorState.Normal;
         m_Anim.SetBool("IsDeath",false);
         //喘息之时现在免费送
-        m_Actor.AddTag(ActorFlag.Invincible);
-        GameRoot.CreateTimer(() => m_Actor.RemoveTag(ActorFlag.Invincible), 4);
+        Actor.AddTag(ActorFlag.Invincible);
+        GameRoot.CreateTimer(() => Actor.RemoveTag(ActorFlag.Invincible), 4);
 
         // 恢复死亡前的视角状态
         if (_wasThirdPersonBeforeDeath)

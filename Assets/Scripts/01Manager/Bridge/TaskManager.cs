@@ -41,7 +41,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 
     private System.Random TaskRandom { get; set; }
 
-    private static Dictionary<string, int> _DefaultBattleData = new() {
+    internal static Dictionary<string, int> DefaultBattleData = new() {
         ["击杀敌人"] = 0,
         ["开火次数"] = 0,
         ["命中次数"] = 0,
@@ -284,7 +284,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         if (subTypes != null) task.subs = subTypes.Select(item => new TaskItem(Missions[item])).ToArray();
         else task.subs = new TaskItem[0];
         //task.RequiredAD = new() {10,11,16,17};
-        task.RequiredAD = new() { 10,16, 17 };
+        task.RequiredAD = new() { Constants.SupplyId,Constants.HealBag, Constants.IlluminatorId, Constants.LampTowerId };
         task.RequiredAD.AddRange(task.MainCfg.RequiredAD.Select(item => item.ID));
         task.RequiredAD.AddRange(task.taskCfg.extra.SelectMany(item => Missions[item].RequiredAD).Select(item => item.ID));
         if (subTypes != null) task.RequiredAD.AddRange(subTypes.SelectMany(item => Missions[item].RequiredAD).Select(item => item.ID));
@@ -311,10 +311,27 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         task.BattleData.Clear();
         for (int i =0;i<RoomManager.Instance.players.Count;++i)
         {
-            task.BattleData.Add(new(_DefaultBattleData));
+            task.BattleData.Add(new(DefaultBattleData));
         }
         Constants.TaskBorder = task.MapBorder;
         GameRoot.GameState = GameStateEnum.Ready;
+    }
+
+    /// <summary>
+    /// 场景模式：从 CampaignCfg 补全 nowTask 的地图级数据（RequiredAD、campData、BattleData）
+    /// </summary>
+    public void EnsureSceneData(CampaignCfg cfg)
+    {
+        var task = Instance.nowTask;
+        task.RequiredAD = new List<int>(cfg.useAirdrops);
+        task.campData = Instance.Camps[cfg.enemy];
+        task.SceneSizeType = cfg.sizeType;
+        if (task.BattleData == null || task.BattleData.Count == 0)
+        {
+            task.BattleData = new();
+            for (int i = 0; i < RoomManager.Instance.players.Count; ++i)
+                task.BattleData.Add(new(DefaultBattleData));
+        }
     }
 
     public void EnterTransition()
@@ -375,10 +392,13 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         public int[] ExtraDifficulty { get; set; } = new int[] { 0, 0, 0, 0 };
         public OOPartEnum[] SpecialtyPropertys { get; set; }
         public OOPartEnum[] OtherPropertys { get; set; }
-        public MissionMainData_SO MainCfg => (MissionMainData_SO)main.cfg;
+        public MissionMainData_SO MainCfg => main?.cfg as MissionMainData_SO;
+        /// <summary>场景模式下由 CampaignCfg 提供</summary>
+        public SizeType SceneSizeType { get; set; } = SizeType.Mini;
+        private SizeType EffectiveSizeType => MainCfg?.sizeType ?? SceneSizeType;
 
         public int MapSize => Constants.MapDefaultBorder
-        +MainCfg.sizeType switch {
+        +EffectiveSizeType switch {
             SizeType.Small => 256,
             SizeType.Medium => 384,
             SizeType.Large => 512,
@@ -386,7 +406,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
             _ => 128,
         };
 
-        public int CameraSize => MainCfg.sizeType switch {
+        public int CameraSize => EffectiveSizeType switch {
             SizeType.Mini => 192,
             _ => MapSize - Constants.MapDefaultBorder,
         };
@@ -394,7 +414,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         /// <summary>地图边缘的半径</summary>
         public int MapBorder => (MapSize - CameraSize) / 2;
 
-        public int MapHeight => MainCfg.sizeType switch {
+        public int MapHeight => EffectiveSizeType switch {
             SizeType.Small => 64,
             SizeType.Medium => 80,
             SizeType.Large => 96,

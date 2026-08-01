@@ -50,6 +50,8 @@ namespace FPSGame.Furn
 
         GameObject gameObject { get; }
 
+        event Action OnOperate;
+
         void Operate();
         bool CanOperate(GameObject unit);
         bool Handle(GameObject user);
@@ -65,7 +67,7 @@ namespace FPSGame.Furn
         private static int nowID = 0;
         private static int GetID => ++nowID;
 
-        public Action OnOperate;
+        public event Action OnOperate;
 
         [Foldout("配置", true)]
 
@@ -122,6 +124,7 @@ namespace FPSGame.Furn
         protected int count;
 
         private I_Actor _actor;
+        private Vector3 _colliderCenterOffset = Vector3.up;
 
         public int NumberID { get; private set; }
         
@@ -145,10 +148,7 @@ namespace FPSGame.Furn
                 if (this == null || gameObject == null)
                     return Vector3.zero;
 
-                if (TryGetComponent<Collider>(out var collider) && collider != null)
-                    return collider.bounds.center;
-                else
-                    return transform.position + Vector3.up;
+                return transform.position + _colliderCenterOffset;
             }
         }
 
@@ -172,6 +172,10 @@ namespace FPSGame.Furn
             _audioSource = GetComponent<AudioSource>();
             _actor = GetComponent<I_Actor>();
             if (!anim) anim = GetComponent<Animator>();
+
+            // 缓存碰撞器中心偏移，避免每帧访问bounds.center导致AABB重算抖动
+            if (TryGetComponent<Collider>(out var col))
+                _colliderCenterOffset = col.bounds.center - transform.position;
 
             // 首次分配唯一ID
             if (NumberID == 0)

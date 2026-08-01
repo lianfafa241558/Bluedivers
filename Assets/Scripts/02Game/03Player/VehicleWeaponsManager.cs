@@ -94,6 +94,7 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
     PlayerInputHandler m_InputHandler;
     I_AIController m_AIController;
     IDrivable m_Controller;
+    GameObject _owner;
 
 
     Vector3 m_WeaponBobLocalPosition;//武器摆动坐标
@@ -342,6 +343,7 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
         Array.Copy(m_WeaponSlots, newArray, m_WeaponSlots.Length);
         newArray[newArray.Length - 1] = weapon;
         m_WeaponSlots = newArray;
+        weapon.Owner = _owner;
         OnIconChange?.Invoke(newArray.Length == 1,icon);
 
     }
@@ -379,6 +381,16 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
     void OnSetOwner(bool state)
     {
         enabled = state;
+        _owner = state ? m_Controller.CurrentOwner : null;
+
+        // 同步武器所有者
+        for (int i = 0; i < m_WeaponSlots.Length; i++)
+        {
+            if (m_WeaponSlots[i])
+            {
+                m_WeaponSlots[i].Owner = _owner;
+            }
+        }
 
         if (!HaveWeapon())
         {

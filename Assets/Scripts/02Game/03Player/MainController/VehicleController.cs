@@ -18,6 +18,9 @@ public interface IDrivable
 
     public Camera PlayerCamera { get; }
 
+    /// <summary>当前驾驶员（null 表示无人驾驶）</summary>
+    public GameObject CurrentOwner { get; }
+
     /// <summary>
     /// 重设相机基准点,给载具使用
     /// </summary>
@@ -34,6 +37,7 @@ public class VehicleController : BaseSelfMoveableController,IDrivable
 
     //[SerializeField]
     private GameObject _owner;
+    GameObject IDrivable.CurrentOwner => _owner;
     private bool _wasThirdPersonOnEnter;
 
     Camera IDrivable.PlayerCamera => PlayerCamera;
@@ -58,7 +62,11 @@ public class VehicleController : BaseSelfMoveableController,IDrivable
             comp.Controller.enabled = false;
             owner.GetComponent<I_Actor>().ActorState = ActorState.Hide;
             owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled = false;
-            comp.GetComponentInChildren<LookAtController>().enabled = false;
+            if (!_wasThirdPersonOnEnter)
+            {
+                comp.GetComponentInChildren<LookAtController>().enabled = false;
+            }
+
 
             RecordCameraBasePoint = PlayerCamera.transform.localPosition;
 
@@ -75,13 +83,14 @@ public class VehicleController : BaseSelfMoveableController,IDrivable
                 comp.Controller.enabled = true;
                 _owner.transform.parent = null;
                 comp.PlayerCamera.transform.localPosition = RecordCameraBasePoint;
-                comp.GetComponentInChildren<LookAtController>().enabled = true;
+
                 _owner.GetComponent<I_Actor>().ActorState = ActorState.Normal;
 
                 // 第三人称下武器相机应保持关闭
                 if (!_wasThirdPersonOnEnter)
                 {
                     _owner.GetComponent<PlayerWeaponsManager>().WeaponCamera.enabled = true;
+                    comp.GetComponentInChildren<LookAtController>().enabled = true;
                 }
             }
 

@@ -1,3 +1,4 @@
+using System;
 using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -9,16 +10,20 @@ public class HpItemBoss : HpItemBase
     public Transform armorLayout;
     private PartController enemy;
     private int lenght;
-    public override void Set(GameObject enemy)
+
+    private Damageable[] damageables;
+    public override void Set(GameObject go)
     {
-        base.Set(enemy);
-        this.enemy = enemy.GetComponent<PartController>();
-        lenght = this.enemy.invincibleArmor.Length;
-        Debug.Log("长度"+ lenght);
+        base.Set(go);
+        this.enemy = go.GetComponent<PartController>();
+
+        damageables = enemy.invincibleArmor.Length > 0 ? enemy.invincibleArmor : enemy.deathArmor;
+        lenght = damageables.Length;
+
         int i=0;
         for (i=0; i< lenght; ++i)
         {
-            var item = this.enemy.invincibleArmor[i];
+            var item = damageables[i];
             SetActive(armorLayout.GetChild(i), true);
             SetFill(armorLayout.GetChild(i, 1, 0), item.GetArmorRatio());
             SetFill(armorLayout.GetChild(i, 1, 1), item.GetArmorRatio());
@@ -28,6 +33,8 @@ public class HpItemBoss : HpItemBase
         {
             SetActive(armorLayout.GetChild(i),false);
         }
+        SetFill(FillW, 1);
+        SetFill(FillR, 1);
     }
 
     public override void Tick()
@@ -35,8 +42,7 @@ public class HpItemBoss : HpItemBase
         SetFill(FillW, health.GetHpRatio() - 0.02f, Time.deltaTime * 2);
         for (int i = 0; i < lenght; ++i)
         {
-            var item = enemy.invincibleArmor[i];
-            SetFill(armorLayout.GetChild(i,1, 0), item.GetArmorRatio(), Time.deltaTime * 2);
+            SetFill(armorLayout.GetChild(i,1, 0),GetFill(armorLayout.GetChild(i, 1, 1)), Time.deltaTime * 2);
         }
        
     }
@@ -45,13 +51,13 @@ public class HpItemBoss : HpItemBase
     {
         for (int i = 0; i < lenght; ++i)
         {
-            enemy.invincibleArmor[i].OnDamage -= OnDamage;
+            damageables[i].OnDamage -= OnDamage;
         }
     }
 
     void OnDamage(Damageable damageable)
     {
-        int index = enemy.invincibleArmor.FindIndex(item=>item==damageable);
+        int index = damageables.FindIndex(item=>item==damageable);
         SetFill(armorLayout.GetChild(index,1,1), damageable.GetArmorRatio());
     }
 }

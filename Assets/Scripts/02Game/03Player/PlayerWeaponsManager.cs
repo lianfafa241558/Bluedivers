@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
@@ -186,7 +187,7 @@ namespace Unity.FPS.Gameplay
 
         void Update()
         {
-
+            if (m_PlayerCharacterController.Actor.ActorState == ActorState.Hide) return;
             //if (IsDown) return;
             WeaponPlayerController activeWeapon = GetActiveWeapon();
             WeaponPlayerController activeSecWeapon = GetActiveSecWeapon();
@@ -750,6 +751,12 @@ namespace Unity.FPS.Gameplay
             SwitchToWeaponIndex(newWeaponIndex, force:false, allowDual:false);
         }
 
+
+        public WeaponController GetWeapon(WeaponTypeEnum weaponType)
+        {
+           return GetWeaponAtSlotIndex((int)weaponType);
+        }
+
         /// <summary>
         /// 切换到武器插槽中的给定武器索引
         /// </summary>
@@ -1082,16 +1089,18 @@ namespace Unity.FPS.Gameplay
         private int m_LastWeaponIndex;
         void OnAirdrop(WindowStateEnum oldSstate, WindowStateEnum newState)
         {
-            if(newState== WindowStateEnum.Airdrop)
-            {
-                //Debug.LogError("记录上一次武器为"+ ActiveWeaponIndex);
-                m_LastWeaponIndex = ActiveWeaponIndex;
-                SwitchToWeaponIndex((int)WeaponTypeEnum.FlareGun, false,false,false);
-            }
-            else if(oldSstate == WindowStateEnum.Airdrop&& AirdropController.WaitRelease==null)
-            {
-                //Debug.LogError("切换会原武器" + m_LastWeaponIndex);
-                SwitchToWeaponIndex((m_LastWeaponIndex == (int)WeaponTypeEnum.FlareGun)?0: m_LastWeaponIndex, false, false, false);
+            if (m_PlayerCharacterController.Actor.ActorState == ActorState.Normal) {
+                if (newState == WindowStateEnum.Airdrop)
+                {
+                    //Debug.LogError("记录上一次武器为"+ ActiveWeaponIndex);
+                    m_LastWeaponIndex = ActiveWeaponIndex;
+                    SwitchToWeaponIndex((int)WeaponTypeEnum.FlareGun, false, false, false);
+                }
+                else if (oldSstate == WindowStateEnum.Airdrop && AirdropController.WaitRelease == null)
+                {
+                    //Debug.LogError("切换会原武器" + m_LastWeaponIndex);
+                    SwitchToWeaponIndex((m_LastWeaponIndex == (int)WeaponTypeEnum.FlareGun) ? 0 : m_LastWeaponIndex, false, false, false);
+                }
             }
         }
         void OnInputCompletedAirdrop(GameObject go, AirdropData data) {

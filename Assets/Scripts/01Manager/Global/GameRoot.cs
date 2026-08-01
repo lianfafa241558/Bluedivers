@@ -119,7 +119,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
         if (IsLocal)
         {
             RoomManager.Instance.Self.airdrop = new int[4] {105,104,103,100 };
-            BattleManager.Creat();
+            BattleManager.Creat(true);
         }
 
         StartCoroutine(nameof(InitGameState));

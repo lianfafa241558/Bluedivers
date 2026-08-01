@@ -66,9 +66,9 @@ namespace Unity.FPS.Game {
 
         public bool CanPickup() => CurrentHealth < MaxHealth;
 
-        public float GetHpRatio() => CurrentHealth.RawFloat / MaxHealth;
+        public float GetHpRatio() => CurrentHealth.RawFloat / (MaxHealth+0f);
 
-        public float GetShieldRatio() => CurrentShield.RawFloat / MaxShield;
+        public float GetShieldRatio() => CurrentShield.RawFloat / (MaxShield+0f);
 
         [DisplayField]
         [SerializeField]
@@ -81,7 +81,7 @@ namespace Unity.FPS.Game {
         /// <summary>标记当前 TakeDamage 调用来自异常状态 tick，HandleDamage 据此跳过积蓄槽更新</summary>
         private bool _isAboTickDamage;
 
-        protected virtual void Start() {
+        protected virtual void Awake() {
             CurrentHealth = MaxHealth;
             if(MainPart.IsValid()) MainPart.isMain = true;
             InitAboState();

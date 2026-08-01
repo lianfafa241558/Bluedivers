@@ -27,8 +27,8 @@ namespace Unity.FPS.Game
         [SerializeField]
         public int showShield;
 
-        protected override void Start() {
-            base.Start();
+        protected override void Awake() {
+            base.Awake();
             CurrentShield = showShield=MaxShield;
             OnShieldDamaged += _OnDamaged;
             m_Audio=AudioSvc.CreatSource(gameObject,AudioGroups.General);

@@ -321,13 +321,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 1417902310742990669}
+  - type: 0
+    chassis: {fileID: 1417902310742990669}
     barrel: {fileID: 899669233212924542}
     weapon: {fileID: 1417902311292615294}
-    aimSharpness: 10
+    aimSharpness: 90
     detectionFireDelay: 0
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0.17364818, y: 0, z: 0, w: 0.9848077}
     dot: 1
@@ -1079,6 +1081,8 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -1089,6 +1093,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -1276,11 +1281,11 @@ MonoBehaviour:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
   IsSeeingTarget: 0
+  obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
-  showCollider: {fileID: 0}
 --- !u!1 &1417902311569273196
 GameObject:
   m_ObjectHideFlags: 0

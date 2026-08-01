@@ -614,7 +614,6 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
         h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ImpactSfx")) + 2;
         h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("OnlyTerrain")) + 2;
         h += EditorGUI.GetPropertyHeight(useHole) + 2;
-
         if (useHole.boolValue)
         {
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Hole")) + 2;

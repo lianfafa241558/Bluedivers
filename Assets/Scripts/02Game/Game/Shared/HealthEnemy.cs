@@ -9,9 +9,10 @@ namespace Unity.FPS.Game
 {
     public class HealthEnemy : Health {
 
-        protected override void Start() {
-            base.Start();
-            PEInt scale = 1+(TaskManager.Instance.nowTask.ExtraDifficulty[3]* (PEInt)0.1f);
+        protected override void Awake()
+        {
+            base.Awake();
+            PEInt scale = 1 + (TaskManager.Instance.nowTask.ExtraDifficulty[3] * (PEInt)0.1f);
             switch (TaskManager.Instance.nowTask.difficulty)
             {
                 case DifficultyEnum.Normal:
@@ -39,8 +40,8 @@ namespace Unity.FPS.Game
                     scale *= (PEInt)1.35f;
                     break;
             }
-            showHealth = (CurrentHealth *= scale).RawInt;
-            foreach(var item in AboGauge)
+            MaxHealth = showHealth = (CurrentHealth * scale).RawInt;
+            foreach (var item in AboGauge)
             {
                 item.Value.Max *= scale;
             }

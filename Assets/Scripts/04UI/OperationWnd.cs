@@ -20,6 +20,7 @@ public class OperationWnd : Window
     {
         GlobalEventSub.OnFurnitureOperate += RefreshDisplay;
         GlobalEventSub.OnViewSwitch += OnViewSwitch;
+        OnViewSwitch(ArchiveSvc.GetSetting("默认操作视角") > 0);
     }
     public void UnInit()
     {

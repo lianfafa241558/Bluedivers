@@ -125,6 +125,9 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     [SerializeField]
     Vector3 m_GroundNormal;
 
+    /// <summary>是否处于陡坡（坡度超过 slopeLimit 无法站立但身体接触了地面）</summary>
+    private bool _isOnSteepSlope;
+
     /// <summary>最终重力速度</summary>
     protected virtual float GravitySpeed => GravityDownForce;
 
@@ -153,8 +156,6 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         HasJumpedThisFrame = false;
         GroundCheck();
         HandleCharacterMovement();
-
-
     }
 
 
@@ -250,6 +251,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         //接地检查前重置
         bool lastState = IsGrounded;
         IsGrounded = false;
+        _isOnSteepSlope = false;
         m_GroundNormal = Vector3.up;
 
         //只有在距离上次跳跃时间较短的情况下，才尝试探测地面；否则，我们可能会在尝试跳跃后立即倒贴地面
@@ -286,6 +288,13 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
                 else
                 {
                     if (grounderIK) grounderIK.weight = 0;
+
+                    // 陡坡：角色接触了地面但坡度太陡无法站立，标记以便在移动时沿坡面滑下
+                    // 只有法线明显向上时才判定为陡坡，避免台阶/墙面被误判为陡坡导致上下抖动
+                    if (Vector3.Dot(hit.normal, transform.up) > 0.3f)
+                    {
+                        _isOnSteepSlope = true;
+                    }
                 }
             }
         }
@@ -424,6 +433,14 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
             ApplyForceVelocity = default;
         }
         totalVelocity *= (PEInt)Time.deltaTime;
+
+        // 陡坡滑动：将位移投影到坡面上，避免被 CharacterController 当墙挡住
+        if (_isOnSteepSlope)
+        {
+            Vector3 projectedDisplacement = Vector3.ProjectOnPlane(totalVelocity.RawVector3, m_GroundNormal);
+            totalVelocity = (PEVector3)projectedDisplacement;
+        }
+
         //将最终计算出的速度值作为角色移动应用
         Move(totalVelocity.RawVector3);
 

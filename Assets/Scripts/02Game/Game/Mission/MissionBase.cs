@@ -13,7 +13,7 @@ namespace FpsGame.Mission
 {
     public enum MissionType
     {
-        Main,Extra,Nest
+        Main,Extra,Nest,Sub,Evacuate,
     }
 
 
@@ -83,12 +83,18 @@ namespace FpsGame.Mission
         [HideInInspector]
         public int entitySize;//半径
 
-        [DisplayField(false)]
-        public float percentage;//完成百分比，用来显示
+
+
+
+        [Foldout("场景专用", true)]
+        [InspectorName("场景任务数据(场景模式用)")]
+        [SerializeField]
+        protected MissionData_SO _sceneMissionData;
 
         [Foldout("显示",true)]
         public MissionBase[] subTask;
-
+        [DisplayField(false)]
+        public float percentage;//完成百分比，用来显示
         [DisplayField(false)]
         [SerializeField]
         /// <summary>在部署战备范围内</summary>
@@ -151,6 +157,60 @@ namespace FpsGame.Mission
             InitMission();
         }
 
+        /// <summary>
+        /// 场景模式轻量初始化：仅注入数据引用，不实例化 MissionView（场景已有）
+        /// </summary>
+        public void InitFromSceneData(TaskManager.SelectTaskData root)
+        {
+            this.root = root;
+            manager = BattleManager.Instance;
+            random = manager.BattleRandom;
+
+            if (_sceneMissionData != null)
+            {
+                data = new TaskManager.TaskItem(_sceneMissionData);
+                
+            }
+
+            switch (missionType)
+            {
+                case MissionType.Evacuate:
+                case MissionType.Sub:
+                case MissionType.Main:
+                    if (_sceneMissionData is MissionMainData_SO maincfg)
+                        color = maincfg.color;
+                    else
+                        color = Color.white;
+                    break;
+                case MissionType.Extra:
+                    color = Color.white;
+                    break;
+                case MissionType.Nest:
+                    color = root.campData.Color;
+                    break;
+            }
+
+            // 场景中 MissionView 已作为子对象存在，直接获取引用
+            if (entity == null&&prefabs.Count>0)
+            {
+                Debug.LogError("没有为其设置实体",this);
+            }
+
+
+            if (entity != null && data?.cfg?.RequiredAD != null)
+            {
+                entity.Init(this, data.cfg.RequiredAD.Select(item => item.ID).ToArray());
+            }
+
+            if (data?.cfg?.RequiredAD?.Count > 0)
+                BattleEventSub.OnAirdrop += OnAirdrop;
+
+            if (data == null || data.cfg.RequiredAD.Count == 0)
+                AirdropRange = 0;
+
+            InitMission();
+        }
+
         public void EventStart()
         {
             StartMission();
@@ -184,7 +244,7 @@ namespace FpsGame.Mission
         protected virtual void InitMission()
         {
 
-            if (prefabs.Count > 0)
+            if (!entity && prefabs.Count > 0)
             {
                 entity = Instantiate(prefabs.RandomTake(), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), entityParent).GetComponent<MissionView>();
                 entity.Init(this, this.data.cfg.RequiredAD.Select(item => item.ID).ToArray());

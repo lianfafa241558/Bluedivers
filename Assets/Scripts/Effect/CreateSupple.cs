@@ -14,11 +14,18 @@ public class CreatSupple : MonoBehaviour
 
     void Start()
     {
-        if (BattleManager.Instance.BattleRandom.Bool(probability))
-        {
-            Instantiate(prefab, transform.position + RandomUtils.RandomVector2().ToVector3() * range, default, transform.parent);
+        var pos = transform.position + RandomUtils.RandomVector2().ToVector3() * range;
+        var parent = transform.parent;
+        var copiedProbability = probability;
 
-        }
+        BattleManager.EnqueueInit(() =>
+        {
+            if (BattleManager.Instance.BattleRandom.Bool(copiedProbability))
+            {
+                Instantiate(prefab, pos, default, parent);
+            }
+        });
+
         Destroy(gameObject);
     }
 }

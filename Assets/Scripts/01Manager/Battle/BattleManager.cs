@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,29 +26,43 @@ public class BattleManager : Singleton<BattleManager>
     private UnitQueryGrid unitQueryGrid;
     private MapRoot mapRoot;
 
+    private static readonly Queue<Action> _initQueue = new();
+    public static void EnqueueInit(Action action) => _initQueue.Enqueue(action);
+
     public System.Random BattleRandom { get;private set; }
 
-    public static void Creat()
+    #region 初始化
+
+    public static void Creat(bool isNormal)
     {
         var manager = new GameObject("BattleManager").AddComponent<BattleManager>();
-        manager.StartCoroutine(manager.Init());
+        if (isNormal)
+        {
+            manager.StartCoroutine(manager.Init());
+        }
+        else
+        {
+            manager.StartCoroutine(manager.InitSpecial());
+        }
 
     }
-    private IEnumerator Init()
+
+    private IEnumerator InitSpecial()
     {
+        Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
+        TaskManager.Instance.EnsureSceneData(transMapRoot.GetComponent<CampaignCfg>());
+        mapRoot = transMapRoot.GetComponent<MapRoot>();
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
         BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
-
-        yield return InitTerrain();
-        Debug.Log($"地形耗时: {sw.ElapsedMilliseconds} ms");
-        sw.Restart();
-
-
+        TerrainUtils.Main = mapRoot.terrain;
+        mapRoot.Init(false);
+        
         ACCont = new GameObject("ActorsManager").AddComponent<ActorsManager>();
         ACCont.transform.SetParent(transform);
 
         MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
+        MissionCont.Init(MissionInitMode.FindFromScene);
         MissionCont.transform.SetParent(transform);
         Debug.Log($"开始任务");
         yield return MissionCont.WaitForInitialization();
@@ -73,11 +88,108 @@ public class BattleManager : Singleton<BattleManager>
         GameRoot.GameState = GameStateEnum.Game;
         yield return null;
         WndManager.WindowState = WindowStateEnum.Game;
+        DrainInitQueue();
         IsStartBattle = true;
         Debug.Log($"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
 
 
     }
+
+    private IEnumerator Init()
+    {
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+
+        BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
+
+        yield return InitTerrain();
+        Debug.Log($"地形耗时: {sw.ElapsedMilliseconds} ms");
+        sw.Restart();
+
+
+        ACCont = new GameObject("ActorsManager").AddComponent<ActorsManager>();
+        ACCont.transform.SetParent(transform);
+
+        MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
+        MissionCont.Init(MissionInitMode.GenerateFromData);
+        MissionCont.transform.SetParent(transform);
+        Debug.Log($"开始任务");
+        yield return MissionCont.WaitForInitialization();
+        Debug.Log($"任务耗时: {sw.ElapsedMilliseconds} ms");
+        sw.Restart();
+
+        ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
+        ADCont.Init();
+        ADCont.transform.SetParent(transform);
+        BRCont = new GameObject("BattleRoleCont").AddComponent<BattleRoleManager>();
+        BRCont.transform.SetParent(transform);
+        WaveCont = new GameObject("WaveCont").AddComponent<WaveManager>();
+        WaveCont.transform.SetParent(transform);
+        PatrolCont = new GameObject("PatrolCont").AddComponent<PatrolContriller>();
+        PatrolCont.transform.SetParent(transform);
+        WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
+        RequestManager = new GameObject("RequestManager").AddComponent<PathRequestManager>();
+        RequestManager.transform.SetParent(transform);
+        Debug.Log("完成主要内容初始?");
+        yield return null;
+
+        //ResManager.Instance.SetLoadSceneExtraProgress(1);
+        GameRoot.GameState = GameStateEnum.Game;
+        yield return null;
+        WndManager.WindowState = WindowStateEnum.Game;
+        DrainInitQueue();
+        IsStartBattle = true;
+        Debug.Log($"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
+
+
+    }
+    IEnumerator InitTerrain()
+    {
+        Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
+        mapRoot = transMapRoot.GetComponent<MapRoot>();
+
+        var terrain = TerrainUtils.Main = mapRoot.terrain;
+        var cfg = TaskManager.Instance.nowTask;
+        var terrainData = terrain.terrainData;
+
+
+        var mapRes = cfg.MainCfg.sizeType switch {
+            SizeType.Small => 512,
+            SizeType.Medium => 1024,
+            SizeType.Large => 1024,
+            _ => 512
+        };
+
+        terrainData.heightmapResolution = mapRes + 1;
+        terrainData.alphamapResolution = mapRes;
+        // 分辨率变更后重新设置Main，同步静态缓存
+        TerrainUtils.Main = terrain;
+        //不能调换顺序，会出问题
+        terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
+        // size.y 变更后刷新 terrainHeight 缓存，否则 AdditionTerrain 高度计算使用旧值
+        TerrainUtils.Main = terrain;
+        //Debug.LogWarning("地图尺寸" + cfg.MainCfg.sizeType + " 地图大小 + cfg.MapSize);
+        //Debug.LogWarning("地图真实" + mapRoot.terrain.terrainData.size);
+        //terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
+        mapRoot.Init(true);
+        List<TerrainItemInfo> infos = new(TaskManager.Instance.nowTask.mapCfg.TerrainItem);
+        var nestinfo = TaskManager.Instance.nowTask.campData.NestTerrainItem;
+        infos[3] = nestinfo;
+        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().SetTextures(infos.Select(item => item.diffuseTexture).ToArray(), infos.Select(item => item.tileSize).ToArray());
+
+        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain(cfg.taskCfg.terrainType);
+
+        var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
+        if (debugger.IsValid())
+        {
+            debugger.grid = unitQueryGrid;
+        }
+    }
+
+    #endregion
+
+
+
+    #region 生命周期
 
     void Start()
     {
@@ -103,52 +215,22 @@ public class BattleManager : Singleton<BattleManager>
         BattleEventSub.OnPlayerDead -= OnPlayerDeath;
         GlobalEventSub.OnOOPartCollect -= OOPartCollect;
         GlobalEventSub.OnDaySwitch -= OnDatSwitch;
+        _initQueue.Clear();
     }
 
-
-
-    IEnumerator InitTerrain()
+    private void DrainInitQueue()
     {
-        Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
-        mapRoot = transMapRoot.GetComponent<MapRoot>();
-       
-        var terrain=TerrainUtils.Main = mapRoot.terrain;
-        var cfg=TaskManager.Instance.nowTask;
-        var terrainData = terrain.terrainData;
-
-       
-        var mapRes= cfg.MainCfg.sizeType switch {
-            SizeType.Small => 512,
-            SizeType.Medium => 1024,
-            SizeType.Large => 1024,
-            _ => 512 
-        };
-        
-        terrainData.heightmapResolution = mapRes + 1;
-        terrainData.alphamapResolution = mapRes;
-        // 分辨率变更后重新设置Main，同步静态缓存
-        TerrainUtils.Main = terrain;
-        //不能调换顺序，会出问题
-        terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
-        // size.y 变更后刷新 terrainHeight 缓存，否则 AdditionTerrain 高度计算使用旧值
-        TerrainUtils.Main = terrain;
-        //Debug.LogWarning("地图尺寸" + cfg.MainCfg.sizeType + " 地图大小 + cfg.MapSize);
-        //Debug.LogWarning("地图真实" + mapRoot.terrain.terrainData.size);
-        //terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
-        mapRoot.Init();
-        List<TerrainItemInfo> infos = new(TaskManager.Instance.nowTask.mapCfg.TerrainItem);
-        var nestinfo = TaskManager.Instance.nowTask.campData.NestTerrainItem;
-        infos[3] = nestinfo;
-        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().SetTextures(infos.Select(item=>item.diffuseTexture).ToArray(), infos.Select(item => item.tileSize).ToArray());
-
-        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain(cfg.taskCfg.terrainType);
-
-        var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
-        if (debugger.IsValid())
+        while (_initQueue.Count > 0)
         {
-            debugger.grid = unitQueryGrid;
+            var action = _initQueue.Dequeue();
+            try { action?.Invoke(); }
+            catch (System.Exception e) { Debug.LogError($"[BattleManager] 初始化队列执行异常: {e}"); }
         }
     }
+
+    #endregion
+
+    #region API
 
 
     public List<I_Actor> FindUnits(IPERange range, TargetCfg targetCfg, System.Func<I_Actor, bool> customFilter = null)
@@ -249,7 +331,7 @@ public class BattleManager : Singleton<BattleManager>
         ADCont.Authorize(17, !isNoon);
         //应该加语音播报
     }
-
+    #endregion
 }
 
 public struct WaveCreateParams

@@ -247,7 +247,10 @@ namespace Unity.FPS.AI
 
                 case AIState.Idle:
                     //m_EnemyController.StopNav();
-                    
+
+                    // 开启自动巡逻旋转的炮塔（如机枪）在空闲时巡逻转动
+                    UpdateAutoRotate();
+
                     // 非固定单位Idle超时后移动
                     if (!m_EnemyController.IsFixed && Time.time >= m_IdleStartTime + IdleMaxDuration)
                     {
@@ -258,6 +261,8 @@ namespace Unity.FPS.AI
                     }
                     break;
                 case AIState.Patrol:
+                    // 开启自动巡逻旋转的炮塔在巡逻时转动
+                    UpdateAutoRotate();
                     if (m_EnemyController.UpdatePathDestination())
                     {
                         //移除
@@ -326,7 +331,7 @@ namespace Unity.FPS.AI
                     else if (AimTargrt())
                     {
                         turrets.ForEach(item => {
-                            if (item.IsLockTarget(TargetPosition))
+                            if (item.weapon && item.IsLockTarget(TargetPosition))
                             {
                                 m_EnemyController.TryAtack(item.weapon);
                             }
@@ -393,10 +398,22 @@ namespace Unity.FPS.AI
             }
         }
 
-        /// <summary>炮台锁头(LateUpdate)</summary>
+        /// <summary>
+        /// 炮台锁头(LateUpdate)，每个炮台独立索敌：
+        /// 战斗状态(Follow/Attack)下目标可达则瞄准；目标不可达或非战斗状态则自动巡逻转。
+        /// </summary>
         protected override void UpdateTurretAiming()
         {
            if(AiState != AIState.Idle && AiState != AIState.Patrol && AiState != AIState.Death && AiState != AIState.Beware && AiState != AIState.Return) turrets.ForEach(item => item.Aiming(Time.time - m_TimeStartedDetection));
+        }
+
+        /// <summary>对开启自动巡逻旋转的炮塔执行巡逻转动（未开启的自动跳过）</summary>
+        private void UpdateAutoRotate()
+        {
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                turrets[i].AutoRotate(Time.deltaTime);
+            }
         }
 
         protected override bool AimTargrt()

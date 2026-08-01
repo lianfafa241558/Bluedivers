@@ -7,7 +7,9 @@ using Utils;
 
 namespace Unity.FPS.AI
 {
-
+    /// <summary>
+    /// 允许任意I_AIController
+    /// </summary>
     public abstract partial class EnemyControllerFX : MonoBehaviour {
 
         public Animator Animator;

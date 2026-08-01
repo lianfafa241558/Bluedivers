@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -7,15 +9,121 @@ using static Core.InputManagerBase<InputState, Core.WindowStateEnum>;
 
 using Core;
 using Tool = Utils.Tool;
+using Core.Interface;
 
 //这个类完全是为了自定义编辑器才有的
-public class InputManager : InputManagerBase<InputState, WindowStateEnum>
+public class InputManager : InputManagerBase<InputState, WindowStateEnum>,I_GlobaManager
 {
+    [System.Serializable]
+    private class InputListSaveData
+    {
+        public List<InputItem> items;
+    }
+
+    private const string SaveFileName = "inputBindings.json";
+
     //留着切界面用的
     public WindowStateEnum nowState;
     public List<InputItem> InputList => inputList;
 
     public override WindowStateEnum NowWindowState => WndManager.WindowState;
+
+    /// <summary>
+    /// 获取存档目录路径
+    /// </summary>
+    private static string GetSaveDirectory()
+    {
+#if UNITY_ANDROID
+        return Application.persistentDataPath + "/";
+#elif UNITY_STANDALONE_WIN
+        string path = Application.dataPath + "/../";
+#if UNITY_EDITOR
+        path += "/../";
+#endif
+        return path;
+#endif
+    }
+
+
+    /// <summary>
+    /// 从JSON文件加载输入配置，若文件不存在则以默认值生成(由root触发)
+    /// </summary>
+    public void Init()
+    {
+        string filePath = GetSaveDirectory() + SaveFileName;
+
+        if (File.Exists(filePath))
+        {
+            string jsonStr = File.ReadAllText(filePath);
+            var saveData = JsonUtility.FromJson<InputListSaveData>(jsonStr);
+            if (saveData != null && saveData.items != null && saveData.items.Count > 0)
+            {
+                // 备份默认配置用于比对
+                var defaultList = new List<InputItem>(inputList);
+                inputList = saveData.items;
+
+                // 对比：默认有但存档没有的条目，补充进去
+                bool hasNewEntries = false;
+                foreach (var defaultItem in defaultList)
+                {
+                    if (defaultItem == null) continue;
+                    if (!inputList.Exists(loadedItem =>
+                        loadedItem != null &&
+                        loadedItem.key.Equals(defaultItem.key) &&
+                        loadedItem.window.Equals(defaultItem.window)))
+                    {
+                        inputList.Add(defaultItem);
+                        hasNewEntries = true;
+                        Debug.Log($"输入配置补充新条目: {defaultItem.key} (界面: {defaultItem.window})");
+                    }
+                }
+
+                if (hasNewEntries)
+                {
+                    Save();
+                    Debug.Log("输入配置已更新（补充新条目）并保存");
+                }
+
+                Debug.Log("输入配置已从文件加载: " + filePath);
+            }
+        }
+        else
+        {
+            Save();
+            Debug.Log("生成默认输入配置文件: " + filePath);
+        }
+
+        // 重置运行时状态
+        foreach (var item in inputList)
+        {
+            if (item != null)
+            {
+                item.lastTime = Mathf.Infinity;
+            }
+        }
+    }
+
+    public void UnInit()
+    {
+
+    }
+
+    /// <summary>
+    /// 保存当前输入配置到JSON文件
+    /// </summary>
+    public void Save()
+    {
+        string dir = GetSaveDirectory();
+        if (!Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+
+        var saveData = new InputListSaveData { items = inputList };
+        string jsonStr = JsonUtility.ToJson(saveData, true);
+        string filePath = dir + SaveFileName;
+        File.WriteAllText(filePath, jsonStr, new UTF8Encoding(true));
+    }
 
 }
 
@@ -39,7 +147,7 @@ public enum InputState
     [InspectorName("武器3")] Weapon3,
     [InspectorName("武器4")] Weapon4,
 
-    [InspectorName("轨道支援面板")] Airdrop,
+    [InspectorName("战备面板")] Airdrop,
     [InspectorName("左")] Left,
     [InspectorName("上")] Up,
     [InspectorName("右")] Right,
@@ -58,6 +166,8 @@ public enum InputState
     [InspectorName("减速")] Deceler,
 
     [InspectorName("小地图")] MiniMap,
+
+    [InspectorName("切换视角")] Perspective,
 }
 
 #if UNITY_EDITOR

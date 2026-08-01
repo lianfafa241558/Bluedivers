@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 namespace FpsGame.Mission
@@ -7,7 +7,7 @@ namespace FpsGame.Mission
     /// 撤离任务(移动)
     /// </summary>
     [AddComponentMenu("任务/撤离/动态撤离", 30)]
-    public class TaskTargetEvacuateMobile : MissionBase
+    public class MissionEvacuateMobile : MissionBase
     {
 
         enum EvacuateState

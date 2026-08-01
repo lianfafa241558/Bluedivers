@@ -192,6 +192,7 @@ public class PlayerInputHandler : MonoBehaviour
         //return GetFireInputHeld() && !m_FireInputWasHeld;
     }
 
+
     /// <summary>
     /// 松开瞄准键
     /// </summary>
@@ -333,7 +334,7 @@ public class PlayerInputHandler : MonoBehaviour
     /// </summary>
     public bool GetToggleViewDown()
     {
-        return CanProcessInput(WindowStateEnum.Game) && Input.GetKeyDown(KeyCode.T);
+        return CanProcessInput(WindowStateEnum.Game) && InputManager.GetDown(InputState.Perspective);
     }
 
 

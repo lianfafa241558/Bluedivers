@@ -72,13 +72,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 4973519714065153255}
+  - type: 0
+    chassis: {fileID: 4973519714065153255}
     barrel: {fileID: 5208956053367185142}
     weapon: {fileID: 3068231880032129563}
-    aimSharpness: 5
+    aimSharpness: 90
     detectionFireDelay: 0.5
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: -0.008726535, y: 0, z: 0, w: 0.9999619}
     dot: 1
@@ -654,6 +656,7 @@ MonoBehaviour:
     ChargeGravityScale: 0
     ChargeSoundScale: 0
     ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}

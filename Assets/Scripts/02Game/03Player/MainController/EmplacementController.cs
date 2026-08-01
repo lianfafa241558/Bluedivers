@@ -21,6 +21,7 @@ public class EmplacementController : BaseSelfController, IDrivable
 
     //[SerializeField]
     private GameObject owner;
+    GameObject IDrivable.CurrentOwner => owner;
     private Camera PlayerCamera;
     private bool _wasThirdPersonOnEnter;
 

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using FPSGame.Furn;
@@ -33,16 +33,19 @@ public class PlayerOperationController : MonoBehaviour
         {
             // 第三人称：检测角色前方近距离的交互物，取距离最近的可交互物
             Vector3 checkPos = m_PlayerController.CenterPos + Vector3.up * 0.5f + transform.forward * 0.5f;
-            Collider[] colliders = Physics.OverlapSphere(checkPos, 1.2f, -1, QueryTriggerInteraction.Collide);
             IFurniture newtar = null;
             float nearestDist = float.MaxValue;
-            foreach (var col in colliders)
+            foreach (var furn in Furniture_Attached.list.Values)
             {
-                var furn = col.GetComponent<IFurniture>();
-                if (furn != null && furn.CanOperate(gameObject))
+                if (furn == null || furn.gameObject == null)
+                    continue;
+                // 排除自己身上的
+                if (furn.gameObject.transform.IsChildOf(transform))
+                    continue;
+                if (furn.CanOperate(gameObject))
                 {
-                    float dist = Vector3.Distance(col.transform.position, checkPos);
-                    if (dist < nearestDist)
+                    float dist = Vector3.Distance(furn.gameObject.transform.position, checkPos);
+                    if (dist < nearestDist && dist <= 1.9f)
                     {
                         nearestDist = dist;
                         newtar = furn;
@@ -64,8 +67,8 @@ public class PlayerOperationController : MonoBehaviour
                 ClearTarget();
             }
 
-            // 第三人称有交互目标时自动切瞄准模式
-            m_PlayerController.WeaponsManager.ForceAim = target != null;
+            // 第三人称处于交互操作时自动切瞄准模式
+            m_PlayerController.WeaponsManager.ForceAim = m_InputHandler.InOperation;
         }
         else if (Physics.Raycast(m_Camera.ScreenPointToRay(new(Screen.width / 2, Screen.height / 2, 0)), out var hit, 1.3f, m_Camera.cullingMask))
         {

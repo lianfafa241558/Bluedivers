@@ -442,6 +442,8 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -451,6 +453,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -959,11 +962,11 @@ MonoBehaviour:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
   IsSeeingTarget: 0
+  obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
   show: 0
   ShowTargetState: 0
-  showCollider: {fileID: 0}
 --- !u!1 &1952154323
 GameObject:
   m_ObjectHideFlags: 0
@@ -1224,23 +1227,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 5022651815003707194}
+  - type: 0
+    chassis: {fileID: 5022651815003707194}
     barrel: {fileID: 1477713122}
     weapon: {fileID: 710939692}
-    aimSharpness: 4
+    aimSharpness: 45
     detectionFireDelay: 2
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
     dot: 1
-  - chassis: {fileID: 6852085611720710291}
+  - type: 0
+    chassis: {fileID: 6852085611720710291}
     barrel: {fileID: 6852085611720710291}
     weapon: {fileID: 2904059255717174406}
-    aimSharpness: 4
+    aimSharpness: 45
     detectionFireDelay: 2
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
     dot: 1
@@ -1547,6 +1554,8 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -1556,6 +1565,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0

@@ -15,10 +15,6 @@ namespace FpsGame.Mission
     [AddComponentMenu("任务/摧毁区域内的单位", 30)]
     public class MissionDestroyActor : MissionBase
     {
-        [Foldout("标旗")]
-        [InspectorName("显示进度条")]
-        [SerializeField]
-        bool useBar;
 
         /// <summary>
         /// 只有指定名称的物体被摧毁才算
@@ -39,7 +35,7 @@ namespace FpsGame.Mission
             {
                 item.OnDie += OnActorDeath;
             }
-            if (useBar) percentage = 0.01f;
+            if (missionTag.HasFlag(MissionTag.DisplayProgress)) percentage = 0.01f;
         }
 
 

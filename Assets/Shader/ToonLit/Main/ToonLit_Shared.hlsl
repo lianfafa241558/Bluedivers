@@ -390,7 +390,9 @@ half4 GetFinalBaseColor(Varyings input)
     }
     if (_BlendingScale)
     {
-        col = col * (1 - _BlendingScale) + col * _BlendingScale * (tex2D(_BlendingMap, (_UseUV1 ? input.uv1 : input.uv) * _BlendingMap_ST.xy) * 2 - 1) * backCol.a;
+        float2 baseOffset = _BaseMap_ST.zw; // 获取偏移值
+        float2 correctedUV = (_UseUV1 ? input.uv1 : input.uv) - baseOffset; // 反向补偿
+        col = col * (1 - _BlendingScale) + col * _BlendingScale * (tex2D(_BlendingMap, correctedUV * _BlendingMap_ST.xy + _BlendingMap_ST.zw) * 2 - 1) * backCol.a;
     }
     
     return col * _BaseColor;

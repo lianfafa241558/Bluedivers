@@ -85,7 +85,7 @@ MonoBehaviour:
     ExplosionInnerRange: 1
     ExplosionRange: 2
     DestructeRadius: 0
-    ShockwaveRadius: 4
+    ShockwaveRadius: 2.5
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -105,6 +105,7 @@ MonoBehaviour:
     ChargeGravityScale: 0
     ChargeSoundScale: 0
     ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
@@ -745,13 +746,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 8968079531062296686}
+  - type: 0
+    chassis: {fileID: 8968079531062296686}
     barrel: {fileID: 1274457981293757952}
     weapon: {fileID: 6169973437940763510}
-    aimSharpness: 5
+    aimSharpness: 90
     detectionFireDelay: 0.5
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1

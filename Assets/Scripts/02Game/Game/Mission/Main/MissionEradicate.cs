@@ -13,6 +13,9 @@ namespace FpsGame.Mission
     [AddComponentMenu("任务/主要/彻底消灭", 30)]
     public class MissionEradicate : MissionBase
     {
+        [InspectorName("击杀基数")]
+        [SerializeField]
+        private int enemyBaseValue=15;
         [SerializeField]
         private int LastWaveTickCount;
         [SerializeField]
@@ -23,13 +26,13 @@ namespace FpsGame.Mission
         {
             BattleEventSub.OnEnemyDead += EnemyDead;
             var task = TaskManager.Instance.nowTask;
-            MaxProgress = root.campData.enemyVarietyType.ToEnemyType() switch {
-                EnemyType.Kaiser => 70,
-                EnemyType.Decagrammaton => 90,
-                EnemyType.Colour => 120,
-                _ => 70
+            MaxProgress = enemyBaseValue * root.campData.enemyVarietyType.ToEnemyType() switch {
+                EnemyType.Kaiser => 5,
+                EnemyType.Decagrammaton => 6,
+                EnemyType.Colour => 8,
+                _ => 5
             };
-            MaxProgress = (int)(MaxProgress * Mathf.Sqrt((int)task.difficulty) * (1 + 0.3f * task.ExtraDifficulty[2]));
+            MaxProgress = (int)(MaxProgress * Mathf.Sqrt((int)task.difficulty) * (1 + 0.1f * task.ExtraDifficulty[2]));
             //MaxProgress /= 100;
             UpdateText("消灭敌方部队", "");
             TickTime = 5;

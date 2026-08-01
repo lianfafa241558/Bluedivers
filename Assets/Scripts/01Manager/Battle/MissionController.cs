@@ -8,6 +8,14 @@ using UnityEngine;
 using Utils;
 using TaskItem = TaskManager.TaskItem;
 
+public enum MissionInitMode
+{
+    [InspectorName("从数据生成")]
+    GenerateFromData,
+    [InspectorName("从场景获取")]
+    FindFromScene
+}
+
 public class MissionController : MonoBehaviour
 {
     BattleManager manager;
@@ -15,6 +23,9 @@ public class MissionController : MonoBehaviour
 
     TaskManager.SelectTaskData root;
 
+    [SerializeField]
+    [InspectorName("任务初始化模式")]
+    private MissionInitMode _initMode = MissionInitMode.GenerateFromData;
 
     List<TaskItem> waitMissions;
     List<MissionBase> missions;
@@ -23,10 +34,23 @@ public class MissionController : MonoBehaviour
     private bool isInitialized;
     private Transform EntityRoot;
 
-
-    void Start()
+    public void Init(MissionInitMode mode)
     {
+        _initMode = mode;
         StartCoroutine(InitializeAsync());
+    }
+
+
+    private List<TaskItem> GetTask()
+    {
+        List<TaskItem> list = new() {
+            root.main,
+            root.evacuate
+        };
+        list.AddRange(root.extras);
+        list.AddRange(root.nests.SelectMany(nestItem => nestItem));
+        list.AddRange(root.subs);
+        return list;
     }
 
     private IEnumerator InitializeAsync()
@@ -34,26 +58,29 @@ public class MissionController : MonoBehaviour
         manager = BattleManager.Instance;
         root = TaskManager.Instance.nowTask;
 
-        EntityRoot = new GameObject("EntityRoot").transform;
-
-        // 安全初始化
-        waitMissions = new();
-        missionCreatPoints = new();
         missions = new();
-        waitMissions.Add(root.main);
-        waitMissions.Add(root.evacuate);
-        waitMissions.AddRange(root.extras);
-        waitMissions.AddRange(root.nests.SelectMany(nestItem => nestItem));
-        waitMissions.AddRange(root.subs);
-        Debug.Log("开始生成任务");
-        yield return InitAllMission();
-        Debug.Log("开始生成兴趣点");
-        yield return InitInterestPoint();
 
-        var async=TerrainUtils.AsyncRefresh(true);
-        while (!async.isDone)
+        if (_initMode == MissionInitMode.FindFromScene)
         {
-            yield return null;
+            Debug.Log("从场景收集任务");
+            yield return CollectMissionsFromScene();
+        }
+        else
+        {
+            EntityRoot = new GameObject("EntityRoot").transform;
+            waitMissions = GetTask();
+            missionCreatPoints = new();
+
+            Debug.Log("开始生成任务");
+            yield return InitAllMission();
+            Debug.Log("开始生成兴趣点");
+            yield return InitInterestPoint();
+
+            var async = TerrainUtils.AsyncRefresh(true);
+            while (!async.isDone)
+            {
+                yield return null;
+            }
         }
         //TODO:为了方便测试。这个不该扔到战备控制器里
         /*
@@ -137,13 +164,26 @@ public class MissionController : MonoBehaviour
         {
             MissionBase go=null;
             yield return CreatMission(task, (re) => go = re);
-            if (task == root.main) main = go;
-            else if (task == root.evacuate) evacuate = go;
-            else if (root.subs.Contains(task)) subs.Add(go);
+            switch (go.missionType)
+            {
+                case MissionType.Main:
+                    main = go;
+                    break;
+                case MissionType.Extra:
+                    break;
+                case MissionType.Nest:
+                    break;
+                case MissionType.Sub:
+                    subs.Add(go);
+                    break;
+                case MissionType.Evacuate:
+                    evacuate = go;
+                    break;
+            }
             Debug.Log($"创建任务{go.name}耗时: {sw.ElapsedMilliseconds} ms");
             sw.Restart();
             yield return null;
-        }           
+        }
         //让撤离任务链接主任务
         evacuate.Link(main);
         foreach (var sub in subs)
@@ -153,6 +193,52 @@ public class MissionController : MonoBehaviour
         main.subTask = subs.ToArray();
 
         //waitMissions = null;
+    }
+    /// <summary>
+    /// 场景模式：从场景中收集已布置好的 Mission，注入数据引用并建立链接
+    /// </summary>
+    private IEnumerator CollectMissionsFromScene()
+    {
+        var sceneMissions = FindObjectsByType<MissionBase>(FindObjectsInactive.Include, FindObjectsSortMode.None).ToList();
+        foreach (var mission in sceneMissions)
+        {
+            mission.InitFromSceneData(root);
+            missions.Add(mission);
+            mission.transform.parent = transform;
+            mission.enabled = false;
+            yield return null;
+        }
+
+        // 按 MissionEnum 分类（与 InitAllMission 的分类逻辑一致）
+        MissionBase main = null, evacuate = null;
+        List<MissionBase> subs = new();
+
+        foreach (var go in sceneMissions)
+        {
+            switch (go.missionType)
+            {
+                case MissionType.Main:
+                    main = go;
+                    break;
+                case MissionType.Extra:
+                    break;
+                case MissionType.Nest:
+                    break;
+                case MissionType.Sub:
+                    subs.Add(go);
+                    break;
+                case MissionType.Evacuate:
+                    evacuate = go;
+                    break;
+            }
+        }
+
+        if (evacuate != null && main != null)
+            evacuate.Link(main);
+        foreach (var sub in subs)
+            sub.parent = main;
+        if (main != null)
+            main.subTask = subs.ToArray();
     }
     /// <summary>
     /// 创建兴趣点
@@ -182,7 +268,7 @@ public class MissionController : MonoBehaviour
         Vector2 statrPoint = root.MapBorder * Vector2.one;
         if (newRange == 0) return center.ToVector3();
 
-        // 步骤1：将地图划分为网格，保证均匀分布（网格大小为“最小安全间距”）
+        // 步骤1：将地图划分为网格，保证均匀分布（网格大小为"最小安全间距"）
         float gridSize = newRange * 2; // 新点与其他点的最小安全间距（避免相切）
         int gridCount = Mathf.CeilToInt(mapRadius * 2 / gridSize); // 网格数量
 
@@ -286,13 +372,15 @@ public class MissionController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-       
-        for (int i=0;i< missionCreatPoints.Count;++i)
+        if (missionCreatPoints!=null)
         {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(missionCreatPoints[i].Pos.ToVector3(), missionCreatPoints[i].Range);
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(missionCreatPoints[i].Pos.ToVector3(), missionCreatPoints[i].Range+5);
+            for (int i = 0; i < missionCreatPoints.Count; ++i)
+            {
+                Gizmos.color = Color.blue;
+                Gizmos.DrawWireSphere(missionCreatPoints[i].Pos.ToVector3(), missionCreatPoints[i].Range);
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(missionCreatPoints[i].Pos.ToVector3(), missionCreatPoints[i].Range + 5);
+            }
         }
         Gizmos.color = Color.green;
         Vector3 center= new Vector3(root.MapSize / 2,30, root.MapSize / 2);

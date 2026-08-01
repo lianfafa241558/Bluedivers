@@ -1,9 +1,14 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
 using GameContract;
+using Unity.Burst.CompilerServices;
 using Unity.FPS.Game;
+using Unity.FPS.Gameplay;
 using UnityEngine;
+using UnityEngine.UIElements;
+using static UnityEngine.UI.Image;
 
 /// <summary>
 /// 战备控制器，管理战备的输入、释放与状态切换。
@@ -114,10 +119,8 @@ public class AirdropController : MonoBehaviour
 
     private void Open()
     {
-        if (Player.ActorState == ActorState.Hide) return;
-        // 死亡状态下，只有存在 deathEnable 战备时才允许打开面板
-        if (Player.ActorState == ActorState.Dead && !useAd.Any(item => item.IsCurrentlyAvailable(Player)))
-            return;
+        //if (Player.ActorState == ActorState.Hide) return;
+
         WndManager.WindowState = WindowStateEnum.Airdrop;
         inputDir.Clear();
         OnCancel(Player.gameObject,WaitRelease);
@@ -173,10 +176,18 @@ public class AirdropController : MonoBehaviour
             item.State = AirdropState.Ready;
             WaitRelease = null;
         }
-        //else if (Player.ActorState == ActorState.Hide)
-        //{
-        //    OnRelease(Player.gameObject, GameObject target, Vector3 point, item);
-        //}
+        else if (Player.ActorState == ActorState.Hide)
+        {
+            var camera = Player.transform.GetComponent<PlayerController>().PlayerCamera;
+            var targetPoint = camera.transform.TransformPoint(0,0,30);
+            if (Physics.Raycast(camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0)), out var hit, 30))
+            {
+                targetPoint = hit.point;
+            }
+            var beacon = VFXManager.Creat(ResSvc.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), targetPoint, Quaternion.Euler(0, camera.transform.eulerAngles.y, 0), null);
+            beacon.GetComponent<IVfxEffect>()?.SetOwner(Player.gameObject, Player.transform.GetComponent<PlayerWeaponsManager>().GetWeapon(WeaponTypeEnum.FlareGun).gameObject, null, targetPoint);
+            //BattleEventSub.Airdrop(Player.gameObject, null, targetPoint, item);
+        }
 
     }
 
@@ -188,8 +199,9 @@ public class AirdropController : MonoBehaviour
             Debug.LogError("战备丢失");
             return; }
         data.State = AirdropState.Arrive;
-        if (GameRoot.GameState == GameStateEnum.Game && owner.TryGetComponent(out PlayerController player))
+        if (owner.TryGetComponent(out PlayerController player))
         {
+
             BattleManager.Instance.AddBattleDataItem(player.PlayerIndex, "呼叫战备次数");
 
             WaitRelease = null;

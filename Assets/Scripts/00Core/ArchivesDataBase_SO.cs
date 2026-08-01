@@ -39,7 +39,7 @@ namespace Core
         //创建文件夹路径（/../代表Application.dataPath 路径的上一级目录）
         protected void SaveFile()
         {
-            string jsonStr = JsonUtility.ToJson(this);
+            string jsonStr = JsonUtility.ToJson(this, true);
             Debug.LogWarning(jsonStr);
             string deletePath = DeletePath();
 

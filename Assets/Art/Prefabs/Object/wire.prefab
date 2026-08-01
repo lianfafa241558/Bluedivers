@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1284316744136086128}
   - component: {fileID: 951540971308266131}
   - component: {fileID: 4251719756443789385}
+  - component: {fileID: 5813758292514173771}
   m_Layer: 0
   m_Name: wire
   m_TagString: Untagged
@@ -104,6 +105,7 @@ MonoBehaviour:
   MainPart: {fileID: 951540971308266131}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 1
 --- !u!114 &951540971308266131
 MonoBehaviour:
@@ -146,6 +148,19 @@ NavMeshObstacle:
   m_CarveOnlyStationary: 1
   m_Center: {x: 0, y: 0, z: 0}
   m_TimeToStationary: 0.5
+--- !u!114 &5813758292514173771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5058036032287315983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7579dbb2d10d4b34bbe05adb3f8014cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Unidirectional: 0
 --- !u!1001 &8144646808614434862
 PrefabInstance:
   m_ObjectHideFlags: 0

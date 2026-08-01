@@ -56,9 +56,11 @@ namespace GameContract
         [InspectorName("暴露后不隐藏")] OneDiscovered = 1 << 5,
         /// <summary>产生热度</summary>
         [InspectorName("产生热度")] HeatPoint = 1 << 6,
+
         [InspectorName("占位符")] placeholder3 = 1 << 7,
         [InspectorName("占位符")] placeholder4 = 1 << 8,
-        [InspectorName("占位符")] placeholder5 = 1 << 9,
+        /// <summary>完成时不播放音效</summary>
+        [InspectorName("不播放音效")] NoAudio = 1 << 9,
         /// <summary>是否隐藏和子任务(在ui层)</summary>
         [InspectorName("是否隐藏和子任务(在ui层)")] hideAll = 1 << 10,
         /// <summary>是否隐藏自身(在uui层)</summary>

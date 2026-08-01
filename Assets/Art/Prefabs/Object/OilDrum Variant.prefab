@@ -51,8 +51,8 @@ MonoBehaviour:
   UseDiffScale: 0
   DamageData:
     DamageExplosion: 30
-    ExplosionInnerRange: 2
-    ExplosionRange: 4
+    ExplosionInnerRange: 3
+    ExplosionRange: 6
     DestructeRadius: 2
     ShockwaveRadius: 6
     DamageGroupExplosion:
@@ -61,14 +61,14 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     SoundRadius: 20
-    NoSource: 0
+    NoSource: 1
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
-    ImpactVfx: {fileID: 6513570022818009108, guid: 5e0e441763238ba498d5a4847077d889,
+    ImpactVfx: {fileID: 8167516518492074666, guid: 4a7139f81905c6d4bb2476226c226a62,
       type: 3}
     ImpactSfx: {fileID: 8300000, guid: b02d9ebe4402b4f4486f6df07bb4ec0d, type: 3}
-    UseHole: 0
-    Hole: {fileID: 0}
+    UseHole: 1
+    Hole: {fileID: 6513570022818009108, guid: 5e0e441763238ba498d5a4847077d889, type: 3}
     OnlyTerrain: 0
 --- !u!1001 &9093880604317977347
 PrefabInstance:

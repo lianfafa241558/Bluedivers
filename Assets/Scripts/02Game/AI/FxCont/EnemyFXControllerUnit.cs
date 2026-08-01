@@ -8,6 +8,9 @@ using Utils;
 
 namespace Unity.FPS.AI
 {
+    /// <summary>
+    /// 允许任意I_AIController
+    /// </summary>
     public class EnemyFXControllerUnit : EnemyControllerFX
     {
         private Vector3 previousPosition;
@@ -46,17 +49,19 @@ namespace Unity.FPS.AI
             base.Update();
             if (allowDeath) return;
             //float moveSpeed = GetActualVelocity();
-            float moveSpeed = (m_Controller as EnemyController).Velocity.magnitude;
+
+            float moveSpeed = m_Controller.Velocity.magnitude;
             //show = m_EnemyController.Velocity;
             //if (moveSpeed > 0)
             //{
 
             //更新动画师速度参数
             SetFloat(Constants.k_AnimMoveSpeedParameter, moveSpeed);
-                //根据移动速度改变移动声音的音调
-                //m_AudioSource.pitch = Mathf.Lerp(PitchDistortionMovementSpeed.Min, PitchDistortionMovementSpeed.Max,moveSpeed / m_EnemyController.NavMeshAgent.speed);
+            //根据移动速度改变移动声音的音调
+            //m_AudioSource.pitch = Mathf.Lerp(PitchDistortionMovementSpeed.Min, PitchDistortionMovementSpeed.Max,moveSpeed / m_EnemyController.NavMeshAgent.speed);
 
             //}
+
             if (m_moveAudio)
             {
                 var InMove = moveSpeed > 0.05;
@@ -66,6 +71,8 @@ namespace Unity.FPS.AI
                     m_moveAudio.SetState(InMove);
                 }
             }
+            
+
             if (Time.time > lastFreeFx)
             {
                 lastFreeFx = Time.time + Random.Range(20, 40);//纯表现层不需要同步

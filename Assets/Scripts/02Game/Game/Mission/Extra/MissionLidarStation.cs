@@ -8,7 +8,7 @@ namespace FpsGame.Mission
     /// <summary>
     /// 雷达站
     /// </summary>
-    [AddComponentMenu("任务/次要/雷达站", 30)]
+    [AddComponentMenu("任务/次要/完成控制台", 30)]
     public class MissionLidarStation : MissionBase
     {
         KeyScreen keyScreen;

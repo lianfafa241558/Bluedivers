@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Utils;
@@ -13,7 +13,7 @@ public class TransSceneController : MonoBehaviour
         
         AudioSvc.PlayMusic("Shooting Athletes", 0.3f);
         ResSvc.Instance.AsyncLoadScene("TestScene", () => {
-            BattleManager.Creat();
+            BattleManager.Creat(true);
         }, true,false);
 
         transform.SetParent(null);

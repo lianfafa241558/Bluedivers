@@ -58,13 +58,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1276822515}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 1, z: -0, w: 0.000000003725289}
-  m_LocalPosition: {x: -0.5899395, y: -0, z: -0}
+  m_LocalRotation: {x: -0, y: 0.99904823, z: -0, w: -0.043619394}
+  m_LocalPosition: {x: -1.191645, y: -0, z: 0.051416017}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1511148981}
-  m_Father: {fileID: 475950549768238861}
+  m_Father: {fileID: 2304767645905287308}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!65 &1276822517
 BoxCollider:
@@ -130,7 +130,7 @@ MonoBehaviour:
   inOperate: 0
   desc: "\u8FDB\u5165\u9A7E\u9A76"
   anim: {fileID: 0}
-  audio: {fileID: 0}
+  _audioSource: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -276,27 +276,18 @@ MonoBehaviour:
     MinRange: 0
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 20
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
-    DamageExplosion: 20
+    WeaknessBonus: 0
     ExplosionInnerRange: 1
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 0
       Value: 1
@@ -313,6 +304,8 @@ MonoBehaviour:
     ChargeSpeedScale: 0
     ChargeGravityScale: 0
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -322,6 +315,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -5409,27 +5403,18 @@ MonoBehaviour:
     MinRange: 0
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 20
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
-    DamageExplosion: 20
+    WeaknessBonus: 0
     ExplosionInnerRange: 1
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 0
       Value: 1
@@ -5446,6 +5431,8 @@ MonoBehaviour:
     ChargeSpeedScale: 0
     ChargeGravityScale: 0
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
   UnparentMuzzleFlash: 0
@@ -5455,6 +5442,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -6597,6 +6585,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 2025638258383414520}
+    - targetCorrespondingSourceObject: {fileID: 7677572885370160200, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
+        type: 3}
+      insertIndex: 2
+      addedObject: {fileID: 1276822516}
     - targetCorrespondingSourceObject: {fileID: 702212540951987919, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
         type: 3}
       insertIndex: -1
@@ -6613,10 +6605,6 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 48177154398984068}
-    - targetCorrespondingSourceObject: {fileID: 8352753072782560201, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
-        type: 3}
-      insertIndex: 0
-      addedObject: {fileID: 1276822516}
     - targetCorrespondingSourceObject: {fileID: -514327008128055819, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
         type: 3}
       insertIndex: -1
@@ -6670,6 +6658,14 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 4354974115626204149}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4074799347454894253}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3202768300275649719}
     - targetCorrespondingSourceObject: {fileID: 7554152952781420519, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
         type: 3}
       insertIndex: -1
@@ -6887,12 +6883,6 @@ MonoBehaviour:
   BleedValue: 0
   isMain: 0
   showArmor: 0
---- !u!4 &475950549768238861 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8352753072782560201, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
-    type: 3}
-  m_PrefabInstance: {fileID: 8462292471518837956}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &985343173401573681 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -514327008128055819, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
@@ -7125,6 +7115,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   goArr:
   - {fileID: 4195746468734833313}
+--- !u!4 &2304767645905287308 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7677572885370160200, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
+    type: 3}
+  m_PrefabInstance: {fileID: 8462292471518837956}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3489555844048561584 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4980276022192675188, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
@@ -8135,6 +8131,7 @@ MonoBehaviour:
   MaxSpeedForFallDamage: 30
   FallDamageAtMinSpeed: 10
   FallDamageAtMaxSpeed: 50
+  UseUpJump: 0
   IsGrounded: 0
   JumpCount: 0
   m_LastTimeJumped: 0
@@ -8186,6 +8183,7 @@ MonoBehaviour:
   MainPart: {fileID: 1345760138}
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 0
 --- !u!114 &941697706187103440
 MonoBehaviour:
@@ -8219,6 +8217,159 @@ MonoBehaviour:
   weaponPointL: {fileID: 6161093460269982227}
   weaponPointR: {fileID: 1520244604794738314}
   LookPoint: {fileID: 2769681543833390996}
+--- !u!114 &4074799347454894253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8768917471514755477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c38bd72727a07134aaba57de6aef07e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  delayTime: 2
+  selfExplosionTime: 0
+  weapon: {fileID: 0}
+  go: {fileID: 8768917471514755477}
+  UseDiffScale: 0
+  DamageData:
+    DamageExplosion: 50
+    ExplosionInnerRange: 4
+    ExplosionRange: 8
+    DestructeRadius: 4
+    ShockwaveRadius: 10
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 20
+    NoSource: 1
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 6513570022818009108, guid: f4897c6a885fec74185b34e9259784f1,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: 879e8f9020762ae4fb63c3b2370decc5, type: 3}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+--- !u!114 &3202768300275649719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8768917471514755477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80419325f2f428345a61e01db81699ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 6599254993500643241}
+  BirthMaterial: {fileID: 0}
+  fxDic:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      cilp: {fileID: 0}
+      ps: {fileID: 0}
+      trans: {fileID: 0}
+      go: []
+    arr:
+    - Key: 3
+      Value:
+        cilp: {fileID: 8300000, guid: a7fae22399a6e1d448dc0dd2210f1dac, type: 3}
+        ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
+          type: 3}
+        trans: {fileID: 0}
+        go: []
+    - Key: 4
+      Value:
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        ps: {fileID: 0}
+        trans: {fileID: 0}
+        go: []
+    meetReset: 0
+  rendererSet:
+  - type: 0
+    occasion: 3
+    material: {fileID: 2100000, guid: e9fe9af10ecfc89459a0c455577a6dc2, type: 2}
+    colorName: 
+    defaultColor: {r: 0, g: 0, b: 0, a: 0}
+    switchOccasion: 0
+    switchColor: {r: 0, g: 0, b: 0, a: 0}
+    gradient:
+      serializedVersion: 2
+      key0: {r: 0, g: 0, b: 0, a: 1}
+      key1: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+      key2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 15035
+      ctime2: 52428
+      ctime3: 65535
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 4
+      m_NumAlphaKeys: 2
+    duration: 0.1
+  - type: 0
+    occasion: 4
+    material: {fileID: 2100000, guid: e9fe9af10ecfc89459a0c455577a6dc2, type: 2}
+    colorName: _DissolveValue
+    defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
+    switchOccasion: 2
+    switchColor: {r: 0, g: 0, b: 0, a: 0}
+    gradient:
+      serializedVersion: 2
+      key0: {r: 0, g: 0, b: 0, a: 1}
+      key1: {r: 0, g: 0, b: 0, a: 1}
+      key2: {r: 1, g: 1, b: 1, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 8867
+      ctime2: 65535
+      ctime3: 65535
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 3
+      m_NumAlphaKeys: 2
+    duration: 3
 --- !u!4 &8993363820924844555 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 702212540951987919, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,

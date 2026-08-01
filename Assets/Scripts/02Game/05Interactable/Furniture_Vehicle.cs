@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using GameContract;
 using Unity.FPS.Game;
@@ -21,11 +21,15 @@ public class Furniture_Vehicle : Furniture_Base
         {
             return;
         }
+        if (owner)
+        {
+            owner.transform.position = transform.TransformPoint(0,0,1);
+        }
         base.Operate();
         controller = relatedTrans2.GetComponent<IDrivable>();
         actor = relatedTrans2.GetComponent<I_Actor>();
         controller.SetOwener(owner);
-        desc = inOperate ? "进入驾驶" : "退出驾驶";
+        desc = inOperate ? "退出驾驶" : "进入驾驶";
         if (owner)
         {
             owner.transform.parent = relatedTrans2;

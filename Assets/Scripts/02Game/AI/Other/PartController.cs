@@ -16,8 +16,8 @@ public class PartController : MonoBehaviour
     public Damageable[] invincibleArmor;
     /// <summary>(全部摧毁)致死装甲</summary>
     [Header("(全部摧毁)致死装甲")]
-    [SerializeField]
-    private Damageable[] deathArmor;
+
+    public Damageable[] deathArmor;
 
     private int DeathPartCount;
 

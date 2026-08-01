@@ -37,7 +37,7 @@ namespace Unity.FPS.AI
         [SerializeField]
         private bool UseDiffScale = true;
 
-        [Compare("weapon",0, CompareOperate.Equal)]
+        //[Compare("weapon",0, CompareOperate.Equal)]
         [SerializeField]
         protected SustainedDamageData DamageData;
 

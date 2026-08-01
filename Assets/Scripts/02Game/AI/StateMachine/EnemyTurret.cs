@@ -12,9 +12,6 @@ namespace Unity.FPS.AI
 
         public bool PreJudgment = true;
 
-        //[InspectorName("每秒旋转度数")]
-        public float RotationSpeed = 30f;
-
         public enum AIState
         {
             Idle,
@@ -69,10 +66,11 @@ namespace Unity.FPS.AI
             switch (AiState)
             {
                 case AIState.Idle:
-                    turrets.ForEach(item => {
-                        item.Rotate(RotationSpeed*Time.deltaTime);
-                        item.Synchro();
-                    });
+                    // 对开启自动巡逻旋转的炮塔巡逻转动（未开启的自动跳过）
+                    for (int i = 0; i < turrets.Count; i++)
+                    {
+                        turrets[i].AutoRotate(Time.deltaTime);
+                    }
                     break;
                 case AIState.Attack:
                     if (m_EnemyController.Target==null) break;
@@ -111,7 +109,6 @@ namespace Unity.FPS.AI
             foreach (var item in turrets) {
                 if (mustShoot |= Time.time > m_TimeStartedDetection + item.detectionFireDelay) break;
             }
-
 
             CalculationAimTargrt(PreJudgmentDirection());
 

@@ -7,9 +7,11 @@ using PEMaths;
 using UnityEngine;
 namespace Unity.FPS.Game
 {
+
     /// <summary>
     /// 附加肢体(在这种类型的组件下填写爆炸抗性没用)
     /// </summary>
+    [AddComponentMenu("单位/附属肢体", 30)]
     public class TransferDamageable : MonoBehaviour, I_Damagable 
     {
 

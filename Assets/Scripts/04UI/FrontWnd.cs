@@ -73,10 +73,16 @@ public class FrontWnd : Window
         //PlayAnim("Exit");
         if (IsLoad) return;
         IsLoad = true;
+
+        //TODO:先这样
+        ResSvc.Instance.AsyncLoadScene("Teach", () => {
+            BattleManager.Creat(false);
+        });
+        /*
         ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
             GameState = GameStateEnum.Bridge;
             WindowState = WindowStateEnum.Game;
-        });
+        });*/
     }
 
 

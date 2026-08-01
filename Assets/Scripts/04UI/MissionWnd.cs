@@ -71,6 +71,8 @@ public class MissionWnd : Window
         RectTransform par = null;
         switch (mission.missionType)
         {
+            case MissionType.Evacuate:
+            case MissionType.Sub:
             case MissionType.Main:
                 if (mission.parent)
                 {
@@ -144,7 +146,7 @@ public class MissionWnd : Window
     /// </summary>
     public void OnObjectiveCompleted(MissionBase mission)
     {
-        AudioSvc.PlaySound(new(mission.missionType==MissionType.Main&& mission .parent==null ? m_MainCompletedSound:m_ExtraCompletedSound, AudioGroups.UI));
+        if(!mission.HasTag(GameContract.MissionTag.NoAudio))AudioSvc.PlaySound(new(mission.missionType==MissionType.Main|| mission.missionType == MissionType.Sub ? m_MainCompletedSound:m_ExtraCompletedSound, AudioGroups.UI));
         AudioSvc.Suppressed(3);
         if (m_ObjectivesDictionnary.TryGetValue(mission, out MissionHUDItem toast))
         {

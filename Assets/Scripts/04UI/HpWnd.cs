@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using GameContract;
@@ -79,8 +79,8 @@ public class HpWnd : Window
 
     private void OnEnemyCreate(Actor go)
     {
-        var enemy = go.GetComponent<EnemyController>();
-        if (enemy.Boss)
+        //var enemy = go.GetComponent<EnemyController>();
+        if (go.HasFlag( ActorFlag.Boss))
         {
             var prefab = Instantiate(BossPrefab, transform.GetChild(0));
             dic.Add(go.gameObject, prefab);
@@ -90,8 +90,8 @@ public class HpWnd : Window
 
     private void OnEnemyDead(Actor go)
     {
-        var enemy = go.GetComponent<EnemyController>();
-        if (enemy.Boss&&dic.TryGetValue(go.gameObject, out var item))
+        //var enemy = go.GetComponent<EnemyController>();
+        if (go.HasFlag(ActorFlag.Boss) && dic.TryGetValue(go.gameObject, out var item))
         {
             Tool.Destroy(item);
             dic.Remove(go.gameObject);

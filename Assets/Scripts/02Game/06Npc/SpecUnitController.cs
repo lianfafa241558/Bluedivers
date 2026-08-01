@@ -19,6 +19,7 @@ namespace Unity.FPS.AI
         public bool IsTargetInAttackRange => DetectionModule.IsTargetInAttackRange;
         /// <summary>目标是否可见</summary>
         public bool IsSeeingTarget => DetectionModule.IsSeeingTarget;
+        public override Vector3 Velocity => NavMeshAgent ? NavMeshAgent.velocity : Vector3.zero;
 
         public NavMeshAgent NavMeshAgent { get; private set; }
         public DetectionModule DetectionModule { get; private set; }

@@ -12,11 +12,11 @@ namespace FpsGame.MapUtils
         [InspectorName("空气墙")]
         public GameObject wallPrefab;
 
-        public void Init()
+        public void Init(bool isNormal)
         {
             //Debug.LogError("maprootInit的大小" + terrain.terrainData.size);
             //TerrainUtils.Main = terrain;
-            GenerateTerrainRect();
+            if(isNormal)GenerateTerrainRect();
             CreatAirWall();
         }
         /*

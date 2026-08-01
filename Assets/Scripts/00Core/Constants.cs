@@ -14,7 +14,7 @@ public static class Constants
     public const int MaxPlayer = 4;
 
     /// <summary>死亡高度</summary>
-    public const int KillHeight = -5;
+    public const int KillHeight = 0;
     /// <summary>
     /// 默认地图边缘(直径)
     /// </summary>
@@ -58,4 +58,9 @@ public static class Constants
     public static int SupplyId = 10;
     /// <summary>飞鹰重新装填ID</summary>
     public static int SOSId = 11;
+
+    /// <summary>轨道照明弹ID</summary>
+    public static int IlluminatorId = 17;
+    /// <summary>探照灯ID</summary>
+    public static int LampTowerId = 16;
 }

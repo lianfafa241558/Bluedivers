@@ -11,11 +11,12 @@ using Utils;
 
 namespace Unity.FPS.Game
 {
- 
+
 
     /// <summary>
     /// 可以被攻击 没有这个组件就不造成伤害)
     /// </summary>
+    [AddComponentMenu("单位/肢体", 30)]
     public class Damageable : TickBehaviour, I_Damagable
     {
         /// <summary>友伤倍率</summary>
@@ -95,9 +96,39 @@ namespace Unity.FPS.Game
 
         void Awake()
         {
-            remainArmor = armorValue;
-            showArmor = armorValue;
-            List<Collider> list = GetComponents<Collider>().ToList();
+
+            PEInt scale = 1 + (TaskManager.Instance.nowTask.ExtraDifficulty[3] * (PEInt)0.1f);
+            switch (TaskManager.Instance.nowTask.difficulty)
+            {
+                case DifficultyEnum.Normal:
+                    scale *= (PEInt)0.5f;
+                    break;
+                case DifficultyEnum.Hard:
+                    scale *= (PEInt)0.6f;
+                    break;
+                case DifficultyEnum.VeryHard:
+                    scale *= (PEInt)0.7f;
+                    break;
+                case DifficultyEnum.HardCode:
+                    scale *= (PEInt)0.85f;
+                    break;
+                case DifficultyEnum.Extreme:
+                    scale *= (PEInt)1f;
+                    break;
+                case DifficultyEnum.Insane:
+                    scale *= (PEInt)1.15f;
+                    break;
+                case DifficultyEnum.Torment:
+                    scale *= (PEInt)1.2f;
+                    break;
+                case DifficultyEnum.Lunatic:
+                    scale *= (PEInt)1.35f;
+                    break;
+            }
+
+            remainArmor = armorValue * scale;
+            showArmor = remainArmor.RawFloat;
+            List <Collider> list = GetComponents<Collider>().ToList();
             foreach (var item in LineArmor)
             {
                 item.source = this;
@@ -252,6 +283,7 @@ namespace Unity.FPS.Game
                         }
                     }
                     ArmorBreaker = source;
+                    OnDamage?.Invoke(this);
                     OnDestroyPart?.Invoke();
                 }
                 else

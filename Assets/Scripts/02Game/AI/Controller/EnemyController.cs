@@ -19,6 +19,7 @@ namespace Unity.FPS.AI
     [RequireComponent(typeof(HealthEnemy), typeof(Actor))]
     public partial class EnemyController : AIController
     {
+        public override Vector3 Velocity => NavMeshAgent ? NavMeshAgent.velocity : Vector3.zero;
 
         public string EnemyName => m_Actor.ShowName;
 
@@ -57,8 +58,7 @@ namespace Unity.FPS.AI
         public GameAttribute Speed=>GetAttribute(UnitAttrType.Speed);
 
 
-        public Vector3 Velocity => NavMeshAgent ? NavMeshAgent.velocity : Vector3.zero;
-        
+
 
         protected NavMeshAgent NavMeshAgent { get; private set; }
         public DetectionModule DetectionModule { get; private set; }
@@ -243,7 +243,6 @@ namespace Unity.FPS.AI
         protected override void _OnDie(GameObject source)
         {
             base._OnDie(source);
-
             if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
             {
                 NavMeshAgent.isStopped = true;
@@ -284,6 +283,8 @@ namespace Unity.FPS.AI
 
         public bool TryAtack(WeaponEnemyController weapon) {
             bool didFire = false;
+            // 自体炮塔等无武器炮台直接跳过，避免 NRE
+            if (!weapon) return false;
             float dis = Vector3.Distance(EyePoint.position,Target.Pos);
             if (dis <= weapon.CurrentWeaponExtremeRange) {
                 didFire |= weapon.HandleShootInputs(true, true, false);
@@ -296,6 +297,7 @@ namespace Unity.FPS.AI
         }
         public void TryStop(WeaponEnemyController weapon)
         {
+            if (!weapon) return;
             weapon.ShootInputs(false, false, true);
         }
 

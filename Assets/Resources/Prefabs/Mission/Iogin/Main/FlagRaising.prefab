@@ -24,13 +24,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5877342823092023798}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &-2509108833781468010
 MonoBehaviour:
@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8f970bbf93667b468c2b1692ec143e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  missionTag: 10257
+  missionTag: 10769
   missionType: 0
   priority: 100
   prefabs: []
@@ -79,8 +79,9 @@ MonoBehaviour:
   icon: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
   entitySize: 0
-  percentage: 0
+  _sceneMissionData: {fileID: 0}
   subTask: []
+  percentage: 0
   InAirdropRange: 0
   entity: {fileID: 0}
   end: 0

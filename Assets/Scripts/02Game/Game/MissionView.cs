@@ -6,6 +6,7 @@ using Utils;
 using Unity.FPS.Game;
 
 using System.Collections;
+using UnityEngine.Events;
 
 namespace FpsGame.Mission
 {
@@ -41,6 +42,9 @@ namespace FpsGame.Mission
         //[HideInInspector]
         public MissionBase mission;//仅用来触发事件
         private int[] requiredAD;
+        [SerializeField]
+        private UnityEvent actions;
+
 
         public void Start()
         {
@@ -53,16 +57,16 @@ namespace FpsGame.Mission
             this.requiredAD = requiredAD;
             this.discovered = HaveTag(MissionTag.StratDiscovered);
             areaRange = HaveTag(MissionTag.IsArea) ? mission.entitySize : 0;
-
+            this.mission.OnMissionCompleted += OnMissionComplete;
             GlobalEventSub.OnMark += Mark;
             if (requiredAD.Length > 0) BattleEventSub.OnAirdrop += OnAirdrop;
-            Debug.Log("InitMissionView"+name, gameObject);
         }
 
         public void Uninit()
         {
+            this.mission.OnMissionCompleted -= OnMissionComplete;
             if (!discovered) GlobalEventSub.OnMark -= Mark;
-            if (requiredAD.Length > 0) BattleEventSub.OnAirdrop -= OnAirdrop;
+            if (requiredAD!=null&&requiredAD.Length > 0) BattleEventSub.OnAirdrop -= OnAirdrop;
             enabled = false;
         }
 
@@ -81,10 +85,10 @@ namespace FpsGame.Mission
 
         private void Update()
         {
-            if (!BattleManager.Instance.IsStartBattle) return;
+            
 
-            if (!mission.IsInitialized) return;
- 
+            if (!mission||!mission.IsInitialized) return;
+            if (!BattleManager.Instance || !BattleManager.Instance.IsStartBattle) return;
 
             var dis = ActorsManager.Players.Min(item => Vector2.Distance(item.Pos.ToVector2(), Pos.ToVector2()));
 
@@ -160,6 +164,11 @@ namespace FpsGame.Mission
                 allowUseAirdrop = true;
                 BattleEventSub.OnAirdrop -= OnAirdrop;
             }
+        }
+
+        private void OnMissionComplete(MissionBase _)
+        {
+            actions?.Invoke();
         }
     }
 }

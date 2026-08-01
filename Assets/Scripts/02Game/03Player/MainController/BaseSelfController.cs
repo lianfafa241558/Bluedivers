@@ -10,12 +10,12 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInputHandler), typeof(AudioSource))]
 public class BaseSelfController : MonoBehaviour, IUnit
 {
-    public Vector3 CenterPos => m_Actor.CenterPos;
-    public string PlayerName => m_Actor.ShowName;
-    public string Id => m_Actor.Id;
-    public Sprite Portrait => m_Actor.Portrait;
-    public Sprite Halo => m_Actor.ExtraPortrait;
-    public Color Color => m_Actor.Color;
+    public Vector3 CenterPos => Actor.CenterPos;
+    public string PlayerName => Actor.ShowName;
+    public string Id => Actor.Id;
+    public Sprite Portrait => Actor.Portrait;
+    public Sprite Halo => Actor.ExtraPortrait;
+    public Color Color => Actor.Color;
 
     [Foldout("一般", true)]
 
@@ -46,7 +46,7 @@ public class BaseSelfController : MonoBehaviour, IUnit
     public PlayerInputHandler InputHandler { get; private set; }
 
     protected Animator m_Anim { get; set; }
-    protected Actor m_Actor { get; set; }
+    public Actor Actor { get;private set; }
 
     //后坐力
     protected float VerticalNewRecoil, VerticalRecoil;
@@ -63,7 +63,7 @@ public class BaseSelfController : MonoBehaviour, IUnit
     {
         InputHandler = GetComponent<PlayerInputHandler>();
         Health = GetComponent<Health>();
-        m_Actor = GetComponent<Actor>();
+        Actor = GetComponent<Actor>();
         m_Anim = GetComponent<Animator>();
         if (!AudioSource) AudioSource = GetComponent<AudioSource>();
         InitAttribute();
@@ -78,7 +78,7 @@ public class BaseSelfController : MonoBehaviour, IUnit
         attrs = UnitAttributeFactory.CreateBaseUnit(new Dictionary<UnitAttrType, PEInt> {
             [UnitAttrType.Speed] = 0,
             [UnitAttrType.AngularSpeed] = (PEInt)RotationSpeed,
-            [UnitAttrType.Size] = (PEInt)m_Actor.HalfRange,
+            [UnitAttrType.Size] = (PEInt)Actor.HalfRange,
         });
     }
 

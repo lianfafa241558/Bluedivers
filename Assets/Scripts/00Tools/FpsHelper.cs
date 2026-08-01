@@ -210,8 +210,8 @@ public static class FpsHelper
 
     public static Vector3 GetNavMeshPoint(Vector3 pos)
     {
-        // 用 TerrainUtils 获取地面高度
-        float groundHeight = TerrainUtils.WSToHeight(pos);
+        // 用 TerrainUtils 获取地面高度（Main 不存在时回退到原始 Y）
+        float groundHeight = TerrainUtils.Main != null ? TerrainUtils.Main.WSToHeight(pos) : pos.y;
         Vector3 dropPos = new Vector3(pos.x, groundHeight, pos.z);
 
         // 用 NavMesh.SamplePosition 找最近的可用点
@@ -339,32 +339,44 @@ public static class FpsHelper
     /// </summary>
     public static void Teleport(this CharacterController controller, Vector3 direction)
     {
-
         Vector3 targetPosition = controller.transform.position + direction;
-        // 直接移动到目标点
-        controller.transform.position = targetPosition;
 
-        // 检测是否卡进地下，如果是则向上修正
+        // 先检测地下再移动，避免 CharacterController 自身的碰撞体干扰 SphereCast
         Vector3 finalPosition = PreventUnderground(controller, targetPosition);
-        controller.transform.position = finalPosition;
-
+        controller.transform.position = finalPosition + 0.2f * Vector3.up;
+        Physics.SyncTransforms();
     }
 
     /// <summary>
-    /// 防止角色卡进地下（修正Y 轴位置）
+    /// 防止角色卡进地下（修正Y轴位置）
+    /// 先用地形高度保底，再用 SphereCast 检测建筑物等人工结构
     /// </summary>
     private static Vector3 PreventUnderground(CharacterController controller, Vector3 position)
     {
         float halfHeight = controller.height * 0.5f;
-        float radius = controller.radius * 0.9f; // 用角色半径的90%，避免边缘碰撞
+        float radius = controller.radius * 0.9f;
         float skinWidth = 0.01f;
         float maxCheckDistance = 100f;
         LayerMask groundMask = LayerDefinition.GroundLayers;
-
         RaycastHit hit;
 
-        // ========== 第一步：向下检测（处理正常情况）==========
-        // 从角色中心稍上位置发射 SphereCast
+        // === 第一步：地形优先 ===
+        float terrainSurfaceY = TerrainUtils.Main != null ? TerrainUtils.Main.WSToHeight(position) : float.MinValue;
+        float terrainMinY = terrainSurfaceY - skinWidth;
+
+        if (TerrainUtils.Main != null)
+        {
+            // 目标在地形以下 → 直接修正到地形表面
+            if (position.y < terrainMinY)
+            {
+                float correctedY = terrainSurfaceY + halfHeight + skinWidth;
+                return new Vector3(position.x, correctedY, position.z);
+            }
+        }
+
+        // === 第二步：SphereCast 向下检测（建筑物等人工结构）===
+        // 注：能走到这里的 position.y 一定在地形以上（Step 1 已处理地下），
+        // 所以 origin = position + (halfHeight + radius) 不会从地形内部出发
         Vector3 origin = position + Vector3.up * (halfHeight + radius);
 
         if (Physics.SphereCast(
@@ -376,28 +388,22 @@ public static class FpsHelper
             groundMask,
             QueryTriggerInteraction.Ignore))
         {
-            // 计算地面距离
             float groundDistance = hit.distance - halfHeight - radius;
 
-            // 如果卡进地下了（地面距离为负）
-            if (groundDistance < 0)
-            {
-                // 修正到地面之上
-                float correctedY = hit.point.y + halfHeight + skinWidth;
-                return new Vector3(position.x, correctedY, position.z);
-            }
-
-            // 如果太靠近地面，也稍微修正一下防止抖动
+            // 仅在紧贴/低于地面时修正（正常空中保持原位）
             if (groundDistance < skinWidth)
             {
-                float correctedY = hit.point.y + halfHeight + skinWidth;
-                return new Vector3(position.x, correctedY, position.z);
+                float sphereCastY = hit.point.y + halfHeight + skinWidth;
+                float bestY = TerrainUtils.Main != null
+                    ? Mathf.Max(sphereCastY, terrainSurfaceY + halfHeight + skinWidth)
+                    : sphereCastY;
+                return new Vector3(position.x, bestY, position.z);
             }
-
-            //return position;
+            // 空中正常 → 不修正
+            return position;
         }
 
-
+        // === 第三步：SphereCast 向上检测（完全在地下时的兜底）===
         origin = position + Vector3.up * (radius + 0.01f);
 
         if (Physics.SphereCast(
@@ -409,30 +415,17 @@ public static class FpsHelper
             groundMask,
             QueryTriggerInteraction.Ignore))
         {
-            // 说明在地下，修正到地面之上
             float correctedY = hit.point.y + halfHeight + skinWidth;
-            Debug.Log($"从地下 {position.y:F2} 修正到地面 {correctedY:F2}");
             return new Vector3(position.x, correctedY, position.z);
         }
-        /*
-        origin = position + Vector3.up * 100f;
 
-        if (Physics.SphereCast(
-            origin,
-            radius,
-            Vector3.down,
-            out hit,
-            200f,
-            groundMask,
-            QueryTriggerInteraction.Ignore))
+        // === 第四步：最终兜底 ===
+        if (TerrainUtils.Main != null && position.y < terrainMinY)
         {
-            float correctedY = hit.point.y + halfHeight + skinWidth;
-            Debug.Log($"从高空找到地面，修正到 {correctedY:F2}");
+            float correctedY = terrainSurfaceY + halfHeight + skinWidth;
             return new Vector3(position.x, correctedY, position.z);
-        }*/
+        }
 
-        // 真的找不到地面，返回原位置
-        Debug.LogWarning("PreventUnderground: 无法检测到地面，位置保持不变");
         return position;
     }
 

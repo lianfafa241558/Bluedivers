@@ -37,6 +37,7 @@ namespace Unity.FPS.Game
         GameObject Hole { get; }
     }
 
+ 
     [System.Serializable]
     /// <summary>
     /// 伤害配置(完整)

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Core;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -12,6 +13,8 @@ namespace FpsGame.Mission
     [AddComponentMenu("任务/主要/搜索并摧毁", 30)]
     public class MissionDestroyNest : MissionBase
     {
+        [SerializeField]
+        private ActorFlag targetTag = ActorFlag.Nest;
 
         protected override void StartMission()
         {
@@ -35,7 +38,7 @@ namespace FpsGame.Mission
 
         void OnActorDeath(Actor actor)
         {
-            if (!actor.HasFlag(Core.ActorFlag.Nest)) return;
+            if (!actor.HasFlag(targetTag)) return;
             if (++NowProgress < MaxProgress)
             {
                 UpdateMission();

@@ -7,6 +7,7 @@ using PEMaths;
 
 using Unity.FPS.Game;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Events;
 using Utils;
 
@@ -33,6 +34,8 @@ public interface I_AIController
     public Vector3 HpPos { get; }
     public Vector3 Pos { get; set; }
     public Vector3 CenterPos { get; }
+
+    Vector3 Velocity { get; }
     public float BirthDuration { get; set; }
 
     public string ID { get; }
@@ -72,6 +75,9 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
         get => this.BirthDuration;
         set => this.BirthDuration=value;
     }
+
+    public virtual Vector3 Velocity => Vector3.zero;
+
     //public WeaponCurrentAttribute Speed => speed;
 
     //感觉可能需要加是第X号武器进行攻击的参数
@@ -136,7 +142,7 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
         {
             OnDie?.Invoke();
             OnLostTarget?.Invoke();
-            Invoke(nameof(DisableCollider), 2f);
+            Invoke(nameof(DisableCollider), 1f);
             //GetComponent<Collider>().enabled = false;
         }
 

@@ -157,6 +157,10 @@ public partial class SettingWnd : Window
         {
             ArchiveSvc.Archive.Save();
         }
+        if (_haveInputChanged)
+        {
+            (InputManager.Instance as InputManager).Save();
+        }
         Tool.Destroy(showModle);
 
     }
@@ -598,7 +602,9 @@ public partial class SettingWnd : Window
     {
         //不需要判定状态，已经隐藏??
         //其实按理说应该是传送回房间的，但是现在没做
-        ActorsManager.Player.Pos = Vector3.zero;
+        ActorsManager.Player.transform.GetComponent<CharacterController>().enabled = false;
+        ActorsManager.Player.Pos = TransformUtils.SceenFind("ShowStudentPoint").transform.position;
+        ActorsManager.Player.transform.GetComponent<CharacterController>().enabled = true;
         SetWndState(false);
     }
 
@@ -624,6 +630,25 @@ public partial class SettingWnd : Window
     private bool Cancel()
     {
         if (!State) return false;
+
+        // HandleKeyCodeInput 已在本帧处理了选择框/改键的取消，不再重复关闭窗口
+        if (_escHandledThisFrame)
+        {
+            return true;
+        }
+
+        // 如果选择框或改键模式激活，先取消它们（兜底）
+        if (_rebindSelectionRoot != null && _rebindSelectionRoot.activeSelf)
+        {
+            HideSelection();
+            return true;
+        }
+        if (_rebindState == RebindState.WaitingForKey)
+        {
+            ResetRebindState();
+            return true;
+        }
+
         wndManager.PlaySound(new("UI/UI_Button_Back"));
         SetWndState(false);
         justClosed = Time.time;

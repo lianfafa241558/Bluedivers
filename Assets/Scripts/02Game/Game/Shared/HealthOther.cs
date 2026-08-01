@@ -1,4 +1,4 @@
-﻿
+
 using UnityEngine;
 using Utils;
 
@@ -11,9 +11,9 @@ namespace Unity.FPS.Game
         /// </summary>
         [InspectorName("死亡后自动摧毁自身物体）")]
         public bool AutoDestroy;
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();
+            base.Awake();
         }
         protected override void HandleDeath(GameObject source)
         {

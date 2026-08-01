@@ -27,7 +27,7 @@ namespace Unity.FPS.AI
         [DisplayField(true,false)]
         private float lastDamagedTime = Mathf.NegativeInfinity, creatTime= Mathf.Infinity;
 
-        public AIState AiState { get; private set; }
+        public AIState AiState;// { get; private set; }
 
         protected override void UpdateCurrentAiState()
         {

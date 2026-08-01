@@ -28,7 +28,7 @@ public class MedivacController : TickBehaviour
     [SerializeField]
     AudioClip landCilp;
     [SerializeField]
-    bool complete, arrive;
+    bool complete, arrive,nextComplete;
     public Transform targetPoint;
 
     private List<I_Actor> players => ActorsManager.Players;
@@ -120,7 +120,7 @@ public class MedivacController : TickBehaviour
 
     private void LandInit()
     {
-        TickTime = 4;
+        TickTime = 3;
         anim.Play("Idle",0,0);
     }
 
@@ -164,11 +164,15 @@ public class MedivacController : TickBehaviour
     private void LandTick(int count, int playerCount)
     {
         if (complete) return;
-        if (count == 0)
+        if (nextComplete)
         {
             complete = true;
             anim.Play("Evacuate");
-            Destroy(gameObject,14);
+            Destroy(gameObject, 14);
+        }
+        if (count == 0)
+        {
+            nextComplete = true;
         }
 
     }

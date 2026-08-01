@@ -44,11 +44,15 @@
 ## 协作偏好
 - 遇到不确定/有疑问的情况时，应先暂停、总结当前状态并向用户询问，而不是自行做大量全局搜索去推断。优先问清楚再行动。
 - 输出代码时不要主动纠结/移除 using 语句。用户会自行管理 using 的增删，无需助手操心。
+- 文件夹重命名/移动、文件改名等结构性修改由用户**手动**完成；AI 只负责分析、给出方案与依赖关系，**不主动执行**文件改动。
 
 ## 修复记录（2026-07-19）
 - Furniture_General.cs Supply lambda：owner 为 null 时 NRE — 加 `if (furn.owner != null)` 判空保护整个补给逻辑（UseSupply + BaseOp + AddBattleDataItem）。
 - PlayerOperationController.cs 第三人称 target 选择：`OverlapSphere` 取第一个有效 Collider 而非最近，导致密集 Supply 间选错目标。改为遍历所有 Collider 取距离 `checkPos` 最近的。
 - SubtitleWnd.cs 第三人称 UI 提示：独立遍历 Furniture_Attached.list 找最近，与 PlayerOperationController.target 不同步。改为直接使用 `playerOp.target` 保持一致。
+
+## 修复记录（2026-07-26）
+- BaseSelfMoveableController.cs 陡坡卡死 bug：坡度超过 slopeLimit 时 CapsuleCast 能检测到地面但 IsNormalUnderSlopeLimit 返回 false，IsGrounded=false → AirMove() 加重力 → CharacterController.Move() 把陡坡当墙阻止移动，角色既不下落也不能移动。修复：1) 新增 `_isOnSteepSlope` 标志字段；2) GroundCheck() 中陡坡分支设置标志；3) HandleCharacterMovement() 中 Move() 前将位移用 Vector3.ProjectOnPlane 投影到坡面法线平面，使重力重定向为沿坡面滑下。
 
 ## 文档与 Skill
 - `.codebuddy/rules/UnityCSharp编码规范.md`：C# 编码规范（必须/推荐/可选三级），自动加载为项目规则

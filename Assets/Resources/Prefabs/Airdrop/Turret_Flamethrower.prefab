@@ -665,6 +665,8 @@ MonoBehaviour:
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 100002, guid: 47a64522814c71641bef89d1826f3dfd, type: 3}
   UnparentMuzzleFlash: 0
@@ -675,6 +677,7 @@ MonoBehaviour:
   ContinuousShootLoopSfx: {fileID: 8300000, guid: 1a5ea9a2cacc07c4b8e1d17185c18252,
     type: 3}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -917,23 +920,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - chassis: {fileID: 5240970916890292219}
+  - type: 0
+    chassis: {fileID: 5240970916890292219}
     barrel: {fileID: 5240970916890292219}
     weapon: {fileID: 3847745933799528504}
-    aimSharpness: 5
+    aimSharpness: 180
     detectionFireDelay: 0.5
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
-  - chassis: {fileID: 6735583885833813288}
+  - type: 0
+    chassis: {fileID: 6735583885833813288}
     barrel: {fileID: 0}
     weapon: {fileID: 3847745933799528504}
-    aimSharpness: 1
+    aimSharpness: 90
     detectionFireDelay: 0.5
     aimBlendTime: 1
     limitRotation: 0
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
