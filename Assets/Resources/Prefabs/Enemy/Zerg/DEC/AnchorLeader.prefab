@@ -9877,12 +9877,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   creatPoint: {fileID: 2707424008054101531}
+  creatCilp: {fileID: 8300000, guid: f4a1cdedf715b304baff0c053a7f9bdb, type: 3}
   creatData:
   - Key: {fileID: 310874619415933559, guid: 8d32a1ba6b224fc49aae770211b2577b, type: 3}
     Value: 60
   damagedTime: 22
   lastDamagedTime: -Infinity
   creatTime: 20
+  AiState: 0
 --- !u!114 &6016710536525159653
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9950,6 +9952,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -9957,6 +9960,7 @@ MonoBehaviour:
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -9964,6 +9968,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: ed394529eedc6814996d224eda9cbd60, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}

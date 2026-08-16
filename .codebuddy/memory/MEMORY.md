@@ -2,8 +2,18 @@
 
 ## 项目环境
 - Unity 2022.3.62f2c1（2022 LTS），URP 14.0.12，C# 9.0 / .NET Standard 2.1
-- 依赖：Photon PUN、TextMeshPro 3.0.9、Navigation 1.1.6、Timeline 1.7.7、ugui
+- 依赖：TextMeshPro 3.0.9、Navigation 1.1.6、Timeline 1.7.7、ugui
+- **Photon PUN 已弃用**（旧方案），`Assets/Photon/` 将逐步移除
+- KCPNet（自研网络库）尚未完成，暂不接入；当前为**单机版 demo**
+- 逻辑数学：`PEMaths`（Photon Engine 固定点数库 PEInt/PEVector，位于 `Assets/Scripts/Lib/PEMaths.xml`），用于逻辑层确定性计算
 - 产品名 BlueDivers，companyName GameDevelopmentDepartmentFaFa
+
+## 项目定位
+单机版 PvE 第三人称/第一人称**射击割草** demo，对标《绝地潜兵2》+《深岩银河》融合。
+- 绝地潜兵元素：战备空投/轨道打击/飞鹰/SOS/探照灯（全类别已实现）、主/副/特殊任务、战略大地图（`MapData_SO` + `SelectMapWnd` + `ArchivesData_SO`）、平坦地形生成
+- 深岩银河元素：撤离（类似 DRG，所有人上船才起飞，不放弃任何人）、采矿/欧帕兹采集、巢穴破坏任务、波次防守
+- 代码由 Unity FPS Sample 二次开发而来（命名空间 `Unity.FPS.*`）
+- 网络策略：轻服务器（仅房间列表），其余全存本地；暂无多人在线进度同步
 
 ## 代码结构约定
 - 脚本在 `Assets/Scripts/`，按**数字前缀编号 + 功能**划分模块，编号体现程序集依赖顺序：
@@ -22,7 +32,7 @@
 - 几乎不用 async/await，异步全用协程
 
 ## 已知问题
-- 运行时脚本误引 UnityEditor：`00Core/ObjectPool.cs`（`using static UnityEditor.Progress;`）、`02Data/` 下多个 `_SO` 脚本 —— 非 Editor 平台会编译失败，需清理
+- ~~运行时脚本误引 UnityEditor~~：已于 2026-08-07 修复（`EnemyMobile.cs`、`RoleData_SO.cs`、`SoundGroup_SO.cs`、`TaskManager.cs` 添加 `#if UNITY_EDITOR` 守卫）
 
 ## 修复记录
 - ModifyTerrain.cs：根物体悬浮 bug — Modify() 协程中先在旧地形高度贴地，再 yield return ModifyHeightMap 修改地形，地形改变后根物体 Y 未更新。修复：在地形修改和 AdditionTerrain 完成后重新采样高度并贴地。
@@ -54,6 +64,29 @@
 ## 修复记录（2026-07-26）
 - BaseSelfMoveableController.cs 陡坡卡死 bug：坡度超过 slopeLimit 时 CapsuleCast 能检测到地面但 IsNormalUnderSlopeLimit 返回 false，IsGrounded=false → AirMove() 加重力 → CharacterController.Move() 把陡坡当墙阻止移动，角色既不下落也不能移动。修复：1) 新增 `_isOnSteepSlope` 标志字段；2) GroundCheck() 中陡坡分支设置标志；3) HandleCharacterMovement() 中 Move() 前将位移用 Vector3.ProjectOnPlane 投影到坡面法线平面，使重力重定向为沿坡面滑下。
 
+## 项目全景总结（2026-08 调研，2026-08-07 修正）
+> 详细版见 `.codebuddy/skills/bluedivers-unity/references/module-guide.md` 末尾「项目全景总结」章节。
+
+**已实现（核心战斗层扎实）**：伤害模型（弱点/多部位护甲/关联护甲/护盾/抗性）、属性系统（Modifier 叠加/双属性链）、武器体系（30+ 脚本，多伤害类型/过热/蓄力/升级模块）、投射物、玩家（视角切换/倒地呼叫/载具/喷气背包/护盾背包）、AI（探测/状态机/技能/BOSS）、波次（`WaveManager` Zerg/Robot，人口值权重刷怪，已拆分为 3 文件）、`UnitQueryGrid` 空间网格、平坦噪声地形（绝地潜兵式 fBm+植被+NavMesh）、任务系统（主/支/巢穴/撤离）、昼夜循环 + 夜间敌袭、**战备全类别**（空投/轨道打击/飞鹰/SOS/探照灯/照明弹）、**战略大地图**（`MapData_SO` + `SelectMapWnd` + `ArchivesData_SO`，单机值）、撤离（类似 DRG 所有人上船起飞，无撤离失败惩罚）。
+
+**未实现（对标两款游戏）**：
+- 绝地潜兵：机甲/哨戒/炮塔等重型战备（战备类别已全但缺重型部署类）、大战略任务链（无解放度进度推进）、联机（当前单机 demo）
+- 深岩银河：洞穴/矿洞体素系统（地图是平坦地形，不做挖掘）、矿物转运货运链（规划中：给 `SpecUnitKei` 加 furniture + 玩家 OOPart 拾取组件）
+- 通用：Roguelite 成长闭环待确认
+
+**规划中的系统**：
+- 矿物提交：给 `SpecUnitKei` 添加 furniture 交互 + 玩家添加 OOPart 拾取组件（有携带上限），必须交给 Kei
+- 联机：KCPNet 未完成，暂不迁移；目标为轻服务器（仅房间列表）+ 本地存储
+- 波次规模维持现状（担心单位多了确定性同步不一致）
+
+**架构改进（按优先级）**：① 统一确定性随机源（`BattleRandom` 与 `WaveManager` 的 `System.Random` 收口）② `I_Damagable`/`I_Entity` 与 Unity 类型解耦为纯逻辑 DTO ③ 统一命名空间 + asmdef rootNamespace ④ 重写 SingletonNet RPC 封装（`nameof(action)` 取到参数名，未跑通）⑤ God Class 审查（`BattleManager`/`PlayerController`/`WeaponPlayerController`）⑥ `UnitQueryGrid.FindUnits` List 每帧分配改池化。
+
+## 可复用编辑器基础设施（优先复用，勿重复造轮子）
+- **SO 选择弹窗**：`Assets/Editor/SOPickerPopup.cs` 的 `SOPickerPopup<T>`（全局命名空间，`PopupWindowContent`）。凡是要做"从一堆数据里选一个并回调"的可搜索列表弹窗（选 SO/预制体/子资源等），**优先用** `PopupWindow.Show(rect, new SOPickerPopup<T>(items, onPick, getIcon, getName, getType?, getTypeColor?, getFrame?, confirmMode))`，不要再自实现。
+  - `confirmMode=false`（默认）单击即回调关闭（武器升级/模组选择）；`confirmMode=true` 单击选中+确定/取消确认（speechGroups 子资源选择）。
+  - 数据过滤/子资源筛选由调用方注入前完成（如 `LoadAllAssetsAtPath(...).OfType<SoundGroup_SO>()`）。
+  - 现有调用方：`WeaponUpgradeEditorWindow.cs`、`RoleSpeechGroupDrawer.cs`。详细见 skill 的"复用约定：SO 选择弹窗"。
+
 ## 文档与 Skill
 - `.codebuddy/rules/UnityCSharp编码规范.md`：C# 编码规范（必须/推荐/可选三级），自动加载为项目规则
-- `.codebuddy/skills/bluedivers-unity/`：项目专用 skill，含 SKILL.md（架构约定、命名速查、开发工作流、Photon 约定、避坑指南、关键基础设施表）和 references/module-guide.md（各模块详细职责与关键类清单）。处理项目 C# 代码时自动触发
+- `.codebuddy/skills/bluedivers-unity/`：项目专用 skill，含 SKILL.md（架构约定、命名速查、开发工作流、KCP 网络约定、避坑指南、关键基础设施表、项目定位）和 references/module-guide.md（各模块详细职责、关键类清单、项目全景总结）。处理项目 C# 代码时自动触发

@@ -83,6 +83,10 @@ namespace Unity.FPS.Game {
         [InspectorName("枪口闪光的预制体")]
         public GameObject MuzzleFlashPrefab;
 
+        /// <summary>闪光大小倍率</summary>
+        [InspectorName("闪光大小倍率")]
+        public float FlashSizeScale=1;
+
         /// <summary>闪光不附着于枪口</summary>
         [InspectorName("闪光不附着于枪口")]
         public bool UnparentMuzzleFlash;
@@ -375,6 +379,7 @@ namespace Unity.FPS.Game {
             if (MuzzleFlashPrefab != null)
             {
                 GameObject muzzleFlashInstance = VFXManager.Creat(MuzzleFlashPrefab, point.position, point.rotation, UnparentMuzzleFlash? null:point.transform);
+                muzzleFlashInstance.transform.localScale = Vector3.one * FlashSizeScale;
                 //为闪光指定第一人称图层
                 TransformUtils.SetChildLayer(muzzleFlashInstance.gameObject, point.gameObject.layer, true);
 

@@ -1,5 +1,33 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8662401196465046609
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Noa_FinalMaga
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: cc9a6e389fb56c946a3729dc808abe87, type: 3}
+    subtitle: "\u6700\u540E\u4E00\u7EC4\u5F39\u836F\u3002"
+  - audioClip: {fileID: 8300000, guid: 10c234d1cbb6bee4ea50f65ae1e29fc5, type: 3}
+    subtitle: "\u5F39\u836F\u5373\u5C06\u8017\u5C3D\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &-8471778849584261267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -332,7 +360,17 @@ MonoBehaviour:
       Value: {fileID: 1748428103362150175}
     - Key: 6
       Value: {fileID: 8842128237312950649}
-    meetReset: 0
+    - Key: 14
+      Value: {fileID: 6074249294248040027}
+    - Key: 18
+      Value: {fileID: 4366608328792534225}
+    - Key: 19
+      Value: {fileID: 663253798433072426}
+    - Key: 20
+      Value: {fileID: -8662401196465046609}
+    - Key: 15
+      Value: {fileID: 2547133461607313490}
+    meetReset: 1
   DefaultAirdropIDs: 63000000
 --- !u!114 &231580543679630454
 MonoBehaviour:
@@ -356,6 +394,36 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &663253798433072426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Noa_Uninstall
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 59dd893b8f671934ca998747c7d0271c, type: 3}
+    subtitle: "\u4E22\u4E0B\u88C5\u5907\u3002"
+  - audioClip: {fileID: 8300000, guid: 69242f56ec75ea54a912c1ae38603f49, type: 3}
+    subtitle: "\u4E22\u5F03\u4E86\u7269\u54C1\u3002"
+  - audioClip: {fileID: 8300000, guid: b4c1e4375231f87488fb5736569eb56c, type: 3}
+    subtitle: "\u653E\u4E0B\u7269\u54C1"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
   isOrder: 0
   priority: 0
   group: 6
@@ -470,6 +538,34 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &2547133461607313490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Noa_Reload
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: ec9da43cfd9a6754d86cc0c8ae152daf, type: 3}
+    subtitle: "\u6B63\u5728\u6362\u5F39\u3002"
+  - audioClip: {fileID: 8300000, guid: f17c0953b48c8624ab47d0bafc1fd97d, type: 3}
+    subtitle: "\u8BF7\u6C42\u63A9\u62A4\u6362\u5F39\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &2688867297431051801
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -524,6 +620,36 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &4366608328792534225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Noa_Install
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: ed7a9d56016a17c4caefc36caf728d43, type: 3}
+    subtitle: "\u88C5\u5907\u7269\u54C1\u3002"
+  - audioClip: {fileID: 8300000, guid: 56101e47cd8949f46bddb0c4c8d2eee2, type: 3}
+    subtitle: "\u6361\u8D77\u80CC\u5305\u3002"
+  - audioClip: {fileID: 8300000, guid: 90a9365c005713146937ec0b95eb548b, type: 3}
+    subtitle: "\u88C5\u5907\u80CC\u5305\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &5445619004508900519
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -548,6 +674,36 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &6074249294248040027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Noa_CollOOPartsFail
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: b8ace4b53a657794cae195e77082e94a, type: 3}
+    subtitle: "\u80CC\u5305\u5DF2\u6EE1"
+  - audioClip: {fileID: 8300000, guid: 998baab42b3114747ab5390833114799, type: 3}
+    subtitle: "\u6211\u7684\u80CC\u5305\u6EE1\u4E86"
+  - audioClip: {fileID: 8300000, guid: c30a380003dbbb741b1f5443adc2bdf1, type: 3}
+    subtitle: "\u65E0\u6CD5\u62FE\u53D6\u53E4\u4EE3\u9057\u7269"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
   isOrder: 0
   priority: 0
   group: 6

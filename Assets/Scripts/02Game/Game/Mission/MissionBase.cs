@@ -163,13 +163,16 @@ namespace FpsGame.Mission
         public void InitFromSceneData(TaskManager.SelectTaskData root)
         {
             this.root = root;
+
             manager = BattleManager.Instance;
             random = manager.BattleRandom;
 
             if (_sceneMissionData != null)
             {
-                data = new TaskManager.TaskItem(_sceneMissionData);
-                
+                if (_sceneMissionData is MissionMainData_SO maincfg)
+                    data = new TaskManager.TaskItem(maincfg, 1f);
+                else
+                    data = new TaskManager.TaskItem(_sceneMissionData);
             }
 
             switch (missionType)
@@ -199,6 +202,9 @@ namespace FpsGame.Mission
 
             if (entity != null && data?.cfg?.RequiredAD != null)
             {
+                this.icon = entity.Portrait;
+                this.pos = entity.Pos;
+                this.title = entity.Title;
                 entity.Init(this, data.cfg.RequiredAD.Select(item => item.ID).ToArray());
             }
 
@@ -214,6 +220,7 @@ namespace FpsGame.Mission
         public void EventStart()
         {
             StartMission();
+            //Debug.LogError("触发事件"+this,this);
             BattleEventSub.MissionStart(this);
             if (missionTag.HasFlag(MissionTag.StratDiscovered)&&entity.IsValid()) entity.TryDiscovered();
             

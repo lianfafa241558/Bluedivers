@@ -23,6 +23,16 @@ public static class FpsHelper
 
 
 
+    /// <summary>
+    /// 是否是主要阶段（战斗中、准备、过渡）
+    /// </summary>
+    public static bool IsMainStage()
+    {
+        return GameRoot.GameState == GameStateEnum.Game
+            || GameRoot.GameState == GameStateEnum.Ready
+            || GameRoot.GameState == GameStateEnum.Bridge;
+    }
+
     public static LayerMask GetHittableLayers(float speed){
         //高速武器不能穿盾
         if (speed>50){
@@ -79,12 +89,17 @@ public static class FpsHelper
         {
             var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new());
             if (hitData.IgnoreSelf) unitList.Remove(owner.GetComponent<I_Actor>());
+            //Debug.LogError("目标数量"+unitList.Count);
+            for (int i = 0; i < unitList.Count; ++i)
+            {
+                Debug.LogWarning("目标"+ unitList[i].gameObject);
+            }
             var list= unitList.Select(item => item.Damageables)
                 .SelectMany(item => item)
                 .Where(item=>!item.IsExplosionImmunity())
                 .ToList();
 
-            //Debug.LogWarning("范围"+ damageRange + "内的目标数量"+ list.Count);
+            //Debug.LogWarning("范围" + "内的目标数量"+ list.Count);
             foreach (Damageable item in list)//每一个伤害组件
             {
                 PEInt value = 0; 
@@ -99,7 +114,7 @@ public static class FpsHelper
                 }
                 if (value > 0)
                 {
-                    //Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value + " 基础伤害" + damageData.DamageExplosion + "距离" + distance + "直击:" + (collider.gameObject == item.gameObject));
+                    Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value );
                     item.InflictDamage(item, value, damageData.DamageGroupExplosion, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
                 }
             }

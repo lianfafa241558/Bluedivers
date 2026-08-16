@@ -56,6 +56,7 @@ public class RoomManager : Singleton<RoomManager> ,I_GlobaManager
             airdrop = new int[4],
             weapons = arch.GetWeaponSelect(arch.lastSelectRole),
             Upgrades = arch.GetWeaponUpgrade(arch.lastSelectRole),
+            boosterId = 0,
         });
         Self = players[0];
     }
@@ -78,6 +79,8 @@ public class PlayerData
     public int[] airdrop;
     public int[] weapons;
     public int[][] Upgrades;
+    /// <summary>已选择的全队强化 ID（0 表示未选择）</summary>
+    public int boosterId;
     public bool isEmpty;
     public bool isVaild() => id != 0;
 }

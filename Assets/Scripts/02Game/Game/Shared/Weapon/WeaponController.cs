@@ -230,7 +230,7 @@ namespace Unity.FPS.Game
         public PEInt CurrentTotalAmmo => PEMath.Max(Ammo.CurrValue, 0) + PEMath.Max(Magazine.CurrValue, 0);
 
         /// <summary>当前蓄力比例(离散值)(0-1但按阶段取值)</summary></summary>
-        public override PEInt WeaponChargeScale_D=> new(AttrFinal(Attr.ChargeHigheststage) == default ? 1 : ChargeDuration.StageScale.RawFloat);
+        public override PEInt WeaponChargeScale_D=> new(AttrFinal(Attr.ChargeHigheststage) == default ? 1 : (ChargeDuration?.StageScale.RawFloat??1));
 
         #endregion
         #region 生命周期

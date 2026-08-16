@@ -8,7 +8,9 @@ using FpsGame.MapUtils;
 using GameContract;
 
 using Unity.FPS.Game;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using Utils;
 using Tool = Utils.Tool;

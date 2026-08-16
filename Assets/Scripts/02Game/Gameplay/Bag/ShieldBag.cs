@@ -60,7 +60,7 @@ public class ShieldBag : BagBase
     }
 
 
-    public void Hit(GameObject _, Vector3 point)
+    public void Hit(GameObject _, Vector3 point,bool _2)
     {
         OnFillChange?.Invoke(true, m_health.CurrentShield.RawFloat / m_health.MaxShield);
         OnTextChange?.Invoke(true, m_health.CurrentShield.RawInt + "/" + m_health.MaxShield);

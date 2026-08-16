@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 
@@ -114,27 +116,27 @@ namespace Unity.FPS.Game
         /// <summary>采集遗物</summary>
         [InspectorName("战斗/采集遗物")]
         CollOOParts,
-        /// <summary>占位符</summary>
-        [InspectorName("占位符")]
-        Placeholder5,
-        /// <summary>占位符</summary>
-        [InspectorName("占位符")]
-        Placeholder6,
+        /// <summary>采集遗物失败</summary>
+        [InspectorName("战斗/采集遗物失败")]
+        CollOOPartsFail,
+        /// <summary>正在换弹</summary>
+        [InspectorName("战斗/换弹")]
+        ReLoad,
         /// <summary>发现敌人</summary>
         [InspectorName("战斗/发现敌人")]
         EnemySpotted,
         /// <summary>受击</summary>
         [InspectorName("战斗/受击")]
         Damage,
-        /// <summary>占位符</summary>
-        [InspectorName("占位符")]
-        Placeholder7,
-        /// <summary>占位符</summary>
-        [InspectorName("占位符")]
-        Placeholder8,
-        /// <summary>占位符</summary>
-        [InspectorName("占位符")]
-        Placeholder9,
+        /// <summary>装备物品</summary>
+        [InspectorName("战斗/装备物品")]
+        Install,
+        /// <summary>卸载物品</summary>
+        [InspectorName("战斗/卸载物品")]
+        Uninstall,
+        /// <summary>最后一组弹药</summary>
+        [InspectorName("战斗/最后一组弹药")]
+        FinalMaga,
         /// <summary>选择</summary>
         [InspectorName("大厅/选择")]
         Select,

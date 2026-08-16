@@ -158,7 +158,7 @@ public partial class PlayerWnd
     bool m_WarningActive;
     float m_LastTimeWarningStarted = Mathf.NegativeInfinity;
 
-    void OnTakeDamage(GameObject damageSource, Vector3 pos)
+    void OnTakeDamage(GameObject damageSource, Vector3 pos,bool _)
     {
         ResetFlash();
         if(damageSource) SetHitDir(damageSource.transform.position);

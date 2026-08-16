@@ -147,6 +147,48 @@ public class GameEndWnd : Window
         InitLeft();
         InitRight();
         InitMiddle();
+        SaveRewards();
+    }
+
+    /// <summary>
+    /// 结算保存：把本次任务采集的道具（欧帕兹）和货币（青辉石）累加进存档。
+    /// 不限胜负，仅在结算界面首次显示时执行一次。
+    /// </summary>
+    private void SaveRewards()
+    {
+        var task = taskManager.nowTask;
+
+        // 1. 保存采集的道具（OOPartEnum 资源）
+        if (task.collectProperty != null)
+        {
+            foreach (var kvp in task.collectProperty)
+            {
+                propertyManager.SetCount(kvp.Key, kvp.Value);
+            }
+        }
+
+        // 2. 保存货币（青辉石）：奖励分数 × (1 + 最终难度系数)
+        float diffScale = taskManager.FinalDiffScale();
+        int totalReward = task.MainReward + task.ExtraReward + task.NestReward;
+        int money = (int)(totalReward * (1 + diffScale));
+        if (money > 0)
+        {
+            propertyManager.SetCount(OOPartEnum.Pyroxene, money);
+        }
+
+        // 3. 增加本地玩家角色经验：任务奖励总和 / 5
+        var self = roomManager.Self;
+        if (self != null && !string.IsNullOrEmpty(self.roleName))
+        {
+            int exp = totalReward / 5;
+            if (exp > 0)
+            {
+                ArchiveSvc.Archive.GainRoleExp(self.roleName, exp, out int newLevel, out var _);
+                self.roleLevel = newLevel;
+            }
+        }
+
+        ArchiveSvc.Archive.Save();
     }
 
     protected override void ShowWnd()

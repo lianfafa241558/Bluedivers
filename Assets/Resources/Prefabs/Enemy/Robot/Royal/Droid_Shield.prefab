@@ -172,6 +172,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
@@ -447,14 +448,18 @@ MonoBehaviour:
     barrel: {fileID: 7325853932942404959}
     weapon: {fileID: 2049840841048896522}
     aimSharpness: 90
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 1, w: -0.00000004371139}
     dot: 1
+    meleeRangeThreshold: 5
   AttackStop: 0
+  WeakPointHitStunDuration: 0.3
   AttackStopDistanceRatio: 0.2
   MaintainMaxDis: 0
   PatrolSpeed: 2
@@ -475,8 +480,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u51EF\u6492\u91CD\u88C5\u7A81\u51FB\u5175"
-  Id: robot00
+  ShowName: "\u51EF\u6492\u91CD\u88C5\u8E42\u8E8F\u8005"
+  Id: robot01
   Portrait: {fileID: 21300000, guid: 42cf8bb75fd4d004c98a9bbdcc8afcd7, type: 3}
   ExtraPortrait: {fileID: 21300000, guid: 42cf8bb75fd4d004c98a9bbdcc8afcd7, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
@@ -504,7 +509,7 @@ NavMeshAgent:
   m_Radius: 1
   m_Speed: 3.5
   m_Acceleration: 8
-  avoidancePriority: 50
+  avoidancePriority: 35
   m_AngularSpeed: 120
   m_StoppingDistance: 0.2
   m_AutoTraverseOffMeshLink: 1
@@ -552,6 +557,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -559,12 +565,14 @@ MonoBehaviour:
     - Key: 5
       Value:
         cilp: {fileID: 8300000, guid: 9d859b9617096434ba7f3b7fd892e21b, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 1c69692918425f04dac0a012fde1c626, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -572,6 +580,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: ed394529eedc6814996d224eda9cbd60, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -579,6 +588,7 @@ MonoBehaviour:
     - Key: 1
       Value:
         cilp: {fileID: 8300000, guid: f4b83a7d24c9cca4d9096abb34ff8f6e, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []

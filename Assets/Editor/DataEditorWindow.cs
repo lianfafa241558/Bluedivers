@@ -50,6 +50,7 @@ public class DataEditorWindow : EditorWindow
         AddTab(new AboStateTabModule(this));
         AddTab(new WeaponTabModule(this));
         AddTab(new RoleTabModule(this));
+        AddTab(new BoosterTabModule(this));
     }
 
     private void AddTab(IDataTab tab) => _tabs[tab.TabType] = tab;

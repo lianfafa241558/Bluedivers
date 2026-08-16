@@ -11,6 +11,7 @@ namespace Unity.FPS.Gameplay
     /// <summary>
     /// 地雷
     /// </summary>
+    [AddComponentMenu("子弹/地雷", 30)]
     public class ProjectileMine : ProjectileBase
     {
         private const float _waitTime = 2;

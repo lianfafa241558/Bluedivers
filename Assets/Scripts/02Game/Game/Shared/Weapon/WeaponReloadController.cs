@@ -163,6 +163,10 @@ namespace Unity.FPS.Game
         {
             ReloadTime.CurrValue = 0;
             IsReloading = true;
+            // 换弹语音：手动换弹与弹匣打空的自动换弹都会走到这里；
+            // 带 AutomaticReload flag 的武器走 UpdateAmmo() 恢复弹药，不会调用 ReloadStart()，故不播。
+            // 非玩家武器 Owner 无匹配订阅，自动忽略。
+            if (Owner != null) GlobalEventSub.PlayMeetSpeech(Owner, SpeechTypeEnum.ReLoad);
         }
 
         /// <summary>
@@ -182,6 +186,12 @@ namespace Unity.FPS.Game
                 Ammo.CurrValue -= newAmmo - oldAmmo;
             }
             IsReloading = false;
+
+            // 最后一组弹药：后备弹清零（无限子弹除外）时提示
+            if (Owner != null && !InfiniteAmmo && Ammo.CurrValue == 0)
+            {
+                GlobalEventSub.PlayMeetSpeech(Owner, SpeechTypeEnum.FinalMaga);
+            }
         }
 
         /// <summary>

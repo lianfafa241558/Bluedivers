@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Attribute;
 using GameContract;
-
+using PEMaths;
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -26,16 +26,33 @@ namespace FpsGame.Mission
         {
             //Debug.LogError("实体" + entity);
             //Debug.LogError("变换" + entity.transform);
-
-            var list = entity.transform.GetComponentsInChildren<I_AIController>();
-            var actors = list.Where(item => actorNames.Contains(item.ID)).ToArray();
+            //StartCoroutine(WaitCreatUnit());
+            FindUnit();
+            if (missionTag.HasFlag(MissionTag.DisplayProgress)) percentage = 0.01f;
+        }
+        
+        IEnumerator WaitCreatUnit()
+        {
+            yield return new WaitForSeconds(1.0f);
+            var list = BattleManager.Instance.FindUnits(new PECircle((PEVector2)((PEVector3)pos), (PEInt)entitySize), new());
+            var actors = list.Where(item => actorNames.Contains(item.Id)).ToArray();
             NowProgress = 0;
             MaxProgress = actors.Length;
             foreach (var item in actors)
             {
-                item.OnDie += OnActorDeath;
+                item.OnDeath += OnActorDeath;
             }
-            if (missionTag.HasFlag(MissionTag.DisplayProgress)) percentage = 0.01f;
+        }
+        private void FindUnit()
+        {
+            var list = BattleManager.Instance.FindUnits(new PECircle((PEVector2)((PEVector3)pos), (PEInt)entitySize), new());
+            var actors = list.Where(item => actorNames.Contains(item.Id)).ToArray();
+            NowProgress = 0;
+            MaxProgress = actors.Length;
+            foreach (var item in actors)
+            {
+                item.OnDeath += OnActorDeath;
+            }
         }
 
 

@@ -91,6 +91,8 @@ namespace GameContract
         [InspectorName("特殊单位1")] Special1 = 7,
         /// <summary>特殊单位2</summary>
         [InspectorName("特殊单位2")] Special2 = 8,
+        /// <summary>首领</summary>
+        [InspectorName("首领")] Boss = 9,
     }
 
     public interface I_Actor: I_Entity

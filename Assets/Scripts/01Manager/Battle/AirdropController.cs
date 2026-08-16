@@ -113,7 +113,28 @@ public class AirdropController : MonoBehaviour
         {
             item.OnStateChange += OnAirdropStateChange;//这样只有自己叫的才考虑
         }
+        if (BattleManager.Instance.HaveBooster(BoosterType.ReinforcementBudget))
+        {
+            ApplyReinforcementBudget();
+        }
+    }
 
+    /// <summary>
+    /// 应用"增加增援预算"强化：提高增援（HealBag）的可用次数。
+    /// </summary>
+    public void ApplyReinforcementBudget()
+    {
+        int addCount = 2; // 额外增援次数
+        foreach (var item in useAd)
+        {
+            if (item.cfg.ID == Constants.HealBag)
+            {
+                item.arriveCount += addCount;
+                item.cool -= 30;
+                if (item.State != AirdropState.Unavailable) item.count += addCount;
+                break;
+            }
+        }
     }
 
 
@@ -262,7 +283,12 @@ public class AirdropController : MonoBehaviour
                 if (data.cfg.deliveryType == AirdropDeliveryEnum.Jet)
                 {
                     bool haveVaild = useAd.Any(item=>item.cfg.deliveryType == AirdropDeliveryEnum.Jet&&item.State != AirdropState.Unavailable);
-                    if (!haveVaild) OnWaitRelease(useAd.FirstOrDefault(item=> item.cfg.ID == Constants.EagleReloadId));
+                    if (!haveVaild)
+                    {
+                        var reloadAd = useAd.FirstOrDefault(item=> item.cfg.ID == Constants.EagleReloadId);
+                        if (reloadAd != null)
+                            OnWaitRelease(reloadAd);
+                    }
                 }
                 break;
             case AirdropState.Wait:

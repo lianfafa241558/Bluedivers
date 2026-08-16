@@ -105,6 +105,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
@@ -534,14 +535,18 @@ MonoBehaviour:
     barrel: {fileID: 6851128117256260656}
     weapon: {fileID: 6017343103319438640}
     aimSharpness: 180
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   AttackStop: 0
+  WeakPointHitStunDuration: 0.3
   AttackStopDistanceRatio: 1
   MaintainMaxDis: 0
   PatrolSpeed: 2
@@ -562,7 +567,7 @@ NavMeshAgent:
   m_Radius: 1
   m_Speed: 3.5
   m_Acceleration: 8
-  avoidancePriority: 50
+  avoidancePriority: 60
   m_AngularSpeed: 120
   m_StoppingDistance: 0.2
   m_AutoTraverseOffMeshLink: 1
@@ -639,6 +644,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -646,6 +652,7 @@ MonoBehaviour:
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: a7fae22399a6e1d448dc0dd2210f1dac, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -653,6 +660,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -660,6 +668,7 @@ MonoBehaviour:
     - Key: 1
       Value:
         cilp: {fileID: 8300000, guid: 25722734eeccba042a18e26e376ca542, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8855434715677272938, guid: d850c9c8ce8d946408e60108bc3793b8,
           type: 3}
         trans: {fileID: 0}

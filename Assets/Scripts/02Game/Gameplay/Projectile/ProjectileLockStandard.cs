@@ -1,4 +1,4 @@
-﻿
+
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
@@ -6,6 +6,7 @@ namespace Unity.FPS.Gameplay
     /// <summary>
     /// 智能武器锁头
     /// </summary>
+    [AddComponentMenu("子弹/锁定子弹", 30)]
     public class ProjectileLockStandard : ProjectileStandard
     {
 

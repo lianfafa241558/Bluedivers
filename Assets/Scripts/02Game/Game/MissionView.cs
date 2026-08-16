@@ -23,7 +23,10 @@ namespace FpsGame.Mission
 
         public bool HaveTag(MissionTag tag) => mission.missionTag.HasFlag(tag);
 
-
+        /// <summary>
+        /// 仅场景中加载时使用
+        /// </summary>
+        public string Title;
         #endregion
         #region
 

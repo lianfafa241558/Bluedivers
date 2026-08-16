@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace Core
         public string playerName;
         [InspectorName("UID")]
         public int UID;
-
+        public bool isNew;
         #region IO
 
         public static string DeletePath()
@@ -91,6 +92,7 @@ namespace Core
 
                 Debug.LogWarning(DeletePaths + "找到了存档"+fileInfo.OpenText().ReadToEnd());
                 JsonUtility.FromJsonOverwrite(fileInfo.OpenText().ReadToEnd(), tmp);
+                tmp.isNew = false;
                 teststring += "存档内容" + fileInfo.OpenText().ReadToEnd();
             }
             else
@@ -98,6 +100,7 @@ namespace Core
                 teststring += DeletePaths + "没有找到存档，在" + deletePath + tmp.Path() + "创建新存档";
                 Debug.LogError(DeletePaths + "没有找到存档，在" + deletePath + tmp.Path() + "创建新存档");
                 tmp.name = "Archive";
+                tmp.isNew = true;
                 tmp.NewPlayerLogon();
                 tmp.SaveFile();
             }

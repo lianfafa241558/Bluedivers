@@ -58,14 +58,14 @@ namespace FPSGame.Gameplay
 
             //开启条件
             //1.天上
-            //2.按住空格
+            //2.按住空格(跳跃键)
             //3.不是这一帧刚开始的跳跃
             if (Owner.IsValid() && m_PlayerCharacterController.IsGrounded&& m_CanUse)
             {
                 m_CanUse = false;
             }
-            else if (Owner.IsValid()&&
-                !m_PlayerCharacterController.HasJumpedThisFrame && m_InputHandler.GetJumpInputDown()&&!m_CanUse)
+            else if (Owner.IsValid() &&
+                !m_PlayerCharacterController.HasJumpedThisFrame && m_InputHandler.GetJumpInputDown() && !m_CanUse)
             {
                 m_CanUse = true;
                 OnStateChange?.Invoke(true);

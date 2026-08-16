@@ -337,6 +337,30 @@ public class PlayerInputHandler : MonoBehaviour
         return CanProcessInput(WindowStateEnum.Game) && InputManager.GetDown(InputState.Perspective);
     }
 
+    /// <summary>
+    /// 按下使用背包键（UseBag）
+    /// </summary>
+    public bool GetUseBagDown()
+    {
+        return CanProcessInput(WindowStateEnum.Game) && InputManager.GetDown(InputState.UseBag);
+    }
+
+    /// <summary>
+    /// 按住使用背包键（UseBag）
+    /// </summary>
+    public bool GetUseBagHeld()
+    {
+        return CanProcessInput(WindowStateEnum.Game) && InputManager.Get(InputState.UseBag);
+    }
+
+    /// <summary>
+    /// 松开使用背包键（UseBag）
+    /// </summary>
+    public bool GetUseBagUp()
+    {
+        return CanProcessInput(WindowStateEnum.Game) && InputManager.GetUp(InputState.UseBag);
+    }
+
 
     /// <summary>
     /// 获得切换武器号 滚轮实在是用现成体系做不了

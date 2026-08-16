@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using Core;
 using FPSGame.Attribute;
 using UnityEngine;
@@ -103,31 +104,38 @@ namespace Unity.FPS.Game
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.color = Color.cyan;
-
-            Vector3 pos = WeaponMuzzle.position;
-            Vector3 muzzleVelocity = WeaponMuzzle.forward * CurrentSpeed;
-            Vector3 inheriteVelocity = CurrentDamgeData.InheritWeaponSpeed ? MuzzleWorldVelocity : Vector3.zero;
-            Vector3 velocity = muzzleVelocity;
-            float gravity = CurrentGravity;
-            float totalRange = CurrentWeaponRange;
-            const float stepTime = 0.02f;
-            float elapsedDistance = 0f;
-            Vector3 lastPos = pos;
-
-            while (elapsedDistance < totalRange)
+            var list = new List<Transform>();
+            if (WeaponMuzzle.IsValid()) list.Add(WeaponMuzzle);
+            if (WeaponMuzzle2.IsValid()) list.Add(WeaponMuzzle2);
+            for(int i = 0; i < list.Count; ++i)
             {
-                Vector3 moveDelta = (velocity + inheriteVelocity) * stepTime;
-                pos += moveDelta;
-                velocity += Vector3.down * gravity * stepTime;
-                elapsedDistance += moveDelta.magnitude;
+                Gizmos.color = Color.cyan;
 
-                Gizmos.DrawLine(lastPos, pos);
-                lastPos = pos;
+                Vector3 pos = list[i].position;
+                Vector3 muzzleVelocity = list[i].forward * CurrentSpeed;
+                Vector3 inheriteVelocity = CurrentDamgeData.InheritWeaponSpeed ? MuzzleWorldVelocity : Vector3.zero;
+                Vector3 velocity = muzzleVelocity;
+                float gravity = CurrentGravity;
+                float totalRange = CurrentWeaponRange;
+                const float stepTime = 0.02f;
+                float elapsedDistance = 0f;
+                Vector3 lastPos = pos;
+
+                while (elapsedDistance < totalRange)
+                {
+                    Vector3 moveDelta = (velocity + inheriteVelocity) * stepTime;
+                    pos += moveDelta;
+                    velocity += Vector3.down * gravity * stepTime;
+                    elapsedDistance += moveDelta.magnitude;
+
+                    Gizmos.DrawLine(lastPos, pos);
+                    lastPos = pos;
+                }
+
+                if (Damages[0].GetDamageOuterRadius(1) > 0)
+                    Gizmos.DrawWireSphere(pos, Damages[0].GetDamageOuterRadius(1).RawFloat);
             }
-
-            if (Damages[0].GetDamageOuterRadius(1) > 0)
-                Gizmos.DrawWireSphere(pos, Damages[0].GetDamageOuterRadius(1).RawFloat);
+            
         }
 
 #if UNITY_EDITOR

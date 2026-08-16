@@ -52,6 +52,36 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 0
+--- !u!114 &-5884271306564699768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Uninstall
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: ed8a4889e9b1d4e4eb104093a92fe5fa, type: 3}
+    subtitle: "\u4E22\u4E0B\u88C5\u5907"
+  - audioClip: {fileID: 8300000, guid: 67cda49cfb8a87b48b49c5086c4411a5, type: 3}
+    subtitle: "\u4E22\u5F03\u4E86\u7269\u54C1"
+  - audioClip: {fileID: 8300000, guid: 07aacf6b00a22fc4eb703fc78d544506, type: 3}
+    subtitle: "\u653E\u4E0B\u7269\u54C1"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &-5632710249488756580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78,6 +108,34 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &-5185647892412459820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: FinalMaga
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 4852ccfdf0bbc7a4ba6cf3db6fa1eeaf, type: 3}
+    subtitle: "\u6700\u540E\u4E00\u7EC4\u5F39\u836F\u3002"
+  - audioClip: {fileID: 8300000, guid: a049ea65274af124dbbe7aa3ecce93e8, type: 3}
+    subtitle: "\u5F39\u836F\u5373\u5C06\u8017\u5C3D\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &-5005465925329857397
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -148,9 +206,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groupName: Airdrop
   clips:
-  - audioClip: {fileID: 8300000, guid: 20e60d75c9fabcb47ad2d51a0dce1ee7, type: 3}
+  - audioClip: {fileID: 8300000, guid: ddf990e60f0352244beaff071bbadf13, type: 3}
     subtitle: "\u547C\u53EB\u6218\u5907\uFF01"
-  - audioClip: {fileID: 8300000, guid: 57576136698d0e449b9077d8127caf27, type: 3}
+  - audioClip: {fileID: 8300000, guid: ba3fc6c87da7bec43baeafc7ce94ee9c, type: 3}
     subtitle: "\u547C\u53EB\u652F\u63F4\uFF01"
   volumeRange: {x: 1, y: 1}
   pitchRange: {x: 1, y: 1}
@@ -328,6 +386,16 @@ MonoBehaviour:
       Value: {fileID: 1956834907679798162}
     - Key: 6
       Value: {fileID: 7461272970445793654}
+    - Key: 14
+      Value: {fileID: 3011524264014347148}
+    - Key: 15
+      Value: {fileID: 4834281146680908923}
+    - Key: 18
+      Value: {fileID: 2758133383561054896}
+    - Key: 19
+      Value: {fileID: -5884271306564699768}
+    - Key: 20
+      Value: {fileID: -5185647892412459820}
     meetReset: 0
   DefaultAirdropIDs: 2e010000
 --- !u!114 &345053142933966265
@@ -498,6 +566,66 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &2758133383561054896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Install
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 04a4f525a82030047ac1117857f89dc5, type: 3}
+    subtitle: "\u88C5\u5907\u7269\u54C1\u3002"
+  - audioClip: {fileID: 8300000, guid: fd4b916016ed9c741871996962d17f48, type: 3}
+    subtitle: "\u6361\u8D77\u80CC\u5305\u3002"
+  - audioClip: {fileID: 8300000, guid: ede6eef92453bca45a033b4078b3e9ad, type: 3}
+    subtitle: "\u88C5\u5907\u80CC\u5305\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &3011524264014347148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: CollOOPartsFail
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 9d8b89c9be48feb4484ba84e1ac9b92a, type: 3}
+    subtitle: "\u80CC\u5305\u5DF2\u6EE1"
+  - audioClip: {fileID: 8300000, guid: 0ea5f8572bf7c9c4eb7fb12e842e8047, type: 3}
+    subtitle: "\u6211\u7684\u80CC\u5305\u6EE1\u4E86"
+  - audioClip: {fileID: 8300000, guid: ea7c1a3508046db48b013a263bcb5236, type: 3}
+    subtitle: "\u65E0\u6CD5\u62FE\u53D6\u6B27\u5E15\u5179"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &4223763852681259120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -556,6 +684,34 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &4834281146680908923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Reload
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 477d55a37ef55324195e427179cff5dc, type: 3}
+    subtitle: "\u6B63\u5728\u6362\u5F39\u3002"
+  - audioClip: {fileID: 8300000, guid: c8559ca6509e51e4e9c0986561522be9, type: 3}
+    subtitle: "\u8BF7\u6C42\u63A9\u62A4\u6362\u5F39\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &7461272970445793654
 MonoBehaviour:
   m_ObjectHideFlags: 0

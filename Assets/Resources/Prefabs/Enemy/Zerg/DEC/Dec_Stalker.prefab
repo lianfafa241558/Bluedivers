@@ -263,7 +263,7 @@ NavMeshAgent:
   m_Radius: 2
   m_Speed: 8
   m_Acceleration: 8
-  avoidancePriority: 50
+  avoidancePriority: 40
   m_AngularSpeed: 120
   m_StoppingDistance: 0.3
   m_AutoTraverseOffMeshLink: 1
@@ -326,14 +326,18 @@ MonoBehaviour:
     barrel: {fileID: 899669233212924542}
     weapon: {fileID: 1417902311292615294}
     aimSharpness: 90
+    autoRotateSpeed: 0
     detectionFireDelay: 0
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0.17364818, y: 0, z: 0, w: 0.9848077}
     dot: 1
+    meleeRangeThreshold: 5
   AttackStop: 0
+  WeakPointHitStunDuration: 0.3
   AttackStopDistanceRatio: 0.5
   MaintainMaxDis: 1
   PatrolSpeed: 2
@@ -362,6 +366,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -369,6 +374,7 @@ MonoBehaviour:
     - Key: 5
       Value:
         cilp: {fileID: 8300000, guid: bc6f66823836e20448c1f1406a33cb3e, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7841879911733702924, guid: cfa5716c5fdc3c14dba625f4a2f94fa5,
           type: 3}
         trans: {fileID: 0}
@@ -376,6 +382,7 @@ MonoBehaviour:
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -383,6 +390,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: 8237287f7fa2c5d46a2150687d592794, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -390,6 +398,7 @@ MonoBehaviour:
     - Key: 1
       Value:
         cilp: {fileID: 8300000, guid: 25722734eeccba042a18e26e376ca542, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
@@ -1086,6 +1095,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: 71c74369d77d2b84fb81ce2ed79197e2, type: 3}

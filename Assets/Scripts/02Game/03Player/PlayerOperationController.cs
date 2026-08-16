@@ -45,7 +45,7 @@ public class PlayerOperationController : MonoBehaviour
                 if (furn.CanOperate(gameObject))
                 {
                     float dist = Vector3.Distance(furn.gameObject.transform.position, checkPos);
-                    if (dist < nearestDist && dist <= 1.9f)
+                    if (dist < nearestDist && dist <= 2.2f)
                     {
                         nearestDist = dist;
                         newtar = furn;

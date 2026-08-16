@@ -98,22 +98,23 @@ namespace Unity.FPS.AI
             public Transform firePoint => weapon ? weapon.WeaponMuzzle : null;
 
             [InspectorName("转向速度")]
-            [Tooltip("匀速转向转速系数：1=180°/秒(即0.5=90°/秒)")]
-            public float aimSharpness = 1f;
+            [Tooltip("匀速转向速度（度/秒）。例如 30=30°/秒，90=90°/秒。注意：若本炮塔是某父级底座(如limitFollow/spine0)的子物体，此速度应 ≥ 父级底座转向速度，否则会被父级旋转拖乱导致指向错误")]
+            public float aimSharpness = 60f;
             [InspectorName("自动巡逻旋转速度(°/秒)")]
             [Tooltip(">0 时该炮塔在非攻击状态自动巡逻旋转；0=不自动旋转。用于选择性控制哪些炮塔巡逻")]
             public float autoRotateSpeed;
             [InspectorName("侦测开火延迟")]
             public float detectionFireDelay = 1f;
-            [InspectorName("瞄准时间")]
-            public float aimBlendTime = 1f;
+            [InspectorName("最小攻击距离")]
+            [Tooltip("目标距离炮塔小于该值时不开火(太近打不到)。0=不限")]
+            public float minAttackRange;
             [InspectorName("水平限制旋转角度")]
             [Range(0, 120)]
             /// <summary> 限制底盘水平旋转角度 </summary>
             public int limitRotation;
 
             [InspectorName("水平限制跟随物体")]
-            [Tooltip("以该物体 forward 的水平投影作为水平限制基准。留空则跟随根物体(坦克)。用于炮塔挂在不同层级、需各自跟随不同父节点的情况")]
+            [Tooltip("以该物体 forward 的水平投影作为水平限制基准。留空则跟随根物体(坦克)。用于炮塔挂在不同层级、需各自跟随不同父节点的情况。若此炮塔是该物体的子级(如主炮挂在spine0下)，则炮塔转向速度须 ≥ 该物体(父级底座)转向速度，否则会被父级旋转拖乱导致指向错误")]
             public Transform limitFollow;
 
             [InspectorName("垂直限制旋转角度")]
@@ -225,8 +226,10 @@ namespace Unity.FPS.AI
 
                 //从底盘到目标的方向
                 Vector3 chassisDir = Vector3.ProjectOnPlane(targetPos - chassis.position, Vector3.up).normalized;
-                //目标在底盘正上/下方时水平方向为零向量，LookRotation 会抛异常，需兜底
-                if (chassisDir.sqrMagnitude < 0.0001f) chassisDir = Vector3.forward;
+                // 目标在底盘正上/下方时水平方向接近零向量：保持底盘当前水平朝向，
+                // 避免 LookRotation 异常和水平方向乱跳（如玩家钻到坦克正下方时机枪不应水平旋转 180°）
+                if (chassisDir.sqrMagnitude < 0.0001f)
+                    chassisDir = Vector3.ProjectOnPlane(chassisRotation * Vector3.forward, Vector3.up).normalized;
 
                 Vector3 barrelDir = Vector3.zero;
                 if (HaveBarrel)
@@ -257,8 +260,10 @@ namespace Unity.FPS.AI
                 //看向目标Y轴加上原本偏移方向的修正
                 Quaternion tarChassisRotation = Quaternion.LookRotation(chassisDir) * chassisOffset;
 
-                //匀速转向：aimSharpness 表示转速系数，1=180°/秒（即 0.5=90°/秒）
-                float maxDegreesDelta = aimSharpness * 180f * Time.deltaTime;
+                //匀速转向：aimSharpness 直接表示转向速度（度/秒）。
+                // 注意：本炮塔若为某父级底座(limitFollow/spine0)的子物体，此速度必须 ≥ 父级底座转向速度，
+                // 否则父级旋转会拖乱子炮塔的绝对瞄准，导致指向错误（如主炮指向 back）。
+                float maxDegreesDelta = aimSharpness * Time.deltaTime;
 
                 if (!integrated)
                     chassisRotation = Quaternion.RotateTowards(chassisRotation, tarChassisRotation, maxDegreesDelta);
@@ -331,6 +336,8 @@ namespace Unity.FPS.AI
             private Vector3 GetLimitBaseForward()
             {
                 Transform follow = limitFollow ? limitFollow : root;
+                // 无跟随物体时兜底为正前方，避免 NRE
+                if (!follow) return Vector3.forward;
                 Vector3 fwd = Vector3.ProjectOnPlane(follow.forward, Vector3.up).normalized;
                 if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.forward;
                 return fwd;
@@ -338,11 +345,11 @@ namespace Unity.FPS.AI
 
             private Vector3 GetLimitedDirection(Vector3 from, Vector3 to, float maxAngle)
             {
-                float angle = Vector3.Angle(from, to);
-                if (angle <= maxAngle) return to;
-
-                Vector3 axis = Vector3.Cross(from, to).normalized;
-                return Quaternion.AngleAxis(maxAngle, axis) * from;
+                // 带符号偏角（绕 up）：对反向/平行方向也能稳定给出 ±180°，
+                // 避免原实现用 Cross(from,to) 在反向时退化为零轴导致 NaN 乱跳
+                float angle = Vector3.SignedAngle(from, to, Vector3.up);
+                float clamped = Mathf.Clamp(angle, -maxAngle, maxAngle);
+                return Quaternion.AngleAxis(clamped, Vector3.up) * from;
             }
 
             /// <summary>
@@ -375,19 +382,9 @@ namespace Unity.FPS.AI
 
             public void Aiming(float time)
             {
-                float scale = time / Mathf.Max(aimBlendTime, 0.1f);
-
-                //插值系数，=0时直接是a，=1时是b
-                if (scale >= 1 || aimBlendTime == 0)
-                {
-                    if (!integrated) chassis.rotation = chassisRotation;
-                    if (HaveBarrel) barrel.rotation = barrelRotation;
-                }
-                else
-                {
-                    if (!integrated) chassis.rotation = Quaternion.Slerp(chassis.rotation, chassisRotation, scale);
-                    if (HaveBarrel) barrel.rotation = Quaternion.Slerp(barrel.rotation, barrelRotation, scale);
-                }
+                // 直接应用 Look() 中用 aimSharpness 渐进算出的目标旋转，转向速度完全由 aimSharpness 决定
+                if (!integrated) chassis.rotation = chassisRotation;
+                if (HaveBarrel) barrel.rotation = barrelRotation;
             }
             /// <summary> 在Idle状态下同步 </summary>
             public void Synchro()
@@ -403,6 +400,38 @@ namespace Unity.FPS.AI
                     return true;
                 }
                 return false;
+            }
+
+            [InspectorName("近战射程阈值")]
+            [Tooltip("武器射程(CurrentWeaponExtremeRange)不超过该值视为近战，近战才会检查垂直高度差(目标过高/过低够不着就不开火)；超过则视为远程，忽略该规则")]
+            public float meleeRangeThreshold = 5f;
+
+            /// <summary>
+            /// 该炮塔当前是否允许对 targetPos 开火（目标距离不小于最小攻击距离）。
+            /// 基于底盘位置判定；minAttackRange<=0 时不限。
+            /// 近战武器额外检查垂直高度差：目标与发射点的垂直高度差超过武器射程则视为够不着，不允许开火。
+            /// </summary>
+            public bool CanFireAt(Vector3 targetPos)
+            {
+                // 最小攻击距离：目标过近不能开火（minAttackRange<=0 时不限制）
+                if (minAttackRange > 0 && Vector3.Distance(chassis.position, targetPos) < minAttackRange)
+                {
+                    return false;
+                }
+
+                // 近战武器(射程<=阈值)：目标垂直高度差超过射程则够不着，不攻击。
+                // 远程武器(射程>阈值)可抛射/直线命中高处，跳过该规则。
+                if (weapon && weapon.CurrentWeaponExtremeRange <= meleeRangeThreshold)
+                {
+                    Vector3 firePos = firePoint ? firePoint.position : chassis.position;
+                    float heightDelta = Mathf.Abs(targetPos.y - firePos.y);
+                    if (heightDelta > weapon.CurrentWeaponExtremeRange)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             }
 
             public Vector3 AimDir()

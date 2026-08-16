@@ -107,6 +107,24 @@ namespace Unity.FPS.Gameplay
         [HideInInspector]
         public bool ForceAim;
 
+        /// <summary>
+        /// 刷新瞄准状态（如视角切换时强制重新评估 IsAiming）
+        /// </summary>
+        public void RefreshAimState()
+        {
+            var activeWeapon = GetActiveWeapon();
+            var activeSecWeapon = GetActiveSecWeapon();
+            if (activeWeapon != null && !activeWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
+            {
+                bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
+                IsAiming = !activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld());
+            }
+            else
+            {
+                IsAiming = false;
+            }
+        }
+
         //private bool IsDown => m_PlayerCharacterController.IsDead;
         /*
         public int ActiveWeaponIndex { get; private set; } = -1;
@@ -1075,15 +1093,6 @@ namespace Unity.FPS.Gameplay
         {
             var weapon = GetActiveWeapon();
             if(weapon.ScopeGo) weapon.ScopeGo.SetActive(state);
-        }
-
-        /// <summary>
-        /// 强制触发一次准星刷新（视角切换时用）
-        /// </summary>
-        public void RefreshAimState()
-        {
-            if (OnAim != null)
-                OnAim.Invoke(IsAiming);
         }
 
         private int m_LastWeaponIndex;

@@ -7,6 +7,7 @@ namespace Unity.FPS.Gameplay
     /// <summary>
     /// 玩家激光子弹
     /// </summary>
+    [AddComponentMenu("子弹/玩家激光子弹", 30)]
     public class ProjectilePlayerLaser : ProjectileLaser
     {
 

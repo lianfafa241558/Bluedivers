@@ -23,7 +23,7 @@ namespace Unity.FPS.Game
             Player = player;
             Players.Add(player);
             OnActorCreat.Enqueue(new(UnitTypeEnum.Player, player));
-            //Debug.LogError("玩家出生" + player + "  " + player.transform.position, player.transform);
+            Debug.LogError("玩家出生" + player + "  " + player.transform.position, player.transform);
         }
         public void RegisterFriend(Actor friend)
         {
@@ -32,7 +32,7 @@ namespace Unity.FPS.Game
         }
         public void RegisterSpecUnit(Actor specUnit)
         {
-            //Debug.LogError("特殊单位出生"+ specUnit, specUnit);
+            //Debug.LogError("响应特殊单位出生"+ specUnit, specUnit);
             SpecUnits.Add(specUnit);
             OnActorCreat.Enqueue(new(UnitTypeEnum.SpecUnit, specUnit));
         }

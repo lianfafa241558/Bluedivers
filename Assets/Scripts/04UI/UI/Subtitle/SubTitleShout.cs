@@ -1,4 +1,4 @@
-﻿using Core;
+using Core;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -10,9 +10,9 @@ public class SubTitleShout : SubtitleBase
 {
     private Vector2 baseVector;
     private float lastTime,showTime;
-    public override SubtitleBase Creat(I_Actor owner, GameObject target, Transform parent,bool alwaysShow)
+    public override SubtitleBase Creat(I_Actor owner, GameObject _, Transform parent,bool alwaysShow)
     {
-        base.Creat(owner, target, parent, alwaysShow);
+        base.Creat(owner, _, parent, alwaysShow);
         GlobalEventSub.OnMark += OnMark;
         GlobalEventSub.OnActorSpeech += OnActorSpeech;
         if(owner.transform.TryGetComponent(out Health health))
@@ -20,7 +20,7 @@ public class SubTitleShout : SubtitleBase
             health.OnRevive += OnRevive;
             health.OnDie += OnDeath;
         }
-
+        SetSprite(halo, owner.ExtraPortrait);
         baseVector = transform.GetRect().anchoredPosition;//复活后恢复位置
         SetActive(gameObject, false);
         SetActive(distance, false);

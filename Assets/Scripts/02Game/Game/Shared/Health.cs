@@ -35,7 +35,7 @@ namespace Unity.FPS.Game {
         public UnityAction<PEInt, GameObject, Collider,bool> OnDamaged;
 
         /// <summary>被击中时 来源，受击点</summary>
-        public UnityAction<GameObject,Vector3> OnHit;
+        public UnityAction<GameObject,Vector3,bool> OnHit;
 
         /// <summary>是否是破盾伤害</summary>
         public UnityAction<bool> OnShieldDamaged;
@@ -116,7 +116,7 @@ namespace Unity.FPS.Game {
         }
 
         /// <summary>受到伤害</summary>
-        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource,Collider damageAffected,Vector3 pos,bool response=true) {
+        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource,Collider damageAffected,Vector3 pos,bool response=true,bool isWeakness=false) {
             if (Invincible || m_IsDead)
                 return;
             bool haveshield= CurrentShield > 0, isBreakShield=false;
@@ -174,7 +174,7 @@ namespace Unity.FPS.Game {
             if (trueDamageAmount > 0) {
                 m_LastHitTime = Time.time;
                 OnDamaged?.Invoke(trueDamageAmount, damageSource,damageAffected, noSource);
-                if(response)OnHit?.Invoke(damageSource,pos);
+                if(response)OnHit?.Invoke(damageSource,pos,isWeakness);
                 if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
                 //这个是控制hpui的，所以总是响应
                 BattleEventSub.UnitHit(gameObject, damageSource);

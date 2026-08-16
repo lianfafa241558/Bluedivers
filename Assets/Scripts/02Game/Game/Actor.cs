@@ -203,43 +203,31 @@ namespace Unity.FPS.Game
             Range.SetXY((PEVector2)Pos);
             lastAngle = transform.eulerAngles;
             BattleEventSub.UnitPosChange(this);
-
-        }
-
-        private void Start()
-        {
-#if UNITY_EDITOR
-            if (GameRoot.Instance.IsLocal)
-            {
-                Invoke("Init", Time.fixedDeltaTime * 2);
-                //Init();
-            }
-            else
-            {
-                Init();
-            }
-#else
-            Init();
-#endif
-        }
-
-        void Init()
-        {
             StartCoroutine(WaitSetPos());
+        }
 
+      
+        private IEnumerator WaitSetPos()
+        {
+            while(!FpsHelper.IsMainStage())
+            {
+                yield return null;
+            }
+            //Debug.Log("创建了单位" + this.gameObject, this.gameObject);
             switch (type)
             {
                 case UnitTypeEnum.Enemy:
                     BattleEventSub.EnemyCreate(this);
                     break;
                 case UnitTypeEnum.Player:
-                    Debug.Log("创建了玩家"+this.gameObject,this.gameObject);
+                    //Debug.Log("创建了玩家" + this.gameObject, this.gameObject);
                     GlobalEventSub.PlayerCreate(this);
                     break;
                 case UnitTypeEnum.Friend:
                     GlobalEventSub.FriendCreate(this);
                     break;
                 case UnitTypeEnum.SpecUnit:
+                    //Debug.LogError("特殊单位出生" + ShowName, this);
                     if (!HasFlag(ActorFlag.Unimportant)) BattleEventSub.SpecUnitCreate(this);
                     //Debug.LogError("创建特殊单位"+ShowName);
                     break;
@@ -248,14 +236,8 @@ namespace Unity.FPS.Game
                     break;
             }
             isInitialized = true;
-        }
 
-        private IEnumerator WaitSetPos()
-        {
-            while(GameRoot.GameState!= GameStateEnum.Game)
-            {
-                yield return null;
-            }
+
             if (!HasFlag(ActorFlag.AllowFloating))
             {
                 if (UnityEngine.AI.NavMesh.SamplePosition(transform.position, out var hit, 100, UnityEngine.AI.NavMesh.AllAreas))
@@ -264,6 +246,10 @@ namespace Unity.FPS.Game
                 }
                 //transform.position = TerrainUtils.WSToTS(transform.position);
             }
+            Range.SetXY(LogicPos);
+            BattleEventSub.UnitPosChange(this);
+            OnPosChange?.Invoke(this);
+
         }
 
 

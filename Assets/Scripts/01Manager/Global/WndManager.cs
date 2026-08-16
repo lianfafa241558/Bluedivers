@@ -1,11 +1,8 @@
-using System.Collections.Generic;
 using Core;
 
 using UnityEngine;
 using UnityEngine.Events;
-using Utils;
-using static NoticeWnd;
-using static WndTools.WndRootTool;
+
 
 public class WndManager : Singleton<WndManager>
 {
@@ -118,7 +115,7 @@ public class WndManager : Singleton<WndManager>
     public void CreatNotice(string role, string type, System.Func<bool> func = default,float vaildTime=-1)
     {
         ResSvc.Instance.GetVoice(role, type,out var data,out var sourceName,out var portrait);
-        var noticeData = new NoticeData() {
+        var noticeData = new NoticeWnd.NoticeData() {
             data = data.Get(),
             sourceName = sourceName,
             portrait = portrait,

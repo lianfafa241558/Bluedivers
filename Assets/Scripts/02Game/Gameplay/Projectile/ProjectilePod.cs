@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using GameContract;
 
 using Unity.FPS.Game;
@@ -10,6 +10,7 @@ namespace Unity.FPS.Gameplay
     /// <summary>
     /// 空投弹，极简版子弹，不是通过武器创建的，正常走的特效
     /// </summary>
+    [AddComponentMenu("子弹/空投舱", 30)]
     public class ProjectilePod : ProjectileBase
     {
 

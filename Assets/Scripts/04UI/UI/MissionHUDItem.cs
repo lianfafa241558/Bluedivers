@@ -46,7 +46,7 @@ public class MissionHUDItem : MonoBehaviour
         //Debug.LogError("激活状态?"+ mission.HasTag(MissionTag.IsActive)+ " tag1: " +mission.missionTag.ToString() + " tag2: " + GetMissionTagNames(mission.missionTag)+"激活"+ mission.HasTag(MissionTag.IsActive));
         SetAlpha(canvasGroup, mission.HasTag(MissionTag.IsActive) ? 1:0.3f);
         //隐藏，直到显示状态变化
-        allowShow = (mission.HasTag(MissionTag.StratDiscovered) && mission.missionType == MissionType.Main) && !mission.HasTag(MissionTag.hideAll);
+        allowShow = (mission.HasTag(MissionTag.StratDiscovered) && (mission.missionType == MissionType.Main|| mission.missionType == MissionType.Sub|| mission.missionType == MissionType.Evacuate)) && !mission.HasTag(MissionTag.hideAll);
         SetActive(transform, allowShow);
         //RefreshContentSizeFitter(self);
 

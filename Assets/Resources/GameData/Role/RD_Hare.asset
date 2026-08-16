@@ -110,6 +110,64 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &-6172562986566149093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Hare_FinalMaga
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 8c4b61e9a40606f4abd1af838a01f7a4, type: 3}
+    subtitle: "\u6700\u540E\u4E00\u7EC4\u5F39\u836F\u3002"
+  - audioClip: {fileID: 8300000, guid: e18bfe4b4e703de4cb08d1cea9a5310e, type: 3}
+    subtitle: "\u5F39\u836F\u5373\u5C06\u8017\u5C3D\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-5660137044220516627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Hare_CollOOPartsFail
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: d0e7df6250b30a84ebbe3b0790624c92, type: 3}
+    subtitle: "\u80CC\u5305\u5DF2\u6EE1\u3002"
+  - audioClip: {fileID: 8300000, guid: ffdbdf827a6425841a789d64d5bc4c39, type: 3}
+    subtitle: "\u6211\u7684\u80CC\u5305\u6EE1\u4E86\u3002"
+  - audioClip: {fileID: 8300000, guid: d6e6379ffb01c7047b7a70bc914eb571, type: 3}
+    subtitle: "\u65E0\u6CD5\u62FE\u53D6\u53E4\u4EE3\u9057\u7269\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &-5424032603698235143
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -164,6 +222,36 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &-3865221749181304706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Hare_Install
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 4e47560583295dc4ca3a3181269f6502, type: 3}
+    subtitle: "\u88C5\u5907\u7269\u54C1\u3002"
+  - audioClip: {fileID: 8300000, guid: 9229b898d5d000a44a29441e6c907f49, type: 3}
+    subtitle: "\u6361\u8D77\u80CC\u5305\u3002"
+  - audioClip: {fileID: 8300000, guid: 2d34c2a5219f31347a0a03f38151b2c7, type: 3}
+    subtitle: "\u88C5\u5907\u80CC\u5305\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &-3565781751003031812
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -362,7 +450,17 @@ MonoBehaviour:
       Value: {fileID: 4318717090476704158}
     - Key: 6
       Value: {fileID: -2210224684079201159}
-    meetReset: 0
+    - Key: 14
+      Value: {fileID: -5660137044220516627}
+    - Key: 15
+      Value: {fileID: 632081315526019086}
+    - Key: 18
+      Value: {fileID: -3865221749181304706}
+    - Key: 19
+      Value: {fileID: 1182303470208331765}
+    - Key: 20
+      Value: {fileID: -6172562986566149093}
+    meetReset: 1
   DefaultAirdropIDs: 4a010000
 --- !u!114 &409795455368184160
 MonoBehaviour:
@@ -388,6 +486,34 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &632081315526019086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Hare_Reload
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: e59e150c227b1314e85a2fea1b69f6f1, type: 3}
+    subtitle: "\u6B63\u5728\u6362\u5F39\u3002"
+  - audioClip: {fileID: 8300000, guid: db2a1c36cd510754e80bde08c77d683f, type: 3}
+    subtitle: "\u8BF7\u6C42\u63A9\u62A4\u6362\u5F39\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
   isOrder: 0
   priority: 0
   group: 6
@@ -420,6 +546,36 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &1182303470208331765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Hare_Uninstall
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: e6e1ac0ebd7055c45b6e4fed82ea927f, type: 3}
+    subtitle: "\u4E22\u4E0B\u88C5\u5907\u3002"
+  - audioClip: {fileID: 8300000, guid: aabdc8c277e3fc74698905cae4fdfdfc, type: 3}
+    subtitle: "\u4E22\u5F03\u4E86\u7269\u54C1\u3002"
+  - audioClip: {fileID: 8300000, guid: 4782faa4f9b35eb48b3df1a0289a2bfe, type: 3}
+    subtitle: "\u653E\u4E0B\u7269\u54C1\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &1256141276028986912
 MonoBehaviour:
   m_ObjectHideFlags: 0

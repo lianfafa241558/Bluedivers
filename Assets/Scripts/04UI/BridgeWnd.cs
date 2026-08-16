@@ -27,7 +27,7 @@ public class BridgeWnd : Window
 
     protected override void FirstShowWnd()
     {
-        SetActive(taskRoot, false);
+        //SetActive(taskRoot, false);
     }
 
 
@@ -98,7 +98,7 @@ public class BridgeWnd : Window
         
         SetActive(friendRoot, task.PlayMode !=2);
 
-        SetActive(taskRoot, true);
+        //SetActive(taskRoot, true);
         taskRoot.GetComponent<Animator>().Play("Entry",0,0);
         SetText(taskType, cfg.name);
         SetText(taskName, info.name);

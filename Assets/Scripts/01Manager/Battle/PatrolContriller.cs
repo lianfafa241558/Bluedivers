@@ -98,6 +98,8 @@ public class PatrolContriller : TickBehaviour
     private float _patrolCooldownTimer;
     private bool _isMainTaskCompleted;
     private int _destroyedInfluencePointsCount;
+    /// <summary>定位混淆强化：提高生成巡逻队的所需热度（加长生成间隔）</summary>
+    private bool _isPositionConfusion;
 
     // 外部引用
     private List<I_Actor> Players => ActorsManager.Players;
@@ -224,11 +226,12 @@ public class PatrolContriller : TickBehaviour
         // 主线任务减成
         if (_isMainTaskCompleted) required *= MAIN_TASK_REDUCTION;
 
-        // 定位混淆（暂不处理）
-        // required *= 1.25f;
-        //Debug.LogError($"基础热度{_basePatrolHeat},玩家数量{playerCount},完成主线{_isMainTaskCompleted}，最终{required}");
+        // 定位混淆：提高热度需求（加长巡逻队生成间隔）
+        if (_isPositionConfusion) required *= 1.25f;
         return required;
     }
+
+
 
     /// <summary>
     /// 获取影响力点产热加成（距离50-150m，0.5-0）
@@ -343,6 +346,11 @@ public class PatrolContriller : TickBehaviour
         foreach (var player in Players)
         {
             _playerHeatList.Add(InitRequiredHeat(player, requiredHeat));
+        }
+        if (manager.HaveBooster(BoosterType.PositionConfusion))
+        {
+            _isPositionConfusion = true;
+            RefreshAllPlayerRequiredHeat();
         }
     }
    

@@ -1,6 +1,7 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.FPS.Game;
+using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 using Utils;
 
@@ -14,10 +15,29 @@ public class OOPart : Furniture_Base
     {
         base.Operate();
         var type = Tool.StringToEnum<OOPartEnum>(Id);
-        GlobalEventSub.OOPartCollect(owner,type,(int)ExtFloatParameter);
-        GlobalEventSub.PlayMeetSpeech(owner, SpeechTypeEnum.CollOOParts);
-        //var dic = TaskManager.Instance.nowTaskCfg.collectProperty;
-        //if (!dic.TryAdd(type,1)) ++dic[type];
+        int count = (int)ExtFloatParameter;
+        Debug.LogError("玩家拾取了"+Id+" ,"+type+" "+count);
+        SpeechTypeEnum enumtype=SpeechTypeEnum.CollOOParts;
+        if (type == OOPartEnum.Pyroxene)
+        {
+            var dic = TaskManager.Instance.nowTask.collectProperty;
+            if (!dic.TryAdd(type, count)) dic[type] += count;
+        }
+
+        // 采集物先存入玩家携带背包（有上限，满则无法采集）
+        if (owner && owner.TryGetComponent(out PlayerOOPartInventory bag))
+        {
+            if (bag.IsFull(type))
+            {
+                enumtype = SpeechTypeEnum.CollOOPartsFail;
+            }
+            else
+            {
+                bag.TryAdd(type, count);
+            }
+        }
+        GlobalEventSub.PlayMeetSpeech(owner, enumtype);
+        GlobalEventSub.OOPartCollect(owner, type, count);
         Tool.Destroy(gameObject);
     }
     

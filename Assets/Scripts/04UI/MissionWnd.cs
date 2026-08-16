@@ -13,15 +13,12 @@ public class MissionWnd : Window
 
     public RectTransform MainLayout, ExtraLayout, NestLayout;
     //public AudioClip m_InitSound;//任务初始化时播放的声音
-    public AudioClip m_MainCompletedSound;//主要任务完成时播放的声音
-    public AudioClip m_ExtraCompletedSound;//额外任务完成时播放的声音
+
 
 
     //任务和对应ui的字
     Dictionary<MissionBase, MissionHUDItem> m_ObjectivesDictionnary=new();
 
-
- 
 
     protected override void FirstShowWnd()
     {
@@ -30,6 +27,7 @@ public class MissionWnd : Window
 
     protected override void ShowWnd()
     {
+        Debug.LogError("完成missionWnd初始化");
         BattleEventSub.OnMissionStart += OnObjectiveCreated;
         BattleEventSub.OnMissionStateChange += OnMissionShowStateChange;
         BattleEventSub.OnMissionUpdate += OnObjectiveUpdate;
@@ -146,8 +144,6 @@ public class MissionWnd : Window
     /// </summary>
     public void OnObjectiveCompleted(MissionBase mission)
     {
-        if(!mission.HasTag(GameContract.MissionTag.NoAudio))AudioSvc.PlaySound(new(mission.missionType==MissionType.Main|| mission.missionType == MissionType.Sub ? m_MainCompletedSound:m_ExtraCompletedSound, AudioGroups.UI));
-        AudioSvc.Suppressed(3);
         if (m_ObjectivesDictionnary.TryGetValue(mission, out MissionHUDItem toast))
         {
             toast.Completed();

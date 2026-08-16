@@ -48,6 +48,8 @@ public class SubtitleWnd : Window
     public void Init()
     {
         OnViewSwitch(ArchiveSvc.GetSetting("默认操作视角")>0);
+        GlobalEventSub.OnViewSwitch += OnViewSwitch;
+        GlobalEventSub.OnSceneChange += OnSceneChange;
     }
 
     protected override void FirstShowWnd()
@@ -65,8 +67,7 @@ public class SubtitleWnd : Window
             m_ThirdPersonConcernInstance.gameObject.SetActive(false);
         }
         AirDropSubtitlesPool = new(AirdropPoolUpdate, AirdropPoolAdd, AirdropPoolEnqueue, 0);
-        GlobalEventSub.OnViewSwitch += OnViewSwitch;
-        GlobalEventSub.OnSceneChange += OnSceneChange;
+
         GainObjectTipRoot.alpha = 0;
 
     }
@@ -267,7 +268,7 @@ public class SubtitleWnd : Window
             case UnitTypeEnum.SpecUnit:
                 //Debug.LogError($"创建特殊单位玩家{ActorsManager.Player}，目标{item.Value}");
                 //Debug.LogError($"目标的单位{item.Value.gameObject}");
-                Subtitles.Add(Instantiate(GameRoot.GameState== GameStateEnum.Bridge? NPCPrefab: SpecUnitPrefab).Creat(ActorsManager.Player, item.Value.gameObject, transform, alwaysShow));
+                Subtitles.Add(Instantiate(GameRoot.GameState == GameStateEnum.Bridge? NPCPrefab: SpecUnitPrefab).Creat(ActorsManager.Player, item.Value.gameObject, transform, alwaysShow));
                 break;
         }
 

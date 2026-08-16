@@ -19,7 +19,9 @@ namespace Unity.FPS.AI.Editor
                 return FieldHeight + LineSpacing;
 
             bool selfBody = IsSelfBody(property);
-            int lines = selfBody ? GetSelfBodyLineCount() : GetFullLineCount();
+            var limitRotationProp = property.FindPropertyRelative("limitRotation");
+            bool showLimitFollow = limitRotationProp != null && limitRotationProp.intValue > 0;
+            int lines = selfBody ? GetSelfBodyLineCount(showLimitFollow) : GetFullLineCount(showLimitFollow);
             return lines * (FieldHeight + LineSpacing);
         }
 
@@ -32,7 +34,7 @@ namespace Unity.FPS.AI.Editor
             var aimSharpnessProp = property.FindPropertyRelative("aimSharpness");
             var autoRotateSpeedProp = property.FindPropertyRelative("autoRotateSpeed");
             var detectionFireDelayProp = property.FindPropertyRelative("detectionFireDelay");
-            var aimBlendTimeProp = property.FindPropertyRelative("aimBlendTime");
+            var minAttackRangeProp = property.FindPropertyRelative("minAttackRange");
             var limitRotationProp = property.FindPropertyRelative("limitRotation");
             var limitFollowProp = property.FindPropertyRelative("limitFollow");
             var verticalLimitRotationProp = property.FindPropertyRelative("verticalLimitRotation");
@@ -96,17 +98,18 @@ namespace Unity.FPS.AI.Editor
                 DrawIntSliderWithChinese(limitRect, limitRotationProp, "水平限制角度", 0, 120);
                 y += rowH;
 
-                // 水平限制跟随物体
-                Rect limitFollowRect = new Rect(position.x, y, fullWidth, FieldHeight);
-                DrawObjectFieldWithChinese(limitFollowRect, limitFollowProp, "水平限制跟随");
-                y += rowH;
+                // 水平限制跟随物体（仅水平限制>0时显示）
+                if (limitRotationProp.intValue > 0)
+                {
+                    Rect limitFollowRect = new Rect(position.x, y, fullWidth, FieldHeight);
+                    DrawObjectFieldWithChinese(limitFollowRect, limitFollowProp, "水平限制跟随");
+                    y += rowH;
+                }
 
-                Rect sharpnessRect = new Rect(position.x, y, fullWidth, FieldHeight);
+                // 转向速度 + 自动巡逻速度 同行
+                Rect sharpnessRect = new Rect(position.x, y, halfW, FieldHeight);
+                Rect autoRotateRect = new Rect(sharpnessRect.xMax + 8f, y, halfW, FieldHeight);
                 DrawFloatFieldWithChinese(sharpnessRect, aimSharpnessProp, "转向速度");
-                y += rowH;
-
-                // 自动巡逻旋转速度
-                Rect autoRotateRect = new Rect(position.x, y, fullWidth, FieldHeight);
                 DrawFloatFieldWithChinese(autoRotateRect, autoRotateSpeedProp, "自动巡逻速度(°/秒)");
                 y += rowH;
             }
@@ -119,26 +122,26 @@ namespace Unity.FPS.AI.Editor
                 DrawIntSliderWithChinese(verticalLimitRect, verticalLimitRotationProp, "垂直限制角度", 0, 90);
                 y += rowH;
 
-                // 水平限制跟随物体（独立行）
-                Rect limitFollowRect = new Rect(position.x, y, fullWidth, FieldHeight);
-                DrawObjectFieldWithChinese(limitFollowRect, limitFollowProp, "水平限制跟随");
-                y += rowH;
+                // 水平限制跟随物体（仅水平限制>0时显示）
+                if (limitRotationProp.intValue > 0)
+                {
+                    Rect limitFollowRect = new Rect(position.x, y, fullWidth, FieldHeight);
+                    DrawObjectFieldWithChinese(limitFollowRect, limitFollowProp, "水平限制跟随");
+                    y += rowH;
+                }
 
-                // 瞄准锐度 + 瞄准时间 同行
+                // 转向速度 + 自动巡逻速度 同行
                 Rect sharpnessRect = new Rect(position.x, y, halfW, FieldHeight);
-                Rect blendRect = new Rect(sharpnessRect.xMax + 8f, y, halfW, FieldHeight);
+                Rect autoRotateRect = new Rect(sharpnessRect.xMax + 8f, y, halfW, FieldHeight);
                 DrawFloatFieldWithChinese(sharpnessRect, aimSharpnessProp, "转向速度");
-                DrawFloatFieldWithChinese(blendRect, aimBlendTimeProp, "瞄准时间");
-                y += rowH;
-
-                // 自动巡逻旋转速度（独立行）
-                Rect autoRotateRect = new Rect(position.x, y, fullWidth, FieldHeight);
                 DrawFloatFieldWithChinese(autoRotateRect, autoRotateSpeedProp, "自动巡逻速度(°/秒)");
                 y += rowH;
 
-                // 侦测开火延迟（独立行）
-                Rect delayRect = new Rect(position.x, y, fullWidth, FieldHeight);
+                // 开火延迟 + 最小攻击距离 同行
+                Rect delayRect = new Rect(position.x, y, halfW, FieldHeight);
+                Rect minRangeRect = new Rect(delayRect.xMax + 8f, y, halfW, FieldHeight);
                 DrawFloatFieldWithChinese(delayRect, detectionFireDelayProp, "开火延迟");
+                DrawFloatFieldWithChinese(minRangeRect, minAttackRangeProp, "最小攻击距离");
                 y += rowH;
 
                 // ---- Section 3: 偏移与调试 ----
@@ -175,16 +178,22 @@ namespace Unity.FPS.AI.Editor
             return typeProp.enumValueIndex == (int)AIInputUnitController.Turret.TurretType.SelfBody;
         }
 
-        /// <summary>自体炮塔展开行数：foldout + 结构标题 + 底盘 + 类型 + 参数标题 + 水平限制 + 跟随物体 + 瞄准锐度 + 自动巡逻速度</summary>
-        private static int GetSelfBodyLineCount()
+        /// <summary>
+        /// 自体炮塔展开行数：foldout + 结构标题 + 底盘 + 类型 + 参数标题 + 水平限制 + [跟随物体] + 转向/巡逻速度。
+        /// 水平限制为 0 时隐藏跟随物体行。
+        /// </summary>
+        private static int GetSelfBodyLineCount(bool showLimitFollow)
         {
-            return 9;
+            return showLimitFollow ? 8 : 7;
         }
 
-        /// <summary>完整炮台展开行数：foldout + 结构标题 + 底盘/炮管 + 类型 + 武器 + 参数标题 + 限制*2 + 跟随物体 + 锐度/时间 + 自动巡逻 + 开火延迟 + 偏移标题 + 偏移 + 偏差 + dot</summary>
-        private static int GetFullLineCount()
+        /// <summary>
+        /// 完整炮台展开行数：foldout + 结构标题 + 底盘/炮管 + 类型 + 武器 + 参数标题 + 限制*2 + [跟随物体] + 转向/巡逻 + 开火延迟/最小攻击距离 + 偏移标题 + 偏移 + 偏差 + dot。
+        /// 水平限制为 0 时隐藏跟随物体行。
+        /// </summary>
+        private static int GetFullLineCount(bool showLimitFollow)
         {
-            return 15;
+            return showLimitFollow ? 14 : 13;
         }
 
         // ---- Helper: 构建 Foldout 标签（显示摘要信息） ----

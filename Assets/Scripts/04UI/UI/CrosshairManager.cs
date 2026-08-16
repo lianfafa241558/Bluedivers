@@ -57,10 +57,11 @@ namespace Unity.FPS.UI
             m_WeaponsManager.OnAim += OnAim;
             SwitchWeapon(m_WeaponsManager.GetActiveWeapon(), false);
         }
+        //TODO:这里可能切换了场景，但是准星没被删除
 
         private void OnViewSwitch(bool isThirdPerson)
         {
-            RefreshCrosshairVisibility(m_WeaponsManager.IsAiming);
+            if(m_WeaponsManager) RefreshCrosshairVisibility(m_WeaponsManager.IsAiming);
         }
         protected override void SwitchWeapon(WeaponPlayerController weapon, bool isSec = false)
         {

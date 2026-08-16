@@ -105,6 +105,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: 71c74369d77d2b84fb81ce2ed79197e2, type: 3}
@@ -267,6 +268,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -274,6 +276,7 @@ MonoBehaviour:
     - Key: 5
       Value:
         cilp: {fileID: 8300000, guid: bc6f66823836e20448c1f1406a33cb3e, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7841879911733702924, guid: cfa5716c5fdc3c14dba625f4a2f94fa5,
           type: 3}
         trans: {fileID: 0}
@@ -281,6 +284,7 @@ MonoBehaviour:
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -288,6 +292,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: ff8b08126d2aeb34e9e0d697c876c5d6, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -295,12 +300,14 @@ MonoBehaviour:
     - Key: 1
       Value:
         cilp: {fileID: 8300000, guid: 4ed17dd3b8fec6d408b80504765a96a3, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
     - Key: 7
       Value:
         cilp: {fileID: 8300000, guid: 1044aeff27a71c44fa562be5e1a56b86, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
@@ -455,14 +462,18 @@ MonoBehaviour:
     barrel: {fileID: 3474697495815350228}
     weapon: {fileID: 7577670470533182702}
     aimSharpness: 90
+    autoRotateSpeed: 0
     detectionFireDelay: 2
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   AttackStop: 0
+  WeakPointHitStunDuration: 0.3
   AttackStopDistanceRatio: 1
   MaintainMaxDis: 0
   PatrolSpeed: 2
@@ -483,7 +494,7 @@ NavMeshAgent:
   m_Radius: 1.4
   m_Speed: 4.5
   m_Acceleration: 8
-  avoidancePriority: 50
+  avoidancePriority: 35
   m_AngularSpeed: 40
   m_StoppingDistance: 0.3
   m_AutoTraverseOffMeshLink: 1

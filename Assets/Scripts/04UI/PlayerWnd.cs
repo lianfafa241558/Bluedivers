@@ -92,6 +92,7 @@ public partial class PlayerWnd : Window
     private void TryPlayer()
     {
         initPlayer = true;
+        //Debug.LogError("设置玩家");
         m_Controller = ActorsManager.Player.transform.GetComponent<PlayerController>();
         m_WeaponsManager = m_Controller.WeaponsManager;
         m_Health = m_Controller.Health;
@@ -179,7 +180,7 @@ public partial class PlayerWnd : Window
             }
             dirList.Add(item.GetComponent<CanvasGroup>());
         }
-
+        Debug.LogError("初始化playerwnd"+ ActorsManager.Player);
         InitHitFlash();
     }
 

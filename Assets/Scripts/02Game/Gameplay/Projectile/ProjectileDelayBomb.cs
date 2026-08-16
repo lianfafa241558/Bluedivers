@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -7,6 +7,7 @@ namespace Unity.FPS.Gameplay
     /// <summary>
     /// 延迟炸弹：落地不爆炸，需要通过标记tag，然后只能空爆
     /// </summary>
+    [AddComponentMenu("子弹/延迟炸弹", 30)]
     public class ProjectileDelayBomb : ProjectileStandard
     {
         public int DamagesIndex = 1;

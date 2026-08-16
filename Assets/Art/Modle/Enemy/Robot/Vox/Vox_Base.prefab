@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 211035666915608562}
   serializedVersion: 2
   m_LocalRotation: {x: -0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalPosition: {x: 0.1, y: 2.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -312,7 +312,7 @@ MonoBehaviour:
   - Speed: 50
     Gravity: 30
     InheritWeaponSpeed: 0
-    MaxLifeTime: 2.5
+    MaxLifeTime: 4
     MaxRange: -1
     MinRange: -1
     NoSource: 0
@@ -336,7 +336,7 @@ MonoBehaviour:
       Value: 1
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 5911405891695202493, guid: 57e46722276d42e48a0bf2d1bd68ad15,
+    ImpactVfx: {fileID: 5787557760003359419, guid: a3cf9ad6752f4fc448bcaaad7edfea05,
       type: 3}
     ImpactSfx: {fileID: 8300000, guid: 91758df701bea4040aeeb177ce602826, type: 3}
     UseHole: 0
@@ -351,11 +351,11 @@ MonoBehaviour:
     ChargeHeatScale: 1
     ChargeSpreadScale: 1
   UseDamageIndex: 0
-  MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
-    type: 3}
+  MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
-  SFXRange: 20
-  ShootSfx: {fileID: 8300000, guid: a00f91e4a49038d459216f92c302858c, type: 3}
+  SFXRange: 80
+  ShootSfx: {fileID: 8300000, guid: ffdc3de9ac8f0204d894430fea03edec, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
@@ -486,9 +486,10 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 5
   UnparentMuzzleFlash: 0
-  SFXRange: 20
-  ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
+  SFXRange: 80
+  ShootSfx: {fileID: 8300000, guid: 20e0a754c5204344db9ed6c6ed42f061, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
@@ -534,7 +535,7 @@ Transform:
   m_GameObject: {fileID: 2693697131730620322}
   serializedVersion: 2
   m_LocalRotation: {x: -0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalPosition: {x: -0.1, y: 2.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -650,9 +651,10 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 5
   UnparentMuzzleFlash: 0
-  SFXRange: 20
-  ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
+  SFXRange: 80
+  ShootSfx: {fileID: 8300000, guid: 20e0a754c5204344db9ed6c6ed42f061, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
@@ -813,9 +815,10 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 3
   UnparentMuzzleFlash: 0
-  SFXRange: 20
-  ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
+  SFXRange: 50
+  ShootSfx: {fileID: 8300000, guid: fa17e97d25c6d8949918eaf2a2a4284c, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
@@ -982,9 +985,10 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 3
   UnparentMuzzleFlash: 0
-  SFXRange: 20
-  ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
+  SFXRange: 50
+  ShootSfx: {fileID: 8300000, guid: fa17e97d25c6d8949918eaf2a2a4284c, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
@@ -1072,7 +1076,7 @@ MonoBehaviour:
   - Speed: 50
     Gravity: 30
     InheritWeaponSpeed: 0
-    MaxLifeTime: 2.5
+    MaxLifeTime: 4
     MaxRange: -1
     MinRange: -1
     NoSource: 0
@@ -1096,7 +1100,7 @@ MonoBehaviour:
       Value: 1
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 5911405891695202493, guid: 57e46722276d42e48a0bf2d1bd68ad15,
+    ImpactVfx: {fileID: 5787557760003359419, guid: a3cf9ad6752f4fc448bcaaad7edfea05,
       type: 3}
     ImpactSfx: {fileID: 8300000, guid: 91758df701bea4040aeeb177ce602826, type: 3}
     UseHole: 0
@@ -1111,11 +1115,11 @@ MonoBehaviour:
     ChargeHeatScale: 1
     ChargeSpreadScale: 1
   UseDamageIndex: 0
-  MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
-    type: 3}
+  MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
-  SFXRange: 20
-  ShootSfx: {fileID: 8300000, guid: a00f91e4a49038d459216f92c302858c, type: 3}
+  SFXRange: 80
+  ShootSfx: {fileID: 8300000, guid: ffdc3de9ac8f0204d894430fea03edec, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
@@ -5966,6 +5970,37 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!1 &4603074379672562932
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2484124977186016577}
+  m_Layer: 0
+  m_Name: R_ThighDir
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2484124977186016577
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4603074379672562932}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7718190693216738361}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1 &4734244183712552745
 GameObject:
   m_ObjectHideFlags: 0
@@ -6033,9 +6068,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
+  - Key: 0
+    Value: 0.5
   AllArmor: 0
-  armorValue: 0
+  armorValue: 600
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 2190733536120882051}
@@ -10936,6 +10975,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4514608907033727696}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5430578107655528573
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 953611734212404823}
+  m_Layer: 0
+  m_Name: L_ThighDir
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &953611734212404823
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5430578107655528573}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8035048036750779812}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!1 &6272204123029141965
 GameObject:
   m_ObjectHideFlags: 0
@@ -11121,9 +11191,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
+  - Key: 0
+    Value: 0.5
   AllArmor: 0
-  armorValue: 0
+  armorValue: 600
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 4974762776183023126}
@@ -11369,15 +11443,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8489466198997991702}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0.5, y: 0.2, z: -2.5}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.5, y: -0.2, z: 2.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5945262801262576572}
   - {fileID: 2623020311773311340}
   m_Father: {fileID: 7773684069834415663}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9068938063861129314
 GameObject:
   m_ObjectHideFlags: 0
@@ -11445,9 +11519,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 1
+    Value: 1
+  - Key: 0
+    Value: 0.5
   AllArmor: 0
-  armorValue: 0
+  armorValue: 600
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 8462009051947181141}
@@ -12186,12 +12264,12 @@ PrefabInstance:
     - target: {fileID: -6113859297101739756, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -6113859297101739756, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -6113859297101739756, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
@@ -12206,7 +12284,32 @@ PrefabInstance:
     - target: {fileID: -6113859297101739756, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 180
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4705905250557078783, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9961947
+      objectReference: {fileID: 0}
+    - target: {fileID: -4705905250557078783, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.08715578
+      objectReference: {fileID: 0}
+    - target: {fileID: -4705905250557078783, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4705905250557078783, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4705905250557078783, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -10
       objectReference: {fileID: 0}
     - target: {fileID: -4404576202331029592, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
@@ -12258,6 +12361,31 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.y
       value: 90
       objectReference: {fileID: 0}
+    - target: {fileID: -3766109375663745458, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9961947
+      objectReference: {fileID: 0}
+    - target: {fileID: -3766109375663745458, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.08715578
+      objectReference: {fileID: 0}
+    - target: {fileID: -3766109375663745458, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3766109375663745458, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3766109375663745458, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -10
+      objectReference: {fileID: 0}
     - target: {fileID: -2382683877571807839, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       propertyPath: m_Icon
@@ -12292,6 +12420,16 @@ PrefabInstance:
     - target: {fileID: 2756068402857428676, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2844549479374594716, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2844549479374594716, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2923760188307984298, guid: 366e887518a52f44d94633dd85d14645,
@@ -12384,6 +12522,10 @@ PrefabInstance:
         type: 3}
       insertIndex: 3
       addedObject: {fileID: 90377562300726861}
+    - targetCorrespondingSourceObject: {fileID: 5755462465452666309, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 953611734212404823}
     - targetCorrespondingSourceObject: {fileID: -4705905250557078783, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       insertIndex: -1
@@ -12396,6 +12538,10 @@ PrefabInstance:
         type: 3}
       insertIndex: 0
       addedObject: {fileID: 4766897385617489734}
+    - targetCorrespondingSourceObject: {fileID: 5422684190991995992, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2484124977186016577}
     - targetCorrespondingSourceObject: {fileID: -3766109375663745458, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       insertIndex: -1
@@ -12565,6 +12711,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 240425195366698866}
+    - targetCorrespondingSourceObject: {fileID: 7635306940275875458, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 391789765190349955}
     - targetCorrespondingSourceObject: {fileID: -9189143813167683762, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       insertIndex: -1
@@ -12581,6 +12731,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 473342310272709722}
+    - targetCorrespondingSourceObject: {fileID: 1565962688128315704, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1642834934641033259}
     - targetCorrespondingSourceObject: {fileID: -9107833389178868572, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       insertIndex: -1
@@ -12629,6 +12783,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 699271391425178994}
+    - targetCorrespondingSourceObject: {fileID: 386150664081325740, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5017554458407822057}
     - targetCorrespondingSourceObject: {fileID: 9019435298865139684, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       insertIndex: -1
@@ -12645,6 +12803,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 292595133924816473}
+    - targetCorrespondingSourceObject: {fileID: 1894523816604693017, guid: 366e887518a52f44d94633dd85d14645,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7782322742997772350}
     - targetCorrespondingSourceObject: {fileID: -1177174385697980967, guid: 366e887518a52f44d94633dd85d14645,
         type: 3}
       insertIndex: -1
@@ -13093,7 +13255,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 2133522532766066850}
@@ -13157,9 +13319,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 0
+    Value: 0.5
+  - Key: 1
+    Value: 0.5
   AllArmor: 0
-  armorValue: 1000
+  armorValue: 800
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7024906432710323948}
@@ -13256,9 +13422,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 0
+    Value: 0.5
+  - Key: 1
+    Value: 0.5
   AllArmor: 0
-  armorValue: 1000
+  armorValue: 800
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 1120098809201984326}
@@ -13311,7 +13481,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 2502016879686120026}
@@ -13390,8 +13560,23 @@ MonoBehaviour:
     NoLog: 0
     NoDefaultVale: 0
     DefaultValue: 0
-    arr: []
+    arr:
+    - Key: 0
+      Value: 0.5
     meetReset: 0
+--- !u!114 &5017554458407822057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2667919867080193741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 259183c26a0b02042811185de07fe558, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Disposable: 0
 --- !u!4 &2870766023540338570 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 366e887518a52f44d94633dd85d14645,
@@ -13421,7 +13606,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 3001299880894604666}
@@ -13509,13 +13694,22 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
     arr:
+    - Key: 1
+      Value:
+        cilp: {fileID: 8300000, guid: 6a01212b33e861440b27daaff3f09029, type: 3}
+        SG: {fileID: 0}
+        ps: {fileID: 0}
+        trans: {fileID: 0}
+        go: []
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: a7fae22399a6e1d448dc0dd2210f1dac, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -13523,6 +13717,21 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 0}
+        ps: {fileID: 0}
+        trans: {fileID: 0}
+        go: []
+    - Key: 7
+      Value:
+        cilp: {fileID: 0}
+        SG: {fileID: 11400000, guid: b6e410a4ac03ef74b81308586fdf226d, type: 2}
+        ps: {fileID: 0}
+        trans: {fileID: 0}
+        go: []
+    - Key: 6
+      Value:
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 11400000, guid: ed6bc8f33352ece44981db62e051ca8b, type: 2}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
@@ -13530,7 +13739,7 @@ MonoBehaviour:
   rendererSet:
   - type: 0
     occasion: 3
-    material: {fileID: 2100000, guid: 5f074bfdc503c2d4cb67bb53eceffe50, type: 2}
+    material: {fileID: 2100000, guid: 0ae8152d049d00343ad900e75e92dae7, type: 2}
     colorName: 
     defaultColor: {r: 0, g: 0, b: 0, a: 0}
     switchOccasion: 0
@@ -13568,7 +13777,7 @@ MonoBehaviour:
     duration: 0.1
   - type: 0
     occasion: 4
-    material: {fileID: 2100000, guid: 5f074bfdc503c2d4cb67bb53eceffe50, type: 2}
+    material: {fileID: 2100000, guid: 0ae8152d049d00343ad900e75e92dae7, type: 2}
     colorName: _DissolveValue
     defaultColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
     switchOccasion: 2
@@ -13705,10 +13914,7 @@ MonoBehaviour:
   - {fileID: 2404798147078784647}
   - {fileID: 5697730698688815903}
   - {fileID: 2693787016881208534}
-  - {fileID: 1595765253541362014}
   - {fileID: 1185961692894614874}
-  - {fileID: 4724089831252729062}
-  - {fileID: 712701855043113918}
 --- !u!95 &6132891567951152250
 Animator:
   serializedVersion: 5
@@ -13719,7 +13925,7 @@ Animator:
   m_GameObject: {fileID: 3214676031555351856}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b09b1a0da82663c4aa3126f94debff0f, type: 2}
+  m_Controller: {fileID: 9100000, guid: 5851b5fbb59515c4cadc3f12672085d0, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -13931,8 +14137,23 @@ MonoBehaviour:
     NoLog: 0
     NoDefaultVale: 0
     DefaultValue: 0
-    arr: []
+    arr:
+    - Key: 0
+      Value: 0.5
     meetReset: 0
+--- !u!114 &1642834934641033259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3884022372318837081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 259183c26a0b02042811185de07fe558, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Disposable: 0
 --- !u!1 &4052066367161716770 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1758215729849030723, guid: 366e887518a52f44d94633dd85d14645,
@@ -13956,7 +14177,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 4052066367161716770}
@@ -14035,8 +14256,23 @@ MonoBehaviour:
     NoLog: 0
     NoDefaultVale: 0
     DefaultValue: 0
-    arr: []
+    arr:
+    - Key: 0
+      Value: 0.5
     meetReset: 0
+--- !u!114 &7782322742997772350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4185823586400991864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 259183c26a0b02042811185de07fe558, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Disposable: 0
 --- !u!4 &4329490606539251666 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2038102877984331699, guid: 366e887518a52f44d94633dd85d14645,
@@ -14205,8 +14441,23 @@ MonoBehaviour:
     NoLog: 0
     NoDefaultVale: 0
     DefaultValue: 0
-    arr: []
+    arr:
+    - Key: 0
+      Value: 0.5
     meetReset: 0
+--- !u!114 &391789765190349955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5308534725829940963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 259183c26a0b02042811185de07fe558, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Disposable: 0
 --- !u!1 &5361688880439917018 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -1570295425174015557, guid: 366e887518a52f44d94633dd85d14645,
@@ -14268,7 +14519,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 0
+    Value: 0.5
+  - Key: 1
+    Value: 0.5
   AllArmor: 0
   armorValue: 1500
   LineArmor: []
@@ -14278,6 +14533,9 @@ MonoBehaviour:
     scale: 0
   - go: {fileID: 849729126018949744}
     state: 1
+    scale: 1
+  - go: {fileID: 5466843631378313876}
+    state: 0
     scale: 1
   BleedValue: 0
   isMain: 0
@@ -14366,7 +14624,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 5630519134784521412}
@@ -14424,9 +14682,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 0
+    Value: 0.5
+  - Key: 1
+    Value: 0.5
   AllArmor: 0
-  armorValue: 1000
+  armorValue: 800
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7815243878005341204}
@@ -14500,7 +14762,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 5762678400933522352}
@@ -14598,9 +14860,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 0
+    Value: 0.5
+  - Key: 1
+    Value: 0.5
   AllArmor: 0
-  armorValue: 1000
+  armorValue: 800
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 8275744548539377825}
@@ -14792,6 +15058,12 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 2332225792682788961}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &7718190693216738361 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5422684190991995992, guid: 366e887518a52f44d94633dd85d14645,
+    type: 3}
+  m_PrefabInstance: {fileID: 2332225792682788961}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7744174673048092878 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3808516045455013713, guid: 366e887518a52f44d94633dd85d14645,
@@ -14836,7 +15108,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7744174673048092878}
@@ -14915,7 +15187,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 0
+    Value: 0.5
+  - Key: 1
+    Value: 0.5
   AllArmor: 0
   armorValue: 1500
   LineArmor: []
@@ -14925,6 +15201,9 @@ MonoBehaviour:
     scale: 0
   - go: {fileID: 8182691669816939143}
     state: 1
+    scale: 1
+  - go: {fileID: 6399607964701263803}
+    state: 0
     scale: 1
   BleedValue: 0
   isMain: 0
@@ -14958,7 +15237,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7951362289895222582}
@@ -14991,6 +15270,12 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.8, y: 0.6, z: 0.5}
   m_Center: {x: 0, y: -0.05, z: 0}
+--- !u!4 &8035048036750779812 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5755462465452666309, guid: 366e887518a52f44d94633dd85d14645,
+    type: 3}
+  m_PrefabInstance: {fileID: 2332225792682788961}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &8080042845599402884 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5800547431565165541, guid: 366e887518a52f44d94633dd85d14645,
@@ -15144,7 +15429,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 8320463654425475715}
@@ -15206,7 +15491,7 @@ MonoBehaviour:
   - Key: 1
     Value: 1
   AllArmor: 0
-  armorValue: 300
+  armorValue: 400
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 8604538270967536704}

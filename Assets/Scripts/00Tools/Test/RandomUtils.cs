@@ -69,12 +69,12 @@ using UnityEngine;
         /// </summary>
         public static bool Bool(float value = 50f)
         {
-            return Range(0, 100) < 50;
+            return Range(0, 100) < value;
         }
 
         public static bool Bool(this System.Random rand, float value = 50f)
         {
-            return rand.Range(0, 100) < 50;
+            return rand.Range(0, 100) < value;
         }
 
         /// <summary>

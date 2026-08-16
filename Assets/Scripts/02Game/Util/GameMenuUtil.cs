@@ -1,13 +1,10 @@
 #if UNITY_EDITOR
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using Core;
 using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEditor;
-using UnityEngine;
 
 public static class GameMenuUtil
 {

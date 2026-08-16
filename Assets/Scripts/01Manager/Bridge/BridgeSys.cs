@@ -23,6 +23,19 @@ public class BridgeSys : SingletonNet<BridgeSys>
         armament.ReceivePlayerSelectAemament(playerIndex, id, index);
     }
 
+    /// <summary> 发送玩家选择全队强化的消息</summary>
+    public void SendPlayerSelectTeamEnhance(int playerIndex, int id)
+    {
+        RPC(ReceivePlayerSelectTeamEnhance, RpcTarget.All, playerIndex, id);
+    }
+
+    [PunRPC]
+    /// <summary> 收到玩家选择全队强化的回调</summary>
+    public void ReceivePlayerSelectTeamEnhance(int playerIndex, int id)
+    {
+        armament.ReceivePlayerSelectTeamEnhance(playerIndex, id);
+    }
+
     /// <summary> 发送玩家准备的消息</summary>
     public void SendPlayerReady(int playerIndex, bool state)
     {

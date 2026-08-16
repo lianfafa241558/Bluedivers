@@ -12,6 +12,7 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager
     private static Dictionary<string, GameObject> goDic = new();//缓存游戏物体
     private static Dictionary<string, Sprite> sprDic = new();//缓存纹理
     public static Dictionary<int, AirdropData_SO> airdropDic;//缓存空投
+    public static Dictionary<int, Booster_SO> boostDic;//缓存全队强化
     public static Dictionary<string, NoticeTree_SO> voiceDic;//缓存台词
     public static Dictionary<DamageTypeEnum, AboStateData_SO> aboStateDic;//缓存异常状态
 
@@ -20,6 +21,7 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager
     {
         Awake();
         airdropDic = LoadObjects<AirdropData_SO>("GameData/Airdrop").ToDictionary(item => item.ID);
+        boostDic = LoadObjects<Booster_SO>("GameData/Booster").ToDictionary(item => item.ID);
         var list = LoadObjects<NoticeTree_SO>("GameData/NoticeTree").Where(item=>item.UseResLoad);
         voiceDic = new();
         foreach (var role in list)

@@ -114,6 +114,7 @@ namespace FPSGame.AI
         public void TryAtack(Turret turret)
         {
             if (!turret.weapon) return;
+            if (!turret.CanFireAt(DetectionTargetPos)) return;
             float dis = Vector3.Distance(turret.barrel.position, DetectionTargetPos);
             if (dis <= turret.weapon.CurrentWeaponExtremeRange)
             {

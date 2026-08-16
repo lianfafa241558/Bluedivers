@@ -196,9 +196,17 @@ namespace Unity.FPS.AI
 
         protected void TriggerFX(OccasionTypeEnum type,Vector3 pos,Quaternion roat,Transform parent,bool ignoreAudio =false) {
             if(fxDic.TryGet(type, out var value)){
-                if (!ignoreAudio && value.cilp.IsValid())
+                // 有音效组用音效组，否则用单个音频剪辑
+                if (!ignoreAudio && (value.SG || value.cilp.IsValid()))
                 {
-                    AudioSvc.PlaySound(new(value.cilp, pos,range:40, group: AudioGroups.Enemy));
+                    if (value.SG)
+                    {
+                        AudioSvc.PlaySound(value.SG.Get(pos));
+                    }
+                    else
+                    {
+                        AudioSvc.PlaySound(new(value.cilp, pos,range:80, group: AudioGroups.Enemy));
+                    }
                 }
                 if (value.ps.IsValid())
                 {
@@ -225,6 +233,7 @@ namespace Unity.FPS.AI
         [System.Serializable]
         protected class FxSet {
             public AudioClip cilp;
+            public SoundGroup_SO SG;
             public ParticleSystem ps;
             public GameObject trans;//创建的物体
             public List<ArmorBreakEffect> go;

@@ -1025,6 +1025,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
@@ -1157,6 +1158,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
@@ -1356,6 +1358,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
@@ -1456,50 +1459,63 @@ MonoBehaviour:
     barrel: {fileID: 5421953814291031245}
     weapon: {fileID: 1106928432209728371}
     aimSharpness: 30
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   - type: 0
     chassis: {fileID: 3074188252844256474}
     barrel: {fileID: 3074188252844256474}
     weapon: {fileID: 4847995491742605522}
     aimSharpness: 30
+    autoRotateSpeed: 0
     detectionFireDelay: 1
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 30
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   - type: 0
     chassis: {fileID: 8044811307324243245}
     barrel: {fileID: 8044811307324243245}
     weapon: {fileID: 4847995492296334197}
     aimSharpness: 30
+    autoRotateSpeed: 0
     detectionFireDelay: 1
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 30
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   - type: 1
     chassis: {fileID: 7606481591237733862}
     barrel: {fileID: 0}
     weapon: {fileID: 0}
     aimSharpness: 30
+    autoRotateSpeed: 0
     detectionFireDelay: 1
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   AttackStop: 0
+  WeakPointHitStunDuration: 0.3
   AttackStopDistanceRatio: 0.5
   MaintainMaxDis: 0
   PatrolSpeed: 2
@@ -1520,8 +1536,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u51EF\u6492\u7A81\u51FB\u5175"
-  Id: robot00
+  ShowName: "\u6B4C\u5229\u4E9A"
+  Id: Goliath
   Portrait: {fileID: 21300000, guid: 2ace2a1e45e5a9d4a9fd2b3362f1abf0, type: 3}
   ExtraPortrait: {fileID: 21300000, guid: 2ace2a1e45e5a9d4a9fd2b3362f1abf0, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1549,7 +1565,7 @@ NavMeshAgent:
   m_Radius: 2
   m_Speed: 3.5
   m_Acceleration: 8
-  avoidancePriority: 50
+  avoidancePriority: 20
   m_AngularSpeed: 15
   m_StoppingDistance: 0.2
   m_AutoTraverseOffMeshLink: 1
@@ -1597,6 +1613,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -1604,12 +1621,14 @@ MonoBehaviour:
     - Key: 5
       Value:
         cilp: {fileID: 8300000, guid: 9d859b9617096434ba7f3b7fd892e21b, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 1c69692918425f04dac0a012fde1c626, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -1617,6 +1636,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: e88f59f2b669bc94e9bcfa62250ab68d, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -1624,6 +1644,7 @@ MonoBehaviour:
     - Key: 1
       Value:
         cilp: {fileID: 8300000, guid: f4b83a7d24c9cca4d9096abb34ff8f6e, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
@@ -1908,6 +1929,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}

@@ -10,10 +10,12 @@ using PEMaths;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
+using static UnityEditor.Progress;
 
 public class BattleManager : Singleton<BattleManager>
 {
     public bool IsStartBattle;
+    public bool IsNormal;
 
     public ActorsManager ACCont;
     public AirdropController ADCont;
@@ -31,11 +33,15 @@ public class BattleManager : Singleton<BattleManager>
 
     public System.Random BattleRandom { get;private set; }
 
+    /// <summary>本局选择的全队强化类型（null 表示未选择）</summary>
+    private BoosterType[] _activeTeamEnhance;
+
     #region 初始化
 
     public static void Creat(bool isNormal)
     {
         var manager = new GameObject("BattleManager").AddComponent<BattleManager>();
+        manager.IsNormal = isNormal;
         if (isNormal)
         {
             manager.StartCoroutine(manager.Init());
@@ -55,6 +61,7 @@ public class BattleManager : Singleton<BattleManager>
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
         BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
+        ApplyTeamEnhance();
         TerrainUtils.Main = mapRoot.terrain;
         mapRoot.Init(false);
         
@@ -78,9 +85,10 @@ public class BattleManager : Singleton<BattleManager>
         WaveCont.transform.SetParent(transform);
         PatrolCont = new GameObject("PatrolCont").AddComponent<PatrolContriller>();
         PatrolCont.transform.SetParent(transform);
-        WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
+        //WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
         RequestManager = new GameObject("RequestManager").AddComponent<PathRequestManager>();
         RequestManager.transform.SetParent(transform);
+        
         Debug.Log("完成主要内容初始?");
         yield return null;
 
@@ -100,6 +108,7 @@ public class BattleManager : Singleton<BattleManager>
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
         BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
+        ApplyTeamEnhance();
 
         yield return InitTerrain();
         Debug.Log($"地形耗时: {sw.ElapsedMilliseconds} ms");
@@ -129,6 +138,7 @@ public class BattleManager : Singleton<BattleManager>
         WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
         RequestManager = new GameObject("RequestManager").AddComponent<PathRequestManager>();
         RequestManager.transform.SetParent(transform);
+        
         Debug.Log("完成主要内容初始?");
         yield return null;
 
@@ -147,7 +157,8 @@ public class BattleManager : Singleton<BattleManager>
         Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
         mapRoot = transMapRoot.GetComponent<MapRoot>();
 
-        var terrain = TerrainUtils.Main = mapRoot.terrain;
+        //var terrain = TerrainUtils.Main = mapRoot.terrain;
+        var terrain = mapRoot.terrain;
         var cfg = TaskManager.Instance.nowTask;
         var terrainData = terrain.terrainData;
 
@@ -162,7 +173,7 @@ public class BattleManager : Singleton<BattleManager>
         terrainData.heightmapResolution = mapRes + 1;
         terrainData.alphamapResolution = mapRes;
         // 分辨率变更后重新设置Main，同步静态缓存
-        TerrainUtils.Main = terrain;
+        //TerrainUtils.Main = terrain;
         //不能调换顺序，会出问题
         terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
         // size.y 变更后刷新 terrainHeight 缓存，否则 AdditionTerrain 高度计算使用旧值
@@ -203,7 +214,7 @@ public class BattleManager : Singleton<BattleManager>
         BattleEventSub.OnEnemyDead += OnEnemyDeath;
         GlobalEventSub.OnPlayerCreate += OnPlayerCreate;
         BattleEventSub.OnPlayerDead += OnPlayerDeath;
-        GlobalEventSub.OnOOPartCollect += OOPartCollect;
+        //GlobalEventSub.OnOOPartCollect += OOPartCollect;
         GlobalEventSub.OnDaySwitch += OnDatSwitch;
     }
     private void OnDestroy()
@@ -213,7 +224,7 @@ public class BattleManager : Singleton<BattleManager>
         BattleEventSub.OnEnemyDead -= OnEnemyDeath;
         GlobalEventSub.OnPlayerCreate -= OnPlayerCreate;
         BattleEventSub.OnPlayerDead -= OnPlayerDeath;
-        GlobalEventSub.OnOOPartCollect -= OOPartCollect;
+        //GlobalEventSub.OnOOPartCollect -= OOPartCollect;
         GlobalEventSub.OnDaySwitch -= OnDatSwitch;
         _initQueue.Clear();
     }
@@ -310,19 +321,37 @@ public class BattleManager : Singleton<BattleManager>
         GameRoot.CreateTimer(() => {
             // 先切到 UI 状态，让 PlayerWnd/SubtitleWnd 的 Update 不再执行，避免场景卸载期间 NRE
             WndManager.WindowState = WindowStateEnum.UI;
-            ResSvc.Instance.AsyncLoadScene("GameEnd", () => {
-                
-                GameRoot.GameState = GameStateEnum.GameEnd;
-                WndManager.WindowState = WindowStateEnum.UI;
-            }, false);
+            if (IsNormal)
+            {
+                ResSvc.Instance.AsyncLoadScene("GameEnd", () => {
+
+                    GameRoot.GameState = GameStateEnum.GameEnd;
+                    WndManager.WindowState = WindowStateEnum.UI;
+                }, false);
+            }
+            else
+            {
+                ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
+                    GameRoot.GameState = GameStateEnum.Bridge;
+                    WndManager.WindowState = WindowStateEnum.Game;
+                });
+            }
         }, delay);
     }
 
-    private void OOPartCollect(GameObject user, OOPartEnum type, int count)
+    //private void OOPartCollect(GameObject user, OOPartEnum type, int count)
+    //{
+        // 采集事件：统计采集行为（采集动作），任务采集量由 Kei 交付时 SubmitOOPart 累加
+    //    if (user && user.TryGetComponent(out PlayerController player))
+    //}
+
+    /// <summary>欧帕兹提交给凯伊(Kei)：累加任务采集量</summary>
+    public void SubmitOOPart(GameObject user, OOPartEnum type, int count)
     {
         var dic = TaskManager.Instance.nowTask.collectProperty;
-        if (!dic.TryAdd(type, count)) dic[type]+= count;
-        if (user&&user.TryGetComponent(out PlayerController player)) AddBattleDataItem(player.PlayerIndex, "采集欧帕兹数量");
+        if (!dic.TryAdd(type, count)) dic[type] += count;
+        AddBattleDataItem(user.GetComponent<PlayerController>().PlayerIndex, "采集欧帕兹数量");
+        GlobalEventSub.KeiSubmit(type, count);
     }
     private void OnDatSwitch(bool isNoon)
     {
@@ -331,6 +360,22 @@ public class BattleManager : Singleton<BattleManager>
         ADCont.Authorize(17, !isNoon);
         //应该加语音播报
     }
+
+    /// <summary>
+    /// 应用本局选择的全队强化效果。
+    /// 从 RoomManager.Self.teamEnhance 读取 ID，映射到对应强化类型并应用到各系统。
+    /// </summary>
+    private void ApplyTeamEnhance()
+    {
+        _activeTeamEnhance = RoomManager.Instance.players.Where(item => item.boosterId > 0).Select(item =>ResSvc.boostDic[item.boosterId].type).ToArray();
+       
+    }
+
+    public bool HaveBooster(BoosterType type)
+    {
+       return _activeTeamEnhance.Contains(type);
+    }
+
     #endregion
 }
 

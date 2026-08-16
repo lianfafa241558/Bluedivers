@@ -27,7 +27,7 @@ public abstract class Window : MonoBehaviour
     /// <param name="isActive">是否显示</param>
     public virtual void SetWndState(bool isActive = true)
     {
-        if (gameObject.activeSelf != isActive)
+        if (gameObject.activeSelf != isActive||(isActive&&!firstInit))
         {
             gameObject.SetActive(isActive);
             GlobalEventSub.WndSwitch(gameObject.name, isActive);

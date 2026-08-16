@@ -134,6 +134,64 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 0
+--- !u!114 &-3503060312454667736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Aris_Uninstall
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: fc5f78ef751d8f8468f34e73ca103b71, type: 3}
+    subtitle: "\u4E22\u4E0B\u88C5\u5907"
+  - audioClip: {fileID: 8300000, guid: 8848ab31fe40b5845bd1c95d3dcc34c4, type: 3}
+    subtitle: "\u4E22\u5F03\u4E86\u7269\u54C1"
+  - audioClip: {fileID: 8300000, guid: a562632ae37762a4398908c1d577c8dc, type: 3}
+    subtitle: "\u653E\u4E0B\u7269\u54C1"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
+--- !u!114 &-3248342274755610678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_FinalMaga
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 61633cb4059e1c34f99a81e5fb8096a8, type: 3}
+    subtitle: "\u6700\u540E\u4E00\u7EC4\u5F39\u836F\u3002"
+  - audioClip: {fileID: 8300000, guid: 9acf47bc9a905034f9ec2c33daa26c20, type: 3}
+    subtitle: "\u5F39\u836F\u5373\u5C06\u8017\u5C3D\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &-2291838349569425844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -250,6 +308,34 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &-425794308427468785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Reload
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: fcd2228af2053b346aff51773a438296, type: 3}
+    subtitle: "\u6B63\u5728\u6362\u5F39\u3002"
+  - audioClip: {fileID: 8300000, guid: 4d9c3f320e0a6d34b91330e7afcbfe8c, type: 3}
+    subtitle: "\u8BF7\u6C42\u63A9\u62A4\u6362\u5F39\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -308,6 +394,8 @@ MonoBehaviour:
       Value: {fileID: -1191394592291570121}
     - Key: 5
       Value: {fileID: -8301432212155486874}
+    - Key: 6
+      Value: {fileID: 7924031647132274471}
     - Key: 7
       Value: {fileID: -1340957725084711019}
     - Key: 10
@@ -332,12 +420,50 @@ MonoBehaviour:
       Value: {fileID: -5054879524940723478}
     - Key: 13
       Value: {fileID: 4615617089841119283}
+    - Key: 14
+      Value: {fileID: 651868360274807468}
     - Key: 12
       Value: {fileID: 8119503840800103084}
-    - Key: 6
-      Value: {fileID: 7924031647132274471}
-    meetReset: 0
+    - Key: 19
+      Value: {fileID: -3503060312454667736}
+    - Key: 15
+      Value: {fileID: -425794308427468785}
+    - Key: 20
+      Value: {fileID: -3248342274755610678}
+    - Key: 18
+      Value: {fileID: 960297874653962149}
+    meetReset: 1
   DefaultAirdropIDs: 2c010000
+--- !u!114 &651868360274807468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Aris_CollOOPartsFail
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: 0d574362a82f6074bb3af99cae5496a6, type: 3}
+    subtitle: "\u80CC\u5305\u5DF2\u6EE1"
+  - audioClip: {fileID: 8300000, guid: fb17730588ad1744c89bfac262069e80, type: 3}
+    subtitle: "\u6211\u7684\u80CC\u5305\u6EE1\u4E86"
+  - audioClip: {fileID: 8300000, guid: da64a524bf7b4534b92bb0abea1ae2a8, type: 3}
+    subtitle: "\u65E0\u6CD5\u62FE\u53D6\u6B27\u5E15\u5179"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &725341724854948546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -392,6 +518,36 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 8
+--- !u!114 &960297874653962149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_Install
+  m_EditorClassIdentifier: 
+  groupName: 
+  clips:
+  - audioClip: {fileID: 8300000, guid: f177acefeee7c37458aaf509d5357cba, type: 3}
+    subtitle: "\u88C5\u5907\u7269\u54C1\u3002"
+  - audioClip: {fileID: 8300000, guid: f7f22f884e3b2ce43a1d0c9a38b118d9, type: 3}
+    subtitle: "\u6361\u8D77\u80CC\u5305\u3002"
+  - audioClip: {fileID: 8300000, guid: b30cb04b2638446418a33975cbb11e6c, type: 3}
+    subtitle: "\u88C5\u5907\u80CC\u5305\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 0
 --- !u!114 &1233894546374839440
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -30,7 +30,9 @@ namespace Unity.FPS.AI
         [SerializeField]
         GameObject callPoint;
         [SerializeField]
-        List<AudioClip> moveCilps;
+        SoundGroup_SO moveCilps;
+        [SerializeField]
+        SoundGroup_SO stopCilps;
 
         MpbController mpb;
 
@@ -73,7 +75,7 @@ namespace Unity.FPS.AI
             }
 
             m_callInstance =VFXManager.Creat(callPoint, point);
-            AudioSvc.PlaySound(new("Kei/MollyBeaconPlace", AudioGroups.General, 0.5f));
+            AudioSvc.PlaySound(new("Student/Kei/MollyBeaconPlace", AudioGroups.General, 0.5f));
 
             if (Vector3.Distance(m_Target,point)>1)
             {
@@ -127,12 +129,14 @@ namespace Unity.FPS.AI
                 case AIState.Move:
                     if (!m_audioSource.isPlaying)
                     {
-                        m_audioSource.clip = moveCilps.RandomTake();
+                        m_audioSource.clip = moveCilps.Get().Clip;
                         m_audioSource.Play();
                     }
                     if (Vector3.Distance(transform.position, m_Target) < 1)
                     {
                         AiState = AIState.Wait;
+                        AudioSvc.PlaySound(stopCilps.Get(transform.position));
+
                         mpb.Set("_Expression", 1).Apply();
                         if(m_callInstance) m_callInstance.GetComponent<LimitedLife>().allowRelease = true;
 
@@ -201,7 +205,7 @@ namespace Unity.FPS.AI
                     if (AimTargrt())
                     {
                         turrets.ForEach(item => {
-                            if (item.IsLockTarget(TargetPosition)) m_Controller.TryAtack(item.weapon);
+                            if (item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition)) m_Controller.TryAtack(item.weapon);
                         });
                     }
 

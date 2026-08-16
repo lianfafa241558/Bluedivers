@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5294146096679048695}
   - component: {fileID: 5955930136657763294}
   - component: {fileID: 5466324106317365425}
-  m_Layer: 6
+  m_Layer: 2
   m_Name: cir1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4898,7 +4898,7 @@ GameObject:
   m_Component:
   - component: {fileID: 715442211118711722}
   - component: {fileID: 3237471398529446737}
-  m_Layer: 6
+  m_Layer: 2
   m_Name: Blink
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4943,6 +4943,9 @@ MonoBehaviour:
   allowSeeRelease: 0
   allowRelease: 0
   useDebug: 0
+  OnEnd:
+    m_PersistentCalls:
+      m_Calls: []
   showScale: 0
 --- !u!1 &2717789869141549924
 GameObject:
@@ -5001,7 +5004,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.5, y: 0.7, z: 0.4}
+  m_Size: {x: 0.7, y: 0.7, z: 0.5}
   m_Center: {x: 0, y: 1.1, z: -0.25}
 --- !u!82 &8733004869774225593
 AudioSource:
@@ -5122,7 +5125,7 @@ MonoBehaviour:
   inOperate: 0
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
-  audio: {fileID: 0}
+  _audioSource: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -5162,7 +5165,7 @@ GameObject:
   - component: {fileID: 3058727188996724014}
   - component: {fileID: 3298275266451006664}
   - component: {fileID: 57272205500800534}
-  m_Layer: 6
+  m_Layer: 2
   m_Name: cir2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10050,7 +10053,7 @@ GameObject:
   - component: {fileID: 5324388681979619869}
   - component: {fileID: 5057877190657746308}
   - component: {fileID: 4288340293863500329}
-  m_Layer: 6
+  m_Layer: 2
   m_Name: flash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14880,7 +14883,7 @@ GameObject:
   - component: {fileID: 2656123463482099733}
   - component: {fileID: 4024831770675140451}
   - component: {fileID: 308154522586973850}
-  m_Layer: 6
+  m_Layer: 2
   m_Name: cir2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19768,7 +19771,7 @@ GameObject:
   - component: {fileID: 4293831224628619701}
   - component: {fileID: 8390726630336405262}
   - component: {fileID: 2090293212529000718}
-  m_Layer: 6
+  m_Layer: 2
   m_Name: Point Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19937,6 +19940,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: BlinkBag
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d94abccd7e1f7d24d99adf3d725193d8,
+        type: 3}
+      propertyPath: m_Layer
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

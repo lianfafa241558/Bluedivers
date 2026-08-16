@@ -101,6 +101,13 @@ public static class GlobalEventSub
 
 
     /// <summary>
+    /// 欧帕兹已提交给凯伊(Kei)（参数：类型，数量）。用于已提交列表 UI 展示。
+    /// </summary>
+    public static event Action<OOPartEnum, int> OnKeiSubmit;
+    public static void KeiSubmit(OOPartEnum type, int count) => OnKeiSubmit?.Invoke(type, count);
+
+
+    /// <summary>
     /// 放弃思考，直接让玩家喊话
     /// </summary>
     public static event Action<GameObject, SpeechTypeEnum> OnPlayMeetSpeech;

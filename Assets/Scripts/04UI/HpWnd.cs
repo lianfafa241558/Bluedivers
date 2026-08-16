@@ -93,7 +93,8 @@ public class HpWnd : Window
         //var enemy = go.GetComponent<EnemyController>();
         if (go.HasFlag(ActorFlag.Boss) && dic.TryGetValue(go.gameObject, out var item))
         {
-            Tool.Destroy(item);
+            item.End();
+            Tool.Destroy(item.gameObject,1);
             dic.Remove(go.gameObject);
         }
     }

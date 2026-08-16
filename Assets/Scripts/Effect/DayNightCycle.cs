@@ -68,7 +68,7 @@ public class DayNightCycle : MonoBehaviour
 
     IEnumerator SetDayState()
     {
-        while (GameRoot.GameState != Core.GameStateEnum.Game && GameRoot.GameState != Core.GameStateEnum.Bridge)
+        while (!FpsHelper.IsMainStage())
         {
             yield return null;
         }

@@ -10,6 +10,7 @@ namespace Unity.FPS.Gameplay
     /// <summary>
     /// 标准子弹
     /// </summary>
+    [AddComponentMenu("子弹/标准子弹", 30)]
     public class ProjectileStandard : ProjectileBase
     {
 

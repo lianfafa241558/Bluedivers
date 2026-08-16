@@ -161,7 +161,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
 
     protected virtual void LateUpdate()
     {
-        if (GameRoot.GameState != GameStateEnum.Game && GameRoot.GameState != GameStateEnum.Ready && GameRoot.GameState != GameStateEnum.Bridge) return;
+        if (!FpsHelper.IsMainStage()) return;
 
         var targetVelocity = CharacterVelocity;
         targetVelocity.y = 0;

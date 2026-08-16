@@ -168,6 +168,7 @@ public enum InputState
     [InspectorName("小地图")] MiniMap,
 
     [InspectorName("切换视角")] Perspective,
+    [InspectorName("使用背包")] UseBag,
 }
 
 #if UNITY_EDITOR

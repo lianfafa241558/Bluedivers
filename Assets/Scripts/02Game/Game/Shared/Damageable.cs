@@ -241,6 +241,11 @@ namespace Unity.FPS.Game
                 //Debug.LogWarning("友军减伤"+ damage+" "+ damage * SensibilityToSelfdamage);
                 damage *= (PEInt)SensibilityToSelfdamage;
             }
+            // 全队强化"生命力强化"：玩家受到的伤害降低 10%
+            if (BattleManager.Instance.HaveBooster(BoosterType.Vitality) && Actor && (Actor.Type== UnitTypeEnum.Player|| Actor.Type == UnitTypeEnum.Friend))
+            {
+                damage *= (PEInt)0.9f;
+            }
             if (isWeakness)
             {
                 damage *= (1+ WeaknessBonus);
@@ -261,7 +266,7 @@ namespace Unity.FPS.Game
                 }
             }
             
-            Health.TakeDamage(finalDamageGroups, noSource, damageSource, ClosestCollider(pos), pos,true);
+            Health.TakeDamage(finalDamageGroups, noSource, damageSource, ClosestCollider(pos), pos,true,isWeakness);
             
         }
 

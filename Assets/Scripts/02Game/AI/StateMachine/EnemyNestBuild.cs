@@ -14,15 +14,18 @@ namespace Unity.FPS.AI
             Active,
             Death,
         }
-
+        [SerializeField]
         [InspectorName("创建点")]
-        public Transform creatPoint;
-
+        private Transform creatPoint;
+        [SerializeField]
+        [InspectorName("创建音效")]
+        private AudioClip creatCilp;
+        [SerializeField]
         [InspectorName("生产单位")]
-        public List<SKVP<GameObject,int>> creatData;
-
+        private List<SKVP<GameObject,int>> creatData;
+        [SerializeField]
         [InspectorName("脱战时间")]
-        public int damagedTime=12;
+        private int damagedTime=12;
         [SerializeField]
         [DisplayField(true,false)]
         private float lastDamagedTime = Mathf.NegativeInfinity, creatTime= Mathf.Infinity;
@@ -42,6 +45,7 @@ namespace Unity.FPS.AI
                         creatTime = Time.time+ item.Value;
                         var go = Instantiate(item.Key, creatPoint.position + creatPoint.forward, creatPoint.rotation, transform.parent);
                         go.GetComponent<EnemyController>().SetNavDestination(GetComponent<EnemyController>().Target.Pos);
+                        AudioSvc.PlaySound(new(creatCilp,transform.position,40, Core.AudioGroups.Enemy));
                     }
                     break;
             }

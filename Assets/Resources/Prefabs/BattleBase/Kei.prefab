@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 4114667942546815185}
   - component: {fileID: 570710056}
   - component: {fileID: 570710057}
+  - component: {fileID: 1205380000088346360}
   m_Layer: 0
   m_Name: Kei
   m_TagString: Untagged
@@ -175,6 +176,33 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 2
+--- !u!114 &1205380000088346360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5512607945900794717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 869608d9b685d874dba54c2276104550, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  meetTime: 2
+  audioPress: {fileID: 0}
+  audioOper: {fileID: 0}
+  audioClose: {fileID: 0}
+  flags: 0
+  pressTime: 0
+  canOperate: 1
+  inOperate: 0
+  desc: "\u63D0\u4EA4\u6B27\u5E15\u5179"
+  anim: {fileID: 0}
+  _audioSource: {fileID: 0}
+  lastOperatetime: 0
+  owner: {fileID: 0}
+  time: 0
+  count: 0
 --- !u!1001 &7766046033655693533
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -1,6 +1,6 @@
 ---
 name: bluedivers-unity
-description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Bluedivers 项目的 C# 脚本编写、Unity 组件开发、模块架构设计、Photon PUN 网络功能、ScriptableObject 数据定义、UI 窗口开发等任务时使用。提供项目特定的架构约定、命名规范、模块依赖关系和常见开发工作流。当用户在 Bluedivers 项目中编写或修改 Unity C# 代码、新增脚本或模块、处理 Photon 网络逻辑时应触发此 skill。
+description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Bluedivers 项目的 C# 脚本编写、Unity 组件开发、模块架构设计、ScriptableObject 数据定义、UI 窗口开发等任务时使用。提供项目特定的架构约定、命名规范、模块依赖关系、游戏系统全景与常见开发工作流。当用户在 Bluedivers 项目中编写或修改 Unity C# 代码、新增脚本或模块时触发。
 ---
 
 # Bluedivers Unity 项目开发指南
@@ -9,10 +9,20 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 
 - **Unity**: 2022.3.62f2c1（2022 LTS），C# 9.0 / .NET Standard 2.1
 - **渲染管线**: URP 14.0.12
-- **网络**: Photon PUN（非 Unity Netcode / Mirror）
+- **网络**: Photon PUN 为旧方案（已弃用）；KCPNet 自研网络库尚未完成，当前为**单机版 demo**，暂不做联机
 - **关键依赖**: TextMeshPro 3.0.9、Navigation 1.1.6、Timeline 1.7.7、ugui
-- **游戏类型**: 3D FPS（命名空间含 `FpsGame`）
+- **游戏类型**: 单机版 PvE 第三人称/第一人称**射击割草** demo（对标《绝地潜兵2》+《深岩银河》融合）
+- **逻辑数学**: `PEMaths`（Photon Engine 固定点数库，PEInt/PEVector），用于逻辑层确定性计算
 - **编码规范**: 见 `.codebuddy/rules/UnityCSharp编码规范.md`（自动加载），编码时必须遵循
+
+## 项目定位
+
+以《绝地潜兵2》为蓝本、融合《深岩银河》元素的**单机版 PvE 射击割草** demo。
+- **绝地潜兵元素**：战备空投/轨道打击/飞鹰空袭/SOS呼叫/探照灯（**全类别已实现**）、主/副/特殊任务、战略大地图（`MapData_SO` + `SelectMapWnd` + `ArchivesData_SO`）、平坦地形生成、撤离、欧帕兹收集、倒地呼叫队友、NPC 语音播报、昼夜循环夜间敌袭
+- **深岩银河元素**：撤离机制（所有人上船才起飞，不放弃任何人）、采矿采集、巢穴破坏任务、波次防守
+- 代码大量沿用 Unity 官方 FPS Sample 命名空间（`Unity.FPS.Game` 等），由 FPS Sample 二次开发而来
+
+完整系统全景、已实现/未实现对标、架构改进建议见 `references/module-guide.md` 末尾的「项目全景总结」章节。
 
 ## 架构约定
 
@@ -97,12 +107,29 @@ Inspector 字段暴露示例：
 2. 通过 `CoroutineSvc.StartCoroutine` 或 `MonoBehaviour.StartCoroutine` 启动。
 
 
-## Photon PUN 约定
+## 网络层（暂不做联机）
 
-- Photon 相关脚本位于 `Assets/Photon/`，使用独立的 asmdef。
-- 运行时网络同步逻辑与本地逻辑解耦，便于离线测试。
-- RPC 方法用 `[PunRPC]` 标记，方法名使用帕斯卡命名法。
-- 跨网络同步字段需评估带宽，避免每帧同步大对象，优先事件驱动。
+> 当前为**单机版 demo**，暂不做联机。Photon PUN 已弃用，KCPNet 自研网络库尚未完成。目标网络架构：轻服务器（仅房间列表）+ 本地存储。
+
+### 现有网络基础设施（保留备用）
+- `00Tools/SingletonNet.cs` — 网络单例基类（旧封装 `MonoBehaviourPunCallbacks` 的 RPC 重载）
+- `01Manager/Global/NetManager.cs` — 继承 `SingletonNet<NetManager>`，驱动 `I_Login` 固定逻辑帧 `LogicTick`
+- `00Tools/LogicBehaviour.cs` — 固定逻辑帧基类
+- `PEMaths`（PEInt/PEVector 定点数）— 逻辑层确定性计算，避免浮点同步不一致
+
+### 业务代码中的 Photon 依赖点（未来迁移时参考）
+| 文件 | 依赖情况 |
+|------|---------|
+| `00Tools/SingletonNet.cs` | RPC 封装基类 |
+| `01Manager/Global/NetManager.cs` | 继承 SingletonNet |
+| `01Manager/Bridge/BridgeSys.cs` | `SendPlayerSelectArmament`/`SendPlayerReady` 两个 RPC |
+| `04UI/BridgeWnd.cs` | 仅 using Photon，无实际调用 |
+| `04UI/ArmamentWnd.cs` | 仅 using Photon，无实际调用 |
+
+### 未来网络开发约定
+- 战斗逻辑（AI 出生、随机种子、伤害）走**确定性逻辑帧**，用确定性随机源。
+- `I_Actor`/`I_Entity` 已有 `LogicPos`/`Logic3Pos` 定点坐标，可直接作为同步载体。
+- 网络传输只走定点数/ID，Unity 类型（GameObject/Vector3）仅在表现层恢复。
 
 ## 性能注意事项
 
@@ -113,7 +140,9 @@ Inspector 字段暴露示例：
 
 ## 已知问题与避坑
 
-- **运行时误引 UnityEditor**：`00Core/ObjectPool.cs`（`using static UnityEditor.Progress;`）和 `02Data/` 下多个 `_SO` 脚本存在 `using UnityEditor`，会导致非 Editor 平台构建失败。新增代码严禁此问题，存量代码在接触时优先清理。
+- ~~运行时误引 UnityEditor~~：已于 2026-08-07 修复（`EnemyMobile.cs`、`RoleData_SO.cs`、`SoundGroup_SO.cs`、`TaskManager.cs` 添加 `#if UNITY_EDITOR` 守卫）。
+- **SingletonNet 的 RPC 封装有误**：`RPC(nameof(action), ...)` 中 `nameof(action)` 取到的是局部参数名 `"action"` 而非委托目标方法名（第 63 行才用 `action.Method.Name`），说明该 RPC 封装未真正跑通。
+- **确定性随机源未统一收口**：`BattleRandom`（`BattleManager`）与 `WaveManager` 各自的 `System.Random` 并存。将来做联机时需统一收口到单一确定性随机源。
 - **接口命名不统一**：历史代码中少量接口使用标准 `I_` 前缀，新接口必须使用 `I` 前缀。
 - **字段暴露方式不统一**：存量 `public` 字段较多，新代码优先 `[SerializeField] private`，存量逐步迁移。
 - **枚举后缀不统一**：部分枚举带 `Enum` 后缀（`GameStateEnum`），新代码加后缀。
@@ -130,10 +159,43 @@ Inspector 字段暴露示例：
 | `CoroutineSvc` | `01Manager/Global/` | 协程管理服务 |
 | `ArchiveSvc` | `01Manager/Global/` | 存档服务 |
 | `InputManager` | `01Manager/Global/` | 输入管理 |
-| `BattleManager` | `01Manager/Battle/` | 战斗流程管理 |
+| `BattleManager` | `01Manager/Battle/` | 战斗流程管理（含 `BattleRandom` 确定性随机源） |
 | `MissionController` | `01Manager/Battle/` | 任务系统管理 |
 | `TickBehaviour` / `I_TickClass` | `00Core/Timer/` | 自定义 Tick 系统 |
+| `LogicTimerSystem` / `ViewTimerSystem` | `00Core/Timer/` | 双层定时器（固定逻辑帧 20ms + 表现帧） |
 | `FsmSystem` / `IState<T>` | `00Core/` | 泛型状态机框架 |
 | `CustomAttribute` | `00Core/Attribute/` | 项目自定义特性 |
+| `LogicBehaviour` / `I_Login` | `00Tools/` | 固定逻辑帧基类（帧同步基础） |
+| `SingletonNet` / `NetManager` | `00Tools/` → `01Manager/Global/` | 网络单例 + 逻辑帧驱动（当前单机版，暂不联机） |
+| `WaveManager` | `01Manager/Bridge/` | 波次刷怪调度（已拆分为 `WaveManager.cs` + `ZergWave.cs` + `RobotWave.cs`） |
+| `UnitQueryGrid` | `02Game/` | 空间网格优化单位检索（割草大数量敌人） |
+| `PEMaths` | `Assets/Scripts/Lib/PEMaths.xml` | 固定点数数学库（PEInt/PEVector），逻辑层确定性计算 |
+| `GenerateNoiseTerrain` | `08Map/` | fBm 噪声地形生成（分块提交、树木植被、NavMesh） |
+| `GameAttribute` / `UnitAttributeFactory` | `02Game/` | 属性系统：Modifier 叠加、双属性链（直接/爆炸）、OnFinalValueChange |
+| `WeaponController` 体系 | `02Game/Game/Shared/Weapon/` | 30+ 武器脚本：弹匣/过热/蓄力/充能、多种伤害类型、武器升级模块 |
+| `SOPickerPopup<T>` | `Assets/Editor/SOPickerPopup.cs` | **泛用 SO 选择弹窗框架**（PopupWindowContent）。做"可搜索的列表选择器"时**优先复用**，不要再自造：数据由委托注入（icon/name/type/color/frame），`confirmMode` 控制"单击即选"或"确定/取消确认"。用法见下 |
+
+### 复用约定：SO 选择弹窗（SOPickerPopup）
+
+需要"从一堆数据里选一个并回调"的编辑器 UI 时（如给某字段选 SO/预制体、从子资源里挑一个），**直接复用** `SOPickerPopup<T>`（`Assets/Editor/SOPickerPopup.cs`，全局命名空间），不要重复实现搜索列表弹窗。
+
+- 注入数据 + 显示委托，用 `PopupWindow.Show(rect, ...)` 锚定在某控件上弹出：
+  ```csharp
+  PopupWindow.Show(activatorRect, new SOPickerPopup<MySO>(
+      items,                                  // List<MySO>
+      so => { /* 选中回调 */ },
+      so => so.icon,                          // 图标(Func<T,Sprite>)，可 null
+      so => so.name,                          // 名称
+      so => so.typeName,                      // 次级类型行，可 null(不显示)
+      getTypeColor: so => so.color,           // 可选：类型文字颜色
+      getFrame: so => (path, color),          // 可选：图标边框
+      confirmMode: true                       // true=单击选中+确定/取消确认; 默认 false=单击即回调
+  ));
+  ```
+- `confirmMode=false`（默认）：单击条目立即回调并关闭（武器升级/模组选择器用此模式）。
+- `confirmMode=true`：单击仅选中高亮，双击或"确定"确认，可"取消"（RoleData_SO.speechGroups 的语音子资源选择用此模式）。
+- 过滤/子资源筛选由调用方注入数据前完成（如 `AssetDatabase.LoadAllAssetsAtPath(path).OfType<SoundGroup_SO>()`），框架只负责展示与搜索。
+
+现有调用方：`WeaponUpgradeEditorWindow.cs`（`ShowUpgradePicker`/`ShowModulePicker`）、`RoleSpeechGroupDrawer.cs`（speechGroups 添加）。
 
 详细说明见 `references/module-guide.md`。

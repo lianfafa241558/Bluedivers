@@ -91,23 +91,9 @@ public class MiniMapWnd : Window
 
         InputManager.BindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
 
-        foreach (var item in ActorsManager.Players)
-        {
-            switch (item.Type)
-            {
-                case UnitTypeEnum.Player:
-                    PlayerCreat(item);
-                    break;
-                case UnitTypeEnum.Friend:
-                    FriendCreat(item);
-                    break;
-                default:
-                    break;
-            }
-        }
         //此时玩家已经诞生
-        //GlobalEventManager.OnPlayerCreate += PlayerCreat;
-        //GlobalEventManager.OnFriendCreate += FriendCreat;
+        GlobalEventSub.OnPlayerCreate += PlayerCreat;
+        GlobalEventSub.OnFriendCreate += FriendCreat;
         //应该还有盟友离开游戏?
         BattleEventSub.OnSpecUnitCreate += OtherCreat;
         BattleEventSub.OnSpecUnitDead += OtherDeath;
@@ -123,8 +109,8 @@ public class MiniMapWnd : Window
     {
         base.OnDestroy();
         InputManager.UnBindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
-        //GlobalEventManager.OnPlayerCreate -= PlayerCreat;
-        //GlobalEventManager.OnFriendCreate -= FriendCreat;
+        GlobalEventSub.OnPlayerCreate -= PlayerCreat;
+        GlobalEventSub.OnFriendCreate -= FriendCreat;
         //应该还有盟友离开游戏?
         BattleEventSub.OnSpecUnitCreate -= OtherCreat;
         BattleEventSub.OnSpecUnitDead -= OtherDeath;
@@ -246,8 +232,9 @@ public class MiniMapWnd : Window
         HashSet<I_Actor> list=new();
         foreach (var item in ActorsManager.Players)
         {
-            //先临时用50，之后再想办法
-            list.UnionWith(BattleManager.Instance.FindUnits(new PECircle(item.LogicPos, 50), TargetCfg.Enemy, (actor) =>!actor.HasFlag(ActorFlag.MiniMapIgnore)));
+            //先临时用50，之后再想办法；全队强化"无人机侦察助推器"可提高雷达射程
+            float radarRange = 50 * (BattleManager.Instance.HaveBooster(BoosterType.Radar)?1.5f:1);
+            list.UnionWith(BattleManager.Instance.FindUnits(new PECircle(item.LogicPos, (PEInt)radarRange), TargetCfg.Enemy, (actor) =>!actor.HasFlag(ActorFlag.MiniMapIgnore)));
         }
         int i = 0;
         EnemyCount = 0;

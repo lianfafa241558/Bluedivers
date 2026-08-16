@@ -131,9 +131,11 @@ public class MedivacController : TickBehaviour
     {
         if (taskManager.nowTask.Countdown >0)
         {
+            // 全队强化"专家救援飞行员"：缩短撤离等待时间
+            float mul = BattleManager.Instance&&BattleManager.Instance.HaveBooster(BoosterType.ExpertPilot)?0.6f:1f;
             if (count == 0)
             {
-                taskManager.nowTask.Countdown = 16;
+                taskManager.nowTask.Countdown = Mathf.RoundToInt(16 * mul);
             }
             else if (count < playerCount)
             {
@@ -141,7 +143,8 @@ public class MedivacController : TickBehaviour
             }
             else
             {
-                if (taskManager.nowTask.Countdown > 6) taskManager.nowTask.Countdown = 6;
+                int fullCount = Mathf.RoundToInt(6 * mul);
+                if (taskManager.nowTask.Countdown > fullCount) taskManager.nowTask.Countdown = fullCount;
 
                 --taskManager.nowTask.Countdown;
             }

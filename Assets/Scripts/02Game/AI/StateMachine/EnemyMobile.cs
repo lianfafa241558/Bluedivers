@@ -2,7 +2,9 @@ using System.Linq;
 using Core;
 using GameContract;
 using Unity.FPS.Game;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 namespace Unity.FPS.AI
 {
@@ -12,6 +14,15 @@ namespace Unity.FPS.AI
 
         public bool AttackStop;
         protected EnemyController m_EnemyController;
+
+        /// <summary>弱点受击僵直时长（秒），命中弱点后短暂无法攻击（不禁移动）</summary>
+        [InspectorName("弱点受击僵直时长(秒)")]
+        public float WeakPointHitStunDuration = 0.3f;
+
+        /// <summary>弱点受击僵直是否生效</summary>
+        private bool _hitStunActive;
+        /// <summary>弱点受击僵直结束时间</summary>
+        private float _hitStunEndTime;
 
         protected Vector3 TargetPosition => m_EnemyController.Target.Pos;
 
@@ -104,11 +115,40 @@ namespace Unity.FPS.AI
             }
 
             InitAboStateListener();
+            InitHitStunListener();
         }
 
         private void OnDestroy()
         {
             OnDestroyAboState();
+            UninitHitStunListener();
+        }
+
+        /// <summary>订阅 Health.OnHit，命中弱点时触发受击僵直</summary>
+        private void InitHitStunListener()
+        {
+            var health = m_EnemyController.GetComponent<Health>();
+            if (health != null)
+            {
+                health.OnHit += OnHitStun;
+            }
+        }
+
+        private void UninitHitStunListener()
+        {
+            var health = m_EnemyController != null ? m_EnemyController.GetComponent<Health>() : null;
+            if (health != null)
+            {
+                health.OnHit -= OnHitStun;
+            }
+        }
+
+        /// <summary>命中弱点：触发短僵直，期间无法攻击（不禁移动）。仅弱点命中触发</summary>
+        private void OnHitStun(GameObject source, Vector3 pos, bool isWeakness)
+        {
+            if (!isWeakness) return;
+            _hitStunActive = true;
+            _hitStunEndTime = Time.time + WeakPointHitStunDuration;
         }
 
 
@@ -204,6 +244,12 @@ namespace Unity.FPS.AI
 
             // 死亡后不再执行任何行为
             if (AiState == AIState.Death) return;
+
+            // 弱点受击僵直超时清除
+            if (_hitStunActive && Time.time >= _hitStunEndTime)
+            {
+                _hitStunActive = false;
+            }
 
             // Vertigo：完全禁止移动，强制停止导航
             if (IsMoveLocked)
@@ -331,7 +377,7 @@ namespace Unity.FPS.AI
                     else if (AimTargrt())
                     {
                         turrets.ForEach(item => {
-                            if (item.weapon && item.IsLockTarget(TargetPosition))
+                            if (item.weapon && item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition))
                             {
                                 m_EnemyController.TryAtack(item.weapon);
                             }
@@ -358,8 +404,9 @@ namespace Unity.FPS.AI
         {
             if (AiState == AIState.Follow || AiState == AIState.Attack)
             {
-                // 丢失目标时，如果有警惕点则前往警惕点
-                var bewarePoint = m_EnemyController.DetectionModule.BewarePoint;
+                // 丢失目标时，优先前往目标最后已知位置搜索；没有则退回警惕点（枪声/示警点）
+                var lastKnown = m_EnemyController.DetectionModule.LastKnownTargetPos;
+                var bewarePoint = lastKnown ?? m_EnemyController.DetectionModule.BewarePoint;
                 if (bewarePoint.HasValue)
                 {
                     m_BewareDestination = bewarePoint.Value;

@@ -33,10 +33,12 @@ namespace Unity.FPS.AI
             base.Start();
             if (fxDic.TryGet(OccasionTypeEnum.Movement, out var value))
             {
-                if (value.cilp.IsValid())
+                // 有音效组用音效组，否则用单个音频剪辑
+                if (value.SG || value.cilp.IsValid())
                 {
                     m_moveAudio = AudioSvc.CreatSource(gameObject, AudioGroups.Enemy);
-                    m_moveAudio.clip = value.cilp;
+
+                    m_moveAudio.clip = value.SG ? value.SG.Get(transform.position).Clip : value.cilp;
                     m_moveAudio.Stop();
                 }
 

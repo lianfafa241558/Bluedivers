@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -44,7 +44,7 @@ namespace Utils
                 }
                 else
                 {
-                    Debug.LogError("找不到" + transform + "下" + values + " 停留在" + re);
+                    Debug.LogError("找不到" + transform + "下" + values[i] + " 停留在" + re);
                     re = null;
                 }
             }

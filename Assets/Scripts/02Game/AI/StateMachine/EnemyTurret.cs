@@ -12,6 +12,10 @@ namespace Unity.FPS.AI
 
         public bool PreJudgment = true;
 
+        [InspectorName("预判强度")]
+        [Tooltip("预判位移的放大系数（对目标每帧位移 dx 的缩放），1=按目标位移等量预判，0=不预判。独立于转向速度")]
+        public float PreJudgmentFactor = 1f;
+
         public enum AIState
         {
             Idle,
@@ -76,7 +80,12 @@ namespace Unity.FPS.AI
                     if (m_EnemyController.Target==null) break;
                     // shoot
                     if (AimTargrt()) {
-                        turrets.ForEach(item => m_EnemyController.TryAtack(item.weapon));
+                        for (int i = 0; i < turrets.Count; i++)
+                        {
+                            var t = turrets[i];
+                            if (t.weapon && t.CanFireAt(TargetPosition))
+                                m_EnemyController.TryAtack(t.weapon);
+                        }
                     }
                     lastTargetPos = TargetPosition;
                     break;
@@ -128,7 +137,7 @@ namespace Unity.FPS.AI
             if (PreJudgment)
             {
                 var dx = tar - lastTargetPos;
-                return tar + turrets[0].aimSharpness * dx;
+                return tar + PreJudgmentFactor * dx;
             }
             else
             {

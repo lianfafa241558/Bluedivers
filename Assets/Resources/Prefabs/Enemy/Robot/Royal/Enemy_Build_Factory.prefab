@@ -344,6 +344,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   creatPoint: {fileID: 133094827338154126}
+  creatCilp: {fileID: 8300000, guid: f4a1cdedf715b304baff0c053a7f9bdb, type: 3}
   creatData:
   - Key: {fileID: 369260635418747019, guid: 09b33a1eb27f26c48b3d30d66e9a4a89, type: 3}
     Value: 18
@@ -354,6 +355,7 @@ MonoBehaviour:
   damagedTime: 20
   lastDamagedTime: -Infinity
   creatTime: 10
+  AiState: 0
 --- !u!114 &7250842007383053312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -391,10 +393,10 @@ MonoBehaviour:
   UseDiffScale: 1
   DamageData:
     DamageExplosion: 10
-    ExplosionInnerRange: 3
-    ExplosionRange: 6
+    ExplosionInnerRange: 5
+    ExplosionRange: 10
     DestructeRadius: 4
-    ShockwaveRadius: 8
+    ShockwaveRadius: 12
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -430,20 +432,31 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
     arr:
+    - Key: 1
+      Value:
+        cilp: {fileID: 8300000, guid: 97d1d898835aab747a716d61c4f8c624, type: 3}
+        SG: {fileID: 0}
+        ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
+          type: 3}
+        trans: {fileID: 0}
+        go: []
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 1c69692918425f04dac0a012fde1c626, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
         go: []
     - Key: 4
       Value:
-        cilp: {fileID: 8300000, guid: ed394529eedc6814996d224eda9cbd60, type: 3}
+        cilp: {fileID: 8300000, guid: 4542f0402632194478be3336d3a5221d, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}

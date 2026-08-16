@@ -29,6 +29,7 @@ namespace Unity.FPS.Game
 
         protected override void Awake() {
             base.Awake();
+            if (BattleManager.Instance&&BattleManager.Instance.HaveBooster(BoosterType.Shield)) MaxShield += 10;
             CurrentShield = showShield=MaxShield;
             OnShieldDamaged += _OnDamaged;
             m_Audio=AudioSvc.CreatSource(gameObject,AudioGroups.General);

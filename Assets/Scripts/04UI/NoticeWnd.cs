@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -10,7 +11,7 @@ public class NoticeWnd : Window
     [SerializeField]
     private Transform portrait, noiteName, desc;
     [SerializeField]
-    private AudioSource audioSource, audioSource2;
+    private AudioSource audioSource;//, audioSource2;
     private string nowDesc;
     private int nowCount;
     private float time;
@@ -64,8 +65,10 @@ public class NoticeWnd : Window
     private void Creat(string desc, AudioClip clip,string name,Sprite sprite,int priority)
     {
         nowPriority = priority;
+
         SetWndState(true);
-        PlayAnim("Entry", true);
+
+        //PlayAnim("Entry", true);
         nowDesc = desc;
         nowCount = 0;
         time = 0.5f;
@@ -76,23 +79,21 @@ public class NoticeWnd : Window
         SetText(this.desc, "");
         SetSprite(portrait, sprite);
         SetText(noiteName, name);
-        /*
-        if (audioSource.isPlaying && nowSourceName != name)
-        {
-            audioSource2.clip = audioSource.clip;
-            audioSource2.time = audioSource.time;
-            audioSource2.Play();
-        }*/
+
+        PlayAnim("Entry", true);
         audioSource.clip = clip;
         if (clip) audioSource.Play();
-        //Debug.LogError("创建"+desc);
+
         nowSourceName = name;
 
     }
 
+   
+
+
     public void Clear()
     {
-        //Debug.LogError("清空");
+        Debug.LogError("清空");
         queue.Clear();
         noticeState = NoticeState.Exit;
         SetWndState(false);

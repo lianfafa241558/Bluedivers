@@ -13,15 +13,11 @@ public class BlinkBag : BagBase
 
     [InspectorName("耗电量")]
     public float cost=0.5f;
-    //[SerializeField]
-    //private float lastStartTime;
-    private bool isUse;
     #endregion
     AudioSource AudioSource;
     private void Awake()
     {
         AudioSource = GetComponent<AudioSource>();
-        CancelUse();
     }
 
 
@@ -30,19 +26,11 @@ public class BlinkBag : BagBase
         base.Update();//恢复充电总是执行
 
         if (!Owner.IsValid()) return;
-        /*
-        if (m_InputHandler.GetJumpInputDown())
-        {
-            StartlUse();
-        }*/
-        //没有被其他人占用，自己也还没启用
-        if (m_InputHandler.GetJumpInputLong(0.3f) && CurrentFillRatio > cost && !m_InputHandler.useJump && !isUse)
+
+        //按下使用背包键(UseBag)即闪现，未被跳跃占用时
+        if (m_InputHandler.GetUseBagDown() && CurrentFillRatio > cost && !m_InputHandler.useJump)
         {
             Blink();
-        }
-        else if(m_InputHandler.GetJumpInputUp(true))
-        {
-            CancelUse();
         }
 
     }
@@ -63,18 +51,5 @@ public class BlinkBag : BagBase
         }
         CurrentFillRatio -= cost;
         OnStateChange?.Invoke(true);
-        isUse = true;
-        m_InputHandler.useJump = true;
-    }
-
-    private void CancelUse()
-    {
-        if (isUse)
-        {
-            isUse = false;
-            m_InputHandler.useJump = false;
-        }
-        //lastStartTime = Mathf.Infinity;
-
     }
 }

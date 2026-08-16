@@ -15,6 +15,7 @@ public enum TabType
     AboState,
     Weapon,
     Role,
+    Booster,
 }
 
 /// <summary>数据编辑器各 Tab 页的统一契约</summary>

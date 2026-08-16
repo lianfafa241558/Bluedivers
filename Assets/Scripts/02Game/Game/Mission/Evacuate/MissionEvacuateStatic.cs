@@ -95,7 +95,13 @@ namespace FpsGame.Mission
             pos = entity.Pos;
             area = entity.transform;
             areaPoint = area.transform.position;
-            Transform point = _startPointEntity ?? area;
+            // 注意：不能用 ?? 对 Unity Object 判空（无法识别未赋值/已销毁的伪 null），改用 Unity 重载的 != null
+            Transform point = _startPointEntity != null ? _startPointEntity : area;
+            if (point == null)
+            {
+                Debug.LogError("撤离任务起始点为空：_startPointEntity 与 area 均为空，无法创建撤离单位", this);
+                return;
+            }
 
             ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/Kei", false, point.TransformPoint(0, 0, 10));
             medivac = ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, point.TransformPoint(0, 12, 0)).GetComponent<MedivacController>();
@@ -127,7 +133,7 @@ namespace FpsGame.Mission
             switch (stage)
             {
                 case EvacuateState.Activation:
-                    if (--countDown == -3)
+                    if (--countDown == -5)
                     {
                         CreatNotice("Yuuka", IsComplete?"Evacuate": "EvacuateFail");
                         BattleManager.Instance.ReleaseAirdrop(areaPoint, 0, InitBeacon);

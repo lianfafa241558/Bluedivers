@@ -526,19 +526,29 @@ namespace FpsGame.MapUtils
             preHeight.Apply(false, false);
             preTexture.Apply(false, false);
 
-            // NavMesh 异步构建并等待完成
+            // NavMesh 构建（首次同步构建填充数据，之后异步增量更新并等待完成）
             yield return null;
             var surface = GetComponent<NavMeshSurface>();
             if (surface != null)
             {
-                var asyncOp = surface.UpdateNavMesh(surface.navMeshData);
-                float timeout = Time.realtimeSinceStartup + 10f;
-                while (!asyncOp.isDone && Time.realtimeSinceStartup < timeout)
+                if (surface.navMeshData == null)
+                    surface.BuildNavMesh(); // 首次构建：NavMeshBuilder.BuildNavMeshData 会创建并赋值 navMeshData
+
+                if (surface.navMeshData != null)
                 {
-                    yield return null;
+                    var asyncOp = surface.UpdateNavMesh(surface.navMeshData);
+                    float timeout = Time.realtimeSinceStartup + 10f;
+                    while (!asyncOp.isDone && Time.realtimeSinceStartup < timeout)
+                    {
+                        yield return null;
+                    }
+                    if (!asyncOp.isDone)
+                        Debug.LogWarning("NavMesh 异步构建超时，可能仍在后台进行");
                 }
-                if (!asyncOp.isDone)
-                    Debug.LogWarning("NavMesh 异步构建超时，可能仍在后台进行");
+                else
+                {
+                    Debug.LogWarning("NavMesh 构建失败：navMeshData 为空，跳过 NavMesh 更新");
+                }
             }
             Debug.Log($"完成总时间: {sw.ElapsedMilliseconds} ms");
         }
@@ -1347,7 +1357,12 @@ namespace FpsGame.MapUtils
 
                 var surface = GetComponent<NavMeshSurface>();
                 if (surface != null)
-                    surface.UpdateNavMesh(surface.navMeshData);
+                {
+                    if (surface.navMeshData == null)
+                        surface.BuildNavMesh(); // 首次构建填充 navMeshData，避免 UpdateNavMesh 因 data 为 null 抛异常
+                    if (surface.navMeshData != null)
+                        surface.UpdateNavMesh(surface.navMeshData);
+                }
             }
         }
         #endregion

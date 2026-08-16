@@ -13,6 +13,7 @@ public class SubtitleSpecUnit : SubtitleBase
         if (!alwaysShow) SetAlpha(transform, 0);
         var tarActor = target.GetComponent<I_Actor>();
         //unimportant = tarActor.HasFlag(ActorFlag.Unimportant);
+        noFade = tarActor.HasFlag(Core.ActorFlag.Boss);
         SetText(title, tarActor.ShowName);
         SetSprite(halo, tarActor.ExtraPortrait);
         SetActive(gameObject, tarActor != owner);
@@ -23,7 +24,7 @@ public class SubtitleSpecUnit : SubtitleBase
     {
         GlobalEventSub.OnActorSpeech -= OnActorSpeech;
     }
-
+    bool noFade;
     float lastSpeechTime = Mathf.NegativeInfinity;
     float showTime;
     //[SerializeField]
@@ -58,7 +59,7 @@ public class SubtitleSpecUnit : SubtitleBase
             SetText(desc,"");
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)desc.parent);
         }
-        if (targetState&&completeTrans)
+        if (targetState&&completeTrans&& !noFade)
         {
             var dis = GetDistance();
             show = Mathf.Clamp01((dis - 60) / 40f);

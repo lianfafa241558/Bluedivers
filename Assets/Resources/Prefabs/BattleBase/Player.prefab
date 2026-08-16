@@ -267,6 +267,7 @@ GameObject:
   - component: {fileID: 8225660560379712063}
   - component: {fileID: 6191850924841700648}
   - component: {fileID: 1465940967207981465}
+  - component: {fileID: 4810969739816676373}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -414,7 +415,7 @@ MonoBehaviour:
   CapsuleHeightStanding: 1.8
   _thirdPersonCameraPoint: {fileID: 7724981111999742206}
   _thirdPersonAimCameraPoint: {fileID: 3941019779098024387}
-  _thirdPersonSmoothSpeed: 8
+  _thirdPersonSmoothSpeed: 16
   _thirdPersonOcclusionLayers:
     serializedVersion: 2
     m_Bits: 9
@@ -706,6 +707,19 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+--- !u!114 &4810969739816676373
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 514622668125285558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d04068347a8d2c40b4f122785253b44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentCount: 0
 --- !u!1 &2232355963688029884
 GameObject:
   m_ObjectHideFlags: 0

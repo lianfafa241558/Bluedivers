@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using Unity.FPS.Game;
 using UnityEngine;
@@ -9,6 +9,7 @@ namespace Unity.FPS.Gameplay
     /// <summary>
     /// 近战伤害
     /// </summary>
+    [AddComponentMenu("子弹/近战", 30)]
     public class ProjectileMelee : ProjectileBase
     {
 

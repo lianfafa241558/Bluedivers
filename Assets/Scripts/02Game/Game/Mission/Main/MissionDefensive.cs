@@ -25,6 +25,7 @@ namespace FpsGame.Mission
 
         protected override void StartMission()
         {
+            Debug.LogWarning("start防守任务");
             UpdateText("防守任务目标", "");
             TickTime = 1;
             time = -60;

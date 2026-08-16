@@ -87,7 +87,7 @@ public class CanvasController : MonoBehaviour
     {
         inIEnumerator = true;
         SetAlpha(transform, 0);
-        yield return new WaitForSeconds(4.5f);
+        yield return new WaitForSeconds(3.5f);
         SetAlpha(transform, 0, 1, 500, () => SetActive(transform, true));
         yield return new WaitForSeconds(0.5f);
         inIEnumerator = false;

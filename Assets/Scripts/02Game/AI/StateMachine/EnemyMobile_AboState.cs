@@ -168,8 +168,8 @@ namespace Unity.FPS.AI
             }
         }
 
-        /// <summary>是否被异常状态禁止攻击（Freeze/Vertigo/Terror）</summary>
-        public bool IsAttackLocked => _freezeActive || _vertigoActive || _terrorActive;
+        /// <summary>是否被异常状态禁止攻击（Freeze/Vertigo/Terror），或弱点受击僵直期间</summary>
+        public bool IsAttackLocked => _freezeActive || _vertigoActive || _terrorActive || _hitStunActive;
 
         /// <summary>是否被异常状态禁止移动（Freeze/Vertigo）</summary>
         public bool IsMoveLocked => _freezeActive || _vertigoActive;

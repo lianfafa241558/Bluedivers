@@ -175,6 +175,9 @@ public partial class PlayerController : BaseSelfMoveableController
         }
 
         GlobalEventSub.ViewSwitch(IsThirdPerson);
+
+        // 视角切换后刷新武器瞄准状态，确保准星等UI正确
+        WeaponsManager.RefreshAimState();
     }
     private void OnEnable()
     {
