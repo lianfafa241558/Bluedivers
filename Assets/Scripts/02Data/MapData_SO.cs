@@ -28,6 +28,9 @@ public class MapData_SO : ScriptableObject
 
     [InspectorName("特产")]
     public OOPartEnum[] product;
+    [InspectorName("次要资源")]
+    public OOPartEnum[] otherProduct;
+
     [InspectorName("兴趣点")]
     public SKVP<GameObject, int>[] interestPoints;
 

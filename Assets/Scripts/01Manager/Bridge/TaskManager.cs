@@ -305,7 +305,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         task.mapName = mapData.AreaName;
         task.PlayMode = playMode;
         task.SpecialtyPropertys = mapData.product;
-        task.OtherPropertys = ((OOPartEnum[])System.Enum.GetValues(typeof(OOPartEnum))).Except(mapData.product).ToArray(); ;
+        task.OtherPropertys = mapData.otherProduct;
         task.Countdown = 16;
         task.activeTask = true;
 

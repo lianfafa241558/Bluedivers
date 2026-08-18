@@ -16,6 +16,10 @@ using static WndTools.WndRootTool;
 /// </summary>
 public class OOPartBagWnd : MonoBehaviour
 {
+
+    /// <summary>携带上限</summary>
+    public const int MaxCapacity = 5;
+
     [SerializeField]
     [InspectorName("列表容器")]
     private Transform listRoot;
@@ -113,6 +117,7 @@ public class OOPartBagWnd : MonoBehaviour
             SetSprite(go.GetChild(0), PropertyManager.Instance.GetIcon(type));
             SetText(go.GetChild(1), PropertyManager.Instance.GetName(type));
             SetText(go.GetChild(2), Tool.FillZero(count, 2));
+            SetFill(go.GetChild(3), (count + 0f) / MaxCapacity);
             items.Add(go.gameObject);
         }
     }

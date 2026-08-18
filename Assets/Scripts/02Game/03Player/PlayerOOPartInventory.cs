@@ -46,6 +46,7 @@ public class PlayerOOPartInventory : MonoBehaviour
     /// </summary>
     public bool TryAdd(OOPartEnum type, int count)
     {
+        Debug.LogError("尝试添加"+type+" "+count);
         if (count <= 0 || IsFull(type)) return false;
 
         int actual = Mathf.Min(count, Remaining(type));

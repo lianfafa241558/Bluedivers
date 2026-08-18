@@ -1,9 +1,9 @@
-﻿using System;
-using Photon.Pun;
+using System;
+
 using UnityEngine;
 using Utils;
 
-public class SingletonNet<T> : MonoBehaviourPunCallbacks where T : SingletonNet<T>
+public class SingletonNet<T> : MonoBehaviour where T : SingletonNet<T>
 {
     /// <summary>
     /// 外部访问，公共静态成员（单例）?
@@ -42,7 +42,7 @@ public class SingletonNet<T> : MonoBehaviourPunCallbacks where T : SingletonNet<
         if (instance == this) instance = null;
     }
 
-
+    /*
     public bool RPC(Action action, RpcTarget target)
     {
         if (PhotonNetwork.IsConnected)
@@ -96,5 +96,5 @@ public class SingletonNet<T> : MonoBehaviourPunCallbacks where T : SingletonNet<
             return false;
         }
     }
-
+    */
 }

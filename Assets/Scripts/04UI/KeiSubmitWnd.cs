@@ -100,7 +100,7 @@ public class KeiSubmitWnd : MonoBehaviour
             SetSprite(go.GetChild(0), PropertyManager.Instance.GetIcon(type));
             SetText(go.GetChild(1), PropertyManager.Instance.GetName(type));
             SetText(go.GetChild(2), Tool.FillZero(count,2));
-            SetFill(go.GetChild(3), (count+0f)/MaxCapacity);
+            //SetFill(go.GetChild(3), (count+0f)/MaxCapacity);
             items.Add(go.gameObject);
         }
     }

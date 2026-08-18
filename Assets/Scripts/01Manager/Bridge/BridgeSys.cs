@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
 using UnityEngine;
 
 public class BridgeSys : SingletonNet<BridgeSys>
@@ -13,10 +12,11 @@ public class BridgeSys : SingletonNet<BridgeSys>
     /// <summary> 发送玩家选择战备的消息</summary>
     public void SendPlayerSelectArmament(int playerIndex, int id, int index)
     {
-        RPC(ReceivePlayerSelectArmament, RpcTarget.All, playerIndex, id, index);
+        //RPC(ReceivePlayerSelectArmament, RpcTarget.All, playerIndex, id, index);
+        ReceivePlayerSelectArmament(playerIndex, id, index);
     }
 
-    [PunRPC]
+    //[PunRPC]
     /// <summary> 收到玩家选择战备的回调</summary>
     public void ReceivePlayerSelectArmament(int playerIndex,int id,int index)
     {
@@ -26,10 +26,11 @@ public class BridgeSys : SingletonNet<BridgeSys>
     /// <summary> 发送玩家选择全队强化的消息</summary>
     public void SendPlayerSelectTeamEnhance(int playerIndex, int id)
     {
-        RPC(ReceivePlayerSelectTeamEnhance, RpcTarget.All, playerIndex, id);
+        //RPC(ReceivePlayerSelectTeamEnhance, RpcTarget.All, playerIndex, id);
+        ReceivePlayerSelectTeamEnhance(playerIndex, id);
     }
 
-    [PunRPC]
+    //[PunRPC]
     /// <summary> 收到玩家选择全队强化的回调</summary>
     public void ReceivePlayerSelectTeamEnhance(int playerIndex, int id)
     {
@@ -39,10 +40,11 @@ public class BridgeSys : SingletonNet<BridgeSys>
     /// <summary> 发送玩家准备的消息</summary>
     public void SendPlayerReady(int playerIndex, bool state)
     {
-        RPC(ReceivePlayerReady, RpcTarget.All, playerIndex, state);
+        //RPC(ReceivePlayerReady, RpcTarget.All, playerIndex, state);
+        ReceivePlayerReady(playerIndex, state);
     }
 
-    [PunRPC]
+    
     /// <summary> 收到玩家准备的回调</summary>
     public void ReceivePlayerReady(int playerIndex, bool state)
     {

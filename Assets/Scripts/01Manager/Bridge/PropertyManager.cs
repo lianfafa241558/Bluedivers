@@ -25,7 +25,7 @@ public class PropertyManager : Singleton<PropertyManager>
 
     public GameObject CreatOOPart()
     {
-        if (RandomUtils.Bool())
+        if (RandomUtils.Bool(70))
         {
             return GetPrefab(TaskManager.Instance.nowTask.SpecialtyPropertys.RandomTake());
         }
