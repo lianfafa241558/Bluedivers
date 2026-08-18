@@ -279,11 +279,11 @@ public class ArchivesData_SO : ArchivesDataBase_SO
 
         public float RawFloat
         {
-            get=> float.Parse(value);
+            get=> float.Parse(value ?? "0");
         }
         public int RawInt
         {
-            get => (int)float.Parse(value);
+            get => (int)float.Parse(value ?? "0");
         }
         public override string ToString()
         {

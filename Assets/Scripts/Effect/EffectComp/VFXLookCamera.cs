@@ -1,15 +1,34 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class VFXLookCamera : MonoBehaviour
 {
-    void Update()
+    private Transform _cameraTransform;
+
+    private void Start()
     {
-        if (Camera.main)
-        {
-            //transform.LookAt(Camera.main.transform);
-            transform.forward = -Camera.main.transform.forward;
-        }
+        RefreshCamera();
     }
+
+    private void LateUpdate()
+    {
+        if (_cameraTransform == null)
+        {
+            RefreshCamera();
+            if (_cameraTransform == null)
+            {
+                return;
+            }
+        }
+
+        transform.LookAt(_cameraTransform);
+    }
+
+    private void RefreshCamera()
+    {
+        Camera mainCamera = Camera.main;
+        _cameraTransform = mainCamera != null ? mainCamera.transform : null;
+    }
+
 }
