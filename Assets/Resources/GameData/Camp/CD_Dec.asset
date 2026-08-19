@@ -48,15 +48,18 @@ MonoBehaviour:
         weight: 100
         size: 3
     - tier: 4
-      weight: 5
+      weight: 3
       unitWeights:
       - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
           type: 3}
-        weight: 64
+        weight: 100
         size: 5
+    - tier: 5
+      weight: 2
+      unitWeights:
       - unit: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
           type: 3}
-        weight: 40
+        weight: 100
         size: 10
     - tier: 6
       weight: 0
@@ -77,7 +80,11 @@ MonoBehaviour:
       unitWeights:
       - unit: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
           type: 3}
-        weight: 100
+        weight: 50
+        size: 10
+      - unit: {fileID: 6937058127014514701, guid: e05056a0a4ed9f84eb90497122746f1b,
+          type: 3}
+        weight: 50
         size: 10
     patrolTemplate:
     - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
@@ -122,15 +129,18 @@ MonoBehaviour:
         weight: 100
         size: 3
     - tier: 4
-      weight: 5
+      weight: 3
       unitWeights:
       - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
           type: 3}
-        weight: 60
+        weight: 100
         size: 5
+    - tier: 5
+      weight: 2
+      unitWeights:
       - unit: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
           type: 3}
-        weight: 40
+        weight: 100
         size: 10
     - tier: 6
       weight: 0
@@ -151,7 +161,11 @@ MonoBehaviour:
       unitWeights:
       - unit: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
           type: 3}
-        weight: 100
+        weight: 50
+        size: 10
+      - unit: {fileID: 6937058127014514701, guid: e05056a0a4ed9f84eb90497122746f1b,
+          type: 3}
+        weight: 50
         size: 10
     patrolTemplate:
     - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
@@ -206,16 +220,19 @@ MonoBehaviour:
         weight: 100
         size: 3
     - tier: 4
-      weight: 5
+      weight: 3
       unitWeights:
       - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
           type: 3}
-        weight: 60
+        weight: 100
         size: 5
+    - tier: 5
+      weight: 2
+      unitWeights:
       - unit: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
           type: 3}
-        weight: 40
-        size: 5
+        weight: 100
+        size: 10
     - tier: 6
       weight: 0
       unitWeights:
@@ -295,16 +312,19 @@ MonoBehaviour:
         weight: 100
         size: 3
     - tier: 4
-      weight: 5
+      weight: 3
       unitWeights:
       - unit: {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74,
           type: 3}
         weight: 60
         size: 5
+    - tier: 9
+      weight: 2
+      unitWeights:
       - unit: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
           type: 3}
-        weight: 40
-        size: 5
+        weight: 100
+        size: 10
     - tier: 6
       weight: 0
       unitWeights:
@@ -329,7 +349,7 @@ MonoBehaviour:
     - tier: 9
       weight: 0
       unitWeights:
-      - unit: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
+      - unit: {fileID: 6937058127014514701, guid: e05056a0a4ed9f84eb90497122746f1b,
           type: 3}
         weight: 100
         size: 10

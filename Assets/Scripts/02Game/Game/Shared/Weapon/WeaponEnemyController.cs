@@ -61,7 +61,8 @@ namespace Unity.FPS.Game
         public override bool HandleShootInputs(bool inputDown, bool inputHeld, bool inputUp)
         {
             if (!AllowShoot && !inputUp) return false;
-            if (!WeaponMuzzle.gameObject.activeInHierarchy && !inputUp) return false;
+            var muzzle = GetMuzzle(0);
+            if ((!muzzle || !muzzle.gameObject.activeInHierarchy) && !inputUp) return false;
             return base.HandleShootInputs(inputDown, inputHeld, inputUp);
            
         }
@@ -104,15 +105,30 @@ namespace Unity.FPS.Game
 
         private void OnDrawGizmosSelected()
         {
-            var list = new List<Transform>();
-            if (WeaponMuzzle.IsValid()) list.Add(WeaponMuzzle);
-            if (WeaponMuzzle2.IsValid()) list.Add(WeaponMuzzle2);
-            for(int i = 0; i < list.Count; ++i)
+            // 编辑器下可能未配置伤害数据
+            if (Damages == null || Damages.Count == 0) return;
+
+            // 收集发射点位：齐射武器遍历齐射点位，否则遍历单点点位
+            var muzzles = new List<Transform>();
+            if (UseManyMuzzle && WeaponManyMuzzles.IsValid() && WeaponManyMuzzles.Count > 0)
+            {
+                muzzles.AddRange(WeaponManyMuzzles);
+            }
+            else
+            {
+                if (WeaponMuzzle.IsValid()) muzzles.Add(WeaponMuzzle);
+                if (WeaponMuzzle2.IsValid()) muzzles.Add(WeaponMuzzle2);
+            }
+            if (muzzles.Count == 0) return;
+
+            for (int i = 0; i < muzzles.Count; ++i) DrawBallistic(muzzles[i]);
+
+            void DrawBallistic(Transform muzzle)
             {
                 Gizmos.color = Color.cyan;
 
-                Vector3 pos = list[i].position;
-                Vector3 muzzleVelocity = list[i].forward * CurrentSpeed;
+                Vector3 pos = muzzle.position;
+                Vector3 muzzleVelocity = muzzle.forward * CurrentSpeed;
                 Vector3 inheriteVelocity = CurrentDamgeData.InheritWeaponSpeed ? MuzzleWorldVelocity : Vector3.zero;
                 Vector3 velocity = muzzleVelocity;
                 float gravity = CurrentGravity;
@@ -135,7 +151,6 @@ namespace Unity.FPS.Game
                 if (Damages[0].GetDamageOuterRadius(1) > 0)
                     Gizmos.DrawWireSphere(pos, Damages[0].GetDamageOuterRadius(1).RawFloat);
             }
-            
         }
 
 #if UNITY_EDITOR

@@ -118,6 +118,7 @@ namespace Unity.FPS.AI
                 lastTriggerAttackTime = Time.time + 0.5f;
                 //攻击没必要
                 //TriggerFX(OccasionTypeEnum.Attack, m_EnemyController.AimPoint.position, Quaternion.identity, null);
+                Debug.LogError("触发攻击触发器");
                 SetTrigger(name, true);
             }
 

@@ -289,7 +289,7 @@ namespace Unity.FPS.AI
             if (dis <= weapon.CurrentWeaponExtremeRange) {
                 didFire |= weapon.HandleShootInputs(true, true, false);
             }
-
+            //Debug.LogWarning(gameObject+"使用"+weapon+"攻击"+"触发"+ didFire+"事件"+(OnAttack != null),gameObject);
             if (didFire && OnAttack != null) {
                 OnAttack?.Invoke(weapon);
             }

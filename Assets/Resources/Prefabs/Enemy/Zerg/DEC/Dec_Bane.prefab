@@ -182,9 +182,10 @@ MonoBehaviour:
   EyePoint: {fileID: 7024828909445759603}
   DetectionRange: 15
   HearingRange: 10
-  AttackRange: 2.5
+  AttackRange: 3
   AlertRange: 20
   KnownTargetTimeout: 8
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
@@ -569,7 +570,7 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   AttackStop: 1
   WeakPointHitStunDuration: 0.3
-  AttackStopDistanceRatio: 1
+  AttackStopDistanceRatio: 0.9
   MaintainMaxDis: 0
   PatrolSpeed: 3
   BewareSpeed: 4

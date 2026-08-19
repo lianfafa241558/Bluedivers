@@ -45,6 +45,9 @@ namespace Unity.FPS.Game
         /// <summary>子弹耗尽死亡 敌人专用</summary>
         [InspectorName("子弹耗尽死亡 敌人专用")]
         AutoDeath = 1 << 2,
+        /// <summary>强制连射：开火后松手不停，直到弹匣打空(无限弹匣则一直打)</summary>
+        [InspectorName("强制连射(打空弹匣才停)")]
+        ForceShoot = 1 << 3,
     }
 
     public abstract partial class WeaponController : WeaponReloadController
@@ -390,7 +393,8 @@ namespace Unity.FPS.Game
                 SetBool(Constants.k_AnimIsActiveParameter, true);
                 ChargeDuration.CurrValue = 0;
                 OnCharget?.Invoke(true);
-                if (ChargeVfx) m_ChargeVfx = VFXManager.Creat(ChargeVfx.gameObject,WeaponMuzzle.position,WeaponMuzzle.rotation,WeaponMuzzle).GetComponent<ChargeView>();
+                var muzzle = GetMuzzle(0);
+                if (ChargeVfx && muzzle) m_ChargeVfx = VFXManager.Creat(ChargeVfx.gameObject, muzzle.position, muzzle.rotation, muzzle).GetComponent<ChargeView>();
                 return true;
             }
             else
@@ -487,19 +491,21 @@ namespace Unity.FPS.Game
             return false;
         }
 
-        void TryUpdateLaser()
+        bool TryUpdateLaser()
         {
             if (!InLasering)
             { 
                 if (AllowShoot && CanShoot)
                 {
                     //Debug.LogError("激光创建自杀");
+                    m_LastProjectiles.Clear();//开启新一轮激光，重置记录
                     HandleShoot();
                     OnUIUpdate?.Invoke();
                     InLasering = true;
-
+                    return true;
                 }
             }
+            return false;
         }
         void UpdateLaser()
         {
@@ -518,13 +524,18 @@ namespace Unity.FPS.Game
         {
             InLasering = false;
             SetBool(Constants.k_AnimIsActiveParameter, false);
-            if (lastProjectile) lastProjectile.Release();
+            // 齐射时可能有多个激光子弹，全部释放
+            foreach (var projectile in m_LastProjectiles)
+            {
+                if (projectile) projectile.Release();
+            }
+            m_LastProjectiles.Clear();
         }
 
-        protected ProjectileBase lastProjectile;
+        protected List<ProjectileBase> m_LastProjectiles = new();
         void GetLaserBullet(ProjectileBase projectile)
         {
-            lastProjectile = projectile;
+            m_LastProjectiles.Add(projectile);
         }
 
         #endregion
@@ -754,6 +765,27 @@ namespace Unity.FPS.Game
         /// </summary>
         public virtual bool HandleShootInputs(bool inputDown, bool inputHeld, bool inputUp)
         {
+            // 强制连射：开火后松手不停，直到弹匣打空(无限弹匣则一直打)
+            if (HasFlag(WeaponFlag.ForceShoot))
+            {
+                // 弹匣已打空(不足以再打一发)，结束强制连射
+                if ((InShoots || InLasering) && !CanShoot)
+                {
+                    if (InLasering) EndLaser();
+                    else
+                    {
+                        InShoots = false;
+                        SetBool(Constants.k_AnimIsActiveParameter, false);
+                    }
+                }
+                // 连射中且仍有子弹：忽略松手输入，视同继续按住扳机
+                else if (inputUp && (InShoots || InLasering) && CanShoot)
+                {
+                    inputUp = false;
+                    inputHeld = true;
+                }
+            }
+
             switch (ShootType)
             {
                 case WeaponShootType.Manual:
@@ -797,7 +829,7 @@ namespace Unity.FPS.Game
                     WantsToShoot = inputHeld && InLasering;
 
                     if (inputUp) EndLaser();//鼠标抬起
-                    else if (inputHeld) TryUpdateLaser();
+                    else if (inputHeld) return TryUpdateLaser();
                     else if (inputDown) return TryBeginLaser();
                     return false;
 

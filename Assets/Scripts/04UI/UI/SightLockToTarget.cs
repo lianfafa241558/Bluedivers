@@ -156,7 +156,8 @@ namespace Unity.FPS.UI
         void UpdateLine(LineRenderer line, Vector3 end)
         {
 
-            var start = m_Weapons.WeaponMuzzle;
+            var start = m_Weapons.GetMuzzle(0);
+            if (!start) return;
 
             float speed = 20;
             float rotationSpeed =5;

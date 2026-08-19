@@ -52,11 +52,44 @@ namespace Unity.FPS.Game {
         [InspectorName("武器根对象")]
         public GameObject WeaponRoot;
 
-        [InspectorName("发射点位")]
-        public Transform WeaponMuzzle;
+        [SerializeField]
+        [InspectorName("齐射")]
+        [Tooltip("开火时所有发射点位一起开火，并按点位数量自动调整一次消耗的弹药量")]
+        protected bool UseManyMuzzle;
 
+
+        [SerializeField]
+        [Compare("UseManyMuzzle", 0, CompareOperate.Equal)]
+        [InspectorName("发射点位")]
+        protected Transform WeaponMuzzle;
+
+        [SerializeField]
+        [Compare("UseManyMuzzle", 0, CompareOperate.Equal)]
         [InspectorName("发射点位2")]
-        public Transform WeaponMuzzle2;
+        protected Transform WeaponMuzzle2;
+
+
+
+        [SerializeField]
+        [InspectorName("发射点位(齐射)")]
+        [Compare("UseManyMuzzle", 1, CompareOperate.Equal)]
+        protected List<Transform> WeaponManyMuzzles;
+
+        /// <summary>
+        /// 获取第 index 个发射点位。齐射武器从齐射点位列表取，否则从交替点位数组取；越界自动取模
+        /// </summary>
+        public Transform GetMuzzle(int index)
+        {
+            if (UseManyMuzzle && WeaponManyMuzzles != null && WeaponManyMuzzles.Count > 0)
+            {
+                return WeaponManyMuzzles[index % WeaponManyMuzzles.Count];
+            }
+            if (Muzzles != null && Muzzles.Length > 0)
+            {
+                return Muzzles[index % Muzzles.Length];
+            }
+            return WeaponMuzzle;
+        }
 
         #endregion
         [Foldout("武器参数", true)]
@@ -200,11 +233,20 @@ namespace Unity.FPS.Game {
         protected Transform[] Muzzles;
         private int shootCount=0;
 
+        /// <summary>每次射击消耗的弹药量(开启齐射时自动按发射点位数量调整)</summary>
+        [SerializeField]
+        protected int ShootCost = 1;
+
         public override void LogicInit()
         {
-            if (!WeaponMuzzle)
+            if (!UseManyMuzzle && !WeaponMuzzle)
             {
                 Debug.LogError("错误:未配置武器开火点", gameObject);
+                enabled = false;
+            }
+            if (UseManyMuzzle && WeaponManyMuzzles.Count == 0)
+            {
+                Debug.LogError("错误:开启齐射但未配置发射点位", gameObject);
                 enabled = false;
             }
             if (Damages.Count==0)
@@ -216,6 +258,16 @@ namespace Unity.FPS.Game {
             if (WeaponMuzzle.IsValid()) list.Add(WeaponMuzzle);
             if (WeaponMuzzle2.IsValid()) list.Add(WeaponMuzzle2);
             Muzzles = list.ToArray();
+
+            // 齐射:开火时所有点位一起开火,并按点位数量自动调整一次消耗的弹药量
+            if (UseManyMuzzle)
+            {
+                ShootCost = WeaponManyMuzzles.Count;
+            }
+            else if (WeaponManyMuzzles.Count > 0)
+            {
+                Muzzles = WeaponManyMuzzles.ToArray();
+            }
 
             InitAttribute();
 
@@ -331,25 +383,20 @@ namespace Unity.FPS.Game {
             //发射数量，如果以后做了蓄力会更多弹丸数量再说
             int bulletsPerShotFinal = AttrFinal(Attr.BulletsPerShot,1).RawInt;
 
-            Transform muzzle = WeaponMuzzle= Muzzles[shootCount++ % Muzzles.Length];
-
-            // 生成所有方向随机的子弹
-            for (int i = 0; i < bulletsPerShotFinal; ++i)
+            if (UseManyMuzzle)
             {
-                Vector3 shotDirection = GetShotDirectionWithinSpread(muzzle);
-                Vector3 shotPos = muzzle.position;
-                if (AttrFinal(Attr.BulletsOffect) > 0)
+                // 齐射:所有发射点位一起开火
+                for (int u = 0; u < WeaponManyMuzzles.Count; ++u)
                 {
-                    Vector2 point = RandomUtils.InsideUnitCircle() * AttrFinal(Attr.BulletsOffect).RawFloat;
-                    shotPos = muzzle.TransformPoint(point);
+                    ShootFromMuzzle(WeaponManyMuzzles[u], bulletsPerShotFinal);
                 }
-                var bullet = VFXManager.Creat(ProjectilePrefab, shotPos, Quaternion.LookRotation(shotDirection));
-
-                OnBulletShoot?.Invoke(bullet);
-                bullet.Shoot(this);
             }
-
-            ShootFlash(muzzle);
+            else
+            {
+                // 交替射击
+                Transform muzzle = WeaponMuzzle = Muzzles[shootCount++ % Muzzles.Length];
+                ShootFromMuzzle(muzzle, bulletsPerShotFinal);
+            }
 
             if (!UseContinuousShootSound)
             {
@@ -371,6 +418,30 @@ namespace Unity.FPS.Game {
                     _overheatTimer = AttrFinal(Attr.OverheatDuration).RawFloat;
                 }
             }
+        }
+
+        /// <summary>
+        /// 从单个发射点位发射一轮子弹(含枪口闪光)
+        /// </summary>
+        void ShootFromMuzzle(Transform muzzle, int bulletsPerShotFinal)
+        {
+            // 生成所有方向随机的子弹
+            for (int i = 0; i < bulletsPerShotFinal; ++i)
+            {
+                Vector3 shotDirection = GetShotDirectionWithinSpread(muzzle);
+                Vector3 shotPos = muzzle.position;
+                if (AttrFinal(Attr.BulletsOffect) > 0)
+                {
+                    Vector2 point = RandomUtils.InsideUnitCircle() * AttrFinal(Attr.BulletsOffect).RawFloat;
+                    shotPos = muzzle.TransformPoint(point);
+                }
+                var bullet = VFXManager.Creat(ProjectilePrefab, shotPos, Quaternion.LookRotation(shotDirection));
+
+                OnBulletShoot?.Invoke(bullet);
+                bullet.Shoot(this,0 ,muzzle);
+            }
+
+            ShootFlash(muzzle);
         }
 
         protected void ShootFlash(Transform point)

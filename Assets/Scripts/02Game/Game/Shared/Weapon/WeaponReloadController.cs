@@ -40,8 +40,6 @@ namespace Unity.FPS.Game
         /// <summary>无限弹匣子弹</summary>
         public bool InfiniteMagazine => Magazine.FinalValue < 0;
 
-        [SerializeField]
-        protected int ShootCost = 1;
         #endregion
 
         public bool IsReloading { get; protected set; }

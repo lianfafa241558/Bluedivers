@@ -55,12 +55,21 @@ public class CustomLabelDrawer : PropertyDrawer
         return false;
     }
 
-    private bool ShouldDisplayField(SerializedProperty property, CompareAttribute attr)
+    public static bool ShouldDisplayField(SerializedProperty property, CompareAttribute attr)
     {
         if (string.IsNullOrEmpty(attr.contField)) return true;
 
         // 获取当前属性的父级对象
         var parentPath = property.propertyPath;
+
+        // [Compare] 加在数组/List 字段上时，Unity 会把它应用到每个数组元素上
+        // （路径形如 SomeField.Array.data[i]），这里去掉数组索引段，
+        // 让控制字段按"数组字段所在层级"定位（SomeField.Array → SomeField）
+        var arrayIdx = parentPath.IndexOf(".Array");
+        if (arrayIdx > 0)
+        {
+            parentPath = parentPath.Substring(0, arrayIdx);
+        }
 
         var lastDot = parentPath.LastIndexOf('.');
         parentPath = lastDot > 0 ? parentPath.Substring(0, lastDot) : "";
@@ -93,7 +102,7 @@ public class CustomLabelDrawer : PropertyDrawer
                 return Calculate(attr.operate, controlProp.objectReferenceValue != null ? 1 : 0, attr.enumValue);
         }
     }
-    public bool Calculate(CompareOperate operate, float source, float target)
+    public static bool Calculate(CompareOperate operate, float source, float target)
     {
         return operate switch {
             CompareOperate.Equal => Mathf.Approximately(source, target),//使用近似比较

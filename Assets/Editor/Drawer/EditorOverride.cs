@@ -87,6 +87,7 @@ namespace Pixeye.Unity
                 for (var i = 1; i < props.Count; i++)
                 {
                     var prop = props[i];
+                    if (!ShouldDisplayField(prop)) continue;
 
                     if (IsInlineField(prop))
                     {
@@ -131,6 +132,7 @@ namespace Pixeye.Unity
 
                     for (int i = 0; i < cache.props.Count; i++)
                     {
+                        if (!ShouldDisplayField(cache.props[i])) continue;
                         this.UseVerticalLayout(() => Child(i), StyleFramework.boxChild);
                     }
                 }
@@ -245,6 +247,21 @@ namespace Pixeye.Unity
                 var pr = prop.Copy();
                 props.Add(pr);
             }
+        }
+
+        /// <summary>
+        /// 字段是否应显示（支持 [Compare] 条件控制）。
+        /// 数组/List 字段本身也会被正确判断，避免"字段级 Compare 只作用到元素上"的问题。
+        /// </summary>
+        private bool ShouldDisplayField(SerializedProperty prop)
+        {
+            if (target == null) return true;
+            var fieldInfo = target.GetType().GetField(prop.name,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (fieldInfo == null) return true;
+            var compare = Attribute.GetCustomAttribute(fieldInfo, typeof(CompareAttribute)) as CompareAttribute;
+            if (compare == null) return true;
+            return CustomLabelDrawer.ShouldDisplayField(prop, compare);
         }
 
 

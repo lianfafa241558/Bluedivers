@@ -12,6 +12,9 @@ namespace Unity.FPS.AI
     public partial class EnemyMobile : AIInputUnitController
     {
 
+        /// <summary>开火时停在原地且炮塔停止旋转：任一武器处于开火状态(蓄力/激光/射击/可连射)时，机体站桩、炮塔保持当前朝向不追踪；不开火时正常追敌并追踪瞄准</summary>
+        [InspectorName("开火时停在原地")]
+        [Tooltip("开启后：只要任一武器在开火(蓄力/激光/射击/可连射)，就停在原地且炮塔停止旋转(保持当前朝向)；不开火时正常追敌并追踪瞄准")]
         public bool AttackStop;
         protected EnemyController m_EnemyController;
 
@@ -228,13 +231,32 @@ namespace Unity.FPS.AI
             }
             return false;
         }
-        bool InAttackState()
+        /// <summary>任一武器是否正在开火（蓄力/激光/射击中）。注意：不含"武器就绪可开火"(CanShoot)，
+        /// 否则进入射程后 mustStop 恒为 true，炮塔会被永久冻结无法转过去对准目标</summary>
+        bool IsFiringNow()
         {
-            bool re = false;
-            turrets.ForEach(item => {
-                re|=item.weapon.InAttackState();
-            });
-            return re;
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                WeaponEnemyController w = turrets[i].weapon;
+                if (w != null && (w.InCharging || w.InLasering || w.InShoots))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>是否已过开火延迟（与 AimTargrt 判定一致：任一炮塔过了它的开火延迟即允许开火）</summary>
+        bool IsFireDelayPassed()
+        {
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                if (Time.time > m_TimeStartedDetection + turrets[i].detectionFireDelay)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
    
         /// <summary>状态机每帧</summary>
@@ -322,13 +344,17 @@ namespace Unity.FPS.AI
                     m_EnemyController.SetNavDestination(m_OriginPos);
                     break;
                 case AIState.Follow:
-                    float followDis = Vector3.Distance(TargetPosition, m_EnemyController.CenterPos);
+                    // 水平距离(寻路是地面导航，忽略高度差)减去目标半径：避免大型单位因身高把距离"抬高"，导致一直往目标脚下冲
+                    float targetHalfFollow = m_EnemyController.Target.Actor?.HalfRange ?? 0f;
+                    Vector3 toTargetFollow = TargetPosition - m_EnemyController.Pos;
+                    toTargetFollow.y = 0f;
+                    float followDis = toTargetFollow.magnitude - targetHalfFollow;
                     float followStopRange = AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange;
-                    if (followDis >= followStopRange + 1 / m_EnemyController.DetectionModule.AttackRange)
+                    if (followDis >= followStopRange + 1)
                     {
                         m_EnemyController.SetNavDestination(TargetPosition);
                     }
-                    else if (followDis < followStopRange - 1 / m_EnemyController.DetectionModule.AttackRange && MaintainMaxDis)
+                    else if (followDis < followStopRange - 1 && MaintainMaxDis)
                     {
                         m_EnemyController.SetNavDestination(transform.position + (transform.position - TargetPosition).normalized);
                     }
@@ -341,19 +367,23 @@ namespace Unity.FPS.AI
                     break;
                 case AIState.Attack:
 
-                    float dis = Vector3.Distance(TargetPosition, m_EnemyController.CenterPos);
+                    // 水平距离(寻路是地面导航，忽略高度差)减去目标半径：避免大型单位因身高把距离"抬高"，导致一直往目标脚下冲
+                    float targetHalfAttack = m_EnemyController.Target.Actor?.HalfRange ?? 0f;
+                    Vector3 toTargetAttack = TargetPosition - m_EnemyController.Pos;
+                    toTargetAttack.y = 0f;
+                    float dis = toTargetAttack.magnitude - targetHalfAttack;
                     float stopRange = (AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange);
-                    bool mustStop = AttackStop && InAttackState();
+                    bool mustStop = AttackStop && IsFiringNow();
                     if (mustStop)
                     {
                         m_EnemyController.StopNav();
                     }
                     //如果目标到自己的距离大于停止系数*攻击范围，那就追，到范围就停
-                    else if (dis >= stopRange + 1 / m_EnemyController.DetectionModule.AttackRange)//接近
+                    else if (dis >= stopRange + 1)//接近
                     {
                         m_EnemyController.SetNavDestination(TargetPosition);
                     }
-                    else if (dis < stopRange - 1 / m_EnemyController.DetectionModule.AttackRange && MaintainMaxDis)//保持最大距离的敌人会在目标接近时远离
+                    else if (dis < stopRange - 1 && MaintainMaxDis)//保持最大距离的敌人会在目标接近时远离
                     {
                         m_EnemyController.SetNavDestination(transform.position + (transform.position - TargetPosition).normalized);
                     }
@@ -363,16 +393,24 @@ namespace Unity.FPS.AI
                     }
 
                     // shoot
-                    if (mustStop)
-                    {
-                        turrets.ForEach(item => {
-                            if (item.IsLockTarget(TargetPosition)) m_EnemyController.TryStop(item.weapon);
-                        });
-                    }
-                    else if (IsAttackLocked)
+                    if (IsAttackLocked)
                     {
                         // Vertigo/Terror：禁止攻击，停止武器
                         turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
+                    }
+                    else if (mustStop)
+                    {
+                        // 开火中且勾选 AttackStop：炮塔保持当前朝向不再追踪(不调 AimTargrt/Look)，
+                        // 仅对已锁定的炮塔按开火延迟正常开火
+                        if (IsFireDelayPassed())
+                        {
+                            turrets.ForEach(item => {
+                                if (item.weapon && item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition))
+                                {
+                                    m_EnemyController.TryAtack(item.weapon);
+                                }
+                            });
+                        }
                     }
                     else if (AimTargrt())
                     {
@@ -531,5 +569,6 @@ namespace Unity.FPS.AI
             }
             
         }
+
     }
 }

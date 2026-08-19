@@ -36,6 +36,16 @@ namespace Unity.FPS.AI
         [InspectorName("丢失目标时间")]
         public float KnownTargetTimeout = 4f;
 
+        /// <summary>最短转火时间（秒）：锁定目标后冷却期内不因受击/视野转火，避免被围殴时反复切换目标导致无法开火</summary>
+        [InspectorName("最短转火时间(秒)")]
+        public float MinSwitchTargetTime = 4f;
+
+        /// <summary>锁定当前目标的时间（用于最短转火冷却）</summary>
+        private float TimeLastTargetSet = Mathf.NegativeInfinity;
+
+        /// <summary>是否处于转火冷却期（有目标且锁定时间不足最短转火时间）</summary>
+        protected bool IsSwitchingCooldown => Target.Actor.IsValid() && Time.time - TimeLastTargetSet < MinSwitchTargetTime;
+
         public UnityAction onDetectedTarget;
         public UnityAction onLostTarget;
 
@@ -125,6 +135,7 @@ namespace Unity.FPS.AI
                 if (actor != null)
                 {
 
+                    TimeLastTargetSet = Time.time;
                     targetColliders = actor.transform.GetComponentsInChildren<Collider>();
                     TimeLastSeenTarget = Time.time;
                     showTarget = actor.gameObject;
@@ -305,8 +316,12 @@ namespace Unity.FPS.AI
             if (newTarget != null)
             {
                 IsSeeingTarget = true;
-                //Debug.LogError(transform.parent + "设置新目标从" + Target.Actor + "变为" + newTarget, transform);
-                SetTargetActor(newTarget);
+                // 转火冷却期内保持当前目标，避免被围殴/目标被遮挡时反复切换
+                if (!IsSwitchingCooldown)
+                {
+                    //Debug.LogError(transform.parent + "设置新目标从" + Target.Actor + "变为" + newTarget, transform);
+                    SetTargetActor(newTarget);
+                }
             }
 
             return false;
@@ -420,9 +435,13 @@ namespace Unity.FPS.AI
             var newThreat = FpsHelper.ThreatValue(CorePoint.position, newActor);
             if (!Target.Actor.IsValid()|| oldThreat > newThreat)
             {
-                //Debug.LogWarning(transform.parent + "受击设置新目标" + Target.Actor + "变为" + newActor, transform);
-                SetTargetActor(newActor);
-                OnDetect();
+                // 有当前目标且处于转火冷却期时，不因受击切换目标，避免被围殴时反复转火无法开火
+                if (!Target.Actor.IsValid() || !IsSwitchingCooldown)
+                {
+                    //Debug.LogWarning(transform.parent + "受击设置新目标" + Target.Actor + "变为" + newActor, transform);
+                    SetTargetActor(newActor);
+                    OnDetect();
+                }
             }
             
             

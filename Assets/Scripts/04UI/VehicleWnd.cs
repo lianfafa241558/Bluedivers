@@ -414,7 +414,8 @@ public class VehicleWnd : Window
             weaponInst.transform.localPosition = -weaponInst.ShowRoot.transform.localPosition;
             weaponInst.transform.localScale = weaponInst.ShowRoot.transform.localScale;
         }
-        if (weaponInst.WeaponMuzzle != weaponInst.WeaponRoot.transform) SetActive(weaponInst.WeaponMuzzle, false);
+        var weaponMuzzle = weaponInst.GetMuzzle(0);
+        if (weaponMuzzle && weaponMuzzle != weaponInst.WeaponRoot.transform) SetActive(weaponMuzzle, false);
         SetText(weaponName, weaponInst.WeaponName);
 
 

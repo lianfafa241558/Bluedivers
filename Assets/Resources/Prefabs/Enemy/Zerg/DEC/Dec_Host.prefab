@@ -207,6 +207,7 @@ MonoBehaviour:
   AttackRange: 15
   AlertRange: 50
   KnownTargetTimeout: 8
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
@@ -543,8 +544,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 3693183097195693351}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 2797009384319742370}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 0
@@ -618,7 +621,7 @@ MonoBehaviour:
   showReloadTime: 0
   showCool: 0
   ShootType: 1
-  WeaponFlag: 0
+  WeaponFlag: 8
   AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
@@ -1070,7 +1073,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowName: "\u5B75\u5316\u8005"
-  Id: Hydralisk
+  Id: Host
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}

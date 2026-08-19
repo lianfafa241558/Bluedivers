@@ -95,7 +95,7 @@ namespace Unity.FPS.AI
             [InspectorName("绑定武器")]
             public WeaponEnemyController weapon;
 
-            public Transform firePoint => weapon ? weapon.WeaponMuzzle : null;
+            public Transform firePoint => weapon ? weapon.GetMuzzle(0) : null;
 
             [InspectorName("转向速度")]
             [Tooltip("匀速转向速度（度/秒）。例如 30=30°/秒，90=90°/秒。注意：若本炮塔是某父级底座(如limitFollow/spine0)的子物体，此速度应 ≥ 父级底座转向速度，否则会被父级旋转拖乱导致指向错误")]
@@ -173,7 +173,7 @@ namespace Unity.FPS.AI
                 if (HaveBarrel)
                 {
                     if (!firePoint)
-                        Debug.LogError($"[Turret Init] 绑定武器缺少发射点位(WeaponMuzzle): {weapon.name}", weapon);
+                        Debug.LogError($"[Turret Init] 绑定武器缺少发射点位: {weapon}", weapon);
                     else
                         barrelOffset = Quaternion.Inverse(firePoint.rotation) * barrel.rotation;
                 }
@@ -246,9 +246,28 @@ namespace Unity.FPS.AI
                     Vector3 baseForwardXZ = GetLimitBaseForward();
                     // 限制底盘水平旋转
                     chassisDir = GetLimitedDirection(baseForwardXZ, chassisDir, limitRotation);
-                    // 保持炮管垂直旋转与底盘同轴（同步水平转向）
+                    // 保持炮管垂直旋转与底盘同轴（同步水平转向）。
+                    // 注意：不能用 new Vector3(chassisDir.x, barrelDir.y, chassisDir.z).normalized——
+                    // 受限后的 chassisDir 是单位水平向量(长度1)，替换后归一化会压缩 dy、改变俯仰角，
+                    // 导致炮管下压/上抬不足（水平方向被钳制得越狠，Y 轴偏差越大）。
+                    // 正确做法：水平方向取受限后的 chassisDir，俯仰角保持原 barrelDir 的俯仰角，按球坐标重建。
                     if (HaveBarrel)
-                        barrelDir = new Vector3(chassisDir.x, barrelDir.y, chassisDir.z).normalized;
+                    {
+                        float elevation = Mathf.Asin(Mathf.Clamp(barrelDir.y, -1f, 1f));
+                        Vector3 horizDir = new Vector3(chassisDir.x, 0f, chassisDir.z);
+                        float horizLen = horizDir.magnitude;
+                        if (horizLen < 0.0001f)
+                        {
+                            // 目标在底盘正上/正下方：无水平分量，用当前朝向兜底
+                            horizDir = Vector3.ProjectOnPlane(barrelRotation * Vector3.forward, Vector3.up).normalized;
+                            if (horizDir.sqrMagnitude < 0.0001f) horizDir = Vector3.forward;
+                        }
+                        else
+                        {
+                            horizDir /= horizLen;
+                        }
+                        barrelDir = (horizDir * Mathf.Cos(elevation) + Vector3.up * Mathf.Sin(elevation)).normalized;
+                    }
                 }
 
                 // 垂直限制：限制炮管俯仰角（相对水平面）

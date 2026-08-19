@@ -12,6 +12,8 @@ namespace Unity.FPS.Game
         public ProjectileBase Template { get; set; }
         public GameObject Owner { get; private set; }
         public WeaponBaseController WeaponBase{ get; private set; }
+        /// <summary>发射该子弹的炮口(齐射时可区分具体点位)</summary>
+        public Transform Muzzle { get; private set; }
 
         public DamageData DamageData { get; protected set; }
         /// <summary>初始位置</summary>
@@ -45,17 +47,22 @@ namespace Unity.FPS.Game
 
         public void Shoot(WeaponBaseController controller)
         {
-            Shoot(controller, controller.UseDamageIndex);
+            Shoot(controller, controller.UseDamageIndex, controller.GetMuzzle(0));
         }
-        public void Shoot(WeaponBaseController controller,int index)
+        public void Shoot(WeaponBaseController controller,int damageDataIndex)
+        {
+            Shoot(controller, damageDataIndex, controller.GetMuzzle(0));
+        }
+        public void Shoot(WeaponBaseController controller,int damageDataIndex, Transform muzzle)
         {
             if (!controller.IsValid()) { Debug.LogWarning("子弹没有武器来源"+gameObject); Tool.Destroy(gameObject); return; }
 
             Owner = controller.Owner;
             WeaponBase = controller;
+            Muzzle = muzzle;
             InitialPosition = transform.position;
             InitialDirection = transform.forward;
-            DamageData = controller.Damages[index];
+            DamageData = controller.Damages[damageDataIndex];
             InheritedMuzzleVelocity = DamageData.InheritWeaponSpeed ? controller.MuzzleWorldVelocity : Vector3.zero;
             Charge = controller.WeaponChargeScale_D;
             SFXRange = controller.SFXRange;

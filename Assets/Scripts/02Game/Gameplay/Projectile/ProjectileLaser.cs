@@ -40,8 +40,8 @@ namespace Unity.FPS.Gameplay
             //这里可以有武器，但是update里面得脱落
             ShootSpeed = WeaponBase.AttrFinal(WeaponAttrType.ShootInterval, new(0.1f)).RawFloat;
             m_ShootTime = Time.time;
-            //直接设置父级就不用处理移动了
-            transform.parent = WeaponBase.WeaponMuzzle;
+            //直接设置父级就不用处理移动了；齐射时绑定实际发射的炮口
+            transform.parent = Muzzle.IsValid() ? Muzzle : WeaponBase.GetMuzzle(0);
 
             //忽略发射者的碰撞
             m_IgnoredColliders = new List<Collider>();
@@ -52,12 +52,14 @@ namespace Unity.FPS.Gameplay
             m_line.positionCount = 2;
 
             RaycastHit hit;
-            if (!Physics.Raycast(new Ray(transform.position, transform.forward), out hit, 300, FpsHelper.GetHittableLayers(999)))
+
+            if (!Physics.Raycast(new Ray(transform.position + MinRange* transform.forward, transform.forward), out hit, 300, FpsHelper.GetHittableLayers(999)))
             {
                 hit.point = transform.position + transform.forward * 300;
                 hit.normal = -transform.forward;
 
             }
+            //Debug.DrawLine(transform.position + MinRange * transform.forward, hit.point,Color.red,3);
             m_lastPos = hit.point;
             m_EndObject = new();
             foreach (var item in EndObject)
@@ -78,7 +80,7 @@ namespace Unity.FPS.Gameplay
             m_line.SetPosition(0, transform.position);
             Vector3 vector = transform.forward;
             Vector3 end;
-            if (Physics.Raycast(new Ray(transform.position, vector), out var hit, 300, FpsHelper.GetHittableLayers(999)))
+            if (Physics.Raycast(new Ray(transform.position + MinRange * transform.forward, vector), out var hit, 300, FpsHelper.GetHittableLayers(999)))
             {
                 m_line.SetPosition(1, hit.point);
                 end = hit.point;

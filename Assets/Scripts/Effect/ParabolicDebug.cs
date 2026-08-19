@@ -24,22 +24,23 @@ public class ParabolicDebug : MonoBehaviour
         float gravity = m_weapon.CurrentGravity;
         //float time = lenght / speed;//相对于每次移动lenght的所需时间
         float time = 0.05f;//相对于每次移动lenght的所需时间
+        var muzzle = m_weapon.GetMuzzle(0);
         if (target) {
-            LookPos = CalculateLaunchPoint(m_weapon.WeaponMuzzle.position, target.position, speed, gravity);
-
-            m_weapon.WeaponMuzzle.LookAt(LookPos);
+            
+            LookPos = CalculateLaunchPoint(muzzle.position, target.position, speed, gravity);
+            muzzle.LookAt(LookPos);
             Gizmos.DrawCube(LookPos,Vector3.one);
             Gizmos.DrawCube(target.position, Vector3.one);
             Gizmos.DrawLine(target.position, LookPos);
-            Gizmos.DrawLine(target.position, m_weapon.WeaponMuzzle.position);
-            Gizmos.DrawLine(m_weapon.WeaponMuzzle.position, LookPos);
+            Gizmos.DrawLine(target.position, muzzle.position);
+            Gizmos.DrawLine(muzzle.position, LookPos);
             Gizmos.color = Color.green;
-            //Gizmos.DrawLine(m_weapon.WeaponMuzzle.position, target.position+ maxHeight *Vector3.up);
+            //Gizmos.DrawLine(muzzle.position, target.position+ maxHeight *Vector3.up);
         }
         //子弹的弹道和下面的写法是基本吻合的
         RayGo = null;
-        Vector3 lastPos = m_weapon.WeaponMuzzle.position ;
-        Vector3 velocity = m_weapon.WeaponMuzzle.forward * speed;
+        Vector3 lastPos = muzzle.position ;
+        Vector3 velocity = muzzle.forward * speed;
         for (int i = 0; i < 100; ++i) {
             Gizmos.color = Color.HSVToRGB((0.1f*i)%1,1,1);
             Gizmos.DrawLine(lastPos, lastPos + velocity * time);
@@ -108,7 +109,7 @@ public class ParabolicDebug : MonoBehaviour
             height = dy + 0.5f * gravity * time * time;
         }
         // 返回目标点x,z坐标加上计算高度
-        return new Vector3(targetPos.x, m_weapon.WeaponMuzzle.position.y + height, targetPos.z);
+        return new Vector3(targetPos.x, m_weapon.GetMuzzle(0).position.y + height, targetPos.z);
 
     }
 
