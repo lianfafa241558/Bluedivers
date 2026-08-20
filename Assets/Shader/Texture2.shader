@@ -168,11 +168,12 @@ Shader "LX/Texture2"
             col*= (UNITY_ACCESS_INSTANCED_PROP(Props, _BaseColor)+UNITY_ACCESS_INSTANCED_PROP(Props, _HitColor))*i.color; 
         #if _UseLight
             Light mainLight = GetMainLight();
-            col.rgb *= mainLight.color;
+            // 场景无方向光(或强度为0)时 _MainLightColor 为黑, 乘黑会让 additive 混合下特效完全消失, 此处兜底退化为不乘光
+            half3 lightColor = mainLight.color;
+            col.rgb *= lerp(lightColor, half3(1,1,1), dot(lightColor, half3(1,1,1)) < 0.001);
         #endif
             
         #if _UseFresnel
-            Light mainLight = GetMainLight();
             half3 N = i.normalWS;
             half3 L = normalize(_WorldSpaceCameraPos - i.positionWS);
             half NdotL =saturate(dot(N,L));

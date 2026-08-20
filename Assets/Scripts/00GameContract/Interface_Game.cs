@@ -127,6 +127,10 @@ namespace GameContract
 
         public bool HasFlag(ActorFlag flag);
 
+        public void AddFlag(ActorFlag flag);
+
+        public void RemoveFlag(ActorFlag flag);
+
         public bool Equals(I_Actor obj);
 
         public int GetHashCode();

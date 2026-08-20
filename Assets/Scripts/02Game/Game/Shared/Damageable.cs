@@ -49,7 +49,7 @@ namespace Unity.FPS.Game
         public int BleedValue;
 
         public event UnityAction<Damageable> OnDamage;
-        public event UnityAction OnDestroyPart;
+        public event UnityAction<Damageable> OnDestroyPart;
         public Health Health { get; private set; }
         private Actor Actor { get; set; }
 
@@ -88,11 +88,21 @@ namespace Unity.FPS.Game
        
         public PEInt remainArmor;
 
+        /// <summary>护甲满值（含难度缩放），用于护甲/护盾恢复</summary>
+        private PEInt maxArmor;
+
         [DisplayField]
         [SerializeField]
         private float showArmor;
 
         public float GetArmorRatio() => remainArmor.RawFloat / armorValue;
+
+        public void SetIsMain(Health health)
+        {
+            isMain = true;
+            health.OnDie+= DestroyPart;
+        }
+
 
         void Awake()
         {
@@ -127,6 +137,7 @@ namespace Unity.FPS.Game
             }
 
             remainArmor = armorValue * scale;
+            maxArmor = remainArmor;
             showArmor = remainArmor.RawFloat;
             List <Collider> list = GetComponents<Collider>().ToList();
             foreach (var item in LineArmor)
@@ -155,6 +166,15 @@ namespace Unity.FPS.Game
             foreach (var item in showArmorLists)
             {
                 armors[item.Key]-=item.Value-AllArmor;
+            }
+            // 记录护甲破坏效果的初始状态，用于护盾恢复
+            foreach (var item in armorBreakEffect)
+            {
+                if (item.go != null)
+                {
+                    item.originActive = item.go.activeSelf;
+                    item.originLocalScale = item.go.transform.localScale;
+                }
             }
         }
 
@@ -279,17 +299,7 @@ namespace Unity.FPS.Game
                 showArmor = remainArmor.RawFloat;
                 if (remainArmor <= 0)
                 {
-                    foreach (var item in armorBreakEffect)
-                    {
-                        if (item.go != null)
-                        {
-                            item.go.SetActive(item.state);
-                            item.go.transform.localScale *= item.scale;
-                        }
-                    }
-                    ArmorBreaker = source;
-                    OnDamage?.Invoke(this);
-                    OnDestroyPart?.Invoke();
+                    BreakArmor(source);
                 }
                 else
                 {
@@ -297,6 +307,53 @@ namespace Unity.FPS.Game
                 }
             }
         }
+
+        /// <summary>
+        /// 恢复护甲（护盾类肢体）：护甲回满并还原护甲破坏效果
+        /// </summary>
+        public void RestoreArmor()
+        {
+            if (remainArmor > 0) return;
+
+            remainArmor = maxArmor;
+            showArmor = remainArmor.RawFloat;
+            ArmorBreaker = null;
+            foreach (var item in armorBreakEffect)
+            {
+                if (item.go != null)
+                {
+                    item.go.SetActive(item.originActive);
+                    item.go.transform.localScale = item.originLocalScale;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 摧毁护甲
+        /// </summary>
+        public void BreakArmor(GameObject source)
+        {
+            foreach (var item in armorBreakEffect)
+            {
+                if (item.go != null)
+                {
+                    item.go.SetActive(item.state);
+                    item.go.transform.localScale *= item.scale;
+                }
+            }
+            ArmorBreaker = source;
+            OnDamage?.Invoke(this);
+            DestroyPart(null);
+        }
+
+        private void DestroyPart(GameObject _)
+        {
+            OnDestroyPart?.Invoke(this);
+        }
+
+
+
+
         public override bool Tick()
         {
             if (armorValue>0&&remainArmor <= 0)
@@ -324,6 +381,10 @@ namespace Unity.FPS.Game
         public bool state;
         public float scale;
 
+        /// <summary>运行时记录破坏前的激活状态，用于护盾恢复</summary>
+        [HideInInspector] public bool originActive;
+        /// <summary>运行时记录破坏前的局部缩放，用于护盾恢复</summary>
+        [HideInInspector] public Vector3 originLocalScale;
     }
 
 }

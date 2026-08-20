@@ -104,22 +104,22 @@ namespace FPSGame.Furn
       
         public Animator anim;
 
-        [DisplayField(true, false)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         [SerializeField]
         [InspectorName("音频源")]
         private AudioSource _audioSource;
 
 
         [Foldout("状态", true)]
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         public float lastOperatetime;
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         [SerializeField]
         protected GameObject owner;
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         [SerializeField]
         protected float time;
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         [SerializeField]
         protected int count;
 

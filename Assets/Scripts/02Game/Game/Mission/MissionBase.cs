@@ -44,16 +44,16 @@ namespace FpsGame.Mission
         [SerializeField]
         private List<GameObject> prefabs;
 
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         [InspectorName("标题")]
         public string title;
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         [InspectorName("当前目标提示")]
         public string tip;
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         [InspectorName("最大任务进度")]
         public int MaxProgress;
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         [InspectorName("当前任务进度")]
         public int NowProgress;
 
@@ -64,14 +64,14 @@ namespace FpsGame.Mission
         public Vector2Int mapEntitySize = Vector2Int.one * 20;
 
 
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         public MissionBase parent;//主任务
 
         
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         public TaskManager.TaskItem data;
         [SerializeField]
-        [DisplayField(true, false)]
+         [DisplayField(DisplayFieldEnum.RunRead)]
         protected TaskManager.SelectTaskData root;
 
         [HideInInspector]
@@ -93,9 +93,9 @@ namespace FpsGame.Mission
 
         [Foldout("显示",true)]
         public MissionBase[] subTask;
-        [DisplayField(false)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         public float percentage;//完成百分比，用来显示
-        [DisplayField(false)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         [SerializeField]
         /// <summary>在部署战备范围内</summary>
         private bool InAirdropRange;

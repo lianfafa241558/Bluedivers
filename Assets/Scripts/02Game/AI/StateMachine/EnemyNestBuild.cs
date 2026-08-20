@@ -27,7 +27,7 @@ namespace Unity.FPS.AI
         [InspectorName("脱战时间")]
         private int damagedTime=12;
         [SerializeField]
-        [DisplayField(true,false)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         private float lastDamagedTime = Mathf.NegativeInfinity, creatTime= Mathf.Infinity;
 
         public AIState AiState;// { get; private set; }

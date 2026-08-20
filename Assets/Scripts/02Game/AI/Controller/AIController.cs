@@ -48,7 +48,10 @@ public interface I_AIController
     /// </summary>
     public void Beware(Vector3 point,bool spread);
 
+    public I_Actor Actor { get; }
+    public GameAttribute GetAttribute(UnitAttrType type);
 
+    public T GetAttribute<T>(UnitAttrType type) where T : GameAttribute;
 }
 
 
@@ -58,7 +61,7 @@ public interface I_AIController
 /// </summary>
 public abstract class AIController : MonoBehaviour, I_AIController, IUnit
 {
-
+    public I_Actor Actor => m_Actor;
     public Transform AimPoint => m_Actor.AimPoint;
     public Vector3 CenterPos => m_Actor.CenterPos;
     public virtual Vector3 Pos {

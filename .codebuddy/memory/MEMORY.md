@@ -50,6 +50,7 @@
 - 全局事件（非战斗相关）在 `GlobalEventSub` 中定义；战斗相关事件在 `BattleEventSub` 中定义。
 - 新增跨多组件通知的功能时，优先考虑在 `GlobalEventSub` 或 `BattleEventSub` 中加 `static event`，而非让每个组件各自 `FindObjectOfType` 或 `GetComponent` 获取目标实例。
 - **默认操作视角设置**：在 `ArchivesData_SO.settingDic` 中以 key `"默认操作视角"` 存储，值为 `ArchSettingData`（Dropdown 类型，0=第一人称，1=第三人称）。`PlayerController.Start()` 中读取该设置并通过 `ApplyViewMode()` 初始化视角。`ApplyViewMode()` 同时被 `HandleToggleView()` 复用，封装了视角切换时的 Camera cullingMask、WeaponCamera、LookAt 组件的统一处理。
+- **AI 控制器架构（2026-08-20 确认）**：`AIController`（`Assets/Scripts/02Game/AI/Controller/AIController.cs`）**不继承** `Actor`，保持"组合 + 接口代理"——通过 `m_Actor = GetComponent<Actor>()` 持有 `I_Actor` 并代理其 AimPoint/CenterPos/Pos/HpPos/ID。理由：① `Actor` 是身份/标识组件（团队/Flag/逻辑碰撞/ActorsManager 注册/事件广播），被大量系统 `GetComponent<Actor>()` 单实例取用（`ActorsManager`/`Damageable`/`WaveManager`/`HpItemBase` 等），继承会导致双 Actor 组件行为未定义；② `EnemyController`/`OtherController` 均 `[RequireComponent(typeof(Actor))]`，同一物体同时挂 Actor 与控制器是既定组合约定；③ `Actor` 有自己的 Awake/Update/OnDestroy 生命周期，避免耦合。`AIController` 是抽象基类，子类 `EnemyController`（`[RequireComponent(typeof(HealthEnemy), typeof(Actor))]`）、`OtherController`。全项目无任何类继承 `Actor`。
 
 ## 协作偏好
 - 遇到不确定/有疑问的情况时，应先暂停、总结当前状态并向用户询问，而不是自行做大量全局搜索去推断。优先问清楚再行动。

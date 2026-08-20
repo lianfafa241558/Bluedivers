@@ -83,7 +83,7 @@ namespace Unity.FPS.Game {
 
         protected virtual void Awake() {
             CurrentHealth = MaxHealth;
-            if(MainPart.IsValid()) MainPart.isMain = true;
+            if(MainPart.IsValid()) MainPart.SetIsMain(this);
             InitAboState();
         }
         /// <summary>受到治疗</summary>

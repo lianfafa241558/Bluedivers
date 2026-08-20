@@ -23,6 +23,8 @@ namespace Unity.FPS.Gameplay
         [Header("特效")]
         [InspectorName("创建终点物体")]
         public List<GameObject> EndObject;
+        [InspectorName("终点物体")]
+        public List<Transform> EndMoveObject;
 
         protected float m_ShootTime;
 
@@ -66,6 +68,10 @@ namespace Unity.FPS.Gameplay
             {
                 //m_EndObject.Add(VFXManager.Creat(item, hit.point, Quaternion.LookRotation(hit.normal, Vector3.forward), null).transform);
                 m_EndObject.Add(VFXManager.Creat(item, hit.point, default, null).transform);
+            }
+            foreach (var item in EndMoveObject)
+            {
+                m_EndObject.Add(item);
             }
         }
 
@@ -170,8 +176,11 @@ namespace Unity.FPS.Gameplay
             //Debug.DrawRay(pos,normal,Color.red,1);
             foreach (var item in m_EndObject)
             {
-                item.GetComponent<LimitedLife>().ResetLift(1);
-                if(item.TryGetComponent<ParticleSystem>(out var ps))
+                if (item.TryGetComponent<LimitedLife>(out var life))
+                {
+                    life.ResetLift(1);
+                }
+                else if(item.TryGetComponent<ParticleSystem>(out var ps))
                 {
                     if (jump)
                     {
@@ -203,7 +212,10 @@ namespace Unity.FPS.Gameplay
         {
             foreach (var item in m_EndObject)
             {
-                item.GetComponent<LimitedLife>().ResetLift(1);
+                if (item.TryGetComponent<LimitedLife>(out var life))
+                {
+                    life.ResetLift(1);
+                }
             }
         }
     }

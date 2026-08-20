@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core;
+using FPSGame.Attribute;
 using GameContract;
-
+using Unity.Collections;
 using UnityEngine;
 using Utils;
 
@@ -24,10 +25,16 @@ namespace Unity.FPS.AI
         [SerializeField]
         protected new SkillTag tag;
 
-
+        [DisplayField]
+        [InspectorName("控制器")]
+        [SerializeField]
         protected EnemyController m_Controller;
+        [DisplayField]
+        [InspectorName("当前冷却时间")]
         [SerializeField]
         protected float nowCoolTime;
+        [DisplayField]
+        [InspectorName("当前持续时间")]
         [SerializeField]
         protected float nowDurationTime;
 

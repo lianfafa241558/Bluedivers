@@ -45,11 +45,7 @@ namespace Unity.FPS.Game
         public UnityAction OnShoot;
         public UnityAction<ProjectileHitData> OnHit;
 
-        public void Shoot(WeaponBaseController controller)
-        {
-            Shoot(controller, controller.UseDamageIndex, controller.GetMuzzle(0));
-        }
-        public void Shoot(WeaponBaseController controller,int damageDataIndex)
+        public void Shoot(WeaponBaseController controller,int damageDataIndex=0)
         {
             Shoot(controller, damageDataIndex, controller.GetMuzzle(0));
         }

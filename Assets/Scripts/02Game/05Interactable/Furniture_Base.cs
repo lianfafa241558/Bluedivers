@@ -43,10 +43,10 @@ public class Furniture_Base : Furniture_Attached, IFurniture, I_Entity
     [InspectorName("外部布尔参数")]
     public bool ExtBoolParameter;
 
-    [DisplayField(true, false)]
+    [DisplayField(DisplayFieldEnum.RunRead)]
     [SerializeField]
     protected ParticleSystem particle;
-    [DisplayField(true, false)]
+    [DisplayField(DisplayFieldEnum.RunRead)]
     [SerializeField]
     protected NavMeshObstacle obs;
 

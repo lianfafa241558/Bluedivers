@@ -438,7 +438,7 @@ namespace Unity.FPS.Game {
                 var bullet = VFXManager.Creat(ProjectilePrefab, shotPos, Quaternion.LookRotation(shotDirection));
 
                 OnBulletShoot?.Invoke(bullet);
-                bullet.Shoot(this,0 ,muzzle);
+                bullet.Shoot(this, UseDamageIndex, muzzle);
             }
 
             ShootFlash(muzzle);

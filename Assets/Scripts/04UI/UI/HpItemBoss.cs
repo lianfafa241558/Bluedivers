@@ -26,7 +26,7 @@ public class HpItemBoss : HpItemBase
         base.Set(go);
         this.enemy = go.GetComponent<PartController>();
 
-        damageables = enemy.invincibleArmor.Length > 0 ? enemy.invincibleArmor : enemy.deathArmor;
+        damageables = enemy.invincibleArmor.Count > 0 ? enemy.invincibleArmor.ToArray() : enemy.deathArmor;
         lenght = damageables.Length;
 
         int i=0;

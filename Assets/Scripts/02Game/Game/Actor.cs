@@ -82,6 +82,13 @@ namespace Unity.FPS.Game
 
         public bool HasFlag(ActorFlag flag) => this.flag.HasFlag(flag);
 
+
+        public void AddFlag(ActorFlag flag) => this.flag|=flag;
+
+        public void RemoveFlag(ActorFlag flag) => this.flag &= ~flag;
+
+
+
         /// <summary>是否为固定单位(只对EnemyMoble有效)</summary>
         [InspectorName("固定单位(只对EnemyMoble有效)")]
         public bool IsFixed;

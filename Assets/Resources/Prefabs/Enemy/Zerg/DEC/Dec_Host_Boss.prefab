@@ -321,7 +321,7 @@ MonoBehaviour:
       Value: 12
   ProjectilePrefab: {fileID: 828996816448062211, guid: 4382c41751911db43982fe1740493e6b,
     type: 3}
-  BulletFlag: 1
+  BulletFlag: 0
   Damages:
   - Speed: 20
     Gravity: 20
@@ -495,6 +495,11 @@ PrefabInstance:
       propertyPath: BirthDuration
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 173954395524836698, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: armorValue
+      value: 1500
+      objectReference: {fileID: 0}
     - target: {fileID: 214383806843130632, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
         type: 3}
       propertyPath: turrets.Array.size
@@ -617,6 +622,16 @@ PrefabInstance:
       propertyPath: fxDic.arr.Array.data[3].Value.cilp
       value: 
       objectReference: {fileID: 8300000, guid: cc8ede0678c58184f904240da2211f3a, type: 3}
+    - target: {fileID: 1171883762761738631, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: armorValue
+      value: 1500
+      objectReference: {fileID: 0}
+    - target: {fileID: 1874984855391456243, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: armorValue
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4632448015928212784, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -667,6 +682,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4989793301514849609, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: armorValue
+      value: 1500
+      objectReference: {fileID: 0}
+    - target: {fileID: 5792866995986013894, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: armorValue
+      value: 1500
+      objectReference: {fileID: 0}
     - target: {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
         type: 3}
       propertyPath: m_Name
@@ -696,6 +721,11 @@ PrefabInstance:
         type: 3}
       propertyPath: threat
       value: 1.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8266803176952894058, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: UseHpBar
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8266803176952894058, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
         type: 3}
