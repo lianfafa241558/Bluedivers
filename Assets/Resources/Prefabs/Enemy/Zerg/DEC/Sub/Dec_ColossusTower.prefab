@@ -212,12 +212,12 @@ MonoBehaviour:
   flag: 0
   type: 4
   team: 1
-  threat: 1
-  aimPoint: {fileID: 0}
+  threat: 5
+  aimPoint: {fileID: 4719077617878620530}
   UseHpBar: 1
   HpHeight: 0.5
   shape: 0
-  rangeLength: 0.8
+  rangeLength: 1
   damageables: []
 --- !u!114 &5654568588082256016
 MonoBehaviour:
@@ -232,9 +232,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   delayTime: 0
-  selfExplosionTime: 60
+  selfExplosionTime: 30
   weapon: {fileID: 0}
-  go: {fileID: 0}
+  go: {fileID: 1947318220356619581}
   UseDiffScale: 1
   DamageData:
     DamageExplosion: 0
@@ -489,10 +489,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 2
-  m_Height: 8
+  m_Radius: 0.7
+  m_Height: 4
   m_Direction: 1
-  m_Center: {x: 0, y: 4.5, z: 0}
+  m_Center: {x: 0, y: 2.25, z: 0}
 --- !u!1 &2126492985260048276
 GameObject:
   m_ObjectHideFlags: 0
@@ -554,6 +554,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5505894108119415876}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4806805708179537874
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4719077617878620530}
+  m_Layer: 6
+  m_Name: Aimpoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4719077617878620530
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4806805708179537874}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 3.49, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2567782706857191708}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7135720194004436916
 GameObject:
@@ -644,25 +675,25 @@ MonoBehaviour:
     - Key: 0
       Value: -1
     - Key: 1
-      Value: -1
+      Value: 20
     - Key: 2
-      Value: 0.2
+      Value: 0.3
   ProjectilePrefab: {fileID: 8835491154407723254, guid: a73248c52291b9941941bd0c06320ef2,
     type: 3}
   BulletFlag: 8
   Damages:
-  - Speed: 100
+  - Speed: 20
     Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 3
-    MaxRange: 25
+    MaxRange: 20
     MinRange: -1
     NoSource: 0
     SoundRadius: 50
     DamageExplosion: 0
     DamageDirect: 5
     DamageGroupDirect:
-    - Key: 0
+    - Key: 5
       Value: 1
     - Key: 2
       Value: 1
@@ -679,7 +710,7 @@ MonoBehaviour:
     ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
       type: 3}
     ImpactSfx: {fileID: 8300000, guid: f673a0b2d4827d841b581dd72b5bcc18, type: 3}
-    UseHole: 1
+    UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
     UseCharge: 0
@@ -708,6 +739,14 @@ MonoBehaviour:
   showInReload: 0
   showReloadTime: 0
   showCool: 0
+  ShootType: 3
+  WeaponFlag: 0
+  AutomaticReleaseOnCharged: 0
+  Lockshape: 0
+  ReloadSfx: {fileID: 0}
+  ChangeWeaponSfx: {fileID: 0}
+  ChargeVfx: {fileID: 0}
+  WeaponAnimator: {fileID: 0}
 --- !u!1001 &2605369463291268855
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -720,6 +759,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_RootOrder
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f608cef994cea8548a61fbd5de2bbeb4,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f608cef994cea8548a61fbd5de2bbeb4,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f608cef994cea8548a61fbd5de2bbeb4,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f608cef994cea8548a61fbd5de2bbeb4,
         type: 3}
@@ -770,6 +824,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f608cef994cea8548a61fbd5de2bbeb4,
+        type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -7284918505069793120, guid: f608cef994cea8548a61fbd5de2bbeb4,
         type: 3}
@@ -913,6 +972,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 497985906103618209}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: f608cef994cea8548a61fbd5de2bbeb4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4719077617878620530}
     - targetCorrespondingSourceObject: {fileID: 7512281513308713651, guid: f608cef994cea8548a61fbd5de2bbeb4,
         type: 3}
       insertIndex: -1

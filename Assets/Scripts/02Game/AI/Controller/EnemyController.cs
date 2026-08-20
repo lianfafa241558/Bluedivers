@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core;
+using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 
@@ -69,13 +70,6 @@ namespace Unity.FPS.AI
  
         Collider[] m_SelfColliders;
 
-        int m_CurrentWeaponIndex;
-        WeaponEnemyController m_CurrentWeapon;
-
-        //[SerializeField]
-        //[Display(false,true,true)]
-        WeaponEnemyController[] m_Weapons;
-
         //[Display(true, false, true)]
         private Vector3 m_lastDestination;
         private NavMeshPath m_lastPath;
@@ -141,7 +135,6 @@ namespace Unity.FPS.AI
             base.Start();
 
             FindAndInitializeAllWeapons();
-            GetCurrentWeapon();
             Invoke(nameof(BirthEnd), BirthDuration+0.1f);
             Speed.AddModifier(ModifierType.Factor,-1);
         }
@@ -253,12 +246,6 @@ namespace Unity.FPS.AI
                 DetectionModule.enabled = false;
             }
             Speed.AddModifier(ModifierType.Factor, -1);
-            /*
-            for (int i = 0; i < m_Weapons.Length; i++)
-            {
-                TryStop(WeaponEnemyController weapon)
-                m_Weapons[i].Owner = gameObject;
-            }*/
 
             if (GameRoot.GameState == GameStateEnum.Game && source && m_Actor.Team != 1)
             {
@@ -270,16 +257,6 @@ namespace Unity.FPS.AI
 
         }
 
-
-        public void OrientWeaponsTowards(Vector3 lookPosition)
-        {
-            for (int i = 0; i < m_Weapons.Length; i++)
-            {
-                // orient weapon towards player
-                Vector3 weaponForward = (lookPosition - m_Weapons[i].WeaponRoot.transform.position).normalized;
-                m_Weapons[i].transform.forward = weaponForward;
-            }
-        }
 
         public bool TryAtack(WeaponEnemyController weapon) {
             bool didFire = false;
@@ -303,49 +280,16 @@ namespace Unity.FPS.AI
 
 
         /// <summary>
-        /// 查找并初始化所有武器
+        /// 为所有武器绑定归属与忽略自身碰撞体
         /// </summary>
         void FindAndInitializeAllWeapons()
         {
-            if (!m_Weapons.IsValid()|| m_Weapons.Length==0)
+            var weapons = GetComponentsInChildren<WeaponBaseController>();
+            for (int i = 0; i < weapons.Length; i++)
             {
-                
-                m_Weapons = GetComponentsInChildren<WeaponEnemyController>();
-                //Debug.LogError("查找武器" + gameObject.name+"数量"+m_Weapons.Length);
-                for (int i = 0; i < m_Weapons.Length; i++)
-                {
-                    m_Weapons[i].Owner = gameObject;
-                    m_Weapons[i].IgnoredColliders = m_SelfColliders;
-                }
+                weapons[i].Owner = gameObject;
+                weapons[i].IgnoredColliders = m_SelfColliders;
             }
-        }
-
-        public bool HaveWeapon() {
-             return m_Weapons.Length>0;
-        }
-
-        /// <summary>
-        /// 不用担心没有武器的问题，建筑不会调用此方法
-        /// </summary>
-        /// <returns></returns>
-        public WeaponEnemyController GetCurrentWeapon()
-        {
-            //FindAndInitializeAllWeapons();//其他组件尝试调用的更早，只能预先检测有没有??
-            //检查当前是否未选择武器
-            if (m_CurrentWeapon == null)
-            {
-                //将武器列表中的第一件武器设置为当前武器
-                SetCurrentWeapon(0);
-            }
-            return m_CurrentWeapon;
-        }
-
-        void SetCurrentWeapon(int index)
-        {
-            m_CurrentWeaponIndex = index;
-            if (!m_Weapons.IsValid() ||index >= m_Weapons.Length) return;
-            m_CurrentWeapon = m_Weapons[m_CurrentWeaponIndex];
-            m_CurrentWeapon.ShowWeapon(true);
         }
 
         /// <summary>

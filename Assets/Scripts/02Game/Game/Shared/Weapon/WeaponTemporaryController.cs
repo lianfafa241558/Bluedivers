@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Unity.FPS.Game
 {
     using Attr = WeaponAttrType;
-    public class WeaponTemporaryController : WeaponReloadController, IVfxEffect
+    public class WeaponTemporaryController : WeaponController, IVfxEffect
     {
 
         protected virtual void OnEnable()
@@ -23,14 +23,13 @@ namespace Unity.FPS.Game
         public override void LogicInit()
         {
             base.LogicInit();
-            if (AttrFinal(Attr.StartCool) == 0) WantsToShoot = true;
         }
 
         public override void LogicTick()
         {
             base.LogicTick();
-            if (AttrFinal(Attr.StartCool) > 0) WantsToShoot = ShootInterval.CurrValue >= new PEInt(-0.1f);
-            TryShoot();//每帧都尝试射击
+            // 临时武器无外部输入：每帧模拟"按住扳机"，由 ShootType 决定实际行为(全自动/激光/蓄力/锁定等)
+            HandleShootInputs(true, true, false);
         }
 
 

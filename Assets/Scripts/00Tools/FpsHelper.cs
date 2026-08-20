@@ -9,6 +9,8 @@ using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.AI;
 using Utils;
+using static UnityEditor.Progress;
+using static UnityEngine.Rendering.DebugUI;
 
 public static class FpsHelper
 {
@@ -79,7 +81,7 @@ public static class FpsHelper
             //Debug.LogWarning("对" + collider.gameObject.name, collider.gameObject);
             //Debug.LogWarning("造成直击伤害" + damageData.GetDirectDamage(charg), collider.gameObject);
             //Debug.LogWarning(" 基础伤害" + damageData.DamageDirect, collider.gameObject);
-
+            Debug.LogWarning("对" + comp.gameObject.name + "造成直击伤害" + damageData.GetDirectDamage(charg) * damageScale);
             comp.InflictDamage(comp, damageData.GetDirectDamage(charg)* damageScale, damageData.DamageGroupDirect, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
             
         }
@@ -114,7 +116,7 @@ public static class FpsHelper
                 }
                 if (value > 0)
                 {
-                    Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value );
+                    Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value , item.gameObject);
                     item.InflictDamage(item, value, damageData.DamageGroupExplosion, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
                 }
             }

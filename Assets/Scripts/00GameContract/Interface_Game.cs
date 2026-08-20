@@ -16,6 +16,7 @@ namespace GameContract
 
     public interface I_Damagable
     {
+        GameObject gameObject { get; }
         I_Damagable Source { get; }
         float GetArmor(DamageTypeEnum type);
         bool IsExplosionImmunity();

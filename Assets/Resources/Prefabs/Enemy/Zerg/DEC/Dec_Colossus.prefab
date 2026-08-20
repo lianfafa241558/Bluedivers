@@ -10,8 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7386048590988771538}
   - component: {fileID: 8613809284823272879}
-  - component: {fileID: 3353850408714202750}
-  - component: {fileID: 7155199298961186431}
+  - component: {fileID: 7167990996515536359}
   m_Layer: 6
   m_Name: IK_Foreleg_FR
   m_TagString: Untagged
@@ -104,7 +103,7 @@ MonoBehaviour:
       length: 0
       sqrMag: 0
       axis: {x: 0.0000103428565, y: -4.405868, z: 7.3227587}
---- !u!114 &3353850408714202750
+--- !u!114 &7167990996515536359
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -113,51 +112,81 @@ MonoBehaviour:
   m_GameObject: {fileID: 1523255774216089919}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae36b3c20245aa74496377971f0ccb0e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1fefde50582945046a4ddc355073c6d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Collider: {fileID: 7155199298961186431}
-  TickInterval: 0.5
-  UseDiffScale: 1
-  DamageData:
+  WeaponRoot: {fileID: 1523255774216089919}
+  UseManyMuzzle: 0
+  WeaponMuzzle: {fileID: 7386048590988771538}
+  WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
+  cfg:
+    _fakeAttrs:
+    - Key: 1
+      Value: -1
+    - Key: 2
+      Value: 1
+    - Key: 4
+      Value: 10
+  ProjectilePrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
+    type: 3}
+  BulletFlag: 8
+  Damages:
+  - Speed: 0
+    Gravity: 5
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 0.1
+    MaxRange: 0
+    MinRange: 0
+    NoSource: 0
+    SoundRadius: 20
     DamageExplosion: 5
-    ExplosionInnerRange: 1
-    ExplosionRange: 1
+    DamageDirect: 0
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 2
+    ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 0
     DamageGroupExplosion:
     - Key: 0
       Value: 1
-    SoundRadius: 20
-    NoSource: 0
-    UseCollisionDirection: 1
-    ImpactVfxSpawnOffset: 0.1
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
---- !u!135 &7155199298961186431
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1523255774216089919}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 1
-  m_Center: {x: 0, y: 0, z: 0}
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 0
+    ChargeGravityScale: 0
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  UseDamageIndex: 0
+  MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
+  UnparentMuzzleFlash: 0
+  SFXRange: 20
+  ShootSfx: {fileID: 0}
+  UseContinuousShootSound: 0
+  ContinuousShootStartSfx: {fileID: 0}
+  ContinuousShootLoopSfx: {fileID: 0}
+  ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
 --- !u!1 &1890396222787193804
 GameObject:
   m_ObjectHideFlags: 0
@@ -604,7 +633,7 @@ MonoBehaviour:
     limitFollow: {fileID: 9106861244373743293}
     verticalLimitRotation: 60
     allowDeviation: 0.005
-    barrelSetOffset: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
+    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
   - type: 0
@@ -619,7 +648,7 @@ MonoBehaviour:
     limitFollow: {fileID: 9135244005265323181}
     verticalLimitRotation: 60
     allowDeviation: 0.005
-    barrelSetOffset: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
+    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
   AttackStop: 1
@@ -871,8 +900,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6832193981916512750}
   - component: {fileID: 2264128883296879615}
-  - component: {fileID: 8587460075420854221}
-  - component: {fileID: 4781588979192254773}
+  - component: {fileID: 3255035752010598346}
   m_Layer: 6
   m_Name: IK_Foreleg_FL
   m_TagString: Untagged
@@ -966,7 +994,7 @@ MonoBehaviour:
       length: 0
       sqrMag: 0
       axis: {x: -0.000007960425, y: -4.4059005, z: 7.3227715}
---- !u!114 &8587460075420854221
+--- !u!114 &3255035752010598346
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -975,51 +1003,81 @@ MonoBehaviour:
   m_GameObject: {fileID: 4744504993711981416}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae36b3c20245aa74496377971f0ccb0e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1fefde50582945046a4ddc355073c6d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Collider: {fileID: 4781588979192254773}
-  TickInterval: 0.5
-  UseDiffScale: 1
-  DamageData:
+  WeaponRoot: {fileID: 4744504993711981416}
+  UseManyMuzzle: 0
+  WeaponMuzzle: {fileID: 6832193981916512750}
+  WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
+  cfg:
+    _fakeAttrs:
+    - Key: 1
+      Value: -1
+    - Key: 2
+      Value: 1
+    - Key: 4
+      Value: 10
+  ProjectilePrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
+    type: 3}
+  BulletFlag: 8
+  Damages:
+  - Speed: 0
+    Gravity: 5
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 0.1
+    MaxRange: 0
+    MinRange: 0
+    NoSource: 0
+    SoundRadius: 20
     DamageExplosion: 5
-    ExplosionInnerRange: 1
-    ExplosionRange: 1
+    DamageDirect: 0
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 2
+    ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 0
     DamageGroupExplosion:
     - Key: 0
       Value: 1
-    SoundRadius: 20
-    NoSource: 0
-    UseCollisionDirection: 1
-    ImpactVfxSpawnOffset: 0.1
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
---- !u!135 &4781588979192254773
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4744504993711981416}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 1
-  m_Center: {x: 0, y: 0, z: 0}
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 0
+    ChargeGravityScale: 0
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  UseDamageIndex: 0
+  MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
+  UnparentMuzzleFlash: 0
+  SFXRange: 20
+  ShootSfx: {fileID: 0}
+  UseContinuousShootSound: 0
+  ContinuousShootStartSfx: {fileID: 0}
+  ContinuousShootLoopSfx: {fileID: 0}
+  ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
 --- !u!1 &7003551527865518140
 GameObject:
   m_ObjectHideFlags: 0
@@ -1225,8 +1283,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6862190300583483035}
   - component: {fileID: 5521081382999228453}
-  - component: {fileID: 6452264986147126507}
-  - component: {fileID: 1122987429354524820}
+  - component: {fileID: 8172389704918322171}
   m_Layer: 6
   m_Name: IK_Foreleg_BL
   m_TagString: Untagged
@@ -1319,7 +1376,7 @@ MonoBehaviour:
       length: 0
       sqrMag: 0
       axis: {x: 0.000011119839, y: -4.405868, z: 7.3227587}
---- !u!114 &6452264986147126507
+--- !u!114 &8172389704918322171
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1328,51 +1385,81 @@ MonoBehaviour:
   m_GameObject: {fileID: 7977475908979683675}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae36b3c20245aa74496377971f0ccb0e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1fefde50582945046a4ddc355073c6d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Collider: {fileID: 1122987429354524820}
-  TickInterval: 0.5
-  UseDiffScale: 1
-  DamageData:
+  WeaponRoot: {fileID: 7977475908979683675}
+  UseManyMuzzle: 0
+  WeaponMuzzle: {fileID: 6862190300583483035}
+  WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
+  cfg:
+    _fakeAttrs:
+    - Key: 1
+      Value: -1
+    - Key: 2
+      Value: 1
+    - Key: 4
+      Value: 10
+  ProjectilePrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
+    type: 3}
+  BulletFlag: 8
+  Damages:
+  - Speed: 0
+    Gravity: 5
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 0.1
+    MaxRange: 0
+    MinRange: 0
+    NoSource: 0
+    SoundRadius: 20
     DamageExplosion: 5
-    ExplosionInnerRange: 1
-    ExplosionRange: 1
+    DamageDirect: 0
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 2
+    ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 0
     DamageGroupExplosion:
     - Key: 0
       Value: 1
-    SoundRadius: 20
-    NoSource: 0
-    UseCollisionDirection: 1
-    ImpactVfxSpawnOffset: 0.1
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
---- !u!135 &1122987429354524820
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7977475908979683675}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 1
-  m_Center: {x: 0, y: 0, z: 0}
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 0
+    ChargeGravityScale: 0
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  UseDamageIndex: 0
+  MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
+  UnparentMuzzleFlash: 0
+  SFXRange: 20
+  ShootSfx: {fileID: 0}
+  UseContinuousShootSound: 0
+  ContinuousShootStartSfx: {fileID: 0}
+  ContinuousShootLoopSfx: {fileID: 0}
+  ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
 --- !u!1 &8683554384172438557
 GameObject:
   m_ObjectHideFlags: 0
@@ -1415,8 +1502,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7566517121593386113}
   - component: {fileID: 1822850105432216446}
-  - component: {fileID: 6942592454052227529}
-  - component: {fileID: 2142442229851716488}
+  - component: {fileID: 5513147452187725981}
   m_Layer: 6
   m_Name: IK_Foreleg_BR
   m_TagString: Untagged
@@ -1511,7 +1597,7 @@ MonoBehaviour:
       length: 0
       sqrMag: 0
       axis: {x: 0.000040841347, y: -4.405868, z: 7.3227587}
---- !u!114 &6942592454052227529
+--- !u!114 &5513147452187725981
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1520,51 +1606,81 @@ MonoBehaviour:
   m_GameObject: {fileID: 8833830768678548054}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae36b3c20245aa74496377971f0ccb0e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1fefde50582945046a4ddc355073c6d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Collider: {fileID: 2142442229851716488}
-  TickInterval: 0.5
-  UseDiffScale: 1
-  DamageData:
+  WeaponRoot: {fileID: 8833830768678548054}
+  UseManyMuzzle: 0
+  WeaponMuzzle: {fileID: 7566517121593386113}
+  WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
+  cfg:
+    _fakeAttrs:
+    - Key: 1
+      Value: -1
+    - Key: 2
+      Value: 1
+    - Key: 4
+      Value: 10
+  ProjectilePrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
+    type: 3}
+  BulletFlag: 8
+  Damages:
+  - Speed: 0
+    Gravity: 5
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 0.1
+    MaxRange: 0
+    MinRange: 0
+    NoSource: 0
+    SoundRadius: 20
     DamageExplosion: 5
-    ExplosionInnerRange: 1
-    ExplosionRange: 1
+    DamageDirect: 0
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 2
+    ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 0
     DamageGroupExplosion:
     - Key: 0
       Value: 1
-    SoundRadius: 20
-    NoSource: 0
-    UseCollisionDirection: 1
-    ImpactVfxSpawnOffset: 0.1
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
---- !u!135 &2142442229851716488
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8833830768678548054}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 1
-  m_Center: {x: 0, y: 0, z: 0}
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 0
+    ChargeGravityScale: 0
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  UseDamageIndex: 0
+  MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
+  UnparentMuzzleFlash: 0
+  SFXRange: 20
+  ShootSfx: {fileID: 0}
+  UseContinuousShootSound: 0
+  ContinuousShootStartSfx: {fileID: 0}
+  ContinuousShootLoopSfx: {fileID: 0}
+  ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
+  wantsToShoot: 0
+  ShootCost: 1
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
 --- !u!1001 &1959328461039665350
 PrefabInstance:
   m_ObjectHideFlags: 0

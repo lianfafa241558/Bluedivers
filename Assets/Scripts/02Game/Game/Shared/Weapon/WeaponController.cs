@@ -513,7 +513,8 @@ namespace Unity.FPS.Game
             {
                 ResetInterval();
                 UseMagazine(ShootCost);
-                if (Magazine.CurrValue <= 0)
+                // 无限弹匣(Magazine<0)时 CurrValue 为负,不能据此判定耗尽;只有有限弹匣打空才结束激光
+                if (!InfiniteMagazine && Magazine.CurrValue <= 0)
                 {
                     EndLaser();//子弹耗尽
                 }

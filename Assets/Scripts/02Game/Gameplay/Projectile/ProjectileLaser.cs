@@ -55,9 +55,9 @@ namespace Unity.FPS.Gameplay
 
             RaycastHit hit;
 
-            if (!Physics.Raycast(new Ray(transform.position + MinRange* transform.forward, transform.forward), out hit, 300, FpsHelper.GetHittableLayers(999)))
+            if (!Physics.SphereCast(transform.position + MinRange * transform.forward, Radius, transform.forward, out hit, MaxRange, FpsHelper.GetHittableLayers(999)))
             {
-                hit.point = transform.position + transform.forward * 300;
+                hit.point = transform.position + transform.forward * MaxRange;
                 hit.normal = -transform.forward;
 
             }
@@ -86,7 +86,7 @@ namespace Unity.FPS.Gameplay
             m_line.SetPosition(0, transform.position);
             Vector3 vector = transform.forward;
             Vector3 end;
-            if (Physics.Raycast(new Ray(transform.position + MinRange * transform.forward, vector), out var hit, 300, FpsHelper.GetHittableLayers(999)))
+            if (Physics.SphereCast(transform.position + MinRange * transform.forward, Radius, vector, out var hit, MaxRange, FpsHelper.GetHittableLayers(999)))
             {
                 m_line.SetPosition(1, hit.point);
                 end = hit.point;
@@ -97,7 +97,7 @@ namespace Unity.FPS.Gameplay
             }
             else
             {
-                m_line.SetPosition(1, transform.position + vector * 300);
+                m_line.SetPosition(1, transform.position + vector * MaxRange);
                 SetLife();
                 
             }
@@ -120,7 +120,7 @@ namespace Unity.FPS.Gameplay
                     hit.point = transform.position;
                     hit.normal = -transform.forward;
                 }
-                //Debug.LogError("击中"+ closestHit.collider.name);
+                Debug.LogError("击中"+ hit.collider.name);
                 OnHit?.Invoke(new() {
                     pos = hit.point,
                     normal = hit.normal,
