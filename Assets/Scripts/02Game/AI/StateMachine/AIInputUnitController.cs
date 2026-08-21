@@ -414,12 +414,11 @@ namespace Unity.FPS.AI
 
             public bool IsLockTarget(Vector3 target)
             {
-                if ((1 - dot) < allowDeviation)
-                {
-                    return true;
-                }
-                return false;
+                return ((1 - dot) < allowDeviation);
             }
+
+
+
 
             [InspectorName("近战射程阈值")]
             [Tooltip("武器射程(CurrentWeaponExtremeRange)不超过该值视为近战，近战才会检查垂直高度差(目标过高/过低够不着就不开火)；超过则视为远程，忽略该规则")]
@@ -449,7 +448,6 @@ namespace Unity.FPS.AI
                         return false;
                     }
                 }
-
                 return true;
             }
 

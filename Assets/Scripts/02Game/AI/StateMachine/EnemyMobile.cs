@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Core;
 using GameContract;
@@ -296,6 +297,7 @@ namespace Unity.FPS.AI
                 {
                     if (item.weapon != null)
                     {
+                        //中毒
                         m_EnemyController.TryAtack(item.weapon);
                     }
                 });
@@ -434,8 +436,13 @@ namespace Unity.FPS.AI
             if (AiState == AIState.Idle || AiState == AIState.Patrol || AiState == AIState.Beware || AiState == AIState.Return)
             {
                 SwitchState(AIState.Follow);
+                // 首次从非战斗状态进入战斗才重置开火延迟计时
+                m_TimeStartedDetection = Time.time;
             }
-            m_TimeStartedDetection = Time.time;
+            // 战斗状态(Follow/Attack)下反复 OnDetect(目标短暂失去视野后重新看见、受击转火等)
+            // 不再重置 m_TimeStartedDetection：
+            // 否则开火延迟(detectionFireDelay)反复重新计时，期间 IsFireDelayPassed=false，
+            // mustStop 分支跳过开火→武器被冻结在射击状态(InShoots)无法结束→卡死，表现为"开火被打断/等换弹完才开火"
         }
 
         protected override void OnLostTarget()

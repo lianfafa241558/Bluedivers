@@ -73,7 +73,7 @@ public class FrontWnd : Window
         //PlayAnim("Exit");
         if (IsLoad) return;
         IsLoad = true;
-        if (ArchiveSvc.Archive.isNew)
+        if (ArchiveSvc.Archive.isNew||Input.GetKey(KeyCode.U))
         {
             ResSvc.Instance.AsyncLoadScene("Teach", () => {
                 BattleManager.Creat(false);

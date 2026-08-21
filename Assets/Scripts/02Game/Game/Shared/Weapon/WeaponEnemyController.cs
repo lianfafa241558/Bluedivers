@@ -8,7 +8,9 @@ namespace Unity.FPS.Game
 {
     public class WeaponEnemyController : WeaponController
     {
-
+        [InspectorName("常驻显示射线")]
+        [SerializeField]
+        private bool allowShowGizmos;
 
         private enum AttackEnum
         {
@@ -103,7 +105,19 @@ namespace Unity.FPS.Game
         }
 
 
+        private void OnDrawGizmos()
+        {
+            if (allowShowGizmos) DrawGizmos();
+        }
+
+
         private void OnDrawGizmosSelected()
+        {
+            if (!allowShowGizmos) DrawGizmos();
+        }
+
+
+        private void DrawGizmos()
         {
             // 编辑器下可能未配置伤害数据
             if (Damages == null || Damages.Count == 0) return;

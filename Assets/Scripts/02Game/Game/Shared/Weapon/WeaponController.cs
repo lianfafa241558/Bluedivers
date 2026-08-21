@@ -269,6 +269,18 @@ namespace Unity.FPS.Game
         {
             base.LogicTick();
 
+            // 弹匣残余不足以完成下一次射击时自动换弹：
+            // 齐射武器(UseManyMuzzle，每次消耗=发射点位数量)在弹匣残余 < 单次消耗时，
+            // CanShoot=false 无法开火，而 UseMagazine 只在打空(<=0)时才触发换弹，
+            // 导致"残余不足"状态永远卡死(既不射击也不换弹)。这里兜底触发手动换弹。
+            // 排除：换弹中、自动恢复类武器(AutomaticReload)、无限弹匣、无后备弹。
+            if (!IsReloading && !HasFlag(WeaponFlag.AutomaticReload) && !InfiniteMagazine
+                && Magazine.CurrValue > 0 && Magazine.CurrValue < ShootCost
+                && (InfiniteAmmo || Ammo.CurrValue > 0))
+            {
+                TryManualReload();
+            }
+
             UpdateAmmo();
             switch (ShootType)
             {
