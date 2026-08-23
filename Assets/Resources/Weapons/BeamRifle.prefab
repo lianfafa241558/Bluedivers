@@ -49,8 +49,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 7636490635208348040}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 2672668502797459692}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 0
@@ -78,7 +80,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 3
     MaxRange: -1
-    MinRange: -1
+    MinRange: 1
     NoSource: 0
     SoundRadius: 20
     DamageExplosion: 0
@@ -107,9 +109,11 @@ MonoBehaviour:
     ChargeGravityScale: 1
     ChargeSoundScale: 1
     ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: a342e37561382d744ba2a23497329771,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 0}

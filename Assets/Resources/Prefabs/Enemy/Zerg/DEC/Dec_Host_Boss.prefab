@@ -318,7 +318,7 @@ MonoBehaviour:
     - Key: 7
       Value: 2
     - Key: 10
-      Value: 12
+      Value: 24
   ProjectilePrefab: {fileID: 828996816448062211, guid: 4382c41751911db43982fe1740493e6b,
     type: 3}
   BulletFlag: 0
@@ -388,6 +388,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1 &7471277096663998836
 GameObject:
@@ -714,6 +715,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8266803176952894058, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
         type: 3}
+      propertyPath: Id
+      value: HostBoss
+      objectReference: {fileID: 0}
+    - target: {fileID: 8266803176952894058, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
       propertyPath: flag
       value: 4
       objectReference: {fileID: 0}
@@ -721,6 +727,11 @@ PrefabInstance:
         type: 3}
       propertyPath: threat
       value: 1.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8266803176952894058, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u7A46\u5C14\u74E6"
       objectReference: {fileID: 0}
     - target: {fileID: 8266803176952894058, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
         type: 3}
@@ -804,7 +815,11 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 5990565980442906842}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8006755568074854687}
   m_SourcePrefab: {fileID: 100100000, guid: 8a59a0e48f53f7c4694a6c8346e03d21, type: 3}
 --- !u!4 &995084773533769496 stripped
 Transform:
@@ -854,3 +869,35 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 4361409741703596238}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6937058127014514701 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6684387008531667139, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+    type: 3}
+  m_PrefabInstance: {fileID: 4361409741703596238}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8006755568074854687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6937058127014514701}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4936009300487642bf79ac13c456480, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Cool: 60
+  Duration: 0
+  MeetDetectedTime: 10
+  Range: 30
+  tag: 4
+  m_Controller: {fileID: 0}
+  nowCoolTime: 0
+  nowDurationTime: 0
+  m_LastDetectedTarget: 0
+  armors:
+  - {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74, type: 3}
+  - {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74, type: 3}
+  - {fileID: 5022651815003707193, guid: 870ae891b78c1f649800b47e6c170e74, type: 3}
+  orbitDistance: 10

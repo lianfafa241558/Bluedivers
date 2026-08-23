@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Core;
 using FPSGame.Attribute;
-using GameContract;
 
 using Unity.FPS.Game;
 using UnityEngine;
@@ -23,7 +22,7 @@ public partial class SettingWnd : Window
         selfIcon,selfName,selfLevel,selfExp, selfFrame;
 
     [Foldout("右上按钮", true)]
-    public Transform freeCamera, rebirth,returnShop, exitGame;
+    public Transform freeCamera, rebirth,returnShop, exitGame,teach;
 
     [Foldout("设置",true)]
     public GameObject tempTitle, tempDrop, tempToggle, tempSilder;
@@ -115,7 +114,11 @@ public partial class SettingWnd : Window
         SetCilck(returnShop, TryReturnShop);
         SetCilck(rebirth, TryRebirth);
         SetCilck(exitGame, TryExitGame);
+        SetCilck(teach, TryTeach);
+
         
+
+
         WndManager.OnWindowStateSet += OnWindowStateChange;
 
         lookPoint = new GameObject("LookPoint");
@@ -597,6 +600,16 @@ public partial class SettingWnd : Window
         });
 
     }
+
+    /// <summary>(在舰船上)新手教程</summary>
+    void TryTeach()
+    {
+        SetWndState(false);
+        ResSvc.Instance.AsyncLoadScene("Teach", () => {
+            BattleManager.Creat(false);
+        });
+    }
+
     /// <summary>(在舰船上)重置</summary>
     void TryRebirth()
     {

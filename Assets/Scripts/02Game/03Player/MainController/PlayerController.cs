@@ -140,7 +140,7 @@ public partial class PlayerController : BaseSelfMoveableController
         Health.OnRevive += OnRevive;
         WeaponsManager.OnShoot += WeapomRecoil;
         m_sprintTime = -SprintCool;
-        if (GameRoot.GameState == GameStateEnum.Bridge) Health.Invincible = true;
+        if (GameRoot.GameState == GameStateEnum.Bridge) Actor.AddTag(ActorFlag.Invincible);
 
         // 根据存档中的"默认操作视角"设置初始化视角（0=第一人称，1=第三人称）
         bool defaultThirdPerson = ArchiveSvc.GetSetting("默认操作视角") == 1;

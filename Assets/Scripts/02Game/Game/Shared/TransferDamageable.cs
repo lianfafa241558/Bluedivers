@@ -9,7 +9,7 @@ namespace Unity.FPS.Game
 {
 
     /// <summary>
-    /// 附加肢体(在这种类型的组件下填写爆炸抗性没用)
+    /// 附加肢体(可独立配置护甲等级与爆炸抗性)
     /// </summary>
     [AddComponentMenu("单位/附属肢体", 30)]
     public class TransferDamageable : MonoBehaviour, I_Damagable 
@@ -18,6 +18,11 @@ namespace Unity.FPS.Game
         [SerializeField]
         [InspectorName("弱点")]
         private bool isWeakness;
+
+        /// <summary>独立护甲等级（由穿甲等级AP判定减伤）</summary>
+        [SerializeField]
+        [InspectorName("护甲等级")]
+        private int armorLevel;
 
         [HideInInspector]
         public Damageable source;
@@ -28,25 +33,14 @@ namespace Unity.FPS.Game
 
         public GameObject ActorGo => Source.ActorGo;
 
-        [Header("伤害抗性")]
-        [InspectorName("伤害抗性")]
-        [SerializeField]
-        private DisplayDic<DamageTypeEnum, float> extraLists;
+        public int ArmorLevel => armorLevel;
 
+        public float ExplosionResistance => source.ExplosionResistance;
 
-        public float GetArmor(DamageTypeEnum type)
+        public void InflictDamage(DamagePacket packet)
         {
-            extraLists.TryGet(type, out  var re);
-            if(!source.IsValid()) Debug.LogError("物体"+gameObject.name+"没有关联根组件",gameObject);
-            return source.GetArmor(type)+re;
+            Source.InflictDamage(packet);
         }
-         
-        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum, float>> damageGroups,PEInt weaknessBouns, bool noSource, GameObject damageSource, Vector3 pos)
-        {
-            Source.InflictDamage(source, damage, damageGroups, weaknessBouns, noSource, damageSource, pos);
-        }
-
-        public bool IsExplosionImmunity() => true;
 
     }
 }

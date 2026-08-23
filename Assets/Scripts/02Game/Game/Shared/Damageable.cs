@@ -21,21 +21,29 @@ namespace Unity.FPS.Game
     {
         /// <summary>友伤倍率</summary>
         private const float SensibilityToSelfdamage = 0.5f;
+        /// <summary>爆炸抗性达到此值视为完全免疫（跳过爆炸遮挡判定）</summary>
+        private const float ExplosionImmunityThreshold = 0.95f;
+        /// <summary>穿甲等级不足时，每差 1 级减伤比例</summary>
+        private const float ArmorPenaltyPerLevel = 0.33f;
+        /// <summary>穿甲不足时伤害最低比例</summary>
+        private const float ArmorMinFactor = 0.1f;
+
 
         [SerializeField]
         [InspectorName("弱点")]
         private bool isWeakness;
 
-        [Header("伤害抗性")]
-        [InspectorName("伤害抗性")]
+        /// <summary>爆炸抗性（0~1，1=完全免疫）</summary>
         [SerializeField]
-        private List<KVP<DamageTypeEnum, float>> showArmorLists;
+        [InspectorName("爆炸抗性")]
+        private float explosionResistance;
 
+        /// <summary>护甲等级（绝地潜兵2式，由穿甲等级AP判定减伤）</summary>
         [SerializeField]
-        [InspectorName("全抗性")]
-        private float AllArmor;
+        [InspectorName("护甲等级")]
+        private int armorLevel;
 
-
+        
         [InspectorName("基础护甲值")]
         public int armorValue;
         [Header("关联护甲")]
@@ -64,18 +72,10 @@ namespace Unity.FPS.Game
 
         public I_Damagable Source => this;
 
+        public int ArmorLevel => armorLevel;
 
+        public float ExplosionResistance => explosionResistance;
 
-        public float GetArmor(DamageTypeEnum type)
-        {
-            if (armors.TryGetValue(type,out var re))
-            {
-                return re;
-            }
-            return 0;
-        }
-
-        private Dictionary<DamageTypeEnum, float> armors;
         /// <summary>
         /// 主体一定过爆炸判定
         /// </summary>
@@ -157,16 +157,6 @@ namespace Unity.FPS.Game
             {
                 Actor = GetComponentInParent<Actor>();
             }
-            armors = new();
-            foreach (DamageTypeEnum type in System.Enum.GetValues(typeof(DamageTypeEnum)))
-            {
-                armors.Add(type,1);
-            }
-            //比如护甲里面填0.5，收到的伤害-50%
-            foreach (var item in showArmorLists)
-            {
-                armors[item.Key]-=item.Value-AllArmor;
-            }
             // 记录护甲破坏效果的初始状态，用于护盾恢复
             foreach (var item in armorBreakEffect)
             {
@@ -198,11 +188,6 @@ namespace Unity.FPS.Game
             return closest;
         }
 
-        public bool IsExplosionImmunity()
-        {
-            return armors[DamageTypeEnum.Explosion] <= 0;
-        }
-
         /// <summary>
         /// 检查自己是否被遮挡(爆炸判定)
         /// </summary>
@@ -216,8 +201,8 @@ namespace Unity.FPS.Game
                 return true;
             }
             collider = null;
-            //爆炸免疫的直接跳过
-            if (armors[DamageTypeEnum.Explosion] <= 0) return false;
+            //爆炸抗性接近完全免疫的直接跳过遮挡判定
+            if (explosionResistance >= ExplosionImmunityThreshold) return false;
 
             RaycastHit hit;
             // 批量射线检查
@@ -245,9 +230,13 @@ namespace Unity.FPS.Game
 
 
 
-        public void InflictDamage(I_Damagable source, PEInt damage, List<SKVP<DamageTypeEnum,float>> damageGroups,PEInt WeaknessBonus, bool noSource, GameObject damageSource,Vector3 pos) {
+        public void InflictDamage(DamagePacket packet) {
             if (!Health) return;
-            if (!damageGroups.IsValid()|| damageGroups.Count==0) return;
+            if (!packet.DamageGroups.IsValid()|| packet.DamageGroups.Count==0) return;
+
+            PEInt damage = packet.Damage;
+            GameObject damageSource = packet.DamageSource;
+            I_Damagable source = packet.Source;
 
             Actor SourceActor=null;
             if (damageSource)
@@ -268,17 +257,30 @@ namespace Unity.FPS.Game
             }
             if (isWeakness)
             {
-                damage *= (1+ WeaknessBonus);
+                damage *= (1+ packet.WeaknessBonus);
             }
 
+            // 穿甲等级 vs 护甲等级结算（绝地潜兵2式穿透+递减减伤），用被击肢体(source)自身的护甲等级
+            int hitArmorLevel = source != null ? source.ArmorLevel : armorLevel;
+            float hitExplosionResistance = source != null ? source.ExplosionResistance : explosionResistance;
+            float armorFactor = packet.AP >= hitArmorLevel
+                ? 1f
+                : Mathf.Max(ArmorMinFactor, 1f - (hitArmorLevel - packet.AP) * ArmorPenaltyPerLevel);
+
             List<SKVP<DamageTypeEnum, PEInt>> finalDamageGroups = new();
-            if (damageGroups.Count == 0) {
-                finalDamageGroups.Add(new(DamageTypeEnum.Gun, (damage * (PEInt)source.GetArmor(DamageTypeEnum.Gun))));
+            if (packet.DamageGroups.Count == 0) {
+                // 无成分时按动能(Gun)结算
+                finalDamageGroups.Add(new(DamageTypeEnum.Gun, (damage * (PEInt)armorFactor)));
             }
             else {
-                foreach (var item in damageGroups) {
-                    //基础伤害*伤害系数*抗性
-                    PEInt value = (damage * (PEInt)item.Value * (PEInt)source.GetArmor(item.Key));
+                foreach (var item in packet.DamageGroups) {
+                    //基础伤害*伤害系数*穿甲减伤因子
+                    PEInt value = (damage * (PEInt)item.Value * (PEInt)armorFactor);
+                    // 爆炸成分额外乘 (1 - 爆炸抗性)，用被击肢体自身的爆炸抗性
+                    if (item.Key == DamageTypeEnum.Explosion && hitExplosionResistance > 0f)
+                    {
+                        value *= (PEInt)(1f - hitExplosionResistance);
+                    }
                     finalDamageGroups.Add(new(item.Key, value));
                     if (item.Key == DamageTypeEnum.Destruction) {
                         ArmorDestruction(value, damageSource);
@@ -286,7 +288,7 @@ namespace Unity.FPS.Game
                 }
             }
             
-            Health.TakeDamage(finalDamageGroups, noSource, damageSource, ClosestCollider(pos), pos,true,isWeakness);
+            Health.TakeDamage(finalDamageGroups, packet.NoSource, damageSource, ClosestCollider(packet.Pos), packet.Pos,true,isWeakness, packet.DemolishValue);
             
         }
 

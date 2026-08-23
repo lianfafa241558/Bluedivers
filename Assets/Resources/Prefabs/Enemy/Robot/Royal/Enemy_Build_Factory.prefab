@@ -82,12 +82,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists:
-  - Key: 1
-    Value: 0.5
-  - Key: 0
-    Value: 0.9
-  AllArmor: 0
+  explosionResistance: 0.5
+  armorLevel: 4
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -370,7 +366,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 500
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 5529930566279991862}
+  demolishValue: 30
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -404,6 +402,9 @@ MonoBehaviour:
       Value: 1
     SoundRadius: 20
     NoSource: 1
+    DirectAP: 0
+    ExplosionAP: 0
+    demolishValue: 0
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: f4897c6a885fec74185b34e9259784f1,
@@ -585,11 +586,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
-  showArmorLists:
-  - Key: 1
-    Value: 1
-  AllArmor: 0
+  isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -667,6 +666,7 @@ MonoBehaviour:
   AttackRange: 35
   AlertRange: 10
   KnownTargetTimeout: 4
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
