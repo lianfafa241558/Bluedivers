@@ -5,7 +5,7 @@ using FPSGame.Attribute;
 using GameContract;
 using PEMaths;
 
-using Unity.FPS.AI;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.Events;
@@ -101,6 +101,14 @@ namespace Unity.FPS.Game {
         public float GetResistance(DamageTypeEnum type)
             => _armorResistance.TryGetValue(type, out var value) ? value : 1f;
 
+        private void OnEnable()
+        {
+            if (m_IsDead) 
+            {
+                Revive();
+            }
+        }
+
         protected virtual void Awake() {
             m_Actor = GetComponentInParent<Actor>();
             CurrentHealth = MaxHealth;
@@ -116,6 +124,9 @@ namespace Unity.FPS.Game {
             if(MainPart.IsValid()) MainPart.SetIsMain(this);
             InitAboState();
         }
+
+
+
         /// <summary>受到治疗</summary>
         public void Heal(float healAmount) {
             if (m_IsDead)

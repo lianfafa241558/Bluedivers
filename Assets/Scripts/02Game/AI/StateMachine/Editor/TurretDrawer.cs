@@ -1,13 +1,13 @@
 using UnityEditor;
 using UnityEngine;
-using Unity.FPS.AI;
 
-namespace Unity.FPS.AI.Editor
+
+namespace FPSGame.AI.Editor
 {
     /// <summary>
-    /// AIInputUnitController.Turret 的自定义 PropertyDrawer
+    /// Turret 的自定义 PropertyDrawer
     /// </summary>
-    [CustomPropertyDrawer(typeof(AIInputUnitController.Turret))]
+    [CustomPropertyDrawer(typeof(Turret))]
     public class TurretDrawer : PropertyDrawer
     {
         private const float LineSpacing = 2f;
@@ -175,7 +175,7 @@ namespace Unity.FPS.AI.Editor
         {
             var typeProp = property.FindPropertyRelative("type");
             if (typeProp == null) return false;
-            return typeProp.enumValueIndex == (int)AIInputUnitController.Turret.TurretType.SelfBody;
+            return typeProp.enumValueIndex == (int)Turret.TurretType.SelfBody;
         }
 
         /// <summary>

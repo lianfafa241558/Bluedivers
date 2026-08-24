@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Core;
 using GameContract;
-using Unity.FPS.AI;
+
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;

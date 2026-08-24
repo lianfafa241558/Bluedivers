@@ -3,7 +3,7 @@ using Core;
 using Unity.FPS.Game;
 using UnityEngine;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     /// <summary>
     /// 环绕装甲：以单位为中心，每 360/count 度、指定距离处生成装甲单位，

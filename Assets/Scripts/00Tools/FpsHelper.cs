@@ -46,7 +46,19 @@ public static class FpsHelper
         {
             if (damageable.Source.IsValid())
             {
-                damageable.InflictDamage(damageable, (PEInt)24, ThornArmorDamageGroups, 0, false, target.gameObject, point);
+                var thornPacket = new DamagePacket
+                {
+                    Source = damageable,
+                    Damage = (PEInt)24,
+                    DamageGroups = ThornArmorDamageGroups,
+                    WeaknessBonus = 0,
+                    AP = 0,
+                    NoSource = false,
+                    DamageSource = target.gameObject,
+                    Pos = point,
+                    DemolishValue = 0,
+                };
+                damageable.InflictDamage(thornPacket);
                 break;
             }
         }
@@ -111,8 +123,6 @@ public static class FpsHelper
 
             // 全队强化"荆棘护甲"：近战攻击玩家阵营单位时，攻击者受到 24 点反伤
             TryThornArmorReflect(comp, owner, point, hitData);
-            comp.InflictDamage(comp, damageData.GetDirectDamage(charg)* damageScale, damageData.DamageGroupDirect, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
-
             Debug.LogWarning("对" + comp.gameObject.name + "造成直击伤害" + damageData.GetDirectDamage(charg) * damageScale);
             var directPacket = new DamagePacket
             {
@@ -127,8 +137,6 @@ public static class FpsHelper
                 DemolishValue = damageData.GetDemolishValue(),
             };
             comp.InflictDamage(directPacket);
-
-            
         }
          
         //爆炸

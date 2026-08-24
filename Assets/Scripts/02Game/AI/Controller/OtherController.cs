@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using Utils;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     [RequireComponent(typeof(Actor))]
     public partial class OtherController : AIController

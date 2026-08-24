@@ -79,6 +79,9 @@ MonoBehaviour:
   allowSeeRelease: 0
   allowRelease: 0
   useDebug: 0
+  OnEnd:
+    m_PersistentCalls:
+      m_Calls: []
   showScale: 0
 --- !u!114 &8730633645148779547
 MonoBehaviour:
@@ -107,8 +110,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -129,7 +132,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 5
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 3884080132440999546}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -164,8 +169,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowName: "\u53CD\u6B65\u5175\u5730\u96F7"
   Id: Mine
-  Portrait: {fileID: 21300000, guid: 68d2805771bfac446b791b697aa5434b, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 68d2805771bfac446b791b697aa5434b, type: 3}
+  Portrait: {fileID: 21300000, guid: 89b8063e5f1640f4fa2d4632dc5a42d1, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 89b8063e5f1640f4fa2d4632dc5a42d1, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
   IsFixed: 0
@@ -423,7 +428,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 1, g: 0.62774116, b: 0, a: 0.101960786}
+      maxColor: {r: 1, g: 0.8208382, b: 0, a: 0.101960786}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}

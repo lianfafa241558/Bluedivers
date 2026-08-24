@@ -3,7 +3,7 @@ using Core;
 using Unity.FPS.Game;
 using UnityEngine;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     /// <summary>
     /// 护盾恢复（被动技能）：

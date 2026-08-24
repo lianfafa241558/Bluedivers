@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace Unity.FPS.AI {
+namespace FPSGame.AI {
 
     public struct RendererIndexData {
         public Renderer Renderer;

@@ -116,8 +116,10 @@ namespace Unity.FPS.Gameplay
             var activeSecWeapon = GetActiveSecWeapon();
             if (activeWeapon != null && !activeWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
             {
+                // 双持时始终视为正在瞄准
+                bool dualWielding = activeSecWeapon != null;
                 bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
-                IsAiming = !activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld());
+                IsAiming = (dualWielding || (!activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld())));
             }
             else
             {
@@ -212,7 +214,7 @@ namespace Unity.FPS.Gameplay
 
 
             //设置瞄准时装弹也不立即结束瞄准
-            if (activeWeapon != null && activeWeapon.IsReloading && IsAiming)//在瞄准了肯定不是双持
+            if (activeWeapon != null && activeWeapon.IsReloading && IsAiming)//装弹中延迟结束瞄准（双持时下一帧会重新强制瞄准）
             {
                 if ((closeAimDelay += Time.deltaTime) > 0.3f)
                 {
@@ -223,8 +225,10 @@ namespace Unity.FPS.Gameplay
             // 判断是否在瞄准，完全不缩放的武器无法瞄准（第三人称除外）
             if(activeWeapon != null && !activeWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
             {
+                // 双持时始终视为正在瞄准
+                bool dualWielding = activeSecWeapon != null;
                 bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
-                IsAiming = !activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld());
+                IsAiming = (dualWielding || (!activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld())));
             }
 
 

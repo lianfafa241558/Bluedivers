@@ -2,7 +2,7 @@
 using System;
 using System.Reflection;
 using Core;
-using Unity.FPS.AI;
+using FPSGame.AI;
 using Unity.FPS.Game;
 using UnityEditor;
 

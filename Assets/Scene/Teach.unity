@@ -8017,7 +8017,6 @@ MonoBehaviour:
   damagedTime: 999
   lastDamagedTime: -Infinity
   creatTime: Infinity
-  AiState: 0
 --- !u!114 &594379133
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8049,7 +8048,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 0}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -22337,10 +22338,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists:
-  - Key: 0
-    Value: 0.9
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -22361,7 +22360,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 200
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 1253395055}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -33084,8 +33085,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -33106,7 +33107,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 200
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 2127456066}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []

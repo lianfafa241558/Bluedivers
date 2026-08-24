@@ -1,10 +1,11 @@
-using Unity.FPS.Game;
+using System.Collections.Generic;
+
 using UnityEngine;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     [RequireComponent(typeof(EnemyController))]
-    public class EnemyTurret : AIInputUnitController
+    public class EnemyTurret : AIInputUnitController<EnemyTurret.AIState>
     {
         protected EnemyController m_EnemyController;
 
@@ -22,8 +23,6 @@ namespace Unity.FPS.AI
             Attack,
             Death,
         }
-
-        public AIState AiState;// { get; private set; }
 
         private Vector3 lastTargetPos;//上一帧目标的位置
 
@@ -47,14 +46,55 @@ namespace Unity.FPS.AI
             //m_EnemyController.OnDie += OnDie;
         }
 
+        protected override Dictionary<AIState, StateInfo> InitState()
+        {
+            return new Dictionary<AIState, StateInfo>
+            {
+                [AIState.Idle] = new StateInfo
+                {
+                    onUpdate = IdleBehavior,
+                },
+                [AIState.Attack] = new StateInfo
+                {
+                    onUpdate = AttackBehavior,
+                },
+                [AIState.Death] = new StateInfo(),
+            };
+        }
+
         protected override void OnDie()
         {
-            AiState = AIState.Death;
+            SwitchState(AIState.Death);
             turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
         }
         protected override void UpdateTurretAiming()
         {
             if(AiState == AIState.Attack) base.UpdateTurretAiming();
+        }
+
+        /// <summary>Idle：对开启自动巡逻旋转的炮塔巡逻转动（未开启的自动跳过）</summary>
+        private void IdleBehavior()
+        {
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                turrets[i].AutoRotate(Time.deltaTime);
+            }
+        }
+
+        /// <summary>Attack：瞄准并射击</summary>
+        private void AttackBehavior()
+        {
+            if (m_EnemyController.Target==null) return;
+            // shoot
+            if (AimTargrt()) {
+                for (int i = 0; i < turrets.Count; i++)
+                {
+                    var t = turrets[i];
+                    if (t.weapon && t.CanFireAt(TargetPosition))
+                        m_EnemyController.TryAtack(t.weapon);
+                }
+            }
+            lastTargetPos = TargetPosition;
         }
 
         protected override void UpdateCurrentAiState()
@@ -66,37 +106,15 @@ namespace Unity.FPS.AI
             {
                 OnLostTarget();
             }*/
-            // Handle logic 
-            switch (AiState)
-            {
-                case AIState.Idle:
-                    // 对开启自动巡逻旋转的炮塔巡逻转动（未开启的自动跳过）
-                    for (int i = 0; i < turrets.Count; i++)
-                    {
-                        turrets[i].AutoRotate(Time.deltaTime);
-                    }
-                    break;
-                case AIState.Attack:
-                    if (m_EnemyController.Target==null) break;
-                    // shoot
-                    if (AimTargrt()) {
-                        for (int i = 0; i < turrets.Count; i++)
-                        {
-                            var t = turrets[i];
-                            if (t.weapon && t.CanFireAt(TargetPosition))
-                                m_EnemyController.TryAtack(t.weapon);
-                        }
-                    }
-                    lastTargetPos = TargetPosition;
-                    break;
-            }
+            // 查表调用当前状态的行为
+            InvokeCurrentState();
         }
 
         protected override void OnDetectedTarget()
         {
             if (AiState == AIState.Idle)
             {
-                AiState = AIState.Attack;
+                SwitchState(AIState.Attack);
             }
             m_TimeStartedDetection = Time.time;
 
@@ -106,7 +124,7 @@ namespace Unity.FPS.AI
         {
             if (AiState != AIState.Death)
             {
-                AiState = AIState.Idle;
+                SwitchState(AIState.Idle);
                 m_TimeLostDetection = Time.time;
                 turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
             }

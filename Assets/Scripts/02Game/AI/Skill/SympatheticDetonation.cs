@@ -8,7 +8,7 @@ using Unity.FPS.Game;
 using UnityEngine;
 using static UnityEngine.UI.GridLayoutGroup;
 
-namespace Unity.FPS.AI
+namespace UFPSGame.AI
 {
     /// <summary>
     /// 死亡殉爆以及自爆

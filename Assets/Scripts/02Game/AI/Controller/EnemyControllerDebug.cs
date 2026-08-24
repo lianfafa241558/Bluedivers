@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 /*
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     public partial class EnemyController
     {

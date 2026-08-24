@@ -1,10 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
-
-using Unity.FPS.AI;
-using Unity.FPS.Game;
 using UnityEngine;
-using static Unity.FPS.AI.AIInputUnitController;
 
 namespace FPSGame.AI
 {

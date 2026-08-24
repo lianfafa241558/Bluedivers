@@ -7,7 +7,7 @@ using Unity.Collections;
 using UnityEngine;
 using Utils;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     public abstract class UnitSkill_Base : TickBehaviour
     {

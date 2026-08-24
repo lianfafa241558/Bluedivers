@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using GameContract;
 
-using Unity.FPS.AI;
+
 using UnityEngine;
-using static Unity.FPS.AI.AIInputUnitController;
 
 namespace FPSGame.AI
 {

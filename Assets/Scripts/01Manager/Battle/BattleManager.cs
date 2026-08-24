@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using FpsGame.MapUtils;
+using FPSGame.Game;
 using GameContract;
 using PEMaths;
 
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
-using static UnityEditor.Progress;
+
 
 public class BattleManager : Singleton<BattleManager>
 {

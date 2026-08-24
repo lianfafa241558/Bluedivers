@@ -11,10 +11,7 @@ namespace Unity.FPS.Game
         /// </summary>
         [InspectorName("死亡后自动摧毁自身物体）")]
         public bool AutoDestroy;
-        protected override void Awake()
-        {
-            base.Awake();
-        }
+
         protected override void HandleDeath(GameObject source)
         {
             bool wasDead = m_IsDead;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using Unity.FPS.Game;
 using UnityEngine;
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     public class DieLoot : MonoBehaviour
     {

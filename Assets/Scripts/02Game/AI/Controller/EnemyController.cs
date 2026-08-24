@@ -11,7 +11,7 @@ using UnityEngine.AI;
 using UnityEngine.Events;
 using Utils;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
 
 

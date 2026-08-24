@@ -11,7 +11,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.UIElements;
 using Utils;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     public class DetectionModule : TickBehaviour
     {

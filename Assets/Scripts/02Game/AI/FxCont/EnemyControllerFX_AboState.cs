@@ -1,7 +1,7 @@
 using Unity.FPS.Game;
 using UnityEngine;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     /// <summary>EnemyControllerFX 异常状态行为：Freeze 满 Animator 速度降至 0.01，解除恢复</summary>
     public abstract partial class EnemyControllerFX

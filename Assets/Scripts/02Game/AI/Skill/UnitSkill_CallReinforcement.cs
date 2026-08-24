@@ -3,7 +3,7 @@ using GameContract;
 
 using Unity.FPS.Game;
 using UnityEngine;
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     /// <summary>
     /// 有这个的单位可以拉烟

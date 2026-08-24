@@ -4,7 +4,7 @@ using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     /// <summary>EnemyMobile 异常状态行为：Electric 减速、Freeze 停滞、Vertigo 停滞禁攻、Terror 逃跑禁攻、Toxicity 乱走乱攻、Hacker 锁同队</summary>
     public partial class EnemyMobile

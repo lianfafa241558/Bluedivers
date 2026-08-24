@@ -6,7 +6,7 @@ using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     /// <summary>
     /// 允许任意I_AIController

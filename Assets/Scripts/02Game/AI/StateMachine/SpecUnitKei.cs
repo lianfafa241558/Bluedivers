@@ -8,9 +8,9 @@ using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
-    public class SpecUnitKei : AIInputUnitController
+    public class SpecUnitKei : AIInputUnitController<SpecUnitKei.AIState>
     {
         public enum AIState
         {
@@ -44,7 +44,6 @@ namespace Unity.FPS.AI
 
         Vector3 TargetPosition => m_Controller.KnownDetectedTarget.Pos;
 
-        public AIState AiState { get; private set; }
         float lastSpeechTime, speechShowTime;
 
 
@@ -80,7 +79,7 @@ namespace Unity.FPS.AI
             if (Vector3.Distance(m_Target,point)>1)
             {
                 m_Target = point;
-                AiState = AIState.Move;
+                SwitchState(AIState.Move);
                 m_Controller.SetNavDestination(m_Target);
                 mpb.Set("_Expression", 20).Apply();
             }
@@ -97,6 +96,55 @@ namespace Unity.FPS.AI
             }
         }
 
+        protected override Dictionary<AIState, StateInfo> InitState()
+        {
+            return new Dictionary<AIState, StateInfo>
+            {
+                [AIState.Wait] = new StateInfo(),
+                [AIState.Move] = new StateInfo(),
+                [AIState.Follow] = new StateInfo
+                {
+                    onUpdate = FollowBehavior,
+                },
+                [AIState.Attack] = new StateInfo
+                {
+                    onUpdate = AttackBehavior,
+                },
+                [AIState.Death] = new StateInfo(),
+            };
+        }
+
+        /// <summary>Follow：追敌并瞄准</summary>
+        private void FollowBehavior()
+        {
+            m_Controller.SetNavDestination(TargetPosition);
+            AimTargrt();
+        }
+
+        /// <summary>Attack：逼近/保持距离并射击</summary>
+        private void AttackBehavior()
+        {
+            float dis = Vector3.Distance(TargetPosition,
+                    m_Controller.CenterPos);
+            float stopRange = (0.95f * m_Controller.DetectionModule.AttackRange);//停止距离
+            //如果目标到自己的距离大于停止系数*攻击范围，那就追，到范围就停
+            if (dis >= stopRange + 1 / m_Controller.DetectionModule.AttackRange)//接近
+            {
+                m_Controller.SetNavDestination(TargetPosition);
+            }
+            else//原地
+            {
+                m_Controller.SetNavDestination(transform.position);
+            }
+            // shoot
+            if (AimTargrt())
+            {
+                turrets.ForEach(item => {
+                    if (item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition)) m_Controller.TryAtack(item.weapon);
+                });
+            }
+        }
+
 
         /// <summary>状态机切换</summary>
         protected override void UpdateAiStateTransitions()
@@ -109,7 +157,7 @@ namespace Unity.FPS.AI
                     // 当与目标有视线连接时，转为攻击状态
                     if (m_Controller.IsSeeingTarget && m_Controller.IsTargetInAttackRange && IsLockTarget())
                     {
-                        AiState = AIState.Attack;
+                        SwitchState(AIState.Attack);
                         mpb.Set("_Expression", 20).Apply();
                         //在这里写移动没用，下一帧就改了
                     }
@@ -119,7 +167,7 @@ namespace Unity.FPS.AI
                     // Transition to follow when no longer a target in attack range
                     if (!m_Controller.IsTargetInAttackRange)
                     {
-                        AiState = AIState.Follow;
+                        SwitchState(AIState.Follow);
                         mpb.Set("_Expression", 3).Apply();
                     }
 
@@ -134,7 +182,7 @@ namespace Unity.FPS.AI
                     }
                     if (Vector3.Distance(transform.position, m_Target) < 1)
                     {
-                        AiState = AIState.Wait;
+                        SwitchState(AIState.Wait);
                         AudioSvc.PlaySound(stopCilps.Get(transform.position));
 
                         mpb.Set("_Expression", 1).Apply();
@@ -171,46 +219,11 @@ namespace Unity.FPS.AI
         }
 
 
-        /// <summary>状态机每帧</summary>
+        /// <summary>状态机每帧（查表调用当前状态行为）</summary>
         protected override void UpdateCurrentAiState()
         {
-            // Handle logic 
-            switch (AiState)
-            {
-                case AIState.Wait:
-
-                    break;
-                case AIState.Move:
-
-                    break;
-                case AIState.Follow:
-                    m_Controller.SetNavDestination(TargetPosition);
-                    AimTargrt();
-                    break;
-                case AIState.Attack:
-
-                    float dis = Vector3.Distance(TargetPosition,
-                            m_Controller.CenterPos);
-                    float stopRange = (0.95f * m_Controller.DetectionModule.AttackRange);//停止距离
-                    //如果目标到自己的距离大于停止系数*攻击范围，那就追，到范围就停
-                    if (dis >= stopRange + 1 / m_Controller.DetectionModule.AttackRange)//接近
-                    {
-                        m_Controller.SetNavDestination(TargetPosition);
-                    }
-                    else//原地
-                    {
-                        m_Controller.SetNavDestination(transform.position);
-                    }
-                    // shoot
-                    if (AimTargrt())
-                    {
-                        turrets.ForEach(item => {
-                            if (item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition)) m_Controller.TryAtack(item.weapon);
-                        });
-                    }
-
-                    break;
-            }
+            // 查表调用当前状态行为
+            InvokeCurrentState();
         }
 
 
@@ -218,7 +231,7 @@ namespace Unity.FPS.AI
         {
             if (AiState == AIState.Wait)
             {
-                AiState = AIState.Follow;
+                SwitchState(AIState.Follow);
             }
 
             m_TimeStartedDetection = Time.time;
@@ -228,7 +241,7 @@ namespace Unity.FPS.AI
         {
             if (AiState == AIState.Follow || AiState == AIState.Attack)
             {
-                AiState = AIState.Wait;
+                SwitchState(AIState.Wait);
             }
 
             m_TimeLostDetection = Time.time;
@@ -259,7 +272,7 @@ namespace Unity.FPS.AI
         protected override void OnDie()
         {
             //真的会死吗？
-            AiState = AIState.Death;
+            SwitchState(AIState.Death);
         }
     }
 }

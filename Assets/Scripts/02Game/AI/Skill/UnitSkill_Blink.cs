@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using Utils;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     [AddComponentMenu("技能/闪现", 30)]
     public class UnitSkill_Blink : UnitSkill_Base

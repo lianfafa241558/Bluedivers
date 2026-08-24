@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using GameContract;
+
 using Unity.FPS.Game;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine;
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     [RequireComponent(typeof(EnemyController))]
-    public partial class EnemyMobile : AIInputUnitController
+    public partial class EnemyMobile : AIInputUnitController<EnemyMobile.AIState>
     {
 
         /// <summary>开火时停在原地且炮塔停止旋转：任一武器处于开火状态(蓄力/激光/射击/可连射)时，机体站桩、炮塔保持当前朝向不追踪；不开火时正常追敌并追踪瞄准</summary>
@@ -81,15 +82,8 @@ namespace Unity.FPS.AI
         [InspectorName("Idle最大停留时间（秒）")]
         public float IdleMaxDuration = 120f;
 
-        public AIState AiState2 = AIState.Follow;
-
-        public AIState AiState {
-            get => AiState2;
-            set
-            {
-                AiState2 = value;
-            }
-        }
+        /// <summary>Speed 属性差值（Patrol/Beware/Return 进入时计算，退出时取反移除）</summary>
+        private PEMaths.PEInt speedScale;
 
         [ContextMenu("重置")]
         private void ResetQu()
@@ -104,70 +98,11 @@ namespace Unity.FPS.AI
             }
         }
 
-        #region 状态机委托表结构（试点：从 switch 改造而来，行为等价）
-
-        /// <summary>单个状态的钩子表</summary>
-        protected struct StateInfo
-        {
-            public Action onEnter;
-            public Action onUpdate;
-            public Action onExit;
-        }
-
-        /// <summary>状态表：枚举 -> 状态钩子</summary>
-        private Dictionary<AIState, StateInfo> _stateInfos;
-
-        /// <summary>Speed 属性差值（Patrol/Beware/Return 进入时计算，退出时取反移除）</summary>
-        private PEMaths.PEInt speedScale;
-
-        /// <summary>构建状态表，注册每个状态的 onEnter/onUpdate/onExit</summary>
-        private Dictionary<AIState, StateInfo> InitState()
-        {
-            return new Dictionary<AIState, StateInfo>
-            {
-                [AIState.Idle] = new StateInfo
-                {
-                    onEnter = EnterIdle,
-                    onUpdate = IdleBehavior,
-                },
-                [AIState.Patrol] = new StateInfo
-                {
-                    onEnter = EnterPatrol,
-                    onExit = ExitSpeedState,
-                    onUpdate = PatrolBehavior,
-                },
-                [AIState.Follow] = new StateInfo
-                {
-                    onUpdate = FollowBehavior,
-                },
-                [AIState.Attack] = new StateInfo
-                {
-                    onUpdate = AttackBehavior,
-                },
-                [AIState.Death] = new StateInfo(),
-                [AIState.Beware] = new StateInfo
-                {
-                    onEnter = EnterBeware,
-                    onExit = ExitSpeedState,
-                    onUpdate = BewareBehavior,
-                },
-                [AIState.Return] = new StateInfo
-                {
-                    onEnter = EnterReturn,
-                    onExit = ExitSpeedState,
-                    onUpdate = ReturnBehavior,
-                },
-            };
-        }
-
         protected override void Start()
         {
             base.Start();
             m_EnemyController = m_Controller as EnemyController;
             m_OriginPos = transform.position;
-
-            // 状态表必须在首次 SwitchState 前构建
-            _stateInfos = InitState();
 
             // 有巡逻点就走巡逻，否则原地不动
             if (m_EnemyController.PatrolPos != default)
@@ -216,16 +151,6 @@ namespace Unity.FPS.AI
             _hitStunEndTime = Time.time + WeakPointHitStunDuration;
         }
 
-        /// <summary>状态切换：先退旧状态(onExit)，再进新状态(onEnter)</summary>
-        private void SwitchState(AIState state)
-        {
-            if (state == AiState) return;
-
-            _stateInfos[AiState].onExit?.Invoke();
-            AiState = state;
-            _stateInfos[state].onEnter?.Invoke();
-        }
-
         /// <summary>回到起点后决定是Idle还是Patrol</summary>
         private void TryReturnToIdleOrPatrol()
         {
@@ -239,7 +164,45 @@ namespace Unity.FPS.AI
             }
         }
 
-        #endregion
+        /// <summary>构建状态表，注册每个状态的 onEnter/onUpdate/onExit</summary>
+        protected override Dictionary<AIState, StateInfo> InitState()
+        {
+            return new Dictionary<AIState, StateInfo>
+            {
+                [AIState.Idle] = new StateInfo
+                {
+                    onEnter = EnterIdle,
+                    onUpdate = IdleBehavior,
+                },
+                [AIState.Patrol] = new StateInfo
+                {
+                    onEnter = EnterPatrol,
+                    onExit = ExitSpeedState,
+                    onUpdate = PatrolBehavior,
+                },
+                [AIState.Follow] = new StateInfo
+                {
+                    onUpdate = FollowBehavior,
+                },
+                [AIState.Attack] = new StateInfo
+                {
+                    onUpdate = AttackBehavior,
+                },
+                [AIState.Death] = new StateInfo(),
+                [AIState.Beware] = new StateInfo
+                {
+                    onEnter = EnterBeware,
+                    onExit = ExitSpeedState,
+                    onUpdate = BewareBehavior,
+                },
+                [AIState.Return] = new StateInfo
+                {
+                    onEnter = EnterReturn,
+                    onExit = ExitSpeedState,
+                    onUpdate = ReturnBehavior,
+                },
+            };
+        }
 
         #region 状态 onEnter / onExit
 
@@ -255,7 +218,7 @@ namespace Unity.FPS.AI
         {
             if (m_EnemyController.Speed == null) return;
             speedScale = (PEMaths.PEInt)PatrolSpeed - m_EnemyController.Speed.FinalValue;
-            m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
+            m_EnemyController.Speed.AddModifier(ModifierType.Extra, speedScale);
         }
 
         /// <summary>进入 Beware：记录目标点并设置警惕速度差修饰</summary>
@@ -266,7 +229,7 @@ namespace Unity.FPS.AI
 
             if (m_EnemyController.Speed == null) return;
             speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
-            m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
+            m_EnemyController.Speed.AddModifier(ModifierType.Extra, speedScale);
         }
 
         /// <summary>进入 Return：设置返回速度差修饰</summary>
@@ -274,13 +237,13 @@ namespace Unity.FPS.AI
         {
             if (m_EnemyController.Speed == null) return;
             speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
-            m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
+            m_EnemyController.Speed.AddModifier(ModifierType.Extra, speedScale);
         }
 
         /// <summary>退出带速度差修饰的状态（Patrol/Beware/Return）：移除该修饰</summary>
         private void ExitSpeedState()
         {
-            m_EnemyController.Speed?.AddModifier(Game.ModifierType.Extra, -speedScale);
+            m_EnemyController.Speed?.AddModifier(ModifierType.Extra, -speedScale);
         }
 
         #endregion
@@ -519,7 +482,7 @@ namespace Unity.FPS.AI
 
         #endregion
 
-        /// <summary>状态机每帧（查表调用当前状态的 onUpdate）</summary>
+        /// <summary>状态机每帧（全局守卫后查表调用当前状态的 onUpdate）</summary>
         protected override void UpdateCurrentAiState()
         {
             if (!m_EnemyController.BirthComplete) return;
@@ -571,7 +534,7 @@ namespace Unity.FPS.AI
             }
 
             // 查表调用当前状态的行为
-            _stateInfos[AiState].onUpdate?.Invoke();
+            InvokeCurrentState();
         }
 
 

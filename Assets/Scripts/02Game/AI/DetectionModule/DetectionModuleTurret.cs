@@ -4,7 +4,7 @@ using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     public class DetectionModuleTurret : DetectionModule
     {

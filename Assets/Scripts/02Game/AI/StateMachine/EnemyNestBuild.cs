@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using FPSGame.Attribute;
+
 using UnityEngine;
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     /// <summary>
     /// 工厂型敌人的状态机
     /// </summary>
-    public class EnemyNestBuild : AIInputBaseController
+    public class EnemyNestBuild : AIInputBaseController<EnemyNestBuild.AIState>
     {
         public enum AIState
         {
@@ -30,25 +31,35 @@ namespace Unity.FPS.AI
         [DisplayField(DisplayFieldEnum.RunRead)]
         private float lastDamagedTime = Mathf.NegativeInfinity, creatTime= Mathf.Infinity;
 
-        public AIState AiState;// { get; private set; }
+        protected override Dictionary<AIState, StateInfo> InitState()
+        {
+            return new Dictionary<AIState, StateInfo>
+            {
+                [AIState.Idle] = new StateInfo(),
+                [AIState.Active] = new StateInfo
+                {
+                    onUpdate = ActiveBehavior,
+                },
+                [AIState.Death] = new StateInfo(),
+            };
+        }
+
+        /// <summary>Active：按生产节奏生成单位并派遣</summary>
+        private void ActiveBehavior()
+        {
+            if (Time.time > creatTime)
+            {
+                var item = RandomUtils.RandomTake(creatData);
+                creatTime = Time.time + item.Value;
+                var go = Instantiate(item.Key, creatPoint.position + creatPoint.forward, creatPoint.rotation, transform.parent);
+                go.GetComponent<EnemyController>().SetNavDestination(GetComponent<EnemyController>().Target.Pos);
+                AudioSvc.PlaySound(new(creatCilp, transform.position, 40, Core.AudioGroups.Enemy));
+            }
+        }
 
         protected override void UpdateCurrentAiState()
         {
-            switch (AiState)
-            {
-                case AIState.Idle:
-                    break;
-                case AIState.Active:
-                    if(Time.time > creatTime)
-                    {
-                        var item = RandomUtils.RandomTake(creatData);
-                        creatTime = Time.time+ item.Value;
-                        var go = Instantiate(item.Key, creatPoint.position + creatPoint.forward, creatPoint.rotation, transform.parent);
-                        go.GetComponent<EnemyController>().SetNavDestination(GetComponent<EnemyController>().Target.Pos);
-                        AudioSvc.PlaySound(new(creatCilp,transform.position,40, Core.AudioGroups.Enemy));
-                    }
-                    break;
-            }
+            InvokeCurrentState();
         }
         protected override void UpdateAiStateTransitions()
         {
@@ -57,7 +68,7 @@ namespace Unity.FPS.AI
                 case AIState.Idle:
                     if (Time.time - damagedTime < lastDamagedTime)
                     {
-                        AiState = AIState.Active;
+                        SwitchState(AIState.Active);
 
                         creatTime = Time.time + RandomUtils.Range(5,10);//第一个生产时间随机
                     }
@@ -65,7 +76,7 @@ namespace Unity.FPS.AI
                 case AIState.Active:
                     if (Time.time - damagedTime > lastDamagedTime)
                     {
-                        AiState = AIState.Idle;
+                        SwitchState(AIState.Idle);
                     }
                     break;
             }
@@ -90,7 +101,7 @@ namespace Unity.FPS.AI
 
         protected override void OnDie()
         {
-            AiState = AIState.Death;
+            SwitchState(AIState.Death);
         }
     }
 }

@@ -1,10 +1,7 @@
-﻿using System.Collections;
 using System.Collections.Generic;
 using Core;
-
-using Unity.FPS.AI;
 using UnityEngine;
-namespace Unity.FPS.AI
+namespace FPSGame.AI
 {
     /// <summary>
     /// 召唤师
