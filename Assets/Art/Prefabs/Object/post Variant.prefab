@@ -213,6 +213,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 20
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 9210779771240400988}
   showHealth: 0
   m_IsDead: 0
@@ -247,10 +248,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 4
   showArmorLists:
   - Key: 0
     Value: 0.9
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

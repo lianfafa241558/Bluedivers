@@ -249,6 +249,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 994554564314660960}
   showHealth: 0
   m_IsDead: 0
@@ -290,6 +291,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -297,6 +299,7 @@ MonoBehaviour:
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -304,6 +307,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -433,12 +437,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0.5
+  armorLevel: 5
   showArmorLists:
   - Key: 1
     Value: 0.5
   - Key: 0
     Value: 1
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -544,12 +551,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0.5
+  armorLevel: 5
   showArmorLists:
   - Key: 1
     Value: 0.5
   - Key: 0
     Value: 1
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1004,18 +1014,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
   - Key: 1
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 370154366912348637}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -1065,18 +1080,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
   - Key: 1
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 5053574906852636046}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -1120,18 +1140,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
   - Key: 1
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 5854297673936818957}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -1175,18 +1200,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
   - Key: 1
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 5854297673936818957}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -1236,18 +1266,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
   - Key: 1
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 5854297673936818957}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -1297,18 +1332,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
   - Key: 1
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7821796911108112869}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0

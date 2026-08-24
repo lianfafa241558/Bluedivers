@@ -24,11 +24,24 @@ namespace Unity.FPS.Game {
         [InspectorName("最大护盾值")] 
         public int MaxShield;
 
+        /// <summary>整体伤害抗性（各类型减伤乘区，1=无减伤）。动能/爆炸由护甲等级AP判定，此处不含这两项</summary>
+        [Header("伤害抗性")]
+        [SerializeField]
+        [InspectorName("伤害抗性")]
+        private List<SKVP<DamageTypeEnum, float>> showArmorLists = new();
+
 
 
         /// <summary>主体部位</summary>
         [InspectorName("主体部位")]
         public Damageable MainPart;
+
+        /// <summary>
+        /// 拆毁值：伤害的拆毁值大于此值则直接秒杀。默认 -1 视为无法被拆毁（不受秒杀）。
+        /// </summary>
+        [SerializeField]
+        [InspectorName("拆毁值")]
+        protected int demolishValue = -1;
 
 
         /// <summary>收到伤害时,值，来源，受击点,无源伤害</summary>
@@ -61,9 +74,6 @@ namespace Unity.FPS.Game {
         //剩余护盾
         public PEInt CurrentShield { get; set; }
 
-        //是否无敌
-        public bool Invincible { get; set; }
-
         public bool CanPickup() => CurrentHealth < MaxHealth;
 
         public float GetHpRatio() => CurrentHealth.RawFloat / (MaxHealth+0f);
@@ -74,6 +84,9 @@ namespace Unity.FPS.Game {
         [SerializeField]
         protected bool m_IsDead;
 
+        /// <summary>所属单位（无敌标记的唯一来源，Awake 缓存）</summary>
+        protected Actor m_Actor;
+
         protected float m_LastHitTime = Mathf.NegativeInfinity;
 
         private float m_Time;
@@ -81,8 +94,25 @@ namespace Unity.FPS.Game {
         /// <summary>标记当前 TakeDamage 调用来自异常状态 tick，HandleDamage 据此跳过积蓄槽更新</summary>
         private bool _isAboTickDamage;
 
+        /// <summary>整体伤害抗性缓存字典（由 showArmorLists 构建，避免每帧遍历列表）</summary>
+        private readonly Dictionary<DamageTypeEnum, float> _armorResistance = new();
+
+        /// <summary>获取指定伤害类型的整体减伤乘区（1=无减伤，未配置即 1）</summary>
+        public float GetResistance(DamageTypeEnum type)
+            => _armorResistance.TryGetValue(type, out var value) ? value : 1f;
+
         protected virtual void Awake() {
+            m_Actor = GetComponentInParent<Actor>();
             CurrentHealth = MaxHealth;
+            // 构建整体抗性字典
+            _armorResistance.Clear();
+            if (showArmorLists != null)
+            {
+                foreach (var item in showArmorLists)
+                {
+                    _armorResistance[item.Key] = item.Value;
+                }
+            }
             if(MainPart.IsValid()) MainPart.SetIsMain(this);
             InitAboState();
         }
@@ -116,14 +146,27 @@ namespace Unity.FPS.Game {
         }
 
         /// <summary>受到伤害</summary>
-        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource,Collider damageAffected,Vector3 pos,bool response=true,bool isWeakness=false) {
-            if (Invincible || m_IsDead)
+        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource,Collider damageAffected,Vector3 pos,bool response=true,bool isWeakness=false,int demolishValue=-1) {
+            if (m_IsDead || (m_Actor != null && m_Actor.HasFlag(ActorFlag.Invincible)))
                 return;
+
+            // 拆毁秒杀：自身拆毁值 -1 视为无法被拆毁；否则伤害拆毁值大于自身拆毁值则直接击杀，无视护盾，但受上面无敌标记保护
+            if (demolishValue > 0 && this.demolishValue != -1 && demolishValue >= this.demolishValue)
+            {
+                CurrentHealth = 0;
+                showHealth = 0;
+                if (response) OnHit?.Invoke(damageSource, pos, isWeakness);
+                HandleDeath(damageSource);
+                return;
+            }
+
             bool haveshield= CurrentShield > 0, isBreakShield=false;
             PEInt finaldamgage = 0;
             foreach(var item in damageGroups)
             {
-                var re= HandleDamage(item.Key, PEMath.Max(item.Value, 0), damageSource, _isAboTickDamage);
+                // 整体伤害抗性减伤乘区（未配置的类型为 1，不缩放）
+                PEInt resistedValue = PEMath.Max(item.Value, 0) * (PEInt)GetResistance(item.Key);
+                var re= HandleDamage(item.Key, resistedValue, damageSource, _isAboTickDamage);
                 finaldamgage += re;
 #if UNITY_EDITOR
                 if (re.RawFloat>=0.5f)
@@ -140,8 +183,7 @@ namespace Unity.FPS.Game {
                             }
                         }
                     }
-                    if (damageAffected) Tool.DrawLabel(damageAffected.RandomPoint(out var normal), "" + Tool.Round(finaldamgage.RawFloat), 3, dmgColor);
-                    else Tool.DrawLabel(transform.position + RandomUtils.RandomVector3XZ(), "" + Tool.Round(finaldamgage.RawFloat), 3, dmgColor);
+                    if (damageAffected) Tool.DrawLabel(pos + RandomUtils.RandomVector3XZ(), "" + Tool.Round(finaldamgage.RawFloat), 3, dmgColor);
                 }
 #endif
 

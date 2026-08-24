@@ -407,10 +407,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
-  showArmorLists:
-  - Key: 1
-    Value: 1
+  explosionResistance: 1
+  armorLevel: 0
+  showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 500
   LineArmor: []
   armorBreakEffect: []
@@ -495,10 +496,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 1
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -5552,6 +5556,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 1857799104042451175}
   showHealth: 0
   m_IsDead: 0

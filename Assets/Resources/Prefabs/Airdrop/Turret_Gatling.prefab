@@ -46,8 +46,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -126,12 +129,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
   - Key: 0
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -444,8 +450,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 4274337668471837614}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 247966274271703664}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -490,6 +498,10 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -500,6 +512,7 @@ MonoBehaviour:
     ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 100006, guid: 1cfb0135c414e5943bf0918321a2fcf7, type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 1
   SFXRange: 20
   ShootSfx: {fileID: 0}
@@ -523,6 +536,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 3362843243081175594}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!114 &8685075148618714980
 MonoBehaviour:
@@ -680,27 +694,33 @@ MonoBehaviour:
     barrel: {fileID: 6116561079889630990}
     weapon: {fileID: 4274337670399264107}
     aimSharpness: 10
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   - type: 0
     chassis: {fileID: 6002478235547541627}
     barrel: {fileID: 0}
     weapon: {fileID: 4274337670399264107}
     aimSharpness: 90
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   PreJudgment: 1
-  RotationSpeed: 30
+  PreJudgmentFactor: 1
   AiState: 0
 --- !u!114 &4416010112212442149
 MonoBehaviour:
@@ -784,6 +804,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 320801384810680893}
   showHealth: 0
   m_IsDead: 0
@@ -840,6 +861,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -847,6 +869,7 @@ MonoBehaviour:
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -854,6 +877,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -1082,6 +1106,7 @@ MonoBehaviour:
   AttackRange: 65
   AlertRange: 0
   KnownTargetTimeout: 2
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
@@ -1739,8 +1764,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1814,12 +1842,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0.3
+  armorLevel: 1
   showArmorLists:
   - Key: 0
     Value: 0.3
   - Key: 1
     Value: 0.3
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1887,12 +1918,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.2
   - Key: 1
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1960,8 +1994,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

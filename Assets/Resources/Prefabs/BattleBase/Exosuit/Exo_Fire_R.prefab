@@ -48,8 +48,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 8573215493687280928}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 6329600808180454796}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -93,6 +95,10 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -100,8 +106,10 @@ MonoBehaviour:
     ChargeGravityScale: 1
     ChargeSoundScale: 1
     ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 100002, guid: 5bfe589ecf87278499f335e7dab632b1, type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 0}
@@ -125,6 +133,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!65 &8043074810428274866
 BoxCollider:
@@ -160,8 +169,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor:
   - {fileID: 8533741032729777254}
@@ -170,6 +182,8 @@ MonoBehaviour:
   - go: {fileID: 8573215493687280928}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -289,7 +303,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  source: {fileID: 0}
+  armorLevel: 0
+  explosionResistance: 0
   extraLists:
     ShowSetting: 0
     NoLog: 0
@@ -297,6 +312,7 @@ MonoBehaviour:
     DefaultValue: 0
     arr: []
     meetReset: 0
+  source: {fileID: 0}
 --- !u!65 &8469151825249832076
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -448,7 +464,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  source: {fileID: 0}
+  armorLevel: 2
+  explosionResistance: 0
   extraLists:
     ShowSetting: 0
     NoLog: 0
@@ -462,6 +479,7 @@ MonoBehaviour:
     - Key: 1
       Value: 0.5
     meetReset: 0
+  source: {fileID: 0}
 --- !u!114 &1625311197853695582
 MonoBehaviour:
   m_ObjectHideFlags: 0

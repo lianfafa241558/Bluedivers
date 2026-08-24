@@ -88,6 +88,8 @@ public class DamageDataDrawer : PropertyDrawer
 
         EditorGUI.indentLevel++;
         y = DrawPropertyOrPaired(property, useCharge, "DamageDirect", "ChargeDamageScale", "直接伤害值", "满蓄伤害倍率", position, y);
+        y = DrawPropertyOrPaired(property, useCharge, "DirectAP", "DirectAPChargeScale", "直击穿甲等级", "满蓄直击穿甲倍率", position, y);
+        y = DrawProperty(property, "demolishValue", "拆毁值", position, y);
         y = DrawSinglelineList(property, "DamageGroupDirect", "伤害成分", position, y);
         EditorGUI.indentLevel--;
         y += Padding;
@@ -98,6 +100,8 @@ public class DamageDataDrawer : PropertyDrawer
     {
         float h = SectionHeaderHeight;
         h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("DamageDirect")) + 2;
+        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("DirectAP")) + 2;
+        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("demolishValue")) + 2;
         h += GetSinglelineListHeight(property, "DamageGroupDirect");
         h += Padding;
         return h;
@@ -115,6 +119,7 @@ public class DamageDataDrawer : PropertyDrawer
 
         EditorGUI.indentLevel++;
         y = DrawPropertyOrPaired(property, useCharge, "DamageExplosion", "ChargeDamageScale", "爆炸伤害值", "满蓄倍率", position, y);
+        y = DrawPropertyOrPaired(property, useCharge, "ExplosionAP", "ExplosionAPChargeScale", "爆炸穿甲等级", "满蓄爆炸穿甲倍率", position, y);
 
 
         if (explosionProp.floatValue > 0)
@@ -142,6 +147,7 @@ public class DamageDataDrawer : PropertyDrawer
 
         float h = SectionHeaderHeight;
         h += EditorGUI.GetPropertyHeight(explosionProp) + 2;
+        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ExplosionAP")) + 2;
         h += GetSinglelineListHeight(property, "DamageGroupExplosion");
 
         if (ev > 0)
@@ -539,6 +545,7 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
 
         EditorGUI.indentLevel++;
         y = DrawProperty(property, "DamageExplosion", "爆炸伤害值", position, y);
+        y = DrawProperty(property, "demolishValue", "拆毁值", position, y);
 
 
 
@@ -564,6 +571,7 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
 
         float h = SectionHeaderHeight;
         h += EditorGUI.GetPropertyHeight(explosionProp) + 2;
+        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("demolishValue")) + 2;
 
         if (ev > 0)
         {

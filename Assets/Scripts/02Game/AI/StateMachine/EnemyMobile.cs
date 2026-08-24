@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
@@ -102,11 +103,71 @@ namespace Unity.FPS.AI
                 }
             }
         }
+
+        #region 状态机委托表结构（试点：从 switch 改造而来，行为等价）
+
+        /// <summary>单个状态的钩子表</summary>
+        protected struct StateInfo
+        {
+            public Action onEnter;
+            public Action onUpdate;
+            public Action onExit;
+        }
+
+        /// <summary>状态表：枚举 -> 状态钩子</summary>
+        private Dictionary<AIState, StateInfo> _stateInfos;
+
+        /// <summary>Speed 属性差值（Patrol/Beware/Return 进入时计算，退出时取反移除）</summary>
+        private PEMaths.PEInt speedScale;
+
+        /// <summary>构建状态表，注册每个状态的 onEnter/onUpdate/onExit</summary>
+        private Dictionary<AIState, StateInfo> InitState()
+        {
+            return new Dictionary<AIState, StateInfo>
+            {
+                [AIState.Idle] = new StateInfo
+                {
+                    onEnter = EnterIdle,
+                    onUpdate = IdleBehavior,
+                },
+                [AIState.Patrol] = new StateInfo
+                {
+                    onEnter = EnterPatrol,
+                    onExit = ExitSpeedState,
+                    onUpdate = PatrolBehavior,
+                },
+                [AIState.Follow] = new StateInfo
+                {
+                    onUpdate = FollowBehavior,
+                },
+                [AIState.Attack] = new StateInfo
+                {
+                    onUpdate = AttackBehavior,
+                },
+                [AIState.Death] = new StateInfo(),
+                [AIState.Beware] = new StateInfo
+                {
+                    onEnter = EnterBeware,
+                    onExit = ExitSpeedState,
+                    onUpdate = BewareBehavior,
+                },
+                [AIState.Return] = new StateInfo
+                {
+                    onEnter = EnterReturn,
+                    onExit = ExitSpeedState,
+                    onUpdate = ReturnBehavior,
+                },
+            };
+        }
+
         protected override void Start()
         {
             base.Start();
             m_EnemyController = m_Controller as EnemyController;
             m_OriginPos = transform.position;
+
+            // 状态表必须在首次 SwitchState 前构建
+            _stateInfos = InitState();
 
             // 有巡逻点就走巡逻，否则原地不动
             if (m_EnemyController.PatrolPos != default)
@@ -155,8 +216,204 @@ namespace Unity.FPS.AI
             _hitStunEndTime = Time.time + WeakPointHitStunDuration;
         }
 
+        /// <summary>状态切换：先退旧状态(onExit)，再进新状态(onEnter)</summary>
+        private void SwitchState(AIState state)
+        {
+            if (state == AiState) return;
 
+            _stateInfos[AiState].onExit?.Invoke();
+            AiState = state;
+            _stateInfos[state].onEnter?.Invoke();
+        }
 
+        /// <summary>回到起点后决定是Idle还是Patrol</summary>
+        private void TryReturnToIdleOrPatrol()
+        {
+            if (m_EnemyController.PatrolPos != default)
+            {
+                SwitchState(AIState.Patrol);
+            }
+            else
+            {
+                SwitchState(AIState.Idle);
+            }
+        }
+
+        #endregion
+
+        #region 状态 onEnter / onExit
+
+        /// <summary>进入 Idle：记录时间并停止导航</summary>
+        private void EnterIdle()
+        {
+            m_IdleStartTime = Time.time;
+            m_EnemyController.StopNav();
+        }
+
+        /// <summary>进入 Patrol：设置巡逻速度差修饰</summary>
+        private void EnterPatrol()
+        {
+            if (m_EnemyController.Speed == null) return;
+            speedScale = (PEMaths.PEInt)PatrolSpeed - m_EnemyController.Speed.FinalValue;
+            m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
+        }
+
+        /// <summary>进入 Beware：记录目标点并设置警惕速度差修饰</summary>
+        private void EnterBeware()
+        {
+            var bewarePoint = m_EnemyController.DetectionModule.BewarePoint;
+            m_BewareDestination = bewarePoint.HasValue ? bewarePoint.Value : m_OriginPos;
+
+            if (m_EnemyController.Speed == null) return;
+            speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
+            m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
+        }
+
+        /// <summary>进入 Return：设置返回速度差修饰</summary>
+        private void EnterReturn()
+        {
+            if (m_EnemyController.Speed == null) return;
+            speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
+            m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
+        }
+
+        /// <summary>退出带速度差修饰的状态（Patrol/Beware/Return）：移除该修饰</summary>
+        private void ExitSpeedState()
+        {
+            m_EnemyController.Speed?.AddModifier(Game.ModifierType.Extra, -speedScale);
+        }
+
+        #endregion
+
+        #region 状态 onUpdate（各状态每帧行为）
+
+        /// <summary>Idle：空闲炮塔巡逻转动；非固定单位超时且无玩家靠近则自毁</summary>
+        private void IdleBehavior()
+        {
+            // 开启自动巡逻旋转的炮塔（如机枪）在空闲时巡逻转动
+            UpdateAutoRotate();
+
+            // 非固定单位Idle超时后移动
+            if (!m_EnemyController.IsFixed && Time.time >= m_IdleStartTime + IdleMaxDuration)
+            {
+                if (ActorsManager.Players.Min(item => Vector3.Distance(item.Pos, m_EnemyController.Pos)) > 80)
+                {
+                    m_EnemyController.Kill(true);
+                }
+            }
+        }
+
+        /// <summary>Patrol：炮塔巡逻转动；走到巡逻点则自毁（移除）</summary>
+        private void PatrolBehavior()
+        {
+            // 开启自动巡逻旋转的炮塔在巡逻时转动
+            UpdateAutoRotate();
+            if (m_EnemyController.UpdatePathDestination())
+            {
+                //移除
+                m_EnemyController.Kill(true);
+            }
+        }
+
+        /// <summary>Beware：前往警惕点</summary>
+        private void BewareBehavior()
+        {
+            m_EnemyController.SetNavDestination(m_BewareDestination);
+        }
+
+        /// <summary>Return：返回原点</summary>
+        private void ReturnBehavior()
+        {
+            m_EnemyController.SetNavDestination(m_OriginPos);
+        }
+
+        /// <summary>Follow：追敌并保持攻击距离，同时瞄准目标</summary>
+        private void FollowBehavior()
+        {
+            // 水平距离(寻路是地面导航，忽略高度差)减去目标半径：避免大型单位因身高把距离"抬高"，导致一直往目标脚下冲
+            float targetHalfFollow = m_EnemyController.Target.Actor?.HalfRange ?? 0f;
+            Vector3 toTargetFollow = TargetPosition - m_EnemyController.Pos;
+            toTargetFollow.y = 0f;
+            float followDis = toTargetFollow.magnitude - targetHalfFollow;
+            float followStopRange = AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange;
+            if (followDis >= followStopRange + 1)
+            {
+                m_EnemyController.SetNavDestination(TargetPosition);
+            }
+            else if (followDis < followStopRange - 1 && MaintainMaxDis)
+            {
+                m_EnemyController.SetNavDestination(transform.position + (transform.position - TargetPosition).normalized);
+            }
+            else
+            {
+                m_EnemyController.StopNav();
+            }
+
+            AimTargrt();
+        }
+
+        /// <summary>Attack：逼近/保持距离并射击，支持开火站桩与瞄准锁定</summary>
+        private void AttackBehavior()
+        {
+            // 水平距离(寻路是地面导航，忽略高度差)减去目标半径：避免大型单位因身高把距离"抬高"，导致一直往目标脚下冲
+            float targetHalfAttack = m_EnemyController.Target.Actor?.HalfRange ?? 0f;
+            Vector3 toTargetAttack = TargetPosition - m_EnemyController.Pos;
+            toTargetAttack.y = 0f;
+            float dis = toTargetAttack.magnitude - targetHalfAttack;
+            float stopRange = (AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange);
+            bool mustStop = AttackStop && IsFiringNow();
+            if (mustStop)
+            {
+                m_EnemyController.StopNav();
+            }
+            //如果目标到自己的距离大于停止系数*攻击范围，那就追，到范围就停
+            else if (dis >= stopRange + 1)//接近
+            {
+                m_EnemyController.SetNavDestination(TargetPosition);
+            }
+            else if (dis < stopRange - 1 && MaintainMaxDis)//保持最大距离的敌人会在目标接近时远离
+            {
+                m_EnemyController.SetNavDestination(transform.position + (transform.position - TargetPosition).normalized);
+            }
+            else//原地
+            {
+                m_EnemyController.StopNav();
+            }
+
+            // shoot
+            if (IsAttackLocked)
+            {
+                // Vertigo/Terror：禁止攻击，停止武器
+                turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
+            }
+            else if (mustStop)
+            {
+                // 开火中且勾选 AttackStop：炮塔保持当前朝向不再追踪(不调 AimTargrt/Look)，
+                // 仅对已锁定的炮塔按开火延迟正常开火
+                if (IsFireDelayPassed())
+                {
+                    turrets.ForEach(item => {
+                        if (item.weapon && item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition))
+                        {
+                            m_EnemyController.TryAtack(item.weapon);
+                        }
+                    });
+                }
+            }
+            else if (AimTargrt())
+            {
+                turrets.ForEach(item => {
+                    if (item.weapon && item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition))
+                    {
+                        m_EnemyController.TryAtack(item.weapon);
+                    }
+                });
+            }
+        }
+
+        #endregion
+
+        #region 状态切换判定（Transitions）
 
         /// <summary>状态机切换</summary>
         protected override void UpdateAiStateTransitions()
@@ -259,8 +516,10 @@ namespace Unity.FPS.AI
             }
             return false;
         }
-   
-        /// <summary>状态机每帧</summary>
+
+        #endregion
+
+        /// <summary>状态机每帧（查表调用当前状态的 onUpdate）</summary>
         protected override void UpdateCurrentAiState()
         {
             if (!m_EnemyController.BirthComplete) return;
@@ -311,121 +570,8 @@ namespace Unity.FPS.AI
                 return;
             }
 
-            // Handle logic 
-            switch (AiState)
-            {
-
-                case AIState.Idle:
-                    //m_EnemyController.StopNav();
-
-                    // 开启自动巡逻旋转的炮塔（如机枪）在空闲时巡逻转动
-                    UpdateAutoRotate();
-
-                    // 非固定单位Idle超时后移动
-                    if (!m_EnemyController.IsFixed && Time.time >= m_IdleStartTime + IdleMaxDuration)
-                    {
-                        if (ActorsManager.Players.Min(item => Vector3.Distance(item.Pos, m_EnemyController.Pos)) > 80)
-                        {
-                            m_EnemyController.Kill(true);
-                        }
-                    }
-                    break;
-                case AIState.Patrol:
-                    // 开启自动巡逻旋转的炮塔在巡逻时转动
-                    UpdateAutoRotate();
-                    if (m_EnemyController.UpdatePathDestination())
-                    {
-                        //移除
-                        m_EnemyController.Kill(true);
-                    }
-                    break;
-                case AIState.Beware:
-                    m_EnemyController.SetNavDestination(m_BewareDestination);
-                    break;
-                case AIState.Return:
-                    m_EnemyController.SetNavDestination(m_OriginPos);
-                    break;
-                case AIState.Follow:
-                    // 水平距离(寻路是地面导航，忽略高度差)减去目标半径：避免大型单位因身高把距离"抬高"，导致一直往目标脚下冲
-                    float targetHalfFollow = m_EnemyController.Target.Actor?.HalfRange ?? 0f;
-                    Vector3 toTargetFollow = TargetPosition - m_EnemyController.Pos;
-                    toTargetFollow.y = 0f;
-                    float followDis = toTargetFollow.magnitude - targetHalfFollow;
-                    float followStopRange = AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange;
-                    if (followDis >= followStopRange + 1)
-                    {
-                        m_EnemyController.SetNavDestination(TargetPosition);
-                    }
-                    else if (followDis < followStopRange - 1 && MaintainMaxDis)
-                    {
-                        m_EnemyController.SetNavDestination(transform.position + (transform.position - TargetPosition).normalized);
-                    }
-                    else
-                    {
-                        m_EnemyController.StopNav();
-                    }
-
-                    AimTargrt();
-                    break;
-                case AIState.Attack:
-
-                    // 水平距离(寻路是地面导航，忽略高度差)减去目标半径：避免大型单位因身高把距离"抬高"，导致一直往目标脚下冲
-                    float targetHalfAttack = m_EnemyController.Target.Actor?.HalfRange ?? 0f;
-                    Vector3 toTargetAttack = TargetPosition - m_EnemyController.Pos;
-                    toTargetAttack.y = 0f;
-                    float dis = toTargetAttack.magnitude - targetHalfAttack;
-                    float stopRange = (AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange);
-                    bool mustStop = AttackStop && IsFiringNow();
-                    if (mustStop)
-                    {
-                        m_EnemyController.StopNav();
-                    }
-                    //如果目标到自己的距离大于停止系数*攻击范围，那就追，到范围就停
-                    else if (dis >= stopRange + 1)//接近
-                    {
-                        m_EnemyController.SetNavDestination(TargetPosition);
-                    }
-                    else if (dis < stopRange - 1 && MaintainMaxDis)//保持最大距离的敌人会在目标接近时远离
-                    {
-                        m_EnemyController.SetNavDestination(transform.position + (transform.position - TargetPosition).normalized);
-                    }
-                    else//原地
-                    {
-                        m_EnemyController.StopNav();
-                    }
-
-                    // shoot
-                    if (IsAttackLocked)
-                    {
-                        // Vertigo/Terror：禁止攻击，停止武器
-                        turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
-                    }
-                    else if (mustStop)
-                    {
-                        // 开火中且勾选 AttackStop：炮塔保持当前朝向不再追踪(不调 AimTargrt/Look)，
-                        // 仅对已锁定的炮塔按开火延迟正常开火
-                        if (IsFireDelayPassed())
-                        {
-                            turrets.ForEach(item => {
-                                if (item.weapon && item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition))
-                                {
-                                    m_EnemyController.TryAtack(item.weapon);
-                                }
-                            });
-                        }
-                    }
-                    else if (AimTargrt())
-                    {
-                        turrets.ForEach(item => {
-                            if (item.weapon && item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition))
-                            {
-                                m_EnemyController.TryAtack(item.weapon);
-                            }
-                        });
-                    }
-
-                    break;
-            }
+            // 查表调用当前状态的行为
+            _stateInfos[AiState].onUpdate?.Invoke();
         }
 
 
@@ -477,19 +623,6 @@ namespace Unity.FPS.AI
             m_EnemyController.StopNav();
         }
 
-        /// <summary>回到起点后决定是Idle还是Patrol</summary>
-        private void TryReturnToIdleOrPatrol()
-        {
-            if (m_EnemyController.PatrolPos != default)
-            {
-                SwitchState(AIState.Patrol);
-            }
-            else
-            {
-                SwitchState(AIState.Idle);
-            }
-        }
-
         /// <summary>
         /// 炮台锁头(LateUpdate)，每个炮台独立索敌：
         /// 战斗状态(Follow/Attack)下目标可达则瞄准；目标不可达或非战斗状态则自动巡逻转。
@@ -530,51 +663,6 @@ namespace Unity.FPS.AI
         {
             SwitchState(AIState.Death);
             turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
-        }
-
-        private PEMaths.PEInt speedScale;
-        private void SwitchState(AIState state)
-        {
-            if (state != AiState)
-            {
-                //退出旧状态
-                if (AiState == AIState.Patrol)
-                {
-                    m_EnemyController.Speed?.AddModifier(Game.ModifierType.Extra, -speedScale);
-                }
-                else if (AiState == AIState.Beware || AiState == AIState.Return)
-                {
-                    m_EnemyController.Speed?.AddModifier(Game.ModifierType.Extra, -speedScale);
-                }
-
-                //进入新状态
-                if (state == AIState.Idle)
-                {
-                    m_IdleStartTime = Time.time;
-                    m_EnemyController.StopNav();
-                }
-                else if (state == AIState.Patrol && m_EnemyController.Speed != null)
-                {
-                    speedScale = (PEMaths.PEInt)PatrolSpeed - m_EnemyController.Speed.FinalValue;
-                    m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
-                }
-                else if (state == AIState.Beware && m_EnemyController.Speed != null)
-                {
-                    var bewarePoint = m_EnemyController.DetectionModule.BewarePoint;
-                    m_BewareDestination = bewarePoint.HasValue ? bewarePoint.Value : m_OriginPos;
-
-                    speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
-                    m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
-                }
-                else if (state == AIState.Return && m_EnemyController.Speed != null)
-                {
-                    speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
-                    m_EnemyController.Speed.AddModifier(Game.ModifierType.Extra, speedScale);
-                }
-
-                AiState = state;
-            }
-            
         }
 
     }

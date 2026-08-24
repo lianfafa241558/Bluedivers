@@ -77,10 +77,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
-  showArmorLists:
-  - Key: 1
-    Value: 1
+  explosionResistance: 1
+  armorLevel: 0
+  showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -163,12 +164,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -267,6 +269,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.2
@@ -275,12 +279,15 @@ MonoBehaviour:
   - Key: 5
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 1000
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7227105190494820569}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -353,20 +360,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 1
   showArmorLists:
   - Key: 0
     Value: 0.3
-  - Key: 1
-    Value: 1
   - Key: 5
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 1000
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7227105190494820569}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -425,12 +435,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -515,12 +526,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -619,20 +631,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 1
   showArmorLists:
   - Key: 0
     Value: 0.3
-  - Key: 1
-    Value: 1
   - Key: 5
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 1000
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 8123733457477064338}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -705,6 +720,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0.5
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.2
@@ -713,12 +730,15 @@ MonoBehaviour:
   - Key: 5
     Value: 0.5
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 1000
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 8922969383773025653}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -769,12 +789,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 2
   showArmorLists:
   - Key: 0
     Value: 0.5
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -962,8 +983,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 4847995491068169967}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 9035371344433951422}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -1014,6 +1037,10 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -1048,6 +1075,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1 &4847995492296334155
 GameObject:
@@ -1095,8 +1123,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 4847995491724206242}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 3067795135824400318}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -1147,6 +1177,10 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -1181,6 +1215,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1 &5767977636220542985
 GameObject:
@@ -1294,8 +1329,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 6193550305683973656}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 3478163927100559196}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -1347,6 +1384,10 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -1381,6 +1422,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1 &7116943157928245084
 GameObject:
@@ -1589,6 +1631,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 2616920412064224701}
   showHealth: 0
   m_IsDead: 0
@@ -1756,6 +1799,8 @@ MonoBehaviour:
       Value: 1
     SoundRadius: 20
     NoSource: 1
+    DirectAP: 0
+    ExplosionAP: 0
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: f4897c6a885fec74185b34e9259784f1,
@@ -1872,8 +1917,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 4374848317542095796}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 3092370832766491868}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -1918,6 +1965,10 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -1952,6 +2003,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1 &8332100938603449056
 GameObject:
@@ -2039,8 +2091,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -2120,6 +2175,7 @@ MonoBehaviour:
   AttackRange: 100
   AlertRange: 30
   KnownTargetTimeout: 2
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0

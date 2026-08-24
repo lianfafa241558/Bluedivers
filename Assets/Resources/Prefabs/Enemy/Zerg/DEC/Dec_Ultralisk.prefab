@@ -50,18 +50,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 3
   showArmorLists:
   - Key: 0
     Value: 0.6
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 500
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 3699630446526270759}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 50
   isMain: 0
   showArmor: 0
@@ -240,19 +243,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.75
-    - Key: 1
-      Value: 0.75
-    - Key: 2
-      Value: 0.75
-    meetReset: 0
 --- !u!1 &419683771
 GameObject:
   m_ObjectHideFlags: 0
@@ -323,19 +313,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.75
-    - Key: 1
-      Value: 0.75
-    - Key: 2
-      Value: 0.75
-    meetReset: 0
 --- !u!1 &710939691
 GameObject:
   m_ObjectHideFlags: 0
@@ -382,8 +359,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 1696364084}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 1477713122}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 0
@@ -436,6 +415,10 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -469,6 +452,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1 &796036338
 GameObject:
@@ -540,19 +524,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.75
-    - Key: 1
-      Value: 0.75
-    - Key: 2
-      Value: 0.75
-    meetReset: 0
 --- !u!1 &1354983740
 GameObject:
   m_ObjectHideFlags: 0
@@ -623,19 +594,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.75
-    - Key: 1
-      Value: 0.75
-    - Key: 2
-      Value: 0.75
-    meetReset: 0
 --- !u!1 &1477713121
 GameObject:
   m_ObjectHideFlags: 0
@@ -777,8 +735,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -855,12 +816,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 0
   showArmorLists:
   - Key: 0
     Value: -0.5
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -959,6 +921,7 @@ MonoBehaviour:
   AttackRange: 4
   AlertRange: 50
   KnownTargetTimeout: 8
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
@@ -1288,6 +1251,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 1096021716}
   showHealth: 0
   m_IsDead: 0
@@ -1396,6 +1360,7 @@ MonoBehaviour:
   MeetDetectedTime: 3
   Range: 19
   tag: 0
+  m_Controller: {fileID: 0}
   nowCoolTime: 0
   nowDurationTime: 0
   m_LastDetectedTarget: 0
@@ -1508,8 +1473,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 6354824414703182599}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 6852085611720710291}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 0
@@ -1562,6 +1529,10 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -1595,6 +1566,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1001 &5022651813183203234
 PrefabInstance:
@@ -3740,14 +3712,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 0
   showArmorLists:
   - Key: 0
     Value: -0.3
-  - Key: 1
-    Value: 1
   - Key: 2
     Value: -0.5
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 300
   LineArmor:
   - {fileID: 6668378849415900682}
@@ -3756,6 +3729,8 @@ MonoBehaviour:
   - go: {fileID: 836337703832068766}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 30
   isMain: 0
   showArmor: 0
@@ -3820,13 +3795,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr: []
-    meetReset: 0
 --- !u!4 &1451926286930542193 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5877844530942335443, guid: a32a80b645c69d14d8bc4c42ff6805d3,
@@ -3875,8 +3843,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 300
   LineArmor:
   - {fileID: 4149854300538498283}
@@ -3884,6 +3855,8 @@ MonoBehaviour:
   - go: {fileID: 1844088304691493888}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 30
   isMain: 0
   showArmor: 0
@@ -3930,13 +3903,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr: []
-    meetReset: 0
 --- !u!1 &2130421791424940877 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -2871945939182736145, guid: a32a80b645c69d14d8bc4c42ff6805d3,
@@ -4019,12 +3985,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 3
   showArmorLists:
   - Key: 0
     Value: 0.6
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -4073,14 +4040,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 0
   showArmorLists:
   - Key: 0
     Value: -0.3
-  - Key: 1
-    Value: 1
   - Key: 2
     Value: -0.5
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 300
   LineArmor:
   - {fileID: 3121992866469804778}
@@ -4089,6 +4057,8 @@ MonoBehaviour:
   - go: {fileID: 2455150496732965946}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 30
   isMain: 0
   showArmor: 0
@@ -4134,8 +4104,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 300
   LineArmor:
   - {fileID: 7901342749488738619}
@@ -4143,6 +4116,8 @@ MonoBehaviour:
   - go: {fileID: 3072324252762372732}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 30
   isMain: 0
   showArmor: 0
@@ -4195,19 +4170,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.8
-    - Key: 1
-      Value: 0.8
-    - Key: 2
-      Value: 0.8
-    meetReset: 0
 --- !u!4 &3270865325796854668 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -1670701761049777106, guid: a32a80b645c69d14d8bc4c42ff6805d3,
@@ -4256,14 +4218,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 0
   showArmorLists:
   - Key: 0
     Value: -0.3
-  - Key: 1
-    Value: 1
   - Key: 2
     Value: -0.5
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 300
   LineArmor:
   - {fileID: 1446497555475017374}
@@ -4272,6 +4235,8 @@ MonoBehaviour:
   - go: {fileID: 3360511360846312063}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 30
   isMain: 0
   showArmor: 0
@@ -4323,16 +4288,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists:
-  - Key: 1
-    Value: 1
+  explosionResistance: 1
+  armorLevel: 0
+  showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 500
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 5335081721263766878}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -4350,13 +4318,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr: []
-    meetReset: 0
 --- !u!4 &4773448694512795721 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a32a80b645c69d14d8bc4c42ff6805d3,
@@ -4445,10 +4406,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists:
-  - Key: 1
-    Value: 1
+  explosionResistance: 1
+  armorLevel: 0
+  showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 300
   LineArmor:
   - {fileID: 4503300792633806366}
@@ -4457,6 +4419,8 @@ MonoBehaviour:
   - go: {fileID: 5335081721263766878}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 30
   isMain: 0
   showArmor: 0
@@ -4500,12 +4464,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 0
   showArmorLists:
   - Key: 0
     Value: -0.25
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -4554,8 +4519,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 600
   LineArmor:
   - {fileID: 3357392338221676014}
@@ -4563,9 +4531,13 @@ MonoBehaviour:
   - go: {fileID: 5547300949121950173}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   - go: {fileID: 5970679412572759866}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 30
   isMain: 0
   showArmor: 0
@@ -4618,13 +4590,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr: []
-    meetReset: 0
 --- !u!1 &6038349241207100495 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1619199728214848493, guid: a32a80b645c69d14d8bc4c42ff6805d3,
@@ -4665,8 +4630,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -4716,19 +4684,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.8
-    - Key: 1
-      Value: 0.8
-    - Key: 2
-      Value: 0.8
-    meetReset: 0
 --- !u!1 &7390188967240511543 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6684693681731004523, guid: a32a80b645c69d14d8bc4c42ff6805d3,
@@ -4771,22 +4726,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 0
   showArmorLists:
   - Key: 0
     Value: -1
-  - Key: 1
-    Value: 1
   - Key: 3
     Value: -1
   - Key: 2
     Value: -1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 500
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7390188967240511543}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 150
   isMain: 0
   showArmor: 0
@@ -4833,19 +4791,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.8
-    - Key: 1
-      Value: 0.8
-    - Key: 2
-      Value: 0.8
-    meetReset: 0
 --- !u!1 &8328127842152203902 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -5321144713376144932, guid: a32a80b645c69d14d8bc4c42ff6805d3,
@@ -4888,8 +4833,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
   showArmorLists: []
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 600
   LineArmor:
   - {fileID: 7002090877822208061}
@@ -4897,9 +4845,13 @@ MonoBehaviour:
   - go: {fileID: 8328127842152203902}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   - go: {fileID: 1477713121}
     state: 0
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 30
   isMain: 0
   showArmor: 0
@@ -4946,19 +4898,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   source: {fileID: 0}
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.8
-    - Key: 1
-      Value: 0.8
-    - Key: 2
-      Value: 0.8
-    meetReset: 0
 --- !u!1 &8773262229824132372 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -4867009431427779914, guid: a32a80b645c69d14d8bc4c42ff6805d3,
@@ -5001,20 +4940,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 0
   showArmorLists:
   - Key: 0
     Value: -0.5
-  - Key: 1
-    Value: 1
   - Key: 2
     Value: -0.5
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 8773262229824132372}
     state: 1
     scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 50
   isMain: 0
   showArmor: 0

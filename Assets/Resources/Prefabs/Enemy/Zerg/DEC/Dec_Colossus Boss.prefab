@@ -329,6 +329,10 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 8167516518492074666, guid: 4a7139f81905c6d4bb2476226c226a62, type: 3}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
@@ -531,12 +535,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  explosionResistance: 1
+  armorLevel: 0
   showArmorLists:
   - Key: 5
     Value: 1
-  - Key: 1
-    Value: 1
   AllArmor: 0
+  isExplosionImmunity: 1
   armorValue: 1000
   LineArmor: []
   armorBreakEffect: []
@@ -553,8 +558,18 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 123417380040570590, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: armorLevel
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 123417380040570590, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: armorValue
       value: 1200
+      objectReference: {fileID: 0}
+    - target: {fileID: 123417380040570590, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: explosionResistance
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 123417380040570590, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -591,6 +606,11 @@ PrefabInstance:
       propertyPath: showArmorLists.Array.data[0].Value
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 726516424718870698, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: avoidancePriority
+      value: 15
+      objectReference: {fileID: 0}
     - target: {fileID: 862374942568513005, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       propertyPath: armorValue
@@ -598,8 +618,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 862374942568513005, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: explosionResistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 862374942568513005, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: isExplosionImmunity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 862374942568513005, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: showArmorLists.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 862374942568513005, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -663,8 +693,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2482426355189014054, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: armorLevel
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2482426355189014054, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: armorValue
       value: 1200
+      objectReference: {fileID: 0}
+    - target: {fileID: 2482426355189014054, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: explosionResistance
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2482426355189014054, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -693,8 +733,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3352742561756961093, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: armorLevel
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3352742561756961093, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: armorValue
       value: 1200
+      objectReference: {fileID: 0}
+    - target: {fileID: 3352742561756961093, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: explosionResistance
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3352742561756961093, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -725,6 +775,26 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Dec_Colossus Boss
+      objectReference: {fileID: 0}
+    - target: {fileID: 4405464842987676495, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: fxDic.arr.Array.data[2].Value.go.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4405464842987676495, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: fxDic.arr.Array.data[2].Value.go.Array.data[0].go
+      value: 
+      objectReference: {fileID: 9149703219557037832}
+    - target: {fileID: 4405464842987676495, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: fxDic.arr.Array.data[2].Value.go.Array.data[0].scale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4405464842987676495, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: fxDic.arr.Array.data[2].Value.go.Array.data[0].state
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4721436131401642377, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -1048,8 +1118,23 @@ PrefabInstance:
       objectReference: {fileID: 4075877464115848760}
     - target: {fileID: 4721436131401642377, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: Damages.Array.data[0].DamageDirect
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4721436131401642377, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: cfg._fakeAttrs.Array.data[1].Value
       value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 4721436131401642377, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: Damages.Array.data[0].DamageExplosion
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4721436131401642377, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: Damages.Array.data[0].DamageGroupDirect.Array.data[0].Key
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4781588979192254773, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -1273,8 +1358,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7325041431179426136, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: armorLevel
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7325041431179426136, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: armorValue
       value: 1200
+      objectReference: {fileID: 0}
+    - target: {fileID: 7325041431179426136, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: explosionResistance
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7325041431179426136, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -1303,8 +1398,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7652045207447379756, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: explosionResistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7652045207447379756, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: isExplosionImmunity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7652045207447379756, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: showArmorLists.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7652045207447379756, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -1323,8 +1428,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7952602575828400590, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: explosionResistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7952602575828400590, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: isExplosionImmunity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7952602575828400590, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: showArmorLists.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7952602575828400590, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -1348,6 +1463,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8278004289893178877, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: Id
+      value: Dec_ColossusBoss
+      objectReference: {fileID: 0}
+    - target: {fileID: 8278004289893178877, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: flag
       value: 4
       objectReference: {fileID: 0}
@@ -1355,6 +1475,11 @@ PrefabInstance:
         type: 3}
       propertyPath: threat
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8278004289893178877, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u6218\u4E89\u4F7F\u8005"
       objectReference: {fileID: 0}
     - target: {fileID: 8278004289893178877, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -1373,12 +1498,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
+      propertyPath: showArmorLists.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
       propertyPath: AboGaugeArr.Array.data[0].Key
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       propertyPath: AboGaugeArr.Array.data[0].Value
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: showArmorLists.Array.data[0].Key
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: showArmorLists.Array.data[0].Value
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8587460075420854221, guid: 8d6ef4a967951304baacd7d5f89e548b,
@@ -1713,8 +1853,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
+  explosionResistance: 0.9
+  armorLevel: 4
+  showArmorLists:
+  - Key: 0
+    Value: 0.9
+  - Key: 1
+    Value: 0.9
   AllArmor: 0
+  isExplosionImmunity: 0
   armorValue: 500
   LineArmor: []
   armorBreakEffect:

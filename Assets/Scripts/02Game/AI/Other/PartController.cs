@@ -25,6 +25,9 @@ public class PartController : MonoBehaviour
     /// <summary>所有无敌装甲被摧毁时触发</summary>
     public event UnityAction OnAllInvincibleArmorDestroyed;
 
+    /// <summary>无敌装甲列表发生变化（增/减/清空降级）时触发，供 UI 同步</summary>
+    public event UnityAction OnInvincibleArmorListChanged;
+
     private int DeathPartCount;
 
     private I_AIController controller;
@@ -86,6 +89,7 @@ public class PartController : MonoBehaviour
         if (invincibleArmor.Count == 0) controller.Actor.AddFlag(ActorFlag.Invincible);
         invincibleArmor.Add(damageable);
         damageable.OnDestroyPart += OnInvinciblePartDestroy;
+        OnInvincibleArmorListChanged?.Invoke();
     }
 
 
@@ -98,6 +102,7 @@ public class PartController : MonoBehaviour
             controller.Actor.RemoveFlag(ActorFlag.Invincible);
             OnAllInvincibleArmorDestroyed?.Invoke();
         }
+        OnInvincibleArmorListChanged?.Invoke();
     }
 
     void OnLegDestroy(Damageable _)

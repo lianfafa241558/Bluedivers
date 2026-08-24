@@ -108,9 +108,26 @@ public static class FpsHelper
             //Debug.LogWarning("对" + collider.gameObject.name, collider.gameObject);
             //Debug.LogWarning("造成直击伤害" + damageData.GetDirectDamage(charg), collider.gameObject);
             //Debug.LogWarning(" 基础伤害" + damageData.DamageDirect, collider.gameObject);
+
             // 全队强化"荆棘护甲"：近战攻击玩家阵营单位时，攻击者受到 24 点反伤
             TryThornArmorReflect(comp, owner, point, hitData);
             comp.InflictDamage(comp, damageData.GetDirectDamage(charg)* damageScale, damageData.DamageGroupDirect, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
+
+            Debug.LogWarning("对" + comp.gameObject.name + "造成直击伤害" + damageData.GetDirectDamage(charg) * damageScale);
+            var directPacket = new DamagePacket
+            {
+                Source = comp,
+                Damage = damageData.GetDirectDamage(charg) * damageScale,
+                DamageGroups = damageData.DamageGroupDirect,
+                WeaknessBonus = damageData.GetWeaknessBonus(),
+                AP = damageData.GetDirectAP(charg),
+                NoSource = damageData.NoSource || !owner,
+                DamageSource = owner,
+                Pos = point,
+                DemolishValue = damageData.GetDemolishValue(),
+            };
+            comp.InflictDamage(directPacket);
+
             
         }
          
@@ -126,7 +143,6 @@ public static class FpsHelper
             }
             var list= unitList.Select(item => item.Damageables)
                 .SelectMany(item => item)
-                .Where(item=>!item.IsExplosionImmunity())
                 .ToList();
 
             //Debug.LogWarning("范围" + "内的目标数量"+ list.Count);
@@ -145,7 +161,19 @@ public static class FpsHelper
                 if (value > 0)
                 {
                     Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value , item.gameObject);
-                    item.InflictDamage(item, value, damageData.DamageGroupExplosion, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
+                    var explosionPacket = new DamagePacket
+                    {
+                        Source = item,
+                        Damage = value,
+                        DamageGroups = damageData.DamageGroupExplosion,
+                        WeaknessBonus = damageData.GetWeaknessBonus(),
+                        AP = damageData.GetExplosionAP(charg),
+                        NoSource = damageData.NoSource || !owner,
+                        DamageSource = owner,
+                        Pos = point,
+                        DemolishValue = damageData.GetDemolishValue(),
+                    };
+                    item.InflictDamage(explosionPacket);
                 }
             }
 

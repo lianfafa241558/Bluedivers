@@ -21,29 +21,21 @@ public class HpItemBoss : HpItemBase
     private bool _visible;
     private float _hideTimer;
 
+    // 无敌装甲同步 / 无敌高亮
+    private Color _originalRColor;     // FillR 原始颜色，退出无敌时恢复
+    private bool _isInvincibleShown;   // 当前是否处于无敌高亮，避免每帧重复 SetColor
+
     public override void Set(GameObject go)
     {
         base.Set(go);
         this.enemy = go.GetComponent<PartController>();
 
-        damageables = enemy.invincibleArmor.Count > 0 ? enemy.invincibleArmor.ToArray() : enemy.deathArmor;
-        lenght = damageables.Length;
-
-        int i=0;
-        for (i=0; i< lenght; ++i)
-        {
-            var item = damageables[i];
-            SetActive(armorLayout.GetChild(i), true);
-            SetFill(armorLayout.GetChild(i, 1, 0), 1);
-            SetFill(armorLayout.GetChild(i, 1, 1), 1);
-            item.OnDamage += OnDamage;
-        }
-        for (; i < armorLayout.childCount; ++i)
-        {
-            SetActive(armorLayout.GetChild(i),false);
-        }
         SetFill(FillW, 1);
         SetFill(FillR, 1);
+        RebuildArmor();
+        _originalRColor = GetColor(FillR);
+        _isInvincibleShown = false;
+
         _hideTimer = HideDelay;
         // 一开始就在 50m 内则直接播放 Entry 显示，否则初始隐藏
         if (IsPlayerNear())
@@ -56,6 +48,40 @@ public class HpItemBoss : HpItemBase
             _visible = false;
             SetActive(gameObject, false);
         }
+    }
+
+    /// <summary>按当前 PartController.invincibleArmor 重建护甲 UI 与事件订阅（增/减/清空降级均可同步）</summary>
+    private void RebuildArmor()
+    {
+        // 清理旧订阅，避免重复/泄漏
+        if (damageables != null)
+        {
+            for (int u = 0; u < damageables.Length; ++u)
+            {
+                if (damageables[u] != null) damageables[u].OnDamage -= OnDamage;
+            }
+        }
+
+        damageables = enemy.invincibleArmor.Count > 0 ? enemy.invincibleArmor.ToArray() : enemy.deathArmor;
+        lenght = damageables.Length;
+
+        int i = 0;
+        for (; i < lenght; ++i)
+        {
+            var item = damageables[i];
+            SetActive(armorLayout.GetChild(i), true);
+            SetFill(armorLayout.GetChild(i, 1, 0), 1);
+            SetFill(armorLayout.GetChild(i, 1, 1), 1);
+            item.OnDamage += OnDamage;
+        }
+        for (; i < armorLayout.childCount; ++i)
+        {
+            SetActive(armorLayout.GetChild(i), false);
+        }
+
+        // 订阅列表变化事件（先 -= 防重复）
+        enemy.OnInvincibleArmorListChanged -= RebuildArmor;
+        enemy.OnInvincibleArmorListChanged += RebuildArmor;
     }
 
     /// <summary>显示：播放 Entry 动画，首次显示播放 showClip</summary>
@@ -85,6 +111,14 @@ public class HpItemBoss : HpItemBase
             SetFill(armorLayout.GetChild(i,1, 0),GetFill(armorLayout.GetChild(i, 1, 1)), Time.deltaTime * 2);
         }
 
+        // 单位自身无敌时 FillR 变白，恢复时还原原色
+        bool invincible = actor.HasFlag(ActorFlag.Invincible);
+        if (invincible != _isInvincibleShown)
+        {
+            _isInvincibleShown = invincible;
+            SetColor(FillR, invincible ? Color.white : _originalRColor);
+        }
+
         if (IsPlayerNear())
         {
             // 范围内：显示并刷新隐藏冷却
@@ -110,10 +144,14 @@ public class HpItemBoss : HpItemBase
 
     public override void End()
     {
-        for (int i = 0; i < lenght; ++i)
+        if (damageables != null)
         {
-            damageables[i].OnDamage -= OnDamage;
+            for (int i = 0; i < damageables.Length; ++i)
+            {
+                if (damageables[i] != null) damageables[i].OnDamage -= OnDamage;
+            }
         }
+        if (enemy != null) enemy.OnInvincibleArmorListChanged -= RebuildArmor;
         anim.Play("Death");
         AudioSvc.PlaySound(new(deathCilp, Core.AudioGroups.UI));
     }

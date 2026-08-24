@@ -22,6 +22,9 @@ namespace Unity.FPS.Game
         PEInt GetShockwaveRadius(PEInt chargeScale);
         PEInt GetSoundRadius(PEInt chargeScale);
         public PEInt GetWeaknessBonus();
+        public int GetDirectAP(PEInt chargeScale);
+        public int GetExplosionAP(PEInt chargeScale);
+        public int GetDemolishValue();
         List<SKVP<DamageTypeEnum, float>> DamageGroupDirect { get; }
         List<SKVP<DamageTypeEnum, float>> DamageGroupExplosion { get; }
           
@@ -127,6 +130,29 @@ namespace Unity.FPS.Game
         /// <summary>只附着到地面/summary>
         public bool OnlyTerrain;
 
+        /// <summary>直击穿甲等级（对所有直击成分类型统一有效）</summary>
+        [SerializeField]
+        [InspectorName("直击穿甲等级")]
+        private int DirectAP;
+        /// <summary>满蓄直击穿甲等级倍率（配合蓄力）</summary>
+        [SerializeField]
+        [InspectorName("满蓄直击穿甲倍率")]
+        private float DirectAPChargeScale = 1;
+        /// <summary>爆炸穿甲等级（对所有爆炸成分类型统一有效）</summary>
+        [SerializeField]
+        [InspectorName("爆炸穿甲等级")]
+        private int ExplosionAP;
+        /// <summary>满蓄爆炸穿甲等级倍率（配合蓄力）</summary>
+        [SerializeField]
+        [InspectorName("满蓄爆炸穿甲倍率")]
+        private float ExplosionAPChargeScale = 1;
+
+        /// <summary>拆毁值：大于目标 Health 的拆毁值时直接秒杀。默认 0</summary>
+        [SerializeField]
+        [InspectorName("拆毁值")]
+        private int demolishValue;
+
+
         //[Header("蓄力")]
         /// <summary>使用蓄力</summary>
         [SerializeField]
@@ -186,6 +212,14 @@ namespace Unity.FPS.Game
         public PEInt GetShockwaveRadius(PEInt ChargeScale) => _HandleValue(ShockwaveRadius, ChargeAOERangeScale, ChargeScale);
         public PEInt GetWeaknessBonus() => (PEInt)WeaknessBonus;
 
+        /// <summary>直击穿甲等级（随蓄力缩放，charge=0 为 DirectAP，charge=1 为 DirectAP×DirectAPChargeScale）</summary>
+        public int GetDirectAP(PEInt charge) => _HandleAP(DirectAP, DirectAPChargeScale, charge);
+        /// <summary>爆炸穿甲等级（随蓄力缩放）</summary>
+        public int GetExplosionAP(PEInt charge) => _HandleAP(ExplosionAP, ExplosionAPChargeScale, charge);
+
+        /// <summary>拆毁值（不随蓄力缩放）</summary>
+        public int GetDemolishValue() => demolishValue;
+
 
         /// <summary>速度</summary>
         public PEInt GetSpeed(PEInt ChargeScale) => _HandleValue(Speed, ChargeSpeedScale, ChargeScale);
@@ -199,6 +233,10 @@ namespace Unity.FPS.Game
         //private PEInt _HandleValue(PEInt baseValue, PEInt scaleValue, PEInt charge)=> (PEInt)(baseValue * (UseCharge ? PEMath.Lerp(1, scaleValue, charge) : 1));
 
         private PEInt _HandleValue(float baseValue, float scaleValue, PEInt charge) => (PEInt)baseValue * (UseCharge ? PEMath.Lerp(1, (PEInt)scaleValue, charge) : 1);
+
+        /// <summary>穿甲等级蓄力缩放：int 类型，随蓄力按倍率缩放（AP 为 0 时不缩放）</summary>
+        private int _HandleAP(int baseValue, float scaleValue, PEInt charge)
+            => baseValue > 0 ? (baseValue * (UseCharge ? PEMath.Lerp(1, (PEInt)scaleValue, charge) : 1)).RawInt : baseValue;
 
 
         public float GetAttr(Attr type)
