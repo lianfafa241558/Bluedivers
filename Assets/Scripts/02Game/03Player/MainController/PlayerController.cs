@@ -391,10 +391,14 @@ public partial class PlayerController : BaseSelfMoveableController
         }
         base.HandleRotation();
     }
+    /// <summary>当前冲刺冷却时间（全队强化"疾风二度"降低20%）</summary>
+    private float CurrentSprintCool
+        => HaveBooster(BoosterType.Windrunner) ? SprintCool * 0.8f : SprintCool;
+
     void UpdateSprint()
     {
         // 冲刺
-        if (m_sprintTime < -SprintCool && InputHandler.GetSprintInputDouble())
+        if (m_sprintTime < -CurrentSprintCool && InputHandler.GetSprintInputDouble())
         {
             m_sprintTime = SprintDuration;
             MoveSpeedScale *= SprintSpeedModifier;
@@ -538,14 +542,25 @@ public partial class PlayerController : BaseSelfMoveableController
     public void UseCaisson()
     {
         WeaponsManager.UseSupply();
+        // 全队强化"补给大师"：吃完补给后所有武器立刻装弹完成
+        if (HaveBooster(BoosterType.SuppleMaster))
+        {
+            WeaponsManager.ReloadAllWeapons();
+        }
     }
     /// <summary>
     /// 使用医疗包
     /// </summary>
     public void UseMedicalBag()
     {
-        Health.Heal(Health.MaxHealth / 2);
+        // 全队强化"补给大师"：恢复的生命值从 50% 提升到 60%
+        float healRatio = HaveBooster(BoosterType.SuppleMaster) ? 0.6f : 0.5f;
+        Health.Heal(Health.MaxHealth * healRatio);
     }
+
+    /// <summary>本局是否激活了指定的全队强化</summary>
+    private bool HaveBooster(BoosterType type)
+        => BattleManager.Instance && BattleManager.Instance.HaveBooster(type);
 
 
 }

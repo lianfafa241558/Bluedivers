@@ -976,6 +976,20 @@ namespace Unity.FPS.Gameplay
             }
         }
 
+        /// <summary>
+        /// 所有武器立刻完成装弹（全队强化"补给大师"）
+        /// </summary>
+        public void ReloadAllWeapons()
+        {
+            for (int i = 0; i < m_WeaponSlots.Length; ++i)
+            {
+                if (m_WeaponSlots[i])
+                {
+                    m_WeaponSlots[i].ReloadComplete();
+                }
+            }
+        }
+
 
         /// <summary>
         /// 获得当前使用的武器

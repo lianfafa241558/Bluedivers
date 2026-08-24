@@ -157,6 +157,21 @@ namespace Unity.FPS.Game
             }
         }
 
+        /// <summary>
+        /// 立即完成装弹（全队强化"补给大师"等外部效果调用）
+        /// </summary>
+        public virtual void ReloadComplete()
+        {
+            // 无限弹匣无需装弹
+            if (InfiniteMagazine) return;
+            // 没有后备弹则无法装弹
+            if (!InfiniteAmmo && Ammo.CurrValue <= 0) return;
+            // 弹匣已满无需装弹
+            if (Magazine.CurrValue >= Magazine.FinalValue) return;
+
+            ReloadEnd();
+        }
+
         protected virtual void ReloadStart()
         {
             ReloadTime.CurrValue = 0;

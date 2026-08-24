@@ -6,6 +6,7 @@ using GameContract;
 using PEMaths;
 
 using Unity.FPS.Game;
+using Unity.FPS.Gameplay;
 using UnityEngine;
 using UnityEngine.AI;
 using Utils;
@@ -23,7 +24,33 @@ public static class FpsHelper
 
     private static List<GameObject> bulletHoles;
 
+    /// <summary>荆棘护甲反伤伤害组（真实伤害，无视抗性稳定为24点）</summary>
+    private static readonly List<SKVP<DamageTypeEnum, float>> ThornArmorDamageGroups = new() { new(DamageTypeEnum.Real, 1) };
 
+    /// <summary>
+    /// 全队强化"荆棘护甲"：近战攻击玩家阵营单位的攻击者会受到 24 点反伤
+    /// </summary>
+    private static void TryThornArmorReflect(I_Damagable target, GameObject attacker, Vector3 point, ProjectileHitData hitData)
+    {
+        // 仅近战攻击（子弹为 ProjectileMelee）触发反伤
+        if (!hitData.weapon.IsValid() || !(hitData.weapon.ProjectilePrefab is ProjectileMelee)) return;
+        // 需要全队强化，且被攻击方为玩家阵营单位
+        if (!BattleManager.Instance.IsValid() || !BattleManager.Instance.HaveBooster(BoosterType.ThornArmor)) return;
+        if (!target.gameObject) return;
+        Actor targetActor = target.gameObject.GetComponent<Actor>();
+        if (!targetActor || (targetActor.Type != UnitTypeEnum.Player && targetActor.Type != UnitTypeEnum.Friend)) return;
+        if (!attacker || !attacker.TryGetComponent(out Actor attackerActor)) return;
+
+        // 对攻击者造成 24 点反伤（取第一个有效肢体）
+        foreach (I_Damagable damageable in attackerActor.Damageables)
+        {
+            if (damageable.Source.IsValid())
+            {
+                damageable.InflictDamage(damageable, (PEInt)24, ThornArmorDamageGroups, 0, false, target.gameObject, point);
+                break;
+            }
+        }
+    }
 
     /// <summary>
     /// 是否是主要阶段（战斗中、准备、过渡）
@@ -81,7 +108,8 @@ public static class FpsHelper
             //Debug.LogWarning("对" + collider.gameObject.name, collider.gameObject);
             //Debug.LogWarning("造成直击伤害" + damageData.GetDirectDamage(charg), collider.gameObject);
             //Debug.LogWarning(" 基础伤害" + damageData.DamageDirect, collider.gameObject);
-            Debug.LogWarning("对" + comp.gameObject.name + "造成直击伤害" + damageData.GetDirectDamage(charg) * damageScale);
+            // 全队强化"荆棘护甲"：近战攻击玩家阵营单位时，攻击者受到 24 点反伤
+            TryThornArmorReflect(comp, owner, point, hitData);
             comp.InflictDamage(comp, damageData.GetDirectDamage(charg)* damageScale, damageData.DamageGroupDirect, damageData.GetWeaknessBonus(), damageData.NoSource || !owner, owner, point);
             
         }

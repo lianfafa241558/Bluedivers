@@ -261,6 +261,13 @@ namespace Unity.FPS.Game
                 //Debug.LogWarning("友军减伤"+ damage+" "+ damage * SensibilityToSelfdamage);
                 damage *= (PEInt)SensibilityToSelfdamage;
             }
+            // 全队强化"友情护盾"：友军伤害再降低 50%（总友伤 25%，仅玩家队伍生效）
+            if (Actor && SourceActor && Actor.Team == SourceActor.Team
+                && IsFriendlyUnit(Actor)
+                && BattleManager.Instance.HaveBooster(BoosterType.FriendShield))
+            {
+                damage *= (PEInt)0.5f;
+            }
             // 全队强化"生命力强化"：玩家受到的伤害降低 10%
             if (BattleManager.Instance.HaveBooster(BoosterType.Vitality) && Actor && (Actor.Type== UnitTypeEnum.Player|| Actor.Type == UnitTypeEnum.Friend))
             {
@@ -289,6 +296,10 @@ namespace Unity.FPS.Game
             Health.TakeDamage(finalDamageGroups, noSource, damageSource, ClosestCollider(pos), pos,true,isWeakness);
             
         }
+
+        /// <summary>是否为玩家阵营单位（玩家/盟友）</summary>
+        private static bool IsFriendlyUnit(Actor actor)
+            => actor.Type == UnitTypeEnum.Player || actor.Type == UnitTypeEnum.Friend;
 
         //计算护甲破坏
         private void ArmorDestruction(PEInt value, GameObject source)
