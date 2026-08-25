@@ -18,7 +18,7 @@ public static class FpsHelper
     static FpsHelper()
     {
         //bulletHoles = ResSvc.Instance.LoadObjects<GameObject>("VFX/Weapon/BulletHole/Base");
-        bulletHoles = Resources.LoadAll<GameObject>("VFX/Weapon/BulletHole/Base").ToList();
+        bulletHoles = Resources.LoadAll<GameObject>("VFX/BulletHole/Base").ToList();
     }
 
 

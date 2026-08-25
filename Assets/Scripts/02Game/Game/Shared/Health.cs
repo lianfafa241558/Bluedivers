@@ -111,7 +111,8 @@ namespace Unity.FPS.Game {
 
         protected virtual void Awake() {
             m_Actor = GetComponentInParent<Actor>();
-            CurrentHealth = MaxHealth;
+            CurrentHealth = showHealth = MaxHealth;
+    
             // 构建整体抗性字典
             _armorResistance.Clear();
             if (showArmorLists != null)

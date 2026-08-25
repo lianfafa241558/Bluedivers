@@ -1,4 +1,4 @@
-﻿using Core;
+using Core;
 using Core.Interface;
 
 using Unity.FPS.Game;
@@ -196,7 +196,8 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
     public static void Release(ProjectileBase go)
     {
         if (!go.IsValid()) return;
-        bulletPool.Release(go.Template, go);
+        if (go.Template.IsValid()) bulletPool.Release(go.Template, go);
+        else Destroy(go.gameObject);
     }
 
     public static void MoveBackToCurrentScene(GameObject objectToMove)

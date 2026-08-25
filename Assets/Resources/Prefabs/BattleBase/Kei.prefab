@@ -98,7 +98,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 0}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -148,12 +150,8 @@ MonoBehaviour:
   callSound: {fileID: 11400000, guid: fe80750b0b12b70429294882f1714ff2, type: 2}
   callPoint: {fileID: 2393499853092318471, guid: c5043470050053142b706b26181f2f86,
     type: 3}
-  moveCilps:
-  - {fileID: 8300000, guid: 77d5c7d6dcf24704a80a13017f690dca, type: 3}
-  - {fileID: 8300000, guid: 1885a476ee0a1f74c92458c1bc19ca06, type: 3}
-  - {fileID: 8300000, guid: 2d9e7e09d1d4aea4fa5e811aaa6b34b8, type: 3}
-  - {fileID: 8300000, guid: b402f67d021517f4880df02d264b3226, type: 3}
-  - {fileID: 8300000, guid: a33ddc057a12b2244abef6841acc75d1, type: 3}
+  moveCilps: {fileID: 11400000, guid: adcc40115f72f044f85e66bda1541126, type: 2}
+  stopCilps: {fileID: 11400000, guid: 248a907a14271044585ce5d1c512d213, type: 2}
 --- !u!195 &570710057
 NavMeshAgent:
   m_ObjectHideFlags: 0

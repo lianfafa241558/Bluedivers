@@ -11,7 +11,7 @@ PrefabInstance:
     - target: {fileID: 442983653206533217, guid: 69fd3c6a95219fb498854d67ce239517,
         type: 3}
       propertyPath: m_Name
-      value: MineLauncher_Glue
+      value: MineLauncher_Melta
       objectReference: {fileID: 0}
     - target: {fileID: 784931013060139326, guid: 69fd3c6a95219fb498854d67ce239517,
         type: 3}
@@ -21,10 +21,25 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 784931013060139326, guid: 69fd3c6a95219fb498854d67ce239517,
         type: 3}
+      propertyPath: Damages.Array.data[0].MinRange
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 784931013060139326, guid: 69fd3c6a95219fb498854d67ce239517,
+        type: 3}
+      propertyPath: Damages.Array.data[0].ImpactSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: e745e9066c7a2524ea09202212d000a2, type: 3}
+    - target: {fileID: 784931013060139326, guid: 69fd3c6a95219fb498854d67ce239517,
+        type: 3}
       propertyPath: Damages.Array.data[0].ImpactVfx
       value: 
       objectReference: {fileID: 4704835795331346303, guid: 492cb51e324470c498ba6b79ed665aad,
         type: 3}
+    - target: {fileID: 784931013060139326, guid: 69fd3c6a95219fb498854d67ce239517,
+        type: 3}
+      propertyPath: Damages.Array.data[1].ImpactSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: abfa61cd0176ae6418cd43e01c9b39e0, type: 3}
     - target: {fileID: 784931013060139326, guid: 69fd3c6a95219fb498854d67ce239517,
         type: 3}
       propertyPath: Damages.Array.data[1].ImpactVfx
