@@ -50,6 +50,7 @@ namespace FPSGame.AI
         public UnityAction onLostTarget;
 
 
+
         public TargetData Target = new();// { get; protected set; } = new();
 
         [SerializeField]
@@ -81,9 +82,11 @@ namespace FPSGame.AI
 
         protected Actor m_Actor;
 
-        public GameObject showTarget;
+        [SerializeField]
+        GameObject showTarget;
+        [SerializeField]
+        Vector3 showTargetPos;
 
-        
         private Transform CorePoint;
 
         public Transform GetCorePoint()=> EyePoint == null ? transform : EyePoint;
@@ -122,6 +125,7 @@ namespace FPSGame.AI
         {
             if(!BattleManager.Instance.IsValid()) return true;
             HandleTargetDetection();
+            showTargetPos = Target.Pos;
             return true;
         }
 

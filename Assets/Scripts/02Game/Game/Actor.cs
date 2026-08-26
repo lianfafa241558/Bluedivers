@@ -64,7 +64,7 @@ namespace Unity.FPS.Game
         List<UnitQueryGridNode> I_Actor.GridNodes => curQueryGridNodes;
 
         public Transform AimPoint=> aimPoint;
-
+        public I_Damagable MainDamageable => mainDamageable;
         public I_Damagable[] Damageables => damageables;
 
         public float Threat => threat;
@@ -174,8 +174,9 @@ namespace Unity.FPS.Game
         private IPERange range;
         public List<UnitQueryGridNode> curQueryGridNodes = new List<UnitQueryGridNode>();
         [HideInInspector]
-        public Damageable[] damageables;
-
+        Damageable[] damageables;
+        [HideInInspector]
+        I_Damagable mainDamageable;
         #endregion
 
         #endregion
@@ -203,6 +204,7 @@ namespace Unity.FPS.Game
             {
                 m_Health.OnDie += OnDie;
                 m_Health.OnRevive += OnRevive;
+                mainDamageable = m_Health.MainPart;
             }
 
             damageables = GetComponentsInChildren<Damageable>();

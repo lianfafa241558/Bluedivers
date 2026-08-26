@@ -194,19 +194,24 @@ namespace FPSGame.AI
             return false;
         }
 
+
+        [SerializeField]
+        bool isImportant;
+
         /// <summary>
         /// 设置目标点（通过PathRequestManager排队，避免单帧寻路瓶颈
         /// </summary>
         public void SetNavDestination(Vector3 destination)
         {
-            if (Vector3.Distance(destination, m_lastDestination) < 1) return;
 
+            if (Vector3.Distance(destination, m_lastDestination) < 1) return;
+            if (isImportant) Debug.LogError("设置目标点为"+destination,gameObject);
             m_lastDestination = destination;
             if (FpsHelper.HaveNavMeshAgent(NavMeshAgent) && NavMeshAgent.isOnNavMesh)
             {
                 if (BirthComplete)
                 {
-                    PathRequestManager.Instance.RequestPath(NavMeshAgent, destination);
+                    PathRequestManager.Instance.RequestPath(NavMeshAgent, destination, isImportant);
                 }
             }
         }

@@ -43,18 +43,12 @@ namespace Unity.FPS.Game
         /// <summary>无源伤害</summary>
         public bool NoSource = false;
 
-        /// <summary>直击穿甲等级（对所有直击成分类型统一有效）</summary>
         [SerializeField]
-        [InspectorName("直击穿甲等级")]
-        private int DirectAP;
         /// <summary>爆炸穿甲等级（对所有爆炸成分类型统一有效）</summary>
-        [SerializeField]
-        [InspectorName("爆炸穿甲等级")]
         private int ExplosionAP;
 
-        /// <summary>拆毁值：大于目标 Health 的拆毁值时直接秒杀。默认 0</summary>
         [SerializeField]
-        [InspectorName("拆毁值")]
+        /// <summary>拆毁值：大于目标 Health 的拆毁值时直接秒杀。默认 0</summary>
         private int demolishValue;
 
         //[Header("碰撞/特效")]
@@ -116,7 +110,7 @@ namespace Unity.FPS.Game
 
         public PEInt GetWeaknessBonus() => 0;
 
-        public int GetDirectAP(PEInt chargeScale) => DirectAP;
+        public int GetDirectAP(PEInt chargeScale) => ExplosionAP;
         public int GetExplosionAP(PEInt chargeScale) => ExplosionAP;
         public int GetDemolishValue() => demolishValue;
         #region 接口映射(显式实现以保留字段的Unity序列化)

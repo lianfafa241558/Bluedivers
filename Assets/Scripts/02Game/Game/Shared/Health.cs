@@ -179,6 +179,7 @@ namespace Unity.FPS.Game {
                 // 整体伤害抗性减伤乘区（未配置的类型为 1，不缩放）
                 PEInt resistedValue = PEMath.Max(item.Value, 0) * (PEInt)GetResistance(item.Key);
                 var re= HandleDamage(item.Key, resistedValue, damageSource, _isAboTickDamage);
+                //Debug.LogError("伤害类型" + item.Key + "值" + item.Value + "剩余值" + resistedValue+"最终计数"+re,gameObject);
                 finaldamgage += re;
 #if UNITY_EDITOR
                 if (re.RawFloat>=0.5f)
@@ -201,7 +202,7 @@ namespace Unity.FPS.Game {
 
             }
 
-            //Debug.LogWarning("最终伤害" + finaldamgage + "血量" + CurrentHealth);
+            //Debug.LogWarning("最终伤害" + finaldamgage + "血量" + CurrentHealth,gameObject);
 
 
             PEInt healthBefore = CurrentHealth, shieldBefore = CurrentShield;

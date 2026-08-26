@@ -48,7 +48,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         //其实这里有个bug，如果连续放，就会变成同时落地，但是实际上拍空投有Cd，所以直接不管！
         data = AirdropController.WaitRelease;
         //同时,锁定的点总是会是实际的脚下而不是单位头顶
-        if (Physics.Raycast(point+Vector3.up*10,Vector3.down, out var hit,50, LayerDefinition.GroundLayers))
+        if (Physics.Raycast(point+Vector3.up*10,Vector3.down, out var hit,200, LayerDefinition.GroundLayers))
         {
             transform.position = point = hit.point;
         }

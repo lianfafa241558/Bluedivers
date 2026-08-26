@@ -37,7 +37,7 @@ public static class FpsHelper
     private static List<GameObject> bulletHoles;
 
     /// <summary>荆棘护甲反伤伤害组（真实伤害，无视抗性稳定为24点）</summary>
-    private static readonly List<SKVP<DamageTypeEnum, float>> ThornArmorDamageGroups = new() { new(DamageTypeEnum.Real, 1) };
+    private static readonly List<SKVP<DamageTypeEnum, float>> ThornArmorDamageGroups = new() { new(DamageTypeEnum.Gun, 1) };
 
     /// <summary>
     /// 全队强化"荆棘护甲"：近战攻击玩家阵营单位的攻击者会受到 24 点反伤
@@ -53,26 +53,23 @@ public static class FpsHelper
         if (!targetActor || (targetActor.Type != UnitTypeEnum.Player && targetActor.Type != UnitTypeEnum.Friend)) return;
         if (!attacker || !attacker.TryGetComponent(out Actor attackerActor)) return;
 
-        // 对攻击者造成 24 点反伤（取第一个有效肢体）
-        foreach (I_Damagable damageable in attackerActor.Damageables)
+        // 对攻击者造成 24 点反伤
+        I_Damagable damageable = attackerActor.MainDamageable;
+
+        if (damageable.Source.IsValid())
         {
-            if (damageable.Source.IsValid())
-            {
-                var thornPacket = new DamagePacket
-                {
-                    Source = damageable,
-                    Damage = (PEInt)24,
-                    DamageGroups = ThornArmorDamageGroups,
-                    WeaknessBonus = 0,
-                    AP = 0,
-                    NoSource = false,
-                    DamageSource = target.gameObject,
-                    Pos = point,
-                    DemolishValue = 0,
-                };
-                damageable.InflictDamage(thornPacket);
-                break;
-            }
+            var thornPacket = new DamagePacket {
+                Damage = 24,
+                DamageGroups = ThornArmorDamageGroups,
+                WeaknessBonus = 0,
+                AP = 10,
+                NoSource = false,
+                DamageSource = target.gameObject,
+                Pos = point,
+                DemolishValue = 0,
+                isDirect = true
+            };
+            damageable.InflictDamage(thornPacket);
         }
     }
 
@@ -138,7 +135,6 @@ public static class FpsHelper
             Debug.LogWarning("对" + comp.gameObject.name + "造成直击伤害" + damageData.GetDirectDamage(charg) * damageScale);
             var directPacket = new DamagePacket
             {
-                Source = comp,
                 Damage = damageData.GetDirectDamage(charg) * damageScale,
                 DamageGroups = damageData.DamageGroupDirect,
                 WeaknessBonus = damageData.GetWeaknessBonus(),
@@ -147,6 +143,7 @@ public static class FpsHelper
                 DamageSource = owner,
                 Pos = point,
                 DemolishValue = damageData.GetDemolishValue(),
+                isDirect = true,
             };
             comp.InflictDamage(directPacket);
         }
@@ -157,10 +154,10 @@ public static class FpsHelper
             var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new());
             if (hitData.IgnoreSelf) unitList.Remove(owner.GetComponent<I_Actor>());
             //Debug.LogError("目标数量"+unitList.Count);
-            for (int i = 0; i < unitList.Count; ++i)
-            {
-                Debug.LogWarning("目标"+ unitList[i].gameObject);
-            }
+            //for (int i = 0; i < unitList.Count; ++i)
+            //{
+                //Debug.LogWarning("目标"+ unitList[i].gameObject);
+            //}
             var list= unitList.Select(item => item.Damageables)
                 .SelectMany(item => item)
                 .ToList();
@@ -181,9 +178,9 @@ public static class FpsHelper
                 if (value > 0)
                 {
                     Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value , item.gameObject);
+                    
                     var explosionPacket = new DamagePacket
                     {
-                        Source = item,
                         Damage = value,
                         DamageGroups = damageData.DamageGroupExplosion,
                         WeaknessBonus = damageData.GetWeaknessBonus(),
@@ -192,6 +189,7 @@ public static class FpsHelper
                         DamageSource = owner,
                         Pos = point,
                         DemolishValue = damageData.GetDemolishValue(),
+                        isDirect = false,
                     };
                     item.InflictDamage(explosionPacket);
                 }

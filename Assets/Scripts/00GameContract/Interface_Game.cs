@@ -13,8 +13,6 @@ namespace GameContract
     /// </summary>
     public struct DamagePacket
     {
-        /// <summary>被击肢体</summary>
-        public I_Damagable Source;
         /// <summary>基础伤害</summary>
         public PEInt Damage;
         /// <summary>伤害成分（类型+系数）</summary>
@@ -31,6 +29,9 @@ namespace GameContract
         public Vector3 Pos;
         /// <summary>拆毁值（大于目标 Health 拆毁值则秒杀）</summary>
         public int DemolishValue;
+        /// <summary>是否直击</summary>
+        public bool isDirect;
+
     }
 
     public interface IVfxEffect
@@ -148,6 +149,8 @@ namespace GameContract
         public Vector3 HpPos { get; }
 
         public List<UnitQueryGridNode> GridNodes { get; }
+
+        public I_Damagable MainDamageable { get; }
         public I_Damagable[] Damageables { get; }
 
         /// <summary>是否为地图单位只对EnemyMoble有效</summary>

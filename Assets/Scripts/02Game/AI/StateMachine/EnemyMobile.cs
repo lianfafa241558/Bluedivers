@@ -45,8 +45,10 @@ namespace FPSGame.AI
             Return,
         }
 
+        [SerializeField]
+        EnemyMobile.AIState showState;
 
-        [InspectorName("停止移动时攻击范围的系数")]
+       [InspectorName("停止移动时攻击范围的系数")]
         [Tooltip("攻击范围指侦测模块的攻击范围")]
         [Range(0f, 1f)]
         public float AttackStopDistanceRatio = 0.5f;
@@ -489,6 +491,8 @@ namespace FPSGame.AI
 
             // 死亡后不再执行任何行为
             if (AiState == AIState.Death) return;
+
+            showState = AiState;
 
             // 弱点受击僵直超时清除
             if (_hitStunActive && Time.time >= _hitStunEndTime)

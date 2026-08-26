@@ -169,7 +169,6 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 0.3
-  damageables: []
 --- !u!135 &7100214043958108873
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -220,9 +219,8 @@ MonoBehaviour:
       Value: 1
     SoundRadius: 60
     NoSource: 0
-    DirectAP: 0
-    ExplosionAP: 0
-    demolishValue: 20
+    ExplosionAP: 2
+    demolishValue: 0
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: db88a36f795988344bf2dd4e9120fdbb,

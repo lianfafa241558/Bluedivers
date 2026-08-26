@@ -236,7 +236,7 @@ namespace Unity.FPS.Game
 
             PEInt damage = packet.Damage;
             GameObject damageSource = packet.DamageSource;
-            I_Damagable source = packet.Source;
+            //I_Damagable source = packet.Source;
 
             Actor SourceActor=null;
             if (damageSource)
@@ -247,7 +247,7 @@ namespace Unity.FPS.Game
             // 友军减伤
             if (Actor && SourceActor && Actor.Team == SourceActor.Team)
             {
-                //Debug.LogWarning("友军减伤"+ damage+" "+ damage * SensibilityToSelfdamage);
+                
                 damage *= (PEInt)SensibilityToSelfdamage;
             }
             // 全队强化"友情护盾"：友军伤害再降低 50%（总友伤 25%，仅玩家队伍生效）
@@ -266,31 +266,35 @@ namespace Unity.FPS.Game
             {
                 damage *= (1+ packet.WeaknessBonus);
             }
+            //Debug.LogWarning("友军减伤" + damage,gameObject);
 
-            // 穿甲等级 vs 护甲等级结算（绝地潜兵2式穿透+递减减伤），用被击肢体(source)自身的护甲等级
-            int hitArmorLevel = source != null ? source.ArmorLevel : armorLevel;
-            float hitExplosionResistance = source != null ? source.ExplosionResistance : explosionResistance;
-            float armorFactor = packet.AP >= hitArmorLevel
-                ? 1f
-                : Mathf.Max(ArmorMinFactor, 1f - (hitArmorLevel - packet.AP) * ArmorPenaltyPerLevel);
+
+            //爆炸抗性
+            PEInt hitExplosionResistance = packet.isDirect ? 1 : (1 - (PEInt)explosionResistance);
+            //Debug.LogWarning("爆炸抗性" + hitExplosionResistance, gameObject);
+
+            //穿甲等级
+            PEInt armorFactor = PEMath.Clamp(1 - (armorLevel - packet.AP) * (PEInt)ArmorPenaltyPerLevel, new(0.1f), 1);
+            //Debug.LogWarning("穿甲系数" + armorFactor+"护甲等级"+armorLevel+"穿甲等级"+packet.AP, gameObject);
+            damage *= hitExplosionResistance* armorFactor;
+
+            //Debug.LogWarning("AP减伤" + damage, gameObject);
 
             List<SKVP<DamageTypeEnum, PEInt>> finalDamageGroups = new();
             if (packet.DamageGroups.Count == 0) {
                 // 无成分时按动能(Gun)结算
-                finalDamageGroups.Add(new(DamageTypeEnum.Gun, (damage * (PEInt)armorFactor)));
+                finalDamageGroups.Add(new(DamageTypeEnum.Gun, (damage)));
             }
             else {
                 foreach (var item in packet.DamageGroups) {
-                    //基础伤害*伤害系数*穿甲减伤因子
-                    PEInt value = (damage * (PEInt)item.Value * (PEInt)armorFactor);
-                    // 爆炸成分额外乘 (1 - 爆炸抗性)，用被击肢体自身的爆炸抗性
-                    if (item.Key == DamageTypeEnum.Explosion && hitExplosionResistance > 0f)
-                    {
-                        value *= (PEInt)(1f - hitExplosionResistance);
-                    }
-                    finalDamageGroups.Add(new(item.Key, value));
+                    PEInt value = (damage * (PEInt)item.Value);
+
                     if (item.Key == DamageTypeEnum.Destruction) {
                         ArmorDestruction(value, damageSource);
+                    }
+                    else
+                    {
+                        finalDamageGroups.Add(new(item.Key, value));
                     }
                 }
             }

@@ -123,9 +123,9 @@ namespace Unity.FPS.Gameplay
                 sfxRange = DamageData.SoundRadius,
                 weapon = null,//纯自部署，无武器来源
                 useDiffScale = false,
-                IgnoreSelf = true,
+                IgnoreSelf = false,
             });
-            Debug.LogWarning("回收"+gameObject,gameObject);
+            //Debug.LogWarning("回收"+gameObject,gameObject);
             // 地雷爆炸后自毁
             VFXManager.Release(gameObject);
         }

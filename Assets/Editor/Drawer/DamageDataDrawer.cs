@@ -544,9 +544,10 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
         var explosionProp = property.FindPropertyRelative("DamageExplosion");
 
         EditorGUI.indentLevel++;
-        y = DrawProperty(property, "DamageExplosion", "爆炸伤害值", position, y);
-        y = DrawProperty(property, "demolishValue", "拆毁值", position, y);
 
+        y = DrawProperty(property, "demolishValue", "拆毁值", position, y);
+        y = DrawProperty(property, "ExplosionAP", "穿甲等级", position, y);
+        y = DrawProperty(property, "DamageExplosion", "爆炸伤害值", position, y);
 
 
         if (explosionProp.floatValue > 0)
@@ -578,6 +579,7 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
             h += LineHeight + 2; // ExplosionInnerRange + ExplosionRange (paired)
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("DestructeRadius")) + 2;
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ShockwaveRadius")) + 2;
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ExplosionAP")) + 2;
             h += GetSinglelineListHeight(property, "DamageGroupExplosion");
         }
 

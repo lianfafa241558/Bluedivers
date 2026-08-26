@@ -298,6 +298,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -5438,6 +5439,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -6875,23 +6877,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 4
-    Value: 0.5
-  - Key: 5
-    Value: 0.5
-  - Key: 6
-    Value: 0.5
-  - Key: 7
-    Value: 0.5
-  - Key: 10
-    Value: 0.5
-  - Key: 8
-    Value: 1
-  - Key: 11
-    Value: -1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -7086,29 +7071,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0.5
+  explosionResistance: 0
   armorLevel: 2
-  showArmorLists:
-  - Key: 4
-    Value: 0.5
-  - Key: 5
-    Value: 0.5
-  - Key: 6
-    Value: 0.5
-  - Key: 7
-    Value: 0.5
-  - Key: 10
-    Value: 0.5
-  - Key: 8
-    Value: 1
-  - Key: 9
-    Value: 1
-  - Key: 11
-    Value: -1
-  - Key: 1
-    Value: 0.5
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor:
   - {fileID: 323293385}
@@ -7185,23 +7149,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 4
-    Value: 0.5
-  - Key: 5
-    Value: 0.5
-  - Key: 6
-    Value: 0.5
-  - Key: 7
-    Value: 0.5
-  - Key: 10
-    Value: 0.5
-  - Key: 8
-    Value: 1
-  - Key: 11
-    Value: -1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -7392,23 +7339,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 4
-    Value: 0.5
-  - Key: 5
-    Value: 0.5
-  - Key: 6
-    Value: 0.5
-  - Key: 7
-    Value: 0.5
-  - Key: 10
-    Value: 0.5
-  - Key: 8
-    Value: 1
-  - Key: 11
-    Value: -1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 150
   LineArmor:
   - {fileID: 1182494268}
@@ -7756,23 +7686,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 4
-    Value: 0.5
-  - Key: 5
-    Value: 0.5
-  - Key: 6
-    Value: 0.5
-  - Key: 7
-    Value: 0.5
-  - Key: 10
-    Value: 0.5
-  - Key: 8
-    Value: 1
-  - Key: 11
-    Value: -1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 150
   LineArmor:
   - {fileID: 1251346717}
@@ -8071,7 +7984,6 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 1.5
-  damageables: []
 --- !u!95 &6599254993500643241
 Animator:
   serializedVersion: 5
@@ -8199,6 +8111,7 @@ MonoBehaviour:
   - Key: 11
     Value: -1
   MainPart: {fileID: 1345760138}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -8267,6 +8180,7 @@ MonoBehaviour:
     NoSource: 1
     DirectAP: 0
     ExplosionAP: 0
+    demolishValue: 0
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: f4897c6a885fec74185b34e9259784f1,
