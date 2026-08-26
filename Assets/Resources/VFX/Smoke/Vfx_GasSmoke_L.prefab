@@ -4950,7 +4950,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b72e5c4e2526a5e4cb512fc1d8fc9397, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Collider: {fileID: 1941537816041714526}
+  DamageAnchor: {fileID: 1322925389548500674}
   TickInterval: 0.5
   UseDiffScale: 0
   DamageData:
@@ -4966,6 +4966,9 @@ MonoBehaviour:
       Value: 1
     SoundRadius: 95
     NoSource: 1
+    DirectAP: 0
+    ExplosionAP: 0
+    demolishValue: 0
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 0}

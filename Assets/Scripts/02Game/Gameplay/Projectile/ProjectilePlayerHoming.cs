@@ -1,3 +1,4 @@
+using GameContract;
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
@@ -19,9 +20,6 @@ namespace Unity.FPS.Gameplay
         [InspectorName("开始追踪延迟")]
         public float TrackDelay = 0f;
 
-        [Tooltip("从屏幕中心发射射线所用的碰撞层级")]
-        [InspectorName("射线层级")]
-        public LayerMask RayLayers = Physics.DefaultRaycastLayers;
 
         /// <summary>玩家镜头相机（持续采样目标点用）</summary>
         Camera m_Camera;
@@ -50,7 +48,7 @@ namespace Unity.FPS.Gameplay
                 // 从屏幕中心(视口0.5,0.5)发射射线采样目标点
                 Ray ray = m_Camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
                 float rayDistance = MaxRange > 0 ? MaxRange : 500f;
-                if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, RayLayers, QueryTriggerInteraction.Collide))
+                if (Physics.Raycast(ray, out RaycastHit hit, rayDistance,FpsHelper.GetHittableLayers(m_Velocity.magnitude), QueryTriggerInteraction.Collide))
                 {
                     m_TargetPoint = hit.point;
                 }

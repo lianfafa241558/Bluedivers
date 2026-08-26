@@ -20,16 +20,11 @@ namespace Unity.FPS.Gameplay
         protected override void Update()
         {
             if (TrajectoryCorrectionTime>=0) {
-                Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
-                if (Physics.Raycast(ray, out RaycastHit hit, 300, FpsHelper.GetHittableLayers(999)))
-                {
-                    var dir = (hit.point - transform.position).normalized;
-                    var dis = Vector3.Distance(hit.point, transform.position);
-                    transform.forward = Vector3.Slerp(transform.forward, dir, dis / TrajectoryCorrectionTime);
-                }
+                var pos=FpsHelper.PlayerCameraLookPoint;
+                var dir = (pos - transform.position).normalized;
+                var dis = Vector3.Distance(pos, transform.position);
+                transform.forward = Vector3.Slerp(transform.forward, dir, dis / TrajectoryCorrectionTime);
             }
-
-
             base.Update();
         }
 

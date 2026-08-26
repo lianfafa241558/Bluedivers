@@ -333,6 +333,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
@@ -537,11 +538,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 5
-    Value: 1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 1000
   LineArmor: []
   armorBreakEffect: []
@@ -1486,6 +1482,11 @@ PrefabInstance:
       propertyPath: UseHpBar
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8278004289893178877, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: rangeLength
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       propertyPath: MaxHealth
@@ -1855,13 +1856,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.9
   armorLevel: 4
-  showArmorLists:
-  - Key: 0
-    Value: 0.9
-  - Key: 1
-    Value: 0.9
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 500
   LineArmor: []
   armorBreakEffect:

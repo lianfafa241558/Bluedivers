@@ -18,9 +18,9 @@ namespace FPSGame.Gameplay
 
 
         [Header("通用")]
-        [InspectorName("根部变换")]
+        [InspectorName("伤害中心锚点")]
         [SerializeField]
-        protected Collider Collider;
+        protected Transform DamageAnchor;
         [InspectorName("伤害间隔(秒)")]
         [SerializeField]
         private float TickInterval = 0.5f;
@@ -66,7 +66,7 @@ namespace FPSGame.Gameplay
         {
             FpsHelper.Hit(new ProjectileHitData
             {
-                pos = Collider.bounds.center,
+                pos = DamageAnchor ? DamageAnchor.position : transform.position,
                 normal = Vector3.up,
                 collider = null,//不产生直击伤害，仅范围伤害
                 data = DamageData,
@@ -81,16 +81,16 @@ namespace FPSGame.Gameplay
 
         protected virtual void OnDrawGizmos()
         {
-            if (!Collider) return;
+            if (!DamageAnchor) return;
             Gizmos.color = Color.yellow;
             if (DamageData.IsValid())
             {
-                Gizmos.DrawWireSphere(Collider.bounds.center, DamageData.GetDamageOuterRadius(1).RawFloat);
+                Gizmos.DrawWireSphere(DamageAnchor.position, DamageData.GetDamageOuterRadius(1).RawFloat);
             }
             Gizmos.color = Color.red;
             if (DamageData.IsValid())
             {
-                Gizmos.DrawWireSphere(Collider.bounds.center, DamageData.GetDamageInnerRadius(1).RawFloat);
+                Gizmos.DrawWireSphere(DamageAnchor.position, DamageData.GetDamageInnerRadius(1).RawFloat);
             }
         }
 

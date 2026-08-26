@@ -53,7 +53,7 @@ namespace FPSGame.Gameplay
         void Activate()
         {
             // 假设地面火焰为静止对象，激活时缓存中心即可。
-            _cachedCenter = Collider ? Collider.bounds.center : transform.position;
+            _cachedCenter = DamageAnchor ? DamageAnchor.position : transform.position;
 
             int cx = Mathf.FloorToInt(_cachedCenter.x * InverseCellSize);
             int cy = Mathf.FloorToInt(_cachedCenter.z * InverseCellSize);

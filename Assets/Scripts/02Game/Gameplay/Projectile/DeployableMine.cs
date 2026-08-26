@@ -9,16 +9,14 @@ using Utils;
 namespace Unity.FPS.Gameplay
 {
     /// <summary>
-    /// 地雷（自部署专用，替代 ProjectileMine）
-    /// 纯 MonoBehaviour 自部署单位：不继承 ProjectileBase、不依赖武器体系，
-    /// 由外部脚本 Instantiate 后调用 <see cref="Deploy(Vector3, GameObject)"/> 部署。
-    /// 复用预制体上的 Actor/Health/LimitedLife 组件：
+    /// 地雷
+    /// 由外部脚本 Instantiate 后调用 <see cref=" SetOwner(GameObject, GameObject, Collider, Vector3)"/> 部署。
     /// - Actor 提供队伍(Team)，用于智能触发判定敌我
     /// - Health 提供被破坏时引爆(OnDie)以及触发引爆(Kill)
     /// - LimitedLife 提供超时回收
     /// </summary>
     [AddComponentMenu("单位/地雷", 30)]
-    public class DeployableMine : MonoBehaviour
+    public class DeployableMine : MonoBehaviour,IVfxEffect
     {
         [Header("通用")]
         [InspectorName("根部变换")]
@@ -75,18 +73,6 @@ namespace Unity.FPS.Gameplay
             TryHit();
         }
 
-        /// <summary>
-        /// 部署地雷：由外部脚本调用，实例化后激活即生效。
-        /// </summary>
-        /// <param name="pos">部署位置</param>
-        /// <param name="owner">伤害来源（可为 null，走无源伤害）</param>
-        public void Deploy(Vector3 pos, GameObject owner = null)
-        {
-            transform.position = pos;
-            Owner = owner;
-            m_DeployTime = Time.time;
-            m_Exploded = false;
-        }
 
         void TryHit()
         {
@@ -96,6 +82,8 @@ namespace Unity.FPS.Gameplay
 
             // 通过空间网格查询触发范围内的单位（返回 I_Actor，可直接获得队伍信息做智能判定）
             // 注意：TargetCfg.Enemy 只匹配 UnitTypeEnum.Enemy，查不到玩家(Player)，必须用匹配所有类型的目标配置
+            // 注意：空间网格内部已用 range.Overlaps(unit.Range) 按"地雷触发范围 与 单位占位范围相交"筛选，
+            // 不能再按单位中心点距离判断，否则地雷黏在巨型敌人身上时中心点离黏附表面过远会导致不炸
             var units = BattleManager.Instance.FindUnits(
                 new PECircle((PEVector2)Root.position, (PEInt)TriggerRange),
                 TargetCfg.EnemyAI,
@@ -104,13 +92,10 @@ namespace Unity.FPS.Gameplay
 
             foreach (var actor in units)
             {
-                if (Vector3.Distance(actor.Pos, Root.position) < TriggerRange)
-                {
-                    // 通过 Health 自杀引爆，与 ProjectileMine 行为一致，避免重复爆炸造成两次伤害
-                    if (m_health) m_health.Kill();
-                    else Explosion(actor.gameObject);
-                    break;
-                }
+                // 通过 Health 自杀引爆，与 ProjectileMine 行为一致，避免重复爆炸造成两次伤害
+                if (m_health) m_health.Kill();
+                else Explosion(null);
+                break;
             }
         }
 
@@ -121,7 +106,7 @@ namespace Unity.FPS.Gameplay
             Tool.Destroy(gameObject);
         }
 
-        void Explosion(GameObject source)
+        void Explosion(GameObject _)
         {
             if (m_Exploded) return;
             m_Exploded = true;
@@ -140,7 +125,7 @@ namespace Unity.FPS.Gameplay
                 useDiffScale = false,
                 IgnoreSelf = true,
             });
-
+            Debug.LogWarning("回收"+gameObject,gameObject);
             // 地雷爆炸后自毁
             VFXManager.Release(gameObject);
         }
@@ -153,5 +138,15 @@ namespace Unity.FPS.Gameplay
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(Root.position, TriggerRange);
         }
+
+        public void SetOwner(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point)
+        {
+            transform.position = point;
+            Owner = owner;
+            m_DeployTime = Time.time;
+            m_Exploded = false;
+        }
+
+
     }
 }

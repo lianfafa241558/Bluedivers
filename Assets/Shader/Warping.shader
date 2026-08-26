@@ -2,10 +2,10 @@ Shader "LX/Warping"
 {
 	Properties{
 
-		_NormalTex("NormalTex", 2D) = "white" {}//xÊÇr£¬yÊÇg
-		_StrengthTex("StrengthTex", 2D) = "white" {}//Î»ÒÆµÄÇ¿¶ÈÄ¬ÈÏ¾ÍÊÇÈ«1
-		_HeatTime("Heat Time", range(0,1)) = 0.1//Æ«ÒÆ²¨¶¯µÄÊ±¼ä
-		_HeatForce("Heat Force", range(0,0.1)) = 0.008//Æ«ÒÆµÄ·¶Î§
+		_NormalTex("NormalTex", 2D) = "white" {}//xæ˜¯rï¼Œyæ˜¯g
+		_StrengthTex("StrengthTex", 2D) = "white" {}//ä½ç§»çš„å¼ºåº¦é»˜è®¤å°±æ˜¯å…¨1
+		_HeatTime("Heat Time", range(0,1)) = 0.1//åç§»æ³¢åŠ¨çš„æ—¶é—´
+		_HeatForce("Heat Force", range(0,0.1)) = 0.008//åç§»çš„èŒƒå›´
 		
 	}
 
@@ -37,6 +37,7 @@ Shader "LX/Warping"
 						float4 vertex : POSITION;
 						float4 uvgrab : TEXCOORD0;
 						float2 uvmain : TEXCOORD1;
+                        float4 color : COLOR;
 					};
 
 					float _HeatForce;
@@ -53,6 +54,7 @@ Shader "LX/Warping"
 					o.vertex = vertexInput.positionCS;
 					o.uvgrab = float4(0, 0, 0, 0);
 					o.uvmain = TRANSFORM_TEX(v.texcoord, _NormalTex);
+                    o.color=v.color;
 					return o;
 				}
 
@@ -66,10 +68,10 @@ Shader "LX/Warping"
 						half distortX = ((offsetColor1.r + offsetColor2.r) - 1) * _HeatForce * strengthTex.r;
 						half distorty = ((offsetColor1.g + offsetColor2.g) - 1) * _HeatForce * strengthTex.r;
 
-						half2 screenUV = (i.vertex.xy / _ScreenParams.xy) + float2(distortX, distorty);
+						half2 screenUV = (i.vertex.xy / _ScreenParams.xy) + float2(distortX, distorty)*i.color.a;
 
 						half4 col = tex2D(_CameraOpaqueTexture, screenUV);
-						col.a = 1.0f;
+						col.a = 1;
 
 						return col;
 					}

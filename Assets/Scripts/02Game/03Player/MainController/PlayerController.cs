@@ -307,6 +307,9 @@ public partial class PlayerController : BaseSelfMoveableController
 
     protected override void LateUpdate()
     {
+        LookPointHandle();
+
+
         // 刚切换到第三人称时，瞬间跳转到第三人称相机位置
         if (IsThirdPerson && !_wasThirdPersonLastFrame && !IsDead && PlayerCamera && _thirdPersonCameraPoint)
         {
@@ -373,6 +376,7 @@ public partial class PlayerController : BaseSelfMoveableController
             WeaponsManager.FirstPersonSocket.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0, 0);
         }
         _wasThirdPersonLastFrame = IsThirdPerson;
+
     }
 
     protected override void TryJump()

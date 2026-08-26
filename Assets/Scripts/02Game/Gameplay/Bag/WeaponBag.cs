@@ -19,9 +19,6 @@ public class WeaponBag : BagBase
     [InspectorName("武器(WeaponEnemyController)")]
     public WeaponEnemyController weapon;
 
-    [InspectorName("激活时的物体")]
-    public GameObject activeGo;
-
     #endregion
 
     private bool m_FirePressed;
@@ -87,8 +84,7 @@ public class WeaponBag : BagBase
     public override void OnInstall(I_Actor actor, Func<IEnumerable<IEquippable>> getEquippableList)
     {
         base.OnInstall(actor, getEquippableList);
-        if (activeGo) activeGo.SetActive(true);
-
+   
         if (weapon)
         {
             weapon.Owner = Owner.gameObject;
@@ -101,7 +97,7 @@ public class WeaponBag : BagBase
     public override void OnUninstall()
     {
         if (weapon) weapon.ShowWeapon(false);
-        if (activeGo) activeGo.SetActive(false);
+
         base.OnUninstall();//内部会 OnStateChange?.Invoke(false)
     }
 }

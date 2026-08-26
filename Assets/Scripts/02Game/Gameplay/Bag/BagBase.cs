@@ -45,6 +45,15 @@ namespace FPSGame.Gameplay
 
         [SerializeField]
         private float currentFillRatio = 1;
+
+        [InspectorName("装备时")]
+        [SerializeField]
+        protected UnityEvent OnInstallEvent;
+
+        [InspectorName("卸下时")]
+        [SerializeField]
+        protected UnityEvent OnUninstallEvent;
+
         /// <summary>剩余燃料(0-1)</summary>
         public float CurrentFillRatio
         {
@@ -70,6 +79,7 @@ namespace FPSGame.Gameplay
             transform.localEulerAngles = Vector3.zero;
             transform.localPosition = Vector3.zero;
             //CurrentFillRatio = 1f;
+            OnInstallEvent?.Invoke();
         }
 
         public virtual void OnUninstall()
@@ -79,6 +89,7 @@ namespace FPSGame.Gameplay
             m_InputHandler = null;
             transform.parent = null;
             OnStateChange?.Invoke(false);
+            OnUninstallEvent?.Invoke();
         }
         protected virtual void OnDestroy()
         {

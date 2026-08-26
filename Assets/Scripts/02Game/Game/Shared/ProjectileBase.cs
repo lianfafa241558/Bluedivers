@@ -63,11 +63,10 @@ namespace Unity.FPS.Game
             Charge = controller.WeaponChargeScale_D;
             SFXRange = controller.SFXRange;
             MaxRange = controller.CurrentWeaponRange;
-            MinRange = DamageData.MinRange;
+            MinRange = Mathf.Max(DamageData.MinRange,0);
             Gravity = controller.CurrentGravity;
             BulletFlag = controller.BulletFlag;
             IgnoredColliders = controller.IgnoredColliders;
-
             OnHit += FpsHelper.Hit;
             OnShoot?.Invoke();
         }
@@ -82,6 +81,7 @@ namespace Unity.FPS.Game
             OnShoot = null;
             OnHit = null;
         }
+
     }
 
     public struct ProjectileHitData {

@@ -22,6 +22,18 @@ public static class FpsHelper
     }
 
 
+    public static Vector3 PlayerCameraLookPoint { get;private set; }
+
+    public static PEVector3 PlayerCameraLookLogicPoint { get; private set; }
+
+    public static void SetPlayerCameraLookPoint(Vector3 pos)
+    {
+        PlayerCameraLookPoint = pos;
+        PlayerCameraLookLogicPoint = new(pos);
+    }
+
+
+
     private static List<GameObject> bulletHoles;
 
     /// <summary>荆棘护甲反伤伤害组（真实伤害，无视抗性稳定为24点）</summary>
