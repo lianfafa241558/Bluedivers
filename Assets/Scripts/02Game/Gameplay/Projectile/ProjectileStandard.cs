@@ -128,7 +128,10 @@ namespace Unity.FPS.Gameplay
                 Move();
             }
 
-            if (dis>MinRange) { TryHit(); }
+            // 首帧 dis 在 Move 前计算为 0，若用严格 > 会跳过发射点到第一帧末的整段路径，
+            // 导致高速子弹(单帧>1m)第一帧就钻入地形，之后 SphereCast 起点在碰撞体内部永不命中。
+            // 用 >= 保证发射瞬间即参与检测(m_LastRootPosition=发射点，扫掠段覆盖首段)。
+            if (dis >= MinRange) { TryHit(); }
             m_lastTime = Time.time;
             m_LastRootPosition = Root.position;
         }

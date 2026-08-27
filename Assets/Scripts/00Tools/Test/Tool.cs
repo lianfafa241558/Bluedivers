@@ -1005,7 +1005,10 @@ namespace Utils
             drawLabelUtils.DrawLabel(pos, Color.white, text, time);
 #endif
         }
-
+        public static void DrawWireSphere(Vector3 pos, float size, Color color, float time)
+        {
+            DrawShape(ShapeType.Circle, pos, Vector3.one * size, time, color);
+        }
         public static void DrawShape(ShapeType shape, Vector3 pos, Vector3 size, float time, Color color)
         {
 #if UNITY_EDITOR

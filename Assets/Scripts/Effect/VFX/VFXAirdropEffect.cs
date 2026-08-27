@@ -50,6 +50,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         //同时,锁定的点总是会是实际的脚下而不是单位头顶
         if (Physics.Raycast(point+Vector3.up*10,Vector3.down, out var hit,200, LayerDefinition.GroundLayers))
         {
+            Debug.LogError("point"+point+"击中点"+hit.point);
             transform.position = point = hit.point;
         }
         BattleEventSub.Airdrop(owner, gameObject, point, data);

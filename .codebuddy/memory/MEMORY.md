@@ -30,6 +30,7 @@
 - 枚举后缀不统一（`GameStateEnum` vs `ActorState`）
 - 协程命名以动词开头（`InitGameState`/`WaitSetPos`），不用 `Coroutine` 后缀
 - 几乎不用 async/await，异步全用协程
+- **Unity `Debug` 类没有 `DrawWireSphere`**：运行时调试画线框球必须用 `Tool.DrawWireSphere(pos, size, color, time)`（`00Tools/Test/Tool.cs`，内部走 Editor 的 `DrawLabelUtils`）。`Debug` 只有 `DrawLine`/`DrawRay`。误用 `Debug.DrawWireSphere` 编译失败。
 
 ## 已知问题
 - ~~运行时脚本误引 UnityEditor~~：已于 2026-08-07 修复（`EnemyMobile.cs`、`RoleData_SO.cs`、`SoundGroup_SO.cs`、`TaskManager.cs` 添加 `#if UNITY_EDITOR` 守卫）

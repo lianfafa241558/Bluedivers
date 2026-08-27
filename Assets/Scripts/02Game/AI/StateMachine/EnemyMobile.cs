@@ -1,13 +1,9 @@
-using System;
+
 using System.Collections.Generic;
 using System.Linq;
-using Core;
 using GameContract;
 
 using Unity.FPS.Game;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using UnityEngine;
 namespace FPSGame.AI
 {
@@ -29,6 +25,9 @@ namespace FPSGame.AI
         private bool _hitStunActive;
         /// <summary>弱点受击僵直结束时间</summary>
         private float _hitStunEndTime;
+
+        /// <summary>环绕角（首次进入战斗时随机生成，单位先前往玩家周围该角度的环绕点，到达后才直接锁玩家）</summary>
+        private float _encircleAngle;
 
         protected Vector3 TargetPosition => m_EnemyController.Target.Pos;
 
@@ -54,6 +53,10 @@ namespace FPSGame.AI
         public float AttackStopDistanceRatio = 0.5f;
         [InspectorName("保持在攻击距离范围上的距离")]//目标靠近就跑，远离就追
         public bool MaintainMaxDis = false;
+
+        [InspectorName("环绕距离(米)")]
+        [Tooltip("发现目标后先前往玩家周围该距离的随机角度点，接近到该距离内后才直接锁定玩家位置，避免所有单位直线挤向玩家")]
+        public float EncircleDistance = 8f;
 
         [InspectorName("巡逻速度")]
         public float PatrolSpeed = 2;
@@ -292,7 +295,7 @@ namespace FPSGame.AI
             m_EnemyController.SetNavDestination(m_OriginPos);
         }
 
-        /// <summary>Follow：追敌并保持攻击距离，同时瞄准目标</summary>
+        /// <summary>Follow：先前往玩家周围随机角度的环绕点，接近后直接锁玩家位置</summary>
         private void FollowBehavior()
         {
             // 水平距离(寻路是地面导航，忽略高度差)减去目标半径：避免大型单位因身高把距离"抬高"，导致一直往目标脚下冲
@@ -301,8 +304,17 @@ namespace FPSGame.AI
             toTargetFollow.y = 0f;
             float followDis = toTargetFollow.magnitude - targetHalfFollow;
             float followStopRange = AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange;
-            if (followDis >= followStopRange + 1)
+
+            if (followDis > EncircleDistance && toTargetFollow.sqrMagnitude > 0.01f)
             {
+                // 阶段1：先前往玩家周围该随机角度的环绕点，从不同方向接近，避免同向单位挤成直线
+                Vector3 dir = toTargetFollow.normalized;
+                Vector3 encirclePoint = TargetPosition + Quaternion.Euler(0f, _encircleAngle, 0f) * (-dir) * EncircleDistance;
+                m_EnemyController.SetNavDestination(encirclePoint);
+            }
+            else if (followDis >= followStopRange + 1)
+            {
+                // 阶段2：已进入环绕距离，直接锁玩家位置
                 m_EnemyController.SetNavDestination(TargetPosition);
             }
             else if (followDis < followStopRange - 1 && MaintainMaxDis)
@@ -551,6 +563,8 @@ namespace FPSGame.AI
                 SwitchState(AIState.Follow);
                 // 首次从非战斗状态进入战斗才重置开火延迟计时
                 m_TimeStartedDetection = Time.time;
+                // 生成一次随机环绕角：先前往玩家周围该角度的环绕点，接近后才直接锁玩家
+                _encircleAngle = Random.Range(0f, 360f);
             }
             // 战斗状态(Follow/Attack)下反复 OnDetect(目标短暂失去视野后重新看见、受击转火等)
             // 不再重置 m_TimeStartedDetection：

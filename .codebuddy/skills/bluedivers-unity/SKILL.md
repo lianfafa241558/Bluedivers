@@ -146,6 +146,7 @@ Inspector 字段暴露示例：
 - **接口命名不统一**：历史代码中少量接口使用标准 `I_` 前缀，新接口必须使用 `I` 前缀。
 - **字段暴露方式不统一**：存量 `public` 字段较多，新代码优先 `[SerializeField] private`，存量逐步迁移。
 - **枚举后缀不统一**：部分枚举带 `Enum` 后缀（`GameStateEnum`），新代码加后缀。
+- **Unity `Debug` 类没有 `DrawWireSphere`**：运行时调试画线框球**必须用** `Tool.DrawWireSphere(pos, size, color, time)`（`00Tools/Test/Tool.cs`，内部走 Editor 的 `DrawLabelUtils`，已用 `#if UNITY_EDITOR` 保护）。`Debug` 只有 `DrawLine`/`DrawRay`。误用 `Debug.DrawWireSphere` 会导致编译失败。
 
 ## 关键基础设施
 
