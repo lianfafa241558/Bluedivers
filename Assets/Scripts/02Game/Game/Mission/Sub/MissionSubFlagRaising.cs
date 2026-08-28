@@ -29,7 +29,7 @@ namespace FpsGame.Mission
             adID = data.cfg.RequiredAD[0].ID;
         }
 
-
+        private bool waveTriggered;
 
         public override bool Tick()
         {
@@ -57,7 +57,7 @@ namespace FpsGame.Mission
             if (nowTime < 0) return true;
             if (nowTime >= 100)
             {
-                int enemyCount = BattleManager.Instance.FindUnits(new PECircle(entity.LogicPos, (int)defenseRange-5),TargetCfg.Enemy).Count;
+                int enemyCount = BattleManager.Instance.FindUnits(new PECircle(entity.LogicPos, (int)defenseRange),TargetCfg.Enemy).Count;
                 if (count>0)
                 {
                     UpdateTip("肃清区域敌人  [剩余" + count + "]");
@@ -68,9 +68,14 @@ namespace FpsGame.Mission
                 }
                 return true;
             }
-            if (nowTime==5|| nowTime==65)
+            if (nowTime%60>5&& !waveTriggered)
             {
                 BattleManager.Instance.CreatWave(WaveCreateParams.Extra.Set(pos));
+                waveTriggered=true;
+            }
+            if (nowTime % 60 < 5 && waveTriggered)
+            {
+                waveTriggered = false;
             }
             
 
@@ -103,7 +108,7 @@ namespace FpsGame.Mission
 
         private int AreaHavePlayer()
         {
-            return ActorsManager.Players.Count(item => Vector3.Distance(item.Pos, entity.Pos) < defenseRange);
+            return ActorsManager.Players.Count(item =>item.ActorState != Core.ActorState.Dead && Vector3.Distance(item.Pos, entity.Pos) < defenseRange);
         }
 
 

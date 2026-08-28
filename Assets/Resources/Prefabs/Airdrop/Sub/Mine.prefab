@@ -204,14 +204,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Root: {fileID: 3683346346603110213}
   DeployDelay: 2
-  TriggerRange: 1.5
+  TriggerRange: 1
   intelligent: 0
   DamageData:
     DamageExplosion: 20
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 0
-    ShockwaveRadius: 3
+    ShockwaveRadius: 2
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -220,7 +220,7 @@ MonoBehaviour:
     SoundRadius: 60
     NoSource: 0
     ExplosionAP: 2
-    demolishValue: 0
+    demolishValue: 20
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: db88a36f795988344bf2dd4e9120fdbb,
@@ -5075,17 +5075,17 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.56
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2eb0229e5d55d8d4d9e2d70c65eead52,
         type: 3}

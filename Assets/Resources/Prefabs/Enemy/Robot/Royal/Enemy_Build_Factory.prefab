@@ -276,6 +276,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &2332792523109339259
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -304,7 +305,6 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 1
-  damageables: []
 --- !u!195 &8822482883838708908
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -351,7 +351,6 @@ MonoBehaviour:
   damagedTime: 20
   lastDamagedTime: -Infinity
   creatTime: 10
-  AiState: 0
 --- !u!114 &7250842007383053312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -402,7 +401,6 @@ MonoBehaviour:
       Value: 1
     SoundRadius: 20
     NoSource: 1
-    DirectAP: 0
     ExplosionAP: 0
     demolishValue: 0
     UseCollisionDirection: 1
@@ -587,7 +585,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
-  explosionResistance: 1
+  explosionResistance: 0
   armorLevel: 0
   armorValue: 0
   LineArmor: []
@@ -674,6 +672,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1001 &6535999995545704481

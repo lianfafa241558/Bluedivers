@@ -130,9 +130,9 @@ namespace Unity.FPS.Gameplay
             VFXManager.Release(gameObject);
         }
 
-        protected virtual void OnDrawGizmos()
+        private void OnDrawGizmosSelected()
         {
-            if (!DamageData.IsValid() || !Root) return;
+                        if (!DamageData.IsValid() || !Root) return;
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(Root.position, DamageData.GetDamageOuterRadius(1).RawFloat);
             Gizmos.color = Color.yellow;

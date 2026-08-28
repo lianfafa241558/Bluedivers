@@ -71,7 +71,7 @@ namespace GameContract
     [System.Flags]//flag不能跳位，必须占位符
     public enum MissionTag
     {
-        /// <summary>跟随地图缩放</summary>
+        /// <summary>初始暴露</summary>
         [InspectorName("初始暴露")] StratDiscovered = 1 << 0,
         /// <summary>显示一个区域/summary>
         [InspectorName("显示一个区域")] IsArea = 1 << 1,

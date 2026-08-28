@@ -198,7 +198,6 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 1
-  damageables: []
 --- !u!114 &1146304480259289586
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -215,6 +214,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 9210779771240400988}
+  demolishValue: 20
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -249,12 +249,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   explosionResistance: 0
-  armorLevel: 4
-  showArmorLists:
-  - Key: 0
-    Value: 0.9
-  AllArmor: 0
-  isExplosionImmunity: 0
+  armorLevel: 3
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

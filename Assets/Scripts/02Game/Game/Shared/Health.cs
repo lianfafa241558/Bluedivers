@@ -163,7 +163,7 @@ namespace Unity.FPS.Game {
                 return;
 
             // 拆毁秒杀：自身拆毁值 -1 视为无法被拆毁；否则伤害拆毁值大于自身拆毁值则直接击杀，无视护盾，但受上面无敌标记保护
-            if (demolishValue > 0 && this.demolishValue != -1 && demolishValue >= this.demolishValue)
+            if (this.demolishValue >0 && demolishValue >= this.demolishValue)
             {
                 CurrentHealth = 0;
                 showHealth = 0;

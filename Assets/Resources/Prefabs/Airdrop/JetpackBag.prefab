@@ -171,6 +171,12 @@ MonoBehaviour:
   RefillDelay: 1
   flag: -1
   currentFillRatio: 1
+  OnInstallEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnUninstallEvent:
+    m_PersistentCalls:
+      m_Calls: []
   JetpackVfx:
   - {fileID: 3550187146245108903}
   - {fileID: 4783914741403088093}
@@ -302,7 +308,7 @@ PrefabInstance:
     - target: {fileID: 4191076340491169250, guid: e8ab4ad369eaefc47850b29cd4ca2429,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4904785604920091417, guid: e8ab4ad369eaefc47850b29cd4ca2429,
         type: 3}
@@ -514,7 +520,7 @@ PrefabInstance:
     - target: {fileID: 8562800173759390037, guid: e8ab4ad369eaefc47850b29cd4ca2429,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

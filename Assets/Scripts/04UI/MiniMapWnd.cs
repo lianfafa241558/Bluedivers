@@ -429,7 +429,8 @@ public class MiniMapWnd : Window
                     MissionType.Main => MainColor,
                     MissionType.Extra => ExtraColor,
                     MissionType.Nest => mission.color,
-                    _ => default,
+                    MissionType.Sub => MainColor,
+                    _ => Color.red,
                 };
                 SetColor(go.GetChild(1, 1), color);
                 SetColor(go.GetChild(1, 0), color);

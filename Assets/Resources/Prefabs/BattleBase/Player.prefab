@@ -324,7 +324,6 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 0.5
-  damageables: []
 --- !u!114 &3946878608257546397
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -529,8 +528,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -648,7 +647,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 50
+  showArmorLists: []
   MainPart: {fileID: 6472837815971613716}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -745,7 +746,7 @@ Transform:
   m_GameObject: {fileID: 2232355963688029884}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.8, y: 1, z: -6}
+  m_LocalPosition: {x: 0.5, y: 1, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -959,7 +960,7 @@ Transform:
   m_GameObject: {fileID: 4364909338254387679}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.7, y: 0.7, z: -2.5}
+  m_LocalPosition: {x: 0.8, y: 0.4, z: -1.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
