@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Core.Interface;
 using FpsGame.Mission;
 using GameContract;
+using PEMaths;
 using Unity.FPS.Game;
 using UnityEngine;
 using static AirdropController;
@@ -103,8 +104,8 @@ public static class BattleEventSub
 
 
     /// <summary> 开始撤离</summary>
-    public static event Action OnEvacuate;
-    public static void Evacuate() => OnEvacuate?.Invoke();
+    public static event Action<PEVector3> OnEvacuate;
+    public static void Evacuate(PEVector3 pos) => OnEvacuate?.Invoke(pos);
 
     #endregion
 
@@ -143,6 +144,14 @@ public static class BattleEventSub
     /// <summary>玩家复活 </summary>
     public static event Action<Actor> OnPlayerRevive;
     public static void PlayerRevive(Actor unit) => OnPlayerRevive?.Invoke(unit);
+
+    /// <summary>团灭判负倒计时，参数为剩余秒数</summary>
+    public static event Action<float> OnWipeFailCountdown;
+    public static void WipeFailCountdown(float remaining) => OnWipeFailCountdown?.Invoke(remaining);
+
+    /// <summary>团灭判负倒计时取消（被救起或条件不再满足）</summary>
+    public static event Action OnWipeFailCancel;
+    public static void WipeFailCancel() => OnWipeFailCancel?.Invoke();
 
     //玩家创建在全局
 

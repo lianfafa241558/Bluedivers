@@ -48,9 +48,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -131,13 +128,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 2
-  showArmorLists:
-  - Key: 0
-    Value: 0.5
-  - Key: 0
-    Value: 0.5
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -502,6 +492,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -721,7 +712,6 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   PreJudgment: 1
   PreJudgmentFactor: 1
-  AiState: 0
 --- !u!114 &4416010112212442149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -739,6 +729,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &4416010112212442148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -766,8 +757,8 @@ MonoBehaviour:
   UseHpBar: 1
   HpHeight: 1
   shape: 0
-  rangeLength: 1.5
-  damageables: []
+  rangeLength: 1
+  halfHeight: 1.5
 --- !u!195 &7455901374782472435
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -806,6 +797,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 320801384810680893}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -823,7 +815,7 @@ NavMeshObstacle:
   m_MoveThreshold: 0.1
   m_Carve: 0
   m_CarveOnlyStationary: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 1.5, z: 0}
   m_TimeToStationary: 0.5
 --- !u!114 &334815098536296615
 MonoBehaviour:
@@ -1082,7 +1074,7 @@ Transform:
   m_GameObject: {fileID: 7214794499546292129}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1114,6 +1106,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
   RespondMark: 1
@@ -1766,9 +1759,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1844,13 +1834,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.3
   armorLevel: 1
-  showArmorLists:
-  - Key: 0
-    Value: 0.3
-  - Key: 1
-    Value: 0.3
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1920,13 +1903,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
-  showArmorLists:
-  - Key: 0
-    Value: 0.2
-  - Key: 1
-    Value: 0.5
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1996,9 +1972,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

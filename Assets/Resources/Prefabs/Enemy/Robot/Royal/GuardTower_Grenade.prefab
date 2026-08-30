@@ -609,6 +609,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1 &7501986878090706821
@@ -669,6 +670,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &5269503680042491516
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -699,7 +701,6 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   PreJudgment: 1
   PreJudgmentFactor: 1
-  AiState: 0
 --- !u!114 &439574553960334294
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -728,7 +729,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 1
-  damageables: []
+  halfHeight: 2.1849554
 --- !u!195 &6641069724604980993
 NavMeshAgent:
   m_ObjectHideFlags: 0

@@ -67,6 +67,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &1992591344839443453
 GameObject:
@@ -135,6 +136,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &2696393744726766910
 GameObject:
@@ -195,6 +197,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1 &3577463980131566663
@@ -264,6 +267,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &3693183097195693351
 GameObject:
@@ -394,6 +398,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &4165171150349536885
 GameObject:
@@ -558,6 +563,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -727,6 +733,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &5509040373470994642
 GameObject:
@@ -861,6 +868,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &5660495845544268620
 GameObject:
@@ -929,6 +937,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &6684387008531667139
 GameObject:
@@ -988,6 +997,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 4782955672776048055}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -1019,7 +1029,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 1.7
-  damageables: []
+  halfHeight: 1.46
 --- !u!114 &75619832239817635
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1037,6 +1047,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 1
+  isImportant: 0
 --- !u!114 &579562280907152891
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1246,14 +1257,15 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   AttackStop: 1
   WeakPointHitStunDuration: 0.3
+  showState: 0
   AttackStopDistanceRatio: 0.6
   MaintainMaxDis: 0
+  EncircleDistance: 8
   PatrolSpeed: 2
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
   IdleMaxDuration: 120
-  AiState2: 1
 --- !u!195 &7820146443735053807
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1362,6 +1374,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &8041157139032463226
 GameObject:
@@ -1505,6 +1518,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1001 &569409385758534785
 PrefabInstance:
@@ -3468,6 +3482,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &1735951743341531229 stripped
 GameObject:
@@ -3509,6 +3524,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!4 &2097674343757842581 stripped
 Transform:
@@ -3556,6 +3572,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &2701969293238602966 stripped
 GameObject:
@@ -3630,6 +3647,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!4 &3851374433827032760 stripped
 Transform:
@@ -3677,6 +3695,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &3936084374623985313 stripped
 GameObject:
@@ -3720,9 +3739,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 150
   LineArmor:
   - {fileID: 2894464610256575581}
@@ -3780,9 +3796,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 150
   LineArmor:
   - {fileID: 7508501207925251303}
@@ -3846,9 +3859,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 100
   LineArmor:
   - {fileID: 3085531840998514021}
@@ -3945,6 +3955,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &5716267258643692983 stripped
 GameObject:
@@ -3986,6 +3997,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &5723714028939970417 stripped
 GameObject:
@@ -4029,15 +4041,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 0
-    Value: -1
-  - Key: 3
-    Value: -1
-  - Key: 2
-    Value: -1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -4112,9 +4115,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor:
   - {fileID: 5832997876581394934}
@@ -4167,6 +4167,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &7667654605231846892 stripped
 GameObject:
@@ -4208,6 +4209,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}
 --- !u!1 &8116080345323667552 stripped
 GameObject:
@@ -4303,9 +4305,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 100
   LineArmor:
   - {fileID: 8781071549759883367}
@@ -4407,4 +4406,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
+  armorLevel: 0
   source: {fileID: 0}

@@ -200,6 +200,8 @@ MonoBehaviour:
       Value: 1
     SoundRadius: 80
     NoSource: 1
+    ExplosionAP: 0
+    demolishValue: 0
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 665100303325612391, guid: 4a251ccafda82a644accfe3c2b5efebf,
@@ -233,7 +235,7 @@ Transform:
   m_GameObject: {fileID: 5900522124904462587}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.4, z: 0}
+  m_LocalPosition: {x: 0, y: 1.19, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -306,8 +308,8 @@ MonoBehaviour:
   UseHpBar: 0
   HpHeight: 1
   shape: 0
-  rangeLength: 3
-  damageables: []
+  rangeLength: 1
+  halfHeight: 1.4
 --- !u!114 &5900522125226825039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -322,7 +324,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 20
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 5900522125013508120}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -379,6 +383,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -386,15 +391,19 @@ MonoBehaviour:
     - Key: 5
       Value:
         cilp: {fileID: 0}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go:
         - go: {fileID: 2493083264749330298}
           state: 0
           scale: 1
+          originActive: 0
+          originLocalScale: {x: 0, y: 0, z: 0}
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -402,6 +411,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -1073,6 +1083,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: KeyScreen
       objectReference: {fileID: 0}
+    - target: {fileID: 6583187459899956849, guid: cf02da3a4781fac46a2d26154e498fdc,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1179,6 +1194,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Hellbomb
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cfd3fc667c678d6488884650f64dab18,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1240,8 +1260,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

@@ -167,7 +167,7 @@ public class DamageDataDrawer : PropertyDrawer
 
     #region 碰撞
 
-    private float DrawSection_Collision(Rect position, SerializedProperty property, float y)
+    protected float DrawSection_Collision(Rect position, SerializedProperty property, float y)
     {
         DrawSectionHeader(position, "碰撞", ref y);
 
@@ -191,7 +191,7 @@ public class DamageDataDrawer : PropertyDrawer
         return y;
     }
 
-    private float GetSectionHeight_Collision(SerializedProperty property)
+    protected float GetSectionHeight_Collision(SerializedProperty property)
     {
         var useHole = property.FindPropertyRelative("UseHole");
         float h = SectionHeaderHeight;
@@ -583,51 +583,6 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
             h += GetSinglelineListHeight(property, "DamageGroupExplosion");
         }
 
-        h += Padding;
-        return h;
-    }
-
-    #endregion
-
-    #region 碰撞
-
-    private float DrawSection_Collision(Rect position, SerializedProperty property, float y)
-    {
-        DrawSectionHeader(position, "碰撞", ref y);
-
-        EditorGUI.indentLevel++;
-        y = DrawProperty(property, "UseCollisionDirection", "特效使用碰撞点的朝向", position, y);
-        y = DrawProperty(property, "ImpactVfxSpawnOffset", "特效沿法线偏移量", position, y);
-        y = DrawProperty(property, "ImpactVfx", "碰撞特效", position, y);
-        y = DrawProperty(property, "ImpactSfx", "碰撞音效", position, y);
-        y = DrawProperty(property, "OnlyTerrain", "只附着到地面", position, y);
-        var useHole = property.FindPropertyRelative("UseHole");
-        y = DrawProperty(property, "UseHole", "创建弹坑", position, y);
-        if (useHole.boolValue)
-        {
-            EditorGUI.indentLevel++;
-            y = DrawProperty(property, "Hole", "弹坑/不填使用默认", position, y);
-            EditorGUI.indentLevel--;
-        }
-        EditorGUI.indentLevel--;
-        y += Padding;
-        return y;
-    }
-
-    private float GetSectionHeight_Collision(SerializedProperty property)
-    {
-        var useHole = property.FindPropertyRelative("UseHole");
-        float h = SectionHeaderHeight;
-        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("UseCollisionDirection")) + 2;
-        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ImpactVfxSpawnOffset")) + 2;
-        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ImpactVfx")) + 2;
-        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ImpactSfx")) + 2;
-        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("OnlyTerrain")) + 2;
-        h += EditorGUI.GetPropertyHeight(useHole) + 2;
-        if (useHole.boolValue)
-        {
-            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Hole")) + 2;
-        }
         h += Padding;
         return h;
     }

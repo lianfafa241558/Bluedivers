@@ -216,6 +216,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -354,7 +355,7 @@ MonoBehaviour:
   HpHeight: 2
   shape: 0
   rangeLength: 0.5
-  damageables: []
+  halfHeight: 6
 --- !u!195 &8523330831985173643
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -394,6 +395,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &8523330831985173641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -410,6 +412,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 8523330833250684558}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -443,14 +446,15 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   AttackStop: 0
   WeakPointHitStunDuration: 0.3
+  showState: 0
   AttackStopDistanceRatio: 0.7
   MaintainMaxDis: 1
+  EncircleDistance: 8
   PatrolSpeed: 2
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
   IdleMaxDuration: 120
-  AiState2: 1
 --- !u!114 &-1568069395640556039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -704,6 +708,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1 &8523330833250684555
@@ -763,11 +768,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
-  showArmorLists:
-  - Key: 1
-    Value: 0.5
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

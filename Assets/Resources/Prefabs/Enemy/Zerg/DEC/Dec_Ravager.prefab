@@ -127,6 +127,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -381,6 +382,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1 &3808758975234262439
@@ -485,6 +487,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -778,6 +781,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 1478053612840412110}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -809,7 +813,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 1.7
-  damageables: []
+  halfHeight: 1.0229858
 --- !u!114 &6731495466205310907
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -827,6 +831,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 1
+  isImportant: 0
 --- !u!114 &6731495466205310906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1051,14 +1056,15 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   AttackStop: 0
   WeakPointHitStunDuration: 0.3
+  showState: 0
   AttackStopDistanceRatio: 0.5
   MaintainMaxDis: 0
+  EncircleDistance: 8
   PatrolSpeed: 2
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
   IdleMaxDuration: 120
-  AiState2: 1
 --- !u!195 &6731495466205310901
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -2608,11 +2614,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
-  showArmorLists:
-  - Key: 0
-    Value: 0.2
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 0
   LineArmor:
   - {fileID: 8758041376956919421}
@@ -2673,11 +2674,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 0
-    Value: 0.1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 90
   LineArmor:
   - {fileID: 7198725040718444843}
@@ -2775,11 +2771,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 0
-    Value: 0.1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 70
   LineArmor:
   - {fileID: 1322073786529135222}
@@ -2835,17 +2826,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
-  showArmorLists:
-  - Key: 0
-    Value: -1
-  - Key: 1
-    Value: 0.5
-  - Key: 3
-    Value: -1
-  - Key: 2
-    Value: -1
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -2983,11 +2963,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 0
-    Value: 0.1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 70
   LineArmor:
   - {fileID: 7085621635824225683}
@@ -3148,9 +3123,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 100
   LineArmor: []
   armorBreakEffect:
@@ -3204,11 +3176,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 0
-    Value: 0.1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 70
   LineArmor:
   - {fileID: 8477769561650769273}
@@ -3360,11 +3327,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
-  showArmorLists:
-  - Key: 1
-    Value: 0.5
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor:
   - {fileID: 5549107878628929267}
@@ -3414,11 +3376,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 0
-    Value: 0.1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 70
   LineArmor:
   - {fileID: 3533603623595228897}
@@ -3474,13 +3431,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 0
-    Value: -0.5
-  - Key: 3
-    Value: -0.5
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -3653,11 +3603,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
-  showArmorLists:
-  - Key: 0
-    Value: 0.35
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 80
   LineArmor: []
   armorBreakEffect:
@@ -3855,11 +3800,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists:
-  - Key: 0
-    Value: 0.1
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 90
   LineArmor:
   - {fileID: 3975263505995788144}

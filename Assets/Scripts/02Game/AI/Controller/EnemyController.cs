@@ -17,7 +17,7 @@ namespace FPSGame.AI
 
 
 
-    [RequireComponent(typeof(HealthEnemy), typeof(Actor))]
+    //[RequireComponent(typeof(HealthEnemy), typeof(Actor))]
     public partial class EnemyController : AIController
     {
         public override Vector3 Velocity => NavMeshAgent ? NavMeshAgent.velocity : Vector3.zero;
@@ -49,6 +49,13 @@ namespace FPSGame.AI
         /// <summary>巡逻目标点</summary>
         public Vector3 PatrolPos { get; set; }
 
+        /// <summary>
+        /// 长期落点（波次空投等的待命点）：到达后不移除，期间目标被中断(回Idle)会继续走向该点。
+        /// 区别于 PatrolPos：PatrolPos 是巡逻队"到达即自毁"的哨兵点，HomePoint 是"到达即待命"的落点。
+        /// default 表示未设置。
+        /// </summary>
+        public Vector3 HomePoint { get; set; }
+
         /// <summary>当前的目??的AimPoint)</summary>
         public TargetData Target => DetectionModule.Target;
         /// <summary>目标是否进入攻击范围</summary>
@@ -70,8 +77,9 @@ namespace FPSGame.AI
  
         Collider[] m_SelfColliders;
 
-        //[Display(true, false, true)]
-        private Vector3 m_lastDestination;
+        //[DisplayField]
+        [SerializeField]
+        public Vector3 m_lastDestination;
         private NavMeshPath m_lastPath;
 
 
@@ -150,7 +158,13 @@ namespace FPSGame.AI
 
         void BirthEnd()
         {
-            if (m_lastDestination!=default) SetNavDestination(m_lastDestination);
+            if (m_lastDestination != default)
+            {
+                var target = m_lastDestination;
+                m_lastDestination = default;
+                if (isImportant) Debug.LogError("重置目标点",gameObject);
+                SetNavDestination(target);
+            }
             Speed.AddModifier(ModifierType.Factor, 1);
         }
 
@@ -203,14 +217,17 @@ namespace FPSGame.AI
         /// </summary>
         public void SetNavDestination(Vector3 destination)
         {
-
+            if (isImportant) Debug.LogError("设置目标点为" + destination+"旧目标"+ m_lastDestination, gameObject);
             if (Vector3.Distance(destination, m_lastDestination) < 1) return;
-            if (isImportant) Debug.LogError("设置目标点为"+destination,gameObject);
             m_lastDestination = destination;
+            if (isImportant) Debug.LogError("设置目标点成功" + destination + "和" + m_lastDestination, gameObject);
+
             if (FpsHelper.HaveNavMeshAgent(NavMeshAgent) && NavMeshAgent.isOnNavMesh)
             {
                 if (BirthComplete)
                 {
+                    if (isImportant) Debug.LogError("发送目标点" + destination, gameObject);
+
                     PathRequestManager.Instance.RequestPath(NavMeshAgent, destination, isImportant);
                 }
             }
@@ -223,7 +240,7 @@ namespace FPSGame.AI
             {
                 NavMeshAgent?.ResetPath();
             }
-
+            if(isImportant)Debug.LogError("取消了目标点",gameObject);
             m_lastDestination = default;
         }
 
@@ -312,6 +329,10 @@ namespace FPSGame.AI
 
         private void OnDrawGizmosSelected()
         {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(transform.position, m_lastDestination);
+            Gizmos.DrawWireSphere(m_lastDestination, 1f);
+
             if (NavMeshAgent == null || !NavMeshAgent.hasPath) return;
 
             NavMeshPath path = NavMeshAgent.path;

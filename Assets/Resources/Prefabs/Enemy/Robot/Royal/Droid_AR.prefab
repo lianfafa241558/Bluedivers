@@ -59,6 +59,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &688512791758661599
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -77,22 +78,27 @@ MonoBehaviour:
     barrel: {fileID: 1497958040842121397}
     weapon: {fileID: 7532005413751538852}
     aimSharpness: 90
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 1
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: -0.000000003809697, y: -0.08715571, z: 0.9961947, w: -0.000000043545054}
     dot: 1
+    meleeRangeThreshold: 5
   AttackStop: 0
+  WeakPointHitStunDuration: 0.3
+  showState: 0
   AttackStopDistanceRatio: 0.5
   MaintainMaxDis: 0
+  EncircleDistance: 8
   PatrolSpeed: 2
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
   IdleMaxDuration: 120
-  AiState2: 2
 --- !u!114 &1296185267782236953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,7 +127,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 0.55
-  damageables: []
+  halfHeight: 1
 --- !u!195 &3365388953001942714
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -158,7 +164,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 70
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 4866910914358559338}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -182,6 +190,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -189,12 +198,14 @@ MonoBehaviour:
     - Key: 5
       Value:
         cilp: {fileID: 8300000, guid: 9d859b9617096434ba7f3b7fd892e21b, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 1c69692918425f04dac0a012fde1c626, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -202,6 +213,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: ed394529eedc6814996d224eda9cbd60, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}
@@ -209,6 +221,7 @@ MonoBehaviour:
     - Key: 1
       Value:
         cilp: {fileID: 8300000, guid: f4b83a7d24c9cca4d9096abb34ff8f6e, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 0}
         trans: {fileID: 0}
         go: []
@@ -307,6 +320,7 @@ MonoBehaviour:
   MeetDetectedTime: 10
   Range: 16
   tag: -1
+  m_Controller: {fileID: 0}
   nowCoolTime: 0
   nowDurationTime: 0
   m_LastDetectedTarget: 0
@@ -367,8 +381,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -448,6 +462,7 @@ MonoBehaviour:
   AttackRange: 50
   AlertRange: 30
   KnownTargetTimeout: 4
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
@@ -455,6 +470,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1 &3614279159440798159
@@ -566,8 +582,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 3614279159440798159}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 2713296857973273024}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -618,6 +636,11 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -629,6 +652,7 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 3f5b545b9a1e74c418b061bba5bb9e2c,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
@@ -651,6 +675,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1 &8669221196424264068
 GameObject:

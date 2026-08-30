@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 7001511317827093950}
   - component: {fileID: 8892360739145406699}
   - component: {fileID: 141647902212826922}
-  - component: {fileID: 4541459674274990344}
   - component: {fileID: 1100331133994757510}
+  - component: {fileID: -8987177670010149597}
   m_Layer: 0
   m_Name: Pod
   m_TagString: Untagged
@@ -78,21 +78,10 @@ MonoBehaviour:
   allowSeeRelease: 0
   allowRelease: 0
   useDebug: 1
+  OnEnd:
+    m_PersistentCalls:
+      m_Calls: []
   showScale: 0
---- !u!114 &4541459674274990344
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 57782140885802990}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0a085d07dde3d749b64104c181853c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Root: {fileID: 400943399546854645}
-  fire: {fileID: 9168300073529511928}
 --- !u!114 &1100331133994757510
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,6 +98,47 @@ MonoBehaviour:
   weaponPointL: {fileID: 0}
   weaponPointR: {fileID: 0}
   LookPoint: {fileID: 0}
+--- !u!114 &-8987177670010149597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 57782140885802990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdcb300903701bf4d9e67e3240093855, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Root: {fileID: 400943399546854645}
+  fire: {fileID: 9168300073529511928}
+  Gravity: 20
+  InitialFallSpeed: 0.1
+  HitRadius: 0.3
+  LandingDetectDistance: 1000
+  DamageData:
+    DamageExplosion: 1000
+    ExplosionInnerRange: 2
+    ExplosionRange: 2
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 20
+    NoSource: 0
+    ExplosionAP: 10
+    demolishValue: 40
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 358637981425055526, guid: efdeece2f6f8461469d5c1c1454fe7fe,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: cb84f78bea62db34ba3781750450c646, type: 3}
+    UseHole: 1
+    Hole: {fileID: 3744692740160411619, guid: a6dfed1623e96604aa1c3c1ac3cc57ca, type: 3}
+    OnlyTerrain: 1
 --- !u!1 &1367939550119907362
 GameObject:
   m_ObjectHideFlags: 0

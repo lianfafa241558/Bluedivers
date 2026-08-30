@@ -631,7 +631,7 @@ MonoBehaviour:
     outerRadius: 70
     depth: 0
   additionTerrain: {fileID: 8134641666659700897}
-  transitionDistance: 3
+  transitionDistance: 10
   StartModify: 0
 --- !u!114 &1865969588
 MonoBehaviour:
@@ -6978,7 +6978,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 300
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 7294893088266950093}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -6996,8 +6998,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -7032,7 +7034,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 2
-  damageables: []
+  halfHeight: 0
 --- !u!4 &9064244039578165850 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 949877522104722329, guid: fbe793ae7724f6a45a9e3b0dc8ad4a49,

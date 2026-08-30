@@ -31,6 +31,13 @@ namespace Core.Interface
         /// <summary>单位半径</summary>
         public float HalfRange { get;}
 
+        /// <summary>
+        /// 单位半高度
+        /// 单位竖直占位区间 = [CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]
+        /// 0 表示未配置，需要做竖直判定的逻辑应退化为"不做高度过滤"
+        /// </summary>
+        public float HalfHeight { get;}
+
         public Transform transform { get; }
         public GameObject gameObject { get; }
     }

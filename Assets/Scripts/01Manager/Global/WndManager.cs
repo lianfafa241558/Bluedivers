@@ -1,3 +1,4 @@
+using System;
 using Core;
 
 using UnityEngine;
@@ -43,6 +44,8 @@ public class WndManager : Singleton<WndManager>
     public VehicleWnd vehicleWnd;
 
     public SettingWnd settingWnd;
+
+    public CountDownWnd countDownWnd;
 
     public Sprite empty;
 
@@ -105,6 +108,11 @@ public class WndManager : Singleton<WndManager>
             }
            
         }
+    }
+
+    public void CreatCountDown(Func<int> func,CountDownTypeEnum type)
+    {
+        countDownWnd.StartDown(func, type);
     }
 
     public void CreatTip(TipWndInfo info)

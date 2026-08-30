@@ -28,6 +28,10 @@ namespace Unity.FPS.Gameplay
         [InspectorName("触发范围")]
         [SerializeField]
         private float TriggerRange = 0.7f;
+        [InspectorName("竖直触发范围(0=同触发范围)")]
+        [Tooltip("判定单位竖直占位区间与地雷高度差时使用的容差；为 0 时复用触发范围")]
+        [SerializeField]
+        private float VerticalRange = 0f;
         [InspectorName("智能(只炸敌方队伍)")]
         [SerializeField]
         private bool intelligent = false;
@@ -87,8 +91,8 @@ namespace Unity.FPS.Gameplay
             var units = BattleManager.Instance.FindUnits(
                 new PECircle((PEVector2)Root.position, (PEInt)TriggerRange),
                 TargetCfg.EnemyAI,
-                // 智能地雷：只炸与地雷不同队伍的存活目标
-                item => FpsHelper.VaildTarget(item) && (!intelligent || item.Team != team));
+                // 智能地雷：只炸与地雷不同队伍的存活目标；竖直方向必须在触发高度内(避免炸到空中单位)
+                item => FpsHelper.VaildTarget(item) && (!intelligent || item.Team != team) && InVerticalRange(item));
 
             foreach (var actor in units)
             {
@@ -97,6 +101,26 @@ namespace Unity.FPS.Gameplay
                 else Explosion(null);
                 break;
             }
+        }
+
+        /// <summary>
+        /// 竖直方向判定：单位竖直占位区间 [CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]
+        /// 与地雷触发球(半径 竖直触发范围)是否相交，避免地雷对高空单位生效
+        /// </summary>
+        bool InVerticalRange(I_Actor actor)
+        {
+            // 未配置半高度(0)的单位不做竖直过滤，保持原有的平面判定行为
+            if (actor.HalfHeight <= 0f) return true;
+
+            float range = VerticalRange > 0f ? VerticalRange : TriggerRange;
+            float centerY = actor.CenterPos.y;
+            float mineY = Root.position.y;
+            float bottom = centerY - actor.HalfHeight;
+            float top = centerY + actor.HalfHeight;
+
+            // 地雷高度到单位竖直区间的距离
+            float gap = mineY < bottom ? bottom - mineY : (mineY > top ? mineY - top : 0f);
+            return gap <= range;
         }
 
         /// <summary>生命周期结束(超时)：未爆炸则直接回收</summary>

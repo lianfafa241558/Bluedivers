@@ -211,11 +211,18 @@ namespace FPSGame.AI
 
         #region 状态 onEnter / onExit
 
-        /// <summary>进入 Idle：记录时间并停止导航</summary>
+        /// <summary>进入 Idle：记录时间并停止导航；若存在长期落点(HomePoint)则继续走向它，避免中断后丢失目标</summary>
         private void EnterIdle()
         {
             m_IdleStartTime = Time.time;
-            m_EnemyController.StopNav();
+            if (m_EnemyController.HomePoint != default)
+            {
+                m_EnemyController.SetNavDestination(m_EnemyController.HomePoint);
+            }
+            else
+            {
+                m_EnemyController.StopNav();
+            }
         }
 
         /// <summary>进入 Patrol：设置巡逻速度差修饰</summary>

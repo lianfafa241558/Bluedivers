@@ -59,6 +59,13 @@ namespace Unity.FPS.Game
 
         public override float HalfRange => rangeLength;
 
+        /// <summary>
+        /// 单位半高度：单位竖直占位区间 = [CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]
+        /// 0 表示未配置，需要做竖直判定的逻辑会退化为"不做高度过滤"
+        /// 编辑器工具(菜单 Tools/单位半高度批量设置)可批量按 AimPoint 局部 Y 填充
+        /// </summary>
+        public override float HalfHeight => halfHeight;
+
         public int Team { get => team; set => team=value; }
 
         List<UnitQueryGridNode> I_Actor.GridNodes => curQueryGridNodes;
@@ -165,6 +172,11 @@ namespace Unity.FPS.Game
         [SerializeField]
         [InspectorName("半径/半长度")]
         private float rangeLength;
+
+        [SerializeField]
+        [InspectorName("半高度")]
+        [Tooltip("单位竖直占位半高度，以瞄准点高度为中心上下各延伸该值。0=未配置，退化不做高度过滤")]
+        private float halfHeight;
 
         //[DisplayField]
         //[InspectorName("召唤者")]
@@ -353,7 +365,83 @@ namespace Unity.FPS.Game
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.DrawWireSphere(CenterPos, rangeLength);
+            DrawRangeGizmo();
+        }
+
+        /// <summary>占位 Gizmo 圆周分段数</summary>
+        private const int GizmoSegments = 16;
+
+        /// <summary>
+        /// 绘制单位占位范围：配置了半高度时绘制由 半径(rangeLength) 与 半高度(halfHeight) 控制的胶囊体，否则退化为球体
+        /// 胶囊中心为 <see cref="CenterPos"/>，总高度 = 2 * halfHeight（底部即单位脚底，顶部为头顶）
+        /// </summary>
+        private void DrawRangeGizmo()
+        {
+            Vector3 center = CenterPos;
+            float radius = rangeLength;
+
+            // 未配置半高度(0)：退化为球体，保持原有表现
+            if (halfHeight <= 0f)
+            {
+                Gizmos.DrawWireSphere(center, radius);
+                return;
+            }
+
+            // 胶囊 = 上下半球 + 中间圆柱；半高度不足一个半径时圆柱段高度为 0，自然退化为球
+            float bodyHalf = Mathf.Max(0f, halfHeight - radius);
+            Vector3 top = center + Vector3.up * bodyHalf;
+            Vector3 bottom = center - Vector3.up * bodyHalf;
+
+            DrawWireCap(top, radius, Vector3.up);
+            DrawWireCap(bottom, radius, Vector3.down);
+
+            // 圆柱段：上下两个圆环 + 竖向连接线（复用同一次圆周遍历）
+            Vector3 prevTop = top + Vector3.right * radius;
+            Vector3 prevBottom = bottom + Vector3.right * radius;
+            for (int i = 1; i <= GizmoSegments; i++)
+            {
+                float angle = i * Mathf.PI * 2f / GizmoSegments;
+                Vector3 offset = (Mathf.Cos(angle) * Vector3.right + Mathf.Sin(angle) * Vector3.forward) * radius;
+                Vector3 curTop = top + offset;
+                Vector3 curBottom = bottom + offset;
+
+                Gizmos.DrawLine(prevTop, curTop);
+                Gizmos.DrawLine(prevBottom, curBottom);
+                if(i%(GizmoSegments/4)==0) Gizmos.DrawLine(curTop, curBottom);
+
+                prevTop = curTop;
+                prevBottom = curBottom;
+            }
+        }
+
+        /// <summary>绘制胶囊端盖：水平圆环 + 两条互相垂直的竖直半圆弧（使其呈现半球而非平盖）</summary>
+        private void DrawWireCap(Vector3 center, float radius, Vector3 poleDir)
+        {
+            Vector3 prev = center + Vector3.right * radius;
+            for (int i = 1; i <= GizmoSegments; i++)
+            {
+                float angle = i * Mathf.PI * 2f / GizmoSegments;
+                Vector3 cur = center + (Mathf.Cos(angle) * Vector3.right + Mathf.Sin(angle) * Vector3.forward) * radius;
+                Gizmos.DrawLine(prev, cur);
+                prev = cur;
+            }
+
+            DrawWireArc(center, radius, Vector3.right, poleDir);
+            DrawWireArc(center, radius, Vector3.forward, poleDir);
+        }
+
+        /// <summary>在 axis1(水平起始方向) 与 poleDir(极点方向) 张成的平面上绘制半圆弧</summary>
+        private void DrawWireArc(Vector3 center, float radius, Vector3 axis1, Vector3 poleDir)
+        {
+            int segments = GizmoSegments / 2;
+            Vector3 prev = center + axis1 * radius;
+            for (int i = 1; i <= segments; i++)
+            {
+                float t = i * Mathf.PI / segments;
+                Vector3 cur = center + (Mathf.Cos(t) * axis1 + Mathf.Sin(t) * poleDir) * radius;
+                Gizmos.DrawLine(prev, cur);
+                prev = cur;
+            }
         }
 
 

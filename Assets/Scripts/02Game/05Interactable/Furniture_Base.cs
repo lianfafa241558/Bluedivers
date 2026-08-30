@@ -24,6 +24,12 @@ public class Furniture_Base : Furniture_Attached, IFurniture, I_Entity
 
     public virtual float HalfRange => 1;
 
+    /// <summary>
+    /// 单位半高度：单位竖直占位区间 = [CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]
+    /// 0 表示未配置，需要做竖直判定的逻辑应退化为"不做高度过滤"
+    /// </summary>
+    public virtual float HalfHeight => 0;
+
     protected override Sprite Icon { get => Portrait; }
     string I_Entity.ShowName { get => ShowName; set => ShowName = value; }
     string I_Entity.Id { get => Id; set => Id = value; }

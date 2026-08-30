@@ -20,6 +20,7 @@ namespace FpsGame.Mission
         string targetId; 
         [SerializeField]
         AudioSource onDamageAud,onDeathAud;
+
         public int time;
         int m_TargetCount;
 
@@ -65,7 +66,7 @@ namespace FpsGame.Mission
             {
                 var smallCount = time % 120;
                 if (smallCount == 0) keyScreen.SetStage(1);//显示进度条
-                //每 20miso作为一个大端，50秒一个小波，持续2波，30秒休息
+                //每 120 秒 作为一个大端，50秒一个小波，持续2波，30秒休息
                 if (smallCount >= 0) percentage = smallCount / 120f;//显示进度条
                 if (smallCount >= 0 && smallCount < 100 && smallCount % 50 == 0)
                 {

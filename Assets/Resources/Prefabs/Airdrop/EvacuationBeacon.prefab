@@ -5090,6 +5090,37 @@ MonoBehaviour:
   baseWidth: 0
   disScale: 0.03
   useForward: 0
+--- !u!1 &7220413793541929767
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2045095580426774019}
+  m_Layer: 0
+  m_Name: Aimpoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2045095580426774019
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7220413793541929767}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3253609403202530613}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8199114119370784831
 GameObject:
   m_ObjectHideFlags: 0
@@ -5857,6 +5888,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 7612680620629183368}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: f584e90a395fcfd45a389d454fb6bddd,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2045095580426774019}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f584e90a395fcfd45a389d454fb6bddd,
         type: 3}
@@ -5948,12 +5983,12 @@ MonoBehaviour:
   type: 8
   team: 0
   threat: 1
-  aimPoint: {fileID: 3253609403202530613}
+  aimPoint: {fileID: 2045095580426774019}
   UseHpBar: 1
   HpHeight: 4.2
   shape: 0
-  rangeLength: 0.25
-  damageables: []
+  rangeLength: 0.6
+  halfHeight: 2.4
 --- !u!114 &6266057680353214847
 MonoBehaviour:
   m_ObjectHideFlags: 0

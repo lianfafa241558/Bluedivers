@@ -41,7 +41,6 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
 
     private LimitedLife m_Lift;
     private GameObject m_owner;
-    private WeaponBaseController m_weapon;
 
     public float m_lastWarnTime = 0;
     public void SetOwner(GameObject owner, GameObject weaponRoot, Collider collider, Vector3 point) {
@@ -58,7 +57,6 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         transform.parent = null;
         transform.eulerAngles = new(0, owner.transform.eulerAngles.y, 0);
         m_owner = owner;
-        m_weapon = weaponRoot.GetComponent<WeaponBaseController>();
         Init();
     }
     public void TmpAirdrop(Vector3 point, AirdropData_SO data, System.Action<GameObject> action)
@@ -74,7 +72,6 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         transform.parent = null;
         //transform.eulerAngles = Vector3.zero;
         m_owner = ActorsManager.Player.gameObject;
-        m_weapon = m_owner.GetComponent<PlayerWeaponsManager>().GetWeaponAtSlotIndex((int)WeaponTypeEnum.FlareGun);
         if(action.IsValid()) OnCreatObject += action;
         Init();
     }
@@ -142,7 +139,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
                 EndMedivac();
                 break;
         }
-        if (m_creatObject&&m_creatObject.TryGetComponent(out ProjectileBase pro))
+        if (m_creatObject&&m_creatObject.TryGetComponent(out AirdropPod pro))
         {
             pro.OnHit -= PodHit;
         }
@@ -178,9 +175,9 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
                     {
                         anim.enabled = false;
                     }
-                    if (m_creatObject.TryGetComponent(out ProjectileBase pro))//补给舱
+                    if (m_creatObject.TryGetComponent(out AirdropPod pro))//补给舱
                     {
-                        pro.Shoot(m_weapon,2);
+                        pro.Launch(m_owner);
                         pro.OnHit += PodHit;
                     }
                 }
@@ -197,9 +194,9 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
                     {
                         anim.enabled = false;
                     }
-                    if (m_creatObject.TryGetComponent(out ProjectileBase pro))//补给舱
+                    if (m_creatObject.TryGetComponent(out AirdropPod pro))//补给舱
                     {
-                        pro.Shoot(m_weapon, 2);
+                        pro.Launch(m_owner);
                         pro.OnHit += PodHit;
                     }
                     if (m_creatObject.TryGetComponent(out Actor actor))
@@ -252,7 +249,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
             {
                 m_creatObject.GetComponent<LimitedLife>().ResetLift(9999);
             }
-            if (m_creatObject.TryGetComponent(out ProjectileBase pro))
+            if (m_creatObject.TryGetComponent(out AirdropPod pro))
             {
                 pro.OnHit -= PodHit;
             }
@@ -271,7 +268,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         }
         else
         {
-            if (m_creatObject.TryGetComponent(out ProjectileBase pro))
+            if (m_creatObject.TryGetComponent(out AirdropPod pro))
             {
                 pro.OnHit -= PodHit;
             }

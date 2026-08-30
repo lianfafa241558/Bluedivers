@@ -54,8 +54,8 @@ namespace FPSGame.Game
             groups = new();
             center = param.center;
 
-            spawnInterval = Mathf.Max(1f, 480f / Mathf.Max(1, creats.Count));
-            lastGroupSpawnTime = Time.time;
+            spawnInterval = Mathf.Clamp(480f / Mathf.Max(1, creats.Count),5,15);
+            lastGroupSpawnTime = Time.time - spawnInterval+5;
 
             BattleEventSub.OnEnemyDead += OnUnitDeath;
 
@@ -184,6 +184,9 @@ namespace FPSGame.Game
             return 2;
         }
 
+        /// <summary>
+        /// 创建运输船
+        /// </summary>
         void SpawnGroup()
         {
             // 按人口取单位，每船16人口上限
@@ -346,14 +349,14 @@ namespace FPSGame.Game
                 }
 
                 // 启用Animator（开始落地动画）
-                var fx = unit.GetComponent<EnemyControllerFX>();
-                if (fx && fx.Animator)
+                if (unit.TryGetComponent(out EnemyControllerFX fx)&& fx.Animator)
                 {
                     fx.Animator.enabled = true;
                 }
-                unit.GetComponent<EnemyController>().SetNavDestination(
-                    center + random.InsideUnitCircle().ToVector3() * 5
-                );
+                var ec = unit.GetComponent<EnemyController>();
+                // 设置长期落点：到达后不移除，途中被中断(回Idle)会继续走向该点
+                ec.HomePoint = center + random.InsideUnitCircle().ToVector3() * 5;
+                ec.SetNavDestination(ec.HomePoint);
             }
 
         }

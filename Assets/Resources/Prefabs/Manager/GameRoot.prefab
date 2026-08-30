@@ -15673,7 +15673,6 @@ GameObject:
   - component: {fileID: 8321511600229745009}
   - component: {fileID: 7196216302206704132}
   - component: {fileID: 539272395813844899}
-  - component: {fileID: 7033130665857802273}
   - component: {fileID: 8664207786176584262}
   m_Layer: 0
   m_Name: VecticalUI
@@ -15775,53 +15774,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &7033130665857802273
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3005551862693291052}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 566bc32bf6fff8d42a33f1119710499f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  arr:
-  - state: 4
-    isExit: 0
-    funs:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 6295012675625074570}
-          m_TargetAssemblyTypeName: WindowBase, Assembly-CSharp
-          m_MethodName: SetWndState
-          m_Mode: 6
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 1
-          m_CallState: 2
-  - state: 4
-    isExit: 1
-    funs:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 6295012675625074570}
-          m_TargetAssemblyTypeName: WindowBase, Assembly-CSharp
-          m_MethodName: SetWndState
-          m_Mode: 6
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
 --- !u!114 &8664207786176584262
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16174,6 +16126,7 @@ MonoBehaviour:
   guideWnd: {fileID: 0}
   vehicleWnd: {fileID: 0}
   settingWnd: {fileID: 0}
+  countDownWnd: {fileID: 6295012675625074570}
   empty: {fileID: 21300000, guid: 0e311172f7a9902448049c5f48189608, type: 3}
 --- !u!114 &1030084172130637352
 MonoBehaviour:

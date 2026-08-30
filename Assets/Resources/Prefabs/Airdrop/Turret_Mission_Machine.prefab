@@ -206,9 +206,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -5186,9 +5183,9 @@ GameObject:
   - component: {fileID: 3339788449836367257}
   - component: {fileID: 8920040030572099325}
   - component: {fileID: -5027991563151779132}
-  - component: {fileID: 5445839581304146764}
   - component: {fileID: 6132510036563376193}
   - component: {fileID: 7065580761447226292}
+  - component: {fileID: -5657066838097257511}
   m_Layer: 0
   m_Name: Turret_Mission_Machine
   m_TagString: Untagged
@@ -5260,7 +5257,6 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   PreJudgment: 0
   PreJudgmentFactor: 1
-  AiState: 0
 --- !u!114 &8388289548102656335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5278,6 +5274,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &8388289548102656334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5305,8 +5302,8 @@ MonoBehaviour:
   UseHpBar: 0
   HpHeight: 1
   shape: 0
-  rangeLength: 1.5
-  damageables: []
+  rangeLength: 1
+  halfHeight: 1.5
 --- !u!195 &3339788449836367257
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -5345,6 +5342,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 1975540416390641001}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -5362,22 +5360,8 @@ NavMeshObstacle:
   m_MoveThreshold: 0.1
   m_Carve: 0
   m_CarveOnlyStationary: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 1.5, z: 0}
   m_TimeToStationary: 0.5
---- !u!114 &5445839581304146764
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1904168379638373661}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0a085d07dde3d749b64104c181853c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Root: {fileID: 1904168379638373649}
-  fire: {fileID: 5539501498870844487}
 --- !u!114 &6132510036563376193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5514,6 +5498,47 @@ MonoBehaviour:
       m_NumAlphaKeys: 2
     duration: 3
   UseAttack: 0
+--- !u!114 &-5657066838097257511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1904168379638373661}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdcb300903701bf4d9e67e3240093855, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Root: {fileID: 1904168379638373649}
+  fire: {fileID: 5539501498870844487}
+  Gravity: 20
+  InitialFallSpeed: 0.1
+  HitRadius: 0.3
+  LandingDetectDistance: 1000
+  DamageData:
+    DamageExplosion: 1000
+    ExplosionInnerRange: 2
+    ExplosionRange: 2
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 20
+    NoSource: 0
+    ExplosionAP: 10
+    demolishValue: 40
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 358637981425055526, guid: efdeece2f6f8461469d5c1c1454fe7fe,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: cb84f78bea62db34ba3781750450c646, type: 3}
+    UseHole: 1
+    Hole: {fileID: 3744692740160411619, guid: a6dfed1623e96604aa1c3c1ac3cc57ca, type: 3}
+    OnlyTerrain: 1
 --- !u!1 &2759190545591540230
 GameObject:
   m_ObjectHideFlags: 0
@@ -5616,7 +5641,7 @@ Transform:
   m_GameObject: {fileID: 3243146389249942219}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5648,6 +5673,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
   RespondMark: 1
@@ -5774,9 +5800,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -10953,6 +10976,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -11505,13 +11529,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
-  showArmorLists:
-  - Key: 0
-    Value: 0.2
-  - Key: 1
-    Value: 0.5
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -11587,9 +11604,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -11692,13 +11706,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.3
   armorLevel: 1
-  showArmorLists:
-  - Key: 0
-    Value: 0.3
-  - Key: 1
-    Value: 0.3
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -11786,9 +11793,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

@@ -37,6 +37,18 @@ public class BattleManager : Singleton<BattleManager>
     /// <summary>本局选择的全队强化类型（null 表示未选择）</summary>
     private BoosterType[] _activeTeamEnhance;
 
+    /// <summary>团灭判负的宽限时间（秒）。需大于治疗包部署时间，避免最后一次增援还在下落时误判</summary>
+    private const float WipeFailGrace = 10f;
+
+    /// <summary>增援战备（HealBag），初始化后缓存，避免判定时反复遍历</summary>
+    private AirdropController.AirdropData _reinforceAd;
+
+    /// <summary>是否已挂起判负计时器（防重复触发）</summary>
+    private bool _wipeCheckPending;
+
+    /// <summary>团灭判负倒计时计时器，用于中止倒计时</summary>
+    private LogicTimer _wipeTimer;
+
     #region 初始化
 
     public static void Creat(bool isNormal)
@@ -79,6 +91,7 @@ public class BattleManager : Singleton<BattleManager>
 
         ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
         ADCont.Init();
+        CacheReinforceAd();
         ADCont.transform.SetParent(transform);
         BRCont = new GameObject("BattleRoleCont").AddComponent<BattleRoleManager>();
         BRCont.transform.SetParent(transform);
@@ -129,6 +142,7 @@ public class BattleManager : Singleton<BattleManager>
 
         ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
         ADCont.Init();
+        CacheReinforceAd();
         ADCont.transform.SetParent(transform);
         BRCont = new GameObject("BattleRoleCont").AddComponent<BattleRoleManager>();
         BRCont.transform.SetParent(transform);
@@ -227,6 +241,8 @@ public class BattleManager : Singleton<BattleManager>
         BattleEventSub.OnPlayerDead -= OnPlayerDeath;
         //GlobalEventSub.OnOOPartCollect -= OOPartCollect;
         GlobalEventSub.OnDaySwitch -= OnDatSwitch;
+        if (_reinforceAd != null) _reinforceAd.OnStateChange -= OnReinforceStateChange;
+        if (_wipeTimer != null) GameRoot.RemoveTimer(_wipeTimer);
         _initQueue.Clear();
     }
 
@@ -286,6 +302,85 @@ public class BattleManager : Singleton<BattleManager>
     private void OnPlayerDeath(Actor unit)
     {
         //unitQueryGrid.RemoveUnit(unit.GetComponent<Actor>());
+        TryWipeFail();
+    }
+
+    /// <summary>缓存增援战备（HealBag）并订阅其状态变化</summary>
+    private void CacheReinforceAd()
+    {
+        _reinforceAd = ADCont.useAd.FirstOrDefault(item => item.cfg.ID == Constants.HealBag);
+        if (_reinforceAd != null) _reinforceAd.OnStateChange += OnReinforceStateChange;
+    }
+
+    /// <summary>是否全队阵亡</summary>
+    public bool IsTeamWiped =>
+        ActorsManager.Players.Count > 0
+        && ActorsManager.Players.All(item => item.ActorState == ActorState.Dead);
+
+    /// <summary>剩余增援次数（未携带增援时返回 0）</summary>
+    public int ReinforcementCount => _reinforceAd != null ? _reinforceAd.count : 0;
+
+    /// <summary>
+    /// 尝试判定团灭失败：全队阵亡且增援已耗尽（State 为 Unavailable）时进入倒计时并结算失败。
+    /// 倒计时期间逐秒广播剩余秒数，并持续校验条件，被救起则中止。
+    /// </summary>
+    private void TryWipeFail()
+    {
+        if (_wipeCheckPending || !IsStartBattle) return;
+        // 本局未携带增援战备时不判负，避免误伤不带增援的任务
+        if (_reinforceAd == null) return;
+        if (_reinforceAd.State != AirdropController.AirdropState.Unavailable) return;
+        if (!IsTeamWiped) return;
+
+        _wipeCheckPending = true;
+        _wipeTimer = GameRoot.CreateTimer((count) =>
+        {
+            // 逐秒校验：期间可能被在途治疗包救起，或已进入结算流程
+            if (!CheckWipeFailValid())
+            {
+                CancelWipeFail();
+                return;
+            }
+            // 首次回调在 1 秒后（count=0），此时剩余 WipeFailGrace-1 秒
+            BattleEventSub.WipeFailCountdown(WipeFailGrace - count - 1);
+        }, 1, Mathf.CeilToInt(WipeFailGrace), () =>
+        {
+            _wipeTimer = null;
+            _wipeCheckPending = false;
+            // 结算前最后校验一次
+            if (!CheckWipeFailValid()) return;
+            EndGame(1, GameResult.Failure);
+        });
+        // 立即广播初始值，避免首发回调前界面空白
+        BattleEventSub.WipeFailCountdown(WipeFailGrace);
+    }
+
+    /// <summary>团灭判负条件是否仍然成立</summary>
+    private bool CheckWipeFailValid()
+    {
+        if (!IsStartBattle || GameRoot.GameState != GameStateEnum.Game) return false;
+        if (_reinforceAd == null) return false;
+        if (_reinforceAd.State != AirdropController.AirdropState.Unavailable) return false;
+        return IsTeamWiped;
+    }
+
+    /// <summary>中止团灭判负倒计时（被救起或条件失效）</summary>
+    private void CancelWipeFail()
+    {
+        if (_wipeTimer != null)
+        {
+            GameRoot.RemoveTimer(_wipeTimer);
+            _wipeTimer = null;
+        }
+        if (!_wipeCheckPending) return;
+        _wipeCheckPending = false;
+        BattleEventSub.WipeFailCancel();
+    }
+
+    /// <summary>增援战备状态变化：次数耗尽（Unavailable）且全队阵亡时进入判负流程</summary>
+    private void OnReinforceStateChange(AirdropController.AirdropData data, AirdropController.AirdropState state)
+    {
+        if (state == AirdropController.AirdropState.Unavailable) TryWipeFail();
     }
 
     private void OnPlayerCreate(I_Actor unit)

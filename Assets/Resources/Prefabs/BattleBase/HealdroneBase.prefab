@@ -179,15 +179,17 @@ MonoBehaviour:
   AttackRange: 48
   AlertRange: 0
   KnownTargetTimeout: 1
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
   IsSeeingTarget: 0
+  obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
-  showCollider: {fileID: 0}
   RespondMark: 1
 --- !u!1 &4031389201757756416
 GameObject:
@@ -401,8 +403,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 2818738212187947562}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 8233855649297090712}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 0
@@ -427,27 +431,18 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 16
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -459,15 +454,23 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 4f5d4e5eaa0e5104791549cea3dc3f23,
     type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: 1862bb40e3ffecc45a49d24648c354ea, type: 3}
@@ -475,6 +478,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -489,6 +493,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 8300000, guid: 7b83d61917ac1224f942a0609b1221f2, type: 3}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!4 &1588947129576558681 stripped
 Transform:
@@ -848,7 +853,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 0.4
-  damageables: []
+  halfHeight: 0.4
 --- !u!95 &4952577386512971593
 Animator:
   serializedVersion: 5
@@ -905,20 +910,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DetectionModule: {fileID: 2949943331448375281}
   turrets:
-  - chassis: {fileID: 4454821171153398149}
+  - type: 0
+    chassis: {fileID: 4454821171153398149}
     barrel: {fileID: 1588947129576558681}
     weapon: {fileID: 0}
     aimSharpness: 10
+    autoRotateSpeed: 0
     detectionFireDelay: 0
-    aimBlendTime: 0.5
+    minAttackRange: 0
     limitRotation: 20
+    limitFollow: {fileID: 0}
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 1, w: -0.00000004371139}
     dot: 0
+    meleeRangeThreshold: 5
   aiState: 0
   moveSpeed: 5
   floowRaudius: 8
   attackRaudius: 20
+  flag: 0
   _formationOffsetAngle: 0
 --- !u!114 &1919478008454359820
 MonoBehaviour:
@@ -942,7 +953,7 @@ MonoBehaviour:
   inOperate: 0
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
-  audio: {fileID: 0}
+  _audioSource: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0

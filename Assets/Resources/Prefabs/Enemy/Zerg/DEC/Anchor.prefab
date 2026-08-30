@@ -141,6 +141,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1 &1978288453588925801
@@ -5190,7 +5191,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 2.5
-  damageables: []
+  halfHeight: 2.4899998
 --- !u!114 &7189259611297382791
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5217,7 +5218,6 @@ MonoBehaviour:
   damagedTime: 22
   lastDamagedTime: -Infinity
   creatTime: 12
-  AiState: 0
 --- !u!114 &3354291942843070455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5234,6 +5234,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 5223879833850573371}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -5254,6 +5255,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &65810398994913091
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15711,9 +15713,6 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -15764,11 +15763,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 4
-  showArmorLists:
-  - Key: 0
-    Value: 0.9
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect:
@@ -15912,11 +15906,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 3
-  showArmorLists:
-  - Key: 0
-    Value: 0.6
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -16012,11 +16001,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 4
-  showArmorLists:
-  - Key: 0
-    Value: 0.9
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect:
@@ -16072,11 +16056,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 4
-  showArmorLists:
-  - Key: 0
-    Value: 0.9
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 0
   LineArmor: []
   armorBreakEffect:

@@ -218,7 +218,7 @@ MonoBehaviour:
   HpHeight: 0.5
   shape: 0
   rangeLength: 1
-  damageables: []
+  halfHeight: 2.7450008
 --- !u!114 &5654568588082256016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -249,6 +249,8 @@ MonoBehaviour:
       Value: 1
     SoundRadius: 20
     NoSource: 0
+    ExplosionAP: 0
+    demolishValue: 0
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 0}
@@ -295,6 +297,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &2756393078566378911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -309,7 +312,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 500
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 2526569839041457081}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -462,8 +467,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -713,6 +718,11 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1

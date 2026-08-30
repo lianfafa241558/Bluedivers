@@ -64,6 +64,11 @@
 
 **架构改进优先级**：① 统一确定性随机源（`BattleRandom` 与 `WaveManager` 的 `System.Random` 收口）② `I_Damagable`/`I_Entity` 与 Unity 类型解耦为纯逻辑 DTO ③ 统一命名空间 + asmdef rootNamespace ④ 重写 SingletonNet RPC 封装 ⑤ God Class 审查（`BattleManager`/`PlayerController`/`WeaponPlayerController`）⑥ `UnitQueryGrid.FindUnits` List 分配池化。
 
+## 单位竖直占位约定（2026-08-29）
+- `I_Entity.HalfHeight`：单位竖直占位区间 = `[CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]`；**0 = 未配置，消费方退化不做高度过滤**（保证存量行为不变）
+- `Actor.halfHeight` 由编辑器工具 `Tools/单位半高度批量设置`（`Assets/Editor/ActorHalfHeightTool.cs`）按 `AimPoint` 相对 Actor 的局部 Y 批量填充（未旋转时区间底部正好落在 `Pos.y` 脚底）
+- 需要区分空中/地面单位的逻辑（如 `DeployableMine` 触发判定 `InVerticalRange`）必须叠加竖直检测，不能只做平面距离
+
 ## 可复用编辑器基础设施（优先复用，勿重复造轮子）
 - **SO 选择弹窗**：`Assets/Editor/SOPickerPopup.cs` 的 `SOPickerPopup<T>`（全局命名空间，`PopupWindowContent`）。做"从数据里选一个并回调"的可搜索列表弹窗，**优先用** `PopupWindow.Show(rect, new SOPickerPopup<T>(items, onPick, getIcon, getName, getType?, getTypeColor?, getFrame?, confirmMode))`。
   - `confirmMode=false`（默认）单击即回调关闭；`confirmMode=true` 单击选中+确定/取消确认。

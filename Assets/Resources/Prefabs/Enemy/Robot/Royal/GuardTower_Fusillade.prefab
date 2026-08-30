@@ -403,6 +403,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  isImportant: 0
 --- !u!114 &8348494265262561826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -433,7 +434,6 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   PreJudgment: 1
   PreJudgmentFactor: 1
-  AiState: 0
 --- !u!114 &1287047880460393466
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -462,7 +462,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 1
-  damageables: []
+  halfHeight: 2.1849554
 --- !u!195 &5102244574948167641
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1078,6 +1078,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1001 &395271962746345924

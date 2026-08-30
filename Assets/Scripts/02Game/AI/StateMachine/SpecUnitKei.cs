@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using Core;
 using FPSGame.Furn;
 using GameContract;
-
+using PEMaths;
+using TMPro;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -45,7 +46,9 @@ namespace FPSGame.AI
         Vector3 TargetPosition => m_Controller.KnownDetectedTarget.Pos;
 
         float lastSpeechTime, speechShowTime;
-
+        [SerializeField]
+        TextMeshPro text;
+        PEInt helpCool=0;
 
         protected override void Start()
         {
@@ -196,14 +199,24 @@ namespace FPSGame.AI
 
         private void HelpPlayer()
         {
+            if (helpCool > 0) return;
+            bool have= false;
             //到目标点了，尝试对着拉人
             ActorsManager.Players.ForEach((item) => {
-                if (Vector3.Distance(item.Pos, transform.position) <= 2
+                if (Vector3.Distance(item.Pos, transform.position) <= 2.5f
                     && item.transform.TryGetComponent(out Furniture_PlayerDown furn))
                 {
-                    furn.Handle(gameObject);
+                    if (furn.Handle(gameObject))
+                    {
+                        item.transform.GetComponent<Health>().Heal(100);
+                        have = true;
+                    }
                 }
             });
+            if (have)
+            {
+                helpCool = 60;
+            }
         }
 
         private bool IsLockTarget()
@@ -226,6 +239,11 @@ namespace FPSGame.AI
             InvokeCurrentState();
         }
 
+        private void FixedUpdate()
+        {
+            helpCool -= Constants.LoginFrame;
+            text.text = helpCool > 0 ? "" + helpCool.RawInt : "";
+        }
 
         protected override void OnDetectedTarget()
         {

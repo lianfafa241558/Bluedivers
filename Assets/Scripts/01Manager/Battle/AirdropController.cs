@@ -191,10 +191,14 @@ public class AirdropController : MonoBehaviour
         //通过这个事件来让对应的类调用来直接强制释放
         BattleEventSub.SelectAirdrop(Player.gameObject,item);
 
-        if (item.cfg.isDirect)//直接释放（飞鹰装填和升旗）
+        if (item.cfg.isDirect)//直接释放（飞鹰装填和HealBag）
         {
-            //通过 item.OnStateChange事件来执行对应效果 
-            item.State = AirdropState.Ready;
+            // 次数耗尽时保持 Unavailable：Wait 分支扣减后置为 Unavailable，此处不得覆盖回 Ready，
+            // 否则会同时导致"用完后仍能继续呼叫"和"团灭判负无法触发"
+            if (item.State != AirdropState.Unavailable)
+            {
+                item.State = AirdropState.Ready;
+            }
             WaitRelease = null;
         }
         else if (Player.ActorState == ActorState.Hide)

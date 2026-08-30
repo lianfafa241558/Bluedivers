@@ -4,6 +4,7 @@ using Core;
 using FpsGame.Mission;
 using FPSGame.AI;
 using GameContract;
+using PEMaths;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -134,6 +135,7 @@ namespace FPSGame.Game
             // 订阅全局事件
             BattleEventSub.OnMissionStart += OnMissionCreated;
             BattleEventSub.OnMissionCompleted += OnMissionCompleted;
+            BattleEventSub.OnEvacuate += OnEvacuateStart;
 
             GlobalEventSub.OnPlayerCreate += OnPlayerJoin;
             GlobalEventSub.OnFriendCreate += OnPlayerJoin;
@@ -147,6 +149,7 @@ namespace FPSGame.Game
             // 取消事件订阅
             BattleEventSub.OnMissionStart -= OnMissionCreated;
             BattleEventSub.OnMissionCompleted -= OnMissionCompleted;
+            BattleEventSub.OnEvacuate -= OnEvacuateStart;
 
             GlobalEventSub.OnPlayerCreate -= OnPlayerJoin;
             GlobalEventSub.OnFriendCreate -= OnPlayerJoin;
@@ -296,6 +299,30 @@ namespace FPSGame.Game
             RefreshAllPlayerRequiredHeat();
 
 
+        }
+
+        /// <summary>
+        /// 玩家开始撤离时，所有巡逻队重新设置巡逻目标点
+        /// 目标点为：从巡逻队当前点，经过撤离点，延伸到地图边界的点
+        /// </summary>
+        /// <param name="evacuatePos">撤离点位置</param>
+        private void OnEvacuateStart(PEVector3 evacuatePos)
+        {
+            Vector3 evacuate = evacuatePos.RawVector3;
+
+            foreach (var enemy in ActorsManager.Enemys)
+            {
+                if (enemy == null || enemy.gameObject == null) continue;
+                if (!enemy.gameObject.TryGetComponent(out EnemyController controller)) continue;
+                if (controller.PatrolPos == default) continue; // 仅巡逻队重新定向
+
+                Vector3 from = controller.transform.position;
+                Vector2 dir = (evacuate - from).ToVector2();
+                if (dir.sqrMagnitude < 0.0001f) continue; // 已在撤离点，无方向
+
+                controller.PatrolPos = Tool.GetCircleIntersection(
+                    mapCenter, mapRadius + 30, from.ToVector2(), dir).ToVector3();
+            }
         }
 
         /// <summary>

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using Core.Interface;
+using FPSGame.Attribute;
 using GameContract;
 
 
@@ -41,6 +42,7 @@ namespace FPSGame.Game
 
         Random random;
         BattleManager manager;
+        [DisplayField]
         EnemyVarietyType enemyVarietyType;
 
         private void Awake()

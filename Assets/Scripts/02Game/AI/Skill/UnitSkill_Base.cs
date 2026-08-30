@@ -4,6 +4,7 @@ using Core;
 using FPSGame.Attribute;
 using GameContract;
 using Unity.Collections;
+using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 
@@ -16,10 +17,33 @@ namespace FPSGame.AI
         public int Cool;
         [InspectorName("技能持续")]
         public int Duration;
+
+        /// <summary>
+        /// 释放类型：被动=冷却结束即释放；主动=需要目标且接战时间达标；受击=受击/攻击后提前接战时间触发
+        /// </summary>
+        [InspectorName("释放类型")]
+        public SkillReleaseType releaseType = SkillReleaseType.Active;
+
+        /// <summary>
+        /// 需要接战时间（仅主动/受击类型使用）
+        /// </summary>
         [InspectorName("需要接战时间")]
+        [Compare("releaseType", (int)SkillReleaseType.Passive, CompareOperate.NotEqual)]
         public int MeetDetectedTime;
+
+        /// <summary>
+        /// 触发范围（仅主动/受击类型使用）
+        /// </summary>
         [InspectorName("触发范围")]
+        [Compare("releaseType", (int)SkillReleaseType.Passive, CompareOperate.NotEqual)]
         public float Range;
+
+        /// <summary>
+        /// 受击后触发技能的时间（仅受击类型生效）：受击/攻击后接战时间提前到此值触发
+        /// </summary>
+        [InspectorName("受击后触发技能的时间")]
+        [Compare("releaseType", (int)SkillReleaseType.Damaged, CompareOperate.Equal)]
+        public float DamageSkillTime;
 
         [InspectorName("标旗")]
         [SerializeField]
@@ -53,6 +77,12 @@ namespace FPSGame.AI
             m_Controller.OnDie += OnDeath;
             nowCoolTime = 0;
             isDead = false;
+            //受击类型：受击/攻击后提前接战时间，加速技能释放
+            if (releaseType == SkillReleaseType.Damaged)
+            {
+                m_Controller.OnDamaged += OnDamagedSkill;
+                m_Controller.OnAttack += OnAttackSkill;
+            }
             Init();
         }
         private void OnDestroy()
@@ -61,6 +91,11 @@ namespace FPSGame.AI
             m_Controller.OnDetectedTarget -= OnDetectedTarget;
             m_Controller.OnLostTarget -= OnLostTarget;
             m_Controller.OnDie -= OnDeath;
+            if (releaseType == SkillReleaseType.Damaged)
+            {
+                m_Controller.OnDamaged -= OnDamagedSkill;
+                m_Controller.OnAttack -= OnAttackSkill;
+            }
 
             Uninit();
         }
@@ -89,6 +124,9 @@ namespace FPSGame.AI
             else
             {
                 TickCool();
+
+                //被动技能无需目标/接战时间，冷却结束即可释放
+                if (releaseType == SkillReleaseType.Passive) return true;
 
                 if (m_HaveTarget&&HaveTag(SkillTag.MeetTargetInRange))
                 {
@@ -153,13 +191,34 @@ namespace FPSGame.AI
         }
 
         /// <summary>
+        /// 受击后提前接战时间，加速技能释放（受击类型专用）
+        /// </summary>
+        void OnDamagedSkill(Collider _)
+        {
+            m_LastDetectedTarget = Mathf.Min(m_LastDetectedTarget, Time.time - MeetDetectedTime + DamageSkillTime);
+        }
+
+        /// <summary>
+        /// 攻击后提前接战时间，加速技能释放（受击类型专用）
+        /// </summary>
+        void OnAttackSkill(WeaponBaseController _)
+        {
+            m_LastDetectedTarget = Mathf.Min(m_LastDetectedTarget, Time.time - MeetDetectedTime + DamageSkillTime);
+        }
+
+        /// <summary>
         /// 允许释放
         /// </summary>
         /// <returns></returns>
         protected bool CanExecute()
         {
-            return nowCoolTime <= 0
-                && MeetDetectedTime + m_LastDetectedTarget < Time.time
+            if (nowCoolTime > 0) return false;
+
+            //被动：冷却结束即释放，无需目标/接战时间
+            if (releaseType == SkillReleaseType.Passive) return true;
+
+            //主动/受击：需要目标且接战时间达标（受击由技能内订阅事件提前 m_LastDetectedTarget 触发）
+            return MeetDetectedTime + m_LastDetectedTarget < Time.time
                 && HaveTarget(out var actor)
                 && TargetVaild(actor);
         }
@@ -179,6 +238,19 @@ namespace FPSGame.AI
                 || actor.Type.HasFlag(UnitTypeEnum.Friend));
         }
 
+
+        /// <summary>
+        /// 技能释放类型
+        /// </summary>
+        public enum SkillReleaseType
+        {
+            /// <summary>被动：冷却结束就释放，无需目标</summary>
+            [InspectorName("被动")] Passive,
+            /// <summary>主动：需要目标且接战时间达标</summary>
+            [InspectorName("主动")] Active,
+            /// <summary>受击：受击/攻击后提前接战时间触发</summary>
+            [InspectorName("受击")] Damaged,
+        }
 
         [System.Flags]
         protected enum SkillTag

@@ -257,7 +257,7 @@ namespace FpsGame.Mission
             countDown = m_EvacuateTime;//如果有撤离效果就变短
             if(IsComplete) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
             CreatNotice("Ayane", "CountDownBegins");
-
+            BattleEventSub.Evacuate(new(pos));
         }
 
         private void EndWait()

@@ -317,6 +317,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         }
         Constants.TaskBorder = task.MapBorder;
         GameRoot.GameState = GameStateEnum.Ready;
+        WndManager.Instance.CreatCountDown(()=> nowTask.Countdown,CountDownTypeEnum.Blue);
     }
 
     /// <summary>
