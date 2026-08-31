@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using FPSGame.Furn;
 using GameContract;
-
+using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -75,7 +75,9 @@ namespace FPSGame.Gameplay
             Owner = actor;
             m_PlayerCharacterController = Owner.gameObject.GetComponent<PlayerController>();
             m_InputHandler = Owner.gameObject.GetComponent<PlayerInputHandler>();
-            transform.parent = m_PlayerCharacterController.ModleRoot.transform;
+            // 挂到玩家承载组件的背部点位，未配置则回退到玩家模型根
+            var mountPoint = Owner.gameObject.GetComponent<PlayerMountPoint>();
+            transform.parent = mountPoint != null && mountPoint.BackPoint ? mountPoint.BackPoint : m_PlayerCharacterController.ModleRoot.transform;
             transform.localEulerAngles = Vector3.zero;
             transform.localPosition = Vector3.zero;
             //CurrentFillRatio = 1f;

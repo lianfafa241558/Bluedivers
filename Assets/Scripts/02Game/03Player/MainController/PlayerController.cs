@@ -25,6 +25,10 @@ public partial class PlayerController : BaseSelfMoveableController
     [InspectorName("玩家倒地摄像机")]
     private Camera PlayerDownCamera;
 
+
+    [InspectorName("拾取道具点")]
+    public Transform HandPoint;
+
     private Vector3 _downCameraVelocity;
 
     [Range(0, 1f)]
@@ -129,6 +133,7 @@ public partial class PlayerController : BaseSelfMoveableController
 
     private void OnDestroy()
     {
+       
         if (!WeaponsManager) return;
         WeaponsManager.OnAim -= OnAim;
     }
@@ -220,6 +225,9 @@ public partial class PlayerController : BaseSelfMoveableController
                 PlayerCamera.gameObject.SetActive(false);
             }
         }
+
+        // 玩家进载具等被禁用时广播，供手持装备等订阅（用于进载具丢下不可携带装备）
+        OnEnterVehicle?.Invoke();
     }
 
     public void OnAim(bool state)
@@ -282,6 +290,9 @@ public partial class PlayerController : BaseSelfMoveableController
             _aimController = modleRoot.GetComponent<AimController>();
             if (_aimController) _aimController.enabled = false;
         }
+
+        // 模型加载完成，广播给 PlayerMountPoint 等订阅方（解析动态模型内的 IK/背部点位）
+        OnBodySet?.Invoke();
     }
 
 

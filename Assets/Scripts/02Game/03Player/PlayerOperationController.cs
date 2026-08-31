@@ -133,7 +133,7 @@ public class PlayerOperationController : MonoBehaviour
 
     private void TrySetTarget(RaycastHit hit)
     {
-        var newtar = hit.transform.GetComponent<IFurniture>();
+        var newtar = hit.transform.GetComponentInParent<IFurniture>();
         if(target != newtar && (newtar == null || newtar.CanOperate(gameObject)))
         {
             if (target != null && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;

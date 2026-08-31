@@ -69,8 +69,8 @@ public class CountDownWnd : Window
     /// <summary>每次显示数值跳变时触发(参数为当前剩余秒数)</summary>
     public event Action<int> OnValueChanged;
 
-    /// <summary>倒计时归零时触发</summary>
-    public event Action OnFinished;
+    ///// <summary>倒计时归零时触发</summary>
+    //public event Action OnFinished;
 
     /// <summary>是否正在显示倒计时动画区域</summary>
     public bool IsCounting => _valueProvider != null;

@@ -784,16 +784,21 @@ namespace Unity.FPS.Gameplay
         /// </summary>
         public void SwitchWeapon(bool ascendingOrder)
         {
+            // 战斗中滚轮只在可切换槽位0-3内（投掷/信号枪/空手有各自呼出方式，不参与滚轮切换）；
+            // 大厅等非战斗状态允许滚轮切换所有武器槽位
+            bool inGame = GameRoot.GameState == GameStateEnum.Game;
+            int loopEnd = inGame ? MaxSwitchableSlotIndex : m_WeaponSlots.Length - 1;
+            int cycleBase = inGame ? SwitchableSlotCount : m_WeaponSlots.Length;
+
             int newWeaponIndex = -1;
             int closestSlotDistance = m_WeaponSlots.Length;
-            //只在可切换槽位0-3内寻找（投掷/信号枪/空手有各自呼出方式，不参与滚轮切换）
-            for (int i = 0; i <= MaxSwitchableSlotIndex; ++i)
+            for (int i = 0; i <= loopEnd; ++i)
             {
                 //如果此插槽的武器有效，则计算其与活动插槽索引的"距离"（按升序或降序排列）
                 //如果距离最近，请选择
                 if (i != ActiveWeaponIndex && GetWeaponAtSlotIndex(i) != null)
                 {
-                    int distanceToActiveIndex = GetDistanceBetweenWeaponSlots(ActiveWeaponIndex, i, ascendingOrder);
+                    int distanceToActiveIndex = GetDistanceBetweenWeaponSlots(ActiveWeaponIndex, i, ascendingOrder, cycleBase);
                     if (distanceToActiveIndex < closestSlotDistance)
                     {
                         closestSlotDistance = distanceToActiveIndex;
@@ -890,7 +895,7 @@ namespace Unity.FPS.Gameplay
         }
 
         /// <summary>
-        /// 添加武器
+        /// 添加武器（生成新实例入槽）
         /// </summary>
         /// <param name="weaponPrefab"></param>
         /// <returns></returns>
@@ -902,47 +907,112 @@ namespace Unity.FPS.Gameplay
                 return false;
             }
 
-            //按武器类型的映射槽位放置（主0/副1/支援2/特殊3/投掷4/信号枪5/空手6），槽位被占则添加失败
+            // 按武器类型的映射槽位放置（主0/副1/支援2/特殊3/投掷4/信号枪5/空手6），槽位被占则添加失败
             int i = SlotOf(weaponPrefab.WeaponTypeEnum);
-            if (i < m_WeaponSlots.Length && m_WeaponSlots[i] == null)
-                {
-                    // 将武器预制件作为武器插座的子对象生成
-                    //但是因为切人物时人物隐藏，因此必须先创建，再移动到武器根
-                    WeaponPlayerController weaponInstance = Instantiate(weaponPrefab);
-                    weaponInstance.transform.SetParent(WeaponParentSocket);
-                    weaponInstance.transform.localPosition = Vector3.zero;
-                    weaponInstance.transform.localRotation = Quaternion.identity;
-                    //将所有者设置为该游戏对象，以便武器可以相应地更改投射物/伤害逻辑
-                    weaponInstance.PlayerIndex = m_PlayerCharacterController.PlayerIndex;
-                    weaponInstance.Owner = gameObject;
-                    SetWeaponState(weaponInstance, false);
-
-                    //为武器指定第一人称图层
-                    int layerIndex =
-                        Mathf.RoundToInt(Mathf.Log(FpsWeaponLayer.value,
-                            2)); //此函数将层掩码转换为层索引
-                    foreach (Transform t in weaponInstance.gameObject.GetComponentsInChildren<Transform>(true))
-                    {
-                        t.gameObject.layer = layerIndex;
-                    }
-
-                    m_WeaponSlots[i] = weaponInstance;
-                    
-                    OnAddedWeapon?.Invoke(weaponInstance, i);
-                    var arch = ArchiveSvc.Archive.GetRoleCfg(m_PlayerCharacterController.Id);
-                    var lenghts = weaponInstance.UpgradeCount();
-                    var archWeaponData = ArchiveSvc.Archive.weaponUpgradeDic.TryGet(arch.ID + "_" + weaponInstance.WeaponName, new(arch.ID + "_" + weaponInstance.WeaponName, lenghts.Length));
-                    weaponInstance.ApplyUpgrade(archWeaponData.selectIndex, archWeaponData.selectModuleIndex);
-
-                    if (GetActiveWeapon() == null)
-                    { 
-                        //如果当前没有武器，则自动切换到这个武器
-                        SwitchToWeaponIndex(i,true,false);
-                    }
-                    return true;
+            if (i >= m_WeaponSlots.Length || m_WeaponSlots[i] != null)
+            {
+                return false;
             }
 
-            return false;
+            // 将武器预制件作为武器插座的子对象生成
+            //但是因为切人物时人物隐藏，因此必须先创建，再移动到武器根
+            WeaponPlayerController weaponInstance = Instantiate(weaponPrefab);
+            return EquipGroundWeapon(weaponInstance, i);
+        }
+
+        /// <summary>
+        /// 拾取地面武器入槽（接收已存在实例，不重新生成、保留弹药/升级状态）。
+        /// 入槽后禁用其 Furniture_WeaponPickup 组件，使其脱离交互列表。
+        /// </summary>
+        /// <param name="weaponInstance">已存在的地面武器实例</param>
+        /// <returns>是否成功入槽</returns>
+        public bool EquipGroundWeapon(WeaponPlayerController weaponInstance)
+        {
+            int i = SlotOf(weaponInstance.WeaponTypeEnum);
+            if (i >= m_WeaponSlots.Length || m_WeaponSlots[i] != null || weaponInstance == null)
+            {
+                return false;
+            }
+            return EquipGroundWeapon(weaponInstance, i);
+        }
+
+        /// <summary>
+        /// 装载武器实例到指定槽位（AddWeapon / EquipGroundWeapon 共用）。
+        /// </summary>
+        bool EquipGroundWeapon(WeaponPlayerController weaponInstance, int i)
+        {
+            if (i < 0 || i >= m_WeaponSlots.Length || m_WeaponSlots[i] != null || weaponInstance == null)
+            {
+                return false;
+            }
+
+            weaponInstance.transform.SetParent(WeaponParentSocket);
+            weaponInstance.transform.localPosition = Vector3.zero;
+            weaponInstance.transform.localRotation = Quaternion.identity;
+            //将所有者设置为该游戏对象，以便武器可以相应地更改投射物/伤害逻辑
+            weaponInstance.PlayerIndex = m_PlayerCharacterController.PlayerIndex;
+            weaponInstance.Owner = gameObject;
+            SetWeaponState(weaponInstance, false);
+
+            //为武器指定第一人称图层
+            int layerIndex =
+                Mathf.RoundToInt(Mathf.Log(FpsWeaponLayer.value,
+                    2)); //此函数将层掩码转换为层索引
+            foreach (Transform t in weaponInstance.gameObject.GetComponentsInChildren<Transform>(true))
+            {
+                t.gameObject.layer = layerIndex;
+            }
+
+            m_WeaponSlots[i] = weaponInstance;
+
+            OnAddedWeapon?.Invoke(weaponInstance, i);
+            // 支援武器没有改装（进战斗后捡起），不套用角色存档的武器升级配置
+            if (weaponInstance.WeaponTypeEnum != WeaponTypeEnum.Support)
+            {
+                var arch = ArchiveSvc.Archive.GetRoleCfg(m_PlayerCharacterController.Id);
+                var lenghts = weaponInstance.UpgradeCount();
+                var archWeaponData = ArchiveSvc.Archive.weaponUpgradeDic.TryGet(arch.ID + "_" + weaponInstance.WeaponName, new(arch.ID + "_" + weaponInstance.WeaponName, lenghts.Length));
+                weaponInstance.ApplyUpgrade(archWeaponData.selectIndex, archWeaponData.selectModuleIndex);
+            }
+
+            if (GetActiveWeapon() == null)
+            {
+                //如果当前没有武器，则自动切换到这个武器
+                SwitchToWeaponIndex(i, true, false);
+            }
+
+            // 入槽后禁用拾取交互组件，脱离 Furniture_Attached.list 不再被交互扫描
+            var pickup = weaponInstance.GetComponent<Furniture_WeaponPickup>();
+            if (pickup != null)
+            {
+                pickup.enabled = false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 摘除武器但不销毁（轮盘卸载落地时使用）：出槽 + 断订阅 + 自动切换。
+        /// </summary>
+        public void DetachWeapon(WeaponPlayerController weaponInstance)
+        {
+            for (int i = 0; i < m_WeaponSlots.Length; i++)
+            {
+                if (m_WeaponSlots[i] != weaponInstance) continue;
+
+                m_WeaponSlots[i] = null;
+                OnRemovedWeapon?.Invoke(weaponInstance, i);
+                // 只退订事件（卸载落地场景不调 ShowWeapon(false)，否则 WeaponRoot 被隐藏导致落地模型消失）
+                weaponInstance.OnShoot -= _OnShoot;
+                weaponInstance.OnWantShootChange -= OnWantShootChange;
+
+                // 若卸载的是主手武器，自动切换到下一把可用武器（SwitchWeapon 会跳过已置空的当前槽）
+                if (i == ActiveWeaponIndex)
+                {
+                    SwitchWeapon(true);
+                }
+                return;
+            }
         }
 
         public bool RemoveWeapon(WeaponPlayerController weaponInstance)
@@ -1059,7 +1129,7 @@ namespace Unity.FPS.Gameplay
 
         //计算两个武器槽索引之间的"距离"
         //例如：如果我们有5个武器插槽，插槽2和4之间的距离按升序排列是2，按降序排列是3
-        int GetDistanceBetweenWeaponSlots(int fromSlotIndex, int toSlotIndex, bool ascendingOrder)
+        int GetDistanceBetweenWeaponSlots(int fromSlotIndex, int toSlotIndex, bool ascendingOrder, int cycleBase)
         {
             int distanceBetweenSlots = 0;
 
@@ -1074,7 +1144,7 @@ namespace Unity.FPS.Gameplay
 
             if (distanceBetweenSlots < 0)
             {
-                distanceBetweenSlots = SwitchableSlotCount + distanceBetweenSlots;
+                distanceBetweenSlots = cycleBase + distanceBetweenSlots;
             }
 
             return distanceBetweenSlots;

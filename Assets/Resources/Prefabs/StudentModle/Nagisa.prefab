@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7489332856178505838
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 377685040160023270}
+  m_Layer: 0
+  m_Name: BackPoint
+  m_TagString: BackPoint
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &377685040160023270
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7489332856178505838}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.50315624, y: 0.49824932, z: 0.4866628, w: 0.5116061}
+  m_LocalPosition: {x: 1.0328188, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5137805327763404150}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9200549920457306076
 GameObject:
   m_ObjectHideFlags: 0
@@ -1446,6 +1477,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 5345023965813708363}
+    - targetCorrespondingSourceObject: {fileID: 1366592693543313199, guid: 91e5c8a34aa351c46aff58f398a7875e,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 377685040160023270}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 91e5c8a34aa351c46aff58f398a7875e,
         type: 3}

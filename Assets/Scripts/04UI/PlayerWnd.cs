@@ -119,11 +119,9 @@ public partial class PlayerWnd : Window
         SetActive(playerRoot, isNormal);
         SetActive(timeShow.parent, isNormal);
         
-        for (int i = 0; i < 3; ++i)
+        for (int i = 0; i < weaponList.transform.childCount; ++i)
         {
-            var item = m_WeaponsManager.GetWeaponAtSlotIndex(i);
-            //支援武器初始为空（进战斗后捡起），空槽清空图标即可
-            SetSprite(weaponList.transform.GetChild(i, 0), item ? item.WeaponIcon : null);
+            RefreshWeaponSlot(i);
         }
 
         m_WeaponsManager.OnAddedWeapon += AddWeapon;
@@ -313,15 +311,28 @@ public partial class PlayerWnd : Window
             weaponList.alpha = Mathf.Lerp(weaponList.alpha, -0.1f,2*Time.deltaTime);
         }
     }
-    //讲道理我们根本不会添加武器和移除武器
+    // 武器增删（拾取/卸载支援武器）时刷新武器栏对应槽位
     void AddWeapon(WeaponPlayerController newWeapon, int weaponIndex)
     {
-
+        RefreshWeaponSlot(weaponIndex);
     }
 
     void RemoveWeapon(WeaponPlayerController newWeapon, int weaponIndex)
     {
+        RefreshWeaponSlot(weaponIndex);
+    }
 
+    /// <summary>
+    /// 刷新武器栏第 index 个槽位：有武器则显示子项并设图标，空则隐藏子项。
+    /// </summary>
+    void RefreshWeaponSlot(int index)
+    {
+        if (index < 0 || index >= weaponList.transform.childCount) return;
+        var slot = weaponList.transform.GetChild(index);
+        var item = m_WeaponsManager.GetWeaponAtSlotIndex(index);
+        // 空槽隐藏对应 UI 物体（如支援武器初始为空），有武器则显示并设图标
+        SetActive(slot.gameObject, item != null);
+        SetSprite(weaponList.transform.GetChild(index, 0), item ? item.WeaponIcon : null);
     }
     /// <summary>
     /// 切换武器
@@ -359,12 +370,15 @@ public partial class PlayerWnd : Window
             }
             
             int index = m_WeaponsManager.ActiveWeaponIndex;
-            if (index < 3)
+            if (index < weaponList.transform.childCount)
             {
                 m_LastChangeTime = Time.time;
-                for (int i = 0; i < 3; ++i)
+                // 遍历全部槽位（含支援武器），当前激活项高亮，其余调暗；隐藏项保持隐藏
+                for (int i = 0; i < weaponList.transform.childCount; ++i)
                 {
-                    weaponList.transform.GetChild(i).GetComponent<CanvasGroup>().alpha = index == i ? 1 : 0.5f;
+                    var slot = weaponList.transform.GetChild(i);
+                    if (!slot.gameObject.activeSelf) continue;
+                    slot.GetComponent<CanvasGroup>().alpha = index == i ? 1 : 0.5f;
                 }
             }
             SetActive(weaponNameL.parent, false);
