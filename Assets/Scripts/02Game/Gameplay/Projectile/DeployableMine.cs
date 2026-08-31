@@ -28,8 +28,8 @@ namespace Unity.FPS.Gameplay
         [InspectorName("触发范围")]
         [SerializeField]
         private float TriggerRange = 0.7f;
-        [InspectorName("竖直触发范围(0=同触发范围)")]
-        [Tooltip("判定单位竖直占位区间与地雷高度差时使用的容差；为 0 时复用触发范围")]
+        [InspectorName("触发距离(0=同触发范围)")]
+        [Tooltip("实际3D距离判定使用的容差；为 0 时复用触发范围")]
         [SerializeField]
         private float VerticalRange = 0f;
         [InspectorName("智能(只炸敌方队伍)")]
@@ -86,13 +86,14 @@ namespace Unity.FPS.Gameplay
 
             // 通过空间网格查询触发范围内的单位（返回 I_Actor，可直接获得队伍信息做智能判定）
             // 注意：TargetCfg.Enemy 只匹配 UnitTypeEnum.Enemy，查不到玩家(Player)，必须用匹配所有类型的目标配置
-            // 注意：空间网格内部已用 range.Overlaps(unit.Range) 按"地雷触发范围 与 单位占位范围相交"筛选，
-            // 不能再按单位中心点距离判断，否则地雷黏在巨型敌人身上时中心点离黏附表面过远会导致不炸
+            // 注意：空间网格内部已用 range.Overlaps(unit.Range) 做"地雷触发范围 与 单位占位范围相交"的水平预筛，
+            // 最终是否引爆由 InTriggerRange 按"地雷到单位实际3D距离"判定，
+            // 不能直接按单位中心点距离判断，否则地雷黏在巨型敌人身上时中心点离黏附表面过远会导致不炸
             var units = BattleManager.Instance.FindUnits(
                 new PECircle((PEVector2)Root.position, (PEInt)TriggerRange),
                 TargetCfg.EnemyAI,
-                // 智能地雷：只炸与地雷不同队伍的存活目标；竖直方向必须在触发高度内(避免炸到空中单位)
-                item => FpsHelper.VaildTarget(item) && (!intelligent || item.Team != team) && InVerticalRange(item));
+                // 智能地雷：只炸与地雷不同队伍的存活目标；按实际3D距离判定(避免高空掠过的单位误触发)
+                item => FpsHelper.VaildTarget(item) && (!intelligent || item.Team != team) && InTriggerRange(item));
 
             foreach (var actor in units)
             {
@@ -104,23 +105,31 @@ namespace Unity.FPS.Gameplay
         }
 
         /// <summary>
-        /// 竖直方向判定：单位竖直占位区间 [CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]
-        /// 与地雷触发球(半径 竖直触发范围)是否相交，避免地雷对高空单位生效
+        /// 实际距离判定：由单位中心点与单位高度构成竖直占位区间 [CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]
+        /// （半高度未配置(<=0)时退化为单位中心点本身），水平方向以单位占位边缘(中心距 - HalfRange)计。
+        /// 实际距离 = 水平间隙与竖直间隙合成的 3D 距离，仅当不超过触发距离才可引爆，
+        /// 避免高空掠过的飞行单位(如治疗无人机)误触发，同时保证地雷黏在巨型单位表面时仍能正常引爆。
         /// </summary>
-        bool InVerticalRange(I_Actor actor)
+        bool InTriggerRange(I_Actor actor)
         {
-            // 未配置半高度(0)的单位不做竖直过滤，保持原有的平面判定行为
-            if (actor.HalfHeight <= 0f) return true;
-
             float range = VerticalRange > 0f ? VerticalRange : TriggerRange;
-            float centerY = actor.CenterPos.y;
-            float mineY = Root.position.y;
-            float bottom = centerY - actor.HalfHeight;
-            float top = centerY + actor.HalfHeight;
 
-            // 地雷高度到单位竖直区间的距离
-            float gap = mineY < bottom ? bottom - mineY : (mineY > top ? mineY - top : 0f);
-            return gap <= range;
+            // 竖直间隙：地雷高度到单位竖直占位区间的距离(未配置半高度时按中心点计算)
+            float centerY = actor.CenterPos.y;
+            float halfH = actor.HalfHeight;
+            float bottom = centerY - halfH;
+            float top = centerY + halfH;
+            float mineY = Root.position.y;
+            float vertGap = mineY < bottom ? bottom - mineY : (mineY > top ? mineY - top : 0f);
+
+            // 水平间隙：到单位水平占位边缘的距离，扣除单位半径保证黏在巨型单位表面时仍可触发
+            Vector2 mineXZ = new Vector2(Root.position.x, Root.position.z);
+            Vector2 unitXZ = new Vector2(actor.CenterPos.x, actor.CenterPos.z);
+            float horizGap = Mathf.Max(0f, Vector2.Distance(mineXZ, unitXZ) - actor.HalfRange);
+
+            // 实际(3D)距离
+            float actualDist = Mathf.Sqrt(horizGap * horizGap + vertGap * vertGap);
+            return actualDist <= range;
         }
 
         /// <summary>生命周期结束(超时)：未爆炸则直接回收</summary>

@@ -166,6 +166,8 @@ namespace Unity.FPS.Game
         public float HpHeight=1;
 
 
+        #endregion
+
         #region 逻辑碰撞
         [Foldout("逻辑碰撞", true)]
         public ShapeType shape= ShapeType.Circle;
@@ -189,8 +191,6 @@ namespace Unity.FPS.Game
         Damageable[] damageables;
         [HideInInspector]
         I_Damagable mainDamageable;
-        #endregion
-
         #endregion
 
         private bool isInitialized;

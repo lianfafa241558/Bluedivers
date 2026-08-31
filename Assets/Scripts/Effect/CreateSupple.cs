@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utils;
 
-[AddComponentMenu("创建场景物体/补给品")]
+[AddComponentMenu("创建场景物体/场景物品")]
 public class CreatSupple : MonoBehaviour
 {
     [SerializeField]
     float range, probability=50;
     [SerializeField]
-    GameObject prefab;
+    GameObject[] prefabs;
 
     void Start()
     {
@@ -22,7 +22,7 @@ public class CreatSupple : MonoBehaviour
         {
             if (BattleManager.Instance.BattleRandom.Bool(copiedProbability))
             {
-                Instantiate(prefab, pos, default, parent);
+                Instantiate(prefabs.RandomTake(BattleManager.Instance.BattleRandom), pos, default, parent);
             }
         });
 

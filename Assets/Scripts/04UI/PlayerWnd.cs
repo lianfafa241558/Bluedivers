@@ -121,8 +121,9 @@ public partial class PlayerWnd : Window
         
         for (int i = 0; i < 3; ++i)
         {
-            var item = m_WeaponsManager.GetWeaponAtSlotIndex(i) ;
-            SetSprite(weaponList.transform.GetChild(i, 0), item.WeaponIcon);
+            var item = m_WeaponsManager.GetWeaponAtSlotIndex(i);
+            //支援武器初始为空（进战斗后捡起），空槽清空图标即可
+            SetSprite(weaponList.transform.GetChild(i, 0), item ? item.WeaponIcon : null);
         }
 
         m_WeaponsManager.OnAddedWeapon += AddWeapon;
@@ -286,7 +287,7 @@ public partial class PlayerWnd : Window
         //迫于无奈，直接这边获取了
         SetText(nowAmmoR, m_ActiveWeapon.Magazine.CurrValue.RawInt);
         SetText(remainAmmoR, m_ActiveWeapon.Ammo.CurrValue.RawInt);
-        var grenade = m_WeaponsManager.GetWeaponAtSlotIndex((int)WeaponTypeEnum.Grenade);
+        var grenade = m_WeaponsManager.GetWeaponAtSlotIndex(PlayerWeaponsManager.SlotOf(WeaponTypeEnum.Grenade));
            
         SetText(GrenadeCount, grenade.Ammo.CurrValue.RawInt + grenade.Magazine.CurrValue.RawInt);
          

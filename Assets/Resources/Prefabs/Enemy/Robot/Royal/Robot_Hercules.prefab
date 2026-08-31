@@ -409,9 +409,6 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 1
   armorValue: 500
   LineArmor: []
   armorBreakEffect: []
@@ -469,7 +466,7 @@ Transform:
   m_GameObject: {fileID: 3523374148779426995}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -498,11 +495,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
-  showArmorLists:
-  - Key: 1
-    Value: 0.5
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -531,7 +523,7 @@ CapsuleCollider:
   m_Radius: 7
   m_Height: 24
   m_Direction: 2
-  m_Center: {x: 0, y: 5, z: 6}
+  m_Center: {x: 0, y: 1, z: 6}
 --- !u!1 &4844735636262297004
 GameObject:
   m_ObjectHideFlags: 0
@@ -5518,8 +5510,8 @@ MonoBehaviour:
   UseHpBar: 1
   HpHeight: 2
   shape: 0
-  rangeLength: 10
-  damageables: []
+  rangeLength: 12
+  halfHeight: 12
 --- !u!195 &4201340165210355672
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -5558,6 +5550,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 1857799104042451175}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -5578,6 +5571,8 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
+  isImportant: 0
 --- !u!114 &3894886327015234027
 MonoBehaviour:
   m_ObjectHideFlags: 0

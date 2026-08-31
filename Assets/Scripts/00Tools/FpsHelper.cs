@@ -67,7 +67,8 @@ public static class FpsHelper
                 DamageSource = target.gameObject,
                 Pos = point,
                 DemolishValue = 0,
-                isDirect = true
+                isDirect = true,
+                damageAffected = null,
             };
             damageable.InflictDamage(thornPacket);
         }
@@ -144,6 +145,7 @@ public static class FpsHelper
                 Pos = point,
                 DemolishValue = damageData.GetDemolishValue(),
                 isDirect = true,
+                damageAffected = collider,
             };
             comp.InflictDamage(directPacket);
         }
@@ -165,8 +167,9 @@ public static class FpsHelper
             //Debug.LogWarning("范围" + "内的目标数量"+ list.Count);
             foreach (Damageable item in list)//每一个伤害组件
             {
+                Collider exolosionCollider = item.ClosestCollider(point);
                 PEInt value = 0; 
-                if (PEVector3.Distance((PEVector3)item.transform.position, (PEVector3)point)<= damageInnerRadius)
+                if (PEVector3.Distance((PEVector3)exolosionCollider.bounds.center, (PEVector3)point)<= damageInnerRadius)
                 {
                     value = damageData.GetExplosionDamage(charg, 0) * damageScale;
                 }
@@ -190,6 +193,7 @@ public static class FpsHelper
                         Pos = point,
                         DemolishValue = damageData.GetDemolishValue(),
                         isDirect = false,
+                        damageAffected = exolosionCollider,
                     };
                     item.InflictDamage(explosionPacket);
                 }

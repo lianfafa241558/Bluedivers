@@ -95,8 +95,12 @@ namespace Unity.FPS.Game
         [SerializeField]
         private float showArmor;
 
+        /// <summary>获取当前护甲剩余比例（0~1）</summary>
+        /// <returns>剩余护甲 / 基础护甲值</returns>
         public float GetArmorRatio() => remainArmor.RawFloat / armorValue;
 
+        /// <summary>标记为部件主体，并在主体死亡时连带销毁该部件</summary>
+        /// <param name="health">主体的 Health 组件，其 OnDie 事件将触发部件销毁</param>
         public void SetIsMain(Health health)
         {
             isMain = true;
@@ -104,6 +108,7 @@ namespace Unity.FPS.Game
         }
 
 
+        /// <summary>初始化：按任务难度缩放护甲值，收集自身与关联护甲的碰撞体，查找 Health/Actor 引用并记录护甲破坏效果初始状态</summary>
         void Awake()
         {
 
@@ -168,6 +173,9 @@ namespace Unity.FPS.Game
             }
         }
 
+        /// <summary>获取距指定位置最近的碰撞体（含关联护甲的碰撞体）</summary>
+        /// <param name="pos">参考位置（通常为伤害来源点）</param>
+        /// <returns>距离最近的 Collider；无碰撞体时返回 null 并报错</returns>
         public Collider ClosestCollider(Vector3 pos) {
             if (m_colliders.Length == 0)
             {
@@ -230,6 +238,8 @@ namespace Unity.FPS.Game
 
 
 
+        /// <summary>结算伤害入口：依次处理友军减伤、全队强化、弱点加成、爆炸抗性、穿甲等级，拆分伤害类型后交给 Health 结算，并处理护甲破坏成分</summary>
+        /// <param name="packet">伤害数据包（伤害值、来源、伤害成分、穿甲等级等）</param>
         public void InflictDamage(DamagePacket packet) {
             if (!Health) return;
             if (!packet.DamageGroups.IsValid()|| packet.DamageGroups.Count==0) return;
@@ -299,7 +309,7 @@ namespace Unity.FPS.Game
                 }
             }
             
-            Health.TakeDamage(finalDamageGroups, packet.NoSource, damageSource, ClosestCollider(packet.Pos), packet.Pos,true,isWeakness, packet.DemolishValue);
+            Health.TakeDamage(finalDamageGroups, packet.NoSource, damageSource, packet.damageAffected, packet.Pos,true,isWeakness, packet.DemolishValue);
             
         }
 
@@ -307,7 +317,9 @@ namespace Unity.FPS.Game
         private static bool IsFriendlyUnit(Actor actor)
             => actor.Type == UnitTypeEnum.Player || actor.Type == UnitTypeEnum.Friend;
 
-        //计算护甲破坏
+        /// <summary>计算护甲破坏：扣减剩余护甲，护甲归零时触发破坏，否则触发受击事件</summary>
+        /// <param name="value">破坏类伤害值</param>
+        /// <param name="source">伤害来源物体</param>
         private void ArmorDestruction(PEInt value, GameObject source)
         {
             if (remainArmor > 0)
@@ -363,6 +375,8 @@ namespace Unity.FPS.Game
             DestroyPart(null);
         }
 
+        /// <summary>部件销毁处理：广播 OnDestroyPart 事件</summary>
+        /// <param name="_">未使用的参数（用于匹配 Health.OnDie 签名）</param>
         private void DestroyPart(GameObject _)
         {
             OnDestroyPart?.Invoke(this);
@@ -371,6 +385,8 @@ namespace Unity.FPS.Game
 
 
 
+        /// <summary>每帧tick：护甲已破坏时按流血速度对自身施加真实伤害（流血效果）</summary>
+        /// <returns>是否继续 tick</returns>
         public override bool Tick()
         {
             if (armorValue>0&&remainArmor <= 0)
@@ -381,6 +397,7 @@ namespace Unity.FPS.Game
         }
 
 #if UNITY_EDITOR
+        /// <summary>编辑器辅助：自动收集子物体中的关联护甲，并在有基础护甲值时添加自身为护甲破坏效果</summary>
         [ContextMenu("自动配置")]
         private void AutoSetting()
         {

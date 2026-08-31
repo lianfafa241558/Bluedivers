@@ -1,0 +1,123 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &441296324314849861
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.777771
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.1539993
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -2.5058289
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_Materials.Array.data[1]
+      value: 
+      objectReference: {fileID: 2100000, guid: ce1c73063a096854f8b1a4c8428d6e77, type: 2}
+    - target: {fileID: 919132149155446097, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      propertyPath: m_Name
+      value: Shell_Explosive
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2e45e36f61539984ba0b2d8df44de601,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3543150465064072123}
+  m_SourcePrefab: {fileID: 100100000, guid: 2e45e36f61539984ba0b2d8df44de601, type: 3}
+--- !u!1 &783245332362682132 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2e45e36f61539984ba0b2d8df44de601,
+    type: 3}
+  m_PrefabInstance: {fileID: 441296324314849861}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3543150465064072123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 783245332362682132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d1a73430ee99de4296c185ee351d18b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  meetTime: 0
+  audioPress: {fileID: 0}
+  audioOper: {fileID: 0}
+  audioClose: {fileID: 0}
+  flags: 0
+  pressTime: 0
+  canOperate: 1
+  inOperate: 0
+  desc: "\u8FDB\u884C\u4EA4\u4E92"
+  anim: {fileID: 0}
+  _audioSource: {fileID: 0}
+  lastOperatetime: 0
+  owner: {fileID: 0}
+  time: 0
+  count: 0
+  ShowName: 
+  Id: 
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  ExtBoolParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}

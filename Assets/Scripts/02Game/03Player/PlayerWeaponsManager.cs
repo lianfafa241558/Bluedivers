@@ -20,6 +20,37 @@ namespace Unity.FPS.Gameplay
 
         //private const string _FlareGunName = "激光指示器";
 
+        /// <summary>可被滚轮/数字键切换的最大槽位索引（0-3：主/副/支援/特殊，投掷和信号枪有各自呼出方式）</summary>
+        public const int MaxSwitchableSlotIndex = 3;
+
+        /// <summary>可被滚轮/数字键切换的槽位数量</summary>
+        public const int SwitchableSlotCount = MaxSwitchableSlotIndex + 1;
+
+        /// <summary>
+        /// 武器类型 → 槽位索引 映射表（下标 = (int)WeaponTypeEnum）
+        /// 主武器0 / 副武器1 / 特殊2→槽3 / 投掷3→槽4 / 信号枪4→槽5 / 护甲5→槽7(占位,不存在list中) / 支援6→槽2 / 空手7→槽6
+        /// </summary>
+        public static readonly int[] WeaponTypeToSlot = { 0, 1, 3, 4, 5, 7, 2, 6 };
+
+        /// <summary>槽位索引 → 武器类型 映射表（下标 = 槽位）</summary>
+        public static readonly WeaponTypeEnum[] SlotToWeaponType =
+        {
+            WeaponTypeEnum.Primary, WeaponTypeEnum.Secondary, WeaponTypeEnum.Support, WeaponTypeEnum.Special,
+            WeaponTypeEnum.Grenade, WeaponTypeEnum.FlareGun, WeaponTypeEnum.Empty, WeaponTypeEnum.Armor,
+        };
+
+        /// <summary>获取武器类型对应的槽位索引</summary>
+        public static int SlotOf(WeaponTypeEnum type)
+        {
+            return WeaponTypeToSlot[(int)type];
+        }
+
+        /// <summary>该槽位是否可被滚轮/数字键切换（0-3）</summary>
+        public static bool IsSwitchableSlot(int slotIndex)
+        {
+            return slotIndex >= 0 && slotIndex <= MaxSwitchableSlotIndex;
+        }
+
         public enum WeaponSwitchState
         {
             /// <summary>拿起</summary>
@@ -254,7 +285,7 @@ namespace Unity.FPS.Gameplay
                     return;
                 }
                 //拿手雷的时候不能左键射击
-                if (ActiveWeaponIndex == (int)WeaponTypeEnum.Grenade) return;
+                if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.Grenade)) return;
 
                 if (!GetActiveSecWeapon())//单持武器时，正常左键射击
                 {
@@ -315,7 +346,7 @@ namespace Unity.FPS.Gameplay
             {
                 if (m_PlayerCharacterController.enabled)//进载具了就不能切
                 {
-                    //优先滚轮切换
+                    //优先滚轮切换（只在可切换槽位0-3之间循环）
                     int switchWeaponInput = m_InputHandler.GetSwitchWeaponInput();
                     if (switchWeaponInput != 0)
                     {
@@ -326,9 +357,9 @@ namespace Unity.FPS.Gameplay
                     {
 
                         switchWeaponInput = m_InputHandler.GetSelectWeaponInput();
-                        if (switchWeaponInput != 0)
+                        //然后尝试数字键切换（输入1-4对应槽位0-3，投掷/信号枪/空手不响应数字键）
+                        if (switchWeaponInput >= 1 && switchWeaponInput <= SwitchableSlotCount)
                         {
-                            //然后尝试数字键切换（因为这里输入1-9，但是武器槽实际上是0-8）
                             if (GetWeaponAtSlotIndex(switchWeaponInput - 1) != null)
                                 SwitchToWeaponIndex(switchWeaponInput - 1, false, true);
                         }
@@ -345,8 +376,8 @@ namespace Unity.FPS.Gameplay
             if (!m_PlayerCharacterController.enabled) return;
             if (m_InputHandler.GetCrouchDown())
             {
-                if (ActiveWeaponIndex != (int)WeaponTypeEnum.FlareGun) m_LastWeaponIndex = ActiveWeaponIndex;
-                SwitchToWeaponIndex((int)WeaponTypeEnum.FlareGun, true,false,false);
+                if (ActiveWeaponIndex != SlotOf(WeaponTypeEnum.FlareGun)) m_LastWeaponIndex = ActiveWeaponIndex;
+                SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.FlareGun), true,false,false);
             }
             else if (m_InputHandler.GetCrouchUp())
             {
@@ -359,11 +390,11 @@ namespace Unity.FPS.Gameplay
         {
             //指示器不会打断投掷
             if (m_InputHandler.GetCrouch()) return;
-            var grenade= (int)WeaponTypeEnum.Grenade;
+            var grenade = SlotOf(WeaponTypeEnum.Grenade);
             if (m_InputHandler.GetThrowDown() && GetWeaponAtSlotIndex(grenade).Magazine.CurrValue> 0)
             {
                 if (ActiveWeaponIndex != grenade) m_LastWeaponIndex = ActiveWeaponIndex;
-                SwitchToWeaponIndex((int)WeaponTypeEnum.Grenade, true, false,true);
+                SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.Grenade), true, false,true);
             }
             if (m_InputHandler.GetThrowUP())
             {
@@ -755,7 +786,8 @@ namespace Unity.FPS.Gameplay
         {
             int newWeaponIndex = -1;
             int closestSlotDistance = m_WeaponSlots.Length;
-            for (int i = 0; i < (GameRoot.GameState == GameStateEnum.Game ? 3 : m_WeaponSlots.Length); ++i)
+            //只在可切换槽位0-3内寻找（投掷/信号枪/空手有各自呼出方式，不参与滚轮切换）
+            for (int i = 0; i <= MaxSwitchableSlotIndex; ++i)
             {
                 //如果此插槽的武器有效，则计算其与活动插槽索引的"距离"（按升序或降序排列）
                 //如果距离最近，请选择
@@ -776,7 +808,7 @@ namespace Unity.FPS.Gameplay
 
         public WeaponController GetWeapon(WeaponTypeEnum weaponType)
         {
-           return GetWeaponAtSlotIndex((int)weaponType);
+           return GetWeaponAtSlotIndex(SlotOf(weaponType));
         }
 
         /// <summary>
@@ -793,7 +825,7 @@ namespace Unity.FPS.Gameplay
             //3.允许双持？("武器和主手不一样"或者"武器和主手一样，但是有副手")
             if (force || (newWeaponIndex != ActiveWeaponIndex && newWeaponIndex >= 0)||(allowDual&&GetActiveSecWeapon()))
             {
-                if (ActiveWeaponIndex == (int)WeaponTypeEnum.FlareGun && WaitRelease.IsValid()) BattleEventSub.CancelAirdrop(gameObject,WaitRelease);
+                if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun) && WaitRelease.IsValid()) BattleEventSub.CancelAirdrop(gameObject,WaitRelease);
                 //存储与武器切换动画相关的数据
                 m_SwitchNewWeaponIndex = newWeaponIndex;
                 m_TimeStartedWeaponSwitch = Time.time;
@@ -870,11 +902,9 @@ namespace Unity.FPS.Gameplay
                 return false;
             }
 
-            //在我们的武器插槽中搜索第一个空闲的，将武器分配给它，如果找到，则返回true。否则返回false
-            for (int i = 0; i < m_WeaponSlots.Length; i++)
-            {
-                // only add the weapon if the slot is free
-                if (m_WeaponSlots[i] == null)
+            //按武器类型的映射槽位放置（主0/副1/支援2/特殊3/投掷4/信号枪5/空手6），槽位被占则添加失败
+            int i = SlotOf(weaponPrefab.WeaponTypeEnum);
+            if (i < m_WeaponSlots.Length && m_WeaponSlots[i] == null)
                 {
                     // 将武器预制件作为武器插座的子对象生成
                     //但是因为切人物时人物隐藏，因此必须先创建，再移动到武器根
@@ -910,7 +940,6 @@ namespace Unity.FPS.Gameplay
                         SwitchToWeaponIndex(i,true,false);
                     }
                     return true;
-                }
             }
 
             return false;
@@ -1045,7 +1074,7 @@ namespace Unity.FPS.Gameplay
 
             if (distanceBetweenSlots < 0)
             {
-                distanceBetweenSlots = m_WeaponSlots.Length + distanceBetweenSlots;
+                distanceBetweenSlots = SwitchableSlotCount + distanceBetweenSlots;
             }
 
             return distanceBetweenSlots;
@@ -1121,33 +1150,33 @@ namespace Unity.FPS.Gameplay
                 {
                     //Debug.LogError("记录上一次武器为"+ ActiveWeaponIndex);
                     m_LastWeaponIndex = ActiveWeaponIndex;
-                    SwitchToWeaponIndex((int)WeaponTypeEnum.FlareGun, false, false, false);
+                    SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.FlareGun), false, false, false);
                 }
                 else if (oldSstate == WindowStateEnum.Airdrop && AirdropController.WaitRelease == null)
                 {
                     //Debug.LogError("切换会原武器" + m_LastWeaponIndex);
-                    SwitchToWeaponIndex((m_LastWeaponIndex == (int)WeaponTypeEnum.FlareGun) ? 0 : m_LastWeaponIndex, false, false, false);
+                    SwitchToWeaponIndex((m_LastWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun)) ? 0 : m_LastWeaponIndex, false, false, false);
                 }
             }
         }
         void OnInputCompletedAirdrop(GameObject go, AirdropData data) {
             if (go != gameObject) return;
-            var weapon = GetWeaponAtSlotIndex((int)WeaponTypeEnum.FlareGun);
+            var weapon = GetWeaponAtSlotIndex(SlotOf(WeaponTypeEnum.FlareGun));
             weapon.UseDamageIndex = 1;
         }
         void OnCancelAirdrop(GameObject go,AirdropData data)
         {
             if (go != gameObject) return;
-            var weapon = GetWeaponAtSlotIndex((int)WeaponTypeEnum.FlareGun);
+            var weapon = GetWeaponAtSlotIndex(SlotOf(WeaponTypeEnum.FlareGun));
             weapon.UseDamageIndex = 0;
         }
         public void OnAirdrop(GameObject owner, GameObject _, Vector3 point, AirdropData data)
         {
             if (owner==gameObject)
             {
-                var weapon = GetWeaponAtSlotIndex((int)WeaponTypeEnum.FlareGun);
+                var weapon = GetWeaponAtSlotIndex(SlotOf(WeaponTypeEnum.FlareGun));
                 weapon.UseDamageIndex = 0;
-                SwitchToWeaponIndex((m_LastWeaponIndex == (int)WeaponTypeEnum.FlareGun) ? 0 : m_LastWeaponIndex, false, false, false);
+                SwitchToWeaponIndex((m_LastWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun)) ? 0 : m_LastWeaponIndex, false, false, false);
             }
         }
 
@@ -1160,11 +1189,11 @@ namespace Unity.FPS.Gameplay
             if (furn.InOperate)
             {
                 m_LastWeaponIndex = ActiveWeaponIndex;
-                SwitchToWeaponIndex((int)WeaponTypeEnum.FlareGun+1, false, false, false);
+                SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.Empty), false, false, false);
             }
             else
             {
-                SwitchToWeaponIndex((m_LastWeaponIndex >= (int)WeaponTypeEnum.FlareGun) ? 0 : m_LastWeaponIndex, false, false, false);
+                SwitchToWeaponIndex(IsSwitchableSlot(m_LastWeaponIndex) ? m_LastWeaponIndex : 0, false, false, false);
             }
         }
 

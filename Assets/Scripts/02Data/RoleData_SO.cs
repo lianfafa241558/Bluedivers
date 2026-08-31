@@ -70,6 +70,13 @@ namespace Unity.FPS.Game
         /// <summary>护甲</summary>
         [InspectorName("护甲")]
         Armor,
+        /// <summary>支援武器</summary>
+        [InspectorName("支援武器")]
+        Support,
+        /// <summary>空手</summary>
+        [InspectorName("空手")]
+        Empty,
+
     }
 
     public enum SpeechTypeEnum

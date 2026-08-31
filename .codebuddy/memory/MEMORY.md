@@ -39,6 +39,7 @@
 - PlayerOperationController.cs 第三人称 target 选择：`OverlapSphere` 取最近而非第一个有效 Collider。
 - SubtitleWnd.cs 第三人称 UI 提示：改为直接使用 `playerOp.target` 保持一致。
 - BaseSelfMoveableController.cs 陡坡卡死：新增 `_isOnSteepSlope` 标志，Move() 前用 `Vector3.ProjectOnPlane` 将位移投影到坡面法线平面，重力沿坡滑下。
+- DeployableMine.cs 高空单位误引爆（2026-08-31）：飞行单位（如 `HealdroneBase.prefab`）halfHeight=0，原竖直过滤对 `HalfHeight<=0` 放行。改为 `InTriggerRange` 实际 3D 距离判定：竖直间隙按 [CenterPos.y±HalfHeight]（未配置退化为中心点），水平间隙 = 中心距 - HalfRange，合成后与触发距离比较。注意：halfHeight=0 的地面单位若 AimPoint 离地过高会炸不到，需批量工具补值。
 
 ## 资源文件
 - `Assets/Shader/UIImageChannelMix.shader`：UI/Image 专用 Shader（`UI/ImageChannelMix`），R通道*Image颜色，G通道*白色，B忽略，A用贴图Alpha，支持 Stencil 响应 Mask

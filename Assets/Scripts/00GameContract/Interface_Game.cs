@@ -31,6 +31,8 @@ namespace GameContract
         public int DemolishValue;
         /// <summary>是否直击</summary>
         public bool isDirect;
+        /// <summary>击中的碰撞体 </summary>
+        public Collider damageAffected;
 
     }
 
