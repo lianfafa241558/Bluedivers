@@ -18,6 +18,8 @@ public partial class KeyScreen
     List<DirectionEnum> nowInput, targetInput;
     int nowSelectIndex;
     bool[] itemState;
+    int artilleryProgress;
+    bool artilleryComplete;
     [SerializeField]
     int[] itemValue, targetValue;
 
@@ -42,7 +44,8 @@ public partial class KeyScreen
             [ProcedureType.ParaModify] = (ParaModifyInit, ParaModifyUpdate),
             [ProcedureType.Direction] = (DirectionInit, DirectionUpdate),
             [ProcedureType.Unlock] = (UnlockInit, UnlockUpdate),
-            [ProcedureType.Password] = (PasswordInit, PasswordUpdate)
+            [ProcedureType.Password] = (PasswordInit, PasswordUpdate),
+            [ProcedureType.Artillery] = (ArtilleryInit, ArtilleryUpdate)
         };
     }
 
@@ -578,6 +581,61 @@ public partial class KeyScreen
         return false;
     }
 
+    #endregion
+    #region 炮弹架
+    void ArtilleryInit(Procedure now)
+    {
+        SetActive(artillery, true);
+        artilleryProgress = 0;
+        artilleryComplete = false;
+
+        //把目标家具设为可操作
+        for (int i = 0; i < now.furns.Count; ++i)
+        {
+            now.furns[i].canOperate = true;
+        }
+        //隐藏所有槽位的显示物体（第0个子物体）
+        for (int i = 0; i < artillery.childCount; ++i)
+        {
+            SetActive(artillery.GetChild(i, 0), false);
+        }
+        GlobalEventSub.OnFurnitureOperate += OnArtilleryFurnitureOperate;
+    }
+
+    bool ArtilleryUpdate()
+    {
+        //达到5立即完成
+        if (artilleryComplete)
+        {
+            PlaySound(new(ActionS));
+            return true;
+        }
+        return false;
+    }
+
+    void OnArtilleryFurnitureOperate(GameObject user, IFurniture furniture)
+    {
+        var now = nowProcedure;
+        //只响应本次阶段监听的目标家具
+        if (now.type != ProcedureType.Artillery) return;
+        if (now.furns.FindIndex(item => item.NumberID == furniture.NumberID) < 0) return;
+
+        ++artilleryProgress;
+        //对应位置的子物体下的第0个子物体设为显示
+        var index = artilleryProgress - 1;
+        if (index < artillery.childCount)
+        {
+            SetActive(artillery.GetChild(index, 0), true);
+        }
+        PlaySound(new(FinishS));
+
+        if (artilleryProgress >= 5)
+        {
+            artilleryComplete = true;
+            GlobalEventSub.OnFurnitureOperate -= OnArtilleryFurnitureOperate;
+            SetColor(artillery.GetChild(0), _LightColor);
+        }
+    }
     #endregion
 
     private void PlayInputCilp()

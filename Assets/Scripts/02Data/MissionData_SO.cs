@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using FpsGame.Mission;
-
+using FPSGame.Attribute;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/支线任务配置")]
@@ -10,6 +10,7 @@ public class MissionData_SO : ScriptableObject
 
     [InspectorName("类型")]
     public MissionEnum type;
+    [SpritePreview(4,4)]
     public Sprite sprite;
     public string desc;
     [InspectorName("主控制器")]

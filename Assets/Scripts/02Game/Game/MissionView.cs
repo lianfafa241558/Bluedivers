@@ -140,6 +140,9 @@ namespace FpsGame.Mission
             WndManager.Instance.CreatNotice(role, type, func,vaildTime);
         }
 
+        /// <summary>
+        /// 尝试暴露该任务
+        /// </summary>
         public void TryDiscovered()
         {
             discovered = true;

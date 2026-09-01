@@ -97,6 +97,24 @@ namespace Unity.FPS.Game
         }
 
         /// <summary>
+        /// 确保 IK 引用已就绪（供 SetStatrtWeapon 等早于 OnBodySet 的调用使用）。
+        /// fullIK 依赖动态模型，正常情况下由 OnBodySet 解析；此方法在模型已就绪但事件未触发时兜底。
+        /// </summary>
+        public void EnsureIK()
+        {
+            if (fullIK == null && m_Player != null && m_Player.ModleRoot != null)
+            {
+                fullIK = m_Player.ModleRoot.GetComponent<FullBodyBipedIK>();
+            }
+        }
+
+        /// <summary>左手 IK 当前是否空闲（未被武器/装备占用），用于双持判断</summary>
+        public bool IsLeftHandFree => fullIK != null && fullIK.solver.leftHandEffector.target == null;
+
+        /// <summary>右手 IK 当前是否空闲（未被武器/装备占用），用于双持判断</summary>
+        public bool IsRightHandFree => fullIK != null && fullIK.solver.rightHandEffector.target == null;
+
+        /// <summary>
         /// 设置左右手 IK 目标（装备/武器握点），null 的手不吸附。
         /// 同时设置左右手肘 Bend Goal：配置了手肘点则权重 1 引导手臂弯曲方向，未配置则权重 0 不生效。
         /// </summary>
@@ -119,6 +137,18 @@ namespace Unity.FPS.Game
             bendConstraintR.bendGoal = rElbow;
             bendConstraintR.weight = rElbow ? 1f : 0f;
 
+        }
+
+        /// <summary>
+        /// 仅设置左手 IK 目标（副武器：只吸附左手，不覆盖主武器的右手 IK）。
+        /// </summary>
+        public void SetLeftHandIK(Transform lHand)
+        {
+            if (fullIK == null) return;
+
+            fullIK.solver.leftHandEffector.target = lHand;
+            fullIK.solver.leftHandEffector.positionWeight = lHand ? 1 : 0;
+            fullIK.solver.leftHandEffector.rotationWeight = lHand ? 1 : 0;
         }
 
         /// <summary>清除左右手 IK 目标（放下装备/武器时调用）</summary>

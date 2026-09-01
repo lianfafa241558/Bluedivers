@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Furn;
+using FPSGame.Gameplay;
 using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -23,6 +24,19 @@ public class EquipController : MonoBehaviour
     public IEnumerable<IFurniture> AllFurns() => equips.Values;
 
     public Dictionary<IEquippable, IFurniture> Equips=> equips;
+
+    /// <summary>
+    /// 是否持有手持装备（HandEquip）。手持装备会占用玩家双手/空手状态，
+    /// 期间应禁止滚轮/数字键切换武器（否则会被自动丢下）。
+    /// </summary>
+    public bool IsHoldingHandEquip()
+    {
+        foreach (var key in equips.Keys)
+        {
+            if (key is HandEquip) return true;
+        }
+        return false;
+    }
 
     /// <summary>
     /// 只通过交互组件装载，自己不调用

@@ -12,13 +12,23 @@ namespace FPSGame.Gameplay
     /// <summary>
     /// 手持装备：实现 IEquippable，由 EquipController 管理，可通过"丢弃装备"轮盘卸载。
     /// 装备后：模型挂在玩家 HandPoint 上、设置左右手 IK、强制玩家切空手、移速 -50%；
-    /// 卸载后：清除 IK、恢复移速、落地为可再拾取实体、自动切回主武器。
+    /// 卸载后：清除 IK、恢复移速、落地为可再拾取实体（带基于 CharacterController 的模拟重力自然下落触地）、自动切回主武器。
     /// 触发自动丢下：切到其他武器 / 玩家倒地 / 进入不可携带载具（CanEnterVehicle=false）。
+    /// 落地重力内联在本类中（基于 CharacterController.Move）：装备期间禁用（跟随手部），卸载落地后启用（下落触地停住）。
     /// </summary>
+    [RequireComponent(typeof(CharacterController))]
     public class HandEquip : MonoBehaviour, IEquippable
     {
         [InspectorName("移速惩罚系数（装：x系数，卸：/系数）")]
         public float MoveSpeedScaleModifier = 0.5f;
+
+        [InspectorName("落地重力加速度")]
+        [Tooltip("装备卸载落地时自由下落的加速度，默认 20")]
+        public float GravityDownForce = 20f;
+
+        [InspectorName("落地最大下落速度")]
+        [Tooltip("限制最大下落速度，防止穿透地面")]
+        public float MaxFallSpeed = 50f;
 
         [InspectorName("是否可带上载具（false 则进载具自动丢下）")]
         public bool CanEnterVehicle = false;
@@ -48,11 +58,60 @@ namespace FPSGame.Gameplay
         Health m_Health;
         PlayerMountPoint m_MountPoint;
 
+        /// <summary>落地用角色控制器：装备期间禁用（避免手部物体与玩家/地面碰撞），卸载落地后启用</summary>
+        CharacterController m_Controller;
+
+        /// <summary>落地垂直速度（内联模拟重力用，向下为负）</summary>
+        float m_VerticalVelocity;
+
+        /// <summary>落地重力是否启用：true=落地态自然下落，false=装备跟随手部不下落</summary>
+        bool m_GravityActive;
+
         /// <summary>入槽前缓存的装备根层级，卸载落地时恢复（否则留在第一人称武器层导致主相机不可见/交互异常）</summary>
         int m_CachedLayer = -1;
 
         /// <summary>被动丢下（切武器/倒地/进载具）时跳过恢复切主武器</summary>
         bool m_SkipRestoreWeapon;
+
+        private void Awake()
+        {
+            m_Controller = GetComponent<CharacterController>();
+
+            // 落地装备物体上的原交互 BoxCollider 设为 Trigger：
+            // 第一人称拾取靠 Physics.Raycast 命中（默认命中 Trigger），保留其参与 raycast；
+            // CharacterController 本身是实体 Collider，作为落地唯一物理体，避免与原实体 BoxCollider 双碰撞。
+            // 装备跟随手部期间 CharacterController.enabled=false 使其 Collider 失效，不会与玩家/地面碰撞。
+            foreach (var col in GetComponents<Collider>())
+            {
+                if (col is CharacterController) continue;
+                col.isTrigger = true;
+            }
+        }
+
+        /// <summary>
+        /// 落地模拟重力：仅在落地态（m_GravityActive）且角色控制器可用时生效。
+        /// 触地（isGrounded）时垂直速度归零并轻微吸附，未触地则加速下落、限速后应用位移。
+        /// </summary>
+        private void Update()
+        {
+            if (!m_GravityActive || m_Controller == null || !m_Controller.enabled)
+            {
+                return;
+            }
+
+            // 触地且正在下落：将垂直速度重置为轻微向下的值，使物体稳定贴地停住（不反弹、不滚动）
+            if (m_Controller.isGrounded && m_VerticalVelocity < 0f)
+            {
+                m_VerticalVelocity = -1f;
+            }
+            else
+            {
+                m_VerticalVelocity -= GravityDownForce * Time.deltaTime;
+                m_VerticalVelocity = Mathf.Max(m_VerticalVelocity, -MaxFallSpeed);
+            }
+
+            m_Controller.Move(Vector3.up * m_VerticalVelocity * Time.deltaTime);
+        }
 
         /// <summary>IEquippable.Owner（I_Actor）显式实现</summary>
         I_Actor IEquippable.Owner => m_Owner;
@@ -122,6 +181,11 @@ namespace FPSGame.Gameplay
                 m_Player.MoveSpeedScale *= MoveSpeedScaleModifier;
             }
 
+            // 装备跟随玩家手部：禁用落地重力与角色控制器，避免手部物体受重力下落/与玩家或地面碰撞
+            m_GravityActive = false;
+            m_VerticalVelocity = 0f;
+            if (m_Controller != null) m_Controller.enabled = false;
+
             // 订阅玩家事件：切武器 / 倒地 / 进载具
             m_SkipRestoreWeapon = false;
             if (m_Weapons != null) m_Weapons.OnSwitchedToWeapon += OnWeaponSwitched;
@@ -153,6 +217,11 @@ namespace FPSGame.Gameplay
 
             // 落地（保持模型可见）
             transform.SetParent(null, true);
+
+            // 启用落地重力与角色控制器：装备从脱离位置自然下落，触地即停（不反弹、不滚动）
+            m_VerticalVelocity = 0f;
+            m_GravityActive = true;
+            if (m_Controller != null) m_Controller.enabled = true;
 
             // 恢复原层级（移除第一人称武器层，主相机与交互系统才能看到落地装备）
             if (m_CachedLayer >= 0)

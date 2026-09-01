@@ -176,8 +176,8 @@ namespace Unity.FPS.Gameplay
         WeaponPlayerController[] m_WeaponSlots = new WeaponPlayerController[9]; // 9 available weapon slots
         PlayerInputHandler m_InputHandler;
         PlayerController m_PlayerCharacterController;
-        [SerializeField]
-        FullBodyBipedIK m_fullIk;
+        PlayerMountPoint m_MountPoint;
+        EquipController m_EquipController;
 
         float m_PlayerAngle;
 
@@ -203,6 +203,7 @@ namespace Unity.FPS.Gameplay
         {
             m_InputHandler = GetComponent<PlayerInputHandler>();
             m_PlayerCharacterController = GetComponent<PlayerController>();
+            m_EquipController = GetComponent<EquipController>();
             //m_WeaponSwitchState = WeaponSwitchState.Down;
             OnSwitchedToWeapon += OnWeaponSwitched;
             OnAim += OnAiming;
@@ -346,16 +347,18 @@ namespace Unity.FPS.Gameplay
             {
                 if (m_PlayerCharacterController.enabled)//进载具了就不能切
                 {
+                    //手持装备（HandEquip）期间禁止滚轮切换武器（防止误触），但数字键切换仍可用
+                    bool holdingHandEquip = m_EquipController != null && m_EquipController.IsHoldingHandEquip();
+
                     //优先滚轮切换（只在可切换槽位0-3之间循环）
                     int switchWeaponInput = m_InputHandler.GetSwitchWeaponInput();
-                    if (switchWeaponInput != 0)
+                    if (switchWeaponInput != 0 && !holdingHandEquip)
                     {
                         bool switchUp = switchWeaponInput > 0;
                         SwitchWeapon(switchUp);
                     }
                     else
                     {
-
                         switchWeaponInput = m_InputHandler.GetSelectWeaponInput();
                         //然后尝试数字键切换（输入1-4对应槽位0-3，投掷/信号枪/空手不响应数字键）
                         if (switchWeaponInput >= 1 && switchWeaponInput <= SwitchableSlotCount)
@@ -420,7 +423,7 @@ namespace Unity.FPS.Gameplay
             UpdateWeaponSwitching();
             UpdateWeaponThirdPersonAim();
 
-            if(m_PlayerCharacterController&& m_PlayerCharacterController.ModleRoot) m_PlayerCharacterController.ModleRoot.localEulerAngles = new(0,Mathf.Lerp(m_PlayerCharacterController.ModleRoot.localEulerAngles.y,m_PlayerAngle, Time.deltaTime * 5), 0);
+            if(m_PlayerCharacterController&& m_PlayerCharacterController.ModleRoot) m_PlayerCharacterController.ModleRoot.localEulerAngles = new(0,Mathf.LerpAngle(m_PlayerCharacterController.ModleRoot.localEulerAngles.y,m_PlayerAngle, Time.deltaTime * 5), 0);
         
             //根据所有组合动画影响设置最终武器插座位置
             WeaponParentSocket.localPosition = Vector3.Lerp(WeaponParentSocket.localPosition, m_WeaponMainLocalPosition + m_WeaponBobLocalPosition + m_WeaponRecoilLocalPosition,Time.deltaTime* BobSharpness);
@@ -469,9 +472,12 @@ namespace Unity.FPS.Gameplay
                 WeaponPlayerController activeWeapon = GetActiveWeapon();
                 if (IsAiming && activeWeapon)
                 {
+                    // 第三人称瞄准时不把武器移动到 AimingWeaponPosition，固定使用默认位置
+                    Vector3 targetPos = m_PlayerCharacterController.IsThirdPerson
+                        ? DefaultWeaponPosition.localPosition
+                        : (AimingWeaponPosition.localPosition + activeWeapon.AimOffset);
                     m_WeaponMainLocalPosition = Vector3.Lerp(m_WeaponMainLocalPosition,
-                        AimingWeaponPosition.localPosition + activeWeapon.AimOffset,
-                        AimingAnimationSpeed * Time.deltaTime);
+                        targetPos, AimingAnimationSpeed * Time.deltaTime);
 
                     float zoomRatio = activeWeapon.AimZoomRatio;
                     if (m_PlayerCharacterController.IsThirdPerson)
@@ -581,8 +587,8 @@ namespace Unity.FPS.Gameplay
                     //Debug.LogWarning("切换武器"+ newWeapon);
                     if (m_SwitchNewWeaponAllowDual)//允许双持
                     {
-                        bool leftFree  = !m_fullIk.solver.leftHandEffector.target;
-                        bool rightFree = !m_fullIk.solver.rightHandEffector.target;
+                        bool leftFree  = m_MountPoint == null || m_MountPoint.IsLeftHandFree;
+                        bool rightFree = m_MountPoint == null || m_MountPoint.IsRightHandFree;
                         bool leftNeed  = !(newWeapon == oldWeapon || newWeapon == oldSecWeapon)&&(newWeapon && newWeapon.LHand);
                         bool rightNeed = !(newWeapon== oldWeapon|| newWeapon == oldSecWeapon)&&(newWeapon && newWeapon.RHand);
                         //左手需要但是左手被占，或者右手需要，但是右手被占
@@ -761,8 +767,13 @@ namespace Unity.FPS.Gameplay
 
         public void SetStatrtWeapon(List<WeaponPlayerController> StartingWeapons)
         {
-            m_fullIk = GetComponentInChildren<FullBodyBipedIK>();
-            //Debug.LogWarning("重设FullBodyBipedIK:" + m_fullIk);
+            m_MountPoint = GetComponent<PlayerMountPoint>();
+            // SetStatrtWeapon 在 SetBody 内部、OnBodySet 事件触发之前调用，
+            // 需在此确保 PlayerMountPoint 内的 IK 已就绪（否则初始武器的 IK 设置会被跳过）
+            if (m_MountPoint != null)
+            {
+                m_MountPoint.EnsureIK();
+            }
             //Debug.LogWarning("重置武器" + StartingWeapons.Count);
             for (int i = 0; i < m_WeaponSlots.Length; i++)
             {
@@ -1162,19 +1173,18 @@ namespace Unity.FPS.Gameplay
                 if (isSec)
                 {
                     // 副武器（左手武器）：只设置左手 IK，不覆盖主武器的右手 IK
-                    m_fullIk.solver.leftHandEffector.target = newWeapon.LHand;
-                    m_fullIk.solver.leftHandEffector.positionWeight = newWeapon.LHand ? 1 : 0;
-                    m_fullIk.solver.leftHandEffector.rotationWeight = newWeapon.LHand ? 1 : 0;
+                    if (m_MountPoint != null)
+                    {
+                        m_MountPoint.SetLeftHandIK(newWeapon.LHand);
+                    }
                 }
                 else
                 {
                     // 主武器：设置左右手 IK（单手持或双手持都会完整设置）
-                    m_fullIk.solver.leftHandEffector.target = newWeapon.LHand;
-                    m_fullIk.solver.rightHandEffector.target = newWeapon.RHand;
-                    m_fullIk.solver.leftHandEffector.positionWeight = newWeapon.LHand ? 1 : 0;
-                    m_fullIk.solver.rightHandEffector.positionWeight = newWeapon.RHand ? 1 : 0;
-                    m_fullIk.solver.leftHandEffector.rotationWeight = newWeapon.LHand ? 1 : 0;
-                    m_fullIk.solver.rightHandEffector.rotationWeight = newWeapon.RHand ? 1 : 0;
+                    if (m_MountPoint != null)
+                    {
+                        m_MountPoint.SetHandIK(newWeapon.LHand, newWeapon.RHand);
+                    }
                 }
 
                 //newWeapon.LHand.parent = transform;

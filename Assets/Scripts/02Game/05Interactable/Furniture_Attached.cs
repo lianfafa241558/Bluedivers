@@ -147,10 +147,11 @@ namespace FPSGame.Furn
                 // 防止对象已被销毁后访问（切场景等情况）
                 if (this == null || gameObject == null)
                     return Vector3.zero;
-
+                if (_collider) return _collider.bounds.center;
                 return transform.position + _colliderCenterOffset;
             }
         }
+        private Collider _collider;
 
         public override Vector3 Forward =>/*Quaternion.Euler(90*ForwardAxis) **/transform.forward;
 
@@ -169,6 +170,7 @@ namespace FPSGame.Furn
 
         protected virtual void Awake()
         {
+            _collider = GetComponent<Collider>();
             _audioSource = GetComponent<AudioSource>();
             _actor = GetComponent<I_Actor>();
             if (!anim) anim = GetComponent<Animator>();

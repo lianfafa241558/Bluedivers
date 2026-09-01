@@ -193,7 +193,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
             m_FootstepDistanceCounter +=  targetVelocity.Magnitude.RawFloat * Time.deltaTime;
 
             //脚步声
-            float chosenFootstepSfxFrequency = FootstepSfxFrequency * MoveSpeedScale;
+            float chosenFootstepSfxFrequency = FootstepSfxFrequency / MoveSpeedScale;
             if (m_FootstepDistanceCounter >= 1f / Mathf.Max(chosenFootstepSfxFrequency,0.1f))
             {
                 m_FootstepDistanceCounter = 0f;

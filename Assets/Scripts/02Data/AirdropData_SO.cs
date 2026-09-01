@@ -71,8 +71,9 @@ public class AirdropData_SO : ScriptableObject
     public bool sustainHideBeacon;
     [InspectorName("危险警告")]
     public bool useWarning;
+
     [InspectorName("空投舱永久存在")]
-    [Compare("useNormalPod")]
+    [Compare("useNormalPod",1, CompareOperate.Equal)]
     public bool permanentPod;
 
     [InspectorName("需要授权")]

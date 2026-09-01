@@ -63,4 +63,6 @@ public static class Constants
     public static int IlluminatorId = 17;
     /// <summary>探照灯ID</summary>
     public static int LampTowerId = 16;
+    /// <summary>火炮阵地ID</summary>
+    public static int ArtilleryId = 18;
 }

@@ -28,7 +28,8 @@ public class MissionController : MonoBehaviour
     private MissionInitMode _initMode = MissionInitMode.GenerateFromData;
 
     List<TaskItem> waitMissions;
-    List<MissionBase> missions;
+    /// <summary>当前战斗中所有任务实例</summary>
+    public List<MissionBase> missions;
     List<(Vector2 Pos,int Range)> missionCreatPoints;
 
     private bool isInitialized;

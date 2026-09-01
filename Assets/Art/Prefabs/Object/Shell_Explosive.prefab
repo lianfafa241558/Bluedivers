@@ -42,7 +42,7 @@ GameObject:
   - component: {fileID: 114126928721839534}
   - component: {fileID: 4919498652898942121}
   - component: {fileID: 3424576168184472821}
-  - component: {fileID: 2107604625024202875}
+  - component: {fileID: 5772083555422772522}
   m_Layer: 6
   m_Name: Shell_Explosive
   m_TagString: Untagged
@@ -121,6 +121,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MoveSpeedScaleModifier: 0.5
+  GravityDownForce: 20
+  MaxFallSpeed: 50
   CanEnterVehicle: 0
   LHand: {fileID: 864479973959074328}
   RHand: {fileID: 7403287844762109983}
@@ -128,8 +130,8 @@ MonoBehaviour:
   RElbow: {fileID: 1216376781769642206}
   HandOffset: {x: 0, y: -0.2, z: 0}
   HandEuler: {x: 0, y: 0, z: 0}
---- !u!65 &2107604625024202875
-BoxCollider:
+--- !u!143 &5772083555422772522
+CharacterController:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -143,12 +145,17 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.3, y: 0.4, z: 0.4}
-  m_Center: {x: 0.05, y: 0.1, z: 0}
+  m_Height: 0.5
+  m_Radius: 0.3
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.1, z: 0}
 --- !u!1 &2420338980348300955
 GameObject:
   m_ObjectHideFlags: 0

@@ -30,7 +30,7 @@ public partial class KeyScreen : MonoBehaviour
     public List<Procedure> procedure;
     [SerializeField]
     Transform bg;
-    Transform title, tip, stage,exit,inputs,load,wait, actionItem, paraModify, direction, unlock, password,end;
+    Transform title, tip, stage,exit,inputs,load,wait, actionItem, paraModify, direction, unlock, password,end, artillery;
     [DisplayField]
     public Furniture_General furn;
 
@@ -69,6 +69,7 @@ public partial class KeyScreen : MonoBehaviour
         unlock = bg.Find("Unlock");
         password = bg.Find("Password");
         end = bg.Find("End");
+        artillery = bg.Find("Artillery");
 
         InitProcedre();
     }
@@ -114,7 +115,7 @@ public partial class KeyScreen : MonoBehaviour
             SetText(this.stage, (stage + 1) + "/" + procedure.Count);
             AudioSvc.PlaySound(new("Beacon/Beacon_Finish1"));
             var now = nowProcedure;
-            SetActive(false, inputs, load, wait, actionItem, paraModify, direction, unlock, password, end);
+            SetActive(false, inputs, load, wait, actionItem, paraModify, direction, unlock, password, end, artillery);
             SetText(tip, now.tip);
             furn.canOperate = true;
             dic[now.type].Item1.Invoke(now);
@@ -123,7 +124,7 @@ public partial class KeyScreen : MonoBehaviour
         {
             AudioSvc.PlaySound(new("Beacon/Beacon_Finish2"));
             OnComple?.Invoke();
-            SetActive(false, inputs, load, wait, actionItem, paraModify, direction, unlock, password);
+            SetActive(false, inputs, load, wait, actionItem, paraModify, direction, unlock, password, artillery);
             SetActive(end);
             SetText(title, "所有系统正常运转");
             SetText(tip,"感谢您的配合");
@@ -209,6 +210,9 @@ public partial class KeyScreen : MonoBehaviour
         /// <summary>密码</summary>
         [InspectorName("密码")]
         Password,
+        /// <summary>炮弹架</summary>
+        [InspectorName("炮弹架")]
+        Artillery,
     }
 }
 #if UNITY_EDITOR
@@ -281,6 +285,9 @@ public class ProcedureEditor : PropertyDrawer
                 break;
             case KeyScreen.ProcedureType.Password:
 
+                break;
+            case KeyScreen.ProcedureType.Artillery:
+                DrawArtilleryProperties(position, property, ref y);
                 break;
         }
 
@@ -372,6 +379,16 @@ public class ProcedureEditor : PropertyDrawer
         y += height;
     }
 
+    private void DrawArtilleryProperties(Rect position, SerializedProperty property, ref float y)
+    {
+        var furns = property.FindPropertyRelative("furns");
+        float height = lineIntervalAndHeight * (furns.isExpanded ? Mathf.Max(furns.arraySize, 1) + 3 : 1);
+        EditorGUI.PropertyField(
+            new Rect(position.x, y, position.width, height),
+            furns, new GUIContent("监听物体"));
+        y += height;
+    }
+
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
@@ -414,6 +431,11 @@ public class ProcedureEditor : PropertyDrawer
                 lineCount += 3;
                 var UnlockItem = property.FindPropertyRelative("UnlockItem");
                 lineCount += UnlockItem.isExpanded ?Mathf.Max(UnlockItem.arraySize,1) : 0;
+                break;
+            case KeyScreen.ProcedureType.Artillery:
+                lineCount += 1;
+                var furns4 = property.FindPropertyRelative("furns");
+                lineCount += furns4.isExpanded ? Mathf.Max(furns4.arraySize, 1) + 2 : 0;
                 break;
         }
 

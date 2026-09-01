@@ -583,8 +583,8 @@ public enum MissionEnum
     [InspectorName("次要/非法广播")] Broadcast,
     /// <summary>科研哨站</summary>
     [InspectorName("次要/科研哨站")] ScienceFacility,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder2,
+    /// <summary>火炮阵地</summary>
+    [InspectorName("次要/火炮阵地")] ArtilleryPosition,
     /// <summary>占位符</summary>
     [InspectorName("次要/占位符")] Placeholder3,
 
