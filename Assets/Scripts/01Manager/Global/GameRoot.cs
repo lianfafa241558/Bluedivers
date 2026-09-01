@@ -61,56 +61,12 @@ public partial class GameRoot : GameRootBase<GameRoot>
     [SerializeField]
     private float timeScale;
 
-    #region 层级
     public bool IsLocal;
-    /// <summary>高速子弹碰撞层</summary>
-    [SerializeField]
-    [InspectorName("高速子弹碰撞层")]
-    private LayerMask hittableHighSpeedLayers = -1;
 
-    
-
-    /// <summary>武器层</summary>
-    [SerializeField]
-    [InspectorName("武器层")]
-    private LayerMask weaponLayers = -1;
-
-    /// <summary>地面层</summary>
-    [SerializeField]
-    [InspectorName("地面层")]
-    private LayerMask groundLayers = -1;
-
-    /// <summary>单位层</summary>
-    [SerializeField]
-    [InspectorName("单位层")]
-    private LayerMask unitLayers = -1;
-
-
-    /// <summary>空气墙层</summary>
-    [SerializeField]
-    [InspectorName("空气墙层")]
-    private LayerMask airWallLayers = -1;
-
-
-    /// <summary>第一人称忽略层</summary>
-    [SerializeField]
-    [InspectorName("第一人称忽略层")]
-    private LayerMask firstPersonIgnoreLayers=-1;
-    #endregion
 
 
     public override void Awake()
     {
-        //Debug.LogWarning("游戏状态初始被设置为" + GameState);
-        LayerDefinition.HittableHighSpeedLayers = hittableHighSpeedLayers | groundLayers | unitLayers;
-        LayerDefinition.HittableLayers = groundLayers | unitLayers;
-        LayerDefinition.MoveableLayers = airWallLayers| groundLayers|unitLayers;
-        LayerDefinition.UnitLayers = unitLayers;
-        LayerDefinition.GroundLayers = groundLayers;
-        LayerDefinition.WeaponLayers = weaponLayers;
-        LayerDefinition.AirWallLayers = airWallLayers;
-        LayerDefinition.FirstPersonIgnoreLayers = firstPersonIgnoreLayers;
-
 
         base.Awake();
         if (Instance != this) return;

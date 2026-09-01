@@ -642,7 +642,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowName: "\u7EDF\u5FA1\u8005"
   Id: Hydralisk
-  Portrait: {fileID: 0}
+  Portrait: {fileID: 21300000, guid: 027f6dfb79e79704794d6f4b03864fc5, type: 3}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
@@ -674,6 +674,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 1
+  m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
 --- !u!114 &310874619415933552
 MonoBehaviour:
@@ -965,8 +966,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 45
   Duration: 0
+  releaseType: 1
   MeetDetectedTime: 4
   Range: 20
+  DamageSkillTime: 0
   tag: 2
   m_Controller: {fileID: 0}
   nowCoolTime: 0
@@ -994,8 +997,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 15
   Duration: 4
+  releaseType: 1
   MeetDetectedTime: 3
   Range: 19
+  DamageSkillTime: 0
   tag: 0
   m_Controller: {fileID: 0}
   nowCoolTime: 0

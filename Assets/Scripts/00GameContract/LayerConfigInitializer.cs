@@ -27,6 +27,10 @@ namespace GameContract
         [InspectorName("烟雾层")]
         private LayerMask smokeLayers = -1;
 
+        /// <summary>第一人称忽略层</summary>
+        [SerializeField]
+        [InspectorName("第一人称忽略层")]
+        private LayerMask firstPersonIgnoreLayers = -1;
 
 
         private void Awake()
@@ -40,6 +44,7 @@ namespace GameContract
             LayerDefinition.WeaponLayers = weaponLayers;
             LayerDefinition.AirWallLayers = airWallLayers;
             LayerDefinition.SmokeLayers = smokeLayers;
+            LayerDefinition.FirstPersonIgnoreLayers = weaponLayers|firstPersonIgnoreLayers;
             Destroy(this);  // 配置完立即销毁
         }
     }
@@ -72,6 +77,7 @@ namespace GameContract
 
         /// <summary>第一人称忽略层</summary>
         public static LayerMask FirstPersonIgnoreLayers { get; set; }
+
 
     }
 

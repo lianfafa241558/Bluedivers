@@ -18,6 +18,12 @@ PrefabInstance:
       propertyPath: m_Speed
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 7501487554820498403, guid: 1b75658350d9a2841837a7b5601b8e17,
+        type: 3}
+      propertyPath: Portrait
+      value: 
+      objectReference: {fileID: 21300000, guid: e43a52d04762476409d6f999228f389b,
+        type: 3}
     - target: {fileID: 7501487554820498407, guid: 1b75658350d9a2841837a7b5601b8e17,
         type: 3}
       propertyPath: m_Name
@@ -126,9 +132,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 15
   Duration: 4
+  releaseType: 1
   MeetDetectedTime: 3
   Range: 19
+  DamageSkillTime: 0
   tag: 0
+  m_Controller: {fileID: 0}
   nowCoolTime: 0
   nowDurationTime: 0
   m_LastDetectedTarget: 0
@@ -147,9 +156,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 100
   Duration: 0
+  releaseType: 1
   MeetDetectedTime: 10
   Range: 16
+  DamageSkillTime: 0
   tag: -1
+  m_Controller: {fileID: 0}
   nowCoolTime: 0
   nowDurationTime: 0
   m_LastDetectedTarget: 0

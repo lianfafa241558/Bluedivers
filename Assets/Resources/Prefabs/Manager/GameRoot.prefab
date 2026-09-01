@@ -15898,24 +15898,6 @@ MonoBehaviour:
   gameState: 1
   timeScale: 0
   IsLocal: 0
-  hittableHighSpeedLayers:
-    serializedVersion: 2
-    m_Bits: 528
-  weaponLayers:
-    serializedVersion: 2
-    m_Bits: 1024
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 9
-  unitLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  airWallLayers:
-    serializedVersion: 2
-    m_Bits: 8192
-  firstPersonIgnoreLayers:
-    serializedVersion: 2
-    m_Bits: 5120
 --- !u!114 &9044407380725780217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16067,6 +16049,9 @@ MonoBehaviour:
   smokeLayers:
     serializedVersion: 2
     m_Bits: 16384
+  firstPersonIgnoreLayers:
+    serializedVersion: 2
+    m_Bits: 4096
 --- !u!1 &7276224890037606887
 GameObject:
   m_ObjectHideFlags: 0

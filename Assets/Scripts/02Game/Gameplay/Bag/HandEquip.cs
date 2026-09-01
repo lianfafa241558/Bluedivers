@@ -29,6 +29,12 @@ namespace FPSGame.Gameplay
         [InspectorName("右手")]
         public Transform RHand;
 
+        [InspectorName("左肘 Bend Goal（可选，未配置则不生效）")]
+        public Transform LElbow;
+
+        [InspectorName("右肘 Bend Goal（可选，未配置则不生效）")]
+        public Transform RElbow;
+
         [InspectorName("手持时局部偏移")]
         public Vector3 HandOffset = Vector3.zero;
 
@@ -41,6 +47,9 @@ namespace FPSGame.Gameplay
         EquipController m_EquipController;
         Health m_Health;
         PlayerMountPoint m_MountPoint;
+
+        /// <summary>入槽前缓存的装备根层级，卸载落地时恢复（否则留在第一人称武器层导致主相机不可见/交互异常）</summary>
+        int m_CachedLayer = -1;
 
         /// <summary>被动丢下（切武器/倒地/进载具）时跳过恢复切主武器</summary>
         bool m_SkipRestoreWeapon;
@@ -70,6 +79,12 @@ namespace FPSGame.Gameplay
             m_Health = actor.gameObject.GetComponent<Health>();
             m_MountPoint = actor.gameObject.GetComponent<PlayerMountPoint>();
 
+            // 强制玩家切空手（装备在手中，不可持武器）
+            if (m_Weapons != null)
+            {
+                m_Weapons.SwitchToWeaponIndex(PlayerWeaponsManager.SlotOf(WeaponTypeEnum.Empty), true, false,true);
+            }
+
             // 挂到玩家承载组件的拾取道具点（HandPoint），由 IK 让手吸附到 LHand/RHand
             if (m_MountPoint != null)
             {
@@ -78,8 +93,8 @@ namespace FPSGame.Gameplay
                 transform.localPosition = HandOffset;
                 transform.localEulerAngles = HandEuler;
 
-                // 设置左右手 IK，让玩家手吸附到装备的握点
-                m_MountPoint.SetHandIK(LHand, RHand);
+                // 设置左右手 IK，让玩家手吸附到装备的握点（手肘点用于引导手臂弯曲方向）
+                m_MountPoint.SetHandIK(LHand, RHand, LElbow, RElbow);
             }
             else if (m_Player != null)
             {
@@ -89,11 +104,17 @@ namespace FPSGame.Gameplay
                 transform.localEulerAngles = HandEuler;
             }
 
-            // 强制玩家切空手（装备在手中，不可持武器）
-            if (m_Weapons != null)
+            // 装备切到第一人称武器层（与入槽武器一致），否则第一人称 WeaponCamera 看不到；
+            // 缓存原层级，卸载落地时恢复
+            m_CachedLayer = gameObject.layer;
+            int fpsLayer =
+                Mathf.RoundToInt(Mathf.Log(LayerDefinition.WeaponLayers.value,
+                    2)); //此函数将层掩码转换为层索引（同 PlayerWeaponsManager.EquipWeapon）
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
             {
-                m_Weapons.SwitchToWeaponIndex(PlayerWeaponsManager.SlotOf(WeaponTypeEnum.Empty), true, false);
+                t.gameObject.layer = fpsLayer;
             }
+
 
             // 移速惩罚
             if (m_Player != null)
@@ -132,6 +153,16 @@ namespace FPSGame.Gameplay
 
             // 落地（保持模型可见）
             transform.SetParent(null, true);
+
+            // 恢复原层级（移除第一人称武器层，主相机与交互系统才能看到落地装备）
+            if (m_CachedLayer >= 0)
+            {
+                foreach (Transform t in GetComponentsInChildren<Transform>(true))
+                {
+                    t.gameObject.layer = m_CachedLayer;
+                }
+                m_CachedLayer = -1;
+            }
 
             // 重新启用交互组件，使其可被再次拾取
             // （切武器/倒地/进载具的被动丢下走此路径，轮盘卸载走 Furniture_HandEquip.Operate 卸载分支，

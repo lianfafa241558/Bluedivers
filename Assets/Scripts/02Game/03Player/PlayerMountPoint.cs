@@ -74,7 +74,7 @@ namespace Unity.FPS.Game
             if (m_Player == null) return;
 
             // 重新解析模型内的手部 IK
-            fullIK = GetComponentInChildren<FullBodyBipedIK>();
+            fullIK = m_Player.ModleRoot.GetComponent<FullBodyBipedIK>();
 
             // 按标签解析背部点位（在动态模型内递归查找）
             backPoint = m_Player.ModleRoot != null
@@ -96,8 +96,11 @@ namespace Unity.FPS.Game
             return null;
         }
 
-        /// <summary>设置左右手 IK 目标（装备/武器握点），null 的手不吸附</summary>
-        public void SetHandIK(Transform lHand, Transform rHand)
+        /// <summary>
+        /// 设置左右手 IK 目标（装备/武器握点），null 的手不吸附。
+        /// 同时设置左右手肘 Bend Goal：配置了手肘点则权重 1 引导手臂弯曲方向，未配置则权重 0 不生效。
+        /// </summary>
+        public void SetHandIK(Transform lHand, Transform rHand, Transform lElbow = null, Transform rElbow = null)
         {
             if (fullIK == null) return;
 
@@ -107,6 +110,15 @@ namespace Unity.FPS.Game
             fullIK.solver.rightHandEffector.positionWeight = rHand ? 1 : 0;
             fullIK.solver.leftHandEffector.rotationWeight = lHand ? 1 : 0;
             fullIK.solver.rightHandEffector.rotationWeight = rHand ? 1 : 0;
+
+            // 手肘 Bend Goal：有手肘点权重 1，无则权重 0
+            var bendConstraintL = fullIK.solver.GetBendConstraint(FullBodyBipedChain.LeftArm);
+            bendConstraintL.bendGoal = lElbow;
+            bendConstraintL.weight = lElbow ? 1f : 0f;
+            var bendConstraintR = fullIK.solver.GetBendConstraint(FullBodyBipedChain.RightArm);
+            bendConstraintR.bendGoal = rElbow;
+            bendConstraintR.weight = rElbow ? 1f : 0f;
+
         }
 
         /// <summary>清除左右手 IK 目标（放下装备/武器时调用）</summary>
@@ -120,6 +132,15 @@ namespace Unity.FPS.Game
             fullIK.solver.rightHandEffector.positionWeight = 0;
             fullIK.solver.leftHandEffector.rotationWeight = 0;
             fullIK.solver.rightHandEffector.rotationWeight = 0;
+
+            // 同步清除手肘 Bend Goal
+            // 手肘 Bend Goal：有手肘点权重 1，无则权重 0
+            var bendConstraintL = fullIK.solver.GetBendConstraint(FullBodyBipedChain.LeftArm);
+            bendConstraintL.bendGoal = null;
+            bendConstraintL.weight = 0;
+            var bendConstraintR = fullIK.solver.GetBendConstraint(FullBodyBipedChain.RightArm);
+            bendConstraintR.bendGoal = null;
+            bendConstraintR.weight =0;
         }
     }
 }

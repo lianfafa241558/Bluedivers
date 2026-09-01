@@ -23,7 +23,7 @@ namespace Unity.FPS.Game
             Player = player;
             Players.Add(player);
             OnActorCreat.Enqueue(new(UnitTypeEnum.Player, player));
-            Debug.LogError("玩家出生" + player + "  " + player.transform.position, player.transform);
+            //Debug.LogError("玩家出生" + player + "  " + player.transform.position, player.transform);
         }
         public void RegisterFriend(Actor friend)
         {

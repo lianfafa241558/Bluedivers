@@ -324,6 +324,9 @@ public partial class PlayerController : BaseSelfMoveableController
         // 刚切换到第三人称时，瞬间跳转到第三人称相机位置
         if (IsThirdPerson && !_wasThirdPersonLastFrame && !IsDead && PlayerCamera && _thirdPersonCameraPoint)
         {
+            // 第一人称期间水平角直接转在角色 transform 上（_cameraYaw 未更新），
+            // 切第三人称时先同步为角色当前朝向，避免相机瞬移回上次退出第三人称时的旧角度（同死亡相机处理）
+            _cameraYaw = transform.eulerAngles.y;
             float xOffset = _thirdPersonCameraPoint.localPosition.x;
             float height = _thirdPersonCameraPoint.localPosition.y;
             float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z);

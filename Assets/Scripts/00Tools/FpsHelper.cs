@@ -356,7 +356,7 @@ public static class FpsHelper
 
     public static PEInt DiffDamageScale()
     {
-        PEInt scale = 1 + (TaskManager.Instance.nowTask.ExtraDifficulty[0] * (PEInt)0.15f)+(ActorsManager.Players.Count-1)*(PEInt)0.05f;
+        PEInt scale = 1 + (TaskManager.Instance.nowTask.ExtraDifficulty[0] * (PEInt)0.15f);
         switch (TaskManager.Instance.nowTask.difficulty)
         {
             case DifficultyEnum.Normal:

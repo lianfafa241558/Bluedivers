@@ -179,7 +179,7 @@ public partial class PlayerWnd : Window
             }
             dirList.Add(item.GetComponent<CanvasGroup>());
         }
-        Debug.LogError("初始化playerwnd"+ ActorsManager.Player);
+        //Debug.LogError("初始化playerwnd"+ ActorsManager.Player);
         InitHitFlash();
     }
 

@@ -1268,6 +1268,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
 --- !u!195 &910742491
 NavMeshAgent:
@@ -1303,9 +1304,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u5341\u5B57\u795E\u660E\u81EA\u52A8\u673A"
+  ShowName: "\u5C60\u622E\u8005"
   Id: UNG_Ultralisk
-  Portrait: {fileID: 21300000, guid: 25a2e2339cffa8e449c57a6d7df0a9cc, type: 3}
+  Portrait: {fileID: 21300000, guid: c9a53bdb4fe66024894f2c05954e81c1, type: 3}
   ExtraPortrait: {fileID: 21300000, guid: 25a2e2339cffa8e449c57a6d7df0a9cc, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
@@ -1353,8 +1354,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 15
   Duration: 4
+  releaseType: 1
   MeetDetectedTime: 3
   Range: 19
+  DamageSkillTime: 0
   tag: 0
   m_Controller: {fileID: 0}
   nowCoolTime: 0

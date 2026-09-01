@@ -30,6 +30,14 @@ public class Furniture_Base : Furniture_Attached, IFurniture, I_Entity
     /// </summary>
     public virtual float HalfHeight => 0;
 
+
+
+    string IFurniture.ShowName { get => ShowName; }
+    string IFurniture.Id { get => Id; }
+
+    Sprite IFurniture.Portrait => Icon;
+
+
     protected override Sprite Icon { get => Portrait; }
     string I_Entity.ShowName { get => ShowName; set => ShowName = value; }
     string I_Entity.Id { get => Id; set => Id = value; }
