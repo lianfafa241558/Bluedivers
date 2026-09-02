@@ -16,7 +16,7 @@ using UnityEditor;
 public partial class KeyScreen : MonoBehaviour
 {
     public event UnityAction<int> OnUpdateStage;
-    public event UnityAction OnComple;
+    public UnityEvent OnComple;
 
     [SerializeField]
     private Color _LightColor = new(0, 0.627f, 1f);
@@ -159,7 +159,7 @@ public partial class KeyScreen : MonoBehaviour
 
     bool AllowUnmanned(ProcedureType type)
     {
-        if (type == ProcedureType.Load || type == ProcedureType.Wait || type== ProcedureType.ParaModify) return true;
+        if (type == ProcedureType.Load || type == ProcedureType.Wait || type == ProcedureType.ParaModify || type == ProcedureType.Artillery) return true;
         return false;
     }
 

@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using Utils;
 using static UnityEditor.Progress;
+using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 using static UnityEngine.Rendering.DebugUI;
 
 public static class FpsHelper
@@ -143,7 +144,7 @@ public static class FpsHelper
                 NoSource = damageData.NoSource || !owner,
                 DamageSource = owner,
                 Pos = point,
-                DemolishValue = damageData.GetDemolishValue(),
+                DemolishValue = damageData.GetDemolishValue(0),
                 isDirect = true,
                 damageAffected = collider,
             };
@@ -168,8 +169,9 @@ public static class FpsHelper
             foreach (Damageable item in list)//每一个伤害组件
             {
                 Collider exolosionCollider = item.ClosestCollider(point);
-                PEInt value = 0; 
-                if (PEVector3.Distance((PEVector3)exolosionCollider.bounds.center, (PEVector3)point)<= damageInnerRadius)
+                PEInt value = 0;
+                var centerDisance = PEVector3.Distance((PEVector3)exolosionCollider.bounds.center, (PEVector3)point);
+                if (centerDisance <= damageInnerRadius)
                 {
                     value = damageData.GetExplosionDamage(charg, 0) * damageScale;
                 }
@@ -191,7 +193,7 @@ public static class FpsHelper
                         NoSource = damageData.NoSource || !owner,
                         DamageSource = owner,
                         Pos = point,
-                        DemolishValue = damageData.GetDemolishValue(),
+                        DemolishValue = damageData.GetDemolishValue(centerDisance),
                         isDirect = false,
                         damageAffected = exolosionCollider,
                     };

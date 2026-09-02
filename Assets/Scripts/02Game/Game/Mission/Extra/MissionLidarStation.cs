@@ -16,7 +16,7 @@ namespace FpsGame.Mission
         protected override void StartMission()
         {
             keyScreen = entity.transform.GetComponentInChildren<KeyScreen>();
-            keyScreen.OnComple += OnKeyScreenComple;
+            keyScreen.OnComple.RemoveListener(OnKeyScreenComple);
 
         }
 
@@ -29,7 +29,11 @@ namespace FpsGame.Mission
             foreach (var mission in missions)
             {
                 if (mission.end) continue;
-                if (mission.entity.IsValid()) mission.entity.TryDiscovered();
+                if (mission.entity.IsValid())
+                {
+                    Debug.LogError("尝试暴露"+ mission,mission);
+                    mission.entity.TryDiscovered();
+                }
             }
         }
     }

@@ -173,7 +173,7 @@ namespace FpsGame.Mission
         {
             plane = go;
             keyScreen = go.GetComponentInChildren<KeyScreen>();
-            keyScreen.OnComple += OnComple;
+            keyScreen.OnComple.AddListener(OnComple);
             keyScreen.OnUpdateStage += OnUpdateStage;
             keyScreen.gameObject.SetActive(false);
         }

@@ -272,15 +272,15 @@ MonoBehaviour:
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 0}
+  relatedTrans: {fileID: 1009844439945072076}
   relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 0
+  ExtFloatParameter: 5
   ExtBoolParameter: 0
   particle: {fileID: 0}
   obs: {fileID: 0}
   requireId: Shell
-  maxProgress: 5
-  placePoint: {fileID: 1009844439945072076}
+  shells: 
+  m_weapon: {fileID: 0}
 --- !u!114 &411330635134411522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -386,20 +386,16 @@ MonoBehaviour:
   cfg:
     _fakeAttrs:
     - Key: 0
-      Value: 36
+      Value: 0
     - Key: 1
-      Value: 4
+      Value: 1
     - Key: 2
-      Value: 1.5
-    - Key: 7
-      Value: 5
+      Value: 1
     - Key: 11
-      Value: 2.5
+      Value: 10
     - Key: 12
       Value: 100
-    - Key: 4
-      Value: 4
-  ProjectilePrefab: {fileID: 3718883947606575504, guid: 6dd2c59677b7a7e458cd7f8b1ac99137,
+  ProjectilePrefab: {fileID: 1177580448967823432, guid: e171309708f06b74193eb48b71f1c59f,
     type: 3}
   BulletFlag: 0
   Damages:
@@ -409,17 +405,19 @@ MonoBehaviour:
     MaxLifeTime: 5
     MaxRange: -1
     MinRange: -1
-    NoSource: 0
-    SoundRadius: 20
-    DamageExplosion: 100
-    DamageDirect: 0
+    NoSource: 1
+    SoundRadius: 100
+    DamageExplosion: 200
+    DamageDirect: 550
     DamageGroupDirect:
     - Key: 0
+      Value: 1
+    - Key: 2
       Value: 1
     WeaknessBonus: 0
     ExplosionInnerRange: 3
     ExplosionRange: 6
-    DestructeRadius: 0
+    DestructeRadius: 3
     ShockwaveRadius: 0
     DamageGroupExplosion:
     - Key: 1
@@ -427,18 +425,248 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     UseCollisionDirection: 1
-    ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 4260779743739990948, guid: 6442d46ac7382ae4e917ca6f0aece2d8,
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 6513570022818009108, guid: 5e0e441763238ba498d5a4847077d889,
       type: 3}
-    ImpactSfx: {fileID: 8300000, guid: c9c63d78fd83ae44b8e1458ff52a1138, type: 3}
-    UseHole: 0
-    Hole: {fileID: 1939284960408366933, guid: e1dec93785cf6964e8454fdbf914210e, type: 3}
+    ImpactSfx: {fileID: 8300000, guid: cae00213721a55f4b95aac9376b754bb, type: 3}
+    UseHole: 1
+    Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
     OnlyTerrain: 0
     DirectAP: 0
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
-    demolishValue: 0
+    demolishValue: 30
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 1
+    ChargeGravityScale: 1
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  - Speed: 200
+    Gravity: 10
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 5
+    MaxRange: -1
+    MinRange: -1
+    NoSource: 1
+    SoundRadius: 20
+    DamageExplosion: 300
+    DamageDirect: 700
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 4
+    ExplosionRange: 8
+    DestructeRadius: 4
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 6513570022818009108, guid: f4897c6a885fec74185b34e9259784f1,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: cae00213721a55f4b95aac9376b754bb, type: 3}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 40
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 1
+    ChargeGravityScale: 1
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  - Speed: 150
+    Gravity: 90
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 5
+    MaxRange: -1
+    MinRange: -1
+    NoSource: 1
+    SoundRadius: 100
+    DamageExplosion: 2500
+    DamageDirect: 0
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 12.5
+    ExplosionRange: 25
+    DestructeRadius: 15
+    ShockwaveRadius: 30
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 665100303325612391, guid: 4a251ccafda82a644accfe3c2b5efebf,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: b1b223bdf0531c946825b724fae6c90f, type: 3}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 10
+    ExplosionAPChargeScale: 1
+    demolishValue: 60
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 1
+    ChargeGravityScale: 1
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  - Speed: 150
+    Gravity: 90
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 5
+    MaxRange: -1
+    MinRange: -1
+    NoSource: 1
+    SoundRadius: 100
+    DamageExplosion: 200
+    DamageDirect: 550
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 3
+    ExplosionRange: 6
+    DestructeRadius: 3
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 8167516518492074666, guid: 9bf5007dbab9f9a4d9c2d3e322a9c375,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: cae00213721a55f4b95aac9376b754bb, type: 3}
+    UseHole: 1
+    Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
+    OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 30
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 1
+    ChargeGravityScale: 1
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  - Speed: 150
+    Gravity: 90
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 5
+    MaxRange: -1
+    MinRange: -1
+    NoSource: 1
+    SoundRadius: 100
+    DamageExplosion: 200
+    DamageDirect: 550
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 3
+    ExplosionRange: 6
+    DestructeRadius: 3
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 2115654139197423946, guid: c017b2553037218409ad516f7ecc5241,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: cae00213721a55f4b95aac9376b754bb, type: 3}
+    UseHole: 0
+    Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
+    OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 30
+    UseCharge: 0
+    ChargeDamageScale: 0
+    ChargeAOERangeScale: 0
+    ChargeSpeedScale: 1
+    ChargeGravityScale: 1
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  - Speed: 150
+    Gravity: 90
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 5
+    MaxRange: -1
+    MinRange: -1
+    NoSource: 1
+    SoundRadius: 100
+    DamageExplosion: 200
+    DamageDirect: 550
+    DamageGroupDirect:
+    - Key: 0
+      Value: 1
+    - Key: 2
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 3
+    ExplosionRange: 6
+    DestructeRadius: 3
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 3577755781743022927, guid: 89ff1385eeedab44abb732d49f29da50,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: cae00213721a55f4b95aac9376b754bb, type: 3}
+    UseHole: 0
+    Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
+    OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 30
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -466,7 +694,7 @@ MonoBehaviour:
   showReloadTime: 0
   showCool: 0
   ShootType: 1
-  WeaponFlag: 5
+  WeaponFlag: 1
   AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}

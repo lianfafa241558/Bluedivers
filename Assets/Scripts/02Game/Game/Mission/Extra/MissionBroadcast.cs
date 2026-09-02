@@ -20,7 +20,7 @@ namespace FpsGame.Mission
             tower.OnDie += OnTowerDeath;
 
             keyScreen = towerGo.GetComponentInChildren<KeyScreen>();
-            keyScreen.OnComple += OnKeyScreenComple;
+            keyScreen.OnComple.AddListener(OnKeyScreenComple);
 
         }
 

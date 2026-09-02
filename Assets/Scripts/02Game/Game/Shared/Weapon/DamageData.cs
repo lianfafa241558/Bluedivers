@@ -18,13 +18,16 @@ namespace Unity.FPS.Game
         PEInt GetDirectDamage(PEInt chargeScale);
         PEInt GetDamageInnerRadius(PEInt chargeScale);
         PEInt GetDamageOuterRadius(PEInt chargeScale);
+        /// <summary>效果系数，内半径1，外半径衰减到0</summary>
+        PEInt GetEffectRadiusScale(PEInt distance, PEInt chargeScale);
+
         PEInt GetDestructeRadius(PEInt chargeScale);
         PEInt GetShockwaveRadius(PEInt chargeScale);
         PEInt GetSoundRadius(PEInt chargeScale);
         public PEInt GetWeaknessBonus();
         public int GetDirectAP(PEInt chargeScale);
         public int GetExplosionAP(PEInt chargeScale);
-        public int GetDemolishValue();
+        public int GetDemolishValue(PEInt distance);
         List<SKVP<DamageTypeEnum, float>> DamageGroupDirect { get; }
         List<SKVP<DamageTypeEnum, float>> DamageGroupExplosion { get; }
           
@@ -185,23 +188,20 @@ namespace Unity.FPS.Game
 
         public bool UseExplode => DamageExplosion > 0;
 
-        public PEInt GetExplosionDamage(PEInt ChargeScale, PEInt distance)
+        public PEInt GetEffectRadiusScale(PEInt distance, PEInt chargeScale)
         {
-            PEInt outerRange = GetDamageOuterRadius(ChargeScale);
-            PEInt innerRange = GetDamageInnerRadius(ChargeScale);
-            PEInt damage = _HandleValue(DamageExplosion, ChargeDamageScale, ChargeScale);
-            if (distance < innerRange)
-            {
-                return damage;
-            }
-            else if (distance < outerRange)
-            {
-                return damage * PEMath.Clamp((outerRange - distance) / (outerRange - innerRange), 0, 1);
-            }
-            else return 0;
+            PEInt outerRange = GetDamageOuterRadius(chargeScale);
+            PEInt innerRange = GetDamageInnerRadius(chargeScale);
+            if (outerRange == innerRange || distance < innerRange) return 1;
+            else return PEMath.Clamp((outerRange - distance) / (outerRange - innerRange), 0, 1);
         }
+        public PEInt GetExplosionDamage(PEInt chargeScale, PEInt distance) =>
+            GetEffectRadiusScale(distance, chargeScale) * (PEInt)DamageExplosion;
+
         /// <summary>直击伤害</summary>
         public PEInt GetDirectDamage(PEInt ChargeScale) => _HandleValue(DamageDirect, ChargeDamageScale, ChargeScale);
+
+
         /// <summary>爆炸内半径</summary>
         public PEInt GetDamageInnerRadius(PEInt ChargeScale) => _HandleValue(ExplosionInnerRange, ChargeAOERangeScale, ChargeScale);
         /// <summary>爆炸外半径</summary>
@@ -218,7 +218,7 @@ namespace Unity.FPS.Game
         public int GetExplosionAP(PEInt charge) => _HandleAP(ExplosionAP, ExplosionAPChargeScale, charge);
 
         /// <summary>拆毁值（不随蓄力缩放）</summary>
-        public int GetDemolishValue() => demolishValue;
+        public int GetDemolishValue(PEInt distance) => (GetEffectRadiusScale(distance,1)*demolishValue).RawInt;
 
 
         /// <summary>速度</summary>

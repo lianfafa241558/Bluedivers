@@ -474,7 +474,7 @@ public class AirdropController : MonoBehaviour
                 {
 
                     case AirdropState.Cool:
-                        time = cool- cfg.sustainTime- arriveTime;//真的吗（woc好像是真的）
+                        time = Mathf.Max(cool- cfg.sustainTime - arriveTime,0.5f);//真的吗（woc好像是真的）
                         break;
                     case AirdropState.Arrive:
                         time = arriveTime;

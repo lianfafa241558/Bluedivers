@@ -455,7 +455,7 @@ MonoBehaviour:
     DamageExplosion: 5
     DamageDirect: 5
     DamageGroupDirect:
-    - Key: 3
+    - Key: 0
       Value: 1
     - Key: 2
       Value: 1
@@ -475,9 +475,9 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 5
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 3
     ExplosionAPChargeScale: 1
     demolishValue: 0
     UseCharge: 0
@@ -643,6 +643,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
 --- !u!114 &2434812269676555755
 MonoBehaviour:

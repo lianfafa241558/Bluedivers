@@ -320,6 +320,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
 --- !u!114 &5816104919111125095
 MonoBehaviour:
@@ -1026,9 +1027,9 @@ MonoBehaviour:
     OnlyTerrain: 0
     DirectAP: 0
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 3
     ExplosionAPChargeScale: 1
-    demolishValue: 0
+    demolishValue: 30
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0

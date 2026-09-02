@@ -1,6 +1,10 @@
+using System.Collections.Generic;
 using System.Linq;
+using FPSGame.Attribute;
 using FPSGame.Furn;
+using Unity.FPS.Game;
 using UnityEngine;
+using Utils;
 
 /// <summary>
 /// 炮弹架交互家具：玩家需手持指定 ID 的物体（如炮弹）才能交互。
@@ -16,20 +20,50 @@ public class Furniture_Artillery : Furniture_Base
     [Tooltip("玩家必须手持 Id 等于该值的物体才能交互")]
     private string requireId;
 
+    [DisplayField]
     [SerializeField]
-    [InspectorName("进度上限")]
-    [Tooltip("进度小于该值时才可交互，达到后不可再放置")]
-    private int maxProgress = 5;
+    [InspectorName("已放置的炮弹")]
+    private List<int> shells=new();
 
+    [DisplayField]
     [SerializeField]
-    [InspectorName("放置点位")]
-    [Tooltip("放下物体时，物体将移动到这个 Transform 的位置")]
-    private Transform placePoint;
+    [InspectorName("已放置的炮弹")]
+    private WeaponController m_weapon;
+
 
     /// <summary>当前已放置进度（运行时只读）</summary>
-    public int Progress { get; private set; }
+    public int Progress => shells.Count();
 
-    public override string Desc => "放置[" + requireId + "](" + Progress + "/" + maxProgress + ")";
+    public override string Desc => "放置[" + requireId + "]";
+
+
+    protected override void Awake()
+    {
+        base.Awake();
+        m_weapon = GetComponentInChildren<WeaponController>();
+        m_weapon.OnShoot += OnShoot;
+    }
+    private void OnDestroy()
+    {
+        m_weapon.OnShoot -= OnShoot;
+        m_weapon = null;
+    }
+
+    private void OnShoot(WeaponBaseController weapon)
+    {
+        int index;  
+        if (shells.Count > 0)
+        {
+
+            index = shells[shells.Count - 1];
+            shells.RemoveAt(shells.Count - 1);
+        }
+        else
+        {
+            index = 0;
+        }
+        weapon.UseDamageIndex = index;
+    }
 
     /// <summary>
     /// 交互判断：基类条件 && 进度未满 && 玩家手持匹配物体。
@@ -37,7 +71,7 @@ public class Furniture_Artillery : Furniture_Base
     public override bool CanOperate(GameObject unit)
     {
         if (!base.CanOperate(unit)) return false;
-        if (Progress >= maxProgress) return false;
+        if (Progress >= ExtFloatParameter) return false;
         return HasRequireItem(unit);
     }
 
@@ -59,12 +93,20 @@ public class Furniture_Artillery : Furniture_Base
     /// <summary>是否玩家手持匹配 ID 的物体</summary>
     private bool HasRequireItem(GameObject user)
     {
-        if (user == null || string.IsNullOrEmpty(requireId)) return false;
-        if (!user.TryGetComponent(out EquipController equip)) return false;
+        if (user == null || string.IsNullOrEmpty(requireId))
+        {
+            return false;
+        }
+        if (!user.TryGetComponent(out EquipController equip))
+        {
+            return false;
+        }
         foreach (var furn in equip.AllFurns())
         {
+            Debug.LogWarning("furn"+(furn != null? furn.Id : ""));
             if (furn != null && furn.Id == requireId) return true;
         }
+        Debug.LogWarning("没有找到对应id的物品");
         return false;
     }
 
@@ -85,10 +127,28 @@ public class Furniture_Artillery : Furniture_Base
             // 关闭落地重力，使物体固定在放置点位
             if (go.TryGetComponent(out CharacterController cc)) cc.enabled = false;
             // 放到指定点位
-            if (placePoint != null) go.transform.position = placePoint.position;
-
-            ++Progress;
+            if (relatedTrans != null)
+            {
+                //go.transform.position = relatedTrans.position;
+                go.transform.SetParent(relatedTrans, false);
+                go.transform.localPosition = Vector3.zero;
+                go.transform.localEulerAngles = Vector3.zero;
+                Tool.Destroy(go,0.5f);
+            }
+            int index = (int)((Furniture_Base)furn).ExtFloatParameter;
+            shells.Add(index);
+            m_weapon.UseDamageIndex = index;
+            m_weapon.Magazine.CurrValue = shells.Count;
             break;
         }
     }
+    /// <summary>
+    /// event检视器调用
+    /// </summary>
+    public void AuthorizeAirdrop()
+    {
+        BattleManager.Instance.Authorize(Constants.ArtilleryId,true);
+    }
+
+
 }

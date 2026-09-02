@@ -79,23 +79,19 @@ namespace Unity.FPS.Game
 
         public bool UseExplode => DamageExplosion > 0;
 
-        public PEInt GetDirectDamage(PEInt chargeScale) => 0;
-
-        public PEInt GetExplosionDamage(PEInt chargeScale, PEInt distance)
+        public PEInt GetEffectRadiusScale(PEInt distance, PEInt chargeScale)
         {
             PEInt outerRange = GetDamageOuterRadius(chargeScale);
             PEInt innerRange = GetDamageInnerRadius(chargeScale);
-            PEInt damage = (PEInt)DamageExplosion;
-            if (distance < innerRange)
-            {
-                return damage;
-            }
-            else if (distance < outerRange)
-            {
-                return damage * PEMath.Clamp((outerRange - distance) / (outerRange - innerRange), 0, 1);
-            }
-            else return 0;
+            if (outerRange == innerRange|| distance < innerRange) return 1;
+            else return PEMath.Clamp((outerRange - distance) / (outerRange - innerRange), 0, 1);
         }
+        public PEInt GetDirectDamage(PEInt chargeScale) => 0;
+
+        public PEInt GetExplosionDamage(PEInt chargeScale, PEInt distance)=> 
+            GetEffectRadiusScale(distance, chargeScale) * (PEInt)DamageExplosion;
+            
+        
 
         /// <summary>爆炸内半径</summary>
         public PEInt GetDamageInnerRadius(PEInt chargeScale) => (PEInt)ExplosionInnerRange;
@@ -112,7 +108,10 @@ namespace Unity.FPS.Game
 
         public int GetDirectAP(PEInt chargeScale) => ExplosionAP;
         public int GetExplosionAP(PEInt chargeScale) => ExplosionAP;
-        public int GetDemolishValue() => demolishValue;
+
+        /// <summary>拆毁值（不随蓄力缩放）</summary>
+        public int GetDemolishValue(PEInt distance) => (GetEffectRadiusScale(distance, 1) * demolishValue).RawInt;
+
         #region 接口映射(显式实现以保留字段的Unity序列化)
         List<SKVP<DamageTypeEnum, float>> IDamageData.DamageGroupExplosion => DamageGroupExplosion;
         bool IDamageData.NoSource => NoSource;

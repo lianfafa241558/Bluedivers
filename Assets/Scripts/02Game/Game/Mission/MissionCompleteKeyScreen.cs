@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -18,14 +18,14 @@ namespace FpsGame.Mission
         protected override void StartMission()
         {
             keyScreen = entity.GetComponentInChildren<KeyScreen>();
-            keyScreen.OnComple += OnComple;
+            keyScreen.OnComple.AddListener(OnComple);
             keyScreen.OnUpdateStage += OnUpdateStage;
         }
         protected override void Uninit()
         {
             base.Uninit();
             if (!keyScreen.IsValid()) return;
-            keyScreen.OnComple -= OnComple;
+            keyScreen.OnComple.RemoveListener(OnComple);
             keyScreen.OnUpdateStage -= OnUpdateStage;
         }
 
