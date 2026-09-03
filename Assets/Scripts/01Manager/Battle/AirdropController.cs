@@ -91,6 +91,7 @@ public class AirdropController : MonoBehaviour
 
 
         useAd = new();
+        List<int> subAd = new();
         //读取任务所需战备
         var required = TaskManager.Instance.nowTask.RequiredAD;
         for (int i = 0; i < required.Count; ++i)
@@ -100,13 +101,20 @@ public class AirdropController : MonoBehaviour
         }
         //读取玩家携带的战备
         var arr = RoomManager.Instance.Self.airdrop;
-        if(arr.Any(id=> ResSvc.airdropDic[id].deliveryType == AirdropDeliveryEnum.Jet))
-        {
-            useAd.Add(new(ResSvc.airdropDic[Constants.EagleReloadId],true));
-        }
+        
+        //if(arr.Any(id=> ResSvc.airdropDic[id].deliveryType == AirdropDeliveryEnum.Jet))
+        //{
+        //    useAd.Add(new(ResSvc.airdropDic[Constants.EagleReloadId],true));
+        //}
         for (int i = 0; i < arr.Length; ++i)
         {
-            useAd.Add(new(ResSvc.airdropDic[arr[i]],false));
+            useAd.Add(new(ResSvc.airdropDic[arr[i]], false));
+            int sub = ResSvc.airdropDic[arr[i]].subAirdrop;
+            if (sub > 0&& !subAd.Contains(sub))
+            {
+                useAd.Add(new(ResSvc.airdropDic[sub], false));
+                subAd.Add(sub);
+            }
         }
 
         foreach(var item in useAd)

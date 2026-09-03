@@ -150,5 +150,13 @@ public class Furniture_Artillery : Furniture_Base
         BattleManager.Instance.Authorize(Constants.ArtilleryId,true);
     }
 
+    /// <summary>
+    /// event检视器调用
+    /// </summary>
+    public void AuthorizePlayerAirdrop()
+    {
+        BattleManager.Instance.Authorize(Constants.PlayerArtilleryAId, true);
+        BattleManager.Instance.Authorize(Constants.PlayerArtilleryBId, true);
+    }
 
 }

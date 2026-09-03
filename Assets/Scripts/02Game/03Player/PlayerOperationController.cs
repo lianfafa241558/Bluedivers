@@ -54,6 +54,7 @@ public class PlayerOperationController : MonoBehaviour
             }
             if (target != newtar)
             {
+                CancelSteppedPress();
                 if (target != null && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
                 target = newtar;
                 if (newtar == null)
@@ -87,7 +88,36 @@ public class PlayerOperationController : MonoBehaviour
 
         if (target != null)
         {
-            if (target.MeetTime == 0)
+            // 逐步长按家具：把按住过程的推进权交给家具（IStepPress）
+            if (target is IStepPress step && step.CanOperateStepped(gameObject))
+            {
+                if (m_InputHandler.GetOperateDown())
+                {
+                    if (step.BeginPress(gameObject))
+                    {
+                        if (target.AudioPress) aud = AudioSvc.PlaySound(new(target.AudioPress, target.CenterPos, 20, AudioGroups.General) { loop = true });
+                    }
+                }
+                else if (m_InputHandler.GetOperateHeld())
+                {
+                    if (step.StepPress(Time.deltaTime))//本次转完，收尾
+                    {
+                        target.Handle(gameObject);
+                        if (aud) { aud.Stop(); aud = null; }
+                        if (!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
+                        if (target == null || !target.CanOperate(gameObject))
+                        {
+                            target = null;
+                        }
+                    }
+                }
+                else if (m_InputHandler.GetOperateUp())//取消操作（保留已转移进度）
+                {
+                    step.CancelPress();
+                    if (aud) { aud.Stop(); aud = null; }
+                }
+            }
+            else if (target.MeetTime == 0)
             {
                 if (m_InputHandler.GetOperateDown())
                 {
@@ -131,11 +161,18 @@ public class PlayerOperationController : MonoBehaviour
 
     }
 
+    /// <summary>切换/清除目标前，把正在进行的接管按压取消</summary>
+    private void CancelSteppedPress()
+    {
+        if (target is IStepPress step) step.CancelPress();
+    }
+
     private void TrySetTarget(RaycastHit hit)
     {
         var newtar = hit.transform.GetComponentInParent<IFurniture>();
         if(target != newtar && (newtar == null || newtar.CanOperate(gameObject)))
         {
+            CancelSteppedPress();
             if (target != null && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
             target = newtar;
             if (newtar == null)
@@ -150,6 +187,7 @@ public class PlayerOperationController : MonoBehaviour
     {
         if (target != null && (!target.HaveFlag(FurnitureFlag.SwitchState) || !target.InOperate))
         {
+            CancelSteppedPress();
             if (!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
             if (aud) { aud.Stop(); aud = null; }
             target = null;
@@ -165,6 +203,7 @@ public class PlayerOperationController : MonoBehaviour
                 enabled = true;
                 break;
             default:
+                CancelSteppedPress();
                 if (target != null &&!target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
                 if (aud) { aud.Stop(); aud = null; }
                 target = null;

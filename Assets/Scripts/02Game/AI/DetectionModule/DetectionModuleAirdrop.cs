@@ -31,7 +31,10 @@ namespace FPSGame.AI
 
         void OnAirdrop(GameObject source, GameObject beacon, Vector3 point, AirdropController.AirdropData data)
         {
-            if (data.cfg.ID != Constants.ArtilleryId) return;
+            if (data.cfg.ID != Constants.ArtilleryId
+                && data.cfg.ID != Constants.PlayerArtilleryAId
+                && data.cfg.ID != Constants.PlayerArtilleryBId) return;
+
             //if (!RespondAirdrop) return;
             // 把空投落点设为当前目标并触发发现，令单位转向攻击该点
             Target.Set(point);

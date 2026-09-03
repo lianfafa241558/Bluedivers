@@ -29,20 +29,25 @@ public enum AirdropDeliveryEnum
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/战备")]
 public class AirdropData_SO : ScriptableObject
 {
-    [InspectorName("隐藏战备")]
+    [InspectorName("在战备配置界面隐藏")]
     public bool isHide;
     public int ID;
     public string showName;
     [TextArea]
     public string desc;
+    [SpritePreview(4,4)]
     [InspectorName("图标")]
     public Sprite icon;
+    
+
     [InspectorName("操作")]
     public DirectionEnum[] opter;
     [InspectorName("类型")]
     public AirdropType type;
     [InspectorName("投送方式")]
     public AirdropDeliveryEnum deliveryType;
+
+    [Space]
     [InspectorName("冷却")]
     public int cool;
 
@@ -57,6 +62,10 @@ public class AirdropData_SO : ScriptableObject
     [Range(0, 20)]
     public int arriveCount = 0;
 
+    [InspectorName("附属战备")]
+    public int subAirdrop = 0;
+
+    [Space]
     [InspectorName("影响范围的显示")]
     public Vector2 showRange;
 
@@ -64,6 +73,8 @@ public class AirdropData_SO : ScriptableObject
     public int sustainTime;
     [InspectorName("创建的物体")]
     public GameObject creatObect;
+
+    [Space]
     [InspectorName("使用标准空投舱")]
     [Compare("deliveryType", (int)AirdropDeliveryEnum.Pod, CompareOperate.Equal)]
     public bool useNormalPod;
