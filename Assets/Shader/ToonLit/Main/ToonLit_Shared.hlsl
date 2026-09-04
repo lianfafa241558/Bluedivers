@@ -87,6 +87,7 @@ sampler2D _BlendingMap;
 sampler2D _ColourTex;
 sampler2D _ColourMaskTex;
 
+
 // 把你所有的 uniforms(一般是里面的东西。着色器文件的属性{})，以使SRP批处理程序兼容
 // see -> https://blogs.unity3d.com/2019/02/28/srp-batcher-speed-up-your-rendering/
 CBUFFER_START(UnityPerMaterial)
@@ -123,6 +124,7 @@ half3 _EmissionColor;
 half _EmissionMulByBaseColor;
 half3 _EmissionMapChannelMask;
 half _EmissionScale;
+float4 _EmissionMap_ST;
 
     //specular
 half _UseSpecular;
@@ -163,8 +165,10 @@ float _OutlineZOffset;
     // colour
 float _UseColour;
 float4 _ColourTex_ST;
-float4 _ColourrMaskTex_ST;
+float4 _ColourMaskTex_ST;
 float _ColourScale;
+half4 _ColourColor;
+
 
 CBUFFER_END
 
@@ -405,12 +409,12 @@ half3 GetFinalEmissionColor(Varyings input)//计算自发光颜色
     {
         if (_EmissionMaskAddite)
         {
-            half3 value = tex2D(_EmissionMap, input.uv).rgb * _EmissionMapChannelMask;
+            half3 value = tex2D(_EmissionMap, input.uv *_EmissionMap_ST.xy).rgb * _EmissionMapChannelMask;
             result += (value.r + value.g + value.b) * _EmissionColor.rgb * _EmissionScale;
         }
         else
         {
-            result += tex2D(_EmissionMap, input.uv).rgb * _EmissionColor.rgb  * _EmissionScale;
+            result += tex2D(_EmissionMap, input.uv*_EmissionMap_ST.xy).rgb * _EmissionColor.rgb  * _EmissionScale;
             //result += tex2D(_EmissionMap, input.uv).rgb * _EmissionMapChannelMask * _EmissionColor.rgb*_EmissionScale;
         }
         
@@ -445,7 +449,8 @@ half3 GetFinalColourColor(Varyings input)//计算"色彩"遮罩(效果在光照�
     half3 result = 0;
     if (_UseColour)
     {
-        result = tex2D(_ColourMaskTex, input.uv).rgb * _ColourScale;
+        result = tex2D(_ColourMaskTex, input.uv * _ColourMaskTex_ST.xy).rgb *_ColourColor;
+        //result = tex2D(_ColourTex, input.uv).rgb *_ColourColor*tex2D(_ColourMaskTex, input.uv).rgb;
     }
     return result;
 }

@@ -79,14 +79,14 @@ half3 ShadeSingleLight(ToonSurfaceData surfaceData, ToonLightingData lightingDat
 half3 ShadeColour(ToonSurfaceData surfaceData, ToonLightingData lightingData)
 {
     half3 result = 0;
-    /*
+    
     if (_UseColour)
     {
 
         float2 uv = lightingData.viewDirectionWS.xy * (_ColourTex_ST.xy + _ColourTex_ST.zw);
         float3 texColor = tex2D(_ColourTex, uv).rgb;
         result = texColor * surfaceData.colourMask;
-    }*/
+    }
     return result;
 }
 
@@ -112,6 +112,8 @@ half3 CompositeAllLightResults(half3 indirectResult, half3 mainLightResult, half
     /*
     if(_UseSpecular)specular= mainLightResult.rgb * surfaceData.specular * (1-smoothstep(0.5-_SpecularSoftness,0.5+_SpecularSoftness,pow(1-saturate(dot(R,V)),_Smoothness)));
     */
+     
+
 #ifdef ToonShaderIsOutline
     // Outline: 在间接光和直接光之间取最大值，避免两者叠加导致对环境光过于敏感
     half3 combinedLight = max(indirectResult, mainLightResult + additionalLightSumResult);
@@ -139,16 +141,7 @@ half3 CompositeAllLightResults(half3 indirectResult, half3 mainLightResult, half
         tangentNormal.z = sqrt(1 - saturate(dot(tangentNormal.xy, tangentNormal.xy)));
         // 转换到世界空间
         half3 finalNormal = normalize(mul(tangentNormal, TBN));
-        
-        
-        //猜测3:切线空间细节法线偏移（基于纹理采样的切线空间偏移）
-        /*
-        half2 detailOffset = (surfaceData.tangentAndSpecular.rg - 0.5) * 1;
-        half3 finalNormal = normalize(lightingData.normalWS +
-            lightingData.tangentWS * detailOffset.x +
-            lightingData.bitangentWS * detailOffset.y); 
-        */
-        
+
         float3 R = reflect(-mainLight.direction, finalNormal + _SpecularOffest * lightingData.tangentWS);
         float3 V = lightingData.viewDirectionWS;
         //float3 R = reflect(-mainLight.direction, lightingData.normalWS + _SpecularOffest * lightingData.tangentWS);
@@ -157,27 +150,10 @@ half3 CompositeAllLightResults(half3 indirectResult, half3 mainLightResult, half
         V = normalize(V);
         
         specular = specularResult * (smoothstep(0.5 - _SpecularSoftness, 0.5 + _SpecularSoftness, pow(saturate(dot(R, V)), _Smoothness)));
-        
-        /*
-        // 主高光（原始）
-        float NdotV = dot(lightingData.normalWS, lightingData.viewDirectionWS);
-        float primarySpec = pow(saturate(NdotV), _Smoothness);
-    
-        // 次级高光（偏移）
-        float3 shiftedNormal = normalize(lightingData.normalWS + _SpecularOffest);
-        float shiftedNdotV = dot(shiftedNormal, lightingData.viewDirectionWS);
-        float secondarySpec = pow(saturate(shiftedNdotV), _Smoothness);
-    
-        // 混合两个高光
-        float finalSpec = lerp(primarySpec, secondarySpec, 0.5);
-    
-        specular = specularResult * (smoothstep(0.5 - _SpecularSoftness,
-                                            0.5 + _SpecularSoftness,
-                                            finalSpec));
-        */
-        
+  
     }
-    return ((1 - surfaceData.colourMask) * surfaceData.albedo + colourResult) * rawLightSum /**lightingData.shadowCoord*/ + emissionResult + specular;
+    //return surfaceData.colourMask;
+    return ((1 - surfaceData.colourMask) * surfaceData.albedo + (surfaceData.colourMask*colourResult)) * ((_ColourScale)+rawLightSum*(1-_ColourScale)) /**lightingData.shadowCoord*/ + emissionResult + specular;
 
 #endif
 
