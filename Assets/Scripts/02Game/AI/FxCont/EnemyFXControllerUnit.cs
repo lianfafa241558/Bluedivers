@@ -31,14 +31,15 @@ namespace FPSGame.AI
         protected override void Start()
         {
             base.Start();
-            if (fxDic.TryGet(OccasionTypeEnum.Movement, out var value))
+            var moveFx = GetFxSet(OccasionTypeEnum.Movement);
+            if (moveFx != null)
             {
                 // 有音效组用音效组，否则用单个音频剪辑
-                if (value.SG || value.cilp.IsValid())
+                if (moveFx.SoundGroup || moveFx.Clip.IsValid())
                 {
                     m_moveAudio = AudioSvc.CreatSource(gameObject, AudioGroups.Enemy);
 
-                    m_moveAudio.clip = value.SG ? value.SG.Get(transform.position).Clip : value.cilp;
+                    m_moveAudio.clip = moveFx.SoundGroup ? moveFx.SoundGroup.Get(transform.position).Clip : moveFx.Clip;
                     m_moveAudio.Stop();
                 }
 

@@ -323,7 +323,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 20
+  - BulletPrefab: {fileID: 828996816448062211, guid: 4382c41751911db43982fe1740493e6b,
+      type: 3}
+    Speed: 20
     Gravity: 20
     InheritWeaponSpeed: 0
     MaxLifeTime: 2
@@ -354,6 +356,11 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 3577755781743022927, guid: 6d2a5fa267dd5d74b97cee8e92d47ab2, type: 3}
     OnlyTerrain: 1
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -889,8 +896,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 60
   Duration: 0
+  releaseType: 1
   MeetDetectedTime: 10
   Range: 30
+  DamageSkillTime: 0
   tag: 4
   m_Controller: {fileID: 0}
   nowCoolTime: 0

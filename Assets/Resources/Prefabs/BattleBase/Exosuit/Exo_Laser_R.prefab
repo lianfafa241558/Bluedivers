@@ -68,7 +68,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 100
+  - BulletPrefab: {fileID: 8835491154407723254, guid: 1c1f8f22e6c13174faef359317b71b2e,
+      type: 3}
+    Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
@@ -103,6 +105,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
@@ -177,9 +180,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 0
   LineArmor:
   - {fileID: 8533741032729777254}
@@ -332,14 +332,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   armorLevel: 0
-  explosionResistance: 0
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr: []
-    meetReset: 0
   source: {fileID: 0}
 --- !u!1001 &8807712388092934257
 PrefabInstance:
@@ -466,20 +458,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   armorLevel: 2
-  explosionResistance: 0
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.5
-    - Key: 2
-      Value: 0.5
-    - Key: 1
-      Value: 0.5
-    meetReset: 0
   source: {fileID: 0}
 --- !u!114 &3572450649952723735
 MonoBehaviour:

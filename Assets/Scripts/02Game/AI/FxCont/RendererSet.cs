@@ -18,33 +18,6 @@ namespace FPSGame.AI {
             MaterialIndex = index;
         }
     }
-    public enum OccasionTypeEnum {
-        /// <summary>攻击时</summary>
-        [InspectorName("攻击时")]
-        Attack,
-        /// <summary>发现目标</summary>
-        [InspectorName("发现目标")]
-        DetectedTarget,
-        /// <summary>丢失目标</summary>
-        [InspectorName("丢失目标")]
-        LostTarget,
-        /// <summary>受击时</summary>
-        [InspectorName("受击时")]
-        Hit,
-        /// <summary>死亡时</summary>
-        [InspectorName("死亡时")]
-        Die,
-        /// <summary>诞生时</summary>
-        [InspectorName("诞生时")]
-        Birth,
-        /// <summary>移动时</summary>
-        [InspectorName("移动时")]
-        Movement,
-        /// <summary>闲置时</summary>
-        [InspectorName("闲置时")]
-        Free,
-    }
-
     [System.Serializable]
     public class RendererSet {
         public MaterialPropertyBlock mpb;
@@ -71,6 +44,23 @@ namespace FPSGame.AI {
 
         public float lastTriggerTime { get;set; }= float.NegativeInfinity;
         List<(Renderer,int)> renderers=new();
+
+        // 颜色属性名运行时缓存（用 bool 标记解析状态，勿用默认值当哨兵）
+        [System.NonSerialized]
+        private int colorId;
+        [System.NonSerialized]
+        private bool colorIdResolved;
+
+        private int GetColorId() {
+            if (!colorIdResolved) {
+                string name = string.IsNullOrEmpty(colorName)
+                    ? (type == MPBTypeEnum.Switch ? "_EmissionColor" : "_HitColor")
+                    : colorName;
+                colorId = Shader.PropertyToID(name);
+                colorIdResolved = true;
+            }
+            return colorId;
+        }
 
 
         public enum MPBTypeEnum {
@@ -110,7 +100,7 @@ namespace FPSGame.AI {
                 case MPBTypeEnum.Trigger:
                     if ((Time.time - lastTriggerTime) <= duration) {
                         Color currentColor = gradient.Evaluate((Time.time - lastTriggerTime) / duration);
-                        mpb.SetColor(string.IsNullOrEmpty(colorName)?"_HitColor":colorName, currentColor);
+                        mpb.SetColor(GetColorId(), currentColor);
                         for (int i = 0; i < renderers.Count; ++i) {
                             renderers[i].Item1.SetPropertyBlock(mpb, renderers[i].Item2);
                         }
@@ -122,7 +112,7 @@ namespace FPSGame.AI {
                         var a = lastOccasion == switchOccasion ? defaultColor : switchColor;
                         var b = lastOccasion != switchOccasion ? defaultColor : switchColor;
                         Color currentColor = Color.Lerp(a,b,(Time.time - lastTriggerTime)/2);
-                        mpb.SetColor(string.IsNullOrEmpty(colorName) ? "_EmissionColor" : colorName, currentColor);
+                        mpb.SetColor(GetColorId(), currentColor);
                         for (int i = 0; i < renderers.Count; ++i) {
                             renderers[i].Item1.SetPropertyBlock(mpb, renderers[i].Item2);
                         }

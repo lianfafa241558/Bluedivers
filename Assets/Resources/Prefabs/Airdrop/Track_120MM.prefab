@@ -62,11 +62,12 @@ MonoBehaviour:
       Value: 2
     - Key: 8
       Value: 45
-  ProjectilePrefab: {fileID: 1177580448967823432, guid: e171309708f06b74193eb48b71f1c59f,
-    type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 200
+  - BulletPrefab: {fileID: 1177580448967823432, guid: e171309708f06b74193eb48b71f1c59f,
+      type: 3}
+    LandingPrefab: {fileID: 0}
+    Speed: 200
     Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
@@ -83,9 +84,9 @@ MonoBehaviour:
       Value: 1
     WeaknessBonus: 0
     ExplosionInnerRange: 3
-    ExplosionRange: 6
+    ExplosionRange: 10
     DestructeRadius: 3
-    ShockwaveRadius: 0
+    ShockwaveRadius: 11
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -96,14 +97,14 @@ MonoBehaviour:
     ImpactVfx: {fileID: 6513570022818009108, guid: 5e0e441763238ba498d5a4847077d889,
       type: 3}
     ImpactSfx: {fileID: 8300000, guid: cae00213721a55f4b95aac9376b754bb, type: 3}
-    UseHole: 1
+    UseHole: 0
     Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 7
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 5
     ExplosionAPChargeScale: 1
-    demolishValue: 30
+    demolishValue: 40
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0

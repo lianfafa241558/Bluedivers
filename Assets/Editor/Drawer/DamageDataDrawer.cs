@@ -56,12 +56,18 @@ public class DamageDataDrawer : PropertyDrawer
         var useCharge = property.FindPropertyRelative("UseCharge");
 
         EditorGUI.indentLevel++;
+        y = DrawProperty(property, "BulletPrefab", "子弹", position, y);
+        y = DrawProperty(property, "LandingPrefab", "落点预制体(开火预测落点)", position, y);
         y = DrawProperty(property, "UseCharge", "使用蓄力", position, y);
         y = DrawPropertyOrPaired(property, useCharge, "Speed", "ChargeSpeedScale", "投掷物的速度", "蓄力倍率", position, y);
         y = DrawPropertyOrPaired(property, useCharge, "Gravity", "ChargeGravityScale", "下坠速度", "蓄力倍率", position, y);
         y = DrawPropertyOrPaired(property, useCharge, "SoundRadius", "ChargeSoundScale", "发出的声音影响范围", "蓄力倍率", position, y);
-        y = DrawProperty(property, "ChargeHeatScale", "满蓄热量倍率", position, y);
-        y = DrawProperty(property, "ChargeSpreadScale", "满蓄散布倍率", position, y);
+        if (useCharge.boolValue)
+        {
+            // 未勾选蓄力时不显示这两个满蓄倍率
+            y = DrawProperty(property, "ChargeHeatScale", "满蓄热量倍率", position, y);
+            y = DrawProperty(property, "ChargeSpreadScale", "满蓄散布倍率", position, y);
+        }
         y = DrawPairedProperties(property, "MinRange", "安全引信(单位:M)", "MaxRange", "自爆引信(单位:M)", position, y);
         y = DrawProperty(property, "MaxLifeTime", "生命周期", position, y);
         y = DrawProperty(property, "InheritWeaponSpeed", "继承武器初速度", position, y);
@@ -74,7 +80,11 @@ public class DamageDataDrawer : PropertyDrawer
 
     private float GetSectionHeight_Motion(SerializedProperty property)
     {
-        return SectionHeaderHeight + 11 * (LineHeight + 2) + Padding;
+        // 固定 11 行，勾选蓄力后额外增加"满蓄热量/散布倍率"2 行
+        var useCharge = property.FindPropertyRelative("UseCharge");
+        int rows = 11;
+        if (useCharge != null && useCharge.boolValue) rows += 2;
+        return SectionHeaderHeight + rows * (LineHeight + 2) + Padding;
     }
 
     #endregion
@@ -119,12 +129,12 @@ public class DamageDataDrawer : PropertyDrawer
 
         EditorGUI.indentLevel++;
         y = DrawPropertyOrPaired(property, useCharge, "DamageExplosion", "ChargeDamageScale", "爆炸伤害值", "满蓄倍率", position, y);
-        y = DrawPropertyOrPaired(property, useCharge, "ExplosionAP", "ExplosionAPChargeScale", "爆炸穿甲等级", "满蓄爆炸穿甲倍率", position, y);
-
 
         if (explosionProp.floatValue > 0)
         {
             EditorGUI.indentLevel++;
+            // 爆炸伤害为 0 时不显示爆炸穿甲等级(含满蓄倍率)
+            y = DrawPropertyOrPaired(property, useCharge, "ExplosionAP", "ExplosionAPChargeScale", "爆炸穿甲等级", "满蓄爆炸穿甲倍率", position, y);
             y = DrawPairedProperties(property, "ExplosionInnerRange", "伤害内半径", "ExplosionRange", "伤害外半径", position, y);
             y = DrawProperty(property, "DestructeRadius", "地形破坏半径", position, y);
             y = DrawProperty(property, "ShockwaveRadius", "冲击波半径", position, y);
@@ -147,14 +157,15 @@ public class DamageDataDrawer : PropertyDrawer
 
         float h = SectionHeaderHeight;
         h += EditorGUI.GetPropertyHeight(explosionProp) + 2;
-        h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ExplosionAP")) + 2;
-        h += GetSinglelineListHeight(property, "DamageGroupExplosion");
 
+        // 爆炸伤害为 0 时只显示伤害值本身，其余行(穿甲/范围/成分等)一并隐藏
         if (ev > 0)
         {
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ExplosionAP")) + 2;
             h += LineHeight + 2; // ExplosionInnerRange + ExplosionRange (paired)
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("DestructeRadius")) + 2;
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ShockwaveRadius")) + 2;
+            h += GetSinglelineListHeight(property, "DamageGroupExplosion");
             if (useCharge.boolValue)
                 h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("ChargeAOERangeScale")) + 2;
         }

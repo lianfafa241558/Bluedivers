@@ -51,23 +51,23 @@ public static class Constants
     public static int k_AnimEntry { get; } = Animator.StringToHash("Entry");
 
     /// <summary>飞鹰重新装填ID</summary>
-    public static int EagleReloadId = 1;
+    public const int EagleReloadId = 1;
     /// <summary>呼叫增援ID</summary>
-    public static int HealBag = 9;
+    public const int HealBag = 9;
     /// <summary>补给ID</summary>
-    public static int SupplyId = 10;
+    public const int SupplyId = 10;
     /// <summary>SOSID</summary>
-    public static int SOSId = 11;
+    public const int SOSId = 11;
 
     /// <summary>探照灯ID</summary>
-    public static int LampTowerId = 16;
+    public const int LampTowerId = 16;
     /// <summary>轨道照明弹ID</summary>
-    public static int IlluminatorId = 17;
+    public const int IlluminatorId = 17;
 
     /// <summary>火炮阵地ID</summary>
-    public static int ArtilleryId = 18;
+    public const int ArtilleryId = 18;
     /// <summary>极速射ID</summary>
-    public static int PlayerArtilleryAId = 19;
+    public const int PlayerArtilleryAId = 19;
     /// <summary>实验性弹头ID</summary>
-    public static int PlayerArtilleryBId = 20;
+    public const int PlayerArtilleryBId = 20;
 }

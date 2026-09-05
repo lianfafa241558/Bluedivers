@@ -84,13 +84,14 @@ namespace FPSGame.AI
         /// <summary>Attack：瞄准并射击</summary>
         private void AttackBehavior()
         {
-            if (m_EnemyController.Target==null) return;
+            if (m_EnemyController.Target.Pos == default) return;
             // shoot
             if (AimTargrt()) {
                 for (int i = 0; i < turrets.Count; i++)
                 {
                     var t = turrets[i];
-                    if (t.weapon && t.CanFireAt(TargetPosition))
+                    // 需炮管实际转到目标附近(dot 达标)才开火，避免获得目标瞬间未瞄准就射击
+                    if (t.weapon && t.IsLockTarget(TargetPosition) && t.CanFireAt(TargetPosition))
                         m_EnemyController.TryAtack(t.weapon);
                 }
             }

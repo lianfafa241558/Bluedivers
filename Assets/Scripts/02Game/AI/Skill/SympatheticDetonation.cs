@@ -89,7 +89,8 @@ namespace UFPSGame.AI
                 collider = null,//不产生直击伤害，仅范围伤害
                 data = DamageData,
                 chargeScale = 1,
-                owner = go,
+                soure = go,
+                self = go,
                 sfxRange = DamageData.SoundRadius,
                 weapon = null,
                 useDiffScale = UseDiffScale,

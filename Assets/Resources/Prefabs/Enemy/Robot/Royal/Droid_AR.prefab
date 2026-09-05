@@ -59,6 +59,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
 --- !u!114 &688512791758661599
 MonoBehaviour:
@@ -317,8 +318,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 100
   Duration: 0
+  releaseType: 1
   MeetDetectedTime: 10
   Range: 16
+  DamageSkillTime: 0
   tag: -1
   m_Controller: {fileID: 0}
   nowCoolTime: 0
@@ -604,7 +607,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 8
   Damages:
-  - Speed: 100
+  - BulletPrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
+      type: 3}
+    Speed: 100
     Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 2

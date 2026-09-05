@@ -80,8 +80,8 @@ MonoBehaviour:
   HearingRange: 0
   AttackRange: 300
   AlertRange: 0
-  KnownTargetTimeout: 10
-  MinSwitchTargetTime: 10
+  KnownTargetTimeout: 5
+  MinSwitchTargetTime: 5
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
@@ -234,7 +234,7 @@ MonoBehaviour:
     limitRotation: 0
     limitFollow: {fileID: 0}
     verticalLimitRotation: 0
-    allowDeviation: 0.005
+    allowDeviation: 0.00001
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
@@ -267,6 +267,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ShowName: "\u706B\u70AE"
   Id: Artillery
   Portrait: {fileID: 21300000, guid: eaa361ab78f30474b9353500a5cc1c30, type: 3}
@@ -388,23 +389,21 @@ MonoBehaviour:
     - Key: 0
       Value: 0
     - Key: 1
-      Value: 1
+      Value: 5
     - Key: 2
-      Value: 1
-    - Key: 11
       Value: 10
-    - Key: 12
-      Value: 100
-  ProjectilePrefab: {fileID: 1177580448967823432, guid: e171309708f06b74193eb48b71f1c59f,
-    type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 150
-    Gravity: 90
+  - BulletPrefab: {fileID: 1177580448967823432, guid: e171309708f06b74193eb48b71f1c59f,
+      type: 3}
+    LandingPrefab: {fileID: 5724586729671233977, guid: 663a2d0a791515b4f9c84ba0d79ebcb7,
+      type: 3}
+    Speed: 300
+    Gravity: 180
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
-    MinRange: -1
+    MinRange: 5
     NoSource: 1
     SoundRadius: 100
     DamageExplosion: 200
@@ -416,9 +415,9 @@ MonoBehaviour:
       Value: 1
     WeaknessBonus: 0
     ExplosionInnerRange: 3
-    ExplosionRange: 6
+    ExplosionRange: 10
     DestructeRadius: 3
-    ShockwaveRadius: 0
+    ShockwaveRadius: 11
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -429,12 +428,12 @@ MonoBehaviour:
     ImpactVfx: {fileID: 6513570022818009108, guid: 5e0e441763238ba498d5a4847077d889,
       type: 3}
     ImpactSfx: {fileID: 8300000, guid: cae00213721a55f4b95aac9376b754bb, type: 3}
-    UseHole: 1
+    UseHole: 0
     Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 7
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 5
     ExplosionAPChargeScale: 1
     demolishValue: 30
     UseCharge: 0
@@ -445,12 +444,16 @@ MonoBehaviour:
     ChargeSoundScale: 1
     ChargeHeatScale: 1
     ChargeSpreadScale: 1
-  - Speed: 200
-    Gravity: 10
+  - BulletPrefab: {fileID: 6490250897866438168, guid: dae3855ae22405746a42a615a425b972,
+      type: 3}
+    LandingPrefab: {fileID: 5614042088652906868, guid: c3c819fde2f3b0447951b8c61d0eaac1,
+      type: 3}
+    Speed: 300
+    Gravity: 180
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
-    MinRange: -1
+    MinRange: 5
     NoSource: 1
     SoundRadius: 20
     DamageExplosion: 300
@@ -462,9 +465,9 @@ MonoBehaviour:
       Value: 1
     WeaknessBonus: 0
     ExplosionInnerRange: 4
-    ExplosionRange: 8
+    ExplosionRange: 12
     DestructeRadius: 4
-    ShockwaveRadius: 0
+    ShockwaveRadius: 16
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -478,9 +481,9 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 8
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 6
     ExplosionAPChargeScale: 1
     demolishValue: 40
     UseCharge: 0
@@ -491,16 +494,20 @@ MonoBehaviour:
     ChargeSoundScale: 1
     ChargeHeatScale: 1
     ChargeSpreadScale: 1
-  - Speed: 150
-    Gravity: 90
+  - BulletPrefab: {fileID: 8804788573471547178, guid: b2f060171e3942b44908beeb8924fca9,
+      type: 3}
+    LandingPrefab: {fileID: 5614042088652906868, guid: 86b9268706366694baa550519d2e8550,
+      type: 3}
+    Speed: 300
+    Gravity: 180
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
-    MinRange: -1
+    MinRange: 5
     NoSource: 1
-    SoundRadius: 100
+    SoundRadius: 200
     DamageExplosion: 2500
-    DamageDirect: 0
+    DamageDirect: 100
     DamageGroupDirect:
     - Key: 0
       Value: 1
@@ -524,7 +531,7 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 10
     DirectAPChargeScale: 1
     ExplosionAP: 10
     ExplosionAPChargeScale: 1
@@ -537,12 +544,16 @@ MonoBehaviour:
     ChargeSoundScale: 1
     ChargeHeatScale: 1
     ChargeSpreadScale: 1
-  - Speed: 150
-    Gravity: 90
+  - BulletPrefab: {fileID: 8839797659457907699, guid: 9698e59b35486f84b96c0b3a0f7094f8,
+      type: 3}
+    LandingPrefab: {fileID: 5614042088652906868, guid: 0ecb4902bee05ed4a980e99611a04078,
+      type: 3}
+    Speed: 300
+    Gravity: 180
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
-    MinRange: -1
+    MinRange: 5
     NoSource: 1
     SoundRadius: 100
     DamageExplosion: 200
@@ -554,12 +565,14 @@ MonoBehaviour:
       Value: 1
     WeaknessBonus: 0
     ExplosionInnerRange: 3
-    ExplosionRange: 6
+    ExplosionRange: 10
     DestructeRadius: 3
     ShockwaveRadius: 0
     DamageGroupExplosion:
     - Key: 1
-      Value: 1
+      Value: 0.5
+    - Key: 4
+      Value: 0.5
     - Key: 2
       Value: 1
     UseCollisionDirection: 1
@@ -570,11 +583,11 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 7
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 5
     ExplosionAPChargeScale: 1
-    demolishValue: 30
+    demolishValue: 40
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -583,15 +596,19 @@ MonoBehaviour:
     ChargeSoundScale: 1
     ChargeHeatScale: 1
     ChargeSpreadScale: 1
-  - Speed: 150
-    Gravity: 90
+  - BulletPrefab: {fileID: 9028124548655428632, guid: 8d6e44b8e5f0d014db0f70265f7ea26e,
+      type: 3}
+    LandingPrefab: {fileID: 5614042088652906868, guid: 709d058cb4e2ae44eb66a90b9aa8f7c8,
+      type: 3}
+    Speed: 300
+    Gravity: 180
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
-    MinRange: -1
+    MinRange: 5
     NoSource: 1
     SoundRadius: 100
-    DamageExplosion: 200
+    DamageExplosion: 0
     DamageDirect: 550
     DamageGroupDirect:
     - Key: 0
@@ -608,7 +625,7 @@ MonoBehaviour:
       Value: 1
     - Key: 2
       Value: 1
-    UseCollisionDirection: 1
+    UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 2115654139197423946, guid: c017b2553037218409ad516f7ecc5241,
       type: 3}
@@ -616,11 +633,11 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 7
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
-    demolishValue: 30
+    demolishValue: 40
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -629,15 +646,19 @@ MonoBehaviour:
     ChargeSoundScale: 1
     ChargeHeatScale: 1
     ChargeSpreadScale: 1
-  - Speed: 150
-    Gravity: 90
+  - BulletPrefab: {fileID: 6866150473806456250, guid: 31177be139d26ce41a8cd76a97cf4f95,
+      type: 3}
+    LandingPrefab: {fileID: 5614042088652906868, guid: d211ca825b2526249b8b1f661929c17e,
+      type: 3}
+    Speed: 300
+    Gravity: 180
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
-    MinRange: -1
+    MinRange: 5
     NoSource: 1
     SoundRadius: 100
-    DamageExplosion: 200
+    DamageExplosion: 50
     DamageDirect: 550
     DamageGroupDirect:
     - Key: 0
@@ -646,15 +667,13 @@ MonoBehaviour:
       Value: 1
     WeaknessBonus: 0
     ExplosionInnerRange: 3
-    ExplosionRange: 6
+    ExplosionRange: 10
     DestructeRadius: 3
     ShockwaveRadius: 0
     DamageGroupExplosion:
-    - Key: 1
+    - Key: 4
       Value: 1
-    - Key: 2
-      Value: 1
-    UseCollisionDirection: 1
+    UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 3577755781743022927, guid: 89ff1385eeedab44abb732d49f29da50,
       type: 3}
@@ -662,11 +681,11 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 4064177228596411665, guid: cc10fd4d911db6b4395eadff2d18d031, type: 3}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 7
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 7
     ExplosionAPChargeScale: 1
-    demolishValue: 30
+    demolishValue: 40
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -678,10 +697,10 @@ MonoBehaviour:
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 4f5d4e5eaa0e5104791549cea3dc3f23,
     type: 3}
-  FlashSizeScale: 1
+  FlashSizeScale: 5
   UnparentMuzzleFlash: 0
-  SFXRange: 50
-  ShootSfx: {fileID: 8300000, guid: 3ce44684e47e96b4f88126500c2a4f36, type: 3}
+  SFXRange: 60
+  ShootSfx: {fileID: 8300000, guid: c9c63d78fd83ae44b8e1458ff52a1138, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
@@ -892,7 +911,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.35678673, y: 0.35434166, z: 2.1685016}
-  m_Center: {x: 0.0000060498714, y: -0.016475653, z: 0.8865707}
+  m_Center: {x: 0, y: 0, z: 0.8865707}
 --- !u!1 &3833579285754264912 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 304aed247bfd45d4fa29ca88d02abbf4,

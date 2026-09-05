@@ -17,6 +17,7 @@ Shader "ToonLit/ToonLit_Hair"
         [Header(Base Color)]
         [MainTexture]_BaseMap("_BaseMap (Albedo)", 2D) = "white" {}
         [HDR][MainColor]_BaseColor("_BaseColor", Color) = (1,1,1,1)
+        _BaseScale("颜色系数", Range(0,2)) = 1
 
 
         [HDR] _HitColor("HitColor", Color) = (0,0,0)

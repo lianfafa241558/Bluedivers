@@ -134,7 +134,8 @@ namespace Unity.FPS.Gameplay
             if (Root.position.y > m_LandingHeight) return true;
 
             // 到达落地高度：贴地后结算一次落地伤害并停止
-            transform.position = new Vector3(transform.position.x, m_LandingHeight - Root.localPosition.y, transform.position.z);
+            var extraHeight = m_LandingHeight - Root.position.y;
+            transform.position = new Vector3(transform.position.x, m_LandingHeight + extraHeight, transform.position.z);
             Land();
             return false;
         }
@@ -195,10 +196,12 @@ namespace Unity.FPS.Gameplay
                 collider = collider,
                 data = DamageData,
                 chargeScale = 1,//无蓄力概念
-                owner = Owner.IsValid() ? Owner : gameObject,
+                soure = Owner,
+                self = gameObject,
                 sfxRange = DamageData.IsValid() ? DamageData.SoundRadius : 0,
                 weapon = null,//纯自部署，无武器来源
                 useDiffScale = false,
+                IgnoreSelf =true
             };
 
         /// <summary>

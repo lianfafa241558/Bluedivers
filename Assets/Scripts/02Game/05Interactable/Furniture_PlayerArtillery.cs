@@ -1,7 +1,8 @@
+using System;
 using System.Collections.Generic;
 using FPSGame.Attribute;
-using UnityEngine;
 using Unity.FPS.Game;
+using UnityEngine;
 
 /// <summary>
 /// 玩家火炮炮弹架（欧帕兹装填）。
@@ -61,6 +62,7 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
         BattleEventSub.OnAirdrop += OnAirdrop;
         BattleManager.Instance.Authorize(Constants.PlayerArtilleryAId, true);
         BattleManager.Instance.Authorize(Constants.PlayerArtilleryBId, true);
+        Invoke(nameof(StartSubmit),0.1f);
     }
 
     protected override void OnDisable()
@@ -71,13 +73,33 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
         BattleManager.Instance.Authorize(Constants.PlayerArtilleryBId, false);
     }
 
+    void StartSubmit()
+    {
+        shells.Clear();
+        //初始送3发
+        var rand = BattleManager.Instance.BattleRandom;
+        for (int i = 0; i < 3; ++i)
+        {
+            int idx = ShellIndexPool[rand.Range(0, ShellIndexPool.Length)];
+            shells.Add(idx);
+            m_weapon.UseDamageIndex = idx;
+        }
+        m_weapon.Magazine.CurrValue = shells.Count;
+    }
+
     /// <summary>
     /// 监听战备释放：极速射(PlayerArtilleryA)释放即由本架立即补一发 0 档位炮弹（马上会被打出去）。
     /// </summary>
     private void OnAirdrop(GameObject source, GameObject beacon, Vector3 point, AirdropController.AirdropData data)
     {
-        if (data.cfg.ID != Constants.PlayerArtilleryAId) return;
-        shells.Add(0);
+
+        if (data.cfg.ID == Constants.PlayerArtilleryAId)
+        {
+            shells.Add(0);
+            m_weapon.UseDamageIndex = 0;
+            m_weapon.Magazine.CurrValue = shells.Count;
+            //Debug.LogWarning("发射战备前:炮弹数量" + shells.Count + "弹匣数量" + m_weapon.Magazine.CurrValue);
+        }
     }
 
     /// <summary>
@@ -90,6 +112,11 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
         {
             index = shells[shells.Count - 1];
             shells.RemoveAt(shells.Count - 1);
+            //刚好到0时
+            if (shells.Count==0)
+            {
+                BattleManager.Instance.Authorize(Constants.PlayerArtilleryBId, false);
+            }
         }
         else
         {
@@ -107,11 +134,18 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
     /// </summary>
     protected override void OnSubmit(GameObject user, OOPartEnum type)
     {
+        //重新有了
+        if (shells.Count == 0)
+        {
+            BattleManager.Instance.Authorize(Constants.PlayerArtilleryBId, true);
+        }
         var rand = BattleManager.Instance.BattleRandom;
         int idx = ShellIndexPool[rand.Range(0, ShellIndexPool.Length)];
         shells.Add(idx);
         // 弹匣量 = 已装填发数（供 UI 与可发射数）
-        if (m_weapon) m_weapon.Magazine.CurrValue = shells.Count;
+        m_weapon.Magazine.CurrValue = shells.Count;
+        m_weapon.UseDamageIndex = idx;
+        Debug.LogWarning("炮弹数量"+ shells.Count+"弹匣数量"+ m_weapon.Magazine.CurrValue);
     }
 
     /// <summary>

@@ -69,8 +69,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 7495003590799055199}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 7036994935218901720}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 0
@@ -87,7 +89,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 100
+  - BulletPrefab: {fileID: 8924682559891268397, guid: 0d4439bc619f18b4c93aa155b6509e5b,
+      type: 3}
+    Speed: 100
     Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
@@ -115,14 +119,22 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
   ShootSfx: {fileID: 8300000, guid: 53d2238f4c4b2aa4f8e559c7af9e0126, type: 3}
@@ -130,6 +142,7 @@ MonoBehaviour:
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -159,6 +172,7 @@ MonoBehaviour:
   AimZoomRatio: 1
   AimOffset: {x: 0, y: 0, z: 0}
   playerAngle: 0
+  _showAttrInfo: 
   desc: "\u8BFA\u4E9A\u7684\u6795\u5934\u3002\n\u5F53\u8BFA\u4E9A\u7528\u5E73\u9759\u7684\u8BED\u6C14\u8BF4\u51FA\u5371\u9669\u7684\u8BDD\u8BED\u65F6\uFF0C\u5176\u4ED6\u4EBA\u53EA\u80FD\u4FDD\u4F51\u8FD9\u6795\u5934\u7684\u76EE\u6807\u4E0D\u662F\u81EA\u5DF1\u3002"
   m_RenameAttr: []
   showAttr: 000000001400000064000000

@@ -207,7 +207,8 @@ public static partial class TerrainUtils
             data.SetHeightsDelayLOD(xBase, yBase, heights); //延迟写入（性能最优）
             data.SyncHeightmap();//同步地形数据
                                  //这里高度已经被标准化过了
-            ModifyAlphaMap(uv, 1 - Mathf.Clamp01((baseHeight - centerOldHeight) / (depth / terrainHeight) - 0.1f), innerRadius, outerRadius, shape, isSet);
+            //ModifyAlphaMap 是协程（迭代器），必须 yield return 驱动，裸调用不会执行
+            yield return ModifyAlphaMap(uv, 1 - Mathf.Clamp01((baseHeight - centerOldHeight) / (depth / terrainHeight) - 0.1f), innerRadius, outerRadius, shape, isSet);
             if (refresh) AsyncRefresh(true);
         }
 
@@ -273,7 +274,7 @@ public static partial class TerrainUtils
                         alphas[y, x, 2] = Mathf.SmoothStep(alphas[y, x, 2], Mathf.Clamp01(((1 - height) * 2f) * (1 - alphas[y, x, 4]) * weightSum), power);
 
                         //巢穴层不 ?
-                        alphas[x, y, 3] = Mathf.Clamp01(1 - alphas[y, x, 1] - alphas[y, x, 2] - alphas[y, x, 4]);
+                        alphas[y, x, 3] = Mathf.Clamp01(1 - alphas[y, x, 1] - alphas[y, x, 2] - alphas[y, x, 4]);
 
 
                     }

@@ -131,7 +131,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 8
   Damages:
-  - Speed: 100
+  - BulletPrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
+      type: 3}
+    Speed: 100
     Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 2
@@ -440,6 +442,7 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
 --- !u!114 &9041933765179479921
 MonoBehaviour:

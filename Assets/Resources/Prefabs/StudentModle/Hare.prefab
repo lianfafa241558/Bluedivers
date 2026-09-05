@@ -1492,6 +1492,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   emittScale: 0.5
   speedScale: 1
+  scaleFieldName: _EmissionScale
+  modifies:
+  - rid: 1259320267568316431
+  references:
+    version: 2
+    RefIds:
+    - rid: 1259320267568316431
+      type: {class: EmittController/ScaleModify, ns: , asm: 05_EffectComp}
+      data:
+        fieldName: _EmissionScale
+        speedScale: 1
+        emittScale: 0.5
 --- !u!4 &648927810915459094 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5203492708468019957, guid: 2ddf27eb8cd319f47aacc8800abacc85,

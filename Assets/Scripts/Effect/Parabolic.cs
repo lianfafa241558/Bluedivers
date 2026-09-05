@@ -36,7 +36,7 @@ public class Parabolic : MonoBehaviour
 
             int count = 1;
             RayGo = null;
-            posList[0] = transform.position+ m_weapon.ProjectilePrefab.InheritedMuzzleVelocity * paragraph;
+            posList[0] = transform.position+ m_weapon.CurrentDamgeData.BulletPrefab.InheritedMuzzleVelocity * paragraph;
 
             Vector3 velocity = transform.forward * speed;
             for (int i = 1; i <50; ++i)

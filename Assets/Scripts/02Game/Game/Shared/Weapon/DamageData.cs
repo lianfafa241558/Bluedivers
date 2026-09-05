@@ -53,6 +53,10 @@ namespace Unity.FPS.Game
 
 
         //[Header("运动")]
+        /// <summary>子弹(留空时使用武器默认 ProjectilePrefab)</summary>
+        public ProjectileBase BulletPrefab;
+        /// <summary>落点预制体(开火时预测地形落点并创建，用 LimitedLife 自动清理)</summary>
+        public GameObject LandingPrefab;
         /// <summary>速度</summary>
         public float Speed = 20f;
         /// <summary>下坠速度</summary>

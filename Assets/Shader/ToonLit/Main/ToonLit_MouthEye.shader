@@ -12,6 +12,7 @@ Shader "ToonLit/ToonLit_MouthEye"
         [Header(Base Color)]
         [MainTexture]_BaseMap("_BaseMap (Albedo)", 2D) = "white" {}
         [HDR][MainColor]_BaseColor("_BaseColor", Color) = (1,1,1,1)
+        _BaseScale("颜色系数", Range(0,2)) = 1
 
         [Space(20)]
         [Header(Mouth)]

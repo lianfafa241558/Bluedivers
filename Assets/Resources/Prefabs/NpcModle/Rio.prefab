@@ -1005,6 +1005,8 @@ MonoBehaviour:
   lastPos: {x: 0, y: 0, z: 0}
   speed: 10
   returnSpeed: 10
+  snapDistance: 6
+  debug: 0
 --- !u!4 &2643028603498103905 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2319028571406198274, guid: d3e2f3459dd390c4ab732dadddf10e62,
@@ -1049,6 +1051,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   emittScale: 0.5
   speedScale: 1
+  scaleFieldName: _EmissionScale
+  modifies:
+  - rid: 1259320267568316429
+  references:
+    version: 2
+    RefIds:
+    - rid: 1259320267568316429
+      type: {class: EmittController/ScaleModify, ns: , asm: 05_EffectComp}
+      data:
+        fieldName: _EmissionScale
+        speedScale: 1
+        emittScale: 0.5
 --- !u!4 &5395579708175270128 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3574794222294687085, guid: d3e2f3459dd390c4ab732dadddf10e62,

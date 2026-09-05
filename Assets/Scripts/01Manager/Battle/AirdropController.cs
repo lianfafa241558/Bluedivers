@@ -101,20 +101,30 @@ public class AirdropController : MonoBehaviour
         }
         //读取玩家携带的战备
         var arr = RoomManager.Instance.Self.airdrop;
-        
+
         //if(arr.Any(id=> ResSvc.airdropDic[id].deliveryType == AirdropDeliveryEnum.Jet))
         //{
         //    useAd.Add(new(ResSvc.airdropDic[Constants.EagleReloadId],true));
         //}
         for (int i = 0; i < arr.Length; ++i)
         {
-            useAd.Add(new(ResSvc.airdropDic[arr[i]], false));
-            int sub = ResSvc.airdropDic[arr[i]].subAirdrop;
-            if (sub > 0&& !subAd.Contains(sub))
+            var subArr = ResSvc.airdropDic[arr[i]].subAirdrop;
+            for (int u = 0; u < subArr.Length; ++u)
             {
-                useAd.Add(new(ResSvc.airdropDic[sub], false));
-                subAd.Add(sub);
+                int sub = subArr[u];
+                if (sub > 0 && !subAd.Contains(sub))
+                {
+                    useAd.Add(new(ResSvc.airdropDic[sub], false));
+                    subAd.Add(sub);
+                }
             }
+        }
+
+
+
+        for (int i = 0; i < arr.Length; ++i)
+        {
+            useAd.Add(new(ResSvc.airdropDic[arr[i]], false));
         }
 
         foreach(var item in useAd)
@@ -336,18 +346,24 @@ public class AirdropController : MonoBehaviour
                 }
                 break;
             case AirdropState.Arrive:
+                //飞鹰装填
                 if (data.cfg.deliveryType == AirdropDeliveryEnum.Jet)
                 {
-                    //飞鹰共CD
                     foreach (var item in useAd)
                     {
                         if (item.cfg.ID == Constants.EagleReloadId && !item.IsAuthorize)
                         {
                             _Authorize(item, true);
                         }
-                        else if (item != data && item.cfg.deliveryType == AirdropDeliveryEnum.Jet)
+                    }
+                }
+                //战备共CD
+                if (!string.IsNullOrEmpty(data.cfg.coolGroup))
+                {
+                    foreach (var item in useAd)
+                    {
+                        if (item != data && item.cfg.coolGroup == data.cfg.coolGroup)
                         {
-                            //Debug.LogError("所有飞鹰共CD");
                             if (item.State != AirdropState.Unavailable) item.State = AirdropState.Cool;
                             item.time = item.cool;//因为正常cd阶段是减去了持续和呼叫时间
                         }

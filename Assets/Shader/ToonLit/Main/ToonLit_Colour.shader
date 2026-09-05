@@ -12,6 +12,7 @@ Shader "ToonLit/ToonLit_Colour"
         [Header(Base Color)]
         [MainTexture]_BaseMap("_BaseMap (Albedo)", 2D) = "white" {}
         [HDR][MainColor]_BaseColor("_BaseColor", Color) = (1,1,1,1)
+        _BaseScale("颜色系数", Range(0,2)) = 1
 
         //混合纹理
         _BlendingScale("混合程度", Range(0,1)) = 0
@@ -26,6 +27,9 @@ Shader "ToonLit/ToonLit_Colour"
         _EmissionScale("发光系数", Range(0,2)) = 1
         _EmissionMap("自发光贴图", 2D) = "white" {}
         _EmissionMapChannelMask("自发光贴图通道", Vector) = (1,1,1,0)
+
+         [Header(Shade)]
+        _CelShadeSoftness("阴影切面的平滑程度", Range(0,1)) = 0.05
 
         [Header(_Colour)]
          [Toggle]_UseColour("使用色彩", Float) = 0

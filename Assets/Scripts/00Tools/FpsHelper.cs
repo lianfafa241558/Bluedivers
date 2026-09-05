@@ -46,7 +46,7 @@ public static class FpsHelper
     private static void TryThornArmorReflect(I_Damagable target, GameObject attacker, Vector3 point, ProjectileHitData hitData)
     {
         // 仅近战攻击（子弹为 ProjectileMelee）触发反伤
-        if (!hitData.weapon.IsValid() || !(hitData.weapon.ProjectilePrefab is ProjectileMelee)) return;
+        if (!hitData.weapon.IsValid() || !(hitData.self.GetComponent<ProjectileMelee>())) return;
         // 需要全队强化，且被攻击方为玩家阵营单位
         if (!BattleManager.Instance.IsValid() || !BattleManager.Instance.HaveBooster(BoosterType.ThornArmor)) return;
         if (!target.gameObject) return;
@@ -106,14 +106,14 @@ public static class FpsHelper
 
         //真的会有这种情况吗？？？
         if (!hitData.data.IsValid()) {
-            Debug.LogError("没有伤害组件"+ hitData.owner + hitData.pos);
+            Debug.LogError("没有伤害组件"+ hitData.soure + hitData.pos);
             return;
         }
         Vector3 point = hitData.pos;
         Vector3 normal = hitData.normal;
         Collider collider = hitData.collider;//要考虑碰撞体为空（爆炸）
         PEInt charg = hitData.chargeScale;
-        GameObject owner = hitData.owner;
+        GameObject soure = hitData.soure;
         
         var damageData = hitData.data;
         PEInt damageOuterRadius = damageData.GetDamageOuterRadius(charg);
@@ -133,7 +133,7 @@ public static class FpsHelper
             //Debug.LogWarning(" 基础伤害" + damageData.DamageDirect, collider.gameObject);
 
             // 全队强化"荆棘护甲"：近战攻击玩家阵营单位时，攻击者受到 24 点反伤
-            TryThornArmorReflect(comp, owner, point, hitData);
+            TryThornArmorReflect(comp, soure, point, hitData);
             Debug.LogWarning("对" + comp.gameObject.name + "造成直击伤害" + damageData.GetDirectDamage(charg) * damageScale);
             var directPacket = new DamagePacket
             {
@@ -141,8 +141,8 @@ public static class FpsHelper
                 DamageGroups = damageData.DamageGroupDirect,
                 WeaknessBonus = damageData.GetWeaknessBonus(),
                 AP = damageData.GetDirectAP(charg),
-                NoSource = damageData.NoSource || !owner,
-                DamageSource = owner,
+                NoSource = damageData.NoSource || !soure,
+                DamageSource = soure,
                 Pos = point,
                 DemolishValue = damageData.GetDemolishValue(0),
                 isDirect = true,
@@ -155,7 +155,8 @@ public static class FpsHelper
         if (BattleManager.Instance.IsValid() && damageData.UseExplode)
         {
             var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new());
-            if (hitData.IgnoreSelf) unitList.Remove(owner.GetComponent<I_Actor>());
+            if (hitData.IgnoreSelf&& hitData.self.TryGetComponent<I_Actor>(out var self)) unitList.Remove(self);
+            //Debug.LogError("忽略自身?"+hitData.IgnoreSelf+" "+owner);
             //Debug.LogError("目标数量"+unitList.Count);
             //for (int i = 0; i < unitList.Count; ++i)
             //{
@@ -190,8 +191,8 @@ public static class FpsHelper
                         DamageGroups = damageData.DamageGroupExplosion,
                         WeaknessBonus = damageData.GetWeaknessBonus(),
                         AP = damageData.GetExplosionAP(charg),
-                        NoSource = damageData.NoSource || !owner,
-                        DamageSource = owner,
+                        NoSource = damageData.NoSource || !soure,
+                        DamageSource = soure,
                         Pos = point,
                         DemolishValue = damageData.GetDemolishValue(centerDisance),
                         isDirect = false,
@@ -220,7 +221,9 @@ public static class FpsHelper
             //地形破坏
             if (destructe > 0)
             {
-                TerrainUtils.ModifyHeightMap(point, (destructe / new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe / 5).RawFloat, ShapeType.Circle, false);
+                //Debug.LogError($"地形破坏{point} 内半径{(destructe / new PEInt(1.5f)).RawFloat} 外半径{destructe.RawFloat} 深度{(destructe / 5).RawFloat}");
+                //ModifyHeightMap 是协程（迭代器），必须用 StartCoroutine 启动，直接调用不会执行
+                GameRoot.Instance.StartCoroutine(TerrainUtils.ModifyHeightMap(point, (destructe / new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe / 5).RawFloat, ShapeType.Circle, false));
             }
 
            
@@ -240,7 +243,7 @@ public static class FpsHelper
             }
 
             //if (collider.transform.TryGetComponentInParent(out Actor actor) && actor != ActorsManager.Player) GlobalEventManager.BulletHit(owner, point);
-            BattleEventSub.BulletHit(owner, point);
+            BattleEventSub.BulletHit(soure, point);
 
         }
 
@@ -250,13 +253,13 @@ public static class FpsHelper
             if (damageData.ImpactVfx.TryGetComponent(out ProjectileBase projectile))
             {
                 var ps = VFXManager.Creat(projectile, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default);
-                ps.GetComponentInChildren<IVfxEffect>()?.SetOwner(owner, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+                ps.GetComponentInChildren<IVfxEffect>()?.SetOwner(soure, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
                 ps.GetComponentInChildren<ProjectileBase>()?.Shoot(hitData.weapon);
             }
             else
             {
                 var ps = VFXManager.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
-                ps.GetComponentInChildren<IVfxEffect>()?.SetOwner(owner, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+                ps.GetComponentInChildren<IVfxEffect>()?.SetOwner(soure, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
             }
 
         }

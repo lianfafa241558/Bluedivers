@@ -49,7 +49,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         //同时,锁定的点总是会是实际的脚下而不是单位头顶
         if (Physics.Raycast(point+Vector3.up*10,Vector3.down, out var hit,200, LayerDefinition.GroundLayers))
         {
-            Debug.LogError("point"+point+"击中点"+hit.point);
+            //Debug.LogError("point"+point+"击中点"+hit.point);
             transform.position = point = hit.point;
         }
         BattleEventSub.Airdrop(owner, gameObject, point, data);
@@ -171,15 +171,6 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
                 if (data.cfg.useNormalPod)
                 {
                     m_creatObject = VFXManager.Creat(normalPod, transform.position + Vector3.up * data.cfg.arriveHeight, transform.rotation, null).transform;
-                    if (m_creatObject.TryGetComponent(out Animator anim))
-                    {
-                        anim.enabled = false;
-                    }
-                    if (m_creatObject.TryGetComponent(out AirdropPod pro))//补给舱
-                    {
-                        pro.Launch(m_owner);
-                        pro.OnHit += PodHit;
-                    }
                 }
                 //直接使用自定义物??
                 else
@@ -190,20 +181,23 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
                     {
                         weapon.Owner = m_owner;
                     }
-                    if (m_creatObject.TryGetComponent(out Animator anim))
-                    {
-                        anim.enabled = false;
-                    }
-                    if (m_creatObject.TryGetComponent(out AirdropPod pro))//补给舱
-                    {
-                        pro.Launch(m_owner);
-                        pro.OnHit += PodHit;
-                    }
-                    if (m_creatObject.TryGetComponent(out Actor actor))
+                    if (m_creatObject.TryGetComponentInChildren(out Actor actor))
                     {
                         actor.Team = m_owner.GetComponent<I_Actor>().Team;
                         actor.Owner = m_owner.GetComponent<I_Actor>();
                     }
+                }
+
+                if (m_creatObject.TryGetComponentInChildren(out AirdropPod pro))//补给舱
+                {
+                    pro.Launch(m_owner);
+                    pro.OnHit += PodHit;
+                }
+
+                var list = m_creatObject.GetComponentsInChildren<Animator>();
+                foreach(var anim in list)
+                {
+                    anim.enabled = false;
                 }
 
             }
@@ -232,10 +226,13 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
             //Debug.LogError("落地位置 "+ m_creatObject.position+"标记位置"+ transform.position+"碰撞位置"+hitData.pos);
         m_creatObject.position = transform.position;
         
-        if (m_creatObject.TryGetComponent(out Animator anim))
+
+        var list = m_creatObject.GetComponentsInChildren<Animator>();
+        foreach (var anim in list)
         {
             anim.enabled = true;
         }
+
         if (data.cfg.sustainHideBeacon)
         {
             for (int i = 1; i < 5; ++i)
@@ -249,7 +246,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
             {
                 m_creatObject.GetComponent<LimitedLife>().ResetLift(9999);
             }
-            if (m_creatObject.TryGetComponent(out AirdropPod pro))
+            if (m_creatObject.TryGetComponentInChildren(out AirdropPod pro))
             {
                 pro.OnHit -= PodHit;
             }
@@ -260,7 +257,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
             {
                 weapon.Owner = m_owner;
             }
-            if (go.TryGetComponent(out I_Actor actor))
+            if (go.TryGetComponentInChildren(out Actor actor))
             {
                 actor.Team = m_owner.GetComponent<I_Actor>().Team;
                 actor.Owner = m_owner.GetComponent<I_Actor>();

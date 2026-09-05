@@ -62,7 +62,7 @@ public abstract class CrosshairManagerBase : MonoBehaviour
     /// <summary>击中目标回调</summary>
     protected void Hit(GameObject victim, GameObject attacker)
     {
-        if(attacker==m_Weapons.Owner) m_ActiveSightGo.SetTrigger(Constants.k_AnimOnDamagedParameter);
+        if(victim != attacker && attacker == m_Weapons.Owner ) m_ActiveSightGo.SetTrigger(Constants.k_AnimOnDamagedParameter);
     }
     /// <summary>发起攻击回调</summary>
     protected void Attack(WeaponBaseController weapon)

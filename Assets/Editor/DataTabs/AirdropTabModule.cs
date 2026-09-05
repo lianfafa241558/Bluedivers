@@ -6,7 +6,44 @@ using UnityEngine;
 
 public sealed class AirdropTabModule : DataTabModule<AirdropData_SO>
 {
+    /// <summary>存在 ID 重复 / 操作序列重复 的战备集合（用于列表标红）</summary>
+    private readonly HashSet<AirdropData_SO> _conflictSet = new HashSet<AirdropData_SO>();
+
     public AirdropTabModule(DataEditorWindow host) : base(host) { }
+
+    /// <summary>刷新时清理遮罩纹理缓存</summary>
+    protected override void RefreshData()
+    {
+        ClearMaskCache();
+        base.RefreshData();
+        RecomputeConflicts();
+    }
+
+
+    /// <summary>全量两两比较：同 ID 或同操作序列（均非空）视为冲突</summary>
+    private void RecomputeConflicts()
+    {
+        _conflictSet.Clear();
+        for (int i = 0; i < Items.Count; i++)
+        {
+            for (int j = i + 1; j < Items.Count; j++)
+            {
+                AirdropData_SO a = Items[i];
+                AirdropData_SO b = Items[j];
+                bool idDup = a.ID == b.ID;
+                bool opDup = a.opter != null && b.opter != null
+                             && a.opter.Length > 0 && b.opter.Length > 0
+                             && a.opter.SequenceEqual(b.opter);
+                if (idDup || opDup)
+                {
+                    _conflictSet.Add(a);
+                    _conflictSet.Add(b);
+                }
+            }
+        }
+    }
+
+    private bool HasConflict(AirdropData_SO data) => _conflictSet.Contains(data);
 
     public override TabType TabType => TabType.Airdrop;
     public override string DisplayName => "战备数据";
@@ -51,7 +88,8 @@ public sealed class AirdropTabModule : DataTabModule<AirdropData_SO>
 
         EditorGUILayout.BeginVertical();
         {
-            GUILayout.Label($"{data.showName}[{data.ID}]", DataEditorWindow.ColoredLabel(EditorStyles.boldLabel, data.Color));
+            bool conflict = HasConflict(data);
+            GUILayout.Label($"{data.showName}[{data.ID}]", DataEditorWindow.ColoredLabel(EditorStyles.boldLabel, conflict ? Color.red : data.Color));
 
             string opterStr = "";
             if (data.opter != null && data.opter.Length > 0)
@@ -67,7 +105,15 @@ public sealed class AirdropTabModule : DataTabModule<AirdropData_SO>
             }
             string deliveryStr = DataEditorWindow.GetInspectorName(data.deliveryType);
             string infoText = string.IsNullOrEmpty(opterStr) ? deliveryStr : $"{opterStr} · {deliveryStr}";
-            GUILayout.Label(infoText, new GUIStyle(GUI.skin.label) { fontSize = 10, fontStyle = FontStyle.Bold });
+            if (conflict)
+            {
+                GUILayout.Label($"{infoText}   ⚠ ID/操作冲突",
+                    new GUIStyle(GUI.skin.label) { fontSize = 10, fontStyle = FontStyle.Bold, normal = { textColor = Color.red } });
+            }
+            else
+            {
+                GUILayout.Label(infoText, new GUIStyle(GUI.skin.label) { fontSize = 10, fontStyle = FontStyle.Bold });
+            }
         }
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
@@ -125,12 +171,6 @@ public sealed class AirdropTabModule : DataTabModule<AirdropData_SO>
         return result;
     }
 
-    /// <summary>刷新时清理遮罩纹理缓存</summary>
-    protected override void RefreshData()
-    {
-        ClearMaskCache();
-        base.RefreshData();
-    }
 
     private static void ClearMaskCache()
     {

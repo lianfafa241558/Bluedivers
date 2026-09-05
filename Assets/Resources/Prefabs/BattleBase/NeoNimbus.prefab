@@ -1669,6 +1669,7 @@ MonoBehaviour:
   AttackRange: 65
   AlertRange: 0
   KnownTargetTimeout: 0.5
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
@@ -1676,6 +1677,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1 &7853315038477104362
@@ -2016,6 +2018,7 @@ MonoBehaviour:
   landCilp: {fileID: 8300000, guid: 8226ae4fea9af224398a44c0ef4ddf9a, type: 3}
   complete: 0
   arrive: 0
+  nextComplete: 0
   targetPoint: {fileID: 0}
   showCount: 0
   ShowPlayerCount: 0
@@ -2218,8 +2221,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 3994667389255506392}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 3510801935074957308}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -2234,7 +2239,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 100
+  - BulletPrefab: {fileID: 8835491154407723254, guid: 1c1f8f22e6c13174faef359317b71b2e,
+      type: 3}
+    Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
@@ -2265,6 +2272,11 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
@@ -2275,6 +2287,7 @@ MonoBehaviour:
     ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 60
   ShootSfx: {fileID: 0}
@@ -2300,6 +2313,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!114 &3478435371521452379
 MonoBehaviour:
@@ -2315,16 +2329,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DetectionModule: {fileID: 7449206302271650874}
   turrets:
-  - chassis: {fileID: 9169074979550265918}
+  - type: 0
+    chassis: {fileID: 9169074979550265918}
     barrel: {fileID: 9169074979550265918}
     weapon: {fileID: 7483416642442599068}
     aimSharpness: 0.5
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 0.5
+    minAttackRange: 0
     limitRotation: 45
+    limitFollow: {fileID: 0}
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 0}
     dot: 0
+    meleeRangeThreshold: 5
   aiState: 0
   RotationSpeed: 30
 --- !u!1 &8961000562993612649
@@ -2374,8 +2393,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 2603671042552525248}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 8044897545116172258}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -2390,7 +2411,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 100
+  - BulletPrefab: {fileID: 8835491154407723254, guid: 1c1f8f22e6c13174faef359317b71b2e,
+      type: 3}
+    Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
@@ -2421,6 +2444,11 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
@@ -2431,6 +2459,7 @@ MonoBehaviour:
     ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 60
   ShootSfx: {fileID: 0}
@@ -2456,6 +2485,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!114 &8272181644764724856
 MonoBehaviour:
@@ -2471,16 +2501,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DetectionModule: {fileID: 7449206302271650874}
   turrets:
-  - chassis: {fileID: 1549150425942049225}
+  - type: 0
+    chassis: {fileID: 1549150425942049225}
     barrel: {fileID: 1549150425942049225}
     weapon: {fileID: 7775158966999687160}
     aimSharpness: 0.5
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 0.5
+    minAttackRange: 0
     limitRotation: 45
+    limitFollow: {fileID: 0}
+    verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 0}
     dot: 0
+    meleeRangeThreshold: 5
   aiState: 0
   RotationSpeed: 30
 --- !u!1 &9043262420115308463

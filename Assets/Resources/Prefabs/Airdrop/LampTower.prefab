@@ -46,8 +46,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 2080002074}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 2279048169206629816}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -60,7 +62,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 100
+  - BulletPrefab: {fileID: 857091340230576855, guid: 226514313747a894db23618d2cc38c68,
+      type: 3}
+    Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
@@ -90,6 +94,11 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -100,6 +109,7 @@ MonoBehaviour:
     ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 100006, guid: 1cfb0135c414e5943bf0918321a2fcf7, type: 3}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 35
   ShootSfx: {fileID: 8300000, guid: 0d44f0cb2e91f5f4ca09aded9a1bd9ab, type: 3}
@@ -122,6 +132,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!1 &1618611147
 GameObject:
@@ -173,6 +184,7 @@ MonoBehaviour:
   AttackRange: 65
   AlertRange: 0
   KnownTargetTimeout: 0
+  MinSwitchTargetTime: 4
   Target:
     pos: {x: 0, y: 0, z: 0}
   showGizmos: 0
@@ -180,6 +192,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
   RespondMark: 1
@@ -484,7 +497,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 0}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -538,7 +553,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 1.5
-  damageables: []
+  halfHeight: 0
 --- !u!114 &731077170
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -556,6 +571,8 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
+  isImportant: 0
 --- !u!114 &731077171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -574,16 +591,18 @@ MonoBehaviour:
     barrel: {fileID: 7500047666114618239}
     weapon: {fileID: 733078087}
     aimSharpness: 180
+    autoRotateSpeed: 0
     detectionFireDelay: 0.5
-    aimBlendTime: 3
+    minAttackRange: 0
     limitRotation: 0
+    limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
+    meleeRangeThreshold: 5
   PreJudgment: 0
-  RotationSpeed: 10
-  AiState: 0
+  PreJudgmentFactor: 1
 --- !u!114 &4993735179080487280
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -620,6 +639,7 @@ MonoBehaviour:
     NoDefaultVale: 0
     DefaultValue:
       cilp: {fileID: 0}
+      SG: {fileID: 0}
       ps: {fileID: 0}
       trans: {fileID: 0}
       go: []
@@ -627,6 +647,7 @@ MonoBehaviour:
     - Key: 3
       Value:
         cilp: {fileID: 8300000, guid: 6d92ec7fa64afd2419462ed916dedda9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
           type: 3}
         trans: {fileID: 0}
@@ -634,6 +655,7 @@ MonoBehaviour:
     - Key: 4
       Value:
         cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 0}
         ps: {fileID: 8950624839484268202, guid: 2a8f5052fe50f7b41b17149abb0f7414,
           type: 3}
         trans: {fileID: 0}

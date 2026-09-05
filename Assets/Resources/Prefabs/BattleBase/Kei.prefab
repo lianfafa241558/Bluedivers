@@ -387,6 +387,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
 --- !u!1001 &7766046033655693533
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -861,6 +862,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   emittScale: 0.5
   speedScale: 1
+  scaleFieldName: _EmissionScale
+  modifies:
+  - rid: 1259320267568316422
+  references:
+    version: 2
+    RefIds:
+    - rid: 1259320267568316422
+      type: {class: EmittController/ScaleModify, ns: , asm: 05_EffectComp}
+      data:
+        fieldName: _EmissionScale
+        speedScale: 1
+        emittScale: 0.5
 --- !u!1 &5733860456173945097 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2617798698952376788, guid: e9eb1672267638f4d85f3b4529c87395,

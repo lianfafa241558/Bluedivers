@@ -126,7 +126,8 @@ public class Furniture_Pipe : Furniture_Base
             {
                 item.enabled = true;
                 item.gameObject.layer = 0;
-                TerrainUtils.ModifyHeightMap(item.transform.position,0, 2f,0.5f, ShapeType.Circle, false,false);
+                //ModifyHeightMap 是协程（迭代器），必须用 StartCoroutine 启动，直接调用不会执行
+                GameRoot.Instance.StartCoroutine(TerrainUtils.ModifyHeightMap(item.transform.position,0, 2f,0.5f, ShapeType.Circle, false,false));
             }
         }
 

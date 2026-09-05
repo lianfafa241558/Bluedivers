@@ -88,7 +88,9 @@ namespace Unity.FPS.Game
         public Vector3 pos, normal; 
         public Collider collider;
         /// <summary>伤害来源</summary>
-        public GameObject owner;
+        public GameObject soure;
+        /// <summary>伤害物体(自身)</summary>
+        public GameObject self;
         /// <summary>伤害信息</summary>
         public IDamageData data;
         /// <summary>武器引用，只有击中特效依然是子弹的时候使用（？想办法去掉？）</summary>

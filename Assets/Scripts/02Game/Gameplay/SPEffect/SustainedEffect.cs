@@ -71,7 +71,8 @@ namespace FPSGame.Gameplay
                 collider = null,//不产生直击伤害，仅范围伤害
                 data = DamageData,
                 chargeScale = 1,
-                owner = Owner,
+                soure = Owner,
+                self =gameObject,
                 sfxRange = DamageData.SoundRadius,
                 weapon = null,
                 useDiffScale = UseDiffScale,

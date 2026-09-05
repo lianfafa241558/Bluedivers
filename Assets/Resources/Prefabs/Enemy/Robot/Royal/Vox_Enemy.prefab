@@ -58,6 +58,7 @@ MonoBehaviour:
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
   showTarget: {fileID: 0}
+  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
   ShowTargetState: 0
 --- !u!1 &5412717839845758609
@@ -474,6 +475,12 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 5317149632382884588, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: Damages.Array.data[0].LandingPrefab
+      value: 
+      objectReference: {fileID: 1766904303727736413, guid: e96a1000bec583b4aa742cdec79b31d6,
+        type: 3}
     - target: {fileID: 5361688880439917018, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
         type: 3}
       propertyPath: m_Layer
@@ -554,6 +561,12 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 7002150173613616604, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: Damages.Array.data[0].LandingPrefab
+      value: 
+      objectReference: {fileID: 1766904303727736413, guid: e96a1000bec583b4aa742cdec79b31d6,
+        type: 3}
     - target: {fileID: 7024906432710323948, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
         type: 3}
       propertyPath: m_Layer
@@ -879,6 +892,8 @@ MonoBehaviour:
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
+  isImportant: 0
 --- !u!114 &7733711855446599762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -999,14 +1014,15 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   AttackStop: 0
   WeakPointHitStunDuration: 0.3
+  showState: 0
   AttackStopDistanceRatio: 0.2
   MaintainMaxDis: 0
+  EncircleDistance: 8
   PatrolSpeed: 2
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
   IdleMaxDuration: 120
-  AiState2: 2
 --- !u!195 &6404041158885394288
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1047,6 +1063,7 @@ MonoBehaviour:
   - Key: 11
     Value: 9
   MainPart: {fileID: 2099042117010003610}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:

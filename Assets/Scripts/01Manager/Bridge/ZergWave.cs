@@ -136,9 +136,10 @@ namespace FPSGame.Game
                                 var go = Object.Instantiate(tmp, points[i] + random.InsideUnitCircle().ToVector3() * 10, dir, null);
                                 units.Add(go.GetComponent<Actor>());
 
-                                go.GetComponent<EnemyController>().SetNavDestination(
-                                    center + random.InsideUnitCircle().ToVector3() * 5
-                                );
+                                var ec = go.GetComponent<EnemyController>();
+                                // 设置长期落点：到达后不移除，途中被中断(回Idle)会继续走向该点
+                                ec.HomePoint = center + random.InsideUnitCircle().ToVector3() * 5;
+                                ec.SetNavDestination(ec.HomePoint);
 
                             }
                             else

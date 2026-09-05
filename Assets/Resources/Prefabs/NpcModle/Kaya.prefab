@@ -133,7 +133,43 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 5919687184030598210}
+    - targetCorrespondingSourceObject: {fileID: -4261960768833000180, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 189086296240521260}
   m_SourcePrefab: {fileID: 100100000, guid: f6e4436c36dcd7d4c8e6fa95f71b861a, type: 3}
+--- !u!1 &528090203853036904 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4261960768833000180, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
+    type: 3}
+  m_PrefabInstance: {fileID: 4867932137745608804}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &189086296240521260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 528090203853036904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6948e7847167a014fbcf292ba2cafc23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  emittScale: 0.5
+  speedScale: 1
+  scaleFieldName: _EmissionScale
+  modifies:
+  - rid: 1259320267568316425
+  references:
+    version: 2
+    RefIds:
+    - rid: 1259320267568316425
+      type: {class: EmittController/ScaleModify, ns: , asm: 05_EffectComp}
+      data:
+        fieldName: _EmissionScale
+        speedScale: 1
+        emittScale: 0.5
 --- !u!4 &960154835122308186 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5682832173067809854, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,
@@ -826,6 +862,8 @@ MonoBehaviour:
   lastPos: {x: 0, y: 0, z: 0}
   speed: 10
   returnSpeed: 10
+  snapDistance: 6
+  debug: 0
 --- !u!4 &7694225514773992849 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2974978486542870005, guid: f6e4436c36dcd7d4c8e6fa95f71b861a,

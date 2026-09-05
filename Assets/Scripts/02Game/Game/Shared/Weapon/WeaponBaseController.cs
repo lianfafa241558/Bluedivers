@@ -98,8 +98,8 @@ namespace Unity.FPS.Game {
 
         [Foldout("子弹参数", true)]
 
-        [InspectorName("子弹预制体")]
-        public ProjectileBase ProjectilePrefab;
+        //[InspectorName("子弹预制体")]
+        //public ProjectileBase ProjectilePrefab;
         [InspectorName("子弹标旗")]
         public BulletFlag BulletFlag;
 
@@ -435,10 +435,13 @@ namespace Unity.FPS.Game {
                     Vector2 point = RandomUtils.InsideUnitCircle() * AttrFinal(Attr.BulletsOffect).RawFloat;
                     shotPos = muzzle.TransformPoint(point);
                 }
-                var bullet = VFXManager.Creat(ProjectilePrefab, shotPos, Quaternion.LookRotation(shotDirection));
+                var bullet = VFXManager.Creat(CurrentDamgeData.BulletPrefab, shotPos, Quaternion.LookRotation(shotDirection));
 
                 OnBulletShoot?.Invoke(bullet);
                 bullet.Shoot(this, UseDamageIndex, muzzle);
+
+                // 每个弹丸都预测地形落点并生成落点预示(仅配置了 LandingPrefab 的伤害配置生效)
+                SpawnLandingMarker(shotPos, shotDirection);
             }
 
             ShootFlash(muzzle);
@@ -455,6 +458,100 @@ namespace Unity.FPS.Game {
                 TransformUtils.SetChildLayer(muzzleFlashInstance.gameObject, point.gameObject.layer, true);
 
             }
+        }
+
+        /// <summary>
+        /// 开火时在预测的地面落点创建落点预示物体(<see cref="DamageData.LandingPrefab"/>)，物体按预计飞行时间自动清理，
+        /// 旋转对齐落点表面法线
+        /// </summary>
+        private void SpawnLandingMarker(Vector3 origin, Vector3 direction)
+        {
+            if (Damages == null || Damages.Count == 0 || UseDamageIndex >= Damages.Count) return;
+            var data = Damages[UseDamageIndex];
+            if (data == null || data.LandingPrefab == null) return;
+
+            if (!TryPredictLanding(origin, direction, out var landPos, out var normal, out float flightTime)) return;
+
+            // 物体前向(+Z)对齐落点表面法线(即物体"朝上"立在落点)
+            Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, normal);
+            var marker = VFXManager.Creat(data.LandingPrefab, landPos, rotation);
+            if (!marker) return;
+
+            // 短暂存在：生命周期=预计飞行时间(+少许余量)，超时后由 VFXManager 池自动回收
+            var ll = marker.GetComponent<LimitedLife>();
+            if (ll == null) ll = marker.AddComponent<LimitedLife>();
+            ll.ResetLift(Mathf.Max(flightTime, 0.1f) + 0.2f);
+        }
+
+        /// <summary>
+        /// 粗粒度模拟当前伤害配置的子弹弹道(速度/重力/继承武器速度)，用物理检测 GroundLayers 求落点。
+        /// 敌人/单位层不参与拦截：超出极限射程或生命周期仍未命中地面则判定无落点。
+        /// </summary>
+        private bool TryPredictLanding(Vector3 origin, Vector3 direction,
+            out Vector3 landPos, out Vector3 normal, out float flightTime)
+        {
+            landPos = default;
+            normal = Vector3.up;
+            flightTime = 0f;
+
+            float speed = CurrentSpeed;
+            if (speed <= 0f) return false;
+            float gravity = CurrentGravity;
+            Vector3 inherit = CurrentDamgeData.InheritWeaponSpeed ? MuzzleWorldVelocity : Vector3.zero;
+            float maxDist = CurrentWeaponRange;
+            float maxLife = Mathf.Max(CurrentDamgeData.MaxLifeTime, 0.01f);
+            const float kStep = 0.05f;   // 弹道模拟步长(s)，落点预示精度要求不高
+            const float kMaxSeg = 2f;    // 单次射线检测最大长度(m)，防高速大步长穿透薄地面
+
+            // 起点已压着地面层(枪口贴地)直接视为落地
+            if (Physics.CheckSphere(origin, 0.1f, LayerDefinition.GroundLayers, QueryTriggerInteraction.Collide))
+            {
+                landPos = origin;
+                return true;
+            }
+
+            Vector3 pos = origin;
+            Vector3 vel = direction.normalized * speed;
+            float t = 0f;
+
+            while (t < maxLife)
+            {
+                float dt = Mathf.Min(kStep, maxLife - t);
+                vel += Vector3.down * gravity * dt;
+                Vector3 move = (vel + inherit) * dt;
+                Vector3 end = pos + move;
+                float total = move.magnitude;
+
+                if (total > 1e-4f)
+                {
+                    Vector3 moveDir = move / total;
+                    float covered = 0f;
+                    // 段内细分射线，避免单个大步长跨过薄地面
+                    while (covered < total)
+                    {
+                        float seg = Mathf.Min(total - covered, kMaxSeg);
+                        if (Physics.Raycast(pos + moveDir * covered, moveDir, out var hit, seg,
+                                LayerDefinition.GroundLayers, QueryTriggerInteraction.Collide))
+                        {
+                            landPos = hit.point;
+                            normal = hit.normal;
+                            if ((landPos - origin).magnitude > maxDist) return false; // 打空(超过极限射程)
+
+                            float local = covered + hit.distance;
+                            flightTime = (t - dt) + dt * (local / total);
+                            return true;
+                        }
+                        covered += seg;
+                    }
+                }
+
+                // 超过极限射程仍未落地 => 打空，不生成落点
+                if ((end - origin).magnitude >= maxDist) return false;
+
+                pos = end;
+                t += dt;
+            }
+            return false;
         }
 
 

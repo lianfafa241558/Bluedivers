@@ -151,6 +151,7 @@ namespace FPSGame.Furn
                 return transform.position + _colliderCenterOffset;
             }
         }
+        [SerializeField]
         private Collider _collider;
 
         public override Vector3 Forward =>/*Quaternion.Euler(90*ForwardAxis) **/transform.forward;
@@ -170,7 +171,7 @@ namespace FPSGame.Furn
 
         protected virtual void Awake()
         {
-            _collider = GetComponent<Collider>();
+            if(!_collider)_collider = GetComponent<Collider>();
             _audioSource = GetComponent<AudioSource>();
             _actor = GetComponent<I_Actor>();
             if (!anim) anim = GetComponent<Animator>();

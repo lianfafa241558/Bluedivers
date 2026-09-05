@@ -43,6 +43,7 @@ Shader "ToonLit/ToonLit"
         [Header(Base Color)]
         [MainTexture]_BaseMap("_BaseMap (Albedo)", 2D) = "white" {}
         [HDR][MainColor]_BaseColor("_BaseColor", Color) = (1,1,1,1)
+        _BaseScale("颜色系数", Range(0,2)) = 1
 
         //混合纹理
         _BlendingScale("混合程度", Range(0,1)) = 0
@@ -228,11 +229,11 @@ Shader "ToonLit/ToonLit"
 
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            //#pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile _ _FORWARD_PLUS
-            //#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
             //#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             //#pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
-            //#pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_instancing
             // ---------------------------------------------------------------------------------------------
             // Unity defined keywords
@@ -276,8 +277,9 @@ Shader "ToonLit/ToonLit"
 
             //直接从“ForwardLit”传递中复制所有关键字
             // ---------------------------------------------------------------------------------------------
-            #pragma multi_compile _MAIN_LIGHT_SHADOWS
-            //#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            //#pragma multi_compile_fragment _ _SHADOWS_SOFT
             //#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             //#pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             //#pragma multi_compile_fragment _ _SHADOWS_SOFT

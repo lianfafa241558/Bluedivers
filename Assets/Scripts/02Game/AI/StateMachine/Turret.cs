@@ -151,7 +151,7 @@ namespace FPSGame.AI
         [SerializeField]
         [InspectorName("瞄准就绪度")]
         [Tooltip("(弧度，转角度为*57")]
-        private float dot = 1;
+        private float dot = 0;
 
         public void Look(Vector3 targetPos)
         {

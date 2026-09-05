@@ -152,7 +152,8 @@ namespace Unity.FPS.Gameplay
                 collider = null,//不产生直击伤害
                 data = DamageData,
                 chargeScale = 1,
-                owner = Owner??gameObject,
+                soure = Owner,
+                self =gameObject,
                 sfxRange = DamageData.SoundRadius,
                 weapon = null,//纯自部署，无武器来源
                 useDiffScale = false,

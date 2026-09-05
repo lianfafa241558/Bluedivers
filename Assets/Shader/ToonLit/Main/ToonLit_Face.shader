@@ -12,6 +12,7 @@ Shader "ToonLit/ToonLit_Face"
         [Header(Base Color)]
         [MainTexture]_BaseMap("_BaseMap (Albedo)", 2D) = "white" {}
         [HDR][MainColor]_BaseColor("_BaseColor", Color) = (1,1,1,1)
+        _BaseScale("颜色系数", Range(0,2)) = 1
 
          _ShadowMapColor("阴影颜色", Color) = (0.85,0.85,0.85)
          _CelShadeMidPoint("阴影切面的系数", Range(-1,1)) = -0.5

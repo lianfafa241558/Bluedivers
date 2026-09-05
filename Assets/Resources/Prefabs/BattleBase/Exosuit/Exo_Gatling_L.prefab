@@ -64,7 +64,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 100
+  - BulletPrefab: {fileID: 7272235627310111179, guid: 6bd525f977c5b294e91f9cf11e8a3c77,
+      type: 3}
+    Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
@@ -98,6 +100,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -149,9 +152,6 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
-  showArmorLists: []
-  AllArmor: 0
-  isExplosionImmunity: 0
   armorValue: 400
   LineArmor:
   - {fileID: 1937500384787808069}
@@ -311,20 +311,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   armorLevel: 2
-  explosionResistance: 0
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr:
-    - Key: 0
-      Value: 0.5
-    - Key: 2
-      Value: 0.5
-    - Key: 1
-      Value: 0.5
-    meetReset: 0
   source: {fileID: 0}
 --- !u!114 &5604024700282963688
 MonoBehaviour:
@@ -484,14 +470,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   armorLevel: 0
-  explosionResistance: 0
-  extraLists:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue: 0
-    arr: []
-    meetReset: 0
   source: {fileID: 0}
 --- !u!65 &2126045472790158978
 BoxCollider:

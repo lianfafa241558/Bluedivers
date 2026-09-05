@@ -262,7 +262,7 @@ half3 ShadeSingleLight(InputData inputData,Light light, bool isAdditionalLight,i
     half3 litColor =toon;
     */
 
-    half distanceAttenuation = isAdditionalLight ? sqrt(light.distanceAttenuation) : light.distanceAttenuation;
+     half distanceAttenuation = isAdditionalLight ? sqrt(light.distanceAttenuation) : light.distanceAttenuation;
     // 最终光照
     half3 color = light.color * litColor*distanceAttenuation;
     half hardShadow = step(0.5, light.shadowAttenuation); // 0 或 1

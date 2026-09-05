@@ -102,7 +102,7 @@ float4 _MouthMap_ST;
 float4 _AlphaMap_ST;
 float _Expression;
 float _Column;
-
+float _BaseScale;
 
 float _BlendingScale;
 float _UseUV1;
@@ -306,6 +306,8 @@ Varyings VertexShaderWork(Attributes input)
 #ifdef ToonShaderApplyShadowBiasFix
     // see GetShadowPositionHClip() in URP/Shaders/ShadowCasterPass.hlsl
     // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl
+    // 注意:URP 的 ApplyShadowBias 已内置 normal/depth bias(由 URP Asset 的 Shadow Settings 控制),
+    // 不要再手动沿法线外扩顶点,否则会把投射阴影轮廓整体撑大.
     float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, output.normalWS, _LightDirection));
     
     //防止相机过近导致的镂空
@@ -399,7 +401,7 @@ half4 GetFinalBaseColor(Varyings input)
         col = col * (1 - _BlendingScale) + col * _BlendingScale * (tex2D(_BlendingMap, correctedUV * _BlendingMap_ST.xy + _BlendingMap_ST.zw) * 2 - 1) * backCol.a;
     }
     
-    return col * _BaseColor;
+    return col * _BaseColor * _BaseScale;
 }
 half3 GetFinalEmissionColor(Varyings input)//计算自发光颜色
 {

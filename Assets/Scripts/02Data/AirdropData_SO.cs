@@ -63,7 +63,10 @@ public class AirdropData_SO : ScriptableObject
     public int arriveCount = 0;
 
     [InspectorName("附属战备")]
-    public int subAirdrop = 0;
+    public int[] subAirdrop;
+
+    [InspectorName("冷却组")]
+    public string coolGroup;
 
     [Space]
     [InspectorName("影响范围的显示")]
@@ -99,6 +102,9 @@ public class AirdropData_SO : ScriptableObject
     [InspectorName("死亡时可用")]
     public bool deathEnable;
 
+    //TODO:还没实现
+    [InspectorName("团队冷却")]
+    public bool teamCool;
     public Color Color { 
         get
         {

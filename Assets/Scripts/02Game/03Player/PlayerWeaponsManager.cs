@@ -882,7 +882,7 @@ namespace Unity.FPS.Gameplay
         public void SwitchToWeaponIndex(string weaponName, bool force = false, bool allowDual = true, bool instant = false)
         {
 
-            int index = m_WeaponSlots.FindIndex(item => item.WeaponName == weaponName);
+            int index = m_WeaponSlots.FindIndex(item => item && item.WeaponName == weaponName);
             //Debug.LogError("寻找武器" + weaponName+"结果"+ index);
             if (index>-1)
             {

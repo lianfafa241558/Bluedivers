@@ -600,6 +600,9 @@ MonoBehaviour:
   allowSeeRelease: 0
   allowRelease: 0
   useDebug: 0
+  OnEnd:
+    m_PersistentCalls:
+      m_Calls: []
   showScale: 0
 --- !u!114 &8678845714814920700
 MonoBehaviour:
@@ -614,8 +617,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 723395061430880861}
+  UseManyMuzzle: 1
   WeaponMuzzle: {fileID: 723395061430880858}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles:
+  - {fileID: 723395061430880858}
+  - {fileID: 723395061677193480}
+  - {fileID: 723395062305493866}
+  - {fileID: 723395061276695424}
+  - {fileID: 723395060341203208}
   cfg:
     _fakeAttrs:
     - Key: 1
@@ -632,7 +642,9 @@ MonoBehaviour:
     type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 200
+  - BulletPrefab: {fileID: 8924682559891268397, guid: 095d2f9c39e71d343a791201356205b6,
+      type: 3}
+    Speed: 200
     Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 0.2
@@ -640,23 +652,16 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    DamageExplosion: 0
     DamageDirect: 50
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    DamageExplosion: 0
+    WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -668,14 +673,22 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 3629486385860210166, guid: 2d9b927d84f508643974e27ad9fadf71, type: 3}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 40
   ShootSfx: {fileID: 0}
@@ -684,19 +697,21 @@ MonoBehaviour:
   ContinuousShootLoopSfx: {fileID: 8300000, guid: 1784b460afbd34c4593f4bacd4cfde87,
     type: 3}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
   showCool: 0
-  UseManyMuzzle: 1
-  WeaponManyMuzzles:
-  - {fileID: 723395061430880858}
-  - {fileID: 723395061677193480}
-  - {fileID: 723395062305493866}
-  - {fileID: 723395061276695424}
-  - {fileID: 723395060341203208}
+  ShootType: 0
+  WeaponFlag: 0
+  AutomaticReleaseOnCharged: 0
+  Lockshape: 0
+  ReloadSfx: {fileID: 0}
+  ChangeWeaponSfx: {fileID: 0}
+  ChargeVfx: {fileID: 0}
+  WeaponAnimator: {fileID: 0}
 --- !u!1001 &1825502618753743112
 PrefabInstance:
   m_ObjectHideFlags: 0
