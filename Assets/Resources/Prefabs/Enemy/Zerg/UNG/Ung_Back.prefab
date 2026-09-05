@@ -15,6 +15,12 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 10b921ae9a8536e4fad357dd9cef665b, type: 2}
     - target: {fileID: 3316608398210949451, guid: 6f1b1e83859066147805935784fca32c,
         type: 3}
+      propertyPath: fxData
+      value: 
+      objectReference: {fileID: 11400000, guid: 959010bf1da245b47b8974ca23817005,
+        type: 2}
+    - target: {fileID: 3316608398210949451, guid: 6f1b1e83859066147805935784fca32c,
+        type: 3}
       propertyPath: BirthMaterial
       value: 
       objectReference: {fileID: 0}
@@ -126,9 +132,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 15
   Duration: 4
+  releaseType: 1
   MeetDetectedTime: 3
   Range: 19
+  DamageSkillTime: 0
   tag: 0
+  m_Controller: {fileID: 0}
   nowCoolTime: 0
   nowDurationTime: 0
   m_LastDetectedTarget: 0
@@ -147,9 +156,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 100
   Duration: 0
+  releaseType: 1
   MeetDetectedTime: 10
   Range: 16
+  DamageSkillTime: 0
   tag: -1
+  m_Controller: {fileID: 0}
   nowCoolTime: 0
   nowDurationTime: 0
   m_LastDetectedTarget: 0

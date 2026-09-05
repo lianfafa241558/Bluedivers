@@ -55,11 +55,10 @@ namespace FPSGame.AI
             var firstMat = skinnedRenderers[0].sharedMaterial;
             if (firstMat == null) return;
 
-            // rendererSet 中每一项的 material 设为该材质
-            for (int i = 0; i < rendererSet.Count; i++)
-            {
-                rendererSet[i].material = firstMat;
-            }
+            // 材质下沉到组件：AutoInit 只填单位自身 fxMaterial（共享模板条目材质留空，由组件提供）
+            fxMaterial = firstMat;
+            UnityEditor.EditorUtility.SetDirty(this);
+            UnityEditor.AssetDatabase.SaveAssets();
         }
 #endif
     }

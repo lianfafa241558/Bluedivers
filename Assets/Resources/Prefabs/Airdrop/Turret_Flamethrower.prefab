@@ -624,12 +624,11 @@ MonoBehaviour:
       Value: 1
     - Key: 4
       Value: 4
-  ProjectilePrefab: {fileID: 828996816448062211, guid: e606251cb8bfb024caf249b34dbf2ee3,
-    type: 3}
   BulletFlag: 1
   Damages:
   - BulletPrefab: {fileID: 828996816448062211, guid: e606251cb8bfb024caf249b34dbf2ee3,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -1111,6 +1110,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
   BirthMaterial: {fileID: 0}
+  fxData: {fileID: 11400000, guid: cedc87e2ce1be0747a68392b552f8927, type: 2}
   fxDic:
     ShowSetting: 0
     NoLog: 0

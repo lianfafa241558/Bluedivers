@@ -18,15 +18,24 @@ namespace FPSGame.AI
         [SerializeField]
         private Material BirthMaterial;
 
-        /// <summary>共享特效配置 SO（每敌人类型一个资产）。赋值后优先于旧 rendererSet/fxDic（迁移过渡期旧字段兜底）</summary>
-        [InspectorName("特效配置 SO")]
+        /// <summary>共享渲染模板 SO（rendererSet；条目材质留空时用 fxMaterial）</summary>
+        [InspectorName("特效模板 SO")]
         public EnemyFxData_SO fxData;
 
-        [SerializeField]
-        protected DisplayDic<OccasionTypeEnum, FxSet> fxDic = new();
+        /// <summary>事件特效 SO（fxDic：受击/死亡等时机的音效粒子），可被同类单位共享</summary>
+        [InspectorName("事件特效 SO")]
+        public EnemyFxEventData_SO fxEvent;
+
+        /// <summary>单位自身生效材质：RendererSetConfig.material 为空时用它做匹配/生效材质</summary>
+        [InspectorName("生效材质")]
+        public Material fxMaterial;
 
         [Header("击中闪光")]
-        public List<RendererSet> rendererSet;
+        /// <summary>运行态 MPB 闪变条目（由 fxData.rendererSet 在 InitRS 构建），不参与序列化</summary>
+        private List<RendererSet> rendererSet = new();
+
+        /// <summary>是否已提示过"特效条目缺材质"（只提示一次）</summary>
+        private bool _warnedNoMaterial;
 
 
         protected I_AIController m_Controller;
@@ -152,33 +161,34 @@ namespace FPSGame.AI
 
         private void InitRS() {
             originalMaterials = new();
-            if (fxData.IsValid() && fxData.rendererSet != null && fxData.rendererSet.Count > 0)
+            rendererSet.Clear();
+            if (fxData.IsValid() && fxData.rendererSet != null)
             {
-                // SO 优先：由共享配置构建运行态列表（实例私有状态），替代序列化到 prefab 的旧内联数据
-                var runtime = new List<RendererSet>(fxData.rendererSet.Count);
+                // 由共享配置构建运行态条目（实例私有状态：MPB/匹配结果/计时）
                 for (int c = 0; c < fxData.rendererSet.Count; ++c)
                 {
                     var cfg = fxData.rendererSet[c];
-                    runtime.Add(new RendererSet
-                    {
-                        type = (RendererSet.MPBTypeEnum)cfg.type,
-                        occasion = cfg.occasion,
-                        material = cfg.material,
-                        colorName = cfg.colorName,
-                        defaultColor = cfg.defaultColor,
-                        switchOccasion = cfg.switchOccasion,
-                        switchColor = cfg.switchColor,
-                        gradient = cfg.gradient,
-                        duration = cfg.duration,
-                    });
+                    if (cfg == null) continue;
+                    rendererSet.Add(new RendererSet { Config = cfg });
                 }
-                rendererSet = runtime;
             }
 
             foreach (var renderer in GetComponentsInChildren<Renderer>(true)) {
                 for (int i = 0; i < renderer.sharedMaterials.Length; i++) {
                     for (int u = 0; u < rendererSet.Count; ++u) {
-                        if (renderer.sharedMaterials[i] == rendererSet[u].material) {
+                        // 材质来源：config.material 非空优先，否则用单位 fxMaterial（模板条目通常留空）
+                        Material mat = GetFxMaterial(rendererSet[u]);
+                        if (mat == null)
+                        {
+                            if (!_warnedNoMaterial)
+                            {
+                                _warnedNoMaterial = true;
+                                Debug.LogWarning(gameObject + "：特效条目既无 RendererSetConfig.material，组件也未设置 fxMaterial，闪白将无法匹配材质。", gameObject);
+                            }
+                            continue;
+                        }
+                        if (renderer.sharedMaterials[i] == mat)
+                        {
                             rendererSet[u].Add(renderer, i);
                         }
                     }
@@ -200,6 +210,13 @@ namespace FPSGame.AI
             }
         }
 
+        /// <summary>特效条目生效材质：config.material 非空优先（特例覆盖），否则回落单位 fxMaterial（模板条目通常留空）</summary>
+        private Material GetFxMaterial(RendererSet rs)
+        {
+            if (rs == null || rs.Config == null) return fxMaterial;
+            return rs.Config.material != null ? rs.Config.material : fxMaterial;
+        }
+
         void RestoreMat()
         {
             for (int i = 0; i < originalMaterials.Count; ++i)
@@ -219,95 +236,46 @@ namespace FPSGame.AI
             }
         }
 
-#if UNITY_EDITOR
-        /// <summary>是否仍携带旧内联 FX 配置（迁移工具据此判定是否需要导出 SO）</summary>
-        public bool HasLegacyFxData
+        /// <summary>
+        /// 取某时机的特效配置：fxEvent（事件 SO）优先；fxData.fxDic 为过渡兜底（旧资产未抽离 fxDic 前兼容）。
+        /// </summary>
+        protected FxSetConfig GetFxSet(OccasionTypeEnum type)
         {
-            get
+            if (fxEvent.IsValid() && fxEvent.fxDic.TryGet(type, out var cfg))
             {
-                if (rendererSet != null && rendererSet.Count > 0) return true;
-                try { return fxDic.Count > 0; }
-                catch { return false; }
+                return cfg;
             }
-        }
-
-        /// <summary>迁移工具调用：把旧内联 rendererSet/fxDic 逐字段拷入共享 SO 资产（不改动自身序列化字段）</summary>
-        public void ExportLegacyTo(EnemyFxData_SO target)
-        {
-            if (target == null) return;
-
-            target.rendererSet = new List<RendererSetConfig>();
-            if (rendererSet != null)
+            if (fxData.IsValid() && fxData.fxDic.TryGet(type, out var cfg2))
             {
-                for (int i = 0; i < rendererSet.Count; ++i)
-                {
-                    var src = rendererSet[i];
-                    if (src == null) continue;
-                    target.rendererSet.Add(new RendererSetConfig
-                    {
-                        type = (MPBTypeEnum)src.type,
-                        occasion = src.occasion,
-                        material = src.material,
-                        colorName = src.colorName,
-                        defaultColor = src.defaultColor,
-                        switchOccasion = src.switchOccasion,
-                        switchColor = src.switchColor,
-                        gradient = src.gradient,
-                        duration = src.duration,
-                    });
-                }
+                return cfg2;
             }
-
-            foreach (var key in fxDic.Keys)
-            {
-                if (!fxDic.TryGet(key, out var src) || src == null) continue;
-                target.fxDic[key] = new FxSetConfig
-                {
-                    SG = src.SG,
-                    cilp = src.cilp,
-                    ps = src.ps,
-                    trans = src.trans,
-                    go = src.go != null ? new List<ArmorBreakEffect>(src.go) : null,
-                };
-            }
-        }
-#endif
-
-
-        /// <summary>取某时机的特效配置：SO 共享配置优先，旧内联 fxDic 兜底（迁移过渡期）</summary>
-        protected IFxSet GetFxSet(OccasionTypeEnum type)
-        {
-            if (fxData.IsValid())
-            {
-                return fxData.fxDic.TryGet(type, out var cfg) ? cfg : null;
-            }
-            return fxDic.TryGet(type, out var legacy) ? legacy : null;
+            return null;
         }
 
         protected void TriggerFX(OccasionTypeEnum type,Vector3 pos,Quaternion roat,Transform parent,bool ignoreAudio =false) {
             var value = GetFxSet(type);
             if (value == null) return;
             // 有音效组用音效组，否则用单个音频剪辑
-            if (!ignoreAudio && (value.SoundGroup || value.Clip.IsValid()))
+            if (!ignoreAudio && (value.SG || value.cilp.IsValid()))
             {
-                if (value.SoundGroup)
+                if (value.SG)
                 {
-                    AudioSvc.PlaySound(value.SoundGroup.Get(pos));
+                    AudioSvc.PlaySound(value.SG.Get(pos));
                 }
                 else
                 {
-                    AudioSvc.PlaySound(new(value.Clip, pos,range:80, group: AudioGroups.Enemy));
+                    AudioSvc.PlaySound(new(value.cilp, pos,range:80, group: AudioGroups.Enemy));
                 }
             }
-            if (value.Particle.IsValid())
+            if (value.ps.IsValid())
             {
-                VFXManager.Creat(value.Particle.gameObject, pos, roat, parent);
+                VFXManager.Creat(value.ps.gameObject, pos, roat, parent);
             }
-            if (value.SpawnObject.IsValid())
+            if (value.trans.IsValid())
             {
-                Instantiate(value.SpawnObject, pos, transform.rotation,null);
+                Instantiate(value.trans, pos, transform.rotation,null);
             }
-            foreach (var item in value.Effects)
+            foreach (var item in value.go)
             {
                 if (!item.go)
                 {
@@ -317,22 +285,6 @@ namespace FPSGame.AI
                 item.go.SetActive(item.state);
                 item.go.transform.localScale *= item.scale;
             }
-        }
-
-
-        [System.Serializable]
-        protected class FxSet : IFxSet {
-            public AudioClip cilp;
-            public SoundGroup_SO SG;
-            public ParticleSystem ps;
-            public GameObject trans;//创建的物体
-            public List<ArmorBreakEffect> go;
-
-            AudioClip IFxSet.Clip => cilp;
-            SoundGroup_SO IFxSet.SoundGroup => SG;
-            ParticleSystem IFxSet.Particle => ps;
-            GameObject IFxSet.SpawnObject => trans;
-            IReadOnlyList<ArmorBreakEffect> IFxSet.Effects => go;
         }
 
 

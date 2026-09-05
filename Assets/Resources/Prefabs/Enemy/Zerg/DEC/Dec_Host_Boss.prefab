@@ -319,12 +319,11 @@ MonoBehaviour:
       Value: 2
     - Key: 10
       Value: 24
-  ProjectilePrefab: {fileID: 828996816448062211, guid: 4382c41751911db43982fe1740493e6b,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 828996816448062211, guid: 4382c41751911db43982fe1740493e6b,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 20
     Gravity: 20
     InheritWeaponSpeed: 0
@@ -563,6 +562,12 @@ PrefabInstance:
       propertyPath: turrets.Array.data[1].meleeRangeThreshold
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 579562280907152891, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: fxData
+      value: 
+      objectReference: {fileID: 11400000, guid: 48c4b335b0b01cb42a49895036897b2f,
+        type: 2}
     - target: {fileID: 579562280907152891, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
         type: 3}
       propertyPath: BirthMaterial

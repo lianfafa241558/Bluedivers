@@ -74,6 +74,7 @@
 - **SO 选择弹窗**：`Assets/Editor/SOPickerPopup.cs` 的 `SOPickerPopup<T>`（全局命名空间，`PopupWindowContent`）。做"从数据里选一个并回调"的可搜索列表弹窗，**优先用** `PopupWindow.Show(rect, new SOPickerPopup<T>(items, onPick, getIcon, getName, getType?, getTypeColor?, getFrame?, confirmMode))`。
   - `confirmMode=false`（默认）单击即回调关闭；`confirmMode=true` 单击选中+确定/取消确认。
   - 数据过滤由调用方注入前完成；现有调用方：`WeaponUpgradeEditorWindow.cs`、`RoleSpeechGroupDrawer.cs`。
+- **预制体组件批量工具基类**：`Assets/Editor/PrefabBatchToolBase.cs` 的 `PrefabBatchToolBase<TComponent> : EditorWindow`（namespace `Unity.FPS.EditorExt`，同目录同程序集）。以后做「遍历 Assets 下所有预制体里某类组件 → 批量检查/批量写字段」的编辑器窗口时，**继承它**并最小实现钩子即可得到两步式(1.扫描/2.应用)窗口、进度条、报告与复制：必填 `protected abstract BatchItem CreateItem(TComponent, prefabPath, objectPath)`（纯判定+报告文本）；选填 `WriteValue(TComponent)→WriteResult{Modified/NoChange/Skipped}`（默认只读，`SupportsApply=false` 只扫不写）、`DrawOptions()`（base 已含"跳过嵌套预制体"开关，判定用 `SkipNestedPrefab`）、文案虚属性与汇总/行格式虚方法（BuildScanSummary/BuildApplySummary/BuildReportLine/BuildChangedLine/BuildChangeText）。`[MenuItem]` 静态入口与写 prefab 走 `LoadPrefabContents`+`SaveAsPrefabAsset`（finally 必 Unload）。现调用方：`ActorHalfHeightTool.cs`（半高度批量设置）。
 
 ## 文档与 Skill
 - `.codebuddy/rules/UnityCSharp编码规范.md`：C# 编码规范（必须/推荐/可选三级），自动加载为项目规则

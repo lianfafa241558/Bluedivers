@@ -307,12 +307,11 @@ MonoBehaviour:
       Value: 20
     - Key: 10
       Value: 10
-  ProjectilePrefab: {fileID: 5542020336735652036, guid: 955b15727be064042ac6efa145a76bea,
-    type: 3}
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 5542020336735652036, guid: 955b15727be064042ac6efa145a76bea,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 50
     Gravity: 30
     InheritWeaponSpeed: 0
@@ -450,12 +449,11 @@ MonoBehaviour:
       Value: 100
     - Key: 0
       Value: -1
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: 6d4e5671e640839468a79d4ff7063e57,
-    type: 3}
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 8924682559891268397, guid: 6d4e5671e640839468a79d4ff7063e57,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 200
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -625,12 +623,11 @@ MonoBehaviour:
       Value: 100
     - Key: 0
       Value: -1
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: 6d4e5671e640839468a79d4ff7063e57,
-    type: 3}
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 8924682559891268397, guid: 6d4e5671e640839468a79d4ff7063e57,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 200
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -800,12 +797,11 @@ MonoBehaviour:
       Value: 100
     - Key: 0
       Value: -1
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
-    type: 3}
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -980,12 +976,11 @@ MonoBehaviour:
       Value: 100
     - Key: 0
       Value: -1
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
-    type: 3}
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 8924682559891268397, guid: ec753d54f333bb944b8b04884ad63828,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -1121,12 +1116,11 @@ MonoBehaviour:
       Value: 20
     - Key: 10
       Value: 10
-  ProjectilePrefab: {fileID: 5542020336735652036, guid: 955b15727be064042ac6efa145a76bea,
-    type: 3}
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 5542020336735652036, guid: 955b15727be064042ac6efa145a76bea,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 50
     Gravity: 30
     InheritWeaponSpeed: 0
@@ -13730,54 +13724,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Animator: {fileID: 6132891567951152250}
   BirthMaterial: {fileID: 0}
-  fxDic:
-    ShowSetting: 0
-    NoLog: 0
-    NoDefaultVale: 0
-    DefaultValue:
-      cilp: {fileID: 0}
-      SG: {fileID: 0}
-      ps: {fileID: 0}
-      trans: {fileID: 0}
-      go: []
-    arr:
-    - Key: 1
-      Value:
-        cilp: {fileID: 8300000, guid: 6a01212b33e861440b27daaff3f09029, type: 3}
-        SG: {fileID: 0}
-        ps: {fileID: 0}
-        trans: {fileID: 0}
-        go: []
-    - Key: 3
-      Value:
-        cilp: {fileID: 8300000, guid: a7fae22399a6e1d448dc0dd2210f1dac, type: 3}
-        SG: {fileID: 0}
-        ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
-          type: 3}
-        trans: {fileID: 0}
-        go: []
-    - Key: 4
-      Value:
-        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
-        SG: {fileID: 0}
-        ps: {fileID: 0}
-        trans: {fileID: 0}
-        go: []
-    - Key: 7
-      Value:
-        cilp: {fileID: 0}
-        SG: {fileID: 11400000, guid: b6e410a4ac03ef74b81308586fdf226d, type: 2}
-        ps: {fileID: 0}
-        trans: {fileID: 0}
-        go: []
-    - Key: 6
-      Value:
-        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
-        SG: {fileID: 11400000, guid: ed6bc8f33352ece44981db62e051ca8b, type: 2}
-        ps: {fileID: 0}
-        trans: {fileID: 0}
-        go: []
-    meetReset: 0
+  fxData: {fileID: 11400000, guid: f8c4c9f9107cc874b989d4121066e1eb, type: 2}
   rendererSet:
   - type: 0
     occasion: 3
@@ -13893,6 +13840,54 @@ MonoBehaviour:
       m_NumColorKeys: 3
       m_NumAlphaKeys: 2
     duration: 3
+  fxDic:
+    ShowSetting: 0
+    NoLog: 0
+    NoDefaultVale: 0
+    DefaultValue:
+      cilp: {fileID: 0}
+      SG: {fileID: 0}
+      ps: {fileID: 0}
+      trans: {fileID: 0}
+      go: []
+    arr:
+    - Key: 1
+      Value:
+        cilp: {fileID: 8300000, guid: 6a01212b33e861440b27daaff3f09029, type: 3}
+        SG: {fileID: 0}
+        ps: {fileID: 0}
+        trans: {fileID: 0}
+        go: []
+    - Key: 3
+      Value:
+        cilp: {fileID: 8300000, guid: a7fae22399a6e1d448dc0dd2210f1dac, type: 3}
+        SG: {fileID: 0}
+        ps: {fileID: 7635230255058315795, guid: 7593818fba43c7f4c8372299ce5e893f,
+          type: 3}
+        trans: {fileID: 0}
+        go: []
+    - Key: 4
+      Value:
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 0}
+        ps: {fileID: 0}
+        trans: {fileID: 0}
+        go: []
+    - Key: 7
+      Value:
+        cilp: {fileID: 0}
+        SG: {fileID: 11400000, guid: b6e410a4ac03ef74b81308586fdf226d, type: 2}
+        ps: {fileID: 0}
+        trans: {fileID: 0}
+        go: []
+    - Key: 6
+      Value:
+        cilp: {fileID: 8300000, guid: 80ee67bda8e511949a96b7ae212fb2b9, type: 3}
+        SG: {fileID: 11400000, guid: ed6bc8f33352ece44981db62e051ca8b, type: 2}
+        ps: {fileID: 0}
+        trans: {fileID: 0}
+        go: []
+    meetReset: 0
 --- !u!114 &4957280852508026729
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -298,12 +298,11 @@ MonoBehaviour:
       Value: 0.2
     - Key: 10
       Value: 15
-  ProjectilePrefab: {fileID: 8835491154407723254, guid: de1da8c1eba295c40bf45965c2a9a260,
-    type: 3}
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 8835491154407723254, guid: de1da8c1eba295c40bf45965c2a9a260,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -774,6 +773,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dec_Colossus Boss
       objectReference: {fileID: 0}
+    - target: {fileID: 4405464842987676495, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: fxData
+      value: 
+      objectReference: {fileID: 11400000, guid: 31b1aea6052684e4187189db40b1d7c1,
+        type: 2}
     - target: {fileID: 4405464842987676495, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       propertyPath: fxDic.arr.Array.data[2].Value.go.Array.size

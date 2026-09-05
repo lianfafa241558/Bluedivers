@@ -80,6 +80,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8782697207922320284, guid: 626228c0ff990e144b362ba1f7dcc7a0,
         type: 3}
+      propertyPath: fxData
+      value: 
+      objectReference: {fileID: 11400000, guid: 6c0570b8a6e8cd44fa9639188f8a61ed,
+        type: 2}
+    - target: {fileID: 8782697207922320284, guid: 626228c0ff990e144b362ba1f7dcc7a0,
+        type: 3}
       propertyPath: BirthMaterial
       value: 
       objectReference: {fileID: 0}
@@ -122,9 +128,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 15
   Duration: 4
+  releaseType: 1
   MeetDetectedTime: 3
   Range: 19
+  DamageSkillTime: 0
   tag: 0
+  m_Controller: {fileID: 0}
   nowCoolTime: 0
   nowDurationTime: 0
   m_LastDetectedTarget: 0

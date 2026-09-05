@@ -1,259 +1,123 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
-namespace FPSGame.AI {
-
-    public struct RendererIndexData {
+namespace FPSGame.AI
+{
+    /// <summary>材质槽位信息</summary>
+    public struct RendererIndexData
+    {
         public Renderer Renderer;
         public int MaterialIndex;
 
-        public RendererIndexData(Renderer renderer, int index) {
+        public RendererIndexData(Renderer renderer, int index)
+        {
             Renderer = renderer;
             MaterialIndex = index;
         }
     }
-    [System.Serializable]
-    public class RendererSet {
-        public MaterialPropertyBlock mpb;
 
-        public MPBTypeEnum type;
-        public OccasionTypeEnum occasion;
-        public Material material;
-        public string colorName;
-        //切换时
-        [ColorUsage(true, true)]
-        public Color defaultColor;
+    /// <summary>
+    /// 运行态 MPB 闪变条目：由 EnemyControllerFX.InitRS 按共享 EnemyFxData_SO.rendererSet 配置创建。
+    /// 配置只读引用共享对象，本类只持有实例私有状态（MPB、材质槽位匹配结果、触发计时与 PropertyID 缓存）。不参与序列化。
+    /// </summary>
+    public class RendererSet
+    {
+        /// <summary>共享配置（运行时只读）</summary>
+        public RendererSetConfig Config;
 
-        public OccasionTypeEnum switchOccasion;
-        [ColorUsage(true, true)]//alpha和hdr
-        public Color switchColor;
+        private MaterialPropertyBlock mpb;
+        private readonly List<(Renderer, int)> renderers = new();
         private OccasionTypeEnum lastOccasion;
-
-        //触发时
-
-        [GradientUsage(true)]
-        public Gradient gradient;
-        [InspectorName("持续时间")]
-        public float duration = 0.1f;
-
-        public float lastTriggerTime { get;set; }= float.NegativeInfinity;
-        List<(Renderer,int)> renderers=new();
+        private float lastTriggerTime = float.NegativeInfinity;
 
         // 颜色属性名运行时缓存（用 bool 标记解析状态，勿用默认值当哨兵）
-        [System.NonSerialized]
         private int colorId;
-        [System.NonSerialized]
         private bool colorIdResolved;
 
-        private int GetColorId() {
-            if (!colorIdResolved) {
-                string name = string.IsNullOrEmpty(colorName)
-                    ? (type == MPBTypeEnum.Switch ? "_EmissionColor" : "_HitColor")
-                    : colorName;
-                colorId = Shader.PropertyToID(name);
-                colorIdResolved = true;
-            }
-            return colorId;
+        public void Add(Renderer renderer, int materialIndex)
+        {
+            renderers.Add((renderer, materialIndex));
+            if (!mpb.IsValid()) mpb = new MaterialPropertyBlock();
         }
 
-
-        public enum MPBTypeEnum {
-            Trigger,
-            Switch,
-        }
-
-        public void Add(Renderer renderer, int materialIndex) {
-            renderers.Add((renderer,materialIndex));
-            if(!mpb.IsValid())mpb = new MaterialPropertyBlock();
-        }
-
-        public void Trigger(OccasionTypeEnum occasion) {
-            switch (type) {
+        public void Trigger(OccasionTypeEnum occasion)
+        {
+            switch (Config.type)
+            {
                 case MPBTypeEnum.Trigger:
-                    if(this.occasion== occasion) {
+                    if (Config.occasion == occasion)
+                    {
                         lastTriggerTime = Time.time;
                     }
                     break;
+
                 case MPBTypeEnum.Switch:
-                    if (this.occasion == occasion) {
-                        if (mpb.IsValid()) {
+                    if (Config.occasion == occasion)
+                    {
+                        if (mpb.IsValid())
+                        {
                             lastOccasion = occasion;
                             lastTriggerTime = Time.time;
                         }
                     }
-                    else if (switchOccasion == occasion && mpb.IsValid()) {
+                    else if (Config.switchOccasion == occasion && mpb.IsValid())
+                    {
                         lastOccasion = occasion;
                         lastTriggerTime = Time.time;
                     }
                     break;
             }
         }
-        public void Update() {
+
+        public void Update()
+        {
             if (!mpb.IsValid()) return;
-            switch (type) {
+            switch (Config.type)
+            {
                 case MPBTypeEnum.Trigger:
-                    if ((Time.time - lastTriggerTime) <= duration) {
-                        Color currentColor = gradient.Evaluate((Time.time - lastTriggerTime) / duration);
+                    if ((Time.time - lastTriggerTime) <= Config.duration)
+                    {
+                        float progress = Config.duration > 0 ? (Time.time - lastTriggerTime) / Config.duration : 1f;
+                        Color currentColor = Config.gradient.Evaluate(progress);
                         mpb.SetColor(GetColorId(), currentColor);
-                        for (int i = 0; i < renderers.Count; ++i) {
-                            renderers[i].Item1.SetPropertyBlock(mpb, renderers[i].Item2);
-                        }
+                        ApplyToRenderers();
                         mpb.Clear();
                     }
                     break;
+
                 case MPBTypeEnum.Switch:
-                    if ((Time.time - lastTriggerTime) <= 2) {
-                        var a = lastOccasion == switchOccasion ? defaultColor : switchColor;
-                        var b = lastOccasion != switchOccasion ? defaultColor : switchColor;
-                        Color currentColor = Color.Lerp(a,b,(Time.time - lastTriggerTime)/2);
+                    if ((Time.time - lastTriggerTime) <= 2)
+                    {
+                        var a = lastOccasion == Config.switchOccasion ? Config.defaultColor : Config.switchColor;
+                        var b = lastOccasion != Config.switchOccasion ? Config.defaultColor : Config.switchColor;
+                        Color currentColor = Color.Lerp(a, b, (Time.time - lastTriggerTime) / 2);
                         mpb.SetColor(GetColorId(), currentColor);
-                        for (int i = 0; i < renderers.Count; ++i) {
-                            renderers[i].Item1.SetPropertyBlock(mpb, renderers[i].Item2);
-                        }
+                        ApplyToRenderers();
                         mpb.Clear();
                     }
                     break;
             }
-
         }
 
-    }
-
-#if UNITY_EDITOR
-
-    [CustomPropertyDrawer(typeof(RendererSet))]
-    public class RendererSetEditor : PropertyDrawer {
-        private const float lineHeight = 20f;
-
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
-            EditorGUI.BeginProperty(position, label, property);
-
-            var typeProp = property.FindPropertyRelative("type");
-            var typeValue = (RendererSet.MPBTypeEnum)typeProp.enumValueIndex;
-
-            // 绘制折叠箭头和标签
-            property.isExpanded = EditorGUI.Foldout(
-                new Rect(position.x, position.y, position.width, lineHeight),
-                property.isExpanded, label);
-
-            if (!property.isExpanded) {
-                EditorGUI.EndProperty();
-                return;
+        private void ApplyToRenderers()
+        {
+            for (int i = 0; i < renderers.Count; ++i)
+            {
+                renderers[i].Item1.SetPropertyBlock(mpb, renderers[i].Item2);
             }
+        }
 
-            // 计算起始Y位置
-            float y = position.y + lineHeight;
-
-            float LabelWidth = EditorGUIUtility.labelWidth;
-
-            EditorGUIUtility.labelWidth = position.width * 0.3f;
-
-            // 绘制公共属性
-            EditorGUI.PropertyField(
-                new Rect(position.x, y, position.width, lineHeight),
-                property.FindPropertyRelative("type"));
-            y += lineHeight;
-
-
-            // 根据类型显示不同字段
-            switch (typeValue) {
-                case RendererSet.MPBTypeEnum.Switch:
-                    DrawSwitchProperties(position, property, ref y);
-                    break;
-
-                case RendererSet.MPBTypeEnum.Trigger:
-                    DrawTriggerProperties(position, property, ref y);
-                    break;
+        private int GetColorId()
+        {
+            if (!colorIdResolved)
+            {
+                string name = string.IsNullOrEmpty(Config.colorName)
+                    ? (Config.type == MPBTypeEnum.Switch ? "_EmissionColor" : "_HitColor")
+                    : Config.colorName;
+                colorId = Shader.PropertyToID(name);
+                colorIdResolved = true;
             }
-
-            EditorGUIUtility.labelWidth = LabelWidth;
-            EditorGUI.EndProperty();
-        }
-
-        private void DrawSwitchProperties(Rect position, SerializedProperty property, ref float y) {
-
-            EditorGUI.PropertyField(
-                new Rect(position.x, y, position.width, lineHeight),
-                property.FindPropertyRelative("material"));
-            y += lineHeight*1.1f;
-            EditorGUI.PropertyField(
-                new Rect(position.x, y, position.width, lineHeight),
-                property.FindPropertyRelative("colorName"));
-            y += lineHeight*1.5f;
-
-            float LabelWidth = EditorGUIUtility.labelWidth;
-
-            EditorGUI.PropertyField(
-                new Rect(position.x + 0, y, (position.width ) / 2 - 0, lineHeight),
-                property.FindPropertyRelative("occasion"));
-            EditorGUI.PropertyField(
-                new Rect(position.x + 0 + (position.width ) / 2 + 20, y, (position.width ) / 2 - 20, lineHeight),
-                property.FindPropertyRelative("defaultColor"));
-            y += lineHeight;
-            EditorGUI.PropertyField(
-                new Rect(position.x + 0, y, (position.width  ) / 2 - 0, lineHeight),
-                property.FindPropertyRelative("switchOccasion"));
-            EditorGUI.PropertyField(
-                new Rect(position.x + 0 + (position.width ) / 2 + 20, y, (position.width ) / 2 - 20, lineHeight),
-                property.FindPropertyRelative("switchColor"));
-            y += lineHeight;
-
-
-
-        }
-
-        private void DrawTriggerProperties(Rect position, SerializedProperty property, ref float y) {
-            EditorGUI.PropertyField(
-                new Rect(position.x, y, position.width, lineHeight),
-                property.FindPropertyRelative("occasion"));
-            y += lineHeight;
-
-            EditorGUI.PropertyField(
-                new Rect(position.x, y, position.width, lineHeight),
-                property.FindPropertyRelative("material"));
-            y += lineHeight;
-
-            EditorGUI.PropertyField(
-                new Rect(position.x, y, position.width, lineHeight),
-                property.FindPropertyRelative("colorName"));
-            y += lineHeight * 1.1f;
-            EditorGUI.PropertyField(
-                new Rect(position.x, y, position.width, lineHeight),
-                property.FindPropertyRelative("gradient"));
-            y += lineHeight;
-
-            EditorGUI.PropertyField(
-                new Rect(position.x, y, position.width, lineHeight),
-                property.FindPropertyRelative("duration"));
-            y += lineHeight;
-        }
-
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
-            if (!property.isExpanded)
-                return lineHeight;
-
-            var typeProp = property.FindPropertyRelative("type");
-            int lineCount = 3; // 基础属性(occasion+material+type)
-
-            if (typeProp.enumValueIndex == (int)RendererSet.MPBTypeEnum.Switch)
-                lineCount += 3; // switch模式属性
-            else
-                lineCount += 3; // trigger模式属性
-
-            // 如果是数组中的元素则增加额外间距
-            if (property.propertyPath.Contains(".Array.data["))
-                lineCount += 1;
-
-            return lineCount * lineHeight;
+            return colorId;
         }
     }
-#endif
-
-
 }

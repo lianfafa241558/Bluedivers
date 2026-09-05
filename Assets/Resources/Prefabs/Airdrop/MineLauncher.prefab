@@ -115,12 +115,11 @@ MonoBehaviour:
       Value: 2.6
     - Key: 61
       Value: 8
-  ProjectilePrefab: {fileID: 7785816051124341128, guid: 1a806ccfaddf13a46bbbc4218fb923f6,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 7785816051124341128, guid: 1a806ccfaddf13a46bbbc4218fb923f6,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 8
     Gravity: 20
     InheritWeaponSpeed: 0
@@ -167,6 +166,7 @@ MonoBehaviour:
     ChargeSpreadScale: 1
   - BulletPrefab: {fileID: 7785816051124341128, guid: 1a806ccfaddf13a46bbbc4218fb923f6,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 7
     Gravity: 20
     InheritWeaponSpeed: 0
@@ -418,6 +418,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Animator: {fileID: 784931013060139314}
   BirthMaterial: {fileID: 0}
+  fxData: {fileID: 11400000, guid: 492fafb905e14bd4aa2484b59b5e119a, type: 2}
   fxDic:
     ShowSetting: 0
     NoLog: 0

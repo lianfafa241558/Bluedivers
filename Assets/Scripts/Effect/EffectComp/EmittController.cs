@@ -17,8 +17,9 @@ public class EmittController : MonoBehaviour
 
     private MpbController mpb;
 
-    void Start()
+    void Awake()
     {
+        // 必须在 Awake 初始化：OnBecameVisible 可能在 Start 之前触发（首帧可见），届时 mpb 尚未创建会 NRE
         mpb = new(transform);
     }
 
@@ -35,7 +36,11 @@ public class EmittController : MonoBehaviour
 
     private void Refresh()
     {
-        foreach (var item in modifies) item.Update(mpb);
+        if (mpb == null || modifies == null) return;
+        foreach (var item in modifies)
+        {
+            if (item != null) item.Update(mpb);
+        }
         mpb.Apply();
     }
 
