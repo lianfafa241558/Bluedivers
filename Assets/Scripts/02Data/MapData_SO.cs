@@ -23,6 +23,10 @@ public class MapData_SO : ScriptableObject
     [SpritePreview]
     public Sprite Icon, Map;
     public Color color;
+
+
+    [Divider]
+    [Header("对象")]
     [InspectorName("敌对类型")]
     public EnemyVarietyType enemyVarietyType;
 
@@ -34,6 +38,10 @@ public class MapData_SO : ScriptableObject
     [InspectorName("兴趣点")]
     public SKVP<GameObject, int>[] interestPoints;
 
+
+    [Divider]
+    [Header("地形")]
+    [InspectorName("纹理配置")]
     public TerrainItemInfo[] TerrainItem;
 
     [System.Serializable]

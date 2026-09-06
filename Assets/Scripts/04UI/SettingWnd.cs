@@ -525,7 +525,7 @@ public partial class SettingWnd : Window
 
         SetActive(stateActiveRoot, true);
         SetActive(stateHideRoot, false);
-        SetText(mapName, cfg.mapName);
+        SetText(mapName, taskManager.MapId);
         SetSprite(mapIcon, cfg.mapCfg.Icon);
         SetSprite(mapImage, cfg.mapCfg.Map);
 

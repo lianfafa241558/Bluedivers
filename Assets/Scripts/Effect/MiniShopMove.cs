@@ -32,7 +32,7 @@ public class MiniShopMove : MonoBehaviour
             // 现在安全遍历
             foreach (Transform item in children)
             {
-                if ( item.GetChild(1).GetComponent<TMPro.TextMeshPro>().text== TaskManager.Instance.nowTask.mapName)
+                if ( item.GetChild(1).GetComponent<TMPro.TextMeshPro>().text== TaskManager.Instance.MapId)
                 {
                     transform.position = item.GetChild(1).position+0.3f*Vector3.up;
                 }

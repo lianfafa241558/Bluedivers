@@ -1,22 +1,18 @@
 using System.Collections.Generic;
-using Core;
 using UnityEngine;
 
 namespace FPSGame.AI
 {
     /// <summary>
-    /// 敌人特效共享配置：每敌人类型/prefab 变体一个资产，多个实例共享引用。
-    /// 运行时为只读数据，不要修改资产内容。
+    /// 敌人渲染特效模板 SO：只持有 rendererSet（颜色闪白/溶解等 MPB 条目），条目材质通常留空，
+    /// 运行时以单位组件 EnemyControllerFX.fxMaterial 作为生效材质（config.material 非空可覆盖）。
+    /// 事件特效（音效/粒子）见 EnemyFxEventData_SO。
     /// </summary>
     [CreateAssetMenu(fileName = "EFX_", menuName = "Data/敌人特效")]
     public class EnemyFxData_SO : ScriptableObject
     {
         [Header("MPB 颜色闪变")]
-        [Tooltip("与旧 prefab 内联 rendererSet 对应；每项按目标材质匹配渲染器槽位，运行时逐实例构建私有状态")]
+        [Tooltip("与旧 prefab 内联 rendererSet 对应；条目材质留空时使用组件 fxMaterial，运行时逐实例构建私有状态")]
         public List<RendererSetConfig> rendererSet = new();
-
-        [Header("事件特效")]
-        [Tooltip("各时机（受击/攻击/死亡等）触发的音效/粒子/挂点")]
-        public DisplayDic<OccasionTypeEnum, FxSetConfig> fxDic = new(true);
     }
 }

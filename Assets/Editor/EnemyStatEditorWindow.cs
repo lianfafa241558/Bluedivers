@@ -1,28 +1,65 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
+using FPSGame.AI;
 using Unity.FPS.Game;
 using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 敌人/怪物数值编辑器：读取 Assets/Resources/Prefabs/Enemy 下带 Actor 的预制体，
-/// 左侧列表显示 Portrait + ShowName，右侧可编辑 名称/ID/头像/基础血量（直接写回预制体资产），
+/// 单位数值编辑器：左侧按 敌人/其他/战备 三类浏览指定目录下带 Actor 的预制体，
+/// 列表显示 Portrait + ShowName；右侧可编辑 名称/ID/头像/基础血量（直接写回预制体资产），
 /// 并显示不同难度 x ExtraDifficulty(0~3) 的血量表格（参照 HealthEnemy.Awake 公式），
 /// 以及每个武器每个 DamageData 的伤害表格（参照 FpsHelper.DiffDamageScale 公式，不含玩家人数项）。
 /// 修改通过 Undo 记录，点击工具栏"保存资产"落盘。
 /// </summary>
 public class EnemyStatEditorWindow : EditorWindow
 {
-    [MenuItem("Tools/敌人/怪物编辑器")]
+    [MenuItem("Tools/怪物编辑器")]
     private static void Open()
     {
         var wnd = GetWindow<EnemyStatEditorWindow>("怪物编辑器");
         wnd.minSize = new Vector2(900, 600);
     }
 
-    /// <summary>敌人预制体目录</summary>
-    private const string EnemyPrefabFolder = "Assets/Resources/Prefabs/Enemy";
+    /// <summary>左侧列表分类</summary>
+    private enum ListCategory
+    {
+        Enemy = 0,
+        Other = 1,
+        Battle = 2,
+    }
+
+    /// <summary>列表分类定义：按钮文案（Name）+ 统计用短名（ShortName）+ 扫描目录（Folders）</summary>
+    private sealed class ListCategoryDef
+    {
+        public readonly string Name;
+        public readonly string ShortName;
+        public readonly string[] Folders;
+
+        public ListCategoryDef(string name, string shortName, string[] folders)
+        {
+            Name = name;
+            ShortName = shortName;
+            Folders = folders;
+        }
+    }
+
+    /// <summary>敌人/其他/战备 三类列表目录（AssetDatabase.FindAssets 会在目录内递归查找）</summary>
+    private static readonly ListCategoryDef[] ListCategories =
+    {
+        new ListCategoryDef("敌人列表", "敌人", new[] { "Assets/Resources/Prefabs/Enemy" }),
+        new ListCategoryDef("其他列表", "其他", new[] { "Assets/Art/Prefabs", "Assets/Resources/Prefabs/GameEvent" }),
+        new ListCategoryDef("战备列表", "战备", new[] { "Assets/Resources/Prefabs/Airdrop", "Assets/Resources/Prefabs/BattleBase" }),
+    };
+
+    /// <summary>分类切换按钮文案（与 ListCategories 顺序一致）</summary>
+    private static readonly string[] ListCategoryNames =
+    {
+        ListCategories[0].Name,
+        ListCategories[1].Name,
+        ListCategories[2].Name,
+    };
 
     /// <summary>ExtraDifficulty 行范围固定为 0~3</summary>
     private const int MaxExtraDiff = 3;
@@ -43,6 +80,12 @@ public class EnemyStatEditorWindow : EditorWindow
         public Actor actor;
         public string path;
     }
+
+    /// <summary>当前列表分类</summary>
+    private ListCategory _category = ListCategory.Enemy;
+
+    /// <summary>当前分类的定义（目录/文案）</summary>
+    private ListCategoryDef CurDef => ListCategories[(int)_category];
 
     private readonly List<EnemyEntry> _entries = new List<EnemyEntry>();
     private Vector2 _listScroll;
@@ -71,7 +114,7 @@ public class EnemyStatEditorWindow : EditorWindow
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
             }
-            GUILayout.Label($"共 {_entries.Count} 个敌人预制体", EditorStyles.toolbarButton);
+            GUILayout.Label($"共 {_entries.Count} 个{CurDef.ShortName}预制体", EditorStyles.toolbarButton);
             GUILayout.FlexibleSpace();
         }
 
@@ -120,11 +163,11 @@ public class EnemyStatEditorWindow : EditorWindow
         Repaint();
     }
 
-    /// <summary>扫描目录下所有带 Actor 的预制体</summary>
+    /// <summary>扫描当前分类目录下所有带 Actor 的预制体</summary>
     private void ReloadPrefabs()
     {
         _entries.Clear();
-        string[] guids = AssetDatabase.FindAssets("t:Prefab", new[] { EnemyPrefabFolder });
+        string[] guids = AssetDatabase.FindAssets("t:Prefab", CurDef.Folders);
         for (int i = 0; i < guids.Length; i++)
         {
             string path = AssetDatabase.GUIDToAssetPath(guids[i]);
@@ -147,7 +190,19 @@ public class EnemyStatEditorWindow : EditorWindow
     {
         using (new EditorGUILayout.VerticalScope(GUILayout.Width(280)))
         {
-            EditorGUILayout.LabelField("敌人列表", EditorStyles.boldLabel);
+            // 分类切换按钮：敌人列表 / 其他列表 / 战备列表
+            ListCategory newCategory = (ListCategory)GUILayout.Toolbar((int)_category, ListCategoryNames, EditorStyles.toolbarButton);
+            if (newCategory != _category)
+            {
+                _category = newCategory;
+                _selectedIndex = -1;
+                _healthLoadedFor = -1;
+                _listScroll = Vector2.zero;
+                ReloadPrefabs();
+            }
+
+            EditorGUILayout.Space(4);
+
             _listScroll = EditorGUILayout.BeginScrollView(_listScroll, GUI.skin.box, GUILayout.ExpandHeight(true));
             for (int i = 0; i < _entries.Count; i++)
             {
@@ -210,7 +265,7 @@ public class EnemyStatEditorWindow : EditorWindow
 
             if (_selectedIndex < 0 || _selectedIndex >= _entries.Count)
             {
-                EditorGUILayout.HelpBox("请从左侧选择一个敌人", MessageType.Info);
+                EditorGUILayout.HelpBox($"请从左侧选择一个{CurDef.ShortName}单位", MessageType.Info);
                 return;
             }
 
@@ -254,6 +309,11 @@ public class EnemyStatEditorWindow : EditorWindow
 
             EditorGUILayout.Space(6);
 
+            // 特效组件
+            DrawEnemyFx(entry.prefab);
+
+            EditorGUILayout.Space(6);
+
             // 血量
             Health health = entry.prefab.GetComponent<Health>();
             if (health == null) health = entry.prefab.GetComponentInChildren<Health>(true);
@@ -281,12 +341,17 @@ public class EnemyStatEditorWindow : EditorWindow
                 {
                     EditorGUILayout.HelpBox("该预制体没有 Health 组件", MessageType.Warning);
                 }
-                else
+                else if (health is HealthEnemy)
                 {
+                    // 仅 HealthEnemy 在 Awake 用 Extra[3] × 难度系数重算血量（参照 HealthEnemy.Awake）
                     EditorGUILayout.LabelField("最终血量 = 基础血量 × (1 + Extra[3] × 0.1) × 难度系数", EditorStyles.miniLabel);
-                    // 血量公式参照 HealthEnemy.Awake
                     DrawScaleTable("Extra[3]", (rowExtra, colDiff) =>
                         Mathf.RoundToInt(_healthValue * (1 + rowExtra * 0.1f) * HealthDiffScale[colDiff]).ToString());
+                }
+                else
+                {
+                    // 其它 Health 类型（Player/Other/SpecUnit 等）不参与难度缩放，仅维护基础值
+                    EditorGUILayout.LabelField($"{health.GetType().Name}：不参与 Extra/难度 血量缩放，仅维护基础值", EditorStyles.miniLabel);
                 }
             }
 
@@ -297,7 +362,59 @@ public class EnemyStatEditorWindow : EditorWindow
         }
     }
 
-    /// <summary>读取预制体上的所有武器并绘制伤害表格</summary>
+    /// <summary>
+    /// 绘制选中敌人的 EnemyControllerFX（含子类）序列化字段，修改直接写回预制体
+    /// </summary>
+    private void DrawEnemyFx(GameObject prefab)
+    {
+        using (new EditorGUILayout.VerticalScope(GUI.skin.box))
+        {
+            EnemyControllerFX fx = prefab.GetComponent<EnemyControllerFX>();
+            if (fx == null)
+            {
+                fx = prefab.GetComponentInChildren<EnemyControllerFX>(true);
+            }
+
+            if (fx == null)
+            {
+                EditorGUILayout.LabelField("特效组件", EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox("该预制体没有 EnemyControllerFX 组件", MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.LabelField($"特效组件 ({fx.GetType().Name})", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("编辑该组件序列化字段，改动点\"保存资产\"落盘", EditorStyles.miniLabel);
+
+            using (var so = new SerializedObject(fx))
+            {
+                so.Update();
+                EditorGUI.BeginChangeCheck();
+
+                SerializedProperty prop = so.GetIterator();
+                if (prop.NextVisible(true))
+                {
+                    do
+                    {
+                        // 跳过组件自身的 m_Script 与开关项，仅展示配置字段
+                        if (prop.name == "m_Script" || prop.name == "m_Enabled") continue;
+                        EditorGUILayout.PropertyField(prop, true);
+                    }
+                    while (prop.NextVisible(false));
+                }
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(fx, "修改特效组件");
+                    so.ApplyModifiedProperties();
+                    EditorUtility.SetDirty(fx);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 读取预制体上的所有武器并绘制伤害表格
+    /// </summary>
     private void DrawWeapons(GameObject prefab)
     {
         using (new EditorGUILayout.VerticalScope(GUI.skin.box))
@@ -365,38 +482,44 @@ public class EnemyStatEditorWindow : EditorWindow
     /// <param name="getCell">(行 ExtraDifficulty 值, 列难度枚举值) → 单元格文本</param>
     private void DrawScaleTable(string rowLabelPrefix, Func<int, int, string> getCell)
     {
-        const float labelWidth = 70f;
-        const float cellWidth = 86f;
+        const int difficultyCount = 8;
+        const float labelWidth = 56f;
         const float cellHeight = 20f;
 
-        // 表头
-        using (new EditorGUILayout.HorizontalScope())
+        // 表头行：整行按实际布局宽均分，绝不产生超出可视区的内容 → 不会触发水平滚动条
+        Rect headerRow = EditorGUILayout.GetControlRect(GUILayout.Height(cellHeight));
+        GUI.Label(new Rect(headerRow.x, headerRow.y, labelWidth, headerRow.height),
+            rowLabelPrefix + "\\难度", EditorStyles.miniBoldLabel);
+        DrawScaleRowCells(headerRow, labelWidth, difficultyCount, (cellRect, col) =>
         {
-            Rect headerLabelRect = EditorGUILayout.GetControlRect(GUILayout.Width(labelWidth), GUILayout.Height(cellHeight));
-            GUI.Label(headerLabelRect, rowLabelPrefix + "\\难度", EditorStyles.miniBoldLabel);
-            for (int c = 0; c < 8; c++)
-            {
-                Rect cellRect = EditorGUILayout.GetControlRect(GUILayout.Width(cellWidth), GUILayout.Height(cellHeight));
-                EditorGUI.DrawRect(cellRect, new Color(1, 1, 1, 0.08f));
-                GUI.Label(cellRect, ((DifficultyEnum)c).ToString(), EditorStyles.miniBoldLabel);
-            }
-        }
+            EditorGUI.DrawRect(cellRect, new Color(1, 1, 1, 0.08f));
+            GUI.Label(cellRect, ((DifficultyEnum)col).ToString(), EditorStyles.miniBoldLabel);
+        });
 
         // 数据行
         for (int row = 0; row <= MaxExtraDiff; row++)
         {
-            using (new EditorGUILayout.HorizontalScope())
+            int rowExtra = row;
+            Rect rowRect = EditorGUILayout.GetControlRect(GUILayout.Height(cellHeight));
+            GUI.Label(new Rect(rowRect.x, rowRect.y, labelWidth, rowRect.height), $"= {rowExtra}", EditorStyles.miniLabel);
+            DrawScaleRowCells(rowRect, labelWidth, difficultyCount, (cellRect, col) =>
             {
-                Rect rowLabelRect = EditorGUILayout.GetControlRect(GUILayout.Width(labelWidth), GUILayout.Height(cellHeight));
-                GUI.Label(rowLabelRect, $"= {row}", EditorStyles.miniLabel);
+                EditorGUI.DrawRect(cellRect, rowExtra % 2 == 0 ? new Color(1, 1, 1, 0.03f) : Color.clear);
+                GUI.Label(cellRect, getCell(rowExtra, col), EditorStyles.miniLabel);
+            });
+        }
+    }
 
-                for (int c = 0; c < 8; c++)
-                {
-                    Rect cellRect = EditorGUILayout.GetControlRect(GUILayout.Width(cellWidth), GUILayout.Height(cellHeight));
-                    EditorGUI.DrawRect(cellRect, row % 2 == 0 ? new Color(1, 1, 1, 0.03f) : Color.clear);
-                    GUI.Label(cellRect, getCell(row, c), EditorStyles.miniLabel);
-                }
-            }
+    /// <summary>
+    /// 将一行矩形去掉标签列后剩余宽度平均分成 count 列，逐列回调绘制
+    /// </summary>
+    private static void DrawScaleRowCells(Rect rowRect, float labelWidth, int count, Action<Rect, int> drawCell)
+    {
+        float cellWidth = Mathf.Max(1f, (rowRect.width - labelWidth) / count);
+        for (int c = 0; c < count; c++)
+        {
+            Rect cellRect = new Rect(rowRect.x + labelWidth + c * cellWidth, rowRect.y, cellWidth, rowRect.height);
+            drawCell(cellRect, c);
         }
     }
 

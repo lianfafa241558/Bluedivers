@@ -139,6 +139,20 @@ namespace Pixeye.Unity
             // 标签区域：从箭头右侧到大小输入左侧
             Rect labelRect = new Rect(foldoutRect.x + 30f, headerRect.y,
                 headerRect.width - 30f - sizeWidth, headerRect.height);
+            // 右侧大小输入区域
+            Rect sizeRect = new Rect(headerRect.x + headerRect.width - sizeWidth,
+                headerRect.y, sizeWidth, headerRect.height);
+
+            // 鼠标悬停整行高亮（对齐 Unity 原生数组头部；数量输入框有自己的高亮，排除）
+            if (Event.current.type == EventType.Repaint
+                && headerRect.Contains(Event.current.mousePosition)
+                && !sizeRect.Contains(Event.current.mousePosition))
+            {
+                Color hoverColor = EditorGUIUtility.isProSkin
+                    ? new Color(1f, 1f, 1f, 0.045f)
+                    : new Color(0f, 0f, 0f, 0.06f);
+                EditorGUI.DrawRect(headerRect, hoverColor);
+            }
 
             bool isExpanded = EditorGUI.Foldout(foldoutRect, prop.isExpanded, GUIContent.none, true);
             if (isExpanded != prop.isExpanded)
@@ -167,11 +181,18 @@ namespace Pixeye.Unity
             }
 
             // 右侧大小输入
-            Rect sizeRect = new Rect(headerRect.x + headerRect.width - sizeWidth,
-                headerRect.y, sizeWidth, headerRect.height);
             int newSize = EditorGUI.IntField(sizeRect, prop.arraySize);
             if (newSize != prop.arraySize && newSize >= 0)
                 prop.arraySize = newSize;
+
+            // 整行点击切换折叠（对齐 Unity 原生数组头部的交互）。
+            // 放在 IntField/Foldout 之后：点击箭头或大小输入框时 MouseDown 已被控件消费（Event 变为 Used），不会重复触发。
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0
+                && headerRect.Contains(Event.current.mousePosition))
+            {
+                prop.isExpanded = !prop.isExpanded;
+                Event.current.Use();
+            }
 
             // ===== 折叠则跳过列表体 =====
             if (!prop.isExpanded)

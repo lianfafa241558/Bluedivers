@@ -236,18 +236,12 @@ namespace FPSGame.AI
             }
         }
 
-        /// <summary>
-        /// 取某时机的特效配置：fxEvent（事件 SO）优先；fxData.fxDic 为过渡兜底（旧资产未抽离 fxDic 前兼容）。
-        /// </summary>
+        /// <summary>取某时机的特效配置（读事件 SO fxEvent；未挂 SO/未配置返回 null）</summary>
         protected FxSetConfig GetFxSet(OccasionTypeEnum type)
         {
             if (fxEvent.IsValid() && fxEvent.fxDic.TryGet(type, out var cfg))
             {
                 return cfg;
-            }
-            if (fxData.IsValid() && fxData.fxDic.TryGet(type, out var cfg2))
-            {
-                return cfg2;
             }
             return null;
         }

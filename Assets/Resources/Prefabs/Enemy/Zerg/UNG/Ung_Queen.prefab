@@ -48,6 +48,11 @@ PrefabInstance:
       propertyPath: turrets.Array.data[0].chassis
       value: 
       objectReference: {fileID: 4184674290975490838}
+    - target: {fileID: 310874619415933554, guid: 8d32a1ba6b224fc49aae770211b2577b,
+        type: 3}
+      propertyPath: Id
+      value: Queen
+      objectReference: {fileID: 0}
     - target: {fileID: 310874619415933558, guid: 8d32a1ba6b224fc49aae770211b2577b,
         type: 3}
       propertyPath: m_Speed
@@ -183,8 +188,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cool: 100
   Duration: 0
+  releaseType: 1
   MeetDetectedTime: 10
   Range: 16
+  DamageSkillTime: 0
   tag: -1
   m_Controller: {fileID: 0}
   nowCoolTime: 0

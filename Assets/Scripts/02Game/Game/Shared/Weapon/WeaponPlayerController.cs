@@ -199,6 +199,19 @@ namespace Unity.FPS.Game
             return base.HandleShootInputs(inputDown, inputHeld, inputUp);
         }
 
+
+        protected override void ReloadStart()
+        {
+            base.ReloadStart();
+            // 换弹语音：手动换弹才会走到这里；
+            // 带 AutomaticReload flag 的武器走 UpdateAmmo() 恢复弹药，不会调用 ReloadStart()，故不播。
+            // 非玩家武器 Owner 无匹配订阅，自动忽略。
+            if (Owner != null&&!WeaponFlag.HasFlag( WeaponFlag.AutomaticReload) && !WeaponFlag.HasFlag(WeaponFlag.NoManualReload))
+            {
+                GlobalEventSub.PlayMeetSpeech(Owner, !InfiniteAmmo && Ammo.CurrValue == 0 ? SpeechTypeEnum.FinalMaga : SpeechTypeEnum.ReLoad);
+            }
+        }
+
         /// <summary>
         /// 第三人称瞄准目标点（由 PlayerWeaponsManager 注入），
         /// 非零时子弹从枪口指向此点（屏幕中心对应的世界位置）

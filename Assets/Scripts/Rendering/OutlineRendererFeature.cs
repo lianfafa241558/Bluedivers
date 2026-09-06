@@ -2,6 +2,10 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
+/// <summary>
+/// 描边渲染器特性：在指定渲染阶段（默认 AfterRenderingOpaques）后，用 "Outline" ShaderTagId
+/// 将 outlineLayerMask 层内物体重画一遍（走 Shader 的 Outline 额外 pass），实现物体描边
+/// </summary>
 public class OutlineRendererFeature : ScriptableRendererFeature
 {
     [System.Serializable]
@@ -33,6 +37,10 @@ public class OutlineRendererFeature : ScriptableRendererFeature
         renderer.EnqueuePass(_outlinePass);
     }
 
+    /// <summary>
+    /// 描边渲染 Pass：重新提交几何体绘制描边。因独立执行时 URP 主光全局变量已失效，
+    /// 绘制前需手动设置 _MainLightPosition/_MainLightColor 等 uniform，保证 Outline pass 内 GetMainLight() 光照正确
+    /// </summary>
     private class OutlineRenderPass : ScriptableRenderPass
     {
         private readonly OutlineSettings _settings;

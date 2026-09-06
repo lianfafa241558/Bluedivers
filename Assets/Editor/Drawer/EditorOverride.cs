@@ -94,6 +94,9 @@ namespace Pixeye.Unity
                         // 濡傛灉鏄暟缁?List锛屼娇鐢ㄨ嚜瀹氫箟鏁扮粍缁樺埗锛堜繚鐣欏師鐢熸牱寮忥紝鍏冪礌鍐呰仈锛?
                         if (prop.isArray)
                         {
+                            // 内联数组头部为自绘，Unity 不会自动画 DecoratorDrawer（如 [Divider]），
+                            // 这里按注册表统一补画，任何 Decorator 型特性无需再改 EditorOverride
+                            DrawDecorators(prop);
                             DrawInlineArrayNative(prop);
                             //EditorGUILayout.PropertyField(prop, true);
                         }
@@ -140,10 +143,15 @@ namespace Pixeye.Unity
                 void Child(int i)
                 {
                     var prop = cache.props[i];
+
                     if (IsInlineField(prop))
                     {
                         if (prop.isArray)
+                        {
+                            // 同 Body：内联数组自绘头部需手动补画 Decorator
+                            DrawDecorators(prop);
                             DrawInlineArrayNative(prop);
+                        }
                         else
                             DrawInlineObject(prop);
                     }
@@ -246,6 +254,82 @@ namespace Pixeye.Unity
             {
                 var pr = prop.Copy();
                 props.Add(pr);
+            }
+        }
+
+        /// <summary>
+        /// 在字段上方绘制其声明的所有 DecoratorDrawer 型特性（如 [Divider]）。
+        /// 普通绘制路径由 Unity 自动处理 Decorator，只有内联数组的自绘头部需要手动补画；
+        /// 任何 Decorator 型特性无需修改 EditorOverride 即可自动生效。
+        /// </summary>
+        private void DrawDecorators(SerializedProperty prop)
+        {
+            var fieldInfo = target.GetType().GetField(prop.name,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (fieldInfo == null) return;
+            foreach (var attr in fieldInfo.GetCustomAttributes(typeof(PropertyAttribute), true))
+            {
+                var drawer = DecoratorDrawerCache.Bind(attr.GetType(), (PropertyAttribute)attr);
+                if (drawer == null) continue;
+                Rect rect = GUILayoutUtility.GetRect(0, drawer.GetHeight(), GUILayout.ExpandWidth(true));
+                drawer.OnGUI(rect);
+            }
+        }
+
+        /// <summary>
+        /// DecoratorDrawer 注册表：按特性类型缓存 DecoratorDrawer 实例。
+        /// Unity 没有公开"根据特性获取 DecoratorDrawer"的 API，这里在首次访问时扫描
+        /// 所有 DecoratorDrawer 子类的 [CustomPropertyDrawer] 自建映射（纯公开 API）。
+        /// 新的 Decorator 型特性只要写了 Drawer 类，即自动加入本机制。
+        /// </summary>
+        static class DecoratorDrawerCache
+        {
+            static readonly Dictionary<Type, DecoratorDrawer> drawers = new Dictionary<Type, DecoratorDrawer>();
+            static bool initialized;
+
+            // 自建的 Drawer 实例绕过了 Unity 的创建流程，Unity 不会注入 m_Attribute，
+            // 必须在每次绘制前手动绑定实际特性实例，否则 Drawer 内取 attribute 会 NRE
+            static readonly FieldInfo attributeField =
+                typeof(DecoratorDrawer).GetField("m_Attribute", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            /// <summary>
+            /// 取缓存 Drawer 并绑定本次绘制的实际特性实例（绑定必须每次进行：缓存实例被所有字段复用，
+            /// 且实际实例携带真实构造参数，如 [TextArea(4,10)] 的 minLines/maxLines）。
+            /// </summary>
+            public static DecoratorDrawer Bind(Type attributeType, PropertyAttribute actualAttribute)
+            {
+                EnsureInit();
+                if (drawers.Count == 0) return null;
+                if (!drawers.TryGetValue(attributeType, out var drawer) || drawer == null) return null;
+                attributeField?.SetValue(drawer, actualAttribute);
+                return drawer;
+            }
+
+            static void EnsureInit()
+            {
+                if (initialized) return;
+                initialized = true;
+                if (attributeField == null) return;
+
+                foreach (var type in TypeCache.GetTypesDerivedFrom<DecoratorDrawer>())
+                {
+                    // Unity 的特性类名为 CustomPropertyDrawer（无 Attribute 后缀），
+                    // 且其 GetHandledType() 为 internal，故通过公开的 GetCustomAttributesData() 读取构造参数
+                    foreach (var data in type.GetCustomAttributesData())
+                    {
+                        if (data.AttributeType != typeof(CustomPropertyDrawer)) continue;
+
+                        var attrType = data.ConstructorArguments.Count > 0
+                            ? data.ConstructorArguments[0].Value as Type
+                            : null;
+                        if (attrType == null || drawers.ContainsKey(attrType)) continue;
+
+                        var ctor = type.GetConstructor(Type.EmptyTypes);
+                        if (ctor != null)
+                            drawers[attrType] = (DecoratorDrawer)Activator.CreateInstance(type);
+                        break;
+                    }
+                }
             }
         }
 

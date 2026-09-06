@@ -106,6 +106,15 @@ Inspector 字段暴露示例：
 1. 方法名以动词开头（如 `InitGameState`、`DownloadAudio`），不加 `Coroutine` 后缀。
 2. 通过 `CoroutineSvc.StartCoroutine` 或 `MonoBehaviour.StartCoroutine` 启动。
 
+### 新增自定义 Inspector 特性
+
+1. **先判断特性类型**（决定 Drawer 基类，直接决定数组兼容性）：
+   - 纯装饰（分割线、标题、间隔等，不读字段值/上下文）→ Drawer 继承 **`DecoratorDrawer`**（`OnGUI(Rect)` + `GetHeight()`）。数组/List 头部、嵌套类、内联数组全部自动生效，无需改任何 Inspector 代码。
+   - 需要读字段值/上下文（条件显隐、只读控制等）→ Drawer 继承 `PropertyDrawer`；若该特性可能加在数组上，`OnGUI`/`GetPropertyHeight` 需对 `propertyPath.Contains(".Array.data[")` 回退为 `EditorGUI.PropertyField` 普通绘制。
+2. 特性类放入 `Assets/Scripts/00Attribute/CustomAttribute.cs`（运行时程序集，不得引 UnityEditor）；Drawer 放入 `Assets/Editor/Drawer/CustomLabelDrawer.cs`。
+3. 不要在 `EditorOverride` 里为单个特性写专用绘制代码——Decorator 型会被 `DecoratorDrawerCache` 自动识别。
+4. 注意：`DecoratorDrawer` 绘制在字段**上方**且不隐藏字段本体；`PropertyDrawer` 会完全接管字段绘制（OnGUI 不画字段则字段不可见）。
+
 
 ## 网络层（暂不做联机）
 
@@ -147,6 +156,12 @@ Inspector 字段暴露示例：
 - **字段暴露方式不统一**：存量 `public` 字段较多，新代码优先 `[SerializeField] private`，存量逐步迁移。
 - **枚举后缀不统一**：部分枚举带 `Enum` 后缀（`GameStateEnum`），新代码加后缀。
 - **Unity `Debug` 类没有 `DrawWireSphere`**：运行时调试画线框球**必须用** `Tool.DrawWireSphere(pos, size, color, time)`（`00Tools/Test/Tool.cs`，内部走 Editor 的 `DrawLabelUtils`，已用 `#if UNITY_EDITOR` 保护）。`Debug` 只有 `DrawLine`/`DrawRay`。误用 `Debug.DrawWireSphere` 会导致编译失败。
+- **自定义 Inspector 特性的数组兼容**：`PropertyDrawer` 型特性加在数组/List 字段上时，Unity 只会把它作用到**每个元素**（路径含 `.Array.data[`），数组头部拿不到绘制回调。所以：
+  - **纯装饰类特性（分割线/标题等，不读属性上下文）必须用 `DecoratorDrawer`**（`[Header]`/`[Space]` 同款机制），数组头部/嵌套类/任意 Inspector 自动生效。项目现有例子：`DividerDrawer`（`Assets/Editor/Drawer/CustomLabelDrawer.cs`）。
+  - 需要读属性上下文的特性才用 `PropertyDrawer`，数组场景须在 `OnGUI`/`GetPropertyHeight` 中对 `.Array.data[` 路径回退为 `EditorGUI.PropertyField` 普通绘制（否则元素变成空白/不可见）。
+  - EditorOverride 回退 Inspector 的**内联数组自绘头部**不会自动画 Decorator，已由通用 `DrawDecorators` + `DecoratorDrawerCache` 注册表补画——新 Decorator 特性零修改自动生效，不要在 EditorOverride 里写特性专用代码。
+  - **反射自建 Drawer 的坑**：自己 `Activator.CreateInstance` 创建的 PropertyDrawer/DecoratorDrawer 实例，Unity **不会**注入 `m_Attribute` 私有字段，Drawer 内取 `attribute` 会 NRE 并连锁打断 GUILayout（表现为"Invalid GUILayout state"+"pushing more GUIClips than popping"）。必须用反射 `typeof(DecoratorDrawer).GetField("m_Attribute", NonPublic|Instance)` 在每次绘制前注入**实际特性实例**（不能用空构造的默认实例，会丢失带参构造的真实参数值）。
+- **Unity 特性 API 坑**：特性类名是 `UnityEditor.CustomPropertyDrawer`（**没有** `Attribute` 后缀）；其 `GetHandledType()` 为 internal，实例上无 `ConstructorArguments`（那是 `CustomAttributeData` 的属性）。要读取某 Drawer 类声明的目标特性类型，用 `type.GetCustomAttributesData()` 找 `AttributeType == typeof(CustomPropertyDrawer)` 的条目，从 `ConstructorArguments[0].Value as Type` 取——全公开 API。
 
 ## 关键基础设施
 
@@ -175,6 +190,8 @@ Inspector 字段暴露示例：
 | `GameAttribute` / `UnitAttributeFactory` | `02Game/` | 属性系统：Modifier 叠加、双属性链（直接/爆炸）、OnFinalValueChange |
 | `WeaponController` 体系 | `02Game/Game/Shared/Weapon/` | 30+ 武器脚本：弹匣/过热/蓄力/充能、多种伤害类型、武器升级模块 |
 | `SOPickerPopup<T>` | `Assets/Editor/SOPickerPopup.cs` | **泛用 SO 选择弹窗框架**（PopupWindowContent）。做"可搜索的列表选择器"时**优先复用**，不要再自造：数据由委托注入（icon/name/type/color/frame），`confirmMode` 控制"单击即选"或"确定/取消确认"。用法见下 |
+| `EditorOverride` 回退 Inspector | `Assets/Editor/Drawer/EditorOverride.cs`（partial 分部：`EditorOverrideInLine.cs`） | **全局回退 Inspector**（`[CustomEditor(typeof(Object), true, isFallback=true)]`），提供 `[Foldout]` 分组、`[InspectorName]` 中文标签、`[Compare]` 条件显隐、单行类型**内联数组**绘制（`DrawInlineArrayNative`）。含 `DecoratorDrawerCache` 注册表（TypeCache 扫描 DecoratorDrawer 子类自建映射），让任何 Decorator 型特性自动作用于内联数组头部 |
+| `CustomLabelDrawer.cs` | `Assets/Editor/Drawer/` | 集中存放 `PropertyDrawer`/`DecoratorDrawer`：`CompareAttribute`（条件显隐）、`DisplayField`（运行时只读控制）、`DividerDrawer`（分割线，**DecoratorDrawer 型**）。新增特性 Drawer 优先放此文件 |
 
 ### 复用约定：SO 选择弹窗（SOPickerPopup）
 

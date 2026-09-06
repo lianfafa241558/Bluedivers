@@ -996,6 +996,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: cdd6a40f3781f4e41a4c0c6361c9fee5, type: 2}
   NPCWalk: {fileID: 1116912}
   _autoChatDistance: 2.7
@@ -1093,7 +1094,7 @@ GameObject:
   m_Component:
   - component: {fileID: 21711271}
   - component: {fileID: 21711272}
-  m_Layer: 13
+  m_Layer: 3
   m_Name: Wall1 (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2645,6 +2646,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: 648e0f7b70f2a2e4c9222246cf8429ff, type: 2}
   NPCWalk: {fileID: 49396617}
   _autoChatDistance: 2.7
@@ -3482,6 +3484,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: dccd5c98a68b88244b4acba065b2f2ac, type: 2}
   NPCWalk: {fileID: 110643396}
   _autoChatDistance: 2.7
@@ -3647,7 +3650,7 @@ GameObject:
   m_Component:
   - component: {fileID: 130700906}
   - component: {fileID: 130700907}
-  m_Layer: 13
+  m_Layer: 3
   m_Name: Wall1 (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5359,6 +5362,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: ea28a86b889915b4a93bfdc5a6d45419, type: 2}
   NPCWalk: {fileID: 248931745}
   _autoChatDistance: 2.7
@@ -6006,7 +6010,7 @@ GameObject:
   m_Component:
   - component: {fileID: 335781766}
   - component: {fileID: 335781767}
-  m_Layer: 13
+  m_Layer: 3
   m_Name: Wall1 (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13513,7 +13517,7 @@ GameObject:
   m_Component:
   - component: {fileID: 840730053}
   - component: {fileID: 840730054}
-  m_Layer: 13
+  m_Layer: 3
   m_Name: Wall1 (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14753,7 +14757,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1060957337}
   - component: {fileID: 1060957338}
-  m_Layer: 13
+  m_Layer: 3
   m_Name: Wall1 (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16836,6 +16840,37 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 6521565017277645870}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1220360351
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1220360352}
+  m_Layer: 0
+  m_Name: ReadyPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1220360352
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1220360351}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -8.917999, z: -8.074}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1645924265}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1238967350
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17188,6 +17223,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ShowName: "\u63A7\u5236\u53F0"
   Id: GuideWnd
   Portrait: {fileID: 0}
@@ -18829,7 +18865,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1475608601}
   - component: {fileID: 1475608602}
-  m_Layer: 13
+  m_Layer: 3
   m_Name: Wall1 (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18918,6 +18954,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dataList: []
   m_nowSelectIndex: 0
+  ReadyPoint: {fileID: 1220360351}
   showModleList: []
 --- !u!1 &1482934032
 GameObject:
@@ -19037,7 +19074,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1489109883}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: AirGround
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24197,6 +24234,7 @@ Transform:
   - {fileID: 572399125}
   - {fileID: 1480647335}
   - {fileID: 1067752471}
+  - {fileID: 1220360352}
   - {fileID: 1176909405}
   - {fileID: 99652728}
   - {fileID: 1753141933}
@@ -26001,6 +26039,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: 4191532c17b860a47894b3ca2cb1b30f, type: 2}
   NPCWalk: {fileID: 0}
   _autoChatDistance: 3.5
@@ -28070,6 +28109,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: 38759194a3dfe374987fc3951361a7d4, type: 2}
   NPCWalk: {fileID: 0}
   _autoChatDistance: 2.7
@@ -31505,6 +31545,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: 26e9bd5f30965b34c822a228a5e559b1, type: 2}
   NPCWalk: {fileID: 0}
   _autoChatDistance: 2.7
@@ -45124,6 +45165,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: 71b39c157c5beb04fb85abc10cdadfb9, type: 2}
   NPCWalk: {fileID: 0}
   _autoChatDistance: 2.7
@@ -48881,6 +48923,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   _soundGroup: {fileID: 11400000, guid: 506a704e141c2504e835cb3952100071, type: 2}
   NPCWalk: {fileID: 0}
   _autoChatDistance: 2.7

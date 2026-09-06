@@ -16,6 +16,34 @@ MonoBehaviour:
   intensity:
     m_OverrideState: 1
     m_Value: 0
+--- !u!114 &-5737239075460265682
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: add085d829ad4ac4cbc502735f9c36f1, type: 3}
+  m_Name: SnowVolume
+  m_EditorClassIdentifier: 
+  active: 1
+  snowAmount:
+    m_OverrideState: 1
+    m_Value: 1
+  snowColor:
+    m_OverrideState: 0
+    m_Value: {r: 0.92, g: 0.95, b: 1, a: 1}
+  snowThreshold:
+    m_OverrideState: 0
+    m_Value: 0.5
+  snowSoftness:
+    m_OverrideState: 0
+    m_Value: 0.25
+  noiseStrength:
+    m_OverrideState: 0
+    m_Value: 0.3
 --- !u!114 &-4023792316249071889
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -59,6 +87,7 @@ MonoBehaviour:
   components:
   - {fileID: 7713397037565082216}
   - {fileID: -4023792316249071889}
+  - {fileID: -5737239075460265682}
   - {fileID: 6405822195221754781}
   - {fileID: -6306348763537113199}
 --- !u!114 &6405822195221754781

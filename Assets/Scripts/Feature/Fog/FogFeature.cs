@@ -6,6 +6,9 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using static UnityEngine.Experimental.Rendering.Universal.RenderObjects;
 
+/// <summary>
+/// 雾效渲染器特性：挂载在 URP Renderer 上注入 FogPass，配合 FogVolme Volume 组件实现屏幕空间距离雾
+/// </summary>
 public class FogFeature : ScriptableRendererFeature
 {
     private FogPass myPass;
@@ -42,6 +45,10 @@ public class FogFeature : ScriptableRendererFeature
     }
 }
 
+/// <summary>
+/// 雾效渲染 Pass：每帧检查 Volume 栈中 FogVolme 是否激活，将其雾色/浓度/距离参数写入指定材质，
+/// 再用该材质对相机颜色缓冲做一次全屏 Blit 混合，实现屏幕空间雾后处理
+/// </summary>
 public class FogPass : ScriptableRenderPass
 {
     // 使用 RTHandle 替代 RenderTargetHandle

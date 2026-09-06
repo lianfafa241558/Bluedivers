@@ -5,6 +5,7 @@ using GameContract;
 using UnityEngine;
 using Utils;
 
+[AddComponentMenu("创建场景物体/单位")]
 /// <summary>
 /// 单位创建器，单例模式，随创随用。
 /// 单例对象持续存活，不随某次创建结束而销毁，避免创建器生命周期竞态导致 CreateInfo 被吞。

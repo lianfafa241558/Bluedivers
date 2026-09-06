@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using FPSGame.Attribute;
 using UnityEngine;
 
 namespace Core
@@ -11,13 +12,13 @@ namespace Core
     {
         [SerializeField]
         private bool ShowSetting = false;
-
+        [Compare("ShowSetting", 1, CompareOperate.Equal)]
         [SerializeField]
         private bool NoLog = false;
-
+        [Compare("ShowSetting", 1, CompareOperate.Equal)]
         [SerializeField]
         private bool NoDefaultVale = false;
-
+        [Compare("ShowSetting", 1, CompareOperate.Equal)]
         [SerializeField]
         private Value DefaultValue;
 

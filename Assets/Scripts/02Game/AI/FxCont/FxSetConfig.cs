@@ -5,8 +5,7 @@ using Unity.FPS.Game;
 namespace FPSGame.AI
 {
     /// <summary>
-    /// 单个事件时机的特效配置（音效组/音频/粒子/挂点/护甲破坏表现），由 EnemyFxData_SO.fxDic 持有。
-    /// 清理完成后的正式形态：过渡期 IFxSet 已随旧 FxSet 一并移除，直接消费本类字段。
+    /// 单个事件时机的特效配置（音效组/音频/粒子/挂点/护甲破坏表现），由 EnemyFxEventData_SO.fxDic 持有。
     /// </summary>
     [System.Serializable]
     public class FxSetConfig

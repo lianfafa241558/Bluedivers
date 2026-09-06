@@ -108,7 +108,9 @@ public class AirdropController : MonoBehaviour
         //}
         for (int i = 0; i < arr.Length; ++i)
         {
+            if (arr[i] <= 0) continue;
             var subArr = ResSvc.airdropDic[arr[i]].subAirdrop;
+            if (subArr.IsValid()) continue;
             for (int u = 0; u < subArr.Length; ++u)
             {
                 int sub = subArr[u];

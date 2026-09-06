@@ -1,11 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
 
 public class BridgeRoleManager : RoleManagerBase
 {
+    [SerializeField]
+    private GameObject ReadyPoint;
 
     [Header("展示模型列表")]
     public List<GameObject> showModleList;
@@ -51,6 +54,17 @@ public class BridgeRoleManager : RoleManagerBase
         GameRoot.GameState = Core.GameStateEnum.Bridge;
         WndManager.WindowState = Core.WindowStateEnum.Game;
     }
+    private void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.O))
+        {
+            m_player.Controller.enabled = false;
+            m_player.transform.position = ReadyPoint.transform.position;
+            m_player.Controller.enabled = true;
+        }
+    }
+
+
 
     public override Vector3 GetStartPoint()
     {

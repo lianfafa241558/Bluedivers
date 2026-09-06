@@ -101,20 +101,20 @@ namespace Core
         /// <summary>爆笑星际</summary>
         [InspectorName("十字神明/爆笑星际")] StarCraft,
         /// <summary>十字神明/占位符</summary>
-        [InspectorName("十字神明/占位符")] Placeholder2,
+        [InspectorName("十字神明/占位符2")] Placeholder2,
         /// <summary>十字神明/占位符</summary>
-        [InspectorName("十字神明/占位符")] Placeholder3,
+        [InspectorName("十字神明/占位符3")] Placeholder3,
 
         /// <summary>色彩</summary>
         [InspectorName("色彩/基础")] Colour,
         /// <summary>色彩/贝阿特里斯</summary>
         [InspectorName("色彩/贝阿特里斯")] Beatrice,
         /// <summary>色彩/占位符</summary>
-        [InspectorName("色彩/占位符")] Placeholder4,
+        [InspectorName("色彩/占位符4")] Placeholder4,
         /// <summary>色彩/占位符</summary>
-        [InspectorName("色彩/占位符")] Placeholder5,
+        [InspectorName("色彩/占位符5")] Placeholder5,
         /// <summary>色彩/占位符</summary>
-        [InspectorName("色彩/占位符")] Placeholder6,
+        [InspectorName("色彩/占位符6")] Placeholder6,
 
 
     }

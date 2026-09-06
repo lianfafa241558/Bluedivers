@@ -181,7 +181,7 @@ public class DisplayFieldDrawer : PropertyDrawer
             }
         }
     }
-} 
+}
 
 /*
 [CustomPropertyDrawer(typeof(PEMaths.PEInt))]
@@ -249,4 +249,41 @@ public class PEIntDrawer : PropertyDrawer
 */
 
 
+[CustomPropertyDrawer(typeof(DividerAttribute))]
+public class DividerDrawer : DecoratorDrawer
+{
+    // DecoratorDrawer 是 Unity 原生的"装饰特性"机制（[Header]/[Space] 同款）：
+    // 由 Unity 自动绘制在字段上方（含数组/List 头部、嵌套类内、任意 Inspector），
+    // 不作用于数组元素，也不需要 EditorOverride 额外处理。
+
+    public override float GetHeight()
+    {
+        DividerAttribute divider = (DividerAttribute)attribute;
+        // 总高度 = 上下间距 + 线条高度
+        return divider.spacing + divider.height;
+    }
+
+    public override void OnGUI(Rect position)
+    {
+        DividerAttribute divider = (DividerAttribute)attribute;
+
+        // 计算分割线的绘制区域
+        Rect rect = new Rect(
+            position.x,
+            position.y + divider.spacing / 2f,
+            position.width,
+            divider.height
+        );
+
+        // 获取实际颜色（如果用户未指定，则根据皮肤自动适配）
+        Color lineColor = divider.color;
+        if (lineColor == Color.gray) // 默认灰色的情况下自动适配
+        {
+            lineColor = EditorGUIUtility.isProSkin ? new Color(0.35f, 0.35f, 0.35f) : new Color(0.6f, 0.6f, 0.6f);
+        }
+
+        // 绘制分割线
+        EditorGUI.DrawRect(rect, lineColor);
+    }
+}
 #endif

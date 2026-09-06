@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 3892786399685986023}
   - component: {fileID: 2862974566727447522}
   - component: {fileID: 4286575880073606651}
+  - component: {fileID: 1106099571965985269}
   m_Layer: 0
   m_Name: RobotWall
   m_TagString: Untagged
@@ -103,7 +104,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 2862974566727447522}
-  demolishValue: 50
+  demolishValue: 40
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -161,6 +162,19 @@ NavMeshObstacle:
   m_CarveOnlyStationary: 1
   m_Center: {x: 0, y: 0.6, z: 0}
   m_TimeToStationary: 0.5
+--- !u!114 &1106099571965985269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2938128877824209424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea3b95a4dfe71f44489ac67a3a5e37c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  data: {fileID: 11400000, guid: c3da9e986bf3a5c41a90e3880a4ee7f8, type: 2}
 --- !u!1001 &4951086861485161600
 PrefabInstance:
   m_ObjectHideFlags: 0

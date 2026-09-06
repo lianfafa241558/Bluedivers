@@ -108,7 +108,7 @@ public class BridgeWnd : Window
         SetSprite(taskIcon, info.Sprite);
 
         
-        SetText(taskMap, task.mapName);
+        SetText(taskMap, taskManager.MapId);
         SetText(taskDiff, task.difficulty.ToString());
         SetText(taskDiffReward,"EXP: +"+(int)(diffScale * 100)+"%");
 

@@ -25,6 +25,7 @@ public class BattleManager : Singleton<BattleManager>
     public MissionController MissionCont;
     public PatrolContriller PatrolCont;
     public PathRequestManager RequestManager;
+    public WeatherSystem WeatherCont;
 
     private UnitQueryGrid unitQueryGrid;
     private MapRoot mapRoot;
@@ -33,6 +34,18 @@ public class BattleManager : Singleton<BattleManager>
     public static void EnqueueInit(Action action) => _initQueue.Enqueue(action);
 
     public System.Random BattleRandom { get;private set; }
+
+    /// <summary>本局天气（开局随机抽取）</summary>
+    public WeatherType Weather { get; private set; }
+
+    /// <summary>开局随机抽取天气并应用（使用 BattleRandom，同种子结果一致）</summary>
+    private void RandomWeather()
+    {
+        //Weather = (WeatherType)BattleRandom.Next(0, 4);
+        Weather = WeatherType.Snow;
+        WeatherCont = WeatherSystem.Create(Weather, transform);
+        Debug.Log($"[BattleManager] 本局天气: {Weather}");
+    }
 
     /// <summary>本局选择的全队强化类型（null 表示未选择）</summary>
     private BoosterType[] _activeTeamEnhance;
@@ -102,6 +115,7 @@ public class BattleManager : Singleton<BattleManager>
         //WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
         RequestManager = new GameObject("RequestManager").AddComponent<PathRequestManager>();
         RequestManager.transform.SetParent(transform);
+        RandomWeather();
         
         Debug.Log("完成主要内容初始?");
         yield return null;
@@ -153,6 +167,7 @@ public class BattleManager : Singleton<BattleManager>
         WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
         RequestManager = new GameObject("RequestManager").AddComponent<PathRequestManager>();
         RequestManager.transform.SetParent(transform);
+        RandomWeather();
         
         Debug.Log("完成主要内容初始?");
         yield return null;

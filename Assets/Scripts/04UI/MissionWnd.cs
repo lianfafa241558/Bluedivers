@@ -27,7 +27,7 @@ public class MissionWnd : Window
 
     protected override void ShowWnd()
     {
-        Debug.LogError("完成missionWnd初始化");
+        //Debug.LogError("完成missionWnd初始化");
         BattleEventSub.OnMissionStart += OnObjectiveCreated;
         BattleEventSub.OnMissionStateChange += OnMissionShowStateChange;
         BattleEventSub.OnMissionUpdate += OnObjectiveUpdate;

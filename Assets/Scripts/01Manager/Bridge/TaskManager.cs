@@ -31,6 +31,11 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     [SerializeField]
     private DisplayDic<string, Sprite> OccupierIcon;
 
+    public string MapId => nowTask.mapCfg.AreaName;
+
+    public EnemyVarietyType EnemyVarietyType => nowTask.taskCfg.enemyVarietyType;
+
+
     //[SerializeField]
     //private DisplayDic<string,KVP<Sprite,Sprite>> MapIcon;
 
@@ -302,7 +307,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         task.difficulty = difficulty;
         System.Array.Copy(extraDiff, task.ExtraDifficulty, 4);
 
-        task.mapName = mapData.AreaName;
+
         task.PlayMode = playMode;
         task.SpecialtyPropertys = mapData.product;
         task.OtherPropertys = mapData.otherProduct;
@@ -389,7 +394,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
 
         public GameResult result { get; set; }
         public DifficultyEnum difficulty { get; set; }
-        public string mapName { get; set; }
+
         public int PlayMode { get; set; }
         public int Countdown { get; set; } = 16;
         public int[] ExtraDifficulty { get; set; } = new int[] { 0, 0, 0, 0 };
@@ -424,7 +429,6 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
             _ => 64,
         };
 
-  
         public int MainReward =>main.complete ? main.reward : 0;
         public int ExtraReward => extras.Sum(item => item.complete ? item.reward : 0);
         public int NestReward {

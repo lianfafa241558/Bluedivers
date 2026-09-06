@@ -47,12 +47,20 @@ namespace FPSGame.AI
         [ContextMenu("AutoInit")]
         private void AutoInit()
         {
-            // 搜索子物体中所有的 SkinnedMeshRenderer
+            // 搜索子物体中所有的 SkinnedMeshRenderer 和 MeshRenderer
             var skinnedRenderers = GetComponentsInChildren<SkinnedMeshRenderer>(true);
-            if (skinnedRenderers.Length == 0) return;
+            var meshRenderers = GetComponentsInChildren<MeshRenderer>(true);
 
-            // 取第一个SkinnedMeshRenderer 的第一个材质
-            var firstMat = skinnedRenderers[0].sharedMaterial;
+            // 合并两个数组
+            var allRenderers = new System.Collections.Generic.List<Renderer>();
+            allRenderers.AddRange(skinnedRenderers);
+            allRenderers.AddRange(meshRenderers);
+
+            if (allRenderers.Count == 0) return;
+
+            // 取第一个Renderer的第一个材质
+            var firstRenderer = allRenderers[0];
+            var firstMat = firstRenderer.sharedMaterial;
             if (firstMat == null) return;
 
             // 材质下沉到组件：AutoInit 只填单位自身 fxMaterial（共享模板条目材质留空，由组件提供）

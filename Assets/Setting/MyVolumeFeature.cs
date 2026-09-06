@@ -4,6 +4,10 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
+/// <summary>
+/// 通用全屏后处理渲染器特性：本身不定义具体效果，将面板指定的后处理材质
+/// 在指定渲染阶段对相机画面做一次全屏 Blit（效果完全由材质决定）
+/// </summary>
 public class MyVolumeFeature : ScriptableRendererFeature
 {
     public Material Material; //UniversalRenderPipelineAsset_Renderer 面板，设置材质
@@ -25,6 +29,10 @@ public class MyVolumeFeature : ScriptableRendererFeature
     }
 }
 
+/// <summary>
+/// 通用全屏后处理 Pass：将相机颜色缓冲经指定材质 Blit 到临时 RT 再 Blit 回来，
+/// 完成一次全屏后处理；材质为空或非默认视口时跳过
+/// </summary>
 public class MyVolumeFeaturePass : ScriptableRenderPass
 {
     private RTHandle tempTargetHandle;  // 改用 RTHandle

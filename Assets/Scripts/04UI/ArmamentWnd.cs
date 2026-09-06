@@ -149,7 +149,7 @@ public class ArmamentWnd : Window
         GetComponent<Animator>().Play("Entry");
         SetColor(enemyIcon, taskManager.nowTask.campData.Color);
         SetSprite(enemyIcon, taskManager.nowTask.campData.Sprite);
-        SetText(mapName, taskManager.nowTask.mapName);
+        SetText(mapName, taskManager.MapId);
         SetText(enemyName, "" + taskManager.nowTask.campData.ShowName + "控制");
         for (int i = 0; i < armamentRoot.childCount; ++i)
         {
