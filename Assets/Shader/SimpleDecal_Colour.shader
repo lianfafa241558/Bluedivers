@@ -1,48 +1,40 @@
-// see README here: 
+// see README here:
 // github.com/ColinLeung-NiloCat/UnityURPUnlitScreenSpaceDecalShader
+//
+// 精简自 SimpleDecal_Colour：去掉 _MainTex/_Color/_EmittierColor/_AlphaRemap/_UseMaskMap，
+// 只保留"色彩"核心（移植自 ToonLit_Colour）：
+// 1. 用贴花 UV 采样 _ColourMaskTex * _ColourColor 得到遮罩（对应 ToonLit GetFinalColourColor，遮罩白=显示，黑=透明）
+// 2. 用"像素->相机"方向作为 UV 采样 _ColourTex，得到随视角变化的颜色（对应 ToonLit ShadeColour）
+// 注意：ToonLit 原版用 viewDirectionWS.xy（角色沿 Z 轴观察，xy 是屏幕平面两个变化分量）；
+// 贴花需要任意视角都正常，单一平面投影（.xy 或 .xz）会在视线与被丢弃轴对齐时退化成条纹，
+// 故采用**三平面采样**：zy/xz/xy 三组分量各采一次，用视角分量绝对值做权重混合——
+// 某组分量退化时其权重恰好趋近 0，条纹被隐藏，立体感在任何视角下都成立。
+// 最终颜色 = 视角颜色 * 遮罩 * _ColourScale；透明度由遮罩亮度 * _ColourColor.a 决定
 
-Shader "Decal/SimpleDecal"
+Shader "Decal/SimpleDecal_Colour"
 {
     Properties
     {
-        [Header(Basic)]
-        [MainTexture]_MainTex("Texture", 2D) = "white" {}
-        [MainColor][HDR]_Color("_Color", Color) = (1,1,1,1)
-        [HDR]_EmittierColor("_EmittierColor", Color) = (1,1,1,1)
-
         [Header(Blending)]
         [Enum(UnityEngine.Rendering.BlendMode)]_DecalSrcBlend("_DecalSrcBlend", Int) = 5 // 5 = SrcAlpha
         [Enum(UnityEngine.Rendering.BlendMode)]_DecalDstBlend("_DecalDstBlend", Int) = 10 // 10 = OneMinusSrcAlpha
-
-        [Header(Alpha remap(extra alpha control))]
-        _AlphaRemap("_AlphaRemap", vector) = (1,0,0,0)
-        [Toggle(_UseMaskMap)] _UseMaskMap("_UseMaskMap", Float) = 0
 
         [Header(Stencil Masking)]
         _StencilRef("_StencilRef", Float) = 0
         [Enum(UnityEngine.Rendering.CompareFunction)]_StencilComp("_StencilComp", Float) = 0 //0 = disable
         [Enum(UnityEngine.Rendering.CullMode)]_Cull("_Cull", Float) = 1 //1 = Front
-        //[Enum(UnityEngine.Rendering.CompareFunction)]_ZTest("_ZTest", Float) = 4 //4 = LEqual
 
-        //[Toggle(_UseFog)] _UseFog("Use Unity Fog", Float) = 1
-
+        [Header(_Colour)]
+        _ColourScale("色彩系数", Range(0,1)) = 1
+        [HDR]_ColourColor("色彩颜色", Color) = (1,1,1,1)
+        _ColourTex("_ColourTex(视角颜色)", 2D) = "white" {}
+        _ColourMaskTex("_ColourMaskTex(色彩遮罩)", 2D) = "white" {}
     }
 
     SubShader
     {
-        // 为了避免渲染顺序问题，队列必须 >= 2501，这样才能进入透明队列、 
+        // 为了避免渲染顺序问题，队列必须 >= 2501，这样才能进入透明队列、
         // 在透明队列中，Unity 将始终从后向前绘制
-         // https://github.com/ColinLeung-NiloCat/UnityURPUnlitScreenSpaceDecalShader/issues/6#issuecomment-615940985
-
-         // https://docs.unity3d.com/Manual/SL-SubShaderTags.html
-         // 2500 以下的队列（“几何图形+500”）被视为 “不透明 ”队列，会优化对象的绘制顺序以获得最佳性能。
-         // 更高的渲染队列被视为 “透明对象”，并按距离对对象进行排序、 
-         // 从最远的对象开始渲染，以最近的对象结束。
-         // 在所有不透明物体和透明物体之间绘制天空盒。
-         // 队列“=”透明-499 “表示 ”队列“=”2501“，几乎等同于 ”在透明对象之前绘制"。
-
-         //“DisableBatching ”表示禁用 “动态批处理”，而不是 “srp 批处理”。
-
         Tags { "RenderType" = "Overlay" "Queue" = "Transparent-499" "DisableBatching" = "True" }
 
         Pass
@@ -72,37 +64,34 @@ Shader "Decal/SimpleDecal"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            #pragma shader_feature_local _UseMaskMap
-
             struct appdata
             {
                 float3 positionOS : POSITION;
-                float4 color : COLOR;
             };
 
             struct v2f
             {
                 float4 positionCS : SV_POSITION;
                 float4 screenPos : TEXCOORD0;
-                float4 viewRayOS : TEXCOORD1; // xyz: viewRayOS, w: extra copy of positionVS.z 
+                float4 viewRayOS : TEXCOORD1; // xyz: viewRayOS, w: extra copy of positionVS.z
                 float4 cameraPosOSAndFogFactor : TEXCOORD2;
-                float4 color : COLOR;
             };
 
-            sampler2D _MainTex;
             sampler2D _CameraDepthTexture;
+            sampler2D _ColourTex;
+            sampler2D _ColourMaskTex;
 
-            CBUFFER_START(UnityPerMaterial)               
-                float4 _MainTex_ST;
-                half4 _Color;
-                half4 _EmittierColor;
-                half4 _AlphaRemap;
+            CBUFFER_START(UnityPerMaterial)
+                // colour
+                float _ColourScale;
+                half4 _ColourColor;
+                float4 _ColourTex_ST;
+                float4 _ColourMaskTex_ST;
             CBUFFER_END
 
             v2f vert(appdata input)
             {
                 v2f o;
-                o.color = input.color;
                 // 顶点位置输入（VertexPositionInputs）包含多个空间（世界、视图、同质剪辑空间、ndc）中的位置。
                 // Unity 编译器会删除所有未使用的引用（例如不使用视图空间）。
                 // 因此，使用该结构可以在不增加额外成本的情况下提高灵活性。
@@ -171,25 +160,45 @@ Shader "Decal/SimpleDecal"
                 decalSpaceScenePos = i.cameraPosOSAndFogFactor.xyz + i.viewRayOS.xyz * sceneDepthVS;
 
 
-                // convert unity cube's [-0.5,0.5] vertex pos range to [0,1] uv. Only works if you use a unity cube in mesh filter!
-                float2 decalSpaceUV = decalSpaceScenePos.xy + 0.5;
-
-
                 //丢弃“超出立方体体积”的像素
                 float shouldClip = 0;
                 //如果ZWrite处于关闭状态，则clip（）在移动设备上足够快，因为它不会写入DepthBuffer，因此GPU管道不会停滞（由ARM工作人员确认）。
                 clip(0.5 - abs(decalSpaceScenePos) - shouldClip);
 
-                // sample the decal texture
-                float2 uv = decalSpaceUV.xy * _MainTex_ST.xy + _MainTex_ST.zw;//Texture tiling & offset
+                // convert unity cube's [-0.5,0.5] vertex pos range to [0,1] uv. Only works if you use a unity cube in mesh filter!
+                float2 decalSpaceUV = decalSpaceScenePos.xy + 0.5;
 
-                half4 col = tex2D(_MainTex, uv);
-#if _UseMaskMap
-                     col=col.r*_AlphaRemap.x+col.g*_AlphaRemap.y+col.b*_AlphaRemap.z;
-#endif
-                col *= _Color*i.color*_EmittierColor;// tint color
+                //=====================================================================
+                // 色彩效果（移植自 ToonLit_Colour，全 shader 唯一颜色来源）
+                //=====================================================================
 
-                col.a = saturate(col.a);
+                // 1. 遮罩：用贴花 UV 采样色彩遮罩并乘上色彩颜色（同 ToonLit GetFinalColourColor，
+                //    遮罩白=受色彩影响，黑=不受影响/透明）
+                float2 maskUV = decalSpaceUV * _ColourMaskTex_ST.xy + _ColourMaskTex_ST.zw;
+                half3 colourMask = tex2D(_ColourMaskTex, maskUV).rgb * _ColourColor.rgb;
+
+                // 2. 视角颜色：重建投影点的世界坐标，用"像素->相机"方向做 UV 采样
+                //    注意 DisableBatching=True，对象矩阵是单物体矩阵，重建结果正确
+                float3 positionWS = mul(GetObjectToWorldMatrix(), float4(decalSpaceScenePos, 1)).xyz;
+                float3 viewDirWS = normalize(_WorldSpaceCameraPos.xyz - positionWS);
+
+                // 三平面采样：三组分量各采一次，按视角分量绝对值加权混合。
+                // 幂次（4）越高，过渡越锐利、越接近"只取主导平面"；纹理大小仍用 _ColourTex 的 Tiling 调节
+                float3 blendWeights = pow(abs(viewDirWS), 4);
+                blendWeights /= (blendWeights.x + blendWeights.y + blendWeights.z);
+
+                float2 st = _ColourTex_ST.xy;
+                float2 off = _ColourTex_ST.zw;
+                half3 colourX = tex2D(_ColourTex, viewDirWS.zy * st + off).rgb; // 侧视（x 主导）
+                half3 colourY = tex2D(_ColourTex, viewDirWS.xz * st + off).rgb; // 俯视（y 主导）
+                half3 colourZ = tex2D(_ColourTex, viewDirWS.xy * st + off).rgb; // 正视（z 主导）
+                half3 viewColour = colourX * blendWeights.x + colourY * blendWeights.y + colourZ * blendWeights.z;
+
+                half4 col;
+                col.rgb = viewColour * colourMask * _ColourScale;
+
+                // 透明度由遮罩亮度决定（遮罩黑=完全透明不写背景），_ColourColor.a 作整体透明度控制
+                col.a = saturate(max(colourMask.r, max(colourMask.g, colourMask.b)) * _ColourColor.a);
 
                 //unity的雾气效果
                 col.rgb = MixFog(col.rgb, i.cameraPosOSAndFogFactor.a);

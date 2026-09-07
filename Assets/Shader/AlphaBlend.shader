@@ -4,6 +4,8 @@ Shader "Custom/AlphaBlend"
     {
         // 主纹理
         _MainTex ("Main Texture", 2D) = "white" {}
+        // 主纹理UV移动速度
+        _MainUVSpeed ("Main UV Speed", Vector) = (0, 0, 0, 0)
         // HDR颜色叠加
         [HDR] _Color ("Color", Color) = (1,1,1,1)
 
@@ -100,6 +102,7 @@ Shader "Custom/AlphaBlend"
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
             float4 _MainTex_ST;
+            float2 _MainUVSpeed;
 
             float4 _Color;
      
@@ -140,8 +143,9 @@ Shader "Custom/AlphaBlend"
             // 片元着色器
             half4 frag(Varyings IN) : SV_Target
             {
-                // 1. 采样主纹理
-                half4 mainTexColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv);
+                // 1. 采样主纹理（带UV滚动）
+                float2 mainUV = IN.uv + _MainUVSpeed * IN.time;
+                half4 mainTexColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, mainUV);
 
                 // 2. 计算Alpha1的滚动UV并采样
                 float2 alpha1UV = IN.uv2 + _Alpha1UVSpeed * IN.time;

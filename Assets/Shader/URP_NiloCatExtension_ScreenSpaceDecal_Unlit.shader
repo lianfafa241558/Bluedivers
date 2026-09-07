@@ -1,7 +1,7 @@
 // see README here: 
 // github.com/ColinLeung-NiloCat/UnityURPUnlitScreenSpaceDecalShader
 
-Shader "Screen Space Decal"
+Shader "Decal/Screen Space Decal"
 {
     Properties
     {

@@ -79,12 +79,24 @@ half3 ShadeSingleLight(ToonSurfaceData surfaceData, ToonLightingData lightingDat
 half3 ShadeColour(ToonSurfaceData surfaceData, ToonLightingData lightingData)
 {
     half3 result = 0;
-    
+
     if (_UseColour)
     {
+        // 三平面采样视角颜色：单一平面投影（如原来的 .xy）会在视线与被丢弃轴对齐时
+        // 退化成条纹（如俯视/正视角色时）。三组分量各采一次，按视角分量绝对值加权混合，
+        // 退化那组的权重趋近 0，条纹被隐藏，任意视角都稳定。
+        // 幂次（4）越高过渡越锐利；纹理大小用 _ColourTex 的 Tiling 调节
+        float3 viewDirWS = lightingData.viewDirectionWS;
+        float3 blendWeights = pow(abs(viewDirWS), 4);
+        blendWeights /= (blendWeights.x + blendWeights.y + blendWeights.z);
 
-        float2 uv = lightingData.viewDirectionWS.xy * (_ColourTex_ST.xy + _ColourTex_ST.zw);
-        float3 texColor = tex2D(_ColourTex, uv).rgb;
+        float2 st = _ColourTex_ST.xy;
+        float2 off = _ColourTex_ST.zw;
+        float3 texColorX = tex2D(_ColourTex, viewDirWS.zy * st + off).rgb; // 侧视（x 主导）
+        float3 texColorY = tex2D(_ColourTex, viewDirWS.xz * st + off).rgb; // 俯视（y 主导）
+        float3 texColorZ = tex2D(_ColourTex, viewDirWS.xy * st + off).rgb; // 正视（z 主导）
+        float3 texColor = texColorX * blendWeights.x + texColorY * blendWeights.y + texColorZ * blendWeights.z;
+
         result = texColor * surfaceData.colourMask;
     }
     return result;
