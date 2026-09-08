@@ -28,8 +28,10 @@ Shader "Custom/AlphaBlend"
         _Alpha2UVSpeed ("Alpha2 Speed", Vector) = (0.1, 0.1, 0, 0)
 
         [Space(15)] 
+        [Enum(Off, 0, On, 1)]_ZWriteMode("ZWriteMode", float) = 0
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("SrcBlend", Float) = 5
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("DstBlend", Float) = 10
+
 
         [Space(15)] 
         [Toggle(_UnityFogEnable)] _UnityFogEnable("_UnityFogEnable", Float) = 1
@@ -56,7 +58,7 @@ Shader "Custom/AlphaBlend"
         Blend[_SrcBlend][_DstBlend]
         //Blend SrcAlpha One
 
-		ZWrite Off
+		ZWrite [_ZWriteMode]
 		ZTest LEqual
 		Offset 0 , 0
 		ColorMask RGBA
@@ -84,6 +86,7 @@ Shader "Custom/AlphaBlend"
             {
                 float4 positionOS   : POSITION;
                 float2 uv           : TEXCOORD0;
+                float4 color : COLOR;
             };
 
             // 顶点输出/片元输入结构体
@@ -96,6 +99,7 @@ Shader "Custom/AlphaBlend"
                 // 传递时间（用于UV移动）
                 float time          : TEXCOORD3;
                 float fogFactor : TEXCOORD4;
+                float4 color : TEXCOORD5;
             };
 
             // 全局属性声明
@@ -128,7 +132,7 @@ Shader "Custom/AlphaBlend"
                 Varyings OUT;
                 // 转换顶点到裁剪空间
                 VertexPositionInputs posInputs = GetVertexPositionInputs(IN.positionOS.xyz);
-
+                OUT.color = IN.color;
                 OUT.positionHCS = posInputs.positionCS;
                 // 传递UV（支持缩放和平移）
                 OUT.uv = TRANSFORM_TEX(IN.uv, _MainTex);
@@ -145,7 +149,7 @@ Shader "Custom/AlphaBlend"
             {
                 // 1. 采样主纹理（带UV滚动）
                 float2 mainUV = IN.uv + _MainUVSpeed * IN.time;
-                half4 mainTexColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, mainUV);
+                half4 mainTexColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, mainUV)*IN.color;
 
                 // 2. 计算Alpha1的滚动UV并采样
                 float2 alpha1UV = IN.uv2 + _Alpha1UVSpeed * IN.time;

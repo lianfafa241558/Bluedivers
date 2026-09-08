@@ -7,41 +7,26 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Ashtrailtiling
-  m_Shader: {fileID: 4800000, guid: f257f2ec0c2167c48859a067ac00b592, type: 3}
+  m_Name: BlackHole
+  m_Shader: {fileID: 4800000, guid: 66c4b52bd1e641148b0a113c6f0c8acb, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _UnityFogEnable
-  m_InvalidKeywords:
-  - _ALPHAPREMULTIPLY_ON
-  - _EMISSION
-  - _MOVEX_ON
   - _MY_FOG_ENABLE
-  - _SURFACE_TYPE_TRANSPARENT
-  - _UseMoveST
-  m_LightmapFlags: 1
+  - _UseFresnel
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 3000
   stringTagMap: {}
-  disabledShaderPasses:
-  - DepthOnly
-  - SHADOWCASTER
+  disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _AlphaTex1:
-        m_Texture: {fileID: 2800000, guid: e3cd7b7c005dbd447815b46ec5f8b63f, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _AlphaTex2:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: cf5cc797d676ad54bb8cb2d9d96fcac9, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -61,12 +46,16 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 2800000, guid: f2604c5dbc010984eae5f954c40d5693, type: 3}
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FlowLightTex:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: e85fa323896f1e0429344a8c8f477c8f, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Texture: {fileID: 2800000, guid: 3cd68c7c5eeb3c04a8c2c95fe676767f, type: 3}
+        m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
@@ -98,78 +87,64 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Alpha1Add: 0
-    - _Alpha1Mult: 1
-    - _Alpha2Add: 0
-    - _Alpha2Mult: 1
     - _AlphaClip: 0
-    - _AlphaToMask: 0
     - _Blend: 0
-    - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _ColorMask: 15
     - _Cull: 2
-    - _CullMode: 2
+    - _CullMode: 0
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DstBlend: 7
-    - _DstBlendAlpha: 10
+    - _DstBlend: 10
     - _EnvironmentReflections: 1
-    - _FresnelDecay: 1
-    - _FresnelScale: 0.5
+    - _ExtraInterval: 1
+    - _ExtraScale: 1
+    - _ExtraSpeed: 1
+    - _ExtraWidth: 1
+    - _FlowDir: 0
+    - _FlowLightSpeed: 1
+    - _FlowTrans: 0
+    - _FresnelDecay: 0.84
+    - _FresnelScale: 1
     - _FresnelWave: 0
     - _FresnelWaveTime: 5
-    - _GlossMapScale: 1
-    - _Glossiness: 0.8
-    - _GlossyReflections: 1
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 0
     - _MY_FOG_ENABLE: 1
     - _Metallic: 0
-    - _Mode: 3
     - _MoveOtherSpeed: 0
-    - _MoveSpeed: -5
-    - _MoveX: 1
+    - _MoveSpeed: 0
+    - _MoveX: 0
     - _OcclusionStrength: 1
-    - _Parallax: 0.02
+    - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RenderRef: 0
-    - _Smoothness: 0.8
+    - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _Stencil: 0
-    - _StencilComp: 8
-    - _StencilOp: 0
-    - _StencilReadMask: 255
-    - _StencilWriteMask: 255
-    - _Surface: 1
+    - _SrcBlend: 5
+    - _Surface: 0
     - _TimeScale: 1
     - _Transpose: 0
-    - _UVSec: 0
-    - _UnityFogEnable: 1
-    - _UseFresnel: 0
+    - _UseFresnel: 1
     - _UseLight: 0
-    - _UseMoveST: 1
-    - _UseUIAlphaClip: 0
+    - _UseMoveST: 0
     - _WorkflowMode: 1
     - _ZTestMode: 4
-    - _ZWrite: 0
+    - _ZWrite: 1
     - _ZWriteMode: 0
     m_Colors:
-    - _Alpha1UVSpeed: {r: -0.3, g: 0, b: 0, a: 0}
-    - _Alpha2UVSpeed: {r: 0, g: 0, b: 0, a: 0}
-    - _BaseColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 0}
-    - _Color: {r: 8, g: 8, b: 8, a: 0}
-    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0, g: 0, b: 0, a: 0.2509804}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HitColor: {r: 0, g: 0, b: 0, a: 0}
-    - _MainUVSpeed: {r: -0.3, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
---- !u!114 &4100750763596933347
+--- !u!114 &5829929028766659782
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -181,4 +156,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 7
+  version: 5

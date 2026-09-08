@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: TheMarker_ncl
+  m_Name: Rift_ncl
   m_Shader: {fileID: 4800000, guid: 75076375ddfb2884cadb948f8035eedb, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -33,20 +33,20 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: d194854d61472d744b8684ceab84264a, type: 3}
-        m_Scale: {x: 10, y: 10}
+        m_Texture: {fileID: 2800000, guid: 936edc63ad65dc54d86e94bda0f18dd4, type: 3}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BlendingMap:
         m_Texture: {fileID: 2800000, guid: 3cd68c7c5eeb3c04a8c2c95fe676767f, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 5, y: 2}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ColourMaskTex:
-        m_Texture: {fileID: 2800000, guid: a87e2b041126a2a41af4ae7988c87688, type: 3}
-        m_Scale: {x: 0.1, y: 0.1}
+        m_Texture: {fileID: 2800000, guid: 3b66f4cea2f16e240950409407d81053, type: 3}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ColourTex:
         m_Texture: {fileID: 2800000, guid: e85fa323896f1e0429344a8c8f477c8f, type: 3}
@@ -65,8 +65,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 2800000, guid: ca300ccf1b118894c898e6ef0faba93a, type: 3}
-        m_Scale: {x: 0.1, y: 0.1}
+        m_Texture: {fileID: 2800000, guid: fdcd5beee6b243845a78163243041c74, type: 3}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: fa55f7286eaa2e34fbbc617fcf253dc7, type: 3}
@@ -118,14 +118,14 @@ Material:
     - _AlphaClip: 0
     - _BaseScale: 1
     - _Blend: 0
-    - _BlendingScale: 0.5
+    - _BlendingScale: 0.45
     - _BumpScale: 1
     - _CelShadeMidPoint: -0.5
     - _CelShadeSoftness: 0.1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _ColourOutlineWidth: 0.02
-    - _ColourScale: 0.3
+    - _ColourScale: 0
     - _Column: 8
     - _Cull: 2
     - _Cutoff: 0.5
@@ -154,7 +154,7 @@ Material:
     - _OcclusionRemapEnd: 1
     - _OcclusionRemapStart: 0
     - _OcclusionStrength: 1
-    - _OutlineWidth: 20
+    - _OutlineWidth: 10
     - _OutlineZOffset: 0.0001
     - _OutlineZOffsetMaskRemapEnd: 1
     - _OutlineZOffsetMaskRemapStart: 0
@@ -190,17 +190,17 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1.0592737, g: 1.0592737, b: 1.0592737, a: 1}
+    - _BaseColor: {r: 23.968628, g: 23.968628, b: 23.968628, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColourColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _ColourColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _DissolveValue: {r: 0, g: 0, b: 0, a: 1}
     - _EdgeColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
     - _EmissionColor: {r: 5.992157, g: 5.992157, b: 11.984314, a: 1}
-    - _EmissionMapChannelMask: {r: 0.7, g: 0.5, b: 4, a: 0}
+    - _EmissionMapChannelMask: {r: 0, g: 4, b: 1, a: 0}
     - _HitColor: {r: 0, g: 0, b: 0, a: 1}
     - _IndirectLightMinColor: {r: 0.09999997, g: 0.09999997, b: 0.09999997, a: 1}
     - _OcclusionMapChannelMask: {r: 100, g: 0, b: 0, a: 0}
-    - _OutlineColor: {r: 0.95, g: 0.982353, b: 1, a: 1}
+    - _OutlineColor: {r: 0.95, g: 0.9852941, b: 1, a: 1}
     - _ShadowMapColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SpecularColor: {r: 0, g: 0, b: 0, a: 1}
