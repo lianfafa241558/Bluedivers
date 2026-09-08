@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67750599215035f4185d3a38668cd6b5, type: 3}
   m_Name: SnowRendererFeature
   m_EditorClassIdentifier: 
-  m_Active: 0
+  m_Active: 1
   snowEntries:
   - snowMaterial: {fileID: 2100000, guid: 4e52525330cbbb0439561e8d84c51769, type: 2}
     snowLayerMask:
@@ -42,7 +42,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 3398714486661896040}
   - {fileID: -4561154854406934667}
-  m_RendererFeatureMap: 68d77486d1a82a2f75af8671d385b3c0
+  - {fileID: 4219955689728072436}
+  m_RendererFeatureMap: 68d77486d1a82a2f75af8671d385b3c0f45a216e574b903a
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -110,3 +111,20 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 4294967295
     renderPassEvent: 300
+--- !u!114 &4219955689728072436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a8a626e4a363604d8b1a959cc4ab28f, type: 3}
+  m_Name: FullScreenFogRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  _injectionPoint: 550
+  _renderCamera: 3
+  _shader: {fileID: -6465566751694194690, guid: a1b07ed697d67f145899e797afa7e6d3,
+    type: 3}

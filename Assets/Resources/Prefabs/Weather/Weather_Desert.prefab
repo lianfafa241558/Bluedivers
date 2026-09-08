@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3360290423351006557}
+  - component: {fileID: -6017443565030756327}
   m_Layer: 0
   m_Name: Weather_Desert
   m_TagString: Untagged
@@ -33,6 +34,22 @@ Transform:
   - {fileID: 492127268683410285}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-6017443565030756327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1833352380169736555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a0c40bb8ec4f8c4398a699ac927bb7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _heightOffset: 0
+  _useStormCycle: 0
+  _calmDuration: 45
+  _stormDuration: 20
 --- !u!1 &8262196642829804570
 GameObject:
   m_ObjectHideFlags: 0

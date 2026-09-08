@@ -31,6 +31,14 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _CloudDayTex:
+        m_Texture: {fileID: 2800000, guid: e2c576b6d07638b468b5ba303a3a07cb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CloudNightTex:
+        m_Texture: {fileID: 2800000, guid: 13ec4f589b2340646969832fc2e68ec6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -94,22 +102,29 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
+    - _CloudCoverage: 1
     - _CloudDensity: 2
     - _CloudDirX: 1
     - _CloudDirZ: 1
+    - _CloudExposure: 1
     - _CloudHeight: 10
+    - _CloudLerp: 1
     - _CloudNoiseSpeed: 100
+    - _CloudScale: 0.12
     - _CloudSize: 2.27
     - _CloudSpeed: 0.01
+    - _CoverageBase: 0.5
     - _Cull: 2
     - _CullMode: 2
     - _Cutoff: 0.01
+    - _Density: 1.4
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 1
     - _DstBlendAlpha: 0
     - _EdgeLitPower: 1
     - _EdgeLitStrength: 1
+    - _EdgeSoftness: 0.2
     - _EnvironmentReflections: 1
     - _FresnelDecay: 1
     - _FresnelScale: 0.5
@@ -137,6 +152,7 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RenderRef: 0
+    - _ShadowStrength: 0.45
     - _ShowDebug: 0
     - _SkyboxInfluence: 0.7
     - _Smoothness: 0.5
@@ -154,6 +170,7 @@ Material:
     - _UseFresnel: 0
     - _UseLight: 0
     - _UseMoveST: 0
+    - _WindSpeed: 0.02
     - _WorkflowMode: 1
     - _ZTestMode: 4
     - _ZWrite: 1
@@ -163,10 +180,13 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BottomColor: {r: 0.8, g: 0.8, b: 0.9, a: 1}
+    - _CloudTintColor: {r: 0.75, g: 0.75, b: 0.75, a: 0.5019608}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DayCloudColor: {r: 1, g: 0.97999996, b: 0.95, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HitColor: {r: 0, g: 0, b: 0, a: 0}
     - _MainColor: {r: 1, g: 1, b: 1, a: 1}
+    - _NightCloudColor: {r: 0.09999997, g: 0.11999995, b: 0.17999998, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _TopColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

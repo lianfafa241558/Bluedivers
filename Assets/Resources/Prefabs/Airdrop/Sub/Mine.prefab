@@ -169,6 +169,7 @@ MonoBehaviour:
   HpHeight: 1
   shape: 0
   rangeLength: 0.3
+  halfHeight: 0
 --- !u!135 &7100214043958108873
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -188,7 +189,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.4
+  m_Radius: 0.3
   m_Center: {x: 0, y: 0, z: 0.05}
 --- !u!114 &-8166166637206497874
 MonoBehaviour:
@@ -204,7 +205,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Root: {fileID: 3683346346603110213}
   DeployDelay: 2
-  TriggerRange: 1
+  TriggerRange: 0.5
+  VerticalRange: 0
   intelligent: 0
   DamageData:
     DamageExplosion: 20

@@ -184,29 +184,27 @@ public class SnowRendererFeature : ScriptableRendererFeature
             CommandBufferPool.Release(cmd);
         }
 
-        // Volume 控制状态机：
-        // - Volume 存在：写入全局积雪量倍率，返回是否激活（积雪量>0）
-        // - Volume 不存在且之前在控制：复位全局积雪量为 0 并还原材质参数（雪关闭），返回 false
-        // - Volume 从未存在：维持原行为（材质自身参数生效），返回 true
+        // Volume 控制状态机（严格模式：只有 Volume 存在且激活时雪才生效）：
+        // - Volume 存在且激活：写入全局积雪量倍率，返回 true
+        // - Volume 不存在或未激活：复位全局积雪量为 0 并还原材质参数（雪关闭），返回 false
         private bool UpdateVolumeControl(SnowVolume snowVolume, out SnowVolume activeVolume)
         {
-            if (snowVolume != null)
+            if (snowVolume != null && snowVolume.IsActive())
             {
                 _volumeControlling = true;
                 Shader.SetGlobalFloat(SnowController.GlobalSnowAmountId, snowVolume.snowAmount.value);
                 activeVolume = snowVolume;
-                return snowVolume.IsActive();
+                return true;
             }
 
             activeVolume = null;
             if (_volumeControlling)
             {
                 _volumeControlling = false;
-                Shader.SetGlobalFloat(SnowController.GlobalSnowAmountId, 0f);
                 RestoreMaterialBackups();
-                return false;
             }
-            return true;
+            Shader.SetGlobalFloat(SnowController.GlobalSnowAmountId, 0f);
+            return false;
         }
 
         // 将 Volume 中勾选覆盖(overrideState)的参数写入材质，未勾选的保留材质自身参数

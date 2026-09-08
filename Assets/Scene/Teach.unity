@@ -3582,11 +3582,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Day-Night-Manager
       objectReference: {fileID: 0}
-    - target: {fileID: 6507723845665482283, guid: 482e71a15885df94a94c0aaabd4e3173,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6507723845665482285, guid: 482e71a15885df94a94c0aaabd4e3173,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -17502,14 +17497,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0ebce3f02dedab48bef668fce6f37f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  horizontalStackSize: 2
-  cloudHeight: 5
+  horizontalStackSize: 10
+  cloudHeight: 15
   quadMesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
   cloudMaterial: {fileID: 2100000, guid: 0de89de233a493d4d84f03ffb46cc111, type: 2}
   autoSampleSkyColor: 1
   useGpuInstancing: 0
   castShadows: 0
   layer: 0
+  _useWeatherLink: 1
 --- !u!23 &927573317
 MeshRenderer:
   m_ObjectHideFlags: 0

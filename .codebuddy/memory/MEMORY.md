@@ -55,7 +55,7 @@
 ## 其他功能记录
 - `Furniture_NPCChat.cs`：NPC 语音家具交互，SoundGroup_SO + AudioSvc.PlaySound，协程 WaitForVoiceEnd 保证播完再播
 - `CampTemplate.patrolTemplate`：List<SKVP<string,int>>（队名+权重），Drawer 下拉框+权重 IntField
-- **天气系统**：`01Manager/Battle/WeatherSystem.cs`（基类，晴天直接用）+ 子类 `WeatherRain/WeatherDesert/WeatherSnow`（路径配置在各子类 `EffectPath`）。`WeatherSystem.Create(type, parent)` 工厂按天气建子类，`BattleManager.RandomWeather()` 用 BattleRandom 开局抽取（`BattleManager.Weather` 供查询）。基类 Update 周期风暴：平静 45s→风暴 20s 循环（沙漠=沙尘暴开关物体；下雪=暴雪物体+SnowController.SetGlobalAmount 1↔0.3）；雨常显无周期；雪时 SetEnabled(true) 其余 false
+- **天气系统**：`01Manager/Battle/WeatherSystem.cs`（纯控制器，BattleManager 开局 BattleRandom 抽取后 `Create` 动态创建，`BattleManager.Weather` 供查询）+ `WeatherEffect` 抽象组件基类 + `WeatherEffectRain/Desert/Snow` **挂预制体**（配置直接在预制体 Inspector，含 _useStormCycle/_calmDuration/_stormDuration/_heightOffset）。控制器 `Resources.LoadAll<WeatherEffect>("Prefabs/Weather")` 按 `Type` 属性匹配实例化，Update 周期风暴（StartStorm/EndStorm: SetActive+回调）、LateUpdate 跟随玩家；雪时 `SnowController.SetEnabled(true)`，暴雪回调调 SetGlobalAmount
 - WaveManager 加 `KaiserWave`（参考 ZergWave）：每 360f/creats.Count 秒在 center 创建 PhoenixEagle，从栈取 6 单位挂子对象（相对坐标 ±2 网格）；HalfRange>=1 的大型单位单置 (0,-5,0)；创建时禁用 EnemyControllerFX.Animator，鹰 waitTime=6s，onWait 后第 4 秒单位 Y=鹰Y-40 并启用 Animator
 - `Assets/Shader/UIImageChannelMix.shader`：UI/Image 专用（R*Image色，G*白，B忽略，A用贴图Alpha，响应 Stencil）
 - **积雪渲染（2026-09）**：`Assets/Scripts/Rendering/SnowRendererFeature.cs` — 静态类 `SnowController`（Shader.SetGlobalFloat 控制 `_SnowEnabled`/`_GlobalSnowAmount`）+ `SnowRendererFeature`（URP RendererFeature，AfterRenderingOpaques 用雪材质重画配置层）+ SnowOverlay.shader + SnowVolume（Volume 控制）

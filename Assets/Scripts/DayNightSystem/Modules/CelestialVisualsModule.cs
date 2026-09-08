@@ -17,7 +17,10 @@ namespace FPSGame.DayNightSystem
         [SerializeField] private MeshRenderer cloudsRenderer;
 
         [Header("淡出设置")]
-        [SerializeField] private float fadeDuration = 3f;
+        [InspectorName("淡出角度跨度")]
+        [Tooltip("天体淡入/淡出完成所需转过的角度（度），越小淡出越快")]
+        [Min(0.1f)]
+        [SerializeField] private float fadeAngleSpan = 15f;
         [MinMaxSlider(0,360)]
         [SerializeField] private Vector2 sunHiddenRange = new Vector2(206f, 334f);
         [MinMaxSlider(0, 360)]
@@ -36,6 +39,8 @@ namespace FPSGame.DayNightSystem
         private float _sunScale = 1f;
         private float _moonScale = 1f;
         private float _starsScale = 0f;
+        /// <summary>上一帧的角度，用于计算本帧转过的角度增量</summary>
+        private float _lastAngle;
 
         private Material _moonMat;
         private Material _starsMat;
@@ -46,6 +51,7 @@ namespace FPSGame.DayNightSystem
         {
             if (sunLight) _sunInitialIntensity = sunLight.intensity;
             if (moonLight) _moonInitialIntensity = moonLight.intensity;
+            _lastAngle = state.CurrentAngle;
 
             if (moonRenderer)
             {
@@ -64,7 +70,10 @@ namespace FPSGame.DayNightSystem
         public void Tick(DayNightState state, float deltaTime)
         {
             float angle = state.CurrentAngle;
-            float delta = deltaTime / fadeDuration;
+            // 本帧转过的角度增量（DeltaAngle 自动处理 360/0 环绕），除以淡出角度跨度得到本帧淡出步长
+            float deltaAngle = Mathf.Abs(Mathf.DeltaAngle(_lastAngle, angle));
+            _lastAngle = angle;
+            float delta = deltaAngle / fadeAngleSpan;
 
             float sunTarget = IsAngleInRange(angle, sunHiddenRange) ? 0f : 1f;
             float moonTarget = IsAngleInRange(angle, moonHiddenRange) ? 0f : 1f;
@@ -74,8 +83,11 @@ namespace FPSGame.DayNightSystem
             _moonScale = Mathf.MoveTowards(_moonScale, moonTarget, delta);
             _starsScale = Mathf.MoveTowards(_starsScale, starsTarget, delta);
 
-            if (sunLight) sunLight.intensity = Mathf.Lerp(0, _sunInitialIntensity, _sunScale);
-            if (moonLight) moonLight.intensity = Mathf.Lerp(0, _moonInitialIntensity, _moonScale);
+            // 太阳/月亮强度叠乘天气倍率（暴雪/暴雨时天体光变暗，随 WeatherAtmosphereController 平滑过渡）
+            float weatherDim = WeatherAtmosphereController.SunIntensityMultiplier;
+            WeatherAtmosphereController.Smooth(deltaTime);
+            if (sunLight) sunLight.intensity = Mathf.Lerp(0, _sunInitialIntensity, _sunScale) * weatherDim;
+            if (moonLight) moonLight.intensity = Mathf.Lerp(0, _moonInitialIntensity, _moonScale) * weatherDim;
 
             if (_starsMat)
             {

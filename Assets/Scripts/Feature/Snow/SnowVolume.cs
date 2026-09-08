@@ -25,10 +25,10 @@ public class SnowVolume : VolumeComponent, IPostProcessComponent
     [InspectorName("噪声强度")]
     public FloatParameter noiseStrength = new FloatParameter(0.3f, false);
 
-    /// <summary>积雪量为 0 时视为未激活，Pass 直接跳过</summary>
+    /// <summary>Volume 组件未勾选启用或积雪量为 0 时视为未激活，Pass 直接跳过</summary>
     public bool IsActive()
     {
-        return snowAmount.value > 0f;
+        return active && snowAmount.value > 0f;
     }
 
     public bool IsTileCompatible()

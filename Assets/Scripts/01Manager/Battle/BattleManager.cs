@@ -42,7 +42,7 @@ public class BattleManager : Singleton<BattleManager>
     private void RandomWeather()
     {
         //Weather = (WeatherType)BattleRandom.Next(0, 4);
-        Weather = WeatherType.Snow;
+        Weather = WeatherType.Rain;
         WeatherCont = WeatherSystem.Create(Weather, transform);
         Debug.Log($"[BattleManager] 本局天气: {Weather}");
     }
