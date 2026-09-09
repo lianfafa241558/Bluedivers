@@ -57,7 +57,9 @@ namespace Meryuhi.Rendering
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
             {
                 ref var cameraData = ref renderingData.cameraData;
-                if (_passData.Material == null || (cameraData.cameraType & _passData.RenderCamera) == 0)
+                // 全局开关（FullScreenFogController）：关闭时跳过整个雾 Pass，零绘制开销
+                if (_passData.Material == null || !FullScreenFogController.Enabled
+                    || (cameraData.cameraType & _passData.RenderCamera) == 0)
                 {
                     return;
                 }

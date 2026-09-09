@@ -21,7 +21,8 @@ public class BridgeRoleManager : RoleManagerBase
     protected override void Start()
     {
         base.Start();
-        
+        SnowController.SetEnabled(false);
+
         var modleList = resManager.LoadObjects<GameObject>("Prefabs/StudentModle");
         //Debug.LogWarning("获取到的学生模型长度"+modleList.Count);
         selectPointGo = TransformUtils.SceenFind("ShowStudentPoint");

@@ -37,6 +37,9 @@ Shader "Decal/SimpleDecal_Colour"
         _ColourTex("_ColourTex(视角颜色)", 2D) = "white" {}
         //[NoScaleOffset]
         _ColourMaskTex("_ColourMaskTex(色彩遮罩)", 2D) = "white" {}
+
+         [Space(15)] 
+        [Toggle(_UnityFogEnable)] _UnityFogEnable("_UnityFogEnable", Float) = 1
     }
 
     SubShader
@@ -71,7 +74,7 @@ Shader "Decal/SimpleDecal_Colour"
             #pragma target 3.0
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-
+            #pragma shader_feature_local _UnityFogEnable
             struct appdata
             {
                 float3 positionOS : POSITION;
@@ -106,6 +109,7 @@ Shader "Decal/SimpleDecal_Colour"
 
             v2f vert(appdata input)
             {
+
                 v2f o;
                 // 顶点位置输入（VertexPositionInputs）包含多个空间（世界、视图、同质剪辑空间、ndc）中的位置。
                 // Unity 编译器会删除所有未使用的引用（例如不使用视图空间）。
@@ -113,8 +117,6 @@ Shader "Decal/SimpleDecal_Colour"
                 VertexPositionInputs vertexPositionInput = GetVertexPositionInputs(input.positionOS);
                 o.positionCS = vertexPositionInput.positionCS;
 
-                // 设置雾气参数
-                o.cameraPosOSAndFogFactor.a = ComputeFogFactor(o.positionCS.z);
 
                 // 准备深度纹理的屏幕空间 UV
                 o.screenPos = ComputeScreenPos(o.positionCS);
@@ -135,7 +137,10 @@ Shader "Decal/SimpleDecal_Colour"
 
                 //首先在顶点着色器中将所有内容转换为对象空间（贴花空间），这样我们就可以跳过片段着色器中的所有matrix mul（）
                 o.viewRayOS.xyz = mul((float3x3)ViewToObjectMatrix, viewRay);
+                //相机位置变换到贴花空间，作为 frag 中深度重建射线的起点
                 o.cameraPosOSAndFogFactor.xyz = mul(ViewToObjectMatrix, float4(0,0,0,1)).xyz; //硬代码0或1可以实现许多编译器优化
+                // 设置雾气参数
+                o.cameraPosOSAndFogFactor.a = ComputeFogFactor(o.positionCS.z);
 
                 return o;
             }
@@ -154,6 +159,7 @@ Shader "Decal/SimpleDecal_Colour"
 
             half4 frag(v2f i) : SV_Target
             {
+                
                 // [important note]
                 //========================================================================
                 //现在执行我们之前在顶点着色器中跳过的“viewRay z分割”。
@@ -194,7 +200,7 @@ Shader "Decal/SimpleDecal_Colour"
                 half4 mainMask= tex2D(_MainMaskTex, decalSpaceUV * _MainMaskTex_ST.xy + _MainMaskTex_ST.zw);
 
                 baseCol.a*=mainMask.r*mainMask.a;
-                
+
                 half colourMask = tex2D(_ColourMaskTex, decalSpaceUV * _ColourMaskTex_ST.xy + _ColourMaskTex_ST.zw).r;
 
                 // 2. 视角颜色：重建投影点的世界坐标，用"像素->相机"方向做 UV 采样
@@ -225,8 +231,11 @@ Shader "Decal/SimpleDecal_Colour"
                 col = baseCol+withColour;
 
 
+                #if _UnityFogEnable&& (defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2))
+                //col.a *= saturate(1-i.cameraPosOSAndFogFactor.a);
                 //unity的雾气效果
                 col.rgb = MixFog(col.rgb, i.cameraPosOSAndFogFactor.a);
+                #endif
 
 
 

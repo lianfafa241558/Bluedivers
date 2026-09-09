@@ -50,6 +50,7 @@
 
 ## 修复记录要点（详见各日 .md）
 - ModifyTerrain 地形修改后贴地；WaveManager tier 权重 TryGetValue 降级；ObjectPool Release 误调 _Pop、UnInit 崩溃；TerrainMainUtils 分辨率缓存；Health 死亡僵尸单位（m_IsDead）；BaseSelfMoveableController 陡坡卡死投影；DeployableMine 高空单位误引爆（HalfHeight 3D 判定）；PhoenixEagleController 旋转乱跳（过渡帧 lastPos.y）；PlayerWeaponsManager OnWeaponSwitched 忽略 isSec 破坏 IK；PathRequestManager 假超时重试风暴（pathPending 期间不超时重试，EnemyController.SetNavDestination isImportant 控日志）；AudioManaqerBase sourcePool 初始 SetActive(false)
+- **SimpleDecal_Colour 贴花被吞（2026-09-10）**：根因=主相机堆叠中 UI 相机勾选 Clear Depth，Packages/Fog 的 FullScreenFogRendererFeature 对堆叠内每台相机都执行，UI 相机清深度后全屏雾按错误深度合成吞掉贴花；关 Clear Depth 解决。通用教训：①全屏 RendererFeature 会作用于 Overlay 相机（注意特效叠多次，可过滤 renderType==Overlay）②"Scene 正常 Game 异常"优先查 Scene 视图级开关（Fog/Post）与相机堆叠 Clear Depth ③FullScreenFog pass 注入点 550 是非法枚举值（合法 200/300/500/1000）
 - DividerAttribute 数组不生效（2026-09-07）→ DecoratorDrawer 方案，见「编辑器特性约定」
 
 ## 其他功能记录

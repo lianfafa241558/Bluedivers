@@ -43,6 +43,8 @@ public class MapData_SO : ScriptableObject
     [Header("地形")]
     [InspectorName("纹理配置")]
     public TerrainItemInfo[] TerrainItem;
+    public Gradient fogColor;
+
 
     [System.Serializable]
     [Singleline]

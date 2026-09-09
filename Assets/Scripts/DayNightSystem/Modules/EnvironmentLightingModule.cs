@@ -30,8 +30,14 @@ namespace FPSGame.DayNightSystem
         [Header("光照设置")]
         [SerializeField] private Light sunLight;
         [SerializeField] private Gradient sunColor;
-        [InspectorName("内置雾颜色，同时也会作为全屏雾的颜色")]
+        [InspectorName("内置雾颜色（未注入地图雾色时的兜底）")]
         [SerializeField] private Gradient fogColor;
+
+        /// <summary>
+        /// 当前生效的雾色渐变：优先用氛围桥上注入的地图雾色（MapData_SO），未注入时用模块兜底渐变
+        /// </summary>
+        private Gradient ActiveFogGradient =>
+            WeatherAtmosphereController.FogColorGradient != null ? WeatherAtmosphereController.FogColorGradient : fogColor;
 
         [SerializeField] private AnimationCurve fogFactor;
         private bool _isGradientMode;
@@ -143,7 +149,7 @@ namespace FPSGame.DayNightSystem
                 RenderSettings.ambientEquatorColor = equatorColor.Evaluate(timeFraction) * ambient;
                 RenderSettings.ambientGroundColor = groundColor.Evaluate(timeFraction) * ambient;
                 // 内置雾颜色随环境光一起压暗，避免环境暗了雾反而比场景亮
-                RenderSettings.fogColor = fogColor.Evaluate(timeFraction) * ambient;
+                RenderSettings.fogColor = ActiveFogGradient.Evaluate(timeFraction) * ambient;
                 // 内置雾密度同样受天气能见度联动：能见度低时加浓（参考 0.05 下限防除零）
                 RenderSettings.fogDensity = fogFactor.Evaluate(timeFraction) / Mathf.Max(WeatherAtmosphereController.VisibilityMultiplier, 0.05f);
             }
@@ -167,7 +173,7 @@ namespace FPSGame.DayNightSystem
             float visibility = WeatherAtmosphereController.VisibilityMultiplier;
 
             // 全屏雾颜色同样随环境光压暗：雾的照明来自环境，环境暗雾不能比场景亮
-            Color color = fogColor.Evaluate(timeFraction) * WeatherAtmosphereController.AmbientBrightnessMultiplier;
+            Color color = ActiveFogGradient.Evaluate(timeFraction) * WeatherAtmosphereController.AmbientBrightnessMultiplier;
             _fullscreenFog.color.value = color;
             _fullscreenFog.intensity.value = Mathf.Clamp01(fullscreenFogIntensity.Evaluate(timeFraction) + WeatherAtmosphereController.FogIntensityAdd);
             _fullscreenFog.density.value = Mathf.Clamp01(fullscreenFogDensity.Evaluate(timeFraction) / Mathf.Max(visibility, 0.05f));

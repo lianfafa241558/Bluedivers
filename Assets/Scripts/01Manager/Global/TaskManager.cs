@@ -250,6 +250,8 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         task.taskCfg = TaskCfgs[mapIndex, taskIndex];
         task.campData = Camps[task.taskCfg.enemyVarietyType];
         task.mapCfg = mapData;
+        // 地图雾色注入氛围桥：昼夜模块从桥上取雾色本色，避免昼夜系统跨层直引地图数据
+        WeatherAtmosphereController.FogColorGradient = mapData.fogColor;
         //Debug.LogError("选择的敌人类�? + mapData.enemyVarietyType+" 名称" + task.campData.name);
         /*
         //TODO:测试

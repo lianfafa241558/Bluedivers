@@ -13,16 +13,13 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
-  - _COLORADDSUBDIFF_ON
   - _EMISSION
   - _ProjectionAngleDiscardEnable
-  - _USECOLOUR_ON
   - _USEMAINALPHA_ON
-  - _UnityFogEnable
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2502
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -30,6 +27,18 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _AlphaTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _AlphaTex1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _AlphaTex2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -71,7 +80,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
-        m_Scale: {x: 4, y: 4}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskTex:
         m_Texture: {fileID: 0}
@@ -93,29 +102,61 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - PixelSnap: 0
+    - _Alpha1Add: 0
+    - _Alpha1Mult: 1
+    - _Alpha2Add: 0
+    - _Alpha2Mult: 1
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
     - _BlendOp: 0
+    - _BlurCount: 1
+    - _BlurRadius: 0.01
     - _BumpScale: 1
     - _CameraFadingEnabled: 0
     - _CameraFarFadeDistance: 2
     - _CameraNearFadeDistance: 1
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
+    - _ColorMask: 15
     - _ColorMode: 1
     - _ColourScale: 0
-    - _Cull: 1
+    - _Cull: 0
     - _Cutoff: 0.5
     - _DecalDstBlend: 10
     - _DecalSrcBlend: 5
+    - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DistortionBlend: 0.5
     - _DistortionEnabled: 0
     - _DistortionStrength: 1
     - _DistortionStrengthScaled: 0
     - _DstBlend: 0
+    - _DstBlendAlpha: 0
     - _EmissionEnabled: 1
     - _Emittier: 1
     - _EnableExternalAlpha: 0
+    - _EnvironmentReflections: 1
     - _ExtraInterval: 1
     - _ExtraScale: 1
     - _ExtraSpeed: 1
@@ -138,25 +179,38 @@ Material:
     - _Parallax: 0.02
     - _ProjectionAngleDiscardEnable: 1
     - _ProjectionAngleDiscardThreshold: 0.524
+    - _QueueOffset: 0
+    - _ReceiveShadows: 1
+    - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SoftParticlesEnabled: 0
     - _SoftParticlesFarFadeDistance: 1
     - _SoftParticlesNearFadeDistance: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Stencil: 0
     - _StencilComp: 6
+    - _StencilOp: 0
+    - _StencilReadMask: 255
     - _StencilRef: 1
+    - _StencilWriteMask: 255
     - _SupportOrthographicCamera: 0
+    - _Surface: 0
     - _UVSec: 0
-    - _UnityFogEnable: 1
+    - _UnityFogEnable: 0
     - _UseColour: 1
     - _UseMainAlpha: 1
     - _UseMaskMap: 0
     - _UseTransmitColor: 0
+    - _UseUIAlphaClip: 0
+    - _WorkflowMode: 1
     - _ZTest: 0
     - _ZWrite: 1
     - _ZWriteMode: 0
     m_Colors:
+    - _Alpha1UVSpeed: {r: 0.1, g: 0.1, b: 0, a: 0}
+    - _Alpha2UVSpeed: {r: 0.1, g: 0.1, b: 0, a: 0}
     - _AlphaRemap: {r: 1, g: 1, b: 1, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
@@ -166,7 +220,9 @@ Material:
     - _EmissionColor: {r: 630.346, g: 630.346, b: 630.346, a: 1}
     - _EmittierColor: {r: 23.968628, g: 23.968628, b: 23.968628, a: 1}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
+    - _MainUVSpeed: {r: 0, g: 0, b: 0, a: 0}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
     - _SoftParticleFadeParams: {r: 0, g: 0, b: 0, a: 0}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _TintColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

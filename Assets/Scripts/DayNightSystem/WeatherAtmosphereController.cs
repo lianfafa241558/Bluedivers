@@ -15,6 +15,14 @@ public static class WeatherAtmosphereController
     /// <summary>氛围参数过渡时长（秒）</summary>
     public static float TransitionDuration = 3f;
 
+    // ---- 数据注入槽：地图/任务系统在进图时写入，消费方只认桥不认地图资产 ----
+
+    /// <summary>
+    /// 地图雾色渐变（本色，随昼夜采样）。由 TaskManager 在选图时从 MapData_SO 注入；
+    /// 未注入（null）时昼夜模块使用自己的兜底渐变
+    /// </summary>
+    public static Gradient FogColorGradient;
+
     // ---- 目标值：天气系统切换状态时直接写入 ----
 
     /// <summary>目标能见度倍率</summary>
