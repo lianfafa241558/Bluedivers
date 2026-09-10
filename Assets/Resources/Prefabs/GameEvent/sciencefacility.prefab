@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &463388537073521270
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2450310060287557782}
+  m_Layer: 0
+  m_Name: AimPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2450310060287557782
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 463388537073521270}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 3.25, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2270849705822653234}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1731938328772701401
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -83,6 +114,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 5548580270667275821}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0c58b061d7c261a41ad325cc0f3a3864,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2450310060287557782}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0c58b061d7c261a41ad325cc0f3a3864,
         type: 3}
@@ -108,6 +143,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1541015834379832411}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0c58b061d7c261a41ad325cc0f3a3864,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6411679824077960959}
     - targetCorrespondingSourceObject: {fileID: 7764487973800923219, guid: 0c58b061d7c261a41ad325cc0f3a3864,
         type: 3}
       insertIndex: -1
@@ -161,9 +200,9 @@ MonoBehaviour:
   IsFixed: 1
   flag: 2
   type: 16
-  team: 1
+  team: -1
   threat: 0
-  aimPoint: {fileID: 2625361381749361761}
+  aimPoint: {fileID: 2450310060287557782}
   UseHpBar: 0
   HpHeight: 1
   shape: 0
@@ -182,8 +221,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0
-  armorLevel: 0
+  explosionResistance: 0.5
+  armorLevel: 10
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -205,7 +244,7 @@ MonoBehaviour:
   MaxHealth: 1000
   MaxShield: 0
   showArmorLists: []
-  MainPart: {fileID: 0}
+  MainPart: {fileID: 6443835993258970330}
   demolishValue: -1
   showHealth: 0
   m_IsDead: 0
@@ -245,15 +284,49 @@ MonoBehaviour:
   fxEvent: {fileID: 11400000, guid: dc65f4d8b2d398c409d766e93f18d227, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
   UseAttack: 0
+--- !u!114 &6411679824077960959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1497584771384758664}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c38bd72727a07134aaba57de6aef07e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  delayTime: 2
+  selfExplosionTime: 0
+  weapon: {fileID: 0}
+  go: {fileID: 1497584771384758664}
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 50
+    ExplosionInnerRange: 3
+    ExplosionRange: 6
+    DestructeRadius: 4
+    ShockwaveRadius: 8
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 20
+    NoSource: 1
+    ExplosionAP: 0
+    demolishValue: 0
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 5787557760003359419, guid: a3cf9ad6752f4fc448bcaaad7edfea05,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: 879e8f9020762ae4fb63c3b2370decc5, type: 3}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
 --- !u!4 &2270849705822653234 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0c58b061d7c261a41ad325cc0f3a3864,
-    type: 3}
-  m_PrefabInstance: {fileID: 1731938328772701401}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &2625361381749361761 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -4871138878669299528, guid: 0c58b061d7c261a41ad325cc0f3a3864,
     type: 3}
   m_PrefabInstance: {fileID: 1731938328772701401}
   m_PrefabAsset: {fileID: 0}

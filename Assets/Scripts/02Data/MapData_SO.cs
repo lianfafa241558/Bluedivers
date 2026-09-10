@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Core;
 using FpsGame.MapUtils;
 using FPSGame.Attribute;
@@ -44,6 +45,14 @@ public class MapData_SO : ScriptableObject
     [InspectorName("纹理配置")]
     public TerrainItemInfo[] TerrainItem;
     public Gradient fogColor;
+
+
+    [Divider]
+    [Header("天气")]
+    [InspectorName("天气概率")]
+    [Tooltip("开局抽取天气的权重表（Value 为权重，越大越容易出现）；留空时默认晴天")]
+    public List<SKVP<WeatherType, int>> WeatherInfos;
+
 
 
     [System.Serializable]

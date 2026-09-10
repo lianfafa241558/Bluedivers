@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Linq;
 using Unity.FPS.Game;
 
 //using Unity.FPS.Game;
 using UnityEngine;
+using Utils;
 
 /// <summary>
 /// 天气控制器：由 BattleManager 开局随机抽取天气后通过 Create 工厂创建。
@@ -14,6 +16,9 @@ public class WeatherSystem : MonoBehaviour
     /// <summary>天气特效预制体所在目录（Resources 相对路径）</summary>
     private const string EffectFolder = "Prefabs/Weather";
 
+    /// <summary>权重表为空或总权重非正时的兜底天气</summary>
+    public const WeatherType DefaultWeather = WeatherType.Sunny;
+
     /// <summary>当前生效的天气</summary>
     public WeatherType Weather { get; private set; }
 
@@ -23,6 +28,22 @@ public class WeatherSystem : MonoBehaviour
     // 风暴计时与状态
     private float _stormTimer;
     private bool _stormActive;
+
+    /// <summary>
+    /// 按地图配置的天气权重表抽取天气（Key=天气，Value=权重）。
+    /// 使用 BattleRandom 时同种子结果确定；权重表为空或总权重非正时返回 Sunny。
+    /// </summary>
+    /// <param name="weatherInfos">天气权重表，可为 null</param>
+    /// <param name="random">抽取用随机源（开局 BattleRandom）</param>
+    public static WeatherType RollWeather(List<SKVP<WeatherType, int>> weatherInfos, System.Random random)
+    {
+        if (weatherInfos == null || weatherInfos.Count == 0 || random == null) return DefaultWeather;
+
+        int totalWeight = weatherInfos.Sum(item => item.Value);
+        if (totalWeight <= 0) return DefaultWeather;
+
+        return weatherInfos.WeightTake(totalWeight, random);
+    }
 
     /// <summary>
     /// 工厂：开局应用指定天气（同种子 BattleRandom 下结果确定）
@@ -44,8 +65,7 @@ public class WeatherSystem : MonoBehaviour
     {
         Weather = weather;
 
-        // 积雪渲染只在下雪时生效
-        SnowController.SetEnabled(weather == WeatherType.Snow);
+        // 积雪开关由 WeatherEffectSnow 自己管理（OnInit 开、OnDisable 关），控制器不再集中干预
         if (weather == WeatherType.Sunny) return;
 
         // 扫描天气预制体目录，按具体天气组件声明的类型匹配
@@ -75,9 +95,10 @@ public class WeatherSystem : MonoBehaviour
     /// </summary>
     private void LateUpdate()
     {
+        if(!BattleManager.Instance.IsStartBattle) return;
         if (_effect == null) return;
         var cam = ActorsManager.Player;
-        if (cam == null) return;
+        if (!cam.IsValid()) return;
         _effect.transform.position = cam.Pos;
     }
 

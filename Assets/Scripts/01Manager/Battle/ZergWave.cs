@@ -196,7 +196,7 @@ namespace FPSGame.Game
                 case WaveState.Start:
                     if (tip) WndManager.Instance.CreatNotice("Yuuka", "WaveStart_Zerg");
 
-                    AudioSvc.PlayMusic(AudioSvc.MusicGroup.Wave, 0.3f);
+                    AudioSvc.PlayMusic(AudioSvc.MusicGroup.Wave, 0.5f);
                     break;
                 case WaveState.Ongoing:
                     time = 0;
@@ -205,7 +205,7 @@ namespace FPSGame.Game
                     if (tip) WndManager.Instance.CreatNotice("Yuuka", "WaveEnd_Zerg");
                     break;
                 case WaveState.End:
-                    AudioSvc.PlayMusic(AudioSvc.MusicGroup.Game, 0.2f);
+                    AudioSvc.PlayMusic(AudioSvc.MusicGroup.Game, 0.5f);
                     break;
             }
         }

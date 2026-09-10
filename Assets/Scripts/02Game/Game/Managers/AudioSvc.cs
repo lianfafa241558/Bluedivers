@@ -77,7 +77,7 @@ public class AudioSvc : AudioManaqerBase<AudioSvc>
                 PlayMusic(MusicGroup.Load, 1);
                 break;
             case GameStateEnum.Game:
-                PlayMusic(MusicGroup.Game,0.2f);
+                PlayMusic(MusicGroup.Game,0.5f);
                 break;
             case GameStateEnum.GameEnd:
                 //PlayMusic(MusicGroup.Transition);

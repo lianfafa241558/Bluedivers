@@ -46,10 +46,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a0c40bb8ec4f8c4398a699ac927bb7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _heightOffset: 0
+  _calmObject: {fileID: 0}
+  _stormObject: {fileID: 0}
   _useStormCycle: 0
   _calmDuration: 45
   _stormDuration: 20
+  _calmVisibility: 1.2
+  _stormVisibility: 0.45
+  _calmFogAdd: 0
+  _stormFogAdd: 0.7
+  _calmCloudCoverage: 1
+  _stormCloudCoverage: 1.6
+  _calmCloudBrightness: 1
+  _stormCloudBrightness: 0.7
+  _calmSunIntensity: 1
+  _stormSunIntensity: 0.4
+  _calmAmbientBrightness: 1
+  _stormAmbientBrightness: 0.45
+  _calmSkyLerp: 1
+  _stormSkyLerp: 0.3
 --- !u!1 &8262196642829804570
 GameObject:
   m_ObjectHideFlags: 0

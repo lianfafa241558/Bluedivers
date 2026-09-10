@@ -16,7 +16,8 @@ public class WeatherEffectSnow : WeatherEffect
     public override void OnInit()
     {
         base.OnInit();
-        // 初始为平静期积雪量
+        // 常驻开启积雪渲染（仅本组件开启；基类 OnDisable 销毁时关闭），初始为平静期积雪量
+        SnowController.SetEnabled(true);
         SnowController.SetGlobalAmount(_calmAmount);
     }
 

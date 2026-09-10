@@ -85,7 +85,7 @@ Shader "ToonLit/ToonLit"
         [Toggle]_UseEmission("使用自发光", Float) = 0
         [Toggle]_EmissionMaskAddite("使用每个通道作为蒙版", Float) = 0
         [HDR] _EmissionColor("自发光颜色", Color) = (0,0,0)
-        _EmissionMulByBaseColor("根据原颜色发光", Range(0,1)) = 0
+        _EmissionMulByBaseColor("根据原颜色发光", Range(0,1.4)) = 0
         _EmissionScale("发光系数", Range(0,2)) = 1
         [NoScaleOffset]_EmissionMap("自发光贴图", 2D) = "white" {}
         _EmissionMapChannelMask("自发光贴图通道", Vector) = (1,1,1,0)

@@ -47,9 +47,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f184b2bede4b94540905a25868032a5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  searchRange: 30
+  searchRange: 35
   searchInterval: 1
-  moveSpeed: 6
+  moveSpeed: 8
   allowRelock: 1
   guideSource: {fileID: 2890874790620920371}
 --- !u!1 &2175551841436684055
@@ -108,13 +108,12 @@ MonoBehaviour:
     - Key: 1
       Value: 125
     - Key: 2
-      Value: 0.2
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
-    type: 3}
+      Value: 0.16
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 2000
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -123,38 +122,36 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
-    DamageExplosion: 100
-    DamageDirect: 0
+    DamageExplosion: 30
+    DamageDirect: 150
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
     WeaknessBonus: 0
-    ExplosionInnerRange: 1.5
-    ExplosionRange: 3
+    ExplosionInnerRange: 2.5
+    ExplosionRange: 6
     DestructeRadius: 0
     ShockwaveRadius: 0
     DamageGroupExplosion:
     - Key: 5
-      Value: 0.5
-    - Key: 3
-      Value: 0.5
+      Value: 1
     - Key: 2
       Value: 1
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
-    ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
+    ImpactVfx: {fileID: 8167516518492074666, guid: e1ee3ab2c7c646745a7ff85410c62c13,
       type: 3}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 6
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 4
     ExplosionAPChargeScale: 1
-    demolishValue: 0
+    demolishValue: 40
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
@@ -167,7 +164,7 @@ MonoBehaviour:
   MuzzleFlashPrefab: {fileID: 0}
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
-  SFXRange: 80
+  SFXRange: 200
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 8300000, guid: a051ea20723ca754b8a00ff02b70d2a3,

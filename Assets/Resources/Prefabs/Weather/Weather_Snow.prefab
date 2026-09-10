@@ -577,8 +577,22 @@ MonoBehaviour:
   _calmObject: {fileID: 2366505857563991271}
   _stormObject: {fileID: 6207923982492321508}
   _useStormCycle: 1
-  _calmDuration: 200
-  _stormDuration: 20
+  _calmDuration: 10
+  _stormDuration: 10
+  _calmVisibility: 1
+  _stormVisibility: 0.1
+  _calmFogAdd: 0.3
+  _stormFogAdd: 0.3
+  _calmCloudCoverage: 2
+  _stormCloudCoverage: 6
+  _calmCloudBrightness: 0.7
+  _stormCloudBrightness: 0.5
+  _calmSunIntensity: 1.2
+  _stormSunIntensity: 0
+  _calmAmbientBrightness: 1
+  _stormAmbientBrightness: 2
+  _calmSkyLerp: 0.7
+  _stormSkyLerp: 0.3
   _blizzardAmount: 1
   _calmAmount: 0.7
 --- !u!1001 &153286353686682737
@@ -846,6 +860,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3232863016895839723, guid: d175fdd66185a4c47becc12103900d19,
         type: 3}
+      propertyPath: EmissionModule.rateOverTime.scalar
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 3232863016895839723, guid: d175fdd66185a4c47becc12103900d19,
+        type: 3}
       propertyPath: InitialModule.startLifetime.scalar
       value: 4
       objectReference: {fileID: 0}
@@ -926,6 +945,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5717000252161363596, guid: d175fdd66185a4c47becc12103900d19,
         type: 3}
+      propertyPath: EmissionModule.rateOverTime.scalar
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 5717000252161363596, guid: d175fdd66185a4c47becc12103900d19,
+        type: 3}
       propertyPath: InitialModule.startLifetime.scalar
       value: 4
       objectReference: {fileID: 0}
@@ -972,7 +996,7 @@ PrefabInstance:
     - target: {fileID: 7312899144729115002, guid: d175fdd66185a4c47becc12103900d19,
         type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
-      value: 600
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 7312899144729115002, guid: d175fdd66185a4c47becc12103900d19,
         type: 3}
@@ -983,6 +1007,11 @@ PrefabInstance:
         type: 3}
       propertyPath: InitialModule.startLifetime.minScalar
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7312899144729115002, guid: d175fdd66185a4c47becc12103900d19,
+        type: 3}
+      propertyPath: EmissionModule.rateOverDistance.scalar
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7312899144729115002, guid: d175fdd66185a4c47becc12103900d19,
         type: 3}

@@ -222,6 +222,8 @@ public static class FpsHelper
             if (destructe > 0)
             {
                 //Debug.LogError($"地形破坏{point} 内半径{(destructe / new PEInt(1.5f)).RawFloat} 外半径{destructe.RawFloat} 深度{(destructe / 5).RawFloat}");
+                //弹坑里不该有积雪：按破坏外半径擦除积雪遮罩（无雪天气/地形未就绪时内部自动忽略）
+                SnowController.RemoveSnow(point, destructe.RawFloat);
                 //ModifyHeightMap 是协程（迭代器），必须用 StartCoroutine 启动，直接调用不会执行
                 GameRoot.Instance.StartCoroutine(TerrainUtils.ModifyHeightMap(point, (destructe / new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe / 5).RawFloat, ShapeType.Circle, false));
             }

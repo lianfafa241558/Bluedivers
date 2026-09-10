@@ -9,8 +9,8 @@ namespace Meryuhi.Rendering
     /// </summary>
     public static class FullScreenFogController
     {
-        /// <summary>当前是否启用全屏雾（默认开启）</summary>
-        public static bool Enabled { get; private set; } = true;
+        /// <summary>当前是否启用全屏雾（默认关闭，由需要雾的系统（如天气）调 SetEnabled(true) 开启）</summary>
+        public static bool Enabled { get; private set; } = false;
 
         /// <summary>开关全屏雾（false 时跳过整个雾 Pass）</summary>
         public static void SetEnabled(bool enabled)

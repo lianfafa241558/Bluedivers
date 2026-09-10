@@ -63,6 +63,20 @@ namespace Utils
             return list[0].Key;
         }
 
+        public static T WeightTake<T>(this List<SKVP<T, int>> list, int totleWeight, Random random)
+        {
+            int randomValue = random.Range(1, totleWeight + 1);
+            for (int i = 0, v = 0; i < list.Count; ++i)
+            {
+                v += list[i].Value;
+                if (randomValue < v)
+                {
+                    return list[i].Key;
+                }
+            }
+            return list[0].Key;
+        }
+
 
         public static T NaturalWeightTake<T>(this List<T> list, bool takeOut = false)
         {

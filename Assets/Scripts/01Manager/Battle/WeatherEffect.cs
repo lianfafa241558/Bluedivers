@@ -1,4 +1,6 @@
 using UnityEngine;
+using Unity.FPS.Game;
+using Meryuhi.Rendering;
 
 /// <summary>
 /// 挂在天气特效预制体上的具体天气组件基类：
@@ -45,11 +47,13 @@ public abstract class WeatherEffect : MonoBehaviour
     /// <summary>风暴时长（秒）</summary>
     public float StormDuration => _stormDuration;
 
-    /// <summary>天气应用时回调（实例化后调用一次）：显示平时状态、隐藏风暴期状态</summary>
+    /// <summary>天气应用时回调（实例化后调用一次）：显示平时状态、隐藏风暴期状态，并常驻开启全屏雾（直到死亡/销毁才关）</summary>
     public virtual void OnInit()
     {
         SetCalmState(true);
         ApplyAtmosphere(true);
+        // 静态开关跨局持久，进战斗时复位并常驻开启，玩家死亡或本组件销毁（游戏结束）时关闭
+        FullScreenFogController.SetEnabled(true);
     }
 
     /// <summary>风暴开始回调：切换到风暴期状态（隐藏平时物体）</summary>
@@ -59,7 +63,7 @@ public abstract class WeatherEffect : MonoBehaviour
         ApplyAtmosphere(false);
     }
 
-    /// <summary>风暴结束回调：恢复平时状态</summary>
+    /// <summary>风暴结束回调：恢复平时状态（雾保持常驻，不随风暴开关）</summary>
     public virtual void OnStormEnd()
     {
         SetCalmState(true);
@@ -84,5 +88,12 @@ public abstract class WeatherEffect : MonoBehaviour
     {
         if (_calmObject != null) _calmObject.SetActive(calm);
         if (_stormObject != null) _stormObject.SetActive(!calm);
+    }
+
+    private void OnDisable()
+    {
+        // 本组件销毁（游戏结束/场景卸载）时复位渲染开关（静态值跨局持久）：雾关闭、积雪关闭；玩家死亡不干预
+        FullScreenFogController.SetEnabled(false);
+        SnowController.SetEnabled(false);
     }
 }

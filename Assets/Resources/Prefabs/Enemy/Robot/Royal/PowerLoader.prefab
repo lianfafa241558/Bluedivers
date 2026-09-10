@@ -86,28 +86,26 @@ MonoBehaviour:
     - Key: 1
       Value: 4
     - Key: 2
-      Value: 0.2
+      Value: 0.35
     - Key: 7
       Value: 10
-    - Key: 11
-      Value: 10
-    - Key: 12
-      Value: 100
     - Key: 0
       Value: -1
+    - Key: 10
+      Value: 10
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 828996816448062211, guid: 6af942e200f11d247825ba65533e069e,
       type: 3}
     LandingPrefab: {fileID: 0}
-    Speed: 100
-    Gravity: 10
+    Speed: 60
+    Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 2
     MaxRange: -1
     MinRange: -1
     NoSource: 0
-    SoundRadius: 20
+    SoundRadius: 40
     DamageExplosion: 3
     DamageDirect: 2
     DamageGroupDirect:
@@ -164,7 +162,7 @@ MonoBehaviour:
   showReloadTime: 0
   showCool: 0
   ShootType: 1
-  WeaponFlag: 1
+  WeaponFlag: 8
   AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
@@ -228,28 +226,26 @@ MonoBehaviour:
     - Key: 1
       Value: 4
     - Key: 2
-      Value: 0.2
+      Value: 0.35
     - Key: 7
       Value: 10
-    - Key: 11
-      Value: 10
-    - Key: 12
-      Value: 100
     - Key: 0
       Value: -1
+    - Key: 10
+      Value: 10
   BulletFlag: 8
   Damages:
   - BulletPrefab: {fileID: 828996816448062211, guid: 6af942e200f11d247825ba65533e069e,
       type: 3}
     LandingPrefab: {fileID: 0}
-    Speed: 100
-    Gravity: 10
+    Speed: 60
+    Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 2
     MaxRange: -1
     MinRange: -1
     NoSource: 0
-    SoundRadius: 20
+    SoundRadius: 40
     DamageExplosion: 3
     DamageDirect: 2
     DamageGroupDirect:
@@ -306,7 +302,7 @@ MonoBehaviour:
   showReloadTime: 0
   showCool: 0
   ShootType: 1
-  WeaponFlag: 1
+  WeaponFlag: 8
   AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
@@ -399,9 +395,9 @@ MonoBehaviour:
   cfg:
     _fakeAttrs:
     - Key: 1
-      Value: 10
+      Value: 4
     - Key: 2
-      Value: 0.06
+      Value: 0.2
     - Key: 7
       Value: 2
     - Key: 11
@@ -440,10 +436,11 @@ MonoBehaviour:
       Value: 1
     - Key: 2
       Value: 1
-    UseCollisionDirection: 0
+    UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 0}
-    ImpactSfx: {fileID: 0}
+    ImpactVfx: {fileID: 7655095426451682942, guid: 347e7ad7d423a6f47acfb062d19f36bf,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: e4f09a22c05f570499b57e3732121e8a, type: 3}
     UseHole: 1
     Hole: {fileID: 0}
     OnlyTerrain: 0
@@ -687,7 +684,7 @@ MonoBehaviour:
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
-  AttackStop: 0
+  AttackStop: 1
   WeakPointHitStunDuration: 0.3
   showState: 0
   AttackStopDistanceRatio: 0.2

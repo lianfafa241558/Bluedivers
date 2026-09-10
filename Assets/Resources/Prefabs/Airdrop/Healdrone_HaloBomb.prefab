@@ -147,8 +147,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 6065585077843635089}
+  UseManyMuzzle: 0
   WeaponMuzzle: {fileID: 3665073820391418659}
   WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
   cfg:
     _fakeAttrs:
     - Key: 54
@@ -161,11 +163,11 @@ MonoBehaviour:
       Value: 1
     - Key: 52
       Value: 1
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: 3f9f9ac86f4261047b5b1b8ccd1bb5a6,
-    type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 1
+  - BulletPrefab: {fileID: 0}
+    LandingPrefab: {fileID: 0}
+    Speed: 1
     Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 0.1
@@ -173,29 +175,20 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    DamageExplosion: 1000
     DamageDirect: 0
-    DamageGroupDirect2:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
-    DamageExplosion: 1000
-    ExplosionInnerRange: 6
-    ExplosionRange: 12
+    WeaknessBonus: 0
+    ExplosionInnerRange: 10
+    ExplosionRange: 20
     DestructeRadius: 12
     ShockwaveRadius: 20
-    DamageGroupExplosion2:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
     DamageGroupExplosion:
-    - Key: 3
+    - Key: 1
       Value: 1
     - Key: 2
       Value: 0.33
@@ -207,14 +200,22 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+    DirectAP: 0
+    DirectAPChargeScale: 1
+    ExplosionAP: 10
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
     ChargeSpeedScale: 1
     ChargeGravityScale: 1
     ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
   UseDamageIndex: 0
   MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 80
   ShootSfx: {fileID: 8300000, guid: b1b223bdf0531c946825b724fae6c90f, type: 3}
@@ -223,6 +224,7 @@ MonoBehaviour:
     type: 3}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
   showAmmo: 0
@@ -237,6 +239,7 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+  allowShowGizmos: 0
   animNameType: 0
 --- !u!4 &6874351005588779307 stripped
 Transform:
@@ -470,7 +473,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 0}
+  demolishValue: -1
   showHealth: 0
   m_IsDead: 0
+  AboGaugeArr: []
   AutoDestroy: 1

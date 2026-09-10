@@ -38,11 +38,10 @@ public class BattleManager : Singleton<BattleManager>
     /// <summary>本局天气（开局随机抽取）</summary>
     public WeatherType Weather { get; private set; }
 
-    /// <summary>开局随机抽取天气并应用（使用 BattleRandom，同种子结果一致）</summary>
+    /// <summary>开局按地图配置的天气权重表抽取天气并应用（使用 BattleRandom，同种子结果一致）</summary>
     private void RandomWeather()
     {
-        //Weather = (WeatherType)BattleRandom.Next(0, 4);
-        Weather = WeatherType.Rain;
+        Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, BattleRandom);
         WeatherCont = WeatherSystem.Create(Weather, transform);
         Debug.Log($"[BattleManager] 本局天气: {Weather}");
     }
@@ -208,6 +207,8 @@ public class BattleManager : Singleton<BattleManager>
         terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
         // size.y 变更后刷新 terrainHeight 缓存，否则 AdditionTerrain 高度计算使用旧值
         TerrainUtils.Main = terrain;
+        // 新战斗的新地形：重置积雪遮罩，避免上一场战斗的弹坑痕迹残留（下次擦雪时按地形按需重建）
+        SnowController.ResetMask();
         //Debug.LogWarning("地图尺寸" + cfg.MainCfg.sizeType + " 地图大小 + cfg.MapSize);
         //Debug.LogWarning("地图真实" + mapRoot.terrain.terrainData.size);
         //terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
