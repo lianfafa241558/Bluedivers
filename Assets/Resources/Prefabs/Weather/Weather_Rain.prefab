@@ -577,8 +577,8 @@ MonoBehaviour:
   _calmObject: {fileID: 7316151397793749605}
   _stormObject: {fileID: 5858038557679702071}
   _useStormCycle: 1
-  _calmDuration: 10
-  _stormDuration: 200
+  _calmDuration: 180
+  _stormDuration: 60
   _calmVisibility: 0.6
   _stormVisibility: 0.4
   _calmFogAdd: 0.2
@@ -593,6 +593,11 @@ MonoBehaviour:
   _stormAmbientBrightness: 0.5
   _calmSkyLerp: 0.7
   _stormSkyLerp: 0.2
+  _calmFogHeightAdd: 0
+  _stormFogHeightAdd: 0
+  _calmSkyDust: 0
+  _stormSkyDust: 0.85
+  _skyDustColor: {r: 0.4509804, g: 0.7288474, b: 0.7607843, a: 1}
 --- !u!1001 &6038792435271741476
 PrefabInstance:
   m_ObjectHideFlags: 0

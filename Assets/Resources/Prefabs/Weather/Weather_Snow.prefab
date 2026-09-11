@@ -577,10 +577,10 @@ MonoBehaviour:
   _calmObject: {fileID: 2366505857563991271}
   _stormObject: {fileID: 6207923982492321508}
   _useStormCycle: 1
-  _calmDuration: 10
-  _stormDuration: 10
+  _calmDuration: 210
+  _stormDuration: 30
   _calmVisibility: 1
-  _stormVisibility: 0.1
+  _stormVisibility: 0.22
   _calmFogAdd: 0.3
   _stormFogAdd: 0.3
   _calmCloudCoverage: 2
@@ -590,9 +590,14 @@ MonoBehaviour:
   _calmSunIntensity: 1.2
   _stormSunIntensity: 0
   _calmAmbientBrightness: 1
-  _stormAmbientBrightness: 2
+  _stormAmbientBrightness: 1.5
   _calmSkyLerp: 0.7
   _stormSkyLerp: 0.3
+  _calmFogHeightAdd: 0
+  _stormFogHeightAdd: 200
+  _calmSkyDust: 0
+  _stormSkyDust: 0.85
+  _skyDustColor: {r: 0.95, g: 0.9906231, b: 1, a: 1}
   _blizzardAmount: 1
   _calmAmount: 0.7
 --- !u!1001 &153286353686682737

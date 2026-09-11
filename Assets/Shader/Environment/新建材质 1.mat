@@ -107,19 +107,29 @@ Material:
     - _CloudDirX: 1
     - _CloudDirZ: 1
     - _CloudExposure: 1
+    - _CloudHazeEnd: 950
+    - _CloudHazeStart: 350
+    - _CloudHazeStrength: 1
     - _CloudHeight: 10
     - _CloudLerp: 1
     - _CloudNoiseSpeed: 100
     - _CloudScale: 0.12
     - _CloudSize: 2.27
     - _CloudSpeed: 0.01
+    - _CloudWarp: 0.35
+    - _ClusterStrength: 0.45
     - _CoverageBase: 0.5
     - _Cull: 2
     - _CullMode: 2
     - _Cutoff: 0.01
     - _Density: 1.4
     - _DetailAlbedoMapScale: 1
+    - _DetailAmount: 0.3
+    - _DetailFadeDistance: 900
+    - _DetailFrequency: 3.1
     - _DetailNormalMapScale: 1
+    - _DistanceSoftness: 0.18
+    - _DomeFlatten: 0.35
     - _DstBlend: 1
     - _DstBlendAlpha: 0
     - _EdgeLitPower: 1
@@ -133,19 +143,33 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _GrazingBoost: 2.2
+    - _HazeAlphaFade: 0.9
+    - _HorizonDensityBoost: 0.08
+    - _LayerAltitude: 550
+    - _LayerCoverage: 0.4
+    - _LayerDensity: 1.4
+    - _LayerDetail: 0.3
+    - _LayerScale: 0.005
     - _LightIntensity: 1
+    - _LitBoost: 1.15
     - _LitStrength: 5
     - _MY_FOG_ENABLE: 0
+    - _MaxOpaquePath: 8
     - _Metallic: 0
+    - _MinRayY: 0.02
     - _MorphScale: 0.5
     - _MorphSpeed: 0.05
     - _MorphStrength: 0.1
     - _MoveOtherSpeed: 0
     - _MoveSpeed: 0
     - _MoveX: 0
+    - _NoiseRotation: 25
     - _NoiseScale: 0.12
     - _NoiseScale1: 0.53
     - _NoiseScale2: 1.32
+    - _OcclusionBias: 3
+    - _OcclusionEnabled: 1
     - _OcclusionStrength: 1
     - _OffsetDistance: 0.1
     - _Parallax: 0.005
@@ -170,6 +194,7 @@ Material:
     - _UseFresnel: 0
     - _UseLight: 0
     - _UseMoveST: 0
+    - _WeatherCloudCoverage: 1
     - _WindSpeed: 0.02
     - _WorkflowMode: 1
     - _ZTestMode: 4
@@ -180,15 +205,23 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BottomColor: {r: 0.8, g: 0.8, b: 0.9, a: 1}
-    - _CloudTintColor: {r: 0.75, g: 0.75, b: 0.75, a: 0.5019608}
+    - _CloudHazeColor: {r: 0.34140286, g: 0.35464606, b: 0.35834843, a: 1}
+    - _CloudSunColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CloudTintColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DayCloudColor: {r: 1, g: 0.97999996, b: 0.95, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HitColor: {r: 0, g: 0, b: 0, a: 0}
+    - _HorizonCloudTint: {r: 1, g: 0.9, b: 0.87, a: 1}
+    - _LayerTint: {r: 1, g: 1, b: 1, a: 1}
+    - _LayerWind: {r: 0, g: 0, b: 0, a: 0}
     - _MainColor: {r: 1, g: 1, b: 1, a: 1}
     - _NightCloudColor: {r: 0.09999997, g: 0.11999995, b: 0.17999998, a: 1}
+    - _ShadowTint: {r: 0.62, g: 0.68, b: 0.85, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SunDirection: {r: 0, g: 1, b: 0, a: 0}
     - _TopColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ZenithCloudTint: {r: 0.93, g: 0.96, b: 1, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &4400066183399170485
 MonoBehaviour:

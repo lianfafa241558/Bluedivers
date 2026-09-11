@@ -39,8 +39,26 @@ public static class WeatherAtmosphereController
     public static float TargetAmbientBrightness = 1f;
     /// <summary>目标天空盒亮度倍率：乘到天空盒昼夜插值(_Lerp)上，&lt;1 天空压向夜晚全景图（阴天变暗）</summary>
     public static float TargetSkyLerpMultiplier = 1f;
+    /// <summary>
+    /// 目标天空沙尘量（0~1）：沙尘暴等天气写入。天空盒色调会向沙尘色靠拢、大气变厚，
+    /// 体积云的远景雾同时收缩到全天空（云整体化进沙尘）
+    /// </summary>
+    public static float TargetSkyDust = 0f;
+    /// <summary>目标沙尘色（天空/云在地平线附近靠拢的颜色）</summary>
+    public static Color TargetSkyDustColor = new Color(0.76f, 0.62f, 0.45f, 1f);
+    /// <summary>
+    /// 目标雾层高度抬升（米）：天气可直接把高度雾的雾层整体抬高（0 = 不干预、沿用昼夜曲线）。
+    /// 抬到超过「相机远裁剪面 + 相机高度」后天空也会落进雾层 → 天空随恶劣天气变浑
+    /// </summary>
+    public static float TargetFogHeightAdd = 0f;
 
     // ---- 当前值：向目标值平滑过渡，消费方读取 ----
+
+    /// <summary>
+    /// 当前远景雾色（与全屏雾同色，由 EnvironmentLightingModule 每帧写入）：
+    /// 供透明物体（体积云等）按距离融入远景，避免云"浮"在雾前面
+    /// </summary>
+    public static Color FogColor = new Color(0.72f, 0.78f, 0.86f, 1f);
 
     /// <summary>当前能见度倍率：乘到全屏雾距离参数上，&lt;1 收近视距</summary>
     public static float VisibilityMultiplier = 1f;
@@ -56,6 +74,12 @@ public static class WeatherAtmosphereController
     public static float AmbientBrightnessMultiplier = 1f;
     /// <summary>当前天空盒亮度倍率：乘到天空盒昼夜插值(_Lerp)上（在 EnvironmentLightingModule 中应用）</summary>
     public static float SkyLerpMultiplier = 1f;
+    /// <summary>当前天空沙尘量（0~1）：消费者为 EnvironmentLightingModule（天空盒色调/大气厚度）与 DrawVolumetricCloud（远景雾）</summary>
+    public static float SkyDust = 0f;
+    /// <summary>当前沙尘色</summary>
+    public static Color SkyDustColor = new Color(0.76f, 0.62f, 0.45f, 1f);
+    /// <summary>当前雾层高度抬升（米，平滑后）：在 EnvironmentLightingModule 里叠加到高度雾起止高度上</summary>
+    public static float FogHeightAdd = 0f;
 
     /// <summary>上次执行 Smooth 的帧号（帧保护：一帧内多个消费方调用时只驱动一次，保证渐变速率一致）</summary>
     private static int _lastSmoothFrame = -1;
@@ -77,5 +101,8 @@ public static class WeatherAtmosphereController
         SunIntensityMultiplier = Mathf.Lerp(SunIntensityMultiplier, TargetSunIntensity, t);
         AmbientBrightnessMultiplier = Mathf.Lerp(AmbientBrightnessMultiplier, TargetAmbientBrightness, t);
         SkyLerpMultiplier = Mathf.Lerp(SkyLerpMultiplier, TargetSkyLerpMultiplier, t);
+        SkyDust = Mathf.Lerp(SkyDust, TargetSkyDust, t);
+        SkyDustColor = Color.Lerp(SkyDustColor, TargetSkyDustColor, t);
+        FogHeightAdd = Mathf.Lerp(FogHeightAdd, TargetFogHeightAdd, t);
     }
 }

@@ -6611,14 +6611,94 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0ebce3f02dedab48bef668fce6f37f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  horizontalStackSize: 2
-  cloudHeight: 5
-  quadMesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+  _layers:
+  - enabled: 1
+    altitude: 900
+    coverage: 0.22
+    scale: 0.005
+    density: 1
+    detail: 0.1
+    windScale: 1.25
+    tint: {r: 0.97, g: 0.98, b: 1, a: 1}
+  - enabled: 1
+    altitude: 550
+    coverage: 0.5
+    scale: 0.006
+    density: 1.4
+    detail: 0.12
+    windScale: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+  - enabled: 0
+    altitude: 380
+    coverage: 0.4
+    scale: 0.009
+    density: 1.2
+    detail: 0.1
+    windScale: 0.8
+    tint: {r: 1, g: 0.99, b: 0.97, a: 1}
   cloudMaterial: {fileID: 2100000, guid: 0de89de233a493d4d84f03ffb46cc111, type: 2}
+  _domeRadius: 200
+  _domeMeshOverride: {fileID: 0}
+  _domeSegments: 48
+  _domeRings: 24
+  _windSpeed: 8
+  _windDirection: {x: 1, y: 0.6}
+  _sunLight: {fileID: 0}
+  _moonLight: {fileID: 0}
   autoSampleSkyColor: 1
-  useGpuInstancing: 0
-  castShadows: 0
-  layer: 0
+  _dayNightBySunHeight:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.02
+      value: 0.35
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.35
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _skyTintInfluence: 0.6
+  _sunColorInfluence: 0.75
+  _useWeatherLink: 1
+  _useHazeLink: 1
+  _useFogColorAsHaze: 1
+  _hazeColor: {r: 0.72, g: 0.78, b: 0.86, a: 1}
+  _hazeStartDistance: 3000
+  _hazeEndDistance: 12000
+  _hazeStrength: 1
+  _dustHazeStartDistance: 10
+  _dustHazeEndDistance: 400
 --- !u!23 &883936955
 MeshRenderer:
   m_ObjectHideFlags: 0

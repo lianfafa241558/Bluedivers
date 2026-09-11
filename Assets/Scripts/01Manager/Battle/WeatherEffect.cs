@@ -37,6 +37,21 @@ public abstract class WeatherEffect : MonoBehaviour
     [InspectorName("风暴环境光亮度倍率")] [SerializeField] protected float _stormAmbientBrightness = 0.45f;
     [InspectorName("平时天空盒亮度倍率")] [SerializeField] protected float _calmSkyLerp = 1f;
     [InspectorName("风暴天空盒亮度倍率")] [SerializeField] protected float _stormSkyLerp = 0.3f;
+    [InspectorName("平时雾层抬升(米)")]
+    [Tooltip("在昼夜高度雾曲线上叠加的高度（米）。0 = 不干预（沿用昼夜曲线），雨/雪一般保持 0")]
+    [SerializeField] protected float _calmFogHeightAdd = 0f;
+    [InspectorName("风暴雾层抬升(米)")]
+    [Tooltip("风暴期在昼夜高度雾曲线上叠加的高度（米）。0 = 不干预。\n" +
+             "高度雾是「距离因子 × 高度因子」，天空重建出的世界高度约为「相机 far clip + 相机高度」，" +
+             "雾层抬到它之上后天空才会落进雾层、开始随天气变浑（现 far=300 → 建议 500~700，沙尘暴常用）")]
+    [SerializeField] protected float _stormFogHeightAdd = 0f;
+
+    [InspectorName("平时天空沙尘量")] [Range(0f, 1f)] [SerializeField] protected float _calmSkyDust = 0f;
+    [InspectorName("风暴天空沙尘量")]
+    [Tooltip("0~1：天空盒色调向沙尘色靠拢、大气变厚，体积云同时整体化进沙尘。沙尘暴建议 0.8~1；" +
+             "默认 0 = 不影响（雨/雪等天气必须保持 0，否则天空会被染成沙色）")]
+    [Range(0f, 1f)] [SerializeField] protected float _stormSkyDust = 0f;
+    [InspectorName("沙尘色(天空/云)")] [SerializeField] protected Color _skyDustColor = new Color(0.76f, 0.62f, 0.45f, 1f);
 
     /// <summary>是否周期风暴型（沙漠沙尘暴/下雪暴雪勾选，雨天不勾）</summary>
     public bool UseStormCycle => _useStormCycle;
@@ -81,6 +96,9 @@ public abstract class WeatherEffect : MonoBehaviour
         WeatherAtmosphereController.TargetSunIntensity = calm ? _calmSunIntensity : _stormSunIntensity;
         WeatherAtmosphereController.TargetAmbientBrightness = calm ? _calmAmbientBrightness : _stormAmbientBrightness;
         WeatherAtmosphereController.TargetSkyLerpMultiplier = calm ? _calmSkyLerp : _stormSkyLerp;
+        WeatherAtmosphereController.TargetSkyDust = calm ? _calmSkyDust : _stormSkyDust;
+        WeatherAtmosphereController.TargetSkyDustColor = _skyDustColor;
+        WeatherAtmosphereController.TargetFogHeightAdd = calm ? _calmFogHeightAdd : _stormFogHeightAdd;
     }
 
     /// <summary>切换平时/风暴期状态物体（未配置的忽略）</summary>

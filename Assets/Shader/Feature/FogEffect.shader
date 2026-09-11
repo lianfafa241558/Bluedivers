@@ -13,6 +13,9 @@ Shader "LX/FogSimulation" {
 
 
             [ToggleUI]_Reverse("Reverse", Float) = 0
+            // 天空像素不参与距离雾：天空的深度是远平面（常数），用它算雾只会得到"整片天空均匀掺雾色"，
+            // 而不是距离渐变。天空的地平线雾交给天空盒 / 体积云自己处理
+            _SkipSky("天空不参与雾(0/1)", Range(0, 1)) = 1
         }
             SubShader
             {
@@ -72,6 +75,7 @@ Shader "LX/FogSimulation" {
 
 
                     half _Reverse;
+                    half _SkipSky;
 
                     v2f vert(appdata v)
                     {
@@ -100,9 +104,23 @@ Shader "LX/FogSimulation" {
                         }
 
                         half depth = SAMPLE_TEXTURE2D(_CameraDepthTexture,sampler_CameraDepthTexture,ssuv);//深度图采样
+
+                        // 天空像素（深度为远平面）直接跳过：它的深度是个常数，
+                        // 参与距离雾只会让整片天空被均匀掺一层雾色（还常把云和天空渐变一起冲淡）
+                        if (_SkipSky > 0.5)
+                        {
+                            #if UNITY_REVERSED_Z
+                                if (depth <= 1e-6) return col;
+                            #else
+                                if (depth >= 1.0 - 1e-6) return col;
+                            #endif
+                        }
+
                         // LinearEyeDepth是视角空间下的深度值，范围是 [相机近裁剪面， 相机远裁剪面]
                         half ssdepth = LinearEyeDepth(depth,_ZBufferParams);//线性深度[0.2,70]
-                       
+
+                        // 距离为 0 时 1 - ssdepth/0 会得到 inf → 整屏固定浓度的雾罩，这里兜底
+                        half fogDistance = max(_FogDistance, 1.0);
 
                         half scale = 0;
                         
@@ -111,15 +129,15 @@ Shader "LX/FogSimulation" {
                             //_FogDistance * (1 + 5 * power约等于70
                             //后面这个越小雾气越小，power越大雾气越小
                             half power = saturate(1 - pow(6 * length(half2(i.uv.x - 0.5, (i.uv.y - 0.5) / 1.78)), 2));
-                            scale = saturate(1 - ssdepth / (_FogDistance * (1 + 5 * power * _LightValue)));
+                            scale = saturate(1 - ssdepth / (fogDistance * (1 + 5 * power * _LightValue)));
                                 //距离补正
-                                half brightness = min(ssdepth / _FogDistance*2,3);
+                                half brightness = min(ssdepth / fogDistance*2,3);
                                 col = col * (1+ power * brightness);
                             
                         }
                         else {
                             //scale越小越雾强度越高
-                            scale = saturate(1 - ssdepth / _FogDistance);
+                            scale = saturate(1 - ssdepth / fogDistance);
                         }
                         scale = saturate(scale+_Luminosity * 0.8f+1- _FogIntensity);
 

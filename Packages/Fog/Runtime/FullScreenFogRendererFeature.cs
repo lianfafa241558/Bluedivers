@@ -63,6 +63,13 @@ namespace Meryuhi.Rendering
                 {
                     return;
                 }
+                // 相机堆叠（Camera Stacking）中只有 Base 相机渲染完整场景；Overlay 相机是在 Base 的结果上
+                // 叠加自己的内容，若也跑一次全屏雾，会把 Base 已经合成好的画面（含贴在几何上的贴花、UI）
+                // 再按自己那份深度雾一遍 —— 之前"贴花被吞"就是这个原因
+                if (cameraData.renderType != CameraRenderType.Base)
+                {
+                    return;
+                }
 #if UNITY_EDITOR
                 var sceneView = UnityEditor.SceneView.currentDrawingSceneView;
                 if (sceneView != null && cameraData.camera == sceneView.camera && !sceneView.sceneViewState.fogEnabled)

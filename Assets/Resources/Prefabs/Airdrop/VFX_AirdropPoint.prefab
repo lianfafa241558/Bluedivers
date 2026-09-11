@@ -191,7 +191,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1857868784492786600
 Transform:
   m_ObjectHideFlags: 0
@@ -2594,7 +2594,7 @@ ParticleSystem:
     randomizePerFrame: 0
   ExternalForcesModule:
     serializedVersion: 2
-    enabled: 1
+    enabled: 0
     multiplierCurve:
       serializedVersion: 2
       minMaxState: 0
@@ -10159,6 +10159,9 @@ MonoBehaviour:
   allowSeeRelease: 0
   allowRelease: 0
   useDebug: 0
+  OnEnd:
+    m_PersistentCalls:
+      m_Calls: []
   showScale: 0
 --- !u!1 &7849580979583434667
 GameObject:
