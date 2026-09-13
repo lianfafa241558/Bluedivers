@@ -118,7 +118,7 @@ public class AirdropData_SO : ScriptableObject
             return iconColors[(int)type];
         }
     }
-    private static readonly Color[] colors = new Color[] { new Color(1f,0.5f, 0.5f), new Color(0.5f, 0.8f, 1f), new Color(0.73f, 1f, 0.6f), new Color(1, 0.7f, 0.5f), new Color(0.86f, 0.81f, 0.61f), Color.white };
+    private static readonly Color[] colors = new Color[] { new Color(1f,0.5f, 0.5f), new Color(0.5f, 0.8f, 1f), new Color(0.7f, 1f, 0.55f), new Color(1, 0.7f, 0.5f), new Color(0.86f, 0.81f, 0.61f), Color.white };
 
     private static readonly Color[] iconColors = new Color[] { new Color(0.9f, 0.36f, 0.36f), new Color(0.32f, 0.72f, 0.9f), new Color(0.44f, 0.6f, 0.36f), new Color(1, 0.57f, 0.3f), new Color(0.86f, 0.78f, 0.43f), Color.white };
 

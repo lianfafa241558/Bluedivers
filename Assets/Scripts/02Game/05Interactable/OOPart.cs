@@ -23,6 +23,7 @@ public class OOPart : Furniture_Base
         {
             var dic = TaskManager.Instance.nowTask.collectProperty;
             if (!dic.TryAdd(type, count)) dic[type] += count;
+            Tool.Destroy(gameObject);
         }
         // 采集物先存入玩家携带背包（有上限，满则无法采集）
         else if (owner && owner.TryGetComponent(out PlayerOOPartInventory bag))

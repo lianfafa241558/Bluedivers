@@ -217,7 +217,7 @@ public class AirdropController : MonoBehaviour
             // 否则会同时导致"用完后仍能继续呼叫"和"团灭判负无法触发"
             if (item.State != AirdropState.Unavailable)
             {
-                item.State = AirdropState.Ready;
+                item.State = AirdropState.Sustain;
             }
             WaitRelease = null;
         }

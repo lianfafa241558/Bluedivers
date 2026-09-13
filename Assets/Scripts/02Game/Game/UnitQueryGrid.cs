@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using PEMaths;
 using System.Linq;
 
 using Core;
 using GameContract;
+using UnityEngine;
 
 public class UnitQueryGrid
 {
@@ -106,7 +107,16 @@ public class UnitQueryGrid
         for (int i=0,l= units.Count; i < l; ++i)
         {
             unit = units[i];
-            if (unit.IsValid() && unit.ActorState.HasFlag(targetCfg.actorState)
+
+            //if (customFilter.IsValid())
+            //{
+            //    Debug.LogError(unit.ShowName+"单位有效"+ unit.IsValidMono());
+            //    Debug.LogError(unit.ShowName + "状态有效" + unit.ActorState.HasFlag(targetCfg.actorState));
+            //    Debug.LogError(unit.ShowName + "范围有效" + range.Overlaps(unit.Range));
+            //    Debug.LogError(unit.ShowName + "过滤有效" + customFilter.Invoke(unit));
+
+            //}
+            if (unit.IsValidMono() && unit.ActorState.HasFlag(targetCfg.actorState)
                 && range.Overlaps(unit.Range)
                 && (!customFilter.IsValid() || customFilter.Invoke(unit)))
             {
@@ -128,7 +138,7 @@ public class UnitQueryGrid
         HashSet<I_Actor> filteredUnits = new HashSet<I_Actor>();
         foreach (var unit in units)
         {
-            if (unit.IsValid() && unit.ActorState != ActorState.Dead
+            if (unit.IsValidMono() && unit.ActorState != ActorState.Dead
                 && (customFilter==null || customFilter.Invoke(unit)))
             {
                 filteredUnits.Add(unit);

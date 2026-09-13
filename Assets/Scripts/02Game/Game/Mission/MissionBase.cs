@@ -342,6 +342,7 @@ namespace FpsGame.Mission
         {
             if (entitySize <= 0) return true;
             if (allowUseAirdrop) return true;
+            if (!ActorsManager.Player.IsValidMono()) return true;
             float dis = Vector2.Distance(ActorsManager.Player.Pos.ToVector2(), pos.ToVector2());
            
             bool airdropRange = dis < AirdropRange;

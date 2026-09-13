@@ -88,7 +88,7 @@ MonoBehaviour:
     ExplosionInnerRange: 1
     ExplosionRange: 2
     DestructeRadius: 0
-    ShockwaveRadius: 2
+    ShockwaveRadius: 3
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -286,18 +286,18 @@ MonoBehaviour:
   HearingRange: 25
   AttackRange: 50
   AlertRange: 30
+  Lazy: 0
   KnownTargetTimeout: 4
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &3190650878820689924
 GameObject:
   m_ObjectHideFlags: 0
@@ -877,6 +877,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: 97fb14bbb459ba34e9445874ed6cbc7f, type: 2}
   fxMaterial: {fileID: 2100000, guid: 91fb2f42cd8cb5049bd4ac3f2c870e06, type: 2}
+  events: []
 --- !u!114 &-2911843133968392337
 MonoBehaviour:
   m_ObjectHideFlags: 0

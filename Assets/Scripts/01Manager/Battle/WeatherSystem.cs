@@ -98,7 +98,7 @@ public class WeatherSystem : MonoBehaviour
         if(!BattleManager.Instance.IsStartBattle) return;
         if (_effect == null) return;
         var cam = ActorsManager.Player;
-        if (!cam.IsValid()) return;
+        if (!cam.IsValidMono()) return;
         _effect.transform.position = cam.Pos;
     }
 

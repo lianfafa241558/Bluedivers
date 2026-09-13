@@ -3,6 +3,7 @@ using Core;
 
 using Unity.FPS.Game;
 using UnityEngine;
+using UnityEngine.Events;
 using Utils;
 
 namespace FPSGame.AI
@@ -37,6 +38,8 @@ namespace FPSGame.AI
         /// <summary>是否已提示过"特效条目缺材质"（只提示一次）</summary>
         private bool _warnedNoMaterial;
 
+        [SerializeField]
+        private List<KVP<OccasionTypeEnum, UnityEvent>> events;
 
         protected I_AIController m_Controller;
         private List<KVP<Renderer,Material[]>> originalMaterials;
@@ -247,6 +250,10 @@ namespace FPSGame.AI
         }
 
         protected void TriggerFX(OccasionTypeEnum type,Vector3 pos,Quaternion roat,Transform parent,bool ignoreAudio =false) {
+            if (events.TryGet(type, out var item))
+            {
+                item?.Invoke();
+            }
             var value = GetFxSet(type);
             if (value == null) return;
             // 有音效组用音效组，否则用单个音频剪辑
@@ -269,16 +276,7 @@ namespace FPSGame.AI
             {
                 Instantiate(value.trans, pos, transform.rotation,null);
             }
-            foreach (var item in value.go)
-            {
-                if (!item.go)
-                {
-                    Debug.LogError(gameObject+"状态"+type+"没有设置物体",gameObject);
-                    return;
-                }
-                item.go.SetActive(item.state);
-                item.go.transform.localScale *= item.scale;
-            }
+
         }
 
 

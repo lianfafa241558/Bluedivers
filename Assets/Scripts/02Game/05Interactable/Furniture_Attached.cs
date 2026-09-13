@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Core;
+using Core.Interface;
 using FPSGame.Attribute;
 using GameContract;
 
@@ -32,7 +33,7 @@ namespace FPSGame.Furn
         [InspectorName("任意角度")] AnyAngle = 1 << 8,
     }
 
-    public interface IFurniture
+    public interface IFurniture:IMonoVaild
     {
         float Press { get; set; }
 

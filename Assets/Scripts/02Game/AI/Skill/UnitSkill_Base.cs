@@ -228,11 +228,11 @@ namespace FPSGame.AI
         protected bool HaveTarget(out I_Actor actor)
         {
             actor = m_Controller.Target.Actor;
-            return actor.IsValid() && m_Controller.IsSeeingTarget;
+            return actor.IsValidMono() && m_Controller.IsSeeingTarget;
         }
         protected bool TargetVaild(I_Actor actor)
         {
-            return actor.IsValid()
+            return actor.IsValidMono()
                 && (!HaveTag(SkillTag.TargetIsPlayer)
                 || actor.Type.HasFlag(UnitTypeEnum.Player)
                 || actor.Type.HasFlag(UnitTypeEnum.Friend));

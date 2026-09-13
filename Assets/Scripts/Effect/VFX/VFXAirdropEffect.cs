@@ -42,6 +42,11 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
     private LimitedLife m_Lift;
     private GameObject m_owner;
 
+    /// <summary>本次呼叫是否跳过信标等待阶段("取消空投准备时间"强化)，回收时复位</summary>
+    private bool m_SkipDeployWait;
+    /// <summary>本次呼叫空投舱的落地速度倍率("空投降落速度"强化，1=配置值)，回收时复位</summary>
+    private float m_PodFallScale = 1f;
+
     public float m_lastWarnTime = 0;
     public void SetOwner(GameObject owner, GameObject weaponRoot, Collider collider, Vector3 point) {
         //其实这里有个bug，如果连续放，就会变成同时落地，但是实际上拍空投有Cd，所以直接不管！
@@ -53,7 +58,30 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
             transform.position = point = hit.point;
         }
         BattleEventSub.Airdrop(owner, gameObject, point, data);
-        
+        //武器参数取自信号枪(weaponRoot)，信标特效物体自身不含武器组件
+        if (weaponRoot.IsValid()
+            && weaponRoot.TryGetComponent(out WeaponPlayerController weapon)
+        ){
+            //取消空投准备时间：跳过等待阶段，直接抵达
+            if (weapon.GetAttr("取消空投准备时间") > 0
+                && data.cfg.type == AirdropData_SO.AirdropType.Blue
+            ){
+                m_SkipDeployWait = true;
+            }
+            //自费空投：冷却*0.9（以配置值为基准换算，避免多次呼叫被反复缩减）
+            if (weapon.GetAttr("自费空投") > 0
+                && data.cfg.type == AirdropData_SO.AirdropType.Blue
+            ){
+                data.cool = Mathf.RoundToInt(data.cfg.cool * 0.9f);
+            }
+            //空投降落速度：空投舱落地速度*2
+            if (weapon.GetAttr("空投降落速度") > 0
+                && data.cfg.deliveryType == AirdropDeliveryEnum.Pod
+            ){
+                m_PodFallScale = 2f;
+            }
+        }
+
         transform.parent = null;
         transform.eulerAngles = new(0, owner.transform.eulerAngles.y, 0);
         m_owner = owner;
@@ -80,6 +108,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
     {
 
         m_creatObject = null;
+        if (m_SkipDeployWait) ApplySkipDeployWait();
         SetDisplay();
         switch (data.cfg.deliveryType)
         {
@@ -97,6 +126,22 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
                 break;
         }
     }
+
+    /// <summary>
+    /// 应用"取消空投准备时间"：把部署时间压缩到最短，跳过信标等待阶段。
+    /// 空投舱必须保留自由落体所需时间，其余投送方式(轰炸/飞鹰/运输机)立即抵达。
+    /// 注意：释放时 State 已进入 Arrive 并按原部署时间初始化了剩余时间，这里必须同步 data.time。
+    /// </summary>
+    private void ApplySkipDeployWait()
+    {
+        data.arriveTime = data.cfg.deliveryType == AirdropDeliveryEnum.Pod
+            ? Mathf.Max(1, Mathf.CeilToInt(PodFallTime()))
+            : 0;
+        data.time = data.arriveTime;
+    }
+
+    /// <summary>空投舱自由落体所需时间(不含缓冲)：t=√(2h/g)，g取20 → √(h/10)；落地速度倍率越高用时越短</summary>
+    private float PodFallTime() => Mathf.Sqrt(data.cfg.arriveHeight * 0.1f) / Mathf.Max(m_PodFallScale, 0.01f);
 
     private void Update()
     {
@@ -122,6 +167,10 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
 
     private void OnDisable()
     {
+        //强化状态只对本次呼叫有效，特效被回收(池化复用)前必须复位
+        m_SkipDeployWait = false;
+        m_PodFallScale = 1f;
+
         if (!m_creatObject.IsValid()) return;
 
         switch (data.cfg.deliveryType)
@@ -156,7 +205,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
     {
         //重力加速度g=10,公式h=1/2*g*t^2=5*t^2;
         //反转取时间就是t=sqrt(s/5)开根号
-        m_ExpectedDuration = Mathf.Sqrt(data.cfg.arriveHeight * 0.1f)+0.5f;
+        m_ExpectedDuration = PodFallTime()+0.5f;
         if (m_ExpectedDuration > data.arriveTime) { Debug.LogError(data.cfg.showName + "设置的高度不足以使其在限时内自由落体落地"+"预计需要的时间"+m_ExpectedDuration); }
     }
     void UpdatePod()
@@ -190,6 +239,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
 
                 if (m_creatObject.TryGetComponentInChildren(out AirdropPod pro))//补给舱
                 {
+                    pro.SetFallSpeedScale(m_PodFallScale);
                     pro.Launch(m_owner);
                     pro.OnHit += PodHit;
                 }
@@ -365,7 +415,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
         Quaternion rotation = transform.rotation;
         var go = VFXManager.Creat(neoNimbusVehicle, transform.position, rotation, null).transform;
         //TODO:单位暂时还不能回收
-        if (data.cfg.creatObect.GetComponent<I_Actor>().IsValid())
+        if (data.cfg.creatObect.GetComponent<I_Actor>().IsValidMono())
         {
             var comp = data.cfg.creatObect.GetComponent<CharacterController>();
             m_creatObject = Instantiate(data.cfg.creatObect, go.TransformPoint(0, -2.5f + comp.center.y - comp.height, 1.5f), rotation, go).transform;
@@ -484,7 +534,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect
     }
     private bool InRange()
     {
-        if (GameRoot.GameState != GameStateEnum.Game||!ActorsManager.Player.IsValid()||!data.IsValid()) return false;
+        if (GameRoot.GameState != GameStateEnum.Game||!ActorsManager.Player.IsValidMono()||!data.IsValid()) return false;
          Vector3 pos = ActorsManager.Player.transform.position;
         bool meetWarn = false;
         var size = data.cfg.showRange;

@@ -63,6 +63,11 @@ PrefabInstance:
       propertyPath: cfg._fakeAttrs.Array.data[3].Value
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 2376363769614120270, guid: 7c79c1289406df642b7cc2e64c687227,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.000001407042
+      objectReference: {fileID: 0}
     - target: {fileID: 4501432077687580650, guid: 7c79c1289406df642b7cc2e64c687227,
         type: 3}
       propertyPath: m_LocalPosition.y
@@ -425,12 +430,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 531719c9934cdc647bacfd252c11ff06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Animator: {fileID: 0}
+  Animator: {fileID: 744611665424799885}
   BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 5cb81ed8afa1e7a4da5646aeb9599652, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
-  UseAttack: 0
+  events: []
+  UseAttack: 1
 --- !u!4 &6966671207404786269 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8274762722118717090, guid: 7c79c1289406df642b7cc2e64c687227,

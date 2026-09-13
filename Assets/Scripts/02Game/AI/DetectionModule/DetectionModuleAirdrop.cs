@@ -67,15 +67,23 @@ namespace FPSGame.AI
 
             //if (!RespondAirdrop) return;
             // 尝试搜索范围的单位
-            var target=BattleManager.Instance.FindUnits(new PECircle(new(point), new(GetRadius())),TargetCfg.Enemy);
+            var target = BattleManager.Instance.FindUnits(new PECircle(new(point.ToVector2()), (PEInt)GetRadius()), TargetCfg.Enemy
+                , item => item.Team != m_Actor.Team);
+
+
+            //Tool.DrawShape(Core.ShapeType.Circle, point,Vector3.one* GetRadius(),5,Color.yellow);
+            
+            //Debug.LogWarning("半径"+ GetRadius() + "炮击搜索到的目标"+ target.Count,gameObject);
             if (target.Count > 0)
             {
                 Target.Set(target.RandomTake(BattleManager.Instance.BattleRandom));
+                //Debug.DrawLine(Target.Pos,Target.Pos+Vector3.up*300,Color.red,5);
             }
             // 把空投落点设为当前目标并触发发现，令单位转向攻击该点
             else
             {
                 Target.Set(point + HandleOffest());
+                //Debug.DrawLine(Target.Pos, Target.Pos + Vector3.up * 300, Color.blue, 5);
             }
 
             LastKnownTargetPos = point;
@@ -98,5 +106,7 @@ namespace FPSGame.AI
             }
             return base.Tick();
         }
+
+
     }
 }

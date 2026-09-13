@@ -18,6 +18,8 @@ Material:
   - _USECOLOUR_ON
   - _USEEMISSION_ON
   - _USEOCCLUSION_ON
+  - _UseAlphaClipping
+  - _UseAlphaUV
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -29,7 +31,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _AlphaMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 9de3d54bb0c165342819700dd1eef015, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
@@ -134,14 +136,14 @@ Material:
     - _DirectLightMultiplier: 1
     - _Discoloration: 0
     - _DstBlend: 0
-    - _EdgeWidth: 0.05
+    - _EdgeWidth: 0.1
     - _EmissionMaskAddite: 1
     - _EmissionMulByBaseColor: 1
     - _EmissionScale: 1
     - _EnvironmentReflections: 1
     - _Expression: 24
     - _FixOutlineColor: 1
-    - _FogMaxValue: 1
+    - _FogMaxValue: 0.5
     - _GlossMapScale: 1
     - _Glossiness: 0.4472136
     - _GlossyReflections: 1
@@ -176,8 +178,8 @@ Material:
     - _Surface: 0
     - _Threshold: 0
     - _UVSec: 0
-    - _UseAlphaClipping: 0
-    - _UseAlphaUV: 0
+    - _UseAlphaClipping: 1
+    - _UseAlphaUV: 1
     - _UseAverNormal: 1
     - _UseColour: 1
     - _UseEmission: 1
@@ -194,8 +196,8 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _ColourColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
     - _DissolveValue: {r: 0, g: 0, b: 0, a: 1}
-    - _EdgeColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
-    - _EmissionColor: {r: 5.992157, g: 5.992157, b: 11.984314, a: 1}
+    - _EdgeColor: {r: 0, g: 4.266723, b: 255.99997, a: 1}
+    - _EmissionColor: {r: 7.3980374, g: 6.0235295, b: 11.984314, a: 1}
     - _EmissionMapChannelMask: {r: 0.7, g: 0.5, b: 4, a: 0}
     - _HitColor: {r: 0, g: 0, b: 0, a: 1}
     - _IndirectLightMinColor: {r: 0.09999997, g: 0.09999997, b: 0.09999997, a: 1}

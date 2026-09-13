@@ -52,7 +52,7 @@ namespace Unity.FPS.UI
 
         private void OnPlayerCreate(I_Actor go)
         {
-            if(go.IsValid()) m_WeaponsManager = go.transform.GetComponent<PlayerWeaponsManager>();
+            if(go.IsValidMono()) m_WeaponsManager = go.transform.GetComponent<PlayerWeaponsManager>();
             m_WeaponsManager.OnSwitchedToWeapon += SwitchWeapon;
             m_WeaponsManager.OnAim += OnAim;
             SwitchWeapon(m_WeaponsManager.GetActiveWeapon(), false);

@@ -309,14 +309,14 @@ public class MiniMapWnd : Window
     /// </summary>
     void OnGenericMove(I_Entity entity)
     {
-        if(entity.IsValid()) ActorPoint[entity].anchoredPosition = WorldPosToMapPos(entity.Pos.ToVector2());
+        if(entity.IsValidMono()) ActorPoint[entity].anchoredPosition = WorldPosToMapPos(entity.Pos.ToVector2());
     }
     /// <summary>
     /// 通用的设置旋转
     /// </summary>
     void OnGenericRotate(I_Entity entity)
     {
-        if (entity.IsValid()) ActorPoint[entity].GetChild(0).eulerAngles = new(0, 0, -entity.Angles.y);
+        if (entity.IsValidMono()) ActorPoint[entity].GetChild(0).eulerAngles = new(0, 0, -entity.Angles.y);
     }
 
     #region 玩家控制

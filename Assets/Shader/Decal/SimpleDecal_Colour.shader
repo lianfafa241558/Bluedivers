@@ -85,7 +85,7 @@ Shader "Decal/SimpleDecal_Colour"
                 float4 positionCS : SV_POSITION;
                 float4 screenPos : TEXCOORD0;
                 float4 viewRayOS : TEXCOORD1; // xyz: viewRayOS, w: extra copy of positionVS.z
-                float4 cameraPosOSAndFogFactor : TEXCOORD2;
+                float3 cameraPosOS : TEXCOORD2;
             };
 
             sampler2D _CameraDepthTexture;
@@ -138,9 +138,13 @@ Shader "Decal/SimpleDecal_Colour"
                 //首先在顶点着色器中将所有内容转换为对象空间（贴花空间），这样我们就可以跳过片段着色器中的所有matrix mul（）
                 o.viewRayOS.xyz = mul((float3x3)ViewToObjectMatrix, viewRay);
                 //相机位置变换到贴花空间，作为 frag 中深度重建射线的起点
-                o.cameraPosOSAndFogFactor.xyz = mul(ViewToObjectMatrix, float4(0,0,0,1)).xyz; //硬代码0或1可以实现许多编译器优化
-                // 设置雾气参数
-                o.cameraPosOSAndFogFactor.a = ComputeFogFactor(o.positionCS.z);
+                o.cameraPosOS = mul(ViewToObjectMatrix, float4(0,0,0,1)).xyz; //硬代码0或1可以实现许多编译器优化
+
+                // 注意：这里【不能】按普通物体那样用顶点 o.positionCS.z 算雾因子！
+                // 本 Shader 用一个 cube 罩住目标区域（TheMarker.prefab 里该 cube 缩放 199），
+                // 而 Cull Front 渲染到的是 cube 的【背面】——比真正的贴花表面远得多（可差上百米），
+                // 顶点插值出的雾因子会按"远端 cube 面"的距离算雾，导致雾明显偏浓。
+                // 雾因子改为在 frag 中按重建出的场景深度计算，见下方。
 
                 return o;
             }
@@ -178,7 +182,7 @@ Shader "Decal/SimpleDecal_Colour"
                 //任意空间中的场景深度=rayStartPos+rayDir*rayLength
                 //这里是ObjectSpace（OS）或DecalSpace中的所有数据
                 //请注意，viewRayOS不是一个单位向量，所以不要对其进行归一化，它是一个方向向量，视图空间z的长度为1
-                decalSpaceScenePos = i.cameraPosOSAndFogFactor.xyz + i.viewRayOS.xyz * sceneDepthVS;
+                decalSpaceScenePos = i.cameraPosOS + i.viewRayOS.xyz * sceneDepthVS;
 
 
                 //丢弃“超出立方体体积”的像素
@@ -231,10 +235,14 @@ Shader "Decal/SimpleDecal_Colour"
                 col = baseCol+withColour;
 
 
-                #if _UnityFogEnable&& (defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2))
-                //col.a *= saturate(1-i.cameraPosOSAndFogFactor.a);
-                //unity的雾气效果
-                col.rgb = MixFog(col.rgb, i.cameraPosOSAndFogFactor.a);
+                #if _UnityFogEnable && (defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2))
+                // unity的雾气效果：雾因子必须按【真实被贴表面】的深度算，不能用 cube 顶点算（原因见 vert）。
+                // sceneDepthVS 正是从 _CameraDepthTexture 重建出来的场景表面视空间深度，
+                // 也就是贴花所覆盖的那个像素的真实距离——和背景/地形算出来的雾完全一致，且省掉一次矩阵乘法。
+                // 换算方式对齐 URP 官方片元雾（ShaderVariablesFunctions.hlsl 的 InitializeInputDataFog）：
+                // 视空间深度以相机处为 0，重映射到近平面（减去 _ProjectionParams.y）
+                float fogFactor = ComputeFogFactorZ0ToFar(max(sceneDepthVS - _ProjectionParams.y, 0.0));
+                col.rgb = MixFog(col.rgb, fogFactor);
                 #endif
 
 

@@ -46,7 +46,7 @@ public class GuidedShelling : MonoBehaviour
         if (currentTarget == null|| currentTarget.ActorState == Core.ActorState.Dead)
         {
             searchTimer += Time.deltaTime;
-            if (searchTimer >= searchInterval && (!currentTarget.IsValid()||allowRelock))
+            if (searchTimer >= searchInterval && (!currentTarget.IsValidMono()||allowRelock))
             {
                 SearchEnemy();
                 searchTimer = 0;
@@ -97,7 +97,7 @@ public class GuidedShelling : MonoBehaviour
     private void MoveToTarget()
     {
         // 目标丢失
-        if (!currentTarget.IsValid()) return;
+        if (!currentTarget.IsValidMono()) return;
 
         float distance = Vector3.Distance(lastPoint, currentTarget.Pos);
 

@@ -468,6 +468,11 @@ public class ArmamentWnd : Window
             Debug.LogError("收到玩家选择战备的回调错误，玩家"+ playerIndex);
             return;
         }
+        if (index >=4)
+        {
+            Debug.LogError("收到玩家选择战备的回调错误，战备" + index);
+            return;
+        }
         roomManager.players[playerIndex].airdrop[index] = id;
         var child = armamentRoot.GetChild(playerIndex, 5, index);
         buttons[child] = id;

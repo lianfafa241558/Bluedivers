@@ -22,8 +22,5 @@ namespace FPSGame.AI
         /// <summary>实例化到命中点的物体</summary>
         [InspectorName("挂点物体")]
         public GameObject trans;
-        /// <summary>护甲破坏表现列表</summary>
-        [InspectorName("护甲破坏表现")]
-        public List<ArmorBreakEffect> go = new();
     }
 }

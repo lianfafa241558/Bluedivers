@@ -1,22 +1,32 @@
 using System;
+using Core.Interface;
 using UnityEngine;
 
 public static class ObjectIsValid 
 {
 
     // Unity原生Object
-    public static bool IsValid(this UnityEngine.Object obj)
-      => obj != null && !ReferenceEquals(obj, null) && !obj.Equals(null);
-
+    //public static bool IsValid(this UnityEngine.Object obj)
+    //  => obj != null && !ReferenceEquals(obj, null) && !obj.Equals(null);
+    public static bool IsValid(this UnityEngine.Object obj)=> obj != null;
+    /*
+    public static bool IsValidMono(this IMonoVaild obj)
+    {
+        return obj is UnityEngine.Object o && o != null; ;
+    }
+    */
     // 普通C#对象(没办法判断销毁
     public static bool IsValid(this System.Object obj)
         => obj != null && !obj.Equals(null);
 
-    public static bool IsValid(this GameContract.I_Actor actor)
-    {
-        // 直接安全转Unity对象，调用你已有的正确方法
-        return actor is UnityEngine.Object unityObj && unityObj.IsValid();
-    }
+
+    
+
+    //public static bool IsValid(this GameContract.I_Actor actor)
+    //{
+    // 直接安全转Unity对象，调用你已有的正确方法
+    //    return actor is UnityEngine.Object unityObj && unityObj.IsValid();
+    //}
 
     // 字符串
     public static bool IsValid(this string obj)

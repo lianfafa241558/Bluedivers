@@ -59,6 +59,16 @@ namespace Unity.FPS.Gameplay
 
         private readonly List<Collider> m_IgnoredColliders = new();
 
+        /// <summary>已结算过伤害的单位(以 I_Damagable.ActorGo 标识)，保证同一单位只被结算一次</summary>
+        private readonly HashSet<GameObject> m_HitUnits = new();
+
+        /// <summary>配置的重力加速度基准值(Awake 时取自 Gravity)，避免池化实例被反复叠加修改</summary>
+        private float m_BaseGravity;
+        /// <summary>落地速度倍率(1=配置值)，由外部通过 <see cref="SetFallSpeedScale"/> 下发</summary>
+        private float m_FallSpeedScale = 1f;
+        /// <summary>本次下落的实际重力加速度 = 基准重力 × 倍率²</summary>
+        private float m_Gravity;
+
         private Vector3 m_InitialPosition;
         private Vector3 m_LastRootPosition;
         private Vector3 m_Velocity;
@@ -68,12 +78,15 @@ namespace Unity.FPS.Gameplay
         private void Awake()
         {
             if (!Root) Root = transform;
+            m_BaseGravity = Gravity;
+            m_Gravity = m_BaseGravity;
         }
 
         private void OnEnable()
         {
             // 未下发前保持静止，等待外部调用 Launch
             m_IsStop = true;
+            m_FallSpeedScale = 1f;
             if (fire) fire.SetActive(false);
         }
 
@@ -90,6 +103,17 @@ namespace Unity.FPS.Gameplay
         }
 
         /// <summary>
+        /// 设置落地速度倍率(1=配置值，需在 <see cref="Launch"/> 之前调用)。
+        /// 自由落体有 V=√(2gh)、t=√(2h/g)：下落高度不变时把重力按倍率的平方放大，
+        /// 即可让落地速度恰好放大指定倍率，同时落体用时缩小同样倍率。
+        /// </summary>
+        /// <param name="scale">落地速度倍率，0.01 起有效</param>
+        public void SetFallSpeedScale(float scale)
+        {
+            m_FallSpeedScale = Mathf.Max(scale, 0.01f);
+        }
+
+        /// <summary>
         /// 部署空投舱并开始自由落体
         /// </summary>
         /// <param name="owner">伤害来源(空投发起者)</param>
@@ -97,13 +121,15 @@ namespace Unity.FPS.Gameplay
         {
             Owner = owner;
 
+            m_Gravity = m_BaseGravity * m_FallSpeedScale * m_FallSpeedScale;
             m_InitialPosition = Root.position;
             m_LastRootPosition = m_InitialPosition;
-            m_Velocity = Vector3.down * InitialFallSpeed;
+            m_Velocity = Vector3.down * (InitialFallSpeed * m_FallSpeedScale);
             m_IsStop = false;
 
             // 每次下发重新采样自身碰撞体，避免复用时残留上一次的忽略列表
             m_IgnoredColliders.Clear();
+            m_HitUnits.Clear();
             GetComponentsInChildren(m_IgnoredColliders);
 
             // 未命中地面时退化为 0 高度，保证始终有落地兜底
@@ -129,7 +155,7 @@ namespace Unity.FPS.Gameplay
         private bool Move()
         {
             transform.position += m_Velocity * Time.fixedDeltaTime;
-            m_Velocity += Vector3.down * Gravity * Time.fixedDeltaTime;
+            m_Velocity += Vector3.down * m_Gravity * Time.fixedDeltaTime;
 
             if (Root.position.y > m_LandingHeight) return true;
 
@@ -169,13 +195,34 @@ namespace Unity.FPS.Gameplay
             Hit(closestHit);
         }
 
-        /// <summary>撞击结算：外部回调 → 通用伤害链路 → 自身状态处理</summary>
+        /// <summary>撞击结算：登记忽略目标 → 外部回调 → 通用伤害链路 → 自身状态处理</summary>
         private void Hit(RaycastHit hit)
         {
+            // 先登记命中目标，避免后续帧扫掠到同一碰撞体/单位造成重复伤害
+            RegisterHit(hit.collider);
+
             var hitData = BuildHitData(hit.point, hit.normal, hit.collider);
             if (DamageData.IsValid()) FpsHelper.Hit(hitData);
             OnHit?.Invoke(hitData);
             ResolveHit(hitData);
+        }
+
+        /// <summary>
+        /// 登记已命中的目标(加入忽略列表)，保证同一目标只结算一次伤害
+        /// - 碰撞体：同一碰撞体可能被相邻帧的扫掠段重复命中
+        /// - 单位：一个单位可能由多个肢体碰撞体组成，只应对该单位结算一次
+        /// </summary>
+        private void RegisterHit(Collider collider)
+        {
+            if (!collider) return;
+
+            if (!m_IgnoredColliders.Contains(collider)) m_IgnoredColliders.Add(collider);
+
+            if (collider.TryGetComponent(out I_Damagable damageable))
+            {
+                var unit = damageable.ActorGo;
+                if (unit) m_HitUnits.Add(unit);
+            }
         }
 
         /// <summary>落地结算：无碰撞体，仅产生范围伤害</summary>
@@ -215,7 +262,7 @@ namespace Unity.FPS.Gameplay
             // 单向盾/忽略碰撞：加入忽略列表后继续下落(穿透)
             if (collider && collider.GetComponent<IgnoreHitDetection>())
             {
-                m_IgnoredColliders.Add(collider);
+                if (!m_IgnoredColliders.Contains(collider)) m_IgnoredColliders.Add(collider);
                 return;
             }
             // 没有碰撞体说明是落地结算
@@ -245,8 +292,17 @@ namespace Unity.FPS.Gameplay
             // 忽略没有可损坏组件的触发器的命中
             if (hit.collider.isTrigger && hit.collider.GetComponent<Damageable>() == null) return false;
 
-            // 忽略自身碰撞体
-            return !m_IgnoredColliders.Contains(hit.collider);
+            // 忽略已命中登记过的碰撞体(自身碰撞体、单向盾、命中后登记的目标)
+            if (m_IgnoredColliders.Contains(hit.collider)) return false;
+
+            // 忽略已结算过伤害的单位(同一单位的其他肢体碰撞体不再命中)
+            if (hit.collider.TryGetComponent(out I_Damagable damageable))
+            {
+                var unit = damageable.ActorGo;
+                if (unit && m_HitUnits.Contains(unit)) return false;
+            }
+
+            return true;
         }
 
         /// <summary>停止下落并关闭尾焰</summary>

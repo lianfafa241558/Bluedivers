@@ -72,7 +72,11 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
         ps.transform.rotation = roation;
         ps.transform.localScale = Vector3.one;
         ps.SetActive(true);
-        while (parent!=default && (parent.gameObject.activeSelf == false || parent.localScale == Vector3.zero)) parent = parent.parent;
+        while (parent != default && (parent.gameObject.activeSelf == false || parent.localScale == Vector3.zero))
+        {
+            parent = parent.parent;
+            Debug.LogError(ps+"上升父级到" + parent,ps);
+        }
         MoveBackToCurrentScene(ps);
         ps.transform.SetParent(parent);
 

@@ -56,7 +56,7 @@ public class OperationWnd : Window
     private void Update()
     {
         if (m_IsThirdPerson) return;
-        if (!m_Player && ActorsManager.Player.IsValid()) TryPlayer();
+        if (!m_Player && ActorsManager.Player.IsValidMono()) TryPlayer();
         if (!m_Player) return;
         if (furn != m_Player.target)
         {

@@ -15,7 +15,7 @@ namespace FPSGame.AI
         //Ondamaged
         //Ondeath
         //IsActive
-
+        //Attack/SpecialAttack1/SpecialAttack2/SpecialAttack3
         private float lastTriggerAttackTime;
         private int lastTriggerAttackName;
 

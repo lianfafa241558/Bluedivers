@@ -218,6 +218,8 @@ namespace Unity.FPS.Game
 
         /// <summary>直击穿甲等级（随蓄力缩放，charge=0 为 DirectAP，charge=1 为 DirectAP×DirectAPChargeScale）</summary>
         public int GetDirectAP(PEInt charge) => _HandleAP(DirectAP, DirectAPChargeScale, charge);
+
+
         /// <summary>爆炸穿甲等级（随蓄力缩放）</summary>
         public int GetExplosionAP(PEInt charge) => _HandleAP(ExplosionAP, ExplosionAPChargeScale, charge);
 

@@ -635,7 +635,7 @@ namespace Unity.FPS.Game
                     LockInterval.CurrValue -= LockInterval.FinalValue;
                     for (int i = WeaponLockTarget.Count - 1; i >= 0; --i)
                     {
-                        if (!WeaponLockTarget[i].IsValid())
+                        if (!WeaponLockTarget[i].IsValidMono())
                         {
                             WeaponLockTarget.RemoveAt(i);
                         }
@@ -690,7 +690,7 @@ namespace Unity.FPS.Game
                 var tar = WeaponLockTarget[WeaponLockTarget.Count - 1];
                 WeaponLockTarget.RemoveAt(WeaponLockTarget.Count - 1);
                 //跳过死亡单位
-                if (!tar.IsValid() || tar.ActorState == ActorState.Dead) continue;
+                if (!tar.IsValidMono() || tar.ActorState == ActorState.Dead) continue;
                 if (projectile is Gameplay.ProjectileLockStandard lockPro)
                 {
                     lockPro.SetTarget(tar.AimPoint);

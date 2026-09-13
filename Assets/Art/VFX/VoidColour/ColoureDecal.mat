@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: ffcae3b265e3a8145a16fcc9d07eef4f, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _UnityFogEnable
   m_InvalidKeywords:
   - _EMISSION
   - _ProjectionAngleDiscardEnable
@@ -198,7 +199,7 @@ Material:
     - _SupportOrthographicCamera: 0
     - _Surface: 0
     - _UVSec: 0
-    - _UnityFogEnable: 0
+    - _UnityFogEnable: 1
     - _UseColour: 1
     - _UseMainAlpha: 1
     - _UseMaskMap: 0

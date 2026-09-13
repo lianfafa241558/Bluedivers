@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: f257f2ec0c2167c48859a067ac00b592, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _UnityFogEnable
   m_InvalidKeywords:
   - _ALPHAPREMULTIPLY_ON
   - _EMISSION
@@ -149,7 +150,7 @@ Material:
     - _TimeScale: 1
     - _Transpose: 0
     - _UVSec: 0
-    - _UnityFogEnable: 0
+    - _UnityFogEnable: 1
     - _UseFresnel: 0
     - _UseLight: 0
     - _UseMoveST: 1

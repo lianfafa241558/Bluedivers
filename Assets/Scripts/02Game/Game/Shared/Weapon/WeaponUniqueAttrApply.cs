@@ -6,7 +6,9 @@ namespace Unity.FPS.Game
 {
     using Weapon = WeaponPlayerController;
     using Info =  WeaponPlayerController.AttrInfo;
-
+    /// <summary>
+    /// 特殊的升级应用的场合
+    /// </summary>
     public static class WeaponUniqueAttributeApplier
     {
         private static Dictionary<string, UnityAction<Weapon, Info>> data = new() {

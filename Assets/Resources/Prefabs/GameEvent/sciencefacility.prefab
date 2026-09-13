@@ -241,11 +241,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 353e2a5a83e815841b7088f2d19c38b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHealth: 1000
+  MaxHealth: 5000
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 6443835993258970330}
-  demolishValue: -1
+  demolishValue: 50
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -283,6 +283,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: dc65f4d8b2d398c409d766e93f18d227, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
+  events: []
   UseAttack: 0
 --- !u!114 &6411679824077960959
 MonoBehaviour:

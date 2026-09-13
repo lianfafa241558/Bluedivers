@@ -113,7 +113,7 @@ Shader "Decal/Screen Space Decal"
                 float4 positionCS : SV_POSITION;
                 float4 screenPos : TEXCOORD0;
                 float4 viewRayOS : TEXCOORD1; // xyz: viewRayOS, w: extra copy of positionVS.z 
-                float4 cameraPosOSAndFogFactor : TEXCOORD2;
+                float3 cameraPosOS : TEXCOORD2;
                 float3 normalWS : TEXCOORD3; // 世界空间法线
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
@@ -153,12 +153,9 @@ Shader "Decal/Screen Space Decal"
 
                 o.positionCS = vertexPositionInput.positionCS;
                 o.normalWS = TransformObjectToWorldNormal(input.normal);
-                // regular unity fog
-#if _UnityFogEnable
-                o.cameraPosOSAndFogFactor.a = ComputeFogFactor(o.positionCS.z);
-#else
-                o.cameraPosOSAndFogFactor.a = 0;
-#endif
+                // regular unity fog：雾因子不在这里按顶点 o.positionCS.z 算（原因见 frag 里 MixFog 处的说明）。
+                // 本 Shader 用 cube 罩住目标区域、Cull Front 渲染到的是 cube 的【背面】，
+                // 顶点雾因子对应用的是远端 cube 面的距离，比真正的被贴表面远得多 → 雾会明显偏浓。
 
                 // prepare depth texture's screen space UV
                 // 准备深度纹理的屏幕空间 UV
@@ -186,7 +183,7 @@ Shader "Decal/Screen Space Decal"
 
                 // transform everything to object space(decal space) in vertex shader first, so we can skip all matrix mul() in fragment shader
                 o.viewRayOS.xyz = mul((float3x3)ViewToObjectMatrix, viewRay);
-                o.cameraPosOSAndFogFactor.xyz = mul(ViewToObjectMatrix, float4(0,0,0,1)).xyz; // hard code 0 or 1 can enable many compiler optimization
+                o.cameraPosOS = mul(ViewToObjectMatrix, float4(0,0,0,1)).xyz; // hard code 0 or 1 can enable many compiler optimization
 
                 return o;
             }
@@ -216,6 +213,9 @@ Shader "Decal/Screen Space Decal"
                 float sceneRawDepth = tex2D(_CameraDepthTexture, screenSpaceUV).r;
 
                 float3 decalSpaceScenePos;
+                // 场景表面的视空间深度：既用于重建贴花空间坐标，也是后面算雾因子的唯一正确来源（见下方 MixFog 处）。
+                // 提到正射/透视分支外声明，两条路各自赋值。
+                float sceneDepthVS = 0;
 
 #if _SupportOrthographicCamera
                 // we have to support both orthographic and perspective camera projection
@@ -223,7 +223,7 @@ Shader "Decal/Screen Space Decal"
                 // (should we use UNITY_BRANCH here?) decided NO because https://forum.unity.com/threads/correct-use-of-unity_branch.476804/
                 if(unity_OrthoParams.w)
                 {
-                    float sceneDepthVS = LinearDepthToEyeDepth(sceneRawDepth);
+                    sceneDepthVS = LinearDepthToEyeDepth(sceneRawDepth);
 
                     //***Used a few lines from Asset: Lux URP Essentials by forst***
                     // Edit: The copied Lux URP stopped working at some point, and no one even knew why it worked in the first place 
@@ -241,12 +241,12 @@ Shader "Decal/Screen Space Decal"
 #endif
                     // if perspective camera, LinearEyeDepth will handle everything for user
                     // remember we can't use LinearEyeDepth for orthographic camera!
-                    float sceneDepthVS = LinearEyeDepth(sceneRawDepth,_ZBufferParams);
+                    sceneDepthVS = LinearEyeDepth(sceneRawDepth,_ZBufferParams);
 
                     // scene depth in any space = rayStartPos + rayDir * rayLength
                     // here all data in ObjectSpace(OS) or DecalSpace
                     // be careful, viewRayOS is not a unit vector, so don't normalize it, it is a direction vector which view space z's length is 1
-                    decalSpaceScenePos = i.cameraPosOSAndFogFactor.xyz + i.viewRayOS.xyz * sceneDepthVS;
+                    decalSpaceScenePos = i.cameraPosOS + i.viewRayOS.xyz * sceneDepthVS;
                     
 #if _SupportOrthographicCamera
                 }
@@ -287,10 +287,16 @@ Shader "Decal/Screen Space Decal"
                 col.a = saturate(col.a);
                 col.rgb *= lerp(1, col.a,_MulAlphaToRGB);// extra multiply alpha to RGB
 
-#if _UnityFogEnable
+#if _UnityFogEnable && (defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2))
                 // Mix the pixel color with fogColor. You can optionaly use MixFogColor to override the fogColor
                 // with a custom one.
-                col.rgb = MixFog(col.rgb, i.cameraPosOSAndFogFactor.a);
+                // 雾因子必须按【真实被贴表面】的深度算，不能用 cube 顶点算（原因见 vert）。
+                // sceneDepthVS 是从 _CameraDepthTexture 重建出来的场景表面视空间深度，也就是贴花覆盖的那个
+                // 像素的真实距离——和背景/地形算出来的雾完全一致，且省掉一次矩阵乘法。
+                // 换算方式对齐 URP 官方片元雾（ShaderVariablesFunctions.hlsl 的 InitializeInputDataFog）：
+                // 视空间深度以相机处为 0，重映射到近平面（减去 _ProjectionParams.y）
+                float fogFactor = ComputeFogFactorZ0ToFar(max(sceneDepthVS - _ProjectionParams.y, 0.0));
+                col.rgb = MixFog(col.rgb, fogFactor);
 #endif
 
                 // 1. 获取主方向光

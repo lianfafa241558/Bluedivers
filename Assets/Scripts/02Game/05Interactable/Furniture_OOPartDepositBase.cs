@@ -17,7 +17,7 @@ using UnityEngine;
 public abstract class Furniture_OOPartDepositBase : Furniture_Base, IStepPress
 {
     /// <summary>每秒提交到容器的欧帕兹数量（恒定速率）</summary>
-    public const int SubmitPerSecond = 10;
+    public const int SubmitPerSecond = 5;
 
     /// <summary>单个欧帕兹所需的长按时间（秒）</summary>
     private const float PerUnitTime = 1f / SubmitPerSecond;

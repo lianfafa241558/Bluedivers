@@ -23,7 +23,7 @@ public class EquipmentUninitiatedUI : WheelUI
 
     private void TryShow()
     {
-        if(!m_Controller&& ActorsManager.Player.IsValid()) m_Controller = ActorsManager.Player.transform.GetComponent<EquipController>();
+        if(!m_Controller&& ActorsManager.Player.IsValidMono()) m_Controller = ActorsManager.Player.transform.GetComponent<EquipController>();
         if (m_Controller != null&& m_Controller.Equips.Count>0)
         {
             Show(m_Controller.Equips

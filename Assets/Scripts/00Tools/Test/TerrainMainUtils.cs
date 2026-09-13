@@ -113,7 +113,7 @@ public static partial class TerrainUtils
     /// <param name="isSet">设置/修改</param>
     public static IEnumerator ModifyHeightMap(Vector3 pos, float innerRadius, float outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true)
     {
-
+        if (!Main) yield break;
         yield return ModifyHeightMap(WSToUV(pos), pos.y, innerRadius, outerRadius, depth, shape, isSet, refresh);
     }
 

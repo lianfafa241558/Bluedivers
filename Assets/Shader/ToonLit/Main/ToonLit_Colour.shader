@@ -19,6 +19,14 @@ Shader "ToonLit/ToonLit_Colour"
         _BlendingMap("混合纹理", 2D) = "white" {}
         [Toggle(_UseUV1)]_UseUV1("使用UV1作为混合", Float) = 0
 
+        [Header(Dissolve)]
+        [Toggle(_UseAlphaClipping)]_UseAlphaClipping("使用溶解", Float) = 0
+        [Toggle(_UseAlphaUV)]_UseAlphaUV("使用UV进行溶解", Float) = 0
+        _AlphaMap("溶解贴图", 2D) = "white" {}
+        _DissolveValue("溶解系数", Color) = (0,0,0)//实际上float就行，但是为了方便控制
+        _EdgeWidth ("边缘宽度", Range(0, 0.1)) = 0.05
+        [HDR]_EdgeColor("边缘颜色", Color) = (0.8,0.8,0.8)
+
         [Header(Emission)]
         [Toggle]_UseEmission("使用自发光", Float) = 0
         [Toggle]_EmissionMaskAddite("使用每个通道作为蒙版", Float) = 0
@@ -30,7 +38,7 @@ Shader "ToonLit/ToonLit_Colour"
 
          [Header(Shade)]
         _CelShadeSoftness("阴影切面的平滑程度", Range(0,1)) = 0.05
-
+        _FogMaxValue("雾气系数", Range(0,1)) = 1
         [Header(_Colour)]
          [Toggle]_UseColour("使用色彩", Float) = 0
         

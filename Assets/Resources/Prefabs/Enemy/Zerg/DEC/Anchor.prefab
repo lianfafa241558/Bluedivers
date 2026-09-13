@@ -132,18 +132,18 @@ MonoBehaviour:
   HearingRange: 80
   AttackRange: 0
   AlertRange: 50
+  Lazy: 0
   KnownTargetTimeout: 12
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &1978288453588925801
 GameObject:
   m_ObjectHideFlags: 0
@@ -5269,11 +5269,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 531719c9934cdc647bacfd252c11ff06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Animator: {fileID: 0}
+  Animator: {fileID: 8620854125652032846}
   BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 2a3cf663277d9b0439baf3273df8c9e5, type: 2}
   fxMaterial: {fileID: 2100000, guid: 0c1a506957c9319449b20b1a059b361a, type: 2}
+  events: []
   UseAttack: 0
 --- !u!1 &7519563764043128144
 GameObject:

@@ -473,7 +473,8 @@ namespace Unity.FPS.Game {
             if (!TryPredictLanding(origin, direction, out var landPos, out var normal, out float flightTime)) return;
 
             // 物体前向(+Z)对齐落点表面法线(即物体"朝上"立在落点)
-            Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, normal);
+            //Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, normal);
+            Quaternion rotation = Quaternion.LookRotation(normal, Vector3.up);
             var marker = VFXManager.Creat(data.LandingPrefab, landPos, rotation);
             if (!marker) return;
 

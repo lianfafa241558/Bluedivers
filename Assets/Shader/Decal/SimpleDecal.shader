@@ -85,7 +85,7 @@ Shader "Decal/SimpleDecal"
                 float4 positionCS : SV_POSITION;
                 float4 screenPos : TEXCOORD0;
                 float4 viewRayOS : TEXCOORD1; // xyz: viewRayOS, w: extra copy of positionVS.z 
-                float4 cameraPosOSAndFogFactor : TEXCOORD2;
+                float3 cameraPosOS : TEXCOORD2;
                 float4 color : COLOR;
             };
 
@@ -109,8 +109,9 @@ Shader "Decal/SimpleDecal"
                 VertexPositionInputs vertexPositionInput = GetVertexPositionInputs(input.positionOS);
                 o.positionCS = vertexPositionInput.positionCS;
 
-                // 设置雾气参数
-                o.cameraPosOSAndFogFactor.a = ComputeFogFactor(o.positionCS.z);
+                // 注意：这里【不能】按普通物体那样用顶点 o.positionCS.z 算雾因子（详见 frag 里 MixFog 处的说明）：
+                // 贴花是用一个 cube 罩住目标区域、且 Cull Front 渲染到的是 cube 的【背面】，
+                // 顶点插值出的雾因子对应用的是远端 cube 面的距离，比真正的被贴表面远得多 → 雾会明显偏浓。
 
                 // 准备深度纹理的屏幕空间 UV
                 o.screenPos = ComputeScreenPos(o.positionCS);
@@ -131,7 +132,7 @@ Shader "Decal/SimpleDecal"
 
                 //首先在顶点着色器中将所有内容转换为对象空间（贴花空间），这样我们就可以跳过片段着色器中的所有matrix mul（）
                 o.viewRayOS.xyz = mul((float3x3)ViewToObjectMatrix, viewRay);
-                o.cameraPosOSAndFogFactor.xyz = mul(ViewToObjectMatrix, float4(0,0,0,1)).xyz; //硬代码0或1可以实现许多编译器优化
+                o.cameraPosOS = mul(ViewToObjectMatrix, float4(0,0,0,1)).xyz; //硬代码0或1可以实现许多编译器优化
 
                 return o;
             }
@@ -168,7 +169,7 @@ Shader "Decal/SimpleDecal"
                 //任意空间中的场景深度=rayStartPos+rayDir*rayLength
                 //这里是ObjectSpace（OS）或DecalSpace中的所有数据
                 //请注意，viewRayOS不是一个单位向量，所以不要对其进行归一化，它是一个方向向量，视图空间z的长度为1
-                decalSpaceScenePos = i.cameraPosOSAndFogFactor.xyz + i.viewRayOS.xyz * sceneDepthVS;
+                decalSpaceScenePos = i.cameraPosOS + i.viewRayOS.xyz * sceneDepthVS;
 
 
                 // convert unity cube's [-0.5,0.5] vertex pos range to [0,1] uv. Only works if you use a unity cube in mesh filter!
@@ -191,8 +192,14 @@ Shader "Decal/SimpleDecal"
 
                 col.a = saturate(col.a);
 
-                //unity的雾气效果
-                col.rgb = MixFog(col.rgb, i.cameraPosOSAndFogFactor.a);
+                // unity的雾气效果：雾因子必须按【真实被贴表面】的深度算，不能用 cube 顶点算（原因见 vert）。
+                // sceneDepthVS 是从 _CameraDepthTexture 重建出来的场景表面视空间深度，也就是贴花覆盖的那个
+                // 像素的真实距离——和背景/地形算出来的雾完全一致，且省掉一次矩阵乘法。
+                // 换算方式对齐 URP 官方片元雾（ShaderVariablesFunctions.hlsl 的 InitializeInputDataFog）：
+                // 视空间深度以相机处为 0，重映射到近平面（减去 _ProjectionParams.y）。
+                // 未开启雾关键字时 ComputeFogFactorZ0ToFar 返回 0、MixFog 原样返回，无需额外判断
+                float fogFactor = ComputeFogFactorZ0ToFar(max(sceneDepthVS - _ProjectionParams.y, 0.0));
+                col.rgb = MixFog(col.rgb, fogFactor);
 
                 // 预乘 Alpha：确保透明区域完全不影响背景（保留背景雾效）
                 col.rgb *= col.a;

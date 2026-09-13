@@ -215,6 +215,15 @@ namespace Unity.FPS.Game
             info = normal;
         }
 
+        public float GetAttr(string name)
+        {
+            if (m_Parameter.TryGetValue(name,out var info))
+            {
+                return info.Value;
+            }
+            return 0;
+        }
+
         public WeaponUpgradeData_SO GetUpgrade(int y,int x)
         {
             return Upgrade[y].Value[x];

@@ -243,7 +243,7 @@ public class SelectRoleWnd : Window
     {
 
         if(meetSave)ArchiveSvc.Archive.Save();
-        if(ActorsManager.Player.IsValid()) ActorsManager.Player.gameObject.SetActive(true);
+        if(ActorsManager.Player.IsValidMono()) ActorsManager.Player.gameObject.SetActive(true);
         WindowState = WindowStateEnum.Game;
         if (m_SelectRoleCamera) SetActive(m_SelectRoleCamera.gameObject, false);
         if(m_SelectPoint) SetActive(m_SelectPoint.gameObject, false);

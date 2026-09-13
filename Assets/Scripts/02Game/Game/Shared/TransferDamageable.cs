@@ -39,6 +39,7 @@ namespace Unity.FPS.Game
 
         public void InflictDamage(DamagePacket packet)
         {
+            //转移到主肢体
             Source.InflictDamage(packet);
         }
 

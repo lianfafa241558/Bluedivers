@@ -60,11 +60,11 @@ namespace FPSGame.Gameplay
             //1.天上
             //2.按住空格(跳跃键)
             //3.不是这一帧刚开始的跳跃
-            if (Owner.IsValid() && m_PlayerCharacterController.IsGrounded&& m_CanUse)
+            if (Owner.IsValidMono() && m_PlayerCharacterController.IsGrounded&& m_CanUse)
             {
                 m_CanUse = false;
             }
-            else if (Owner.IsValid() &&
+            else if (Owner.IsValidMono() &&
                 !m_PlayerCharacterController.HasJumpedThisFrame && m_InputHandler.GetJumpInputDown() && !m_CanUse)
             {
                 m_CanUse = true;
@@ -73,7 +73,7 @@ namespace FPSGame.Gameplay
             }
 
             // jetpack usage
-            bool jetpackIsInUse = m_CanUse && Owner.IsValid() && CurrentFillRatio > 0f &&
+            bool jetpackIsInUse = m_CanUse && Owner.IsValidMono() && CurrentFillRatio > 0f &&
                                   m_InputHandler.GetJumpInputHeld();
             if (jetpackIsInUse)
             {

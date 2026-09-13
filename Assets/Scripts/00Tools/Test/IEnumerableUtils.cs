@@ -161,6 +161,22 @@ namespace Utils
 
         }
 
+        public static bool TryGet<K,V>(this List<KVP<K,V>> list,K key, out V output)
+        {
+            int index = list.FindIndex(item=>Equals(item.Key,key));
+            if (index != -1)
+            {
+                output = list[index].Value;
+                return true;
+            }
+            else
+            {
+                output = default;
+                return false;
+            }
+
+        }
+
 
         public static bool Contains<K, V>(this List<KVP<K, V>> list, K key)
         {

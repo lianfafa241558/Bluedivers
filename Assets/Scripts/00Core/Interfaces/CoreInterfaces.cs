@@ -1,15 +1,22 @@
+using Core.Interface;
 using PEMaths;
 using UnityEngine;
 
 namespace Core.Interface
 {
-    public interface I_GlobaManager
+    /// <summary>
+    /// 使用拓展方法实现null判断，必须对挂在mono的接口才能用
+    /// </summary>
+    public interface IMonoVaild { }
+
+
+    public interface I_GlobaManager : IMonoVaild
     {
         void Init();
         void UnInit();
     }
 
-    public interface I_Entity
+    public interface I_Entity: IMonoVaild
     {
         public string ShowName { get; set; }
         public string Id { get; set; }
@@ -44,7 +51,7 @@ namespace Core.Interface
     /// <summary>
     /// 可回收接口 对象
     /// </summary>
-    public interface IRecyclable
+    public interface IRecyclable : IMonoVaild
     {
         public void OnShow();
 
@@ -55,7 +62,7 @@ namespace Core.Interface
     /// <summary>
     /// 应用物理效果接口
     /// </summary>
-    public interface IPhysical
+    public interface IPhysical:IMonoVaild
     {
         /// <summary>应用力</summary>
         void ApplyForce(PEVector3 vector);
@@ -64,4 +71,12 @@ namespace Core.Interface
         void ApplyGravity();
     }
 
+
+}
+public static class ISValidExtensions
+{
+    public static bool IsValidMono(this IMonoVaild obj)
+    {
+        return obj is Object o && o != null;
+    }
 }

@@ -32,6 +32,9 @@ namespace FPSGame.AI
         [InspectorName("警告距离")]
         public float AlertRange = 0;
 
+        [InspectorName("受击不还击")]
+        public bool Lazy;
+
         /// <summary>丢失目标时间</summary>
         [InspectorName("丢失目标时间")]
         public float KnownTargetTimeout = 4f;
@@ -41,20 +44,27 @@ namespace FPSGame.AI
         public float MinSwitchTargetTime = 4f;
 
         /// <summary>锁定当前目标的时间（用于最短转火冷却）</summary>
+        [SerializeField]
+        [DisplayField]
+        [InspectorName("锁定当前目标的时间（用于最短转火冷却）")]
         private float TimeLastTargetSet = Mathf.NegativeInfinity;
 
+
+
+
         /// <summary>是否处于转火冷却期（有目标且锁定时间不足最短转火时间）</summary>
-        protected bool IsSwitchingCooldown => Target.Actor.IsValid() && Time.time - TimeLastTargetSet < MinSwitchTargetTime;
+        protected bool IsSwitchingCooldown => Target.Actor.IsValidMono() && Time.time - TimeLastTargetSet < MinSwitchTargetTime;
 
         public UnityAction onDetectedTarget;
         public UnityAction onLostTarget;
 
 
-
-        public TargetData Target = new();// { get; protected set; } = new();
-
         [SerializeField]
         private bool showGizmos;
+
+        //[DisplayField]
+        public TargetData Target = new();// { get; protected set; } = new();
+
 
         Collider[] targetColliders;
 
@@ -63,15 +73,17 @@ namespace FPSGame.AI
         /// </summary>
         public bool IsTargetInAttackRange { get; private set; }
 
+        [DisplayField]
         /// <summary>目标是否可见</summary>
         public bool IsSeeingTarget;// { get; private set; }
 
-
+        [DisplayField]
         [SerializeField]
         private GameObject obstacle;
 
         /// <summary>上次丢失目标的时间</summary>
         [SerializeField]
+        [DisplayField]
         protected float TimeLastSeenTarget = Mathf.NegativeInfinity;
 
         /// <summary>目标最后已知位置（目标可见时持续更新，丢失后供 AI 前往搜索）</summary>
@@ -82,10 +94,6 @@ namespace FPSGame.AI
 
         protected Actor m_Actor;
 
-        [SerializeField]
-        GameObject showTarget;
-        [SerializeField]
-        Vector3 showTargetPos;
 
         private Transform CorePoint;
 
@@ -125,7 +133,7 @@ namespace FPSGame.AI
         {
             if(!BattleManager.Instance.IsValid()) return true;
             HandleTargetDetection();
-            showTargetPos = Target.Pos;
+
             return true;
         }
 
@@ -142,11 +150,10 @@ namespace FPSGame.AI
                     TimeLastTargetSet = Time.time;
                     targetColliders = actor.transform.GetComponentsInChildren<Collider>();
                     TimeLastSeenTarget = Time.time;
-                    showTarget = actor.gameObject;
+
                 }
                 else
                 {
-                    showTarget = null;
                     targetColliders = null;
                 }
                 
@@ -154,11 +161,11 @@ namespace FPSGame.AI
             
         }
 
-        public bool ShowTargetState = false;
+
         public virtual void HandleTargetDetection()
         {
-            bool haveOldTarget = Target.Actor.IsValid();
-            ShowTargetState = haveOldTarget;
+            bool haveOldTarget = Target.Actor.IsValidMono();
+
 
             show = (Time.time - TimeLastSeenTarget);
             IsSeeingTarget = false;
@@ -260,7 +267,7 @@ namespace FPSGame.AI
             foreach (var h in hits)
             {
                 var actor = h.collider.GetComponentInParent<I_Actor>();
-                if (actor != null && actor.IsValid() && actor != Target.Actor && actor.Team == m_Actor.Team)
+                if (actor != null && actor.IsValidMono() && actor != Target.Actor && actor.Team == m_Actor.Team)
                 {
                     return true;
                 }
@@ -413,7 +420,7 @@ namespace FPSGame.AI
         /// <param name="damageSource"></param>
         protected virtual void OnDamagedDiffuse(GameObject damageSource)
         {
-            if (this==null||!damageSource || !damageSource.GetComponent<I_Actor>().IsValid())
+            if (this == null|| Lazy || !damageSource || !damageSource.GetComponent<I_Actor>().IsValidMono())
             {
                 return;
             }
@@ -433,14 +440,14 @@ namespace FPSGame.AI
             //    "新目标仇恨" + FpsHelper.ThreatValue(CorePoint.position, newActor));
 
             //}
-            if (!newActor.IsValid()|| CorePoint == null) return;
+            if (!newActor.IsValidMono()|| CorePoint == null) return;
 
             var oldThreat = Target!=null? FpsHelper.ThreatValue(CorePoint.position, Target.Actor):0;
             var newThreat = FpsHelper.ThreatValue(CorePoint.position, newActor);
-            if (!Target.Actor.IsValid()|| oldThreat > newThreat)
+            if (!Target.Actor.IsValidMono()|| oldThreat > newThreat)
             {
                 // 有当前目标且处于转火冷却期时，不因受击切换目标，避免被围殴时反复转火无法开火
-                if (!Target.Actor.IsValid() || !IsSwitchingCooldown)
+                if (!Target.Actor.IsValidMono() || !IsSwitchingCooldown)
                 {
                     //Debug.LogWarning(transform.parent + "受击设置新目标" + Target.Actor + "变为" + newActor, transform);
                     SetTargetActor(newActor);
@@ -459,7 +466,7 @@ namespace FPSGame.AI
         void BulletHit(GameObject source, Vector3 pos)
         {
 
-            if ((m_Actor as I_Actor).IsValid()
+            if ((m_Actor as I_Actor).IsValidMono()
                 && source
                 && source.TryGetComponent(out Actor actor)
                 && actor.Team != m_Actor.Team

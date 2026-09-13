@@ -280,12 +280,12 @@ namespace Unity.FPS.Game
 
 
             //爆炸抗性
-            PEInt hitExplosionResistance = packet.isDirect ? 1 : (1 - (PEInt)explosionResistance);
+            PEInt hitExplosionResistance = PEMath.Clamp(packet.isDirect ? 1 : (1 - (PEInt)explosionResistance),0,1);
             //Debug.LogWarning("爆炸抗性" + hitExplosionResistance, gameObject);
 
             //穿甲等级
             PEInt armorFactor = PEMath.Clamp(1 - (armorLevel - packet.AP) * (PEInt)ArmorPenaltyPerLevel, new(0.1f), 1);
-            //Debug.LogWarning("穿甲系数" + armorFactor+"护甲等级"+armorLevel+"穿甲等级"+packet.AP, gameObject);
+            //Debug.LogWarning("穿甲系数" + armorFactor.RawFloat+"护甲等级"+armorLevel+"穿甲等级"+packet.AP, gameObject);
             damage *= hitExplosionResistance* armorFactor;
 
             //Debug.LogWarning("AP减伤" + damage, gameObject);

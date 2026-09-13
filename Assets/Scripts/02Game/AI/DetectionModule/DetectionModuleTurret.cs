@@ -23,7 +23,7 @@ namespace FPSGame.AI
         void OnMark(GameObject owner, GameObject target, Vector3 point)
         {
             Debug.Log("标记"+ (m_Actor.Owner as Actor));
-            if (m_Actor.Owner.IsValid() && owner != m_Actor.Owner.gameObject) return;
+            if (m_Actor.Owner.IsValidMono() && owner != m_Actor.Owner.gameObject) return;
             if (!RespondMark||!target) return;
             //Debug.LogError("尝试寻找标记对象"+"目标"+ target+"距离"+ Vector3.Distance(transform.position, point),this);
             //Debug.LogError("具有组件"+ target.GetComponentInParent<Actor>(), this);

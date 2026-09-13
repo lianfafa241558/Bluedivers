@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.FPS.Game;
@@ -22,7 +22,7 @@ public class Furniture_Door : Furniture_Base
         if (!inOperate)
         {
             var unit = ActorsManager.Actors.FirstOrDefault(item =>Vector3.Distance(Pos, item.Pos) < 3);
-            if (unit.IsValid()) {
+            if (unit.IsValidMono()) {
                 Handle(unit.gameObject); 
             }
             if (lockState)

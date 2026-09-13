@@ -71,6 +71,7 @@ public static class FpsHelper
                 isDirect = true,
                 damageAffected = null,
             };
+            //反甲
             damageable.InflictDamage(thornPacket);
         }
     }
@@ -95,6 +96,26 @@ public static class FpsHelper
             return LayerDefinition.HittableLayers;
         }
         
+    }
+
+    /// <summary>
+    /// 求爆炸伤害的落点（供伤害数字与受击反馈使用）：被命中碰撞体表面、朝向爆心的最近点。
+    /// 直接用爆心会让大范围爆炸的所有伤害都堆在同一位置；用碰撞体 bounds.center 则巨型单位
+    /// （例如一整片护盾）会把伤害点显示在球心，看不出真正命中在哪里。
+    /// </summary>
+    /// <param name="collider">被命中的碰撞体</param>
+    /// <param name="explosionCenter">爆心（爆炸判定起点）</param>
+    /// <returns>伤害落点；碰撞体无效或爆心在其内部时返回爆心本身</returns>
+    private static Vector3 GetExplosionHitPoint(Collider collider, Vector3 explosionCenter)
+    {
+        if (!collider) return explosionCenter;
+        // 非凸 MeshCollider 无法求表面最近点（会原样返回入参），退化为包围盒最近点
+        Vector3 hitPoint = collider is MeshCollider mesh && !mesh.convex
+            ? collider.ClosestPointOnBounds(explosionCenter)
+            : collider.ClosestPoint(explosionCenter);
+        // 爆心落在碰撞体内部时最近点就是爆心本身，此时直接沿用爆心
+        if ((hitPoint - explosionCenter).sqrMagnitude <= 0.0001f) return explosionCenter;
+        return hitPoint;
     }
 
     /// <summary>
@@ -124,7 +145,7 @@ public static class FpsHelper
 
         PEInt damageScale= (hitData.useDiffScale ? DiffDamageScale() : 1);
         //Debug.LogWarning(collider + "蓄力" + charg + "最终范范围 + damageRange+"伤害组成数量"+ damageData.DamageGroup.Count, collider);
-
+        //Debug.LogWarning(collider + "蓄力" + charg);
         //直击
         if (damageData.GetDirectDamage(1)>0&&collider.IsValid()&& collider.TryGetComponent(out I_Damagable comp)&& comp.Source.IsValid())
         {
@@ -134,7 +155,7 @@ public static class FpsHelper
 
             // 全队强化"荆棘护甲"：近战攻击玩家阵营单位时，攻击者受到 24 点反伤
             TryThornArmorReflect(comp, soure, point, hitData);
-            Debug.LogWarning("对" + comp.gameObject.name + "造成直击伤害" + damageData.GetDirectDamage(charg) * damageScale);
+            //Debug.LogWarning("对" + comp.gameObject.name + "造成直击伤害" + damageData.GetDirectDamage(charg) * damageScale+"穿甲等级"+ damageData.GetDirectAP(charg)+"原始值");
             var directPacket = new DamagePacket
             {
                 Damage = damageData.GetDirectDamage(charg) * damageScale,
@@ -148,6 +169,7 @@ public static class FpsHelper
                 isDirect = true,
                 damageAffected = collider,
             };
+            //直击
             comp.InflictDamage(directPacket);
         }
          
@@ -172,6 +194,9 @@ public static class FpsHelper
                 Collider exolosionCollider = item.ClosestCollider(point);
                 PEInt value = 0;
                 var centerDisance = PEVector3.Distance((PEVector3)exolosionCollider.bounds.center, (PEVector3)point);
+                //伤害数字/受击反馈的落点：碰撞体表面朝向爆心的最近点
+                //用爆心 point 会让大范围爆炸的所有伤害堆在同一处；用 bounds.center 则巨型单位（如整片护盾）会把数字显示在球心，看不出实际命中位置
+                Vector3 hitPoint = GetExplosionHitPoint(exolosionCollider, point);
                 if (centerDisance <= damageInnerRadius)
                 {
                     value = damageData.GetExplosionDamage(charg, 0) * damageScale;
@@ -183,7 +208,7 @@ public static class FpsHelper
                 }
                 if (value > 0)
                 {
-                    Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value , item.gameObject);
+                    //Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value +"穿甲等级"+ damageData.GetExplosionAP(charg), item.gameObject);
                     
                     var explosionPacket = new DamagePacket
                     {
@@ -193,11 +218,14 @@ public static class FpsHelper
                         AP = damageData.GetExplosionAP(charg),
                         NoSource = damageData.NoSource || !soure,
                         DamageSource = soure,
-                        Pos = point,
+                        //Pos = point,//大范围爆炸时所有目标都显示在同一处
+                        //Pos = exolosionCollider.bounds.center,//巨型单位会把伤害点显示在包围盒中心，看不出命中位置
+                        Pos = hitPoint,
                         DemolishValue = damageData.GetDemolishValue(centerDisance),
                         isDirect = false,
                         damageAffected = exolosionCollider,
                     };
+                    //爆炸
                     item.InflictDamage(explosionPacket);
                 }
             }
@@ -208,11 +236,11 @@ public static class FpsHelper
                 {
                     if (item.transform.TryGetComponent(out IPhysical physical))
                     {
-                        var distance = PEVector3.Distance((PEVector3)item.transform.position, (PEVector3)point);
-                        PEVector3 vector = (PEVector3)(item.CenterPos - point).normalized * (1 - (distance / shockwave)) * 100;
-                        vector.y *= 4;
+                        var distance = PEVector3.Distance((PEVector3)item.CenterPos, (PEVector3)point);
+                        PEVector3 vector = (PEVector3)(item.CenterPos - point).normalized * (1 - PEMath.Clamp(distance / shockwave,0,1)) * 10;
+                        vector.y *= 2;
                         physical.ApplyForce(vector);
-                        //Debug.LogError("对物体" + item.gameObject + "施加力" + vector);
+                        Debug.LogError("对物体" + item.gameObject + "施加力" + vector);
                     }
                 }
             }
@@ -282,7 +310,7 @@ public static class FpsHelper
 
     public static bool IsTarget(I_Actor actor, TargetCfg targetCfg)
     {
-        if (actor.IsValid()
+        if (actor.IsValidMono()
             && actor.ActorState.HasFlag(targetCfg.actorState)
             && actor.Type.HasFlag(targetCfg.targetType)
         ){
@@ -298,12 +326,12 @@ public static class FpsHelper
     
     public static PEInt ThreatValue(PEVector3 pos,I_Actor target)
     {
-        if (!target.IsValid() || !target.gameObject) return 0;
+        if (!target.IsValidMono() || !target.gameObject) return 0;
         return PEVector3.Distance(pos, (PEVector3)target.CenterPos) * (PEInt)target.Threat;
     }
     public static PEInt ThreatValue(Vector3 pos, I_Actor target)
     {
-        if (!target.IsValid()|| !target.gameObject) return 0;
+        if (!target.IsValidMono()|| !target.gameObject) return 0;
         return PEVector3.Distance((PEVector3)pos, (PEVector3)target.CenterPos) * (PEInt)target.Threat;
     }
 

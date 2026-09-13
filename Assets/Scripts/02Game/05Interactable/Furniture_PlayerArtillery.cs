@@ -24,7 +24,7 @@ using UnityEngine;
 public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
 {
     /// <summary>装填的炮弹可选伤害档位（无 2）</summary>
-    private static readonly int[] ShellIndexPool = { 0, 1, 3, 4, 5 };
+    private static readonly int[] ShellIndexPool = { 1, 3, 4};
 
     [DisplayField]
     [SerializeField]
@@ -76,9 +76,9 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
     void StartSubmit()
     {
         shells.Clear();
-        //初始送3发
+        //初始送5发
         var rand = BattleManager.Instance.BattleRandom;
-        for (int i = 0; i < 3; ++i)
+        for (int i = 0; i < 5; ++i)
         {
             int idx = ShellIndexPool[rand.Range(0, ShellIndexPool.Length)];
             shells.Add(idx);
@@ -100,6 +100,11 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
             m_weapon.Magazine.CurrValue = shells.Count;
             //Debug.LogWarning("发射战备前:炮弹数量" + shells.Count + "弹匣数量" + m_weapon.Magazine.CurrValue);
         }
+        //刚好到0时
+        else if (data.cfg.ID == Constants.PlayerArtilleryBId && shells.Count == 1)
+        {
+            BattleManager.Instance.Authorize(Constants.PlayerArtilleryBId, false);
+        }
     }
 
     /// <summary>
@@ -112,11 +117,6 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
         {
             index = shells[shells.Count - 1];
             shells.RemoveAt(shells.Count - 1);
-            //刚好到0时
-            if (shells.Count==0)
-            {
-                BattleManager.Instance.Authorize(Constants.PlayerArtilleryBId, false);
-            }
         }
         else
         {

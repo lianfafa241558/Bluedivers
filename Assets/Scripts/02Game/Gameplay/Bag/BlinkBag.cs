@@ -25,7 +25,7 @@ public class BlinkBag : BagBase
     {
         base.Update();//恢复充电总是执行
 
-        if (!Owner.IsValid()) return;
+        if (!Owner.IsValidMono()) return;
 
         //按下使用背包键(UseBag)即闪现，未被跳跃占用时
         if (m_InputHandler.GetUseBagDown() && CurrentFillRatio > cost && !m_InputHandler.useJump)

@@ -197,12 +197,12 @@ namespace Unity.FPS.Game {
                         }
                     }
                     if (damageAffected) Tool.DrawLabel(pos + RandomUtils.RandomVector3XZ(), "" + Tool.Round(finaldamgage.RawFloat), 3, dmgColor);
+                    Debug.LogWarning("对" + m_Actor.ShowName + "造成"+ item.Key+ "伤害" + finaldamgage + "血量" + CurrentHealth, gameObject);
                 }
 #endif
 
             }
 
-            //Debug.LogWarning("最终伤害" + finaldamgage + "血量" + CurrentHealth,gameObject);
 
 
             PEInt healthBefore = CurrentHealth, shieldBefore = CurrentShield;

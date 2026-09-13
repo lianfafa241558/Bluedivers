@@ -27,7 +27,7 @@ public class WeaponBag : BagBase
     {
         // 注意：不调用 base.Update()，WeaponBag 没有充电概念，直接驱动武器并刷新 UI
 
-        if (!Owner.IsValid()) return;
+        if (!Owner.IsValidMono()) return;
         if (!weapon) return;
 
         // 使用背包键(UseBag)控制开火
@@ -58,7 +58,7 @@ public class WeaponBag : BagBase
     private void AutoUnload()
     {
         // 卸载会触发 OnUninstall（隐藏武器 + activeGo，OnStateChange(false)）
-        if (Owner.IsValid())
+        if (Owner.IsValidMono())
         {
             Owner.gameObject.GetComponent<EquipController>()?.UninstallEquip(this);
         }

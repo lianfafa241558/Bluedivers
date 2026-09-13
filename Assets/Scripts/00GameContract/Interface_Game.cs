@@ -2,12 +2,151 @@
 using System.Collections.Generic;
 using Core;
 using Core.Interface;
+using FPSGame.Attribute;
 using PEMaths;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace GameContract
 {
+
+    public interface IVfxEffect: IMonoVaild
+    {
+        public void SetOwner(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point);
+
+    }
+
+    public interface I_Damagable
+    {
+        GameObject gameObject { get; }
+        I_Damagable Source { get; }
+        /// <summary>护甲等级（绝地潜兵2式，由攻击方穿甲等级 AP 判定减伤）</summary>
+        int ArmorLevel { get; }
+        /// <summary>爆炸抗性（0~1，1=完全免疫）</summary>
+        float ExplosionResistance { get; }
+
+        public void InflictDamage(DamagePacket packet);
+        GameObject ActorGo { get; }
+        bool IsWeakness { get; }
+    }
+
+    public interface I_MissionPoint : I_Entity
+    {
+        public bool HaveTag(MissionTag tag);
+
+        public float IconSizeScale { get; }
+        //public bool IsMain { get;}
+        public float AreaRange { get; set; }
+
+    }
+
+    public interface I_Actor : I_Entity
+    {
+        //public event UnityAction<I_Actor> OnStateChange;
+        public event UnityAction<I_Actor> OnPosChange;
+        public event UnityAction<I_Actor> OnAngleChange;
+        public event UnityAction OnDeath;
+
+        public int IndexID { get; }
+
+        public UnitTypeEnum Type { get; }
+        public IPERange Range { get; }
+        public ActorState ActorState { get; set; }
+
+        public I_Actor Owner { get; set; }
+
+        public int Team { get; set; }
+
+        /// <summary>仇恨系数</summary>
+        public float Threat { get; }
+
+        public Transform AimPoint { get; }
+
+        public Vector3 HpPos { get; }
+
+        public List<UnitQueryGridNode> GridNodes { get; }
+
+        public I_Damagable MainDamageable { get; }
+        public I_Damagable[] Damageables { get; }
+
+        /// <summary>是否为地图单位只对EnemyMoble有效</summary>
+        bool IsFixed { get; set; }
+
+        public bool HasFlag(ActorFlag flag);
+
+        public void AddFlag(ActorFlag flag);
+
+        public void RemoveFlag(ActorFlag flag);
+
+        public bool Equals(I_Actor obj);
+
+        public int GetHashCode();
+
+
+
+        // 转换为布尔值的转换函数
+        //public static implicit operator bool(I_Actor obj);
+    }
+
+
+
+    [System.Serializable]
+    public class TargetData
+    {
+        [SerializeField] private Vector3 pos;
+        private I_Actor actor;
+#if UNITY_EDITOR
+        [SerializeField] private GameObject show;
+#endif
+        //public Vector3 Pos => actor != null && !ReferenceEquals(actor, null) && !actor.Equals(null) ? actor.CenterPos : pos;
+        public Vector3 Pos => actor == null ? pos : (actor.CenterPos == default ? pos : actor.CenterPos);
+
+        public I_Actor Actor => actor;
+
+        public TargetData()
+        {
+            pos = Vector3.zero;
+            actor = null;
+        }
+        public void Set(I_Actor entity)
+        {
+            this.actor = entity;
+            pos = entity.IsValidMono() ? entity.CenterPos : default;
+#if UNITY_EDITOR
+            show = actor.IsValidMono() ? actor.gameObject:null;
+#endif
+        }
+        public void Set(Vector3 vector)
+        {
+            pos = vector;
+            this.actor = null;
+        }
+
+        //public static implicit operator Vector3(TargetData target)=> target.Pos;
+
+
+        /*
+        public TargetData(Vector3 vector)
+        {
+            pos = vector;
+            entity = null;
+        }
+        public TargetData(I_Entity entity)
+        {
+            pos = entity.CenterPos;
+            this.entity = entity;
+        }*/
+
+        /*
+        public static implicit operator TargetData(Vector3 vector)
+        {
+            return new TargetData(vector);
+        }*/
+
+    }
+
+
     /// <summary>
     /// 伤害结算参数包（纯数据传输结构体，避免 InflictDamage 长参数列表）
     /// </summary>
@@ -36,40 +175,48 @@ namespace GameContract
 
     }
 
-    public interface IVfxEffect
+    public struct UnitQueryGridNode : System.IEquatable<UnitQueryGridNode>
     {
-        public void SetOwner(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point);
+        //与此节点相交的单位，key：teamID
+        public Dictionary<UnitTypeEnum, List<I_Actor>> units;
+
+        public PERect rect;
+        public int x;
+        public int y;
+
+        public UnitQueryGridNode(PERect rect, int x, int y)
+        {
+            this.rect = rect;
+            this.x = x;
+            this.y = y;
+
+            units = new();
+        }
+
+        public bool IsVaild() => rect.x != 0 && rect.y != 0;
+
+        /// <summary>
+        /// 基于x/y坐标判等（IEquatable接口实现，无装箱)        /// </summary>
+        public bool Equals(UnitQueryGridNode other)
+        {
+            // 两个节点坐标相同，即为同一个节
+            return x == other.x && y == other.y;
+        }
+
+        public override bool Equals(object obj)
+        {
+            // 先判断类型，再调用强类型Equals
+            return obj is UnitQueryGridNode other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return System.HashCode.Combine((int)x * 1000, (int)y * 1000);
+        }
 
     }
 
-    public interface I_Damagable
-    {
-        GameObject gameObject { get; }
-        I_Damagable Source { get; }
-        /// <summary>护甲等级（绝地潜兵2式，由攻击方穿甲等级 AP 判定减伤）</summary>
-        int ArmorLevel { get; }
-        /// <summary>爆炸抗性（0~1，1=完全免疫）</summary>
-        float ExplosionResistance { get; }
 
-        public void InflictDamage(DamagePacket packet);
-        GameObject ActorGo { get; }
-        bool IsWeakness { get; }
-    }   
-
-
-
-
-
-
-    public interface I_MissionPoint : I_Entity
-    {
-        public bool HaveTag(MissionTag tag);
-
-        public float IconSizeScale { get; }
-        //public bool IsMain { get;}
-        public float AreaRange { get; set; }
-
-    }
     [System.Flags]//flag不能跳位，必须占位符
     public enum MissionTag
     {
@@ -125,156 +272,6 @@ namespace GameContract
         /// <summary>首领</summary>
         [InspectorName("首领")] Boss = 9,
     }
-
-    public interface I_Actor: I_Entity
-    {
-        //public event UnityAction<I_Actor> OnStateChange;
-        public event UnityAction<I_Actor> OnPosChange;
-        public event UnityAction<I_Actor> OnAngleChange;
-        public event UnityAction OnDeath;
-
-        public int IndexID { get; }
-
-        public UnitTypeEnum Type { get; }
-        public IPERange Range { get; }
-        public ActorState ActorState { get; set; }
-
-        public I_Actor Owner { get; set; }
-
-        public int Team { get; set; }
-
-        /// <summary>仇恨系数</summary>
-        public float Threat { get;}
-
-        public Transform AimPoint { get; }
-
-        public Vector3 HpPos { get; }
-
-        public List<UnitQueryGridNode> GridNodes { get; }
-
-        public I_Damagable MainDamageable { get; }
-        public I_Damagable[] Damageables { get; }
-
-        /// <summary>是否为地图单位只对EnemyMoble有效</summary>
-        bool IsFixed { get; set; }
-
-        public bool HasFlag(ActorFlag flag);
-
-        public void AddFlag(ActorFlag flag);
-
-        public void RemoveFlag(ActorFlag flag);
-
-        public bool Equals(I_Actor obj);
-
-        public int GetHashCode();
-
-
-        // 转换为布尔值的转换函数
-        //public static implicit operator bool(I_Actor obj);
-    }
-    [System.Serializable]
-    public class TargetData
-    {
-        [SerializeField]
-        private Vector3 pos;
-        private I_Actor actor;
-
-        //public Vector3 Pos => actor != null && !ReferenceEquals(actor, null) && !actor.Equals(null) ? actor.CenterPos : pos;
-        public Vector3 Pos => actor == null ? pos:(actor.CenterPos == default ? pos : actor.CenterPos);
-
-        public I_Actor Actor => actor;
-        
-        public TargetData()
-        {
-            pos = Vector3.zero;
-            actor = null;
-        }
-        public void Set(I_Actor entity)
-        {
-            this.actor = entity;
-            pos = entity != null?entity.CenterPos:default;
-        }
-        public void Set(Vector3 vector)
-        {
-            pos = vector;
-            this.actor = null;
-        }
-
-        //public static implicit operator Vector3(TargetData target)=> target.Pos;
-
-        
-        /*
-        public TargetData(Vector3 vector)
-        {
-            pos = vector;
-            entity = null;
-        }
-        public TargetData(I_Entity entity)
-        {
-            pos = entity.CenterPos;
-            this.entity = entity;
-        }*/
-
-        /*
-        public static implicit operator TargetData(Vector3 vector)
-        {
-            return new TargetData(vector);
-        }*/
-
-    }
-
-
-    public struct UnitQueryGridNode: System.IEquatable<UnitQueryGridNode>
-    {
-        //与此节点相交的单位，key：teamID
-        public Dictionary<UnitTypeEnum, List<I_Actor>> units;
-
-        public PERect rect;
-        public int x;
-        public int y;
-
-        public UnitQueryGridNode(PERect rect, int x, int y)
-        {
-            this.rect = rect;
-            this.x = x;
-            this.y = y;
-
-            units = new();
-        }
-
-        public bool IsVaild() => rect.x != 0 && rect.y != 0;
-
-        /// <summary>
-        /// 基于x/y坐标判等（IEquatable接口实现，无装箱)        /// </summary>
-        public bool Equals(UnitQueryGridNode other)
-        {
-            // 两个节点坐标相同，即为同一个节
-            return x == other.x && y == other.y;
-        }
-
-        public override bool Equals(object obj)
-        {
-            // 先判断类型，再调用强类型Equals
-            return obj is UnitQueryGridNode other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            return System.HashCode.Combine((int)x * 1000, (int)y * 1000);
-        }
-
-    }
-
-
-
-    /*
-    public interface I_Locatable
-    {
-        Vector3 Pos { get; }
-        Vector3 Angles { get; }
-    }*/
-
-
 
 
 }

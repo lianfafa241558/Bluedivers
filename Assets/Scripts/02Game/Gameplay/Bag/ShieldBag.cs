@@ -45,7 +45,7 @@ public class ShieldBag : BagBase
     {
         base.Update();//恢复充电总是执行
 
-        if (!Owner.IsValid()) return;
+        if (!Owner.IsValidMono()) return;
         
     }
     public override void OnUninstall()
@@ -77,11 +77,12 @@ public class ShieldBag : BagBase
     private void Die(GameObject _)
     {
         Invoke(nameof(Restore), restoreTime);
-
+        activeGo.SetActive(false);
     }
     private void Restore()
     {
         m_health.Revive();
+        activeGo.SetActive(true);
     }
 
 }
