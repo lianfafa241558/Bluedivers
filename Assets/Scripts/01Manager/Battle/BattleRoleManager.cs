@@ -13,7 +13,7 @@ public class BattleRoleManager : RoleManagerBase
 
     public override Vector3 GetStartPoint()
     {
-        return GameObject.FindGameObjectWithTag("Medivac").transform.TransformPoint(0,-4,5);
+        return GameObject.FindGameObjectWithTag("Medivac").transform.TransformPoint(0,-4,6);
     }
 
     public override void SetPlayerRole(PlayerController player)

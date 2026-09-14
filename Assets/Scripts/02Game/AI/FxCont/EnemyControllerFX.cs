@@ -35,6 +35,9 @@ namespace FPSGame.AI
         /// <summary>运行态 MPB 闪变条目（由 fxData.rendererSet 在 InitRS 构建），不参与序列化</summary>
         private List<RendererSet> rendererSet = new();
 
+        /// <summary>渲染槽位（每个“渲染器+材质下标”唯一一个共享 MPB），多个条目可命中同一槽位</summary>
+        private readonly List<RendererSlot> slots = new();
+
         /// <summary>是否已提示过"特效条目缺材质"（只提示一次）</summary>
         private bool _warnedNoMaterial;
 
@@ -165,9 +168,10 @@ namespace FPSGame.AI
         private void InitRS() {
             originalMaterials = new();
             rendererSet.Clear();
+            slots.Clear();
             if (fxData.IsValid() && fxData.rendererSet != null)
             {
-                // 由共享配置构建运行态条目（实例私有状态：MPB/匹配结果/计时）
+                // 由共享配置构建运行态条目（实例私有状态：命中槽位/计时）
                 for (int c = 0; c < fxData.rendererSet.Count; ++c)
                 {
                     var cfg = fxData.rendererSet[c];
@@ -177,7 +181,10 @@ namespace FPSGame.AI
             }
 
             foreach (var renderer in GetComponentsInChildren<Renderer>(true)) {
-                for (int i = 0; i < renderer.sharedMaterials.Length; i++) {
+                Material[] mats = renderer.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++) {
+                    // 同一槽位（渲染器+材质下标）只建一个共享块，命中的条目共用它，避免互相整块覆盖
+                    RendererSlot slot = null;
                     for (int u = 0; u < rendererSet.Count; ++u) {
                         // 材质来源：config.material 非空优先，否则用单位 fxMaterial（模板条目通常留空）
                         Material mat = GetFxMaterial(rendererSet[u]);
@@ -190,10 +197,13 @@ namespace FPSGame.AI
                             }
                             continue;
                         }
-                        if (renderer.sharedMaterials[i] == mat)
+                        if (mats[i] != mat) continue;
+                        if (slot == null)
                         {
-                            rendererSet[u].Add(renderer, i);
+                            slot = new RendererSlot(renderer, i);
+                            slots.Add(slot);
                         }
+                        rendererSet[u].AddSlot(slot);
                     }
                 }
                 if (BirthMaterial)
@@ -236,6 +246,10 @@ namespace FPSGame.AI
         private void UpdateRS() {
             for (int u = 0; u < rendererSet.Count; ++u) {
                 rendererSet[u].Update();
+            }
+            // 所有条目写完后再统一回写：一个槽位每帧最多一次 SetPropertyBlock，多条目也不会互相覆盖
+            for (int i = 0; i < slots.Count; ++i) {
+                slots[i].Flush();
             }
         }
 

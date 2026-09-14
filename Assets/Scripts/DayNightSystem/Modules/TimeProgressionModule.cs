@@ -13,8 +13,9 @@ namespace FPSGame.DayNightSystem
             System.DateTime now = System.DateTime.Now;
             float minuteSecond = 60 * now.Minute + now.Second;
             // 1800取模，作为初始时间
-            state.CurrentAngle = (minuteSecond % state.CycleDurationSecond) / state.CycleDurationSecond*360;
+            state.CurrentAngle = (minuteSecond % state.CycleDurationSecond) / state.CycleDurationSecond * 360;
 
+            Debug.LogError("当前时间"+ now+"转换后"+ minuteSecond+"角度" + state.CurrentAngle);
         }
 
         public void Tick(DayNightState state, float deltaTime)

@@ -18,8 +18,7 @@ namespace FPSGame.DayNightSystem
 
         public void Initialize(DayNightState state)
         {
-            if (rotator != null) 
-                state.CurrentAngle = rotator.eulerAngles.z;
+            //if (rotator != null) state.CurrentAngle = rotator.eulerAngles.z;
         }
 
         public void Tick(DayNightState state, float deltaTime)
