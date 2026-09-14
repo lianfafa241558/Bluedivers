@@ -594,13 +594,17 @@ half3 ShadeAllLights(ToonSurfaceData surfaceData, ToonLightingData lightingData)
     half3 additionalLightSumResult = 0;
 
 //#ifdef _ADDITIONAL_LIGHTS
-    
+
+    // 附加光阴影所需的 shadowMask（与 URP Lit 保持一致；无烘焙阴影时即 unity_ProbesOcclusion）
+    half4 shadowMask = CalculateShadowMask(inputData);
+
     // 4. 附加光 – 直接使用 LIGHT_LOOP_BEGIN，自动处理所有可见灯光
     uint pixelLightCount = GetAdditionalLightsCount();
     LIGHT_LOOP_BEGIN(pixelLightCount)
 
-    Light light = GetAdditionalLight(lightIndex, lightingData.positionWS);
-    //light.shadowAttenuation = AdditionalLightRealtimeShadow(lightIndex, shadowTestPosWS); //使用偏移位置WS进行阴影测试
+    // 注意:必须使用带 shadowMask 的 3 参重载,2 参重载不会计算 shadowAttenuation(恒为 1.0),
+    // 且变体必须带 _ADDITIONAL_LIGHT_SHADOWS 关键字,否则 AdditionalLightRealtimeShadow() 直接返回 1.0
+    Light light = GetAdditionalLight(lightIndex, lightingData.positionWS, shadowMask);
     additionalLightSumResult += ShadeSingleLight(surfaceData, lightingData, light, true);
     LIGHT_LOOP_END
 
@@ -671,11 +675,18 @@ half4 ShadeFinalColor(Varyings input) : SV_TARGET
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// 共享功能(仅用于ShadowCaster通道和DepthOnly通道)
+// 共享功能(仅用于ShadowCaster通道和DepthNormalsOnly/DepthOnly通道)
 //////////////////////////////////////////////////////////////////////////////////////////
 half4 BaseColorAlphaClipTest(Varyings input) : SV_Target
 {
-    return half4(input.normalWS,1);
-    //DoClipTestToTargetAlphaValue(GetFinalBaseColor(input).a);
+    // 溶解/嘴部的裁切必须在阴影贴图和深度 prepass 里同样生效，
+    // 否则已经溶解消失的物体仍然会投射阴影、仍然会写深度。
+    // 这里复用与 ForwardLit 完全一样的 GetFinalBaseColor().a 和同一个阈值函数，
+    // 保证"看得见的轮廓"和"投影/写深度的轮廓"严格一致。
+    DoClipTestToTargetAlphaValue(GetFinalBaseColor(input).a);
+
+    // DepthNormalsOnly pass 需要这个法线输出(写进 _CameraNormalsTexture)；
+    // ShadowCaster / DepthOnly pass 用的是 ColorMask 0，这个返回值会被丢弃。
+    return half4(input.normalWS, 1);
 }
 

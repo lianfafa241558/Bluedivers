@@ -1,9 +1,9 @@
 # Bluedivers 项目长期记忆
 
-> 详细复盘见各日 `YYYY-MM-DD.md`；本文件只保留跨会话结论。最后整理：2026-09-12
+> 详细复盘见各日 `YYYY-MM-DD.md`；本文件只保留跨会话结论。最后整理：2026-09-14
 
 ## 项目环境
-- Unity 2022.3.62f2c1，URP 14.0.12，C# 9.0/.NET Standard 2.1；TMP 3.0.9、Navigation 1.1.6、Timeline 1.7.7
+- Unity 2022.3.62f2c1、URP 14.0.12、C# 9.0/.NET Standard 2.1；TMP 3.0.9、Navigation 1.1.6、Timeline 1.7.7
 - Photon PUN 已弃用、KCPNet 未完成 → 单机 PvE demo（Unity FPS Sample 二次开发，命名空间 `Unity.FPS.*`）
 - 确定性计算用 `PEMaths`；随机源应统一到 `BattleRandom`
 
@@ -57,22 +57,38 @@
 - 资产：`Assets/Resources/GameData/EnemyFx/`（`Fxs/EFD_*`、`Events/<派系>/EVT_*`）；因 SO 不能存实例引用，`EVT_*.go` 全为空
 
 ## 渲染系统
+### URP 关键字 / 附加光（`Assets/Shader/ToonLit/Main/`）
+- 附加光阴影需**两件事同时成立**：变体带 `_ADDITIONAL_LIGHT_SHADOWS`（否则 `AdditionalLightRealtimeShadow` 直接 `return 1.0`），且用 3 参 `GetAdditionalLight(i, positionWS, shadowMask)`（2 参重载不填 `shadowAttenuation`）
+- `LIGHT_LOOP_BEGIN` 宏体内部引用名为 `inputData` 的变量（Forward+ `ClusterInit` 用），调用处必须先声明 `InputData inputData`
+- 阴影采样不要传含 `_IsFace` 的偏移位置给 `GetAdditionalLight`（会让点光衰减算歪），偏移只给阴影采样用
+- URP Asset（`Assets/Setting/New Universal Render Pipeline Asset.asset`）：`m_AdditionalLightsRenderingMode:1`、`m_AdditionalLightShadowsSupported:1`、`m_ShadowDistance:100`、级联 3
+- URP 14 `USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA` 硬编码 0（走 UBO），与 C# `RenderingUtils.useStructuredBuffer=false` 一致
+- ToonLit 光照模型坑：`_ShadowMapColor`（默认 0.8）是**暗面里该光源的乘数**，不是"影色叠加"→ 暗面/背光仍保留 80% 光，太阳投影也只掉 ~13%；要"背光完全不受光"必须在 `ShadeSingleLight` 里乘 `step(0, NoL)`（已加）或批量把 `_ShadowMapColor` 调黑
+- `ToonLit.shader` 的 `_DirectLightMultiplier`/`_IndirectLightMultiplier`/`_MainLightIgnoreCelShade`/`_AdditionalLightIgnoreCelShade` 未写入 CBUFFER → 死属性；**新增 CBUFFER 字段必须同时写进每个 .shader 的 Properties**（Face/Hair/Colour/MouthEye 各有独立 Properties），否则 SRP Batcher 填不到值
+- ToonLit 变体差异：`ToonLit_MouthEye.shader` 只有 ForwardLit pass，**无 ShadowCaster / 无 DepthNormals**（用它不投影）；其余 4 个变体都有 ShadowCaster。主 shader 的 ShadowCaster pass **不读任何材质属性**（材质参数的代码都在 `#ifdef ToonShaderIsOutline` 里，该 pass 只定义 `ToonShaderApplyShadowBiasFix`），所以"某个参数导致不投影"在主 shader 上不成立
+- `_MAIN_LIGHT_SHADOWS` 勾选框是管**接收**阴影的（`[Toggle]`+`multi_compile` 本地关键字覆盖），不是投射；URP 投影剔除走 `DrawShadows(ShadowDrawingSettings)`，**与 Render Queue 无关**
+- 5 个 ToonLit 变体原先都只有 `DepthNormalsOnly`、**没有 `DepthOnly`** → URP 只用纯深度 prepass 时（`DepthOnlyPass` 找 tag "DepthOnly"）这些物体不写 `_CameraDepthTexture`（相机是否需要深度纹理是 Camera → Rendering → Depth Texture 级别设置；同一帧 `UniversalRenderer` 只跑 DepthOnly 或 DepthNormalOnly 之一）。**已给 ToonLit/_Hair/_Face/_Colour 各补一个 `DepthOnly` pass**（与自己那份 DepthNormalsOnly 对齐，含 `ToonShaderIsOutline`）；`_MouthEye` 未补（它连 ShadowCaster/DepthNormals 都没有）
+- **材质不投影的头号原因**：材质自身的 `disabledShaderPasses: - SHADOWCASTER`（`Material.SetShaderPassEnabled("ShadowCaster", false)` 的序列化结果，**不是 shader 属性、面板不显示**）。全项目 89+ 个 .mat 带这条（含 `Polt0/School_01|Desert_01|Bbackstreet_01|KaiserBoss2|PlanetGloss*` 等实体材质；VFX/贴花那批是有意关的）。排查 grep `^\s*-\s*SHADOWCASTER`（跨行正则不可靠）；修 `SetShaderPassEnabled("ShadowCaster", true)` 或删 YAML 行，批量勿一刀切
+- **`disabledShaderPasses` 跟着材质走、不跟 shader 走**：换 shader 不清空它，复制/另存材质会连它一起复制 → 它是"历史残留"而非当前参数。本项目铁证：`Art/Modle/Scene/Hull_Light.mat` 用的是 Unity 内置 shader 却带着 URP 专属的 `- DepthOnly`；`Hull.mat` 与 `Art/Test/Hull2Test.mat` 同尺寸同列表（复制来的）；213+ 个 ToonLit 材质残留 `_ShowX`/`_UseMosaic`/`_Discoloration`/`_ColourOutlineWidth` 而当前 .shader/.cs 里全都没有（说明这批材质都换过 shader）。全仓无任何代码调用 `SetShaderPassEnabled`/`OnPostprocessMaterial`
+- 工具坑：`search_content` 的 glob **不支持 `*.{a,b}` 花括号**（会假 0 命中），要分开写 `*.shader`、`*.cs`
+- `Assets/Shader/Editor/ToonLitShaderGUI.cs` 整个 class 被注释掉，但 shader 仍写 `CustomEditor "ToonLitMainShaderGUI"` → 主 shader 实际用默认 Inspector（`ToonLitFaceShaderGUI`/`ToonLitMouthEyeShaderGUI` 是真实存在的）
+- URP 14 pass 时序：Opaques 300 / BeforeSkybox 350 / AfterSkybox 400 / BeforeTransparents 450 / AfterTransparents 500 / BeforePostProcessing 550
+
 ### 雾（三层并存）
 1. 内置 `RenderSettings.fog`（`EnvironmentLightingModule` 每帧写法，URP 材质靠 `MixFog` 参与，**不影响天空盒**）＝当前真正在跑的
 2. 自研 `Feature/Fog` 已删除；`Shader/Feature/FogEffect.shader`、`Setting/Feature/Fog.mat` 为孤儿资产
 3. Meryuhi `Packages/Fog` 的 `FullScreenFog`：
-   - `_injectionPoint` 固定 **450**（BeforeRenderingTransparents）；550 会让云/雪/粒子按背后不透明物深度误雾化
-   - 强制 `Height`/`HeightAndDistance`；`Depth`/`Distance` 会把整片天空刷成雾色
+   - `_injectionPoint` 固定 **450**（550 会让云/雪/粒子按背后不透明物深度误雾化）；强制 `Height`/`HeightAndDistance`（`Depth`/`Distance` 会把天空刷成雾色）
    - 三层开关：Renderer 特性 `m_Active` + `FullScreenFogController.Enabled`（默认 false，`WeatherEffect` 才开）+ Volume `intensity>0`
    - 雾层高度：天气预制体 `WeatherEffect._calmFogHeightAdd/_stormFogHeightAdd`（默认 0=不干预）→ `WeatherAtmosphereController.FogHeightAdd` → `EnvironmentLightingModule.UpdateFullscreenFog`
-   - 透明队列抓屏 shader（Warping/Stealth，Queue=Transparent+1）不吃 450 的雾 → 提前到 **445** 手绘：`Rendering/WarpingBeforeFogRendererFeature.cs` + `Warping.shader` 的 `LightMode="WarpingEffect"`（必须改掉 UniversalForward；副作用：Warping 显示依赖该 RF）
+   - 透明队列抓屏 shader（Warping/Stealth，Queue=Transparent+1）不吃 450 的雾 → 提前到 **445** 手绘：`Rendering/WarpingBeforeFogRendererFeature.cs` + `Warping.shader` 的 `LightMode="WarpingEffect"`（副作用：Warping 显示依赖该 RF）
    - 教训：相机堆叠中 UI 相机勾 Clear Depth 会导致贴花消失；"Scene 正常 Game 异常"先查 Scene 视图级开关与相机堆叠 Clear Depth
 
 ### 体积云（`Rendering/DrawVolumetricCloud.cs` + `Shader/Environment/VolumetricCloud.shader`）
 - 跟随相机的半球天穹（运行时自建 mesh ~200m，`HideFlags.DontSave`）+ 每像素视线方向的"圆罩"有界投影采样：`domePos = dir.xz/(dir.y+_DomeFlatten)*altitude`（`_DomeFlatten=0.35`，→0 退化无限平面出条纹），按层内路径长度做 Beer-Lambert；`rayLength = altitude/max(dir.y,_MinRayY)` 只用于雾/遮挡/掠射加厚
 - 遮挡用 `ZTest Always` + shader 内手比 `_CameraDepthTexture`（山更近则 discard；`_OcclusionBias≈3m`；整片消失先设 `_OcclusionEnabled=0`）
 - 远景雾由**仰角**驱动（`_CloudHazeStart/_CloudHazeEnd` 换算正弦仰角）+ `_HazeAlphaFade` 淡出 → 无地平线硬边
-- `CloudLayer[]` 多层（高度/云量/尺度/密度/细节/风速/色调），每层用独立 MaterialPropertyBlock（MPB 会帧间串数据；属性须声明在 CBUFFER 之外）
+- `CloudLayer[]` 多层，每层用独立 MaterialPropertyBlock（MPB 会帧间串数据；属性须声明在 CBUFFER 之外）
 - 风是世界空间米/秒（8~10）；噪声用 Hoskins 哈希（`frac(sin(dot))*43758` 在 20km 尺度精度崩坏出条纹）
 - 云色昼夜由**太阳**方向 Y + `AnimationCurve` 推算（不能用当前主光源，月亮升起会算成白天）；`_SkyTint`/`_Exposure` 归一化后写入；**禁止逐帧累积相乘**
 - 主相机 far clip：`Resources/Prefabs/BattleBase/Player.prefab` near 0.01 / far 300
@@ -86,7 +102,6 @@
 - 屏幕空间/投影式（贴花、抓屏、全屏 quad）**禁止**用顶点 `positionCS.z`，必须 `ComputeFogFactorZ0ToFar(max(sceneDepthVS-_ProjectionParams.y,0))`（对齐 URP `InitializeInputDataFog`；URP14 强制片元雾）
 - 已修：`Decal/SimpleDecal_Colour.shader`、`Decal/SimpleDecal.shader`、`Decal/URP_NiloCatExtension_ScreenSpaceDecal_Unlit.shader`；贴花材质保持 `_Cull:1`(Cull Front)
 - 遗留：`GlowTexture2.shader:66` 传对象空间 z（无材质开启 `_MY_FOG_ENABLE`，暂无表现）
-- URP 14 pass 时序：Opaques 300 / BeforeSkybox 350 / AfterSkybox 400 / BeforeTransparents 450 / AfterTransparents 500 / BeforePostProcessing 550
 
 ## 其他功能记录
 - 天气：`01Manager/Battle/WeatherSystem.cs`（纯控制器，BattleManager 开局用 `BattleRandom` 抽取后 `Create`）+ `WeatherEffect` 抽象基类 + `WeatherEffectRain/Desert/Snow` 挂预制体（氛围参数全在预制体）；`Resources.LoadAll<WeatherEffect>("Prefabs/Weather")` 按 `Type` 匹配
@@ -104,4 +119,4 @@
 - 池化对象的"本次状态"字段必须在 `OnDisable`/`OnEnable` 复位，且复位语句要放在早退 `return` **之前**（`VFXManager` = 对象池 + `LimitedLife` 回收）
 
 ## 修复记录索引（详见各日 .md）
-ModifyTerrain 地形修改后贴地；WaveManager tier 权重 `TryGetValue` 降级；ObjectPool Release 误调 `_Pop`、UnInit 崩溃；TerrainMainUtils 分辨率缓存；Health 死亡僵尸单位（`m_IsDead`）；BaseSelfMoveableController 陡坡卡死投影；DeployableMine 高空单位误引爆（HalfHeight 3D 判定）；PhoenixEagleController 旋转乱跳（过渡帧 `lastPos.y`）；PlayerWeaponsManager `OnWeaponSwitched` 忽略 `isSec` 破坏 IK；PathRequestManager 假超时重试风暴（`pathPending` 期间不重试）；AudioManaqerBase `sourcePool` 初始 `SetActive(false)`；ArchiverDataHandle 中文注释乱码（UTF-8 损坏）；AirdropPod 同一单位重复伤害；爆炸伤害点用碰撞体表面最近点
+ModifyTerrain 地形修改后贴地；WaveManager tier 权重 `TryGetValue` 降级；ObjectPool Release 误调 `_Pop`、UnInit 崩溃；TerrainMainUtils 分辨率缓存；Health 死亡僵尸单位（`m_IsDead`）；BaseSelfMoveableController 陡坡卡死投影；DeployableMine 高空单位误引爆（HalfHeight 3D 判定）；PhoenixEagleController 旋转乱跳（过渡帧 `lastPos.y`）；PlayerWeaponsManager `OnWeaponSwitched` 忽略 `isSec` 破坏 IK；PathRequestManager 假超时重试风暴（`pathPending` 期间不重试）；AudioManaqerBase `sourcePool` 初始 `SetActive(false)`；ArchiverDataHandle 中文注释乱码（UTF-8 损坏）；AirdropPod 同一单位重复伤害；爆炸伤害点用碰撞体表面最近点；ToonLit 附加光阴影缺 `_ADDITIONAL_LIGHT_SHADOWS` + 2 参重载

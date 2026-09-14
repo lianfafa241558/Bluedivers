@@ -233,7 +233,7 @@ Shader "ToonLit/ToonLit"
             //#pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile _ _FORWARD_PLUS
             //#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            //#pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_instancing
             // ---------------------------------------------------------------------------------------------
             // Unity defined keywords
@@ -328,8 +328,9 @@ Shader "ToonLit/ToonLit"
             ENDHLSL
         }
 
-        // DepthOnly pass。用于渲染URP的屏外深度prepass(可以在URP包中搜索DepthOnlyPass.cs)
-        //例如，当深度纹理打开时，我们需要为此卡通着色器执行此屏幕外深度预处理。
+        // DepthNormalsOnly pass。用于渲染URP的屏外"深度+法线"prepass
+        //(DepthNormalOnlyPass 按 LightMode="DepthNormals"/"DepthNormalsOnly" 匹配，
+        // 相机需要法线缓冲(SSAO/贴花/软粒子等)时才会跑，跑的时候顺带把深度也写了)。
         Pass
         {
             Name "DepthNormalsOnly"
@@ -350,6 +351,36 @@ Shader "ToonLit/ToonLit"
             #pragma fragment BaseColorAlphaClipTest //我们只需要做Clip()，不需要着色
 
             //因为它是ShadowCaster过程，所以定义“ToonShaderApplyShadowBiasFix”以将“移除阴影贴图工件”代码注入VertexShaderWork()
+            #define ToonShaderIsOutline
+
+            //在此内编写的所有着色器逻辑。hlsl，记住在编写#include之前编写所有#define
+            #include "ToonLit_Shared.hlsl"
+
+            ENDHLSL
+        }
+
+        // DepthOnly pass。URP 在"只需要深度纹理、不需要法线"的那一帧用这个 pass
+        // (DepthOnlyPass 按 LightMode="DepthOnly" 匹配，可以在URP包中搜索DepthOnlyPass.cs)。
+        // 缺它的后果：相机只勾了 Depth Texture、又没有任何需要法线的功能(SSAO/贴花/软粒子)时，
+        // 本材质不会写进 _CameraDepthTexture，依赖深度纹理的效果会漏掉这些物体。
+        Pass
+        {
+            Name "DepthOnly"
+            Tags{"LightMode" = "DepthOnly"}
+
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0 //只写深度，不写颜色
+            Cull Back
+
+            HLSLPROGRAM
+
+            #pragma vertex VertexShaderWork
+            #pragma fragment BaseColorAlphaClipTest //我们只需要做Clip()，不需要着色
+
+            // 与 DepthNormalsOnly pass 保持一致：深度同样按描边外扩后的几何写入，
+            // 这样 _CameraDepthTexture 的内容不会因为相机是否跑法线 prepass 而不同。
+            // 若不希望外扩，把这个宏和 DepthNormalsOnly 里的那个一起删掉即可。
             #define ToonShaderIsOutline
 
             //在此内编写的所有着色器逻辑。hlsl，记住在编写#include之前编写所有#define

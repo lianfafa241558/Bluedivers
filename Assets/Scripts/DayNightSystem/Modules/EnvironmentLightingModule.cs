@@ -129,11 +129,11 @@ namespace FPSGame.DayNightSystem
                 var volumes = FindObjectsOfType<Volume>(true);
                 foreach (var vol in volumes)
                 {
-                    Debug.LogError("组件:"+ vol.name+ vol.gameObject.layer, vol);
+                    //Debug.LogError("组件:"+ vol.name+ vol.gameObject.layer, vol);
                     if (vol.isGlobal && vol.gameObject.layer == defaultLayer)
                     {
                         fogVolume = vol;
-                        Debug.LogError("找到了组件",vol);
+                        //Debug.LogError("找到了组件",vol);
                         break;
                     }
                 }

@@ -61,6 +61,7 @@ Shader "ToonLit/ToonLit_MouthEye"
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _FORWARD_PLUS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_instancing
             // ---------------------------------------------------------------------------------------------
             // Unity defined keywords

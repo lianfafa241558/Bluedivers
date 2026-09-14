@@ -63,6 +63,11 @@ half3 ShadeSingleLight(ToonSurfaceData surfaceData, ToonLightingData lightingDat
     // 灯光阴影图
     litOrShadowArea *= lerp(1, light.shadowAttenuation, _ReceiveShadowMappingAmount);
 
+    // 注意 _ShadowMapColor 的语义：它是"被判成暗面时该光源保留的比例"，不是叠加的影色。
+    //   调成 0   → 暗面完全不受该光源照射，只剩环境光（与 URP Lit 的 saturate(NoL) 一致）
+    //   调成 0.8 → 暗面仍保留 80% 的光（看起来就是"背光面也受光"）
+    // _CelShadeMidPoint 为负值（wrap lighting）时，明暗交界会越过几何交界（NoL=0），
+    // 交界以内仍按"亮面"满光照射 —— 这是该参数的艺术选择，不受 _ShadowMapColor 影响。
     half3 litOrShadowColor = lerp(_ShadowMapColor, 1, litOrShadowArea);
 
     half3 lightAttenuationRGB = litOrShadowColor * distanceAttenuation;
