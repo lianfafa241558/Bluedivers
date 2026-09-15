@@ -98,5 +98,13 @@
 - 客户端配置 `C:\Users\admin\.codebuddy\mcp.json`（stdio，走 `uvx --from mcpforunityserver mcp-for-unity`）；stdio 桥 `127.0.0.1:6400`，发现文件 `%USERPROFILE%\.unity-mcp\unity-mcp-status-<hash>.json`，实例 `Bluedivers@3d9f2357`
 - 操作手册见 skill **`.codebuddy/skills/unity-mcp/`**（三层自检、工具只读/会写分类、本项目避坑、升级/卸载）；用前先 git commit
 
+## UI 图片/配色词汇表（`Assets/Images/`，参照 `SelectRoleWnd.prefab`）
+- 按钮底：`FX_TEX_Lock.png`（Sliced，`ppu=2`，color 常用亮青 `(0.65,0.87,0.87)`，文字同色）
+- 列表条目/中面板：`frame_panel13.png`（Sliced）—— 未选中 `(0.84,1,1,0.40)`（RoleButton）、`(0.88,0.96,1,0.40)`（WeaponPreviewItem）；**选中态** `(1,0.97,0.84,0.40)`（SelectBtn）
+- 大面板框：`SelectFrame3/4.png`（Sliced，`ppu=0.5`，`(0.67,0.96,1,0.70)`，用于 parameter/desc/bottom/Top）；提示气泡框 `SelectFrame2.png`
+- 小图标框 `UI_Frame4.png`（Simple，alpha 0.5）；图标底 `Common_Main_SkillBG.png`；六边形框 `Hexagonal_Frame(2).png`；锁定框 `FX_TEX_Lock_Frame.png`
+- 进度/连接条 `LinkBar.png`（Filled）；细边框 `frame5/6.png`；箭头 `Arrow_Left/Right/Left2/Right2/Down.png`；全屏底 `99997.png`
+- 纯色深底面板惯例：无 sprite + `(0,0,0,0.2~0.55)`
+
 ## 通用坑与教训
 - 池化对象"本次状态"字段必须在 `OnDisable`/`OnEnable` 复位，且放在早退 `return` **之前**

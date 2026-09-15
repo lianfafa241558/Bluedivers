@@ -81,6 +81,15 @@ public class Furniture_General : Furniture_Base
                 furn.BaseOp();
             }
         },
+
+        ["AirdropConfigWnd"] = new() {
+            _Operate = (furn) => {
+                wndManager.airdropConfigWnd.SetWndState(true);
+                furn.BaseOp();
+            }
+        },
+
+        
         ["KeyScreen"] = new (){
             _Operate = (Furniture_General furn) => {
                 furn.gameObject.GetComponent<KeyScreen>().SetOwener(furn.inOperate || !furn.owner ? null: furn.owner.gameObject);
