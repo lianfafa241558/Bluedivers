@@ -17,13 +17,19 @@ MonoBehaviour:
   showName: "\u90E8\u7F72\u70ED\u7194\u5730\u96F7"
   desc: "\u6563\u5E03\u5F3A\u529B\u70ED\u7194\u5730\u96F7\uFF0C\u9020\u6210\u91CD\u51FB\u7A7F\u7532\u4F24\u5BB3\u3002\u76F8\u8F83\u4E8E\u8F83\u5C0F\u7684\u5730\u96F7\uFF0C\u96F7\u533A\u7684\u5BC6\u5EA6\u8F83\u4F4E\u3002"
   icon: {fileID: 21300000, guid: 0bc9fb4264b2e1f4f8a147e4c5d4af52, type: 3}
+  cost:
+  - Key: 0
+    Value: 1000
   opter: 0300000000000000020000000200000003000000
   type: 2
   deliveryType: 0
+  labels: 4
   cool: 120
   arriveTime: 8
   arriveHeight: 200
   arriveCount: 0
+  subAirdrop: 
+  coolGroup: 
   showRange: {x: 20, y: 0}
   sustainTime: 10
   creatObect: {fileID: 6761241722075055183, guid: 2ae9e56d64dd827418501b5f727e1872,
@@ -36,3 +42,4 @@ MonoBehaviour:
   unAuthorizeVisible: 0
   isDirect: 0
   deathEnable: 0
+  teamCool: 0

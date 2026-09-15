@@ -136,8 +136,8 @@ public partial class SettingWnd : Window
         //wndManager.WndUI.gameObject.SetActive(false);
         //feature.SetActive(true);
         if(roomManager.IsSingle&&GameState == GameStateEnum.Game)TimeScale = 0.01f;//TODO:如果是单机的话
-                                                           // 创建临时Texture2D
-        BG.sprite = CameraCaptureToSprite(Camera.main);
+        // 创建临时Texture2D
+        BG.sprite =FpsHelper.CameraCaptureToSprite(Camera.main);
         BG.material.SetFloat("_TimeScale", TimeScale);
         //GlobalEventManager.OnFakeBg(BG.transform);
         haveSettingChagne = false;
@@ -216,29 +216,6 @@ public partial class SettingWnd : Window
         {
             if (InputManager.CancelEmpty() && !State) SetWndState(true);
         }
-    }
-
-    public Sprite CameraCaptureToSprite(Camera targetCamera)
-    {
-        // 创建RenderTexture
-        RenderTexture rt = new RenderTexture(Screen.width, Screen.height, 24);
-        //int rewordMask = targetCamera.cullingMask;
-        //targetCamera.cullingMask|= LayerDefinition.WeaponLayers;
-        targetCamera.targetTexture = rt;
-        targetCamera.Render();
-
-        // 转换为Texture2D
-        Texture2D tex = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
-        RenderTexture.active = rt;
-        tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
-        tex.Apply();
-
-        // 生成Sprite
-        Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.one * 0.5f);
-        targetCamera.targetTexture = null;
-        //targetCamera.cullingMask = rewordMask;
-        sprite.name = "抓取";
-        return sprite;
     }
 
     private void SwitchNextExpand(bool isAdd)

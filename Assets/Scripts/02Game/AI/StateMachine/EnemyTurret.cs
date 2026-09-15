@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace FPSGame.AI
 {
-    [RequireComponent(typeof(EnemyController))]
+    //[RequireComponent(typeof(EnemyController))]
     public class EnemyTurret : AIInputUnitController<EnemyTurret.AIState>
     {
         protected EnemyController m_EnemyController;

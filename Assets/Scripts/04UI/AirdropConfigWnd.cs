@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using FPSGame.Attribute;
@@ -8,7 +9,7 @@ using static WndTools.WndRootTool;
 
 /// <summary>
 /// 战备配置界面（船舰管理 - 战备配置）
-/// 左侧为按类型分组的战备列表；右上展示战备模型（鼠标左右拖动旋转）；
+/// 左侧为按类型 / 标签分组的战备列表；右上展示战备模型（鼠标左右拖动旋转）；
 /// 右下展示购买价格 / 已拥有状态，并额外提供偏好切换按钮。
 ///
 /// 预制体节点约定：
@@ -18,6 +19,7 @@ using static WndTools.WndRootTool;
 ///   _modelView     右上模型显示 RawImage（贴图由脚本赋值为运行时 RenderTexture）
 ///   _modelCamera   展示用相机（CullingMask 只勾选展示层，TargetTexture 由脚本赋值）
 ///   _modelRoot     模型挂点，相机对准此节点；拖动旋转的也是此节点
+///                  （模型实例会按自身包围盒自动缩放并对齐到该节点，见 FitModelScale）
 ///   _costRoot      价格条目容器，每个子物件：子0=资源图标  子1=数量文本
 ///   _traitText     战备特性（由 subAirdrop 附属战备名称拼接）
 /// </summary>
@@ -28,9 +30,58 @@ public class AirdropConfigWnd : Window
     /// <summary>模型展示用的渲染纹理尺寸</summary>
     private const int ModelViewSize = 1024;
 
+    /// <summary>范围 / 贴花类材质的名字关键字（命中则不参与展示尺寸计算，见 IsRangeDisplayRenderer）</summary>
+    private static readonly string[] RangeMaterialKeys = new string[] { "Range", "DistGround", "Decal", "Focu" };
+
+    /// <summary>
+    /// 列表分组规则：同一类型的战备按标签细分为多个分组。
+    /// 匹配方式为"按顺序首个命中"，因此每条类型最后一条规则是不限制标签的兜底分组；
+    /// 没有任何规则命中的类型（如补给型）不会显示在列表中。
+    /// </summary>
+    private static readonly AirdropGroupRule[] GroupRules = new AirdropGroupRule[]
+    {
+        // 轰炸型：带飞鹰标签的归"轨道打击"，其余归"凤鹰空袭"
+        new("轨道打击", AirdropData_SO.AirdropType.Red, AirdropLabelEnum.Jet),
+        new("凤鹰空袭", AirdropData_SO.AirdropType.Red),
+        // 装备型：背包 / 无人机 / 其余支援武器
+        new("战术背包", AirdropData_SO.AirdropType.Blue, AirdropLabelEnum.Bag),
+        new("无人机", AirdropData_SO.AirdropType.Blue, AirdropLabelEnum.Drone),
+        new("支援武器", AirdropData_SO.AirdropType.Blue),
+        // 炮台型：地雷 / 其余哨戒炮
+        new("地雷发射器", AirdropData_SO.AirdropType.Greed, AirdropLabelEnum.Mine),
+        new("哨戒炮", AirdropData_SO.AirdropType.Greed),
+        // 载具型：不细分，标题取该类型的默认名称
+        new(null, AirdropData_SO.AirdropType.Orange),
+    };
+
+    /// <summary>单个列表分组的归属规则</summary>
+    private readonly struct AirdropGroupRule
+    {
+        /// <summary>分组标题；为 null 时使用所属类型的默认名称</summary>
+        public readonly string Title;
+        /// <summary>所属战备类型</summary>
+        public readonly AirdropData_SO.AirdropType Type;
+        /// <summary>需要携带的标签；0 表示不限制标签（兜底分组）</summary>
+        public readonly AirdropLabelEnum Label;
+
+        public AirdropGroupRule(string title, AirdropData_SO.AirdropType type, AirdropLabelEnum label = 0)
+        {
+            Title = title;
+            Type = type;
+            Label = label;
+        }
+
+        /// <summary>该战备是否归入本分组</summary>
+        public bool Match(AirdropData_SO data)
+        {
+            if (data == null || data.type != Type) return false;
+            return Label == 0 || (data.labels & Label) != 0;
+        }
+    }
+
     [Foldout("配置", true)]
     [SerializeField]
-    private Transform _closeButton, _listContent, _nameText, _typeText, _descText, _traitText,
+    private Transform _bg,_closeButton, _listContent, _nameText, _typeText, _descText, _traitText,
         _attrNameText, _attrValueText, _costRoot, _buyButton, _buyButtonText, _preferButton, _preferButtonText;
 
     [Foldout("配置", true)]
@@ -44,6 +95,15 @@ public class AirdropConfigWnd : Window
     private Camera _modelCamera;
     [SerializeField]
     private Transform _modelRoot;
+    /// <summary>模型在展示区视野里占用的比例（1 = 刚好贴到视野边缘）</summary>
+    [SerializeField]
+    [Range(0.1f, 1f)]
+    [InspectorName("模型展示占比")]
+    private float _modelViewFill = 0.85f;
+    /// <summary>模型默认朝向；拖动旋转会在 Y 轴上叠加（模型正面朝镜头用 180）</summary>
+    [SerializeField]
+    [InspectorName("模型默认旋转")]
+    private Vector3 _modelBaseEuler = new Vector3(0f, 180f, 0f);
 
     [SerializeField]
     [DisplayField]
@@ -63,6 +123,14 @@ public class AirdropConfigWnd : Window
     [SerializeField]
     [DisplayField]
     private GameObject _model;
+    /// <summary>模型的未激活挂点：实例先建在这里，保证其组件在被清理前不会执行 Awake</summary>
+    [SerializeField]
+    [DisplayField]
+    private GameObject _modelHolder;
+    /// <summary>模型实例自身的基础缩放（预制体上的缩放），自适应缩放会在它之上叠加</summary>
+    [SerializeField]
+    [DisplayField]
+    private Vector3 _modelBaseScale = Vector3.one;
     [SerializeField]
     [DisplayField]
     private float _yaw;
@@ -106,7 +174,7 @@ public class AirdropConfigWnd : Window
         InputManager.AddListenerCancel(Cancel);
         //展示相机默认关闭（避免编辑器/场景里误渲染），打开窗口时才启用
         if (_modelCamera) _modelCamera.gameObject.SetActive(true);
-
+        SetSprite(_bg,FpsHelper.CameraCaptureToSprite(Camera.main));
         BuildList();
         SelectFirst();
     }
@@ -150,7 +218,7 @@ public class AirdropConfigWnd : Window
 
     #region 列表
 
-    /// <summary>按类型分组构建左侧战备列表，偏好战备排在同组最前</summary>
+    /// <summary>按分组规则构建左侧战备列表，偏好战备排在同组最前</summary>
     private void BuildList()
     {
         ClearList();
@@ -164,10 +232,23 @@ public class AirdropConfigWnd : Window
         }
         all.Sort((a, b) => a.ID.CompareTo(b.ID));
 
-        for (int t = 0; t < 5; ++t)
+        //分桶：每个战备只归入首个命中的分组，未命中任何规则的类型不会出现在列表中
+        var buckets = new List<AirdropData_SO>[GroupRules.Length];
+        for (int r = 0; r < buckets.Length; ++r) buckets[r] = new List<AirdropData_SO>();
+
+        for (int i = 0; i < all.Count; ++i)
         {
-            var type = (AirdropData_SO.AirdropType)t;
-            var group = all.FindAll(item => item.type == type);
+            for (int r = 0; r < GroupRules.Length; ++r)
+            {
+                if (!GroupRules[r].Match(all[i])) continue;
+                buckets[r].Add(all[i]);
+                break;
+            }
+        }
+
+        for (int r = 0; r < GroupRules.Length; ++r)
+        {
+            var group = buckets[r];
             if (group.Count == 0) continue;
 
             group.Sort((a, b) =>
@@ -179,10 +260,17 @@ public class AirdropConfigWnd : Window
 
             if (_groupPrefab)
             {
+                int bought = 0;
+                for (int i = 0; i < group.Count; ++i)
+                {
+                    if (_arch.IsAirdropBought(group[i].ID)) ++bought;
+                }
+
                 var header = Instantiate(_groupPrefab, _listContent).transform;
-                header.name = "Group_" + type;
-                if (header.childCount > 0) SetText(header.GetChild(0), group[0].TypeName);
-                if (header.childCount > 1) SetText(header.GetChild(1), group.Count + "/" + group.Count);
+                header.name = "Group_" + r;
+                if (header.childCount > 0) SetText(header.GetChild(0), GroupRules[r].Title ?? group[0].TypeName);
+                //数量文本：已拥有 / 总数
+                if (header.childCount > 1) SetText(header.GetChild(1), bought + "/" + group.Count);
             }
 
             for (int i = 0; i < group.Count; ++i)
@@ -190,11 +278,11 @@ public class AirdropConfigWnd : Window
                 var data = group[i];
                 var item = Instantiate(_itemPrefab, _listContent).transform;
                 item.name = "AirdropItem_" + data.ID;
-                if (item.childCount > 0)
-                {
-                    SetSprite(item.GetChild(0), data.icon);
-                    SetColor(item.GetChild(0), data.IconColor);
-                }
+                SetSprite(item.GetChild(0), data.icon);
+                SetColor(item.GetChild(0), data.IconColor);
+
+                SetText(item.GetChild(2), data.showName);
+
 
                 _itemDatas[item] = data;
                 if (_firstData == null) _firstData = data;
@@ -331,8 +419,9 @@ public class AirdropConfigWnd : Window
                 _arch.BuyAirdrop(data.ID);
                 _arch.Save();
 
-                RefreshCost(data);
-                RefreshButtons(data);
+                //已拥有数量会变，重建列表刷新分组表头的数量文本（Select 内部会刷新右侧信息与按钮）
+                BuildList();
+                Select(data);
                 wndManager.PlaySound(new("UI/UI_Reward", volume: 0.25f));
             }
         });
@@ -378,21 +467,35 @@ public class AirdropConfigWnd : Window
         var size = _modelView.rectTransform.rect.size;
         if (size.x <= 1f || size.y <= 1f) return;
         float aspect = size.x / size.y;
-        if (!Mathf.Approximately(_modelCamera.aspect, aspect)) _modelCamera.aspect = aspect;
+        if (Mathf.Approximately(_modelCamera.aspect, aspect)) return;
+        _modelCamera.aspect = aspect;
+        //展示区比例变了，视野范围跟着变，重新贴一次大小
+        FitModelScale();
     }
 
-    /// <summary>展示战备模型；模型上的逻辑脚本与碰撞体一律关闭</summary>
+    /// <summary>
+    /// 展示战备模型。
+    /// 实例先挂在未激活的挂点上（此时对象不在激活层级里，任何组件的 Awake / OnEnable 都不会执行），
+    /// 清理掉根物体上除渲染 / 动画以外的组件后再激活，避免模型上的逻辑脚本产生副作用。
+    /// </summary>
     private void ShowModel(AirdropData_SO data)
     {
         ClearModel();
         if (_modelRoot == null || data == null || data.creatObect == null) return;
 
-        _model = Instantiate(data.creatObect, _modelRoot);
-        _model.name = "ShowModel_" + data.ID;
-        _model.transform.localPosition = Vector3.zero;
-        _model.transform.localRotation = Quaternion.identity;
-        _model.transform.localScale = Vector3.one;
+        _modelHolder = new GameObject("ShowModelHolder");
+        _modelHolder.layer = _modelRoot.gameObject.layer;
+        _modelHolder.transform.SetParent(_modelRoot, false);
+        _modelHolder.SetActive(false);
 
+        _model = Instantiate(data.creatObect, _modelHolder.transform);
+        _model.name = "ShowModel_" + data.ID;
+        //保留预制体自身的旋转与缩放（比如炮台根节点自带 45°，会和挂点上的默认朝向叠加），
+        //只把预制体根节点那串随手存下来的位置归零：模型后面会按包围盒重新摆到视线中心
+        _modelBaseScale = _model.transform.localScale;
+        _model.transform.localPosition = Vector3.zero;
+
+        StripModelRoot(_model);
         _model.SetChildLayer(_modelRoot.gameObject.layer, true);
 
         foreach (var script in _model.GetComponentsInChildren<MonoBehaviour>(true))
@@ -410,7 +513,197 @@ public class AirdropConfigWnd : Window
         }
 
         _yaw = 0f;
-        _modelRoot.localRotation = Quaternion.identity;
+        ApplyModelRotation();
+
+        StartCoroutine(ActiveModelNextFrame(_modelHolder));
+    }
+
+    /// <summary>
+    /// 把挂点旋转设为"模型默认朝向 + 拖动角度"。
+    /// 模型实例会保留预制体自身的旋转，两者叠加（纯 Y 轴时就是角度相加，如 180+45=225）。
+    /// </summary>
+    private void ApplyModelRotation()
+    {
+        if (_modelRoot == null) return;
+        _modelRoot.localRotation = Quaternion.Euler(_modelBaseEuler.x, _modelBaseEuler.y + _yaw, _modelBaseEuler.z);
+    }
+
+    /// <summary>等被移除的组件在本帧末真正销毁后再激活挂点，否则它们仍会抢到一次 Awake</summary>
+    private IEnumerator ActiveModelNextFrame(GameObject holder)
+    {
+        yield return null;
+        if (!holder) yield break;
+        holder.SetActive(true);
+
+        //先把 Animator 的姿势算出来：绑定姿势和动画播放后的位置可能差很远
+        //（Healdrone 的默认动画会把机身往下挪 1.7 米，按绑定姿势量出来的包围盒中心就偏高）
+        foreach (var animator in holder.GetComponentsInChildren<Animator>(true))
+        {
+            if (animator != null && animator.runtimeAnimatorController != null) animator.Update(0f);
+        }
+
+        //再等一帧，等蒙皮网格的包围盒刷新完才量；Renderer.bounds 在未激活时是零体积，必须在激活后量
+        yield return null;
+        if (!holder) yield break;
+        FitModelScale();
+    }
+
+    /// <summary>
+    /// 按模型的包围盒缩放到相机视野内（大体型缩小、小体型放大），并把包围盒中心对齐到相机视线中心，
+    /// 这样不同体型的战备在展示区里看起来大小一致、居中，左右拖动旋转时也不会转出视野。
+    /// </summary>
+    private void FitModelScale()
+    {
+        if (_model == null || _modelRoot == null) return;
+
+        var tr = _model.transform;
+        Vector3 lastScale = tr.localScale;
+        Vector3 lastPos = tr.localPosition;
+        //先复位再量尺寸，保证重复调用（展示区比例变化时）拿到的是同一份基础尺寸
+        tr.localScale = _modelBaseScale;
+        tr.localPosition = Vector3.zero;
+
+        //量尺寸时把模型自身的旋转临时归零：世界包围盒会跟着旋转被"撑大"
+        //（炮台预制体自带 45° 时水平尺寸会虚高四成，模型就会被算小），量完再还原
+        Quaternion baseRotation = tr.localRotation;
+        tr.localRotation = Quaternion.identity;
+        bool hasBounds = TryGetModelBounds(_model, out Bounds bounds);
+        //旋转归零时算出来的中心就是"模型自身局部坐标"，和后面用的旋转是对得上的
+        Vector3 center = hasBounds ? tr.InverseTransformPoint(bounds.center) : Vector3.zero;
+        tr.localRotation = baseRotation;
+
+        if (!hasBounds)
+        {
+            //量不到有效包围盒（比如对象还没激活，Renderer.bounds 是零体积），保持原状
+            tr.localScale = lastScale;
+            tr.localPosition = lastPos;
+            return;
+        }
+
+        //水平按 XZ 半对角线算（绕 Y 拖到任意角度都不会超出视野），竖直按 Y 半高算
+        float horizontal = new Vector2(bounds.extents.x, bounds.extents.z).magnitude;
+        float vertical = bounds.extents.y;
+
+        //相机视线中心：挂点不一定是相机正对的那个点（本预制体就差了 0.5），
+        //按视线中心对齐才是画面正中，否则模型会整体偏上 / 偏下
+        Vector3 focus = _modelRoot.position;
+        float halfHeight = 0f;
+        float halfWidth = 0f;
+        if (_modelCamera != null)
+        {
+            var camT = _modelCamera.transform;
+            float depth = Vector3.Dot(_modelRoot.position - camT.position, camT.forward);
+            focus = camT.position + camT.forward * depth;
+            //模型所在深度处的视野半高 / 半宽
+            halfHeight = _modelCamera.orthographic
+                ? _modelCamera.orthographicSize
+                : Mathf.Abs(depth) * Mathf.Tan(_modelCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            halfWidth = halfHeight * _modelCamera.aspect;
+        }
+
+        //小体型的战备（背包 / 无人机）要放大到同样占满展示区，大体型的再缩小，所以这里是双向的
+        float scale = 0f;
+        if (halfWidth > 0f && horizontal > 0.0001f) scale = halfWidth * _modelViewFill / horizontal;
+        if (halfHeight > 0f && vertical > 0.0001f)
+        {
+            float verticalScale = halfHeight * _modelViewFill / vertical;
+            scale = scale > 0f ? Mathf.Min(scale, verticalScale) : verticalScale;
+        }
+        if (scale <= 0f) scale = 1f;
+
+        //把包围盒中心挪到视线中心：center 是包围盒中心在模型自身局部空间的坐标，
+        //按当前世界旋转 / 缩放换算成世界偏移即可（模型自身旋转此刻已还原）
+        tr.localScale = Vector3.Scale(_modelBaseScale, Vector3.one * scale);
+        tr.position = focus - tr.rotation * Vector3.Scale(center, tr.lossyScale);
+    }
+
+    /// <summary>
+    /// 量取展示模型的世界包围盒。
+    /// 战备预制体里混着不少"不是模型本体"的渲染物，直接 Encapsulate 会被它们撑爆，
+    /// 所以先只按实体网格量；全模型只有特效（比如轨道激光的光束）时再退回按全部 Renderer 量。
+    /// </summary>
+    private static bool TryGetModelBounds(GameObject model, out Bounds bounds)
+    {
+        var renderers = model.GetComponentsInChildren<Renderer>(true);
+        return CollectModelBounds(renderers, true, out bounds) || CollectModelBounds(renderers, false, out bounds);
+    }
+
+    /// <summary>合并可用的 Renderer 包围盒；<paramref name="solidOnly"/> 为 true 时忽略粒子 / 线段 / 拖尾</summary>
+    private static bool CollectModelBounds(Renderer[] renderers, bool solidOnly, out Bounds bounds)
+    {
+        bounds = default;
+        bool hasBounds = false;
+        for (int i = 0; i < renderers.Length; ++i)
+        {
+            var renderer = renderers[i];
+            if (renderer == null) continue;
+            //压根不会被画出来的（物体被关掉 / 渲染器被禁用）不参与
+            if (!renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+            if (solidOnly && (renderer is ParticleSystemRenderer || renderer is LineRenderer || renderer is TrailRenderer)) continue;
+            if (IsRangeDisplayRenderer(renderer)) continue;
+
+            var rendererBounds = renderer.bounds;
+            //零体积的包围盒（未播放的粒子系统等）会把它们所在的点带进包围盒，直接丢掉
+            if (rendererBounds.size.sqrMagnitude <= 0.000001f) continue;
+
+            if (!hasBounds)
+            {
+                bounds = rendererBounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(rendererBounds);
+            }
+        }
+        return hasBounds;
+    }
+
+    /// <summary>
+    /// 是否是"影响范围 / 贴花"这类示意网格。
+    /// 这些网格往往比本体大出一个数量级（比如 HaloBomb 周围 9 片 BombRange 挡墙、旗帜外围 20 米的 Range_Sphere），
+    /// 算进去模型本体就会被缩成一个小点，所以按材质名关键字排除掉。
+    /// </summary>
+    private static bool IsRangeDisplayRenderer(Renderer renderer)
+    {
+        var materials = renderer.sharedMaterials;
+        for (int i = 0; i < materials.Length; ++i)
+        {
+            var material = materials[i];
+            if (material == null) continue;
+            string materialName = material.name;
+            for (int k = 0; k < RangeMaterialKeys.Length; ++k)
+            {
+                if (materialName.IndexOf(RangeMaterialKeys[k], System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 移除模型根物体上除渲染 / 动画以外的组件（逻辑脚本、碰撞体、刚体、音源、相机、灯光、导航等）。
+    /// 注意：<c>enabled = false</c> 是拦不住 Awake 的，只有在激活之前把组件移除，它们的 Awake / OnEnable 才不会执行。
+    /// </summary>
+    private static void StripModelRoot(GameObject model)
+    {
+        var components = model.GetComponents<Component>();
+        for (int i = components.Length - 1; i >= 0; --i)
+        {
+            var component = components[i];
+            if (component == null || IsModelVisualComponent(component)) continue;
+            Tool.Destroy(component);
+        }
+    }
+
+    /// <summary>展示模型必须保留的组件：只负责把模型画出来 / 播放动画，本身不含逻辑</summary>
+    private static bool IsModelVisualComponent(Component component)
+    {
+        return component is Transform
+            || component is Animator
+            || component is Renderer
+            || component is MeshFilter
+            || component is LODGroup
+            || component is ParticleSystem;
     }
 
     private void ClearModel()
@@ -420,7 +713,13 @@ public class AirdropConfigWnd : Window
             Tool.Destroy(_model);
             _model = null;
         }
-        if (_modelRoot) _modelRoot.localRotation = Quaternion.identity;
+        if (_modelHolder != null)
+        {
+            Tool.Destroy(_modelHolder);
+            _modelHolder = null;
+        }
+        _yaw = 0f;
+        ApplyModelRotation();
         _dragging = false;
     }
 
@@ -442,7 +741,7 @@ public class AirdropConfigWnd : Window
             _lastMousePosition = current;
 
             _yaw -= delta * ModelRotateSpeed;
-            _modelRoot.localRotation = Quaternion.Euler(0f, _yaw, 0f);
+            ApplyModelRotation();
         }
         else if (Input.GetMouseButtonUp(0))
         {

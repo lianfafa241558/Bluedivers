@@ -101,6 +101,7 @@ public class AirdropData_SOEditor : Editor
         DrawOpterEditor(curOpter, opOthers.Count > 0);
         DrawField("type");
         DrawField("deliveryType");
+        DrawField("labels");
         GUILayout.Space(6);
 
         // ================= 部署参数 =================
@@ -482,7 +483,22 @@ public class AirdropData_SOEditor : Editor
         if (p == null) return;
 
         if (!ShouldShow(p)) return;
-        EditorGUILayout.PropertyField(p, new GUIContent(LabelOf(name)), true);
+
+        string fieldLabel = LabelOf(name);
+
+        // [Singleline] 元素（如 List<SKVP<OOPartEnum,int>> cost）复用全局内联绘制：
+        // 专属 [CustomEditor] 会顶掉兜底 EditorOverride，这里若用裸 PropertyField，
+        // 列表会退化成 Unity 原生"每个元素 Key/Value 两行"的样式。
+        if (InlineFieldDrawer.IsInlineField(p, target))
+        {
+            if (p.isArray)
+                InlineFieldDrawer.DrawInlineListLayout(p, target, fieldLabel);
+            else
+                InlineFieldDrawer.DrawInlineObjectLayout(p, target, fieldLabel);
+            return;
+        }
+
+        EditorGUILayout.PropertyField(p, new GUIContent(fieldLabel), true);
     }
 
     private void DrawIdField(string name, bool conflict)
@@ -682,9 +698,11 @@ public class AirdropData_SOEditor : Editor
             case "showName": return "显示名称";
             case "desc": return "描述";
             case "icon": return "图标";
+            case "cost": return "购买价格";
             case "opter": return "操作";
             case "type": return "类型";
             case "deliveryType": return "投送方式";
+            case "labels": return "标签";
             case "cool": return "冷却";
             case "arriveTime": return "部署时间";
             case "arriveHeight": return "部署高度";

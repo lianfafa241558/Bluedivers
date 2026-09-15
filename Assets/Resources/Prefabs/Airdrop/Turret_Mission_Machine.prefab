@@ -5201,7 +5201,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1904168379638373661}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0.38268343, z: 0, w: 0.92387956}
   m_LocalPosition: {x: 8.93, y: 37.221024, z: 2.1272702}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5211,7 +5211,7 @@ Transform:
   - {fileID: 8246265038156560384}
   - {fileID: 5164384052857313021}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 45, z: 0}
 --- !u!114 &4274364584730000612
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5396,6 +5396,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 5cb81ed8afa1e7a4da5646aeb9599652, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
+  events: []
   UseAttack: 0
 --- !u!114 &-5657066838097257511
 MonoBehaviour:
@@ -5563,18 +5564,18 @@ MonoBehaviour:
   HearingRange: 10
   AttackRange: 65
   AlertRange: 0
+  Lazy: 0
   KnownTargetTimeout: 0
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
   RespondMark: 1
 --- !u!1 &5892522256953652560
 GameObject:

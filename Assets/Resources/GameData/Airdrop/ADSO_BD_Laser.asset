@@ -17,13 +17,19 @@ MonoBehaviour:
   showName: "LAS-5 Rover \"\u5DE1\u56DE\u72AC\""
   desc: "\u4E00\u67B6\u914D\u5907\u6FC0\u5149\u53D1\u5C04\u5668\u7684\u81EA\u4E3B\u65E0\u4EBA\u673A\uFF0C\u53EF\u63D0\u4F9B360\u5EA6\u706B\u529B\u8986\u76D6\u3002"
   icon: {fileID: 21300000, guid: 5988ec87a7707d24585e24172a0ea299, type: 3}
+  cost:
+  - Key: 0
+    Value: 1000
   opter: 030000000100000000000000010000000200000002000000
   type: 1
   deliveryType: 0
+  labels: 2
   cool: 480
   arriveTime: 8
   arriveHeight: 200
   arriveCount: 0
+  subAirdrop: 
+  coolGroup: 
   showRange: {x: 0, y: 0}
   sustainTime: 0
   creatObect: {fileID: 7527687919712059693, guid: 131103d30cf31e147a492ab64882cfb5,
@@ -33,4 +39,7 @@ MonoBehaviour:
   useWarning: 0
   permanentPod: 0
   authorize: 0
+  unAuthorizeVisible: 0
   isDirect: 0
+  deathEnable: 0
+  teamCool: 0

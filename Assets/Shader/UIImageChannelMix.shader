@@ -50,12 +50,29 @@ Shader "UI/ImageChannelMix"
             #pragma vertex vert
             #pragma fragment frag
 
+            // RectMask2D 靠 CanvasRenderer.EnableRectClipping 注入 _ClipRect + 打开该关键字，
+            // 没有这个变体，父级 RectMask2D 对本 shader 完全无效
+            #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
+
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             // 贴图
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
             float4 _MainTex_ST;
+
+            // 裁剪矩形（CanvasRenderer 运行时注入，故意不写进 Properties，与内置 UI/Default 一致）
+            // 空间：Graphic 自身的局部空间（与顶点 v.vertex.xy 同空间）
+            #ifdef UNITY_UI_CLIP_RECT
+            float4 _ClipRect;
+            #endif
+
+            // 等价于内置 UnityUI.cginc 的 UnityGet2DClipping；此处内联，避免 URP 与 CG 头文件混用
+            half Unity2DClipping(float2 position, float4 clipRect)
+            {
+                float2 inside = step(clipRect.xy, position) * step(position, clipRect.zw);
+                return inside.x * inside.y;
+            }
 
             // 伽马转线性：pow(col, 2.2)
             half3 GammaToLinear(half3 col)
@@ -82,6 +99,7 @@ Shader "UI/ImageChannelMix"
                 float4 vertex : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 half4 color : TEXCOORD1;
+                float2 clipPos : TEXCOORD2; // 局部空间顶点位置，供 _ClipRect 比对
             };
 
             v2f vert(a2v v)
@@ -91,6 +109,7 @@ Shader "UI/ImageChannelMix"
                 o.vertex = posInputs.positionCS;
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.color = v.color;
+                o.clipPos = v.vertex.xy;
                 return o;
             }
 
@@ -109,6 +128,11 @@ Shader "UI/ImageChannelMix"
 
                 half3 finalColor = rChannel + gChannel;
                 half finalAlpha = texColor.a * i.color.a;
+
+                // 响应父级 RectMask2D 裁剪
+                #ifdef UNITY_UI_CLIP_RECT
+                finalAlpha *= Unity2DClipping(i.clipPos, _ClipRect);
+                #endif
 
                 // 输出前转回线性空间
                 finalColor = GammaToLinear(finalColor);

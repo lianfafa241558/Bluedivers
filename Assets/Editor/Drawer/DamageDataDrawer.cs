@@ -12,6 +12,21 @@ public class DamageDataDrawer : PropertyDrawer
     protected const float Gap = 8f;
     protected const float PairLabelWidth = 140f;
 
+    /// <summary>单行内联列表样式（绘制实现在 InlineFieldDrawer，本类只选样式）</summary>
+    protected static readonly InlineListStyle SinglelineStyle = new InlineListStyle
+    {
+        ElementLabelExtraWidth = 64f,
+        ExtraBottomSpace = Padding,
+    };
+
+    /// <summary>同上，头部标签加粗（爆炸伤害区使用）</summary>
+    protected static readonly InlineListStyle SinglelineStyleBold = new InlineListStyle
+    {
+        BoldHeaderLabel = true,
+        ElementLabelExtraWidth = 64f,
+        ExtraBottomSpace = Padding,
+    };
+
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(position, label, property);
@@ -286,203 +301,24 @@ public class DamageDataDrawer : PropertyDrawer
     }
 
     /// <summary>
-    /// 单行列表绘制(用于 List&lt;SKVP&lt;,&gt;&gt; 这类带 [Singleline] 元素的列表)
-    /// 尽量贴近 Unity 原版 list: 头部=折叠+标签+Size 输入框; 底部=+/- 按钮; 元素单行内联
+    /// 单行列表绘制(用于 List&lt;SKVP&lt;,&gt;&gt; 这类带 [Singleline] 元素的列表)。
+    /// 实现已统一收敛到 <see cref="InlineFieldDrawer"/>，这里只提供本 Drawer 使用的样式。
     /// </summary>
     protected float DrawSinglelineList(SerializedProperty property, string propName, string label, Rect position, float y, bool bold = false)
     {
         var listProp = property.FindPropertyRelative(propName);
         if (listProp == null) return y;
 
-        float lineH = EditorGUIUtility.singleLineHeight;
-        // 原版 list 头部右侧 Size 区域: "Size" 文本 + 整数输入框
-        const float sizeLabelW = 40f;
-        const float sizeFieldW = 40f;
-        const float sizeGap = 4f;
-
-        // ===== 头部: 折叠箭头 + 标签(左) | Size 标签 + 数量输入框(右) =====
-        var headerRect = new Rect(position.x- sizeLabelW, y, position.width, lineH);
-
-        // 右侧 Size 区域
-        var sizeRect = new Rect(headerRect.x + headerRect.width , headerRect.y, sizeFieldW, lineH);
-
-        // 折叠控件: 占满 头部 除掉 Size 区域 的部分(会自动按 indentLevel 缩进)
-        var foldRect = new Rect(headerRect.x, headerRect.y, headerRect.width - sizeFieldW - sizeLabelW - sizeGap, lineH);
-
-        GUIStyle foldStyle = bold
-            ? new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold }
-            : EditorStyles.foldout;
-
-        // 用 PropertyField 的标准缩进方式绘制 foldout,保证与其他字段对齐
-        int oldIndent = EditorGUI.indentLevel;
-        // foldout 需要在缩进区域内,把 foldRect 限定在缩进后的可用宽度
-        float indent = EditorGUI.IndentedRect(foldRect).x - foldRect.x;
-        var foldDrawRect = new Rect(foldRect.x + indent, foldRect.y, foldRect.width - indent, lineH);
-
-        bool expanded = EditorGUI.Foldout(foldDrawRect, listProp.isExpanded, new GUIContent(label), true, foldStyle);
-        if (expanded != listProp.isExpanded) listProp.isExpanded = expanded;
-
-        // Size 标签 + 输入框
-        EditorGUI.indentLevel = 0;
-
-        int newSize = EditorGUI.IntField(sizeRect, listProp.arraySize);
-        if (newSize != listProp.arraySize && newSize >= 0) listProp.arraySize = newSize;
-        EditorGUI.indentLevel = oldIndent;
-
-        // 头部右键: 清空
-        if (Event.current.type == EventType.ContextClick && headerRect.Contains(Event.current.mousePosition))
-        {
-            var menu = new GenericMenu();
-            menu.AddItem(new GUIContent("清空数组"), false, () =>
-            {
-                listProp.ClearArray();
-                listProp.serializedObject.ApplyModifiedProperties();
-            });
-            menu.ShowAsContext();
-            Event.current.Use();
-        }
-
-        y += lineH + 2;
-
-        if (!listProp.isExpanded) return y;
-
-        // ===== 元素 =====
-        for (int i = 0; i < listProp.arraySize; i++)
-        {
-            var element = listProp.GetArrayElementAtIndex(i);
-            y = DrawSinglelineElement(position, element, i, listProp, y);
-        }
-
-        // ===== 底部 +/- 按钮(贴近原版 list 样式) =====
-        y = DrawListFooter(position, listProp, y);
-
-        y += Padding;
-        return y;
-    }
-
-    /// <summary>底部 + / - 按钮,模仿 Unity 原版 list</summary>
-    float DrawListFooter(Rect position, SerializedProperty listProp, float y)
-    {
-        float lineH = EditorGUIUtility.singleLineHeight;
-        // 原版: 右下角 - 和 + 两个小方块,各 20x18
-        const float btnW = 24f;
-        const float btnGap = 2f;
-
-        var footerRect = new Rect(position.x, y, position.width, lineH);
-
-        int oldIndent = EditorGUI.indentLevel;
-        EditorGUI.indentLevel = 0;
-
-
-        // "-" 在右, "+" 在 "-" 右侧(原版顺序)
-        var minusRect = new Rect(footerRect.x + footerRect.width - btnW , footerRect.y, btnW, lineH);
-        var plusRect = new Rect(footerRect.x + footerRect.width - btnW * 2 - btnGap, footerRect.y, btnW, lineH);
-
-        if (GUI.Button(minusRect, "-", EditorStyles.miniButtonLeft))
-        {
-            if (listProp.arraySize > 0)
-            {
-                listProp.DeleteArrayElementAtIndex(listProp.arraySize - 1);
-                listProp.serializedObject.ApplyModifiedProperties();
-            }
-        }
-        if (GUI.Button(plusRect, "+", EditorStyles.miniButtonRight))
-        {
-            listProp.InsertArrayElementAtIndex(listProp.arraySize);
-            listProp.serializedObject.ApplyModifiedProperties();
-        }
-
-        EditorGUI.indentLevel = oldIndent;
-        return y + lineH + 2;
-    }
-
-    /// <summary>单行元素: "元素 i" + 各子字段(如 Key/Value)等宽平分</summary>
-    float DrawSinglelineElement(Rect position, SerializedProperty element, int index, SerializedProperty listProp, float y)
-    {
-        float lineH = EditorGUIUtility.singleLineHeight;
-        var rowRect = new Rect(position.x, y, position.width, lineH);
-
-        var children = GetVisibleChildren(element);
-
-        // 元素标签
-        var elemLabel = new GUIContent($"元素 {index}");
-        float labelW = EditorStyles.label.CalcSize(elemLabel).x + 64 ;
-        EditorGUI.LabelField(new Rect(rowRect.x, rowRect.y, labelW, lineH), elemLabel);
-
-        float x = rowRect.x + labelW;
-        float w = rowRect.width - labelW;
-        int visibleCount = 0;
-        foreach (var c in children) if (c.name != "m_Script") visibleCount++;
-        float fieldW = visibleCount > 0 ? w / visibleCount : w;
-
-        int oldIndent = EditorGUI.indentLevel;
-        EditorGUI.indentLevel = 0;
-        float origLabelW = EditorGUIUtility.labelWidth;
-
-        foreach (var child in children)
-        {
-            if (child.name == "m_Script") continue;
-            var cl = new GUIContent(child.displayName);
-            float clw = EditorStyles.label.CalcSize(cl).x + 4;
-            EditorGUIUtility.labelWidth = clw;
-            var childRect = new Rect(x, rowRect.y, fieldW, lineH);
-            EditorGUI.PropertyField(childRect, child, cl, false);
-            x += fieldW;
-        }
-
-        EditorGUIUtility.labelWidth = origLabelW;
-        EditorGUI.indentLevel = oldIndent;
-
-        // 元素右键: 复制/删除
-        if (Event.current.type == EventType.ContextClick && rowRect.Contains(Event.current.mousePosition))
-        {
-            int idx = index;
-            var menu = new GenericMenu();
-            menu.AddItem(new GUIContent("复制"), false, () =>
-            {
-                listProp.InsertArrayElementAtIndex(idx);
-                listProp.serializedObject.ApplyModifiedProperties();
-            });
-            menu.AddItem(new GUIContent("删除"), false, () =>
-            {
-                listProp.DeleteArrayElementAtIndex(idx);
-                listProp.serializedObject.ApplyModifiedProperties();
-            });
-            menu.ShowAsContext();
-            Event.current.Use();
-        }
-
-        return y + lineH + 2;
+        return InlineFieldDrawer.DrawInlineListRect(position, listProp, label, y,
+            bold ? SinglelineStyleBold : SinglelineStyle);
     }
 
     protected float GetSinglelineListHeight(SerializedProperty property, string propName)
     {
         var listProp = property.FindPropertyRelative(propName);
         if (listProp == null) return 0;
-        float lineH = EditorGUIUtility.singleLineHeight;
-        float h = lineH + 2; // 头部
-        if (listProp.isExpanded)
-        {
-            h += listProp.arraySize * (lineH + 2); // 元素
-            h += lineH + 2; // 底部 +/- 按钮
-        }
-        h += Padding;
-        return h;
-    }
 
-    static List<SerializedProperty> GetVisibleChildren(SerializedProperty prop)
-    {
-        var list = new List<SerializedProperty>();
-        var iter = prop.Copy();
-        var end = prop.GetEndProperty();
-        bool enter = true;
-        while (iter.NextVisible(enter))
-        {
-            if (SerializedProperty.EqualContents(iter, end)) break;
-            if (iter.name != "m_Script") list.Add(iter.Copy());
-            enter = false;
-        }
-        return list;
+        return InlineFieldDrawer.GetInlineListHeight(listProp, SinglelineStyle);
     }
 
     #endregion

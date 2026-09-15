@@ -1,11 +1,15 @@
 # Unity 自动生成的文件，永远不需要提交到Git
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
-[Uu]serSettings/
+# 注意：必须用 "/" 锚定到仓库根目录。
+# 不加锚定时 "[Bb]uild/" 这类规则会命中任意层级的同名目录，
+# 例如 Packages/com.coplaydev.unity-mcp/Editor/Tools/Build/、Assets/Art/Anim/Build/，
+# 导致源码/美术资源被静默忽略（git clean -xfd 会直接删掉）。
+/Library/
+/Temp/
+/Obj/
+/Build/
+/Builds/
+/Logs/
+/UserSettings/
 .vs/
 *.user
 *.csproj

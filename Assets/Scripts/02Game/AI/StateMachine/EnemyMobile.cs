@@ -7,7 +7,7 @@ using Unity.FPS.Game;
 using UnityEngine;
 namespace FPSGame.AI
 {
-    [RequireComponent(typeof(EnemyController))]
+    //[RequireComponent(typeof(EnemyController))]
     public partial class EnemyMobile : AIInputUnitController<EnemyMobile.AIState>
     {
 

@@ -58,6 +58,17 @@ public class UnitWeightCfgDrawer : PropertyDrawer
 [CustomPropertyDrawer(typeof(CampData_SO.PatrolCfg))]
 public class PatrolCfgDrawer : PropertyDrawer
 {
+    /// <summary>units（List&lt;SKVP&gt;）的单行内联样式：层级 / 数量，删除与添加按钮由本 Drawer 画</summary>
+    private static readonly InlineListStyle UnitsStyle = new InlineListStyle
+    {
+        ShowHeader = false,
+        Collapsible = false,
+        ShowElementLabel = false,
+        ShowFooterButtons = false,
+        ShowContextMenu = false,
+        ChildLabelProvider = cp => cp.name == "Key" ? "层级" : "数量",
+    };
+
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
         float lineHeight = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
@@ -102,27 +113,8 @@ public class PatrolCfgDrawer : PropertyDrawer
 
         for (int i = 0; i < unitsProp.arraySize; i++)
         {
-            SerializedProperty itemProp = unitsProp.GetArrayElementAtIndex(i);
-            SerializedProperty keyProp = itemProp.FindPropertyRelative("Key");
-            SerializedProperty valueProp = itemProp.FindPropertyRelative("Value");
-
-            float innerW = w - 56;
-            float curX = x + 2;
-
-            // 层级 标签 + 字段
-            float keyLabelW = GUI.skin.label.CalcSize(new GUIContent("层级")).x + 4f;
-            EditorGUI.LabelField(new Rect(curX, y, keyLabelW, lineHeight), "层级");
-            curX += keyLabelW;
-            float keyFieldW = (innerW - keyLabelW - 5f) * 0.5f;
-            EditorGUI.PropertyField(new Rect(curX, y, keyFieldW, lineHeight), keyProp, GUIContent.none);
-            curX += keyFieldW + 5f;
-
-            // 数量 标签 + 字段
-            float valueLabelW = GUI.skin.label.CalcSize(new GUIContent("数量")).x + 4f;
-            EditorGUI.LabelField(new Rect(curX, y, valueLabelW, lineHeight), "数量");
-            curX += valueLabelW;
-            float valueFieldW = innerW - (curX - (x + 2));
-            EditorGUI.PropertyField(new Rect(curX, y, valueFieldW, lineHeight), valueProp, GUIContent.none);
+            // 单行内联元素（层级 = Key，数量 = Value），右侧留出删除按钮位置
+            InlineFieldDrawer.DrawElementRow(new Rect(x + 2, y, w - 56, lineHeight), unitsProp, i, UnitsStyle);
 
             // 删除按钮（右侧）
             Rect delBtnRect = new Rect(x + w - 52, y + 2, 50, lineHeight);
@@ -138,13 +130,7 @@ public class PatrolCfgDrawer : PropertyDrawer
         }
 
         // 添加按钮（右下角）
-        Rect addBtnRect = new Rect(x + w - 80, y, 80, lineHeight);
-        if (GUI.Button(addBtnRect, "+ 添加项"))
-        {
-            unitsProp.arraySize++;
-            unitsProp.serializedObject.ApplyModifiedProperties();
-        }
-        y += lineHeight + spacing;
+        y = InlineFieldDrawer.DrawAddButton(new Rect(x, y, w, lineHeight), y, unitsProp, "+ 添加项");
 
         EditorGUI.EndProperty();
     }
@@ -377,52 +363,55 @@ public class CampTemplateDrawer : PropertyDrawer
         for (int i = 0; i < patrolNames.Length; i++)
             options[i + 1] = patrolNames[i];
 
-        float delBtnW = 54;
+        const float delBtnW = 54;
+
+        // 单行内联样式：巡逻队 = Key（下拉框，选项来自 patrolCfgs），权重 = Value
+        var rowStyle = new InlineListStyle
+        {
+            ShowHeader = false,
+            Collapsible = false,
+            ShowElementLabel = false,
+            ShowFooterButtons = false,
+            ShowContextMenu = false,
+            ChildLabelProvider = cp => cp.name == "Key" ? "巡逻队" : "权重",
+            ChildDrawer = (slot, child) =>
+            {
+                if (child.name != "Key")
+                {
+                    float weightLabelW = 38f;
+                    EditorGUI.LabelField(new Rect(slot.x, slot.y, weightLabelW, slot.height), "权重");
+                    child.intValue = EditorGUI.IntField(
+                        new Rect(slot.x + weightLabelW, slot.y, slot.width - weightLabelW, slot.height), child.intValue);
+                    return;
+                }
+
+                float keyLabelW = 48f;
+                EditorGUI.LabelField(new Rect(slot.x, slot.y, keyLabelW, slot.height), "巡逻队");
+
+                int selectedIdx = 0;
+                for (int j = 0; j < patrolNames.Length; j++)
+                {
+                    if (patrolNames[j] == child.stringValue)
+                    {
+                        selectedIdx = j + 1;
+                        break;
+                    }
+                }
+
+                int picked = EditorGUI.Popup(
+                    new Rect(slot.x + keyLabelW, slot.y, slot.width - keyLabelW, slot.height), selectedIdx, options);
+                if (picked != selectedIdx)
+                {
+                    child.stringValue = picked == 0 ? "" : patrolNames[picked - 1];
+                    child.serializedObject.ApplyModifiedProperties();
+                }
+            },
+        };
 
         for (int i = 0; i < patrolTemplateProp.arraySize; i++)
         {
-            SerializedProperty itemProp = patrolTemplateProp.GetArrayElementAtIndex(i);
-            SerializedProperty keyProp = itemProp.FindPropertyRelative("Key");
-            SerializedProperty valueProp = itemProp.FindPropertyRelative("Value");
-
-            int selectedIdx = 0;
-            string curVal = keyProp.stringValue;
-            for (int j = 0; j < patrolNames.Length; j++)
-            {
-                if (patrolNames[j] == curVal)
-                {
-                    selectedIdx = j + 1;
-                    break;
-                }
-            }
-
-            // 名称下拉框
-            float keyLabelW = 48;
-            Rect keyLabelRect = new Rect(x + 2, y, keyLabelW, lineHeight);
-            EditorGUI.LabelField(keyLabelRect, "巡逻队");
-
-            float valueLabelW = 38;
-            float remainingW = w - keyLabelW - valueLabelW - delBtnW - 20;
-            float keyFieldW = remainingW * 0.5f;
-            float valueFieldW = remainingW * 0.5f;
-            float curX = x + 2 + keyLabelW;
-
-            Rect keyFieldRect = new Rect(curX, y, keyFieldW, lineHeight);
-            int newIdx = EditorGUI.Popup(keyFieldRect, selectedIdx, options);
-            if (newIdx != selectedIdx)
-            {
-                keyProp.stringValue = newIdx == 0 ? "" : patrolNames[newIdx - 1];
-                keyProp.serializedObject.ApplyModifiedProperties();
-            }
-            curX += keyFieldW + 5;
-
-            // 权重字段
-            Rect valueLabelRect = new Rect(curX, y, valueLabelW, lineHeight);
-            EditorGUI.LabelField(valueLabelRect, "权重");
-            curX += valueLabelW;
-
-            Rect valueFieldRect = new Rect(curX, y, valueFieldW, lineHeight);
-            valueProp.intValue = EditorGUI.IntField(valueFieldRect, valueProp.intValue);
+            // 单行内联元素，右侧留出删除按钮位置
+            InlineFieldDrawer.DrawElementRow(new Rect(x + 2, y, w - delBtnW - 4, lineHeight), patrolTemplateProp, i, rowStyle);
 
             // 删除按钮（右侧）
             Rect delRect = new Rect(x + w - delBtnW, y + 2, 50, lineHeight);
@@ -438,13 +427,7 @@ public class CampTemplateDrawer : PropertyDrawer
         }
 
         // 添加按钮（右下角）
-        Rect addPTRect = new Rect(x + w - 80, y, 80, lineHeight);
-        if (GUI.Button(addPTRect, "+ 添加项"))
-        {
-            patrolTemplateProp.arraySize++;
-            patrolTemplateProp.serializedObject.ApplyModifiedProperties();
-        }
-        y += lineHeight + spacing;
+        y = InlineFieldDrawer.DrawAddButton(new Rect(x, y, w, lineHeight), y, patrolTemplateProp, "+ 添加项");
 
         EditorGUI.indentLevel--;
         EditorGUI.EndProperty();

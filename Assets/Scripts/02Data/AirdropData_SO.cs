@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using Core;
 using FPSGame.Attribute;
@@ -26,6 +27,22 @@ public enum AirdropDeliveryEnum
     Medivac,
 }
 
+[Flags]
+public enum AirdropLabelEnum
+{
+    [InspectorName("背包")]
+    Bag=1,
+    [InspectorName("无人机")]
+    Drone=2,
+    [InspectorName("地雷")]
+    Mine=4,
+    [InspectorName("飞鹰")]
+    Jet=8,
+    [InspectorName("运输机")]
+    Medivac=16,
+
+}
+
 
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/战备")]
 public class AirdropData_SO : ScriptableObject
@@ -51,6 +68,8 @@ public class AirdropData_SO : ScriptableObject
     public AirdropType type;
     [InspectorName("投送方式")]
     public AirdropDeliveryEnum deliveryType;
+    [InspectorName("标签")]
+    public AirdropLabelEnum labels;
 
     [Space]
     [InspectorName("冷却")]
