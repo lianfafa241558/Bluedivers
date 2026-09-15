@@ -43,6 +43,8 @@ public class WndManager : Singleton<WndManager>
 
     public VehicleWnd vehicleWnd;
 
+    public AirdropConfigWnd airdropConfigWnd;
+
     public SettingWnd settingWnd;
 
     public CountDownWnd countDownWnd;

@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using Core;
 using FPSGame.Attribute;
 using UnityEngine;
@@ -39,6 +40,10 @@ public class AirdropData_SO : ScriptableObject
     [InspectorName("图标")]
     public Sprite icon;
     
+
+    [Header("费用")]
+    [InspectorName("购买价格")]
+    public List<SKVP<OOPartEnum, int>> cost = new() { new(OOPartEnum.Pyroxene, 1000) };
 
     [InspectorName("操作")]
     public DirectionEnum[] opter;

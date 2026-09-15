@@ -1,0 +1,90 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <Style src="../Common.uss" />
+    <ui:VisualElement name="advanced-section" class="section">
+        <ui:Label text="高级设置" class="section-title" />
+        <ui:VisualElement class="section-content">
+            <ui:VisualElement class="override-row">
+                <ui:Label text="UVX 路径：" class="override-label" />
+                <ui:VisualElement class="status-indicator-small" name="uv-path-status" />
+            </ui:VisualElement>
+            <ui:VisualElement class="path-override-controls">
+                <ui:TextField name="uv-path-override" readonly="true" class="override-field" />
+                <ui:Button name="browse-uv-button" text="浏览" class="icon-button" />
+                <ui:Button name="clear-uv-button" text="清除" class="icon-button" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="override-row" style="margin-top: 8px;">
+                <ui:Label text="服务器来源：" class="override-label" />
+            </ui:VisualElement>
+            <ui:VisualElement class="path-override-controls">
+                <ui:TextField name="git-url-override" placeholder-text="/path/to/Server or git+https://..." class="override-field" />
+                <ui:Button name="browse-git-url-button" text="选择" class="icon-button" />
+                <ui:Button name="clear-git-url-button" text="清除" class="icon-button" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="setting-row" style="margin-top: 8px;">
+                <ui:Label text="调试日志：" class="setting-label" />
+                <ui:Toggle name="debug-logs-toggle" class="setting-toggle" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="setting-row">
+                <ui:Label text="日志记录 (Assets/mcp.log)：" class="setting-label" />
+                <ui:Toggle name="log-record-toggle" class="setting-toggle" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="setting-row">
+                <ui:Label text="服务器健康状态：" class="setting-label" />
+                <ui:VisualElement class="status-container">
+                    <ui:VisualElement name="health-indicator" class="status-dot" />
+                    <ui:Label name="health-status" text="未知" class="status-text" />
+                </ui:VisualElement>
+                <ui:Button name="test-connection-button" text="测试" class="action-button" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="setting-row">
+                <ui:Label text="编辑器加载时自动启动服务器：" class="setting-label" />
+                <ui:Toggle name="auto-start-on-load-toggle" class="setting-toggle" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="setting-row">
+                <ui:Label text="强制全新安装：" class="setting-label" />
+                <ui:Toggle name="dev-mode-force-refresh-toggle" class="setting-toggle" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="setting-row">
+                <ui:Label text="允许局域网绑定（HTTP 本地）：" class="setting-label" />
+                <ui:Toggle name="allow-lan-http-bind-toggle" class="setting-toggle" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="setting-row">
+                <ui:Label text="允许不安全的远程 HTTP：" class="setting-label" />
+                <ui:Toggle name="allow-insecure-remote-http-toggle" class="setting-toggle" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="override-row" style="margin-top: 8px;">
+                <ui:Label text="截图文件夹：" class="override-label" />
+            </ui:VisualElement>
+            <ui:VisualElement class="path-override-controls">
+                <ui:TextField name="screenshots-folder-override" placeholder-text="Assets/Screenshots（默认）" class="override-field" />
+                <ui:Button name="browse-screenshots-folder-button" text="选择" class="icon-button" />
+                <ui:Button name="clear-screenshots-folder-button" text="清除" class="icon-button" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="override-row" style="margin-top: 8px;">
+                <ui:Label text="包来源：" class="override-label" />
+            </ui:VisualElement>
+            <ui:VisualElement class="path-override-controls">
+                <ui:TextField name="deploy-source-path" class="override-field" />
+                <ui:Button name="browse-deploy-source-button" text="选择" class="icon-button" />
+                <ui:Button name="clear-deploy-source-button" text="清除" class="icon-button" />
+            </ui:VisualElement>
+            <ui:Label name="deploy-target-label" class="help-text" />
+            <ui:Label name="deploy-backup-label" class="help-text" />
+            <ui:VisualElement class="path-override-controls" style="margin-top: 4px;">
+                <ui:Button name="deploy-button" text="部署" class="icon-button" />
+                <ui:Button name="deploy-restore-button" text="还原" class="icon-button" />
+            </ui:VisualElement>
+            <ui:Label name="deploy-status-label" class="help-text" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

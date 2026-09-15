@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:VisualElement name="tools-section" class="section">
+        <ui:Label text="工具" class="section-title" />
+        <ui:VisualElement class="section-content">
+            <ui:VisualElement class="setting-row" name="project-scoped-tools-row">
+                <ui:Label text="项目级工具：" class="setting-label" />
+                <ui:Toggle name="project-scoped-tools-toggle" />
+            </ui:VisualElement>
+            <ui:Label name="tools-summary" class="help-text" text="正在发现工具…" />
+            <ui:VisualElement name="tools-actions" class="tool-actions">
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Button name="enable-all-button" text="全部启用" class="tool-action-button" />
+                    <ui:Button name="disable-all-button" text="全部禁用" class="tool-action-button" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Button name="rescan-button" text="重新扫描" class="tool-action-button" />
+                    <ui:Button name="reconfigure-button" text="重新配置客户端" class="tool-action-button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label name="tools-note" class="help-text" text="更改将在重新连接或重新注册工具后生效。" />
+            <ui:VisualElement name="tool-category-container" class="tool-category-container" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,32 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <Style src="../Common.uss" />
+    <ui:VisualElement name="assetgen-section" class="section">
+        <ui:Label text="AI 资产生成" class="section-title" />
+        <ui:VisualElement class="section-content">
+            <ui:Label name="assetgen-help" class="validation-description" text="在此填写你自己的服务商 API 密钥。生成操作通过 MCP 工具 / CLI 触发，不在此处进行。密钥保存在操作系统安全存储中（钥匙串 / 凭据管理器 / libsecret），不会写入项目。" />
+            <ui:VisualElement name="gltfast-notice" class="warning-banner">
+                <ui:Label class="warning-banner-text" text="导入 GLB 需要 glTFast 包 — 请在“依赖”标签页中安装。" />
+            </ui:VisualElement>
+            <ui:VisualElement class="setting-row" style="margin-top: 4px;">
+                <ui:Button name="assetgen-refresh" text="刷新" class="icon-button" />
+                <ui:Label name="assetgen-refresh-status" class="help-text" />
+            </ui:VisualElement>
+            <ui:VisualElement name="assetgen-providers-container" style="margin-top: 8px;" />
+            <ui:Label text="偏好设置" class="config-label" />
+            <ui:VisualElement class="setting-row">
+                <ui:Label text="默认 3D 格式：" class="setting-label" />
+                <ui:DropdownField name="assetgen-format-dropdown" class="setting-dropdown-inline" />
+            </ui:VisualElement>
+            <ui:VisualElement class="override-row" style="margin-top: 8px;">
+                <ui:Label text="输出根目录：" class="override-label" />
+            </ui:VisualElement>
+            <ui:VisualElement class="path-override-controls">
+                <ui:TextField name="assetgen-output-root" placeholder-text="Assets/Generated" class="override-field" />
+            </ui:VisualElement>
+            <ui:VisualElement class="setting-row">
+                <ui:Label text="自动归一化导入的模型：" class="setting-label" />
+                <ui:Toggle name="assetgen-auto-normalize" class="setting-toggle" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

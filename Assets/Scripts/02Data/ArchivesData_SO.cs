@@ -142,6 +142,31 @@ public class ArchivesData_SO : ArchivesDataBase_SO
     [Header("已购买的空投")]
     public List<int> AirdropBuyDic = new();
 
+    [Header("战备偏好")]
+    [InspectorName("战备偏好列表")]
+    public List<int> AirdropPreferList = new();
+
+    /// <summary>该战备是否已购买</summary>
+    public bool IsAirdropBought(int id) => AirdropBuyDic.Contains(id);
+
+    /// <summary>购买战备（去重），返回是否新增</summary>
+    public bool BuyAirdrop(int id)
+    {
+        if (AirdropBuyDic.Contains(id)) return false;
+        AirdropBuyDic.Add(id);
+        return true;
+    }
+
+    /// <summary>该战备是否被偏好</summary>
+    public bool IsAirdropPrefer(int id) => AirdropPreferList.Contains(id);
+
+    /// <summary>切换战备偏好，返回切换后是否处于偏好状态</summary>
+    public bool ToggleAirdropPrefer(int id)
+    {
+        if (AirdropPreferList.Remove(id)) return false;
+        AirdropPreferList.Add(id);
+        return true;
+    }
 
     #endregion
     #region 设置

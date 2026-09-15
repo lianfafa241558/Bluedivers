@@ -12,7 +12,7 @@ using static WndTools.WndRootTool;
 
 public abstract class Window : MonoBehaviour
 {
-    protected WndManager wndManager;
+    protected WndManager wndManager; 
     protected ResSvc resManager;
     protected RoomManager roomManager;
     protected TaskManager taskManager;

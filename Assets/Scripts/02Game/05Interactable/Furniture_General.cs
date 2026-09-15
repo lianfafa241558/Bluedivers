@@ -62,6 +62,12 @@ public class Furniture_General : Furniture_Base
                 furn.BaseOp();
             }
         },
+        ["SelectAirdrop"] = new() {
+            _Operate = (furn) => {
+                wndManager.airdropConfigWnd.SetWndState(true);
+                furn.BaseOp();
+            }
+        },
         ["GuideWnd"] = new() {
             _Operate = (furn) => {
                 wndManager.guideWnd.SetWndState(true);

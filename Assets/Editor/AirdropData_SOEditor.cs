@@ -89,6 +89,12 @@ public class AirdropData_SOEditor : Editor
         DrawField("icon");
         GUILayout.Space(6);
 
+        // ================= 费用 =================
+        SectionTitle("费用", so.Color);
+        EditorGUILayout.Space(2);
+        DrawField("cost");
+        GUILayout.Space(6);
+
         // ================= 呼叫指令 =================
         SectionTitle("呼叫指令", so.Color);
         EditorGUILayout.Space(2);

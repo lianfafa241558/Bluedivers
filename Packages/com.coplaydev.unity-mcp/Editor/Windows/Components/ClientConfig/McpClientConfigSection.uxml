@@ -1,0 +1,51 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <Style src="../Common.uss" />
+    <ui:VisualElement name="client-section" class="section">
+        <ui:Label text="客户端配置" class="section-title" />
+        <ui:VisualElement class="section-content">
+            <ui:Button name="configure-all-button" text="配置所有检测到的客户端" class="primary-button" />
+            <ui:Foldout name="client-details-foldout" text="按客户端配置" value="true" class="client-details-foldout">
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="客户端：" class="setting-label" />
+                    <ui:DropdownField name="client-dropdown" class="setting-dropdown-inline" />
+                </ui:VisualElement>
+                <ui:VisualElement class="setting-row">
+                    <ui:VisualElement class="status-container">
+                        <ui:VisualElement name="client-status-indicator" class="status-dot" />
+                        <ui:Label name="client-status" text="未配置" class="status-text" />
+                    </ui:VisualElement>
+                    <ui:Button name="configure-button" text="配置" class="action-button" />
+                    <ui:Button name="install-skills-button" text="安装技能" class="action-button" style="display: none;" />
+                </ui:VisualElement>
+                <ui:VisualElement class="setting-row" name="claude-cli-path-row" style="display: none;">
+                    <ui:Label text="Claude CLI 路径：" class="setting-label-small" />
+                    <ui:TextField name="claude-cli-path" readonly="true" class="path-display-field" />
+                    <ui:Button name="browse-claude-button" text="浏览" class="icon-button" />
+                </ui:VisualElement>
+                <ui:VisualElement class="setting-row" name="client-project-dir-row" style="display: none;">
+                    <ui:Label text="客户端项目目录：" class="setting-label-small" />
+                    <ui:TextField name="client-project-dir" readonly="true" class="path-display-field" />
+                    <ui:Button name="browse-project-dir-button" text="浏览" class="icon-button" />
+                    <ui:Button name="clear-project-dir-button" text="清除" class="icon-button" />
+                </ui:VisualElement>
+                <ui:Foldout name="manual-config-foldout" text="手动配置" value="false" class="manual-config-foldout">
+                    <ui:VisualElement class="manual-config-content">
+                        <ui:Label text="配置路径：" class="config-label" />
+                        <ui:VisualElement class="path-row">
+                            <ui:TextField name="config-path" readonly="true" class="config-path-field" />
+                            <ui:Button name="copy-path-button" text="复制" class="icon-button" />
+                            <ui:Button name="open-file-button" text="打开" class="icon-button" />
+                        </ui:VisualElement>
+                        <ui:Label text="配置内容：" class="config-label" />
+                        <ui:VisualElement class="config-json-row">
+                            <ui:TextField name="config-json" readonly="true" multiline="true" class="config-json-field" />
+                            <ui:Button name="copy-json-button" text="复制" class="icon-button-vertical" />
+                        </ui:VisualElement>
+                        <ui:Label text="安装步骤：" class="config-label" />
+                        <ui:Label name="installation-steps" class="installation-steps" />
+                    </ui:VisualElement>
+                </ui:Foldout>
+            </ui:Foldout>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -195,13 +195,17 @@ public class ArmamentWnd : Window
 
     }
     /// <summary>
-    /// 显示可选战备
+    /// 显示可选战备（同类型内偏好战备排在最前，并点亮预制体第 1 个子物体）
     /// </summary>
     private void InitPlayerAirdrop()
     {
 
+        var arch = ArchiveSvc.Archive;
         var layout = armamentRoot.GetChild(roomManager.Self.index, 2, 0, 0, 0);
-        var airdropList = ResSvc.airdropDic.Values.OrderBy(item => item.ID).ToList();
+        var airdropList = ResSvc.airdropDic.Values
+            .OrderBy(item => arch.IsAirdropPrefer(item.ID) ? 0 : 1)
+            .ThenBy(item => item.ID)
+            .ToList();
         for (int i = 1; i <= 7; i += 2)
         {
             var root = layout.GetChild(i);
@@ -213,6 +217,8 @@ public class ArmamentWnd : Window
                 SetSprite(button.GetChild(0),list[u].icon);
                 SetColor(button.GetChild(0), list[u].IconColor);
                 SetColor(button, list[u].Color);
+                //第 1 个子物体用于显示是否为偏好战备
+                if (button.childCount > 1) SetActive(button.GetChild(1), arch.IsAirdropPrefer(list[u].ID));
                 buttons.Add(button, list[u].ID);
 
                 SetButton(button,tipRoot,false,ShowTip);

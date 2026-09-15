@@ -1,0 +1,88 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <Style src="Components/Common.uss" />
+    <Style src="MCPSetupWindow.uss" />
+    <ui:ScrollView name="root-container" mode="Vertical">
+        <ui:VisualElement name="setup-header" class="setup-header">
+            <!-- OceanMark logo is injected here at index 0 in CreateGUI -->
+            <ui:Label text="MCP for Unity 安装向导" name="title" class="title" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="step-deps">
+            <ui:VisualElement class="section">
+                <ui:Label text="系统要求" class="section-title" />
+                <ui:VisualElement class="section-content">
+                    <ui:Label text="MCP for Unity 需要 Python 3.10+ 与 UV 包管理器才能运行。Git 仅在通过 Git URL 安装或更新本包时才需要。" class="help-text description-text" />
+
+                    <!-- Dependency Status -->
+                    <ui:VisualElement name="dependency-list">
+                        <!-- Python Status -->
+                        <ui:VisualElement class="dependency-item">
+                            <ui:VisualElement class="dependency-row">
+                                <ui:Label text="Python" class="dependency-name" />
+                                <ui:Label name="python-version" text="..." class="setting-value" />
+                                <ui:VisualElement name="python-indicator" class="status-indicator-small" />
+                            </ui:VisualElement>
+                            <ui:Label name="python-details" class="help-text dependency-details" />
+                        </ui:VisualElement>
+
+                        <!-- UV Status -->
+                        <ui:VisualElement class="dependency-item">
+                            <ui:VisualElement class="dependency-row">
+                                <ui:Label text="UV 包管理器" class="dependency-name" />
+                                <ui:Label name="uv-version" text="..." class="setting-value" />
+                                <ui:VisualElement name="uv-indicator" class="status-indicator-small" />
+                            </ui:VisualElement>
+                            <ui:Label name="uv-details" class="help-text dependency-details" />
+                        </ui:VisualElement>
+
+                        <!-- Git Status (optional) -->
+                        <ui:VisualElement class="dependency-item">
+                            <ui:VisualElement class="dependency-row">
+                                <ui:Label text="Git（可选）" class="dependency-name" />
+                                <ui:Label name="git-version" text="..." class="setting-value" />
+                                <ui:VisualElement name="git-indicator" class="status-indicator-small" />
+                            </ui:VisualElement>
+                            <ui:Label name="git-details" class="help-text dependency-details" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Overall Status Message -->
+                    <ui:VisualElement name="status-message-container">
+                        <ui:Label name="status-message" class="help-text" />
+                    </ui:VisualElement>
+
+                    <!-- Installation Instructions (shown when dependencies missing) -->
+                    <ui:VisualElement name="installation-section" class="installation-container">
+                        <ui:Label text="安装说明" class="installation-title" />
+                        <ui:Label name="installation-instructions" class="help-text" />
+                        <ui:VisualElement class="install-links-row">
+                            <ui:Button name="install-uv-button" text="自动安装 UV" class="action-button install-link-button" />
+                            <ui:Button name="open-python-link-button" text="打开 Python 安装页面" class="secondary-button install-link-button" />
+                            <ui:Button name="open-uv-link-button" text="打开 UV 安装页面" class="secondary-button install-link-button" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Action Buttons -->
+            <ui:VisualElement class="button-container">
+                <ui:Button name="refresh-button" text="刷新" class="setup-button secondary-button" />
+                <ui:Button name="done-button" text="下一步" class="setup-button action-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="step-clients" style="display: none;">
+            <ui:VisualElement class="section">
+                <ui:Label text="配置 MCP 客户端" class="section-title" />
+                <ui:Label text="在你机器上发现了以下 MCP 客户端，请选择要配置的客户端：" class="help-text description-text" />
+                <ui:ScrollView name="clients-scroll" mode="Vertical" style="max-height: 240px;">
+                    <ui:VisualElement name="clients-list" />
+                </ui:ScrollView>
+            </ui:VisualElement>
+            <ui:VisualElement class="button-container">
+                <ui:Button name="skip-clients-button" text="跳过" class="setup-button secondary-button" />
+                <ui:Button name="configure-selected-button" text="配置选中项" class="setup-button action-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:ScrollView>
+</ui:UXML>
