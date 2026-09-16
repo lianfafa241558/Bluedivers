@@ -1,19 +1,22 @@
-﻿using GameContract;
+using GameContract;
 using UnityEngine;
 
 namespace EffectComp
 {
+
+    [AddComponentMenu("场景效果/垂直地面", 30)]
     /// <summary>
     /// 使单位强制垂直地面
     /// </summary>
     public class VerticalTerrain : MonoBehaviour
     {
+        [InspectorName("一次性的")]
         public bool Disposable;
-        private LayerMask terrainLayer;
+        //private LayerMask terrainLayer;
 
         private void Start()
         {
-            terrainLayer = LayerDefinition.GroundLayers;
+            //terrainLayer = LayerDefinition.GroundLayers;
             
             if (Disposable)
             {

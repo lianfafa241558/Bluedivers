@@ -13,7 +13,7 @@ namespace FPSGame.DayNightSystem
 
         private IDayNightModule[] _modules;
 
-        private void Awake()
+        private void Start()
         {
             _modules = GetComponentsInChildren<IDayNightModule>();
 

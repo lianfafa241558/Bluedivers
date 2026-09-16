@@ -149,36 +149,52 @@ public class CustomLabelDrawer : PropertyDrawer
 [CustomPropertyDrawer(typeof(DisplayField))]
 public class DisplayFieldDrawer : PropertyDrawer
 {
+    /// <summary>
+    /// 本帧是否应该绘制：运行期看 run，编辑期看 editor。
+    /// 高度与绘制必须用同一个判断，否则"不绘制"的那一侧仍会占位，表现成一段空白。
+    /// </summary>
+    private static bool ShouldDraw(DisplayField attr)
+    {
+        if (attr == null) return false;
+        return Application.isPlaying ? attr.run : attr.editor;
+    }
+
+    /// <summary>
+    /// 支持展示的属性类型。需要让别的类型也能用 [DisplayField] 时，往这里加一个 case 即可。
+    /// </summary>
+    private static bool IsSupportedType(SerializedProperty property)
+    {
+        switch (property.propertyType)
+        {
+            case SerializedPropertyType.Integer:
+            case SerializedPropertyType.Float:
+            case SerializedPropertyType.Boolean:
+            case SerializedPropertyType.String:
+            case SerializedPropertyType.Color:
+            case SerializedPropertyType.ObjectReference:
+            case SerializedPropertyType.Vector2:
+            case SerializedPropertyType.Vector3:
+                return true;
+            default:
+                return false;
+        }
+    }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        return Application.isPlaying || !(attribute as DisplayField).run ? EditorGUI.GetPropertyHeight(property, label, true) : 0;
+        if (!ShouldDraw(attribute as DisplayField) || !IsSupportedType(property)) return 0f;
+        return EditorGUI.GetPropertyHeight(property, label, true);
     }
+
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
+        var attr = attribute as DisplayField;
+        if (!ShouldDraw(attr) || !IsSupportedType(property)) return;
 
-        // 确保属性是可序列化的
-        if (property.propertyType == SerializedPropertyType.Integer ||
-            property.propertyType == SerializedPropertyType.Float ||
-            property.propertyType == SerializedPropertyType.Boolean ||
-            property.propertyType == SerializedPropertyType.String ||
-            property.propertyType == SerializedPropertyType.ObjectReference)
+        //read 为 true 时只读展示，为 false 时允许在面板上直接改
+        using (new EditorGUI.DisabledScope(attr.read))
         {
-            var attr = attribute as DisplayField;
-            if ((Application.isPlaying&& attr.run) ||(!Application.isPlaying && attr.editor))
-            {
-
-                if ((attribute as DisplayField).read)
-                {
-                    GUI.enabled = false;
-                    EditorGUI.PropertyField(position, property, label, true);
-                    GUI.enabled = true;
-                }
-                else
-                {
-                    EditorGUI.PropertyField(position, property, label, true);
-                }
-            }
+            EditorGUI.PropertyField(position, property, label, true);
         }
     }
 }

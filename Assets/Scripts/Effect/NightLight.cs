@@ -1,7 +1,10 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+/// <summary>
+/// 昼夜切换灯组
+/// </summary>
+[AddComponentMenu("场景效果/昼夜切换灯组", 30)]
 public class NightLight : MonoBehaviour
 {
     [SerializeField]

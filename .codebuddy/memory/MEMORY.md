@@ -42,7 +42,7 @@
 - `EditorOverride`（`[CustomEditor(typeof(Object),true,isFallback=true)]`）是全局兜底 Inspector：`[Foldout]`/`[InspectorName]`/`[Compare]`/单行内联数组全靠它；**被专属 `[CustomEditor]` 完全顶掉**（全仓仅 `SoundGroup_SOEditor`、`AirdropData_SOEditor` 两个非 fallback），目标类型有专属编辑器时须自己补 `[Header]`/`[Space]`/内联
 - 反射自建 Drawer 须手动注入 `m_Attribute`；特性类标 `UnityEditor.CustomPropertyDrawer`；取特性目标类型用 `GetCustomAttributesData().ConstructorArguments[0].Value as Type`
 - 复用：`SOPickerPopup<T>`（`confirmMode` 控单击即选/确认）、`PrefabBatchToolBase`、`DamageDataDrawer.DrawSinglelineList`；Drawer 集中 `Drawer/`
-- `[DisplayField]`（`00Attribute/CustomAttribute.cs`）：编辑期不画、运行期只读；只对已序列化字段生效（私有须配 `[SerializeField]`）；`readonly`/Dictionary 无效
+- `[DisplayField]`（`00Attribute/CustomAttribute.cs` + `CustomLabelDrawer.DisplayFieldDrawer`）：默认编辑期不画、运行期只读；只对已序列化字段生效（私有须配 `[SerializeField]`）；`readonly`/Dictionary 无效；支持类型白名单 `IsSupportedType`＝Integer/Float/Boolean/String/ObjectReference/**Color/Vector2/Vector3**，不在白名单的类型不画也不占位（扩展加一个 `case`）；高度与绘制共用 `ShouldDraw`（`isPlaying ? run : editor`）
 - 数据编辑器：`Editor/DataEditorWindow.cs` + `DataTabs/DataTabModule<T>`；SO 加字段且带专属 Editor 须显式补 `DrawField("新字段")`
 
 ## 协作偏好

@@ -17,6 +17,7 @@ public class DayNightTriggerModule: MonoBehaviour, IDayNightModule
     [SerializeField]
     private float nightOffect;
 
+    [SerializeField]
     bool isNoon;
 
     public void Initialize(DayNightState state)

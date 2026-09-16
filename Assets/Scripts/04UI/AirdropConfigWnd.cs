@@ -15,13 +15,15 @@ using static WndTools.WndRootTool;
 /// 预制体节点约定：
 ///   _listContent   左侧列表内容容器（挂 VerticalLayoutGroup + ContentSizeFitter）
 ///   _groupPrefab   分组表头  子0=标题文本  子1(可选)=数量文本
-///   _itemPrefab    战备条目  子0=图标      子1(可选)=选中框
+///   _itemPrefab    战备条目  子0=图标  子1=是否拥有  子2=名称  子3=是否收藏
 ///   _modelView     右上模型显示 RawImage（贴图由脚本赋值为运行时 RenderTexture）
 ///   _modelCamera   展示用相机（CullingMask 只勾选展示层，TargetTexture 由脚本赋值）
 ///   _modelRoot     模型挂点，相机对准此节点；拖动旋转的也是此节点
 ///                  （模型实例会按自身包围盒自动缩放并对齐到该节点，见 FitModelScale）
 ///   _costRoot      价格条目容器，每个子物件：子0=资源图标  子1=数量文本
 ///   _traitText     战备特性（由 subAirdrop 附属战备名称拼接）
+///   _eagleView     轰炸型"凤鹰号"系列共用的展示模型（留空则回落战备自身的 creatObect）
+///   _shopView      轰炸型"轨道"系列共用的展示模型（留空则回落战备自身的 creatObect）
 /// </summary>
 public class AirdropConfigWnd : Window
 {
@@ -40,9 +42,9 @@ public class AirdropConfigWnd : Window
     /// </summary>
     private static readonly AirdropGroupRule[] GroupRules = new AirdropGroupRule[]
     {
-        // 轰炸型：带飞鹰标签的归"轨道打击"，其余归"凤鹰空袭"
-        new("轨道打击", AirdropData_SO.AirdropType.Red, AirdropLabelEnum.Jet),
-        new("凤鹰空袭", AirdropData_SO.AirdropType.Red),
+        // 轰炸型：带飞鹰标签的归"凤鹰空袭"，其余归"轨道打击"
+        new("轨道打击", AirdropData_SO.AirdropType.Red),
+        new("凤鹰空袭", AirdropData_SO.AirdropType.Red, AirdropLabelEnum.Jet),
         // 装备型：背包 / 无人机 / 其余支援武器
         new("战术背包", AirdropData_SO.AirdropType.Blue, AirdropLabelEnum.Bag),
         new("无人机", AirdropData_SO.AirdropType.Blue, AirdropLabelEnum.Drone),
@@ -104,6 +106,15 @@ public class AirdropConfigWnd : Window
     [SerializeField]
     [InspectorName("模型默认旋转")]
     private Vector3 _modelBaseEuler = new Vector3(0f, 180f, 0f);
+
+    /// <summary>轰炸型"凤鹰号"系列（带飞鹰标签）统一使用的展示模型</summary>
+    [SerializeField]
+    [InspectorName("凤鹰空袭预览模型")]
+    private GameObject _eagleView;
+    /// <summary>轰炸型"轨道"系列（不带飞鹰标签）统一使用的展示模型</summary>
+    [SerializeField]
+    [InspectorName("轨道打击预览模型")]
+    private GameObject _shopView;
 
     [SerializeField]
     [DisplayField]
@@ -283,6 +294,9 @@ public class AirdropConfigWnd : Window
 
                 SetText(item.GetChild(2), data.showName);
 
+                //子1=是否拥有 / 子3=是否收藏，都按存档驱动，重建列表时就刷新
+                SetItemFlag(item, 1, _arch.IsAirdropBought(data.ID));
+                SetItemFlag(item, 3, _arch.IsAirdropPrefer(data.ID));
 
                 _itemDatas[item] = data;
                 if (_firstData == null) _firstData = data;
@@ -304,6 +318,13 @@ public class AirdropConfigWnd : Window
         _firstData = null;
     }
 
+    /// <summary>按下标切换条目上的标记（条目预制体：子1=是否拥有，子3=是否收藏）</summary>
+    private static void SetItemFlag(Transform item, int index, bool active)
+    {
+        if (item == null || index >= item.childCount) return;
+        SetActive(item.GetChild(index), active);
+    }
+
     private void SelectFirst()
     {
         if (_firstData != null) Select(_firstData);
@@ -313,9 +334,14 @@ public class AirdropConfigWnd : Window
     {
         _nowData = data;
 
+        //选中高亮走条目 Button 的 ColorTint（预制体里 selected 态配的是黄色），
+        //这里把该条目设为 EventSystem 的选中对象即可，点其它条目时 Unity 会自己切换
         foreach (var kv in _itemDatas)
         {
-            if (kv.Key.childCount > 1) SetActive(kv.Key.GetChild(1), kv.Value == data);
+            if (kv.Value != data) continue;
+            var button = kv.Key.GetComponent<Button>();
+            if (button != null && UnityEngine.EventSystems.EventSystem.current != null) button.Select();
+            break;
         }
 
         ShowInfo(data);
@@ -474,6 +500,24 @@ public class AirdropConfigWnd : Window
     }
 
     /// <summary>
+    /// 取该战备展示用的模型。
+    /// 轰炸型（<see cref="AirdropData_SO.AirdropType.Red"/>）按标签分成两族，共用同一套载体模型：
+    /// 带飞鹰标签的"凤鹰号"系列展示 <see cref="_eagleView"/>，其余"轨道"系列展示 <see cref="_shopView"/>；
+    /// 其他类型的战备仍然展示自身的 <see cref="AirdropData_SO.creatObect"/>。
+    /// 两个字段留空时回落到 <see cref="AirdropData_SO.creatObect"/>，保证没有配也能正常显示。
+    /// </summary>
+    private GameObject GetPreviewModel(AirdropData_SO data)
+    {
+        if (data == null) return null;
+        if (data.type == AirdropData_SO.AirdropType.Red)
+        {
+            var view = (data.labels & AirdropLabelEnum.Jet) != 0 ? _eagleView : _shopView;
+            if (view != null) return view;
+        }
+        return data.creatObect;
+    }
+
+    /// <summary>
     /// 展示战备模型。
     /// 实例先挂在未激活的挂点上（此时对象不在激活层级里，任何组件的 Awake / OnEnable 都不会执行），
     /// 清理掉根物体上除渲染 / 动画以外的组件后再激活，避免模型上的逻辑脚本产生副作用。
@@ -481,14 +525,17 @@ public class AirdropConfigWnd : Window
     private void ShowModel(AirdropData_SO data)
     {
         ClearModel();
-        if (_modelRoot == null || data == null || data.creatObect == null) return;
+        if (_modelRoot == null || data == null) return;
+
+        var preview = GetPreviewModel(data);
+        if (preview == null) return;
 
         _modelHolder = new GameObject("ShowModelHolder");
         _modelHolder.layer = _modelRoot.gameObject.layer;
         _modelHolder.transform.SetParent(_modelRoot, false);
         _modelHolder.SetActive(false);
 
-        _model = Instantiate(data.creatObect, _modelHolder.transform);
+        _model = Instantiate(preview, _modelHolder.transform);
         _model.name = "ShowModel_" + data.ID;
         //保留预制体自身的旋转与缩放（比如炮台根节点自带 45°，会和挂点上的默认朝向叠加），
         //只把预制体根节点那串随手存下来的位置归零：模型后面会按包围盒重新摆到视线中心
