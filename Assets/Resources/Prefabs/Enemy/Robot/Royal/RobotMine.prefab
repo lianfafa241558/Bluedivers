@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6222144502758245057}
   - component: {fileID: 2993928554080433402}
-  - component: {fileID: 5864681512434634788}
   - component: {fileID: 1200020666728257978}
   - component: {fileID: 8511710419596403664}
   - component: {fileID: 4442275009479529810}
@@ -62,28 +61,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &5864681512434634788
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4833145942909972005}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ce78e30cac538a47a5c6f7136786803, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsDestroy: 0
-  LiftTime: 360
-  PreRelease: 1
-  allowSeeRelease: 0
-  allowRelease: 0
-  useDebug: 0
-  OnEnd:
-    m_PersistentCalls:
-      m_Calls: []
-  showScale: 0
 --- !u!114 &1200020666728257978
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -119,7 +96,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 5
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 8
+    Value: 1
+  - Key: 9
+    Value: 1
+  - Key: 11
+    Value: 1
   MainPart: {fileID: 1200020666728257978}
   demolishValue: -1
   showHealth: 0
@@ -141,7 +124,7 @@ MonoBehaviour:
     Value: 10
   - Key: 11
     Value: 100
-  AutoDestroy: 0
+  AutoDestroy: 1
 --- !u!114 &4442275009479529810
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -206,12 +189,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Root: {fileID: 6222144502758245057}
   DeployDelay: 2
-  TriggerRange: 0.5
+  TriggerRange: 1.5
   VerticalRange: 0
   intelligent: 0
   DamageData:
     DamageExplosion: 20
-    ExplosionInnerRange: 1.5
+    ExplosionInnerRange: 2
     ExplosionRange: 3
     DestructeRadius: 0
     ShockwaveRadius: 2
@@ -244,7 +227,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea3b95a4dfe71f44489ac67a3a5e37c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  data: {fileID: 11400000, guid: c3da9e986bf3a5c41a90e3880a4ee7f8, type: 2}
+  data: {fileID: 11400000, guid: a4c03cd8ba0c1f04993d2020530a717f, type: 2}
 --- !u!114 &5594055035715849963
 MonoBehaviour:
   m_ObjectHideFlags: 0

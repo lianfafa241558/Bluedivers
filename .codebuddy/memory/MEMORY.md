@@ -29,20 +29,27 @@
 - 只需"启用/禁用物体"用 `List<{GameObject,bool}>`；仅需"任意组件任意方法"才用 UnityEvent（存方法名，改名静默失效）
 - 共享 + 需引用实例层级 → 间接引用（key/相对路径 + 运行时解析 + 编辑器校验）
 - 价格/消耗统一 `List<SKVP<OOPartEnum,int>>` + `wndManager.CreatTip(new(){costs=...})`
-- UI 展示模型（`ArmamentWnd`/`SettingWnd`/`AirdropConfigWnd`）：实例化 prefab → 禁 MonoBehaviour + Collider、Rigidbody 设 kinematic → `SetChildLayer`；独立相机 + RenderTexture 预览，`RectTransformUtility.RectangleContainsScreenPoint` 判拖动区
-- ⚠ 展示模型要**连 Awake 都不执行**时：`enabled=false` 无效（Awake 只看 `activeInHierarchy`），必须在**未激活的挂点**下实例化 → 移除逻辑组件 → 再激活（`Destroy` 帧末生效，需等一帧；想同帧则用 `DestroyImmediate`）。`AirdropConfigWnd.ShowModel` 是现成实现
-- 展示模型自适应大小：`AirdropConfigWnd.FitModelScale` 用「相机视野半高半宽（到挂点距离处）+ 包围盒 XZ 半对角线（绕 Y 旋转安全）/ Y 半高」求缩放（**双向**，小体型也放大），并把包围盒中心对齐**相机视线中心**（`focus = camPos + fwd*dot(root-camPos, fwd)`，挂点不在视线中心上，本预制体差 0.5）；朝向走 `_modelBaseEuler`（默认 180）+ `ApplyModelRotation()`
-- ⚠ 量展示模型包围盒的四个前提：① `Renderer.bounds` **未激活时为 0**，必须激活后量 ② **带 Animator 的模型必须先让动画算姿势**（激活后 `animator.Update(0f)` 再等一帧），绑定姿势与显示姿势能差 1.7 米（Healdrone 默认动画下移机身），否则模型会整体偏上/偏下 ③ 蒙皮网格 bounds 随骨骼姿势变化 ④ **量的时候要把模型自身旋转临时归零**，否则世界 AABB 被旋转撑大（炮台自带 45° 会让水平尺寸虚高四成）
-- 展示模型保留预制体自身的旋转/缩放（`_modelBaseScale`），默认朝向只加在挂点上 → 世界旋转 = 挂点(默认+拖动) ∘ 预制体自身旋转（8 个炮台预制体根节点自带 45°，180+45=225）
-- ⚠ 量展示模型的包围盒**不能直接 Encapsulate 全部 Renderer**：战备预制体里混着 ① 零体积包围盒的未播放粒子（会把原点/远处那个点并进盒子，模型被缩成 0.002）② 几百米的 LineRenderer 光束 ③ `BombRange`/`EvaRange`/`Range_Sphere`/`TaskShowRange`/`DistGround*`/`Decal*` 等范围贴花示意网格。`FitModelScale` 的过滤顺序：画不出来的（`!enabled || !activeInHierarchy`）→ 特效类（Particle/Line/Trail，仅在还有实体网格时）→ 材质名关键字（`RangeMaterialKeys`）→ 零体积；全模型只剩特效时才退回按全部 Renderer 量
+
+### 组件存活 / 回收（易踩）
+- `VFXManager.Release(GameObject)` **只认根物体**上的 `ParticleSystem`(Stop) 或 `LimitedLife`(allowRelease=true)，两者皆无＝纯空转（不销毁、不停用）；`ProjectileBase` 走另一个重载（回池 + `Template`）
+- `LimitedLife.IsAlive()` **只被 VFXManager 的池 `Update()` 轮询** → 非池化实例（含 Nest 里预置的）即使有 LimitedLife 也不会被回收；`HealthOther.AutoDestroy` 才是"死亡即销毁"的开关
+- 池化对象"本次状态"字段必须在 `OnDisable`/`OnEnable` 复位，且放在早退 `return` **之前**
+
+### UI 展示模型（`ArmamentWnd`/`SettingWnd`/`AirdropConfigWnd`）
+- 流程：实例化 prefab → 禁 MonoBehaviour + Collider、Rigidbody 设 kinematic → `SetChildLayer`；独立相机 + RenderTexture 预览，`RectTransformUtility.RectangleContainsScreenPoint` 判拖动区
+- ⚠ 要**连 Awake 都不执行**：`enabled=false` 无效（Awake 只看 `activeInHierarchy`），必须在**未激活的挂点**下实例化 → 移除逻辑组件 → 再激活（`Destroy` 帧末生效，需等一帧；想同帧用 `DestroyImmediate`）。`AirdropConfigWnd.ShowModel` 是现成实现
+- `FitModelScale` 自适应：相机视野半高/半宽（到挂点距离处）+ 包围盒 XZ 半对角线（绕 Y 旋转安全）/ Y 半高求缩放（**双向**，小体型也放大），并把包围盒中心对齐**相机视线中心**（`focus = camPos + fwd*dot(root-camPos, fwd)`，挂点不在视线中心上，本预制体差 0.5）；朝向走 `_modelBaseEuler`（默认 180）+ `ApplyModelRotation()`
+- ⚠ 量包围盒四个前提：① `Renderer.bounds` **未激活时为 0**，必须激活后量 ② **带 Animator 必须先算姿势**（激活后 `animator.Update(0f)` 再等一帧），绑定姿势与显示姿势能差 1.7 米 ③ 蒙皮 bounds 随骨骼姿势变化 ④ **量前把模型自身旋转临时归零**，否则世界 AABB 被旋转撑大（炮台自带 45° 让水平尺寸虚高四成）
+- 保留预制体自身旋转/缩放（`_modelBaseScale`），默认朝向只加在挂点上 → 世界旋转 = 挂点(默认+拖动) ∘ 预制体自身旋转（8 个炮台根节点自带 45°，180+45=225）
+- ⚠ **不能直接 Encapsulate 全部 Renderer**：战备预制体混着 ① 零体积包围盒的未播放粒子（会把远处那点并进盒子，模型被缩成 0.002）② 几百米 LineRenderer 光束 ③ `BombRange`/`EvaRange`/`Range_Sphere`/`TaskShowRange`/`DistGround*`/`Decal*` 范围贴花网格。过滤顺序：画不出来的（`!enabled || !activeInHierarchy`）→ 特效类（Particle/Line/Trail，仅在还有实体网格时）→ 材质名关键字（`RangeMaterialKeys`）→ 零体积；全模型只剩特效时才退回按全部 Renderer 量
 
 ## 编辑器扩展
 - 装饰特性一律 `DecoratorDrawer`；需读 propertyPath/serializedObject 才用 `PropertyDrawer`（数组场景 `.Array.data[` 回退普通绘制）
 - `InlineFieldDrawer`（`Assets/Editor/Drawer/`）＝`[Singleline]` 单行内联的**唯一实现**（Layout 版 `DrawInlineListLayout/DrawInlineObjectLayout/DrawInlineList/DrawDecorators`；Rect 版 `DrawInlineListRect/GetInlineListHeight/DrawElementRow/DrawFooterButtons/DrawAddButton`，样式 `InlineListStyle` 可插 `ChildLabelProvider`/`ChildDrawer`）；含 `ResolvePropertyType/ResolveField/GetFieldLabel` 反射工具。要单行内联就调它，不要手写
 - `EditorOverride`（`[CustomEditor(typeof(Object),true,isFallback=true)]`）是全局兜底 Inspector：`[Foldout]`/`[InspectorName]`/`[Compare]`/单行内联数组全靠它；**被专属 `[CustomEditor]` 完全顶掉**（全仓仅 `SoundGroup_SOEditor`、`AirdropData_SOEditor` 两个非 fallback），目标类型有专属编辑器时须自己补 `[Header]`/`[Space]`/内联
 - 反射自建 Drawer 须手动注入 `m_Attribute`；特性类标 `UnityEditor.CustomPropertyDrawer`；取特性目标类型用 `GetCustomAttributesData().ConstructorArguments[0].Value as Type`
-- 复用：`SOPickerPopup<T>`（`confirmMode` 控单击即选/确认）、`PrefabBatchToolBase`、`DamageDataDrawer.DrawSinglelineList`；Drawer 集中 `Drawer/`
-- `[DisplayField]`（`00Attribute/CustomAttribute.cs` + `CustomLabelDrawer.DisplayFieldDrawer`）：默认编辑期不画、运行期只读；只对已序列化字段生效（私有须配 `[SerializeField]`）；`readonly`/Dictionary 无效；支持类型白名单 `IsSupportedType`＝Integer/Float/Boolean/String/ObjectReference/**Color/Vector2/Vector3**，不在白名单的类型不画也不占位（扩展加一个 `case`）；高度与绘制共用 `ShouldDraw`（`isPlaying ? run : editor`）
+- 复用：`SOPickerPopup<T>`（`confirmMode` 控单击即选/确认）、`PrefabBatchToolBase`；Drawer 集中 `Drawer/`
+- `[DisplayField]`（`00Attribute/CustomAttribute.cs` + `CustomLabelDrawer.DisplayFieldDrawer`）：默认编辑期不画、运行期只读；只对已序列化字段生效（私有须配 `[SerializeField]`）；`readonly`/Dictionary 无效；类型白名单 `IsSupportedType`＝Integer/Float/Boolean/String/ObjectReference/**Color/Vector2/Vector3**，不在白名单不画也不占位（扩展加一个 `case`）；高度与绘制共用 `ShouldDraw`（`isPlaying ? run : editor`）
 - 数据编辑器：`Editor/DataEditorWindow.cs` + `DataTabs/DataTabModule<T>`；SO 加字段且带专属 Editor 须显式补 `DrawField("新字段")`
 
 ## 协作偏好
@@ -55,10 +62,11 @@
 ## 战备系统
 - 资产 `Assets/Resources/GameData/Airdrop/ADSO_*.asset`；运行时 `ResSvc.airdropDic`
 - `AirdropData_SO`：`type`（Red0轰炸/Blue1装备/Greed2炮台/Orange3载具/Yellow4补给）、`labels`（`AirdropLabelEnum` `[Flags]`：Bag1/Drone2/Mine4/Jet8/Medivac16）、`opter` 方向序列（Left0/Up1/Right2/Down3，LE uint 数组）、`subAirdrop`、`creatObect`（部署 prefab，兼配置界面展示模型）、`coolGroup`、`isHide`
-- ⚠ `labels` 是后加字段：除 `ADSO_R_Railgun`（`labels: 0`）外其余资产 YAML 里**根本没有该行**（=0），需逐个填
+- ⚠ `labels` 是后加字段：除 `ADSO_R_Railgun`（`labels: 0`）外其余资产 YAML 里**根本没有该行**（=0），已加进专属编辑器，需逐个填
 - ⚠ `AirdropData_SOEditor` 为显式列字段，SO 新增字段漏列就不显示；`DrawField` 传显式 GUIContent 会盖掉字段自带 `[InspectorName]`，`LabelOf` 的中文名 switch 必须同步补
 - `ArchivesData_SO`：`AirdropBuyDic`（已购）、`AirdropPreferList`（偏好/排序标记）
-- UI：`AirdropWnd`（HUD）、`AirdropConfigWnd`（购买/偏好；列表分组由静态 `GroupRules` 数组驱动：轰炸→轨道打击/凤鹰空袭、装备→战术背包/无人机/支援武器、炮台→地雷发射器/哨戒炮、载具整组、补给不显示；首个命中即归类，组内偏好优先排序；分组表头第二文本＝已拥有/总数）、`ArmamentWnd`（配置）；`ArmamentButton.prefab` 子1=偏好标记
+- UI：`AirdropWnd`（HUD）、`AirdropConfigWnd`（购买/偏好；列表分组由静态 `GroupRules` 驱动：轰炸→轨道打击/凤鹰空袭、装备→战术背包/无人机/支援武器、炮台→地雷发射器/哨戒炮、载具整组、补给不显示；首个命中即归类，组内偏好优先排序；分组表头第二文本＝已拥有/总数）、`ArmamentWnd`（配置）；`ArmamentButton.prefab` 子1=偏好标记
+- 部署链路：`VFXAirdropEffect` 按 `deliveryType` 分支（Pod 用 `Instantiate(creatObect)`；`ImpactVfx` 指向某 prefab 时由 `FpsHelper.Hit` 用 `VFXManager.Creat` 创建并 `SetOwner`）
 - 强化：`VFXAirdropEffect.SetOwner` 武器参数须从 **`weaponRoot`** 取；只改运行时 `AirdropData`（以 cfg 为基准）；改 `arriveTime` 须同步 `time`
 
 ## 敌人特效（`02Game/AI/FxCont`）
@@ -106,8 +114,8 @@
 - 进度/连接条 `LinkBar.png`（Filled）；细边框 `frame5/6.png`；箭头 `Arrow_Left/Right/Left2/Right2/Down.png`；全屏底 `99997.png`；纯色深底惯例：无 sprite + `(0,0,0,0.2~0.55)`
 
 ## 通用坑与教训
-- 池化对象"本次状态"字段必须在 `OnDisable`/`OnEnable` 复位，且放在早退 `return` **之前**
 - 上游包文件丢失排查法：`git ls-files` 与镜像目录清单比对；Unity 报"meta 存在但文件夹不存在"常意味着目录内文件被忽略/删除（空目录 git 不存）
 - 双机/换机后第一件事：确认 MCP 连的是**当前这份副本**（`project_path`），再动写操作
 - 编辑器特性失效先问「谁在画这个 Inspector」：专属 `[CustomEditor]` 会顶掉全局 fallback
 - Unity 资产 YAML 中**整行缺失的字段**＝脚本新增后资产尚未重新保存（按默认值处理），排查数据时须留意
+- 诊断"某组件没生效"时先看**是不是压根没人调它**：如 `LimitedLife` 只被池轮询、`VFXManager.Release` 只对池化/粒子对象生效
