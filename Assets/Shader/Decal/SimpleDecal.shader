@@ -14,6 +14,11 @@ Shader "Decal/SimpleDecal"
         [Enum(UnityEngine.Rendering.BlendMode)]_DecalSrcBlend("_DecalSrcBlend", Int) = 5 // 5 = SrcAlpha
         [Enum(UnityEngine.Rendering.BlendMode)]_DecalDstBlend("_DecalDstBlend", Int) = 10 // 10 = OneMinusSrcAlpha
 
+        // 加法式混合专用开关（如 _DecalSrcBlend=SrcAlpha / _DecalDstBlend=DstAlpha：背景被 dst*dstAlpha
+        // 原样保留，贴花是"往上加一层"）。这种混合下雾只能【衰减】贴花自身颜色，不能把雾色混进来：
+        // 背景在不透明阶段已经算过雾了，再混一份雾色 = 整块足迹多出一份雾色（贴图全黑处也变雾色方块）。
+        [Toggle(_DecalAdditiveFog)] _DecalAdditiveFog("加法混合(雾只衰减)", Float) = 0
+
         [Header(Alpha remap(extra alpha control))]
         _AlphaRemap("_AlphaRemap", vector) = (1,0,0,0)
         [Toggle(_UseMaskMap)] _UseMaskMap("_UseMaskMap", Float) = 0
@@ -73,6 +78,9 @@ Shader "Decal/SimpleDecal"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             #pragma shader_feature_local _UseMaskMap
+
+            // 加法混合材质（见 Properties 上方说明）开启后，雾只做衰减、不叠雾色
+            #pragma shader_feature_local _DecalAdditiveFog
 
             struct appdata
             {
@@ -199,7 +207,16 @@ Shader "Decal/SimpleDecal"
                 // 视空间深度以相机处为 0，重映射到近平面（减去 _ProjectionParams.y）。
                 // 未开启雾关键字时 ComputeFogFactorZ0ToFar 返回 0、MixFog 原样返回，无需额外判断
                 float fogFactor = ComputeFogFactorZ0ToFar(max(sceneDepthVS - _ProjectionParams.y, 0.0));
+#if _DecalAdditiveFog
+                // 加法式混合（例：PylonPower 的 _DecalSrcBlend=SrcAlpha / _DecalDstBlend=DstAlpha）
+                // 下背景被 dst*dstAlpha 原样保留，而 MixFog 会把雾色混进输出 —— 等于在整块足迹上
+                // 【额外多加一份雾色】：贴图全黑的地方本来什么都不加，开雾后却变成一整块雾色方块
+                // （PylonPower 的贴图 pylon_alpha1_orange 四角纯黑但 alpha 恒为 1，正好整块方形都中招）。
+                // 加法层对雾只能衰减：MixFog(c,f) - MixFog(0,f) 恒等于 c * 无雾强度，任何雾模式都成立。
+                col.rgb = MixFog(col.rgb, fogFactor) - MixFog(half3(0, 0, 0), fogFactor);
+#else
                 col.rgb = MixFog(col.rgb, fogFactor);
+#endif
 
                 // 预乘 Alpha：确保透明区域完全不影响背景（保留背景雾效）
                 col.rgb *= col.a;

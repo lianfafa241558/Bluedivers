@@ -253,3 +253,73 @@ tar -xf "$env:TEMP\unity-mcp.zip" -C "$env:TEMP\um" "unity-mcp-beta/MCPForUnity"
 | 连接关系 | 桥是「本机 Unity ↔ 本机客户端」，默认不跨机 | 只操作**当前设备上开着的**那个 Unity |
 
 **换设备后的第一件事**：跑 §3 自检，确认 `project_path` 指向当前这份副本，再动任何写操作 —— 否则容易把 A 机器上的改动预期套到 B 机器上。
+
+---
+
+## 14. 让**另一个 Unity 工程**也用上（多工程接入）
+
+**关键认识：客户端配置只有一份，工程侧才要各装一份。**
+
+- **客户端 `mcp.json` 不用改**：`uvx mcp-for-unity` 这**一个** server 进程会自动发现**所有**正在运行的 Unity 实例 —— 每个工程在 `%USERPROFILE%\.unity-mcp\` 下写自己的 `unity-mcp-status-<工程路径hash>.json`。
+- **每个 Unity 工程要各做两件事**：① 装包 ② 把 Transport 切 `Stdio`。
+
+本机已知的其他 Unity 工程：
+
+| 路径 | Unity 版本 | 备注 |
+|---|---|---|
+| `D:\Project\RTSClient` | 2022.3.62f3 | 与 Bluedivers 同版本；Packages 里只有 `com.arongranberg.astar` |
+| `E:\rtsclient` | 2022.3.34f1c1 | Unity 中国版；Packages 里有 astar、NB_FX |
+
+### 步骤
+
+1. **复制包**（务必从本工程复制，才带上汉化）：
+   ```powershell
+   Copy-Item -Recurse "e:\Bluedivers\Packages\com.coplaydev.unity-mcp" "D:\Project\RTSClient\Packages\com.coplaydev.unity-mcp"
+   ```
+   ❗ 不要改用 git URL 从上游装 —— 那样**拿不到汉化**。
+
+2. **改目标工程的 `Packages/manifest.json`**，加两行：
+   ```json
+   "com.coplaydev.unity-mcp": "file:com.coplaydev.unity-mcp",
+   "com.unity.nuget.newtonsoft-json": "3.0.2",
+   ```
+   （`com.unity.test-framework` 若已有 ≥ 1.1.31 则不必动）
+
+3. **打开目标工程 → `Window → MCP for Unity` → Connection → Transport = `Stdio`**
+   ⚠️ **每个工程都要单独切一次**：`MCPForUnity.UseHttpTransport` 是 **EditorPrefs、按工程隔离**，新工程会回到默认 HTTP → 桥不自启 → 照样报 `No Unity Editor instances found`。
+
+4. **多实例路由**（同时开多个工程时，server 需要知道发给谁）：
+   - 会话内切换：`set_active_instance`，参数支持 `Name@hash`、hash 前缀、或**端口号**
+   - 或另配一个服务器条目：
+     `"args": ["--from","mcpforunityserver","mcp-for-unity","--default-instance","RTSClient@xxxxxxxx"]`
+
+5. **端口不打架**：stdio 桥默认 `6400`，被占用时 `PortManager.GetPortWithFallback()` 自动让到 6401、6402…
+
+6. **验证**：`Get-ChildItem "$env:USERPROFILE\.unity-mcp"` 会随打开的工程数出现多个 status 文件。
+
+### 注意
+- **汉化会分叉**：包是各工程一份副本、各改各的。日后升级要逐个工程覆盖，别拿旧副本覆盖新副本。
+- **多工程 ≠ 双机（§13）**：同一台机器上两个 CodeBuddy 窗口 = **两个 uvx 进程 = 两个独立会话**（`mcp.json` 文件共用，但 server 进程与实例钉选状态**不共用**）。所以两边互不干扰，但**每个窗口都要各自钉一次**。
+- **活动实例只存在内存里**（FastMCP 会话态 + `set_active_instance`），不落盘 → 重开窗口 / 重启 IDE / 重启 server 都要**重设**。
+
+### 多实例路由：server 会拒绝猜测（本机已落地规则）
+
+源码 `transport/legacy/unity_connection.py:578-596`（`mcpforunityserver` 10.2.x）明确：
+
+| 运行中的实例数 | 行为 |
+|---|---|
+| 1 个 | 自动选中，无需任何操作 |
+| ≥ 2 个且未钉选 | **直接抛错** `Multiple Unity instances are connected and none is selected...`，并列出可选 ID |
+
+注释点明了原因：旧的「路由到最近心跳的编辑器」会让未绑定会话**串到别的项目**，已按上游 issue **#1023** 删除。所以最坏情况是"报错让你选"，不会"偷偷改错项目"。
+
+**免掉"每次设一次"的正解 = 工作区规则**（不是全局 env）：
+
+| 工程 | 规则文件 | 钉的实例 |
+|---|---|---|
+| `E:\Bluedivers` | `.codebuddy/rules/UnityMCP_多实例路由.md` | `Bluedivers@3d9f2357`（端口 6400） |
+| `D:\Project\RTSClient` | `.codebuddy/rules/UnityMCP_多实例路由.mdc` | `RTSClient@6365de15`（端口 6401） |
+
+规则随会话自动加载，天然按窗口隔离；且**每次调用都带 `unity_instance="..."`**（单次路由，不改会话默认值），比依赖 `set_active_instance` 的隐含状态更稳。
+
+❗ **不要用全局 `~/.codebuddy/mcp.json` 的 `env.UNITY_MCP_DEFAULT_INSTANCE`**：那是**全局**的，两个窗口会一起被钉到同一个实例，反而制造交叉。
