@@ -25,17 +25,17 @@ namespace FPSGame.Game
         Vector3 center;
         bool completeCreat;
         bool tip;
-
+        int waitTime;
         bool IsDisposed;
 
         System.Random random;
-        public ZergWave(WaveCreateParams param, Stack<GameObject> creats, List<GameObject> waveUseObject)
+        public ZergWave(WaveCreateParams param, Stack<GameObject> creats, List<GameObject> waveUseObject,int waitTime)
         {
             random = new Random(RandomUtils.Range(0, 1000));
             this.waveUseObject = new(waveUseObject);
             this.creats = creats;
             this.tip = param.tip;
-
+            this.waitTime = waitTime;
             creatObject = new();
             units = new();
             center = param.center;
@@ -113,12 +113,12 @@ namespace FPSGame.Game
                     {
                         for (int i = 0; i < perTickCreat; ++i)
                         {
-                            var go = VFXManager.Creat(waveUseObject[0], points[i]);
+                            var go = VFXManager.Creat(waveUseObject[0], points[i], Quaternion.Euler(0f, random.Range(0, 360), 0f));
                             go.GetComponent<LimitedLife>().ResetLift(51);
                             creatObject.Add(go);
                         }
                     }
-                    if (time == -10)
+                    if (time <= -waitTime)
                     {
                         Trans(WaveState.Ongoing);
                     }

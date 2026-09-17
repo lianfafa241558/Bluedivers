@@ -116,16 +116,34 @@ namespace FPSGame.Game
             //时间没到或者不是强制刷新
             if (!param.extraWave && Time.time < m_lastWaveTime + WaveCool * WaveCoolMul) return false;
             m_lastWaveTime = Time.time;
-            switch (enemyVarietyType.ToEnemyType())
+            switch (enemyVarietyType)
             {
-                case EnemyType.Kaiser:
+                case EnemyVarietyType.KaiserBase:
                     ticks.Add(new RobotWave(param, InitWaveUnits(param.scale), WaveUseObject));
                     break;
-                case EnemyType.Decagrammaton:
-                    ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject));
+                case EnemyVarietyType.KaiserPMC:
+                    ticks.Add(new RobotWave(param, InitWaveUnits(param.scale), WaveUseObject));
                     break;
-                case EnemyType.Colour:
-                    ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject));
+                case EnemyVarietyType.KaiserMengsk:
+                    ticks.Add(new RobotWave(param, InitWaveUnits(param.scale), WaveUseObject));
+                    break;
+                case EnemyVarietyType.BlackMarket:
+                    ticks.Add(new RobotWave(param, InitWaveUnits(param.scale), WaveUseObject));
+                    break;
+                case EnemyVarietyType.Decagrammaton:
+                    ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject, 10));
+                    break;
+                case EnemyVarietyType.UnNamedGuardian:
+                    ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject, 13));
+                    break;
+                case EnemyVarietyType.Colour:
+                    ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject, 10));
+                    break;
+                case EnemyVarietyType.Beatrice:
+                    ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject, 10));
+                    break;
+                default:
+                    ticks.Add(new ZergWave(param, InitWaveUnits(param.scale), WaveUseObject, 10));
                     break;
             }
 
