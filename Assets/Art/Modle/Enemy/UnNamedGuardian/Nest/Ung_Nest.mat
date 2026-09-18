@@ -20,17 +20,20 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Fire1
+  m_Name: Ung_Nest
   m_Shader: {fileID: 4800000, guid: f257f2ec0c2167c48859a067ac00b592, type: 3}
-  m_ValidKeywords: []
-  m_InvalidKeywords:
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
   - _UnityFogEnable
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -132,6 +135,7 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
+    - _ColorMask: 15
     - _Cull: 2
     - _CullMode: 2
     - _Cutoff: 0.5
@@ -175,8 +179,12 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 5
+    - _Stencil: 0
     - _StencilComp: 0
+    - _StencilOp: 0
+    - _StencilReadMask: 255
     - _StencilRef: 0
+    - _StencilWriteMask: 255
     - _StripeWidth: 4
     - _SupportOrthographicCamera: 0
     - _Surface: 0
@@ -187,6 +195,7 @@ Material:
     - _UseLight: 0
     - _UseMaskMap: 0
     - _UseMoveST: 0
+    - _UseUIAlphaClip: 0
     - _WorkflowMode: 1
     - _ZTest: 0
     - _ZTestMode: 4
@@ -199,9 +208,10 @@ Material:
     - _Alpha2UVSpeed: {r: 0, g: -0.2, b: 0, a: 0}
     - _AlphaRemap: {r: 1, g: 0, b: 0, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 5.992157, g: 3.2, b: 1.1607844, a: 1}
+    - _Color: {r: 11.984314, g: 2.3215683, b: 2.3215683, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HitColor: {r: 0, g: 0, b: 0, a: 0}
+    - _MainUVSpeed: {r: 0, g: 0, b: 0, a: 0}
     - _MaskColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _StripeColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}

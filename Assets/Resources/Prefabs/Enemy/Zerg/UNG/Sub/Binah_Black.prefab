@@ -9629,6 +9629,7 @@ GameObject:
   - component: {fileID: 5919098031505462027}
   - component: {fileID: 3273329139834196574}
   - component: {fileID: 8138840388240833960}
+  - component: {fileID: 515033675598289151}
   m_Layer: 0
   m_Name: Binah_Black
   m_TagString: Untagged
@@ -9771,6 +9772,32 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &515033675598289151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5164940976938432577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45339f4b3a87c5c4db014d9fdd9551d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  datas:
+  - localPos: {x: 0, y: 0, z: 0}
+    shape: 0
+    innerRadius: 6
+    outerRadius: 10
+    depth: -1
+  - localPos: {x: 0, y: 0, z: 0}
+    shape: 0
+    innerRadius: 2
+    outerRadius: 3
+    depth: 1
+  additionTerrain: {fileID: 0}
+  transitionDistance: 5
+  StartModify: 0
 --- !u!1 &6690584420790364778
 GameObject:
   m_ObjectHideFlags: 0
