@@ -279,7 +279,7 @@ namespace FPSGame.AI
                 }
                 else
                 {
-                    AudioSvc.PlaySound(new(value.cilp, pos,range:80, group: AudioGroups.Enemy));
+                    AudioSvc.PlaySound(new(value.cilp, pos,range:40, group: AudioGroups.Enemy));
                 }
             }
             if (value.ps.IsValid())

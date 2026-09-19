@@ -240,7 +240,7 @@ MonoBehaviour:
   IsFixed: 0
   flag: 0
   type: 4
-  team: 1
+  team: 3
   threat: 1
   aimPoint: {fileID: 1417902311298751955}
   UseHpBar: 1
@@ -283,7 +283,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DeathDuration: 5
-  BirthDuration: 2
+  BirthDuration: 0
   birthTime: 0
   IsRemove: 0
   PathReachingRadius: 2
@@ -377,10 +377,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 1979617965209287183}
-  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
+  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: 650fa9f1ffa004340bd2d77f31e14e10, type: 2}
   fxEvent: {fileID: 11400000, guid: 0ffb4f6b6ab78604c84c6879ffa60429, type: 2}
   fxMaterial: {fileID: 2100000, guid: 90b8a01f529ed304eb3f13505c41564f, type: 2}
+  events: []
 --- !u!114 &8384242933103516960
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1122,18 +1123,18 @@ MonoBehaviour:
   HearingRange: 10
   AttackRange: 4
   AlertRange: 0
+  Lazy: 0
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &1417902311569273196
 GameObject:
   m_ObjectHideFlags: 0

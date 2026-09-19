@@ -75,7 +75,7 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
         while (parent != default && (parent.gameObject.activeSelf == false || parent.localScale == Vector3.zero))
         {
             parent = parent.parent;
-            Debug.LogError(ps+"上升父级到" + parent,ps);
+            //Debug.LogError(ps+"上升父级到" + parent,ps);
         }
         MoveBackToCurrentScene(ps);
         ps.transform.SetParent(parent);

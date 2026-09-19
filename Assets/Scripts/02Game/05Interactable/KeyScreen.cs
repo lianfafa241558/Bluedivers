@@ -34,6 +34,8 @@ public partial class KeyScreen : MonoBehaviour
     [DisplayField]
     public Furniture_General furn;
 
+    [DisplayField]
+    [SerializeField]
     private int nowStage=-1;
     [DisplayField]
     public GameObject owner;

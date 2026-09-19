@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using FPSGame.Attribute;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -12,7 +13,7 @@ namespace FpsGame.Mission
     [AddComponentMenu("任务/完成控制面板", 30)]
     public class MissionCompleteKeySceern : MissionBase
     {
-        
+        [DisplayField]
         protected KeyScreen keyScreen;
 
         protected override void StartMission()

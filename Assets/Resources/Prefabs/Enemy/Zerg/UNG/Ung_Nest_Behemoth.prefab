@@ -11,22 +11,32 @@ PrefabInstance:
     - target: {fileID: 582481507360870890, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 582481507360870890, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 582481507360870890, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 582481507360870890, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalPosition.y
       value: 1.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 652725942506706191, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: team
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1201508442716763934, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2642745059489855707, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
@@ -91,27 +101,32 @@ PrefabInstance:
     - target: {fileID: 5704962004868595492, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.9
+      value: 1.2
       objectReference: {fileID: 0}
     - target: {fileID: 5704962004868595492, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 2
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 5704962004868595492, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.9
+      value: 1.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5704962004868595492, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5704962004868595492, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 5.92
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 5704962004868595492, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.88
+      value: 3.63
       objectReference: {fileID: 0}
     - target: {fileID: 5704962004868595492, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
@@ -128,10 +143,41 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ung_Nest_Behemoth
       objectReference: {fileID: 0}
-    - target: {fileID: 7003831133739272522, guid: f7024220001b62946b639a9fe6ac9565,
+    - target: {fileID: 8077001151899314139, guid: f7024220001b62946b639a9fe6ac9565,
         type: 3}
-      propertyPath: MainPart
+      propertyPath: ForceModule.y.scalar
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8077001151899314139, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: ForceModule.z.scalar
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8077001151899314139, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: InitialModule.startSize.scalar
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8077001151899314139, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: InitialModule.startSize.minScalar
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8129380694571133639, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: creatData.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8129380694571133639, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: creatData.Array.data[0].Key
       value: 
+      objectReference: {fileID: 753218668971608280, guid: d0015fa88a2c09840a0f21835a998cff,
+        type: 3}
+    - target: {fileID: 8129380694571133639, guid: f7024220001b62946b639a9fe6ac9565,
+        type: 3}
+      propertyPath: creatData.Array.data[0].Value
+      value: 60
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

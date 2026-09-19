@@ -59,9 +59,17 @@ public class BridgeRoleManager : RoleManagerBase
     {
         if(Input.GetKeyDown(KeyCode.O))
         {
-            m_player.Controller.enabled = false;
-            m_player.transform.position = ReadyPoint.transform.position;
-            m_player.Controller.enabled = true;
+            if(GameRoot.GameState== Core.GameStateEnum.Bridge)
+            {
+                WndManager.Instance.selectMapWnd.SetWndState(true);
+            }
+            else if (GameRoot.GameState == Core.GameStateEnum.Ready)
+            {
+                m_player.Controller.enabled = false;
+                m_player.transform.position = ReadyPoint.transform.position;
+                m_player.Controller.enabled = true;
+            }
+
         }
     }
 

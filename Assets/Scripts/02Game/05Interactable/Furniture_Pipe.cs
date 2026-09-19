@@ -196,7 +196,7 @@ public class Furniture_Pipe : Furniture_Base
         inOperate = false;
         meetTime = 3;
         Press = 3;
-        relatedTrans2.gameObject.SetActive(false);
+        if(relatedTrans2) relatedTrans2.gameObject.SetActive(false);
     }
 
     [ContextMenu("错误")]
@@ -205,8 +205,9 @@ public class Furniture_Pipe : Furniture_Base
         Id = "PipeError";
         canOperate = true;
         meetTime = 5;
+        pressTime = 0;
         Press = 5;
-        relatedTrans2.gameObject.SetActive(true);
+        if (relatedTrans2) relatedTrans2.gameObject.SetActive(true);
     }
 
 }

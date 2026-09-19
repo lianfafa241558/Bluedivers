@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using GameContract;
 
@@ -17,7 +15,7 @@ namespace FpsGame.Mission
 
 
     [AddComponentMenu("任务/撤离/静态撤离", 30)]
-    public class MissionEvacuateStatic : MissionBase
+    public class MissionEvacuateStatic : MissionEvacuateBase
     {
         enum EvacuateState
         {
@@ -31,100 +29,30 @@ namespace FpsGame.Mission
             Evacuate,
             End
         }
-        public bool IsFast;
-        [SerializeField]
-        private Transform _startPointEntity;
+
 
         private EvacuateState stage;
-        private int countDown;
-        private int suspendCountDown;
 
         private int m_EvacuateTime = 120;//撤离时间
         private int m_EvacuateRange = 30;//撤离范围
         private int suspendTime = 10;
-        private Vector3 areaPoint;
 
-        Transform area, beacon;
+        Transform beacon;
         KeyScreen keyScreen;
-
-        MedivacController medivac;
-        bool IsComplete;
-        
-        
-
-
-        protected override void StartMission()
-        {
-
-           
-
-            
-        }
-
         protected override void InitMission()
         {
-            if (!entity)
-            {
-                if (IsFast)
-                {
-
-                    var go = GameObject.FindWithTag("StartPoint");
-                    if (go)
-                    {
-                        Debug.LogWarning("尝试设置init" + gameObject, gameObject);
-                        entity = go.GetComponent<MissionView>();
-                        entity.Init(this, new int[0]);
-                    }
-                    else
-                    {
-                        base.InitMission();
-                    }
-                }
-                else
-                {
-                    base.InitMission(); 
-                }
-            }
-
-
+            base.InitMission();
             if (IsFast)
             {
-                m_EvacuateTime = 10;
+                m_EvacuateTime = 5;
                 m_EvacuateRange = 999;
             }
-            pos = entity.Pos;
-            area = entity.transform;
-            areaPoint = area.transform.position;
-            // 注意：不能用 ?? 对 Unity Object 判空（无法识别未赋值/已销毁的伪 null），改用 Unity 重载的 != null
-            Transform point = _startPointEntity != null ? _startPointEntity : area;
-            if (point == null)
-            {
-                Debug.LogError("撤离任务起始点为空：_startPointEntity 与 area 均为空，无法创建撤离单位", this);
-                return;
-            }
-
-            ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/Kei", false, point.TransformPoint(0, 0, 10));
-            medivac = ResSvc.Instance.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, point.TransformPoint(0, 12, 0)).GetComponent<MedivacController>();
-            medivac.SetType(MedivacController.MedivacState.Land);
-            medivac.targetPoint = point;
         }
 
-        public override void Link(MissionBase mission)
+        public override void Activation(MissionBase mission)
         {
-            mission.OnMissionEnd += Activation;
-
-        }
-
-        public void Activation(MissionBase mission)
-        {
-            mission.OnMissionEnd -= Activation;
-            IsComplete = mission.completed;
+            base.Activation(mission);
             stage = EvacuateState.Activation;
-
-            RemoveTag(MissionTag.hideAll);
-            AddTag(MissionTag.IsActive);
-            BattleEventSub.MissionStateChange(this, true);
-            BattleEventSub.MissionEnityShow(entity);
             UpdateText("激活撤离终端", "");
         }
 
@@ -136,6 +64,7 @@ namespace FpsGame.Mission
                     if (--countDown == -5)
                     {
                         CreatNotice("Yuuka", IsComplete?"Evacuate": "EvacuateFail");
+                        //呼叫撤离信标
                         BattleManager.Instance.ReleaseAirdrop(areaPoint, 0, InitBeacon);
                     }
                     if (IsFast && keyScreen)
@@ -206,9 +135,6 @@ namespace FpsGame.Mission
 
             return true;
         }
-
-
-
 
         void InitBeacon(GameObject beacon)
         {

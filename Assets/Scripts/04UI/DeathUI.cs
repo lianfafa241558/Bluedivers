@@ -7,16 +7,8 @@ using static WndTools.WndRootTool;
 public class DeathUI : Window
 {
 
-    [SerializeField]
-    [InspectorName("倒计时根节点")]
-    private Transform _root;
 
-    [SerializeField]
-    [InspectorName("倒计时文本")]
-    private Transform _text;
-
-
-    private int time;
+    private float time;
     /// <summary>是否处于团灭判负倒计时中</summary>
     private bool _countingDown;
 
@@ -68,10 +60,13 @@ public class DeathUI : Window
     {
         _countingDown = true;
         time = (int)remaining;
-        WndManager.Instance.CreatCountDown(() => time,CountDownTypeEnum.Red);
-        SetActive(_root, true);
+        WndManager.Instance.CreatCountDown(() => (int)time,CountDownTypeEnum.Red);
+
         SetWndState(true);
-        SetCountDownText(remaining);
+    }
+    private void Update()
+    {
+        if (_countingDown && time > 0) time -= Time.deltaTime;
     }
 
     /// <summary>倒计时取消：被救起或判负条件不再满足</summary>
@@ -87,13 +82,8 @@ public class DeathUI : Window
     {
         if (!_countingDown) return;
         _countingDown = false;
-        SetActive(_root, false);
+
     }
 
-    /// <summary>将剩余秒数写入所有倒计时文本</summary>
-    private void SetCountDownText(float remaining)
-    {
-        var content = Mathf.CeilToInt(remaining).ToString();
-        SetText(_text, content);
-    }
+
 }

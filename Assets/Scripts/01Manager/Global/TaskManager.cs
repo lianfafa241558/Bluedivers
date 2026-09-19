@@ -572,13 +572,13 @@ public enum MissionEnum
     Campaign,
 
     /// <summary>撤离/迅速撤离</summary>
-    [InspectorName("撤离/迅速撤离")] EvacuateFast,
+    [InspectorName("撤离/迅速静态撤离")] EvacuateFast,
     /// <summary>撤离/动态撤离</summary>
     [InspectorName("撤离/动态撤离")] EvacuateMove,
     /// <summary>撤离/静态撤离</summary>
     [InspectorName("撤离/静态撤离")] EvacuateStatic,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder40,
+    /// <summary>撤离/迅速动态撤离</summary>
+    [InspectorName("撤离/迅速动态撤离")] EvacuateMoveFast,
 
 
     /// <summary>次要/黑盒</summary>

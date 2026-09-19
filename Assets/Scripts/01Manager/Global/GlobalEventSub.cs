@@ -46,7 +46,7 @@ public static class GlobalEventSub
     /// <summary>昼夜交替时</summary>
     public static void DaySwitch(bool isNoon)
     {
-        Debug.LogError($"昼夜交替事件触发，当前状态：{(isNoon ? "白天" : "夜晚")}");
+        //Debug.LogError($"昼夜交替事件触发，当前状态：{(isNoon ? "白天" : "夜晚")}");
         OnDaySwitch?.Invoke(isNoon);
     }
 

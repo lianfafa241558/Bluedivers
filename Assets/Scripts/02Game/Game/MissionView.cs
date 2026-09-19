@@ -88,8 +88,8 @@ namespace FpsGame.Mission
 
         private void Update()
         {
-            
 
+            if (GameRoot.GameState != GameStateEnum.Game) return;
             if (!mission||!mission.IsInitialized) return;
             if (!BattleManager.Instance || !BattleManager.Instance.IsStartBattle) return;
 

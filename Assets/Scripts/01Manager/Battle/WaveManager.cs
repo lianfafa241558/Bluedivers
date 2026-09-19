@@ -93,7 +93,7 @@ namespace FPSGame.Game
                 .Where(kvp => kvp != null)
                 .ToList();
 
-            waveValue = (int)((1 + 0.15f * task.ExtraDifficulty[2]) * 100
+            waveValue = (int)((1 + 0.15f * task.ExtraDifficulty[2]) * 60
                 * task.difficulty switch {
                     DifficultyEnum.Normal => 0.6f,
                     DifficultyEnum.Hard => 0.75f,

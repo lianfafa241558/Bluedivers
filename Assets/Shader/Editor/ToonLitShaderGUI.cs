@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
-/*
+
 public class ToonLitMainShaderGUI : ShaderGUI
 {
     private MaterialEditor materialEditor;
@@ -429,4 +429,4 @@ public class ToonLitMainShaderGUI : ShaderGUI
             }
         }
     }
-}*/
+}

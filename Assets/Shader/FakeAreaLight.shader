@@ -14,7 +14,7 @@ Shader "LX/FakeAreaLight"
         _distortFactor("factor",Range(0,1)) = 0
 
         [Space(16)]
-        _FresnelScale("_FresnelScale", Range(0,1)) = 0.5
+        _FresnelScale("_FresnelScale", Range(-1,1)) = 0.5
         _FresnelDecay("_FresnelDecay", Range(0,30)) = 1
 
     }
@@ -38,7 +38,7 @@ Shader "LX/FakeAreaLight"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             sampler2D _AlphaTex;
-            //float4 _MainTex_ST;
+            float4 _AlphaTex_ST;
 
             float4 _Color;
             float4 _EmissionColor;
@@ -92,7 +92,7 @@ Shader "LX/FakeAreaLight"
 
         half4 frag(v2f i) : SV_Target
         {
-            half a= tex2D(_AlphaTex, i.uv/_MainTex_ST.xy-_MainTex_ST.zw).r;
+            half a= tex2D(_AlphaTex, i.uv/_MainTex_ST.xy*_AlphaTex_ST.xy-_MainTex_ST.zw+_AlphaTex_ST.zw).r;
             //屏幕位置扭动
             half dragOffset = sin(_Time.y * _distortFactorTime);
             i.uv2.y+=_Time.y*_distortFactor;
@@ -106,9 +106,13 @@ Shader "LX/FakeAreaLight"
             half3 V = normalize(_WorldSpaceCameraPos - i.positionWS);//L是灯光方向，这里其实是V
             half NdotV  =saturate(abs(dot(N,V)));
 
-            // 标准菲涅尔公式
+            // 标准菲涅尔公式：边缘 fresnel→1，正对相机 fresnel→0
             half fresnel = pow(1.0 - NdotV, _FresnelDecay);
-            col.a=lerp(col.a,col.a * fresnel,_FresnelScale);
+            // _FresnelScale 的绝对值决定强度，正负号决定方向：
+            //   > 0：边缘更实、中心更透（原有效果）
+            //   < 0：边缘更透、中心更实（反向，边缘渐变透明）
+            half fresnelDir = (_FresnelScale >= 0.0) ? fresnel : (1.0 - fresnel);
+            col.a = lerp(col.a, col.a * fresnelDir, abs(_FresnelScale));
 
             if(_FresnelWave){
                 col.a += sin(_Time.y)*_FresnelWave;

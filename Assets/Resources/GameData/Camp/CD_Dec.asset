@@ -86,6 +86,13 @@ MonoBehaviour:
           type: 3}
         weight: 50
         size: 10
+    - tier: 8
+      weight: 0
+      unitWeights:
+      - unit: {fileID: 7764545679262662935, guid: 1cffa75392754f8479ced48d1cae32b5,
+          type: 3}
+        weight: 100
+        size: 10
     patrolTemplate:
     - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
       Value: 40
@@ -96,7 +103,9 @@ MonoBehaviour:
     - Key: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
       Value: 10
     - Key: "\u7206\u866B\u5DE1\u903B\u961F"
-      Value: 20
+      Value: 15
+    - Key: "\u5927\u7206\u866B"
+      Value: 5
   - name: "\u6218\u58EB\u6A21\u677F"
     template:
     - tier: 1
@@ -167,6 +176,13 @@ MonoBehaviour:
           type: 3}
         weight: 50
         size: 10
+    - tier: 8
+      weight: 0
+      unitWeights:
+      - unit: {fileID: 7764545679262662935, guid: 1cffa75392754f8479ced48d1cae32b5,
+          type: 3}
+        weight: 100
+        size: 10
     patrolTemplate:
     - Key: "\u8DF3\u866B\u5DE1\u903B\u961F"
       Value: 15
@@ -179,7 +195,9 @@ MonoBehaviour:
     - Key: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
       Value: 10
     - Key: "\u7206\u866B\u5DE1\u903B\u961F"
-      Value: 15
+      Value: 12
+    - Key: "\u5927\u7206\u866B"
+      Value: 3
   - name: "\u70B9\u706B\u866B\u6A21\u677F"
     template:
     - tier: 1
@@ -409,9 +427,7 @@ MonoBehaviour:
   - name: "\u8DF3\u866B\u5DE1\u903B\u961F"
     units:
     - Key: 1
-      Value: 8
-    - Key: 2
-      Value: 1
+      Value: 12
     - Key: 6
       Value: 1
   - name: "\u7EAF\u4FA6\u67E5\u5DE1\u903B\u961F"
@@ -422,6 +438,10 @@ MonoBehaviour:
     units:
     - Key: 7
       Value: 12
+  - name: "\u5927\u7206\u866B"
+    units:
+    - Key: 8
+      Value: 1
   enemyVarietyType: 5
   ShowName: "\u5341\u5B57\u795E\u660E"
   Sprite: {fileID: 21300000, guid: db98d366425374145a850959cd37c0ee, type: 3}
@@ -432,7 +452,7 @@ MonoBehaviour:
   NestTerrainItem:
     diffuseTexture: {fileID: 2800000, guid: d9194ddd69f2d4049b638601c871a997, type: 3}
     tileSize: {x: 4, y: 4}
-  mainTypes: 000000000400000006000000050000000700000008000000
+  mainTypes: 00000000020000000400000006000000050000000700000008000000
   extraTypes: 2200000023000000240000002500000028000000290000002600000032000000
   nestTypes: 640000006500000066000000
   mainTypesBackup: 000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000b000000

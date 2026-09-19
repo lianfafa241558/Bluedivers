@@ -522,7 +522,12 @@ public struct WaveCreateParams
         tip = true,
     };
 
-
+    public static WaveCreateParams Evacuate => new WaveCreateParams {
+        extraWave = true,
+        range = 60,
+        scale = 0.5f,
+        tip = false,
+    };
 }
 public static class WaveUtil
 {
