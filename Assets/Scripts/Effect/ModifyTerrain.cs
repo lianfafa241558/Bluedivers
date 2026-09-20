@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core;
+using FpsGame.MapUtils;
 
 using UnityEngine;
 
@@ -12,6 +13,9 @@ public class ModifyTerrain : MonoBehaviour
     Terrain additionTerrain;
     [SerializeField]
     float transitionDistance=5;
+    [SerializeField]
+    [InspectorName("清除植被的原型范围（含头含尾，7-10=树）")]
+    Vector2Int clearVegetationRange = new Vector2Int(7, 10);
 
     [SerializeField]
     [InspectorName("测试时使用，在start修改地形")]
@@ -44,10 +48,22 @@ public class ModifyTerrain : MonoBehaviour
                 Vector3 pos = transform.TransformPoint(data.localPos);
                 //Debug.LogError("修改高度"+ pos+"  "+ data.outerRadius,gameObject);
                 yield return TerrainUtils.ModifyHeightMap(pos, data.innerRadius, data.outerRadius, data.depth, ShapeType.Circle, true, false);
+                //弹坑范围内的树整片清除（"清除"不走爆炸白名单；只清 clearVegetationRange，默认 7-10 的树，石块 0-6 保留）
+                TreeDestructor.ClearInRadius(pos, data.outerRadius, clearVegetationRange.x, clearVegetationRange.y);
+                //弹坑范围内的细节（草/花）一并擦除
+                TerrainDetailEraser.ClearInRadius(pos, data.outerRadius);
                 //Debug.LogError("修改了地形" + gameObject);
             }
             if (additionTerrain)
             {
+                //附加地形是"角点=position、XZ=size"的方块，中心 = 角点 + 半尺寸（上面已把它摆到 transform.position 附近）
+                //按矩形而非外接圆清除，避免多清掉区域外的树（附加地形未被旋转，轴对齐矩形判定是精确的）
+                var addSize = additionTerrain.terrainData.size;
+                Vector3 addCenter = additionTerrain.transform.position + new Vector3(addSize.x * 0.5f, 0f, addSize.z * 0.5f);
+                TreeDestructor.ClearInRectXZ(addCenter, new Vector2(addSize.x * 0.5f, addSize.z * 0.5f),
+                    clearVegetationRange.x, clearVegetationRange.y);
+                //附加地形覆盖区域的细节（草/花）同样擦除
+                TerrainDetailEraser.ClearInRectXZ(addCenter, new Vector2(addSize.x * 0.5f, addSize.z * 0.5f));
                 yield return TerrainUtils.AdditionTerrain(additionTerrain, transitionDistance, 360 - transform.eulerAngles.y, y, false);
                 Destroy(additionTerrain.gameObject);
                 //Debug.LogError("附加了地形" + gameObject);

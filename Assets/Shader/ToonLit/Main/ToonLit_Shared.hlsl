@@ -84,6 +84,14 @@ sampler2D _OcclusionMap;
 sampler2D _SpecularMap;
     //sampler2D _OutlineZOffsetMaskTex;
 sampler2D _BlendingMap;
+
+// 地图地形纹理：仅 ToonLit_Stone.shader（定义 ToonLitStoneTerrainTex）声明并使用。
+// 有意不写进 Properties —— 否则材质上的同名槽位会遮住 Shader.SetGlobalTexture 的值。
+#ifdef ToonLitStoneTerrainTex
+sampler2D _TerrainBaseTex;
+sampler2D _TerrainBlendTex;
+#endif
+
 sampler2D _ColourTex;
 sampler2D _ColourMaskTex;
 
@@ -100,12 +108,13 @@ float4 _BaseMap_ST;
 half4 _BaseColor;
 float4 _MouthMap_ST;
 float4 _AlphaMap_ST;
-float _Expression;
-float _Column;
-float _BaseScale;
+half _Expression;
+half _Column;
+half _BaseScale;
 
-float _BlendingScale;
-float _UseUV1;
+half _BlendingScale;
+half _UseUV1;
+half _TerrainBlending;
 
 float4 _BlendingMap_ST;
     //hit
@@ -372,7 +381,15 @@ half2 vertexToHalf2Method1(float3 vertexPos)
 half4 GetFinalBaseColor(Varyings input)
 { //计算基础颜色
 
+#ifdef ToonLitStoneTerrainTex
+    // 石头专用（ToonLit_Stone.shader 的 ForwardLit / Outline 两个 pass 定义了该宏）：基底改读地图第 1 张地形纹理。
+    // 仍用 input.uv 原样采样 —— 顶点阶段已按材质上的 _BaseMap Tiling/Offset 变换过，
+    // 因此缩放/偏移依旧由材质控制，只是贴图来源换成了全局纹理。
+    // 其它 6 个 shader 与本 shader 的深度/阴影 pass 不定义该宏，直接走 #else，编译结果与原来完全一致。
+    half4 backCol = tex2D(_TerrainBaseTex, input.uv);
+#else
     half4 backCol = tex2D(_BaseMap, input.uv);
+#endif
     half4 col = half4(backCol.rgb, 1);
     if (_UseMouthMap)
     {
@@ -398,8 +415,23 @@ half4 GetFinalBaseColor(Varyings input)
     {
         float2 baseOffset = _BaseMap_ST.zw; // 获取偏移值
         float2 correctedUV = (_UseUV1 ? input.uv1 : input.uv) - baseOffset; // 反向补偿
-        col = col * (1 - _BlendingScale) + col * _BlendingScale * (tex2D(_BlendingMap, correctedUV * _BlendingMap_ST.xy + _BlendingMap_ST.zw) * 2 - 1) * backCol.a;
-    }
+#ifdef ToonLitStoneTerrainTex
+        // 石头专用：混合图改读地图第 2 张地形纹理（Tiling/Offset 仍取材质上的 _BlendingMap_ST）
+        half3 blendMap= tex2D(_TerrainBlendTex, correctedUV * _BlendingMap_ST.xy + _BlendingMap_ST.zw).rgb;
+#else
+        half3 blendMap= tex2D(_BlendingMap, correctedUV * _BlendingMap_ST.xy + _BlendingMap_ST.zw).rgb;
+#endif
+        if (_TerrainBlending)
+        {
+            col.rgb = col.rgb * (1 - _BlendingScale) + _BlendingScale * blendMap;
+        }
+        else
+        {
+            col.rgb = col.rgb * (1 - _BlendingScale) + col.rgb * _BlendingScale * (blendMap * 2 - 1) * backCol.a;
+
+        }
+        
+      }
     
     return col * _BaseColor * _BaseScale;
 }
@@ -441,8 +473,14 @@ half GetFinalOcculsion(Varyings input)//计算环境光遮罩？
 half4 GetFinalSpecular(Varyings input)//计算高光贴图
 {
     half4 result = 0;
-    result = tex2D(_SpecularMap, input.uv); 
-    
+    // 只有用到高光时才采样：结果仅在 _UseSpecular 为真时被消费（LightingEquation 的高光分支），
+    // 而 ToonLit_Stone 这类未在 Properties 里声明 _SpecularMap 的 shader 本来就在采一张未绑定的贴图，
+    // 每像素白采一次。加上这个 uniform 分支后行为不变，只是省掉无用采样。
+    if (_UseSpecular)
+    {
+        result = tex2D(_SpecularMap, input.uv);
+    }
+
     return result;
 }
 
@@ -451,7 +489,7 @@ half3 GetFinalColourColor(Varyings input)//计算"色彩"遮罩(效果在光照�
     half3 result = 0;
     if (_UseColour)
     {
-        result = tex2D(_ColourMaskTex, input.uv * _ColourMaskTex_ST.xy).rgb *_ColourColor;
+        result = tex2D(_ColourMaskTex, input.uv * _ColourMaskTex_ST.xy).rgb *_ColourColor.rgb;
         //result = tex2D(_ColourTex, input.uv).rgb *_ColourColor*tex2D(_ColourMaskTex, input.uv).rgb;
     }
     return result;

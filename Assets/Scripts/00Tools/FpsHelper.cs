@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using Core.Interface;
+using FpsGame.MapUtils;
 using GameContract;
 using PEMaths;
 
@@ -254,6 +255,10 @@ public static class FpsHelper
                 SnowController.RemoveSnow(point, destructe.RawFloat);
                 //ModifyHeightMap 是协程（迭代器），必须用 StartCoroutine 启动，直接调用不会执行
                 GameRoot.Instance.StartCoroutine(TerrainUtils.ModifyHeightMap(point, (destructe / new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe / 5).RawFloat, ShapeType.Circle, false));
+                //树木：与弹坑同半径摧毁（地形树没有碰撞体，这里走自建索引表；内部按帧合并提交，不会逐棵重建地形树数据）
+                TreeDestructor.DestroyInRadius(point, destructe.RawFloat);
+                //细节（草/花）：同半径擦除，避免坑里残留悬空的草
+                TerrainDetailEraser.ClearInRadius(point, destructe.RawFloat);
             }
 
            

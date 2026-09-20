@@ -3,9 +3,6 @@ Shader "ToonLit/ToonLit_Stone"
 {
     Properties
     {
-        //[Header(High Level Setting)]
-        //[HideInInspector][Toggle]_IsFace("Is Face? (请确定这是面部材质)", Float) = 0
-
         [HideInInspector][Toggle(_MAIN_LIGHT_SHADOWS)]_MAIN_LIGHT_SHADOWS("_MAIN_LIGHT_SHADOWS", Float) = 1
         [HideInInspector]_RenderRef("_RenderRef",Int) = 0
        
@@ -18,34 +15,28 @@ Shader "ToonLit/ToonLit_Stone"
         [MainTexture]_BaseMap("_BaseMap (Albedo)", 2D) = "white" {}
         [HideInInspector][HDR][MainColor]_BaseColor("_BaseColor", Color) = (1,1,1,1)
         [HideInInspector]_BaseScale("颜色系数", Range(0,2)) = 1
+        
+        //混合纹理
+        _BlendingScale("混合程度", Range(0,1)) = 0
+        _BlendingMap("混合纹理", 2D) = "white" {}
+        [HideInInspector][Toggle]_TerrainBlending("地形混合", Float) = 1
 
-  
         //[Header(Lighting)]
         [HideInInspector]_IndirectLightMinColor("最低颜色", Color) = (0.1,0.1,0.1,1) //如果光探头没有烘烤，可以防止完全变黑
-        [HideInInspector]_IndirectLightMultiplier("间接光照系数", Range(0,1)) = 1
-        [HideInInspector]_DirectLightMultiplier("主光照系数", Range(0,1)) = 1
         [HideInInspector]_CelShadeMidPoint("阴影切面的系数", Range(-1,1)) = -0.5
         [HideInInspector]_CelShadeSoftness("阴影切面的平滑程度", Range(0,1)) = 0.05
-        [HideInInspector]_MainLightIgnoreCelShade("主光忽略切面", Range(0,1)) = 0
-        [HideInInspector]_AdditionalLightIgnoreCelShade("额外光忽略切面", Range(0,1)) = 0.9
 
         //[Header(Shadow mapping)]
         [HideInInspector]_ReceiveShadowMappingAmount("_ReceiveShadowMappingAmount", Range(0,1)) = 0.0
-        [HideInInspector]_ReceiveShadowMappingPosOffset("_ReceiveShadowMappingPosOffset", Float) = 0
         _ShadowMapColor("阴影颜色", Color) = (0.8,0.8,0.8)
         [HideInInspector]_FogMaxValue("雾气系数", Range(0,1)) = 1
 
 
         //[Header(Outline)]
 
-        [HideInInspector][ToggleUI]_FixOutlineColor("使用固定颜色而非乘数", Float) = 0
-        [ToggleUI]_UseAverNormal("使用平均化法线", Float) = 0
         _OutlineWidth("描边宽度 (World Space)", Range(0,20)) = 4
         _OutlineColor("描边颜色", Color) = (0.5,0.5,0.5,1)
         [HideInInspector]_OutlineZOffset("描边偏移 (View Space)", Range(0,1)) = 0.0001
-        //[NoScaleOffset]_OutlineZOffsetMaskTex("_OutlineZOffsetMask (black is apply ZOffset)", 2D) = "black" {}
-        //_OutlineZOffsetMaskRemapStart("_OutlineZOffsetMaskRemapStart", Range(0,1)) = 0
-        //_OutlineZOffsetMaskRemapEnd("_OutlineZOffsetMaskRemapEnd", Range(0,1)) = 1
     }
     SubShader
     {       
@@ -72,15 +63,13 @@ Shader "ToonLit/ToonLit_Stone"
             "Queue"="Geometry"
         }
         
-        //我们可以从所有传递到这个HLSLINCLUDE部分中提取重复的hlsl代码。重复代码越少=错误越少
+        // 注意：地形纹理开关 ToonLitStoneTerrainTex 不在 HLSLINCLUDE 里定义 —— 它只写在真正需要
+        // 地图纹理的两个颜色 pass（ForwardLit / Outline）里。若石头将来启用溶解(_UseAlphaClipping)，
+        // 必须同时给 ShadowCaster / DepthNormalsOnly / DepthOnly 三个 pass 补上同一个 #define，
+        // 否则会出现"本体已溶解、投影与深度还留着"的不一致。
         HLSLINCLUDE
-
-        //所有过程都需要这个关键字
-        //关键字会导致变体，直接使用静态了
-        //#pragma shader_feature_local_fragment _UseAlphaClipping
-        //#pragma shader_feature_local_fragment _UseMouthMap
-        //#pragma shader_feature_local_fragment _SpecMap
-        //#pragma shader_feature _AdditionalLights
+        // 本 shader 所有 pass 共用的代码（当前为空）：需要按 pass 区分的宏都写在各 pass 自己的
+        // HLSLPROGRAM 里，且必须在 #include "ToonLit_Shared.hlsl" 之前。
         ENDHLSL
 
         //注意:
@@ -153,10 +142,13 @@ Shader "ToonLit/ToonLit_Stone"
             #pragma vertex VertexShaderWork
             #pragma fragment ShadeFinalColor
 
-            //因为这个传递只是一个向前传递，所以不需要任何特殊的#define
-            //(没有特殊的#define)
+            //石头专用：让 ToonLit_Shared.hlsl 里 _BaseMap/_BlendingMap 的贴图来源，
+            //换成运行时用 Shader.SetGlobalTexture 注入的地图地形纹理（_TerrainBaseTex/_TerrainBlendTex）。
+            //该宏只在真正需要地图纹理的 ForwardLit / Outline 两个 pass 定义；
+            //其它 include 同一份 hlsl 的 shader 以及本 shader 的深度/阴影 pass 都不受影响。
+            #define ToonLitStoneTerrainTex
 
-            //在此内编写的所有着色器逻辑。hlsl，记住在编写#include之前编写所有#define
+
             #include "ToonLit_Shared.hlsl"
 
             ENDHLSL
@@ -203,7 +195,9 @@ Shader "ToonLit/ToonLit_Stone"
             //因为这是一个大纲传递，所以定义“ToonShaderIsOutline”将大纲相关代码注入到VertexShaderWork()和ShadeFinalColor()中
             #define ToonShaderIsOutline
 
-            //在此内编写的所有着色器逻辑。hlsl，记住在编写#include之前编写所有#define
+            //石头专用：_FixOutlineColor=0 时描边色由表面色推导，所以这个 pass 同样需要地图纹理
+            #define ToonLitStoneTerrainTex
+
             #include "ToonLit_Shared.hlsl"
 
             ENDHLSL
@@ -223,8 +217,6 @@ Shader "ToonLit/ToonLit_Stone"
 
             HLSLPROGRAM
 
-            //我们在这次传递中需要的唯一关键字= _UseAlphaClipping，它已经在HLSLINCLUDE块中定义了
-            //(因此不需要在此过程中编写任何multi_compile或shader_feature)
 
             #pragma vertex VertexShaderWork
             #pragma fragment BaseColorAlphaClipTest //我们只需要做Clip()，不需要着色
@@ -232,7 +224,6 @@ Shader "ToonLit/ToonLit_Stone"
             //因为它是ShadowCaster过程，所以定义“ToonShaderApplyShadowBiasFix”以将“移除阴影贴图工件”代码注入VertexShaderWork()
             #define ToonShaderApplyShadowBiasFix
 
-            //在此内编写的所有着色器逻辑。hlsl，记住在编写#include之前编写所有#define
             #include "ToonLit_Shared.hlsl"
 
             ENDHLSL
@@ -254,8 +245,6 @@ Shader "ToonLit/ToonLit_Stone"
 
             HLSLPROGRAM
 
-            //我们在这次传递中需要的唯一关键字= _UseAlphaClipping，它已经在HLSLINCLUDE块中定义了
-            //(因此不需要在此过程中编写任何multi_compile或shader_feature)
 
             #pragma vertex VertexShaderWork
             #pragma fragment BaseColorAlphaClipTest //我们只需要做Clip()，不需要着色
@@ -263,7 +252,6 @@ Shader "ToonLit/ToonLit_Stone"
             //因为它是ShadowCaster过程，所以定义“ToonShaderApplyShadowBiasFix”以将“移除阴影贴图工件”代码注入VertexShaderWork()
             #define ToonShaderIsOutline
 
-            //在此内编写的所有着色器逻辑。hlsl，记住在编写#include之前编写所有#define
             #include "ToonLit_Shared.hlsl"
 
             ENDHLSL
@@ -293,7 +281,6 @@ Shader "ToonLit/ToonLit_Stone"
             // 若不希望外扩，把这个宏和 DepthNormalsOnly 里的那个一起删掉即可。
             #define ToonShaderIsOutline
 
-            //在此内编写的所有着色器逻辑。hlsl，记住在编写#include之前编写所有#define
             #include "ToonLit_Shared.hlsl"
 
             ENDHLSL
