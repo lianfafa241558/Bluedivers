@@ -26,6 +26,8 @@ namespace FPSGame.Game
         bool completeCreat;
         bool tip;
         bool IsDisposed;
+        System.Action onEnd;
+        System.Func<Vector3> centerGetter;
 
         System.Random random;
 
@@ -48,6 +50,8 @@ namespace FPSGame.Game
             this.waveUseObject = new(waveUseObject);
             this.creats = creats;//机器人平均人口2.23左右
             this.tip = param.tip;
+            onEnd = param.onEnd;
+            centerGetter = param.centerGetter;
             range = param.range;
             points = param.points;
             units = new();
@@ -84,13 +88,21 @@ namespace FPSGame.Game
             units = null;
             groups = null;
             random = null;
+            centerGetter = null;
 
             IsDisposed = true;
+
+            //波次结束(所有单位清空)回调，用于续航/续刷
+            var callback = onEnd;
+            onEnd = null;
+            callback?.Invoke();
         }
 
         public bool Tick()
         {
             --time;
+            //中心点持续跟踪(追击)：有 centerGetter 时每 Tick 刷新，新空投的单位会走向最新位置
+            if (centerGetter != null) center = centerGetter();
             switch (state)
             {
                 case WaveState.Start:

@@ -17,6 +17,9 @@ Shader "LX/FakeAreaLight"
         _FresnelScale("_FresnelScale", Range(-1,1)) = 0.5
         _FresnelDecay("_FresnelDecay", Range(0,30)) = 1
 
+        [Space(16)]
+        _FogScale("_FogScale", Range(0,1)) = 1
+
     }
     HLSLINCLUDE
 
@@ -46,6 +49,8 @@ Shader "LX/FakeAreaLight"
             float4 _Noise_ST;
             half _distortFactorTime;
             half _distortFactor;
+
+            half _FogScale;
 
         CBUFFER_END
 
@@ -120,7 +125,7 @@ Shader "LX/FakeAreaLight"
 
         #if defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2)
             //col.rgb = MixFog(col.rgb,i.fogFactor);
-            col.a *= saturate(1-i.fogFactor);
+            col.a *= saturate(1-i.fogFactor*_FogScale);
             //col.rgb = 0;
             //col.a = 0;
         #endif

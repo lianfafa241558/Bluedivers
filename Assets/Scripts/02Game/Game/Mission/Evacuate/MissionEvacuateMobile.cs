@@ -53,9 +53,15 @@ namespace FpsGame.Mission
         private float m_HoverHeight = 50f;
 
         [SerializeField]
-        [InspectorName("增援波次规模")]
-        [Tooltip("请求撤离时，在玩家与撤离点中点刷出的小规模波次倍率")]
-        private float m_WaveScale = 0.5f;
+        [InspectorName("每名玩家波次倍率")]
+        [Tooltip("请求撤离后，为每名玩家在其位置刷出的追击增援波次倍率；波次结束后会自动续刷")]
+        private float m_WaveScale = 0.35f;
+
+        /// <summary>是否持续为玩家续刷追击增援(波次结束后自动续刷，任务结束/超时后停止)</summary>
+        private bool m_ChaseReinforce;
+
+        /// <summary>因阵亡(倒地)而暂停续刷、等待复活的追击玩家；复活后由 Tick 恢复</summary>
+        private readonly List<I_Actor> m_PausedChase = new();
 
         private EvacuateState stage = EvacuateState.Activation;
 
@@ -109,13 +115,21 @@ namespace FpsGame.Mission
                     UpdateTip("进入雨云号完成撤离 [" + Tool.FloatToTime(countDown) + "]");
                     if (--countDown <= 0) TimeOut();
                     break;
+                case EvacuateState.End:
+                    //与静态撤离一致：收尾 6 秒后播报最终台词
+                    if (--countDown == 0) CreatNotice("Yuuka", IsComplete ? "End" : "Fail");
+                    break;
             }
+
+            ResumePausedChase();
 
             return true;
         }
 
         protected override void Uninit()
         {
+            //任务卸载时停掉追击增援的续刷链
+            StopChaseReinforcement();
             base.Uninit();
             if (kei)
             {
@@ -164,12 +178,81 @@ namespace FpsGame.Mission
             CreatMedivac();
         }
 
-        /// <summary>在玩家与撤离点的中点刷一波小规模增援</summary>
+        /// <summary>为每名玩家刷出一波以其位置为目标的追击增援，波次结束后自动续刷(不会结束)</summary>
         private void CreatReinforcement()
         {
-            if (!ActorsManager.Player.IsValidMono()) return;
-            Vector3 center = Vector3.Lerp(ActorsManager.Player.Pos, areaPoint, 0.5f);
-            BattleManager.Instance.CreatWave(WaveCreateParams.Evacuate.Set(center).Scale(m_WaveScale));
+            m_ChaseReinforce = true;
+            m_PausedChase.Clear();
+            foreach (var player in ActorsManager.Players)
+            {
+                CreatChaseWave(player);
+            }
+        }
+
+        /// <summary>停掉追击增援的续刷链(任务结束/超时/卸载时调用)</summary>
+        private void StopChaseReinforcement()
+        {
+            m_ChaseReinforce = false;
+            m_PausedChase.Clear();
+        }
+
+        /// <summary>
+        /// 为指定玩家刷出一波以其当前位置为目标的追击增援：
+        /// 波次 center 每 Tick 跟踪该玩家(玩家跑动时增援持续追来)，该波清空后自动续刷；
+        /// 若玩家已阵亡(倒地)则暂停本玩家的续刷，等其复活后由 ResumePausedChase 恢复。
+        /// </summary>
+        private void CreatChaseWave(I_Actor player)
+        {
+            if (!m_ChaseReinforce) return;
+
+            //玩家对象已销毁：彻底退出，不再续刷
+            if (!player.IsValidMono())
+            {
+                m_PausedChase.Remove(player);
+                return;
+            }
+
+            //玩家阵亡(倒地)：暂停本玩家续刷，等复活后恢复
+            if (player.ActorState == Core.ActorState.Dead)
+            {
+                if (!m_PausedChase.Contains(player)) m_PausedChase.Add(player);
+                return;
+            }
+
+            m_PausedChase.Remove(player);
+
+            var param = WaveCreateParams.Evacuate.Set(player.Pos).Scale(m_WaveScale);
+            //波次中心持续跟踪该玩家位置(玩家移动时新刷出的单位会走向最新位置)
+            Vector3 last = player.Pos;
+            param.centerGetter = () =>
+            {
+                if (player.IsValidMono()) last = player.Pos;
+                return last;
+            };
+            param.onEnd = () => CreatChaseWave(player);
+            BattleManager.Instance.CreatWave(param);
+        }
+
+        /// <summary>每秒检查：阵亡的追击玩家复活后，恢复其续刷链</summary>
+        private void ResumePausedChase()
+        {
+            if (!m_ChaseReinforce || m_PausedChase.Count == 0) return;
+
+            for (int i = m_PausedChase.Count - 1; i >= 0; --i)
+            {
+                var player = m_PausedChase[i];
+                //对象已销毁：彻底移除
+                if (!player.IsValidMono())
+                {
+                    m_PausedChase.RemoveAt(i);
+                    continue;
+                }
+                //还没复活，继续等
+                if (player.ActorState == Core.ActorState.Dead) continue;
+
+                m_PausedChase.RemoveAt(i);
+                CreatChaseWave(player);
+            }
         }
 
         /// <summary>创建撤离用运输机：从高空下降至撤离点上空，随后着陆</summary>
@@ -211,32 +294,32 @@ namespace FpsGame.Mission
             }, m_LandTime, null);
         }
 
-        /// <summary>超时：运输船起飞，任务失败</summary>
+        /// <summary>超时：强制起飞(只带走已登船玩家)，收尾统一由运输机的 Complete 回调处理</summary>
         private void TimeOut()
         {
-            stage = EvacuateState.End;
-            UpdateText("撤离失败", "");
-            CreatNotice("Yuuka", "Fail");
-
-            if (medivac)
+            if (stage == EvacuateState.End) return;
+            //没有运输机(异常)时直接走统一收尾
+            if (!medivac)
             {
-                //时间到了就起飞，不等没登机的玩家
-                medivac.Play("Evacuate");
-                Destroy(medivac.gameObject, 14);
+                End();
+                return;
             }
-
-            //FailMission();
+            medivac.ForceTakeOff();
         }
 
-        /// <summary>玩家全部登机，运输船起飞</summary>
+        /// <summary>
+        /// 统一收尾(与静态撤离 MissionEvacuateStatic.End 一致)：运输船起飞 → 进入过场 → 14 秒后结算；
+        /// 不论玩家是否全部登机(超时会强制起飞)都会走到这里，最终台词由 Tick 的 End 阶段播报。
+        /// </summary>
         private void End()
         {
             if (stage == EvacuateState.End) return;
             stage = EvacuateState.End;
-            UpdateText("撤离完成", "");
+            StopChaseReinforcement();
+            countDown = 6;
             CreatNotice("Ayane", "TakeOff");
-            //CompleteMission();
             GameRoot.GameState = Core.GameStateEnum.Transition;
+            BattleManager.Instance.EndGame(14);
         }
 
 

@@ -22,6 +22,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Searchlight Grenade
   m_Shader: {fileID: 4800000, guid: f0e451ffb33c3ab47b746c0d4d4fc3df, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _UseFresnel
@@ -31,6 +33,7 @@ Material:
   m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -112,6 +115,7 @@ Material:
     - _DstBlend: 10
     - _EmissionScale: 1
     - _EnvironmentReflections: 1
+    - _FogScale: 0.4
     - _FresnelDecay: 3
     - _FresnelScale: 0.95
     - _GlossMapScale: 0

@@ -223,8 +223,9 @@ namespace FPSGame.AI
             }
 
             m_LastReturnPointPos = transform.position;
-            VFXManager.Creat(returnPoint, point);
-            TrySpeech(callSound);
+            //回收标记与凯伊当前朝向一致
+            VFXManager.Creat(returnPoint, point, transform.rotation);
+            //TrySpeech(callSound);
         }
 
         /// <summary>水平距离(忽略高度差，按行进距离决定是否放标记)</summary>

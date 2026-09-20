@@ -12,6 +12,8 @@ namespace FPSGame.Game
 {
     public class ZergWave : I_TickClass, System.IDisposable
     {
+        /// <summary>centerGetter 模式下，实际中心偏离基准中心超过该距离就重新部署空投点</summary>
+        const float RedeployDistance = 30f;
 
         List<GameObject> waveUseObject;
         List<GameObject> creatObject;
@@ -23,10 +25,18 @@ namespace FPSGame.Game
         int time;
         Vector3[] points;
         Vector3 center;
+        /// <summary>生成环所依据的基准中心(centerGetter 模式下随重新部署更新，用于判断"离太远")</summary>
+        Vector3 anchorCenter;
+        /// <summary>生成环半径参数(来自 param.range，重新部署时复用)</summary>
+        float range;
+        /// <summary>生成点是否由 center+range 随机得出(即 param.points==null)；只有这种模式能跟随 center 重新部署</summary>
+        bool useCenterPoints;
         bool completeCreat;
         bool tip;
         int waitTime;
         bool IsDisposed;
+        System.Action onEnd;
+        System.Func<Vector3> centerGetter;
 
         System.Random random;
         public ZergWave(WaveCreateParams param, Stack<GameObject> creats, List<GameObject> waveUseObject,int waitTime)
@@ -36,31 +46,22 @@ namespace FPSGame.Game
             this.creats = creats;
             this.tip = param.tip;
             this.waitTime = waitTime;
+            onEnd = param.onEnd;
+            centerGetter = param.centerGetter;
             creatObject = new();
             units = new();
             center = param.center;
+            anchorCenter = center;
+            range = param.range;
 
             BattleEventSub.OnEnemyDead += OnUnitDeath;
 
             if (param.points == null)
             {
+                useCenterPoints = true;
                 perTickCreat = Mathf.Max(1, Mathf.CeilToInt(creats.Count / 45f));//保底1个
                 points = new Vector3[perTickCreat];
-                float theta = random.Range(0, 2 * Mathf.PI);
-                for (int i = 0; i < perTickCreat; ++i)
-                {
-                    var dx = random.Range(-1, 1f);//范围20度
-                    points[i] = center + new Vector3(Mathf.Cos(theta + dx), 0, Mathf.Sin(theta + dx)) * random.Range(param.range, param.range + 10);
-
-                    if (NavMesh.SamplePosition(points[i], out var hit, 100, NavMesh.AllAreas))
-                    {
-                        points[i] = hit.position;
-                    }
-                    else
-                    {
-                        points[i] = new Vector3(points[i].x, center.y, points[i].z);
-                    }
-                }
+                ResetPoints();
             }
             else
             {
@@ -98,14 +99,31 @@ namespace FPSGame.Game
             units = null;
             points = null;
             random = null;
+            centerGetter = null;
 
             IsDisposed = true;
+
+            //波次结束(所有单位清空)回调，用于续航/续刷
+            var callback = onEnd;
+            onEnd = null;
+            callback?.Invoke();
         }
 
         public bool Tick()
         {
 
             --time;
+            //中心点持续跟踪(追击)：有 centerGetter 时每 Tick 刷新，新刷出的单位会走向最新位置
+            if (centerGetter != null)
+            {
+                center = centerGetter();
+                //实际中心偏离基准中心过远：回收当前空投点、以当前中心为新基准重新部署(随机生成点模式，且波次尚未收尾)
+                if (useCenterPoints && state == WaveState.Ongoing && !completeCreat
+                    && Vector3.Distance(center, anchorCenter) > RedeployDistance)
+                {
+                    RedeployPods();
+                }
+            }
             switch (state)
             {
                 case WaveState.Start:
@@ -152,12 +170,7 @@ namespace FPSGame.Game
                     else if (completeCreat == false)
                     {
                         completeCreat = true;
-                        for (int i = 0; i < creatObject.Count; ++i)
-                        {
-                            creatObject[i].GetComponentInChildren<Animator>().Play("End");
-                            creatObject[i].GetComponent<LimitedLife>().ResetLift(6);
-                        }
-
+                        EndCreatObjects();
                     }
                     else if (time % 5 == 0)
                     {
@@ -182,6 +195,63 @@ namespace FPSGame.Game
                     return false;
             }
             return true;
+        }
+
+        /// <summary>按当前 center/range 重新计算随机生成环(仅随机生成点模式使用)</summary>
+        void ResetPoints()
+        {
+            float theta = random.Range(0, 2 * Mathf.PI);
+            for (int i = 0; i < perTickCreat; ++i)
+            {
+                var dx = random.Range(-1, 1f);//范围20度
+                points[i] = center + new Vector3(Mathf.Cos(theta + dx), 0, Mathf.Sin(theta + dx)) * random.Range(range, range + 10);
+
+                if (NavMesh.SamplePosition(points[i], out var hit, 100, NavMesh.AllAreas))
+                {
+                    points[i] = hit.position;
+                }
+                else
+                {
+                    points[i] = new Vector3(points[i].x, center.y, points[i].z);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 实际中心偏离基准中心过远时：回收当前空投特效(走 LimitedLife 回收)，
+        /// 以当前中心为新基准重算生成环并重新空投一波，让空投点跟随目标移动。
+        /// </summary>
+        void RedeployPods()
+        {
+            //1. 回收当前空投特效
+            EndCreatObjects();
+
+            //2. 以当前中心为新基准重算生成环
+            anchorCenter = center;
+            ResetPoints();
+
+            //3. 重新空投一波
+            for (int i = 0; i < perTickCreat; ++i)
+            {
+                var go = VFXManager.Creat(waveUseObject[0], points[i], Quaternion.Euler(0f, random.Range(0, 360), 0f));
+                if (!go) continue;
+                go.GetComponent<LimitedLife>().ResetLift(51);
+                creatObject.Add(go);
+            }
+        }
+
+        /// <summary>回收当前所有空投特效(播放结束动画并让 LimitedLife 自行回收)</summary>
+        void EndCreatObjects()
+        {
+            for (int i = 0; i < creatObject.Count; ++i)
+            {
+                if (!creatObject[i]) continue;
+                var animator = creatObject[i].GetComponentInChildren<Animator>();
+                if (animator) animator.Play("End");
+                var life = creatObject[i].GetComponent<LimitedLife>();
+                if (life) life.ResetLift(6);
+            }
+            creatObject.Clear();
         }
 
         void OnUnitDeath(Actor actor)

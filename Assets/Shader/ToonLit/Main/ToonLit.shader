@@ -73,7 +73,7 @@ Shader "ToonLit/ToonLit"
         //[Header(Hit)]
         [HDR] _HitColor("HitColor", Color) = (0,0,0)
         
-        [Toggle]_UseColour("使用‘色彩’效果", Float) = 0
+        [HideInInspector][Toggle]_UseColour("使用‘色彩’效果", Float) = 0
         /*
         //[Header(Colour)]
         _ColourTex("色彩贴图", 2D) = "black" {}

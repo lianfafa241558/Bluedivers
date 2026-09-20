@@ -58,24 +58,11 @@ public class MedivacController : TickBehaviour
         if (!taskManager.nowTask.IsValid()) return true;
         if (!enabled) return true;
 
+        //统计当前在登船舱内的玩家数
         int count = 0;
-        // 获取旋转矩阵的逆矩阵（局部→世界)
-        Matrix4x4 localToWorld = box.transform.localToWorldMatrix;
-        Matrix4x4 worldToLocal = localToWorld.inverse;
-        Vector3 colliderSize = box.size;
         foreach (var item in players)
         {
-            // 将点转换到碰撞体局部空间
-            Vector3 localPoint = worldToLocal.MultiplyPoint3x4(item.transform.position);
-            //Debug.LogError("玩家位置"+ localPoint, item.gameObject);
-            // 检测局部坐标是否在[-0.5, 0.5]范围内（标准BoxCollider尺寸)
-            if (Mathf.Abs(localPoint.x) <= colliderSize.x * 0.5f
-                && Mathf.Abs(localPoint.y) <= colliderSize.y * 0.5f
-                && Mathf.Abs(localPoint.z) <= colliderSize.z * 0.5f
-            )
-            {
-                ++count;
-            }
+            if (IsInBox(item.transform.position)) ++count;
         }
         switch (state)
         {
@@ -182,20 +169,49 @@ public class MedivacController : TickBehaviour
 
     private void EvacuateTick(int count, int playerCount)
     {
-        if (count == playerCount&& !complete)
+        //全员登船才起飞(超时强制起飞走 ForceTakeOff)
+        if (count == playerCount && !complete)
         {
-            complete = true;
-            anim.Play("Evacuate");
-            cam.gameObject.SetActive(true);
-            Complete?.Invoke();
-            foreach (var item in players)
-            {
-                item.transform.parent = target;
-                item.gameObject.SetActive(false);
-            }
-            BattleManager.Instance.EndGame(14);
-
+            TakeOff();
         }
+    }
+
+    /// <summary>
+    /// 强制起飞：不等全员登机，只把当前已在舱内的玩家送上船。
+    /// 供撤离超时等"必须收尾"的场景调用；同样会派发 Complete。
+    /// </summary>
+    public void ForceTakeOff()
+    {
+        if (complete) return;
+        TakeOff();
+    }
+
+    /// <summary>起飞：播放撤离动画/切镜头/派发 Complete，并隐藏成功登船(在舱内)的玩家</summary>
+    private void TakeOff()
+    {
+        complete = true;
+        anim.Play("Evacuate");
+        cam.gameObject.SetActive(true);
+        Complete?.Invoke();
+        foreach (var item in players)
+        {
+            if (!item.IsValidMono()) continue;
+            //只隐藏已登船的玩家，没上船的不动
+            if (!IsInBox(item.transform.position)) continue;
+            item.transform.parent = target;
+            item.gameObject.SetActive(false);
+        }
+    }
+
+    /// <summary>世界坐标是否位于登船舱(BoxCollider)内</summary>
+    private bool IsInBox(Vector3 worldPos)
+    {
+        if (!box) return false;
+        Vector3 localPoint = box.transform.localToWorldMatrix.inverse.MultiplyPoint3x4(worldPos);
+        Vector3 colliderSize = box.size;
+        return Mathf.Abs(localPoint.x) <= colliderSize.x * 0.5f
+            && Mathf.Abs(localPoint.y) <= colliderSize.y * 0.5f
+            && Mathf.Abs(localPoint.z) <= colliderSize.z * 0.5f;
     }
 
 

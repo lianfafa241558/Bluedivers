@@ -199,7 +199,7 @@ namespace FpsGame.Mission
             medivac.SetType(MedivacController.MedivacState.Evacuate);
             medivac.Play("Idle");
             GameRoot.CreatePerTimer(() => {
-                medivac.transform.position = Vector3.Lerp(medivac.transform.position, (Vector3.up * 50) * medivac.transform.lossyScale.x, 30 * Time.deltaTime);
+                medivac.transform.position = Vector3.Lerp(medivac.transform.position, areaPoint + (Vector3.up * 50) * medivac.transform.lossyScale.x, 30 * Time.deltaTime);
                 medivac.transform.eulerAngles = Vector3.Lerp(medivac.transform.eulerAngles, area.eulerAngles, 30 * Time.deltaTime);
             }, 3, null);
         }
@@ -256,7 +256,8 @@ namespace FpsGame.Mission
             countDown = 6;
             CreatNotice("Ayane", "TakeOff");
             //WndManager.Instance.movieWnd.SetWndState(true);
-            GameRoot.GameState = Core.GameStateEnum.Transition;//测试，不确定
+            GameRoot.GameState = Core.GameStateEnum.Transition;
+            BattleManager.Instance.EndGame(14);
         }
 
 

@@ -501,6 +501,12 @@ public struct WaveCreateParams
     public float scale;
     public bool tip;
 
+    /// <summary>波次结束(所有单位清空)时的回调，用于续航/续刷</summary>
+    public System.Action onEnd;
+
+    /// <summary>持续跟踪的中心点(如玩家位置)；不为 null 时波次每 Tick 用它刷新 center，实现移动追击</summary>
+    public System.Func<Vector3> centerGetter;
+
     public static WaveCreateParams Default => new WaveCreateParams {
         extraWave = false,
         range = 35,
@@ -524,8 +530,8 @@ public struct WaveCreateParams
 
     public static WaveCreateParams Evacuate => new WaveCreateParams {
         extraWave = true,
-        range = 60,
-        scale = 0.5f,
+        range = 10,
+        scale = 0.35f,
         tip = false,
     };
 }
