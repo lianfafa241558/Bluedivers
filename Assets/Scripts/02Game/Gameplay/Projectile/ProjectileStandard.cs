@@ -191,6 +191,13 @@ namespace Unity.FPS.Gameplay
             }
             //Debug.LogError("击中于" + gameObject.name, gameObject);
             //Debug.LogError("击中了 "+ closestHit.collider.name, closestHit.collider);
+
+            //var terrain = Terrain.activeTerrain;
+            //float groundY = terrain ? terrain.SampleHeight(closestHit.point) + terrain.transform.position.y : 0f;
+            //Debug.LogError($"击中 {closestHit.collider.name}({closestHit.collider.GetType().Name}) " +
+            //               $"层={LayerMask.LayerToName(closestHit.collider.gameObject.layer)} " +
+            //               $"点={closestHit.point} 离地={closestHit.point.y - groundY:F2}m", closestHit.collider);
+
             OnHit?.Invoke(new() {
                 pos = closestHit.point,
                 normal = closestHit.normal,

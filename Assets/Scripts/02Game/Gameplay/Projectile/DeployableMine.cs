@@ -1,8 +1,10 @@
+using System.Collections;
 using Core;
 using GameContract;
 using PEMaths;
 using Unity.FPS.Game;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.VFX;
 using Utils;
 
@@ -14,6 +16,8 @@ namespace Unity.FPS.Gameplay
     /// - Actor 提供队伍(Team)，用于智能触发判定敌我
     /// - Health 提供被破坏时引爆(OnDie)以及触发引爆(Kill)
     /// - LimitedLife 提供超时回收
+    /// 引爆链路：触发(自动命中 / 被摧毁 / 外部调 <see cref="TriggerExplosion"/>) → 派发"触发爆炸时"
+    /// → 等待 <see cref="ExplosionDelay"/> 秒 → 结算范围伤害 + 派发"爆炸时" → 回池。
     /// </summary>
     [AddComponentMenu("单位/地雷", 30)]
     public class DeployableMine : MonoBehaviour,IVfxEffect
@@ -36,10 +40,22 @@ namespace Unity.FPS.Gameplay
         [SerializeField]
         private bool intelligent = false;
 
+        [Header("爆炸")]
+        [InspectorName("爆炸延迟(秒)")]
+        [Tooltip("触发后等待多久才真正结算伤害与回收(0=触发即爆)；延迟期间不会再被触发")]
+        [SerializeField]
+        private float ExplosionDelay = 0f;
+        [InspectorName("触发爆炸时")]
+        [Tooltip("进入爆炸延迟那一刻派发(预警音效/闪烁等)；延迟为 0 时与\"爆炸时\"同帧")]
+        [SerializeField]
+        private UnityEvent OnTriggered;
+
         [Header("伤害数据")]
         [InspectorName("地雷自带伤害")]
         [SerializeField]
         private SustainedDamageData DamageData;
+
+
 
         /// <summary>伤害来源</summary>
         public GameObject Owner { get; private set; }
@@ -49,6 +65,10 @@ namespace Unity.FPS.Gameplay
         LimitedLife m_limitedLife;
         float m_DeployTime;
         bool m_Exploded;
+        /// <summary>本次已触发(进入爆炸延迟)，用于防止重复触发</summary>
+        bool _triggered;
+        /// <summary>爆炸延迟协程</summary>
+        Coroutine _explodeRoutine;
 
         private void OnEnable()
         {
@@ -56,24 +76,30 @@ namespace Unity.FPS.Gameplay
             m_health = GetComponent<Health>();
             m_limitedLife = GetComponent<LimitedLife>();
 
-            if (m_health) m_health.OnDie += Explosion;
+            if (m_health) m_health.OnDie += OnHealthDie;
             if (m_limitedLife) m_limitedLife.OnEnd.AddListener(OnLifeEnd);
 
             m_DeployTime = Time.time;
+            // 池化复用：上一次的触发状态与未完成的延迟协程都要清掉
             m_Exploded = false;
+            _triggered = false;
+            _explodeRoutine = null;
         }
 
         private void OnDisable()
         {
-            if (m_health) m_health.OnDie -= Explosion;
+            if (m_health) m_health.OnDie -= OnHealthDie;
             if (m_limitedLife) m_limitedLife.OnEnd.RemoveListener(OnLifeEnd);
+            StopExplodeRoutine();
         }
 
         private void Update()
         {
+            if (m_Exploded) return;
+            // 已触发：交给爆炸延迟协程(延迟为 0 时触发那一刻已直接引爆，走不到这里)
+            if (_triggered) return;
             // 部署延迟：等待稳定落定后再启用触发
             if (Time.time < m_DeployTime + DeployDelay) return;
-            if (m_Exploded) return;
             TryHit();
         }
 
@@ -98,8 +124,9 @@ namespace Unity.FPS.Gameplay
             foreach (var actor in units)
             {
                 // 通过 Health 自杀引爆，与 ProjectileMine 行为一致，避免重复爆炸造成两次伤害
+                // （Health 已死时 Kill() 不会派发 OnDie，下面再兜底直接引爆；TriggerExplosion 幂等）
                 if (m_health) m_health.Kill();
-                else Explosion(null);
+                TriggerExplosion();
                 break;
             }
         }
@@ -132,14 +159,62 @@ namespace Unity.FPS.Gameplay
             return actualDist <= range;
         }
 
-        /// <summary>生命周期结束(超时)：未爆炸则直接回收</summary>
+        /// <summary>
+        /// 生命周期结束(超时)：已触发的不留哑火，立即引爆；未触发的直接回收。
+        /// </summary>
         void OnLifeEnd()
         {
             if (m_Exploded) return;
+            if (_triggered)
+            {
+                StopExplodeRoutine();
+                DoExplosion();
+                return;
+            }
             Tool.Destroy(gameObject);
         }
 
-        void Explosion(GameObject _)
+        /// <summary>Health 死亡(被摧毁) → 引爆</summary>
+        private void OnHealthDie(GameObject _) => TriggerExplosion();
+
+        /// <summary>
+        /// 触发爆炸：外部(含其它物体的 UnityEvent)也可直接调用，幂等(只生效一次)。
+        /// 先派发<see cref="OnTriggered"/>"触发爆炸时"，再按 <see cref="ExplosionDelay"/> 延迟结算伤害；
+        /// 延迟为 0 时同步引爆。触发一次后 <see cref="Update"/> 不再做命中判定。
+        /// </summary>
+        public void TriggerExplosion()
+        {
+            if (m_Exploded || _triggered) return;
+            _triggered = true;
+
+            OnTriggered?.Invoke();
+
+            if (ExplosionDelay > 0f)
+            {
+                StopExplodeRoutine();
+                _explodeRoutine = StartCoroutine(DelayExplode());
+            }
+            else DoExplosion();
+        }
+
+        /// <summary>爆炸延迟到点 → 真正引爆</summary>
+        private IEnumerator DelayExplode()
+        {
+            yield return new WaitForSeconds(ExplosionDelay);
+            _explodeRoutine = null;
+            DoExplosion();
+        }
+
+        /// <summary>中止未完成的爆炸延迟(回收/禁用时)</summary>
+        private void StopExplodeRoutine()
+        {
+            if (_explodeRoutine == null) return;
+            StopCoroutine(_explodeRoutine);
+            _explodeRoutine = null;
+        }
+
+        /// <summary>真正引爆：结算范围伤害 → 派发<see cref="OnExploded"/>"爆炸时" → 回池</summary>
+        private void DoExplosion()
         {
             if (m_Exploded) return;
             m_Exploded = true;
@@ -153,12 +228,14 @@ namespace Unity.FPS.Gameplay
                 data = DamageData,
                 chargeScale = 1,
                 soure = Owner,
-                self =gameObject,
+                self = gameObject,
                 sfxRange = DamageData.SoundRadius,
                 weapon = null,//纯自部署，无武器来源
                 useDiffScale = false,
                 IgnoreSelf = false,
             });
+            // 先派发再回池：监听者还能拿到仍然存活的物体
+            //OnExploded?.Invoke();
             //Debug.LogWarning("回收"+gameObject,gameObject);
             // 地雷爆炸后自毁
             VFXManager.Release(gameObject);
@@ -179,8 +256,18 @@ namespace Unity.FPS.Gameplay
             Owner = owner;
             m_DeployTime = Time.time;
             m_Exploded = false;
+            _triggered = false;
+            StopExplodeRoutine();
         }
 
+        /// <summary>
+        /// 监视器用的
+        /// </summary>
+        /// <param name="sfx"></param>
+        public void PlaySound(AudioClip sfx)
+        {
+            AudioSvc.PlaySound(new(sfx, Root.position, DamageData.SoundRadius, AudioGroups.Impact));
+        }
 
     }
 }

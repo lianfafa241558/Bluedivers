@@ -38,6 +38,8 @@ public class MapData_SO : ScriptableObject
 
     [InspectorName("兴趣点")]
     public SKVP<GameObject, int>[] interestPoints;
+    [InspectorName("场景点")]
+    public SKVP<GameObject, int>[] scenePoints;
 
 
     [Divider]

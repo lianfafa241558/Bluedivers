@@ -328,7 +328,11 @@ MonoBehaviour:
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
+  Title: 
   mission: {fileID: 0}
+  actions:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &1411408227107755120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -348,7 +352,9 @@ MonoBehaviour:
     outerRadius: 24
     depth: 0
   additionTerrain: {fileID: 0}
-  transitionDistance: 5
+  transitionDistance: 9
+  clearVegetationRange: {x: 7, y: 10}
+  clearRockRange: {x: 0, y: 6}
   StartModify: 0
 --- !u!1 &6436780582598557716
 GameObject:

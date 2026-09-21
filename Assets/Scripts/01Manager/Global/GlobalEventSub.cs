@@ -43,10 +43,19 @@ public static class GlobalEventSub
     }
 
     public static event Action<bool> OnDaySwitch;
+
+    /// <summary>
+    /// 最近一次昼夜状态（true=白天）；null 表示本次运行还没产生过昼夜事件。
+    /// 用于晚于事件触发才创建/订阅的模块（如 BattleManager）在初始化完成后补一次初始状态，
+    /// 因为场景里的 DayNightBrain.Start 早于 BattleManager 创建，开局那次事件会被漏掉。
+    /// </summary>
+    public static bool? LastDaySwitchIsNoon { get; private set; }
+
     /// <summary>昼夜交替时</summary>
     public static void DaySwitch(bool isNoon)
     {
         //Debug.LogError($"昼夜交替事件触发，当前状态：{(isNoon ? "白天" : "夜晚")}");
+        LastDaySwitchIsNoon = isNoon;
         OnDaySwitch?.Invoke(isNoon);
     }
 

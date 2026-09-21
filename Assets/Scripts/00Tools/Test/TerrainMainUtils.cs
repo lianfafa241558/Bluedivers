@@ -87,6 +87,42 @@ public static partial class TerrainUtils
     /// <summary>上次重建地形碰撞体的帧号（同一帧内去重，见 <see cref="RebuildTreeColliders"/>）</summary>
     private static int lastTreeColliderRebuildFrame = -1;
 
+    #region 高度图改动耗时（实测用，由 TerrainClearer 汇总打印）
+
+    /// <summary>最近一次高度图"读取 patch"耗时（ms）</summary>
+    public static double LastHeightReadMs { get; private set; }
+
+    /// <summary>最近一次高度图"写入 + SyncHeightmap"耗时（ms）</summary>
+    public static double LastHeightWriteMs { get; private set; }
+
+    /// <summary>已统计的高度图修改次数</summary>
+    public static int HeightModifyCount { get; private set; }
+
+    private static double sumHeightReadMs;
+    private static double sumHeightWriteMs;
+
+    /// <summary>平均"读取 patch"耗时（ms）</summary>
+    public static double AvgHeightReadMs => HeightModifyCount > 0 ? sumHeightReadMs / HeightModifyCount : 0d;
+
+    /// <summary>平均"写入 + SyncHeightmap"耗时（ms）</summary>
+    public static double AvgHeightWriteMs => HeightModifyCount > 0 ? sumHeightWriteMs / HeightModifyCount : 0d;
+
+    /// <summary>清空高度图耗时统计</summary>
+    public static void ResetHeightTimingStats()
+    {
+        LastHeightReadMs = 0d;
+        LastHeightWriteMs = 0d;
+        sumHeightReadMs = 0d;
+        sumHeightWriteMs = 0d;
+        HeightModifyCount = 0;
+    }
+
+    /// <summary>与 <see cref="System.Diagnostics.Stopwatch.GetTimestamp"/> 配套的毫秒换算（无 GC）</summary>
+    private static double ElapsedMs(long startTicks)
+        => (System.Diagnostics.Stopwatch.GetTimestamp() - startTicks) * 1000d / System.Diagnostics.Stopwatch.Frequency;
+
+    #endregion
+
     #region 转换方法
 
     /// <summary>
@@ -193,8 +229,10 @@ public static partial class TerrainUtils
             float invRadius = 1f / outerRadiusRes;//范围的倒数，让dis标准 ?
             float innerScale = innerRadius / (outerRadius + 0f);//内半径的系数(比如0.8)
 
-            //地形数据
+            //地形数据（计时：读取 patch）
+            long readTicks = System.Diagnostics.Stopwatch.GetTimestamp();
             float[,] heights = GetHeights(uv, outerRadiusRes, out int xBase, out int yBase, out int size, out Vector2 offset);
+            LastHeightReadMs = ElapsedMs(readTicks);
             if (size == 0)
             {
                 Debug.LogError("错误:修改的地形半径为0");
@@ -251,8 +289,14 @@ public static partial class TerrainUtils
                 }
             }
 
+            long writeTicks = System.Diagnostics.Stopwatch.GetTimestamp();
             data.SetHeightsDelayLOD(xBase, yBase, heights); //延迟写入（性能最优）
             data.SyncHeightmap();//同步地形数据
+            LastHeightWriteMs = ElapsedMs(writeTicks);
+            //实测统计（由 TerrainClearer 汇总打印）；注意：这里没被 TerrainClearer 的合并覆盖，每个弹坑各跑一次
+            sumHeightReadMs += LastHeightReadMs;
+            sumHeightWriteMs += LastHeightWriteMs;
+            HeightModifyCount++;
                                  //这里高度已经被标准化过了
             //ModifyAlphaMap 是协程（迭代器），必须 yield return 驱动，裸调用不会执行
             yield return ModifyAlphaMap(uv, 1 - Mathf.Clamp01((baseHeight - centerOldHeight) / (depth / terrainHeight) - 0.1f), innerRadius, outerRadius, shape, isSet);

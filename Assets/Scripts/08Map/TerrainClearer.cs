@@ -93,8 +93,92 @@ namespace FpsGame.MapUtils
 
         private static float _lastRefreshTime = float.NegativeInfinity;
 
+        /// <summary>
+        /// NavMesh 重烘的最小间隔（秒），与 <see cref="RefreshInterval"/> 解耦。
+        /// <para>NavMesh 是异步的、真实烘焙开销远大于"发起"那几毫秒，所以默认给 1s（实测 5.6ms 只是发起耗时）。</para>
+        /// </summary>
+        public static float NavRefreshInterval = 1f;
+
+        /// <summary>
+        /// 是否在"树/石块真的被清过"后重建树碰撞体。**默认 true**（Terrain 开了"启用树碰撞器"时必须保持 true，
+        /// 否则被清掉的树会留下看不见的"隐形墙"）。
+        /// <para>⚠ 实测（2026-09-21，桥 + 物理射线）：树的碰撞体确实存在（抽样 6/6 棵树在离地 17~24m 命中
+        /// TerrainCollider），重建一次 <b>10.75ms</b>（<c>SetTreeInstances</c> 只要 0.08ms、<c>terrain.Flush</c> 0.69ms）
+        /// —— 也就是这笔钱是**必要开销**，只是在"树没有碰撞体"时才可以省。</para>
+        /// <para>如果哪天把 Terrain Collider 的"启用树碰撞器"**关掉**了，把它设为 false 可省掉这 10.75ms/次。</para>
+        /// </summary>
+        public static bool SyncTreeCollidersOnTreeChange = true;
+
+        /// <summary>
+        /// true = 地形一改动就重建树碰撞体（更保守）。
+        /// <para>默认 false：树碰撞体的位置由树实例决定、**不跟随高度图**，所以"只改高度没清树"的弹坑
+        /// 不需要重建（重建了也是同样结果）；只有清掉树/石块才需要。</para>
+        /// </summary>
+        public static bool RebuildCollidersOnTerrainChange = false;
+
+        /// <summary>
+        /// 树碰撞体重建的最小间隔（秒）。默认 0.5s —— 重建一次 10.75ms，没必要跟着 0.25s 的处理点走；
+        /// 提交版本号会记住变化，所以延迟重建不会丢更新（代价：被清掉的树最多留 0.5s 的隐形碰撞体）。
+        /// </summary>
+        public static float ColliderSyncInterval = 0.5f;
+
+        /// <summary>地形被改过、正等着一次 NavMesh 重烘（会一直保留到真的烘完，避免被节流吞掉）</summary>
+        private static bool _navDirty;
+
+        /// <summary>正在进行的 NavMesh 重烘（没烘完就不再发下一次）</summary>
+        private static AsyncOperation _navOperation;
+
+        private static float _lastNavTime = float.NegativeInfinity;
+
+        /// <summary>上次重建树碰撞体的时间（用于 <see cref="ColliderSyncInterval"/> 限流）</summary>
+        private static float _lastColliderSyncTime = float.NegativeInfinity;
+
+        /// <summary>上次重建树碰撞体时的"树提交版本号"（用于判断树到底变没变）</summary>
+        private static int _colliderSyncedVersion;
+
         /// <summary>当前积压的请求数（调试/诊断用）</summary>
         public static int PendingRequests => _requests.Count;
+
+        #endregion
+
+        #region 计时（实测用）
+
+        /// <summary>是否打印各阶段耗时（Play 模式实测用；关掉即零开销，只留一点点 Stopwatch 调用）</summary>
+        public static bool LogTiming = true;
+
+        /// <summary>每多少次样本额外打印一次"均值/峰值"（1 = 每次都打）</summary>
+        public static int TimingLogEverySamples = 5;
+
+        private enum Phase
+        {
+            Dispatch = 0,
+            TreeFlush,
+            DetailFlush,
+            TreeCollider,
+            NavMesh,
+            Total,
+            Count,
+        }
+
+        private static readonly System.Diagnostics.Stopwatch _stopwatch = new System.Diagnostics.Stopwatch();
+        private static readonly double[] _sumMs = new double[(int)Phase.Count];
+        private static readonly double[] _maxMs = new double[(int)Phase.Count];
+        private static int _sampleCount;
+
+        /// <summary>累计样本数</summary>
+        public static int TimingSamples => _sampleCount;
+
+        /// <summary>清空计时统计（重新开一局实测前调一次）</summary>
+        public static void ResetTimingStats()
+        {
+            for (int i = 0; i < (int)Phase.Count; i++)
+            {
+                _sumMs[i] = 0d;
+                _maxMs[i] = 0d;
+            }
+            _sampleCount = 0;
+            TerrainUtils.ResetHeightTimingStats();
+        }
 
         #endregion
 
@@ -201,7 +285,11 @@ namespace FpsGame.MapUtils
         /// <para>谁改的高度谁来标：<c>ModifyTerrain</c>（挖坑/附加地形）、<c>FpsHelper.Hit</c>（爆炸弹坑）。</para>
         /// <para>标完不必自己重烘：下一个处理点会按 <see cref="RefreshInterval"/> 合并成一次。</para>
         /// </summary>
-        public static void MarkTerrainChanged() => _terrainChanged = true;
+        public static void MarkTerrainChanged()
+        {
+            _terrainChanged = true;
+            _navDirty = true;
+        }
 
         /// <summary>
         /// 立刻处理一次：把积压请求下发 + 兑现重烘（跳过 <see cref="RefreshInterval"/> 限流）。
@@ -213,6 +301,56 @@ namespace FpsGame.MapUtils
         #endregion
 
         #region 内部实现
+
+        /// <summary>计时执行一段逻辑，并把它累加进对应阶段的统计</summary>
+        private static double Measure(Phase phase, Action action)
+        {
+            _stopwatch.Restart();
+            action();
+            double ms = _stopwatch.Elapsed.TotalMilliseconds;
+            AddSample(phase, ms);
+            return ms;
+        }
+
+        private static void AddSample(Phase phase, double ms)
+        {
+            int index = (int)phase;
+            _sumMs[index] += ms;
+            if (ms > _maxMs[index]) _maxMs[index] = ms;
+        }
+
+        private static double Avg(Phase phase)
+            => _sampleCount > 0 ? _sumMs[(int)phase] / _sampleCount : 0d;
+
+        /// <summary>
+        /// 打印一次实测数据。
+        /// <para>每 <see cref="TimingLogEverySamples"/> 次样本额外打印"均值/峰值"；</para>
+        /// <para>⚠ "高度图"那两列来自 <see cref="TerrainUtils"/>（<c>ModifyHeightMap</c> 内部），
+        /// 它不在这里的合并范围内 —— 每个弹坑各执行一次，正是本次实测的重点怀疑对象。</para>
+        /// </summary>
+        private static void LogTimingSample(double dispatchMs, double treeMs, double detailMs,
+            double colliderMs, double navMs, double totalMs, string colliderTag, string navTag)
+        {
+
+            //Debug.Log(
+            //    $"[TerrainClearer] #{_sampleCount} 下发 {dispatchMs:F2} | 树提交 {treeMs:F2} | 草 {detailMs:F2} | "
+            //    + $"碰撞体 {colliderMs:F2}{colliderTag} | NavMesh {navMs:F2}{navTag} | 合计 {totalMs:F2} ms"
+            //    + $"   ‖ 高度图×{TerrainUtils.HeightModifyCount} 上次 读 {TerrainUtils.LastHeightReadMs:F2} "
+            //    + $"写+Sync {TerrainUtils.LastHeightWriteMs:F2} ms"
+            //    + $"（均值 读 {TerrainUtils.AvgHeightReadMs:F2} 写+Sync {TerrainUtils.AvgHeightWriteMs:F2}）");
+
+            int every = Mathf.Max(1, TimingLogEverySamples);
+            if (_sampleCount % every != 0) return;
+
+            //Debug.Log(
+            //    $"[TerrainClearer] 均值(×{_sampleCount}) 下发 {Avg(Phase.Dispatch):F2} | 树提交 {Avg(Phase.TreeFlush):F2} | "
+            //    + $"草 {Avg(Phase.DetailFlush):F2} | 碰撞体 {Avg(Phase.TreeCollider):F2} | NavMesh {Avg(Phase.NavMesh):F2} | "
+            //    + $"合计 {Avg(Phase.Total):F2} ms");
+            //Debug.Log(
+            //    $"[TerrainClearer] 峰值 下发 {_maxMs[(int)Phase.Dispatch]:F2} | 树提交 {_maxMs[(int)Phase.TreeFlush]:F2} | "
+            //    + $"草 {_maxMs[(int)Phase.DetailFlush]:F2} | 碰撞体 {_maxMs[(int)Phase.TreeCollider]:F2} | "
+            //    + $"NavMesh {_maxMs[(int)Phase.NavMesh]:F2} | 合计 {_maxMs[(int)Phase.Total]:F2} ms");
+        }
 
         private static void Enqueue(Request request)
         {
@@ -229,24 +367,91 @@ namespace FpsGame.MapUtils
         private static void Process(bool force)
         {
             bool hasRequest = _requests.Count > 0;
-            if (hasRequest) DispatchPending();
 
-            if (!hasRequest && !_terrainChanged) return;
+            double dispatchMs = 0d;
+            if (hasRequest) dispatchMs = Measure(Phase.Dispatch, DispatchPending);
+
+            if (!hasRequest && !_terrainChanged && !_navDirty) return;
 
             // 非运行期不做重烘：编辑器里没有每帧驱动，重烘交给各自的编辑器流程（生成地形时自带）
             if (!Application.isPlaying) return;
 
             if (!force && Time.time - _lastRefreshTime < RefreshInterval) return;
 
+            bool terrainChangedThisTick = _terrainChanged;
             _lastRefreshTime = Time.time;
             _terrainChanged = false;
 
             // 顺序很重要：先把待提交的树/草兑现（跳过各自的 4/s、8/s 限流），
             // 再重建树碰撞体、最后重烘 NavMesh —— 否则重烘用的还是旧数据
-            TreeDestructor.Flush();
-            TerrainDetailEraser.Flush();
-            TerrainUtils.RebuildTreeColliders(TerrainUtils.Main);
-            if (TerrainUtils.Main != null) TerrainUtils.AsyncRefresh(true);
+            double treeMs = Measure(Phase.TreeFlush, TreeDestructor.Flush);
+            double detailMs = Measure(Phase.DetailFlush, TerrainDetailEraser.Flush);
+
+            // 树碰撞体：只在"树/石块真的被清过"时重建（重建整张地形碰撞体，实测 10.75ms）。
+            // 用提交版本号判断 —— 即使 TreeDestructor 在自己的 LateUpdate 里已经提交过也能准确识别，且不跨帧重复重建。
+            // 另外按 ColliderSyncInterval 限流：延迟重建不会丢更新（版本号会记住），代价是被清掉的树多留一会儿隐形碰撞体
+            bool treeChanged = TreeDestructor.CommitVersion != _colliderSyncedVersion;
+            bool collidersEnabled = SyncTreeCollidersOnTreeChange || RebuildCollidersOnTerrainChange;
+            bool colliderDue = force || ColliderSyncInterval <= 0f
+                || Time.time - _lastColliderSyncTime >= ColliderSyncInterval;
+            bool needCollider = collidersEnabled && colliderDue
+                && ((SyncTreeCollidersOnTreeChange && treeChanged)
+                    || (RebuildCollidersOnTerrainChange && (treeChanged || terrainChangedThisTick)));
+
+            double colliderMs = 0d;
+            string colliderTag = "";
+            if (needCollider)
+            {
+                colliderMs = Measure(Phase.TreeCollider, RebuildTreeCollidersLeg);
+                _colliderSyncedVersion = TreeDestructor.CommitVersion;
+                _lastColliderSyncTime = Time.time;
+            }
+            else if (collidersEnabled && treeChanged && !colliderDue)
+            {
+                colliderTag = "(排队中)"; // 有变化但还没到重建间隔，版本号没消费 ⇒ 下一次一定会补上
+            }
+            else
+            {
+                // 区分"没开关（本来就不需要）"和"开了但这次没变化"
+                colliderTag = collidersEnabled ? "(跳过)" : "(关闭)";
+                _colliderSyncedVersion = TreeDestructor.CommitVersion;
+            }
+
+            // NavMesh：独立节流 + "上一次没烘完就不发下一次"；_navDirty 会保留到真的烘完为止
+            double navMs = 0d;
+            string navTag = "";
+            bool navInFlight = _navOperation != null && !_navOperation.isDone;
+            bool navDue = force || Time.time - _lastNavTime >= NavRefreshInterval;
+            if (_navDirty && navDue && !navInFlight)
+            {
+                navMs = Measure(Phase.NavMesh, RefreshNavLeg);
+                _lastNavTime = Time.time;
+                _navDirty = false;
+            }
+            else if (_navDirty)
+            {
+                navTag = navInFlight ? "(等上次烘完)" : "(排队中)";
+            }
+
+            double totalMs = dispatchMs + treeMs + detailMs + colliderMs + navMs;
+            AddSample(Phase.Total, totalMs);
+            _sampleCount++;
+
+            if (LogTiming)
+                LogTimingSample(dispatchMs, treeMs, detailMs, colliderMs, navMs, totalMs, colliderTag, navTag);
+        }
+
+        /// <summary>树碰撞体重建（单独包一层，便于计时）</summary>
+        private static void RebuildTreeCollidersLeg() => TerrainUtils.RebuildTreeColliders(TerrainUtils.Main);
+
+        /// <summary>
+        /// NavMesh 重烘（单独包一层，便于计时）。
+        /// <para>记下这次异步操作，供"上一次没烘完就不发下一次"的判断使用。</para>
+        /// </summary>
+        private static void RefreshNavLeg()
+        {
+            if (TerrainUtils.Main == null) return;
+            _navOperation = TerrainUtils.AsyncRefresh(true);
         }
 
         /// <summary>把积压的请求下发到三个腿（它们各自还会做"整表提交"级别的合并与限流）</summary>

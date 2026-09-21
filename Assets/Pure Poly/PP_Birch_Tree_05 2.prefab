@@ -12,10 +12,7 @@ GameObject:
   - component: {fileID: 6356102888875503481}
   - component: {fileID: 6164655668900072762}
   - component: {fileID: 1063904345095662900}
-  - component: {fileID: 8843202855659699268}
-  - component: {fileID: 3994680287928227663}
-  - component: {fileID: 3168815071206727507}
-  - component: {fileID: 3350957198530761690}
+  - component: {fileID: 4846045833803572465}
   m_Layer: 0
   m_Name: PP_Birch_Tree_05 2
   m_TagString: Untagged
@@ -111,8 +108,8 @@ CapsuleCollider:
   m_Height: 8
   m_Direction: 1
   m_Center: {x: 0, y: 4, z: 0}
---- !u!135 &8843202855659699268
-SphereCollider:
+--- !u!136 &4846045833803572465
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -129,72 +126,11 @@ SphereCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 3
-  m_Center: {x: 0, y: 13.5, z: -1.5}
---- !u!135 &3994680287928227663
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 913464739227172164}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 2
-  m_Center: {x: 3, y: 9.5, z: -1.8}
---- !u!135 &3168815071206727507
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 913464739227172164}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 2
-  m_Center: {x: 1.5, y: 8.5, z: 2}
---- !u!135 &3350957198530761690
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 913464739227172164}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 2.5
-  m_Center: {x: -3, y: 9.5, z: 0.5}
+  serializedVersion: 2
+  m_Radius: 4.5
+  m_Height: 10
+  m_Direction: 1
+  m_Center: {x: 0, y: 11, z: 0}
 --- !u!1 &9154215057541871321
 GameObject:
   m_ObjectHideFlags: 0

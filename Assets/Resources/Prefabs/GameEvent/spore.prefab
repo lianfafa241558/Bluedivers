@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2686783030726034118}
-  - component: {fileID: 8733269686869181001}
   - component: {fileID: 781337397380387479}
   - component: {fileID: 5458237786777459053}
   - component: {fileID: 2913313072082356221}
@@ -39,27 +38,6 @@ Transform:
   - {fileID: 1453368942663724245}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!95 &8733269686869181001
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4050121514290383702}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: f4586e59c6395e54ca4549abc0ab5742, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &781337397380387479
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -76,6 +54,7 @@ MonoBehaviour:
   LiftTime: 360
   PreRelease: 1
   allowSeeRelease: 0
+  EndDelay: 0.5
   allowRelease: 0
   useDebug: 0
   OnEnd:
@@ -139,7 +118,7 @@ MonoBehaviour:
     Value: 10
   - Key: 11
     Value: 100
-  AutoDestroy: 0
+  AutoDestroy: 1
 --- !u!114 &829255509231655953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159,11 +138,11 @@ MonoBehaviour:
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
   IsFixed: 0
-  flag: 0
+  flag: 16
   type: 16
-  team: 0
-  threat: 1
-  aimPoint: {fileID: 0}
+  team: -1
+  threat: 0
+  aimPoint: {fileID: 1453368942663724245}
   UseHpBar: 0
   HpHeight: 1
   shape: 0
@@ -203,10 +182,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Root: {fileID: 2686783030726034118}
-  DeployDelay: 2
-  TriggerRange: 0.5
+  DeployDelay: 0
+  TriggerRange: 1.3
   VerticalRange: 0
   intelligent: 0
+  ExplosionDelay: 0.5
+  OnTriggered:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 5572559591361073539}
+        m_TargetAssemblyTypeName: Unity.FPS.Gameplay.DeployableMine, Assembly-CSharp
+        m_MethodName: PlaySound
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 8300000, guid: 4f14600997e6b394aba4276e93ec674f,
+            type: 3}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.AudioClip, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1254535192588055448}
+        m_TargetAssemblyTypeName: UnityEngine.Animator, UnityEngine
+        m_MethodName: SetTrigger
+        m_Mode: 5
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: Explode
+          m_BoolArgument: 0
+        m_CallState: 2
   DamageData:
     DamageExplosion: 0
     ExplosionInnerRange: 2
@@ -226,7 +234,7 @@ MonoBehaviour:
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 2115654139197423946, guid: 587fe2094721fdd419e5e30ba35cbec7,
       type: 3}
-    ImpactSfx: {fileID: 8300000, guid: f51c4637af2c5444cb6ae43fd10e5a8f, type: 3}
+    ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
@@ -5049,10 +5057,15 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b7c4435a043eb4a439096a9a89062f63,
+        type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b7c4435a043eb4a439096a9a89062f63,
         type: 3}
       propertyPath: m_Name
-      value: spore
+      value: Model
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5061,7 +5074,11 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 5061776337170495675}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b7c4435a043eb4a439096a9a89062f63,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1254535192588055448}
   m_SourcePrefab: {fileID: 100100000, guid: b7c4435a043eb4a439096a9a89062f63, type: 3}
 --- !u!4 &1453368942663724245 stripped
 Transform:
@@ -5069,3 +5086,30 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1414656017554410302}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2261009284319819375 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: b7c4435a043eb4a439096a9a89062f63,
+    type: 3}
+  m_PrefabInstance: {fileID: 1414656017554410302}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &1254535192588055448
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2261009284319819375}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a777f7f07af60f143b38e0b50224667e, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

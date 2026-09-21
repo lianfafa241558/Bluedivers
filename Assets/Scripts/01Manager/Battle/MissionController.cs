@@ -82,6 +82,8 @@ public class MissionController : MonoBehaviour
             yield return InitAllMission();
             Debug.Log("开始生成兴趣点");
             yield return InitInterestPoint();
+            Debug.Log("开始生成场景点");
+            yield return InitScenePoint();
 
             var async = TerrainUtils.AsyncRefresh(true);
             while (!async.isDone)
@@ -264,7 +266,23 @@ public class MissionController : MonoBehaviour
             yield return null;
         }
     }
-
+    /// <summary>
+    /// 创建场景点
+    /// </summary>
+    IEnumerator InitScenePoint()
+    {
+        int count = random.Range(20, 3*(int)Mathf.Sqrt(root.CameraSize));
+        //Debug.LogWarning("兴趣点数"+count);
+        int totleWeight = root.mapCfg.scenePoints.Sum(item => item.Value);
+        //GameObject[] objects= new GameObject[count];
+        for (int i = 0; i < count; ++i)
+        {
+            var pos = GenerateNewMissionPoint(6);
+            if (pos == default) { Debug.LogWarning("场景点数量" + i); break; }
+            Instantiate(root.mapCfg.scenePoints.WeightTake(totleWeight, random), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), EntityRoot);
+            yield return null;
+        }
+    }
     /// <summary>
     /// 生成新的任务点
     /// </summary>

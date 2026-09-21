@@ -61,7 +61,11 @@ MonoBehaviour:
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
+  Title: 
   mission: {fileID: 0}
+  actions:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &1954428656254427376
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -76,7 +80,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   datas: []
   additionTerrain: {fileID: 1954428656643466638}
-  transitionDistance: 5
+  transitionDistance: 9
+  clearVegetationRange: {x: 7, y: 10}
+  clearRockRange: {x: 0, y: 6}
   StartModify: 0
 --- !u!1 &1954428656643466625
 GameObject:
@@ -884,11 +890,12 @@ MonoBehaviour:
   inOperate: 0
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
-  audio: {fileID: 0}
+  _audioSource: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ShowName: "\u53D1\u7535\u673A"
   Id: Generator
   Portrait: {fileID: 21300000, guid: 3e424e2e43716b24cb62a1e41bd70006, type: 3}

@@ -61,6 +61,12 @@ public class BattleManager : Singleton<BattleManager>
     /// <summary>团灭判负倒计时计时器，用于中止倒计时</summary>
     private LogicTimer _wipeTimer;
 
+    /// <summary>最近一次昼夜状态（true=白天）；null 表示本局还没收到过昼夜事件</summary>
+    private bool? _dayIsNoon;
+
+    /// <summary>是否已按"夜晚"给照明战备加过授权（授权是计数制，用于避免重复加减）</summary>
+    private bool _nightAuthorized;
+
     #region 初始化
 
     public static void Creat(bool isNormal)
@@ -105,6 +111,8 @@ public class BattleManager : Singleton<BattleManager>
         ADCont.Init();
         CacheReinforceAd();
         ADCont.transform.SetParent(transform);
+        // 战备控制器就绪，补发一次初始昼夜授权（开局即夜晚时夜间照明战备才能解锁）
+        ApplyInitDaySwitch();
         BRCont = new GameObject("BattleRoleCont").AddComponent<BattleRoleManager>();
         BRCont.transform.SetParent(transform);
         WaveCont = new GameObject("WaveCont").AddComponent<WaveManager>();
@@ -157,6 +165,8 @@ public class BattleManager : Singleton<BattleManager>
         ADCont.Init();
         CacheReinforceAd();
         ADCont.transform.SetParent(transform);
+        // 战备控制器就绪，补发一次初始昼夜授权（开局即夜晚时夜间照明战备才能解锁）
+        ApplyInitDaySwitch();
         BRCont = new GameObject("BattleRoleCont").AddComponent<BattleRoleManager>();
         BRCont.transform.SetParent(transform);
         WaveCont = new GameObject("WaveCont").AddComponent<WaveManager>();
@@ -237,12 +247,10 @@ public class BattleManager : Singleton<BattleManager>
 
     #region 生命周期
 
-    void Start()
-    {
 
-        var pos = mapRoot.rect;
-        unitQueryGrid = new(new((PEVector2)pos.center, pos.size.x / 2, pos.size.z / 2), 30);
-        
+    public override void Awake()
+    {
+        base.Awake();
 
         BattleEventSub.OnUnitPosChange += OnUnitPosChange;
         BattleEventSub.OnEnemyCreate += OnEnemyCreate;
@@ -252,6 +260,14 @@ public class BattleManager : Singleton<BattleManager>
         //GlobalEventSub.OnOOPartCollect += OOPartCollect;
         GlobalEventSub.OnDaySwitch += OnDatSwitch;
     }
+
+    private void Start()
+    {
+        var pos = mapRoot.rect;
+        unitQueryGrid = new(new((PEVector2)pos.center, pos.size.x / 2, pos.size.z / 2), 30);
+
+    }
+
     private void OnDestroy()
     {
         BattleEventSub.OnUnitPosChange -= OnUnitPosChange;
@@ -472,9 +488,41 @@ public class BattleManager : Singleton<BattleManager>
     private void OnDatSwitch(bool isNoon)
     {
         //Debug.LogError("昼夜交替"+ isNoon);
-        ADCont.Authorize(16, !isNoon);
-        ADCont.Authorize(17, !isNoon);
+        // 战备控制器由初始化协程在地形/任务之后创建，早到的事件先存下来，
+        // 等 ADCont 就绪后由 ApplyInitDaySwitch 补一次（否则开局即夜晚时夜间照明战备不会解锁）
+        _dayIsNoon = isNoon;
+        ApplyDaySwitch();
         //应该加语音播报
+    }
+
+    /// <summary>
+    /// 战备控制器就绪后补一次昼夜授权。
+    /// 场景里的 DayNightBrain.Start 会抛开局那次昼夜事件，但 BattleManager 是被
+    /// AsyncLoadScene 的回调（被延后一帧）创建的，订阅永远晚于事件 → 开局那一次会漏，
+    /// 所以这里按 GlobalEventSub 缓存的状态补一次（开局即夜晚时尤其重要）。
+    /// </summary>
+    private void ApplyInitDaySwitch()
+    {
+        bool? lastNoon = GlobalEventSub.LastDaySwitchIsNoon;
+        if (lastNoon.HasValue) _dayIsNoon = lastNoon;
+        ApplyDaySwitch();
+    }
+
+    /// <summary>
+    /// 按当前昼夜状态授权夜间照明战备（夜晚解锁、白天收回）。
+    /// 授权是计数制（authorizeCounter，0=未授权）且 0 就是"白天"的自然状态，所以白天不能做减法：
+    /// 开局白天时计数本来就是 0，补发再 -1 会变 -1，之后入夜 +1 只回到 0，永远不满足
+    /// IsAuthorize(counter > 0)（ADSO_Y_Lamp/ADSO_Y_Llluminator 都是 authorize=1）⇒ 战备永久锁死。
+    /// 因此只在"入夜加一次 / 从夜晚回白天把那次收回"时动计数，同一状态不重复应用。
+    /// </summary>
+    private void ApplyDaySwitch()
+    {
+        if (ADCont == null || !_dayIsNoon.HasValue) return;
+        bool isNight = !_dayIsNoon.Value;
+        if (isNight == _nightAuthorized) return;
+        _nightAuthorized = isNight;
+        Authorize(Constants.LampTowerId, isNight);
+        Authorize(Constants.IlluminatorId, isNight);
     }
 
     /// <summary>

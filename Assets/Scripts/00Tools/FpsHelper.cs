@@ -11,9 +11,6 @@ using Unity.FPS.Gameplay;
 using UnityEngine;
 using UnityEngine.AI;
 using Utils;
-using static UnityEditor.Progress;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
-using static UnityEngine.Rendering.DebugUI;
 
 public static class FpsHelper
 {

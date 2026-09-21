@@ -6,7 +6,8 @@ public class CreatBuilding : MonoBehaviour
 {
     [SerializeField]
     EnemyActorVariant_SO data;
-
+    [SerializeField]
+    MapActorVariant_SO data2;
     void Start()
     {
         var pos = transform.position;
@@ -15,9 +16,19 @@ public class CreatBuilding : MonoBehaviour
 
         BattleManager.EnqueueInit(() =>
         {
-            var go=Instantiate(data.Get(TaskManager.Instance.EnemyVarietyType), pos, rotation, parent);
-            go.GetComponent<I_AIController>().BirthDuration = 0;
-            go.GetComponent<I_Actor>().IsFixed = true;
+            GameObject tmp = null;
+            if (data)
+            {
+                tmp = data.Get(TaskManager.Instance.EnemyVarietyType);
+            }
+            else if(data2)
+            {
+                tmp = data2.Get(TaskManager.Instance.MapId);
+            }
+            if (tmp == null) return;
+            var go=Instantiate(tmp, pos, rotation, parent);
+            if (go.TryGetComponent(out I_AIController cont)) cont.BirthDuration = 0;
+            if (go.TryGetComponent(out I_Actor actor)) actor.IsFixed = true;
             
         });
 

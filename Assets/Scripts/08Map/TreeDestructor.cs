@@ -37,9 +37,11 @@ namespace FpsGame.MapUtils
         [InspectorName("每秒最多提交次数（0=每帧提交）")]
         [SerializeField] private float _maxCommitPerSecond = 4f;
 
-        [InspectorName("提交后重建树碰撞体（防隐形墙，代价较高）")]
-        [Tooltip("树碰撞体不会随 SetTreeInstances 更新：不重建的话，被摧毁的树会留下看不见的碰撞体。重建整个地形碰撞体较贵，测得卡顿时可关掉")]
-        [SerializeField] private bool _rebuildColliders = true;
+        [InspectorName("提交后自己重建树碰撞体（默认关：由 TerrainClearer 统一重建）")]
+        [Tooltip("树碰撞体不会随 SetTreeInstances 更新：不重建的话，被摧毁的树会留下看不见的碰撞体。"
+            + "所有清除都走 TerrainClearer 门面时由它统一重建（按提交版本号去重，避免跨帧重复重建），所以这里默认关；"
+            + "只有绕过门面直接调用 TreeDestructor 时才需要打开兜底。重建整张地形碰撞体很贵（实测 ~11ms）")]
+        [SerializeField] private bool _rebuildColliders = false;
 
         [InspectorName("打印销毁日志")]
         [SerializeField] private bool _log = false;
@@ -101,6 +103,9 @@ namespace FpsGame.MapUtils
         private float _lastCommitTime;
         private bool _dirty;
 
+        /// <summary>提交版本号：每次真正改动了树实例就 +1（供 TerrainClearer 判断"树到底变没变"）</summary>
+        private int _commitVersion;
+
         #endregion
 
         #region 静态 API
@@ -110,6 +115,13 @@ namespace FpsGame.MapUtils
 
         /// <summary>已摧毁的树数量</summary>
         public static int DestroyedCount => Instance != null ? Instance._destroyedCount : 0;
+
+        /// <summary>
+        /// 树实例的提交版本号：每次**真正**提交（含 LateUpdate 的自动提交）都会 +1。
+        /// <para>调用方（<see cref="TerrainClearer"/>）用它判断"树/石块到底有没有被清掉"，
+        /// 从而只在必要时重建昂贵的树碰撞体。</para>
+        /// </summary>
+        public static int CommitVersion => Instance != null ? Instance._commitVersion : 0;
 
         /// <summary>指定树种是否允许被摧毁（0 基索引；无管理器时视为允许）</summary>
         /// <param name="prototypeIndex">树种索引，对应 <c>TerrainData.treePrototypes</c> 下标</param>
@@ -523,6 +535,7 @@ namespace FpsGame.MapUtils
                 return;
             }
 
+            int changed = 0;
             for (int p = 0; p < _pending.Count; p++)
             {
                 int i = _pending[p];
@@ -536,18 +549,25 @@ namespace FpsGame.MapUtils
                 _instances[i] = tree;
                 _alive[i] = false;
                 _destroyedCount++;
+                changed++;
             }
 
             _pending.Clear();
             _dirty = false;
+
+            // 一处有效改动都没有就别提交（整表提交 + terrain.Flush 都不便宜）
+            if (changed == 0) return;
+
             _lastCommitTime = Time.time;
+            _commitVersion++; // 通知 TerrainClearer："树真的变了"，由它统一决定何时重建树碰撞体
 
             // 一次整表提交；snapToHeightmap = false，避免被弹坑改过的地形把树重新贴一遍
             _data.SetTreeInstances(_instances, false);
             _terrain.Flush();
 
-            // ⚠ 树碰撞体不会随 SetTreeInstances 更新：被摧毁的树会留下"隐形墙"，需要强制重建一次。
-            // 提交本身已被 _maxCommitPerSecond 限流，所以这里直接同步做
+            // ⚠ 树碰撞体不会随 SetTreeInstances 更新：被摧毁的树会留下"隐形墙"，需要重建一次。
+            // 默认交给 TerrainClearer 统一做（按提交版本号去重，避免跨帧重复重建）；
+            // 只有绕过门面直接用 TreeDestructor 时才打开这个开关兜底
             if (_rebuildColliders) TerrainUtils.RebuildTreeColliders(_terrain);
 
             if (_log) Debug.Log($"[树木] 已摧毁 {_destroyedCount}/{_treeCount}");
@@ -599,6 +619,7 @@ namespace FpsGame.MapUtils
 
             _data.SetTreeInstances(_instances, false);
             _terrain.Flush();
+            _commitVersion++;
             if (_rebuildColliders) TerrainUtils.RebuildTreeColliders(_terrain);
         }
 
