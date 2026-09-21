@@ -218,7 +218,11 @@ public class BattleManager : Singleton<BattleManager>
         infos[3] = nestinfo;
         yield return mapRoot.GetComponent<GenerateNoiseTerrain>().SetTextures(infos.Select(item => item.diffuseTexture).ToArray(), infos.Select(item => item.tileSize).ToArray());
 
-        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain(cfg.taskCfg.terrainType);
+        // 地图级倍率：树密度 / 悬崖数量（MapData_SO 上配，缺省 1）
+        yield return mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain(
+            cfg.taskCfg.terrainType,
+            cfg.mapCfg?.TreeSpawnMultiplier ?? 1f,
+            cfg.mapCfg?.RockCoverMultiplier ?? 1f);
 
         var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
         if (debugger.IsValid())

@@ -4844,7 +4844,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 2559687c6ab987d4a8dc48be973cacef, type: 2}
+  - {fileID: 2100000, guid: a1f74ebee1f4a5e4793ffc00a306c9e7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4888,9 +4888,9 @@ ParticleSystemRenderer:
   m_VertexStreams: 00010304
   m_UseCustomTrailVertexStreams: 0
   m_TrailVertexStreams: 00010304
-  m_Mesh: {fileID: 7035516079689379386, guid: 22c7cf1dd3a794a46b1d800a34d880dd, type: 3}
-  m_Mesh1: {fileID: 2383326625463138717, guid: 988b8b3b52b09a74f9db9350c61edbc2, type: 3}
-  m_Mesh2: {fileID: 0}
+  m_Mesh: {fileID: 4300000, guid: 983886d38a2dfa14fa5778c136ecbb9f, type: 3}
+  m_Mesh1: {fileID: 4300000, guid: 1ef63c9e36fd9ae47867f4bb79c7cbb3, type: 3}
+  m_Mesh2: {fileID: 4300000, guid: d1edb567dd56f994cbb75a74e047b18a, type: 3}
   m_Mesh3: {fileID: 0}
   m_MeshWeighting: 1
   m_MeshWeighting1: 1
@@ -9669,6 +9669,7 @@ MonoBehaviour:
   LiftTime: 35
   PreRelease: 1
   allowSeeRelease: 0
+  EndDelay: 0
   allowRelease: 0
   useDebug: 0
   OnEnd:
@@ -9797,6 +9798,7 @@ MonoBehaviour:
     depth: 1
   additionTerrain: {fileID: 0}
   transitionDistance: 5
+  clearVegetationRange: {x: 7, y: 10}
   StartModify: 0
 --- !u!1 &6690584420790364778
 GameObject:

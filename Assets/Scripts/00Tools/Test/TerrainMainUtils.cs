@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Utils;
 using Unity.AI.Navigation;
@@ -8,12 +9,56 @@ using Core;
 
 public static partial class TerrainUtils
 {
+    /// <summary>
+    /// 地表占地圆（纯数据）：世界 XZ 圆心 + 半径。
+    /// <para>地形生成阶段由"地表物体的生产者"（例如 <c>GenerateNoiseTerrain</c> 的巨型悬崖）写入
+    /// <see cref="AreaCircles"/>；使用者（任务点/兴趣点、AI 布点等）只依赖这份数据，</para>
+    /// <para>不需要认识是谁放的、也不需要引用地形生成器所在程序集。</para>
+    /// </summary>
+    public struct AreaCircle
+    {
+        /// <summary>世界坐标 XZ 圆心</summary>
+        public Vector2 Center;
+
+        /// <summary>占地半径（米）</summary>
+        public float Radius;
+
+        public AreaCircle(Vector2 center, float radius)
+        {
+            Center = center;
+            Radius = radius;
+        }
+    }
+
+    /// <summary>
+    /// 本次地形上"不要占用"的地表占地圆（世界 XZ）。
+    /// <para>换地形（<see cref="Main"/> 被赋值）时自动清空，由地表生产者重新注入；读取方只读。</para>
+    /// </summary>
+    private static readonly List<AreaCircle> areaCircles = new();
+
+    /// <summary>地表占地圆（只读，可能为空）</summary>
+    public static IReadOnlyList<AreaCircle> AreaCircles => areaCircles;
+
+    /// <summary>清空地表占地圆（重新生成地形前由生产者调用一次）</summary>
+    public static void ClearAreaCircles() => areaCircles.Clear();
+
+    /// <summary>登记一处地表占地圆（半径 &lt;= 0 会被忽略）</summary>
+    /// <param name="center">世界坐标 XZ 圆心</param>
+    /// <param name="radius">占地半径（米）</param>
+    public static void AddAreaCircle(Vector2 center, float radius)
+    {
+        if (radius <= 0f) return;
+        areaCircles.Add(new AreaCircle(center, radius));
+    }
+
     public static Terrain Main
     {
         get => main;
         set
         {
             main = value;
+            // 换地形 = 上一局的地表占地圆作废（新地形生成时会重新注入）
+            areaCircles.Clear();
             if (value)
             {
                 data = value.terrainData;
@@ -39,6 +84,8 @@ public static partial class TerrainUtils
     /// <summary>纹理贴图分辨 ?/summary>
     private static int alphamapRes;
     private static int terrainHeight;
+    /// <summary>上次重建地形碰撞体的帧号（同一帧内去重，见 <see cref="RebuildTreeColliders"/>）</summary>
+    private static int lastTreeColliderRebuildFrame = -1;
 
     #region 转换方法
 
@@ -481,6 +528,32 @@ public static partial class TerrainUtils
         Main.Flush();
         if (refreshNav) return nav.UpdateNavMesh(nav.navMeshData);
         return null;
+    }
+
+    /// <summary>
+    /// 强制重建地形碰撞体，从而按**当前**树实例重新生成"地形树碰撞体"。
+    /// <para>⚠ 实测（Unity 2022.3.62，2026-09-21）：<c>SetTreeInstances</c> 改完树实例后，树碰撞体**不会**自动更新——
+    /// 旧位置仍然挡住、新位置完全没有碰撞体，<c>terrain.Flush()</c> 也无效；只有 TerrainCollider 重建时
+    /// 才会按当时的树实例生成。"在检视器里随便编辑一下 TerrainData 就正常了"正是因为那次编辑触发了重建。</para>
+    /// <para>实现方式：切一次 <c>enabled</c>（这是实测有效的唯一廉价手段）。</para>
+    /// <para>代价：重建整个地形碰撞体（含全部树碰撞体，几千棵时较贵），运行时不要频繁调。</para>
+    /// <para>注意：树碰撞体只由树 prefab 上的 <b>CapsuleCollider</b> 生成，Box/Sphere/MeshCollider 不参与
+    /// （所以石块原型 0-6 即使开着 Enable Tree Colliders 也不会有碰撞体）。</para>
+    /// </summary>
+    /// <param name="terrain">目标地形；为空或碰撞体已禁用时直接返回</param>
+    public static void RebuildTreeColliders(Terrain terrain)
+    {
+        if (terrain == null) return;
+        if (!terrain.TryGetComponent(out TerrainCollider terrainCollider)) return;
+        if (!terrainCollider.enabled) return;
+
+        // 同一帧内只重建一次：一次清除会经"腿自己的提交"和"TerrainClearer 的合并重烘"两处调用，
+        // 而重建整张地形碰撞体很贵（几千棵树）
+        if (Time.frameCount == lastTreeColliderRebuildFrame) return;
+        lastTreeColliderRebuildFrame = Time.frameCount;
+
+        terrainCollider.enabled = false;
+        terrainCollider.enabled = true;
     }
 
 

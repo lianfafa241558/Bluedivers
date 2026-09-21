@@ -44,7 +44,8 @@ MonoBehaviour:
   - {fileID: -4561154854406934667}
   - {fileID: 4219955689728072436}
   - {fileID: 1053869222489277427}
-  m_RendererFeatureMap: 68d77486d1a82a2f75af8671d385b3c0f45a216e574b903af3c330667918a00e
+  - {fileID: 6298545402421566318}
+  m_RendererFeatureMap: 68d77486d1a82a2f75af8671d385b3c0f45a216e574b903af3c330667918a00e6edb0121aced6857
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -148,3 +149,22 @@ MonoBehaviour:
   _renderCamera: 3
   _shader: {fileID: -6465566751694194690, guid: a1b07ed697d67f145899e797afa7e6d3,
     type: 3}
+--- !u!114 &6298545402421566318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6e3aa44b08abc04a9d92f67f75e05ac, type: 3}
+  m_Name: SkyboxLayerBeforeFogRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    shaderTag: SkyboxLayerBeforeFog
+    renderCamera: 3

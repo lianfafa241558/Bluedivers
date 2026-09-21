@@ -253,12 +253,14 @@ public static class FpsHelper
                 //Debug.LogError($"地形破坏{point} 内半径{(destructe / new PEInt(1.5f)).RawFloat} 外半径{destructe.RawFloat} 深度{(destructe / 5).RawFloat}");
                 //弹坑里不该有积雪：按破坏外半径擦除积雪遮罩（无雪天气/地形未就绪时内部自动忽略）
                 SnowController.RemoveSnow(point, destructe.RawFloat);
-                //ModifyHeightMap 是协程（迭代器），必须用 StartCoroutine 启动，直接调用不会执行
-                GameRoot.Instance.StartCoroutine(TerrainUtils.ModifyHeightMap(point, (destructe / new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe / 5).RawFloat, ShapeType.Circle, false));
-                //树木：与弹坑同半径摧毁（地形树没有碰撞体，这里走自建索引表；内部按帧合并提交，不会逐棵重建地形树数据）
-                TreeDestructor.DestroyInRadius(point, destructe.RawFloat);
-                //细节（草/花）：同半径擦除，避免坑里残留悬空的草
-                TerrainDetailEraser.ClearInRadius(point, destructe.RawFloat);
+                //ModifyHeightMap 是协程（迭代器），必须用 StartCoroutine 启动，直接调用不会执行；
+                //⚠ 最后一个 refresh 传 false：原来默认 true ⇒ 每一发爆炸弹坑都整张 NavMesh 重烘。
+                //现在只"标脏"，由 TerrainClearer 按 RefreshInterval 合并成一次重烘
+                GameRoot.Instance.StartCoroutine(TerrainUtils.ModifyHeightMap(point, (destructe / new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe / 5).RawFloat, ShapeType.Circle, false, false));
+                TerrainClearer.MarkTerrainChanged();
+                //地表物：与弹坑同半径摧毁（树/石块走"可被摧毁"白名单，内部按帧合并提交，不会逐棵重建地形树数据），
+                //草花一并擦除，避免坑里残留悬空的植被
+                TerrainClearer.DestroyInRadius(point, destructe.RawFloat);
             }
 
            

@@ -56,70 +56,240 @@ namespace FpsGame.MapUtils
     }
 
     /// <summary>
+    /// "地形覆盖物"（巨型悬崖 / 巨石）的生成参数。
+    /// <para>与 <see cref="VegetationSpawnData"/> 的"逐格概率"不同：这类物体体积巨大，
+    /// 逐格概率要么叠在一起要么抽不到，而且没有互相排斥的概念，</para>
+    /// <para>所以这里用 <c>count</c>（目标数量）+ 占地圆互斥来做拒绝采样。</para>
+    /// <para>预制体与占地半径在 <see cref="GenerateNoiseTerrain"/> 的列表上配，本结构只管"生成规则"。</para>
+    /// </summary>
+    [Serializable]
+    public struct RockCoverSpawnData
+    {
+        /// <summary>目标数量。0 = 该地形类型不放覆盖物</summary>
+        [InspectorName("目标数量")]
+        public int count;
+
+        /// <summary>互斥间距系数：两块的最近距离 = (半径1+半径2) × 该系数，1 = 恰好相切</summary>
+        [InspectorName("互斥间距系数（半径和的倍数，1=相切）")]
+        public float minSpacingScale;
+
+        /// <summary>落点允许的最小坡度（度）</summary>
+        [InspectorName("最小坡度")]
+        public float minSlope;
+
+        /// <summary>落点允许的最大坡度（度）</summary>
+        [InspectorName("最大坡度")]
+        public float maxSlope;
+
+        /// <summary>落点允许的最小高度（归一化 0~1）</summary>
+        [InspectorName("最小高度")]
+        public float minHeight;
+
+        /// <summary>落点允许的最大高度（归一化 0~1）</summary>
+        [InspectorName("最大高度")]
+        public float maxHeight;
+    }
+
+    /// <summary>
+    /// 一类"地形覆盖物"（巨型悬崖 / 巨石）的配置。
+    /// <para>巨型石块要能走上去、要参与寻路、要有碰撞，地形树做不到（位置只能概率撒、朝向/碰撞受限），</para>
+    /// <para>所以用预制体实例化，由 <see cref="GenerateNoiseTerrain"/> 在地形生成时放置，
+    /// 并把占地圆作为树与草（细节）的排除区。</para>
+    /// </summary>
+    [Singleline]
+    [Serializable]
+    public class RockCoverEntry
+    {
+        /// <summary>要放置的预制体</summary>
+        [InspectorName("预制体")]
+        public GameObject prefab;
+
+        /// <summary>被随机选中的权重，越大越容易选中（&lt;1 按 1 处理）</summary>
+        [InspectorName("权重（越大越容易被选中）")]
+        public int weight = 1;
+
+        /// <summary>占地半径（米）：用于互相排斥、以及擦掉范围内的树与草</summary>
+        [InspectorName("占地半径（米）")]
+        public float footprintRadius = 10f;
+
+        /// <summary>垂直下沉量（米）：贴着地形高度再往下沉，避免在坡地上一边悬空</summary>
+        [InspectorName("下沉量（米）")]
+        public float sinkDepth = 1f;
+    }
+
+    /// <summary>
     /// 地形预设参数，每种 TerrainType 对应一组完整的地形生成参数
     /// </summary>
     [Serializable]
     public struct TerrainPresetData
     {
-        // ---- 分形噪声参数 ----
+        /// <summary>
+        /// 基础缩放。控制基础噪声的采样频率，值越大基础地形起伏越密集。
+        /// </summary>
         [InspectorName("基础缩放")]
         public float baseScale;
+
+        /// <summary>
+        /// 基础振幅。控制基础噪声对地形高度的贡献强度。
+        /// </summary>
         [InspectorName("基础振幅")]
         public float baseAmplitude;
+
+        /// <summary>
+        /// 倍频数。分形噪声的叠加层数，层数越多细节越丰富。
+        /// </summary>
         [InspectorName("倍频数")]
         public int octaves;
+
+        /// <summary>
+        /// 间隙度。每个倍频层频率的放大倍数，决定细节的密集程度。
+        /// </summary>
         [InspectorName("间隙度")]
         public float lacunarity;
+
+        /// <summary>
+        /// 持续度。每个倍频层振幅的衰减比例，决定细节的强弱。
+        /// </summary>
         [InspectorName("持续度")]
         public float persistence;
+
+        /// <summary>
+        /// 细节缩放。控制细节噪声的采样频率，用于叠加更精细的地形细节。
+        /// </summary>
         [InspectorName("细节缩放")]
         public float detailScale;
+
+        /// <summary>
+        /// 细节振幅。控制细节噪声对地形高度的贡献强度。
+        /// </summary>
         [InspectorName("细节振幅")]
         public float detailAmplitude;
 
         // ---- 高度重塑 ----
+
+        /// <summary>
+        /// 高度幂次曲线。对归一化高度应用幂函数重塑，用于调整地形高低分布的对比度。
+        /// </summary>
         [InspectorName("高度幂次曲线")]
         public float heightPower;
 
         // ---- 后处理参数 ----
+
+        /// <summary>
+        /// 高原抬升强度。控制高原区域相对于基础地形的抬升幅度。
+        /// </summary>
         [InspectorName("高原抬升强度")]
         public float plateauIntensity;
+
+        /// <summary>
+        /// 高原阈值。判定高原区域的高度/遮罩阈值，超过该值视为高原。
+        /// </summary>
         [InspectorName("高原阈值")]
         public float plateauThreshold;
+
+        /// <summary>
+        /// 高原噪声缩放。控制高原遮罩噪声的采样频率，影响高原边缘的形状。
+        /// </summary>
         [InspectorName("高原噪声缩放")]
         public float plateauMaskScale;
+
+        /// <summary>
+        /// 边缘衰减。控制地形边缘高度向四周衰减的强度，用于避免边缘突兀。
+        /// </summary>
         [InspectorName("边缘衰减")]
         public float edgeDropoff;
+
+        /// <summary>
+        /// 侵蚀迭代次数。模拟水力/热力侵蚀的迭代次数，次数越多侵蚀效果越明显。
+        /// </summary>
         [InspectorName("侵蚀迭代次数")]
         public int erosionIterations;
 
         // ---- 纹理映射（索引对应 TerrainLayer） ----
+
+        /// <summary>
+        /// 沙地层索引。对应 TerrainLayer 中沙地纹理的索引。
+        /// </summary>
         [InspectorName("沙地层索引")]
         public int sandLayerIndex;
+
+        /// <summary>
+        /// 草地层索引。对应 TerrainLayer 中草地纹理的索引。
+        /// </summary>
         [InspectorName("草地层索引")]
         public int grassLayerIndex;
+
+        /// <summary>
+        /// 岩石层索引。对应 TerrainLayer 中岩石纹理的索引。
+        /// </summary>
         [InspectorName("岩石层索引")]
         public int rockLayerIndex;
+
+        /// <summary>
+        /// 雪地层索引。对应 TerrainLayer 中雪地纹理的索引。
+        /// </summary>
         [InspectorName("雪地层索引")]
         public int snowLayerIndex;
 
         // ---- 植被（石块与树分开配：两者都是地形树实例，靠原型索引区间区分） ----
+
+        /// <summary>
+        /// 石块生成配置。包括石块的密度、坡度/高度范围以及原型索引区间等参数。
+        /// </summary>
         [InspectorName("石块生成")]
         public VegetationSpawnData rockSpawn;
+
+        /// <summary>
+        /// 树生成配置。包括树的密度、坡度/高度范围以及原型索引区间等参数。
+        /// </summary>
         [InspectorName("树生成")]
         public VegetationSpawnData treeSpawn;
 
+        // ---- 地形覆盖物（巨型悬崖 / 巨石：用预制体实例化，不是地形树） ----
+
+        /// <summary>
+        /// 地形覆盖物生成配置。只放"数量 / 互斥间距 / 坡度 / 高度"，
+        /// 具体用哪些预制体、多大占地半径由 <see cref="GenerateNoiseTerrain"/> 上的列表决定。
+        /// </summary>
+        [InspectorName("地形覆盖物生成")]
+        public RockCoverSpawnData rockCover;
+
         // ---- 细节植被 ----
+
+
+        /// <summary>
+        /// 草密度。控制单位面积内草细节植被的生成数量。
+        /// </summary>
         [InspectorName("草密度")]
         public float detailDensity;
+
+        /// <summary>
+        /// 花密度。控制单位面积内花细节植被的生成数量。
+        /// </summary>
         [InspectorName("花密度")]
         public float detailFlowerDensity;
+
+        /// <summary>
+        /// 草最小坡度。允许生成草细节植被的最小地形坡度。
+        /// </summary>
         [InspectorName("草最小坡度")]
         public float detailMinSlope;
+
+        /// <summary>
+        /// 草最大坡度。允许生成草细节植被的最大地形坡度。
+        /// </summary>
         [InspectorName("草最大坡度")]
         public float detailMaxSlope;
+
+        /// <summary>
+        /// 草最小高度。允许生成草细节植被的最小地形高度。
+        /// </summary>
         [InspectorName("草最小高度")]
         public float detailMinHeight;
+
+        /// <summary>
+        /// 草最大高度。允许生成草细节植被的最大地形高度。
+        /// </summary>
         [InspectorName("草最大高度")]
         public float detailMaxHeight;
     }
@@ -131,8 +301,9 @@ namespace FpsGame.MapUtils
 
     public class GenerateNoiseTerrain : MonoBehaviour
     {
+        /// <summary>覆盖石实例容器的名字（换局重生成时按名字复用/清理）</summary>
+        private const string RockCoverRootName = "RockCovers";
 
-        public GameObject StartPoint;
         [InspectorName("每帧最长阻塞时间")]
         public float maxTimePerFrame = 0.01f;
 
@@ -182,6 +353,18 @@ namespace FpsGame.MapUtils
         [InspectorName("可被摧毁的索引（0基，0-6石块/7-10树，留空=全部可摧毁）")]
         [SerializeField] private List<int> _destructibleTreePrototypes = new();
 
+        [Foldout("地形覆盖石（巨型悬崖，预制体不是地形树）", true)]
+        [InspectorName("覆盖石列表（预制体 / 权重 / 占地半径 / 下沉量）")]
+        [SerializeField] private List<RockCoverEntry> _rockCovers = new();
+        [InspectorName("覆盖用数量（<0=用预设）")]
+        [SerializeField] private int _rockCoverCount = -1;
+        [InspectorName("覆盖用互斥间距系数（<0=用预设）")]
+        [SerializeField] private float _rockCoverMinSpacingScale = -1f;
+        [InspectorName("距地图边缘最小距离（米，避开空气墙）")]
+        [SerializeField] private float _rockCoverEdgeMargin = 20f;
+        [InspectorName("每个目标的尝试次数上限")]
+        [SerializeField] private int _rockCoverAttemptsPerCover = 40;
+
         [Foldout("其他", true)]
         public bool isLand;
 
@@ -195,6 +378,17 @@ namespace FpsGame.MapUtils
 
         //比如分辨率1024/512就是2
         private float mapscale => terrain.terrainData.heightmapResolution / terrain.terrainData.size.x;
+
+        // ---- 地形覆盖石 ----
+
+        /// <summary>覆盖石实例的容器（换局重生成时整批清掉）</summary>
+        private Transform _rockCoverRoot;
+
+        /// <summary>本局地图的树生成倍率（由 MapData_SO 传入，乘在树密度上）</summary>
+        private float _treeMultiplier = 1f;
+
+        /// <summary>本局地图的悬崖（地形覆盖石）生成倍率（由 MapData_SO 传入，乘在数量上）</summary>
+        private float _rockCoverMultiplier = 1f;
         /*
         private void Start()
         {
@@ -238,8 +432,13 @@ namespace FpsGame.MapUtils
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0002f, prototypeRange = new Vector2Int(7, 10),
+                            probability = 0, prototypeRange = new Vector2Int(7, 10),
                             minSlope = 0f, maxSlope = 30f, minHeight = 0.1f, maxHeight = 0.7f
+                        },
+                        rockCover = new RockCoverSpawnData
+                        {
+                            count = 12, minSpacingScale = 1.2f,
+                            minSlope = 0f, maxSlope = 60f, minHeight = 0.05f, maxHeight = 0.95f
                         },
                         detailDensity = 0.02f,
                         detailFlowerDensity = 0f,
@@ -279,6 +478,11 @@ namespace FpsGame.MapUtils
                             probability = 0.0008f, prototypeRange = new Vector2Int(7, 10),
                             minSlope = 0f, maxSlope = 40f, minHeight = 0.3f, maxHeight = 0.9f
                         },
+                        rockCover = new RockCoverSpawnData
+                        {
+                            count = 18, minSpacingScale = 1.1f,
+                            minSlope = 5f, maxSlope = 60f, minHeight = 0.25f, maxHeight = 0.95f
+                        },
                         detailDensity = 0.08f,
                         detailFlowerDensity = 0.02f,
                         detailMinSlope = 0f,
@@ -316,6 +520,11 @@ namespace FpsGame.MapUtils
                         {
                             probability = 0.003f, prototypeRange = new Vector2Int(7, 10),
                             minSlope = 0f, maxSlope = 50f, minHeight = 0.1f, maxHeight = 0.95f
+                        },
+                        rockCover = new RockCoverSpawnData
+                        {
+                            count = 24, minSpacingScale = 1.15f,
+                            minSlope = 0f, maxSlope = 55f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         detailDensity = 0.2f,
                         detailFlowerDensity = 0.06f,
@@ -355,6 +564,11 @@ namespace FpsGame.MapUtils
                             probability = 0.0015f, prototypeRange = new Vector2Int(7, 10),
                             minSlope = 0f, maxSlope = 35f, minHeight = 0.1f, maxHeight = 0.85f
                         },
+                        rockCover = new RockCoverSpawnData
+                        {
+                            count = 24, minSpacingScale = 1.2f,
+                            minSlope = 0f, maxSlope = 60f, minHeight = 0.05f, maxHeight = 0.9f
+                        },
                         detailDensity = 0.1f,
                         detailFlowerDensity = 0.04f,
                         detailMinSlope = 0f,
@@ -392,6 +606,11 @@ namespace FpsGame.MapUtils
                         {
                             probability = 0.001f, prototypeRange = new Vector2Int(7, 10),
                             minSlope = 0f, maxSlope = 40f, minHeight = 0.05f, maxHeight = 0.8f
+                        },
+                        rockCover = new RockCoverSpawnData
+                        {
+                            count = 12, minSpacingScale = 1.2f,
+                            minSlope = 0f, maxSlope = 55f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         detailDensity = 0.1f,
                         detailFlowerDensity = 0.03f,
@@ -431,6 +650,11 @@ namespace FpsGame.MapUtils
                             probability = 0.0006f, prototypeRange = new Vector2Int(7, 10),
                             minSlope = 0f, maxSlope = 10f, minHeight = 0.1f, maxHeight = 0.6f
                         },
+                        rockCover = new RockCoverSpawnData
+                        {
+                            count = 12, minSpacingScale = 1.3f,
+                            minSlope = 0f, maxSlope = 35f, minHeight = 0.05f, maxHeight = 0.9f
+                        },
                         detailDensity = 0.15f,
                         detailFlowerDensity = 0.1f,
                         detailMinSlope = 0f,
@@ -461,13 +685,18 @@ namespace FpsGame.MapUtils
                         snowLayerIndex = -1,
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0025f, prototypeRange = new Vector2Int(0, 6),
+                            probability = 0.0005f, prototypeRange = new Vector2Int(0, 6),
                             minSlope = 0f, maxSlope = 60f, minHeight = 0f, maxHeight = 0.95f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
                             probability = 0.0003f, prototypeRange = new Vector2Int(7, 10),
                             minSlope = 0f, maxSlope = 25f, minHeight = 0f, maxHeight = 0.4f
+                        },
+                        rockCover = new RockCoverSpawnData
+                        {
+                            count = 30, minSpacingScale = 1.05f,
+                            minSlope = 0f, maxSlope = 60f, minHeight = 0f, maxHeight = 0.95f
                         },
                         detailDensity = 0.03f,
                         detailFlowerDensity = 0f,
@@ -514,14 +743,19 @@ namespace FpsGame.MapUtils
         /// 应用分形噪声到地形
         /// </summary>
         /// <param name="terrainType">地形类型预设</param>
-        public IEnumerator ApplyFractalNoiseToTerrain(TerrainType terrainType)
+        public IEnumerator ApplyFractalNoiseToTerrain(TerrainType terrainType,
+            float treeMultiplier = 1f, float rockCoverMultiplier = 1f)
         {
+            // 地图级倍率（MapData_SO 传进来）：0 = 本图不长树 / 不放悬崖；负数一律按 0 处理
+            _treeMultiplier = Mathf.Max(0f, treeMultiplier);
+            _rockCoverMultiplier = Mathf.Max(0f, rockCoverMultiplier);
+
             if (terrain == null)
             {
                 Debug.LogWarning("未指定Terrain对象");
                 yield break;
             }
-
+            _terrainType = terrainType;
             TerrainData terrainData = terrain.terrainData;
             width = terrainData.heightmapResolution;
             height = terrainData.heightmapResolution;
@@ -532,7 +766,9 @@ namespace FpsGame.MapUtils
             TerrainPresetData preset = GetTerrainPreset(terrainType);
             Debug.Log($"使用地形预设: {terrainType} | 噪声层数={preset.octaves}"
                 + $" | 石块概率={preset.rockSpawn.probability}(原型{preset.rockSpawn.prototypeRange})"
-                + $" | 树概率={preset.treeSpawn.probability}(原型{preset.treeSpawn.prototypeRange})");
+                + $" | 树概率={preset.treeSpawn.probability}(原型{preset.treeSpawn.prototypeRange})"
+                + $" | 覆盖石数量={(_overridePreset && _rockCoverCount >= 0 ? _rockCoverCount : preset.rockCover.count)}"
+                + $" | 地图倍率：树×{_treeMultiplier} 悬崖×{_rockCoverMultiplier}");
 
             preHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
             preTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
@@ -566,9 +802,14 @@ namespace FpsGame.MapUtils
             yield return ApplyAlphamapsInChunks(chunkSize);
             yield return null;
 
+            // 巨型地形覆盖石（悬崖）：必须先于树与草放置——占地圆会作为它们的排除区，
+            // 也必须早于下面的 NavMesh 烘焙——石头被设成地面层后会被同一次烘焙算进寻路网格。
+            yield return PlaceRockCovers(preset);
+
             // 设置植被：石块与树都是地形树实例，靠原型索引区间区分（0-6 石块 / 7-10 树），分别逐格概率生成
-            yield return SpawnVegetation(preset.rockSpawn, "石块", _overridePreset ? _rockProbability : -1f);
-            yield return SpawnVegetation(preset.treeSpawn, "树", _overridePreset ? treeProbability : -1f);
+            yield return SpawnVegetation(preset.rockSpawn, "石块", _overridePreset ? _rockProbability : -1f, TerrainUtils.AreaCircles);
+            // 树吃地图级倍率（MapData_SO.TreeSpawnMultiplier），石块不吃
+            yield return SpawnVegetation(preset.treeSpawn, "树", _overridePreset ? treeProbability : -1f, TerrainUtils.AreaCircles, _treeMultiplier);
             yield return null;
             terrainData.SetTreeInstances(trees.ToArray(), true);
             // 树实例写入后建立"索引 → 世界坐标"表，供 TreeDestructor 做命中判定与销毁（A 方案：
@@ -578,8 +819,12 @@ namespace FpsGame.MapUtils
             TerrainDetailEraser.Rebuild(terrain);
             yield return null;
 
-            // 设置草（细节）
-            yield return SpawnDetails(preset);
+            // ⚠ 树碰撞体不会随 SetTreeInstances 更新（实测：旧位置仍挡住、新位置没碰撞体，Flush 也无效），
+            // 必须在这里强制重建一次，否则运行时表现为"能穿树 + 撞到看不见的旧树墙"
+            TerrainUtils.RebuildTreeColliders(terrain);
+
+            // 设置草（细节）：被覆盖石压住的格子直接跳过（不用事后擦，省一次 SetDetailLayer）
+            yield return SpawnDetails(preset, TerrainUtils.AreaCircles);
             yield return null;
 
             preHeight.Apply(false, false);
@@ -1171,10 +1416,12 @@ namespace FpsGame.MapUtils
         /// <param name="cfg">该类植被的参数（概率 / 原型索引范围 / 坡度 / 高度）</param>
         /// <param name="label">日志用名字（石块 / 树）</param>
         /// <param name="rateOverride">≥0 时覆盖配置里的概率（"覆盖预设参数"用），&lt;0 表示不覆盖</param>
-        IEnumerator SpawnVegetation(VegetationSpawnData cfg, string label, float rateOverride)
+        IEnumerator SpawnVegetation(VegetationSpawnData cfg, string label, float rateOverride,
+            IReadOnlyList<TerrainUtils.AreaCircle> coverCircles = null, float densityMultiplier = 1f)
         {
             // 与草一致的逐格概率算法：每个格子独立掷骰，命中且满足坡度/高度约束的格子才生成一处。
-            float rate = rateOverride >= 0f ? rateOverride : cfg.probability;
+            // 地图级倍率乘在最终密度上（覆盖值与预设值都乘），0 = 本图不生成
+            float rate = (rateOverride >= 0f ? rateOverride : cfg.probability) * Mathf.Max(0f, densityMultiplier);
             int prototypeCount = terrain.terrainData.treePrototypes.Length;
 
             if (prototypeCount == 0)
@@ -1207,6 +1454,9 @@ namespace FpsGame.MapUtils
                     // 先掷骰再查约束：99% 以上的格子在这一行就被跳过，比逐格算坡度省得多
                     if (Random.value >= rate) continue;
 
+                    // 被巨型地形覆盖石（悬崖）压住的位置不再生成，避免树/石从石头里长出来
+                    if (IsInsideRockCoverNormalized(coverCircles, tx / (float)width, tz / (float)height)) continue;
+
                     float h = heightMap[tx, tz];
                     // 高度约束
                     if (h < cfg.minHeight || h > cfg.maxHeight) continue;
@@ -1220,6 +1470,9 @@ namespace FpsGame.MapUtils
                     tree.widthScale = Random.Range(0.7f, 1.5f);
                     tree.heightScale = Random.Range(0.7f, 1.5f);
                     tree.prototypeIndex = Random.Range(protoMin, protoMax + 1);
+                    // TreeInstance.rotation 是 X-Z 平面弧度（0~2π），不设的话所有实例朝向完全一致，
+                    // 石块尤其明显（像复制粘贴）。rotation 是只读字段语义上要自己构造结构体时写入。
+                    tree.rotation = Random.value * Mathf.PI * 2f;
 
                     trees.Add(tree);
                 }
@@ -1244,7 +1497,7 @@ namespace FpsGame.MapUtils
         ///   草原型索引：0-2, 9-11
         ///   花原型索引：3-8
         /// </summary>
-        IEnumerator SpawnDetails(TerrainPresetData preset)
+        IEnumerator SpawnDetails(TerrainPresetData preset, IReadOnlyList<TerrainUtils.AreaCircle> coverCircles = null)
         {
             int detailRes = terrain.terrainData.detailResolution;
             int protoCount = terrain.terrainData.detailPrototypes.Length;
@@ -1278,6 +1531,9 @@ namespace FpsGame.MapUtils
                 {
                     int hx = Mathf.Clamp(Mathf.RoundToInt(dx * mapToDetail), 1, width - 2);
                     int hz = Mathf.Clamp(Mathf.RoundToInt(dy * mapToDetail), 1, height - 2);
+
+                    // 被巨型地形覆盖石压住的格子不生成草/花（原地形被挖走/覆盖后草会悬空）
+                    if (IsInsideRockCoverNormalized(coverCircles, dx / (float)detailRes, dy / (float)detailRes)) continue;
 
                     float h = heightMap[hx, hz];
                     float slope = GetSteepness(hx, hz);
@@ -1317,6 +1573,258 @@ namespace FpsGame.MapUtils
                 yield return null;
             }
         }
+        #endregion
+
+        #region 地形覆盖石（巨型悬崖）
+
+        /// <summary>
+        /// 按地形类型放置"地形覆盖物"（巨型悬崖 / 巨石）。
+        /// <para>与 <see cref="SpawnVegetation"/> 的逐格概率不同：这类物体体积巨大，逐格概率要么叠成一坨、
+        /// 要么抽不到，也没有互相排斥的概念，所以用"目标数量 + 占地圆互斥 + 坡度/高度约束"做拒绝采样。</para>
+        /// <para>实例化出来的物体<b>会被强制设成地形所在的层</b>（= 地面层），因为 NavMeshSurface 是按
+        /// 层的渲染网格烘焙的，只有和地形同层才能被算进寻路网格（AI 才走得上去）。</para>
+        /// <para>必须在 <c>SetTreeInstances</c> 之前调用：占地圆是树与草（细节）的排除区。</para>
+        /// </summary>
+        IEnumerator PlaceRockCovers(TerrainPresetData preset)
+        {
+            // 管理器负责：清空上一次的登记与纯数据（TerrainUtils.AreaCircles）+ 销毁上一次的实例。
+            // 列表为空也照样清空，避免上一局的残留。
+            RockCoverDestructor.Rebuild(terrain);
+            DestroyRockCovers();
+
+            if (terrain == null || _rockCovers == null || _rockCovers.Count == 0) yield break;
+
+            // 先过滤出可用条目（预制体非空、半径合法），并累计权重
+            List<RockCoverEntry> entries = new();
+            int totalWeight = 0;
+            foreach (RockCoverEntry entry in _rockCovers)
+            {
+                if (entry == null || entry.prefab == null) continue;
+                if (entry.footprintRadius <= 0f)
+                {
+                    Debug.LogWarning($"[地形覆盖] 条目 {entry.prefab.name} 的占地半径 <= 0，已跳过"
+                        + "（半径为 0 时无法计算互斥与树/草排除范围）");
+                    continue;
+                }
+                entries.Add(entry);
+                totalWeight += Mathf.Max(1, entry.weight);
+            }
+            if (entries.Count == 0)
+            {
+                Debug.LogWarning("[地形覆盖] 列表里没有可用条目（预制体为空或占地半径非法），跳过放置");
+                yield break;
+            }
+
+            RockCoverSpawnData cfg = preset.rockCover;
+            // 地图级倍率（MapData_SO.RockCoverMultiplier）乘在数量上：0 = 本图不放悬崖
+            int baseCount = _overridePreset && _rockCoverCount >= 0 ? _rockCoverCount : cfg.count;
+            int targetCount = Mathf.RoundToInt(baseCount * _rockCoverMultiplier);
+            float spacingScale = _overridePreset && _rockCoverMinSpacingScale >= 0f
+                ? _rockCoverMinSpacingScale : cfg.minSpacingScale;
+            spacingScale = Mathf.Max(0.01f, spacingScale);
+            if (targetCount <= 0)
+            {
+                Debug.Log("[地形覆盖] 数量为 0，跳过放置");
+                yield break;
+            }
+
+            TerrainData terrainData = terrain.terrainData;
+            Vector3 origin = terrain.transform.position;
+            Vector3 mapSize = terrainData.size;
+            // 可用落点范围：地图内缩 edgeMargin，避开地图边界与运行时创建空气墙的位置
+            float minX = origin.x + _rockCoverEdgeMargin;
+            float maxX = origin.x + mapSize.x - _rockCoverEdgeMargin;
+            float minZ = origin.z + _rockCoverEdgeMargin;
+            float maxZ = origin.z + mapSize.z - _rockCoverEdgeMargin;
+            if (maxX <= minX || maxZ <= minZ)
+            {
+                Debug.LogWarning($"[地形覆盖] 地图尺寸不足（边缘留白 {_rockCoverEdgeMargin}m 过大），跳过放置");
+                yield break;
+            }
+
+            // 与地形同层：NavMeshSurface 按"地面层"的渲染网格烘焙，不同层就白放了
+            int layer = terrain.gameObject.layer;
+
+            int placed = 0;
+            int maxAttempts = Mathf.Max(1, _rockCoverAttemptsPerCover) * targetCount;
+            float startTime = Time.realtimeSinceStartup;
+
+            for (int attempt = 0; attempt < maxAttempts && placed < targetCount; attempt++)
+            {
+                RockCoverEntry entry = PickRockCoverEntry(entries, totalWeight);
+                float radius = entry.footprintRadius;
+
+                // 落点要留出整块石头的半径，保证石头完整落在地图内
+                float posX = Random.Range(minX + radius, maxX - radius);
+                float posZ = Random.Range(minZ + radius, maxZ - radius);
+                Vector2 posXZ = new(posX, posZ);
+
+                // 高度 / 坡度约束（与植被同一套 heightMap 与坡度算法）
+                int tx = Mathf.Clamp(Mathf.RoundToInt((posX - origin.x) / mapSize.x * (width - 1)), 1, width - 2);
+                int tz = Mathf.Clamp(Mathf.RoundToInt((posZ - origin.z) / mapSize.z * (height - 1)), 1, height - 2);
+                float h = heightMap[tx, tz];
+                if (h < cfg.minHeight || h > cfg.maxHeight) continue;
+                float slope = GetSteepness(tx, tz);
+                if (slope < cfg.minSlope || slope > cfg.maxSlope) continue;
+
+                // 与其他覆盖石的占地圆互斥
+                if (IsOverlappedByRockCover(posXZ, radius, spacingScale)) continue;
+
+                // 落地：不同素材的 pivot 位置完全不一样（有的网格整体在 pivot 之上，直接按 pivot 摆到地表就会浮空），
+                // 所以按"网格最低点"对齐：网格最低点 = 地表高度 - sinkDepth
+                float surfaceY = SampleWorldHeight(posX, posZ);
+                GameObject go = Instantiate(entry.prefab, new Vector3(posX, surfaceY, posZ),
+                    Quaternion.Euler(0f, Random.value * 360f, 0f), _rockCoverRoot);
+                go.name = $"{entry.prefab.name}_{placed}";
+                // 先量出"相对 pivot 的最低点"（含随机 Y 旋转后的结果），再把 pivot 挪到目标高度
+                float bottomOffset = GetRendererMinY(go) - go.transform.position.y;
+                go.transform.position = new Vector3(posX, surfaceY - entry.sinkDepth - bottomOffset, posZ);
+                SetLayerRecursively(go, layer);
+
+                // 登记实例 + 注入纯数据占地圆（TerrainUtils.AreaCircles）：树/草的排除、任务点的避让、
+                // 以及后续被挖地形/附加地形时的按范围清除，都只依赖这份登记
+                RockCoverDestructor.Register(go, posXZ, radius);
+                placed++;
+
+                if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                {
+                    yield return null;
+                    startTime = Time.realtimeSinceStartup;
+                }
+            }
+
+            Debug.Log($"[地形覆盖] 放置 {placed}/{targetCount} 处（尝试上限 {maxAttempts}，互斥系数 {spacingScale:F2}，"
+                + $"层 {LayerMask.LayerToName(layer)}，坡度 {cfg.minSlope}~{cfg.maxSlope}°，"
+                + $"高度 {cfg.minHeight}~{cfg.maxHeight}，地图 {mapSize.x:F0}×{mapSize.z:F0}）");
+        }
+
+        /// <summary>清掉上一次生成的覆盖石，并保证容器存在（换局/重新生成地形时调用）</summary>
+        private void DestroyRockCovers()
+        {
+            if (_rockCoverRoot == null)
+            {
+                Transform existing = transform.Find(RockCoverRootName);
+                _rockCoverRoot = existing != null ? existing : new GameObject(RockCoverRootName).transform;
+                // SetParent(false)：容器只当个挂点，不继承 MapRoot 的缩放/位移
+                if (_rockCoverRoot.parent == null) _rockCoverRoot.SetParent(transform, false);
+            }
+
+            for (int i = _rockCoverRoot.childCount - 1; i >= 0; i--)
+            {
+                GameObject child = _rockCoverRoot.GetChild(i).gameObject;
+#if UNITY_EDITOR
+                // 编辑器里通过 [ContextMenu] 生成时 Destroy 不生效，必须用 DestroyImmediate
+                if (!Application.isPlaying)
+                {
+                    DestroyImmediate(child);
+                    continue;
+                }
+#endif
+                Destroy(child);
+            }
+        }
+
+        /// <summary>按权重随机取一个条目（weight &lt; 1 按 1 处理，保证每个条目都可能被选中）</summary>
+        private static RockCoverEntry PickRockCoverEntry(List<RockCoverEntry> entries, int totalWeight)
+        {
+            int roll = Random.Range(0, totalWeight);
+            for (int i = 0; i < entries.Count; i++)
+            {
+                roll -= Mathf.Max(1, entries[i].weight);
+                if (roll < 0) return entries[i];
+            }
+            return entries[entries.Count - 1];
+        }
+
+        /// <summary>新落点是否与已放置的覆盖石互相压住（最小距离 = 半径和 × spacingScale，1 = 相切）</summary>
+        private bool IsOverlappedByRockCover(Vector2 center, float radius, float spacingScale)
+        {
+            IReadOnlyList<TerrainUtils.AreaCircle> circles = TerrainUtils.AreaCircles;
+            for (int i = 0; i < circles.Count; i++)
+            {
+                TerrainUtils.AreaCircle other = circles[i];
+                float minDistance = (other.Radius + radius) * spacingScale;
+                if ((other.Center - center).sqrMagnitude < minDistance * minDistance) return true;
+            }
+            return false;
+        }
+
+        /// <summary>世界 XZ 是否落在某个地表占地圆内</summary>
+        private static bool IsInsideRockCoverWorld(IReadOnlyList<TerrainUtils.AreaCircle> circles, float worldX, float worldZ)
+        {
+            if (circles == null || circles.Count == 0) return false;
+            for (int i = 0; i < circles.Count; i++)
+            {
+                TerrainUtils.AreaCircle circle = circles[i];
+                float dx = circle.Center.x - worldX;
+                float dz = circle.Center.y - worldZ;
+                if (dx * dx + dz * dz < circle.Radius * circle.Radius) return true;
+            }
+            return false;
+        }
+
+        /// <summary>归一化地形坐标（0~1）是否落在某个地表占地圆内（树/草生成时用来排除）</summary>
+        private bool IsInsideRockCoverNormalized(IReadOnlyList<TerrainUtils.AreaCircle> circles, float nx, float nz)
+        {
+            if (circles == null || circles.Count == 0) return false;
+            Vector3 origin = terrain.transform.position;
+            Vector3 mapSize = terrain.terrainData.size;
+            return IsInsideRockCoverWorld(circles, origin.x + nx * mapSize.x, origin.z + nz * mapSize.z);
+        }
+
+        /// <summary>
+        /// 世界 XZ → 地形表面世界高度。
+        /// <para>刻意不用 <c>TerrainUtils.WSToHeight</c>：那个依赖 <c>TerrainUtils.Main</c> 已初始化，
+        /// 而本类可能通过 [ContextMenu] 在编辑器里直接跑（此时 Main 为空会空引用）。</para>
+        /// </summary>
+        private float SampleWorldHeight(float worldX, float worldZ)
+        {
+            TerrainData terrainData = terrain.terrainData;
+            Vector3 origin = terrain.transform.position;
+            Vector3 mapSize = terrainData.size;
+            float u = Mathf.Clamp01((worldX - origin.x) / mapSize.x);
+            float v = Mathf.Clamp01((worldZ - origin.z) / mapSize.z);
+            return origin.y + terrainData.GetInterpolatedHeight(u, v);
+        }
+
+        /// <summary>
+        /// 实例所有渲染器在世界 Y 上的最低点（没有渲染器时返回 pivot 的高度 = 不做修正）。
+        /// <para>用于"把网格底面对齐地表"：素材的 pivot 常常不在网格底面（实测 CliffA/C/E 的网格
+        /// 整体在 pivot 之上 8~25m，按 pivot 摆就浮空）。</para>
+        /// </summary>
+        private static float GetRendererMinY(GameObject go)
+        {
+            Renderer[] renderers = go.GetComponentsInChildren<Renderer>(true);
+            float minY = go.transform.position.y;
+            bool hasRenderer = false;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                if (!hasRenderer)
+                {
+                    minY = renderers[i].bounds.min.y;
+                    hasRenderer = true;
+                }
+                else
+                {
+                    minY = Mathf.Min(minY, renderers[i].bounds.min.y);
+                }
+            }
+            return minY;
+        }
+
+        /// <summary>递归设置层（子物体一起改，LOD/网格子节点才会同层）</summary>
+        private static void SetLayerRecursively(GameObject go, int layer)
+        {
+            if (go == null) return;
+            go.layer = layer;
+            Transform t = go.transform;
+            for (int i = 0; i < t.childCount; i++)
+            {
+                SetLayerRecursively(t.GetChild(i).gameObject, layer);
+            }
+        }
+
         #endregion
         #region API
 

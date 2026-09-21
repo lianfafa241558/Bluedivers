@@ -18,6 +18,10 @@ public class ModifyTerrain : MonoBehaviour
     Vector2Int clearVegetationRange = new Vector2Int(7, 10);
 
     [SerializeField]
+    [InspectorName("清除石块的原型范围（含头含尾，0-6=石块；-1=不限）")]
+    Vector2Int clearRockRange = new Vector2Int(0, 6);
+
+    [SerializeField]
     [InspectorName("测试时使用，在start修改地形")]
     bool StartModify;
     private void Awake()
@@ -48,10 +52,10 @@ public class ModifyTerrain : MonoBehaviour
                 Vector3 pos = transform.TransformPoint(data.localPos);
                 //Debug.LogError("修改高度"+ pos+"  "+ data.outerRadius,gameObject);
                 yield return TerrainUtils.ModifyHeightMap(pos, data.innerRadius, data.outerRadius, data.depth, ShapeType.Circle, true, false);
-                //弹坑范围内的树整片清除（"清除"不走爆炸白名单；只清 clearVegetationRange，默认 7-10 的树，石块 0-6 保留）
-                TreeDestructor.ClearInRadius(pos, data.outerRadius, clearVegetationRange.x, clearVegetationRange.y);
-                //弹坑范围内的细节（草/花）一并擦除
-                TerrainDetailEraser.ClearInRadius(pos, data.outerRadius);
+                //弹坑范围内的地表物统一清除：树 + 石块（走"清除"语义，忽略可被摧毁白名单）+ 草花 + 悬崖覆盖物。
+                //石块必须一起清：地面被挖低之后，留在原地的石块会整块悬空（实测 167 处悬空就是这么来的）
+                TerrainClearer.ClearInRadius(pos, data.outerRadius, TerrainClearTarget.All,
+                    clearVegetationRange, clearRockRange);
                 //Debug.LogError("修改了地形" + gameObject);
             }
             if (additionTerrain)
@@ -60,14 +64,21 @@ public class ModifyTerrain : MonoBehaviour
                 //按矩形而非外接圆清除，避免多清掉区域外的树（附加地形未被旋转，轴对齐矩形判定是精确的）
                 var addSize = additionTerrain.terrainData.size;
                 Vector3 addCenter = additionTerrain.transform.position + new Vector3(addSize.x * 0.5f, 0f, addSize.z * 0.5f);
-                TreeDestructor.ClearInRectXZ(addCenter, new Vector2(addSize.x * 0.5f, addSize.z * 0.5f),
-                    clearVegetationRange.x, clearVegetationRange.y);
-                //附加地形覆盖区域的细节（草/花）同样擦除
-                TerrainDetailEraser.ClearInRectXZ(addCenter, new Vector2(addSize.x * 0.5f, addSize.z * 0.5f));
+                // 附加地形改的是"矩形 + transitionDistance 过渡带"，清除范围要把过渡带一起算进去，
+                // 否则过渡带里的树/石块会被抬/挖了一半，表现为半悬空
+                Vector2 halfSize = new Vector2(addSize.x * 0.5f + transitionDistance, addSize.z * 0.5f + transitionDistance);
+                //矩形范围内的地表物统一清除（树 + 石块 + 草花 + 悬崖覆盖物）
+                TerrainClearer.ClearInRectXZ(addCenter, halfSize, TerrainClearTarget.All,
+                    clearVegetationRange, clearRockRange);
                 yield return TerrainUtils.AdditionTerrain(additionTerrain, transitionDistance, 360 - transform.eulerAngles.y, y, false);
                 Destroy(additionTerrain.gameObject);
                 //Debug.LogError("附加了地形" + gameObject);
             }
+
+            // 地形刚被改过：标脏 + 立刻兑现一次（跳过 4/s、8/s 限流与 RefreshInterval），
+            // 一次性完成"树/草提交 + 树碰撞体重建 + NavMesh 重烘"，避免"地面已经变了、树和石块还悬在半空"
+            TerrainClearer.MarkTerrainChanged();
+            TerrainClearer.Flush();
         }
 
         Destroy(this);

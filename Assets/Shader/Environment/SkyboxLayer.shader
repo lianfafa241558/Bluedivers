@@ -14,6 +14,8 @@ Shader "Environment/SkyboxLayer"
 
     SubShader
     {
+        // 天空层（星星/月亮/云）队列必须留在透明段：RenderQueueRange.transparent 才能筛到它们，
+        // 且材质自定义队列（星星/月亮 3000、云 3500）继续决定它们之间的先后
         Tags 
         {
             "RenderType" = "Background"
@@ -29,8 +31,15 @@ Shader "Environment/SkyboxLayer"
         ZClip Off          // 关键：禁止视锥体自动裁剪远处物体
         //ZTest Always
         //ZTest Greater
+        // 该 Pass 不再由 URP 默认的透明 Pass 绘制（LightMode 是自定义标签），
+        // 而是在"天空盒之后、全屏雾之前"的 445 由
+        // Assets/Scripts/Rendering/SkyboxLayerBeforeFogRendererFeature.cs 单独画一遍：
+        // 早于 450 才能吃到全屏雾，晚于天空盒(400) 才不会被天空盒以相同深度整片擦掉。
+        // 注意：把该 Renderer Feature 去掉后天空层将完全不显示（没有默认 Pass 兜底）。
         Pass
         {
+            Tags { "LightMode" = "SkyboxLayerBeforeFog" }
+
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag

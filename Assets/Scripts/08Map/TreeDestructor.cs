@@ -37,6 +37,10 @@ namespace FpsGame.MapUtils
         [InspectorName("每秒最多提交次数（0=每帧提交）")]
         [SerializeField] private float _maxCommitPerSecond = 4f;
 
+        [InspectorName("提交后重建树碰撞体（防隐形墙，代价较高）")]
+        [Tooltip("树碰撞体不会随 SetTreeInstances 更新：不重建的话，被摧毁的树会留下看不见的碰撞体。重建整个地形碰撞体较贵，测得卡顿时可关掉")]
+        [SerializeField] private bool _rebuildColliders = true;
+
         [InspectorName("打印销毁日志")]
         [SerializeField] private bool _log = false;
 
@@ -542,6 +546,10 @@ namespace FpsGame.MapUtils
             _data.SetTreeInstances(_instances, false);
             _terrain.Flush();
 
+            // ⚠ 树碰撞体不会随 SetTreeInstances 更新：被摧毁的树会留下"隐形墙"，需要强制重建一次。
+            // 提交本身已被 _maxCommitPerSecond 限流，所以这里直接同步做
+            if (_rebuildColliders) TerrainUtils.RebuildTreeColliders(_terrain);
+
             if (_log) Debug.Log($"[树木] 已摧毁 {_destroyedCount}/{_treeCount}");
         }
 
@@ -591,6 +599,7 @@ namespace FpsGame.MapUtils
 
             _data.SetTreeInstances(_instances, false);
             _terrain.Flush();
+            if (_rebuildColliders) TerrainUtils.RebuildTreeColliders(_terrain);
         }
 
         /// <summary>设置白名单（null/空 = 全部可摧毁），并即时重算</summary>

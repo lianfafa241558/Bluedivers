@@ -35,6 +35,12 @@ public class MissionController : MonoBehaviour
     private bool isInitialized;
     private Transform EntityRoot;
 
+    /// <summary>
+    /// 地表占地圆缓存（巨型悬崖等）：每次生成任务点前从 <see cref="TerrainUtils.AreaCircles"/> 现读一次。
+    /// <para>不能只读一次就长期用——石头可能被 ModifyTerrain 清除，缓存到底会一直躲着已经不存在的石头。</para>
+    /// </summary>
+    readonly List<TerrainUtils.AreaCircle> _areaCircles = new();
+
     public void Init(MissionInitMode mode)
     {
         _initMode = mode;
@@ -264,10 +270,23 @@ public class MissionController : MonoBehaviour
     /// </summary>
     Vector3 GenerateNewMissionPoint(int newRange)
     {
+        // 地表占地圆（巨型悬崖等）每次现读一遍：它们可能已被 ModifyTerrain 清除，
+        // 只读一次就长期用的话会一直躲着已经不存在的石头
+        RefreshAreaCircles();
+
         int mapRadius = (root.CameraSize) / 2;
         Vector2 center = root.MapSize / 2 * Vector2.one;
         Vector2 statrPoint = root.MapBorder * Vector2.one;
-        if (newRange == 0) return center.ToVector3();
+        if (newRange == 0)
+        {
+            // 半径 0 的任务（如主任务）固定刷在地图中心，这里不做挪位，只警告：
+            // 中心若已被占（任务点/地表占地圆如巨型悬崖），应该在地形或布局侧解决
+            if (IsOverlapWithExistingPoints(center, 0))
+            {
+                Debug.LogWarning($"地图中心 {center} 落在已占用范围内，该任务点可能与已有物体重叠");
+            }
+            return center.ToVector3();
+        }
 
         // 步骤1：将地图划分为网格，保证均匀分布（网格大小为"最小安全间距"）
         float gridSize = newRange * 2; // 新点与其他点的最小安全间距（避免相切）
@@ -284,7 +303,7 @@ public class MissionController : MonoBehaviour
             var candidatePos = statrPoint+ new Vector2(gridX, gridY);
 
             if (Vector2.Distance(candidatePos, center)+ newRange <= Mathf.Max( mapRadius - 5, newRange) //没超出地图范围
-                && !IsOverlapWithExistingPoints(candidatePos, (int)(newRange*(100- attemptCount) /100f)))//没和其他任务实体相交
+                && !IsOverlapWithExistingPoints(candidatePos, (int)(newRange*(100- attemptCount) /100f)))//没和其他占地点（任务/兴趣点/地表占地圆）相交
             {
                 candidates.Add(candidatePos);
             }
@@ -292,7 +311,8 @@ public class MissionController : MonoBehaviour
 
         if (candidates.Count == 0)
         {
-            Debug.LogWarning("没有找到可用的点");
+            Debug.LogWarning($"没有找到可用的点（半径 {newRange}，已有任务点 {missionCreatPoints.Count} 个，"
+                + $"需避让的地表占地圆 {_areaCircles.Count} 个）");
             return Vector3.zero;
         }
 
@@ -338,6 +358,11 @@ public class MissionController : MonoBehaviour
         return new Vector3(bestPoint.x, TerrainUtils.WSToHeight(bestPoint), bestPoint.y);
     }
 
+    /// <summary>
+    /// 候选点是否与"已占用的地方"相交。两张表都查：
+    /// <para>① <see cref="missionCreatPoints"/>（已生成的任务点 / 兴趣点）</para>
+    /// <para>② <see cref="_areaCircles"/>（地表占地圆：巨型悬崖等，由 <see cref="RefreshAreaCircles"/> 现读缓存）</para>
+    /// </summary>
     bool IsOverlapWithExistingPoints(Vector2 candidatePos, int newRange)
     {
         foreach (var existing in missionCreatPoints)
@@ -357,7 +382,46 @@ public class MissionController : MonoBehaviour
                 return true;
             }
         }
+
+        // 地表占地圆（巨型悬崖等）：同一套"圆心距 < 半径和 + 5"
+        for (int i = 0; i < _areaCircles.Count; i++)
+        {
+            TerrainUtils.AreaCircle circle = _areaCircles[i];
+            float circleSumRadius = newRange + circle.Radius + 5f;
+            float dx = Mathf.Abs(candidatePos.x - circle.Center.x);
+            float dy = Mathf.Abs(candidatePos.y - circle.Center.y);
+            if (dx > circleSumRadius || dy > circleSumRadius)
+            {
+                continue;
+            }
+
+            if (Vector2.Distance(candidatePos, circle.Center) < circleSumRadius)
+            {
+                return true;
+            }
+        }
         return false;
+    }
+
+    /// <summary>
+    /// 现读 <see cref="TerrainUtils.AreaCircles"/>（地表占地圆：巨型悬崖等）到本地缓存。
+    /// <para>纯数据列表就是"当前还活着的占地集合"：石头被 <c>RockCoverDestructor</c> 清除后会自动从里面消失，
+    /// 所以这里每次都重读，不需要事件、也不需要在别处维护副本。</para>
+    /// <para>本类只认"圆"，不认识是谁放的、也不需要引用地形生成器所在程序集。</para>
+    /// </summary>
+    void RefreshAreaCircles()
+    {
+        int before = _areaCircles.Count;
+        _areaCircles.Clear();
+        IReadOnlyList<TerrainUtils.AreaCircle> circles = TerrainUtils.AreaCircles;
+        for (int i = 0; i < circles.Count; i++)
+        {
+            _areaCircles.Add(circles[i]);
+        }
+        if (_areaCircles.Count != before)
+        {
+            Debug.Log($"[任务点] 地表占地圆：{before} → {_areaCircles.Count}（石头被清除的话这里会减少）");
+        }
     }
 
 
@@ -373,6 +437,9 @@ public class MissionController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
+        // 非运行期 root 未初始化，下面要用 MapSize/CameraSize，直接返回避免空引用
+        if (root == null) return;
+
         if (missionCreatPoints!=null)
         {
             for (int i = 0; i < missionCreatPoints.Count; ++i)
