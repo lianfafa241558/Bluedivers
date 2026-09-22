@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3527790139564852725}
   - component: {fileID: 1800348065642468551}
   - component: {fileID: 3317159022896950181}
+  - component: {fileID: -3338659233404778649}
   m_Layer: 14
   m_Name: Vfx_SmokeIce
   m_TagString: Untagged
@@ -187,8 +188,8 @@ ParticleSystem:
     startColor:
       serializedVersion: 2
       minMaxState: 2
-      minColor: {r: 0.4470588, g: 0.5622023, b: 0.9254902, a: 0.101960786}
-      maxColor: {r: 0.4470588, g: 0.8059667, b: 0.9254902, a: 0.101960786}
+      minColor: {r: 0.4470588, g: 0.5622023, b: 0.9254902, a: 0.2}
+      maxColor: {r: 0.4470588, g: 0.8059667, b: 0.9254902, a: 0.29803923}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -4841,3 +4842,38 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 4
   m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &-3338659233404778649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2115654139197423946}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b72e5c4e2526a5e4cb512fc1d8fc9397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 1286587446612946480}
+  TickInterval: 0.5
+  UseDiffScale: 0
+  DamageData:
+    DamageExplosion: 13
+    ExplosionInnerRange: 3
+    ExplosionRange: 4
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    DamageGroupExplosion:
+    - Key: 6
+      Value: 1
+    SoundRadius: 10
+    NoSource: 1
+    ExplosionAP: 0
+    demolishValue: 0
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0

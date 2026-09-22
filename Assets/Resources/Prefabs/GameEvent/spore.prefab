@@ -118,7 +118,7 @@ MonoBehaviour:
     Value: 10
   - Key: 11
     Value: 100
-  AutoDestroy: 1
+  AutoDestroy: 0
 --- !u!114 &829255509231655953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -131,9 +131,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u53CD\u6B65\u5175\u5730\u96F7"
-  Id: Mine
-  Portrait: {fileID: 21300000, guid: 89b8063e5f1640f4fa2d4632dc5a42d1, type: 3}
+  ShowName: "\u5B62\u5B50"
+  Id: Spore
+  Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 21300000, guid: 89b8063e5f1640f4fa2d4632dc5a42d1, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
@@ -238,6 +238,21 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
+  OnExploded:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2913313072082356221}
+        m_TargetAssemblyTypeName: Unity.FPS.Game.HealthOther, Assembly-CSharp
+        m_MethodName: Destroy
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &8887458782666322203
 GameObject:
   m_ObjectHideFlags: 0

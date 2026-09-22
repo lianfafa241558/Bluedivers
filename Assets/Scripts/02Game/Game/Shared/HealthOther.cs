@@ -16,7 +16,12 @@ namespace Unity.FPS.Game
         {
             bool wasDead = m_IsDead;
             base.HandleDeath(source);
-            if (!wasDead&&m_IsDead && AutoDestroy) Tool.Destroy(gameObject);
+            if (!wasDead&&m_IsDead && AutoDestroy) Destroy();
+        }
+        //检视器用
+        public void Destroy()
+        {
+            Tool.Destroy(gameObject);
         }
     }
 }

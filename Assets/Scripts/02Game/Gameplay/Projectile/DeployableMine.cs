@@ -49,11 +49,15 @@ namespace Unity.FPS.Gameplay
         [Tooltip("进入爆炸延迟那一刻派发(预警音效/闪烁等)；延迟为 0 时与\"爆炸时\"同帧")]
         [SerializeField]
         private UnityEvent OnTriggered;
+        [InspectorName("爆炸时")]
+        [SerializeField]
+        private UnityEvent OnExploded;
 
         [Header("伤害数据")]
         [InspectorName("地雷自带伤害")]
         [SerializeField]
         private SustainedDamageData DamageData;
+
 
 
 
@@ -235,7 +239,7 @@ namespace Unity.FPS.Gameplay
                 IgnoreSelf = false,
             });
             // 先派发再回池：监听者还能拿到仍然存活的物体
-            //OnExploded?.Invoke();
+            OnExploded?.Invoke();
             //Debug.LogWarning("回收"+gameObject,gameObject);
             // 地雷爆炸后自毁
             VFXManager.Release(gameObject);
