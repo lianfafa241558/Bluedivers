@@ -37,14 +37,15 @@ namespace FpsGame.MapUtils
     /// 一类地形植被（石块 / 树）的生成参数。
     /// <para>两者都是地形树实例（TerrainData.treeInstances），只是原型索引区间不同，</para>
     /// <para>所以各配一份概率与约束，分别逐格概率生成。</para>
+    /// <para>⚠ 这里<b>不再配原型索引区间</b>：区间由 <c>MapData_SO</c> 的
+    /// <c>stonePrototypes</c>/<c>treePrototypes</c> 数组长度推导（石块在前、树紧随其后），
+    /// 见 <see cref="GenerateNoiseTerrain.ApplyMapPrototypes"/>。</para>
     /// </summary>
     [Serializable]
     public struct VegetationSpawnData
     {
         [InspectorName("生成概率（每格概率，0.001≈每1000㎡一处）")]
         public float probability;
-        [InspectorName("原型索引范围（含头含尾）")]
-        public Vector2Int prototypeRange;
         [InspectorName("最小坡度")]
         public float minSlope;
         [InspectorName("最大坡度")]
@@ -205,32 +206,6 @@ namespace FpsGame.MapUtils
         [InspectorName("侵蚀迭代次数")]
         public int erosionIterations;
 
-        // ---- 纹理映射（索引对应 TerrainLayer） ----
-
-        /// <summary>
-        /// 沙地层索引。对应 TerrainLayer 中沙地纹理的索引。
-        /// </summary>
-        [InspectorName("沙地层索引")]
-        public int sandLayerIndex;
-
-        /// <summary>
-        /// 草地层索引。对应 TerrainLayer 中草地纹理的索引。
-        /// </summary>
-        [InspectorName("草地层索引")]
-        public int grassLayerIndex;
-
-        /// <summary>
-        /// 岩石层索引。对应 TerrainLayer 中岩石纹理的索引。
-        /// </summary>
-        [InspectorName("岩石层索引")]
-        public int rockLayerIndex;
-
-        /// <summary>
-        /// 雪地层索引。对应 TerrainLayer 中雪地纹理的索引。
-        /// </summary>
-        [InspectorName("雪地层索引")]
-        public int snowLayerIndex;
-
         // ---- 植被（石块与树分开配：两者都是地形树实例，靠原型索引区间区分） ----
 
         /// <summary>
@@ -256,18 +231,11 @@ namespace FpsGame.MapUtils
 
         // ---- 细节植被 ----
 
-
         /// <summary>
         /// 草密度。控制单位面积内草细节植被的生成数量。
         /// </summary>
         [InspectorName("草密度")]
         public float detailDensity;
-
-        /// <summary>
-        /// 花密度。控制单位面积内花细节植被的生成数量。
-        /// </summary>
-        [InspectorName("花密度")]
-        public float detailFlowerDensity;
 
         /// <summary>
         /// 草最小坡度。允许生成草细节植被的最小地形坡度。
@@ -296,7 +264,8 @@ namespace FpsGame.MapUtils
 
 
     /// <summary>
-    /// 生成地形，只从terraindata拿数据，和其他组件不挂钩
+    /// 生成地形。地形高度/材质等来自 TerrainData 与内置预设；树/石/草的原型由调用方（BattleManager）
+    /// 从 <c>MapData_SO</c> 传入，本类不直接依赖 SO 类型（跨 asmdef 引用不到）。
     /// </summary>
 
     public class GenerateNoiseTerrain : MonoBehaviour
@@ -350,7 +319,7 @@ namespace FpsGame.MapUtils
         [SerializeField] private float _rockProbability = -1f;
         [InspectorName("覆盖用树概率（每格概率，<0=用预设值）")]
         [SerializeField] private float treeProbability = -1f;
-        [InspectorName("可被摧毁的索引（0基，0-6石块/7-10树，留空=全部可摧毁）")]
+        [InspectorName("可被摧毁的索引（0基，石块在前；留空=全部可摧毁）")]
         [SerializeField] private List<int> _destructibleTreePrototypes = new();
 
         [Foldout("地形覆盖石（巨型悬崖，预制体不是地形树）", true)]
@@ -421,18 +390,15 @@ namespace FpsGame.MapUtils
                         plateauMaskScale = 10f,
                         edgeDropoff = 0.05f,
                         erosionIterations = 2,
-                        sandLayerIndex = 1,
-                        grassLayerIndex = -1,
-                        rockLayerIndex = 4,
-                        snowLayerIndex = -1,
+
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0012f, prototypeRange = new Vector2Int(0, 6),
+                            probability = 0.0012f,
                             minSlope = 0f, maxSlope = 45f, minHeight = 0.05f, maxHeight = 0.95f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0, prototypeRange = new Vector2Int(7, 10),
+                            probability = 0,
                             minSlope = 0f, maxSlope = 30f, minHeight = 0.1f, maxHeight = 0.7f
                         },
                         rockCover = new RockCoverSpawnData
@@ -441,7 +407,6 @@ namespace FpsGame.MapUtils
                             minSlope = 0f, maxSlope = 60f, minHeight = 0.05f, maxHeight = 0.95f
                         },
                         detailDensity = 0.02f,
-                        detailFlowerDensity = 0f,
                         detailMinSlope = 0f,
                         detailMaxSlope = 15f,
                         detailMinHeight = 0f,
@@ -464,18 +429,15 @@ namespace FpsGame.MapUtils
                         plateauMaskScale = 12f,
                         edgeDropoff = 0.06f,
                         erosionIterations = 1,
-                        sandLayerIndex = -1,
-                        grassLayerIndex = 0,
-                        rockLayerIndex = 4,
-                        snowLayerIndex = -1,
+
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0015f, prototypeRange = new Vector2Int(0, 6),
+                            probability = 0.0015f,
                             minSlope = 0f, maxSlope = 50f, minHeight = 0.05f, maxHeight = 0.95f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0008f, prototypeRange = new Vector2Int(7, 10),
+                            probability = 0.0008f,
                             minSlope = 0f, maxSlope = 40f, minHeight = 0.3f, maxHeight = 0.9f
                         },
                         rockCover = new RockCoverSpawnData
@@ -484,7 +446,6 @@ namespace FpsGame.MapUtils
                             minSlope = 5f, maxSlope = 60f, minHeight = 0.25f, maxHeight = 0.95f
                         },
                         detailDensity = 0.08f,
-                        detailFlowerDensity = 0.02f,
                         detailMinSlope = 0f,
                         detailMaxSlope = 30f,
                         detailMinHeight = 0.25f,
@@ -507,18 +468,15 @@ namespace FpsGame.MapUtils
                         plateauMaskScale = 8f,
                         edgeDropoff = 0.03f,
                         erosionIterations = 3,
-                        sandLayerIndex = -1,
-                        grassLayerIndex = 0,
-                        rockLayerIndex = 4,
-                        snowLayerIndex = -1,
+
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0008f, prototypeRange = new Vector2Int(0, 6),
+                            probability = 0.0008f,
                             minSlope = 0f, maxSlope = 55f, minHeight = 0.05f, maxHeight = 0.95f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0.003f, prototypeRange = new Vector2Int(7, 10),
+                            probability = 0.003f,
                             minSlope = 0f, maxSlope = 50f, minHeight = 0.1f, maxHeight = 0.95f
                         },
                         rockCover = new RockCoverSpawnData
@@ -527,7 +485,6 @@ namespace FpsGame.MapUtils
                             minSlope = 0f, maxSlope = 55f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         detailDensity = 0.2f,
-                        detailFlowerDensity = 0.06f,
                         detailMinSlope = 0f,
                         detailMaxSlope = 50f,
                         detailMinHeight = 0f,
@@ -550,18 +507,15 @@ namespace FpsGame.MapUtils
                         plateauMaskScale = 8f,
                         edgeDropoff = 0.06f,
                         erosionIterations = 2,
-                        sandLayerIndex = 1,
-                        grassLayerIndex = 0,
-                        rockLayerIndex = 4,
-                        snowLayerIndex = -1,
+
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0025f, prototypeRange = new Vector2Int(0, 6),
+                            probability = 0.0025f,
                             minSlope = 0f, maxSlope = 55f, minHeight = 0.05f, maxHeight = 0.95f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0015f, prototypeRange = new Vector2Int(7, 10),
+                            probability = 0.0015f,
                             minSlope = 0f, maxSlope = 35f, minHeight = 0.1f, maxHeight = 0.85f
                         },
                         rockCover = new RockCoverSpawnData
@@ -570,7 +524,6 @@ namespace FpsGame.MapUtils
                             minSlope = 0f, maxSlope = 60f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         detailDensity = 0.1f,
-                        detailFlowerDensity = 0.04f,
                         detailMinSlope = 0f,
                         detailMaxSlope = 40f,
                         detailMinHeight = 0f,
@@ -593,18 +546,15 @@ namespace FpsGame.MapUtils
                         plateauMaskScale = 6f,
                         edgeDropoff = 0.08f,
                         erosionIterations = 1,
-                        sandLayerIndex = 1,
-                        grassLayerIndex = 0,
-                        rockLayerIndex = 4,
-                        snowLayerIndex = -1,
+
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.002f, prototypeRange = new Vector2Int(0, 6),
+                            probability = 0.002f,
                             minSlope = 0f, maxSlope = 50f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0.001f, prototypeRange = new Vector2Int(7, 10),
+                            probability = 0.0005f,
                             minSlope = 0f, maxSlope = 40f, minHeight = 0.05f, maxHeight = 0.8f
                         },
                         rockCover = new RockCoverSpawnData
@@ -613,7 +563,6 @@ namespace FpsGame.MapUtils
                             minSlope = 0f, maxSlope = 55f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         detailDensity = 0.1f,
-                        detailFlowerDensity = 0.03f,
                         detailMinSlope = 0f,
                         detailMaxSlope = 40f,
                         detailMinHeight = 0f,
@@ -636,18 +585,15 @@ namespace FpsGame.MapUtils
                         plateauMaskScale = 8f,
                         edgeDropoff = 0.05f,
                         erosionIterations = 2,
-                        sandLayerIndex = 1,
-                        grassLayerIndex = 0,
-                        rockLayerIndex = 4,
-                        snowLayerIndex = -1,
+
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0012f, prototypeRange = new Vector2Int(0, 6),
+                            probability = 0.0012f,
                             minSlope = 0f, maxSlope = 35f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0006f, prototypeRange = new Vector2Int(7, 10),
+                            probability = 0.0006f,
                             minSlope = 0f, maxSlope = 10f, minHeight = 0.1f, maxHeight = 0.6f
                         },
                         rockCover = new RockCoverSpawnData
@@ -656,7 +602,6 @@ namespace FpsGame.MapUtils
                             minSlope = 0f, maxSlope = 35f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         detailDensity = 0.15f,
-                        detailFlowerDensity = 0.1f,
                         detailMinSlope = 0f,
                         detailMaxSlope = 15f,
                         detailMinHeight = 0f,
@@ -679,18 +624,15 @@ namespace FpsGame.MapUtils
                         plateauMaskScale = 6f,
                         edgeDropoff = 0.08f,
                         erosionIterations = 2,
-                        sandLayerIndex = -1,
-                        grassLayerIndex = 0,
-                        rockLayerIndex = 4,
-                        snowLayerIndex = -1,
+
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0005f, prototypeRange = new Vector2Int(0, 6),
+                            probability = 0.0005f,
                             minSlope = 0f, maxSlope = 60f, minHeight = 0f, maxHeight = 0.95f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0003f, prototypeRange = new Vector2Int(7, 10),
+                            probability = 0.0003f,
                             minSlope = 0f, maxSlope = 25f, minHeight = 0f, maxHeight = 0.4f
                         },
                         rockCover = new RockCoverSpawnData
@@ -699,7 +641,6 @@ namespace FpsGame.MapUtils
                             minSlope = 0f, maxSlope = 60f, minHeight = 0f, maxHeight = 0.95f
                         },
                         detailDensity = 0.03f,
-                        detailFlowerDensity = 0f,
                         detailMinSlope = 0f,
                         detailMaxSlope = 20f,
                         detailMinHeight = 0f,
@@ -708,6 +649,106 @@ namespace FpsGame.MapUtils
 
                 default:
                     return GetTerrainPreset(TerrainType.Desert);
+            }
+        }
+
+        /// <summary>
+        /// 用地图数据（<c>MapData_SO</c>）提供的原型数组重建地形原型，并推导出石块/树的生成区间。
+        /// <para>地形树原型 = 石块原型 + 树原型（石块在前，所以石块索引恒为 0 起的连续段）；</para>
+        /// <para>细节原型 = 草原型（不再区分花）。</para>
+        /// <para><b>区间不再由预设写死</b>：石块 = <c>[0, stoneCount-1]</c>，树 = <c>[stoneCount, stoneCount+treeCount-1]</c>；
+        /// 某一类数量为 0 时区间为空（<c>y &lt; x</c>，SpawnVegetation 直接跳过）。</para>
+        /// <para>推导结果同时写入 <see cref="TerrainClearer.TreePrototypeRange"/>/<see cref="TerrainClearer.RockPrototypeRange"/>，
+        /// 保证"清理地表物"用的区间与生成时一致（否则会清错原型）。</para>
+        /// <para>数组为空 = 不改动地形资产里已有的原型，同时该区间为空 = 本图不生成该类植被。</para>
+        /// <para>⚠ 本类在 <c>08_Map</c> asmdef 内，引用不到 <c>MapData_SO</c>（Assembly-CSharp），</para>
+        /// <para>所以这里只接 <see cref="GameObject"/> 数组，由调用方（BattleManager）从 SO 上取。</para>
+        /// </summary>
+        /// <param name="stonePrototypes">石块原型（<c>MapData_SO.stonePrototypes</c>）</param>
+        /// <param name="treePrototypes">树原型（<c>MapData_SO.treePrototypes</c>），紧随石块之后</param>
+        /// <param name="detailPrototypes">细节（草）原型（<c>MapData_SO.detailPrototypes</c>）</param>
+        /// <param name="stoneRange">输出：石块原型索引区间（含头含尾），空为 (0,-1)</param>
+        /// <param name="treeRange">输出：树原型索引区间（含头含尾），空为 (n,n-1)</param>
+        private void ApplyMapPrototypes(GameObject[] stonePrototypes, GameObject[] treePrototypes,
+            GameObject[] detailPrototypes, out Vector2Int stoneRange, out Vector2Int treeRange)
+        {
+            TerrainData terrainData = terrain.terrainData;
+            int stoneCount = stonePrototypes?.Length ?? 0;
+            int treeCount = treePrototypes?.Length ?? 0;
+
+            // 区间由数组长度推导（石块在前、树紧随其后）；数量为 0 时 y < x = 空区间
+            stoneRange = new Vector2Int(0, stoneCount - 1);
+            treeRange = new Vector2Int(stoneCount, stoneCount + treeCount - 1);
+
+            if (stoneCount + treeCount > 0)
+            {
+                // 沿用地形资产同索引原型的其余配置（bendFactor 等），只替换 prefab；
+                // 数量超出的部分用结构体默认值。
+                TreePrototype[] existing = terrainData.treePrototypes;
+                TreePrototype[] protos = new TreePrototype[stoneCount + treeCount];
+                for (int i = 0; i < protos.Length; i++)
+                {
+                    GameObject prefab = i < stoneCount ? stonePrototypes[i] : treePrototypes[i - stoneCount];
+                    if (prefab == null)
+                    {
+                        Debug.LogWarning($"[原型] 第 {i} 个地形树原型为空，已跳过（该索引不会生成植被）");
+                        continue;
+                    }
+                    protos[i] = i < existing.Length ? existing[i] : new TreePrototype();
+                    protos[i].prefab = prefab;
+                }
+
+                // ⚠ 换原型数组之前必须先清掉已烘焙的树实例：地形资产里可能已有一批引用旧原型索引的实例，
+                // 原型数组一变短，Unity 就会把越界的实例逐条剔除并在控制台刷一堆
+                // "Tree removed: invalid prototype N"（编辑器下还会弄脏地形资产）。
+                // 本方法之后马上会用 SetTreeInstances 重写整表，所以这里清空不会丢东西。
+                if (terrainData.treeInstances.Length > 0)
+                    terrainData.SetTreeInstances(Array.Empty<TreeInstance>(), false);
+
+                terrainData.treePrototypes = protos;
+
+                // 清理侧（TerrainClearer）用的是同一套区间，必须同步，否则"清石块"会清到树上
+                TerrainClearer.RockPrototypeRange = stoneRange;
+                TerrainClearer.TreePrototypeRange = treeRange;
+                Debug.Log($"[原型] 地形树原型已按地图数据重建：石块 {stoneCount} 个（区间 {stoneRange}），"
+                    + $"树 {treeCount} 个（区间 {treeRange}）");
+            }
+            else
+            {
+                Debug.LogWarning("[原型] 地图数据未配置 stonePrototypes/treePrototypes，本图不会生成石块与树");
+            }
+
+            int detailCount = detailPrototypes?.Length ?? 0;
+            if (detailCount > 0)
+            {
+                DetailPrototype[] existing = terrainData.detailPrototypes;
+                DetailPrototype[] protos = new DetailPrototype[detailCount];
+                for (int i = 0; i < detailCount; i++)
+                {
+                    if (detailPrototypes[i] == null)
+                    {
+                        Debug.LogWarning($"[原型] 第 {i} 个细节原型为空，已跳过（该索引不会生成草）");
+                        continue;
+                    }
+                    protos[i] = i < existing.Length ? existing[i] : new DetailPrototype();
+                    // 用网格原型：接管贴图模式下的 prototype，并清掉万一残留的 billboard 贴图
+                    protos[i].prototype = detailPrototypes[i];
+                    protos[i].usePrototypeMesh = true;
+                    protos[i].prototypeTexture = null;
+                }
+                terrainData.detailPrototypes = protos;
+                Debug.Log($"[原型] 细节（草）原型已按地图数据重建：共 {detailCount} 个");
+            }
+            else
+            {
+                Debug.LogWarning("[原型] 地图数据未配置 detailPrototypes，本图不会生成草");
+            }
+
+            if (stoneCount + treeCount > 0 || detailCount > 0)
+            {
+                // 原型变了必须刷新，否则 Terrain 内部仍用旧原型（树实例的 prototypeIndex 会错位）。
+                // 树实例随后会被 SetTreeInstances 整表重写，这里不用担心旧实例。
+                terrainData.RefreshPrototypes();
             }
         }
 
@@ -743,7 +784,14 @@ namespace FpsGame.MapUtils
         /// 应用分形噪声到地形
         /// </summary>
         /// <param name="terrainType">地形类型预设</param>
+        /// <param name="stonePrototypes">石块原型（`MapData_SO.stonePrototypes`），与 <paramref name="treePrototypes"/> 拼成地形树原型，石块在前</param>
+        /// <param name="treePrototypes">真树原型（`MapData_SO.treePrototypes`），紧跟在石块之后</param>
+        /// <param name="detailPrototypes">细节（草）原型（`MapData_SO.detailPrototypes`）</param>
+        /// <param name="treeMultiplier">树密度地图级倍率（1=用预设值，0=本图不长树）</param>
+        /// <param name="rockCoverMultiplier">悬崖数量地图级倍率（1=用预设值，0=本图不放悬崖）</param>
         public IEnumerator ApplyFractalNoiseToTerrain(TerrainType terrainType,
+            GameObject[] stonePrototypes = null, GameObject[] treePrototypes = null,
+            GameObject[] detailPrototypes = null,
             float treeMultiplier = 1f, float rockCoverMultiplier = 1f)
         {
             // 地图级倍率（MapData_SO 传进来）：0 = 本图不长树 / 不放悬崖；负数一律按 0 处理
@@ -764,11 +812,18 @@ namespace FpsGame.MapUtils
 
             // 获取预设参数
             TerrainPresetData preset = GetTerrainPreset(terrainType);
+            // 用 MapData_SO 的原型数组重建地形原型（必须在下面任何生成之前），
+            // 石块/树的原型索引区间由数组长度推导（不再写死在预设里）
+            ApplyMapPrototypes(stonePrototypes, treePrototypes, detailPrototypes,
+                out Vector2Int rockRange, out Vector2Int treeRange);
+
             Debug.Log($"使用地形预设: {terrainType} | 噪声层数={preset.octaves}"
-                + $" | 石块概率={preset.rockSpawn.probability}(原型{preset.rockSpawn.prototypeRange})"
-                + $" | 树概率={preset.treeSpawn.probability}(原型{preset.treeSpawn.prototypeRange})"
+                + $" | 石块概率={preset.rockSpawn.probability}(原型{rockRange})"
+                + $" | 树概率={preset.treeSpawn.probability}(原型{treeRange})"
                 + $" | 覆盖石数量={(_overridePreset && _rockCoverCount >= 0 ? _rockCoverCount : preset.rockCover.count)}"
-                + $" | 地图倍率：树×{_treeMultiplier} 悬崖×{_rockCoverMultiplier}");
+                + $" | 地图倍率：树×{_treeMultiplier} 悬崖×{_rockCoverMultiplier}"
+                + $" | 原型数：石块 {stonePrototypes?.Length ?? 0} 树 {treePrototypes?.Length ?? 0}"
+                + $" 细节 {detailPrototypes?.Length ?? 0}");
 
             preHeight = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
             preTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
@@ -806,16 +861,16 @@ namespace FpsGame.MapUtils
             // 也必须早于下面的 NavMesh 烘焙——石头被设成地面层后会被同一次烘焙算进寻路网格。
             yield return PlaceRockCovers(preset);
 
-            // 设置植被：石块与树都是地形树实例，靠原型索引区间区分（0-6 石块 / 7-10 树），分别逐格概率生成
-            yield return SpawnVegetation(preset.rockSpawn, "石块", _overridePreset ? _rockProbability : -1f, TerrainUtils.AreaCircles);
+            // 设置植被：石块与树都是地形树实例，靠原型索引区间区分（区间由地图数据的原型数量推导），分别逐格概率生成
+            yield return SpawnVegetation(preset.rockSpawn, rockRange, "石块", _overridePreset ? _rockProbability : -1f, TerrainUtils.AreaCircles);
             // 树吃地图级倍率（MapData_SO.TreeSpawnMultiplier），石块不吃
-            yield return SpawnVegetation(preset.treeSpawn, "树", _overridePreset ? treeProbability : -1f, TerrainUtils.AreaCircles, _treeMultiplier);
+            yield return SpawnVegetation(preset.treeSpawn, treeRange, "树", _overridePreset ? treeProbability : -1f, TerrainUtils.AreaCircles, _treeMultiplier);
             yield return null;
             terrainData.SetTreeInstances(trees.ToArray(), true);
             // 树实例写入后建立"索引 → 世界坐标"表，供 TreeDestructor 做命中判定与销毁（A 方案：
             // 树本身没有碰撞体，命中判定全靠这张表，销毁只改缩放不改索引）
             TreeDestructor.Rebuild(terrain, _destructibleTreePrototypes);
-            // 细节（草/花）擦除器：与树同批缓存地形引用，供爆炸/附加地形擦草使用
+            // 细节（草）擦除器：与树同批缓存地形引用，供爆炸/附加地形擦草使用
             TerrainDetailEraser.Rebuild(terrain);
             yield return null;
 
@@ -1413,10 +1468,11 @@ namespace FpsGame.MapUtils
         /// <para>遍历每个格子独立掷骰，命中后才查高度/坡度约束；概率与地图面积无关</para>
         /// <para>（0.001 ≈ 每 1000㎡ 一处），所以小图不会被取整归零。</para>
         /// </summary>
-        /// <param name="cfg">该类植被的参数（概率 / 原型索引范围 / 坡度 / 高度）</param>
+        /// <param name="cfg">该类植被的参数（概率 / 坡度 / 高度）</param>
+        /// <param name="prototypeRange">该类使用的原型索引区间（含头含尾），由地图数据的原型数量推导</param>
         /// <param name="label">日志用名字（石块 / 树）</param>
         /// <param name="rateOverride">≥0 时覆盖配置里的概率（"覆盖预设参数"用），&lt;0 表示不覆盖</param>
-        IEnumerator SpawnVegetation(VegetationSpawnData cfg, string label, float rateOverride,
+        IEnumerator SpawnVegetation(VegetationSpawnData cfg, Vector2Int prototypeRange, string label, float rateOverride,
             IReadOnlyList<TerrainUtils.AreaCircle> coverCircles = null, float densityMultiplier = 1f)
         {
             // 与草一致的逐格概率算法：每个格子独立掷骰，命中且满足坡度/高度约束的格子才生成一处。
@@ -1435,12 +1491,18 @@ namespace FpsGame.MapUtils
                 Debug.Log($"[植被] {label}概率为 0，跳过生成");
                 yield break;
             }
-
-            int protoMin = Mathf.Clamp(cfg.prototypeRange.x, 0, prototypeCount - 1);
-            int protoMax = Mathf.Clamp(cfg.prototypeRange.y, protoMin, prototypeCount - 1);
-            if (protoMin != cfg.prototypeRange.x || protoMax != cfg.prototypeRange.y)
+            // 区间为空（y < x）= 该类没有原型可用（地图数据里这一组是空的），直接跳过
+            if (prototypeRange.y < prototypeRange.x)
             {
-                Debug.LogWarning($"[植被] {label}原型索引范围 {cfg.prototypeRange} 超出地形的 Tree Prototypes 数量"
+                Debug.Log($"[植被] {label}没有可用原型（原型区间 {prototypeRange} 为空），跳过生成");
+                yield break;
+            }
+
+            int protoMin = Mathf.Clamp(prototypeRange.x, 0, prototypeCount - 1);
+            int protoMax = Mathf.Clamp(prototypeRange.y, protoMin, prototypeCount - 1);
+            if (protoMin != prototypeRange.x || protoMax != prototypeRange.y)
+            {
+                Debug.LogWarning($"[植被] {label}原型索引范围 {prototypeRange} 超出地形的 Tree Prototypes 数量"
                     + $"（{prototypeCount}），已收窄为 {protoMin}~{protoMax}");
             }
 
@@ -1490,38 +1552,23 @@ namespace FpsGame.MapUtils
         }
 
         /// <summary>
-        /// 生成草（细节植被），基于坡度和高度约束，使用 Terrain Detail 系统
-        /// </summary>
-        /// <summary>
-        /// 生成草和花（细节植被），支持多种原型混合：
-        ///   草原型索引：0-2, 9-11
-        ///   花原型索引：3-8
+        /// 生成草（细节植被），基于坡度和高度约束，使用 Terrain Detail 系统。
+        /// <para>所有 Detail Prototypes 统一按草处理（不再区分花），逐格概率生成。</para>
         /// </summary>
         IEnumerator SpawnDetails(TerrainPresetData preset, IReadOnlyList<TerrainUtils.AreaCircle> coverCircles = null)
         {
             int detailRes = terrain.terrainData.detailResolution;
             int protoCount = terrain.terrainData.detailPrototypes.Length;
             if (protoCount == 0) yield break;
+            if (preset.detailDensity <= 0f) yield break;
 
-            // 索引分组
-            int[] validGrass = { 0, 1, 2, 9, 10, 11 };
-            int[] validFlowers = { 3, 4, 5, 6, 7, 8 };
-            validGrass = Array.FindAll(validGrass, i => i < protoCount);
-            validFlowers = Array.FindAll(validFlowers, i => i < protoCount);
-            if (validGrass.Length == 0 && validFlowers.Length == 0) yield break;
-
-            // 为每个原型创建独立细节地图
-            var layers = new List<(int, int[,])>();
-            foreach (int i in validGrass)
-                layers.Add((i, new int[detailRes, detailRes]));
-            foreach (int i in validFlowers)
-                layers.Add((i, new int[detailRes, detailRes]));
+            // 为每个原型创建独立细节地图（列表下标与原型索引一一对应）
+            var layers = new List<int[,]>(protoCount);
+            for (int i = 0; i < protoCount; i++)
+                layers.Add(new int[detailRes, detailRes]);
 
             float mapToDetail = width / (float)detailRes;
             float grassScale = preset.detailDensity * 60f;
-            float flowerScale = preset.detailFlowerDensity * 60f;
-            bool hasGrass = validGrass.Length > 0 && preset.detailDensity > 0f;
-            bool hasFlowers = validFlowers.Length > 0 && preset.detailFlowerDensity > 0f;
 
             float startTime = Time.realtimeSinceStartup;
 
@@ -1532,7 +1579,7 @@ namespace FpsGame.MapUtils
                     int hx = Mathf.Clamp(Mathf.RoundToInt(dx * mapToDetail), 1, width - 2);
                     int hz = Mathf.Clamp(Mathf.RoundToInt(dy * mapToDetail), 1, height - 2);
 
-                    // 被巨型地形覆盖石压住的格子不生成草/花（原地形被挖走/覆盖后草会悬空）
+                    // 被巨型地形覆盖石压住的格子不生成草（原地形被挖走/覆盖后草会悬空）
                     if (IsInsideRockCoverNormalized(coverCircles, dx / (float)detailRes, dy / (float)detailRes)) continue;
 
                     float h = heightMap[hx, hz];
@@ -1543,20 +1590,11 @@ namespace FpsGame.MapUtils
 
                     if (!inRange) continue;
 
-                    if (hasGrass && Random.value < preset.detailDensity)
+                    if (Random.value < preset.detailDensity)
                     {
-                        int idx = validGrass[Random.Range(0, validGrass.Length)];
+                        int idx = Random.Range(0, protoCount);
                         int val = Mathf.CeilToInt(grassScale * Random.Range(0.3f, 1.0f));
-                        int[,] map = layers.Find(l => l.Item1 == idx).Item2;
-                        map[dx, dy] = Mathf.Clamp(val, 1, 16);
-                    }
-
-                    if (hasFlowers && Random.value < preset.detailFlowerDensity)
-                    {
-                        int idx = validFlowers[Random.Range(0, validFlowers.Length)];
-                        int val = Mathf.CeilToInt(flowerScale * Random.Range(0.3f, 1.0f));
-                        int[,] map = layers.Find(l => l.Item1 == idx).Item2;
-                        map[dx, dy] = Mathf.Clamp(val, 1, 16);
+                        layers[idx][dx, dy] = Mathf.Clamp(val, 1, 16);
                     }
                 }
 
@@ -1567,9 +1605,9 @@ namespace FpsGame.MapUtils
                 }
             }
 
-            foreach (var (protoIdx, map) in layers)
+            for (int i = 0; i < protoCount; i++)
             {
-                terrain.terrainData.SetDetailLayer(0, 0, protoIdx, map);
+                terrain.terrainData.SetDetailLayer(0, 0, i, layers[i]);
                 yield return null;
             }
         }

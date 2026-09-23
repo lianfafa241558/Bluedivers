@@ -52,10 +52,19 @@ namespace FpsGame.MapUtils
     /// </summary>
     public static class TerrainClearer
     {
-        /// <summary>树使用的原型区间（含头含尾），默认 7-10</summary>
+        /// <summary>
+        /// 树使用的原型区间（含头含尾）。
+        /// <para>⚠ 每张地图的原型数量不同，所以这个值**由 <see cref="GenerateNoiseTerrain"/> 按
+        /// <c>MapData_SO</c> 的 <c>stonePrototypes</c>/<c>treePrototypes</c> 数组长度在生成地形时写入**
+        /// （石块在前、树紧随其后）；这里的默认值只是"没人写过"时的兜底约定。</para>
+        /// <para>为空区间（<c>y &lt; x</c>）= 本图没有树原型。</para>
+        /// </summary>
         public static Vector2Int TreePrototypeRange = new Vector2Int(7, 10);
 
-        /// <summary>石块使用的原型区间（含头含尾），默认 0-6</summary>
+        /// <summary>
+        /// 石块使用的原型区间（含头含尾）。
+        /// <para>与 <see cref="TreePrototypeRange"/> 同源，由 <see cref="GenerateNoiseTerrain"/> 在地形生成时写入。</para>
+        /// </summary>
         public static Vector2Int RockPrototypeRange = new Vector2Int(0, 6);
 
         /// <summary>

@@ -228,9 +228,14 @@ public class BattleManager : Singleton<BattleManager>
         infos[3] = nestinfo;
         yield return mapRoot.GetComponent<GenerateNoiseTerrain>().SetTextures(infos.Select(item => item.diffuseTexture).ToArray(), infos.Select(item => item.tileSize).ToArray());
 
-        // 地图级倍率：树密度 / 悬崖数量（MapData_SO 上配，缺省 1）
+        // 原型与地图级倍率都由 MapData_SO 提供：
+        //   地形树原型 = 石块 + 树（石块在前）；细节（草）原型 = detailPrototypes
+        //   倍率：树密度 / 悬崖数量（缺省 1，0 = 本图不长树 / 不放悬崖）
         yield return mapRoot.GetComponent<GenerateNoiseTerrain>().ApplyFractalNoiseToTerrain(
             cfg.taskCfg.terrainType,
+            cfg.mapCfg?.stonePrototypes,
+            cfg.mapCfg?.treePrototypes,
+            cfg.mapCfg?.detailPrototypes,
             cfg.mapCfg?.TreeSpawnMultiplier ?? 1f,
             cfg.mapCfg?.RockCoverMultiplier ?? 1f);
 

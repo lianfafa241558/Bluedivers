@@ -40,7 +40,12 @@ public class MapData_SO : ScriptableObject
     public SKVP<GameObject, int>[] interestPoints;
     [InspectorName("场景点")]
     public SKVP<GameObject, int>[] scenePoints;
-
+    [InspectorName("岩石原型")]
+    public GameObject[] stonePrototypes;
+    [InspectorName("树原型")]
+    public GameObject[] treePrototypes;
+    [InspectorName("细节原型")]
+    public GameObject[] detailPrototypes;
 
     [Divider]
     [Header("地形")]

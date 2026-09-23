@@ -76,6 +76,48 @@ MonoBehaviour:
     Value: 10
   - Key: {fileID: 8474219090918330155, guid: de80d0e02ee97ea47b04fe55a6d99549, type: 3}
     Value: 10
+  stonePrototypes:
+  - {fileID: 100010, guid: 76075d4f24491b84eb0b4ac914362e3f, type: 3}
+  - {fileID: 100012, guid: dceeca3e930a413458913fd2f889e527, type: 3}
+  - {fileID: 100012, guid: 059c81de61f2d4e4cbe522492d0181da, type: 3}
+  - {fileID: 100000, guid: 1679506d96acb1447aa6870479416bf8, type: 3}
+  - {fileID: 100000, guid: d2db22038a6f9804598cd46453cc7cb8, type: 3}
+  - {fileID: 100000, guid: 55f94b3dfaaba26458dbf470efc8cfa4, type: 3}
+  - {fileID: 100000, guid: d9c3d22cdfbbcfd4f8d8019ff97a0f2e, type: 3}
+  - {fileID: 2094864038213025259, guid: ae1110b538793fe40ab50957f1143dd4, type: 3}
+  - {fileID: 6547896281744465490, guid: 8d7853af1b66f0e4493c6429fee91a70, type: 3}
+  - {fileID: 8199090940646691298, guid: ef6c0c771921cd345afb4758d60892ea, type: 3}
+  - {fileID: 2608264754131744774, guid: aff90eaf0345850458249b445a32b1d5, type: 3}
+  - {fileID: 7305228319952173253, guid: 7b3fadac312db27458762553d15b180b, type: 3}
+  - {fileID: 6871957704018570235, guid: 3f6fde56de2e39c4fb79b5b04a04c3e0, type: 3}
+  treePrototypes:
+  - {fileID: 1282569069118832265, guid: d000da19c6361344b98d5f5f2640e258, type: 3}
+  - {fileID: 2093249872792338959, guid: 25ef3ce5470a28c45968103cdc5b8e5e, type: 3}
+  - {fileID: 7137481511350424424, guid: 2290ac81cb91d554792fb16100be3449, type: 3}
+  - {fileID: 519609427481673430, guid: 3da83ddcdef92674ba500e9999973612, type: 3}
+  - {fileID: 850046412790558054, guid: 89796ddcd5fed00449dd441cfa3e377a, type: 3}
+  - {fileID: 8508852847875860822, guid: d08aee021abf9e448adb14e59f9150d2, type: 3}
+  - {fileID: 627592922019412807, guid: 8beca631048c77a49849ae6f58f43ddb, type: 3}
+  - {fileID: 8560457892970535267, guid: 7936590eb4b262043bfd2d60f8febfd9, type: 3}
+  - {fileID: 3336546684626598533, guid: 80e127278a775834e8340f9ac2394888, type: 3}
+  - {fileID: 2137955706628317422, guid: a1463942c663d4f44ac6f1f5c73884e3, type: 3}
+  - {fileID: 983257491358449303, guid: e8507907eefb8f74aa3cc21ba7833664, type: 3}
+  - {fileID: 4818821960449215845, guid: 221b060771cc7524b8966a35be2e9744, type: 3}
+  - {fileID: 8668659750274387276, guid: aa1ae733ccd52dc4a86c07ec3d054a34, type: 3}
+  - {fileID: 7041402446850945736, guid: b6a8c8e8ca5101c4090bb2be8796bbbc, type: 3}
+  - {fileID: 5465153571997421591, guid: 28a7e91edf9c23245a777bb4935bd399, type: 3}
+  - {fileID: 9175838381505952767, guid: c7646e6cb4cfa904cbd65592dc5bad09, type: 3}
+  - {fileID: 8958401203991243200, guid: a2c18c28986d1614da26d0b5ae272cbd, type: 3}
+  - {fileID: 2145882587233299462, guid: 1f8a36cca81f09c4f9d21417ee541b0f, type: 3}
+  - {fileID: 5358210325407233641, guid: 0e9522f6cdb97164da9abdede3cff179, type: 3}
+  detailPrototypes:
+  - {fileID: 8261613438990479310, guid: 0a0983fd67369754d9cc3c7e7901a205, type: 3}
+  - {fileID: 7890698013936213564, guid: 61d1ac83d33e60c41928a134ac25d490, type: 3}
+  - {fileID: 5209240530925566612, guid: af22f86902c00ec46bf56ae30dd21438, type: 3}
+  - {fileID: 7760985154907877741, guid: b57dd88497b39324f83878a2e6177cb0, type: 3}
+  - {fileID: 7874596901511111609, guid: 51431958db7e9254186b1f425d90c9ff, type: 3}
+  - {fileID: 1509937155340597374, guid: 182cd9eef74ff694e89733635590f5ee, type: 3}
+  - {fileID: 8318398713658459165, guid: fe31adbf0a8e38b49a0d84c5ecdc2e97, type: 3}
   TerrainItem:
   - diffuseTexture: {fileID: 2800000, guid: 883f3f610503acb40bf37c771c24b342, type: 3}
     tileSize: {x: 5, y: 8}
@@ -119,7 +161,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
-  TreeSpawnMultiplier: 0
+  TreeSpawnMultiplier: 1
   RockCoverMultiplier: 3
   WeatherInfos:
   - Key: 0
