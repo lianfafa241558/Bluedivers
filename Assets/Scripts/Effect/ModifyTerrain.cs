@@ -13,13 +13,7 @@ public class ModifyTerrain : MonoBehaviour
     Terrain additionTerrain;
     [SerializeField]
     float transitionDistance=5;
-    [SerializeField]
-    [InspectorName("清除植被的原型范围（含头含尾，7-10=树）")]
-    Vector2Int clearVegetationRange = new Vector2Int(7, 10);
 
-    [SerializeField]
-    [InspectorName("清除石块的原型范围（含头含尾，0-6=石块；-1=不限）")]
-    Vector2Int clearRockRange = new Vector2Int(0, 6);
 
     [SerializeField]
     [InspectorName("测试时使用，在start修改地形")]
@@ -55,7 +49,7 @@ public class ModifyTerrain : MonoBehaviour
                 //弹坑范围内的地表物统一清除：树 + 石块（走"清除"语义，忽略可被摧毁白名单）+ 草花 + 悬崖覆盖物。
                 //石块必须一起清：地面被挖低之后，留在原地的石块会整块悬空（实测 167 处悬空就是这么来的）
                 TerrainClearer.ClearInRadius(pos, data.outerRadius, TerrainClearTarget.All,
-                    clearVegetationRange, clearRockRange);
+                    Vector2Int.one * -1, Vector2Int.one*-1);
                 //Debug.LogError("修改了地形" + gameObject);
             }
             if (additionTerrain)
@@ -69,7 +63,7 @@ public class ModifyTerrain : MonoBehaviour
                 Vector2 halfSize = new Vector2(addSize.x * 0.5f + transitionDistance, addSize.z * 0.5f + transitionDistance);
                 //矩形范围内的地表物统一清除（树 + 石块 + 草花 + 悬崖覆盖物）
                 TerrainClearer.ClearInRectXZ(addCenter, halfSize, TerrainClearTarget.All,
-                    clearVegetationRange, clearRockRange);
+                    Vector2Int.one * -1, Vector2Int.one * -1);
                 yield return TerrainUtils.AdditionTerrain(additionTerrain, transitionDistance, 360 - transform.eulerAngles.y, y, false);
                 Destroy(additionTerrain.gameObject);
                 //Debug.LogError("附加了地形" + gameObject);

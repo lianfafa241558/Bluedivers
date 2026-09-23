@@ -101,9 +101,9 @@ MonoBehaviour:
   TerrainItem:
   - diffuseTexture: {fileID: 2800000, guid: fc0a2752338f60941a852ca02a7cfc7f, type: 3}
     tileSize: {x: 5, y: 8}
-  - diffuseTexture: {fileID: 2800000, guid: d0a42dcb27939254ba0a68ba2c604a46, type: 3}
+  - diffuseTexture: {fileID: 2800000, guid: 3b1d017522cb886488461226c630267c, type: 3}
     tileSize: {x: 16, y: 16}
-  - diffuseTexture: {fileID: 2800000, guid: 98f2daaa2158cf94ba01192e69105343, type: 3}
+  - diffuseTexture: {fileID: 2800000, guid: dfa00e7ed2c3ac148bb645a9e98e8e64, type: 3}
     tileSize: {x: 32, y: 32}
   - diffuseTexture: {fileID: 2800000, guid: d9194ddd69f2d4049b638601c871a997, type: 3}
     tileSize: {x: 4, y: 4}
@@ -113,26 +113,26 @@ MonoBehaviour:
     tileSize: {x: 20, y: 20}
   fogColor:
     serializedVersion: 2
-    key0: {r: 0.09019608, g: 0.09019608, b: 0.14117648, a: 1}
-    key1: {r: 0.34117648, g: 0.3354902, b: 0.32411766, a: 1}
-    key2: {r: 0.4, g: 0.39333335, b: 0.38, a: 0}
-    key3: {r: 0.09019608, g: 0.09019608, b: 0.14117648, a: 0}
-    key4: {r: 0.09019608, g: 0.09019608, b: 0.14117648, a: 0}
+    key0: {r: 0.13908575, g: 0.14117648, b: 0.09019608, a: 0.78431374}
+    key1: {r: 0.34117648, g: 0.33927083, b: 0.33333334, a: 0.2509804}
+    key2: {r: 0.4, g: 0.39819205, b: 0.39215687, a: 0.78431374}
+    key3: {r: 0.14117648, g: 0.13718246, b: 0.09019608, a: 0.78431374}
+    key4: {r: 0.14117648, g: 0.1326425, b: 0.09019608, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 275
-    ctime1: 12942
-    ctime2: 27040
+    ctime1: 12501
+    ctime2: 27811
     ctime3: 41799
     ctime4: 65535
     ctime5: 0
     ctime6: 0
     ctime7: 0
     atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
+    atime1: 12832
+    atime2: 27260
+    atime3: 65535
     atime4: 0
     atime5: 0
     atime6: 0
@@ -140,9 +140,11 @@ MonoBehaviour:
     m_Mode: 0
     m_ColorSpace: 0
     m_NumColorKeys: 5
-    m_NumAlphaKeys: 2
+    m_NumAlphaKeys: 4
+  StoneSpawnMultiplier: 1
   TreeSpawnMultiplier: 1
   RockCoverMultiplier: 1
+  DetailSpawnMultiplier: 1
   WeatherInfos:
   - Key: 0
     Value: 35

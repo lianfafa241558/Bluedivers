@@ -53,13 +53,17 @@ public class MapData_SO : ScriptableObject
     public TerrainItemInfo[] TerrainItem;
     public Gradient fogColor;
 
+    [InspectorName("岩石生成倍率")]
+    public float StoneSpawnMultiplier = 1f;
+
     [InspectorName("树生成倍率")]
-    [Tooltip("乘在地形树的生成密度上（1=用地形预设值，0=本图不长树，2=密度翻倍）")]
     public float TreeSpawnMultiplier = 1f;
 
     [InspectorName("悬崖生成倍率")]
-    [Tooltip("乘在巨型悬崖（地形覆盖石）的生成数量上（1=用地形预设值，0=本图不放悬崖）")]
     public float RockCoverMultiplier = 1f;
+
+    [InspectorName("细节生成倍率")]
+    public float DetailSpawnMultiplier = 1f;
 
 
     [Divider]

@@ -236,8 +236,11 @@ public class BattleManager : Singleton<BattleManager>
             cfg.mapCfg?.stonePrototypes,
             cfg.mapCfg?.treePrototypes,
             cfg.mapCfg?.detailPrototypes,
+            cfg.mapCfg?.StoneSpawnMultiplier ?? 1f,
             cfg.mapCfg?.TreeSpawnMultiplier ?? 1f,
-            cfg.mapCfg?.RockCoverMultiplier ?? 1f);
+            cfg.mapCfg?.RockCoverMultiplier ?? 1f,
+            cfg.mapCfg?.DetailSpawnMultiplier ?? 1f
+        );
 
         var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
         if (debugger.IsValid())

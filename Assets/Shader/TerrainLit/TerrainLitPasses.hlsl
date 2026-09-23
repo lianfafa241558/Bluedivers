@@ -507,11 +507,11 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
 
     // 暗部添加自发光
     half luminance = dot(albedo, half3(0.2126, 0.7152, 0.0722));
-    half darkFactor = 1.0 - saturate(luminance * 4.0); // 越暗因子越大
+    //half darkFactor = 1.0 - saturate(luminance * 4.0); // 越暗因子越大
 
     // 根据贴图颜色添加微弱自发光
-    half3 emissive = lerp(albedo,0.2,0.9) * darkFactor * 0.08; // 10%自发光
-    color.rgb += emissive;
+    //half3 emissive = lerp(albedo,0.2,0.9) * darkFactor * 0.08; // 10%自发光
+    //color.rgb += emissive;
 
     // 受光强度越高雾越淡，使用 NdotL * 主光亮度 做平滑渐变
     // originalStrength 反映附加光强度，主光亮度由 mainLightResult 灰度体现

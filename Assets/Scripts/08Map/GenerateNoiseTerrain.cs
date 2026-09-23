@@ -40,6 +40,9 @@ namespace FpsGame.MapUtils
     /// <para>⚠ 这里<b>不再配原型索引区间</b>：区间由 <c>MapData_SO</c> 的
     /// <c>stonePrototypes</c>/<c>treePrototypes</c> 数组长度推导（石块在前、树紧随其后），
     /// 见 <see cref="GenerateNoiseTerrain.ApplyMapPrototypes"/>。</para>
+    /// <para>⚠ <c>minSlope</c>/<c>maxSlope</c> 由 <see cref="GenerateNoiseTerrain.GetSteepness"/> 判定，
+    /// 而那个函数用的是历史硬编码的近似换算（不是真实米制坡度），所以这两个角度只是"相对刻度"。
+    /// 覆盖石（<see cref="RockCoverSpawnData"/>）走的是真实米制坡度的另一条路径，两者不要混着调。</para>
     /// </summary>
     [Serializable]
     public struct VegetationSpawnData
@@ -74,12 +77,16 @@ namespace FpsGame.MapUtils
         [InspectorName("互斥间距系数（半径和的倍数，1=相切）")]
         public float minSpacingScale;
 
-        /// <summary>落点允许的最小坡度（度）</summary>
-        [InspectorName("最小坡度")]
+        /// <summary>
+        /// 落点允许的最小坡度（度）。
+        /// <para>按"占地圆内的地面倾角"判定（占地圆一圈上最高/最低点的高差 ÷ 直径，真实米制坡度），
+        /// 不是单个格子的梯度值。</para>
+        /// </summary>
+        [InspectorName("最小坡度（占地圆倾角，度）")]
         public float minSlope;
 
-        /// <summary>落点允许的最大坡度（度）</summary>
-        [InspectorName("最大坡度")]
+        /// <summary>落点允许的最大坡度（度），同样按占地圆内的地面倾角判定</summary>
+        [InspectorName("最大坡度（占地圆倾角，度）")]
         public float maxSlope;
 
         /// <summary>落点允许的最小高度（归一化 0~1）</summary>
@@ -273,6 +280,12 @@ namespace FpsGame.MapUtils
         /// <summary>覆盖石实例容器的名字（换局重生成时按名字复用/清理）</summary>
         private const string RockCoverRootName = "RockCovers";
 
+        /// <summary>峰顶判定的高度容差（米）：落点比四周一圈高出这么多才算"山峰顶"（平地噪声抖动不算）</summary>
+        private const float RockCoverPeakTolerance = 0.5f;
+
+        /// <summary>峰顶探测的外圈半径倍数：除占地圆外再看 2 倍半径的一圈，能抓到顶面很宽的山包</summary>
+        private const float RockCoverPeakProbeScale = 2f;
+
         [InspectorName("每帧最长阻塞时间")]
         public float maxTimePerFrame = 0.01f;
 
@@ -353,11 +366,24 @@ namespace FpsGame.MapUtils
         /// <summary>覆盖石实例的容器（换局重生成时整批清掉）</summary>
         private Transform _rockCoverRoot;
 
+        /// <summary>本局地图的石头生成倍率（由 MapData_SO 传入，乘在树密度上）</summary>
+        private float _stoneMultiplier = 1f;
+
         /// <summary>本局地图的树生成倍率（由 MapData_SO 传入，乘在树密度上）</summary>
         private float _treeMultiplier = 1f;
 
         /// <summary>本局地图的悬崖（地形覆盖石）生成倍率（由 MapData_SO 传入，乘在数量上）</summary>
         private float _rockCoverMultiplier = 1f;
+
+
+        /// <summary>本局地图的细节生成倍率（由 MapData_SO 传入，乘在数量上）</summary>
+        private float _detailsMultiplier = 1f;
+
+        /// <summary>调用方本次是否提供了细节（草）原型数组（null = 没提供，沿用地形资产里的原型与草）</summary>
+        private bool _detailProvided;
+
+        /// <summary>本图是否配置了细节（草）原型（由 <see cref="ApplyMapPrototypes"/> 按地图数据设置）；false = 本图不撒草</summary>
+        private bool _detailConfigured;
         /*
         private void Start()
         {
@@ -408,7 +434,7 @@ namespace FpsGame.MapUtils
                         },
                         detailDensity = 0.02f,
                         detailMinSlope = 0f,
-                        detailMaxSlope = 15f,
+                        detailMaxSlope = 45f,
                         detailMinHeight = 0f,
                         detailMaxHeight = 0.3f
                     };
@@ -642,9 +668,9 @@ namespace FpsGame.MapUtils
                         },
                         detailDensity = 0.03f,
                         detailMinSlope = 0f,
-                        detailMaxSlope = 20f,
+                        detailMaxSlope = 40f,
                         detailMinHeight = 0f,
-                        detailMaxHeight = 0.35f
+                        detailMaxHeight = 0.85f
                     };
 
                 default:
@@ -718,11 +744,36 @@ namespace FpsGame.MapUtils
                 Debug.LogWarning("[原型] 地图数据未配置 stonePrototypes/treePrototypes，本图不会生成石块与树");
             }
 
-            int detailCount = detailPrototypes?.Length ?? 0;
-            if (detailCount > 0)
+            // null = 调用方没提供（如编辑器里 [ContextMenu] 手跑、或地图数据没有 mapCfg）→ 完全不动细节；
+            // 长度为 0 = 调用方明确表示"本图没有草" → 清空细节层。两者语义不同，不能混。
+            bool detailProvided = detailPrototypes != null;
+            int detailCount = detailProvided ? detailPrototypes.Length : 0;
+            _detailProvided = detailProvided;
+            _detailConfigured = detailCount > 0;
+            if (_detailConfigured)
             {
                 DetailPrototype[] existing = terrainData.detailPrototypes;
+                // ⚠ 细节层数变少时，被裁掉的那几层草数据不会随原型数组一起消失（它们仍留在 TerrainData
+                // 里），表现为"换成细节更少的地图后，上一张图的草还在原地长着"。必须在改原型数组之前
+                // 显式清零——数组一换短，这些层就再也寻址不到了。
+                int existingDetailCount = existing?.Length ?? 0;
+                if (existingDetailCount > detailCount)
+                    ClearDetailLayers(terrainData, detailCount, existingDetailCount - detailCount);
+
                 DetailPrototype[] protos = new DetailPrototype[detailCount];
+                // ⚠ 渲染模式（是否 GPU 实例化）必须在这里写死，不能靠继承资产里同索引原型，原因三条：
+                //   1. 资产里的原型本身就是混合模式（实测 MainMap：索引 0~3 = Grass + 不实例化、
+                //      4~6 = VertexLit + 实例化）→ 只继承会让"哪一层实例化"取决于资产里的顺序；
+                //   2. 索引超出资产原型数量的层只会拿到 new DetailPrototype() 的默认值
+                //      （usePrototypeMesh=false / useInstancing=false / renderMode=Grass）；
+                //   3. 越是原型数量各图不同的项目（本仓 3~8 个不等），继承越不可控。
+                // Unity 2022.3 手册「Grass and other details」：勾上 Use GPU Instancing 后 Render Mode 会失效，
+                // 走 Instanced mesh 路径——用 prefab 自带的材质与 shader 渲染、用持久化实例常量缓冲，
+                // 实例多时 CPU/GPU 更省（代价：禁用 Healthy/Dry Color 噪声，本项目 ToonLit 不读这两个颜色；
+                // 每批 ≤1023 实例、不吃 lightprobe/lightmap）。
+                // 尺寸/宽高噪声/颜色等"手感参数"仍沿用资产里同索引原型；getter 返回的是新对象副本，
+                // 所以改写这些字段不会污染地形资产。
+                List<string> materialsWithoutInstancing = new List<string>();
                 for (int i = 0; i < detailCount; i++)
                 {
                     if (detailPrototypes[i] == null)
@@ -735,13 +786,31 @@ namespace FpsGame.MapUtils
                     protos[i].prototype = detailPrototypes[i];
                     protos[i].usePrototypeMesh = true;
                     protos[i].prototypeTexture = null;
+                    // VertexLit 只是"没勾实例化时"的兜底取值（勾了实例化后 Unity 会把 Render Mode 置灰忽略）
+                    protos[i].renderMode = DetailRenderMode.VertexLit;
+                    protos[i].useInstancing = true;
+                    // 实例化的前提是材质勾了 Enable GPU Instancing，否则 Unity 会静默退回非实例化
+                    CollectMaterialsWithoutInstancing(protos[i].prototype, materialsWithoutInstancing);
                 }
                 terrainData.detailPrototypes = protos;
-                Debug.Log($"[原型] 细节（草）原型已按地图数据重建：共 {detailCount} 个");
+                Debug.Log($"[原型] 细节（草）原型已按地图数据重建：共 {detailCount} 个（统一 VertexLit + GPU 实例化）");
+                LogDetailPrototypes(protos);
+                if (materialsWithoutInstancing.Count > 0)
+                {
+                    Debug.LogWarning("[原型] 下列细节材质未勾选 Enable GPU Instancing，实例化不会生效"
+                        + "（Unity 会退回非实例化渲染）：" + string.Join("、", materialsWithoutInstancing));
+                }
+            }
+            else if (detailProvided)
+            {
+                // 地图明确给了一个空数组 = 本图不长草：把上一张图留下的草全部清掉（原型数组本身不动，
+                // 与树的"空 = 不改动资产原型"约定一致），否则换图后旧草会继续显示在原地。
+                Debug.LogWarning("[原型] 地图数据未配置 detailPrototypes（空数组），本图不会生成草");
+                ClearDetailLayers(terrainData, 0, terrainData.detailPrototypes?.Length ?? 0);
             }
             else
             {
-                Debug.LogWarning("[原型] 地图数据未配置 detailPrototypes，本图不会生成草");
+                Debug.Log("[原型] 本次未提供 detailPrototypes（null），沿用地形资产里的细节原型与草数据");
             }
 
             if (stoneCount + treeCount > 0 || detailCount > 0)
@@ -792,12 +861,13 @@ namespace FpsGame.MapUtils
         public IEnumerator ApplyFractalNoiseToTerrain(TerrainType terrainType,
             GameObject[] stonePrototypes = null, GameObject[] treePrototypes = null,
             GameObject[] detailPrototypes = null,
-            float treeMultiplier = 1f, float rockCoverMultiplier = 1f)
+            float stoneMultiplier = 1f, float treeMultiplier = 1f, float rockCoverMultiplier = 1f,float detailsMultiplier=1f)
         {
             // 地图级倍率（MapData_SO 传进来）：0 = 本图不长树 / 不放悬崖；负数一律按 0 处理
+            _stoneMultiplier = Mathf.Max(0f, stoneMultiplier);
             _treeMultiplier = Mathf.Max(0f, treeMultiplier);
             _rockCoverMultiplier = Mathf.Max(0f, rockCoverMultiplier);
-
+            _detailsMultiplier = Mathf.Max(0f, detailsMultiplier);
             if (terrain == null)
             {
                 Debug.LogWarning("未指定Terrain对象");
@@ -821,7 +891,7 @@ namespace FpsGame.MapUtils
                 + $" | 石块概率={preset.rockSpawn.probability}(原型{rockRange})"
                 + $" | 树概率={preset.treeSpawn.probability}(原型{treeRange})"
                 + $" | 覆盖石数量={(_overridePreset && _rockCoverCount >= 0 ? _rockCoverCount : preset.rockCover.count)}"
-                + $" | 地图倍率：树×{_treeMultiplier} 悬崖×{_rockCoverMultiplier}"
+                + $" | 地图倍率：细节×{_detailsMultiplier}  岩石×{_stoneMultiplier} 树×{_treeMultiplier} 悬崖×{_rockCoverMultiplier}"
                 + $" | 原型数：石块 {stonePrototypes?.Length ?? 0} 树 {treePrototypes?.Length ?? 0}"
                 + $" 细节 {detailPrototypes?.Length ?? 0}");
 
@@ -862,7 +932,7 @@ namespace FpsGame.MapUtils
             yield return PlaceRockCovers(preset);
 
             // 设置植被：石块与树都是地形树实例，靠原型索引区间区分（区间由地图数据的原型数量推导），分别逐格概率生成
-            yield return SpawnVegetation(preset.rockSpawn, rockRange, "石块", _overridePreset ? _rockProbability : -1f, TerrainUtils.AreaCircles);
+            yield return SpawnVegetation(preset.rockSpawn, rockRange, "石块", _overridePreset ? _rockProbability : -1f, TerrainUtils.AreaCircles,_stoneMultiplier);
             // 树吃地图级倍率（MapData_SO.TreeSpawnMultiplier），石块不吃
             yield return SpawnVegetation(preset.treeSpawn, treeRange, "树", _overridePreset ? treeProbability : -1f, TerrainUtils.AreaCircles, _treeMultiplier);
             yield return null;
@@ -879,7 +949,7 @@ namespace FpsGame.MapUtils
             TerrainUtils.RebuildTreeColliders(terrain);
 
             // 设置草（细节）：被覆盖石压住的格子直接跳过（不用事后擦，省一次 SetDetailLayer）
-            yield return SpawnDetails(preset, TerrainUtils.AreaCircles);
+            yield return SpawnDetails(preset, TerrainUtils.AreaCircles,detailsMultiplier);
             yield return null;
 
             preHeight.Apply(false, false);
@@ -1554,54 +1624,69 @@ namespace FpsGame.MapUtils
         /// <summary>
         /// 生成草（细节植被），基于坡度和高度约束，使用 Terrain Detail 系统。
         /// <para>所有 Detail Prototypes 统一按草处理（不再区分花），逐格概率生成。</para>
+        /// <para>⚠ 本方法会把本图所有细节层<b>整层重写</b>（不撒草时提交全零）：细节层数据是存在
+        /// TerrainData 资产里的，"只写自己那几层"会让上一张图的草残留在新地图上。</para>
         /// </summary>
-        IEnumerator SpawnDetails(TerrainPresetData preset, IReadOnlyList<TerrainUtils.AreaCircle> coverCircles = null)
+        IEnumerator SpawnDetails(TerrainPresetData preset, IReadOnlyList<TerrainUtils.AreaCircle> coverCircles = null,float detailsMultiplier=1f)
         {
             int detailRes = terrain.terrainData.detailResolution;
             int protoCount = terrain.terrainData.detailPrototypes.Length;
             if (protoCount == 0) yield break;
-            if (preset.detailDensity <= 0f) yield break;
+
+            // 本图是否真的要撒草：地图明确没配细节原型（空数组），或密度/倍率为 0 时不撒。
+            // 但"不撒"也必须把各层提交成空，否则上一张图的草会留在原地。
+            float density = preset.detailDensity * detailsMultiplier;
+            bool spawn = preset.detailDensity > 0f && density > 0f
+                && (!_detailProvided || _detailConfigured);
 
             // 为每个原型创建独立细节地图（列表下标与原型索引一一对应）
             var layers = new List<int[,]>(protoCount);
             for (int i = 0; i < protoCount; i++)
                 layers.Add(new int[detailRes, detailRes]);
 
-            float mapToDetail = width / (float)detailRes;
-            float grassScale = preset.detailDensity * 60f;
-
-            float startTime = Time.realtimeSinceStartup;
-
-            for (int dy = 0; dy < detailRes; dy++)
+            if (!spawn)
             {
-                for (int dx = 0; dx < detailRes; dx++)
+                Debug.Log($"[细节] 本图不生成草（原型已配置={_detailConfigured}，密度={preset.detailDensity}，"
+                    + $"地图倍率={detailsMultiplier}），已把 {protoCount} 个细节层重置为空");
+            }
+            else
+            {
+                float mapToDetail = width / (float)detailRes;
+                float grassScale = preset.detailDensity * 60f;
+
+                float startTime = Time.realtimeSinceStartup;
+
+                for (int dy = 0; dy < detailRes; dy++)
                 {
-                    int hx = Mathf.Clamp(Mathf.RoundToInt(dx * mapToDetail), 1, width - 2);
-                    int hz = Mathf.Clamp(Mathf.RoundToInt(dy * mapToDetail), 1, height - 2);
-
-                    // 被巨型地形覆盖石压住的格子不生成草（原地形被挖走/覆盖后草会悬空）
-                    if (IsInsideRockCoverNormalized(coverCircles, dx / (float)detailRes, dy / (float)detailRes)) continue;
-
-                    float h = heightMap[hx, hz];
-                    float slope = GetSteepness(hx, hz);
-
-                    bool inRange = h >= preset.detailMinHeight && h <= preset.detailMaxHeight
-                        && slope >= preset.detailMinSlope && slope <= preset.detailMaxSlope;
-
-                    if (!inRange) continue;
-
-                    if (Random.value < preset.detailDensity)
+                    for (int dx = 0; dx < detailRes; dx++)
                     {
-                        int idx = Random.Range(0, protoCount);
-                        int val = Mathf.CeilToInt(grassScale * Random.Range(0.3f, 1.0f));
-                        layers[idx][dx, dy] = Mathf.Clamp(val, 1, 16);
-                    }
-                }
+                        int hx = Mathf.Clamp(Mathf.RoundToInt(dx * mapToDetail), 1, width - 2);
+                        int hz = Mathf.Clamp(Mathf.RoundToInt(dy * mapToDetail), 1, height - 2);
 
-                if (dy % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
-                {
-                    yield return null;
-                    startTime = Time.realtimeSinceStartup;
+                        // 被巨型地形覆盖石压住的格子不生成草（原地形被挖走/覆盖后草会悬空）
+                        if (IsInsideRockCoverNormalized(coverCircles, dx / (float)detailRes, dy / (float)detailRes)) continue;
+
+                        float h = heightMap[hx, hz];
+                        float slope = GetSteepness(hx, hz);
+
+                        bool inRange = h >= preset.detailMinHeight && h <= preset.detailMaxHeight
+                            && slope >= preset.detailMinSlope && slope <= preset.detailMaxSlope;
+
+                        if (!inRange) continue;
+
+                        if (Random.value < density)
+                        {
+                            int idx = Random.Range(0, protoCount);
+                            int val = Mathf.CeilToInt(grassScale * Random.Range(0.3f, 1.0f));
+                            layers[idx][dx, dy] = Mathf.Clamp(val, 1, 16);
+                        }
+                    }
+
+                    if (dy % 8 == 0 && Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
+                    {
+                        yield return null;
+                        startTime = Time.realtimeSinceStartup;
+                    }
                 }
             }
 
@@ -1610,6 +1695,74 @@ namespace FpsGame.MapUtils
                 terrain.terrainData.SetDetailLayer(0, 0, i, layers[i]);
                 yield return null;
             }
+        }
+
+        /// <summary>
+        /// 把 <paramref name="data"/> 里指定区间的细节（草）层数据清零。
+        /// <para>用途：换图时细节层数变少 → 被裁掉的那几层草数据不会自动消失；或本图不配细节原型 →
+        /// 上一张图的草会整片留在原地。两种情况都必须显式清，Unity 不会替我们清。</para>
+        /// </summary>
+        /// <param name="startLayer">起始层（0 基）</param>
+        /// <param name="layerCount">要清的层数</param>
+        private static void ClearDetailLayers(TerrainData data, int startLayer, int layerCount)
+        {
+            if (data == null || layerCount <= 0) return;
+
+            int total = data.detailPrototypes?.Length ?? 0;
+            int end = Mathf.Min(startLayer + layerCount, total);
+            if (end <= startLayer) return;
+
+            int w = data.detailWidth;
+            int h = data.detailHeight;
+            if (w <= 0 || h <= 0) return;
+
+            // 各层复用同一块零数组，避免逐层分配整张细节图
+            int[,] empty = new int[h, w];
+            for (int layer = startLayer; layer < end; layer++)
+                data.SetDetailLayer(0, 0, layer, empty);
+
+            Debug.Log($"[细节] 已清空 {end - startLayer} 个不再使用的细节层（层 {startLayer}~{end - 1}），"
+                + "避免上一张图的草残留到新地图");
+        }
+
+        /// <summary>
+        /// 收集细节原型上"没有勾选 Enable GPU Instancing"的材质名（去重）。
+        /// <para>细节走 GPU 实例化的前提之一就是这个材质开关，没勾的话 Unity 会静默退回非实例化渲染。</para>
+        /// </summary>
+        /// <param name="prototype">细节原型（prefab）</param>
+        /// <param name="results">输出列表（同时充当去重集合）</param>
+        private static void CollectMaterialsWithoutInstancing(GameObject prototype, List<string> results)
+        {
+            if (prototype == null || results == null) return;
+            Renderer[] renderers = prototype.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Material material = renderers[i] != null ? renderers[i].sharedMaterial : null;
+                if (material == null || material.enableInstancing) continue;
+                if (!results.Contains(material.name)) results.Add(material.name);
+            }
+        }
+
+        /// <summary>打印每层细节原型的渲染模式，便于进图后对着日志核对"实例化到底有没有生效"</summary>
+        /// <param name="protos">提交给地形的细节原型数组</param>
+        private static void LogDetailPrototypes(DetailPrototype[] protos)
+        {
+            if (protos == null) return;
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(
+                "[原型] 细节层渲染模式（instancing=True 即走 GPU 实例化）：");
+            for (int i = 0; i < protos.Length; i++)
+            {
+                if (protos[i] == null)
+                {
+                    sb.Append($"\n  [{i}] （空原型）");
+                    continue;
+                }
+                GameObject prototype = protos[i].prototype;
+                sb.Append($"\n  [{i}] {(prototype != null ? prototype.name : "null")}"
+                    + $" {protos[i].renderMode}/instancing={protos[i].useInstancing}"
+                    + $"/网格={protos[i].usePrototypeMesh}");
+            }
+            Debug.Log(sb.ToString());
         }
         #endregion
 
@@ -1697,13 +1850,20 @@ namespace FpsGame.MapUtils
                 float posZ = Random.Range(minZ + radius, maxZ - radius);
                 Vector2 posXZ = new(posX, posZ);
 
-                // 高度 / 坡度约束（与植被同一套 heightMap 与坡度算法）
+                // 高度约束（归一化 0~1，与植被同一套 heightMap）
                 int tx = Mathf.Clamp(Mathf.RoundToInt((posX - origin.x) / mapSize.x * (width - 1)), 1, width - 2);
                 int tz = Mathf.Clamp(Mathf.RoundToInt((posZ - origin.z) / mapSize.z * (height - 1)), 1, height - 2);
                 float h = heightMap[tx, tz];
                 if (h < cfg.minHeight || h > cfg.maxHeight) continue;
-                float slope = GetSteepness(tx, tz);
-                if (slope < cfg.minSlope || slope > cfg.maxSlope) continue;
+
+                // 坡度 / 峰顶约束：按"整块占地圆"采样，而不是单个格子的梯度。
+                // 巨石占地 10~30m，单格梯度只看得到脚下一小块，既容易在山尖处误判为平地，
+                // 也判断不出这片地到底能不能放稳：
+                //   倾角 = 占地圆一圈的最高/最低点高差 ÷ 直径（真实的米制坡度，单位：度）
+                //   峰顶 = 中心比周围（占地圆内 + 外一圈）都高，即四周全在下坡 → 巨石会一半悬空
+                SampleRockFootprint(posX, posZ, radius, out float tiltDeg, out bool isLocalPeak);
+                if (isLocalPeak) continue;
+                if (tiltDeg < cfg.minSlope || tiltDeg > cfg.maxSlope) continue;
 
                 // 与其他覆盖石的占地圆互斥
                 if (IsOverlappedByRockCover(posXZ, radius, spacingScale)) continue;
@@ -1732,8 +1892,9 @@ namespace FpsGame.MapUtils
             }
 
             Debug.Log($"[地形覆盖] 放置 {placed}/{targetCount} 处（尝试上限 {maxAttempts}，互斥系数 {spacingScale:F2}，"
-                + $"层 {LayerMask.LayerToName(layer)}，坡度 {cfg.minSlope}~{cfg.maxSlope}°，"
-                + $"高度 {cfg.minHeight}~{cfg.maxHeight}，地图 {mapSize.x:F0}×{mapSize.z:F0}）");
+                + $"层 {LayerMask.LayerToName(layer)}，占地圆倾角 {cfg.minSlope}~{cfg.maxSlope}°（已排除峰顶），"
+                + $"高度 {cfg.minHeight}~{cfg.maxHeight}（归一化，约 {cfg.minHeight * mapSize.y:F0}~{cfg.maxHeight * mapSize.y:F0}m），"
+                + $"地图 {mapSize.x:F0}×{mapSize.z:F0}）");
         }
 
         /// <summary>清掉上一次生成的覆盖石，并保证容器存在（换局/重新生成地形时调用）</summary>
@@ -1826,6 +1987,55 @@ namespace FpsGame.MapUtils
         }
 
         /// <summary>
+        /// 采样巨石落点"实际压住的那片地"：地面倾角（度）+ 是否落在峰顶。
+        /// <para>为什么不用 <see cref="GetSteepness"/>：那是单格梯度，且它的 cellSize 是历史硬编码的
+        /// 近似值（不是真实米制坡度）。巨石占地 10~30m，要判断的是"整块地能不能放稳"，必须按占地圆采样。</para>
+        /// <para>倾角 = 占地圆一圈上最高点与最低点的高差 ÷ 直径（由米制高差算出，量纲与预设里的角度一致）；
+        /// 峰顶 = 中心比占地圆内、外两圈都高（四周全在下坡），这种位置放巨石必然一半悬空。</para>
+        /// </summary>
+        /// <param name="worldX">落点世界 X</param>
+        /// <param name="worldZ">落点世界 Z</param>
+        /// <param name="radius">占地半径（米）</param>
+        /// <param name="tiltDegrees">输出：占地圆内的地面倾角（度）</param>
+        /// <param name="isLocalPeak">输出：落点是否为峰顶/山脊尖端</param>
+        private void SampleRockFootprint(float worldX, float worldZ, float radius,
+            out float tiltDegrees, out bool isLocalPeak)
+        {
+            const int directions = 8;
+            Vector3 origin = terrain.transform.position;
+            Vector3 mapSize = terrain.terrainData.size;
+
+            float centerHeight = SampleWorldHeight(worldX, worldZ);
+            float nearMax = float.NegativeInfinity;
+            float nearMin = float.PositiveInfinity;
+            float farMax = float.NegativeInfinity;
+
+            // 外圈不能探出地形边界：越界会被 SampleWorldHeight 钳到地图边缘（边缘被 edgeDropoff 压低），
+            // 那会被误判成"四周都比中心低"。落点本身已按 edgeMargin + radius 内缩，所以这里至少能探 radius。
+            float borderDistance = Mathf.Min(
+                Mathf.Min(worldX - origin.x, origin.x + mapSize.x - worldX),
+                Mathf.Min(worldZ - origin.z, origin.z + mapSize.z - worldZ));
+            float farRadius = Mathf.Min(radius * RockCoverPeakProbeScale, Mathf.Max(radius, borderDistance));
+
+            for (int i = 0; i < directions; i++)
+            {
+                float angle = i * Mathf.PI * 2f / directions;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
+
+                float near = SampleWorldHeight(worldX + cos * radius, worldZ + sin * radius);
+                nearMax = Mathf.Max(nearMax, near);
+                nearMin = Mathf.Min(nearMin, near);
+
+                float far = SampleWorldHeight(worldX + cos * farRadius, worldZ + sin * farRadius);
+                farMax = Mathf.Max(farMax, far);
+            }
+
+            tiltDegrees = Mathf.Atan2(nearMax - nearMin, radius * 2f) * Mathf.Rad2Deg;
+            isLocalPeak = centerHeight - Mathf.Max(nearMax, farMax) > RockCoverPeakTolerance;
+        }
+
+        /// <summary>
         /// 实例所有渲染器在世界 Y 上的最低点（没有渲染器时返回 pivot 的高度 = 不做修正）。
         /// <para>用于"把网格底面对齐地表"：素材的 pivot 常常不在网格底面（实测 CliffA/C/E 的网格
         /// 整体在 pivot 之上 8~25m，按 pivot 摆就浮空）。</para>
@@ -1867,16 +2077,18 @@ namespace FpsGame.MapUtils
         #region API
 
         /// <summary>
-        /// 计算高度图中指定点的坡度（角度制）
+        /// 计算高度图中指定点的坡度（角度制）。
+        /// <para>⚠ 这不是真实米制坡度：下面 <c>cellSize</c> 是历史硬编码的近似换算（把不同地图尺寸都按
+        /// 同一比例折算，且忽略 <c>size.y</c>），它只保证"坡度大小关系"可用。</para>
+        /// <para>给树/石的逐格概率生成用（那一套预设的角度就是按这个刻度调的）。需要真实坡度时用
+        /// <see cref="SampleRockFootprint"/> 那条路径（按米制高差算），不要套用这里的返回值。</para>
         /// </summary>
-        /// <param name="heightmap">二维高度数组（值范围建议0-1）</param>
         /// <param name="x">查询点的x坐标（基于heightmap数组索引）</param>
         /// <param name="y">查询点的y坐标（基于heightmap数组索引）</param>
-        /// <param name="cellSize">单个网格的世界空间尺寸（用于正确计算水平距离）</param>
         /// <returns>坡度角度（0-90度）</returns>
         private float GetSteepness(int x, int y)
         {
-            float cellSize = 1 / 16f;//应该是2，但是我的地形后面+0.5*0.5
+            float cellSize = 1 / 16f;//历史近似：真实格距 = size.x/(heightmapResolution-1)，按米制算会整体放大 5~40 倍
             // 获取中心点及周边8邻域高度（处理边界时自动使用最近的有效点）
             float h = heightMap[x, y];
             float h_x0 = heightMap[Mathf.Max(0, x - 1), y];    

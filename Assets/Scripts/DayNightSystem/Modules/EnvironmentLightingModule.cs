@@ -42,6 +42,8 @@ namespace FPSGame.DayNightSystem
         [SerializeField] private Light sunLight;
         [SerializeField] private Gradient sunColor;
         [InspectorName("内置雾颜色（未注入地图雾色时的兜底）")]
+        [Tooltip("RGB = 雾色（随昼夜时间采样，会再乘环境光亮度倍率）；" +
+                 "A = 该时刻的「雾出现程度」遮罩，0 表示该时段完全不起雾")]
         [SerializeField] private Gradient fogColor;
 
         /// <summary>
@@ -57,6 +59,7 @@ namespace FPSGame.DayNightSystem
         [InspectorName("挂载了 Full Screen Fog 组件的 Volume（如全局 Volume）")]
         [SerializeField] private Volume fogVolume;
         [InspectorName("按时间控制全屏雾强度，X 为当日时间 0~1")]
+        [Tooltip("实际雾强度 = 本曲线 × 雾色渐变的 A 通道 + 天气增量（恶劣天气仍会强行起雾）")]
         [SerializeField] private AnimationCurve fullscreenFogIntensity = new(
             new Keyframe(0f, 0.6f), new Keyframe(0.25f, 0f), new Keyframe(0.5f, 0.6f), new Keyframe(0.75f, 0f), new Keyframe(1f, 0.6f));
         [InspectorName("按时间控制雾密度")]
@@ -200,7 +203,7 @@ namespace FPSGame.DayNightSystem
                 // 同步到氛围桥：透明物体（体积云）按距离融入同一雾色
                 WeatherAtmosphereController.FogColor = RenderSettings.fogColor;
                 // 内置雾密度同样受天气能见度联动：能见度低时加浓（参考 0.05 下限防除零）
-                RenderSettings.fogDensity = fogFactor.Evaluate(timeFraction) / Mathf.Max(WeatherAtmosphereController.VisibilityMultiplier, 0.05f);
+                RenderSettings.fogDensity = fogFactor.Evaluate(timeFraction) / Mathf.Max(WeatherAtmosphereController.VisibilityMultiplier, 0.05f)* ActiveFogGradient.Evaluate(timeFraction).a ;
                 // 程序化天空盒（Skybox/Procedural）的天空色调属性名是 _SkyTint（带下划线），
                 // 写成 "SkyTint" 会静默失败（SetColor 找不到属性直接丢弃）。
                 // 曝光已交给 _Exposure 承担昼夜暗度，这里只做天空色调，故随环境光一起被天气轻微压暗
@@ -237,10 +240,19 @@ namespace FPSGame.DayNightSystem
             // 天气氛围合成：能见度倍率收缩距离，雾强度增量直接叠加（保证恶劣天气在昼夜曲线低点也能起雾）
             float visibility = WeatherAtmosphereController.VisibilityMultiplier;
 
+            // 雾色渐变一次采样、两路使用：RGB = 雾色，A = 该时刻的「雾出现程度」遮罩
+            // （此前只取 RGB，A 通道被丢弃；FullScreenFog 渲染时 color.a 会被 intensity 覆盖）
+            Color fogSample = ActiveFogGradient.Evaluate(timeFraction);
+
             // 全屏雾颜色同样随环境光压暗：雾的照明来自环境，环境暗雾不能比场景亮
-            Color color = ActiveFogGradient.Evaluate(timeFraction) * WeatherAtmosphereController.AmbientBrightnessMultiplier;
+            Color color = fogSample * WeatherAtmosphereController.AmbientBrightnessMultiplier;
             _fullscreenFog.color.value = color;
-            _fullscreenFog.intensity.value = Mathf.Clamp01(fullscreenFogIntensity.Evaluate(timeFraction) + WeatherAtmosphereController.FogIntensityAdd);
+
+            // 雾出现程度 = 昼夜强度曲线 × 渐变 A 遮罩；天气增量不参与遮罩，
+            // 否则正午 A=0 时暴雨/沙尘也会被完全抵消而彻底不起雾
+            _fullscreenFog.intensity.value = Mathf.Clamp01(
+                fullscreenFogIntensity.Evaluate(timeFraction) * fogSample.a
+                + WeatherAtmosphereController.FogIntensityAdd);
             _fullscreenFog.density.value = Mathf.Clamp01(fullscreenFogDensity.Evaluate(timeFraction) / Mathf.Max(visibility, 0.05f));
             _fullscreenFog.startLine.value = fogStartLine.Evaluate(timeFraction) * visibility;
             _fullscreenFog.endLine.value = Mathf.Max(fogEndLine.Evaluate(timeFraction) * visibility, fogStartLine.Evaluate(timeFraction) * visibility + 1f);
