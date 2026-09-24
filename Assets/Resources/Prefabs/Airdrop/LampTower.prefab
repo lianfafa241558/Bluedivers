@@ -182,18 +182,18 @@ MonoBehaviour:
   HearingRange: 10
   AttackRange: 65
   AlertRange: 0
+  Lazy: 0
   KnownTargetTimeout: 0
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
   RespondMark: 1
 --- !u!1 &2080002074
 GameObject:
@@ -635,6 +635,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 5cb81ed8afa1e7a4da5646aeb9599652, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
+  events: []
   UseAttack: 0
 --- !u!1001 &5153817709104510528
 PrefabInstance:
@@ -812,17 +813,17 @@ PrefabInstance:
     - target: {fileID: 6987894609124187300, guid: 099387833863da74a904343ca5a1ee14,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6987894609124187300, guid: 099387833863da74a904343ca5a1ee14,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6987894609124187300, guid: 099387833863da74a904343ca5a1ee14,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -6.26
+      value: -1.9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -137,25 +137,24 @@ MonoBehaviour:
     - Key: 1
       Value: 16
     - Key: 2
-      Value: 0.1
+      Value: 0.5
     - Key: 7
       Value: 1
     - Key: 11
       Value: 1
     - Key: 12
       Value: 1
-  ProjectilePrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
       type: 3}
-    Speed: 100
-    Gravity: 10
+    LandingPrefab: {fileID: 0}
+    Speed: 500
+    Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: -1
-    MinRange: 1
+    MinRange: 0.35
     NoSource: 0
     SoundRadius: 20
     DamageExplosion: 0
@@ -181,7 +180,7 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 4
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
