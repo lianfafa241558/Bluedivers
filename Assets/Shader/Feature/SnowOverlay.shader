@@ -41,6 +41,10 @@ Shader "Custom/SnowOverlay"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
+            // 积雪的全局量（_SnowEnabled/_GlobalSnowAmount/_SnowMask/_SnowMaskRect/_SnowMaskTiles）
+            // 与覆盖度公式、草地积雪函数都在这份共享文件里（草材质也 include 它，保证两边一致）
+            #include "Assets/Shader/Feature/SnowOverlayCommon.hlsl"
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -67,19 +71,8 @@ Shader "Custom/SnowOverlay"
             TEXTURE2D(_NoiseMap);
             SAMPLER(sampler_NoiseMap);
 
-            // 全局控制变量（由 SnowController 通过 Shader.SetGlobalFloat 设置，非材质属性）
-            float _SnowEnabled;
-            float _GlobalSnowAmount;
-
-            // 积雪遮罩（由 SnowController 通过 Shader.SetGlobalTexture 设为纹理阵列）：
-            // 1=正常积雪，0=该点无雪（弹坑、地形被破坏处）。
-            // 切成 _SnowMaskTiles×_SnowMaskTiles 片存放，弹坑只重传被碰到的那一片；0 表示遮罩未创建
-            TEXTURE2D_ARRAY(_SnowMask);
-            SAMPLER(sampler_SnowMask);
-            // 遮罩映射：xy=地形原点(x,z)，zw=1/地形尺寸，世界坐标 XZ 乘它得到遮罩 UV
-            float4 _SnowMaskRect;
-            // 遮罩每边切片数
-            float _SnowMaskTiles;
+            // 全局控制变量（_SnowEnabled/_GlobalSnowAmount）、积雪遮罩（_SnowMask/_SnowMaskRect/_SnowMaskTiles）
+            // 与 SnowSurfaceCoverage() 都在 SnowOverlayCommon.hlsl 里声明/实现
 
             Varyings vert(Attributes IN)
             {
@@ -96,30 +89,14 @@ Shader "Custom/SnowOverlay"
             {
                 half3 normalWS = normalize(IN.normalWS);
 
-                // 检测朝上面：法线与世界上方向的点积 = 表面朝上程度
-                half upDot = saturate(dot(normalWS, half3(0.0, 1.0, 0.0)));
-
                 // 噪声干扰：按世界坐标采样噪声，扰动阈值使积雪边缘破碎、疏密不均
                 half noise = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, IN.positionWS.xz * _NoiseScale).r;
-                half threshold = _SnowThreshold + (noise - 0.5) * _NoiseStrength;
 
-                // 平滑过渡：smoothstep 在阈值上下 _SnowSoftness 范围内做柔和过渡
-                half mask = smoothstep(threshold - _SnowSoftness, threshold + _SnowSoftness, upDot);
+                // 覆盖度（朝上程度 × 噪声扰动阈值 × 积雪遮罩，遮罩内 0 的点即弹坑等处不出雪）
+                // —— 与草地积雪共用 SnowOverlayCommon.hlsl 里的同一套公式
+                half mask = SnowSurfaceCoverage(IN.positionWS, normalWS, _SnowThreshold, _SnowSoftness,
+                                                _NoiseStrength, noise, 0.0h);
                 mask *= _SnowAmount * saturate(_GlobalSnowAmount);
-
-                // 积雪遮罩：世界坐标 XZ → 遮罩 UV → 定位切片与片内 UV，采样值 0 的点（弹坑等）不出雪。
-                // saturate 兜底，UV 越界时不依赖纹理 wrap 模式；
-                // _SnowMaskTiles 为 0 表示遮罩尚未初始化（域重载后全局变量会重置），此时按满雪处理
-                half snowMaskValue = 1.0;
-                if (_SnowMaskTiles > 0.0)
-                {
-                    float2 snowMaskUV = saturate((IN.positionWS.xz - _SnowMaskRect.xy) * _SnowMaskRect.zw);
-                    float2 tileUV = snowMaskUV * _SnowMaskTiles;
-                    float2 tileCoord = min(floor(tileUV), _SnowMaskTiles - 1.0);
-                    float slice = tileCoord.y * _SnowMaskTiles + tileCoord.x;
-                    snowMaskValue = SAMPLE_TEXTURE2D_ARRAY(_SnowMask, sampler_SnowMask, tileUV - tileCoord, slice).r;
-                }
-                mask *= snowMaskValue;
 
                 // 简单光照：主光半兰伯特 + 固定环境补偿，保证雪面有明暗且夜晚不至于全黑
                 Light mainLight = GetMainLight();

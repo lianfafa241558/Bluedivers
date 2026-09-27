@@ -24,13 +24,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5877342823092023798}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &-766845851129917296
 MonoBehaviour:
@@ -45,11 +45,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   missionTag: 12288
-  iconSizeScale: 0.7
   missionType: 1
   priority: 0
   prefabs:
   - {fileID: 6951077649718186921, guid: 5ed335f10f701664aa7036acb18e7115, type: 3}
+  - {fileID: 6951077649718186921, guid: f8d3a2ac1498ee242898544f1c7884e4, type: 3}
   title: "\u62C6\u9664\u88AD\u63A0\u8005\u6298\u8D8A\u951A"
   tip: 
   MaxProgress: 0
@@ -81,12 +81,12 @@ MonoBehaviour:
   icon: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
   entitySize: 0
-  percentage: 0
+  _sceneMissionData: {fileID: 0}
   subTask: []
+  percentage: 0
   InAirdropRange: 0
   entity: {fileID: 0}
   end: 0
   completed: 0
-  useBar: 0
   actorNames:
   - ScienceFacility

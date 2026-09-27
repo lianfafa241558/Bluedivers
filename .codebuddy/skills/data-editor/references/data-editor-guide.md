@@ -182,6 +182,47 @@ if (EditorGUI.EndChangeCheck() && _cachedEditor.serializedObject != null
 - **专属 CustomEditor 如果自己在 `OnInspectorGUI` 内 `ApplyModifiedProperties()`，外层 `DrawCachedInspector` 的 EndChangeCheck/`hasModifiedProperties` 检测就失效、不会 SaveAssets**。此时必须在修改后自行 `EditorUtility.SetDirty(target)` 并调度 `AssetDatabase.SaveAssets()`（参考 `AirdropData_SOEditor.ApplyDirty`：delayCall 去重）。
 - 直改数据/数组的按钮操作建议经 `SerializedProperty` 而非直接改 C# 字段，并即时 `ApplyModifiedProperties`。
 
+### 6.4 `[Compare]` 条件显隐（按枚举 / 开关切换字段显示）
+
+`FPSGame.Attribute.CompareAttribute`（定义在 `Assets/Scripts/00Attribute/CustomAttribute.cs`）让字段按**同层另一个字段**的取值决定显示/隐藏。隐藏 = `OnGUI` 直接 return + `GetPropertyHeight` 返回 0 → **完全不占位**，不是禁用。
+
+**构造与操作符（易错）**
+
+| 写法 | 实际含义 |
+|---|---|
+| `[Compare("flag")]` | 单参构造只设 `contField` → `enumValue = 0`、`operate = default = Equal` ⇒ **控制字段 == 0** |
+| `[Compare("flag", 1)]` | 双参构造的 `operate` 默认值是 `Greater` ⇒ **控制字段 > 1**（不是等于！） |
+| `[Compare("flag", 1, CompareOperate.Equal)]` | 明确写操作符才稳妥 |
+
+- `CompareOperate`：`Equal / NotEqual / Less / LessEqual / Greater / GreaterEqual / Contain / NotContain`；后两个是**位掩码**判断（`(控制值 & 目标) == 目标`，配 `[Flags]` 枚举用）。
+- 判定入口 `CustomLabelDrawer.Calculate(operate, source, target)`；`Float` 控制字段走 `Mathf.Approximately`（近似比较），要精确见 `NotEqual`/区间判断自己写检视器。
+- 支持的控制字段类型：`bool` / 整型 / `float` / `enum`；**其他类型**（对象引用等）按"引用是否非空"折算成 1/0。
+
+**谁执行、谁必须自己处理**
+
+- `[CustomPropertyDrawer(typeof(CompareAttribute))] CustomLabelDrawer` 是标准 PropertyDrawer ⇒ 任何用 `EditorGUI.PropertyField` 画该字段的地方都生效（标准 Inspector、`EditorOverride`、专属 CustomEditor 里的 `PropertyField`）。
+- `EditorOverride` 另有一条自己的 `ShouldDisplayField(prop)`：反射 **root target** 上的同名字段，用于它自绘/内联数组那条路径。
+- **专属 `[CustomEditor]` 里手动列字段或手动 `DrawField` 的必须自己调** `CustomLabelDrawer.ShouldDisplayField(prop, attr)`（`AirdropData_SOEditor` 就是这样），否则不显隐。
+
+**控制字段的定位规则**（`CustomLabelDrawer.GetContainerPath(propertyPath)`，2026-09-27 修正）
+
+控制字段与当前字段**必须同层**：
+
+| 当前字段的 `propertyPath` | 容器 | 控制字段 |
+|---|---|---|
+| `a`（顶层） | `""` | `contField` |
+| `a.b.c` | `a.b` | `a.b.contField` |
+| `a.list.Array.data[i]`（特性挂在 **List 字段本身**，Unity 会把它应用到每个元素上） | `a` | `a.contField`（List 字段的**兄弟**） |
+| `a.list.Array.data[i].x`（特性挂在 **元素内部的字段**上，如 `List<结构体>` 的元素） | `a.list.Array.data[i]` | `a.list.Array.data[i].contField`（**同一个元素里**） |
+
+⚠ 修正前，第 4 行的情形（"List 元素内部的字段"）会被推成顶层的 `contField` → `FindProperty` 返回 null ⇒ **字段永远隐藏 + 每次重绘刷一条 `找不到控制属性 xxx`**。排查"Inspector 字段莫名消失 + Console 刷 error"先查控制字段是否同层。
+
+**其他限制**
+
+- `PropertyAttribute.AllowMultiple` 默认 `false` ⇒ **一个字段只能挂一个 `[Compare]`**（要 AND 两个条件只能自写检视器）。
+- 跨层引用（外层字段控制内层结构的字段）默认不支持；把控制字段放进同一层，或在检视器里自写判断。
+- 变更控制字段后需要 Inspector 重绘才看到效果（IMGUI 每帧重绘，正常无需手动 `Repaint`；数据编辑器右面板由 `DrawCachedInspector` 每帧绘制）。
+
 ## 7. SOPickerPopup 复用指南
 
 `SOPickerPopup<T>`（`T : UnityEngine.Object`）是可搜索的弹窗列表，委托驱动展示：

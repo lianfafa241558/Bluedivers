@@ -372,6 +372,18 @@ public class AirdropController : MonoBehaviour
                     }
                 }
                 break;
+            case AirdropState.Cool:
+                if (data.cfg.ID == Constants.HealBag)
+                {
+                    //还有层数的时候不读条
+                    if (data.arriveCount > 0)
+                    {
+                        data.State = AirdropState.Ready;
+                        data.time = 0;
+                    }
+
+                }
+                break;
         }
         
 

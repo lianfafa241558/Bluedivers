@@ -23,6 +23,18 @@ public static class WeatherAtmosphereController
     /// </summary>
     public static Gradient FogColorGradient;
 
+    /// <summary>
+    /// 地图覆盖的天空盒天顶色渐变（本色，随昼夜采样）。由 TaskManager 在选图时从 MapData_SO 注入；
+    /// 未注入（null）时昼夜模块使用自己场景级的 skyColor 渐变。仅作用于天空盒，不参与环境光
+    /// </summary>
+    public static Gradient SkyColorGradient;
+
+    /// <summary>
+    /// 地图覆盖的天空盒赤道/地平线色渐变。由 TaskManager 在选图时从 MapData_SO 注入；
+    /// 未注入（null）时昼夜模块使用自己场景级的 equatorColor 渐变
+    /// </summary>
+    public static Gradient EquatorColorGradient;
+
     // ---- 目标值：天气系统切换状态时直接写入 ----
 
     /// <summary>目标能见度倍率</summary>

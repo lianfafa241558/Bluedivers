@@ -255,17 +255,18 @@ namespace Unity.FPS.Game {
                 case DamageTypeEnum.Destruction:
                     return 0;//护甲破坏不计入伤害量
                 case DamageTypeEnum.Burn:
-                case DamageTypeEnum.Freeze:
+                
                 case DamageTypeEnum.Electric:
                 case DamageTypeEnum.Radiation:
                     AddAboGauge(type, value, damageSource);
-                    return value;//燃烧/冰冻/雷击/辐射 伤害计入伤害量
+                    return value;//燃烧/雷击/辐射 伤害计入伤害量
+                case DamageTypeEnum.Freeze:
                 case DamageTypeEnum.Toxicity:
                 case DamageTypeEnum.Hacker:
                 case DamageTypeEnum.Terror:
                 case DamageTypeEnum.Vertigo:
                     AddAboGauge(type, value, damageSource);
-                    return 0;//毒/骇入/恐慌/眩晕不计入伤害量
+                    return 0;//冰冻/毒/骇入/恐慌/眩晕不计入伤害量
 
                 default:
                     return value;

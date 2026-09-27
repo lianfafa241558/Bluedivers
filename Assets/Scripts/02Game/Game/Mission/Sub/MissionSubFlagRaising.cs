@@ -30,6 +30,8 @@ namespace FpsGame.Mission
         }
 
         private bool waveTriggered;
+        //[SerializeField]
+        //private GameObject[] list;
 
         public override bool Tick()
         {
@@ -57,8 +59,9 @@ namespace FpsGame.Mission
             if (nowTime < 0) return true;
             if (nowTime >= 100)
             {
-                int enemyCount = BattleManager.Instance.FindUnits(new PECircle(entity.LogicPos, (int)defenseRange),TargetCfg.Enemy).Count;
-                if (count>0)
+                //list = BattleManager.Instance.FindUnits(new PECircle(entity.LogicPos, (int)defenseRange), TargetCfg.Enemy).Select(item=>item.gameObject).ToArray();
+                int enemyCount = BattleManager.Instance.FindUnits(new PECircle(entity.LogicPos, (int)defenseRange), TargetCfg.Enemy).Count;
+                if (enemyCount > 0)
                 {
                     UpdateTip("肃清区域敌人  [剩余" + count + "]");
                 }

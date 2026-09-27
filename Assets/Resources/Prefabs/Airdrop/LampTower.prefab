@@ -405,6 +405,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 8168856613308711789}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7399909234010293307}
   m_SourcePrefab: {fileID: 100100000, guid: eb6945ceeb524c34eafcb4551c4d6396, type: 3}
 --- !u!4 &1971562727815215155 stripped
 Transform:
@@ -497,7 +501,7 @@ MonoBehaviour:
   MaxHealth: 100
   MaxShield: 0
   showArmorLists: []
-  MainPart: {fileID: 0}
+  MainPart: {fileID: 7399909234010293307}
   demolishValue: -1
   showHealth: 0
   m_IsDead: 0
@@ -548,7 +552,7 @@ MonoBehaviour:
   team: 0
   threat: 0
   aimPoint: {fileID: 1977655472960485097}
-  UseHpBar: 1
+  UseHpBar: 0
   HpHeight: 1
   shape: 0
   rangeLength: 1.5
@@ -637,6 +641,28 @@ MonoBehaviour:
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
   events: []
   UseAttack: 0
+--- !u!114 &7399909234010293307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5424410069759482357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
+  armorValue: 0
+  LineArmor:
+  - {fileID: 7184942307819417587}
+  armorBreakEffect: []
+  BleedValue: 0
+  isMain: 0
+  showArmor: 0
 --- !u!1001 &5153817709104510528
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -828,8 +854,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6323003738840652307, guid: 099387833863da74a904343ca5a1ee14,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7184942307819417587}
   m_SourcePrefab: {fileID: 100100000, guid: 099387833863da74a904343ca5a1ee14, type: 3}
+--- !u!1 &1169206921809030227 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6323003738840652307, guid: 099387833863da74a904343ca5a1ee14,
+    type: 3}
+  m_PrefabInstance: {fileID: 5153817709104510528}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7184942307819417587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1169206921809030227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c661b922f5a2365469cd86394bae0e06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 0
+  armorLevel: 0
+  source: {fileID: 0}
 --- !u!4 &1977655472960485097 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6697981615863234729, guid: 099387833863da74a904343ca5a1ee14,

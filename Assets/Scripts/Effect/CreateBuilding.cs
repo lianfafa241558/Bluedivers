@@ -8,6 +8,8 @@ public class CreatBuilding : MonoBehaviour
     EnemyActorVariant_SO data;
     [SerializeField]
     MapActorVariant_SO data2;
+    [SerializeField]
+    bool allowfloat;
     void Start()
     {
         var pos = transform.position;
@@ -28,7 +30,11 @@ public class CreatBuilding : MonoBehaviour
             if (tmp == null) return;
             var go=Instantiate(tmp, pos, rotation, parent);
             if (go.TryGetComponent(out I_AIController cont)) cont.BirthDuration = 0;
-            if (go.TryGetComponent(out I_Actor actor)) actor.IsFixed = true;
+            if (go.TryGetComponent(out I_Actor actor))
+            {
+                actor.IsFixed = true;
+                if(allowfloat) actor.AddFlag(Core.ActorFlag.AllowFloating);
+            }
             
         });
 

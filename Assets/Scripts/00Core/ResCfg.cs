@@ -7,13 +7,13 @@ namespace Core
     public enum ShapeType
     {
         /// <summary>圆形</summary>
-        Circle,
+        [InspectorName("圆形")] Circle,
         /// <summary>椭圆</summary>
-        Ellipse,
+        [InspectorName("椭圆")] Ellipse,
         /// <summary>矩形</summary>
-        Rectangle,
+        [InspectorName("矩形")] Rectangle,
         /// <summary>棱形</summary>
-        Prismatic
+        [InspectorName("棱形")] Prismatic
     }
 
 

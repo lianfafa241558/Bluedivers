@@ -424,7 +424,7 @@ namespace FpsGame.MapUtils
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0,
+                            probability = 0.0005f,
                             minSlope = 0f, maxSlope = 30f, minHeight = 0.1f, maxHeight = 0.7f
                         },
                         rockCover = new RockCoverSpawnData
@@ -536,12 +536,12 @@ namespace FpsGame.MapUtils
 
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0025f,
+                            probability = 0.001f,
                             minSlope = 0f, maxSlope = 55f, minHeight = 0.05f, maxHeight = 0.95f
                         },
                         treeSpawn = new VegetationSpawnData
                         {
-                            probability = 0.0015f,
+                            probability = 0.0006f,
                             minSlope = 0f, maxSlope = 35f, minHeight = 0.1f, maxHeight = 0.85f
                         },
                         rockCover = new RockCoverSpawnData
@@ -575,7 +575,7 @@ namespace FpsGame.MapUtils
 
                         rockSpawn = new VegetationSpawnData
                         {
-                            probability = 0.002f,
+                            probability = 0.001f,
                             minSlope = 0f, maxSlope = 50f, minHeight = 0.05f, maxHeight = 0.9f
                         },
                         treeSpawn = new VegetationSpawnData

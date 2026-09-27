@@ -252,6 +252,10 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
         task.mapCfg = mapData;
         // 地图雾色注入氛围桥：昼夜模块从桥上取雾色本色，避免昼夜系统跨层直引地图数据
         WeatherAtmosphereController.FogColorGradient = mapData.fogColor;
+        // 地图可选覆盖天空盒的天空/赤道色（未勾选则注入 null → 昼夜模块沿用场景 Day-Night-Manager 上的渐变）
+        bool overSkyColor = mapData.skyColor != null && mapData.equatorColor != null;
+        WeatherAtmosphereController.SkyColorGradient = overSkyColor ? mapData.skyColor : null;
+        WeatherAtmosphereController.EquatorColorGradient = overSkyColor ? mapData.equatorColor : null;
         //Debug.LogError("选择的敌人类�? + mapData.enemyVarietyType+" 名称" + task.campData.name);
         /*
         //TODO:测试

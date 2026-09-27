@@ -13,6 +13,8 @@ namespace FpsGame.Mission
 
     public class MissionView : BaseObject, I_MissionPoint
     {
+
+        private static float lastVaildNoticeTime, lastUnvaildNoticeTime;
         #region 接口
 
         public override float HalfRange => mission.entitySize;
@@ -125,11 +127,19 @@ namespace FpsGame.Mission
                 InAirdropRange = inAirdropRange;
                 if (inAirdropRange)//进去又出来就不说了
                 {
-                    if (!allowUseAirdrop) CreatNotice("Kotama", "TaskPodVaildAble", () => InAirdropRange);
+                    if (!allowUseAirdrop && Time.time - lastVaildNoticeTime > 30)
+                    {
+                        lastVaildNoticeTime = Time.time;
+                        CreatNotice("Kotama", "TaskPodVaildAble", () => InAirdropRange);
+                    }
                 }
                 else
                 {
-                    if (!allowUseAirdrop) CreatNotice("Kotama", "TaskPodUnvaildAble", () => !InAirdropRange);
+                    if (!allowUseAirdrop && Time.time - lastUnvaildNoticeTime > 30)
+                    {
+                        lastUnvaildNoticeTime = Time.time;
+                        CreatNotice("Kotama", "TaskPodUnvaildAble", () => !InAirdropRange);
+                    }
                 }
             }
 

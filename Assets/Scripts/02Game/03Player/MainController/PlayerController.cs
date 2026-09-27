@@ -332,7 +332,7 @@ public partial class PlayerController : BaseSelfMoveableController
             _cameraYaw = transform.eulerAngles.y;
             float xOffset = _thirdPersonCameraPoint.localPosition.x;
             float height = _thirdPersonCameraPoint.localPosition.y;
-            float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z);
+            float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z) * _thirdPersonDistanceScale;
             Quaternion rotation = Quaternion.Euler(m_CameraVerticalAngle, _cameraYaw, 0);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
             PlayerCamera.transform.position = CenterPos + offset;

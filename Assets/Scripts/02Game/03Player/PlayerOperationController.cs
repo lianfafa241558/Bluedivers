@@ -6,6 +6,8 @@ using UnityEngine;
 
 public class PlayerOperationController : MonoBehaviour
 {
+    /// <summary>第三人称与物体交互时的相机视距缩放（0.5 = 视距缩小一半，交互物看起来更大）</summary>
+    private const float k_InteractCameraDistanceScale = 0.3f;
 
     public IFurniture target;
 
@@ -85,6 +87,10 @@ public class PlayerOperationController : MonoBehaviour
         {
             m_PlayerController.WeaponsManager.ForceAim = false;
         }
+
+        // 第三人称与物体交互时拉近相机视距，让交互物看起来更大
+        m_PlayerController.ThirdPersonDistanceScale =
+            m_PlayerController.IsThirdPerson && target != null ? k_InteractCameraDistanceScale : 1f;
 
         if (target != null)
         {
@@ -208,6 +214,8 @@ public class PlayerOperationController : MonoBehaviour
                 if (aud) { aud.Stop(); aud = null; }
                 target = null;
                 m_InputHandler.InOperation = false;
+                // 脚本被禁用后不再刷新，需在此还原相机视距
+                if (m_PlayerController) m_PlayerController.ThirdPersonDistanceScale = 1f;
                 enabled = false;
                 break;
         }

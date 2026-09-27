@@ -184,6 +184,14 @@ Shader "ToonLit/ToonLit_Scene"
             //#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_instancing
+            // 草地/地形细节积雪（材质关键字，只开在草材质 PandaMat2 上）：
+            // 草不是 Renderer（Terrain 按 detailPrototypes 内部实例化绘制），吃不到 SnowRendererFeature 的
+            // "用雪材质重画一遍"，所以只能在草自己的片元里叠雪 —— 见 ToonLit_Shared.hlsl 的 ShadeFinalColor
+            // 与 Assets/Shader/Feature/SnowOverlayCommon.hlsl。
+            // ⚠ 有意不做成 [Toggle] 属性：往共享的 UnityPerMaterial CBUFFER 里加字段会波及所有
+            //   include ToonLit_Shared.hlsl 的 shader；关键字直接写在材质上即可（同 _MAIN_LIGHT_SHADOWS 的做法）。
+            //   想关掉草积雪：把材质上的 _SNOW_GRASS 关键字去掉（或用 SnowController.SetGrassAmount(0)）。
+            #pragma shader_feature_local_fragment _SNOW_GRASS
             // ---------------------------------------------------------------------------------------------
             // Unity defined keywords
             #pragma multi_compile_fog

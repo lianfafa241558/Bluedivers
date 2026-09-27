@@ -59,22 +59,8 @@ public class CustomLabelDrawer : PropertyDrawer
     {
         if (string.IsNullOrEmpty(attr.contField)) return true;
 
-        // 获取当前属性的父级对象
-        var parentPath = property.propertyPath;
-
-        // [Compare] 加在数组/List 字段上时，Unity 会把它应用到每个数组元素上
-        // （路径形如 SomeField.Array.data[i]），这里去掉数组索引段，
-        // 让控制字段按"数组字段所在层级"定位（SomeField.Array → SomeField）
-        var arrayIdx = parentPath.IndexOf(".Array");
-        if (arrayIdx > 0)
-        {
-            parentPath = parentPath.Substring(0, arrayIdx);
-        }
-
-        var lastDot = parentPath.LastIndexOf('.');
-        parentPath = lastDot > 0 ? parentPath.Substring(0, lastDot) : "";
-        // 构建完整控制属性路径        //若父级路径为空（顶层属性），直接使用contField（如test2）；
-        //否则拼接父路径（如MissionCfg.test2）
+        // 控制字段必须与当前字段**同层**：先求出"当前字段所在容器"的序列化路径，再拼 contField
+        var parentPath = GetContainerPath(property.propertyPath);
         var fullPath = string.IsNullOrEmpty(parentPath)
             ? attr.contField
             : $"{parentPath}.{attr.contField}";
@@ -82,7 +68,7 @@ public class CustomLabelDrawer : PropertyDrawer
         var controlProp = property.serializedObject.FindProperty(fullPath);
         if (controlProp == null)
         {
-            Debug.LogError($"找不到控制属性 {fullPath}");
+            Debug.LogError($"找不到控制属性 {fullPath}（字段 {property.propertyPath} 上的 [Compare]）");
             return false;
         }
 
@@ -102,6 +88,30 @@ public class CustomLabelDrawer : PropertyDrawer
                 return Calculate(attr.operate, controlProp.objectReferenceValue != null ? 1 : 0, attr.enumValue);
         }
     }
+    /// <summary>
+    /// 求"当前字段所在容器"的序列化路径（<see cref="ShouldDisplayField"/> 用它拼控制字段），按路径形态分三种：
+    /// <list type="bullet">
+    /// <item>顶层字段 <c>a</c> → ""（控制字段就是顶层字段）</item>
+    /// <item>嵌套字段 <c>a.b.c</c> → <c>a.b</c>（去掉最后一段）</item>
+    /// <item>数组 / List：特性加在 **List 字段本身**时 Unity 会把它应用到每个元素上（路径 <c>a.list.Array.data[i]</c>）
+    /// → 去掉整个数组段再当普通字段处理 → <c>a</c>（控制字段是 List 字段的兄弟）；
+    /// 加在 **元素内部的字段** 上（<c>a.list.Array.data[i].x</c>）→ <c>a.list.Array.data[i]</c>（控制字段在同一个元素里）</item>
+    /// </list>
+    /// </summary>
+    /// <param name="propertyPath"><c>SerializedProperty.propertyPath</c></param>
+    private static string GetContainerPath(string propertyPath)
+    {
+        // ".Array.data[i]" 这一段代表"数组元素"，本身不是一个字段层级
+        if (propertyPath.Length > 0 && propertyPath[propertyPath.Length - 1] == ']')
+        {
+            var arrayIdx = propertyPath.LastIndexOf(".Array.data[");
+            if (arrayIdx > 0) propertyPath = propertyPath.Substring(0, arrayIdx);
+        }
+
+        var lastDot = propertyPath.LastIndexOf('.');
+        return lastDot > 0 ? propertyPath.Substring(0, lastDot) : "";
+    }
+
     public static bool Calculate(CompareOperate operate, float source, float target)
     {
         return operate switch {

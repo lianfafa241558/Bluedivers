@@ -14,6 +14,7 @@ namespace FPSGame.Gameplay
     /// 装备后：模型挂在玩家 HandPoint 上、设置左右手 IK、强制玩家切空手、移速 -50%；
     /// 卸载后：清除 IK、恢复移速、落地为可再拾取实体（带基于 CharacterController 的模拟重力自然下落触地）、自动切回主武器。
     /// 触发自动丢下：切到其他武器 / 玩家倒地 / 进入不可携带载具（CanEnterVehicle=false）。
+    /// 主动丢下：装备态下按交互键（PlayerInputHandler.GetOperateDown），正面有可交互物时交互键优先给交互物。
     /// 落地重力内联在本类中（基于 CharacterController.Move）：装备期间禁用（跟随手部），卸载落地后启用（下落触地停住）。
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
@@ -58,6 +59,15 @@ namespace FPSGame.Gameplay
         Health m_Health;
         PlayerMountPoint m_MountPoint;
 
+        /// <summary>玩家输入组件：装备态下检测交互键主动丢下</summary>
+        PlayerInputHandler m_InputHandler;
+
+        /// <summary>玩家交互控制器：用于判断当前是否面朝可交互物（有交互目标时交互键让给交互物）</summary>
+        PlayerOperationController m_Operation;
+
+        /// <summary>本次装备是否还需等交互键松开：避免"按交互键拾取"的同一次按下立刻又把装备丢下</summary>
+        bool m_WaitOperateRelease;
+
         /// <summary>落地用角色控制器：装备期间禁用（避免手部物体与玩家/地面碰撞），卸载落地后启用</summary>
         CharacterController m_Controller;
 
@@ -89,11 +99,18 @@ namespace FPSGame.Gameplay
         }
 
         /// <summary>
-        /// 落地模拟重力：仅在落地态（m_GravityActive）且角色控制器可用时生效。
-        /// 触地（isGrounded）时垂直速度归零并轻微吸附，未触地则加速下落、限速后应用位移。
+        /// 装备态（m_Owner 存在且重力关闭）：检测交互键主动丢下装备；
+        /// 落地态：模拟重力，触地（isGrounded）时垂直速度归零并轻微吸附，未触地则加速下落、限速后应用位移。
         /// </summary>
         private void Update()
         {
+            // 装备态：跟随手部，处理"交互键丢下"
+            if (m_Owner != null && !m_GravityActive)
+            {
+                UpdateDropByOperate();
+                return;
+            }
+
             if (!m_GravityActive || m_Controller == null || !m_Controller.enabled)
             {
                 return;
@@ -111,6 +128,37 @@ namespace FPSGame.Gameplay
             }
 
             m_Controller.Move(Vector3.up * m_VerticalVelocity * Time.deltaTime);
+        }
+
+        /// <summary>
+        /// 装备态下检测"交互键丢下装备"。
+        /// - 拾取用的那一次按下要先松开（m_WaitOperateRelease），否则拾取当帧就可能立刻把装备丢下；
+        /// - 正面存在可交互物（PlayerOperationController.target）时，交互键优先交给该交互物，不丢装备。
+        /// </summary>
+        void UpdateDropByOperate()
+        {
+            if (m_InputHandler == null) return;
+
+            // 等拾取所用的那次按下松开，避免拾取即丢下
+            if (m_WaitOperateRelease)
+            {
+                if (!m_InputHandler.GetOperateHeld()) m_WaitOperateRelease = false;
+                return;
+            }
+
+            if (!m_InputHandler.GetOperateDown()) return;
+            // 交互键优先给正面的交互物（如把手上装备放到炮位/拾取其它物体）
+            if (m_Operation != null && m_Operation.target != null) return;
+
+            DropByOperate();
+        }
+
+        /// <summary>交互键主动丢下装备：卸载落地并切回主武器（与"丢弃装备"轮盘卸载一致）</summary>
+        void DropByOperate()
+        {
+            if (m_EquipController == null) return;
+            m_SkipRestoreWeapon = false;
+            m_EquipController.UninstallEquip(this);
         }
 
         /// <summary>IEquippable.Owner（I_Actor）显式实现</summary>
@@ -137,6 +185,8 @@ namespace FPSGame.Gameplay
             m_EquipController = actor.gameObject.GetComponent<EquipController>();
             m_Health = actor.gameObject.GetComponent<Health>();
             m_MountPoint = actor.gameObject.GetComponent<PlayerMountPoint>();
+            m_InputHandler = actor.gameObject.GetComponent<PlayerInputHandler>();
+            m_Operation = actor.gameObject.GetComponent<PlayerOperationController>();
 
             // 强制玩家切空手（装备在手中，不可持武器）
             if (m_Weapons != null)
@@ -188,6 +238,8 @@ namespace FPSGame.Gameplay
 
             // 订阅玩家事件：切武器 / 倒地 / 进载具
             m_SkipRestoreWeapon = false;
+            // 拾取用的那一次交互键按下需先松开，之后才允许"交互键丢下"
+            m_WaitOperateRelease = true;
             if (m_Weapons != null) m_Weapons.OnSwitchedToWeapon += OnWeaponSwitched;
             if (m_Health != null) m_Health.OnDie += OnPlayerDie;
             if (m_Player != null) m_Player.OnEnterVehicle += OnEnterVehicle;
@@ -255,6 +307,8 @@ namespace FPSGame.Gameplay
             m_EquipController = null;
             m_Health = null;
             m_MountPoint = null;
+            m_InputHandler = null;
+            m_Operation = null;
         }
 
         /// <summary>玩家切到其他武器（非空手）时丢下装备</summary>

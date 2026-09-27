@@ -29,13 +29,28 @@ namespace FPSGame.DayNightSystem
         private static readonly int SkyGroundColorId = Shader.PropertyToID("_GroundColor");
         /// <summary>天空盒大气厚度属性 ID（程序化天空盒；沙尘期加厚让天空变浑浊）</summary>
         private static readonly int SkyAtmosphereThicknessId = Shader.PropertyToID("_AtmosphereThickness");
+        /// <summary>天空盒天顶色属性 ID（Environment/GradientSkybox 专用）</summary>
+        private static readonly int SkyColorId = Shader.PropertyToID("_SkyColor");
+        /// <summary>天空盒赤道/地平线色属性 ID（Environment/GradientSkybox 专用）</summary>
+        private static readonly int SkyEquatorColorId = Shader.PropertyToID("_EquatorColor");
+        /// <summary>太阳盘方向属性 ID（Environment/GradientSkybox 专用，决定太阳盘位置）</summary>
+        private static readonly int SkySunDirectionId = Shader.PropertyToID("_SunDirection");
+        /// <summary>太阳盘颜色属性 ID（Environment/GradientSkybox 专用）</summary>
+        private static readonly int SkySunColorId = Shader.PropertyToID("_SunColor");
 
         [InspectorName("环境光模式")][SerializeField]
         private AmbientMode ambientMode = AmbientMode.Trilight;
 
         [Header("环境照明")]
+        [InspectorName("天空色（天顶 + 环境光天空分量）")]
+        [Tooltip("同时驱动 RenderSettings.ambientSkyColor 与渐变天空盒 _SkyColor（天顶）。" +
+                 "地图可在 MapData_SO 上勾选「覆盖天空盒的天空/赤道色」用地图自己的渐变替换天空盒，但不影响环境光")]
         [SerializeField] private Gradient skyColor;
+        [InspectorName("赤道色（地平线 + 环境光赤道分量）")]
+        [Tooltip("同时驱动 RenderSettings.ambientEquatorColor 与渐变天空盒 _EquatorColor（地平线一圈）")]
         [SerializeField] private Gradient equatorColor;
+        [InspectorName("地面色（环境光地面分量 + 天空盒下半球）")]
+        [Tooltip("驱动 RenderSettings.ambientGroundColor 与渐变天空盒 _GroundColor；不开放地图覆盖")]
         [SerializeField] private Gradient groundColor;
 
         [Header("光照设置")]
@@ -82,7 +97,8 @@ namespace FPSGame.DayNightSystem
         [Min(0f)]
         [SerializeField] private float fogHeightRise = 8f;
         [InspectorName("沙尘期大气厚度倍率")]
-        [Tooltip("沙尘期把程序化天空盒的 _AtmosphereThickness 乘到这个倍率：天空更浑浊、太阳盘更弱")]
+        [Tooltip("沙尘期把程序化天空盒的 _AtmosphereThickness 乘到这个倍率：天空更浑浊、太阳盘更弱。" +
+                 "仅对程序化天空盒(Skybox/Procedural)生效；渐变天空盒的沙尘靠天空各段颜色向沙尘色插值表达")]
         [Range(1f, 5f)] [SerializeField] private float dustAtmosphereScale = 2.5f;
         [InspectorName("天气氛围过渡时长(秒)")]
         [Tooltip("天气切换时，能见度/雾强度/云层参数从当前值渐变到目标值所需的时间")]
@@ -103,8 +119,15 @@ namespace FPSGame.DayNightSystem
                  "材质上的 _Exposure 每帧都会被模块覆盖")]
         [Min(0.01f)] [SerializeField] private float skyBaseExposure = 1f;
         [InspectorName("程序化天空盒基准大气厚度")]
-        [Tooltip("写进 _AtmosphereThickness 的基准值，沙尘期按「沙尘期大气厚度倍率」放大")]
+        [Tooltip("写进 _AtmosphereThickness 的基准值，沙尘期按「沙尘期大气厚度倍率」放大。" +
+                 "仅对程序化天空盒(Skybox/Procedural)生效，渐变天空盒不读这个属性")]
         [Min(0.01f)] [SerializeField] private float skyBaseAtmosphereThickness = 1f;
+
+        [Header("天空盒（可选）")]
+        [InspectorName("渐变天空盒材质（留空=用场景 Lighting 里设置的天空盒）")]
+        [Tooltip("填了则在 Initialize 时把它设为 RenderSettings.skybox，便于直接对比程序化/渐变两种天空盒，" +
+                 "不改动场景资产（退出播放即还原）。留空则沿用场景 Lighting 里的天空盒，模块只负责写它的属性")]
+        [SerializeField] private Material gradientSkybox;
 
         /// <summary>
         /// Full Screen Fog 体积组件的运行时实例引用（Initialize 时从 fogVolume 中获取）
@@ -119,6 +142,10 @@ namespace FPSGame.DayNightSystem
         public void Initialize(DayNightState state)
         {
             RenderSettings.ambientMode = ambientMode;
+            // 可选：运行开始时把天空盒换成指定的（渐变）天空盒。留空则用场景 Lighting 里的设置，
+            // 便于同一个场景里直接对比程序化天空盒与渐变天空盒
+            if (gradientSkybox != null)
+                RenderSettings.skybox = gradientSkybox;
             //RenderSettings.fog = true;
             //RenderSettings.fogMode = FogMode.Linear;
             //RenderSettings.fogStartDistance = 50f;
@@ -184,7 +211,7 @@ namespace FPSGame.DayNightSystem
                 }
                 else if (skybox.HasProperty(SkyExposureId))
                 {
-                    // 程序化天空盒（Skybox/Procedural）没有 _Lerp：改用 _Exposure 表达昼夜与天气压暗。
+                    // 无 _Lerp 的天空盒（Skybox/Procedural、Environment/GradientSkybox）：改用 _Exposure 表达昼夜与天气压暗。
                     // 基准曝光取自本组件的配置（不再从材质读），彻底避免"把上一局写进去的值当成基准"的累积
                     float exposure = skyBaseExposure * Mathf.Lerp(nightSkyExposureScale, 1f, skyDayLerp);
                     skybox.SetFloat(SkyExposureId, exposure);
@@ -204,19 +231,49 @@ namespace FPSGame.DayNightSystem
                 WeatherAtmosphereController.FogColor = RenderSettings.fogColor;
                 // 内置雾密度同样受天气能见度联动：能见度低时加浓（参考 0.05 下限防除零）
                 RenderSettings.fogDensity = fogFactor.Evaluate(timeFraction) / Mathf.Max(WeatherAtmosphereController.VisibilityMultiplier, 0.05f)* ActiveFogGradient.Evaluate(timeFraction).a ;
-                // 程序化天空盒（Skybox/Procedural）的天空色调属性名是 _SkyTint（带下划线），
-                // 写成 "SkyTint" 会静默失败（SetColor 找不到属性直接丢弃）。
-                // 曝光已交给 _Exposure 承担昼夜暗度，这里只做天空色调，故随环境光一起被天气轻微压暗
-                if (skybox != null)
+            }
+
+            // 天空盒颜色：与 ambientMode 无关，必须独立驱动（否则非 Trilight 模式下天空盒会停在材质默认色）。
+            // 只写天空盒自身存在的属性（HasProperty 判空，属性名写错会静默丢弃）；昼夜暗度已交给上面写的 _Exposure
+            if (skybox != null)
+            {
+                // 沙尘天气（SkyDust>0）：天空各段颜色向沙尘色靠拢（沙尘是散射体，直接给亮色、不乘 ambient）
+                float dust = Mathf.Clamp01(WeatherAtmosphereController.SkyDust);
+                Color dustColor = WeatherAtmosphereController.SkyDustColor;
+                // 天顶/赤道色允许「地图级覆盖」：TaskManager 选图时把 MapData_SO 的两条渐变注入氛围桥，
+                // 未注入（null）时沿用本组件的场景级渐变。地面色不开放覆盖（地平线以下基本被地形挡住）
+                Gradient skyGrad = WeatherAtmosphereController.SkyColorGradient ?? skyColor;
+                Gradient equatorGrad = WeatherAtmosphereController.EquatorColorGradient ?? equatorColor;
+                Color skySample = Color.Lerp(skyGrad.Evaluate(timeFraction), dustColor, dust);
+                Color equatorSample = Color.Lerp(equatorGrad.Evaluate(timeFraction), dustColor, dust);
+                Color groundSample = Color.Lerp(groundColor.Evaluate(timeFraction), dustColor, dust);
+
+                // 分支 A：渐变天空盒（Environment/GradientSkybox）——天顶/赤道/地面三段分别写，
+                // 与环境光三分量(skyColor/equatorColor/groundColor)同源。
+                // 太阳盘的方向与颜色也由这里喂，避免依赖 URP 主光 uniform 的空间差异
+                if (skybox.HasProperty(SkyColorId))
                 {
-                    // 沙尘天气（SkyDust>0）：天空色调向沙尘色靠拢（沙尘是散射体，直接给亮色、不乘 ambient），
-                    // 同时加厚大气让天空更浑浊、太阳盘更弱
-                    float dust = Mathf.Clamp01(WeatherAtmosphereController.SkyDust);
-                    Color dustColor = WeatherAtmosphereController.SkyDustColor;
-                    if (skybox.HasProperty(SkyTintId))
-                        skybox.SetColor(SkyTintId, Color.Lerp(skyColor.Evaluate(timeFraction), dustColor, dust));
+                    skybox.SetColor(SkyColorId, skySample);
+                    if (skybox.HasProperty(SkyEquatorColorId))
+                        skybox.SetColor(SkyEquatorColorId, equatorSample);
                     if (skybox.HasProperty(SkyGroundColorId))
-                        skybox.SetColor(SkyGroundColorId, Color.Lerp(equatorColor.Evaluate(timeFraction), dustColor, dust));
+                        skybox.SetColor(SkyGroundColorId, groundSample);
+                    // _SkyTint 在本 shader 里不参与着色，只供体积云(DrawVolumetricCloud)采样天空色调
+                    if (skybox.HasProperty(SkyTintId))
+                        skybox.SetColor(SkyTintId, skySample);
+                    if (skybox.HasProperty(SkySunColorId))
+                        skybox.SetColor(SkySunColorId, sunColor.Evaluate(timeFraction));
+                    if (sunLight != null && skybox.HasProperty(SkySunDirectionId))
+                        skybox.SetVector(SkySunDirectionId, -sunLight.transform.forward);
+                }
+                // 分支 B：程序化天空盒（Skybox/Procedural）——只有整体色调 + 地面色两个出口，
+                // 赤道色只能顶替地面色；沙尘浑浊靠加厚大气表达
+                else
+                {
+                    if (skybox.HasProperty(SkyTintId))
+                        skybox.SetColor(SkyTintId, skySample);
+                    if (skybox.HasProperty(SkyGroundColorId))
+                        skybox.SetColor(SkyGroundColorId, equatorSample);
                     if (skybox.HasProperty(SkyAtmosphereThicknessId))
                         skybox.SetFloat(SkyAtmosphereThicknessId, GetSkyAtmosphereThickness(dust));
                 }

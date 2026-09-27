@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-7020063433173230455
+--- !u!114 &-9163973752195431574
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,15 +20,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Und_Spire
+  m_Name: containerDoor_White
   m_Shader: {fileID: 4800000, guid: 242d39e501376824a90015d3ae2d01c9, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _MAIN_LIGHT_SHADOWS
   m_InvalidKeywords:
-  - _REVERSEOCCLUSIONCOLOR_ON
-  - _USEOCCLUSION_ON
   - _UseAlphaClipping
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -45,11 +43,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 75dfb1c5d536f9d4c96e884b65726b7d, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Texture: {fileID: 2800000, guid: 0c9d4396226e7ab4489163db9627056e, type: 3}
+        m_Scale: {x: 1, y: 0.74}
+        m_Offset: {x: 0, y: 0.26}
     - _BlendingMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 94a933ee9350f174f95e8caff3f3b0f7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -81,7 +79,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: e1610d14660ef4047bc354c9c8fc8945, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -93,7 +91,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
-        m_Texture: {fileID: 2800000, guid: 87eb18a6e66bd084b93e3355cf9b1fdd, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OutlineZOffsetMaskTex:
@@ -128,11 +126,12 @@ Material:
     m_Floats:
     - _AdditionalLightIgnoreCelShade: 0.9
     - _AlphaClip: 0
+    - _BaseScale: 1
     - _Blend: 0
-    - _BlendingScale: 0
+    - _BlendingScale: 0.1
     - _BumpScale: 1
-    - _CelShadeMidPoint: -0.5
-    - _CelShadeSoftness: 0.05
+    - _CelShadeMidPoint: 0
+    - _CelShadeSoftness: 0.01
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _ColourOutlineWidth: 0.02
@@ -144,16 +143,15 @@ Material:
     - _DetailNormalMapScale: 1
     - _DirectLightMultiplier: 1
     - _Discoloration: 0
-    - _DissolveValue: -0.1
     - _DstBlend: 0
-    - _EdgeWidth: 0.05
+    - _EdgeWidth: 0.02
     - _EmissionMaskAddite: 0
     - _EmissionMulByBaseColor: 0
     - _EmissionScale: 1
     - _EnvironmentReflections: 1
     - _Expression: 24
     - _FixOutlineColor: 0
-    - _FogMaxValue: 0.8
+    - _FogMaxValue: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.4472136
     - _GlossyReflections: 1
@@ -166,7 +164,7 @@ Material:
     - _OcclusionRemapEnd: 1
     - _OcclusionRemapStart: 0
     - _OcclusionStrength: 1
-    - _OutlineWidth: 11
+    - _OutlineWidth: 6
     - _OutlineZOffset: 0.0001
     - _OutlineZOffsetMaskRemapEnd: 1
     - _OutlineZOffsetMaskRemapStart: 0
@@ -175,9 +173,8 @@ Material:
     - _ReceiveShadowMappingAmount: 0.65
     - _ReceiveShadowMappingPosOffset: 0
     - _ReceiveShadows: 1
-    - _RenderRef: 1
-    - _ReverseOcclusionColor: 1
-    - _ShowX: 1
+    - _RenderRef: 0
+    - _ReverseOcclusionColor: 0
     - _Smoothness: 0.4472136
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -186,7 +183,6 @@ Material:
     - _SpecularSoftness: 0.05
     - _SrcBlend: 1
     - _Surface: 0
-    - _Threshold: 0
     - _UVSec: 0
     - _UseAlphaClipping: 1
     - _UseAlphaUV: 0
@@ -195,7 +191,7 @@ Material:
     - _UseEmission: 0
     - _UseMosaic: 0
     - _UseMouthMap: 0
-    - _UseOcclusion: 1
+    - _UseOcclusion: 0
     - _UseSpecular: 0
     - _UseUV1: 0
     - _WhiteFocusOutline: 0
@@ -204,15 +200,15 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _DissolveValue: {r: 0, g: 0, b: 0, a: 0}
-    - _EdgeColor: {r: 3.2, g: 0.53333336, b: 0, a: 1}
+    - _DissolveValue: {r: 0, g: 0, b: 0, a: 1}
+    - _EdgeColor: {r: 0.14899999, g: 0.020790692, b: 0.012127903, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionMapChannelMask: {r: 1, g: 1, b: 1, a: 0}
     - _HitColor: {r: 0, g: 0, b: 0, a: 1}
-    - _IndirectLightMinColor: {r: 0.1, g: 0.1, b: 0.1, a: 1}
+    - _IndirectLightMinColor: {r: 0.09999997, g: 0.09999997, b: 0.09999997, a: 1}
     - _OcclusionMapChannelMask: {r: 1, g: 0, b: 0, a: 0}
-    - _OutlineColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _ShadowMapColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
+    - _OutlineColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
+    - _ShadowMapColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

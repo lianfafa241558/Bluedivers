@@ -1,6 +1,6 @@
 ---
 name: data-editor
-description: Bluedivers 项目「数据编辑器」（Tools/数据编辑器，DataEditorWindow + DataTabs）专用开发指南。当用户编写或修改 Assets/Editor/DataEditorWindow.cs、Assets/Editor/DataTabs/ 下任意 TabModule / IDataTab / TabType 枚举、需要在数据编辑器左列表或右面板展示/编辑 SO 数据、新增一个数据编辑 Tab 页、为某类 SO 编写影响编辑器右面板的自定义检视器（CustomEditor）、或复用在编辑器里挑选 SO 的 SOPickerPopup 时触发。提供窗口架构、TabModule 扩展点、面板绘制流程、保存/刷新机制与避坑清单。
+description: Bluedivers 项目「数据编辑器」（Tools/数据编辑器，DataEditorWindow + DataTabs）专用开发指南。当用户编写或修改 Assets/Editor/DataEditorWindow.cs、Assets/Editor/DataTabs/ 下任意 TabModule / IDataTab / TabType 枚举、需要在数据编辑器左列表或右面板展示/编辑 SO 数据、新增一个数据编辑 Tab 页、为某类 SO 编写影响编辑器右面板的自定义检视器（CustomEditor）、复用在编辑器里挑选 SO 的 SOPickerPopup、或需要用 FPSGame.Attribute 的 `[Compare]` 按枚举/开关切换 Inspector 字段显隐时触发。提供窗口架构、TabModule 扩展点、面板绘制流程、保存/刷新机制、条件显隐路径规则与避坑清单。
 ---
 
 # Bluedivers 数据编辑器（DataEditorWindow / DataTabs）开发指南
@@ -58,6 +58,23 @@ Bluedivers 通过一个自研的 IMGUI 编辑器窗口「数据编辑器」（�
 - 自定义检视器若在 `OnInspectorGUI` 内部自行 `Apply`，外层检测会失效，必须自行 `EditorUtility.SetDirty(target)` + `SaveAssets()`（参考 `AirdropData_SOEditor.ApplyDirty` 的去重 delayCall 保存）。
 - 数据资产修改应经 `serializedObject` 属性而非直接改字段，以保证 Inspector 一致性。
 
+### 6. 按条件显示 Inspector 字段（`[Compare]`）
+
+`FPSGame.Attribute.CompareAttribute`（`Assets/Scripts/00Attribute/CustomAttribute.cs`）：**字段按"同层另一个字段"的值切换显示**（隐藏 = 高度 0，不占位）。最常用的场景就是"按枚举切换"，例如：
+
+```csharp
+public ShapeType shape;
+[Compare("shape", (int)ShapeType.Circle, CompareOperate.Equal)]    public int innerRadius;
+[Compare("shape", (int)ShapeType.Circle, CompareOperate.Equal)]    public int outerRadius;
+[Compare("shape", (int)ShapeType.Rectangle, CompareOperate.Equal)] public Vector2 rectHalfSize;
+```
+
+- 谁执行：`CustomLabelDrawer`（`[CustomPropertyDrawer(typeof(CompareAttribute))]`）⇒ 任何用 `PropertyField` 画该字段的地方都生效（标准 Inspector、`EditorOverride`、专属 CustomEditor 里的 `PropertyField`）。**手动列字段 / 手动 `DrawField` 的专属 CustomEditor 必须自己调** `CustomLabelDrawer.ShouldDisplayField(prop, attr)`。
+- ⚠ **构造函数的默认操作符不一样**：`[Compare("flag")]`（单参）= `enumValue 0` + `Equal` ⇒ "控制字段 == 0"；`[Compare("flag", 1)]`（双参）= 默认 `Operate = Greater` ⇒ "控制字段 **>** 1"。想要"bool 为 true 才显示"必须写 `[Compare("flag", 1, CompareOperate.Equal)]`。
+- ⚠ 控制字段**必须与当前字段同层**：`List<结构体>` 元素内部的字段要用**同一元素内**的字段当控制字段；特性挂在 List 字段本身时，控制字段是 List 字段的**兄弟**。完整路径规则见 `references/data-editor-guide.md` §6.4。
+- ⚠ 一个字段只能挂一个 `[Compare]`（`PropertyAttribute.AllowMultiple` 默认 `false`），要 AND 两个条件只能自写检视器。
+- 控制字段支持 `bool`/整型/`float`/`enum`，其他类型按"引用是否非空"折算 1/0；`Contain`/`NotContain` 是位掩码判断（配 `[Flags]` 枚举）。
+
 ## 避坑清单
 
 - TabType 枚举新增后**必须**在 `RegisterTabs` 注册，否则 `Current` 字典访问抛 `KeyNotFoundException`。
@@ -65,6 +82,7 @@ Bluedivers 通过一个自研的 IMGUI 编辑器窗口「数据编辑器」（�
 - 右面板选中对象切换由 `OnSelect` -> `Host.SetCachedEditor` 负责，旧 Editor 会先销毁；重写列表/面板时不要绕过它。
 - IMGUI 每帧触发的 `FindAssets`/加载操作会拖慢鼠标移动时的重绘，务必节流。
 - `[Compare]`/`[InspectorName]` 的处理只属于编辑器框架，运行时不需要。
+- ⚠ `[Compare]` 找不到控制字段时**隐藏该字段并每次重绘打一条 `Debug.LogError("找不到控制属性 …")`**。"Inspector 字段莫名消失 + Console 刷 error"先查：控制字段是否与当前字段**同层**（`List<结构体>` 元素内的字段最容易踩，控制字段必须用同一个元素里的那个）。
 - 全局命名空间无 `namespace`，与 `Assets/Editor` 其余编辑器一致；不要引入会与运行时冲突的类型。
 
 ## Resources

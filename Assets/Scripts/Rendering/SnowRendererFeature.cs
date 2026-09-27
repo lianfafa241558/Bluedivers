@@ -10,6 +10,15 @@ using UnityEngine.Rendering.Universal;
 /// </summary>
 public static class SnowController
 {
+    // 雪外观的默认值（与 SnowVolume 组件的默认值保持一致）：SnowVolume 生效时由 SnowRendererFeature 每帧覆盖，
+    // 供"不走积雪 Pass"的消费方（地形细节/草）取用，保证它们与雪 Pass 的观感一致
+    private const float k_DefaultSnowThreshold = 0.5f;
+    private const float k_DefaultSnowSoftness = 0.25f;
+    private const float k_DefaultSnowNoiseStrength = 0.3f;
+    /// <summary>草地积雪量默认倍率（0=草不吃雪）</summary>
+    private const float k_DefaultGrassSnowAmount = 0.85f;
+    private static readonly Color k_DefaultSnowColor = new Color(0.92f, 0.95f, 1f);
+
     public static readonly int SnowEnabledId = Shader.PropertyToID("_SnowEnabled");
     public static readonly int GlobalSnowAmountId = Shader.PropertyToID("_GlobalSnowAmount");
 
@@ -19,6 +28,19 @@ public static class SnowController
     public static readonly int SnowMaskRectId = Shader.PropertyToID("_SnowMaskRect");
     /// <summary>遮罩每边切片数 ID（0 表示遮罩未创建，Shader 侧直接按满雪处理）</summary>
     public static readonly int SnowMaskTilesId = Shader.PropertyToID("_SnowMaskTiles");
+
+    // 雪"外观"参数 ID：雪 Pass 靠各条目材质的 _SnowColor/_SnowThreshold/... 控制，
+    // 而地形细节（草）不是 Renderer、吃不到那次重画，只能读这些全局量拿到同一套观感
+    /// <summary>雪色（全局）ID</summary>
+    public static readonly int SnowOverlayColorId = Shader.PropertyToID("_SnowOverlayColor");
+    /// <summary>朝上阈值（全局）ID</summary>
+    public static readonly int SnowOverlayThresholdId = Shader.PropertyToID("_SnowOverlayThreshold");
+    /// <summary>边缘柔和度（全局）ID</summary>
+    public static readonly int SnowOverlaySoftnessId = Shader.PropertyToID("_SnowOverlaySoftness");
+    /// <summary>噪声强度（全局）ID</summary>
+    public static readonly int SnowOverlayNoiseStrengthId = Shader.PropertyToID("_SnowOverlayNoiseStrength");
+    /// <summary>草地积雪量倍率 ID（草材质关键字 _SNOW_GRASS 的分支用）</summary>
+    public static readonly int GrassSnowAmountId = Shader.PropertyToID("_SnowGrassAmount");
 
     /// <summary>每边切片数（1=单张 / 2=4 张 / 3=9 张）。切片只影响单次弹坑上传量，不改变遮罩精度</summary>
     public static int MaskTiles = 2;
@@ -54,6 +76,13 @@ public static class SnowController
         // 遮罩未创建时 Shader 靠 _SnowMaskTiles=0 跳过采样（不依赖占位纹理绑定）
         Shader.SetGlobalVector(SnowMaskRectId, Vector4.zero);
         Shader.SetGlobalFloat(SnowMaskTilesId, 0f);
+
+        // 雪外观默认值：草（不走积雪 Pass 的消费方）用它们，SnowVolume 生效时会被每帧覆盖
+        Shader.SetGlobalColor(SnowOverlayColorId, k_DefaultSnowColor);
+        Shader.SetGlobalFloat(SnowOverlayThresholdId, k_DefaultSnowThreshold);
+        Shader.SetGlobalFloat(SnowOverlaySoftnessId, k_DefaultSnowSoftness);
+        Shader.SetGlobalFloat(SnowOverlayNoiseStrengthId, k_DefaultSnowNoiseStrength);
+        Shader.SetGlobalFloat(GrassSnowAmountId, k_DefaultGrassSnowAmount);
     }
 
     /// <summary>开关积雪（false 时跳过整个积雪 Pass）</summary>
@@ -66,6 +95,16 @@ public static class SnowController
     public static void SetGlobalAmount(float amount)
     {
         Shader.SetGlobalFloat(GlobalSnowAmountId, Mathf.Clamp01(amount));
+    }
+
+    /// <summary>
+    /// 设置草地（地形细节）积雪量倍率（0~1，0 = 草不吃雪）。
+    /// 草不是 Renderer，积雪 Pass 覆盖不到它 —— 它由草材质（关键字 _SNOW_GRASS）自己在片元里叠雪，
+    /// 这里调的就是那份"草专用"的强度（雪天/全局雪量仍然照常作为总闸）
+    /// </summary>
+    public static void SetGrassAmount(float amount)
+    {
+        Shader.SetGlobalFloat(GrassSnowAmountId, Mathf.Clamp01(amount));
     }
 
     /// <summary>遮罩是否已创建（调试/查询用）</summary>
@@ -560,6 +599,11 @@ public class SnowRendererFeature : ScriptableRendererFeature
             {
                 _volumeControlling = true;
                 Shader.SetGlobalFloat(SnowController.GlobalSnowAmountId, snowVolume.snowAmount.value);
+                // 雪的外观同步到全局量：草（地形细节）不走本 Pass，只能靠这些全局量拿到一致的雪色/阈值等
+                Shader.SetGlobalColor(SnowController.SnowOverlayColorId, snowVolume.snowColor.value);
+                Shader.SetGlobalFloat(SnowController.SnowOverlayThresholdId, snowVolume.snowThreshold.value);
+                Shader.SetGlobalFloat(SnowController.SnowOverlaySoftnessId, snowVolume.snowSoftness.value);
+                Shader.SetGlobalFloat(SnowController.SnowOverlayNoiseStrengthId, snowVolume.noiseStrength.value);
                 activeVolume = snowVolume;
                 return true;
             }

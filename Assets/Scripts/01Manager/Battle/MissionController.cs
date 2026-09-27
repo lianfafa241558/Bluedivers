@@ -254,7 +254,7 @@ public class MissionController : MonoBehaviour
     /// </summary>
     IEnumerator InitInterestPoint()
     {
-        int count = random.Range(6,(int)Mathf.Sqrt(root.CameraSize));
+        int count = random.Range(6,2*(int)Mathf.Sqrt(root.CameraSize));
         //Debug.LogWarning("兴趣点数"+count);
         int totleWeight = root.mapCfg.interestPoints.Sum(item=>item.Value);
         //GameObject[] objects= new GameObject[count];

@@ -37,6 +37,13 @@
 #include "NiloZOffset.hlsl"
 #include "NiloInvLerpRemap.hlsl"
 
+// 积雪覆盖（地形细节/草专用）：Terrain 的细节不走 SRP 的渲染器列表，
+// SnowRendererFeature 的"用雪材质重画一遍"够不到它，所以草只能在自己的材质里叠雪。
+// 这里只新增了全局 uniform 的声明（_SnowEnabled/_GlobalSnowAmount/_SnowMask*/_SnowOverlay*/_SnowGrassAmount）
+// 与两个函数：实际使用它们的只有定义了材质关键字 _SNOW_GRASS 的材质（草材质 PandaMat2），
+// 其余 shader/材质编译期就会把这些未使用代码裁掉，不进 Properties/CBUFFER、不动 Varyings。
+#include "Assets/Shader/Feature/SnowOverlayCommon.hlsl"
+
 //注意:
 // subfix OS 表示 object 空间     (例如 positionOS = position object space)
 // subfix WS 表示 world 空间      (例如 positionWS = position world space)
@@ -700,6 +707,15 @@ half4 ShadeFinalColor(Varyings input) : SV_TARGET
     
     //应用所有照明计算
     half3 color = ShadeAllLights(surfaceData, lightingData);
+
+#ifdef _SNOW_GRASS
+    // 草地（地形细节）积雪：草不是 Renderer，吃不到 SnowRendererFeature 的"重画一遍"，
+    // 只能在草材质自己的片元里叠雪。材质关键字 _SNOW_GRASS 只开在草材质（PandaMat2）上，
+    // 数据全走全局 uniform（跟随 SnowVolume / SnowController），见 SnowOverlayCommon.hlsl。
+    // 放在描边色转换之前：描边色由表面色推导，这样描边也跟着变白
+    color = ApplyGrassSnow(color, lightingData.normalWS, lightingData.positionWS);
+    color.rgb*=0.4f;
+#endif
 
 #ifdef ToonShaderIsOutline
      color = ConvertSurfaceColorToOutlineColor(color, input.uv);

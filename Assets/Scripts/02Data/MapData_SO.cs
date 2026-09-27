@@ -51,7 +51,19 @@ public class MapData_SO : ScriptableObject
     [Header("地形")]
     [InspectorName("纹理配置")]
     public TerrainItemInfo[] TerrainItem;
+
+
+    [Divider]
+    [Header("天空盒")]
+
+    [InspectorName("天空盒天顶色")]
+    [Tooltip("地平线以上、越靠近正上方越接近本色")]
+    public Gradient skyColor;
+    [InspectorName("天空盒赤道色")]
+    [Tooltip("地平线附近的一圈颜色（天空盒里 y=0 处上下两半球都取它）；一般比天顶色略亮或略灰，做出地平线霾感")]
+    public Gradient equatorColor;
     public Gradient fogColor;
+
 
     [InspectorName("岩石生成倍率")]
     public float StoneSpawnMultiplier = 1f;

@@ -230,7 +230,8 @@ namespace Unity.FPS.Game
       
         private IEnumerator WaitSetPos()
         {
-            while(!FpsHelper.IsMainStage())
+           
+            while (!FpsHelper.IsMainStage())
             {
                 yield return null;
             }
@@ -258,7 +259,7 @@ namespace Unity.FPS.Game
             }
             isInitialized = true;
 
-
+            yield return null;
             if (!HasFlag(ActorFlag.AllowFloating))
             {
                 if (UnityEngine.AI.NavMesh.SamplePosition(transform.position, out var hit, 100, UnityEngine.AI.NavMesh.AllAreas))

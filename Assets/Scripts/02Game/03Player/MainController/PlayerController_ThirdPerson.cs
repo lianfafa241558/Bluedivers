@@ -13,7 +13,20 @@ public partial class PlayerController
 
     private Transform _cameraOriginalParent;
 
+    /// <summary>第三人称相机视距缩放系数，1 = 正常距离，0.5 = 视距缩小一半</summary>
+    private float _thirdPersonDistanceScale = 1f;
+
     public Vector3 ScreenCenterTargetPoint { get; private set; }
+
+    /// <summary>
+    /// 第三人称相机视距缩放系数（1 = 正常，0.5 = 视距缩小一半）。
+    /// 由外部按需设置，例如与物体交互时拉近镜头，让交互物看起来更大。
+    /// </summary>
+    public float ThirdPersonDistanceScale
+    {
+        get => _thirdPersonDistanceScale;
+        set => _thirdPersonDistanceScale = Mathf.Clamp(value, 0.1f, 1f);
+    }
 
     /// <summary>
     /// 第三人称旋转速度（限制上限，避免 angularSpeed 过大导致瞬间转向）
@@ -146,7 +159,7 @@ public partial class PlayerController
             Transform aimPoint = _thirdPersonAimCameraPoint ?? _thirdPersonCameraPoint;
             float xOffset = aimPoint.localPosition.x;
             float height = aimPoint.localPosition.y;
-            float distance = Mathf.Abs(aimPoint.localPosition.z);
+            float distance = Mathf.Abs(aimPoint.localPosition.z) * _thirdPersonDistanceScale;
 
             Quaternion rotation = Quaternion.Euler(clampedV, _cameraYaw, 0);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
@@ -185,7 +198,7 @@ public partial class PlayerController
             // 相机位置：基于 _thirdPersonCameraPoint 的偏移
             float xOffset = _thirdPersonCameraPoint.localPosition.x;
             float height = _thirdPersonCameraPoint.localPosition.y;
-            float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z);
+            float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z) * _thirdPersonDistanceScale;
 
             Quaternion rotation = Quaternion.Euler(clampedVertical, _cameraYaw, 0);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);

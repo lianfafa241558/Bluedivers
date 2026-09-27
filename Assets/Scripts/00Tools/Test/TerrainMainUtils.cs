@@ -76,6 +76,9 @@ public static partial class TerrainUtils
     /// </summary>
     private const float maxTimePerFrame = 0.01f;
 
+    /// <summary>矩形内外框的最小间隔（米）：小于它时按"硬边"处理，避免 <see cref="RectFalloffPower"/> 除零</summary>
+    private const float MinFalloffWidth = 0.01f;
+
     private static Terrain main;
     private static TerrainData data;
     private static NavMeshSurface nav;
@@ -197,7 +200,48 @@ public static partial class TerrainUtils
     public static IEnumerator ModifyHeightMap(Vector3 pos, float innerRadius, float outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true)
     {
         if (!Main) yield break;
-        yield return ModifyHeightMap(WSToUV(pos), pos.y, innerRadius, outerRadius, depth, shape, isSet, refresh);
+        yield return ModifyHeightMap(WSToUV(pos), pos.y,
+            new Vector2(innerRadius, innerRadius), new Vector2(outerRadius, outerRadius), depth, shape, isSet, refresh);
+    }
+
+    /// <summary>
+    /// 修改高度图（矩形：内外框的 X / Z 半长都可以不同，且可绕 Y 旋转）。
+    /// <para><paramref name="innerHalfSize"/> = **内框**半长：该范围内的地形完全按目标高度拉平；</para>
+    /// <para><paramref name="outerHalfSize"/> = **外框**半长：该范围之外地形不动，两者之间按
+    /// "各轴从内框到外框的归一化距离取较大者"线性淡化（等比例内外框时与圆形的标量过渡完全等价）。</para>
+    /// <para><paramref name="angleDeg"/> 通常直接传物体的 <c>transform.eulerAngles.y</c>——矩形会跟着物体一起转；
+    /// 传 0 就是世界 XZ 轴对齐。</para>
+    /// <para>⚠ 注意 <c>TerrainClearer.ClearInRectXZ</c> 目前**只支持轴对齐矩形**，旋转后的矩形要用它清地表物需要另加角度支持。</para>
+    /// </summary>
+    /// <param name="pos">矩形中心的世界坐标</param>
+    /// <param name="innerHalfSize">内框 XZ 半尺寸（米）：x = X 方向半长，y = Z 方向半长</param>
+    /// <param name="outerHalfSize">外框 XZ 半尺寸（米，应大于内框）</param>
+    /// <param name="depth">深度（米）</param>
+    /// <param name="angleDeg">绕 Y 的旋转角（度），与物体世界 Y 旋转一致；0 = 世界轴对齐</param>
+    /// <param name="isSet">true = 设置（压到目标高度）；false = 只往下挖，不抬升</param>
+    /// <param name="refresh">是否刷新地形与 NavMesh</param>
+    public static IEnumerator ModifyHeightMapRect(Vector3 pos, Vector2 innerHalfSize, Vector2 outerHalfSize, float depth, float angleDeg = 0f, bool isSet = true, bool refresh = true)
+    {
+        if (!Main) yield break;
+        yield return ModifyHeightMap(WSToUV(pos), pos.y, innerHalfSize, outerHalfSize, depth, ShapeType.Rectangle, isSet, refresh, angleDeg);
+    }
+
+    /// <summary>
+    /// 矩形的淡化系数：0 = 外框边缘（地形不动），1 = 内框以内（完全生效）。
+    /// <para>两轴各自按"内框半长 → 外框半长"把世界距离归一化，取较大者——即等比例内外框时
+    /// 与圆形那条标量式 <c>(1 - d) / (1 - innerScale)</c> 完全等价，但允许内外框长宽比不同。</para>
+    /// </summary>
+    /// <param name="dxPixel">相对中心的 X 像素偏移</param>
+    /// <param name="dzPixel">相对中心的 Z 像素偏移</param>
+    /// <param name="worldPerPixel">1 像素对应的世界米数（地形 X/Z 等长，共用一个换算）</param>
+    /// <param name="innerHalfSize">内框 XZ 半长（米）</param>
+    /// <param name="outerHalfSize">外框 XZ 半长（米）</param>
+    private static float RectFalloffPower(float dxPixel, float dzPixel, float worldPerPixel, Vector2 innerHalfSize, Vector2 outerHalfSize)
+    {
+        //分母兜底：内外框重合（或配反了）时不让它除零炸出 NaN，退化成"硬边"
+        float tx = (Mathf.Abs(dxPixel) * worldPerPixel - innerHalfSize.x) / Mathf.Max(MinFalloffWidth, outerHalfSize.x - innerHalfSize.x);
+        float tz = (Mathf.Abs(dzPixel) * worldPerPixel - innerHalfSize.y) / Mathf.Max(MinFalloffWidth, outerHalfSize.y - innerHalfSize.y);
+        return Mathf.Clamp01(1f - Mathf.Max(tx, tz));
     }
 
     /// <summary>
@@ -210,28 +254,57 @@ public static partial class TerrainUtils
     /// <param name="outerRadius">外半 ? ?/param>
     /// <param name="depth">深度: ?/param>
     /// <param name="isSet">设置/修改</param>
-    public static IEnumerator ModifyHeightMap(Vector2 uv, float baseHeight, float innerRadius, float outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true)
+    /// <param name="innerHalfSize">内框半长（米）：该范围内完全生效</param>
+    /// <param name="outerHalfSize">外框半长（米）：该范围外不动，两者之间线性淡化</param>
+    /// <param name="angleDeg">矩形绕 Y 的旋转角（度）；其他形状忽略</param>
+    public static IEnumerator ModifyHeightMap(Vector2 uv, float baseHeight, Vector2 innerHalfSize, Vector2 outerHalfSize, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true, float angleDeg = 0f)
     {
-        if (shape != ShapeType.Circle && shape != ShapeType.Ellipse)
+        if (shape != ShapeType.Circle && shape != ShapeType.Ellipse && shape != ShapeType.Rectangle)
         {
             Debug.LogError("修改地形使用了错误的形状" + shape);
 
+            yield break;
         }
         else
         {
             baseHeight /= terrainHeight;
-            var outerRadiusRes = WRToHR(outerRadius);
+            var outerRadiusRes = WRToHR(outerHalfSize.x);
+            //矩形两轴半长可以不同；圆 / 椭圆（含历史实现）两轴都按 outerHalfSize.x
+            var outerRadiusZRes = shape == ShapeType.Rectangle ? WRToHR(outerHalfSize.y) : outerRadiusRes;
             if (outerRadiusRes <= 0)
             {
                 Debug.LogError("错误:修改的地形半 ?outerRadius  ?0");
                 yield break;
             }
             float invRadius = 1f / outerRadiusRes;//范围的倒数，让dis标准 ?
-            float innerScale = innerRadius / (outerRadius + 0f);//内半径的系数(比如0.8)
 
+            if (outerRadiusZRes <= 0)
+            {
+                Debug.LogError("错误:修改的地形半长(Z) <= 0");
+                yield break;
+            }
+            //圆 / 椭圆的内圈比例（内圈 = 外圈 × 该系数）；矩形不用它，走下面的逐轴 RectFalloffPower
+            float innerScale = innerHalfSize.x / (outerHalfSize.x + 0f);
+            //像素 → 世界米（地形 X/Z 等长，共用一个换算），矩形按"米"算淡化要用
+            float worldPerPixel = data.size.x / heightmapRes;
+            //矩形可跟着物体的世界 Y 旋转（兴趣点实例运行时会被随机旋转）；圆 / 椭圆绕中心对称，不需要
+            bool rotateRect = shape == ShapeType.Rectangle && !Mathf.Approximately(angleDeg, 0f);
+            float cosA = 1f;
+            float sinA = 0f;
+            if (rotateRect)
+            {
+                float rad = angleDeg * Mathf.Deg2Rad;
+                cosA = Mathf.Cos(rad);
+                sinA = Mathf.Sin(rad);
+            }
+            //补丁本身是正方形：轴对齐时取两轴较大的半长；旋转后要用**外接圆半径**才够覆盖外框，
+            //超出的部分都由 normalizedDistance > 1 裁掉
+            float patchRadiusRes = rotateRect
+                ? Mathf.Sqrt((float)outerRadiusRes * outerRadiusRes + (float)outerRadiusZRes * outerRadiusZRes)
+                : Mathf.Max(outerRadiusRes, outerRadiusZRes);
             //地形数据（计时：读取 patch）
             long readTicks = System.Diagnostics.Stopwatch.GetTimestamp();
-            float[,] heights = GetHeights(uv, outerRadiusRes, out int xBase, out int yBase, out int size, out Vector2 offset);
+            float[,] heights = GetHeights(uv, patchRadiusRes, out int xBase, out int yBase, out int size, out Vector2 offset);
             LastHeightReadMs = ElapsedMs(readTicks);
             if (size == 0)
             {
@@ -257,17 +330,28 @@ public static partial class TerrainUtils
 
                 for (int x = 0; x < size; x++)
                 {
+                    //矩形要先把"世界偏移"旋进矩形自己的坐标系（世界 → 本地），这样矩形就跟着物体一起转
+                    float px = x - center.x;
+                    float pz = y - center.y;
+                    float lx = rotateRect ? px * cosA - pz * sinA : px;
+                    float lz = rotateRect ? px * sinA + pz * cosA : pz;
+
                     //标准化之后的距离[0,1]
                     float normalizedDistance = shape switch {
                         ShapeType.Circle => Vector2.Distance(new Vector2(x, y), center) * invRadius,
                         ShapeType.Ellipse => Mathf.Max(Mathf.Abs(x - center.x) * 2, Mathf.Abs(y - center.y) * 2) * invRadius,
+                        //矩形：两轴各自按自己的半长归一化（本地坐标），取较大者 = 直角边的正方形/长方形
+                        ShapeType.Rectangle => Mathf.Max(Mathf.Abs(lx) / (float)outerRadiusRes, Mathf.Abs(lz) / (float)outerRadiusZRes),
                         _ => 0,
                     };
                     if (normalizedDistance <= 1f)
                     {
                         var height = SampleSmallHeight(heights, y + offset.y, x + offset.x);
                         //在外圈线性[0,1]，内圈直 ?
-                        float power = Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale));
+                        //矩形按内外框的"米"距离逐轴归一化（允许内外框长宽比不同）；其余形状仍走标量比例式
+                        float power = shape == ShapeType.Rectangle
+                            ? RectFalloffPower(lx, lz, worldPerPixel, innerHalfSize, outerHalfSize)
+                            : Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale));
                         if (isSet)
                         {
                             heights[y, x] = Mathf.Lerp(height, centerHeight, power);
@@ -299,7 +383,7 @@ public static partial class TerrainUtils
             HeightModifyCount++;
                                  //这里高度已经被标准化过了
             //ModifyAlphaMap 是协程（迭代器），必须 yield return 驱动，裸调用不会执行
-            yield return ModifyAlphaMap(uv, 1 - Mathf.Clamp01((baseHeight - centerOldHeight) / (depth / terrainHeight) - 0.1f), innerRadius, outerRadius, shape, isSet);
+            yield return ModifyAlphaMap(uv, 1 - Mathf.Clamp01((baseHeight - centerOldHeight) / (depth / terrainHeight) - 0.1f), innerHalfSize, outerHalfSize, shape, isSet, angleDeg);
             if (refresh) AsyncRefresh(true);
         }
 
@@ -312,14 +396,36 @@ public static partial class TerrainUtils
     /// </summary>
     /// <param name="uv"></param>
     /// <param name="radius"></param>
-    private static IEnumerator ModifyAlphaMap(Vector2 uv, float modifityScale, float innerRadius, float outerRadius, ShapeType shape = ShapeType.Circle, bool isSet = true)
+    private static IEnumerator ModifyAlphaMap(Vector2 uv, float modifityScale, Vector2 innerHalfSize, Vector2 outerHalfSize, ShapeType shape = ShapeType.Circle, bool isSet = true, float angleDeg = 0f)
     {
 
-        var radiusRes = WRToHR(outerRadius);
+        //⚠ 必须用 WRToAR（纹理图像素）：下面的 GetAlphas 是按 alphamapResolution 取 patch 的。
+        //原先写的 WRToHR 只是因为本项目当前 heightmapResolution-1(1024) 恰好 == alphamapResolution(1024) 才不出错；
+        //一旦两者不再相等（例如只把 heightmapResolution 翻倍），贴图改动范围就会跟着错一个比例。
+        var radiusRes = WRToAR(outerHalfSize.x);
+        //矩形两轴半长可以不同；圆 / 椭圆（含历史实现）两轴都按 outerHalfSize.x
+        var radiusZRes = shape == ShapeType.Rectangle ? WRToAR(outerHalfSize.y) : radiusRes;
+        if (radiusRes <= 0 || radiusZRes <= 0) yield break;
         float invRadius = 1f / radiusRes;//范围的倒数，让dis标准 ?
-        float innerScale = innerRadius / (outerRadius + 0f);//内半径的系数(比如0.8)
-
-        float[,,] alphas = GetAlphas(uv, radiusRes, out int xBase, out int yBase, out int size, out int layer);
+        //圆 / 椭圆的内圈比例；矩形走逐轴 RectFalloffPower
+        float innerScale = innerHalfSize.x / (outerHalfSize.x + 0f);
+        //像素 → 世界米（纹理图分辨率与高度图不同，各用自己的换算）
+        float worldPerPixel = data.size.x / alphamapRes;
+        //矩形跟着物体世界 Y 旋转（与高度图那侧同一套算法）
+        bool rotateRect = shape == ShapeType.Rectangle && !Mathf.Approximately(angleDeg, 0f);
+        float cosA = 1f;
+        float sinA = 0f;
+        if (rotateRect)
+        {
+            float rad = angleDeg * Mathf.Deg2Rad;
+            cosA = Mathf.Cos(rad);
+            sinA = Mathf.Sin(rad);
+        }
+        //补丁本身是正方形：轴对齐取两轴较大的半长；旋转后要用外接圆半径才够覆盖外框
+        float patchRadiusRes = rotateRect
+            ? Mathf.Sqrt((float)radiusRes * radiusRes + (float)radiusZRes * radiusZRes)
+            : Mathf.Max(radiusRes, radiusZRes);
+        float[,,] alphas = GetAlphas(uv, patchRadiusRes, out int xBase, out int yBase, out int size, out int layer);
         yield return null;
 
         Vector2 center = Vector2.one * size * 0.5f;
@@ -328,10 +434,18 @@ public static partial class TerrainUtils
         {
             for (int x = 0; x < size; x++)
             {
+                //矩形要先把"世界偏移"旋进矩形自己的坐标系（世界 → 本地）
+                float px = x - center.x;
+                float pz = y - center.y;
+                float lx = rotateRect ? px * cosA - pz * sinA : px;
+                float lz = rotateRect ? px * sinA + pz * cosA : pz;
+
                 //标准化之后的距离[0,1]
                 float normalizedDistance = shape switch {
                     ShapeType.Circle => Vector2.Distance(new Vector2(x, y), center) * invRadius,
                     ShapeType.Ellipse => Mathf.Max(Mathf.Abs(x - center.x) * 2, Mathf.Abs(y - center.y) * 2) * invRadius,
+                    //矩形：两轴各自按自己的半长归一化（本地坐标），取较大者 = 直角边的正方形/长方形
+                    ShapeType.Rectangle => Mathf.Max(Mathf.Abs(lx) / (float)radiusRes, Mathf.Abs(lz) / (float)radiusZRes),
                     _ => 0,
                 };
 
@@ -340,7 +454,10 @@ public static partial class TerrainUtils
                 {
                     if (isSet)
                     {
-                        float power = Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale));
+                        //矩形按内外框的"米"距离逐轴归一化；其余形状仍走标量比例式
+                        float power = shape == ShapeType.Rectangle
+                            ? RectFalloffPower(lx, lz, worldPerPixel, innerHalfSize, outerHalfSize)
+                            : Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale));
 
                         int xHeight = ARToHR(xBase + x);
                         int yHeight = ARToHR(yBase + y);
@@ -373,7 +490,9 @@ public static partial class TerrainUtils
                     {
                         // 使用平滑曲线计算权重
 
-                        float targetWeight = Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale)) * modifityScale;
+                        float targetWeight = (shape == ShapeType.Rectangle
+                            ? RectFalloffPower(lx, lz, worldPerPixel, innerHalfSize, outerHalfSize)
+                            : Mathf.Clamp01((1 - normalizedDistance) / (1 - innerScale))) * modifityScale;
                         //总和必须 ?
                         float originalSum = (1 - targetWeight);
                         //例如:0.3/0.1/0.15/0.2/0.25 弹坑权重0.6,残余权重就是(1-0.6)/(1-0.3)

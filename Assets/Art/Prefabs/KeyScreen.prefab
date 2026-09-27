@@ -1388,6 +1388,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85b7aa7531417544fb81059fc84f70df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnComple:
+    m_PersistentCalls:
+      m_Calls: []
   _LightColor: {r: 0, g: 0.627, b: 1, a: 1}
   procedurePrefabs:
   - {fileID: 2651086928180910819, guid: 30d7070b7db02b646a4fad2b0693bc11, type: 3}
@@ -1420,6 +1423,7 @@ MonoBehaviour:
     UnlockItem: []
   bg: {fileID: 1443492617}
   furn: {fileID: 0}
+  nowStage: -1
   owner: {fileID: 0}
   m_anim: {fileID: 123231757920416154}
   itemValue: 
@@ -1451,6 +1455,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ShowName: "\u63A7\u5236\u677F"
   Id: KeyScreen
   Portrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
@@ -1605,6 +1610,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: KeyScreen
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b771b4939e25c9e45bd3ea2dc9859cd4,
+        type: 3}
+      propertyPath: m_Layer
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
