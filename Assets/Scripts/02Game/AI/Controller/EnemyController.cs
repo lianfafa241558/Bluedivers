@@ -20,6 +20,9 @@ namespace FPSGame.AI
     //[RequireComponent(typeof(HealthEnemy), typeof(Actor))]
     public partial class EnemyController : AIController
     {
+        /// <summary>同一目标点的请求失败后的最小重发间隔(秒)：坏目标不要每帧重算路径</summary>
+        private const float NavRetryInterval = 0.5f;
+
         public override Vector3 Velocity => NavMeshAgent ? NavMeshAgent.velocity : Vector3.zero;
 
         public string EnemyName => m_Actor.ShowName;
@@ -81,6 +84,9 @@ namespace FPSGame.AI
         [SerializeField]
         public Vector3 m_lastDestination;
         private NavMeshPath m_lastPath;
+
+        /// <summary>同一目标点下一次允许重发的时间（请求失败/被挡掉后按 <see cref="NavRetryInterval"/> 节流重试）</summary>
+        private float _nextNavRetryTime;
 
 
 
@@ -152,6 +158,9 @@ namespace FPSGame.AI
         {
             EnsureIsWithinLevelBounds();
 
+            // 结算外力推挤(爆炸/踩踏击退，见 EnemyController_Physical.cs)
+            UpdateKnockback();
+
             //DetectionModule?.HandleTargetDetection();
 
         }
@@ -217,12 +226,27 @@ namespace FPSGame.AI
         /// </summary>
         public void SetNavDestination(Vector3 destination)
         {
-            if (isImportant) Debug.LogError("设置目标点为" + destination+"旧目标"+ m_lastDestination, gameObject);
-            if (Vector3.Distance(destination, m_lastDestination) < 1) return;
+            bool agentReady = FpsHelper.HaveNavMeshAgent(NavMeshAgent);
+            bool sameTarget = Vector3.Distance(destination, m_lastDestination) < 1;
+
+            if (sameTarget)
+            {
+                // ⚠ 只有"路径确实已存在/正在计算"才算这个目标已经生效，可以直接跳过；
+                // 旧实现无条件按 <1m 去重，于是"曾经失败过/被挡住过"的目标会被记成"已完成"，
+                // 同一个目标点永远不再请求（单位永久发呆：状态机在巡逻，NavMeshAgent 却 hasPath=false）
+                if (agentReady && (NavMeshAgent.pathPending || NavMeshAgent.hasPath)) return;
+
+                // 同一个目标点的重复请求做节流：失败的目标不要每帧重算路径
+                if (Time.time < _nextNavRetryTime) return;
+            }
+            _nextNavRetryTime = Time.time + NavRetryInterval;
+
+            if (isImportant) Debug.LogError("设置目标点为" + destination + "旧目标" + m_lastDestination, gameObject);
             m_lastDestination = destination;
+
             if (isImportant) Debug.LogError("设置目标点成功" + destination + "和" + m_lastDestination, gameObject);
 
-            if (FpsHelper.HaveNavMeshAgent(NavMeshAgent) && NavMeshAgent.isOnNavMesh)
+            if (agentReady)
             {
                 if (BirthComplete)
                 {
@@ -317,10 +341,12 @@ namespace FPSGame.AI
         /// <summary>
         /// 没有侦测组件的控制器什么都不做
         /// </summary>
-        /// <param name="point"></param>
-        public override void Beware(Vector3 point,bool spread)
+        /// <param name="point">警惕点(要去查看的噪声点)</param>
+        /// <param name="noise">该噪声的响度(半径/米)：比当前警惕点更轻时不覆盖</param>
+        /// <param name="spread">是否把同一噪声扩散给附近队友</param>
+        public override void Beware(PEVector3 point, PEInt noise, bool spread)
         {
-            DetectionModule.Beware(point, spread);
+            DetectionModule.Beware(point, noise, spread);
         }
 
 

@@ -374,18 +374,18 @@ MonoBehaviour:
   HearingRange: 80
   AttackRange: 15
   AlertRange: 50
+  Lazy: 0
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &3808758975234262439
 GameObject:
   m_ObjectHideFlags: 0
@@ -458,7 +458,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 8
     MaxRange: -1
-    MinRange: -1
+    MinRange: 2
     NoSource: 0
     SoundRadius: 20
     DamageExplosion: 7
@@ -852,6 +852,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: 7369000b62de34b489c0f4454f88255e, type: 2}
   fxMaterial: {fileID: 2100000, guid: 14fce7cbcc8540e458db10c38350d070, type: 2}
+  events: []
 --- !u!114 &6731495466205310900
 MonoBehaviour:
   m_ObjectHideFlags: 0

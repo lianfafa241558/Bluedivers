@@ -61,8 +61,11 @@ namespace FPSGame.Gameplay
             ApplyEffect();
         }
 
-        /// <summary>对范围内所有目标施加一次效果(范围伤害，不产生直击伤害)</summary>
-        void ApplyEffect()
+        /// <summary>
+        /// 对范围内所有目标施加一次效果。默认实现为范围爆炸伤害(不产生直击伤害)；
+        /// 子类可重写以自定义结算方式(如踩踏的动能伤害)。
+        /// </summary>
+        protected virtual void ApplyEffect()
         {
             FpsHelper.Hit(new ProjectileHitData
             {

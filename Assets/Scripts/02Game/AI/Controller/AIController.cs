@@ -46,7 +46,10 @@ public interface I_AIController
     /// <summary>
     /// 使这个单位警惕
     /// </summary>
-    public void Beware(Vector3 point,bool spread);
+    /// <param name="point">警惕点(要去查看的噪声点)</param>
+    /// <param name="noise">该噪声的响度(半径/米)：比当前警惕点更轻时不覆盖</param>
+    /// <param name="spread">是否把同一噪声扩散给附近队友</param>
+    public void Beware(PEVector3 point, PEInt noise, bool spread);
 
     public I_Actor Actor { get; }
     public GameAttribute GetAttribute(UnitAttrType type);
@@ -179,8 +182,10 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
     /// <summary>
     /// 没有侦测组件的控制器什么都不做
     /// </summary>
-    /// <param name="point"></param>
-    public virtual void Beware(Vector3 point,bool spread)
+    /// <param name="point">警惕点(要去查看的噪声点)</param>
+    /// <param name="noise">该噪声的响度(半径/米)：比当前警惕点更轻时不覆盖</param>
+    /// <param name="spread">是否把同一噪声扩散给附近队友</param>
+    public virtual void Beware(PEVector3 point, PEInt noise, bool spread)
     {
 
     }

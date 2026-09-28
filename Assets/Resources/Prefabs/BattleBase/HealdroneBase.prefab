@@ -178,18 +178,18 @@ MonoBehaviour:
   HearingRange: 20
   AttackRange: 48
   AlertRange: 0
+  Lazy: 0
   KnownTargetTimeout: 1
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
   RespondMark: 1
 --- !u!1 &4031389201757756416
 GameObject:
@@ -419,11 +419,11 @@ MonoBehaviour:
       Value: 2
     - Key: 10
       Value: 2
-  ProjectilePrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
-    type: 3}
   BulletFlag: 0
   Damages:
-  - Speed: 145
+  - BulletPrefab: {fileID: 0}
+    LandingPrefab: {fileID: 0}
+    Speed: 145
     Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
@@ -431,6 +431,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 16
     DamageGroupDirect:
@@ -472,7 +473,8 @@ MonoBehaviour:
     type: 3}
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
-  SFXRange: 20
+  SFXRange: 50
+  FireNoiseRadius: 50
   ShootSfx: {fileID: 8300000, guid: 1862bb40e3ffecc45a49d24648c354ea, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -958,6 +960,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ContGo:
   - {fileID: 1299246795375933029}
 --- !u!143 &4116715981550763968

@@ -31,10 +31,20 @@ public static class BattleEventSub
     public static void UnitHit(GameObject victim, GameObject attacker) => OnUnitHit?.Invoke(victim, attacker);
 
 
-    /// <summary>子弹击中地面(近战，超射程消失也算)</summary>
-    public static event Action<GameObject, Vector3> OnBulletHit;
-    /// <summary>子弹击中地面(近战，超射程消失也算)</summary>
-    public static void BulletHit(GameObject source, Vector3 pos) => OnBulletHit?.Invoke(source, pos);
+    /// <summary>表现层：子弹击中地面(近战，超射程消失也算)，给 HUD 做擦弹/受击提示用</summary>
+    public static event Action<GameObject, PEVector3,PEInt> OnBulletHit;
+    /// <summary>表现层：子弹击中地面(近战，超射程消失也算)，给 HUD 做擦弹/受击提示用</summary>
+    public static void BulletHit(GameObject source, PEVector3 pos, PEInt rauids) => OnBulletHit?.Invoke(source, pos, rauids);
+
+
+    /// <summary>
+    /// 逻辑层噪声：AI 听觉的统一入口。开枪(枪口)、命中(弹着点/爆心)各发一条，由 DetectionModule 统一消费。
+    /// 与表现层分开：音效播放距离走 WeaponBaseController.SFXRange / DamageData.SoundRadius(交给 AudioSvc)，
+    /// 本事件只服务 AI 听觉(噪声点的位置 + 响度)，两者互不影响。
+    /// </summary>
+    public static event Action<NoiseData> OnNoise;
+    /// <summary>逻辑层噪声：AI 听觉的统一入口(开枪/命中/爆炸都发这里)</summary>
+    public static void Noise(NoiseData noise) => OnNoise?.Invoke(noise);
 
 
 
@@ -156,4 +166,18 @@ public static class BattleEventSub
     //玩家创建在全局
 
     #endregion
+}
+
+/// <summary>
+/// 逻辑层噪声(只给 AI 听觉用)：声源 + 噪声点 + 响度(半径/米)。
+/// 响度越大越"响"；AI 只允许"更响"的噪声覆盖当前警惕点，避免弹着点的小动静把枪声点顶掉。
+/// </summary>
+public struct NoiseData
+{
+    /// <summary>噪声源(开火者/爆炸物持有者)，用于队伍过滤；为空时该噪声被忽略</summary>
+    public GameObject source;
+    /// <summary>噪声点：枪口 / 弹着点 / 爆心</summary>
+    public PEVector3 pos;
+    /// <summary>噪声半径(米，逻辑层)：越大越响，<=0 视为无效噪声</summary>
+    public PEInt radius;
 }

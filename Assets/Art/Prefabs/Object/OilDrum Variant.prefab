@@ -61,6 +61,7 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     NoSource: 1
     ExplosionAP: 0
     demolishValue: 0
@@ -88,17 +89,17 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 2399adf1b1d1c1444b8ed24100573d62,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -4.3308716
+      value: -3.79
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2399adf1b1d1c1444b8ed24100573d62,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.8548622
+      value: -0.21
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2399adf1b1d1c1444b8ed24100573d62,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -15.472931
+      value: 6.6
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2399adf1b1d1c1444b8ed24100573d62,
         type: 3}
@@ -297,7 +298,7 @@ MonoBehaviour:
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
   IsFixed: 1
-  flag: 16
+  flag: 0
   type: 16
   team: -1
   threat: 0
@@ -324,6 +325,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: ce141dd09fdf43b4a9b1f5d3a81e8ca5, type: 2}
   fxMaterial: {fileID: 2100000, guid: 309b70121e35edb4fbcbab84f3039a06, type: 2}
+  events: []
   UseAttack: 0
 --- !u!4 &8771126716963581160 stripped
 Transform:

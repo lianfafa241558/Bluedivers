@@ -175,9 +175,9 @@ public partial class PlayerWnd
             DyingAudio.Stop();
         }
     }
-    void BulletHit(GameObject source, Vector3 pos)
+    void BulletHit(GameObject source, PEVector3 pos,PEInt _)
     {
-        if (source && source != m_Controller.gameObject && Vector3.Distance(pos, m_Controller.CenterPos) < 3) ResetWarning();
+        if (source && source != m_Controller.gameObject && Vector3.Distance(pos.RawVector3, m_Controller.CenterPos) < 3) ResetWarning();
     }
 
 

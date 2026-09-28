@@ -15,6 +15,9 @@ using UnityEngine.AI;
 ///    pathStatus==PathInvalid 或 PathPartial(单点) 才视为寻路失败，做 NavMesh.SamplePosition 投影重试 + 兜底。
 ///    这才是原始设计要解决的"目标不可达导致单位卡住"问题。
 /// 4. 不再有"假超时重试风暴"：旧版 pathPending&gt;1s 就重试入队，并发多时造成队列堆积、单位执行旧路径乱走。
+/// 5. 兜底失败必须"如实报出来"：投影不到网格时不能空操作（旧实现什么都不做就丢掉请求 ⇒ agent 停在
+///    hasPath=false；调用方若还按"目标没变"去重，就永远不会再发 ⇒ 单位永久发呆）。
+///    现在这里无条件 LogWarning 暴露，并由调用方（EnemyController.SetNavDestination）按节流重新发起。
 /// </summary>
 public class PathRequestManager : Singleton<PathRequestManager>
 {
@@ -196,6 +199,13 @@ public class PathRequestManager : Singleton<PathRequestManager>
             {
                 finalHit = hit.position;
                 agent.SetDestination(finalHit);
+            }
+            else
+            {
+                // ⚠ 投影不到网格：绝不能"什么都不做就丢掉请求"。旧实现就这样：agent 被留在 hasPath=false 的状态，
+                // 而调用方的 m_lastDestination 去重又不会再发同一个目标 ⇒ 单位永久发呆。
+                // 兜底半径内确实没有 NavMesh（目标点本身是非法点）时，如实报出来，由调用方按节流重发。
+                Debug.LogWarning($"[寻路] 已达最大重试，但 {FinalSampleRadius}m 内没有 NavMesh，本次请求放弃（agent 保持无路径，等待调用方重试）。原目标 {req.destination}", agent);
             }
             if (req.log)
             {

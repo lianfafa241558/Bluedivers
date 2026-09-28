@@ -71,12 +71,11 @@ MonoBehaviour:
       Value: 2.5
     - Key: 1
       Value: 350
-  ProjectilePrefab: {fileID: 6427322605795972283, guid: 38aa19c9c455044469210cff8480ccb7,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 6427322605795972283, guid: 38aa19c9c455044469210cff8480ccb7,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 40
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -85,6 +84,7 @@ MonoBehaviour:
     MinRange: 1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 10
     DamageGroupDirect:
@@ -122,7 +122,8 @@ MonoBehaviour:
     type: 3}
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
-  SFXRange: 20
+  SFXRange: 50
+  FireNoiseRadius: 50
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 8300000, guid: dff37a303c908e846b3137a637cbbf7a,

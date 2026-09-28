@@ -186,6 +186,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 30
     DamageDirect: 20
     DamageGroupDirect:
@@ -229,7 +230,8 @@ MonoBehaviour:
     type: 3}
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
-  SFXRange: 30
+  SFXRange: 50
+  FireNoiseRadius: 50
   ShootSfx: {fileID: 8300000, guid: 9aca9cdbb90155d4b9fb8696351fdfed, type: 3}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 0}

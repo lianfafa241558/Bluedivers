@@ -467,6 +467,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 20
     DamageGroupDirect:
@@ -506,7 +507,8 @@ MonoBehaviour:
   MuzzleFlashPrefab: {fileID: 100006, guid: 1cfb0135c414e5943bf0918321a2fcf7, type: 3}
   FlashSizeScale: 1
   UnparentMuzzleFlash: 1
-  SFXRange: 20
+  SFXRange: 30
+  FireNoiseRadius: 30
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 0}
@@ -713,6 +715,7 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   PreJudgment: 1
   PreJudgmentFactor: 1
+  BewareLookDuration: 3
 --- !u!114 &4416010112212442149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -732,6 +735,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &4416010112212442148
 MonoBehaviour:
   m_ObjectHideFlags: 0

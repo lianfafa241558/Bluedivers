@@ -46,8 +46,16 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     public float AccelerationSpeedInAir = 2f;
 
     [InspectorName("重量")]
-    /// <summary>重量</summary>
+    /// <summary>重量(受力换算用的质量：Δv = 冲量 / 重量)</summary>
     public float Weight = 1;
+
+    [InspectorName("受力阻尼-接地(1/秒)")]
+    /// <summary>接地时受力速度的指数衰减系数，越大停得越快</summary>
+    public float GroundDrag = 2f;
+
+    [InspectorName("受力阻尼-空中(1/秒)")]
+    /// <summary>空中时受力速度的指数衰减系数</summary>
+    public float AirDrag = 1f;
 
     [InspectorName("移动时上下晃动幅度")]
     [Range(0, 0.1f)]
@@ -98,6 +106,9 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
 
     /// <summary>物理层受力的移动速度</summary>
     public PEVector3 ApplyForceVelocity { get; set; }
+
+    /// <summary>本帧累积的持续力(牛顿)，移动循环里积分成速度后清空</summary>
+    private PEVector3 m_PendingForce;
 
 
     /// <summary>记录脚步声的行进距离(纯表现层)</summary>
@@ -507,15 +518,21 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
 
         TryJump();
 
-        // 应用外部冲击力（撞击、爆炸等），并随时间衰减
+        // 持续力(牛顿) → 速度：Δv = (力 / 重量) · dt
+        if (m_PendingForce.Magnitude > (PEInt)0.01f)
+        {
+            ApplyForceVelocity += m_PendingForce / (PEInt)Mathf.Max(Weight, 0.1f) * (PEInt)Time.deltaTime;
+            m_PendingForce = default;
+        }
+
+        // 外力速度(冲量：Δv = 冲量/重量)参与本帧位移，并按阻尼指数衰减(接地衰减更快)
         PEVector3 totalVelocity = CharacterVelocity;
         if (ApplyForceVelocity.Magnitude > (PEInt)0.01f)
         {
             totalVelocity += ApplyForceVelocity;
-            // 衰减（接地时衰减更快)
-            float decay = IsGrounded ? 3f : 1f;
-            //暂时没办法，PEVector3里面没有lerp
-            ApplyForceVelocity = (PEVector3)Vector3.Lerp(ApplyForceVelocity.RawVector3, Vector3.zero, decay * Time.deltaTime);
+            float drag = IsGrounded ? GroundDrag : AirDrag;
+            ApplyForceVelocity = (PEVector3)(ApplyForceVelocity.RawVector3 * Mathf.Exp(-drag * Time.deltaTime));
+            if (ApplyForceVelocity.Magnitude <= (PEInt)0.01f) ApplyForceVelocity = default;
         }
         else
         {
@@ -743,13 +760,16 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         return Vector3.Cross(slopeNormal, directionRight).normalized;
     }
 
-    public void ApplyForce(PEVector3 vector)
+    /// <summary>施加一个持续力(牛顿)：逐帧累积，在移动循环里以 Δv = (力/重量)·dt 积分成速度</summary>
+    public void ApplyForce(PEVector3 force)
     {
-        if(vector.Magnitude >(PEInt)Weight)
-        {
-            ApplyForceVelocity += (vector /(PEInt)Mathf.Max(Weight,0.1f));
-            ApplyForceVelocity = ApplyForceVelocity.Normalized * PEMath.Min(ApplyForceVelocity.Magnitude,(PEInt)MaxSpeedInAir*3);
-        }
+        m_PendingForce += force;
+    }
+
+    /// <summary>施加一个瞬时冲量：Δv = 冲量 / 重量(无速度上限；重量越大被推得越少)</summary>
+    public void ApplyImpulse(PEVector3 impulse)
+    {
+        ApplyForceVelocity += impulse / (PEInt)Mathf.Max(Weight, 0.1f);
     }
     public void ApplyGravity()
     {

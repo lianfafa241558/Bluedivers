@@ -38,6 +38,9 @@ public static class FpsHelper
     /// <summary>荆棘护甲反伤伤害组（真实伤害，无视抗性稳定为24点）</summary>
     private static readonly List<SKVP<DamageTypeEnum, float>> ThornArmorDamageGroups = new() { new(DamageTypeEnum.Gun, 1) };
 
+    /// <summary>范围动能伤害(HitAreaKinetic)未配置伤害成分时的兜底成分(动能)</summary>
+    private static readonly List<SKVP<DamageTypeEnum, float>> DefaultKineticGroups = new() { new(DamageTypeEnum.Gun, 1) };
+
     /// <summary>
     /// 全队强化"荆棘护甲"：近战攻击玩家阵营单位的攻击者会受到 24 点反伤
     /// </summary>
@@ -236,8 +239,8 @@ public static class FpsHelper
                     {
                         var distance = PEVector3.Distance((PEVector3)item.CenterPos, (PEVector3)point);
                         PEVector3 vector = (PEVector3)(item.CenterPos - point).normalized * (1 - PEMath.Clamp(distance / shockwave,0,1)) * 10;
-                        vector.y *= 2;
-                        physical.ApplyForce(vector);
+                        //vector.y *= 2;
+                        physical.ApplyImpulse(vector);
                         Debug.LogError("对物体" + item.gameObject + "施加力" + vector);
                     }
                 }
@@ -248,7 +251,7 @@ public static class FpsHelper
             if (destructe > 0)
             {
                 //Debug.LogError($"地形破坏{point} 内半径{(destructe / new PEInt(1.5f)).RawFloat} 外半径{destructe.RawFloat} 深度{(destructe / 5).RawFloat}");
-                //弹坑里不该有积雪：按破坏外半径擦除积雪遮罩（无雪天气/地形未就绪时内部自动忽略）
+                //按破坏外半径擦除积雪遮罩
                 SnowController.RemoveSnow(point, destructe.RawFloat);
                 //ModifyHeightMap 是协程（迭代器），必须用 StartCoroutine 启动，直接调用不会执行；
                 //⚠ 最后一个 refresh 传 false：原来默认 true ⇒ 每一发爆炸弹坑都整张 NavMesh 重烘。
@@ -256,7 +259,6 @@ public static class FpsHelper
                 GameRoot.Instance.StartCoroutine(TerrainUtils.ModifyHeightMap(point, (destructe / new PEInt(1.5f)).RawFloat, destructe.RawFloat, (destructe / 5).RawFloat, ShapeType.Circle, false, false));
                 TerrainClearer.MarkTerrainChanged();
                 //地表物：与弹坑同半径摧毁（树/石块走"可被摧毁"白名单，内部按帧合并提交，不会逐棵重建地形树数据），
-                //草花一并擦除，避免坑里残留悬空的植被
                 TerrainClearer.DestroyInRadius(point, destructe.RawFloat);
             }
 
@@ -265,20 +267,22 @@ public static class FpsHelper
         }
 
         //警告
-        if (BattleManager.Instance.IsValid()&&!hitData.data.NoSource && (!collider.IsValid() || collider.GetComponent<I_Damagable>() == null) && soundRadius > 0)
+        if (BattleManager.Instance.IsValid())
         {
-            var unitList = BattleManager.Instance.FindUnits(new PECircle((PEVector2)point, soundRadius), TargetCfg.Enemy);
-            foreach (var item in unitList)
+            //表现层：HUD 擦弹/受击提示(仍用旧的音效半径口径)
+            if (soundRadius > 0)
             {
-                if (item.transform.TryGetComponent(out I_AIController physical))
-                {
-
-                }
+                BattleEventSub.BulletHit(soure, (PEVector3)point, soundRadius);
             }
 
-            //if (collider.transform.TryGetComponentInParent(out Actor actor) && actor != ActorsManager.Player) GlobalEventManager.BulletHit(owner, point);
-            BattleEventSub.BulletHit(soure, point);
-
+            //逻辑层噪声：命中点发出(开火处的枪声由 WeaponBaseController 在开火时另发)
+            PEInt impactNoise = damageData.GetImpactSoundRadius(charg);
+            //爆炸本来就该是大动静：至少按伤害外半径发声
+            if (damageData.UseExplode && damageOuterRadius > impactNoise) impactNoise = damageOuterRadius;
+            if (impactNoise > 0)
+            {
+                BattleEventSub.Noise(new NoiseData { source = soure, pos = (PEVector3)point, radius = impactNoise });
+            }
         }
 
         //特效
@@ -310,6 +314,137 @@ public static class FpsHelper
     }
 
 
+
+
+    /// <summary>
+    /// 范围动能(非爆炸)伤害：对范围内每个单位逐个结算一次"直击包"。
+    /// 与 <see cref="Hit(ProjectileHitData)"/> 爆炸分支的区别：
+    /// - isDirect=true：绕开爆炸抗性与爆炸遮挡判定(即"非爆炸伤害")
+    /// - 每个单位只结算一次(取离中心最近的肢体)，而非每个肢体各算一次
+    /// - 不派发命中特效/音效/弹痕/地形破坏等副作用
+    /// - 可排除自身单位、可附加击退
+    /// </summary>
+    /// <param name="hitData">范围动能伤害参数</param>
+    public static void HitAreaKinetic(KineticAreaHitData hitData)
+    {
+        if (!hitData.data.IsValid()) return;
+        if (!BattleManager.Instance.IsValid()) return;
+
+        PEInt outer = hitData.data.GetDamageOuterRadius(1);
+        float outerRadius = outer.RawFloat;
+        if (outerRadius <= 0f) return;
+
+        // 打击范围内任意单位(不做队伍过滤)，仅排除 hitData.exclude
+        List<I_Actor> unitList = BattleManager.Instance.FindUnits(
+            new PECircle((PEVector2)hitData.pos, outer),
+            TargetCfg.EnemyAI,
+            unit => VaildTarget(unit)
+                 && unit != hitData.exclude
+                 && (hitData.filter == null || hitData.filter(unit)));
+        if (unitList == null || unitList.Count == 0) return;
+
+        var groups = hitData.groups != null && hitData.groups.Count > 0 ? hitData.groups : DefaultKineticGroups;
+        bool noSource = hitData.data.NoSource || !hitData.soure;
+
+        // 依次逐个单位结算
+        for (int i = 0, l = unitList.Count; i < l; ++i)
+        {
+            // 每个单位只结算一次：取离中心最近的肢体(单肢体单位即其主干)
+            if (!PickNearestPart(unitList[i], hitData.pos.RawVector3, out Damageable part, out Collider collider)) continue;
+
+            PEInt distance = PEVector3.Distance((PEVector3)collider.bounds.center, (PEVector3)hitData.pos);
+            PEInt value = hitData.data.GetExplosionDamage(1, distance);
+            if (value <= 0) continue;
+
+            part.InflictDamage(new DamagePacket
+            {
+                Damage = value,
+                DamageGroups = groups,
+                WeaknessBonus = hitData.data.GetWeaknessBonus(),
+                AP = hitData.data.GetExplosionAP(1),
+                NoSource = noSource,
+                DamageSource = hitData.soure,
+                Pos = collider.ClosestPointOnBounds(hitData.pos.RawVector3),
+                DemolishValue = hitData.data.GetDemolishValue(distance),
+                isDirect = true,//直击包：绕开爆炸抗性/爆炸遮挡，即"非爆炸伤害"
+                damageAffected = collider,
+            });
+        }
+
+        if (hitData.knockbackForce > 0) ApplyKnockback(unitList, hitData);
+    }
+
+    /// <summary>范围动能伤害参数(仿 <see cref="ProjectileHitData"/> 的扁平结构)</summary>
+    public struct KineticAreaHitData
+    {
+        /// <summary>伤害配置：取用其外半径、伤害值、穿甲、弱点火、拆毁值、无源</summary>
+        public IDamageData data;
+        /// <summary>伤害成分(动能填 {Gun,1})；null/空则退化为 {动能,1}</summary>
+        public List<SKVP<DamageTypeEnum, float>> groups;
+        /// <summary>范围中心</summary>
+        public PEVector3 pos;
+        /// <summary>伤害来源(可空)</summary>
+        public GameObject soure;
+        /// <summary>需要排除的单位(通常为自身，可空)</summary>
+        public I_Actor exclude;
+        /// <summary>额外过滤(如只打敌人)；null=打范围内所有单位</summary>
+        public System.Func<I_Actor, bool> filter;
+        /// <summary>击退力度(0=不击退)</summary>
+        public PEInt knockbackForce;
+        /// <summary>击退半径(0=沿用伤害外半径)</summary>
+        public PEInt knockbackRadius;
+        /// <summary>击退竖直倍率(1=保持原方向)</summary>
+        public PEInt knockbackUpScale;
+    }
+
+    /// <summary>取离中心最近的肢体(单肢体单位即其主干)，返回是否找到</summary>
+    static bool PickNearestPart(I_Actor unit, Vector3 center, out Damageable part, out Collider collider)
+    {
+        part = null;
+        collider = null;
+        var damageables = unit.Damageables;
+        if (damageables == null) return false;
+
+        float nearestSqr = float.MaxValue;
+        for (int i = 0, l = damageables.Length; i < l; ++i)
+        {
+            Damageable dam = damageables[i] as Damageable;
+            if (!dam) continue;
+
+            Collider col = dam.ClosestCollider(center);
+            if (!col) continue;
+
+            float sqr = (col.ClosestPointOnBounds(center) - center).sqrMagnitude;
+            if (sqr < nearestSqr)
+            {
+                nearestSqr = sqr;
+                part = dam;
+                collider = col;
+            }
+        }
+        return part != null;
+    }
+
+    /// <summary>按单位施加一次击退：方向背离中心，力度随距离衰减</summary>
+    static void ApplyKnockback(List<I_Actor> unitList, KineticAreaHitData hitData)
+    {
+        PEInt radius = hitData.knockbackRadius;
+        if (radius <= 0) return;
+
+        for (int i = 0, l = unitList.Count; i < l; ++i)
+        {
+            I_Actor unit = unitList[i];
+            if (!unit.transform.TryGetComponent(out IPhysical physical)) continue;
+
+            PEVector3 offset = unit.Logic3Pos - hitData.pos;
+            PEInt falloff = 1 - PEMath.Clamp(offset.Magnitude / radius,0,1);
+            PEVector3 direction = offset.Magnitude > new PEInt(0.0001f) ? offset.Normalized : new(unit.transform.forward);
+            PEVector3 vector = direction * (falloff * hitData.knockbackForce);
+            vector.y *= hitData.knockbackUpScale;
+            //Debug.LogError("施加力"+ vector);
+            physical.ApplyImpulse(vector);
+        }
+    }
 
 
     public static bool IsTarget(I_Actor actor, TargetCfg targetCfg)

@@ -913,18 +913,18 @@ MonoBehaviour:
   HearingRange: 20
   AttackRange: 4
   AlertRange: 50
+  Lazy: 0
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &1952154323
 GameObject:
   m_ObjectHideFlags: 0
@@ -956,6 +956,77 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5022651815003707194}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4836711929747105178
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1442994053580236004}
+  - component: {fileID: 5539063185387029685}
+  m_Layer: 6
+  m_Name: TrampleEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1442994053580236004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4836711929747105178}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.96, y: -2.04, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6010660305500835076}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5539063185387029685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4836711929747105178}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 1442994053580236004}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 5
+    ExplosionInnerRange: 2
+    ExplosionRange: 2
+    DestructeRadius: 0
+    ShockwaveRadius: 2.2
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 20
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 12
+  KnockbackUpScale: 1
 --- !u!1 &5022651815003707193
 GameObject:
   m_ObjectHideFlags: 0
@@ -1016,6 +1087,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: 4a85ec0f07649a64f9acea758b0488d5, type: 2}
   fxMaterial: {fileID: 2100000, guid: 14fce7cbcc8540e458db10c38350d070, type: 2}
+  events: []
 --- !u!114 &910742488
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1203,6 +1275,7 @@ MonoBehaviour:
   nowDurationTime: 0
   m_LastDetectedTarget: 0
   cilp: {fileID: 8300000, guid: e2734bab73117f340aa9bf9ea7166446, type: 3}
+  TramplePoint: {fileID: 4836711929747105178}
 --- !u!1 &5970679412572759866
 GameObject:
   m_ObjectHideFlags: 0
@@ -3284,6 +3357,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 1647803464306829990, guid: a32a80b645c69d14d8bc4c42ff6805d3,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1442994053580236004}
     - targetCorrespondingSourceObject: {fileID: -1670701761049777106, guid: a32a80b645c69d14d8bc4c42ff6805d3,
         type: 3}
       insertIndex: -1
@@ -4389,6 +4466,12 @@ MonoBehaviour:
   isWeakness: 0
   armorLevel: 0
   source: {fileID: 0}
+--- !u!4 &6010660305500835076 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1647803464306829990, guid: a32a80b645c69d14d8bc4c42ff6805d3,
+    type: 3}
+  m_PrefabInstance: {fileID: 5022651813183203234}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &6038349241207100495 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1619199728214848493, guid: a32a80b645c69d14d8bc4c42ff6805d3,

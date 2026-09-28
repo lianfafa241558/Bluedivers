@@ -77,6 +77,8 @@ public class DamageDataDrawer : PropertyDrawer
         y = DrawPropertyOrPaired(property, useCharge, "Speed", "ChargeSpeedScale", "投掷物的速度", "蓄力倍率", position, y);
         y = DrawPropertyOrPaired(property, useCharge, "Gravity", "ChargeGravityScale", "下坠速度", "蓄力倍率", position, y);
         y = DrawPropertyOrPaired(property, useCharge, "SoundRadius", "ChargeSoundScale", "发出的声音影响范围", "蓄力倍率", position, y);
+        // 逻辑层噪声半径(AI 听觉用)；表现层音效距离是上面的 SoundRadius，两者分开
+        y = DrawProperty(property, "ImpactSoundRadius", "命中噪声半径(逻辑层)", position, y);
         if (useCharge.boolValue)
         {
             // 未勾选蓄力时不显示这两个满蓄倍率
@@ -95,9 +97,9 @@ public class DamageDataDrawer : PropertyDrawer
 
     private float GetSectionHeight_Motion(SerializedProperty property)
     {
-        // 固定 11 行，勾选蓄力后额外增加"满蓄热量/散布倍率"2 行
+        // 固定 12 行，勾选蓄力后额外增加"满蓄热量/散布倍率"2 行
         var useCharge = property.FindPropertyRelative("UseCharge");
-        int rows = 11;
+        int rows = 12;
         if (useCharge != null && useCharge.boolValue) rows += 2;
         return SectionHeaderHeight + rows * (LineHeight + 2) + Padding;
     }
@@ -371,6 +373,8 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
         EditorGUI.indentLevel++;
         y = DrawProperty(property, "NoSource", "无源伤害", position, y);
         y = DrawProperty(property, "SoundRadius", "发出的声音影响范围", position, y);
+        // 逻辑层噪声半径(AI 听觉用)；表现层音效距离是上面的 SoundRadius，两者分开
+        y = DrawProperty(property, "ImpactSoundRadius", "命中噪声半径(逻辑层)", position, y);
         EditorGUI.indentLevel--;
         y += Padding;
         return y;
@@ -378,7 +382,8 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
 
     private float GetSectionHeight_General(SerializedProperty property)
     {
-        return SectionHeaderHeight + 2 * (LineHeight + 2) + Padding;
+        // 固定 3 行(无源伤害 / 声音影响范围 / 命中噪声半径)，别漏改
+        return SectionHeaderHeight + 3 * (LineHeight + 2) + Padding;
     }
 
     #endregion

@@ -64,8 +64,14 @@ namespace Core.Interface
     /// </summary>
     public interface IPhysical:IMonoVaild
     {
-        /// <summary>应用力</summary>
-        void ApplyForce(PEVector3 vector);
+        /// <summary>
+        /// 施加一个持续力(牛顿)：由实现方在移动循环里按 Δv = (力 / 质量)·dt 积分成速度。
+        /// 需要逐帧持续施加；一次性打击(爆炸冲击波/击退)请用 <see cref="ApplyImpulse"/>
+        /// </summary>
+        void ApplyForce(PEVector3 force);
+
+        /// <summary>施加一个瞬时冲量：Δv = 冲量 / 质量。适合爆炸冲击波、击退等一次性打击</summary>
+        void ApplyImpulse(PEVector3 impulse);
 
         /// <summary>应用重力</summary>
         void ApplyGravity();

@@ -37,8 +37,11 @@ namespace Unity.FPS.Game
         /// <summary>伤害成分</summary>
         public List<SKVP<DamageTypeEnum, float>> DamageGroupExplosion = new() { new(DamageTypeEnum.Explosion, 1), new(DamageTypeEnum.Destruction, 1) };
 
-        /// <summary>发出的声音影响范围</summary>
+        /// <summary>发出的声音影响范围(表现层：音效播放距离)</summary>
         public int SoundRadius = 20;
+
+        /// <summary>命中点的逻辑层噪声半径(米)：给 AI 听觉用</summary>
+        public int ImpactSoundRadius = 8;
 
         /// <summary>无源伤害</summary>
         public bool NoSource = false;
@@ -101,8 +104,10 @@ namespace Unity.FPS.Game
         public PEInt GetDestructeRadius(PEInt chargeScale) => (PEInt)DestructeRadius;
         /// <summary>冲击波半径</summary>
         public PEInt GetShockwaveRadius(PEInt chargeScale) => (PEInt)ShockwaveRadius;
-        /// <summary>音量</summary>
+        /// <summary>音量(表现层音效距离)</summary>
         public PEInt GetSoundRadius(PEInt chargeScale) => (PEInt)SoundRadius;
+        /// <summary>命中点的逻辑噪声半径</summary>
+        public PEInt GetImpactSoundRadius(PEInt chargeScale) => (PEInt)ImpactSoundRadius;
 
         public PEInt GetWeaknessBonus() => 0;
 

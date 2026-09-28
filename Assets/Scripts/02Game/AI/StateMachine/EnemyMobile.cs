@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using GameContract;
-
+using PEMaths;
 using Unity.FPS.Game;
 using UnityEngine;
 namespace FPSGame.AI
@@ -72,14 +72,35 @@ namespace FPSGame.AI
         [InspectorName("警惕停留时间")]
         public float BewareStayDuration = 2f;
 
-        /// <summary>初始巡逻点（返回状态回到这里）</summary>
-        private Vector3 m_OriginPos;
+        /// <summary>警惕查看超时(秒)：前往警惕点的路上超过该时长仍未到达(目标点不可达/被挡住)就放弃并走返回流程</summary>
+        [InspectorName("警惕查看超时(秒)")]
+        [Tooltip("前往警惕点途中超过该时长仍未到达(如目标点不可达)则放弃、原地转入返回流程，避免单位永久卡在警惕状态。<=0 表示不限时")]
+        public float BewareTimeout = 20f;
 
-        /// <summary>进入Beware时记录的目标点</summary>
-        private Vector3 m_BewareDestination;
+        /// <summary>警惕冷却(秒)：从上一个检查点返回后，这段时间内不再响应"该检查点附近"的枪声</summary>
+        [InspectorName("警惕冷却(秒)")]
+        [Tooltip("从上一个检查点返回后，这段时间内不再响应该检查点附近的枪声(战斗一直打在原地时不要来回跑)。<=0 表示关闭冷却")]
+        public float BewareCooldown = 10f;
+
+        /// <summary>警惕冷却范围(米)：枪声点距"上一次检查点"不超过该值才算"同一个地方"</summary>
+        [InspectorName("警惕冷却范围(米)")]
+        [Tooltip("枪声点距上一次检查点不超过该值时视为同一个地方，冷却期内会被无视；超出则照常前往查看")]
+        public float BewareCooldownRadius = 10f;
+
+        /// <summary>初始巡逻点（返回状态回到这里）</summary>
+        private PEVector3 m_OriginPos;
+
+        /// <summary>进入Beware时记录的目标点（也是"上一次检查点"，警惕冷却用）</summary>
+        private PEVector3 m_BewareDestination;
 
         /// <summary>回到起点的时间</summary>
         private float m_ReturnStartTime;
+
+        /// <summary>进入警惕状态的时间（警惕查看超时用）</summary>
+        private float m_BewareStartTime;
+
+        /// <summary>警惕冷却结束时间（返回 Idle/Patrol 时按 BewareCooldown 记录）</summary>
+        private float m_BewareCooldownEndTime;
 
         /// <summary>进入Idle的时间</summary>
         private float m_IdleStartTime;
@@ -107,7 +128,7 @@ namespace FPSGame.AI
         {
             base.Start();
             m_EnemyController = m_Controller as EnemyController;
-            m_OriginPos = transform.position;
+            m_OriginPos = (PEVector3)transform.position;
 
             // 有巡逻点就走巡逻，否则原地不动
             if (m_EnemyController.PatrolPos != default)
@@ -159,6 +180,9 @@ namespace FPSGame.AI
         /// <summary>回到起点后决定是Idle还是Patrol</summary>
         private void TryReturnToIdleOrPatrol()
         {
+            // 记冷却：刚落点检查完回到原位，短时间内别被"同一个地方"的枪声再叫过去(战斗还在原地打时来回跑)
+            if (BewareCooldown > 0f) m_BewareCooldownEndTime = Time.time + BewareCooldown;
+
             if (m_EnemyController.PatrolPos != default)
             {
                 SwitchState(AIState.Patrol);
@@ -233,12 +257,25 @@ namespace FPSGame.AI
             m_EnemyController.Speed.AddModifier(ModifierType.Extra, speedScale);
         }
 
-        /// <summary>进入 Beware：记录目标点并设置警惕速度差修饰</summary>
+        /// <summary>进入 Beware：决定要去的点(搜索指令 > 听觉噪声点 > 出生点)并消费掉，再设置警惕速度差修饰</summary>
         private void EnterBeware()
         {
-            var bewarePoint = m_EnemyController.DetectionModule.BewarePoint;
-            m_BewareDestination = bewarePoint.HasValue ? bewarePoint.Value : m_OriginPos;
+            var module = m_EnemyController.DetectionModule;
+            if (module.SearchPoint.HasValue)
+            {
+                m_BewareDestination = module.SearchPoint.Value;
+                module.SearchPoint = null;
+            }
+            else
+            {
+                var bewarePoint = module.BewarePoint;
+                m_BewareDestination = bewarePoint.HasValue ? bewarePoint.Value : m_OriginPos;
+            }
+            // 消费掉警惕点：离开警惕/返回后回到 Idle/Patrol 时，不会因为同一个点再次进入 Beware(来回摆动)；
+            // 之后新的枪声/示警会重新写入 BewarePoint，再触发一次查看
+            module.ClearBeware();
 
+            m_BewareStartTime = Time.time;
             if (m_EnemyController.Speed == null) return;
             speedScale = (PEMaths.PEInt)BewareSpeed - m_EnemyController.Speed.FinalValue;
             m_EnemyController.Speed.AddModifier(ModifierType.Extra, speedScale);
@@ -290,16 +327,24 @@ namespace FPSGame.AI
             }
         }
 
-        /// <summary>Beware：前往警惕点</summary>
+        /// <summary>Beware：前往警惕点查看，炮塔一边走一边朝向警惕方向</summary>
         private void BewareBehavior()
         {
-            m_EnemyController.SetNavDestination(m_BewareDestination);
+            m_EnemyController.SetNavDestination(m_BewareDestination.RawVector3);
+
+            // 只取水平方向：不要把炮管压到地面上的落点(否则炮口一直朝下)
+            Vector3 lookAt = m_BewareDestination.RawVector3;
+            lookAt.y = transform.position.y;
+            CalculationAimTargrt(lookAt);
         }
 
-        /// <summary>Return：返回原点</summary>
+        /// <summary>
+        /// Return：到达警惕点后原地停留 BewareStayDuration（这段由状态切换里的"停留时间到才下发原点"驱动），
+        /// 停留期间炮塔自动巡逻转动"查看"四周；到达原点后由状态切换回到 Idle/Patrol
+        /// </summary>
         private void ReturnBehavior()
         {
-            m_EnemyController.SetNavDestination(m_OriginPos);
+            UpdateAutoRotate();
         }
 
         /// <summary>Follow：先前往玩家周围随机角度的环绕点，接近后直接锁玩家位置</summary>
@@ -399,6 +444,33 @@ namespace FPSGame.AI
 
         #region 状态切换判定（Transitions）
 
+        /// <summary>
+        /// 是否该为当前警惕点起身查看，三条都要满足：
+        /// ① 有警惕点(枪声/示警点)；
+        /// ② 点在感知范围(听力/视野**取较大者**)内——枪声写入 BewarePoint 的条件比较宽松
+        ///    (距离 - 音半径 不超过 听力距离)，不拦一道的话一枪能惊动几十米外的单位；
+        /// ③ 不在警惕冷却里——刚从"同一个地方"检查完返回时，不因为同一处的枪声再跑一趟；
+        ///    冷却范围外的枪声照常响应。
+        /// </summary>
+        private bool ShouldInvestigateBeware()
+        {
+            var module = m_EnemyController.DetectionModule;
+            if (module == null) return false;
+
+            var bewarePoint = module.BewarePoint;
+            if (!bewarePoint.HasValue) return false;
+
+            Vector3 point = bewarePoint.Value.RawVector3;
+            if (Vector3.Distance(transform.position, point) > Mathf.Max(module.HearingRange, module.DetectionRange)) return false;
+
+            // m_BewareDestination = 上一次去过的检查点（由 TryReturnToIdleOrPatrol 记冷却结束时间）；
+            // 从没去过任何检查点(m_BewareDestination 还是 default)时不做冷却判定
+            if (BewareCooldown > 0f && Time.time < m_BewareCooldownEndTime && m_BewareDestination != default
+                && Vector3.Distance(point, m_BewareDestination.RawVector3) <= BewareCooldownRadius) return false;
+
+            return true;
+        }
+
         /// <summary>状态机切换</summary>
         protected override void UpdateAiStateTransitions()
         {
@@ -410,6 +482,15 @@ namespace FPSGame.AI
             // Handle transitions 
             switch (AiState)
             {
+                // 听到枪声/示警：前往警惕点查看，到达后停留再返回原点（警惕点由 DetectionModule.BulletHit 写入）
+                case AIState.Idle:
+                case AIState.Patrol:
+                    if (ShouldInvestigateBeware())
+                    {
+                        SwitchState(AIState.Beware);
+                    }
+                    break;
+
                 case AIState.Beware:
                     // 如果发现目标，清除警惕点并转为追逐
                     if (m_EnemyController.IsSeeingTarget)
@@ -417,8 +498,9 @@ namespace FPSGame.AI
                         m_EnemyController.DetectionModule.ClearBeware();
                         SwitchState(AIState.Follow);
                     }
-                    // 到达警惕点后，停留一段时间然后返回
-                    else if (Vector3.Distance(transform.position, m_BewareDestination) <= BewareReachRadius)
+                    // 到达警惕点(或查看超时：目标点不可达/被挡住，不能永久卡在这里)后，停留一段时间再返回
+                    else if (Vector3.Distance(transform.position, m_BewareDestination.RawVector3) <= BewareReachRadius
+                        || (BewareTimeout > 0 && Time.time - m_BewareStartTime >= BewareTimeout))
                     {
                         m_EnemyController.StopNav();
                         m_ReturnStartTime = Time.time;
@@ -433,16 +515,18 @@ namespace FPSGame.AI
                         m_EnemyController.DetectionModule.ClearBeware();
                         SwitchState(AIState.Follow);
                     }
-                    // 停留时间结束，开始移动回原点
-                    else if (Time.time >= m_ReturnStartTime + BewareStayDuration)
-                    {
-                        m_EnemyController.SetNavDestination(m_OriginPos);
-                    }
-                    // 回到起点后，根据是否有巡逻点决定状态
-                    else if (Vector3.Distance(transform.position, m_OriginPos) <= BewareReachRadius)
+                    // 先判"是否已回到原点"，再判"停留时间到没到"。
+                    // ⚠ 原顺序把"停留时间到"写在前面：时间一过该条件永远为真，"到达判定"永远进不去
+                    // ⇒ 单位会卡在 Return 里反复请求原点，永远回不到 Idle/Patrol
+                    else if (Vector3.Distance(transform.position, m_OriginPos.RawVector3) <= BewareReachRadius)
                     {
                         m_EnemyController.StopNav();
                         TryReturnToIdleOrPatrol();
+                    }
+                    // 停留时间结束，开始移动回原点（每帧下发由 SetNavDestination 内部去重/节流）
+                    else if (Time.time >= m_ReturnStartTime + BewareStayDuration)
+                    {
+                        m_EnemyController.SetNavDestination(m_OriginPos.RawVector3);
                     }
                     break;
 
@@ -583,12 +667,16 @@ namespace FPSGame.AI
         {
             if (AiState == AIState.Follow || AiState == AIState.Attack)
             {
-                // 丢失目标时，优先前往目标最后已知位置搜索；没有则退回警惕点（枪声/示警点）
-                var lastKnown = m_EnemyController.DetectionModule.LastKnownTargetPos;
-                var bewarePoint = lastKnown ?? m_EnemyController.DetectionModule.BewarePoint;
-                if (bewarePoint.HasValue)
+                // 丢失目标时，优先前往目标最后已知位置搜索；没有则退回警惕点（枪声/示警点）。
+                // 搜索点是"指令"不是"噪声"，单独放 SearchPoint；EnterBeware 按 搜索点 > 噪声点 取用并消费
+                var module = m_EnemyController.DetectionModule;
+                var lastKnown = module.LastKnownTargetPos;
+                if (lastKnown.HasValue)
                 {
-                    m_BewareDestination = bewarePoint.Value;
+                    module.SearchPoint = lastKnown.Value;
+                }
+                if (module.SearchPoint.HasValue || module.BewarePoint.HasValue)
+                {
                     SwitchState(AIState.Beware);
                 }
                 else
@@ -600,7 +688,7 @@ namespace FPSGame.AI
                     }
                     else
                     {
-                        m_EnemyController.SetNavDestination(m_OriginPos);
+                        m_EnemyController.SetNavDestination(m_OriginPos.RawVector3);
                         SwitchState(AIState.Return);
                     }
                 }
@@ -612,12 +700,16 @@ namespace FPSGame.AI
         }
 
         /// <summary>
-        /// 炮台锁头(LateUpdate)，每个炮台独立索敌：
-        /// 战斗状态(Follow/Attack)下目标可达则瞄准；目标不可达或非战斗状态则自动巡逻转。
+        /// 炮台锁头(LateUpdate)：应用 Look() 渐进算出的目标旋转。
+        /// Follow/Attack 追击瞄准、Beware 一边走一边看向警惕方向；
+        /// Idle/Patrol/Return 由各自 onUpdate 里的自动巡逻转动(UpdateAutoRotate)驱动，Death 不转。
         /// </summary>
         protected override void UpdateTurretAiming()
         {
-           if(AiState != AIState.Idle && AiState != AIState.Patrol && AiState != AIState.Death && AiState != AIState.Beware && AiState != AIState.Return) turrets.ForEach(item => item.Aiming(Time.time - m_TimeStartedDetection));
+            if (AiState == AIState.Beware || AiState == AIState.Follow || AiState == AIState.Attack)
+            {
+                turrets.ForEach(item => item.Aiming(Time.time - m_TimeStartedDetection));
+            }
         }
 
         /// <summary>对开启自动巡逻旋转的炮塔执行巡逻转动（未开启的自动跳过）</summary>

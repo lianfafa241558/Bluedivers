@@ -8035,6 +8035,8 @@ MonoBehaviour:
   MaxSpeedInAir: 4
   AccelerationSpeedInAir: 0
   Weight: 5
+  GroundDrag: 2
+  AirDrag: 1
   ShakeSpeed: 0.1
   JumpForce: 0
   AllowJumpCount: 0
@@ -8054,6 +8056,7 @@ MonoBehaviour:
   m_LastTimeJumped: 0
   m_LastTimeLand: 0
   m_GroundNormal: {x: 0, y: 0, z: 0}
+  _autoEscapeFromOverlap: 1
   showInput: {x: 0, y: 0, z: 0}
 --- !u!114 &699526336179734181
 MonoBehaviour:
@@ -8209,6 +8212,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: b6e3e79e752969f4580b8d329719b003, type: 2}
   fxMaterial: {fileID: 2100000, guid: e9fe9af10ecfc89459a0c455577a6dc2, type: 2}
+  events: []
 --- !u!4 &8993363820924844555 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 702212540951987919, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,

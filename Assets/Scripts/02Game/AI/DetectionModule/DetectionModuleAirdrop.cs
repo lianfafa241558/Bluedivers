@@ -86,7 +86,7 @@ namespace FPSGame.AI
                 //Debug.DrawLine(Target.Pos, Target.Pos + Vector3.up * 300, Color.blue, 5);
             }
 
-            LastKnownTargetPos = point;
+            LastKnownTargetPos = (PEVector3?)point;
             TimeLastSeenTarget = Time.time;
             IsSeeingTarget = true;
             _lastAirdropTime = Time.time;

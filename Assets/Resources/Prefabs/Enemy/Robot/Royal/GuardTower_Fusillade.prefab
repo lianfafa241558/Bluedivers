@@ -206,6 +206,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 2
     DamageGroupDirect:
@@ -248,7 +249,8 @@ MonoBehaviour:
   MuzzleFlashPrefab: {fileID: 1167632833977209241}
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
-  SFXRange: 20
+  SFXRange: 50
+  FireNoiseRadius: 30
   ShootSfx: {fileID: 8300000, guid: 0d44f0cb2e91f5f4ca09aded9a1bd9ab, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -407,6 +409,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &8348494265262561826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -437,6 +444,7 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   PreJudgment: 1
   PreJudgmentFactor: 1
+  BewareLookDuration: 3
 --- !u!114 &1287047880460393466
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -460,7 +468,7 @@ MonoBehaviour:
   type: 4
   team: 2
   threat: 1
-  aimPoint: {fileID: 1197329502240390414}
+  aimPoint: {fileID: 8755663456374418967}
   UseHpBar: 1
   HpHeight: 1
   shape: 0
@@ -525,6 +533,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: e1aefeeba4149664e85945aa5ce3df69, type: 2}
   fxMaterial: {fileID: 2100000, guid: 179affbb2eb16fb4dab62137c139c695, type: 2}
+  events: []
   UseAttack: 0
 --- !u!1 &2863314283112445732
 GameObject:
@@ -602,9 +611,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e41bf42d7ca962c4681c7244f9aa0cfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  weapon: {fileID: 0}
   Angle: 0
   RayGo: {fileID: 0}
   line: {fileID: 0}
+  sphere: {fileID: 0}
+  disance: {fileID: 0}
 --- !u!120 &5158004117012769434
 LineRenderer:
   serializedVersion: 2
@@ -962,18 +974,18 @@ MonoBehaviour:
   HearingRange: 10
   AttackRange: 100
   AlertRange: 10
+  Lazy: 0
   KnownTargetTimeout: 4
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1001 &395271962746345924
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -127,6 +127,11 @@ namespace Unity.FPS.Game {
         [InspectorName("音效范围")]
         public float SFXRange=20;
 
+        /// <summary>逻辑层：开火噪声半径(米)，AI 听觉用。表现层音效距离是上面的 SFXRange，两套分开</summary>
+        [InspectorName("开火噪声半径(逻辑)")]
+        [Tooltip("AI 听觉用的开火噪声半径(米)：每次射击从枪口发出一条噪声，越大越响；<=0 表示不产生开火噪声。表现层音效播放距离用上面的音效范围 SFXRange")]
+        public int FireNoiseRadius = 20;
+
         [InspectorName("射击音效")]
         [Compare("UseContinuousShootSound", 0, CompareOperate.Equal)]
         public AudioClip ShootSfx;
@@ -403,6 +408,19 @@ namespace Unity.FPS.Game {
                 PlaySFX(ShootSfx);
             }
             OnShoot?.Invoke(this);
+
+            //逻辑层噪声：枪声从枪口发出(每次射击一条，齐射/多弹丸也只发一条)。
+            //表现层音效距离走上面的 SFXRange，两者互不影响
+            if (BattleManager.Instance.IsValid() && FireNoiseRadius > 0)
+            {
+                var muzzle = GetMuzzle(0);
+                BattleEventSub.Noise(new NoiseData
+                {
+                    source = Owner,
+                    pos = (PEVector3)(muzzle ? muzzle.position : transform.position),
+                    radius = (PEInt)FireNoiseRadius,
+                });
+            }
 
             // 热量系统：每次射击增加热量，蓄力武器受蓄力热量倍率影响
             var heatPerShot = AttrFinal(Attr.HeatPerShot).RawFloat;

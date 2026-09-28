@@ -78,6 +78,10 @@ namespace FPSGame.Game
         private const float SPAWN_TARGET_DISTANCE = 125f;
         /// <summary>生成距离偏差±25m</summary>
         private const float SPAWN_DISTANCE_OFFSET = 25f;
+        /// <summary>巡逻目标点投影到导航网格的采样半径（目标圆在可玩区外，边界环带常无 NavMesh，需要留足余量）</summary>
+        private const float PATROL_TARGET_SAMPLE_RADIUS = 40f;
+        /// <summary>队内各单位散开偏移后的再采样半径</summary>
+        private const float PATROL_TARGET_UNIT_SAMPLE_RADIUS = 5f;
         #endregion
 
         // 玩家独立热度数据结构
@@ -416,12 +420,42 @@ namespace FPSGame.Game
         {
             Debug.LogWarning($"尝试为玩家{targetPlayer.gameObject.name} 生成巡逻队");
 
-            if (GetValidSpawnPosition(targetPlayer.Pos, out Vector3 spawnPos))
-            {
-                var list = manager.CreatPatrol(spawnPos);
-                var targetPos = Tool.GetCircleIntersection(mapCenter, mapRadius + 30, spawnPos.ToVector2(), (targetPlayer.Pos - spawnPos).ToVector2()).ToVector3();
-                list.ForEach(item => item.GetComponent<EnemyController>().PatrolPos = targetPos + (spawnPos - item.transform.position));
+            if (!GetValidSpawnPosition(targetPlayer.Pos, out Vector3 spawnPos)) return;
 
+            var list = manager.CreatPatrol(spawnPos);
+            if (list == null || list.Count == 0) return;
+
+            // 巡逻方向：从生成点朝玩家方向延伸到地图边界外的圆上取交点
+            Vector3 dirPoint = Tool.GetCircleIntersection(
+                mapCenter, mapRadius + 30,
+                spawnPos.ToVector2(), (targetPlayer.Pos - spawnPos).ToVector2()).ToVector3();
+
+            // ⚠ 这个圆在可玩区外 30m 的地图边界环带上，经常没有烘焙导航网格，几何交点不能直接当目标点：
+            // 目标不可达时 SetDestination 会直接失败（实测目标离网格 18~60m），
+            // 而 EnemyController 的 m_lastDestination 去重会把"失败"记成"已请求"，同一个目标点再也不会重发 ⇒ 单位永久发呆。
+            Vector3 baseTarget = UnityEngine.AI.NavMesh.SamplePosition(
+                new Vector3(dirPoint.x, spawnPos.y, dirPoint.z),
+                out var baseHit, PATROL_TARGET_SAMPLE_RADIUS, UnityEngine.AI.NavMesh.AllAreas)
+                ? baseHit.position
+                : spawnPos;   // 投影不到就退回出生点（至少是个能站人的地方）
+
+            foreach (var item in list)
+            {
+                // ⚠ 旧实现用 ForEach + GetComponent，任一个单位取不到控制器就抛 NRE 中断整个循环，
+                // 后面的单位 PatrolPos 保持 default ⇒ EnemyMobile.Start 直接进 Idle 发呆
+                if (!item || !item.TryGetComponent(out EnemyController controller)) continue;
+
+                Vector3 unitPos = controller.transform.position;
+                // ⚠ 散开偏移只加在 XZ 上：Vector2.ToVector3() 的 y 恒为 0，把 3D 偏移一起加会把目标拖到地下几十米
+                Vector3 point = new Vector3(
+                    baseTarget.x + (spawnPos.x - unitPos.x),
+                    baseTarget.y,
+                    baseTarget.z + (spawnPos.z - unitPos.z));
+
+                controller.PatrolPos = UnityEngine.AI.NavMesh.SamplePosition(
+                    point, out var hit, PATROL_TARGET_UNIT_SAMPLE_RADIUS, UnityEngine.AI.NavMesh.AllAreas)
+                    ? hit.position
+                    : baseTarget;
             }
         }
 
@@ -470,6 +504,10 @@ namespace FPSGame.Game
                 Debug.LogWarning($"地图边界点{spawnPoint},x{Mathf.Cos(theta + dx)},y{Mathf.Sin(theta + dx)}");
             }
 
+            // ⚠ spawnPoint 由 Vector2.ToVector3() 得到，y 恒为 0；直接拿它采样时 3D 距离会被地形高度吃掉
+            // （地形 38m > 采样半径 25m ⇒ 永远采样失败，返回一个"没被投影、y=0"的假点，巡逻目标点的 y 也跟着烂掉）。
+            // 所以先落到地表高度（顺带 2m 内投影）再按 SPAWN_DISTANCE_OFFSET 投影一次。
+            spawnPoint = FpsHelper.GetNavMeshPoint(spawnPoint);
             if (UnityEngine.AI.NavMesh.SamplePosition(spawnPoint, out var hit, SPAWN_DISTANCE_OFFSET, UnityEngine.AI.NavMesh.AllAreas))
             {
                 spawnPoint = hit.position;

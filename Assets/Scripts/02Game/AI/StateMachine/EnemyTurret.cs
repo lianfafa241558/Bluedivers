@@ -17,6 +17,11 @@ namespace FPSGame.AI
         [Tooltip("预判位移的放大系数（对目标每帧位移 dx 的缩放），1=按目标位移等量预判，0=不预判。独立于转向速度")]
         public float PreJudgmentFactor = 1f;
 
+        /// <summary>警惕查看时长(秒)：听到枪声/示警后炮塔朝该方向看这么久，超时恢复自动巡逻</summary>
+        [InspectorName("警惕查看时长(秒)")]
+        [Tooltip("听到枪声/示警(DetectionModule.BewarePoint)后，炮塔朝该方向看这么久；超时后清除警惕点并恢复自动巡逻转动。<=0 表示不响应")]
+        public float BewareLookDuration = 3f;
+
         public enum AIState
         {
             Idle,
@@ -25,6 +30,11 @@ namespace FPSGame.AI
         }
 
         private Vector3 lastTargetPos;//上一帧目标的位置
+
+        /// <summary>是否正在朝警惕方向看（Idle 期间）</summary>
+        private bool _bewareLooking;
+        /// <summary>朝警惕方向看的结束时间</summary>
+        private float _bewareLookEndTime;
 
         [ContextMenu("重置")]
         private void ResetQu()
@@ -69,16 +79,63 @@ namespace FPSGame.AI
         }
         protected override void UpdateTurretAiming()
         {
-            if(AiState == AIState.Attack) base.UpdateTurretAiming();
+            // Attack 追踪目标；Idle 期间"警惕查看"同样应用 Look() 算出的目标旋转（炮台不能走动，只转头看）
+            if (AiState == AIState.Attack || (AiState == AIState.Idle && _bewareLooking)) base.UpdateTurretAiming();
         }
 
-        /// <summary>Idle：对开启自动巡逻旋转的炮塔巡逻转动（未开启的自动跳过）</summary>
+        /// <summary>Idle：听到枪声先朝警惕方向看一会儿，否则对开启自动巡逻旋转的炮塔巡逻转动</summary>
         private void IdleBehavior()
         {
+            // 正在警惕查看时不自动巡逻转动，避免两个旋转互相打架
+            if (UpdateBewareLook()) return;
+
             for (int i = 0; i < turrets.Count; i++)
             {
                 turrets[i].AutoRotate(Time.deltaTime);
             }
+        }
+
+        /// <summary>
+        /// 警惕查看：逻辑层噪声(BattleEventSub.OnNoise)把枪声/弹着点写进 BewarePoint 后，炮塔朝该方向看 BewareLookDuration 秒。
+        /// 超时就把警惕点消费掉并恢复自动巡逻（炮台不会走过去，所以只能"看向"目标方向）。
+        /// </summary>
+        /// <returns>true=本帧正在警惕查看（调用方不要再自动巡逻转动）</returns>
+        private bool UpdateBewareLook()
+        {
+            var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
+            if (module == null || BewareLookDuration <= 0f || !module.BewarePoint.HasValue)
+            {
+                _bewareLooking = false;
+                return false;
+            }
+
+            // 太远的点无视：超过"听力/视野取较大者"就不看（也不消费，交给后续判定）
+            var bewarePoint = module.BewarePoint.Value;
+            float senseRange = Mathf.Max(module.HearingRange, module.DetectionRange);
+            if (Vector3.Distance(transform.position, bewarePoint.RawVector3) > senseRange)
+            {
+                _bewareLooking = false;
+                return false;
+            }
+
+            if (!_bewareLooking)
+            {
+                _bewareLooking = true;
+                _bewareLookEndTime = Time.time + BewareLookDuration;
+            }
+            // 到点：消费掉警惕点，否则恢复巡逻后会被同一个点反复拉回来
+            if (Time.time > _bewareLookEndTime)
+            {
+                _bewareLooking = false;
+                module.ClearBeware();
+                return false;
+            }
+
+            // 只取水平方向：不要把炮管压到地面上的落点上
+            Vector3 lookAt = bewarePoint.RawVector3;
+            lookAt.y = transform.position.y;
+            CalculationAimTargrt(lookAt);
+            return true;
         }
 
         /// <summary>Attack：瞄准并射击</summary>
@@ -126,6 +183,8 @@ namespace FPSGame.AI
             if (AiState != AIState.Death)
             {
                 SwitchState(AIState.Idle);
+                // 回到 Idle 时重新开始计时：否则警惕查看会沿用上一轮已过期的结束时间，刚开打就被判定"看完了"
+                _bewareLooking = false;
                 m_TimeLostDetection = Time.time;
                 turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
             }

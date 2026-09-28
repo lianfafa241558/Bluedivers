@@ -87,7 +87,7 @@ namespace FPSGame.AI
         protected float TimeLastSeenTarget = Mathf.NegativeInfinity;
 
         /// <summary>目标最后已知位置（目标可见时持续更新，丢失后供 AI 前往搜索）</summary>
-        public Vector3? LastKnownTargetPos;
+        public PEVector3? LastKnownTargetPos;
 
         /// <summary>上一帧是否看见目标（用于检测重新发现）</summary>
         private bool m_WasSeeingTargetLastFrame;
@@ -112,12 +112,13 @@ namespace FPSGame.AI
             CorePoint = GetCorePoint();
             //不知道为什么=无效，只能老老实实if
             //if (!SearchPoint) SearchPoint = transform;
-            BattleEventSub.OnBulletHit += BulletHit;
+            //逻辑层噪声统一入口(开枪/命中/爆炸都发这里，不再直接听"命中点"事件)
+            BattleEventSub.OnNoise += OnNoise;
 
         }
         private void OnDestroy()
         {
-            BattleEventSub.OnBulletHit -= BulletHit;
+            BattleEventSub.OnNoise -= OnNoise;
         }
 
         [DisplayField]
@@ -188,7 +189,7 @@ namespace FPSGame.AI
             // 目标可见时持续记录最后已知位置，供丢失后搜索
             if (haveNewTarget && IsSeeingTarget)
             {
-                LastKnownTargetPos = Target.Pos;
+                LastKnownTargetPos = (PEVector3?)Target.Pos;
             }
    
 
@@ -384,13 +385,28 @@ namespace FPSGame.AI
 
         }
 
-        /// <summary>当前警惕的目标点（没有目标则为null</summary>
-        public Vector3? BewarePoint { get; protected set; }
+        /// <summary>当前警惕点(最近听到的噪声点)（没有目标则为null</summary>
+        public PEVector3? BewarePoint { get; protected set; }
 
-        /// <summary>警惕</summary>
-        public virtual void Beware(Vector3 point,bool spread)
+        /// <summary>当前警惕点的响度(噪声半径/米)：只有更响的噪声才能覆盖它</summary>
+        private PEInt m_BewareNoise;
+
+        /// <summary>搜索指令点：丢失目标后要去查看的目标最后已知位置(优先于听觉噪声点，由 AI 消费后清空)</summary>
+        public PEVector3? SearchPoint { get; set; }
+
+        /// <summary>
+        /// 警惕：记录"要去查看的噪声点"及其响度。
+        /// 响度比当前警惕点更轻时直接忽略(不覆盖)——免得弹着点的小动静把枪声点顶掉。
+        /// </summary>
+        /// <param name="point">噪声点</param>
+        /// <param name="noise">该噪声的响度(半径/米)</param>
+        /// <param name="spread">是否把同一噪声扩散给附近队友</param>
+        public virtual void Beware(PEVector3 point, PEInt noise, bool spread)
         {
+            if (BewarePoint.HasValue && noise < m_BewareNoise) return;
+
             BewarePoint = point;
+            m_BewareNoise = noise;
 
             if (spread && AlertRange > 0)
             {
@@ -399,7 +415,7 @@ namespace FPSGame.AI
                     .ToList().ToVaild();
                 foreach (var item in list)
                 {
-                    item.Beware(point, false);//不反复扩散
+                    item.Beware(point, noise, false);//不反复扩散
                 }
             }
 
@@ -409,6 +425,7 @@ namespace FPSGame.AI
         public void ClearBeware()
         {
             BewarePoint = null;
+            m_BewareNoise = 0;
         }
 
 
@@ -463,16 +480,23 @@ namespace FPSGame.AI
 
         }
 
-        void BulletHit(GameObject source, Vector3 pos)
+        /// <summary>
+        /// 逻辑层噪声入口(订阅 BattleEventSub.OnNoise)：开枪(枪口)与命中(弹着点/爆心)都走这里。
+        /// 判定：无源噪声忽略；同队噪声忽略；噪声球(半径=响度)罩到本单位听力范围内就算听见。
+        /// </summary>
+        void OnNoise(NoiseData noise)
         {
-
-            if ((m_Actor as I_Actor).IsValidMono()
-                && source
-                && source.TryGetComponent(out Actor actor)
-                && actor.Team != m_Actor.Team
-                && Vector3.Distance(pos, m_Actor.CenterPos) < HearingRange)
+            if (!m_Actor.IsValidMono()
+                || noise.source == null
+                || noise.radius <= 0)
             {
-                Beware(pos,false);
+                return;
+            }
+            if (!noise.source.TryGetComponent(out Actor actor) || actor.Team == m_Actor.Team) return;
+
+            if (PEVector3.Distance(noise.pos, m_Actor.Logic3Pos) - noise.radius < (PEInt)HearingRange)
+            {
+                Beware(noise.pos, noise.radius, false);
             }
         }
 

@@ -175,6 +175,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &5114223292933438715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -251,6 +256,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: b693fc9396fbc5b48b643e9f062a8248, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1970a5437d2882840bb82cdeb8ecf368, type: 2}
+  events: []
 --- !u!114 &140536466119782164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -571,18 +577,18 @@ MonoBehaviour:
   HearingRange: 15
   AttackRange: 1.5
   AlertRange: 50
+  Lazy: 0
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &5665894347064354046
 GameObject:
   m_ObjectHideFlags: 0
