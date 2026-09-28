@@ -635,6 +635,9 @@ public enum MissionEnum
     /// <summary>占位符</summary>
     [InspectorName("次要/占位符")] Placeholder13,
 
+    /// <summary>次要/次要撤离区(摧毁区域内单位完成，同时作为可选撤离点)</summary>
+    [InspectorName("次要/次要撤离区")] SecondaryEvacuate = 300,
+
     [InspectorName("巢穴/十字神明-S")] NestDecS = 100,
     [InspectorName("巢穴/十字神明-M")] NestDecM = 101,
     [InspectorName("巢穴/十字神明-L")] NestDecL = 102,

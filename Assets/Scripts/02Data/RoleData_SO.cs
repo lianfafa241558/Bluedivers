@@ -183,5 +183,19 @@ namespace Unity.FPS.Game
         /// <summary>失败</summary>
         [InspectorName("结算/失败")]
         Defeat,
+        /// <summary>占位符</summary>
+        [InspectorName("占位符")]
+        Placeholder18,
+        /// <summary>占位符</summary>
+        [InspectorName("占位符")]
+        Placeholder19,
+        /// <summary>占位符</summary>
+        [InspectorName("占位符")]
+        Placeholder20,
+
+        /// <summary>发现哨站</summary>
+        [InspectorName("战斗/发现哨站")]
+        DiscoveringOutpost,
+
     }
 }

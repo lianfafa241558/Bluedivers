@@ -362,9 +362,14 @@ namespace FpsGame.Mission
         {
             if (this.data.cfg.RequiredAD.Contains(data.cfg))
             {
-                allowUseAirdrop = true;
-                BattleManager.Instance.Authorize(data.cfg.ID, false);
-                BattleEventSub.OnAirdrop -= OnAirdrop;
+                if (!HasTag(MissionTag.RepeatCall))
+                {
+                    allowUseAirdrop = true;
+                    BattleManager.Instance.Authorize(data.cfg.ID, false);
+                    BattleEventSub.OnAirdrop -= OnAirdrop;
+
+                }
+
             }
         }
 

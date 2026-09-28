@@ -1,27 +1,27 @@
 # Bluedivers 长期记忆（索引）
 
-> **只留结论与坑；数据/过程/代码细节见各日 `YYYY-MM-DD.md`。** 2026-09-28 三次压缩。
+> **只留结论与坑；过程/代码细节见各日 `YYYY-MM-DD.md`。** 2026-09-28 第四次压缩（去重+精简，内容未删要点）。
 
 ## 协作与通用坑
 - 不确定先问；不动无关 using；改名/移动由用户**手动**做，AI 只给方案
-- 问"能不能/为什么没有"→ 先给**结论+证据(文件:行)**，再给选项与代价，最后才谈落地
+- 问"能不能/为什么没有"→ 先**结论+证据(文件:行)**，再选项与代价，最后才谈落地
 - 双机：换机后先确认 MCP 连的是当前副本，再动写操作
-- 诊断顺序：先问「**有没有人调它**」→ 再看**实际资产/prefab 数值** → 最后才看逻辑；能用运行时反射就别只靠读代码
+- 诊断顺序：先问「**有没有人调它**」→ 看**实际资产/prefab 数值** → 最后看逻辑；能用运行时反射就别只靠读代码
 - Inspector 特性失效先问「谁在画这个 Inspector」：专属 `[CustomEditor]` 顶掉全局 fallback
 - 资产 YAML 缺整行字段 = 脚本新增后资产未重存；Unity **保留 C# 字段初始化器的值** → 新增非 0 默认值字段安全；往**结构体末尾**加字段最稳
-- ⚠ 别什么都往 `BattleEventSub` 塞：能拿实例就订阅**实例事件**；跨实例状态别用 `static`（例外=需"记住最后值给晚订阅者"的初始广播）
-- 新增脚本尽量**运行时自动挂载**，少改场景/prefab YAML；必须手改 prefab 时明确告知；改 URP renderer 资产走 MCP `SerializedObject`
+- ⚠ 别什么都往 `BattleEventSub` 塞：能拿实例就订阅**实例事件**；跨实例状态别用 `static`（例外＝需"记住最后值给晚订阅者"的初始广播）
+- 新增脚本尽量**运行时自动挂载**，少改场景/prefab YAML；必须手改 prefab 要明确告知；改 URP renderer 资产走 MCP `SerializedObject`
 - ⚠ 新增 `const`/`static` 放**类顶部**（规范硬要求）
-- ⚠ **文本搜索不可全信**：`git grep` 会把含异常字节的 `.cs` 当二进制跳过（如 `02Game/Util/WindowStateController.cs`）；`Select-String` 也会漏（`PlayerWnd.BulletHit` 源码里有、扫描找不到，编译却正常）→ 关键结论用**运行时反射/控制台**复核
+- ⚠ **文本搜索不可全信**：`git grep` 把含异常字节的 `.cs` 当二进制跳过（`02Game/Util/WindowStateController.cs`）；`Select-String` 也会漏（`PlayerWnd.BulletHit` 源码里有、扫描找不到）→ 关键结论用**运行时反射/控制台**复核
 
 ## 环境与工具链
-- 副本：`D:\Pro\Bluedivers`、`D:\Project\RTSClient`；**MCP 实例 hash/端口随路径变**，实时以 `mcpforunity://instances` 为准（本机现为 `Bluedivers@3d9f2357`:6400、`RTSClient@6365de15`:6401）
+- 副本 `D:\Pro\Bluedivers`、`D:\Project\RTSClient`；**MCP 实例 hash/端口随路径变**，实时看 `mcpforunity://instances`（2026-09-28 晚实测 `Bluedivers@4a3e6a7b`:6401；规则文件里的 `3d9f2357`:6400 已过期）
 - Unity 2022.3.62f3 / URP 14.0.12 / C#9+.NET Std 2.1；单机 PvE（FPS Sample 改，`Unity.FPS.*`）；随机源统一 `BattleRandom`、确定性用 `PEMaths`
-- `Assets/Scripts/Lib/PEMaths.dll`（含 .xml）：**PEInt/PEVector3 就是"米"标量**（实测 `PEVector3.Distance(3,4,0)=5`、`(PEInt)20→20`、`RawInt==RawFloat`，无数值缩放）；`RawFloat` 换算后不可再参与运算
+- `Assets/Scripts/Lib/PEMaths.dll`：**PEInt/PEVector3 就是"米"标量**（实测 `PEVector3.Distance(3,4,0)=5`、`(PEInt)20→20`、`RawInt==RawFloat`，无数值缩放）；`RawFloat` 换算后不可再参与运算
 - git `core.autocrlf=true`；GitHub 直连被重置 → 走 `cdn.jsdelivr.net/gh/<repo>@<ref>/<path>`
 - `.gitignore` 的 Unity 生成目录规则必须 `/` 锚根（裸 `[Bb]uild/` 曾吞 `Packages/**/Tools/Build/`）
 - 工具坑：`search_content` 的 `glob` 不可靠 → 整目录搜或单文件 `path`+`headLimit`；`findstr` 读部分 fbx 报错 → `select-string`；无 `Debug.DrawWireSphere` → `Tool.DrawWireSphere`
-- 判定"代码是否真的编译进去"：`Library/ScriptAssemblies/Assembly-CSharp.dll` 的 mtime vs 源码 mtime；历史报错见 `%LOCALAPPDATA%\Unity\Editor\Editor.log`
+- 判定"代码是否真编译进去"：看**目标程序集** mtime vs 源码 mtime（`Assembly-CSharp.dll` 只装 `01Manager/`+`02Game/`+`Effect/` 等无 asmdef 目录；`00Tools/Test/*` 属 **`00_Utils.dll`**）；历史报错见 `%LOCALAPPDATA%\Unity\Editor\Editor.log`
 - 规范 `.codebuddy/rules/UnityCSharp编码规范.md`；skills：`bluedivers-unity/`、`data-editor/`、`unity-mcp/`
 
 ## 结构与命名
@@ -42,17 +42,17 @@
 - **交互键（E）解析在 `PlayerOperationController.{Update→Handle}`**：`target` = 第一人称屏幕中心 Raycast(1.3m) 或第三人称 2m 内最近可交互物；有 `target` 时 E 归交互物
 - 第三人称交互拉近：`PlayerController_ThirdPerson.ThirdPersonDistanceScale`(0.1~1) 乘到两分支 `distance`；`PlayerOperationController` 每帧写 `IsThirdPerson && target!=null ? 0.5f : 1f`，窗口切换还原 1
 - 装备：`IEquippable` + `EquipController.Equips`；装卸只由交互家具调 `InstallEquip/UninstallEquip`；交互家具"被携带"时自身 `enabled=false` → **装备想监听输入必须写在 `IEquippable` 实现里**；`InputState.Operate`=E(5)、`Equip`=X(22)
-- 计时器：`TickBehaviour.Tick()` **1 秒 1 次**；`CreateTimer(cb,秒,次数,endcb)`；`CreatePerTimer`=**每帧回调**持续秒
+- 计时器：`TickBehaviour.Tick()` **1 秒 1 次**（返回 false 即把自己移出 `ticks`）；`CreateTimer(cb,秒,次数,endcb)`；`CreatePerTimer`=**每帧回调**持续秒
 - 波次：`BattleManager.CreatWave(WaveCreateParams)` → `RobotWave`/`ZergWave`/`KaiserWave`；皆 `I_TickClass`、1s Tick，`End` 时 `Dispose()` 返回 false 被移出；`onEnd` 在 `Dispose` 回调（续刷安全）；`centerGetter` **只影响尚未落点**的单位；ZergWave 距 `anchorCenter`>50m → `RedeployPods()` 重投
 
 ## AI / 寻路（易踩）
 - AI 单位 = `EnemyController`（组合）+ `EnemyMobile`（状态机）+ `DetectionModule`（感知）；实机队伍：玩家 `team=0`，敌人 `team=2`
 - `EnemyController.PatrolPos` 是**到达即自毁**哨兵点（`HomePoint` 才是到达待命）；巡逻队只能 `BattleManager.CreatPatrol(Vector3)`
 - `EnemyMobile.Start` 只在**开场读一次** `PatrolPos` 决定 Patrol/Idle；`UpdateCurrentAiState` 在 `!BirthComplete` 期间整体早退（`IsMoveLocked`/`_vertigoActive`/`_terrorActive` 会冻结状态切换）
-- ⚠ **`Actor.IsFixed` 的语义（用户 2026-09-28 明确）**：只表示"**不会因为长期不动被删除**"（`IdleBehavior` 里跳过自毁），**不是位置固定** ⇒ 不能拿它当"这个单位不该移动"的门禁
-- **枪声警惕（2026-09-28 已补全）**：`EnemyMobile.UpdateAiStateTransitions` 新增 `Idle/Patrol → Beware`，触发条件 = `DetectionModule.BewarePoint.HasValue` **且** 点距 `<= Mathf.Max(HearingRange, DetectionRange)`（**距离门禁必须有**：`BulletHit` 写入条件"距离 - 音半径 不超过 听力距离"宽松到 ~45m，不拦一道会一枪惊动几十米外全员）；`EnterBeware` 取完点**立刻 `ClearBeware()` 消费**（防来回摆动），`Beware` 到达或 `BewareTimeout=20s` → `Return`（原地停 `BewareStayDuration` → 回原点 → `TryReturnToIdleOrPatrol`）；Beware 期间炮塔 `CalculationAimTargrt` 水平看过去。`EnemyTurret`（不能走动）走 `BewareLookDuration=3s` 只看过去再恢复 `AutoRotate`，同样带距离门禁
-- ⚠ 当时顺带修的两个既有 bug：① `case Return` 原先把"停留时间到 → `SetNavDestination(原点)`"写在"是否已到原点"**前面**，时间一过前者恒真 ⇒ 到达判定永不进入 ⇒ 单位卡在 Return 反复请求原点、回不到 Idle/Patrol。**判"到达"的 `else if` 必须排在"时间到"前面**；② `OnLostTarget` 直接赋 `m_BewareDestination` 会被 `EnterBeware` 按 `BewarePoint` 覆盖 ⇒ `LastKnownTargetPos` 不生效。现统一"要去的点先写进 `DetectionModule.Beware(...)`，`EnterBeware` 只从 `BewarePoint` 取并消费"
-- **警惕冷却（已做）**：`EnemyMobile.BewareCooldown=10s` + `BewareCooldownRadius=10m` —— 从上一个检查点**回到 Idle/Patrol 时**（`TryReturnToIdleOrPatrol`）记 `m_BewareCooldownEndTime`；冷却期内"枪声点 距 `m_BewareDestination`（= 上次检查点）不超过半径"就无视（别处的枪声照常响应，`m_BewareDestination==default` 时不判）。三个条件统一收在 `ShouldInvestigateBeware()`（有警惕点 + 在感知范围 + 不在冷却）。`EnemyTurret` 不参与冷却（它不会"返回"，只看 `BewareLookDuration`）
+- ⚠ **`Actor.IsFixed` 的语义（用户 2026-09-28 明确）**：只表示"**不会因为长期不动被删除**"（`IdleBehavior` 跳过自毁），**不是位置固定** ⇒ 不能拿它当"这个单位不该移动"的门禁
+- **枪声警惕（2026-09-28 已补全）**：`EnemyMobile.UpdateAiStateTransitions` 新增 `Idle/Patrol → Beware`，条件 = `DetectionModule.BewarePoint.HasValue` **且** 点距 `<= Mathf.Max(HearingRange, DetectionRange)`（**距离门禁必须有**，否则一枪惊动几十米外全员）；`EnterBeware` 取完点**立刻 `ClearBeware()` 消费**（防来回摆动）；`Beware` 到达或 `BewareTimeout=20s` → `Return`（原地停 `BewareStayDuration` → 回原点 → `TryReturnToIdleOrPatrol`）；Beware 期间炮塔 `CalculationAimTargrt` 水平看过去。`EnemyTurret`（不能走动）走 `BewareLookDuration=3s` 只看过去再恢复 `AutoRotate`，同样带距离门禁
+- ⚠ 顺带修的两个既有 bug：① `case Return` 原先把"停留时间到 → `SetNavDestination(原点)`"写在"是否已到原点"**前面**，时间一过前者恒真 ⇒ 到达判定永不进入。**判"到达"的 `else if` 必须排在"时间到"前面**；② `OnLostTarget` 直接赋 `m_BewareDestination` 会被 `EnterBeware` 按 `BewarePoint` 覆盖 ⇒ 现统一"要去的点先写进 `DetectionModule.Beware(...)`/`SearchPoint`，`EnterBeware` 只从点取并消费"
+- **警惕冷却（已做）**：`EnemyMobile.BewareCooldown=10s` + `BewareCooldownRadius=10m` —— 从上一个检查点**回到 Idle/Patrol 时**记 `m_BewareCooldownEndTime`；冷却期内"枪声点 距 `m_BewareDestination`（上次检查点）不超过半径"就无视（`m_BewareDestination==default` 时不判）。三条件收在 `ShouldInvestigateBeware()`。`EnemyTurret` 不参与冷却
 - ⚠⚠ **寻路请求失败曾被永久锁死（已修）**：`SetNavDestination` 的 `<1m` 去重键 `m_lastDestination` 曾在"请求真要发出去"之前写入 ⇒ 一次失败即永不重发（特征：State=Patrol、`hasPath=false`）。**修后规则**：仅当"目标没变 **且** `pathPending||hasPath`"才跳过，否则按 `NavRetryInterval=0.5s` 节流重发（别退回无条件去重！）
 - ⚠ `PathRequestManager`：`pathPending` 期间不重试，结束后判 `PathInvalid/PathPartial(只有1拐点)` → 投影重试 5 次(半径 5) → **10m 兜底**；⚠ **兜底 `SamplePosition` 失败时不许空操作**（否则 agent 停在 hasPath=false 无人再触发）→ 改为无条件 `LogWarning` + 交调用方节流
 - `Tool.GetCircleIntersection` 返回 Vector2，`Vector2.ToVector3()` = `(x,0,y)`（**y 恒 0**）⇒ "几何算出来的 XZ 点"必须先补 `y = 地表高度`（`FpsHelper.GetNavMeshPoint`）或用 `spawnPos.y`，再做 `SamplePosition`，否则地形高度(38m)吃掉采样距离(25m) → 必然失败
@@ -81,21 +81,25 @@
 - 天气：`WeatherSystem`（开局按 `mapCfg.WeatherInfos` 用 `BattleRandom` 抽）+`WeatherEffect`（Rain/Desert/Snow）；`WeatherAtmosphereController`（**全局命名空间**静态桥）：选图时注入 `FogColorGradient`，天气侧写 `Target*`，消费方每帧读 `*Multiplier`
 
 ## 任务 / 战备
-- `MissionBase : TickBehaviour`（1s）→ `MissionEvacuateBase` → 静态(终端 KeyScreen)/动态(凯伊 ReturnBag)；`UseSceneStartPoint` 虚开关控快速模式是否顶替 StartPoint；「创建后」走 `InitMission`，「全部初始化后」走 `StartMission`；`Link(mission)` 订阅 `OnMissionEnd`
+- `MissionBase : TickBehaviour`（1s）→ `MissionEvacuateBase` → 静态(终端 KeyScreen)/动态(凯伊 ReturnBag)；`UseSceneStartPoint` 虚开关控快速模式是否顶替 StartPoint；「创建后」走 `InitMission`，「全部初始化后」走 `StartMission`；`Link(mission)` 订阅其 `OnMissionEnd` 来激活自己；`Uninit()` 在 `EndMission`（任务完成）时就会跑 ⇒ **别把"任务完成后还要用"的订阅/清理放 Uninit**
+- **次要撤离区（2026-09-28 新增，`MissionEvacuateSecondary : MissionDestroyActor`，标旗 Extra）**：静态撤离激活时由 `MissionEvacuateStatic.CallSecondaryBeacons()` 往各区中心各呼叫一个 0 号战备（`ReleaseAirdrop(pos,0,InitBeacon)`，0=撤离信标）；任一处 KeyScreen 走到最后一步＝玩家选中该点 → `HideOtherBeacons()`（其余信标 `Animator.Play("Hide")`）+ 把 `area/areaPoint/pos/beacon/keyScreen` **整体换成该区**（撤离判断随之转移）+ `StartWait()`；`OnKeyScreenStage` 加了 `stage==Activation` 门禁防二次 StartWait
+  - 注入链：`MissionController` 按**类型**收集（不依赖标旗）→ 在 `evacuate.Link(main)` 之后 `staticEvacuate.SetSecondaryZones(list)`（GenerateFromData 与 FindFromScene 两条路都做了）
+  - `MissionEnum.SecondaryEvacuate = 300`（**显式值**，插在 Placeholder13 后 ⇒ 不动任何既有枚举值；⚠ 别在枚举中间插隐式值，会整体错位）
+  - 数据侧仍需用户建：挂该脚本的 MissionBase prefab（标旗=Extra）+ MissionData_SO（`controller` 指该 prefab）
 - `MedivacController`：`Land`=插入下机；`Evacuate`=撤离接人；`TakeOff()`=Play"Evacuate"+开 cam+派发 `Complete`+**只隐藏 IsInBox 玩家**
 - 主任务 `MissionCompleteKeySceern`（拼写如此）=终端流程；`MissionOilRefining`：Init 空投平台+连接点→Wait `MissionSubConnectPipes`→Start(180s+波次)→Repair→End；管道状态是 `Furniture_Pipe.Id` 字符串（`Pipe`→`PipeLink`→`PipeWait`→`PipeComplete`/`PipeError`），**无"已修复"标志** → 不能读 Id 判完成，要 Tick 轮询
 - 台词只能 `WndManager.CreatNotice(角色, groupName)`，角色键=`NoticeTree_SO.ID`
-- 战备：资产 `Assets/Resources/GameData/Airdrop/ADSO_*.asset`；`AirdropData_SO`（`type`/`labels`(`[Flags]`)/`opter`(Left0/Up1/Right2/Down3)/`subAirdrop`/`creatObect`/`coolGroup`/`isHide`）；首键严格：→轰炸/↑空中支援/↓炮台地雷补给/←载具
+- 战备：资产 `Assets/Resources/GameData/Airdrop/ADSO_*.asset`；`AirdropData_SO`（`type`/`labels`(`[Flags]`)/`opter`(Left0/Up1/Right2/Down3)/`subAirdrop`/`creatObect`/`coolGroup`/`isHide`）；首键严格：→轰炸/↑空中支援/↓炮台地雷补给/←载具；**ID 0 = 撤离信标**（`type=4`、`creatObect=Prefabs/Airdrop/EvacuationBeacon`、`permanentPod`）
 - ⚠ `labels` 是后加字段 → 除 `ADSO_R_Railgun` 外资产 YAML 无该行(=0)；`AirdropData_SOEditor` 显式列字段，漏列不显示
-- 部署：`VFXAirdropEffect` 按 `deliveryType` 分支；改 `arriveTime` 须同步 `time`；`permanentPod` 会 `LimitedLife.ResetLift(9999)`
+- 部署：`VFXAirdropEffect` 按 `deliveryType` 分支；改 `arriveTime` 须同步 `time`；`permanentPod` 会 `LimitedLife.ResetLift(9999)`；Pod 落地回调 `OnCreatObject` 给的就是 `creatObect` 实例（信标真正本体）
 - 授权：`AirdropController.Authorize(id,state)` → `+= state?1:-1`（0=隐藏且不可用）；必需战备 `TaskManager.RequiredAD = {SupplyId, HealBag, IlluminatorId(17), LampTowerId(16)}`；昼夜解锁照明只在翻转时动计数，开局事件会漏 → `ApplyInitDaySwitch()` 补发
 
 ## 战斗与伤害
 - 伤害总入口 `FpsHelper.Hit(ProjectileHitData)`：直击→爆炸(穿甲/拆毁)→冲击波→**地形破坏**→警告→特效/音效/弹痕；末尾 `//警告` 段现在**同时发两条**：表现层 `BattleEventSub.BulletHit(soure,point,soundRadius)`（HUD 用）+ 逻辑层 `BattleEventSub.Noise(NoiseData)`；`soundRadius=damageData.GetSoundRadius(charge)`=**表现层**音效距离（**与 hitData.sfxRange 无关**）
-- **逻辑层噪声体系（2026-09-28 新建，表现/逻辑彻底分开）**：契约 `NoiseData{GameObject source, PEVector3 pos, PEInt radius}` + 总线 `BattleEventSub.OnNoise/Noise()`。**生产者两条**：① `WeaponBaseController.HandleShoot()` 里 `OnShoot?.Invoke` 之后发**枪口**噪声，半径 `FireNoiseRadius`（逻辑字段，默认 20；**表现层音效距离是 `SFXRange`，两套分开，别再互相复用**）；② `FpsHelper.Hit` 的 `//警告` 段发**弹着点**噪声，半径 `DamageData.GetImpactSoundRadius(charge)`（逻辑字段 `ImpactSoundRadius`，默认 8；⚠ `UseExplode` 时取 `max(它, 伤害外半径)`，否则爆炸会变得比枪声还轻）。**消费者** `DetectionModule.OnNoise`（`Start` 订阅 `OnNoise`、`OnDestroy` 退订；**已不再订阅 `OnBulletHit`**）
+- **逻辑层噪声体系（2026-09-28 新建，表现/逻辑彻底分开）**：契约 `NoiseData{GameObject source, PEVector3 pos, PEInt radius}` + 总线 `BattleEventSub.OnNoise/Noise()`。**生产者两条**：① `WeaponBaseController.HandleShoot()` 里 `OnShoot?.Invoke` 之后发**枪口**噪声，半径 `FireNoiseRadius`（逻辑字段，默认 20；**表现层音效距离是 `SFXRange`，两套分开，别再互相复用**）；② `FpsHelper.Hit` 的 `//警告` 段发**弹着点**噪声，半径 `DamageData.GetImpactSoundRadius(charge)`（逻辑字段 `ImpactSoundRadius`，默认 8；⚠ `UseExplode` 时取 `max(它, 伤害外半径)`）。**消费者** `DetectionModule.OnNoise`（`Start` 订阅、`OnDestroy` 退订；**已不再订阅 `OnBulletHit`**）
 - ⚠ `BattleEventSub.OnBulletHit` 是**表现层**（`PlayerWnd`/`HitFlashWnd` 订阅做擦弹/受击提示），**没有**被噪声体系取代，别把它当逻辑用
 - **感知"警告"链路**：`OnNoise` 条件 = `m_Actor!=null && source!=null && source.TryGetComponent<Actor>() && actor.Team!=m_Actor.Team && PEVector3.Distance(pos, m_Actor.Logic3Pos) - radius < (PEInt)HearingRange` → `Beware(pos, radius, false)`。`source` 必须与 `Actor` **同物体**（玩家/敌人武器 Owner 都是各自根物体，OK；载具/无人机/炮台 Owner 不同物体则静默失效）
-- `DetectionModule` 两个点**分开**：`BewarePoint`(噪声点，带响度 `m_BewareNoise`) 与 `SearchPoint`(丢失目标的搜索**指令**，`EnemyMobile.OnLostTarget` 写、`EnterBeware` 消费)。`Beware(point, noise, spread)` 里 **`noise < m_BewareNoise` 直接 return 不覆盖**（弹着点的小动静顶不掉枪声点）；`ClearBeware()` 连响度一起清；`EnterBeware` 按 `SearchPoint > BewarePoint > m_OriginPos` 取目的地。⚠ `I_AIController.Beware` 签名已加 `noise` 参数（`AIController`/`EnemyController` 同步）
+- `DetectionModule` 两个点**分开**：`BewarePoint`(噪声点，带响度 `m_BewareNoise`) 与 `SearchPoint`(丢失目标的搜索**指令**)。`Beware(point, noise, spread)` 里 **`noise < m_BewareNoise` 直接 return 不覆盖**；`ClearBeware()` 连响度一起清；`EnterBeware` 按 `SearchPoint > BewarePoint > m_OriginPos` 取目的地。⚠ `I_AIController.Beware` 签名已加 `noise` 参数（`AIController`/`EnemyController` 同步）
 - 敌人特效（`02Game/AI/FxCont`）：`EnemyControllerFX`（抽象 partial）+两个子类；三层配置（渲染模板 SO 按 `sharedMaterials[i]==mat` 匹配槽位 / 事件 SO / 组件字段）；**MPB 所有权在"渲染槽位"**（条目只 SetColor，帧末统一 Flush；收尾写回"无效果值"）
 - **"非爆炸范围伤害"**：`DamagePacket.isDirect=true` ⇒ 绕开爆炸抗性/遮挡；骨架 `FpsHelper.HitAreaKinetic(KineticAreaHitData)`（每单位只打离中心最近的肢体、可排除自身、可选击退）；`TrampleEffect` 只做参数拼装；⚠ `FpsHelper` 无 `using System;`（写全 `System.Func`）、`in` 结构体字段不能 lambda 捕获
 - 地雷 `DeployableMine.cs`：`Actor`/`Health`/`LimitedLife` 三件套；外部调**幂等** `TriggerExplosion()` → 延时协程 → `DoExplosion()`（`OnExploded` **在 `VFXManager.Release` 之前**派发）；`LimitedLife` 到寿"已触发则立即引爆、未触发才销毁"
@@ -143,11 +147,11 @@
 
 ## 编辑器扩展
 - 装饰特性一律 `DecoratorDrawer`；需读 propertyPath 才用 `PropertyDrawer`；`InlineFieldDrawer` 是 `[Singleline]` 内联的唯一实现
-- `EditorOverride`（全局 fallback Inspector）**被专属 `[CustomEditor]` 完全顶掉**（全仓仅 2 个）；反射自建 Drawer 须手动注入 `m_Attribute`，特性类标 `CustomPropertyDrawer`
+- `EditorOverride`（全局 fallback Inspector）**被专属 `[CustomEditor]` 完全顶掉**；反射自建 Drawer 须手动注入 `m_Attribute`，特性类标 `CustomPropertyDrawer`
 - 复用：`SOPickerPopup<T>`、`PrefabBatchToolBase`；Drawer 集中 `Drawer/`
 - `[DisplayField]`：编辑期不画、运行期只读；只对已序列化字段生效
 - 数据编辑器：`Editor/DataEditorWindow.cs`+`DataTabs/DataTabModule<T>`；SO 加字段且带专属 Editor 须补 `DrawField("新字段")`
-- ⚠⚠ **专属 `[CustomPropertyDrawer]` 手列的字段，新增字段不会自动出现**：`DamageData`→`Editor/Drawer/DamageDataDrawer.cs:DrawSection_Motion`、`SustainedDamageData`→**同一文件里的 `SustainedDamageDataDrawer.DrawSection_General`**；⚠ **两处行高是硬编码常量**（`GetSectionHeight_Motion` 的 `rows=12`、`GetSectionHeight_General` 的 `3 * (LineHeight+2)`），加一行必须同步改，否则整块布局错位
+- ⚠⚠ **专属 `[CustomPropertyDrawer]` 手列的字段，新增字段不会自动出现**：`DamageData`→`Editor/Drawer/DamageDataDrawer.cs:DrawSection_Motion`、`SustainedDamageData`→**同一文件里的 `SustainedDamageDataDrawer.DrawSection_General`**；⚠ **两处行高是硬编码常量**（`GetSectionHeight_Motion` 的 `rows=12`、`GetSectionHeight_General` 的 `3 * (LineHeight+2)`），加一行必须同步改
 - `Assets/Editor/MaterialUsageFinder.cs`（`Tools/材质引用查询`）
 - ⚠ `DisplayProgressBar` 会派发编辑器事件 → 长任务窗口须加重入锁；⚠ **EditorWindow 私有字段会被 Unity 存档并在域重载后恢复**，UI 开关应在 OnEnable 复位
 - ⚠ `Editor/Tool/EditorTools.asmdef` 的 `references: []` → 看不到 `UnityEngine.UI`；要用 UGUI/项目类型就放 `Assets/Editor/`
@@ -164,5 +168,6 @@
 - 本地嵌入包 `Packages/com.coplaydev.unity-mcp`（已入库含汉化）；手册=skill `unity-mcp/`
 - ⚠ 会话里看不到 `mcp__`/`mcpforunity__` 工具时**不要假装能查编辑器**：只能读文件/资产，要如实说"未证实"
 - 客户端配置两份互不相通：IDE 读 `~/.codebuddy/mcp.json`；Unity 窗口 Configure 只写 CLI；Transport 必须 Stdio
-- `execute_code` 默认 auto（有 Roslyn 则 C#12）；**反射扫全场 `AppDomain.CurrentDomain.GetAssemblies()` + `FindObjectsOfType` 是诊断利器**（本会话靠它确认订阅数/条件/量纲）；`FindObjectsOfType` 不含未激活对象，要含就用 `Resources.FindObjectsOfTypeAll`
-- `mcp_call_tool` 参数校验严格（不接受 schema 外字段）；改完脚本：`validate_script`→`refresh_unity`→等 ~10s→`read_console`（`types` 传**数组**）；⚠ 新 `.cs` 文件 `refresh_unity` 不会导入；编辑器里 `AddComponent` 不调 `Awake`
+- `execute_code` 默认 auto（有 Roslyn 则 C#12）；**反射扫全场 `AppDomain.CurrentDomain.GetAssemblies()` + `FindObjectsOfType` 是诊断利器**；`FindObjectsOfType` 不含未激活对象，要含就用 `Resources.FindObjectsOfTypeAll`
+- `mcp_call_tool` 参数校验严格（不接受 schema 外字段）；改完脚本：`validate_script`→`refresh_unity`→等 ~10s→`read_console`（`types` 传**数组**）；编辑器里 `AddComponent` 不调 `Awake`
+- ⚠⚠ **新建 `.cs` 文件必须先 `refresh_unity(mode=force, scope=assets)`**：默认 `if_dirty` 会返回 `refresh_triggered:false`，新文件没被导入 ⇒ 编译报"找不到类型"（本次实测）；判据是**新 `.cs.meta` 的 mtime 早于 DLL** 才算编进去

@@ -370,6 +370,8 @@ MonoBehaviour:
       Value: {fileID: -8662401196465046609}
     - Key: 15
       Value: {fileID: 2547133461607313490}
+    - Key: 37
+      Value: {fileID: 5152440151232767932}
     meetReset: 1
   DefaultAirdropIDs: 63000000
 --- !u!114 &231580543679630454
@@ -650,6 +652,38 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 0
+--- !u!114 &5152440151232767932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Noa_DiscoveringOutpost
+  m_EditorClassIdentifier: 
+  groupName: DiscoveringOutpost
+  clips:
+  - audioClip: {fileID: 8300000, guid: 3e5675764497b90459c58145f66658af, type: 3}
+    subtitle: "\u53D1\u73B0\u654C\u65B9\u54E8\u7AD9"
+  - audioClip: {fileID: 8300000, guid: 15d69f4f69b341b48ac9562f03b8a562, type: 3}
+    subtitle: "\u8FD9\u91CC\u6709\u654C\u65B9\u57FA\u5730"
+  - audioClip: {fileID: 8300000, guid: 49004e42012014145ac53de34246c579, type: 3}
+    subtitle: "\u654C\u65B9\u54E8\u7AD9\uFF0C\u5F88\u8FD1"
+  - audioClip: {fileID: 8300000, guid: c17608db3a4be42488cc667d357e6a40, type: 3}
+    subtitle: "\u63A5\u8FD1\u654C\u65B9\u54E8\u7AD9"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 8
 --- !u!114 &5445619004508900519
 MonoBehaviour:
   m_ObjectHideFlags: 0

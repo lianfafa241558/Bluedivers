@@ -1,12 +1,12 @@
-using UnityEngine;
+using System.Collections;
 using System.Linq;
 using Core;
 using GameContract;
-using Utils;
 using Unity.FPS.Game;
-
-using System.Collections;
+using UnityEngine;
 using UnityEngine.Events;
+using Utils;
+using static UnityEditor.Progress;
 
 namespace FpsGame.Mission
 {
@@ -95,7 +95,7 @@ namespace FpsGame.Mission
             if (!mission||!mission.IsInitialized) return;
             if (!BattleManager.Instance || !BattleManager.Instance.IsStartBattle) return;
 
-            var dis = ActorsManager.Players.Min(item => Vector2.Distance(item.Pos.ToVector2(), Pos.ToVector2()));
+            var dis = Vector2.Distance(ActorsManager.Player.Pos.ToVector2(), Pos.ToVector2());
 
             bool entityRange = dis < HalfRange + 10;
             if (HaveTag(MissionTag.OneDiscovered))
@@ -118,7 +118,16 @@ namespace FpsGame.Mission
             if (entityRange && !discovered)
             {
                 TryDiscovered();
-                CreatNotice("Kotama", "ApproachingTarget", () => !InAirdropRange);
+                if (mission.missionType == MissionType.Nest)
+                {
+                    ActorsManager.Player.gameObject.GetComponent<PlayerSpeechManager>().Speech(SpeechTypeEnum.DiscoveringOutpost);
+                }
+                else
+                {
+                    CreatNotice("Kotama", "ApproachingTarget", () => !InAirdropRange);
+                }
+                    
+
             }
 
             bool inAirdropRange = dis < mission.AirdropRange&& mission.data.cfg.RequiredAD.Count>0;

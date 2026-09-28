@@ -247,6 +247,8 @@ namespace GameContract
         [InspectorName("显示进度条")] DisplayProgress = 1 << 12,
         /// <summary>激活<summary>
         [InspectorName("激活")] IsActive = 1 << 13,
+        /// <summary>允许重复呼叫战备/summary>
+        [InspectorName("允许重复呼叫战备")] RepeatCall = 1 << 14,
     }
 
     public enum UnitTier

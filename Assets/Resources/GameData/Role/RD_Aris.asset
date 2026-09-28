@@ -336,6 +336,38 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 0
+--- !u!114 &-39035768215716039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Aris_DiscoveringOutpost
+  m_EditorClassIdentifier: 
+  groupName: DiscoveringOutpost
+  clips:
+  - audioClip: {fileID: 8300000, guid: 66cce483b5520fa46a449eac3a206553, type: 3}
+    subtitle: "\u53D1\u73B0\u654C\u65B9\u54E8\u7AD9"
+  - audioClip: {fileID: 8300000, guid: 984ec4530bc03de4fadb41e471a11ccc, type: 3}
+    subtitle: "\u8FD9\u91CC\u6709\u654C\u65B9\u57FA\u5730"
+  - audioClip: {fileID: 8300000, guid: 03a71fa68088bee4ca34b66938c1aede, type: 3}
+    subtitle: "\u654C\u65B9\u54E8\u7AD9\uFF0C\u5F88\u8FD1"
+  - audioClip: {fileID: 8300000, guid: 066f4a8e61ad6ea4f9567e316580697c, type: 3}
+    subtitle: "\u63A5\u8FD1\u654C\u65B9\u54E8\u7AD9"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 8
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -432,6 +464,8 @@ MonoBehaviour:
       Value: {fileID: -3248342274755610678}
     - Key: 18
       Value: {fileID: 960297874653962149}
+    - Key: 37
+      Value: {fileID: -39035768215716039}
     meetReset: 1
   DefaultAirdropIDs: 2c010000
 --- !u!114 &651868360274807468

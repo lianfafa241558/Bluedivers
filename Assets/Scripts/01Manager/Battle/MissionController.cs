@@ -169,10 +169,14 @@ public class MissionController : MonoBehaviour
         //这里的实现就很丑陋了，但是没办法，不能让主任务直接生成
         MissionBase main=null, evacuate = null;
         List<MissionBase> subs=new();
+        //可选撤离点(次要撤离区)：由静态撤离任务统一呼叫信标、并支持就地切换撤离点
+        List<MissionEvacuateSecondary> evacZones = new();
         foreach (var task in waitMissions)
         {
             MissionBase go=null;
             yield return CreatMission(task, (re) => go = re);
+            //按控制器类型登记，不依赖标旗，避免数据配错导致漏登记
+            if (go is MissionEvacuateSecondary zone) evacZones.Add(zone);
             switch (go.missionType)
             {
                 case MissionType.Main:
@@ -195,6 +199,8 @@ public class MissionController : MonoBehaviour
         }
         //让撤离任务链接主任务
         evacuate.Link(main);
+        //把次要撤离区交给静态撤离任务：由它呼叫信标，并在玩家选择后接管撤离流程
+        if (evacuate is MissionEvacuateStatic staticEvacuate) staticEvacuate.SetSecondaryZones(evacZones);
         foreach (var sub in subs)
         {
             sub.parent = main;
@@ -221,9 +227,12 @@ public class MissionController : MonoBehaviour
         // 按 MissionEnum 分类（与 InitAllMission 的分类逻辑一致）
         MissionBase main = null, evacuate = null;
         List<MissionBase> subs = new();
+        //可选撤离点(次要撤离区)
+        List<MissionEvacuateSecondary> evacZones = new();
 
         foreach (var go in sceneMissions)
         {
+            if (go is MissionEvacuateSecondary zone) evacZones.Add(zone);
             switch (go.missionType)
             {
                 case MissionType.Main:
@@ -244,6 +253,8 @@ public class MissionController : MonoBehaviour
 
         if (evacuate != null && main != null)
             evacuate.Link(main);
+        // 把次要撤离区交给静态撤离任务：由它呼叫信标，并在玩家选择后接管撤离流程
+        if (evacuate is MissionEvacuateStatic staticEvacuate) staticEvacuate.SetSecondaryZones(evacZones);
         foreach (var sub in subs)
             sub.parent = main;
         if (main != null)

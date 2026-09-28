@@ -192,6 +192,38 @@ MonoBehaviour:
   priority: 0
   group: 6
   flags: 0
+--- !u!114 &-4729036868423796423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: Yuuka_DiscoveringOutpost
+  m_EditorClassIdentifier: 
+  groupName: DiscoveringOutpost
+  clips:
+  - audioClip: {fileID: 8300000, guid: bfec48ce384f5c44584837fbfea93cfe, type: 3}
+    subtitle: "\u53D1\u73B0\u654C\u65B9\u54E8\u7AD9"
+  - audioClip: {fileID: 8300000, guid: ca106c5a1db847b4fbd41988ade43c57, type: 3}
+    subtitle: "\u8FD9\u91CC\u6709\u654C\u65B9\u57FA\u5730"
+  - audioClip: {fileID: 8300000, guid: a7e1e47fe9e8e9b438d20e250f666fd7, type: 3}
+    subtitle: "\u654C\u65B9\u54E8\u7AD9\uFF0C\u5F88\u8FD1"
+  - audioClip: {fileID: 8300000, guid: 06c507dfcb0885041a90d49b324b9ea2, type: 3}
+    subtitle: "\u63A5\u8FD1\u654C\u65B9\u54E8\u7AD9"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 6
+  flags: 8
 --- !u!114 &-4451136591197534325
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -396,6 +428,8 @@ MonoBehaviour:
       Value: {fileID: -5884271306564699768}
     - Key: 20
       Value: {fileID: -5185647892412459820}
+    - Key: 37
+      Value: {fileID: -4729036868423796423}
     meetReset: 0
   DefaultAirdropIDs: 2e010000
 --- !u!114 &345053142933966265
