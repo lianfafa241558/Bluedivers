@@ -40,20 +40,23 @@ namespace FpsGame.Mission
         public MissionType missionType;
         [InspectorName("优先级")]
         public int priority;
-        //这玩意应该放着这里吗？我得想想
+
         [SerializeField]
         private List<GameObject> prefabs;
+        [SerializeField]
+        private EnemyActorVariant_SO prefabVarients;
 
-         [DisplayField(DisplayFieldEnum.RunRead)]
+
+        [DisplayField(DisplayFieldEnum.RunRead)]
         [InspectorName("标题")]
         public string title;
-         [DisplayField(DisplayFieldEnum.RunRead)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         [InspectorName("当前目标提示")]
         public string tip;
-         [DisplayField(DisplayFieldEnum.RunRead)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         [InspectorName("最大任务进度")]
         public int MaxProgress;
-         [DisplayField(DisplayFieldEnum.RunRead)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         [InspectorName("当前任务进度")]
         public int NowProgress;
 
@@ -64,14 +67,14 @@ namespace FpsGame.Mission
         public Vector2Int mapEntitySize = Vector2Int.one * 20;
 
 
-         [DisplayField(DisplayFieldEnum.RunRead)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         public MissionBase parent;//主任务
 
         
-         [DisplayField(DisplayFieldEnum.RunRead)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         public TaskManager.TaskItem data;
         [SerializeField]
-         [DisplayField(DisplayFieldEnum.RunRead)]
+        [DisplayField(DisplayFieldEnum.RunRead)]
         protected TaskManager.SelectTaskData root;
 
         [HideInInspector]
@@ -194,7 +197,7 @@ namespace FpsGame.Mission
             }
 
             // 场景中 MissionView 已作为子对象存在，直接获取引用
-            if (entity == null&&prefabs.Count>0)
+            if (entity == null)
             {
                 Debug.LogError("没有为其设置实体",this);
             }
@@ -245,15 +248,32 @@ namespace FpsGame.Mission
             
 
         }
+
+        private bool GetEntiryPrefab(out GameObject prefab)
+        {
+            if (prefabs.Count > 0)
+            {
+                prefab=prefabs.RandomTake(manager.BattleRandom);
+                return true;
+            }
+            else if (prefabVarients != null)
+            {
+                prefab = prefabVarients.Get(TaskManager.Instance.EnemyVarietyType);
+                return true;
+            }
+            prefab = null;
+            return false;
+        }
+
+
         /// <summary>
         /// 创建后就执行
         /// </summary>
         protected virtual void InitMission()
         {
-
-            if (!entity && prefabs.Count > 0)
+            if (!entity && GetEntiryPrefab(out GameObject prefab))
             {
-                entity = Instantiate(prefabs.RandomTake(), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), entityParent).GetComponent<MissionView>();
+                entity = Instantiate(prefab, pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), entityParent).GetComponent<MissionView>();
                 entity.Init(this, this.data.cfg.RequiredAD.Select(item => item.ID).ToArray());
             }
             else

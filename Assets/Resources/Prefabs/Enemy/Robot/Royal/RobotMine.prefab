@@ -97,12 +97,12 @@ MonoBehaviour:
   MaxHealth: 5
   MaxShield: 0
   showArmorLists:
-  - Key: 8
-    Value: 1
-  - Key: 9
-    Value: 1
   - Key: 11
-    Value: 1
+    Value: 10
+  - Key: 8
+    Value: 10
+  - Key: 9
+    Value: 10
   MainPart: {fileID: 1200020666728257978}
   demolishValue: -1
   showHealth: 0
@@ -192,6 +192,13 @@ MonoBehaviour:
   TriggerRange: 1.5
   VerticalRange: 0
   intelligent: 0
+  ExplosionDelay: 0
+  OnTriggered:
+    m_PersistentCalls:
+      m_Calls: []
+  OnExploded:
+    m_PersistentCalls:
+      m_Calls: []
   DamageData:
     DamageExplosion: 20
     ExplosionInnerRange: 2
@@ -204,6 +211,7 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     SoundRadius: 40
+    ImpactSoundRadius: 8
     NoSource: 0
     ExplosionAP: 2
     demolishValue: 20

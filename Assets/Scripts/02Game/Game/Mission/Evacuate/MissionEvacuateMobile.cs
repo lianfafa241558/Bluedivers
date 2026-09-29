@@ -166,16 +166,71 @@ namespace FpsGame.Mission
             stage = EvacuateState.Approach;
             countDown = m_EvacuateTime;
 
+            //联动次要撤离区：把本任务自己的撤离点和所有次要撤离区放在一起，选一处离玩家最近的作为实际撤离点
+            SelectNearestEvacuatePoint(user);
+
             UpdateText("运输船接近中", "前往撤离点");
             CreatNotice("Ayane", "CountDownBegins");
             if (user) GlobalEventSub.PlayMeetSpeech(user, SpeechTypeEnum.Evacuate);
-            if (IsComplete) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
-
+            AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
+            AudioSvc.SetLockMusic(true);
             //通知凯伊带队前往撤离点(沿途留下回收标记)，巡逻队也会随之向撤离点收缩
             BattleEventSub.Evacuate(new(areaPoint));
 
             CreatReinforcement();
             CreatMedivac();
+        }
+
+        /// <summary>
+        /// 选择实际使用的撤离点：把"本任务自己的撤离点"与所有次要撤离区放在一起，
+        /// 取离玩家最近的一处，并把 area/areaPoint/pos 整体切过去(随后运输机下落、通知凯伊带队等都用这一处)。
+        /// </summary>
+        private void SelectNearestEvacuatePoint(GameObject user)
+        {
+            Vector3 playerPos = GetEvacuateRequestPos(user);
+            //基准候选是本任务自己的撤离点
+            float best = Vector3.Distance(playerPos, areaPoint);
+            MissionEvacuateSecondary nearest = null;
+
+            foreach (var zone in _secondaryZones)
+            {
+                if (!zone) continue;
+                float d = Vector3.Distance(playerPos, zone.EvacuatePoint);
+                if (d < best)
+                {
+                    best = d;
+                    nearest = zone;
+                }
+            }
+
+            //最近的仍是本任务自己的点，保持不变
+            if (!nearest) return;
+            area = nearest.EvacuateAnchor;
+            areaPoint = nearest.EvacuatePoint;
+            pos = areaPoint;
+        }
+
+        /// <summary>
+        /// 取发起撤离的玩家位置：优先用发起交互的玩家，其次用离当前撤离点最近的玩家，
+        /// 最后退回当前撤离点(快速模式没有玩家近距离交互时)。
+        /// </summary>
+        private Vector3 GetEvacuateRequestPos(GameObject user)
+        {
+            if (user) return user.transform.position;
+
+            I_Actor nearest = null;
+            float best = float.MaxValue;
+            foreach (var player in ActorsManager.Players)
+            {
+                if (!player.IsValidMono()) continue;
+                float d = Vector3.Distance(player.Pos, areaPoint);
+                if (d < best)
+                {
+                    best = d;
+                    nearest = player;
+                }
+            }
+            return nearest != null ? nearest.Pos : areaPoint;
         }
 
         /// <summary>为每名玩家刷出一波以其位置为目标的追击增援，波次结束后自动续刷(不会结束)</summary>
@@ -315,6 +370,7 @@ namespace FpsGame.Mission
         {
             if (stage == EvacuateState.End) return;
             stage = EvacuateState.End;
+            AudioSvc.SetLockMusic(false);
             StopChaseReinforcement();
             countDown = 6;
             CreatNotice("Ayane", "TakeOff");

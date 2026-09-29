@@ -1033,6 +1033,8 @@ MonoBehaviour:
   BewareReachRadius: 2
   BewareStayDuration: 2
   BewareTimeout: 20
+  BewareCooldown: 10
+  BewareCooldownRadius: 10
   IdleMaxDuration: 120
 --- !u!195 &6404041158885394288
 NavMeshAgent:
@@ -1092,8 +1094,6 @@ MonoBehaviour:
     Value: 500
   - Key: 10
     Value: 500
-  - Key: 11
-    Value: 9999
 --- !u!4 &6627845032337287688 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2484124977186016577, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,

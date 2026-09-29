@@ -199,8 +199,8 @@ public class MissionController : MonoBehaviour
         }
         //让撤离任务链接主任务
         evacuate.Link(main);
-        //把次要撤离区交给静态撤离任务：由它呼叫信标，并在玩家选择后接管撤离流程
-        if (evacuate is MissionEvacuateStatic staticEvacuate) staticEvacuate.SetSecondaryZones(evacZones);
+        //把次要撤离区交给撤离任务：静态撤离用它呼叫信标并由玩家选择，动态撤离用它在发起时选离玩家最近的一处
+        if (evacuate is MissionEvacuateBase evacuateBase) evacuateBase.SetSecondaryZones(evacZones);
         foreach (var sub in subs)
         {
             sub.parent = main;
@@ -253,8 +253,8 @@ public class MissionController : MonoBehaviour
 
         if (evacuate != null && main != null)
             evacuate.Link(main);
-        // 把次要撤离区交给静态撤离任务：由它呼叫信标，并在玩家选择后接管撤离流程
-        if (evacuate is MissionEvacuateStatic staticEvacuate) staticEvacuate.SetSecondaryZones(evacZones);
+        // 把次要撤离区交给撤离任务：静态撤离用它呼叫信标并由玩家选择，动态撤离用它在发起时选离玩家最近的一处
+        if (evacuate is MissionEvacuateBase evacuateBase) evacuateBase.SetSecondaryZones(evacZones);
         foreach (var sub in subs)
             sub.parent = main;
         if (main != null)

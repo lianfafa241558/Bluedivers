@@ -5029,18 +5029,18 @@ MonoBehaviour:
   HearingRange: 149
   AttackRange: 0
   AlertRange: 8
+  Lazy: 0
   KnownTargetTimeout: 12
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &5247611013533635576
 GameObject:
   m_ObjectHideFlags: 0
@@ -5144,7 +5144,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 500
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 11
+    Value: 10
+  - Key: 8
+    Value: 10
+  - Key: 9
+    Value: 10
   MainPart: {fileID: 5534251723615431800}
   demolishValue: 30
   showHealth: 0
@@ -5169,6 +5175,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &6071627125960492447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5198,6 +5209,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 2a3cf663277d9b0439baf3273df8c9e5, type: 2}
   fxMaterial: {fileID: 2100000, guid: 0c1a506957c9319449b20b1a059b361a, type: 2}
+  events: []
   UseAttack: 0
 --- !u!1001 &4247307295088711518
 PrefabInstance:

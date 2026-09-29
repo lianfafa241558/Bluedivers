@@ -10036,7 +10036,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 11
+    Value: 10
+  - Key: 8
+    Value: 10
+  - Key: 9
+    Value: 10
   MainPart: {fileID: 2647102820940276906}
   demolishValue: 40
   showHealth: 0
@@ -10061,6 +10067,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &2647102821790562752
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10108,6 +10119,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 2a3cf663277d9b0439baf3273df8c9e5, type: 2}
   fxMaterial: {fileID: 2100000, guid: f3410a3cafb0f4b459fd14b95a4457d5, type: 2}
+  events: []
   UseAttack: 0
 --- !u!1 &2647102822303826459
 GameObject:
@@ -19828,18 +19840,18 @@ MonoBehaviour:
   HearingRange: 80
   AttackRange: 0
   AlertRange: 50
+  Lazy: 0
   KnownTargetTimeout: 12
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &2647102822365142608
 GameObject:
   m_ObjectHideFlags: 0

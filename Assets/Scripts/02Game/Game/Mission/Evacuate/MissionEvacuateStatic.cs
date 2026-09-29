@@ -41,9 +41,6 @@ namespace FpsGame.Mission
         Transform beacon;
         KeyScreen keyScreen;
 
-        /// <summary>地图上可选的其他撤离点(次要撤离区)，任务创建后由 MissionController 注入</summary>
-        private readonly List<MissionEvacuateSecondary> _secondaryZones = new();
-
         /// <summary>本次撤离呼叫出去的所有信标(0号战备)：本任务的 + 各次要撤离区的</summary>
         private readonly List<GameObject> _beacons = new();
 
@@ -62,16 +59,6 @@ namespace FpsGame.Mission
             base.Activation(mission);
             stage = EvacuateState.Activation;
             UpdateText("激活撤离终端", "");
-        }
-
-        /// <summary>
-        /// 注入可选撤离点(次要撤离区)：激活本任务时，除了自己的信标，还会在每个次要撤离区中心各呼叫一个撤离信标，
-        /// 玩家可以自行选择在哪一处发起撤离。
-        /// </summary>
-        public void SetSecondaryZones(List<MissionEvacuateSecondary> zones)
-        {
-            _secondaryZones.Clear();
-            if (zones != null) _secondaryZones.AddRange(zones);
         }
 
         public override bool Tick()
@@ -276,7 +263,7 @@ namespace FpsGame.Mission
             stage = EvacuateState.Wait;
             UpdateText("运输船接近中", "");
             countDown = m_EvacuateTime;//如果有撤离效果就变短
-            if(IsComplete) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
+            //if(IsComplete) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
             CreatNotice("Ayane", "CountDownBegins");
             BattleEventSub.Evacuate(new(pos));
         }

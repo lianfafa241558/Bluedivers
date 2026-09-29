@@ -142,7 +142,7 @@ namespace FPSGame.Game
                     }
                     break;
                 case WaveState.Ongoing:
-                    if (creats.Count > 3)
+                    if (creats.Count >= perTickCreat)
                     {
                         for (int i = 0; i < perTickCreat; ++i)
                         {

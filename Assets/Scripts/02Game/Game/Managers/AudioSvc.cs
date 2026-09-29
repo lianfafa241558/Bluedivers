@@ -9,6 +9,8 @@ public class AudioSvc : AudioManaqerBase<AudioSvc>
     static Dictionary<MusicGroup, List<AudioClip>> musicDic;
     [SerializeField] 
     List<KVP<MusicGroup, List<AudioClip>>> musicList;
+    private static bool musicLock = false;
+
 
     public override void Awake()
     {
@@ -88,10 +90,19 @@ public class AudioSvc : AudioManaqerBase<AudioSvc>
     {
        return ResSvc.Instance.LoadAudio(path, cache);
     }
+
     public static void PlayMusic(MusicGroup type,float volme)
     {
+        if (musicLock) return;
         PlayMusic(musicDic[type].RandomTake(), volme);
     }
+
+    public static void SetLockMusic(bool lockMusic)
+    {
+        musicLock = lockMusic;
+    }
+
+
     public static void Suppressed(float time)
     {
         GameRoot.CreateTimer(() => {

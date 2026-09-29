@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using FPSGame.AI;
 using GameContract;
@@ -28,6 +29,9 @@ namespace FpsGame.Mission
 
         /// <summary>随队撤离的凯伊(动态撤离用它身上的回收信标发起撤离)</summary>
         protected SpecUnitKei kei;
+
+        /// <summary>地图上可选的其他撤离点(次要撤离区)，任务创建后由 MissionController 注入</summary>
+        protected readonly List<MissionEvacuateSecondary> _secondaryZones = new();
 
         /// <summary>快速模式下是否允许用场景中 Tag=StartPoint 的物体顶替任务实体(动态撤离不需要，见 MissionEvacuateMobile)</summary>
         protected virtual bool UseSceneStartPoint => true;
@@ -107,6 +111,17 @@ namespace FpsGame.Mission
             BattleEventSub.MissionStateChange(this, true);
             BattleEventSub.MissionEnityShow(entity);
             //UpdateText("激活撤离终端", "");
+        }
+
+        /// <summary>
+        /// 注入可选撤离点(次要撤离区)。
+        /// <para>静态撤离在激活时会往每处各呼叫一个撤离信标，由玩家自行选择在哪一处撤离；</para>
+        /// <para>动态撤离则在发起撤离时自动选取离玩家最近的一处作为实际使用的撤离点。</para>
+        /// </summary>
+        public void SetSecondaryZones(List<MissionEvacuateSecondary> zones)
+        {
+            _secondaryZones.Clear();
+            if (zones != null) _secondaryZones.AddRange(zones);
         }
 
     }

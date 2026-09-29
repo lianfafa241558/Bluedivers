@@ -141,6 +141,7 @@ MonoBehaviour:
     MinRange: 0
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 5
     DamageDirect: 0
     DamageGroupDirect:
@@ -181,6 +182,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -430,6 +432,7 @@ MonoBehaviour:
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: 1130265b440d4cc4f9eff98ed8b4e0f7, type: 2}
   fxMaterial: {fileID: 2100000, guid: 5c66a4ea401213c4d85b91e6f1125e37, type: 2}
+  events: []
 --- !u!114 &5121374364540953974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -513,6 +516,9 @@ MonoBehaviour:
   BewareSpeed: 4
   BewareReachRadius: 3
   BewareStayDuration: 5
+  BewareTimeout: 20
+  BewareCooldown: 10
+  BewareCooldownRadius: 10
   IdleMaxDuration: 120
 --- !u!114 &8450822822576389202
 MonoBehaviour:
@@ -528,12 +534,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 2000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 11
+    Value: 10
   MainPart: {fileID: 9134004182813535252}
   demolishValue: -1
   showHealth: 0
   m_IsDead: 0
-  AboGaugeArr: []
+  AboGaugeArr:
+  - Key: 4
+    Value: 300
+  - Key: 5
+    Value: 300
+  - Key: 7
+    Value: 300
+  - Key: 8
+    Value: 500
+  - Key: 9
+    Value: 500
 --- !u!114 &9122273490031440664
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -553,6 +571,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!195 &726516424718870698
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -674,18 +697,18 @@ MonoBehaviour:
   HearingRange: 30
   AttackRange: 30
   AlertRange: 50
+  Lazy: 0
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 1
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 1
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &4458179762249634595
 GameObject:
   m_ObjectHideFlags: 0
@@ -890,6 +913,7 @@ MonoBehaviour:
     MinRange: 0
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 5
     DamageDirect: 0
     DamageGroupDirect:
@@ -930,6 +954,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -1088,6 +1113,7 @@ MonoBehaviour:
     MinRange: 12
     NoSource: 0
     SoundRadius: 50
+    ImpactSoundRadius: 8
     DamageExplosion: 5
     DamageDirect: 5
     DamageGroupDirect:
@@ -1130,6 +1156,7 @@ MonoBehaviour:
   FlashSizeScale: 10
   UnparentMuzzleFlash: 0
   SFXRange: 60
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 8300000, guid: 33bc7e3750e879f45b293c31afdcbd1b, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -1293,6 +1320,7 @@ MonoBehaviour:
     MinRange: 0
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 5
     DamageDirect: 0
     DamageGroupDirect:
@@ -1333,6 +1361,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -1528,6 +1557,7 @@ MonoBehaviour:
     MinRange: 0
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 5
     DamageDirect: 0
     DamageGroupDirect:
@@ -1568,6 +1598,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}

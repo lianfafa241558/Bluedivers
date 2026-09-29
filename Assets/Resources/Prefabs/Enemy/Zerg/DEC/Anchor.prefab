@@ -5234,11 +5234,11 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists:
   - Key: 11
-    Value: 1
+    Value: 10
   - Key: 8
-    Value: 1
+    Value: 10
   - Key: 9
-    Value: 1
+    Value: 10
   MainPart: {fileID: 5223879833850573371}
   demolishValue: -1
   showHealth: 0
@@ -5263,6 +5263,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &65810398994913091
 MonoBehaviour:
   m_ObjectHideFlags: 0
