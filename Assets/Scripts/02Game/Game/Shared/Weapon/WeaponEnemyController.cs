@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Core;
 using FPSGame.Attribute;
+using GameContract;
 using UnityEngine;
 
 namespace Unity.FPS.Game
@@ -43,7 +44,7 @@ namespace Unity.FPS.Game
                 HasFlag(WeaponFlag.AutoDeath))
             {
                 ShowWeapon(false);
-                GetComponentInParent<Health>().Kill();
+                GetComponentInParent<IHealth>().Kill();
             }
         }
 

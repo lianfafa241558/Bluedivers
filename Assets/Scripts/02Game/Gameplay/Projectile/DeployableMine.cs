@@ -65,7 +65,7 @@ namespace Unity.FPS.Gameplay
         public GameObject Owner { get; private set; }
 
         Actor m_Actor;
-        Health m_health;
+        IHealth m_health;
         LimitedLife m_limitedLife;
         float m_DeployTime;
         bool m_Exploded;
@@ -77,10 +77,10 @@ namespace Unity.FPS.Gameplay
         private void OnEnable()
         {
             m_Actor = GetComponent<Actor>();
-            m_health = GetComponent<Health>();
+            m_health = GetComponent<IHealth>();
             m_limitedLife = GetComponent<LimitedLife>();
 
-            if (m_health) m_health.OnDie += OnHealthDie;
+            if (m_health.IsValidMono()) m_health.OnDie += OnHealthDie;
             if (m_limitedLife) m_limitedLife.OnEnd.AddListener(OnLifeEnd);
 
             m_DeployTime = Time.time;
@@ -92,7 +92,7 @@ namespace Unity.FPS.Gameplay
 
         private void OnDisable()
         {
-            if (m_health) m_health.OnDie -= OnHealthDie;
+            if (m_health.IsValidMono()) m_health.OnDie -= OnHealthDie;
             if (m_limitedLife) m_limitedLife.OnEnd.RemoveListener(OnLifeEnd);
             StopExplodeRoutine();
         }
@@ -129,7 +129,7 @@ namespace Unity.FPS.Gameplay
             {
                 // 通过 Health 自杀引爆，与 ProjectileMine 行为一致，避免重复爆炸造成两次伤害
                 // （Health 已死时 Kill() 不会派发 OnDie，下面再兜底直接引爆；TriggerExplosion 幂等）
-                if (m_health) m_health.Kill();
+                if (m_health.IsValidMono()) m_health.Kill();
                 TriggerExplosion();
                 break;
             }

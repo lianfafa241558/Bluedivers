@@ -81,7 +81,7 @@ public partial class PlayerWnd : Window
     bool initPlayer;
     [SerializeField]
     PlayerController m_Controller;
-    Health m_Health;
+    IHealth m_Health;
     [SerializeField]
     PlayerWeaponsManager m_WeaponsManager;
     [SerializeField]
@@ -200,7 +200,7 @@ public partial class PlayerWnd : Window
             m_WeaponsManager.OnRemovedWeapon -= RemoveWeapon;
             m_WeaponsManager.OnSwitchedToWeapon -= ChangeWeapon;
         }
-        if (m_Health)
+        if (m_Health.IsValidMono())
         {
             m_Health.OnDie -= OnDie;
             m_Health.OnHit += OnTakeDamage;

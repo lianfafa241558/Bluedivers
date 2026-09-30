@@ -90,7 +90,7 @@ public class PlayerOperationController : MonoBehaviour
 
         // 第三人称与物体交互时拉近相机视距，让交互物看起来更大
         m_PlayerController.ThirdPersonDistanceScale =
-            m_PlayerController.IsThirdPerson && target != null ? k_InteractCameraDistanceScale : 1f;
+            m_PlayerController.IsThirdPerson && m_InputHandler.InOperation && target != null ? k_InteractCameraDistanceScale : 1f;
 
         if (target != null)
         {

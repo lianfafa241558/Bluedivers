@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core;
+using GameContract;
 using PEMaths;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -9,14 +10,14 @@ public class PlayerSpeechManager : MonoBehaviour
 {
     public RoleData_SO Cfg=>GetComponent<PlayerController>().Cfg;
 
-    HealthPlayer m_health;
+    IHealth m_health;
     float lastSpeechTime, speechShowTime;
     SpeechTypeEnum lastSpeechType;
 
 
     private void Start()
     {
-        m_health = GetComponent<HealthPlayer>();
+        m_health = GetComponent<IHealth>();
         m_health.OnDamaged += OnDamage;
         GlobalEventSub.OnMark += OnMark;
         BattleEventSub.OnAirdrop += OnAirdrop;

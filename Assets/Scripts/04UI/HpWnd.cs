@@ -10,6 +10,9 @@ using static WndTools.WndRootTool;
 
 public class HpWnd : Window
 {
+    /// <summary>敌人距离玩家超过该距离时，受击不再显示血条</summary>
+    private const float HpBarMaxDistance = 50f;
+
     [SerializeField]
     HpItemBase SoilderPrefab, BossPrefab;
 
@@ -101,11 +104,16 @@ public class HpWnd : Window
 
     private void OnUnitHit(GameObject victim ,GameObject attacker)
     {
+        victim.TryGetComponent(out Actor actor);
+
+        //距离玩家超过 50m 的敌人受击时不响应血条
+        if (IsEnemyTooFar(actor)) return;
+
         if (pool.TryFind(victim, out var item))
         {
             item.Refresh();
         }
-        else if(victim.TryGetComponent(out Actor actor)&&actor.UseHpBar)
+        else if(actor!=null&&actor.UseHpBar)
         {
             pool.Get(victim).Set(victim);
         }
@@ -114,6 +122,15 @@ public class HpWnd : Window
             value.Refresh();
         }
         
+    }
+
+    /// <summary>受击单位是否为距离玩家超过 <see cref="HpBarMaxDistance"/> 的敌人</summary>
+    private static bool IsEnemyTooFar(Actor actor)
+    {
+        if (actor == null || actor.Type != UnitTypeEnum.Enemy) return false;
+        var player = ActorsManager.Player;
+        if (player == null || !player.IsValidMono()) return false;
+        return Vector3.Distance(player.Pos, actor.Pos) > HpBarMaxDistance;
     }
 
 }

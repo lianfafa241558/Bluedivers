@@ -29,6 +29,8 @@ public interface I_AIController
     public UnityAction OnDetectedTarget { get; set; }
     public UnityAction OnLostTarget { get; set; }
     public UnityAction<Collider> OnDamaged { get; set; }
+
+    public UnityAction<Vector3, Vector3> OnHit { get; set; }
     public UnityAction OnDie { get; set; }
 
     public Vector3 HpPos { get; }
@@ -91,12 +93,15 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
     public UnityAction OnDetectedTarget { get => onDetectedTarget; set => onDetectedTarget = value; }
     public UnityAction OnLostTarget { get => onLostTarget; set => onLostTarget = value; }
     public UnityAction<Collider> OnDamaged { get => onDamaged; set => onDamaged = value; }
+
+    public UnityAction<Vector3, Vector3> OnHit { get => onHit; set => onHit = value; }
     public UnityAction OnDie { get => onDie; set => onDie = value; }
 
     event UnityAction<WeaponBaseController> onAttack;//这里没有注册攻击事件
     event UnityAction onDetectedTarget;
     event UnityAction onLostTarget;
     event UnityAction<Collider> onDamaged;
+    event UnityAction<Vector3,Vector3> onHit;
     event UnityAction onDie;
 
 
@@ -108,7 +113,7 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
 
     //protected WeaponCurrentAttribute speed;
 
-    protected Health m_Health;
+    protected IHealth m_Health;
     protected I_Actor m_Actor;
 
     [HideInInspector]
@@ -129,7 +134,7 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
 
     protected virtual void InitComponent()
     {
-        m_Health = GetComponent<Health>();
+        m_Health = GetComponent<IHealth>();
         m_Actor = GetComponent<Actor>();
     }
 
@@ -138,6 +143,7 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
         birthTime = Time.time;
 
         //订阅伤害和死亡行为
+        m_Health.OnHit += _OnHit;
         m_Health.OnDie += _OnDie;
         m_Health.OnDamaged += _OnDamaged;
     }
@@ -151,7 +157,7 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
             Invoke(nameof(DisableCollider), 1f);
             //GetComponent<Collider>().enabled = false;
         }
-
+        m_Health.OnHit -= _OnHit;
         m_Health.OnDie -= _OnDie;
         m_Health.OnDamaged -= _OnDamaged;
 
@@ -168,10 +174,15 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit
     {
         OnDetectedTarget?.Invoke();
     }
-
     protected virtual void _OnDamaged(PEInt damage, GameObject damageSource, Collider collider, bool noSource)
     {
         OnDamaged?.Invoke(collider);
+    }
+
+    /// <summary>受击   来源，受击点,法线，是弱点</summary>
+    protected virtual void _OnHit(GameObject _, Vector3 pos, Vector3 normal1, bool _2)
+    {
+        OnHit?.Invoke(pos, normal1);
     }
 
     public void Kill(bool IsRemove)

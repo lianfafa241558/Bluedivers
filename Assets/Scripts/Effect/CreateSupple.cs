@@ -17,11 +17,12 @@ public class CreatSupple : MonoBehaviour
         var pos = transform.position + RandomUtils.RandomVector2().ToVector3() * range;
         var parent = transform.parent;
         var copiedProbability = probability;
-
+        Debug.LogError("自注册");
         BattleManager.EnqueueInit(() =>
         {
             if (BattleManager.Instance.BattleRandom.Bool(copiedProbability))
             {
+                Debug.LogError("创建");
                 Instantiate(prefabs.RandomTake(BattleManager.Instance.BattleRandom), pos, default, parent);
             }
         });

@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -110,7 +110,7 @@ public static class CopyUtils
     [MenuItem("GameObject/辅助功能/粘贴碰撞箱和伤害组件",false, priority = -100)]
     static void CopyCollider()
     {
-        PasteCompForInterface<GameContract.I_Damagable>();
+        PasteCompForInterface<GameContract.I_Damageable>();
         PasteComp<Collider>();
     }
 

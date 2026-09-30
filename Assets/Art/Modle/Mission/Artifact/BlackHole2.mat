@@ -13,7 +13,10 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _MY_FOG_ENABLE
+  - _UseAlphaClipping
+  - _UseAlphaUV
   - _UseFresnel
+  - _UseMoveST
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -25,6 +28,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _AlphaMap:
+        m_Texture: {fileID: 2800000, guid: 9de3d54bb0c165342819700dd1eef015, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BaseMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -54,7 +61,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 3525bc2c8e75ad1448f24d7a7d12f1ce, type: 3}
+        m_Texture: {fileID: 2800000, guid: 11e1ddd77dabc4746a2d97222bc62fd8, type: 3}
         m_Scale: {x: 4, y: 2}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -93,11 +100,12 @@ Material:
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
-    - _CullMode: 0
+    - _CullMode: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DstBlend: 10
+    - _DstBlend: 1
+    - _EdgeWidth: 0.02
     - _EnvironmentReflections: 1
     - _ExtraInterval: 1
     - _ExtraScale: 1
@@ -106,7 +114,7 @@ Material:
     - _FlowDir: 0
     - _FlowLightSpeed: 1
     - _FlowTrans: 0
-    - _FresnelDecay: 2
+    - _FresnelDecay: 3
     - _FresnelScale: 1
     - _FresnelWave: 0
     - _FresnelWaveTime: 5
@@ -116,7 +124,7 @@ Material:
     - _MY_FOG_ENABLE: 1
     - _Metallic: 0
     - _MoveOtherSpeed: 0
-    - _MoveSpeed: 0
+    - _MoveSpeed: 0.5
     - _MoveX: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -130,9 +138,11 @@ Material:
     - _Surface: 0
     - _TimeScale: 1
     - _Transpose: 0
+    - _UseAlphaClipping: 1
+    - _UseAlphaUV: 1
     - _UseFresnel: 1
     - _UseLight: 0
-    - _UseMoveST: 0
+    - _UseMoveST: 1
     - _WorkflowMode: 1
     - _ZTestMode: 4
     - _ZWrite: 1
@@ -140,6 +150,8 @@ Material:
     m_Colors:
     - _BaseColor: {r: 11.984315, g: 4.72325, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DissolveValue: {r: 0, g: 0, b: 0, a: 1}
+    - _EdgeColor: {r: 766.99585, g: 241.74446, b: 3.6179137, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HitColor: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}

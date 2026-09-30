@@ -1,3 +1,4 @@
+
 using Core;
 using FPSGame.Attribute;
 using PEMaths;
@@ -78,10 +79,9 @@ namespace Unity.FPS.Game
         /// <summary>复活</summary>
         public override void Revive()
         {
+            base.Revive();
             CurrentHealth = Mathf.Max(MaxHealth/10,1);
             CurrentShield = 0;
-            OnRevive?.Invoke();
-            m_IsDead = false;
         }
 
         //protected override void HandleDeath() {

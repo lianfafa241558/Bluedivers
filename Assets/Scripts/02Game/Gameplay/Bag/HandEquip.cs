@@ -56,7 +56,7 @@ namespace FPSGame.Gameplay
         PlayerController m_Player;
         PlayerWeaponsManager m_Weapons;
         EquipController m_EquipController;
-        Health m_Health;
+        IHealth m_Health;
         PlayerMountPoint m_MountPoint;
 
         /// <summary>玩家输入组件：装备态下检测交互键主动丢下</summary>
@@ -183,7 +183,7 @@ namespace FPSGame.Gameplay
             m_Player = actor.gameObject.GetComponent<PlayerController>();
             m_Weapons = actor.gameObject.GetComponent<PlayerWeaponsManager>();
             m_EquipController = actor.gameObject.GetComponent<EquipController>();
-            m_Health = actor.gameObject.GetComponent<Health>();
+            m_Health = actor.gameObject.GetComponent<IHealth>();
             m_MountPoint = actor.gameObject.GetComponent<PlayerMountPoint>();
             m_InputHandler = actor.gameObject.GetComponent<PlayerInputHandler>();
             m_Operation = actor.gameObject.GetComponent<PlayerOperationController>();

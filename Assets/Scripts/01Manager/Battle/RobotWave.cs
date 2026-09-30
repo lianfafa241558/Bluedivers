@@ -287,7 +287,7 @@ namespace FPSGame.Game
                 }
 
                 var go = Object.Instantiate(bigUnit, FpsHelper.GetNavMeshPoint(center), default, null);
-                foreach (var item in go.GetComponents<Behaviour>()) if (item is not Health) item.enabled = false;
+                foreach (var item in go.GetComponents<Behaviour>()) if (item is not IHealth) item.enabled = false;
 
                 go.transform.parent = eagle.transform;
                 go.transform.localPosition = new Vector3(0, -10, 0);
@@ -324,7 +324,7 @@ namespace FPSGame.Game
                     Vector3 relativePos = new(x, heightY, z);
 
                     var go = Object.Instantiate(popped[i], FpsHelper.GetNavMeshPoint(center), default, null);
-                    foreach (var item in go.GetComponents<Behaviour>()) if (item is not Health) item.enabled = false;
+                    foreach (var item in go.GetComponents<Behaviour>()) if (item is not IHealth) item.enabled = false;
                     go.transform.parent = eagle.transform;
                     go.transform.localPosition = relativePos;
                     group.unitObjects.Add(go);
@@ -352,7 +352,7 @@ namespace FPSGame.Game
                 unit.transform.SetParent(null);
                 var pos = unit.transform.position;
                 unit.transform.position = FpsHelper.GetNavMeshPoint(pos);
-                foreach (var item in unit.GetComponents<Behaviour>()) if (item is not Health) item.enabled = true;
+                foreach (var item in unit.GetComponents<Behaviour>()) if (item is not IHealth) item.enabled = true;
 
                 // 确保所有Collider处于启用状态（Animator关键帧可能在启用后将其关闭）
                 foreach (var col in unit.GetComponentsInChildren<Collider>())

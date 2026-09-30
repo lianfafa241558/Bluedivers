@@ -37,6 +37,14 @@ Shader "LX/Texture2"
 
         [Space(15)] 
         [Toggle(_MY_FOG_ENABLE)] _MY_FOG_ENABLE("_UnityFogEnable", Float) = 1
+
+        [Space(15)]
+        [Toggle(_UseAlphaClipping)]_UseAlphaClipping("使用溶解", Float) = 0
+        [Toggle(_UseAlphaUV)]_UseAlphaUV("使用UV进行溶解", Float) = 0
+        _AlphaMap("溶解贴图", 2D) = "white" {}
+        _DissolveValue("溶解系数", Color) = (0,0,0)//实际上float就行，但是为了方便控制
+        _EdgeWidth ("边缘宽度", Range(0, 0.1)) = 0.05
+        [HDR]_EdgeColor("边缘颜色", Color) = (0.8,0.8,0.8)
     }
     HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -47,6 +55,8 @@ Shader "LX/Texture2"
         #pragma shader_feature_local _Transpose
         #pragma shader_feature_local _UseFresnel
         #pragma shader_feature_local _UseMoveST
+        #pragma shader_feature_local _UseAlphaClipping
+        #pragma shader_feature_local _UseAlphaUV
         #pragma multi_compile_instancing
 
         
@@ -54,6 +64,8 @@ Shader "LX/Texture2"
         CBUFFER_START(UnityPerMaterial)//基础共享参数
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            sampler2D _AlphaMap;
+            float4 _AlphaMap_ST;
             float _FresnelScale;
             float _FresnelDecay;
             float _FresnelWave;
@@ -64,6 +76,12 @@ Shader "LX/Texture2"
             float _MoveOtherSpeed;
 
             float _TimeScale;
+
+            //溶解（与 ToonLit 保持一致）
+            //_UseAlphaClipping / _UseAlphaUV 由 [Toggle] 驱动为 shader 关键字，不在 CBUFFER 中重复声明
+            half3 _DissolveValue;
+            half _EdgeWidth;
+            half3 _EdgeColor;
         CBUFFER_END
         UNITY_INSTANCING_BUFFER_START(Props)//变化实例参数
                 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
@@ -96,6 +114,20 @@ Shader "LX/Texture2"
 
 
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //溶解（复制自 ToonLit_Shared.hlsl，保证与 ToonLit 的效果完全一致）
+        //////////////////////////////////////////////////////////////////////////////////
+        // 用世界坐标生成一张伪 UV，避免依赖模型的 UV0（_UseAlphaUV 关闭时使用）
+        half2 vertexToHalf2Method1(float3 vertexPos)
+        {
+            //frac在边界处会出现跳变，所以干脆不用了
+            half2 uv = half2(
+                (vertexPos.x * 0.14159 + vertexPos.z * 0.26795),
+                (vertexPos.y * 0.31831 + vertexPos.x * 0.41421)
+            );
+            return uv;
+        }
+
         struct a2v {
             float4 vertex : POSITION;
             float3 uv : TEXCOORD0;
@@ -114,9 +146,20 @@ Shader "LX/Texture2"
             float3 normalWS : TEXCOORD3;
 
             float fogFactor : TEXCOORD4;
+            float3 dissolveWS : TEXCOORD5; // 溶解用的世界坐标（_UseAlphaUV 关闭时生成伪 UV）
 
             UNITY_VERTEX_INPUT_INSTANCE_ID
         };
+
+        // 取溶解遮罩值：_UseAlphaUV 打开时用模型 UV，否则用世界坐标的伪 UV（三平面近似）
+        half GetDissolveMask(v2f i)
+        {
+        #if _UseAlphaUV
+            return tex2D(_AlphaMap, i.uv).r;
+        #else
+            return tex2D(_AlphaMap, vertexToHalf2Method1(i.dissolveWS)).r;
+        #endif
+        }
 
         v2f vert(a2v v)
         {
@@ -135,6 +178,10 @@ Shader "LX/Texture2"
             o.positionWS = float3(0, 0, 0);
             o.normalWS = float3(0, 0, 0);
             o.fogFactor = 0;
+            o.dissolveWS = float3(0, 0, 0);
+        #if _UseAlphaClipping
+            o.dissolveWS = posInputs.positionWS;
+        #endif
             //o.worldPos = mul(unity_ObjectToWorld, v.vertex);//旧版写法
             //o.positionWS = GetVertexPositionInputs(v.vertex.xyz).positionWS;//Urp写法
         #if _UseFresnel
@@ -166,6 +213,21 @@ Shader "LX/Texture2"
             half4 col = tex2D(_MainTex, i.uv);
 
             col*= (UNITY_ACCESS_INSTANCED_PROP(Props, _BaseColor)+UNITY_ACCESS_INSTANCED_PROP(Props, _HitColor))*i.color; 
+
+        #if _UseAlphaClipping
+            // 与 ToonLit 完全一致的溶解：遮罩值小于 dissolve 的区域被裁掉，交界处叠 _EdgeColor
+            {
+                half dissolve = (_DissolveValue.r * 1.2 - 0.1);
+                half v = GetDissolveMask(i);
+                half dissolveAlpha = step(dissolve, v);
+                clip(dissolveAlpha - dissolve + _EdgeWidth);
+
+                half isDissolved = step(dissolve + _EdgeWidth, v);
+                half3 edgeColor = _EdgeColor * lerp(dissolve + _EdgeWidth, dissolve, v);
+                col.rgb = lerp(col.rgb, edgeColor, 1 - isDissolved);
+            }
+        #endif
+
         #if _UseLight
             Light mainLight = GetMainLight();
             // 场景无方向光(或强度为0)时 _MainLightColor 为黑, 乘黑会让 additive 混合下特效完全消失, 此处兜底退化为不乘光

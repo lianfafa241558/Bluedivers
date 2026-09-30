@@ -576,7 +576,7 @@ public partial class PlayerController : BaseSelfMoveableController
     {
         // 全队强化"补给大师"：恢复的生命值从 50% 提升到 60%
         float healRatio = HaveBooster(BoosterType.SuppleMaster) ? 0.6f : 0.5f;
-        Health.Heal(Health.MaxHealth * healRatio);
+        Health.Heal(Health.GetHpMax() * healRatio);
     }
 
     /// <summary>本局是否激活了指定的全队强化</summary>

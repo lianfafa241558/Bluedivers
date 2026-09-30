@@ -29,5 +29,8 @@ namespace FPSGame.AI
         /// <summary>闲置时</summary>
         [InspectorName("闲置时")]
         Free,
+        /// <summary>复活时</summary>
+        [InspectorName("复活时")]
+        Revive,
     }
 }

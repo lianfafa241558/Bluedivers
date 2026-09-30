@@ -6,7 +6,7 @@ namespace FPSGame.AI
 {
 
 
-
+    [AddComponentMenu("表现/建筑表现", 999)]
     public class BuildingFXController : EnemyControllerFX
     {
         [SerializeField]

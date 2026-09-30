@@ -311,6 +311,7 @@ MonoBehaviour:
     MinRange: 12
     NoSource: 0
     SoundRadius: 50
+    ImpactSoundRadius: 8
     DamageExplosion: 10
     DamageDirect: 0
     DamageGroupDirect: []
@@ -349,6 +350,7 @@ MonoBehaviour:
   FlashSizeScale: 10
   UnparentMuzzleFlash: 0
   SFXRange: 60
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 8300000, guid: 211fab2280a13b3499bd19875ad54c9a,
@@ -1632,11 +1634,11 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2400589428076926524}
+      addedObject: {fileID: 1564539698006533967}
     - targetCorrespondingSourceObject: {fileID: 3494390850417595609, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1564539698006533967}
+      addedObject: {fileID: 1582648385645459702}
   m_SourcePrefab: {fileID: 100100000, guid: 8d6ef4a967951304baacd7d5f89e548b, type: 3}
 --- !u!4 &261078963748861657 stripped
 Transform:
@@ -1710,21 +1712,6 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 7951905333274820257}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2400589428076926524
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6783624127424309880}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd197e82c98c71545817b4849e92175f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  shield: {fileID: 8360213434925449639}
-  emitter: {fileID: 7030608752648199200}
-  restoreDelay: 15
 --- !u!114 &1564539698006533967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1753,6 +1740,23 @@ MonoBehaviour:
   - {fileID: 1947318220356619581, guid: cef3ac42514915443907e6034a027a07, type: 3}
   - {fileID: 1947318220356619581, guid: cef3ac42514915443907e6034a027a07, type: 3}
   orbitDistance: 30
+--- !u!114 &1582648385645459702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6783624127424309880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1f285df049532044b2519895a52b601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _healthGo: {fileID: 9149703219557037832}
+  _shieldVisual: {fileID: 9149703219557037832}
+  emitter: {fileID: 7030608752648199200}
+  _hideDelay: 0
+  _rebuildDelay: 15
 --- !u!4 &6953088799036700674 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1019083079986529955, guid: 8d6ef4a967951304baacd7d5f89e548b,
@@ -1879,6 +1883,18 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 8360213434925449639}
+    - targetCorrespondingSourceObject: {fileID: 1289543790355709915, guid: bd5c9d048010c144687739970bafa979,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6250976738120648447}
+    - targetCorrespondingSourceObject: {fileID: 1289543790355709915, guid: bd5c9d048010c144687739970bafa979,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5353505670350232407}
+    - targetCorrespondingSourceObject: {fileID: 1289543790355709915, guid: bd5c9d048010c144687739970bafa979,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6005182953978837531}
   m_SourcePrefab: {fileID: 100100000, guid: bd5c9d048010c144687739970bafa979, type: 3}
 --- !u!1 &9149703219557037832 stripped
 GameObject:
@@ -1901,7 +1917,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.9
   armorLevel: 4
-  armorValue: 500
+  armorValue: 0
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 9149703219557037832}
@@ -1912,6 +1928,80 @@ MonoBehaviour:
   BleedValue: 0
   isMain: 0
   showArmor: 0
+--- !u!114 &6250976738120648447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9149703219557037832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: 
+  Id: 
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
+  actorState: 1
+  IsFixed: 0
+  flag: 0
+  type: 0
+  team: 0
+  threat: 1
+  aimPoint: {fileID: 0}
+  UseHpBar: 1
+  HpHeight: 1
+  shape: 0
+  rangeLength: 0
+  halfHeight: 0
+--- !u!114 &5353505670350232407
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9149703219557037832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93fc58c8309d0084e906c74e5c97694d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxHealth: 500
+  MaxShield: 0
+  showArmorLists: []
+  MainPart: {fileID: 8360213434925449639}
+  demolishValue: -1
+  showHealth: 0
+  m_IsDead: 0
+  AboGaugeArr: []
+  ShieldRestoreSpeed: 100
+  ShieldDelay: 5
+  ShieldRestore: {fileID: 0}
+  ShieldFull: {fileID: 0}
+  ShieldBreak: {fileID: 0}
+  ShieldDamage: []
+  showShield: 0
+--- !u!114 &6005182953978837531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9149703219557037832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92309be4ecd64b94d8b4d364e5af0f63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 0}
+  fxData: {fileID: 11400000, guid: eafb0f1a817f8d44fb01152b5a0690dd, type: 2}
+  fxEvent: {fileID: 11400000, guid: dd7cef45915f0f943bd5c7edd65286d5, type: 2}
+  fxMaterial: {fileID: 0}
+  events: []
+  _healthGo: {fileID: 9149703219557037832}
 --- !u!4 &9198108980712990397 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1205021609740332654, guid: bd5c9d048010c144687739970bafa979,

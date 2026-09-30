@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core;
+using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,16 +18,16 @@ public class HpItemBase : MonoBehaviour
     protected Animator anim;
 
     protected Actor actor;
-    protected Health health;
+    protected IHealth health;
     protected float animTime;
 
-    private readonly List<Health.AboStateViewInfo> _aboStates = new List<Health.AboStateViewInfo>();
+    private readonly List<AboStateViewInfo> _aboStates = new List<AboStateViewInfo>();
 
     public virtual void Set(GameObject enemy)
     {
         SetActive(gameObject, true);
         actor = enemy.GetComponent<Actor>();
-        health = enemy.GetComponent<Health>();
+        health = enemy.GetComponent<IHealth>();
         SetText(Name, actor.ShowName);
         SetFill(FillR, health.GetHpRatio());
         anim.Play("Idle");

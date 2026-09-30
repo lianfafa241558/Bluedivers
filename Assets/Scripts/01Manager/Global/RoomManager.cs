@@ -82,5 +82,5 @@ public class PlayerData
     /// <summary>已选择的全队强化 ID（0 表示未选择）</summary>
     public int boosterId;
     public bool isEmpty;
-    public bool isVaild() => id != 0;
+    public bool IsVaild() => id != 0;
 }

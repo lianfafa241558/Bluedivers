@@ -8,6 +8,7 @@ using Utils;
 
 namespace FPSGame.AI
 {
+    [AddComponentMenu("表现/单位表现", 999)]
     /// <summary>
     /// 允许任意I_AIController
     /// </summary>

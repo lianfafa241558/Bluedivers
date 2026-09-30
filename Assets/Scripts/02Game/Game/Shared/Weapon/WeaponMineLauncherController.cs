@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-
+using GameContract;
 using UnityEngine;
 
 namespace Unity.FPS.Game
 {
     public class WeaponMineLauncherController : WeaponTemporaryController
     {
-        private Health health;
+        private IHealth health;
         public override float CurrentSpeed => nowSpeed;
         private float nowSpeed;
 
@@ -20,7 +20,7 @@ namespace Unity.FPS.Game
         {
             base.LogicInit();
             ResetSpeed();
-            health = GetComponent<Health>();
+            health = GetComponent<IHealth>();
             health.OnDie += Stop;
         }
 

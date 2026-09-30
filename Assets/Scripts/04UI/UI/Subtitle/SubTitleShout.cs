@@ -15,7 +15,7 @@ public class SubTitleShout : SubtitleBase
         base.Creat(owner, _, parent, alwaysShow);
         GlobalEventSub.OnMark += OnMark;
         GlobalEventSub.OnActorSpeech += OnActorSpeech;
-        if(owner.transform.TryGetComponent(out Health health))
+        if(owner.transform.TryGetComponent(out IHealth health))
         {
             health.OnRevive += OnRevive;
             health.OnDie += OnDeath;
@@ -32,7 +32,7 @@ public class SubTitleShout : SubtitleBase
     {
         GlobalEventSub.OnMark -= OnMark;
         GlobalEventSub.OnActorSpeech -= OnActorSpeech;
-        if (owner.IsValidMono() && owner.transform.TryGetComponent(out Health health))
+        if (owner.IsValidMono() && owner.transform.TryGetComponent(out IHealth health))
         {
             health.OnRevive += OnRevive;
             health.OnDie += OnDeath;

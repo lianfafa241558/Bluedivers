@@ -160,7 +160,7 @@ namespace Unity.FPS.Gameplay
                     //这里的意思就是，使用穿透单位击中单位不会结束，而是添加到列表并继续
                     //这里不控制停止，只考虑击中伤害
                     //穿透地面直接写ishitVaild里面了，因为反正不用考虑对地面进行控制（大概吧）
-                    I_Damagable damagable = hit.collider.GetComponent<I_Damagable>();
+                    I_Damageable damagable = hit.collider.GetComponent<I_Damageable>();
                     if (BulletFlag.HasFlag(BulletFlag.PenetrateUnits) && damagable.IsValid() && damagable.Source.IsValid() && !m_hasHits.Contains(damagable.ActorGo))
                     {
                         m_hasHits.Add(damagable.ActorGo);
@@ -256,7 +256,7 @@ namespace Unity.FPS.Gameplay
             }
 
             //忽略没有可损坏组件的触发器的命中
-            if (hit.collider.isTrigger && hit.collider.GetComponent<I_Damagable>() == null)
+            if (hit.collider.isTrigger && hit.collider.GetComponent<I_Damageable>() == null)
             {
                 //Debug.LogError("没有伤害组件" + hit.collider);
                 return false;
@@ -277,7 +277,7 @@ namespace Unity.FPS.Gameplay
             }
 
             //如果有忽略地面标签并且目标没有伤害组件就直接忽略
-            if (BulletFlag.HasFlag(BulletFlag.PenetrateTerrain) && hit.collider.GetComponent<I_Damagable>() == null)
+            if (BulletFlag.HasFlag(BulletFlag.PenetrateTerrain) && hit.collider.GetComponent<I_Damageable>() == null)
             {
                 //Debug.LogError("穿透地形忽略" + hit.collider);
                 return false;
@@ -294,7 +294,7 @@ namespace Unity.FPS.Gameplay
                 TryStop();
                 return;
             }
-            bool damageable = hitdata.collider.GetComponent<I_Damagable>().IsValid();
+            bool damageable = hitdata.collider.GetComponent<I_Damageable>().IsValid();
             //可以伤害说明是单位
             //Debug.LogError("是单位?"+ damageable+"有穿透单位标记"+ BulletFlag.HasFlag(BulletFlag.PenetrateUnits)+"有穿透地形标记"+ BulletFlag.HasFlag(BulletFlag.PenetrateTerrain));
 

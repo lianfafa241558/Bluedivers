@@ -352,7 +352,7 @@ namespace FPSGame.AI
                 {
                     if (furn.Handle(gameObject))
                     {
-                        item.transform.GetComponent<Health>().Heal(100);
+                        item.transform.GetComponent<IHealth>().Heal(100);
                         have = true;
                     }
                 }

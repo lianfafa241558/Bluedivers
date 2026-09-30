@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace FPSGame.AI
@@ -17,9 +17,9 @@ namespace FPSGame.AI
     }
 
     /// <summary>
-    /// 运行态 MPB 闪变条目：由 EnemyControllerFX.InitRS 按共享 EnemyFxData_SO.rendererSet 配置创建。
+    /// 运行态 MPB 闪变条目：由 FxControllerBase.InitFx 按共享 EnemyFxData_SO.rendererSet 配置创建。
     /// 配置只读引用共享对象，本类只持有实例私有状态（命中槽位引用、触发计时与 PropertyID 缓存）。不参与序列化。
-    /// 颜色写进 RendererSlot 的共享块（同一槽位可能被多个条目写入），由 EnemyControllerFX 帧末统一 Flush。
+    /// 颜色写进 RendererSlot 的共享块（同一槽位可能被多个条目写入），由 FxControllerBase 帧末统一 Flush。
     /// </summary>
     public class RendererSet
     {

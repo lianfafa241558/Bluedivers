@@ -153,8 +153,8 @@ namespace FPSGame.AI
         /// <summary>订阅 Health.OnHit，命中弱点时触发受击僵直</summary>
         private void InitHitStunListener()
         {
-            var health = m_EnemyController.GetComponent<Health>();
-            if (health != null)
+            var health = m_EnemyController.GetComponent<IHealth>();
+            if (health.IsValidMono())
             {
                 health.OnHit += OnHitStun;
             }
@@ -162,15 +162,15 @@ namespace FPSGame.AI
 
         private void UninitHitStunListener()
         {
-            var health = m_EnemyController != null ? m_EnemyController.GetComponent<Health>() : null;
-            if (health != null)
+            var health = m_EnemyController != null ? m_EnemyController.GetComponent<IHealth>() : null;
+            if (health.IsValidMono())
             {
                 health.OnHit -= OnHitStun;
             }
         }
 
         /// <summary>命中弱点：触发短僵直，期间无法攻击（不禁移动）。仅弱点命中触发</summary>
-        private void OnHitStun(GameObject source, Vector3 pos, bool isWeakness)
+        private void OnHitStun(GameObject source, Vector3 pos,Vector3 _, bool isWeakness)
         {
             if (!isWeakness) return;
             _hitStunActive = true;

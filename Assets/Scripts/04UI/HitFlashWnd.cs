@@ -87,7 +87,7 @@ public partial class PlayerWnd
             {
                 VignetteCanvasGroup.gameObject.SetActive(true);
                 float vignetteAlpha =
-                    (1 - ((m_Health.CurrentHealth / m_Health.MaxHealth).RawFloat /
+                    (1 - (m_Health.GetHpRatio() /
                           0.3f)) * CriticaHealthVignetteMaxAlpha;
 
                 VignetteCanvasGroup.alpha =
@@ -158,7 +158,7 @@ public partial class PlayerWnd
     bool m_WarningActive;
     float m_LastTimeWarningStarted = Mathf.NegativeInfinity;
 
-    void OnTakeDamage(GameObject damageSource, Vector3 pos,bool _)
+    void OnTakeDamage(GameObject damageSource, Vector3 pos,Vector3 _,bool _2)
     {
         ResetFlash();
         if(damageSource) SetHitDir(damageSource.transform.position);

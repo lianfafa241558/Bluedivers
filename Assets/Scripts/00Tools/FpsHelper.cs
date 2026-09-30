@@ -44,7 +44,7 @@ public static class FpsHelper
     /// <summary>
     /// 全队强化"荆棘护甲"：近战攻击玩家阵营单位的攻击者会受到 24 点反伤
     /// </summary>
-    private static void TryThornArmorReflect(I_Damagable target, GameObject attacker, Vector3 point, ProjectileHitData hitData)
+    private static void TryThornArmorReflect(I_Damageable target, GameObject attacker, Vector3 point, ProjectileHitData hitData)
     {
         // 仅近战攻击（子弹为 ProjectileMelee）触发反伤
         if (!hitData.weapon.IsValid() || !(hitData.self.GetComponent<ProjectileMelee>())) return;
@@ -56,7 +56,7 @@ public static class FpsHelper
         if (!attacker || !attacker.TryGetComponent(out Actor attackerActor)) return;
 
         // 对攻击者造成 24 点反伤
-        I_Damagable damageable = attackerActor.MainDamageable;
+        I_Damageable damageable = attackerActor.MainDamageable;
 
         if (damageable.Source.IsValid())
         {
@@ -148,7 +148,7 @@ public static class FpsHelper
         //Debug.LogWarning(collider + "蓄力" + charg + "最终范范围 + damageRange+"伤害组成数量"+ damageData.DamageGroup.Count, collider);
         //Debug.LogWarning(collider + "蓄力" + charg);
         //直击
-        if (damageData.GetDirectDamage(1)>0&&collider.IsValid()&& collider.TryGetComponent(out I_Damagable comp)&& comp.Source.IsValid())
+        if (damageData.GetDirectDamage(1)>0&&collider.IsValid()&& collider.TryGetComponent(out I_Damageable comp)&& comp.Source.IsValid())
         {
             //Debug.LogWarning("对" + collider.gameObject.name, collider.gameObject);
             //Debug.LogWarning("造成直击伤害" + damageData.GetDirectDamage(charg), collider.gameObject);

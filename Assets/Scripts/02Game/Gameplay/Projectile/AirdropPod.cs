@@ -218,7 +218,7 @@ namespace Unity.FPS.Gameplay
 
             if (!m_IgnoredColliders.Contains(collider)) m_IgnoredColliders.Add(collider);
 
-            if (collider.TryGetComponent(out I_Damagable damageable))
+            if (collider.TryGetComponent(out I_Damageable damageable))
             {
                 var unit = damageable.ActorGo;
                 if (unit) m_HitUnits.Add(unit);
@@ -296,7 +296,7 @@ namespace Unity.FPS.Gameplay
             if (m_IgnoredColliders.Contains(hit.collider)) return false;
 
             // 忽略已结算过伤害的单位(同一单位的其他肢体碰撞体不再命中)
-            if (hit.collider.TryGetComponent(out I_Damagable damageable))
+            if (hit.collider.TryGetComponent(out I_Damageable damageable))
             {
                 var unit = damageable.ActorGo;
                 if (unit && m_HitUnits.Contains(unit)) return false;

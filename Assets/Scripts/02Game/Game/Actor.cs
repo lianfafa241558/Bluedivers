@@ -71,8 +71,8 @@ namespace Unity.FPS.Game
         List<UnitQueryGridNode> I_Actor.GridNodes => curQueryGridNodes;
 
         public Transform AimPoint=> aimPoint;
-        public I_Damagable MainDamageable => mainDamageable;
-        public I_Damagable[] Damageables => damageables;
+        public I_Damageable MainDamageable => mainDamageable;
+        public I_Damageable[] Damageables => damageables;
 
         public float Threat => threat;
 
@@ -190,7 +190,7 @@ namespace Unity.FPS.Game
         [HideInInspector]
         Damageable[] damageables;
         [HideInInspector]
-        I_Damagable mainDamageable;
+        I_Damageable mainDamageable;
         #endregion
 
         private bool isInitialized;
@@ -211,12 +211,12 @@ namespace Unity.FPS.Game
             {
                 ActorsManager.Actors.Add(this);
             }
-            var m_Health = GetComponent<Health>();
-            if (m_Health)
+            var m_Health = GetComponent<IHealth>();
+            if (m_Health.IsValidMono())
             {
                 m_Health.OnDie += OnDie;
                 m_Health.OnRevive += OnRevive;
-                mainDamageable = m_Health.MainPart;
+                mainDamageable = m_Health.GetMainPart();
             }
 
             damageables = GetComponentsInChildren<Damageable>();
@@ -277,6 +277,7 @@ namespace Unity.FPS.Game
 
         void OnRevive()
         {
+            Debug.LogError("单位复活");
             ActorState = ActorState.Normal;
             switch (type)
             {
@@ -303,10 +304,10 @@ namespace Unity.FPS.Game
             BattleEventSub.UnitDeath(this);
             OnDeath?.Invoke();
             ActorState = ActorState.Dead;
-            var m_Health = GetComponent<Health>();
-            if (m_Health&&m_Health.CurrentHealth>0)
+            var m_Health = GetComponent<IHealth>();
+            if (m_Health.IsValidMono()&&m_Health.GetHpCurrent()>0)
             {
-                Debug.LogError($"[Health] 单位死亡时生命值>0！CurrentHealth={m_Health.CurrentHealth.RawFloat}, MaxHealth={m_Health.MaxHealth}", gameObject);
+                Debug.LogError($"[Health] 单位死亡时生命值>0！CurrentHealth={m_Health.GetHpCurrent()}, MaxHealth={m_Health.GetHpMax()}", gameObject);
             }
             if (source.IsValid()) BattleEventSub.UnitKill(source.GetComponent<Actor>(),this);
             switch (type)
@@ -341,6 +342,12 @@ namespace Unity.FPS.Game
             }*/
             //Debug.LogError("单位被移除"+gameObject);
             //OnStateChange = null;
+            var m_Health = GetComponent<IHealth>();
+            if (m_Health.IsValidMono())
+            {
+                m_Health.OnDie -= OnDie;
+                m_Health.OnRevive -= OnRevive;
+            }
             OnDeath = null;
             OnPosChange = null;
             OnAngleChange = null;

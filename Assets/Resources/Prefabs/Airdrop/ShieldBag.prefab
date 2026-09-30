@@ -13,8 +13,8 @@ GameObject:
   - component: {fileID: 8975581131076026569}
   - component: {fileID: 5575625336200410710}
   - component: {fileID: 5562236647405478821}
-  - component: {fileID: 911934666600650363}
   - component: {fileID: 8924492267938482431}
+  - component: {fileID: 6902098988878153305}
   m_Layer: 6
   m_Name: Sphere
   m_TagString: Untagged
@@ -132,7 +132,7 @@ MonoBehaviour:
   BleedValue: 0
   isMain: 0
   showArmor: 0
---- !u!114 &911934666600650363
+--- !u!114 &8924492267938482431
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -141,7 +141,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 207114199184333362}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b8ed502d635f93499d68442a27a5b7e, type: 3}
+  m_Script: {fileID: 11500000, guid: 7579dbb2d10d4b34bbe05adb3f8014cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Unidirectional: 1
+--- !u!114 &6902098988878153305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 207114199184333362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93fc58c8309d0084e906c74e5c97694d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   MaxHealth: 1
@@ -168,8 +181,6 @@ MonoBehaviour:
     Value: 10
   - Key: 11
     Value: 100
-  HealthRestoreScale: 0
-  HealthRestoreSpeed: 0
   ShieldRestoreSpeed: 30
   ShieldDelay: 5
   ShieldRestore: {fileID: 0}
@@ -177,19 +188,6 @@ MonoBehaviour:
   ShieldBreak: {fileID: 0}
   ShieldDamage: []
   showShield: 0
---- !u!114 &8924492267938482431
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 207114199184333362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7579dbb2d10d4b34bbe05adb3f8014cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Unidirectional: 1
 --- !u!1 &2317934351446893801
 GameObject:
   m_ObjectHideFlags: 0
@@ -5033,6 +5031,8 @@ GameObject:
   - component: {fileID: 8662827409719677306}
   - component: {fileID: 2720708868680693032}
   - component: {fileID: 3178527037366814488}
+  - component: {fileID: 177813543088722171}
+  - component: {fileID: 8275219929734514498}
   m_Layer: 6
   m_Name: ShieldBag
   m_TagString: Untagged
@@ -5231,10 +5231,43 @@ MonoBehaviour:
   OnUninstallEvent:
     m_PersistentCalls:
       m_Calls: []
-  m_health: {fileID: 911934666600650363}
-  activeGo: {fileID: 207114199184333362}
-  vfxs: []
-  restoreTime: 10
+  _healthGo: {fileID: 0}
+  _rebuild: {fileID: 177813543088722171}
+--- !u!114 &177813543088722171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382642831774620610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1f285df049532044b2519895a52b601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _healthGo: {fileID: 207114199184333362}
+  _shieldVisual: {fileID: 207114199184333362}
+  emitter: {fileID: 0}
+  _hideDelay: 0
+  _rebuildDelay: 10
+--- !u!114 &8275219929734514498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382642831774620610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92309be4ecd64b94d8b4d364e5af0f63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 0}
+  fxData: {fileID: 11400000, guid: eafb0f1a817f8d44fb01152b5a0690dd, type: 2}
+  fxEvent: {fileID: 11400000, guid: dd7cef45915f0f943bd5c7edd65286d5, type: 2}
+  fxMaterial: {fileID: 0}
+  events: []
+  _healthGo: {fileID: 207114199184333362}
 --- !u!1 &3823500722809082368
 GameObject:
   m_ObjectHideFlags: 0

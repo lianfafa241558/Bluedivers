@@ -137,7 +137,11 @@ namespace FPSGame.Furn
         protected virtual Sprite Icon { get => _actor.Portrait; }
 
         public bool InOperate => inOperate; 
-        public float MeetTime=> meetTime; 
+        /// <summary>
+        /// 长按时间。交互控制器按 <c>MeetTime == 0</c> 判定"瞬间操作"（按下即完成，不做长按），
+        /// UI(OperationWnd / SubtitleWnd) 也据此显示"按"或"长按"。子类可重写以按情境动态决定。
+        /// </summary>
+        public virtual float MeetTime=> meetTime; 
         public AudioClip AudioPress=> audioPress;
         public virtual string Desc { get => desc; }
 

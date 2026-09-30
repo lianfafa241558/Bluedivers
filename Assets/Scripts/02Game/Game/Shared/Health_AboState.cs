@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Core;
+using GameContract;
 using PEMaths;
 using UnityEngine;
 
@@ -77,19 +78,7 @@ namespace Unity.FPS.Game
             }
         }
 
-        /// <summary>异常状态 UI 展示信息</summary>
-        public struct AboStateViewInfo
-        {
-            public DamageTypeEnum Type;
-            /// <summary>当前积蓄值</summary>
-            public float Current;
-            /// <summary>最大积蓄值</summary>
-            public float Max;
-            /// <summary>异常状态图标</summary>
-            public Sprite Icon;
-            /// <summary>异常状态颜色</summary>
-            public Color Color;
-        }
+
 
         /// <summary>获取当前积蓄值不为0的异常状态信息（清除并填充到给定列表，复用避免 GC）</summary>
         public void GetActiveAboStates(List<AboStateViewInfo> results)

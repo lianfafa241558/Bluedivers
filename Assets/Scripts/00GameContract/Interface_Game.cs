@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using Core;
 using Core.Interface;
@@ -17,10 +18,54 @@ namespace GameContract
 
     }
 
-    public interface I_Damagable
+    public interface IHealth: IMonoVaild
+    {
+        /// <summary>收到伤害时,值，来源，受击点,无源伤害</summary>
+        public event UnityAction<PEInt, GameObject, Collider, bool> OnDamaged;
+        /// <summary>被击中时 来源，受击点</summary>
+        public event UnityAction<GameObject, Vector3, Vector3, bool> OnHit;
+
+        /// <summary>收到治疗时 治疗值</summary>
+        public event UnityAction<PEInt> OnHealed;
+        /// <summary>恢复护盾时 恢复值</summary>
+        public event UnityAction<PEInt> OnRestoreShield;
+
+        /// <summary>死亡时</summary>
+        public event UnityAction<GameObject> OnDie;
+        /// <summary>复活时</summary>
+        public event UnityAction OnRevive;
+
+        /// <summary>异常状态满槽事件（参数：异常类型、造成伤害者、是否变为满槽）</summary>
+        public event Action<DamageTypeEnum, GameObject, bool> OnAboStateFullChanged;
+
+        public float GetHpMax();
+        public float GetHpCurrent();
+
+        public float GetShieldMax();
+        public float GetShieldCurrent();
+
+        public float GetHpRatio();
+        public float GetShieldRatio();
+        public void Kill();
+
+        public void Revive();
+        public I_Damageable GetMainPart();
+        public void Heal(float healAmount);
+
+        /// <summary>恢复护盾</summary>
+        public void RestoreShield(float healAmount);
+
+        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource, Collider damageAffected, Vector3 pos, bool response = true, bool isWeakness = false, int demolishValue = -1);
+
+
+        public void GetActiveAboStates(List<AboStateViewInfo> results);
+    }
+
+
+    public interface I_Damageable : IMonoVaild
     {
         GameObject gameObject { get; }
-        I_Damagable Source { get; }
+        I_Damageable Source { get; }
         /// <summary>护甲等级（绝地潜兵2式，由攻击方穿甲等级 AP 判定减伤）</summary>
         int ArmorLevel { get; }
         /// <summary>爆炸抗性（0~1，1=完全免疫）</summary>
@@ -67,8 +112,8 @@ namespace GameContract
 
         public List<UnitQueryGridNode> GridNodes { get; }
 
-        public I_Damagable MainDamageable { get; }
-        public I_Damagable[] Damageables { get; }
+        public I_Damageable MainDamageable { get; }
+        public I_Damageable[] Damageables { get; }
 
         /// <summary>是否为地图单位只对EnemyMoble有效</summary>
         bool IsFixed { get; set; }
@@ -214,6 +259,21 @@ namespace GameContract
             return System.HashCode.Combine((int)x * 1000, (int)y * 1000);
         }
 
+    }
+
+
+    /// <summary>异常状态 UI 展示信息</summary>
+    public struct AboStateViewInfo
+    {
+        public DamageTypeEnum Type;
+        /// <summary>当前积蓄值</summary>
+        public float Current;
+        /// <summary>最大积蓄值</summary>
+        public float Max;
+        /// <summary>异常状态图标</summary>
+        public Sprite Icon;
+        /// <summary>异常状态颜色</summary>
+        public Color Color;
     }
 
 

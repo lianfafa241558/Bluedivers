@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core;
+using GameContract;
 using PEMaths;
 
 
@@ -119,7 +120,7 @@ public class PartController : MonoBehaviour
 
         if (++DeathPartCount >= deathArmor.Length)
         {
-            GetComponent<Health>().Kill();
+            GetComponent<IHealth>().Kill();
         }
     }
 }

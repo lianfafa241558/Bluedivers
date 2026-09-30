@@ -12,7 +12,8 @@ using UnityEngine.Events;
 using Utils;
 
 namespace Unity.FPS.Game {
-    public abstract partial class Health : MonoBehaviour {
+    public abstract partial class Health : MonoBehaviour, IHealth
+    {
 
 
 
@@ -44,25 +45,6 @@ namespace Unity.FPS.Game {
         protected int demolishValue = -1;
 
 
-        /// <summary>收到伤害时,值，来源，受击点,无源伤害</summary>
-        public UnityAction<PEInt, GameObject, Collider,bool> OnDamaged;
-
-        /// <summary>被击中时 来源，受击点</summary>
-        public UnityAction<GameObject,Vector3,bool> OnHit;
-
-        /// <summary>是否是破盾伤害</summary>
-        public UnityAction<bool> OnShieldDamaged;
-
-        /// <summary>收到治疗时 治疗值</summary>
-        public UnityAction<PEInt> OnHealed;
-        /// <summary>恢复护盾时 恢复值</summary>
-        public UnityAction<PEInt> OnRestoreShield;
-        /// <summary>死亡时</summary>
-        public UnityAction<GameObject> OnDie;
-
-        /// <summary>复活时</summary>
-        public UnityAction OnRevive;
-
         [Space]
         [DisplayField]
         [InspectorName("剩余生命值")]
@@ -74,11 +56,46 @@ namespace Unity.FPS.Game {
         //剩余护盾
         public PEInt CurrentShield { get; set; }
 
+
+        #region 事件
+
+        /// <summary>收到伤害时,值，来源，受击点,无源伤害</summary>
+        public event UnityAction<PEInt, GameObject, Collider, bool> OnDamaged;
+
+        /// <summary>被击中时 来源，受击点,法线，是弱点</summary>
+        public event UnityAction<GameObject, Vector3,Vector3, bool> OnHit;
+
+        /// <summary>是否是破盾伤害</summary>
+        protected event UnityAction<bool> OnShieldDamaged;
+
+        /// <summary>收到治疗时 治疗值</summary>
+        public event UnityAction<PEInt> OnHealed;
+
+        /// <summary>恢复护盾时 恢复值</summary>
+        public event UnityAction<PEInt> OnRestoreShield;
+
+        /// <summary>死亡时</summary>
+        public event UnityAction<GameObject> OnDie;
+
+        /// <summary>复活时</summary>
+        public event UnityAction OnRevive;
+
+
+        #endregion
+
         public bool CanPickup() => CurrentHealth < MaxHealth;
 
         public float GetHpRatio() => CurrentHealth.RawFloat / (MaxHealth+0f);
 
         public float GetShieldRatio() => CurrentShield.RawFloat / (MaxShield+0f);
+
+        public float GetHpMax() => MaxHealth;
+        public float GetHpCurrent() => CurrentHealth.RawFloat;
+
+        public float GetShieldMax() => MaxShield;
+        public float GetShieldCurrent() => CurrentShield.RawFloat;
+
+        public I_Damageable GetMainPart()=>MainPart;
 
         [DisplayField]
         [SerializeField]
@@ -129,9 +146,9 @@ namespace Unity.FPS.Game {
 
 
         /// <summary>受到治疗</summary>
-        public void Heal(float healAmount) {
-            if (m_IsDead)
-                return;
+        public void Heal(float healAmount) 
+        {
+            if (m_IsDead) return;
 
             PEInt healthBefore = CurrentHealth;
             CurrentHealth += (PEInt)healAmount;
@@ -167,7 +184,7 @@ namespace Unity.FPS.Game {
             {
                 CurrentHealth = 0;
                 showHealth = 0;
-                if (response) OnHit?.Invoke(damageSource, pos, isWeakness);
+                if (response) OnHit?.Invoke(damageSource, pos,(pos-damageAffected.bounds.center).normalized, isWeakness);
                 HandleDeath(damageSource);
                 return;
             }
@@ -229,7 +246,7 @@ namespace Unity.FPS.Game {
             if (trueDamageAmount > 0) {
                 m_LastHitTime = Time.time;
                 OnDamaged?.Invoke(trueDamageAmount, damageSource,damageAffected, noSource);
-                if(response)OnHit?.Invoke(damageSource,pos,isWeakness);
+                if(response)OnHit?.Invoke(damageSource,pos, (pos - damageAffected.bounds.center).normalized,isWeakness);
                 if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
                 //这个是控制hpui的，所以总是响应
                 BattleEventSub.UnitHit(gameObject, damageSource);
@@ -284,7 +301,7 @@ namespace Unity.FPS.Game {
         }
 
 
-        /// <summary>复活</summary>
+        /// <summary>复活,要注意这个时候不能获取血量，因为玩家会清空护盾啥的，值会不对</summary>
         public virtual void Revive()
         {
             CurrentHealth = MaxHealth;
@@ -293,6 +310,8 @@ namespace Unity.FPS.Game {
             m_IsDead = false;
             OnRevive?.Invoke();
         }
+
+
 
         /// <summary>代码杀</summary>
         public void Kill() {

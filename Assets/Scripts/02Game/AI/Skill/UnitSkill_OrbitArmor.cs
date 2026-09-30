@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core;
+using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -68,10 +69,10 @@ namespace FPSGame.AI
                 GameObject go = Instantiate(prefab, pos, transform.rotation, transform.parent);
 
                 // 将创建单位的 Health 主体注册为主单位的无敌装甲
-                Health health = go.GetComponent<Health>();
-                if (health != null && health.MainPart != null)
+                var health = go.GetComponent<IHealth>();
+                if (health != null && health.GetMainPart().IsValidMono())
                 {
-                    m_PartController.AddInvincibleArmor(health.MainPart);
+                    m_PartController.AddInvincibleArmor(health.GetMainPart() as Damageable);
                     registered++;
                 }
                 else

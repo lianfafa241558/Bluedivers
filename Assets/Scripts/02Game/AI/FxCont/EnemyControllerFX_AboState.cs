@@ -1,3 +1,4 @@
+using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -17,8 +18,8 @@ namespace FPSGame.AI
         {
             if (m_Controller != null)
             {
-                var health = ((MonoBehaviour)m_Controller).GetComponent<Health>();
-                if (health != null)
+                var health = ((MonoBehaviour)m_Controller).GetComponent<IHealth>();
+                if (health.IsValidMono())
                 {
                     health.OnAboStateFullChanged += OnAboStateFxChanged;
                 }
@@ -28,8 +29,8 @@ namespace FPSGame.AI
         private void OnDestroyAboStateFx()
         {
             if (m_Controller == null) return;
-            var health = ((MonoBehaviour)m_Controller).GetComponent<Health>();
-            if (health != null)
+            var health = ((MonoBehaviour)m_Controller).GetComponent<IHealth>();
+            if (health.IsValidMono())
             {
                 health.OnAboStateFullChanged -= OnAboStateFxChanged;
             }

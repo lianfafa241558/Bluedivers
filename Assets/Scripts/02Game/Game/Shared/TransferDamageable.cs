@@ -12,7 +12,7 @@ namespace Unity.FPS.Game
     /// 附加肢体(可独立配置护甲等级与爆炸抗性)
     /// </summary>
     [AddComponentMenu("单位/附属肢体", 30)]
-    public class TransferDamageable : MonoBehaviour, I_Damagable 
+    public class TransferDamageable : MonoBehaviour, I_Damageable 
     {
 
         [SerializeField]
@@ -27,9 +27,9 @@ namespace Unity.FPS.Game
         [HideInInspector]
         public Damageable source;
 
-        bool I_Damagable.IsWeakness => isWeakness;
+        bool I_Damageable.IsWeakness => isWeakness;
 
-        public I_Damagable Source => source;
+        public I_Damageable Source => source;
 
         public GameObject ActorGo => Source.ActorGo;
 

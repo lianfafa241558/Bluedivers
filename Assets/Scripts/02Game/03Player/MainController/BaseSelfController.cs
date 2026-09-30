@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using FPSGame.Attribute;
+using GameContract;
 using PEMaths;
 using Unity.FPS.Game;
 using UnityEngine;
@@ -42,7 +43,7 @@ public class BaseSelfController : MonoBehaviour, IUnit
     [InspectorName("垂直旋转的下限")]
     protected float LowerRotationLimit=70;
 
-    public Health Health { get; private set; }
+    public IHealth Health { get; private set; }
     public PlayerInputHandler InputHandler { get; private set; }
 
     protected Animator m_Anim { get; set; }
@@ -62,7 +63,7 @@ public class BaseSelfController : MonoBehaviour, IUnit
     protected virtual void Awake()
     {
         InputHandler = GetComponent<PlayerInputHandler>();
-        Health = GetComponent<Health>();
+        Health = GetComponent<IHealth>();
         Actor = GetComponent<Actor>();
         m_Anim = GetComponent<Animator>();
         if (!AudioSource) AudioSource = GetComponent<AudioSource>();

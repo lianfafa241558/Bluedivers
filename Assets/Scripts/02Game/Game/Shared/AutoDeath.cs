@@ -1,5 +1,6 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
+using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
 using Utils;
@@ -7,11 +8,11 @@ using Utils;
 public class AutoDead : MonoBehaviour
 {
 
-    protected Health m_Health;
+    protected IHealth m_Health;
 
     protected virtual void Start()
     {
-        m_Health =GetComponent<Health>();
+        m_Health =GetComponent<IHealth>();
 
         m_Health.OnDie += _OnDie;
     }

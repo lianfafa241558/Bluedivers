@@ -108,7 +108,7 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     {
         var now = System.DateTime.Now;
         //TaskRandom = new(now.Month*100+now.Day+now.Hour*100+(now.Minute/30*30));//半小时刷新一次
-        TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 5 * 5));//半小时刷新一次
+        TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 2 * 2));//2分钟刷新一次
         residualCodeA = new(codeA);
         residualCodeB = new(codeB);
         var values = MapData.Values.ToList();
@@ -657,8 +657,9 @@ public enum MissionEnum
     /// <summary>重启发电机</summary>
     [InspectorName("子任务/重启发电机")] SubRestartGenerator = 202,
     /// <summary>连接油管</summary>
-    [InspectorName("子任务/连接油管")] ConnectPipes = 203,
-
+    [InspectorName("子任务/连接油管")] SubConnectPipes = 203,
+    /// <summary>采集虫蛋</summary>
+    [InspectorName("子任务/采集虫蛋")] SubEggHunt = 204,
 }
 
 public enum DifficultyEnum

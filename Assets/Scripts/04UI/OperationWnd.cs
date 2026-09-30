@@ -74,6 +74,9 @@ public class OperationWnd : Window
         }
         if (furn!=null)
         {
+            // "长按/按"可能随情境变化（如凯伊提交点按手里拿的东西动态改 MeetTime），
+            // 而 RefreshDisplay 只在目标变化时跑，这里每帧同步一次（与 SubtitleWnd 的第三人称提示一致）
+            if (!string.IsNullOrEmpty(furn.Desc)) SetText(textOpteType, furn.MeetTime > 0 ? "长按" : "按");
             SetActive(barRoot, GetFill(bar)>0.01f);
             if(furn.MeetTime > 0) SetFill(bar, furn.Press/ furn.MeetTime, 5 * Time.deltaTime);
         }

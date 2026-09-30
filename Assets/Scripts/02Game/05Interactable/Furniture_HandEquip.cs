@@ -1,3 +1,4 @@
+using System;
 using FPSGame.Attribute;
 using FPSGame.Furn;
 using FPSGame.Gameplay;
@@ -6,9 +7,17 @@ using UnityEngine;
 /// <summary>
 /// 手持装备的交互家具：地面可交互实体，玩家靠近交互后把 HandEquip 装备给玩家（拿在手里）。
 /// 装备后本组件被禁用（跟随玩家手部，脱离交互列表），经"丢弃装备"轮盘卸载后落地复位可再拾取。
+/// <para>对外暴露两个实例事件，便于持有本实例的一方直接对接：
+/// <see cref="OnPicked"/>（被从地面拾起）与 <see cref="OnSubmitted"/>（被提交点交出）。</para>
 /// </summary>
-public class Furniture_HandEquip : Furniture_Base
+public class Furniture_HandEquip : Furniture_Base, ISubmittableHandItem
 {
+    /// <summary>被玩家从地面拾起时触发。丢弃后重新捡起会再次触发，"是否只处理首次"由订阅方自行决定。</summary>
+    public event Action<Furniture_HandEquip> OnPicked;
+
+    /// <summary>被提交点（如凯伊/Kei）交出时触发；触发后本物体随即被卸载并销毁。</summary>
+    public event Action<Furniture_HandEquip> OnSubmitted;
+
     public override string Desc => "捡起[" + ShowName + "]";
 
     HandEquip m_Equip;
@@ -51,6 +60,8 @@ public class Furniture_HandEquip : Furniture_Base
             canOperate = false;
             // 禁用交互组件，跟随玩家手部（脱离 Furniture_Attached.list 不被交互扫描）
             enabled = false;
+            // 通报"被拾起"（放在最后，避免外部回调打断上面的状态切换）
+            OnPicked?.Invoke(this);
         }
         else
         {
@@ -69,4 +80,7 @@ public class Furniture_HandEquip : Furniture_Base
         owner = null;
         pressTime = 0;
     }
+
+    /// <summary>提交点交出本物件时由提交点调用（提交点只按 Id 白名单认物件，不认具体类型）</summary>
+    void ISubmittableHandItem.NotifySubmitTo(GameObject user) => OnSubmitted?.Invoke(this);
 }

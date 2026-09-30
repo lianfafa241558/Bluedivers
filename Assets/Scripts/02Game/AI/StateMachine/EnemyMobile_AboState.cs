@@ -38,7 +38,7 @@ namespace FPSGame.AI
         /// <summary>订阅异常状态满槽事件</summary>
         private void InitAboStateListener()
         {
-            var health = m_EnemyController.GetComponent<Health>();
+            var health = m_EnemyController.GetComponent<IHealth>();
             if (health != null)
             {
                 health.OnAboStateFullChanged += OnAboStateFullChanged;
@@ -47,7 +47,7 @@ namespace FPSGame.AI
 
         private void OnDestroyAboState()
         {
-            var health = m_EnemyController != null ? m_EnemyController.GetComponent<Health>() : null;
+            var health = m_EnemyController != null ? m_EnemyController.GetComponent<IHealth>() : null;
             if (health != null)
             {
                 health.OnAboStateFullChanged -= OnAboStateFullChanged;

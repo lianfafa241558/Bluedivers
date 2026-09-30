@@ -17,7 +17,7 @@ namespace Unity.FPS.Game
     /// 可以被攻击 没有这个组件就不造成伤害)
     /// </summary>
     [AddComponentMenu("单位/肢体", 30)]
-    public class Damageable : TickBehaviour, I_Damagable
+    public class Damageable : TickBehaviour, I_Damageable
     {
         /// <summary>友伤倍率</summary>
         private const float SensibilityToSelfdamage = 0.5f;
@@ -58,7 +58,7 @@ namespace Unity.FPS.Game
 
         public event UnityAction<Damageable> OnDamage;
         public event UnityAction<Damageable> OnDestroyPart;
-        public Health Health { get; private set; }
+        public IHealth Health { get; private set; }
         private Actor Actor { get; set; }
 
 
@@ -66,11 +66,11 @@ namespace Unity.FPS.Game
         /// <summary>护甲破坏(计算流血)</summary>
         private GameObject ArmorBreaker;
 
-        bool I_Damagable.IsWeakness => isWeakness;
+        bool I_Damageable.IsWeakness => isWeakness;
 
-        GameObject I_Damagable.ActorGo => Actor.gameObject;
+        GameObject I_Damageable.ActorGo => Actor.gameObject;
 
-        public I_Damagable Source => this;
+        public I_Damageable Source => this;
 
         public int ArmorLevel => armorLevel;
 
@@ -101,7 +101,7 @@ namespace Unity.FPS.Game
 
         /// <summary>标记为部件主体，并在主体死亡时连带销毁该部件</summary>
         /// <param name="health">主体的 Health 组件，其 OnDie 事件将触发部件销毁</param>
-        public void SetIsMain(Health health)
+        public void SetIsMain(IHealth health)
         {
             isMain = true;
             health.OnDie+= DestroyPart;
@@ -153,9 +153,9 @@ namespace Unity.FPS.Game
             m_colliders = list.ToArray();
             //在层次结构中查找处于同一级别或更高级别的组件
             Health = GetComponent<HealthEnemy>();
-            if (!Health)
+            if (!Health.IsValidMono())
             {
-                Health = GetComponentInParent<Health>();
+                Health = GetComponentInParent<IHealth>();
             }
             Actor = GetComponent<Actor>();
             if (!Actor)
@@ -241,7 +241,7 @@ namespace Unity.FPS.Game
         /// <summary>结算伤害入口：依次处理友军减伤、全队强化、弱点加成、爆炸抗性、穿甲等级，拆分伤害类型后交给 Health 结算，并处理护甲破坏成分</summary>
         /// <param name="packet">伤害数据包（伤害值、来源、伤害成分、穿甲等级等）</param>
         public void InflictDamage(DamagePacket packet) {
-            if (!Health) return;
+            if (!Health.IsValidMono()) return;
             if (!packet.DamageGroups.IsValid()|| packet.DamageGroups.Count==0) return;
 
             PEInt damage = packet.Damage;

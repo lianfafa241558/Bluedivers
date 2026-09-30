@@ -1,4 +1,5 @@
 using FPSGame.Furn;
+using GameContract;
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ public class HealBag : MonoBehaviour
             {
                 if (furn.Handle(gameObject))
                 {
-                    item.transform.GetComponent<Health>().Heal(100);
+                    item.transform.GetComponent<IHealth>().Heal(100);
                 }
 
             }
