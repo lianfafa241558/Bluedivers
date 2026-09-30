@@ -1,20 +1,49 @@
-using Core;
-using Core.Interface;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using FPSGame.Gameplay;
+using FPSGame.Utils;
 
-
-
-public class VFXManager : Singleton<VFXManager> , I_GlobaManager
+namespace FPSGame.Managers
 {
+
+
+
+/// <summary>
+/// 特效与子弹的对象池管理，提供生成与回收入口。
+/// </summary>
+[AddComponentMenu("管理/特效管理器")]
+public class VFXManager : Singleton<VFXManager> , I_GlobaManager, FPSGame.GameContract.IVfxService
+{
+    /// <summary>FPSGame.GameContract.IVfxService 实现：转发到本类的静态入口，供 05_UnitCore 等下层经 ServiceLocator 调用。</summary>
+    GameObject FPSGame.GameContract.IVfxService.Creat(GameObject tmp, Vector3 pos, Quaternion rotation, Transform parent) => Creat(tmp, pos, rotation, parent);
+    void FPSGame.GameContract.IVfxService.Release(GameObject go) => Release(go);
+
+    /// <summary>按组件模板池化（目前只支持 ProjectileBase —— 武器抛射物池）。</summary>
+    T FPSGame.GameContract.IVfxService.Creat<T>(T template, Vector3 pos, Quaternion rotation)
+    {
+        if (template is ProjectileBase pb) return Creat(pb, pos, rotation) as T;
+        Debug.LogError("IVfxService.Creat<T> 只支持 ProjectileBase 模板：" + template);
+        return null;
+    }
+
+    /// <summary>回收组件实例：抛射物回抛射物池，其余回普通池（避免进错池）。</summary>
+    void FPSGame.GameContract.IVfxService.Release(Component instance)
+    {
+        if (instance is ProjectileBase pb) Release(pb);
+        else if (instance != null) Release(instance.gameObject);
+    }
+
 
     private static AutoDicPool<GameObject, GameObject> pool;
     private static DicObjectPool<ProjectileBase, ProjectileBase> bulletPool;
 
     public void Init()
     {
+        FPSGame.GameContract.ServiceLocator.Vfx = this;//注册特效服务：供 05_UnitCore 等下层只读访问（见 ServiceLocator.cs）
         pool = new(ItemUpdate, ItemAdd, ItemEnqueue, 60);//没人用的60秒销毁这个类(60秒未使用销毁这个项)
         bulletPool = new(BulletAdd, BulletPop,BulletPush);
         // 在场景卸载前清空池，此时池中对象尚未被销毁，清理是安全的
@@ -220,3 +249,4 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager
     #endregion
 }
 
+}

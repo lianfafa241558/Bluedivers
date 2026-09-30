@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.FPS.Game
+namespace FPSGame.Game
 {
     /// <summary>
     /// ModifyAttrData 的 PropertyDrawer：
@@ -153,7 +153,9 @@ namespace Unity.FPS.Game
                     System.Reflection.BindingFlags.NonPublic);
                 if (childField != null)
                 {
-                    var attr = Attribute.GetCustomAttribute(childField, typeof(InspectorNameAttribute)) as InspectorNameAttribute;
+                    // ⚠ 必须全限定 System.Attribute：本文件在 FPSGame.Game 命名空间内，
+                    //   裸写 Attribute 会被解析为外层命名空间的 FPSGame.Attribute（同名子命名空间遮蔽）
+                    var attr = System.Attribute.GetCustomAttribute(childField, typeof(InspectorNameAttribute)) as InspectorNameAttribute;
                     if (attr != null) return attr.displayName;
                 }
             }

@@ -1,5 +1,5 @@
-using UnityEngine;
-namespace Utils
+﻿using UnityEngine;
+namespace FPSGame.Utils
 {
     public static class VectorUtils
     {

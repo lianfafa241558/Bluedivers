@@ -1,11 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Unity.FPS.EditorExt
+namespace FPSGame.EditorExt
 {
     /// <summary>
     /// 它实现了 Unity 的 IPreprocessShaders 接口，在构建阶段（Shader 编译前）对每个 Shader 的编译变体做一次预筛选，把用不到的变体从构建里剔除掉。

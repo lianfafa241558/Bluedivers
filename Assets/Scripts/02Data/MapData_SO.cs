@@ -1,8 +1,12 @@
 using System.Collections.Generic;
-using Core;
-using FpsGame.MapUtils;
-using FPSGame.Attribute;
+using FPSGame.Core;
+//using FPSGame.MapUtils;
+using FPSGame.Attributes;
 using UnityEngine;
+using FPSGame.GameContract;
+
+namespace FPSGame.Data
+{
 
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/地图")]
 public class MapData_SO : ScriptableObject
@@ -102,55 +106,7 @@ public class MapData_SO : ScriptableObject
 
 
 
-    /*
-    public static TaskManager._MapCfg source;
 
-    [ContextMenu("拷贝")]
-    void _Copy()
-    {
-        // 1. 复制基础字符串字
-        AreaName = source.MapName;
-        AreaDesc = source.AreaDesc;
-
-        // 2. 复制 Sprite 资源
-        AreaBackground = source.AreaBackground;
-        Icon = source.Icon;
-        Map = source.Map;
-
-        // 3. 复制枚举数组（特产）
-        product = source.product;
-
-        // 4. 复制敌对类型
-        enemyVarietyType = source.enemyVarietyType;
-
-
-        mapItemInfos = new MapItemInfo[source.mapItemInfos.Length];
-        for (int i = 0; i < source.mapItemInfos.Length; ++i)
-        {
-            mapItemInfos[i] = new MapItemInfo() {
-                name = source.mapItemInfos[i].name,
-                noTask = source.mapItemInfos[i].noTask,
-                pos = source.mapItemInfos[i].pos,
-            };
-        }
-
-        // 6. 复制兴趣点数 KVP
-        interestPoints = new KVP<GameObject, int>[source.interestPoints.Length];
-        for (int i = 0; i < source.interestPoints.Length; i++)
-        {
-            interestPoints[i] = new KVP<GameObject, int>(source.interestPoints[i].Key, source.interestPoints[i].Value);
-        }
-
-        string path = UnityEditor.AssetDatabase.GetAssetPath(this);
-        UnityEditor.AssetDatabase.RenameAsset(path, "MD_" + source.MapName);
-
-        UnityEditor.SerializedObject serializedAsset = new(this);
-        serializedAsset.FindProperty("m_Name").stringValue = "MD_" + source.MapName;
-        serializedAsset.ApplyModifiedProperties();
-
-        UnityEditor.AssetDatabase.SaveAssets();
-    }
-    */
 
 }
 
@@ -165,4 +121,5 @@ public struct TerrainItemInfo
     public Texture diffuseTexture;
     [InspectorName("大小")]
     public Vector2 tileSize;
+}
 }

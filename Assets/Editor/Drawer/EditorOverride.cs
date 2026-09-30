@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using FPSGame.EditorExt;
 
 namespace Pixeye.Unity
 {

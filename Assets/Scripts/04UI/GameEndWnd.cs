@@ -1,16 +1,23 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Core;
+using FPSGame.Core;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Audio;
+
+namespace FPSGame.UI
+{
+using FPSGame.GameContract;
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
 /// <summary>
 /// 战后结算界面
 /// </summary>
+[AddComponentMenu("UI/窗口/结算")]
 public class GameEndWnd : Window
 {
     public const float _Dim = 0.3f;
@@ -592,4 +599,5 @@ public class GameEndWnd : Window
 
     }
 
+}
 }

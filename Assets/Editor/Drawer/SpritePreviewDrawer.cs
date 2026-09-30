@@ -1,7 +1,10 @@
 using System.Collections.Generic;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEditor;
 using UnityEngine;
+
+namespace FPSGame.EditorExt
+{
 
 [CustomPropertyDrawer(typeof(SpritePreviewAttribute))]
 public class SpritePreviewDrawer : PropertyDrawer
@@ -30,5 +33,4 @@ public class SpritePreviewDrawer : PropertyDrawer
         EditorGUI.ObjectField(fieldRect, property, typeof(Sprite), GUIContent.none);
     }
 }
-
-
+}

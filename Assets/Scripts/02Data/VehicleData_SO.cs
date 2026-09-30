@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
+namespace FPSGame.Data
+{
+
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/载具配置")]
 public class VehicleData_SO : ScriptableObject
 {
@@ -40,4 +43,5 @@ public class VehicleData_SO : ScriptableObject
         public string name;
         public Sprite icon;
     }
+}
 }

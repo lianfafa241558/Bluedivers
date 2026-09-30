@@ -1,6 +1,9 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+
+namespace FPSGame.UI
+{
 
 public class ButtonPressDetector : MonoBehaviour, IPointerDownHandler, IPointerUpHandler//, IDragHandler
 {
@@ -57,4 +60,5 @@ public class ButtonPressDetector : MonoBehaviour, IPointerDownHandler, IPointerU
             }
         }
     }
+}
 }

@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace FPSGame.Managers
+{
+
 /// <summary>
 /// 静态协程服务，提供全局的协程调用接口
 /// </summary>
@@ -24,4 +27,5 @@ public class CoroutineSvc
 
     private class CoroutineRunner : MonoBehaviour { }
 
+}
 }

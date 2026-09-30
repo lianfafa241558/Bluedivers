@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEditor;
 
-namespace Unity.FPS.EditorExt
+namespace FPSGame.EditorExt
 {
 
     [CustomEditor(typeof(PrefabReplacer))]

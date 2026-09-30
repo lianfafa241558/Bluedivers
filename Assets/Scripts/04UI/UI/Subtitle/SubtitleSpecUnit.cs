@@ -1,8 +1,18 @@
-using UnityEngine;
-using static WndTools.WndRootTool;
-using UnityEngine.UI;
-using GameContract;
+﻿using UnityEngine;
+using FPSGame.Audio;
 
+namespace FPSGame.UI
+{
+using FPSGame.Gameplay;
+using static FPSGame.WndTools.WndRootTool;
+using UnityEngine.UI;
+using FPSGame.GameContract;
+using FPSGame.Data;
+
+/// <summary>
+/// 特殊单位对话字幕。
+/// </summary>
+[AddComponentMenu("UI/字幕/特殊单位")]
 public class SubtitleSpecUnit : SubtitleBase
 {
 
@@ -13,7 +23,7 @@ public class SubtitleSpecUnit : SubtitleBase
         if (!alwaysShow) SetAlpha(transform, 0);
         var tarActor = target.GetComponent<I_Actor>();
         //unimportant = tarActor.HasFlag(ActorFlag.Unimportant);
-        noFade = tarActor.HasFlag(Core.ActorFlag.Boss);
+        noFade = tarActor.HasFlag(FPSGame.Core.ActorFlag.Boss);
         SetText(title, tarActor.ShowName);
         SetSprite(halo, tarActor.ExtraPortrait);
         SetActive(gameObject, tarActor != owner);
@@ -69,4 +79,5 @@ public class SubtitleSpecUnit : SubtitleBase
         }
     }
 
+}
 }

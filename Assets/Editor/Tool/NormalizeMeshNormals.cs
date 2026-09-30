@@ -1,6 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+
+namespace FPSGame.EditorExt
+{
 
 public static class NormalizeMeshNormals
 {
@@ -94,4 +97,5 @@ public static class NormalizeMeshNormals
         SkinnedMeshRenderer smr = command.context as SkinnedMeshRenderer;
         return smr != null && smr.sharedMesh != null;
     }
+}
 }

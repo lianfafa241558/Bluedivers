@@ -1,6 +1,9 @@
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEditor;
 using UnityEngine;
+
+namespace FPSGame.EditorExt
+{
 
 
 
@@ -74,4 +77,5 @@ public class MinMaxSliderDrawer : PropertyDrawer
         }
     }
 
+}
 }

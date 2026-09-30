@@ -1,7 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// 空投图标遮罩生成器：将 Airdrop 下的图片按颜色规则转换为遮罩纹理，
@@ -300,4 +303,5 @@ public class SpriteMaskGenerator : EditorWindow
 
         return readable;
     }
+}
 }

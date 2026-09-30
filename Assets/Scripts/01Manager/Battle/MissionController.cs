@@ -2,11 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using FpsGame.Mission;
+using FPSGame.Mission;
 
 using UnityEngine;
-using Utils;
-using TaskItem = TaskManager.TaskItem;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
+
+namespace FPSGame.Managers
+{
 
 public enum MissionInitMode
 {
@@ -16,12 +19,16 @@ public enum MissionInitMode
     FindFromScene
 }
 
+/// <summary>
+/// 任务点的生成、布置与初始化，把任务配置实例化到场景。
+/// </summary>
+[AddComponentMenu("任务/任务点控制器")]
 public class MissionController : MonoBehaviour
 {
     BattleManager manager;
     System.Random random => manager.BattleRandom;
 
-    TaskManager.SelectTaskData root;
+    SelectTaskData root;
 
     [SerializeField]
     [InspectorName("任务初始化模式")]
@@ -30,6 +37,25 @@ public class MissionController : MonoBehaviour
     List<TaskItem> waitMissions;
     /// <summary>当前战斗中所有任务实例</summary>
     public List<MissionBase> missions;
+
+    /// <summary>
+    /// 暴露全图所有未结束任务（雷达站完成时调用）。
+    /// ▍原先这段遍历写在玩法层 `MissionLidarStation` 里（要访问 MissionCont.missions ⇒ 反向依赖 01Manager），
+    /// 2026-09-30 收进本类，契约只暴露语义（见 IBattleService.RevealAllMissions）。
+    /// </summary>
+    public void RevealAll()
+    {
+        if (missions == null) return;
+        foreach (var mission in missions)
+        {
+            if (mission.end) continue;
+            if (mission.entity.IsValid())
+            {
+                Debug.LogError("尝试暴露" + mission, mission);
+                mission.entity.TryDiscovered();
+            }
+        }
+    }
     List<(Vector2 Pos,int Range)> missionCreatPoints;
 
     private bool isInitialized;
@@ -491,4 +517,5 @@ public class MissionController : MonoBehaviour
         }
     }
 
+}
 }

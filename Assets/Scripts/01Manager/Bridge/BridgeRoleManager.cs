@@ -1,10 +1,19 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using Utils;
+using FPSGame.Utils;
+using FPSGame.Rendering;
+using FPSGame.Gameplay;
 
+namespace FPSGame.Managers
+{
+
+/// <summary>
+/// 舰桥（准备阶段）的角色展示、选择与换人。
+/// </summary>
+[AddComponentMenu("管理/舰桥角色管理")]
 public class BridgeRoleManager : RoleManagerBase
 {
     [SerializeField]
@@ -52,18 +61,18 @@ public class BridgeRoleManager : RoleManagerBase
         ArchiveSvc.Archive.GainRoleExp(dataList[m_nowShowIndex].ID, Random.Range(5000, 99999), out int level, out float expScale);
 #endif
 
-        GameRoot.GameState = Core.GameStateEnum.Bridge;
-        WndManager.WindowState = Core.WindowStateEnum.Game;
+        GameRoot.GameState = FPSGame.Core.GameStateEnum.Bridge;
+        WndManager.WindowState = FPSGame.Core.WindowStateEnum.Game;
     }
     private void Update()
     {
         if(Input.GetKeyDown(KeyCode.O))
         {
-            if(GameRoot.GameState== Core.GameStateEnum.Bridge)
+            if(GameRoot.GameState== FPSGame.Core.GameStateEnum.Bridge)
             {
-                WndManager.Instance.selectMapWnd.SetWndState(true);
+                WndManager.Instance.SetWndState(FPSGame.GameContract.WndTypeEnum.SelectMap, true);
             }
-            else if (GameRoot.GameState == Core.GameStateEnum.Ready)
+            else if (GameRoot.GameState == FPSGame.Core.GameStateEnum.Ready)
             {
                 m_player.Controller.enabled = false;
                 m_player.transform.position = ReadyPoint.transform.position;
@@ -144,4 +153,5 @@ public class BridgeRoleManager : RoleManagerBase
         selfData.Upgrades = ArchiveSvc.Archive.GetWeaponUpgrade(newRoleId);
     }
     #endregion
+}
 }

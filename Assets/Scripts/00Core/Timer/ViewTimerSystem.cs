@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core
+namespace FPSGame.Core
 {
     /// <summary>
     /// 表现计时器系统

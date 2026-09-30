@@ -1,9 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>数据 Tab 模块的泛型抽象基类，封装所有公共样板逻辑</summary>
 /// <typeparam name="TData">数据资产类型（ScriptableObject 或 GameObject 等 UnityEngine.Object 子类）</typeparam>
@@ -197,4 +200,5 @@ public abstract class DataTabModule<TData> : IDataTab
 
     /// <summary>判断指定项是否为当前选中项（引用相等）</summary>
     protected bool IsSelected(TData data) => Selected == data;
+}
 }

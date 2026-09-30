@@ -1,9 +1,13 @@
 ﻿using UnityEngine;
-using Utils;
+using FPSGame.Utils;
+
+namespace FPSGame.WndTools
+{
 
 /// <summary>
 /// 保持UI的宽高比(用于各种神必的布局)
 /// </summary>
+[AddComponentMenu("UI/工具/保持宽高比")]
 public class UIKeepAspectRatio : MonoBehaviour
 {
     [SerializeField]
@@ -41,4 +45,5 @@ public class UIKeepAspectRatio : MonoBehaviour
     }
 
 
+}
 }

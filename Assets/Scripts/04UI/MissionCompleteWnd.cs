@@ -1,11 +1,20 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using Core;
-using FpsGame.Mission;
+using FPSGame.Core;
+using FPSGame.Mission;
 using UnityEngine;
-using static WndTools.WndRootTool;
+using FPSGame.Audio;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 任务完成提示窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/任务完成")]
 public class MissionCompleteWnd : Window
 {
     [SerializeField]
@@ -55,7 +64,7 @@ public class MissionCompleteWnd : Window
         SetText(item1, mission.data.reward);
         SetText(item2, mission.data.reward / 5);
         anim.Play("Entry", 0, 0);
-        if (!mission.HasTag(GameContract.MissionTag.NoAudio)) AudioSvc.PlaySound(new(mission.missionType == MissionType.Main || mission.missionType == MissionType.Sub ? m_MainCompletedSound : m_ExtraCompletedSound, AudioGroups.UI,1,1));
+        if (!mission.HasTag(FPSGame.GameContract.MissionTag.NoAudio)) AudioSvc.PlaySound(new(mission.missionType == MissionType.Main || mission.missionType == MissionType.Sub ? m_MainCompletedSound : m_ExtraCompletedSound, AudioGroups.UI,1,1));
         AudioSvc.Suppressed(3);
     }
 
@@ -77,4 +86,5 @@ public class MissionCompleteWnd : Window
     }
 
 
+}
 }

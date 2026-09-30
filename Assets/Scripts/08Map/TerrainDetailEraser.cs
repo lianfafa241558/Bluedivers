@@ -1,8 +1,9 @@
 using System.Collections.Generic;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEngine;
+using FPSGame.Utils;
 
-namespace FpsGame.MapUtils
+namespace FPSGame.MapUtils
 {
     /// <summary>
     /// 地形细节（草 / 花）擦除器。

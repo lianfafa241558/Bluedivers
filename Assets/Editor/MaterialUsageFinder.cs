@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,6 +7,9 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// 材质引用查询窗口：指定一个材质，列出所有使用它的预制体/资产。
@@ -1062,4 +1065,5 @@ public class MaterialUsageFinder : EditorWindow
             builder.AppendLine();
         }
     }
+}
 }

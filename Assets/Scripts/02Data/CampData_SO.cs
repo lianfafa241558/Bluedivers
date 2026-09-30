@@ -1,9 +1,12 @@
 using System.Collections.Generic;
-using Core;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.GameContract;
 using System.Linq;
 using UnityEngine;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
+
+namespace FPSGame.Data
+{
 
 
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/阵营配置")]
@@ -76,31 +79,7 @@ public class CampData_SO : ScriptableObject
     [InspectorName("备份的主线类型")]
     public MissionEnum[] mainTypesBackup;
 
-    /*
-    [ContextMenu("转换")]
-    public void trans()
-    {
-        foreach (var temp in templates)
-        {
-            temp.patrolTemplate = temp.PatrolTemplate.Select(item=>new SKVP<string,int>(item,(int)(100f/ temp.PatrolTemplate.Count))).ToList();
-
-        }
-       
-    }
-    
-    [ContextMenu("转换")]
-    public void trans()
-    {
-        Templates.ForEach((key, value) => templates.Add(new() {
-            name = key,
-            Template = new(value.Template),
-            PatrolTemplate = new(value.PatrolTemplate)
-        }));
-        Patrol.ForEach((key, value) => patrolCfgs.Add(new() {
-            name = key,
-            units = value.Template.Select(item => new SKVP<UnitTier, int>(item.Key,item.Value)).ToList()
-        }));
-    }*/
+  
 
     [System.Serializable]
     public class PatrolCfg
@@ -149,3 +128,4 @@ public class CampData_SO : ScriptableObject
 
 
 
+}

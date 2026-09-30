@@ -1,11 +1,20 @@
-using System;
-using Core;
+﻿using System;
+using FPSGame.Core;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Audio;
+using FPSGame.AI;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// Boss 单位血条项（含护甲与异常状态）。
+/// </summary>
+[AddComponentMenu("UI/HUD/Boss 血条")]
 public class HpItemBoss : HpItemBase
 {
     private const float ShowDistance = 50f;
@@ -91,7 +100,7 @@ public class HpItemBoss : HpItemBase
         _visible = true;
         SetActive(gameObject, true);
         anim.Play("Entry");
-        AudioSvc.PlaySound(new(showClip, Core.AudioGroups.UI));
+        AudioSvc.PlaySound(new(showClip, FPSGame.Core.AudioGroups.UI));
 
     }
 
@@ -153,7 +162,7 @@ public class HpItemBoss : HpItemBase
         }
         if (enemy != null) enemy.OnInvincibleArmorListChanged -= RebuildArmor;
         anim.Play("Death");
-        AudioSvc.PlaySound(new(deathCilp, Core.AudioGroups.UI));
+        AudioSvc.PlaySound(new(deathCilp, FPSGame.Core.AudioGroups.UI));
     }
 
     void OnDamage(Damageable damageable)
@@ -173,4 +182,5 @@ public class HpItemBoss : HpItemBase
         return false;
     }
 
+}
 }

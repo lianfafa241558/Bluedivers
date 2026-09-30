@@ -1,10 +1,13 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Utils;
+using FPSGame.Utils;
 using Unity.AI.Navigation;
 
-using Core;
+using FPSGame.Core;
+
+namespace FPSGame.Utils
+{
 //using UnityEngine.AI;
 
 public static partial class TerrainUtils
@@ -963,4 +966,5 @@ public static partial class TerrainUtils
         return Mathf.Lerp(val0, val1, ty);
     }
     #endregion
+}
 }

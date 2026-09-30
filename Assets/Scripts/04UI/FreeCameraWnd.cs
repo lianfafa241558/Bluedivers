@@ -1,8 +1,17 @@
-using Core;
+﻿using FPSGame.Core;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
-using static WndTools.WndRootTool;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
+
+/// <summary>
+/// 自由相机模式的窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/自由相机")]
 public class FreeCameraWnd : Window
 {
     public Transform Tip,showTime;
@@ -77,4 +86,5 @@ public class FreeCameraWnd : Window
 
 
  
+}
 }

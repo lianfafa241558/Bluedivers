@@ -1,20 +1,24 @@
 using System.Collections.Generic;
 using System.Linq;
-using Core;
-using Core.Interface;
-using FPSGame.Attribute;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.Attributes;
+using FPSGame.GameContract;
 
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.AI;
-using Utils;
+using FPSGame.Utils;
+using FPSGame.AI;
 using Random = System.Random;
-using UnitWeightCfg = CampData_SO.UnitWeightCfg;
+using UnitWeightCfg = FPSGame.Data.CampData_SO.UnitWeightCfg;
 
-namespace FPSGame.Game
+namespace FPSGame.Managers
 {
+    /// <summary>
+    /// 按阵营配置抽取单位权重并创建波次，管理波次状态与冷却。
+    /// </summary>
+    [AddComponentMenu("管理/波次管理")]
     public class WaveManager : TickBehaviour
     {
         [SerializeField]

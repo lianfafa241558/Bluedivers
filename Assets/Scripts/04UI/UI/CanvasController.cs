@@ -1,9 +1,18 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Core;
+using FPSGame.Core;
 using UnityEngine;
-using static WndTools.WndRootTool;
 
+namespace FPSGame.UI
+{
+using FPSGame.Gameplay;
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
+
+/// <summary>
+/// HUD 画布的淡入、缩放与沉浸模式。
+/// </summary>
+[AddComponentMenu("UI/HUD/画布控制")]
 public class CanvasController : MonoBehaviour
 {
     public bool isHUD;
@@ -92,4 +101,5 @@ public class CanvasController : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         inIEnumerator = false;
     }
+}
 }

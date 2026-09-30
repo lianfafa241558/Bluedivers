@@ -1,9 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.FPS.EditorExt
+namespace FPSGame.EditorExt
 {
     /// <summary>
     /// 地形树原型预处理工具（编辑器）。

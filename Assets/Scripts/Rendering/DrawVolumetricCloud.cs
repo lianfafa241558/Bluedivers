@@ -1,5 +1,9 @@
-using System;
+﻿using System;
 using UnityEngine;
+using FPSGame.DayNightSystem;
+
+namespace FPSGame.Rendering
+{
 
 /// <summary>
 /// 体积云层系统（天空云层）。
@@ -16,6 +20,7 @@ using UnityEngine;
 /// </para>
 /// </summary>
 [ExecuteInEditMode]
+[AddComponentMenu("渲染/体积云")]
 public class DrawVolumetricCloud : MonoBehaviour
 {
     /// <summary>单层云配置</summary>
@@ -397,4 +402,5 @@ public class DrawVolumetricCloud : MonoBehaviour
     {
         ReleaseDomeMesh();
     }
+}
 }

@@ -1,5 +1,5 @@
 using System;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEngine;
 using UnityEngine.Rendering;
 

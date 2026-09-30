@@ -1,10 +1,14 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
+
+namespace FPSGame.Utils
+{
 
 
     /// <summary>
     /// 用来把换到置换区的物体换回来用的(具有这个组件的预制体必须一开始是隐藏的
     /// </summary>
+    [AddComponentMenu("工具/变换交换")]
     public class ExchangeTransformComp : MonoBehaviour {
         public UnityAction<ExchangeTransformComp> Revert;
         private Transform target;
@@ -38,3 +42,4 @@ using UnityEngine.Events;
 
 
     }
+}

@@ -1,11 +1,15 @@
-using System.Collections.Generic;
-using Core;
-using GameContract;
-using Unity.FPS.Game;
+﻿using System.Collections.Generic;
+using FPSGame.Core;
+using FPSGame.GameContract;
+using FPSGame.Game;
+using FPSGame.Data;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
 
 
 public class HpItemBase : MonoBehaviour
@@ -21,7 +25,7 @@ public class HpItemBase : MonoBehaviour
     protected IHealth health;
     protected float animTime;
 
-    private readonly List<AboStateViewInfo> _aboStates = new List<AboStateViewInfo>();
+    private readonly List<AboStateGauge> _aboStates = new List<AboStateGauge>();
 
     public virtual void Set(GameObject enemy)
     {
@@ -68,6 +72,19 @@ public class HpItemBase : MonoBehaviour
             float ratio = info.Max > 0f ? info.Current / info.Max : 0f;
             ratio = Mathf.Clamp01(ratio);
 
+            // 图标/颜色在此自解：AboStateGauge 只带逻辑值，显示数据源是 04_Data 的 AboStateData_SO。
+            // （2026-10-01 从 05_UnitCore 的 GetActiveAboStates 移来——原先它替 UI 取数，
+            //  还把 Sprite/Color 拖进了契约签名 IHealth.GetActiveAboStates。）
+            Sprite icon = null;
+            Color color = Color.white;
+            if (AboStateData_SO.Dic != null
+                && AboStateData_SO.Dic.TryGetValue(info.Type, out AboStateData_SO stateData)
+                && stateData != null)
+            {
+                icon = stateData.icon;
+                color = stateData.color;
+            }
+
             // 第0个子物体为 fill Image，第1个子物体为图标 Image
             Transform fillT = child.GetChild(0);
             Transform iconT = child.GetChild(1);
@@ -76,18 +93,18 @@ public class HpItemBase : MonoBehaviour
             Image fillImg = fillT.GetComponent<Image>();
             Image iconImg = iconT.GetComponent<Image>();
             // 图标在显示时替换为对应状态的图标
-            SetSprite(iconImg, info.Icon);
+            SetSprite(iconImg, icon);
 
             if (ratio >= 1f)
             {
                 // 满：fill 白色，图标为异常状态颜色
                 fillImg.color = Color.white;
-                iconImg.color = info.Color;
+                iconImg.color = color;
             }
             else
             {
                 // 未满：fill 为异常状态颜色，图标白色
-                fillImg.color = info.Color;
+                fillImg.color = color;
                 iconImg.color = Color.white;
             }
         }
@@ -114,4 +131,5 @@ public class HpItemBase : MonoBehaviour
         }
         return false;
     }
+}
 }

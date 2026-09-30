@@ -1,9 +1,20 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using GameContract;
+using FPSGame.GameContract;
 using UnityEngine;
-using static WndTools.WndRootTool;
+using FPSGame.Game;
 
+namespace FPSGame.UI
+{
+using FPSGame.Core;
+using FPSGame.Gameplay;
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
+
+/// <summary>
+/// 死亡与团灭判负界面。
+/// </summary>
+[AddComponentMenu("UI/窗口/死亡界面")]
 public class DeathUI : Window
 {
 
@@ -18,8 +29,8 @@ public class DeathUI : Window
     }
     public void Init()
     {
-        BattleEventSub.OnPlayerDead += OnPlayerDead;
-        BattleEventSub.OnPlayerRevive += OnPlayerRevive;
+        UnitEventSub.OnPlayerDead += OnPlayerDead;
+        UnitEventSub.OnPlayerRevive += OnPlayerRevive;
         BattleEventSub.OnWipeFailCountdown += OnWipeFailCountdown;
         BattleEventSub.OnWipeFailCancel += OnWipeFailCancel;
         SetWndState(false);
@@ -28,8 +39,8 @@ public class DeathUI : Window
     public override void OnDestroy()
     {
         base.OnDestroy();
-        BattleEventSub.OnPlayerDead -= OnPlayerDead;
-        BattleEventSub.OnPlayerRevive -= OnPlayerRevive;
+        UnitEventSub.OnPlayerDead -= OnPlayerDead;
+        UnitEventSub.OnPlayerRevive -= OnPlayerRevive;
         BattleEventSub.OnWipeFailCountdown -= OnWipeFailCountdown;
         BattleEventSub.OnWipeFailCancel -= OnWipeFailCancel;
     }
@@ -86,4 +97,5 @@ public class DeathUI : Window
     }
 
 
+}
 }

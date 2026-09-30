@@ -1,9 +1,13 @@
-using System;
+﻿using System;
 using System.Linq;
-using Core;
-using Unity.FPS.Game;
+using FPSGame.Core;
+using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Data;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// RoleData_SO.speechGroups 的自定义检视器。
@@ -197,4 +201,5 @@ public class RoleSpeechGroupDrawer : PropertyDrawer
         var attribute = fieldInfo.GetCustomAttributes(typeof(InspectorNameAttribute), false);
         return attribute.Length > 0 ? ((InspectorNameAttribute)attribute[0]).displayName : value.ToString();
     }
+}
 }

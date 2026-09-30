@@ -1,10 +1,14 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
-using Utils;
+using FPSGame.Utils;
 
 
 namespace FPSGame.UI
 {
+    /// <summary>
+    /// 分段式进度条控件。
+    /// </summary>
+    [AddComponentMenu("UI/控件/分段进度条")]
     public class DynamicBar : MonoBehaviour
     {
         [SerializeField]

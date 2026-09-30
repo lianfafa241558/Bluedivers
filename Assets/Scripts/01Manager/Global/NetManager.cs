@@ -1,11 +1,20 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using Core.Interface;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.GameContract;
 using PEMaths;
 using UnityEngine;
+using FPSGame.Utils;
 
-public class NetManager : SingletonNet<NetManager>, I_GlobaManager
+namespace FPSGame.Managers
+{
+
+/// <summary>
+/// 逻辑帧驱动，按 I_Login 调度接入逻辑帧的组件。
+/// </summary>
+[AddComponentMenu("管理/逻辑帧管理")]
+public class NetManager : SingletonNet<NetManager>, I_GlobaManager, FPSGame.GameContract.INetService
 {
     //按理说这个应该是服务器或者房主发的
     private PEInt lastTime;
@@ -14,6 +23,7 @@ public class NetManager : SingletonNet<NetManager>, I_GlobaManager
 
     public void Init()
     {
+        FPSGame.GameContract.ServiceLocator.Net = this;//注册逻辑帧服务：供玩法层（LogicBehaviour）等下层访问（见 ServiceLocator.cs）
         lastTime = (PEInt)Time.time;
         list = new();
     }
@@ -44,3 +54,4 @@ public class NetManager : SingletonNet<NetManager>, I_GlobaManager
     }
 }
 
+}

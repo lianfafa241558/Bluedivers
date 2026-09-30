@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Core
+namespace FPSGame.Core
 {
     public class LogicTimer
     { 

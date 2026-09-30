@@ -1,9 +1,13 @@
 
 using System;
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Attributes;
 using UnityEngine;
+using FPSGame.GameContract;
+
+namespace FPSGame.Data
+{
 public enum DirectionEnum
 {
     [InspectorName("左")]
@@ -181,4 +185,5 @@ public class AirdropData_SO : ScriptableObject
         [InspectorName("补给")]
         Yellow,
     }
+}
 }

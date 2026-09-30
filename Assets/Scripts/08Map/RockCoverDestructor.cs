@@ -1,8 +1,9 @@
 using System.Collections.Generic;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEngine;
+using FPSGame.Utils;
 
-namespace FpsGame.MapUtils
+namespace FPSGame.MapUtils
 {
     /// <summary>
     /// 地形覆盖物（巨型悬崖等）管理器。

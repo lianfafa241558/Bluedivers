@@ -1,11 +1,21 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using AirdropState = AirdropController.AirdropState;
-using static WndTools.WndRootTool;
-using Core;
-using Utils;
-using Unity.FPS.Game;
+using FPSGame.Audio;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Core;
+using FPSGame.Utils;
+using FPSGame.Game;
+using FPSGame.Data;
+using FPSGame.Managers;
+
+/// <summary>
+/// 战斗中的战备 HUD 与操作序列输入。
+/// </summary>
+[AddComponentMenu("UI/窗口/战斗战备")]
 public class AirdropWnd : Window
 {
     [SerializeField]
@@ -405,4 +415,5 @@ public class AirdropWnd : Window
     }
 
 
+}
 }

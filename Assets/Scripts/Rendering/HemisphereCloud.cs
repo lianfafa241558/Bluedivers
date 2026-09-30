@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+namespace FPSGame.Rendering
+{
+
 public class HemisphereCloud : MonoBehaviour
 {
     [Header("云参数")]
@@ -129,4 +132,5 @@ public class HemisphereCloud : MonoBehaviour
         Vector3 center = transform.position + Vector3.up * radius;
         Gizmos.DrawWireCube(center, new Vector3(radius * 2, radius, radius * 2));
     }
+}
 }

@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core
+namespace FPSGame.Core
 {
     public interface IState<T> where T : Enum
     {

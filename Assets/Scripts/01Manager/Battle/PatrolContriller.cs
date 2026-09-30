@@ -1,15 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
-using Core;
-using FpsGame.Mission;
+using FPSGame.Core;
+using FPSGame.Mission;
 using FPSGame.AI;
-using GameContract;
+using FPSGame.GameContract;
 using PEMaths;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using Utils;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
 
-namespace FPSGame.Game
+namespace FPSGame.Managers
 {
     /// <summary>
     /// 巡逻队生成器
@@ -45,6 +46,7 @@ namespace FPSGame.Game
     /// 理论上，如果玩家在摧毁了全部的巢穴后，在靠近地图边缘85内撤离，那么将不会生产巡逻队
     /// 因为地图边缘在安全区内，但是实际会从反方向的90度的弧度范围内尝试刷新
     /// </summary>
+    [AddComponentMenu("管理/巡逻队生成")]
     public class PatrolContriller : TickBehaviour
     {
         #region 常量
@@ -141,8 +143,8 @@ namespace FPSGame.Game
             BattleEventSub.OnMissionCompleted += OnMissionCompleted;
             BattleEventSub.OnEvacuate += OnEvacuateStart;
 
-            GlobalEventSub.OnPlayerCreate += OnPlayerJoin;
-            GlobalEventSub.OnFriendCreate += OnPlayerJoin;
+            UnitEventSub.OnPlayerCreate += OnPlayerJoin;
+            UnitEventSub.OnFriendCreate += OnPlayerJoin;
 
             // 初始化玩家热度数据
             InitHeatData();
@@ -155,8 +157,8 @@ namespace FPSGame.Game
             BattleEventSub.OnMissionCompleted -= OnMissionCompleted;
             BattleEventSub.OnEvacuate -= OnEvacuateStart;
 
-            GlobalEventSub.OnPlayerCreate -= OnPlayerJoin;
-            GlobalEventSub.OnFriendCreate -= OnPlayerJoin;
+            UnitEventSub.OnPlayerCreate -= OnPlayerJoin;
+            UnitEventSub.OnFriendCreate -= OnPlayerJoin;
         }
 
         public override bool Tick()

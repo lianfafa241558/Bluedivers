@@ -1,8 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static WndTools.WndRootTool;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 径向轮盘菜单基类。
+/// </summary>
+[AddComponentMenu("UI/控件/轮盘菜单")]
 public class WheelUI : MonoBehaviour
 {
 
@@ -215,4 +222,5 @@ public class WheelUI : MonoBehaviour
         public string name;
         public Action<string> cb;
     }
+}
 }

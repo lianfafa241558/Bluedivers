@@ -1,12 +1,17 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.GameContract;
 
-using Unity.FPS.Game;
-using Unity.FPS.Gameplay;
+using FPSGame.Game;
+using FPSGame.Gameplay;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using FPSGame.Utils;
+
+namespace FPSGame.UI
+{
 
 public abstract class CrosshairManagerBase : MonoBehaviour
 {
@@ -23,12 +28,12 @@ public abstract class CrosshairManagerBase : MonoBehaviour
 
     protected virtual void Start()
     {
-        BattleEventSub.OnUnitHit += Hit;
+        UnitEventSub.OnUnitHit += Hit;
     }
 
     protected virtual void OnDestroy()
     {
-        BattleEventSub.OnUnitHit -= Hit;
+        UnitEventSub.OnUnitHit -= Hit;
         SwitchWeapon(null, false);
     }
     protected virtual void SwitchWeapon(WeaponPlayerController weapon,bool isSec = false)
@@ -85,4 +90,5 @@ public abstract class CrosshairManagerBase : MonoBehaviour
     {
         OnLockUpdate?.Invoke(actor, state);
     }
+}
 }

@@ -1,11 +1,20 @@
-using Core.Interface;
-using FPSGame.Attribute;
-using Unity.FPS.Game;
+using FPSGame.Core.Interface;
+using FPSGame.Attributes;
+using FPSGame.Game;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
 
 
+/// <summary>
+/// 舰桥玩家与任务信息窗。
+/// </summary>
+[AddComponentMenu("UI/窗口/舰桥信息")]
 public class BridgeWnd : Window
 {
     [Foldout("玩家", true)]
@@ -32,7 +41,7 @@ public class BridgeWnd : Window
         GlobalEventSub.OnGainExp += OnGainExp;
         GlobalEventSub.OnSwitchRole += OnSwitchRole;
         GlobalEventSub.OnSelectRolePreview += OnSelectRolePreview;
-        GlobalEventSub.OnPlayerCreate += SwitchRolePreview;
+        UnitEventSub.OnPlayerCreate += SwitchRolePreview;
     }
 
     protected override void HideWnd()
@@ -40,7 +49,7 @@ public class BridgeWnd : Window
         GlobalEventSub.OnGainExp -= OnGainExp;
         GlobalEventSub.OnSwitchRole -= OnSwitchRole;
         GlobalEventSub.OnSelectRolePreview -= OnSelectRolePreview;
-        GlobalEventSub.OnPlayerCreate -= SwitchRolePreview;
+        UnitEventSub.OnPlayerCreate -= SwitchRolePreview;
     }
 
 
@@ -132,4 +141,5 @@ public class BridgeWnd : Window
         
     }
 
+}
 }

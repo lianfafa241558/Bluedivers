@@ -1,11 +1,16 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Core;
+using FPSGame.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static Core.InputManagerBase<InputState, Core.WindowStateEnum>;
+using FPSGame.UI;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.Core.InputManagerBase<InputState, FPSGame.Core.WindowStateEnum>;
 
 /// <summary>
 /// 快捷键键盘显示类，可复用。支持按键高亮、悬浮提示、绑定颜色显示。
@@ -302,4 +307,5 @@ public class KeyBindingDisplay
         }
         return value.ToString();
     }
+}
 }

@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Unity.FPS.Game;
+using FPSGame.Game;
+using FPSGame.GameContract;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+
+namespace FPSGame.EditorExt
+{
 
 public class DataEditorWindow : EditorWindow
 {
@@ -306,4 +310,5 @@ public class DataEditorWindow : EditorWindow
     }
 
     #endregion
+}
 }

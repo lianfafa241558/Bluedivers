@@ -1,7 +1,10 @@
 using UnityEditor;
 using UnityEngine;
-using Core;
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Attributes;
+
+namespace FPSGame.EditorExt
+{
 
 
 #if UNITY_EDITOR
@@ -42,7 +45,7 @@ public class CustomLabelDrawer : PropertyDrawer
         if (fieldInfo != null)
         {
             // 检查是否应用了FlagsAttribute且不检查继承链
-            return Attribute.IsDefined(fieldInfo.FieldType, typeof(FlagsAttribute), false);
+            return System.Attribute.IsDefined(fieldInfo.FieldType, typeof(FlagsAttribute), false);
         }
 
         PropertyInfo propInfo = hostType.GetProperty(property.propertyPath,
@@ -50,7 +53,7 @@ public class CustomLabelDrawer : PropertyDrawer
 
         if (propInfo != null)
         {
-            return Attribute.IsDefined(propInfo.PropertyType, typeof(FlagsAttribute), false);
+            return System.Attribute.IsDefined(propInfo.PropertyType, typeof(FlagsAttribute), false);
         }
         return false;
     }
@@ -156,14 +159,14 @@ public class CustomLabelDrawer : PropertyDrawer
 
 
 
-[CustomPropertyDrawer(typeof(DisplayField))]
+[CustomPropertyDrawer(typeof(DisplayFieldAttribute))]
 public class DisplayFieldDrawer : PropertyDrawer
 {
     /// <summary>
     /// 本帧是否应该绘制：运行期看 run，编辑期看 editor。
     /// 高度与绘制必须用同一个判断，否则"不绘制"的那一侧仍会占位，表现成一段空白。
     /// </summary>
-    private static bool ShouldDraw(DisplayField attr)
+    private static bool ShouldDraw(DisplayFieldAttribute attr)
     {
         if (attr == null) return false;
         return Application.isPlaying ? attr.run : attr.editor;
@@ -192,13 +195,13 @@ public class DisplayFieldDrawer : PropertyDrawer
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        if (!ShouldDraw(attribute as DisplayField) || !IsSupportedType(property)) return 0f;
+        if (!ShouldDraw(attribute as DisplayFieldAttribute) || !IsSupportedType(property)) return 0f;
         return EditorGUI.GetPropertyHeight(property, label, true);
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
-        var attr = attribute as DisplayField;
+        var attr = attribute as DisplayFieldAttribute;
         if (!ShouldDraw(attr) || !IsSupportedType(property)) return;
 
         //read 为 true 时只读展示，为 false 时允许在面板上直接改
@@ -313,3 +316,4 @@ public class DividerDrawer : DecoratorDrawer
     }
 }
 #endif
+}

@@ -1,6 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using FPSGame.Core;
 using UnityEngine;
+
+namespace FPSGame.Data
+{
 
 /// <summary>
 /// 单维度变种配置：条件键类型 K 由子类封闭（string=按地图，EnemyVarietyType=按敌人类型），
@@ -34,4 +38,5 @@ public abstract class VariantBase_SO<K, V> : ScriptableObject
         }
         return defaultValue;
     }
+}
 }

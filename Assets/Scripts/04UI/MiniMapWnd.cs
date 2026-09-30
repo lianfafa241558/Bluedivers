@@ -1,22 +1,28 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using Core;
-using Core.Interface;
-using FpsGame.Mission;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.Mission;
+using FPSGame.GameContract;
 using PEMaths;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
 //using Action = System.Action;
 
 /// <summary>
 /// 小地图，仅战斗阶段创建，结束销毁
 /// </summary>
+[AddComponentMenu("UI/窗口/小地图")]
 public class MiniMapWnd : Window
 {
     private float areaMultScale = 3;
@@ -92,11 +98,11 @@ public class MiniMapWnd : Window
         InputManager.BindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
 
         //此时玩家已经诞生
-        GlobalEventSub.OnPlayerCreate += PlayerCreat;
-        GlobalEventSub.OnFriendCreate += FriendCreat;
+        UnitEventSub.OnPlayerCreate += PlayerCreat;
+        UnitEventSub.OnFriendCreate += FriendCreat;
         //应该还有盟友离开游戏?
-        BattleEventSub.OnSpecUnitCreate += OtherCreat;
-        BattleEventSub.OnSpecUnitDead += OtherDeath;
+        UnitEventSub.OnSpecUnitCreate += OtherCreat;
+        UnitEventSub.OnSpecUnitDead += OtherDeath;
         BattleEventSub.OnMissionStart += MissionPointCreat;
         BattleEventSub.OnMissionEntityShow += OnMissionShow;
         BattleEventSub.OnMissionUpdate += OnMissionUpdate;
@@ -109,11 +115,11 @@ public class MiniMapWnd : Window
     {
         base.OnDestroy();
         InputManager.UnBindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
-        GlobalEventSub.OnPlayerCreate -= PlayerCreat;
-        GlobalEventSub.OnFriendCreate -= FriendCreat;
+        UnitEventSub.OnPlayerCreate -= PlayerCreat;
+        UnitEventSub.OnFriendCreate -= FriendCreat;
         //应该还有盟友离开游戏?
-        BattleEventSub.OnSpecUnitCreate -= OtherCreat;
-        BattleEventSub.OnSpecUnitDead -= OtherDeath;
+        UnitEventSub.OnSpecUnitCreate -= OtherCreat;
+        UnitEventSub.OnSpecUnitDead -= OtherDeath;
         BattleEventSub.OnMissionStart -= MissionPointCreat;
         BattleEventSub.OnMissionEntityShow -= OnMissionShow;
         BattleEventSub.OnMissionUpdate -= OnMissionUpdate;
@@ -132,7 +138,7 @@ public class MiniMapWnd : Window
         //InputManager.Bind(WindowStateEnum.Airdrop, InputState.Airdrop, CloseWnd);
         //Debug.LogError("注册事件");
         WndManager.OnWindowStateChange += OnWindowStateChange;
-        BattleEventSub.OnPlayerDead += OnPlayerDown;
+        UnitEventSub.OnPlayerDead += OnPlayerDown;
     }
 
     protected override void HideWnd()
@@ -141,7 +147,7 @@ public class MiniMapWnd : Window
         //InputManager.UnBind(WindowStateEnum.Airdrop, InputState.Airdrop, CloseWnd);
         //Debug.LogError("注销事件");
         WndManager.OnWindowStateChange -= OnWindowStateChange;
-        BattleEventSub.OnPlayerDead -= OnPlayerDown;
+        UnitEventSub.OnPlayerDead -= OnPlayerDown;
     }
 
 
@@ -586,4 +592,5 @@ public class MiniMapWnd : Window
         public bool Comple => CompareMethod.Invoke(Target, Now) <= _threshold;
     }
 
+}
 }

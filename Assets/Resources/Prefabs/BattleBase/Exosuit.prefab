@@ -274,6 +274,7 @@ MonoBehaviour:
     MinRange: 0
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 20
     DamageDirect: 0
     DamageGroupDirect:
@@ -314,6 +315,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -5416,6 +5418,7 @@ MonoBehaviour:
     MinRange: 0
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 20
     DamageDirect: 0
     DamageGroupDirect:
@@ -5456,6 +5459,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -6702,7 +6706,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7554152952781420519, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7270442435096298228}
+      addedObject: {fileID: 8130071686845869138}
     - targetCorrespondingSourceObject: {fileID: 1475372225640097094, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
         type: 3}
       insertIndex: -1
@@ -7084,7 +7088,7 @@ MonoBehaviour:
   BleedValue: 0
   isMain: 0
   showArmor: 0
---- !u!114 &7270442435096298228
+--- !u!114 &8130071686845869138
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -7093,10 +7097,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 2136294178812234531}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 772de16427fd63e478b414bab968aa93, type: 3}
+  m_Script: {fileID: 11500000, guid: 2cb6988aa6b649740bc3208ba3f5dde7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  goArr:
+  arr:
   - {fileID: 4195746468734833313}
 --- !u!4 &2304767645905287308 stripped
 Transform:
@@ -8184,6 +8188,7 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     NoSource: 1
     ExplosionAP: 0
     demolishValue: 0
@@ -8208,11 +8213,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 6599254993500643241}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: b6e3e79e752969f4580b8d329719b003, type: 2}
   fxMaterial: {fileID: 2100000, guid: e9fe9af10ecfc89459a0c455577a6dc2, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
 --- !u!4 &8993363820924844555 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 702212540951987919, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,

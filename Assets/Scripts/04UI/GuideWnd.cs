@@ -1,13 +1,21 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Core;
+using FPSGame.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
-using static WndTools.WndRootTool;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 操作引导图窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/引导图")]
 public class GuideWnd : Window
 {
     [SerializeField]
@@ -28,11 +36,9 @@ public class GuideWnd : Window
 
     public void Init()
     {
-        WndManager.Instance.guideWnd = this;
     }
     public void Uninit()
     {
-        WndManager.Instance.guideWnd = null;
     }
     protected override void FirstShowWnd()
     {
@@ -156,4 +162,5 @@ public class GuideWnd : Window
         SetWndState(false);
         return true;
     }
+}
 }

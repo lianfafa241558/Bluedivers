@@ -1,11 +1,19 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Data;
+
+/// <summary>
+/// 语音与字幕通知窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/通知")]
 public class NoticeWnd : Window
 {
     [SerializeField]
@@ -36,7 +44,7 @@ public class NoticeWnd : Window
 
     public void Creat(NoticeData source)
     {
-        if (GameState == Core.GameStateEnum.GameEnd) return;
+        if (GameState == FPSGame.Core.GameStateEnum.GameEnd) return;
         if (!source.data.IsValid()) return;
         // 检查特定方法是否有正在执行??InvokeRepeating
         if (!IsInvoking(nameof(UpdateWait)))
@@ -209,4 +217,5 @@ public class NoticeWnd : Window
 
 
 
+}
 }

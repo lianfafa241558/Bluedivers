@@ -1,9 +1,20 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Core;
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Audio;
+using FPSGame.Gameplay;
+using FPSGame.GameContract;
 
+namespace FPSGame.UI
+{
+
+/// <summary>
+/// 通用确认与提示弹窗。
+/// </summary>
+[AddComponentMenu("UI/窗口/提示弹窗")]
 public class TipWnd : Window
 {
     Queue<TipWndInfo> quene=new();
@@ -149,4 +160,5 @@ public class TipWndInfo
         desc = info.desc;
         costs = info.costs;
     }*/
+}
 }

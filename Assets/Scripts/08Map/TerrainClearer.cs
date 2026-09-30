@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using FPSGame.Utils;
 
-namespace FpsGame.MapUtils
+namespace FPSGame.MapUtils
 {
     /// <summary>要清除哪几类地表物（可组合）</summary>
     [Flags]

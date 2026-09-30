@@ -1,8 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// 泛用的 SO 选择弹窗框架（PopupWindowContent）。
@@ -194,4 +197,5 @@ public class SOPickerPopup<T> : PopupWindowContent where T : UnityEngine.Object
             _onPicked?.Invoke(_selected);
         editorWindow.Close();
     }
+}
 }

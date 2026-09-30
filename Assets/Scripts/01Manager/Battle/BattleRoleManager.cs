@@ -1,8 +1,16 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
+using FPSGame.Gameplay;
 
+namespace FPSGame.Managers
+{
+
+/// <summary>
+/// 战斗中角色的出场、换人与出生点设置。
+/// </summary>
+[AddComponentMenu("管理/战斗角色管理")]
 public class BattleRoleManager : RoleManagerBase
 {
     protected override void Start()
@@ -25,4 +33,5 @@ public class BattleRoleManager : RoleManagerBase
     }
 
 
+}
 }

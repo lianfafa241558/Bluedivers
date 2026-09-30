@@ -1,15 +1,23 @@
 using System;
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
-using Unity.FPS.Game;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.Attributes;
+using FPSGame.Game;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.UI;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
 
 /// <summary>
 /// 选择角色界面，这个界面不应该在除舰桥模式以外的界面打开
 /// </summary>
+[AddComponentMenu("UI/窗口/选角色")]
 public class SelectRoleWnd : Window
 {
     [Foldout("配置人物",true)]
@@ -88,11 +96,9 @@ public class SelectRoleWnd : Window
     }
     public void Init()
     {
-        WndManager.Instance.selectRoleWnd = this;
     }
     public void Uninit()
     {
-        WndManager.Instance.selectRoleWnd = null;
     }
 
     protected override void FirstShowWnd()
@@ -607,7 +613,7 @@ public class SelectRoleWnd : Window
         }
         else
         {
-            wndManager.CreatTip(new()
+            WndHub.Tip.Creat(new()
             {
                 title = upgrade.name,
                 desc = upgrade.desc+"\n\n要购买这项升级吗?",
@@ -907,4 +913,5 @@ public class SelectRoleWnd : Window
         Switch,
         Weapon,
     }
+}
 }

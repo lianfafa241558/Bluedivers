@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEngine;
+using FPSGame.Utils;
 
-namespace FpsGame.MapUtils
+namespace FPSGame.MapUtils
 {
     /// <summary>
     /// 地形树销毁管理器（A 方案）。

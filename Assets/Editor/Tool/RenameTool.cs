@@ -1,10 +1,11 @@
-﻿#if UNITY_EDITOR
+﻿using FPSGame.Utils;
+#if UNITY_EDITOR
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
-namespace CustomEditorWindow
+namespace FPSGame.EditorExt
 {
     public class RenameTool : EditorWindow
     {

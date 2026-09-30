@@ -1,13 +1,21 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Core;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.GameContract;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 敌人血条的创建与管理窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/血条管理")]
 public class HpWnd : Window
 {
     /// <summary>敌人距离玩家超过该距离时，受击不再显示血条</summary>
@@ -55,16 +63,16 @@ public class HpWnd : Window
     protected override void ShowWnd()
     {
 
-        BattleEventSub.OnEnemyCreate += OnEnemyCreate;
-        BattleEventSub.OnEnemyDead += OnEnemyDead;
-        BattleEventSub.OnUnitHit += OnUnitHit;
+        UnitEventSub.OnEnemyCreate += OnEnemyCreate;
+        UnitEventSub.OnEnemyDead += OnEnemyDead;
+        UnitEventSub.OnUnitHit += OnUnitHit;
     }
 
     protected override void HideWnd()
     {
-        BattleEventSub.OnEnemyCreate -= OnEnemyCreate;
-        BattleEventSub.OnEnemyDead -= OnEnemyDead;
-        BattleEventSub.OnUnitHit -= OnUnitHit;
+        UnitEventSub.OnEnemyCreate -= OnEnemyCreate;
+        UnitEventSub.OnEnemyDead -= OnEnemyDead;
+        UnitEventSub.OnUnitHit -= OnUnitHit;
     }
     private void Update()
     {
@@ -133,4 +141,5 @@ public class HpWnd : Window
         return Vector3.Distance(player.Pos, actor.Pos) > HpBarMaxDistance;
     }
 
+}
 }

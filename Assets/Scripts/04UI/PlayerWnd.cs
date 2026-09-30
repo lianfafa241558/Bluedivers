@@ -1,17 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.Attributes;
 using FPSGame.UI;
-using GameContract;
+using FPSGame.GameContract;
 using PEMaths;
 
-using Unity.FPS.Game;
-using Unity.FPS.Gameplay;
+using FPSGame.Game;
+using FPSGame.Gameplay;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 玩家主 HUD（罗盘、武器、任务、击杀等）。
+/// </summary>
+[AddComponentMenu("UI/窗口/玩家 HUD")]
 public partial class PlayerWnd : Window
 {
     public RectTransform CompasRect;
@@ -130,8 +138,8 @@ public partial class PlayerWnd : Window
         m_Health.OnDie += OnDie;
         m_Health.OnHit += OnTakeDamage;
         m_Health.OnHealed += OnHealed;
-        BattleEventSub.OnBulletHit += BulletHit;
-        BattleEventSub.OnUnitKill += UnitKill;
+        UnitEventSub.OnBulletHit += BulletHit;
+        UnitEventSub.OnUnitKill += UnitKill;
     }
 
     /// <summary>
@@ -192,8 +200,8 @@ public partial class PlayerWnd : Window
     protected override void HideWnd()
     {
         initPlayer = false;
-        BattleEventSub.OnBulletHit -= BulletHit;
-        BattleEventSub.OnUnitKill -= UnitKill;
+        UnitEventSub.OnBulletHit -= BulletHit;
+        UnitEventSub.OnUnitKill -= UnitKill;
         if (m_WeaponsManager)
         {
             m_WeaponsManager.OnAddedWeapon -= AddWeapon;
@@ -203,8 +211,8 @@ public partial class PlayerWnd : Window
         if (m_Health.IsValidMono())
         {
             m_Health.OnDie -= OnDie;
-            m_Health.OnHit += OnTakeDamage;
-            m_Health.OnHealed += OnHealed;
+            m_Health.OnHit -= OnTakeDamage;
+            m_Health.OnHealed -= OnHealed;
         }
     }
 
@@ -448,4 +456,5 @@ public partial class PlayerWnd : Window
 
     }
     #endregion
+}
 }

@@ -1,12 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using static WndTools.WndRootTool;
-using static Utils.Tool;
+using FPSGame.Utils;
 
-using GameContract;
-using FPSGame.Attribute;
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using static FPSGame.Utils.Tool;
+
+using FPSGame.GameContract;
+using FPSGame.Attributes;
 
 public abstract class SubtitleBase : MonoBehaviour
 {
@@ -133,4 +137,5 @@ public abstract class SubtitleBase : MonoBehaviour
 
     protected Vector3 TargetPos => targetPoint != default ? targetPoint : (targetActor ? targetActor.CenterPos + targetActor.HpHeight * Vector3.up : target.transform.position + Vector3.up * 2);
 
+}
 }

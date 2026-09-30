@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-namespace Core
+namespace FPSGame.Core
 {
 #if UNITY_EDITOR
     /// <summary>
     /// 方便显示文本的类，这个类只会在编辑器环境下被创建
     /// </summary>
+    [AddComponentMenu("工具/场景标注绘制")]
     public class DrawLabelUtils : MonoBehaviour {
         private class DrawTextInfo {
             public float deathTime;

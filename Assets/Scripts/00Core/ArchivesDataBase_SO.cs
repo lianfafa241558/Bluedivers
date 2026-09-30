@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
 
-namespace Core
+namespace FPSGame.Core
 {
     public abstract class ArchivesDataBase_SO : ScriptableObject
     {

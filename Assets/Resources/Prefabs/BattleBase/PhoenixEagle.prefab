@@ -9981,7 +9981,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -2797864980895152918, guid: f7dc5916526b9d3498e8fc26eebb26fa,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8893447597978125059}
+      addedObject: {fileID: 537330590685741108}
   m_SourcePrefab: {fileID: 100100000, guid: f7dc5916526b9d3498e8fc26eebb26fa, type: 3}
 --- !u!4 &3782110207225548272 stripped
 Transform:
@@ -10115,6 +10115,7 @@ MonoBehaviour:
   diveCurveHeight: -130
   climbCurveHeight: -250
   smoothTime: 0.1
+  useAwake: 0
   onDiving:
     m_PersistentCalls:
       m_Calls: []
@@ -10124,7 +10125,6 @@ MonoBehaviour:
   onClimbing:
     m_PersistentCalls:
       m_Calls: []
-  useAwake: 0
   targetA: {x: 128.7554, y: 83.5358, z: 183.1194}
   targetB: {x: 128.7554, y: 463.5358, z: 783.1194}
   startPoint: {x: 128.7554, y: 338.5358, z: -466.8806}
@@ -10146,8 +10146,12 @@ MonoBehaviour:
   LiftTime: 8
   PreRelease: 1
   allowSeeRelease: 0
+  EndDelay: 0
   allowRelease: 0
   useDebug: 0
+  OnEnd:
+    m_PersistentCalls:
+      m_Calls: []
   showScale: 0
 --- !u!114 &6735991337462396383
 MonoBehaviour:
@@ -10171,7 +10175,7 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 3744312410529573403}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8893447597978125059
+--- !u!114 &537330590685741108
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -10180,10 +10184,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 7700456980477832945}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 772de16427fd63e478b414bab968aa93, type: 3}
+  m_Script: {fileID: 11500000, guid: 2cb6988aa6b649740bc3208ba3f5dde7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  goArr:
+  arr:
   - {fileID: 4009439340484178148}
 --- !u!1001 &3744312411351552625
 PrefabInstance:

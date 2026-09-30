@@ -1,14 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEditorInternal;
 
 using UnityEditor;
 using UnityEngine;
+using FPSGame.EditorExt;
 
-namespace Unity.FPS.Game.Editor
+namespace FPSGame.Game.Editor
 {
     /// <summary>
     /// 武器升级/模组可视化编辑器窗口

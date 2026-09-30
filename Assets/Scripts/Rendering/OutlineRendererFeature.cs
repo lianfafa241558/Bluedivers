@@ -1,6 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+
+namespace FPSGame.Rendering
+{
 
 /// <summary>
 /// 描边渲染器特性：在指定渲染阶段（默认 AfterRenderingOpaques）后，用 "Outline" ShaderTagId
@@ -183,4 +186,5 @@ public class OutlineRendererFeature : ScriptableRendererFeature
 
         }
     }
+}
 }

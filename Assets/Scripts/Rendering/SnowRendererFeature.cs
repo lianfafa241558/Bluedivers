@@ -1,7 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using FPSGame.Utils;
+
+namespace FPSGame.Rendering
+{
 
 /// <summary>
 /// 积雪全局控制器：运行时开关与全局积雪量调节的统一入口。
@@ -733,4 +737,5 @@ public class SnowRendererFeature : ScriptableRendererFeature
             cmd.SetGlobalVector(Shader.PropertyToID("unity_LightData"), new Vector4(0, 0, 1, 0));
         }
     }
+}
 }

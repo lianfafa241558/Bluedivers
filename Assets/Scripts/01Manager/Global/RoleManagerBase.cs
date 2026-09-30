@@ -1,8 +1,12 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.Events;
+using FPSGame.Gameplay;
+
+namespace FPSGame.Managers
+{
 
 public abstract class RoleManagerBase : MonoBehaviour
 {
@@ -38,4 +42,5 @@ public abstract class RoleManagerBase : MonoBehaviour
     }
 
     public abstract Vector3 GetStartPoint();
+}
 }

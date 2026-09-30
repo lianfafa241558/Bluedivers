@@ -1,8 +1,15 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Core;
+using FPSGame.Core;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+
+namespace FPSGame.UI
+{
+/// <summary>
+/// UI 相机的 Overlay/Base 堆叠管理。
+/// </summary>
+[AddComponentMenu("UI/HUD/UICamera")]
 public class UICamera : Singleton<UICamera>
 {
     public static Camera uiCamera;
@@ -117,4 +124,5 @@ public class UICamera : Singleton<UICamera>
         // 如果你的UI相机下面不需要叠加其他相机，可以清空
         // uiCameraData.cameraStack.Clear(); 
     }
+}
 }

@@ -1,7 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using Unity.FPS.Game;
+using FPSGame.Game;
+
+namespace FPSGame.EditorExt
+{
 
 [CustomPropertyDrawer(typeof(DamageData))]
 public class DamageDataDrawer : PropertyDrawer
@@ -440,4 +443,5 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
     }
 
     #endregion
+}
 }

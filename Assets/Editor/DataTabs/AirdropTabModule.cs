@@ -1,8 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Data;
+
+namespace FPSGame.EditorExt
+{
 
 public sealed class AirdropTabModule : DataTabModule<AirdropData_SO>
 {
@@ -180,4 +184,5 @@ public sealed class AirdropTabModule : DataTabModule<AirdropData_SO>
         }
         _maskCache.Clear();
     }
+}
 }

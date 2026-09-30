@@ -1,11 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Attributes;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Game;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
+    using FPSGame.GameContract;
+
+    /// <summary>
+    /// 地图与任务选择窗口。
+    /// </summary>
+    [AddComponentMenu("UI/窗口/选图")]
 public class SelectMapWnd : Window
 {
     private const float _SwitchTime=0.5f;
@@ -48,11 +60,9 @@ public class SelectMapWnd : Window
     private ArchivesData_SO arch => ArchiveSvc.Archive;
     public void Init()
     {
-        WndManager.Instance.selectMapWnd = this;
     }
     public void Uninit()
     {
-        WndManager.Instance.selectMapWnd = null;
     }
     protected override void FirstShowWnd()
     {
@@ -132,7 +142,7 @@ public class SelectMapWnd : Window
         SetCilck(taskJoin, () =>
         {
             wndManager.PlaySound(new("UI/UI_Bubble"));
-            wndManager.CreatTip(new() { 
+            WndHub.Tip.Creat(new() { 
                 title = "未完成的功能",
                 desc = "该功能尚未完成，请等待后续更新。",
             });
@@ -141,7 +151,7 @@ public class SelectMapWnd : Window
         SetCilck(taskPublic, () =>
         {
             wndManager.PlaySound(new("UI/UI_Bubble"));
-            wndManager.CreatTip(new()
+            WndHub.Tip.Creat(new()
             {
                 title = "未完成的功能",
                 desc = "该功能尚未完成，请等待后续更新。",
@@ -542,4 +552,5 @@ public class SelectMapWnd : Window
         SelectTask
     }
 
+}
 }

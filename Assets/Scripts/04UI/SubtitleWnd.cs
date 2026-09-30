@@ -1,16 +1,25 @@
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Attributes;
 using FPSGame.Furn;
-using GameContract;
+using FPSGame.GameContract;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
 
 
+/// <summary>
+/// 字幕、标记与交互提示窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/字幕")]
 public class SubtitleWnd : Window
 {
     [Foldout("喊话", true)]
@@ -77,7 +86,7 @@ public class SubtitleWnd : Window
     {
         BattleEventSub.OnAirdrop += OnAirdrop;
         GlobalEventSub.OnSettingCange += OnSettingCange;
-        BattleEventSub.OnUnitDeath += OnActorDeath;
+        UnitEventSub.OnUnitDeath += OnActorDeath;
         GlobalEventSub.OnOOPartCollect += OOPartCollect;
 
         
@@ -88,7 +97,7 @@ public class SubtitleWnd : Window
     {
         BattleEventSub.OnAirdrop -= OnAirdrop;
         GlobalEventSub.OnSettingCange -= OnSettingCange;
-        BattleEventSub.OnUnitDeath -= OnActorDeath;
+        UnitEventSub.OnUnitDeath -= OnActorDeath;
         GlobalEventSub.OnOOPartCollect -= OOPartCollect;
         //OnSceneChange(null);
     }
@@ -129,7 +138,7 @@ public class SubtitleWnd : Window
             {
                 if (!item.CanOperate(ActorsManager.Player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
                 float dis = Vector3.Distance(item.CenterPos, pos);
-                if (dis < 20 && item != wndManager.operationWnd.furn && !item.InOperate && item != thirdPersonTarget)
+                if (dis < 20 && item != WndHub.Operation.furn && !item.InOperate && item != thirdPersonTarget)
                 {
                     float angle = Vector3.Angle(forward, item.Forward);
                     var viewPos = camera.WorldToViewportPoint(item.CenterPos);
@@ -358,9 +367,9 @@ public class SubtitleWnd : Window
 
     }
 
-    private void OnAirdrop(GameObject owner, GameObject target, Vector3 point, AirdropController.AirdropData data) {
+    private void OnAirdrop(GameObject owner, GameObject target, Vector3 point, AirdropData data) {
         var subtitle = AirDropSubtitlesPool.Get();
-        subtitle.OnAirdrop(owner, target, point);
+        subtitle.OnAirdrop(owner, target, point, data);
     }
 
     /// <summary>
@@ -392,4 +401,5 @@ public class SubtitleWnd : Window
         }
     }
         
+}
 }

@@ -1,14 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Core;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.GameContract;
 using Unity.Burst.CompilerServices;
-using Unity.FPS.Game;
-using Unity.FPS.Gameplay;
+using FPSGame.Game;
+using FPSGame.Gameplay;
 using UnityEngine;
 using UnityEngine.UIElements;
+using FPSGame.Audio;
 using static UnityEngine.UI.Image;
+using FPSGame.Data;
+using FPSGame.Utils;
+
+namespace FPSGame.Managers
+{
 
 /// <summary>
 /// 战备控制器，管理战备的输入、释放与状态切换。
@@ -26,10 +32,18 @@ using static UnityEngine.UI.Image;
 /// 
 /// 直接释放的效果逻辑写在 OnAirdropStateChange 的 AirdropState.Wait 分支中。
 /// </summary>
+[AddComponentMenu("战备/战备控制器")]
 public class AirdropController : MonoBehaviour
 {
 
-    public static AirdropData WaitRelease;
+    /// <summary>当前待释放的空投。**实际状态已下沉玩法层**（见 <c>AirdropReleaseState</c>：
+    /// 它的类型属玩法层，且要被原样传进 `BattleEventSub` 事件 ⇒ 无法走契约投影），
+    /// 这里只保留同名转发属性，让管理器/表现层既有调用点零改动。</summary>
+    public static AirdropData WaitRelease
+    {
+        get => AirdropReleaseState.WaitRelease;
+        set => AirdropReleaseState.WaitRelease = value;
+    }
 
     private const float _PowerMax = 10;
     private const float _PowerReSpeed = 0.167f;//60s回满
@@ -56,7 +70,7 @@ public class AirdropController : MonoBehaviour
         InputManager.BindDown(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
         BattleEventSub.OnCancelAirdrop += OnCancel;
         BattleEventSub.OnAirdrop += OnRelease;
-        BattleEventSub.OnPlayerDead += OnPlayerDeath;
+        UnitEventSub.OnPlayerDead += OnPlayerDeath;
     }
 
 
@@ -66,7 +80,7 @@ public class AirdropController : MonoBehaviour
         InputManager.UnBindDown(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
         BattleEventSub.OnCancelAirdrop -= OnCancel;
         BattleEventSub.OnAirdrop -= OnRelease;
-        BattleEventSub.OnPlayerDead -= OnPlayerDeath;
+        UnitEventSub.OnPlayerDead -= OnPlayerDeath;
     }
 
 
@@ -393,188 +407,5 @@ public class AirdropController : MonoBehaviour
 
 
 
-    [System.Serializable]
-    public class AirdropData {
-        public event System.Action<AirdropData, AirdropState> OnStateChange;
-
-        public AirdropData_SO cfg;
-        public bool isGift;
-        public float time;
-        public int count;
-        public bool isTmp;
-
-        [InspectorName("冷却时间")]
-        public int cool;
-        [InspectorName("部署时间")]
-        public int arriveTime;
-        [InspectorName("部署次数")]
-        public int arriveCount;
-
-        public AirdropData(AirdropData_SO cfg,bool isGift)
-        {
-            this.cfg = cfg;
-            this.isGift = isGift;
-            count = cfg.arriveCount;
-            cool = cfg.cool;
-            arriveTime = cfg.arriveTime;
-            arriveCount = cfg.arriveCount;
-        }
-
-        public AirdropData(AirdropData_SO cfg):this(cfg,true)
-        {
-            isTmp = true;
-            State = AirdropState.Arrive;
-        }
-
-
-        /// <summary>
-        /// 允许使用的计数器 0=隐藏和无法使用 只对cfg.Authorize有效
-        /// </summary>
-        public int authorizeCounter;
-
-        /// <summary>
-        /// UI显示的时间进度[0-1]
-        /// </summary>
-        public float TimeScale
-        {
-            get
-            {
-                float re;
-                switch (state)
-                {
-                    case AirdropState.Cool:
-                        re= time/Mathf.Max(cool,0.1f);
-                        break;
-                    case AirdropState.Arrive:
-                        re = time / Mathf.Max(arriveTime, 0.1f);
-                        break;
-                    case AirdropState.Sustain:
-                        re = time / Mathf.Max(cfg.sustainTime, 0.1f);
-                        break;
-                    case AirdropState.Unavailable:
-                        return 1;
-                    default:
-                        return 0;
-                }
-                return Mathf.Clamp01(re);
-            }
-        }
-
-        public bool IsAuthorize => !cfg.authorize || authorizeCounter > 0;
-
-        /// <summary>
-        /// UI 是否应该显示此战备。
-        /// 有授权：始终显示；
-        /// 无授权但 unAuthorizeVisible：显示（虚化）；
-        /// 无授权且无 unAuthorizeVisible：隐藏。
-        /// </summary>
-        public bool IsVisible => IsAuthorize || cfg.unAuthorizeVisible;
-
-        /// <summary>
-        /// 根据玩家死亡状态判断当前战备是否可用。
-        /// deathEnable 战备：dead 时也可用（活着时正常可用）；
-        /// 普通战备：dead 时不可用，非 dead 时可用。
-        /// </summary>
-        public bool IsCurrentlyAvailable(I_Actor player)
-        {
-            if (State == AirdropState.Unavailable)
-                return false;
-            if (!IsAuthorize)
-                return false;
-            bool isDead = player != null && player.ActorState == ActorState.Dead;
-            if (isDead && !cfg.deathEnable)
-                return false; // 死亡时，只有 deathEnable 战备可用
-            return true;
-        }
-
-        /// <summary>
-        /// 是否仅因死亡状态而不可用（授权和 State 都 OK，只是死亡且没有 deathEnable）。
-        /// 用于 UI 判断：授权不满足时隐藏，死亡不可用时虚化显示。
-        /// </summary>
-        public bool IsOnlyDeathMismatch(I_Actor player)
-        {
-            if (State == AirdropState.Unavailable)
-                return false;
-            if (!IsAuthorize)
-                return false;
-            bool isDead = player != null && player.ActorState == ActorState.Dead;
-            return isDead && !cfg.deathEnable;
-        }
-
-        [SerializeField]
-        private AirdropState state;
-        public AirdropState State { 
-            get => state; 
-            set 
-            {
-                state = value;
-                switch (value)
-                {
-
-                    case AirdropState.Cool:
-                        time = Mathf.Max(cool- cfg.sustainTime - arriveTime,0.5f);//真的吗（woc好像是真的）
-                        break;
-                    case AirdropState.Arrive:
-                        time = arriveTime;
-                        break;
-                    case AirdropState.Sustain:
-                        time = cfg.sustainTime;
-                        break;
-                    case AirdropState.Ready:
-
-                        break;
-                    case AirdropState.Wait:
-
-                        break;
-                    case AirdropState.Unavailable:
-
-                        break;
-                }
-                OnStateChange?.Invoke(this, value);
-            }
-        }
-        public void Update()
-        {
-            if (time >= 0)
-            {
-                if ((time -= Time.deltaTime) < 0)
-                {
-                    switch (State)
-                    {
-                        case AirdropState.Cool:
-                            State = AirdropState.Ready;
-                            break;
-                        case AirdropState.Arrive:
-                            State = AirdropState.Sustain;
-                            break;
-                        case AirdropState.Sustain:
-                            if (arriveCount>0 &&--count<=0)
-                            {
-                                State = AirdropState.Unavailable;
-                            }
-                            else
-                            {
-                                //Debug.LogError(cfg.name+"正常进CD");
-                                State = AirdropState.Cool;
-                            }
-                            break;
-                    }
-                }
-            }
-        }
-    }
-    public enum AirdropState {
-        /// <summary>就绪</summary>
-        [InspectorName("就绪")] Ready,
-        /// <summary>冷却</summary>
-        [InspectorName("冷却")] Cool,
-        /// <summary>等待释放</summary>
-        [InspectorName("等待释放")] Wait,
-        /// <summary>即将抵达</summary>
-        [InspectorName("即将抵达")] Arrive,
-        /// <summary>正在持续</summary>
-        [InspectorName("正在持续")] Sustain,
-        /// <summary>不可用</summary>
-        [InspectorName("不可用")] Unavailable,
-    }
+}
 }

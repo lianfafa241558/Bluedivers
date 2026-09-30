@@ -1,6 +1,6 @@
 ---
 name: bluedivers-unity
-description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Bluedivers 项目的 C# 脚本编写、Unity 组件开发、模块架构设计、ScriptableObject 数据定义、UI 窗口开发等任务时使用。提供项目特定的架构约定、命名规范、模块依赖关系、游戏系统全景与常见开发工作流。当用户在 Bluedivers 项目中编写或修改 Unity C# 代码、新增脚本或模块时触发。
+description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Bluedivers 项目的 C# 脚本编写、Unity 组件开发、模块架构设计、程序集(asmdef)拆分与耦合诊断、ScriptableObject 数据定义、UI 窗口开发等任务时使用。提供项目特定的架构约定、命名规范、模块依赖关系、游戏系统全景与常见开发工作流。当用户在 Bluedivers 项目中编写或修改 Unity C# 代码、新增脚本或模块、讨论程序集/asmdef 拆分、依赖环、高内聚低耦合改造时触发。
 ---
 
 # Bluedivers Unity 项目开发指南
@@ -23,6 +23,7 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 - 代码大量沿用 Unity 官方 FPS Sample 命名空间（`Unity.FPS.Game` 等），由 FPS Sample 二次开发而来
 
 完整系统全景、已实现/未实现对标、架构改进建议见 `references/module-guide.md` 末尾的「项目全景总结」章节。
+**程序集(asmdef)拆分 / 依赖环 / 高内聚低耦合改造**：见 `references/assembly-plan.md`（含实测耦合矩阵、目标分层表、6 个解耦手法、Phase 0~7 执行清单、验收与反模式禁令）。
 
 ## 架构约定
 
@@ -53,7 +54,38 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 
 ### 程序集定义（asmdef）
 
-项目使用 8 个 asmdef 分层管理，新增脚本须放入对应模块的 asmdef 范围内。跨模块引用须通过 asmdef 显式声明依赖，且只能引用编号更小的模块。
+> **完整诊断数据、目标分层表、6 个解耦手法与 Phase 0~7 执行清单见 `references/assembly-plan.md`（2026-09-30 实测重写）。**
+
+现状（2026-09-30 实测）：`Assets/Scripts` 下 **464 个 cs**（**asmdef 内 169 / `Assembly-CSharp` 295**），自有 asmdef **16 个**（+`MackySoft` 3）：
+
+| 已有 asmdef | 覆盖目录 | 依赖 |
+|---|---|---|
+| `00_Attribute` | `00Attribute/` | — |
+| `00_Core` | `00Core/`（含 `Interfaces`/`Timer`） | 00_Attribute |
+| `01_GameContract` | `00GameContract/`（**跨层契约唯一归属地**：`I_Actor/I_Health/I_Damageable/IEquippable/IFurniture/FurnitureFlag/IStepPress/ISubmittableHandItem/IVehicleUIController/TargetCfg/IDamageData` + 跨层枚举 `OOPartEnum/MissionEnum/SizeType/WeatherType/TerrainType`） | 00_Core, 00_Attribute |
+| `00_Utils` | `00Tools/Test/`（⚠ **`00Tools/` 根目录没有 asmdef**） | 00_Core, 01_GameContract, 00_Attribute, Unity.AI.Navigation |
+| `FpsGame.MapUtils` | `08Map/` | 00_Attribute, 00_Utils, 00_Core, Unity.AI.Navigation |
+| `DayNightSystem` | `DayNightSystem/` | 00_Attribute, Fog, URP Core |
+| `05_EffectComp` | `Effect/EffectComp/` | 01_GameContract, 00_Utils, 00_Core, MackySoft |
+| `04_UI` | `04UI/Assembly/` | 00_Core, 00_Utils, 00_WndTools, TMP |
+| `00_WndTools` | `04UI/WndTool/` | 00_Core, 00_Utils, TMP |
+| `NavMeshComponents` | `Plugins/NavMeshComponents/` | — |
+| `02_Rendering`（**2026-09-30 新增**） | `Rendering/`（含 `Snow/`，原 `Feature/Snow` 已并入） | `00_Utils`(`TerrainUtils`), `DayNightSystem`(`WeatherAtmosphereController`), URP/Core RP |
+| `04_Data`（**2026-09-30 新增**） | `02Data/`（14 个纯数据 SO + `Variant/`） | `00_Attribute`, `00_Core`, `01_GameContract`, `00_Utils` |
+| `03_Audio`（**2026-09-30 新增**） | `03Audio/` | `00_Core`, `00_Utils` |
+| `02_Net`（**2026-09-30 新增**） | `NetTmp/`（12 cs，对外**零引用**，依赖插件 `KCPNet.dll`） | — |
+| `05_UnitCore`（**2026-09-30 新增**） | `05UnitCore/`（19 cs：`Actor`/`UnitQueryGrid`/`UnitEventSub`/`ActorsManager`/`Health*`/`Damageable`/`Shield*`/`TransferDamageable`/`AutoDeath`/`MinMaxParameters`/`GameConstants`） | `00_Attribute`, `00_Core`, `01_GameContract`, `00_Utils`, `03_Audio`, `04_Data` |
+| `EditorTools` | `Assets/Editor/Tool/` | **`references: []`**（看不到 UGUI/项目类型） |
+
+**仍在 `Assembly-CSharp`（295 cs / `Assets/Scripts` 464）**：`02Game/Game`(58)、`02Game/AI`(44)、`02Game/Gameplay`(22)、`02Game/05Interactable`(22)、`04UI/UI`(20)、`02Game/03Player`(16)、`01Manager/Battle`(16)、`01Manager/Global`(13)、`00Tools/` 根(9：`FpsHelper*`6/`LogicBehaviour`/`SingletonNet`/`TechnicalDebt`)、`Plugins/DynamicBone`(4)、`02Game/06Npc`(4)、`Effect/` 根+`VFX`、`04UI/` 根…
+已切出：`02_Rendering`（`Rendering/`+`Snow/`）、`04_Data`（`02Data/`）、`03_Audio`（`03Audio/`）、`02_Net`（`NetTmp/`）、`05_UnitCore`（`05UnitCore/`，19 cs）—— 均 2026-09-30。
+
+⚠⚠ **铁律（双向）**：`autoReferenced:true` 只保证"`Assembly-CSharp` 看得见 asmdef"；**反向是硬墙 —— asmdef 永远看不到 `Assembly-CSharp` 的类型**。⇒ 新程序集要用到的每一样东西，必须**已经**在某个 asmdef / 插件 dll 里（`05_UnitCore` 就是被 `00Tools/` 根的 `IsValid` 扩展卡住的）。**扫依赖有两个盲区**：扩展方法（调用点不出现类名）、`internal` 成员。
+
+⚠ **不要只加 asmdef**：`01Manager ↔ 02Game`（含 `02Data`/`04UI`/`Effect`）是一个 342 文件的强连通分量，必须先按下表消回边，顺序不能颠倒。
+⚠ **P5（玩法层）实测结论**：玩法层**不能逐个切**（`08↔07` 25/3、`07↔06Weapon` 13/3、`07↔06AI` 7/1 双向互引）⇒ **合并成一个 `06_Gameplay`（~160 cs，含 `FpsHelper*`/`LogicBehaviour`）**；前提是 ① `00Tools` 根的 manager 引用清零（✅ P5-0 已完成）② 管理器契约扩容 + 两条事件总线搬进玩法层。详见 `references/assembly-plan.md` §Phase 5，重跑 `python .codebuddy/plans/p5_recon.py`。
+
+新增脚本前先查 `references/assembly-plan.md` §3 的目标分层表，确认目标程序集与允许的引用；**新 asmdef 一律 `autoReferenced:false` + 显式 `references`**（现有 11 个是 `true`，属历史遗留，不要再扩散）。
 
 ## 命名约定速查
 

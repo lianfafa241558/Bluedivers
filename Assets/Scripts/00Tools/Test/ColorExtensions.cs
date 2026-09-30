@@ -1,4 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
+
+namespace FPSGame.Utils
+{
 
 public static class ColorExtensions
 {
@@ -42,4 +45,5 @@ public static class ColorExtensions
 
 
 
+}
 }

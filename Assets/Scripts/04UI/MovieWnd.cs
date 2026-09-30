@@ -1,11 +1,18 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Core;
+using FPSGame.Core;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 过场动画黑边窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/过场黑边")]
 public class MovieWnd : Window
 {
     private const float MovieAspectRatio = 2.2f;
@@ -64,4 +71,5 @@ public class MovieWnd : Window
     {
         
     }
+}
 }

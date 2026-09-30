@@ -2,6 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+namespace FPSGame.Data
+{
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/更新说明")]
 public class UpdateData_SO : ScriptableObject
 {
@@ -18,4 +21,5 @@ public class UpdateData_SO : ScriptableObject
         time = DateTime.Now.ToString("yyyy-MM-dd");
         Debug.LogError(time);
     }
+}
 }

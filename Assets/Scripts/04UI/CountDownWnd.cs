@@ -1,18 +1,19 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Core;
-using Unity.FPS.Game;
+using FPSGame.Core;
+using FPSGame.Game;
 using UnityEngine;
-using static WndTools.WndRootTool;
+using FPSGame.Audio;
 
-
-public enum CountDownTypeEnum
+namespace FPSGame.UI
 {
-    Blue,
-    Red,
+using static FPSGame.WndTools.WndRootTool;
 
-}
+
+// `CountDownTypeEnum` 已于 2026-10-01 下沉到 `00Core/CountDownTypeEnum.cs`（00_Core）：
+// 它被 TaskManager/WndManager（01Manager）与 DeathUI（04UI）共见 ⇒ 住在这里会让管理器反向依赖 UI，
+// `09_Managers` 切不出来。全局命名空间未变 ⇒ 调用点零改动。
 
 /// <summary>
 /// 通用倒计时窗口（外部驱动）。
@@ -20,6 +21,7 @@ public enum CountDownTypeEnum
 /// 自身不做计时。兼容旧用法：传 ()=>TaskManager.Instance.nowTask.Countdown。
 /// 支持配置起始阈值、时间格式、是否显示动画/声音，并可通过事件回调感知倒计时变化与归零。
 /// </summary>
+[AddComponentMenu("UI/窗口/倒计时")]
 public class CountDownWnd : Window
 {
     [Serializable]
@@ -172,4 +174,5 @@ public class CountDownWnd : Window
             OnValueChanged?.Invoke(nowcd);
         }
     }
+}
 }

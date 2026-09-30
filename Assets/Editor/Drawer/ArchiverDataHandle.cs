@@ -1,8 +1,13 @@
-﻿
+﻿using FPSGame.Game;
+using static FPSGame.Game.ArchivesData_SO;
+
+namespace FPSGame.EditorExt
+{
+
+
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
-using static ArchivesData_SO;
 #endif
 
 
@@ -168,3 +173,4 @@ public class ArchSettingDataDrawer : PropertyDrawer
 
 
 #endif
+}

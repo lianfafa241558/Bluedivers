@@ -1,10 +1,14 @@
-using System.Collections.Generic;
-using Core;
+﻿using System.Collections.Generic;
+using FPSGame.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static Core.InputManagerBase<InputState, Core.WindowStateEnum>;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.Core.InputManagerBase<InputState, FPSGame.Core.WindowStateEnum>;
 
 public partial class SettingWnd : Window
 {
@@ -244,7 +248,7 @@ public partial class SettingWnd : Window
         if (IsKeyConflict(newKey, _rebindingItem))
         {
             wndManager.PlaySound(new("UI/UI_Button_Back"));
-            wndManager.CreatTip(new TipWndInfo
+            WndHub.Tip.Creat(new TipWndInfo
             {
                 title = "按键冲突",
                 desc = "\n该窗口下已有其他功能绑定了此按键，请选择其他按键。",
@@ -307,4 +311,5 @@ public partial class SettingWnd : Window
         _keyDisplay.HandleInput();
         _displayOnlyKeyDisplay?.HandleInput();
     }
+}
 }

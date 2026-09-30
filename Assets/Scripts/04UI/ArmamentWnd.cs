@@ -1,9 +1,16 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Core;
+using FPSGame.Core;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.UI;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Data;
+using FPSGame.Managers;
 /// <summary>
 /// 战备配置界面
 /// armamentRoot下的0-3是每个玩家的界面根
@@ -15,7 +22,8 @@ using static WndTools.WndRootTool;
 /// armamentRoot.GetChild(i, 7)是选择第几个战备显示的框体
 /// armamentRoot.GetChild(i, 8)下是全部强化的列表
 /// </summary>
-public class ArmamentWnd : Window
+[AddComponentMenu("UI/窗口/武装选择")]
+public class ArmamentWnd : Window, FPSGame.GameContract.IBridgeArmamentSink
 {
     public Transform mapName,enemyIcon, enemyName;
 
@@ -534,4 +542,5 @@ public class ArmamentWnd : Window
     }
 
 
+}
 }

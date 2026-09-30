@@ -1,7 +1,14 @@
-﻿using Unity.FPS.Game;
+﻿using FPSGame.Game;
 using UnityEngine;
-using static WndTools.WndRootTool;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 普通单位血条项。
+/// </summary>
+[AddComponentMenu("UI/HUD/小兵血条")]
 public class HpItemSoldier : HpItemBase
 {
     private const int _ShowTime=5;
@@ -32,4 +39,5 @@ public class HpItemSoldier : HpItemBase
     {
         return base.CanRecycle()|| time < 0;
     }
+}
 }

@@ -1,8 +1,18 @@
-using GameContract;
+using FPSGame.GameContract;
 using UnityEngine;
 using UnityEngine.UI;
-using static WndTools.WndRootTool;
+using FPSGame.Audio;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Data;
+    using FPSGame.Gameplay;
+
+    /// <summary>
+    /// NPC 对话字幕。
+    /// </summary>
+    [AddComponentMenu("UI/字幕/NPC 对话")]
 public class SubtitleNPC : SubtitleBase
 {
     public override SubtitleBase Creat(I_Actor owner, GameObject target, Transform parent, bool alwaysShow)
@@ -91,4 +101,5 @@ public class SubtitleNPC : SubtitleBase
             SetAlpha(transform, newAlpha);
         }
     }
+}
 }

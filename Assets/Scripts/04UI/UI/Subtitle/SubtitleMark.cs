@@ -1,9 +1,16 @@
-using Core;
-using GameContract;
-using Unity.FPS.Game;
+using FPSGame.Core;
+using FPSGame.GameContract;
 using UnityEngine;
-using static WndTools.WndRootTool;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 通用场景标记字幕。
+/// </summary>
+[AddComponentMenu("UI/字幕/标记")]
 public class SubtitleMark : SubtitleBase
 {
     [SerializeField]
@@ -79,4 +86,5 @@ public class SubtitleMark : SubtitleBase
         base.Follow(point);
     }
 
+}
 }

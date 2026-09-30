@@ -1,4 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
+
+namespace FPSGame.Utils
+{
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -113,3 +116,4 @@ public class DisplayBone : MonoBehaviour
 #endif
 }
 
+}

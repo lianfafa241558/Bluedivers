@@ -1,11 +1,19 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using FPSGame.Utils;
 
+namespace FPSGame.Managers
+{
+
+/// <summary>
+/// 舰桥准备与战备选择的消息转发。
+/// </summary>
+[AddComponentMenu("管理/舰桥系统")]
 public class BridgeSys : SingletonNet<BridgeSys>
 {
-    public ArmamentWnd armament;
+    public FPSGame.GameContract.IBridgeArmamentSink armament;
 
 
 
@@ -51,4 +59,5 @@ public class BridgeSys : SingletonNet<BridgeSys>
         armament.ReceivePlayerReady(playerIndex, state);
     }
 
+}
 }

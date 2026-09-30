@@ -1,16 +1,23 @@
 using System;
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
-using Unity.FPS.Game;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.Attributes;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
 
 /// <summary>
 /// 工程岗配置界面
 /// </summary>
+[AddComponentMenu("UI/窗口/工程岗")]
 public class VehicleWnd : Window
 {
 
@@ -52,11 +59,9 @@ public class VehicleWnd : Window
     #region 生命周期
     public void Init()
     {
-        WndManager.Instance.vehicleWnd = this;
     }
     public void Uninit()
     {
-        WndManager.Instance.vehicleWnd = null;
     }
 
     protected override void FirstShowWnd()
@@ -398,282 +403,7 @@ public class VehicleWnd : Window
 
     #endregion
 
-    #region 备份
-    /*
-
-    private string showParameterType, showParameterValue;
-    ArchivesData_SO.WeaponUpgradeData archWeaponData;
-    private void ShowWeaponWnd()
-    {
-        var type = (WeaponTypeEnum)nowSelectWeapon;
-        var weaponTemp = arch.weapons[type][arch.weaponSelect[type]];
-        var weaponInst = showWeapon = Instantiate(weaponTemp, m_SelectWeaponCamera.transform.GetChild(0));
-        if (weaponInst.ShowRoot)
-        {
-            weaponInst.transform.localEulerAngles = weaponInst.ShowRoot.transform.localEulerAngles;
-            weaponInst.transform.localPosition = -weaponInst.ShowRoot.transform.localPosition;
-            weaponInst.transform.localScale = weaponInst.ShowRoot.transform.localScale;
-        }
-        var weaponMuzzle = weaponInst.GetMuzzle(0);
-        if (weaponMuzzle && weaponMuzzle != weaponInst.WeaponRoot.transform) SetActive(weaponMuzzle, false);
-        SetText(weaponName, weaponInst.WeaponName);
 
 
-        //载具列表
-        int count = arch.weapons[type].Count;
-        for (int i = 0; i < weaponitemListLayout.childCount; ++i)
-        {
-            if (SetActive(weaponitemListLayout.GetChild(i), i < count))
-            {
-                SetSprite(weaponitemListLayout.GetChild(i, 0), data.weapons[type][i].WeaponIcon);
-            }
-        }
-
-
-        SetActive(tipRoot, false);
-        var lenghts = weaponInst.UpgradeCount();
-        var levels = weaponInst.UpgradeLevel();
-        archWeaponData = ArchiveSvc.Archive.weaponUpgradeDic.TryGet(arch.ID + "_" + weaponInst.WeaponName, new(arch.ID + "_" + weaponInst.WeaponName, lenghts.Length));
-        var totleLenght = IEnumerableUtils.Sum(lenghts);
-
-
-        for (int y = 0; y < weaponUpgradeItemLayout.childCount; ++y)
-        {
-
-            for (int x = 0; x < 3; ++x)
-            {
-                bool show = y < lenghts.Length && x < lenghts[y];
-                SetActive(weaponUpgradeItemLayout.GetChild(y, x), show);
-                if (show)
-                {
-                    SetSprite(weaponUpgradeItemLayout.GetChild(y, x, 0), showWeapon.GetUpgrade(y, x).icon);
-                    int state = 0;
-                    if (arch.Level < levels[y]) state = 3;
-                    else if (archWeaponData.selectIndex[y] == x) state = 0;
-                    else if (archWeaponData.GetBuy(y, x)) state = 1;
-                    else state = 2;
-
-                    SetUpgradeItemButton(y, x, state);
-                }
-            }
-            if (y < lenghts.Length && lenghts[y] > 0)
-            {
-                SetActive(weaponUpgradeItemLayout.GetChild(y), true);
-                SetFill(weaponUpgradeItemLayout.GetChild(y), Mathf.Clamp01(0.5f * (lenghts[y] - 1)));
-            }
-            else
-            {
-                SetActive(weaponUpgradeItemLayout.GetChild(y), false);
-            }
-
-            bool showSelect = y < lenghts.Length;
-            SetActive(weaponUpgradeSelectLayout.GetChild(y), showSelect);
-            if (showSelect)
-            {
-                SetUpgradeSelectButton(archWeaponData.selectIndex, y, archWeaponData.selectIndex[y], false);
-                SetActive(weaponUpgradeSelectLayout.GetChild(y, 2), arch.Level < levels[y]);
-                SetActive(weaponUpgradeSelectLayout.GetChild(y, 1), arch.Level >= levels[y]);
-                SetText(weaponUpgradeSelectLayout.GetChild(y, 2, 0), levels[y]);
-            }
-
-
-        }
-        SetBuyCountLayout(totleLenght, archWeaponData.BuyCount);
-
-
-        weaponInst.ApplyUpgrade(archWeaponData.selectIndex, archWeaponData.selectModuleIndex);
-
-        SetText(weaponDescText, weaponInst.desc);
-        if (GetActive(showParameterButton)) weaponParameterRoot.GetComponent<Animator>().Play("Exit", 0, 1);
-        if (GetActive(showDescButton)) weaponDescRoot.GetComponent<Animator>().Play("Exit", 0, 1);
-
-        RefreshLayout(weaponDescText);
-
-        RefreshLayout(weaponUpgradeItemLayout);
-
-        
-
-    }
-
-
-
-    /// <summary>
-    /// 鼠标进入升级框
-    /// </summary>
-    private void ShowTip(int y, int x)
-    {
-        SetActive(tipRoot, true);
-        tipRoot.position = new(tipRoot.position.x, Input.mousePosition.y - 50);
-        var data = showWeapon.GetUpgrade(y, x);
-        SetText(tipName, data.name);
-        SetText(tipType, data.type);
-        SetText(tipDesc, data.desc);
-        SetSprite(tipIcon, data.icon);
-        var select = archWeaponData.selectIndex[y];
-
-        showWeapon.ResetAllChangeValues();
-
-        List<ModifyAttrData> oldData, newData;
-        if (select == -1)
-        {
-            oldData = new();
-            newData = data.modifys;
-        }
-        else if (select == x)
-        {
-            oldData = showWeapon.GetUpgrade(y, select).modifys;
-            newData = new();
-        }
-        else
-        {
-            oldData = showWeapon.GetUpgrade(y, select).modifys;
-            newData = data.modifys;
-        }
-        showWeapon.TryUpgrade(oldData, newData);
-        
-    }
-    /// <summary>
-    /// 鼠标离开升级框
-    /// </summary>
-    private void HideTip(int y, int x)
-    {
-        if (!GetActive(tipRoot)) return;
-        SetActive(tipRoot, false);
-        showWeapon.ResetAllChangeValues();
-    }
-    /// <summary>
-    /// 鼠标在升级框内
-    /// </summary>
-    private void MoveTip()
-    {
-        tipRoot.position = new(tipRoot.position.x, Input.mousePosition.y - 50);
-    }
-    /// <summary>
-    /// 点击升级
-    /// </summary>
-    private void SelectUpgrade(int y, int x)
-    {
-        if (arch.Level < showWeapon.UpgradeLevel(y))
-        {
-            wndManager.PlaySound(new("UI/UI_Reward2", volume: 0.1f));
-            return;
-        }
-        var upgrade = showWeapon.GetUpgrade(y, x);
-        if (archWeaponData.GetBuy(y, x))
-        {
-            SetUpgradeSelectButton(archWeaponData.selectIndex, y, x, true);
-            meetSave = true;
-        }
-        else
-        {
-            wndManager.CreatTip(new() {
-                title = upgrade.name,
-                desc = upgrade.desc + "\n\n要购买这项升级吗?",
-                optA_Click = () => {
-                    archWeaponData.SetBuy(y, x);
-                    SetUpgradeItemButton(y, x, 1);
-                    SetBuyCountLayout(-1, archWeaponData.BuyCount);
-                    wndManager.PlaySound(new("UI/UI_Reward", volume: 0.25f));
-                    wndManager.PlaySound(new(data.Speech(SpeechTypeEnum.Upgrade).Clip, AudioGroups.Player, 1, 0.5f));
-                    meetSave = true;
-                },
-                costs = upgrade.cost.ToArray(),
-                optA_Text = "确认",
-                optB_Text = "取消"
-            });
-        }
-
-        SetActive(tipRoot, false);
-    }
-
-    /// <summary>
-    /// 设置选项按钮 0选择 1购买 2未购买
-    /// </summary>
-    public void SetUpgradeItemButton(int y, int x, int state)
-    {
-        switch (state)
-        {
-            case 0:
-                SetColor(weaponUpgradeItemLayout.GetChild(y, x), selectColor);
-                SetColor(weaponUpgradeItemLayout.GetChild(y, x, 1), Color.white);
-
-                break;
-            case 1:
-
-                SetColor(weaponUpgradeItemLayout.GetChild(y, x), buyColor);
-                SetColor(weaponUpgradeItemLayout.GetChild(y, x, 1), new(0, 0, 0, 0));
-                break;
-            case 2:
-                SetColor(weaponUpgradeItemLayout.GetChild(y, x), Color.black);
-                SetColor(weaponUpgradeItemLayout.GetChild(y, x, 1), unbuyColor);
-                break;
-            case 3:
-                SetColor(weaponUpgradeItemLayout.GetChild(y, x), Color.black);
-                SetColor(weaponUpgradeItemLayout.GetChild(y, x, 1), unSelectColor);
-                break;
-        }
-    }
-
-    /// <summary>
-    /// 设置选择按钮
-    /// </summary>
-    public void SetUpgradeSelectButton(int[] arr, int y, int x, bool set)
-    {
-
-        if ((set && arr[y] == x) || x == -1)//重复点击或者本身就是-1都有可能
-        {
-            if (set)
-            {
-                showWeapon.RemoveUpgrade(y, x);
-                arr[y] = -1;
-                wndManager.PlaySound(new("UI/UI_Ready", volume: 0.5f));
-            }
-            SetActive(weaponUpgradeSelectLayout.GetChild(y, 0), false);
-            SetColor(weaponUpgradeSelectLayout.GetChild(y), Color.black);
-            if (x != -1) SetUpgradeItemButton(y, x, 1);//将原来选择的位置重置
-            else
-            {
-                SetColor(weaponUpgradeSelectLayout.GetChild(y), arch.Level < showWeapon.UpgradeLevel(y) ? unLevelColor : Color.black);
-            }
-        }
-        else //X有效且不相同
-        {
-            SetActive(weaponUpgradeSelectLayout.GetChild(y, 0), true);
-            SetSprite(weaponUpgradeSelectLayout.GetChild(y, 0), GetSprite(weaponUpgradeItemLayout.GetChild(y, x, 0)));
-            SetColor(weaponUpgradeSelectLayout.GetChild(y), Color.white);
-
-            if (set)
-            {
-
-                if (arr[y] != -1)
-                {
-                    showWeapon.RemoveUpgrade(y, arr[y]);
-                    SetUpgradeItemButton(y, arr[y], 1);
-                }
-                arr[y] = x;
-                wndManager.PlaySound(new("UI/UI_Ready"));
-                SetUpgradeItemButton(y, x, 0);
-                showWeapon.ApplyUpgrade(y, x);
-            }
-        }
-        if (set)
-        {
-            //SetParameter();
-        }
-    }
-    private void SetBuyCountLayout(int max, int count)
-    {
-
-        for (int i = 0; i < weaponUpgradeBuyLayout.childCount; ++i)
-        {
-            if (max != -1) SetActive(weaponUpgradeBuyLayout.GetChild(i), i < max);
-            SetSprite(weaponUpgradeBuyLayout.GetChild(i), i < count ? buyIcon : unbuyIcon);
-        }
-    }
-
-    */
-
-    #endregion
-
-
+}
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Core
+namespace FPSGame.Core
 {
     /// <summary>
     /// 外部访问，公共静态成员（单例）?    /// </summary>

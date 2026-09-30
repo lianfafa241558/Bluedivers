@@ -1,6 +1,12 @@
 using UnityEngine;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using Meryuhi.Rendering;
+using FPSGame.Rendering;
+using FPSGame.DayNightSystem;
+using FPSGame.GameContract;
+
+namespace FPSGame.Managers
+{
 
 /// <summary>
 /// 挂在天气特效预制体上的具体天气组件基类：
@@ -114,4 +120,5 @@ public abstract class WeatherEffect : MonoBehaviour
         FullScreenFogController.SetEnabled(false);
         SnowController.SetEnabled(false);
     }
+}
 }

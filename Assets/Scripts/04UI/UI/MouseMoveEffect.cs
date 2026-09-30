@@ -1,8 +1,16 @@
-using Core;
+﻿using FPSGame.Core;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 鼠标拖尾粒子效果。
+/// </summary>
+[AddComponentMenu("UI/HUD/鼠标拖尾")]
 public class MouseMoveEffect : MonoBehaviour
 {
     //public Camera UICamera;
@@ -154,4 +162,5 @@ public class MouseMoveEffect : MonoBehaviour
         clickA.Play(false);
     }
  
+}
 }

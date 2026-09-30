@@ -1,12 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Core;
-using Core.Interface;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using FPSGame.Data;
+using FPSGame.Gameplay;
 
-public class ResSvc: Singleton<ResSvc>, I_GlobaManager
+namespace FPSGame.Managers
+{
+
+/// <summary>
+/// 资源加载与缓存、异步场景切换的统一入口。
+/// </summary>
+[AddComponentMenu("管理/资源服务")]
+public class ResSvc: Singleton<ResSvc>, I_GlobaManager, FPSGame.GameContract.IResService
 {
     private static Dictionary<string, AudioClip> adDic = new();//缓存音频资源
     private static Dictionary<string, GameObject> goDic = new();//缓存游戏物体
@@ -14,11 +23,14 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager
     public static Dictionary<int, AirdropData_SO> airdropDic;//缓存空投
     public static Dictionary<int, Booster_SO> boostDic;//缓存全队强化
     public static Dictionary<string, NoticeTree_SO> voiceDic;//缓存台词
-    public static Dictionary<DamageTypeEnum, AboStateData_SO> aboStateDic;//缓存异常状态
+    /// <summary>缓存异常状态（兼容转发：实际存储已下沉到 04_Data 的 <see cref="AboStateData_SO.Dic"/>，
+    /// 因为读它的 Health/Health_AboState 属于单位内核，不能反向依赖本类）。</summary>
+    public static Dictionary<DamageTypeEnum, AboStateData_SO> aboStateDic => AboStateData_SO.Dic;
 
 
     public void Init()
     {
+        FPSGame.GameContract.ServiceLocator.Res = this;//注册资源服务：供玩法层/Effect 等下层访问（见 ServiceLocator.cs）
         Awake();
         airdropDic = LoadObjects<AirdropData_SO>("GameData/Airdrop").ToDictionary(item => item.ID);
         boostDic = LoadObjects<Booster_SO>("GameData/Booster").ToDictionary(item => item.ID);
@@ -28,7 +40,7 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager
         {
             voiceDic.Add(role.ID, role);
         }
-        aboStateDic = LoadObjects<AboStateData_SO>("GameData/AboState").ToDictionary(item => item.typeEnum);
+        AboStateData_SO.Dic = LoadObjects<AboStateData_SO>("GameData/AboState").ToDictionary(item => item.typeEnum);
     }
     public void UnInit()
     {
@@ -293,4 +305,5 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager
     }*/
 
 
+}
 }

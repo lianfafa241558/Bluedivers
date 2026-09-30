@@ -1,8 +1,8 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core{
+namespace FPSGame.Core{
     public interface I_TickClass
     {
         public bool Tick();

@@ -1,9 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Utils;
-using WndTools;
+using FPSGame.Utils;
+using FPSGame.WndTools;
 
+namespace FPSGame.UI
+{
+
+/// <summary>
+/// UI 跟随鼠标做视差移动。
+/// </summary>
+[AddComponentMenu("UI/HUD/鼠标视差")]
 public class FollowMouseMovement : MonoBehaviour
 {
     [SerializeField]
@@ -41,4 +48,5 @@ public class FollowMouseMovement : MonoBehaviour
         }
 
     }
+}
 }

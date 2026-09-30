@@ -1,8 +1,17 @@
-using Core;
+﻿using FPSGame.Core;
 
 using UnityEngine;
-using static WndTools.WndRootTool;
+using FPSGame.Audio;
+using FPSGame.Utils;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 加载界面窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/加载")]
 public class LoadWnd : Window
 {
     public Sprite[] bgs;
@@ -68,4 +77,5 @@ public class LoadWnd : Window
     }
     */
 
+}
 }

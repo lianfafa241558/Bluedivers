@@ -1,6 +1,7 @@
-using Meryuhi.Rendering;
+﻿using Meryuhi.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
+// 注：DayNightSystem 程序集不引用 04_Data，此处不要添加 Data 命名空间的 using
 
 /*
 Customize the "Ambient Mode - Trilight (Gradient)" according to the time of day:"

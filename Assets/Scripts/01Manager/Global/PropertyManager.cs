@@ -1,8 +1,17 @@
 
 using UnityEngine;
 using System.Linq;
-using Core;
+using FPSGame.Core;
+using FPSGame.Utils;
+using FPSGame.GameContract;
 
+namespace FPSGame.Managers
+{
+
+/// <summary>
+/// 欧帕兹属性、图标与预制体的查询管理。
+/// </summary>
+[AddComponentMenu("管理/欧帕兹属性管理")]
 public class PropertyManager : Singleton<PropertyManager>
 {
     [SerializeField]
@@ -37,23 +46,5 @@ public class PropertyManager : Singleton<PropertyManager>
 
 }
 
-public enum OOPartEnum
-{
-    /// <summary>青辉石</summary>
-    [InspectorName("青辉石")]Pyroxene,
-    /// <summary>电池</summary>
-    [InspectorName("电池")] Battery,
-    /// <summary>埴轮</summary>
-    [InspectorName("埴轮")] Crystal,
-    /// <summary>十二面体</summary>
-    [InspectorName("十二面体")] Dodecahedron,
-    /// <summary>以太</summary>
-    [InspectorName("以太")] Ether,
-    /// <summary>透镜</summary>
-    [InspectorName("透镜")] Glasses,
-    /// <summary>圆盘</summary>
-    [InspectorName("圆盘")] Pendant,
-    /// <summary>手稿</summary>
-    [InspectorName("手稿")] Voynich,
-}
 
+}

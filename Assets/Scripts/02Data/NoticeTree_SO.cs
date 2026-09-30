@@ -1,5 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
+
+namespace FPSGame.Data
+{
 
 
 [CreateAssetMenu(fileName = "NT_", menuName = "Data/角色台词组")]
@@ -12,3 +15,4 @@ public class NoticeTree_SO : ScriptableObject
     public List<SoundGroup_SO> sounds = new List<SoundGroup_SO>();
 }
  
+}

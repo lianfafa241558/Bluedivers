@@ -1,5 +1,11 @@
-﻿namespace Core
+﻿using UnityEngine;
+
+namespace FPSGame.Core
 {
+    /// <summary>
+    /// 为场景提供去重的 EventSystem 单例，避免多份 EventSystem 冲突。
+    /// </summary>
+    [AddComponentMenu("框架/事件系统单例")]
     public class EventSystemSingleton : Singleton<EventSystemSingleton>
     {
         public override void Awake()

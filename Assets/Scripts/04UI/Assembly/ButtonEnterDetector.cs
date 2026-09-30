@@ -1,9 +1,16 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+namespace FPSGame.UI
+{
+
+/// <summary>
+/// 指针进出检测并驱动缩放等反馈。
+/// </summary>
+[AddComponentMenu("UI/控件/指针进入检测")]
 public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     public Action<PointerEventData> Enter,Exit,In;
@@ -102,4 +109,5 @@ public class ButtonEnterDetector : MonoBehaviour, IPointerEnterHandler, IPointer
             In?.Invoke(null);
         }
     }
+}
 }

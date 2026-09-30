@@ -1,10 +1,15 @@
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Attributes;
+using FPSGame.Utils;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine;
+
+namespace FPSGame.Data
+{
 
 
 [CreateAssetMenu(fileName = "NT_", menuName = "Data/音效组")]
@@ -456,3 +461,4 @@ public struct RuntimeSoundData
 }
 
 
+}

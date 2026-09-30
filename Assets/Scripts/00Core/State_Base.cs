@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-namespace Core
+namespace FPSGame.Core
 {
     public abstract class State_Base<T> : IState<T>
     where T : Enum

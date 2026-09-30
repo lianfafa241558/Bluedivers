@@ -1,10 +1,20 @@
+﻿using FPSGame.Core.Interface;
 using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Furn;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using static WndTools.WndRootTool;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
+
+/// <summary>
+/// 家具交互提示窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/交互提示")]
 public class OperationWnd : Window
 {
     [SerializeField]
@@ -115,4 +125,5 @@ public class OperationWnd : Window
         
     }
 
+}
 }

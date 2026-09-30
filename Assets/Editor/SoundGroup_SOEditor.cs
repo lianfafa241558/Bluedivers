@@ -1,6 +1,10 @@
-using System.Reflection;
+﻿using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Data;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// SoundGroup_SO 的预览播放编辑器。
@@ -149,4 +153,5 @@ public class SoundGroup_SOEditor : Editor
     {
         StopPreview();
     }
+}
 }

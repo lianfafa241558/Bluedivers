@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 using UnityEditor;
@@ -6,7 +6,7 @@ using UnityEditor.SceneManagement;
 
 using UnityEngine;
 
-namespace Unity.FPS.Game
+namespace FPSGame.Game
 {
     /// <summary>
     /// 肢体编辑器窗口：自动读取当前打开预制体的 Damageable / TransferDamageable 组件，

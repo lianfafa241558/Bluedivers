@@ -1,11 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using PEMaths;
 
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
+using FPSGame.Utils;
+
+namespace FPSGame.UI
+{
 
 public partial class PlayerWnd
 {
@@ -272,4 +275,5 @@ public partial class PlayerWnd
             time = Time.time;
         }
     }
+}
 }

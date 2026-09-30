@@ -1,37 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using Unity.AI.Navigation;
 using UnityEngine;
+using FPSGame.Utils;
 using Random = UnityEngine.Random;
-namespace FpsGame.MapUtils
+using FPSGame.GameContract;
+namespace FPSGame.MapUtils
 {
 
-    public enum TerrainType
-    {
-        /// <summary>沙漠</summary>
-        [InspectorName("沙漠")]
-        Desert,
-        /// <summary>高原</summary>
-        [InspectorName("高原")]
-        Plateau,
-        /// <summary>雨林</summary>
-        [InspectorName("雨林")]
-        Rainforest,
-        /// <summary>丘陵</summary>
-        [InspectorName("丘陵")]
-        Hills,
-        /// <summary>盆地</summary>
-        [InspectorName("盆地")]
-        Basin,
-        /// <summary>平原</summary>
-        [InspectorName("平原")]
-        Plains,
-        /// <summary>山地</summary>
-        [InspectorName("山地")]
-        Mountains,
-    }
 
     /// <summary>
     /// 一类地形植被（石块 / 树）的生成参数。
@@ -275,6 +253,10 @@ namespace FpsGame.MapUtils
     /// 从 <c>MapData_SO</c> 传入，本类不直接依赖 SO 类型（跨 asmdef 引用不到）。
     /// </summary>
 
+    /// <summary>
+    /// 噪声地形生成总控（高度、纹理、植被与覆盖物）。
+    /// </summary>
+    [AddComponentMenu("地图/地形生成")]
     public class GenerateNoiseTerrain : MonoBehaviour
     {
         /// <summary>覆盖石实例容器的名字（换局重生成时按名字复用/清理）</summary>

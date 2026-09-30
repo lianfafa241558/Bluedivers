@@ -1,9 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.FPS.EditorExt
+namespace FPSGame.EditorExt
 {
     /// <summary>
     /// 预制体组件批量工具基类。

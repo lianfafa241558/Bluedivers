@@ -1,8 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Data;
+
+namespace FPSGame.EditorExt
+{
 
 public sealed class CampTabModule : DataTabModule<CampData_SO>
 {
@@ -46,4 +50,5 @@ public sealed class CampTabModule : DataTabModule<CampData_SO>
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
     }
+}
 }

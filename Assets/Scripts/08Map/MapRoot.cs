@@ -1,8 +1,14 @@
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Attributes;
 using Unity.AI.Navigation;
 using UnityEngine;
-namespace FpsGame.MapUtils
+using FPSGame.Utils;
+namespace FPSGame.MapUtils
 {
+    /// <summary>
+    /// 地图根节点：地形范围、空气墙与 NavMeshSurface。
+    /// </summary>
+    [AddComponentMenu("地图/地图根")]
     public class MapRoot : MonoBehaviour
     {
         [Foldout("地形设置", true)] 

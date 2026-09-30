@@ -1,20 +1,37 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Core;
-using FpsGame.MapUtils;
+using FPSGame.Core;
+using FPSGame.MapUtils;
 using FPSGame.Game;
-using GameContract;
+using FPSGame.GameContract;
 using PEMaths;
-
-using Unity.FPS.Game;
 using UnityEngine;
-using Utils;
+using FPSGame.Utils;
+using FPSGame.Data;
+using FPSGame.Rendering;
+using FPSGame.Gameplay;
 
-
-public class BattleManager : Singleton<BattleManager>
+namespace FPSGame.Managers
 {
+
+
+/// <summary>
+/// 战斗总控：单位查询、波次与天气调度、团灭判负与初始化。
+/// </summary>
+[AddComponentMenu("管理/战斗总控")]
+public class BattleManager : Singleton<BattleManager>, IBattleService
+{
+    // 契约成员里"字段 / 静态方法 / 子管理器字段"无法隐式实现接口 ⇒ 显式转发（见 IBattleService.cs）
+    bool FPSGame.GameContract.IBattleService.IsStartBattle => IsStartBattle;
+
+    /// <summary>契约：服务已就位（本类被加载即 true）—— 等价于老的 `BattleManager.Instance != null`。</summary>
+    bool FPSGame.GameContract.IBattleService.IsPresent => true;
+    void FPSGame.GameContract.IBattleService.EnqueueInit(Action action) => EnqueueInit(action);
+    int FPSGame.GameContract.IBattleService.WaveCount => WaveCont.WaveCount;
+    void FPSGame.GameContract.IBattleService.RevealAllMissions() => MissionCont.RevealAll();
+
     public bool IsStartBattle;
     public bool IsNormal;
 
@@ -53,7 +70,7 @@ public class BattleManager : Singleton<BattleManager>
     private const float WipeFailGrace = 10f;
 
     /// <summary>增援战备（HealBag），初始化后缓存，避免判定时反复遍历</summary>
-    private AirdropController.AirdropData _reinforceAd;
+    private AirdropData _reinforceAd;
 
     /// <summary>是否已挂起判负计时器（防重复触发）</summary>
     private bool _wipeCheckPending;
@@ -259,12 +276,13 @@ public class BattleManager : Singleton<BattleManager>
     public override void Awake()
     {
         base.Awake();
+        ServiceLocator.Battle = this;//注册战斗服务：供 05_UnitCore 等下层只读访问（见 ServiceLocator.cs）
 
-        BattleEventSub.OnUnitPosChange += OnUnitPosChange;
-        BattleEventSub.OnEnemyCreate += OnEnemyCreate;
-        BattleEventSub.OnEnemyDead += OnEnemyDeath;
-        GlobalEventSub.OnPlayerCreate += OnPlayerCreate;
-        BattleEventSub.OnPlayerDead += OnPlayerDeath;
+        UnitEventSub.OnUnitPosChange += OnUnitPosChange;
+        UnitEventSub.OnEnemyCreate += OnEnemyCreate;
+        UnitEventSub.OnEnemyDead += OnEnemyDeath;
+        UnitEventSub.OnPlayerCreate += OnPlayerCreate;
+        UnitEventSub.OnPlayerDead += OnPlayerDeath;
         //GlobalEventSub.OnOOPartCollect += OOPartCollect;
         GlobalEventSub.OnDaySwitch += OnDatSwitch;
     }
@@ -278,11 +296,11 @@ public class BattleManager : Singleton<BattleManager>
 
     private void OnDestroy()
     {
-        BattleEventSub.OnUnitPosChange -= OnUnitPosChange;
-        BattleEventSub.OnEnemyCreate -= OnEnemyCreate;
-        BattleEventSub.OnEnemyDead -= OnEnemyDeath;
-        GlobalEventSub.OnPlayerCreate -= OnPlayerCreate;
-        BattleEventSub.OnPlayerDead -= OnPlayerDeath;
+        UnitEventSub.OnUnitPosChange -= OnUnitPosChange;
+        UnitEventSub.OnEnemyCreate -= OnEnemyCreate;
+        UnitEventSub.OnEnemyDead -= OnEnemyDeath;
+        UnitEventSub.OnPlayerCreate -= OnPlayerCreate;
+        UnitEventSub.OnPlayerDead -= OnPlayerDeath;
         //GlobalEventSub.OnOOPartCollect -= OOPartCollect;
         GlobalEventSub.OnDaySwitch -= OnDatSwitch;
         if (_reinforceAd != null) _reinforceAd.OnStateChange -= OnReinforceStateChange;
@@ -373,7 +391,7 @@ public class BattleManager : Singleton<BattleManager>
         if (_wipeCheckPending || !IsStartBattle) return;
         // 本局未携带增援战备时不判负，避免误伤不带增援的任务
         if (_reinforceAd == null) return;
-        if (_reinforceAd.State != AirdropController.AirdropState.Unavailable) return;
+        if (_reinforceAd.State != AirdropState.Unavailable) return;
         if (!IsTeamWiped) return;
 
         _wipeCheckPending = true;
@@ -404,7 +422,7 @@ public class BattleManager : Singleton<BattleManager>
     {
         if (!IsStartBattle || GameRoot.GameState != GameStateEnum.Game) return false;
         if (_reinforceAd == null) return false;
-        if (_reinforceAd.State != AirdropController.AirdropState.Unavailable) return false;
+        if (_reinforceAd.State != AirdropState.Unavailable) return false;
         return IsTeamWiped;
     }
 
@@ -422,9 +440,9 @@ public class BattleManager : Singleton<BattleManager>
     }
 
     /// <summary>增援战备状态变化：次数耗尽（Unavailable）且全队阵亡时进入判负流程</summary>
-    private void OnReinforceStateChange(AirdropController.AirdropData data, AirdropController.AirdropState state)
+    private void OnReinforceStateChange(AirdropData data, AirdropState state)
     {
-        if (state == AirdropController.AirdropState.Unavailable) TryWipeFail();
+        if (state == AirdropState.Unavailable) TryWipeFail();
     }
 
     private void OnPlayerCreate(I_Actor unit)
@@ -440,7 +458,9 @@ public class BattleManager : Singleton<BattleManager>
     public void ReleaseAirdrop(Vector3 point,float angle, int id, System.Action<GameObject> action = default)
     {
         var beacon = VFXManager.Creat(ResSvc.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), point, Quaternion.Euler(0,angle, 0), null);
-        beacon.GetComponent<VFXAirdropEffect>()?.TmpAirdrop(point, ResSvc.Instance.GetAirdrop(id), action);
+        // 走契约取组件（原 `GetComponent<VFXAirdropEffect>()` ⇒ 管理器反向依赖 Effect 层，
+        // 且要传 `AirdropData_SO`；现在只传 id，配置解析交给实现方。见 FPSGame.GameContract.IAirdropEffect）
+        beacon.GetComponent<FPSGame.GameContract.IAirdropEffect>()?.TmpAirdrop(point, id, action);
     }
 
     public void Authorize(int id, bool state)
@@ -550,67 +570,4 @@ public class BattleManager : Singleton<BattleManager>
 
     #endregion
 }
-
-public struct WaveCreateParams
-{
-    public Vector3 center;
-    public Vector3[] points;
-
-    public bool extraWave;
-    public float range;
-    public float scale;
-    public bool tip;
-
-    /// <summary>波次结束(所有单位清空)时的回调，用于续航/续刷</summary>
-    public System.Action onEnd;
-
-    /// <summary>持续跟踪的中心点(如玩家位置)；不为 null 时波次每 Tick 用它刷新 center，实现移动追击</summary>
-    public System.Func<Vector3> centerGetter;
-
-    public static WaveCreateParams Default => new WaveCreateParams {
-        extraWave = false,
-        range = 35,
-        scale = 1,
-        tip = true
-    };
-
-    public static WaveCreateParams Extra => new WaveCreateParams {
-        extraWave = true,
-        range = 35,
-        scale = 0.5f,
-        tip = true
-    };
-
-    public static WaveCreateParams Defensive => new WaveCreateParams {
-        extraWave = true,
-        range = 5,
-        scale = 1,
-        tip = true,
-    };
-
-    public static WaveCreateParams Evacuate => new WaveCreateParams {
-        extraWave = true,
-        range = 10,
-        scale = 0.35f,
-        tip = false,
-    };
-}
-public static class WaveUtil
-{
-    public static WaveCreateParams Set(this WaveCreateParams para, Vector3 center)
-    {
-        para.center = center;
-        return para;
-    }
-    public static WaveCreateParams Set(this WaveCreateParams para, Vector3 center,Vector3[] points)
-    {
-        para.center = center;
-        para.points = points;
-        return para;
-    }
-    public static WaveCreateParams Scale(this WaveCreateParams para, float scale)
-    {
-        para.scale = scale;
-        return para;
-    }
 }

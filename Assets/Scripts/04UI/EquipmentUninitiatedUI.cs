@@ -1,8 +1,18 @@
+﻿using FPSGame.Core.Interface;
 using System.Linq;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using static WndTools.WndRootTool;
+using FPSGame.UI;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 装备卸载用的轮盘菜单。
+/// </summary>
+[AddComponentMenu("UI/控件/卸载轮盘")]
 public class EquipmentUninitiatedUI : WheelUI
 {
 
@@ -12,13 +22,13 @@ public class EquipmentUninitiatedUI : WheelUI
 
     public void Init()
     {
-        InputManager.BindDown(Core.WindowStateEnum.Game, InputState.Equip, TryShow);
+        InputManager.BindDown(FPSGame.Core.WindowStateEnum.Game, InputState.Equip, TryShow);
     }
 
 
     private void OnDestroy()
     {
-        InputManager.UnBindDown(Core.WindowStateEnum.Game, InputState.Equip, TryShow);
+        InputManager.UnBindDown(FPSGame.Core.WindowStateEnum.Game, InputState.Equip, TryShow);
     }
 
     private void TryShow()
@@ -58,4 +68,5 @@ public class EquipmentUninitiatedUI : WheelUI
         //return base.TriggerConditions() || Input.GetKeyUp(KeyCode.X);
     }
 
+}
 }

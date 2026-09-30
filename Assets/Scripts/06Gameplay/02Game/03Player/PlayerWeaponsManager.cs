@@ -1,0 +1,1299 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using FPSGame.Core;
+using FPSGame.Attributes;
+using FPSGame.Furn;
+using RootMotion.FinalIK;
+
+using FPSGame.Game;
+using UnityEngine;
+using UnityEngine.Events;
+using FPSGame.Utils;
+namespace FPSGame.Gameplay
+{
+    /// <summary>
+    /// 玩家武器槽位总控：切换、双持、IK 与升级状态。
+    /// </summary>
+    [AddComponentMenu("玩家/武器管理器")]
+    [RequireComponent(typeof(PlayerInputHandler))]
+    public class PlayerWeaponsManager : MonoBehaviour
+    {
+
+        //private const string _FlareGunName = "激光指示器";
+
+        /// <summary>可被滚轮/数字键切换的最大槽位索引（0-3：主/副/支援/特殊，投掷和信号枪有各自呼出方式）</summary>
+        public const int MaxSwitchableSlotIndex = 3;
+
+        /// <summary>可被滚轮/数字键切换的槽位数量</summary>
+        public const int SwitchableSlotCount = MaxSwitchableSlotIndex + 1;
+
+        /// <summary>
+        /// 武器类型 → 槽位索引 映射表（下标 = (int)WeaponTypeEnum）
+        /// 主武器0 / 副武器1 / 特殊2→槽3 / 投掷3→槽4 / 信号枪4→槽5 / 护甲5→槽7(占位,不存在list中) / 支援6→槽2 / 空手7→槽6
+        /// </summary>
+        public static readonly int[] WeaponTypeToSlot = { 0, 1, 3, 4, 5, 7, 2, 6 };
+
+        /// <summary>槽位索引 → 武器类型 映射表（下标 = 槽位）</summary>
+        public static readonly WeaponTypeEnum[] SlotToWeaponType =
+        {
+            WeaponTypeEnum.Primary, WeaponTypeEnum.Secondary, WeaponTypeEnum.Support, WeaponTypeEnum.Special,
+            WeaponTypeEnum.Grenade, WeaponTypeEnum.FlareGun, WeaponTypeEnum.Empty, WeaponTypeEnum.Armor,
+        };
+
+        /// <summary>获取武器类型对应的槽位索引</summary>
+        public static int SlotOf(WeaponTypeEnum type)
+        {
+            return WeaponTypeToSlot[(int)type];
+        }
+
+        /// <summary>该槽位是否可被滚轮/数字键切换（0-3）</summary>
+        public static bool IsSwitchableSlot(int slotIndex)
+        {
+            return slotIndex >= 0 && slotIndex <= MaxSwitchableSlotIndex;
+        }
+
+        public enum WeaponSwitchState
+        {
+            /// <summary>拿起</summary>
+            Up,
+            /// <summary>放下</summary>
+            Down,
+            /// <summary>(过渡状态)放下旧武器</summary>
+            PutDownPrevious,
+            /// <summary>(过渡状态)拿起新武器</summary>
+            PutUpNew,
+        }
+
+
+
+        [Foldout("点位", true)]
+        [InspectorName("用于避免看到武器投掷几何形状的辅助摄像机")]
+        public Camera WeaponCamera;
+        [InspectorName("第一人称武器槽")]
+        public Transform FirstPersonSocket;
+        [InspectorName("武器父")]
+        public Transform WeaponParentSocket;
+        [InspectorName("未瞄准时的位置")]
+        public Transform DefaultWeaponPosition;
+        [InspectorName("瞄准时的位置")]
+        public Transform AimingWeaponPosition;
+        [InspectorName("放下时的位置")]//新的武器从这个点位移动到WeaponParentSocket
+        public Transform DownWeaponPosition;
+
+
+
+        [Foldout("摆动", true)]
+        [InspectorName("移动时武器在屏幕上移动的频率")]
+        public float BobFrequency = 10f;
+
+        [InspectorName("武器摆锤的速度")]
+        public float BobSharpness = 10f;
+
+        [InspectorName("不瞄准时武器摆动的距离")]
+        public float DefaultBobAmount = 0.05f;
+
+        [InspectorName("瞄准时武器摆动的距离")]
+        public float AimingBobAmount = 0.02f;
+
+        [Foldout("后坐力", true)]
+        [InspectorName("这将影响后坐力移动武器的速度，值越大，速度越快")]
+        public float RecoilSharpness = 50f;
+
+        [InspectorName("后坐力可以影响武器的最大距离")]
+        public float MaxRecoilDistance = 0.5f;
+
+        [InspectorName("反冲结束后，武器返回原始位置的速度有多快")]
+        public float RecoilRestitutionSharpness = 10f;
+
+        [Foldout("其他", true)]
+        [InspectorName("播放瞄准动画的速度")]
+        public float AimingAnimationSpeed = 10f;
+
+        [InspectorName("不瞄准时的视野")]
+        public float DefaultFov = 60f;
+
+        [InspectorName("应用于武器相机的常规视场部分")]
+        public float WeaponFovMultiplier = 1f;
+
+        [InspectorName("在第二次切换武器之前延迟，以避免从鼠标滚轮接收多个输入")]
+        public float WeaponSwitchDelay = 1f;
+
+        [InspectorName("将FPS武器游戏对象设置为的图层")]
+        public LayerMask FpsWeaponLayer;
+
+        private bool m_isAiming;
+        public bool IsAiming {
+            get => m_isAiming;
+            private set {
+                if (IsAiming != value && OnAim != null)
+                {
+                    OnAim.Invoke(value);
+                }
+                m_isAiming = value;
+            }
+        }
+
+        /// <summary>
+        /// 外部强制瞄准（如第三人称交互时自动切瞄准）
+        /// </summary>
+        [HideInInspector]
+        public bool ForceAim;
+
+        /// <summary>
+        /// 刷新瞄准状态（如视角切换时强制重新评估 IsAiming）
+        /// </summary>
+        public void RefreshAimState()
+        {
+            var activeWeapon = GetActiveWeapon();
+            var activeSecWeapon = GetActiveSecWeapon();
+            if (activeWeapon != null && !activeWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
+            {
+                // 双持时始终视为正在瞄准
+                bool dualWielding = activeSecWeapon != null;
+                bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
+                IsAiming = (dualWielding || (!activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld())));
+            }
+            else
+            {
+                IsAiming = false;
+            }
+        }
+
+        //private bool IsDown => m_PlayerCharacterController.IsDead;
+        /*
+        public int ActiveWeaponIndex { get; private set; } = -1;
+        public int ActiveSecWeaponIndex { get; private set; } = -1;
+        */
+        public int ActiveWeaponIndex  = -1;
+        public int ActiveSecWeaponIndex = -1;
+
+        public event UnityAction<WeaponPlayerController,bool> OnSwitchedToWeapon;//武器数据，是否是副武器
+        public event UnityAction<bool> OnAim;
+        public event UnityAction<WeaponPlayerController, int> OnAddedWeapon;
+        public event UnityAction<WeaponPlayerController, int> OnRemovedWeapon;
+        public event UnityAction<WeaponPlayerController> OnShoot;
+
+        [SerializeField]
+        WeaponPlayerController[] m_WeaponSlots = new WeaponPlayerController[9]; // 9 available weapon slots
+        PlayerInputHandler m_InputHandler;
+        PlayerController m_PlayerCharacterController;
+        PlayerMountPoint m_MountPoint;
+        EquipController m_EquipController;
+
+        float m_PlayerAngle;
+
+        float m_WeaponBobFactor;
+        Vector3 m_LastCharacterPosition;
+        Vector3 m_WeaponMainLocalPosition;
+
+        Vector3 m_WeaponBobLocalPosition;//武器摆动坐标
+        Vector3 m_WeaponRecoilLocalPosition;//武器后坐力坐标
+        Vector3 m_AccumulatedRecoil;
+        float m_TimeStartedWeaponSwitch;
+
+
+        [SerializeField]
+        WeaponSwitchState m_WeaponSwitchState;// { get; set; }
+        [SerializeField]
+        int m_SwitchNewWeaponIndex;
+        bool m_SwitchNewWeaponAllowDual;
+
+        float closeAimDelay;
+
+        private void Awake()
+        {
+            m_InputHandler = GetComponent<PlayerInputHandler>();
+            m_PlayerCharacterController = GetComponent<PlayerController>();
+            m_EquipController = GetComponent<EquipController>();
+            //m_WeaponSwitchState = WeaponSwitchState.Down;
+            OnSwitchedToWeapon += OnWeaponSwitched;
+            OnAim += OnAiming;
+            FPSGame.GameContract.ServiceLocator.Wnd.OnWindowStateChange += OnAirdrop;
+
+            BattleEventSub.OnSelectAirdrop += OnInputCompletedAirdrop;
+            BattleEventSub.OnCancelAirdrop += OnCancelAirdrop;
+            BattleEventSub.OnAirdrop += OnAirdrop;
+            GlobalEventSub.OnFurnitureOperate += OnOperation;
+        }
+
+        void Start()
+        {
+
+            //ActiveWeaponIndex = -1;
+
+
+            SetFov(DefaultFov);
+
+        }
+
+
+        private void OnDestroy()
+        {
+            OnSwitchedToWeapon -= OnWeaponSwitched;
+            OnAim -= OnAiming;
+            FPSGame.GameContract.ServiceLocator.Wnd.OnWindowStateChange -= OnAirdrop;
+            BattleEventSub.OnSelectAirdrop -= OnInputCompletedAirdrop;
+            BattleEventSub.OnCancelAirdrop -= OnCancelAirdrop;
+            BattleEventSub.OnAirdrop -= OnAirdrop;
+            GlobalEventSub.OnFurnitureOperate -= OnOperation;
+        }
+
+        void Update()
+        {
+            if (m_PlayerCharacterController.Actor.ActorState == ActorState.Hide) return;
+            //if (IsDown) return;
+            WeaponPlayerController activeWeapon = GetActiveWeapon();
+            WeaponPlayerController activeSecWeapon = GetActiveSecWeapon();
+
+
+            //设置瞄准时装弹也不立即结束瞄准
+            if (activeWeapon != null && activeWeapon.IsReloading && IsAiming)//装弹中延迟结束瞄准（双持时下一帧会重新强制瞄准）
+            {
+                if ((closeAimDelay += Time.deltaTime) > 0.3f)
+                {
+                    IsAiming = false;
+                    closeAimDelay = 0;
+                }
+            }
+            // 判断是否在瞄准，完全不缩放的武器无法瞄准（第三人称除外）
+            if(activeWeapon != null && !activeWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
+            {
+                // 双持时始终视为正在瞄准
+                bool dualWielding = activeSecWeapon != null;
+                bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
+                IsAiming = (dualWielding || (!activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld())));
+            }
+
+
+            UpdateFirstWeapon();
+            UpdateSecWeapon();
+
+            UpdateTrySwitchWeapon();
+            UpdateFlareGun();
+            UpdateThrow();
+
+        }
+
+        private void UpdateFirstWeapon()
+        {
+            WeaponPlayerController activeWeapon = GetActiveWeapon();
+            //有正常状态的武器
+            if (activeWeapon != null && !activeWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
+            {
+                //没有自动换弹且按下键且弹匣不满
+                if (!activeWeapon.HasFlag( WeaponFlag.AutomaticReload) && m_InputHandler.GetReloadDown() && activeWeapon.Magazine.ScaleValue < 1)
+                {
+                    activeWeapon.TryManualReload();
+                    return;
+                }
+                //拿手雷的时候不能左键射击
+                if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.Grenade)) return;
+
+                if (!GetActiveSecWeapon())//单持武器时，正常左键射击
+                {
+                    activeWeapon.HandleShootInputs(
+                       m_InputHandler.GetFireInputDown(),
+                       m_InputHandler.GetFireInputHeld(),
+                       m_InputHandler.GetFireInputReleased(),
+                       IsAiming);
+                }
+                else //双持武器时，反向控制
+                {
+                    activeWeapon.HandleShootInputs(
+                        m_InputHandler.GetAimInputDown(),
+                        m_InputHandler.GetAimInputHeld(),
+                        m_InputHandler.GetAimInputReleased(),
+                        IsAiming);
+                }
+            }
+
+        }
+
+        private void UpdateSecWeapon()
+        {
+            WeaponPlayerController activeSecWeapon = GetActiveSecWeapon();
+            //有正常状态的武器
+            if (activeSecWeapon != null && !activeSecWeapon.IsReloading && m_WeaponSwitchState == WeaponSwitchState.Up)
+            {
+                //没有自动换弹且按下键且弹匣不满
+                if (!activeSecWeapon.HasFlag(WeaponFlag.AutomaticReload) && m_InputHandler.GetReloadDown() && activeSecWeapon.Magazine.ScaleValue < 1)
+                {
+                    activeSecWeapon.TryManualReload();
+                    return;
+                }
+
+                //为了不那么反直觉，双持武器时，右键发射右手主武器
+                activeSecWeapon.HandleShootInputs(
+                    m_InputHandler.GetFireInputDown(),
+                    m_InputHandler.GetFireInputHeld(),
+                    m_InputHandler.GetFireInputReleased(),
+                    IsAiming);
+            }
+
+        }
+
+
+
+        /// <summary>
+        /// 切换武器
+        /// </summary>
+        private void UpdateTrySwitchWeapon()
+        {
+            //切换武器
+            //1.不在瞄准
+            //2.手上没有武器或者武器没有在蓄力（去掉）
+            //3.武器切换状态为UP或者Down
+            if (!IsAiming &&
+                (m_WeaponSwitchState == WeaponSwitchState.Up || m_WeaponSwitchState == WeaponSwitchState.Down))
+            {
+                if (m_PlayerCharacterController.enabled)//进载具了就不能切
+                {
+                    //手持装备（HandEquip）期间禁止滚轮切换武器（防止误触），但数字键切换仍可用
+                    bool holdingHandEquip = m_EquipController != null && m_EquipController.IsHoldingHandEquip();
+
+                    //优先滚轮切换（只在可切换槽位0-3之间循环）
+                    int switchWeaponInput = m_InputHandler.GetSwitchWeaponInput();
+                    if (switchWeaponInput != 0 && !holdingHandEquip)
+                    {
+                        bool switchUp = switchWeaponInput > 0;
+                        SwitchWeapon(switchUp);
+                    }
+                    else
+                    {
+                        switchWeaponInput = m_InputHandler.GetSelectWeaponInput();
+                        //然后尝试数字键切换（输入1-4对应槽位0-3，投掷/信号枪/空手不响应数字键）
+                        if (switchWeaponInput >= 1 && switchWeaponInput <= SwitchableSlotCount)
+                        {
+                            if (GetWeaponAtSlotIndex(switchWeaponInput - 1) != null)
+                                SwitchToWeaponIndex(switchWeaponInput - 1, false, true);
+                        }
+                    }
+                }
+            }
+
+        }
+
+        private void UpdateFlareGun()
+        {
+            //投掷不会打断指示器
+            if (m_InputHandler.GetThrow()) return;
+            if (!m_PlayerCharacterController.enabled) return;
+            if (m_InputHandler.GetCrouchDown())
+            {
+                if (ActiveWeaponIndex != SlotOf(WeaponTypeEnum.FlareGun)) m_LastWeaponIndex = ActiveWeaponIndex;
+                SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.FlareGun), true,false,false);
+            }
+            else if (m_InputHandler.GetCrouchUp())
+            {
+                //信号枪重置原武器
+                SwitchToWeaponIndex(m_LastWeaponIndex, true, false, false);
+            }
+        }
+
+        private void UpdateThrow()
+        {
+            //指示器不会打断投掷
+            if (m_InputHandler.GetCrouch()) return;
+            var grenade = SlotOf(WeaponTypeEnum.Grenade);
+            if (m_InputHandler.GetThrowDown() && GetWeaponAtSlotIndex(grenade).Magazine.CurrValue> 0)
+            {
+                if (ActiveWeaponIndex != grenade) m_LastWeaponIndex = ActiveWeaponIndex;
+                SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.Grenade), true, false,true);
+            }
+            if (m_InputHandler.GetThrowUP())
+            {
+                if (ActiveWeaponIndex == grenade)
+                {
+                    WeaponPlayerController activeSecWeapon = GetActiveWeapon();
+                    activeSecWeapon.HandleShootInputs(true, false, false, IsAiming);
+                    //投掷重置原武器
+                    SwitchToWeaponIndex(m_LastWeaponIndex, true, false, true);
+                }
+            }
+        }
+        
+
+        #region 手部/身体位置
+        //在LateUpdate中更新各种动画功能，因为它需要覆盖动画手臂位置
+        void LateUpdate()
+        {
+            UpdatePlayerAngle();
+            UpdateWeaponAiming();
+            UpdateWeaponBob();
+            UpdateWeaponRecoil();
+            UpdateWeaponSwitching();
+            UpdateWeaponThirdPersonAim();
+
+            if(m_PlayerCharacterController&& m_PlayerCharacterController.ModleRoot) m_PlayerCharacterController.ModleRoot.localEulerAngles = new(0,Mathf.LerpAngle(m_PlayerCharacterController.ModleRoot.localEulerAngles.y,m_PlayerAngle, Time.deltaTime * 5), 0);
+        
+            //根据所有组合动画影响设置最终武器插座位置
+            WeaponParentSocket.localPosition = Vector3.Lerp(WeaponParentSocket.localPosition, m_WeaponMainLocalPosition + m_WeaponBobLocalPosition + m_WeaponRecoilLocalPosition,Time.deltaTime* BobSharpness);
+        }
+
+        /// <summary>
+        /// 第三人称瞄准时将屏幕中心目标点注入所有武器，非瞄准时使用枪口方向
+        /// </summary>
+        private void UpdateWeaponThirdPersonAim()
+        {
+            Vector3 target = (m_PlayerCharacterController.IsThirdPerson && IsAiming)
+                ? m_PlayerCharacterController.ScreenCenterTargetPoint
+                : default;
+
+            for (int i = 0; i < m_WeaponSlots.Length; i++)
+            {
+                if (m_WeaponSlots[i] != null)
+                {
+                    m_WeaponSlots[i].ThirdPersonAimTarget = target;
+                }
+            }
+        }
+        private void UpdatePlayerAngle()
+        {
+            
+            WeaponPlayerController activeWeapon = GetActiveWeapon();
+            WeaponPlayerController activeSecWeapon = GetActiveSecWeapon();
+            //设置手持武器时的侧身
+            if (activeWeapon && activeSecWeapon)
+            {
+                m_PlayerAngle=(activeWeapon.playerAngle + activeSecWeapon.playerAngle) * 0.5f;
+            }
+            else if (activeWeapon)//不会出现没有主武器但有副武器的问题
+            {
+                m_PlayerAngle = activeWeapon.playerAngle;
+            }
+        }
+
+ 
+
+        // Updates weapon position and camera FoV for the aiming transition
+        void UpdateWeaponAiming()
+        {
+            if (m_WeaponSwitchState == WeaponSwitchState.Up)
+            {
+                WeaponPlayerController activeWeapon = GetActiveWeapon();
+                if (IsAiming && activeWeapon)
+                {
+                    // 第三人称瞄准时不把武器移动到 AimingWeaponPosition，固定使用默认位置
+                    Vector3 targetPos = m_PlayerCharacterController.IsThirdPerson
+                        ? DefaultWeaponPosition.localPosition
+                        : (AimingWeaponPosition.localPosition + activeWeapon.AimOffset);
+                    m_WeaponMainLocalPosition = Vector3.Lerp(m_WeaponMainLocalPosition,
+                        targetPos, AimingAnimationSpeed * Time.deltaTime);
+
+                    float zoomRatio = activeWeapon.AimZoomRatio;
+                    if (m_PlayerCharacterController.IsThirdPerson)
+                    {
+                        zoomRatio = 1f;
+                    }
+                    SetFov(Mathf.Lerp(m_PlayerCharacterController.PlayerCamera.fieldOfView,
+                        zoomRatio * DefaultFov, AimingAnimationSpeed * Time.deltaTime));
+                }
+                else
+                {
+                    m_WeaponMainLocalPosition = Vector3.Lerp(m_WeaponMainLocalPosition,
+                        DefaultWeaponPosition.localPosition, AimingAnimationSpeed * Time.deltaTime);
+                    SetFov(Mathf.Lerp(m_PlayerCharacterController.PlayerCamera.fieldOfView, DefaultFov,
+                        AimingAnimationSpeed * Time.deltaTime));
+                }
+            }
+        }
+
+        // 根据角色速度更新武器摆锤动画
+        void UpdateWeaponBob()
+        {
+            if (Time.deltaTime > 0f)
+            {
+                //其实是静止状态
+                bool isStatic = false;
+                //相对位置变化
+                Vector3 playerCharacterVelocity = m_PlayerCharacterController.transform.position - m_LastCharacterPosition;
+                if (playerCharacterVelocity.magnitude<0.01f)
+                {
+                    playerCharacterVelocity = m_PlayerCharacterController.transform.forward*Time.deltaTime* m_PlayerCharacterController.MaxSpeedOnGround*0.5f;
+                    isStatic = true;
+                }
+                playerCharacterVelocity /= Time.deltaTime;
+                //根据我们与最大地面运动速度的接近程度计算平滑的武器摆锤
+                float characterMovementFactor = 0f;
+                if (m_PlayerCharacterController.IsGrounded)
+                {
+                    characterMovementFactor =
+                        Mathf.Clamp01(playerCharacterVelocity.magnitude /
+                                      (m_PlayerCharacterController.MaxSpeedOnGround *
+                                       m_PlayerCharacterController.SprintSpeedModifier));
+                }
+                //摆锤幅度(即使停下也会保持一小段时间)
+                m_WeaponBobFactor =
+                    Mathf.Lerp(m_WeaponBobFactor, characterMovementFactor, BobSharpness * Time.deltaTime);
+
+                //基于正弦函数计算垂直和水平武器摆锤
+                float bobAmount = IsAiming ? AimingBobAmount : DefaultBobAmount;
+                float frequency = BobFrequency *(isStatic?0.1f:1);
+                float hBobValue = Mathf.Sin(Time.time * frequency) * bobAmount * m_WeaponBobFactor;
+                float vBobValue = ((Mathf.Sin(Time.time * frequency * 2f) * 0.5f) + 0.5f) * bobAmount *
+                                  m_WeaponBobFactor;
+
+                // Apply weapon bob
+                m_WeaponBobLocalPosition.x = hBobValue;
+                m_WeaponBobLocalPosition.y = Mathf.Abs(vBobValue);
+
+                m_LastCharacterPosition = m_PlayerCharacterController.transform.position;
+            }
+        }
+
+        //更新武器后坐力动画
+        void UpdateWeaponRecoil()
+        {
+            //如果累积反冲距离当前位置更远，则使当前位置朝反冲目标移动
+            if (m_WeaponRecoilLocalPosition.z >= m_AccumulatedRecoil.z * 0.99f)
+            {
+                m_WeaponRecoilLocalPosition = Vector3.Lerp(m_WeaponRecoilLocalPosition, m_AccumulatedRecoil,
+                    RecoilSharpness * Time.deltaTime);
+            }
+            // otherwise, move recoil position to make it recover towards its resting pose
+            else
+            {
+                m_WeaponRecoilLocalPosition = Vector3.Lerp(m_WeaponRecoilLocalPosition, Vector3.zero,
+                    RecoilRestitutionSharpness * Time.deltaTime);
+                m_AccumulatedRecoil = m_WeaponRecoilLocalPosition;
+            }
+        }
+
+        /// <summary>
+        /// 更新切换武器的动画过程
+        /// </summary>
+        void UpdateWeaponSwitching()
+        {
+            //计算武器开关触发后的时间比例（0-1）
+            float switchingTimeFactor = 0f;
+            if (WeaponSwitchDelay == 0f)
+            {
+                switchingTimeFactor = 1f;
+            }
+            else
+            {
+                switchingTimeFactor = Mathf.Clamp01((Time.time - m_TimeStartedWeaponSwitch) / WeaponSwitchDelay);
+            }
+
+
+            //处理转换到新状态
+            if (switchingTimeFactor >= 1f)
+            {
+                if (m_WeaponSwitchState == WeaponSwitchState.PutDownPrevious)
+                {
+
+                    WeaponPlayerController oldWeapon = GetWeaponAtSlotIndex(ActiveWeaponIndex);
+                    WeaponPlayerController oldSecWeapon = GetWeaponAtSlotIndex(ActiveSecWeaponIndex);
+                    WeaponPlayerController newWeapon = GetWeaponAtSlotIndex(m_SwitchNewWeaponIndex);
+                    //Debug.LogWarning("切换武器"+ newWeapon);
+                    if (m_SwitchNewWeaponAllowDual)//允许双持
+                    {
+                        bool leftFree  = m_MountPoint == null || m_MountPoint.IsLeftHandFree;
+                        bool rightFree = m_MountPoint == null || m_MountPoint.IsRightHandFree;
+                        bool leftNeed  = !(newWeapon == oldWeapon || newWeapon == oldSecWeapon)&&(newWeapon && newWeapon.LHand);
+                        bool rightNeed = !(newWeapon== oldWeapon|| newWeapon == oldSecWeapon)&&(newWeapon && newWeapon.RHand);
+                        //左手需要但是左手被占，或者右手需要，但是右手被占
+                        if ((leftNeed&& !leftFree)
+                            || (rightNeed && !rightFree)
+                            || (newWeapon.IsValid() && newWeapon.Exhausted)
+                            || (oldSecWeapon.IsValid() && oldSecWeapon.Exhausted)
+                            || (oldWeapon.IsValid() && oldWeapon.Exhausted)
+                        )//如果不支持双持
+                        {
+                            ReplaceWeapons(oldWeapon, newWeapon);
+                        }
+                        else //允许双持
+                        {
+                            bool isSec = newWeapon && newWeapon.LHand;
+                            DownDualWeapon(isSec ? oldSecWeapon : oldWeapon, isSec ? oldWeapon : oldSecWeapon , newWeapon, isSec);
+                        }
+                    }
+                    else //不允许双持
+                    {
+                        ReplaceWeapons(oldWeapon, newWeapon);
+                        
+                    }
+                    switchingTimeFactor = 0;
+                }
+                else if (m_WeaponSwitchState == WeaponSwitchState.PutUpNew)
+                {
+                    m_WeaponSwitchState = WeaponSwitchState.Up;
+                    m_WeaponMainLocalPosition = DefaultWeaponPosition.localPosition;
+                }
+            }
+
+            // 处理移动武器插座位置，以切换动画武器
+            if (m_WeaponSwitchState == WeaponSwitchState.PutDownPrevious)
+            {
+                m_WeaponMainLocalPosition = Vector3.Lerp(DefaultWeaponPosition.localPosition,
+                    DownWeaponPosition.localPosition, switchingTimeFactor);
+            }
+            else if (m_WeaponSwitchState == WeaponSwitchState.PutUpNew)
+            {
+                m_WeaponMainLocalPosition = Vector3.Lerp(DownWeaponPosition.localPosition,
+                    DefaultWeaponPosition.localPosition, switchingTimeFactor);
+            }
+        }
+        /// <summary>
+        /// 替换武器并关闭副手武器
+        /// </summary>
+        /// <param name="oldWeapon"></param>
+        /// <param name="newWeapon"></param>
+        void ReplaceWeapons(WeaponPlayerController oldWeapon, WeaponPlayerController newWeapon)
+        {
+            // 停用旧武器
+            if (oldWeapon != null)
+            {
+                SetWeaponState(oldWeapon,false);
+            }
+            
+            // 停用副手武器
+            var secWeapon = GetActiveSecWeapon();
+            if (secWeapon != null)
+            {
+                SetWeaponState(secWeapon, false);
+                ActiveSecWeaponIndex = -1;
+            }
+            ActiveWeaponIndex = m_SwitchNewWeaponIndex;
+            
+            // 激活新武器
+            OnSwitchedToWeapon?.Invoke(newWeapon,false);
+
+
+            if (newWeapon)
+            {
+                m_TimeStartedWeaponSwitch = Time.time;
+                m_WeaponSwitchState = WeaponSwitchState.PutUpNew;
+
+            }
+            else
+            {
+                //如果新武器是空的，不要坚持把武器放回原位
+                m_WeaponSwitchState = WeaponSwitchState.Down;
+            }
+        }
+        /// <summary>
+        /// 双持武器
+        /// </summary>
+        /// <param name="oldWeapon">被替换的武器</param>
+        /// <param name="oldOtherWeapon">另一把武器</param>
+        /// <param name="newWeapon">新武器</param>
+        /// <param name="isSec">是副手</param>
+        void DownDualWeapon(WeaponPlayerController oldWeapon, WeaponPlayerController oldOtherWeapon, WeaponPlayerController newWeapon,bool isSec)
+        {
+            m_TimeStartedWeaponSwitch = Time.time;
+            m_WeaponSwitchState = WeaponSwitchState.PutUpNew;
+
+            //Debug.LogWarning("尝试双持武器，是副手"+ isSec+"   被替换的旧武器"+oldWeapon + "  另一把没被替换的武器"+oldOtherWeapon + "  新装备的武器"+newWeapon);
+            //副手武器作为主要武器时尝试切换至自己
+            if (isSec&& oldOtherWeapon== newWeapon)
+            {
+                return;
+            }
+            bool isDown = oldWeapon == newWeapon;
+            //尝试放下主手武器且没有另一把武器
+            if (isDown && !isSec&& !oldOtherWeapon.IsValid())
+            {
+                return;
+            }
+            // 停用旧武器
+            //bug情况：主手的武器是副手用的时，装备新主手武器时，没有把武器挪到副手再装备，而是直接下掉
+            //此时副手为空，应该将当前武器改为副手，然后装备主手
+            if (!oldOtherWeapon.IsValid())
+            {
+                //ActiveSecWeaponIndex = ActiveWeaponIndex;
+                //ActiveWeaponIndex = m_SwitchNewWeaponIndex;
+            }
+            else if (oldWeapon != null)
+            {
+                Debug.LogWarning("停用旧武器" + oldWeapon.WeaponName);
+                SetWeaponState(oldWeapon, false);
+            }
+
+            if (isSec)
+            {
+                //替换副手武器
+                ActiveSecWeaponIndex = isDown ? -1: m_SwitchNewWeaponIndex;
+                Debug.LogWarning("替换副手武器" + ActiveSecWeaponIndex);
+                if(!isDown) OnSwitchedToWeapon?.Invoke(newWeapon, true);
+                else OnSwitchedToWeapon?.Invoke(oldOtherWeapon, false);
+            }
+            else
+            {
+                if (isDown)//放下主武器
+                {
+                    //前面排除过了，肯定有副手武器
+                    //另外的武器变成主手，副手置空
+                    ActiveWeaponIndex = ActiveSecWeaponIndex;
+                    ActiveSecWeaponIndex = -1;
+                    //Debug.LogWarning("放下主武器" + ActiveWeaponIndex);
+                    OnSwitchedToWeapon?.Invoke(oldOtherWeapon, false);
+                }
+                else //替换主武器
+                {
+                    ActiveSecWeaponIndex = ActiveWeaponIndex;
+                    ActiveWeaponIndex = m_SwitchNewWeaponIndex;
+                    Debug.LogWarning("替换主武器" + ActiveWeaponIndex);
+                    OnSwitchedToWeapon?.Invoke(newWeapon, false);
+                    //不能直接直接用oldOtherWeapon，因为部分情况会是用的oldWeapon
+                    OnSwitchedToWeapon?.Invoke(oldOtherWeapon.IsValid() ?oldOtherWeapon :oldWeapon, true) ;
+                }
+
+            }
+            /*
+            if (isSec)
+            {
+                OnSwitchedToWeapon?.Invoke(oldOtherWeapon, false);
+                if(!isDown)OnSwitchedToWeapon?.Invoke(newWeapon, true);
+            }
+            else
+            {
+                if (!isDown) OnSwitchedToWeapon?.Invoke(newWeapon, false);
+                OnSwitchedToWeapon?.Invoke(oldOtherWeapon, true);
+            }
+            */
+
+
+        }
+        #endregion
+
+        #region 武器相关
+
+        //同时设置主相机和武器相机的视野
+        public void SetFov(float fov)
+        {
+            m_PlayerCharacterController.PlayerCamera.fieldOfView = fov;
+            WeaponCamera.fieldOfView = fov * WeaponFovMultiplier;
+        }
+
+        public void SetStatrtWeapon(List<WeaponPlayerController> StartingWeapons)
+        {
+            m_MountPoint = GetComponent<PlayerMountPoint>();
+            // SetStatrtWeapon 在 SetBody 内部、OnBodySet 事件触发之前调用，
+            // 需在此确保 PlayerMountPoint 内的 IK 已就绪（否则初始武器的 IK 设置会被跳过）
+            if (m_MountPoint != null)
+            {
+                m_MountPoint.EnsureIK();
+            }
+            //Debug.LogWarning("重置武器" + StartingWeapons.Count);
+            for (int i = 0; i < m_WeaponSlots.Length; i++)
+            {
+                if (m_WeaponSlots[i] != null)
+                {
+                    RemoveWeapon(m_WeaponSlots[i]);
+                }
+            }
+            // Add starting weapons
+            foreach (var weapon in StartingWeapons)
+            {
+                AddWeapon(weapon);
+            }
+            //SwitchWeapon(true);
+        }
+
+        /// <summary>
+        /// 找到下一个要切换到的有效武器（一般是滚轮使用）
+        /// </summary>
+        public void SwitchWeapon(bool ascendingOrder)
+        {
+            // 战斗中滚轮只在可切换槽位0-3内（投掷/信号枪/空手有各自呼出方式，不参与滚轮切换）；
+            // 大厅等非战斗状态允许滚轮切换所有武器槽位
+            bool inGame = FPSGame.GameContract.ServiceLocator.Flow.GameState == GameStateEnum.Game;
+            int loopEnd = inGame ? MaxSwitchableSlotIndex : m_WeaponSlots.Length - 1;
+            int cycleBase = inGame ? SwitchableSlotCount : m_WeaponSlots.Length;
+
+            int newWeaponIndex = -1;
+            int closestSlotDistance = m_WeaponSlots.Length;
+            for (int i = 0; i <= loopEnd; ++i)
+            {
+                //如果此插槽的武器有效，则计算其与活动插槽索引的"距离"（按升序或降序排列）
+                //如果距离最近，请选择
+                if (i != ActiveWeaponIndex && GetWeaponAtSlotIndex(i) != null)
+                {
+                    int distanceToActiveIndex = GetDistanceBetweenWeaponSlots(ActiveWeaponIndex, i, ascendingOrder, cycleBase);
+                    if (distanceToActiveIndex < closestSlotDistance)
+                    {
+                        closestSlotDistance = distanceToActiveIndex;
+                        newWeaponIndex = i;
+                    }
+                }
+            }
+            //处理切换到新武器索引(不允许双持)
+            SwitchToWeaponIndex(newWeaponIndex, force:false, allowDual:false);
+        }
+
+
+        public WeaponController GetWeapon(WeaponTypeEnum weaponType)
+        {
+           return GetWeaponAtSlotIndex(SlotOf(weaponType));
+        }
+
+        /// <summary>
+        /// 切换到武器插槽中的给定武器索引
+        /// </summary>
+        /// <param name="newWeaponIndex">目标槽位</param>
+        /// <param name="force">强制切换</param>
+        /// <param name="allowDual">是否允许双持</param>
+        /// <param name="instant">瞬间完成</param>
+        public void SwitchToWeaponIndex(int newWeaponIndex, bool force = false,bool allowDual=true,bool instant=false)
+        {
+            //1.强制
+            //2.武器和主手的不一样且不为空
+            //3.允许双持？("武器和主手不一样"或者"武器和主手一样，但是有副手")
+            if (force || (newWeaponIndex != ActiveWeaponIndex && newWeaponIndex >= 0)||(allowDual&&GetActiveSecWeapon()))
+            {
+                if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun) && AirdropReleaseState.WaitRelease.IsValid()) BattleEventSub.CancelAirdrop(gameObject,AirdropReleaseState.WaitRelease);
+                //存储与武器切换动画相关的数据
+                m_SwitchNewWeaponIndex = newWeaponIndex;
+                m_TimeStartedWeaponSwitch = Time.time;
+                m_SwitchNewWeaponAllowDual = allowDual;
+                //处理首次切换到有效武器的情况（只需将其挂起，无需先放下任何东西）
+                if (GetActiveWeapon() == null)
+                {
+                    m_WeaponMainLocalPosition = DownWeaponPosition.localPosition;
+                    m_WeaponSwitchState = WeaponSwitchState.PutUpNew;
+                    ActiveWeaponIndex = newWeaponIndex;
+                    WeaponPlayerController newWeapon = GetWeaponAtSlotIndex(newWeaponIndex);
+
+                    OnSwitchedToWeapon?.Invoke(newWeapon,false);
+
+                }else if (instant)
+                {
+                    SetWeaponState(GetActiveWeapon(), false);
+                    ActiveWeaponIndex = newWeaponIndex;
+                    OnSwitchedToWeapon?.Invoke(GetWeaponAtSlotIndex(newWeaponIndex), false);
+
+                }
+                //否则，请记住，我们正在放下当前的武器，以便切换到下一个
+                else
+                {
+                    m_WeaponSwitchState = WeaponSwitchState.PutDownPrevious;
+                    
+                }
+            }
+        }
+
+        /// <summary>
+        /// 切换到武器插槽中的给定武器索引
+        /// </summary>
+        /// <param name="weaponName">武器名称</param>
+        /// <param name="force">强制切换</param>
+        /// <param name="allowDual">是否允许双持</param>
+        /// <param name="instant">瞬间完成</param>
+        public void SwitchToWeaponIndex(string weaponName, bool force = false, bool allowDual = true, bool instant = false)
+        {
+
+            int index = m_WeaponSlots.FindIndex(item => item && item.WeaponName == weaponName);
+            //Debug.LogError("寻找武器" + weaponName+"结果"+ index);
+            if (index>-1)
+            {
+                SwitchToWeaponIndex(index, force, allowDual, instant);
+            }
+        }
+
+        public WeaponPlayerController HasWeapon(WeaponPlayerController weaponPrefab)
+        {
+            //检查我们是否已经有来自指定预制件的武器
+            for (var index = 0; index < m_WeaponSlots.Length; index++)
+            {
+                var w = m_WeaponSlots[index];
+                if (w != null && w.WeaponName == weaponPrefab.WeaponName)
+                {
+                    return w;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 添加武器（生成新实例入槽）
+        /// </summary>
+        /// <param name="weaponPrefab"></param>
+        /// <returns></returns>
+        public bool AddWeapon(WeaponPlayerController weaponPrefab)
+        {
+            //防止重复（应该可以不要把，我们又不能捡）
+            if (HasWeapon(weaponPrefab) != null)
+            {
+                return false;
+            }
+
+            // 按武器类型的映射槽位放置（主0/副1/支援2/特殊3/投掷4/信号枪5/空手6），槽位被占则添加失败
+            int i = SlotOf(weaponPrefab.WeaponTypeEnum);
+            if (i >= m_WeaponSlots.Length || m_WeaponSlots[i] != null)
+            {
+                return false;
+            }
+
+            // 将武器预制件作为武器插座的子对象生成
+            //但是因为切人物时人物隐藏，因此必须先创建，再移动到武器根
+            WeaponPlayerController weaponInstance = Instantiate(weaponPrefab);
+            return EquipGroundWeapon(weaponInstance, i);
+        }
+
+        /// <summary>
+        /// 拾取地面武器入槽（接收已存在实例，不重新生成、保留弹药/升级状态）。
+        /// 入槽后禁用其 Furniture_WeaponPickup 组件，使其脱离交互列表。
+        /// </summary>
+        /// <param name="weaponInstance">已存在的地面武器实例</param>
+        /// <returns>是否成功入槽</returns>
+        public bool EquipGroundWeapon(WeaponPlayerController weaponInstance)
+        {
+            int i = SlotOf(weaponInstance.WeaponTypeEnum);
+            if (i >= m_WeaponSlots.Length || m_WeaponSlots[i] != null || weaponInstance == null)
+            {
+                return false;
+            }
+            return EquipGroundWeapon(weaponInstance, i);
+        }
+
+        /// <summary>
+        /// 装载武器实例到指定槽位（AddWeapon / EquipGroundWeapon 共用）。
+        /// </summary>
+        bool EquipGroundWeapon(WeaponPlayerController weaponInstance, int i)
+        {
+            if (i < 0 || i >= m_WeaponSlots.Length || m_WeaponSlots[i] != null || weaponInstance == null)
+            {
+                return false;
+            }
+
+            weaponInstance.transform.SetParent(WeaponParentSocket);
+            weaponInstance.transform.localPosition = Vector3.zero;
+            weaponInstance.transform.localRotation = Quaternion.identity;
+            //将所有者设置为该游戏对象，以便武器可以相应地更改投射物/伤害逻辑
+            weaponInstance.PlayerIndex = m_PlayerCharacterController.PlayerIndex;
+            weaponInstance.Owner = gameObject;
+            SetWeaponState(weaponInstance, false);
+
+            //为武器指定第一人称图层
+            int layerIndex =
+                Mathf.RoundToInt(Mathf.Log(FpsWeaponLayer.value,
+                    2)); //此函数将层掩码转换为层索引
+            foreach (Transform t in weaponInstance.gameObject.GetComponentsInChildren<Transform>(true))
+            {
+                t.gameObject.layer = layerIndex;
+            }
+
+            m_WeaponSlots[i] = weaponInstance;
+
+            OnAddedWeapon?.Invoke(weaponInstance, i);
+            // 支援武器没有改装（进战斗后捡起），不套用角色存档的武器升级配置
+            if (weaponInstance.WeaponTypeEnum != WeaponTypeEnum.Support)
+            {
+                var arch = ArchivesData_SO.Current.GetRoleCfg(m_PlayerCharacterController.Id);//数据自持：玩法层不再直连 01Manager.ArchiveSvc
+                var lenghts = weaponInstance.UpgradeCount();
+                var archWeaponData = ArchivesData_SO.Current.weaponUpgradeDic.TryGet(arch.ID + "_" + weaponInstance.WeaponName, new(arch.ID + "_" + weaponInstance.WeaponName, lenghts.Length));
+                weaponInstance.ApplyUpgrade(archWeaponData.selectIndex, archWeaponData.selectModuleIndex);
+            }
+
+            if (GetActiveWeapon() == null)
+            {
+                //如果当前没有武器，则自动切换到这个武器
+                SwitchToWeaponIndex(i, true, false);
+            }
+
+            // 入槽后禁用拾取交互组件，脱离 Furniture_Attached.list 不再被交互扫描
+            var pickup = weaponInstance.GetComponent<Furniture_WeaponPickup>();
+            if (pickup != null)
+            {
+                pickup.enabled = false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 摘除武器但不销毁（轮盘卸载落地时使用）：出槽 + 断订阅 + 自动切换。
+        /// </summary>
+        public void DetachWeapon(WeaponPlayerController weaponInstance)
+        {
+            for (int i = 0; i < m_WeaponSlots.Length; i++)
+            {
+                if (m_WeaponSlots[i] != weaponInstance) continue;
+
+                m_WeaponSlots[i] = null;
+                OnRemovedWeapon?.Invoke(weaponInstance, i);
+                // 只退订事件（卸载落地场景不调 ShowWeapon(false)，否则 WeaponRoot 被隐藏导致落地模型消失）
+                weaponInstance.OnShoot -= _OnShoot;
+                weaponInstance.OnWantShootChange -= OnWantShootChange;
+
+                // 若卸载的是主手武器，自动切换到下一把可用武器（SwitchWeapon 会跳过已置空的当前槽）
+                if (i == ActiveWeaponIndex)
+                {
+                    SwitchWeapon(true);
+                }
+                return;
+            }
+        }
+
+        public bool RemoveWeapon(WeaponPlayerController weaponInstance)
+        {
+            // Look through our slots for that weapon
+            for (int i = 0; i < m_WeaponSlots.Length; i++)
+            {
+                // when weapon found, remove it
+                if (m_WeaponSlots[i] == weaponInstance)
+                {
+                    m_WeaponSlots[i] = null;
+
+                    if (OnRemovedWeapon != null)
+                    {
+                        OnRemovedWeapon.Invoke(weaponInstance, i);
+                    }
+
+                    Tool.Destroy(weaponInstance.gameObject);
+
+                    // Handle case of removing active weapon (switch to next weapon)
+                    if (i == ActiveWeaponIndex)
+                    {
+                        SwitchWeapon(true);
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 返回总的剩余弹药比例
+        /// </summary>
+        /// <returns></returns>
+        public float TotalRemainAmmoRatio()
+        {
+            float count = 0;
+            float re =0;
+            for (int i = 0; i < m_WeaponSlots.Length; ++i)
+            {
+                if (m_WeaponSlots[i]&&!string.IsNullOrEmpty(m_WeaponSlots[i].WeaponName))
+                {
+                    ++count;
+                    re += m_WeaponSlots[i].CurrentTotalAmmoRatio.RawFloat;
+                }
+            }
+            return re/ count;
+        }
+
+
+        /// <summary>
+        /// 使用补给
+        /// </summary>
+        public void UseSupply()
+        {
+            for (int i = 0; i < m_WeaponSlots.Length; ++i)
+            {
+                if (m_WeaponSlots[i])
+                {
+                    m_WeaponSlots[i].UseSupply();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 所有武器立刻完成装弹（全队强化"补给大师"）
+        /// </summary>
+        public void ReloadAllWeapons()
+        {
+            for (int i = 0; i < m_WeaponSlots.Length; ++i)
+            {
+                if (m_WeaponSlots[i])
+                {
+                    m_WeaponSlots[i].ReloadComplete();
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// 获得当前使用的武器
+        /// </summary>
+        /// <returns></returns>
+        public WeaponPlayerController GetActiveWeapon()
+        {
+            return GetWeaponAtSlotIndex(ActiveWeaponIndex);
+        }
+
+        /// <summary>
+        /// 获得当前使用的副武器
+        /// </summary>
+        /// <returns></returns>
+        public WeaponPlayerController GetActiveSecWeapon()
+        {
+            return GetWeaponAtSlotIndex(ActiveSecWeaponIndex);
+        }
+
+        /// <summary>
+        /// 获得第X个槽位的武器
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public WeaponPlayerController GetWeaponAtSlotIndex(int index)
+        {
+            if (index >= 0 &&
+                index < m_WeaponSlots.Length)
+            {
+                return m_WeaponSlots[index];
+            }
+            return null;
+        }
+
+        //计算两个武器槽索引之间的"距离"
+        //例如：如果我们有5个武器插槽，插槽2和4之间的距离按升序排列是2，按降序排列是3
+        int GetDistanceBetweenWeaponSlots(int fromSlotIndex, int toSlotIndex, bool ascendingOrder, int cycleBase)
+        {
+            int distanceBetweenSlots = 0;
+
+            if (ascendingOrder)
+            {
+                distanceBetweenSlots = toSlotIndex - fromSlotIndex;
+            }
+            else
+            {
+                distanceBetweenSlots = -1 * (toSlotIndex - fromSlotIndex);
+            }
+
+            if (distanceBetweenSlots < 0)
+            {
+                distanceBetweenSlots = cycleBase + distanceBetweenSlots;
+            }
+
+            return distanceBetweenSlots;
+        }
+        #endregion
+
+        #region 事件
+        void OnWeaponSwitched(WeaponPlayerController newWeapon, bool isSec = false)
+        {
+            if (newWeapon != null)
+            {
+                //Debug.LogWarning("切换到新武器"+newWeapon);
+                SetWeaponState(newWeapon, true);
+
+                if (isSec)
+                {
+                    // 副武器（左手武器）：只设置左手 IK，不覆盖主武器的右手 IK
+                    if (m_MountPoint != null)
+                    {
+                        m_MountPoint.SetLeftHandIK(newWeapon.LHand);
+                    }
+                }
+                else
+                {
+                    // 主武器：设置左右手 IK（单手持或双手持都会完整设置）
+                    if (m_MountPoint != null)
+                    {
+                        m_MountPoint.SetHandIK(newWeapon.LHand, newWeapon.RHand);
+                    }
+                }
+
+                //newWeapon.LHand.parent = transform;
+                //newWeapon.RHand.parent = transform;
+            }
+        }
+
+        void SetWeaponState(WeaponPlayerController weapon,bool state)
+        {
+            weapon.ShowWeapon(state);
+            if (state)
+            {
+                weapon.OnShoot += _OnShoot;
+                weapon.OnWantShootChange += OnWantShootChange;
+            }
+            else
+            {
+                weapon.OnShoot -= _OnShoot;
+                weapon.OnWantShootChange -= OnWantShootChange;
+            }
+            
+        }
+
+        private void OnWantShootChange(WeaponBaseController weapon, bool state)
+        {
+            if ( weapon.AttrFinal(WeaponAttrType.MoveSpeedToShoot, 1) != 1)
+            {
+                m_PlayerCharacterController.MoveSpeedScale += (state ? -1 : 1) * (1 - weapon.AttrFinal(WeaponAttrType.MoveSpeedToShoot, 1)).RawFloat;
+            }
+        }
+
+        void OnAiming(bool state)
+        {
+            var weapon = GetActiveWeapon();
+            if(weapon.ScopeGo) weapon.ScopeGo.SetActive(state);
+        }
+
+        private int m_LastWeaponIndex;
+        void OnAirdrop(WindowStateEnum oldSstate, WindowStateEnum newState)
+        {
+            if (m_PlayerCharacterController.Actor.ActorState == ActorState.Normal) {
+                if (newState == WindowStateEnum.Airdrop)
+                {
+                    //Debug.LogError("记录上一次武器为"+ ActiveWeaponIndex);
+                    m_LastWeaponIndex = ActiveWeaponIndex;
+                    SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.FlareGun), false, false, false);
+                }
+                else if (oldSstate == WindowStateEnum.Airdrop && AirdropReleaseState.WaitRelease == null)
+                {
+                    //Debug.LogError("切换会原武器" + m_LastWeaponIndex);
+                    SwitchToWeaponIndex((m_LastWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun)) ? 0 : m_LastWeaponIndex, false, false, false);
+                }
+            }
+        }
+        void OnInputCompletedAirdrop(GameObject go, AirdropData data) {
+            if (go != gameObject) return;
+            var weapon = GetWeaponAtSlotIndex(SlotOf(WeaponTypeEnum.FlareGun));
+            weapon.UseDamageIndex = 1;
+        }
+        void OnCancelAirdrop(GameObject go,AirdropData data)
+        {
+            if (go != gameObject) return;
+            var weapon = GetWeaponAtSlotIndex(SlotOf(WeaponTypeEnum.FlareGun));
+            weapon.UseDamageIndex = 0;
+        }
+        public void OnAirdrop(GameObject owner, GameObject _, Vector3 point, AirdropData data)
+        {
+            if (owner==gameObject)
+            {
+                var weapon = GetWeaponAtSlotIndex(SlotOf(WeaponTypeEnum.FlareGun));
+                weapon.UseDamageIndex = 0;
+                SwitchToWeaponIndex((m_LastWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun)) ? 0 : m_LastWeaponIndex, false, false, false);
+            }
+        }
+
+
+        void OnOperation(GameObject user, IFurniture furn)
+        {
+            bool switchState = furn.HaveFlag(FurnitureFlag.SwitchState);
+            if (user != gameObject || !switchState) return;
+
+            if (furn.InOperate)
+            {
+                m_LastWeaponIndex = ActiveWeaponIndex;
+                SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.Empty), false, false, false);
+            }
+            else
+            {
+                SwitchToWeaponIndex(IsSwitchableSlot(m_LastWeaponIndex) ? m_LastWeaponIndex : 0, false, false, false);
+            }
+        }
+
+
+
+        void _OnShoot(WeaponBaseController weapon)
+        {
+            var wpc = weapon as WeaponPlayerController;
+            OnShoot?.Invoke(wpc);
+            if (FPSGame.GameContract.ServiceLocator.Flow.GameState == GameStateEnum.Game && !string.IsNullOrEmpty(weapon.name) && weapon.name!="信号枪")
+                FPSGame.GameContract.ServiceLocator.Battle.AddBattleDataItem(m_PlayerCharacterController.PlayerIndex, "开火次数");
+
+            if (wpc != null)
+            {
+                m_AccumulatedRecoil += Vector3.back * wpc.RecoilForce;
+                m_AccumulatedRecoil = Vector3.ClampMagnitude(m_AccumulatedRecoil, MaxRecoilDistance);
+            }
+        }
+        #endregion
+    }
+}

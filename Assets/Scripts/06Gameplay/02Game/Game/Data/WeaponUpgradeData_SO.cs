@@ -1,0 +1,27 @@
+using System.Collections;
+using System.Collections.Generic;
+using FPSGame.Attributes;
+using UnityEngine;
+using FPSGame.Core;
+using FPSGame.GameContract;
+
+namespace FPSGame.Game
+{
+    [CreateAssetMenu(fileName = "WUD_", menuName = "Data/武器升级")]
+    public class WeaponUpgradeData_SO : ScriptableObject
+    {
+
+        public new string name;
+        public string type;
+        [SpritePreview(3,3)]
+        public Sprite icon;
+        [TextArea(3, 5)]
+        public string desc;
+
+        [Header("费用")]
+        public List<SKVP<OOPartEnum, int>> cost = new() {new(OOPartEnum.Pyroxene,1000) };
+
+        [Header("修改属性")]
+        public List<ModifyAttrData> modifys;
+    }
+}

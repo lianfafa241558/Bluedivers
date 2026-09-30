@@ -1,10 +1,15 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using FPSGame.Utils;
+
+namespace FPSGame.UI
+{
 /// <summary>
 /// CG控制器，总之就是很后悔没有用时间线插件
 /// </summary>
+[AddComponentMenu("UI/HUD/剧情字幕")]
 public class PlotSubtitles : MonoBehaviour
 {
     public List<SubtitlesInfo> subtitlesInfos=new();
@@ -76,4 +81,5 @@ public class PlotSubtitles : MonoBehaviour
         public string desc;
         public AudioClip clip;
     }
+}
 }

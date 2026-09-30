@@ -1,28 +1,20 @@
-using FPSGame.UI;
+﻿using FPSGame.UI;
 using TMPro;
 
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
-using static WndTools.WndRootTool;
-using static WndManager;
-using Core;
+using FPSGame.Managers;
 
-public interface IVehicleUIController
+namespace FPSGame.UI
 {
-    /// <summary>是否是主手，状态</summary>
-    UnityAction<bool, bool> SetWeaponState { get; set; }
-
-    UnityAction<bool> OnStateChange { get; set; }
-    /// <summary>是否是主手，颜色</summary>
-    UnityAction<bool, Color> OnColorChange { get; set; }
-    /// <summary>是否是主手，值</summary>
-    UnityAction<bool, float> OnFillChange { get; set; }
-    /// <summary>是否是主手，文本</summary>
-    UnityAction<bool, string> OnTextChange { get; set; }
-    /// <summary>是否是主手，图标</summary>
-    UnityAction<bool, Sprite> OnIconChange { get; set; }
-}
+using static FPSGame.WndTools.WndRootTool;
+using static FPSGame.Managers.WndManager;
+using FPSGame.Core;
+using FPSGame.GameContract;
+/// <summary>
+/// 载具 HUD 与武器信息显示。
+/// </summary>
+[AddComponentMenu("UI/HUD/载具 UI")]
 public class VehicleUI : MonoBehaviour
 {
     [SerializeField]
@@ -142,4 +134,5 @@ public class VehicleUI : MonoBehaviour
         var go = (isMain ? weaponMainBar : weaponSecBar).transform.parent;
         if (go) go.gameObject.SetActive(state);
     }
+}
 }

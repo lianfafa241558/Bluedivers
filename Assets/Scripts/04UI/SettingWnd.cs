@@ -1,14 +1,25 @@
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Attributes;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static ArchivesData_SO;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Gameplay;
 
+namespace FPSGame.UI
+{
+using FPSGame.GameContract;
+using static ArchivesData_SO;
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Data;
+using FPSGame.Managers;
+
+/// <summary>
+/// 设置窗口（含快捷键分部）。
+/// </summary>
+[AddComponentMenu("UI/窗口/设置")]
 public partial class SettingWnd : Window
 {
     public Image BG;
@@ -60,7 +71,6 @@ public partial class SettingWnd : Window
         InputManager.BindDown(WindowStateEnum.All, InputState.Esc, OnEsc);
         //Debug.LogError("绑定");
         //此时还没初始化
-        WndManager.Instance.settingWnd = this;
     }
 
     public override void OnDestroy()
@@ -563,7 +573,7 @@ public partial class SettingWnd : Window
     {
         //不需要判定状态，已经隐藏??
         
-        wndManager.CreatTip(new() {
+        WndHub.Tip.Creat(new() {
             title = "中止任务",
             desc = "\n确定要中止任务吗?",
             optA_Click = () =>
@@ -606,7 +616,7 @@ public partial class SettingWnd : Window
     /// <summary>退出游戏</summary>
     void TryExitGame()
     {
-        wndManager.CreatTip(new() {
+        WndHub.Tip.Creat(new() {
             title = "退出游戏",
             desc = "\n确定要退出游戏吗?",
             optA_Click = () => {
@@ -656,3 +666,4 @@ public partial class SettingWnd : Window
 
 }
 
+}

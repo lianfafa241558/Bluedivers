@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Data;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// AirdropData_SO 专属检视器（DataEditorWindow 右面板与标准 Inspector 均生效，优先级高于全局 fallback EditorOverride）。
@@ -735,4 +739,5 @@ public class AirdropData_SOEditor : Editor
             EditorGUIUtility.isProSkin ? new Color(0.5f, 0.5f, 0.5f, 0.25f) : new Color(0, 0, 0, 0.12f));
         EditorGUILayout.Space(2);
     }
+}
 }

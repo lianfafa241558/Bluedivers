@@ -1,14 +1,16 @@
 using System.Collections.Generic;
-using Core;
-using Core.Interface;
+using FPSGame.Core;
 using FPSGame.AI;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.AI;
-using Utils;
+using FPSGame.Utils;
+using FPSGame.Audio;
+using FPSGame.Gameplay;
 using Random = System.Random;
+using FPSGame.GameContract;
 
-namespace FPSGame.Game
+namespace FPSGame.Managers
 {
     public class ZergWave : I_TickClass, System.IDisposable
     {
@@ -54,7 +56,7 @@ namespace FPSGame.Game
             anchorCenter = center;
             range = param.range;
 
-            BattleEventSub.OnEnemyDead += OnUnitDeath;
+            UnitEventSub.OnEnemyDead += OnUnitDeath;
 
             if (param.points == null)
             {
@@ -86,7 +88,7 @@ namespace FPSGame.Game
         public void Dispose()
         {
             if (IsDisposed) return;
-            BattleEventSub.OnEnemyDead -= OnUnitDeath;
+            UnitEventSub.OnEnemyDead -= OnUnitDeath;
 
             units?.Clear();
             waveUseObject?.Clear();

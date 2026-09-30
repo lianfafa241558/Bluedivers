@@ -1,14 +1,20 @@
-using System.Collections.Generic;
-using GameContract;
+﻿using System.Collections.Generic;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.GameContract;
 
-using Unity.FPS.Game;
-using Unity.FPS.Gameplay;
+using FPSGame.Game;
+using FPSGame.Gameplay;
 using UnityEngine;
 using UnityEngine.Events;
-using Utils;
+using FPSGame.Utils;
 
-namespace Unity.FPS.UI
+namespace FPSGame.UI
 {
+    /// <summary>
+    /// 按当前武器切换准星。
+    /// </summary>
+    [AddComponentMenu("UI/HUD/准星管理")]
     public class CrosshairManager : CrosshairManagerBase
     {
 
@@ -34,13 +40,13 @@ namespace Unity.FPS.UI
             {
                 isStartHave = false;
             }
-            GlobalEventSub.OnPlayerCreate += OnPlayerCreate;
+            UnitEventSub.OnPlayerCreate += OnPlayerCreate;
             GlobalEventSub.OnViewSwitch += OnViewSwitch;
         }
 
         protected override void OnDestroy()
         {
-            GlobalEventSub.OnPlayerCreate -= OnPlayerCreate;
+            UnitEventSub.OnPlayerCreate -= OnPlayerCreate;
             GlobalEventSub.OnViewSwitch -= OnViewSwitch;
             if (m_WeaponsManager)
             {

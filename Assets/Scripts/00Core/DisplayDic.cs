@@ -2,10 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEngine;
 
-namespace Core
+namespace FPSGame.Core
 {
     [Serializable]
     public class DisplayDic<Key, Value> : IEnumerable<KVP<Key, Value>>, IEnumerable

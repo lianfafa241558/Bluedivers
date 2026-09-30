@@ -1,10 +1,18 @@
-using System.IO;
+﻿using System.IO;
 using System.Runtime.CompilerServices;
-using Core;
+using FPSGame.Core;
 using UnityEngine;
 using UnityEngine.Video;
-using static WndTools.WndRootTool;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Managers;
+
+/// <summary>
+/// 开场 CG 窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/开场")]
 public class FrontWnd : Window
 {
     [SerializeField]
@@ -94,4 +102,5 @@ public class FrontWnd : Window
     }
 
 
+}
 }

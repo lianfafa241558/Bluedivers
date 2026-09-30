@@ -1,12 +1,19 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-
-using Unity.FPS.Game;
-using Unity.FPS.Gameplay;
+using FPSGame.Core;
+using FPSGame.Game;
+using FPSGame.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
+using FPSGame.Utils;
 
+namespace FPSGame.UI
+{
+
+/// <summary>
+/// 单武器场景下的简化准星。
+/// </summary>
+[AddComponentMenu("UI/HUD/简易准星")]
 public class SimpleAimCrosshairManager : CrosshairManagerBase
 {
 
@@ -36,4 +43,5 @@ public class SimpleAimCrosshairManager : CrosshairManagerBase
         m_ActiveSightGo.SetFloat(Constants.k_AnimChatgetSpeedParameter, 1 / Mathf.Max(m_Weapons.AttrFinal(WeaponAttrType.ChargeDuration).RawFloat, 0.1f));
     }
 
+}
 }

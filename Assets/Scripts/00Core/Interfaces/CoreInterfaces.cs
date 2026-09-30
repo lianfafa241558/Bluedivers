@@ -1,8 +1,7 @@
-using Core.Interface;
-using PEMaths;
+﻿using PEMaths;
 using UnityEngine;
 
-namespace Core.Interface
+namespace FPSGame.Core.Interface
 {
     /// <summary>
     /// 使用拓展方法实现null判断，必须对挂在mono的接口才能用
@@ -77,12 +76,16 @@ namespace Core.Interface
         void ApplyGravity();
     }
 
-
-}
-public static class ISValidExtensions
-{
-    public static bool IsValidMono(this IMonoVaild obj)
+    /// <summary>
+    /// 接口 null 判定的扩展方法（仅对挂在 MonoBehaviour 上的接口有效）。
+    /// <para>⚠ 因为它是扩展方法，调用点写 <c>x.IsValidMono()</c> 不出现类名，
+    /// 所以静态搜索找不到引用点，改命名空间时必须由编译器兜底。</para>
+    /// </summary>
+    public static class ISValidExtensions
     {
-        return obj is Object o && o != null;
+        public static bool IsValidMono(this IMonoVaild obj)
+        {
+            return obj is Object o && o != null;
+        }
     }
 }

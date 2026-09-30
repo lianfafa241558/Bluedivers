@@ -1,15 +1,17 @@
 using System.Collections.Generic;
-using Core;
-using Core.Interface;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
 using FPSGame.AI;
-using GameContract;
+using FPSGame.GameContract;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using Utils;
+using FPSGame.Utils;
+using FPSGame.Audio;
+using FPSGame.Gameplay;
 using Random = System.Random;
 
-namespace FPSGame.Game
+namespace FPSGame.Managers
 {
     public class RobotWave : I_TickClass, System.IDisposable
     {
@@ -61,7 +63,7 @@ namespace FPSGame.Game
             spawnInterval = Mathf.Clamp(480f / Mathf.Max(1, creats.Count),5,15);
             lastGroupSpawnTime = Time.time - spawnInterval+5;
 
-            BattleEventSub.OnEnemyDead += OnUnitDeath;
+            UnitEventSub.OnEnemyDead += OnUnitDeath;
 
             Trans(WaveState.Start);
         }
@@ -69,7 +71,7 @@ namespace FPSGame.Game
         public void Dispose()
         {
             if (IsDisposed) return;
-            BattleEventSub.OnEnemyDead -= OnUnitDeath;
+            UnitEventSub.OnEnemyDead -= OnUnitDeath;
 
             foreach (var g in groups)
             {

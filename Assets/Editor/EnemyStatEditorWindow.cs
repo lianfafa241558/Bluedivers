@@ -1,10 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using FPSGame.AI;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.GameContract;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// 单位数值编辑器：左侧按 敌人/其他/战备 三类浏览指定目录下带 Actor 的预制体，
@@ -530,4 +534,5 @@ public class EnemyStatEditorWindow : EditorWindow
             ? Mathf.RoundToInt(value).ToString()
             : value.ToString("0.#");
     }
+}
 }

@@ -1,7 +1,10 @@
-using System.Collections.Generic;
-using Core;
+﻿using System.Collections.Generic;
+using FPSGame.Core;
 using UnityEngine;
 using UnityEngine.AI;
+
+namespace FPSGame.Managers
+{
 
 /// <summary>
 /// 寻路请求管理器。
@@ -19,7 +22,8 @@ using UnityEngine.AI;
 ///    hasPath=false；调用方若还按"目标没变"去重，就永远不会再发 ⇒ 单位永久发呆）。
 ///    现在这里无条件 LogWarning 暴露，并由调用方（EnemyController.SetNavDestination）按节流重新发起。
 /// </summary>
-public class PathRequestManager : Singleton<PathRequestManager>
+[AddComponentMenu("管理/寻路请求管理")]
+public class PathRequestManager : Singleton<PathRequestManager>, FPSGame.GameContract.IPathService
 {
     /// <summary>单个 agent 的活跃寻路请求</summary>
     struct ActiveReq
@@ -50,6 +54,13 @@ public class PathRequestManager : Singleton<PathRequestManager>
     /// <param name="agent">寻路单位</param>
     /// <param name="destination">目标点（已由调用方确保是期望的最终目标，如玩家位置）</param>
     /// <param name="log">是否打印调试日志</param>
+    /// <summary>注册寻路服务：供 AI 等下层经 ServiceLocator 调用（见 ServiceLocator.cs）。</summary>
+    public override void Awake()
+    {
+        base.Awake();
+        FPSGame.GameContract.ServiceLocator.Path = this;
+    }
+
     public void RequestPath(NavMeshAgent agent, Vector3 destination, bool log = false)
     {
         if (!agent || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
@@ -221,4 +232,5 @@ public class PathRequestManager : Singleton<PathRequestManager>
     {
         active.Clear();
     }
+}
 }

@@ -1,10 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Core;
+using FPSGame.Core;
 using UnityEngine;
 using Random = System.Random;
-namespace Utils
+namespace FPSGame.Utils
 {
     public static class IEnumerableUtils
     {

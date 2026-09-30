@@ -1,7 +1,14 @@
-using System.Collections;
-using Core;
+﻿using System.Collections;
+using FPSGame.Core;
 using UnityEngine;
 
+namespace FPSGame.Utils
+{
+
+/// <summary>
+/// 管理交换区物体的获取与回收。
+/// </summary>
+[AddComponentMenu("工具/变换交换管理")]
 public class ExchangeTransformManager : MonoBehaviour {
         private ObjectPool<ExchangeTransformComp> pool;
 
@@ -47,3 +54,4 @@ public class ExchangeTransformManager : MonoBehaviour {
 
 
     }
+}

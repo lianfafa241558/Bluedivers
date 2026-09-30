@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 using Object = UnityEngine.Object;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// 单行内联列表的绘制样式（Rect 版，供 PropertyDrawer 使用）。
@@ -105,7 +108,7 @@ public static class InlineFieldDrawer
 
     /// <summary>类型（或其泛型定义 / 基类）是否标注了 [Singleline]。</summary>
     public static bool IsSinglelineType(Type type)
-        => type != null && Attribute.IsDefined(type, typeof(SinglelineAttribute));
+        => type != null && System.Attribute.IsDefined(type, typeof(SinglelineAttribute));
 
     //===============================//
     // 2. 反射工具（按 propertyPath 反解类型/字段）
@@ -197,7 +200,7 @@ public static class InlineFieldDrawer
         var field = ResolveField(prop);
         if (field != null)
         {
-            var attr = Attribute.GetCustomAttribute(field, typeof(InspectorNameAttribute)) as InspectorNameAttribute;
+            var attr = System.Attribute.GetCustomAttribute(field, typeof(InspectorNameAttribute)) as InspectorNameAttribute;
             if (attr != null) return attr.displayName;
         }
         return fallback ?? ObjectNames.NicifyVariableName(prop.name);
@@ -210,7 +213,7 @@ public static class InlineFieldDrawer
         var field = ResolveField(child);
         if (field != null)
         {
-            var attr = Attribute.GetCustomAttribute(field, typeof(InspectorNameAttribute)) as InspectorNameAttribute;
+            var attr = System.Attribute.GetCustomAttribute(field, typeof(InspectorNameAttribute)) as InspectorNameAttribute;
             if (attr != null) return attr.displayName;
         }
         return child.displayName;
@@ -868,4 +871,5 @@ public static class InlineFieldDrawer
         int id = so != null && so.targetObject != null ? so.targetObject.GetInstanceID() : 0;
         return id + "|" + prop.propertyPath;
     }
+}
 }

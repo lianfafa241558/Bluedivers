@@ -1,10 +1,10 @@
-using System;
-using Core;
+﻿using System;
+using FPSGame.Core;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace WndTools
+namespace FPSGame.WndTools
 {
     public static class WndRootTool
     {

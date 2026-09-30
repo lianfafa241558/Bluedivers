@@ -1,15 +1,22 @@
 using System.Collections.Generic;
-using FpsGame.Mission;
-using FPSGame.Attribute;
+using FPSGame.Mission;
+using FPSGame.Attributes;
 using FPSGame.UI;
-using GameContract;
+using FPSGame.GameContract;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+
+/// <summary>
+/// 任务列表项。
+/// </summary>
+[AddComponentMenu("UI/HUD/任务项")]
 public class MissionHUDItem : MonoBehaviour
 {
     [Foldout("组件",true)]
@@ -155,4 +162,5 @@ public class MissionHUDItem : MonoBehaviour
 
     }
 
+}
 }

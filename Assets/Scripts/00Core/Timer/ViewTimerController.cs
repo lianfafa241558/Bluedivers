@@ -2,8 +2,12 @@
 
 using UnityEngine;
 
-namespace Core
+namespace FPSGame.Core
 {
+    /// <summary>
+    /// 表现层计时器的 MonoBehaviour 宿主，把 ViewTimerSystem 挂进场景并驱动它。
+    /// </summary>
+    [AddComponentMenu("框架/表现层计时器")]
     public class ViewTimerController : MonoBehaviour
     {
         private ViewTimerSystem _timerSystem;

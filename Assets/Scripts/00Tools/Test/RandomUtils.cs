@@ -1,7 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
+namespace FPSGame.Utils
+{
 
     /// <summary>
     /// 随机数工具
@@ -191,3 +194,4 @@ using UnityEngine;
             return random.OnUnitSphere();
         }
     }
+}

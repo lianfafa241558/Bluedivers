@@ -1,8 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.AI;
 using UnityEditor;
 using UnityEngine;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>
 /// EnemyFxData_SO 改造的编辑器辅助（收尾清理）：对仍挂 EnemyControllerFX 派生组件的 prefab 做一次
@@ -79,4 +82,5 @@ public static class EnemyFxDataMigrationTool
         }
         Debug.Log(msg);
     }
+}
 }

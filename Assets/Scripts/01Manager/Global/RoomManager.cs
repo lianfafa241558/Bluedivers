@@ -1,10 +1,20 @@
-using System.Collections.Generic;
-using Core;
-using Core.Interface;
-using GameContract;
+﻿using System.Collections.Generic;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.GameContract;
+using UnityEngine;
+using FPSGame.Game;
+using FPSGame.Utils;
+
+namespace FPSGame.Managers
+{
 
 
-public class RoomManager : Singleton<RoomManager> ,I_GlobaManager
+/// <summary>
+/// 房间与玩家数据管理。
+/// </summary>
+[AddComponentMenu("管理/房间管理")]
+public class RoomManager : Singleton<RoomManager> ,I_GlobaManager, FPSGame.GameContract.IRoomService
 {
     public PlayerData Self { get; private set; }
     public int SelfIndex => Self.index;
@@ -41,9 +51,14 @@ public class RoomManager : Singleton<RoomManager> ,I_GlobaManager
 
     public bool IsSingle => players.FindAll(item=>!item.isBot).Count==1;
 
+    // FPSGame.GameContract.IRoomService：只给下层两个"整数投影"，避免契约层暴露 PlayerData（见 IRoomService.cs）
+    int FPSGame.GameContract.IRoomService.MasterIndex => Master != null ? Master.index : 0;
+    int FPSGame.GameContract.IRoomService.PlayerCount => players.Count;
+
     public void Init()
     {
         Awake();
+        FPSGame.GameContract.ServiceLocator.Room = this;//注册房间服务：供玩法层（AI/任务）等下层访问（见 ServiceLocator.cs）
         arch = ArchiveSvc.Archive;
         arch.GetRoleLevel(arch.lastSelectRole, out int level, out var exp);
         players.Add(new() {
@@ -83,4 +98,5 @@ public class PlayerData
     public int boosterId;
     public bool isEmpty;
     public bool IsVaild() => id != 0;
+}
 }

@@ -1,4 +1,4 @@
-using FPSGame.Attribute;
+using FPSGame.Attributes;
 using UnityEngine;
 
 namespace FPSGame.DayNightSystem

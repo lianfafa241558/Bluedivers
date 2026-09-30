@@ -2,21 +2,53 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Core;
-using Core.Interface;
-using FpsGame.MapUtils;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.MapUtils;
+using FPSGame.GameContract;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
+using FPSGame.DayNightSystem;
+
+namespace FPSGame.Managers
+{
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine;
-using Utils;
-using Tool = Utils.Tool;
+using FPSGame.Utils;
+using Tool = FPSGame.Utils.Tool;
+using FPSGame.Data;
+    using FPSGame.Gameplay;
 
-public class TaskManager : Singleton<TaskManager>,I_GlobaManager
+    /// <summary>
+    /// 任务生成、难度与结算结果管理。
+    /// </summary>
+    [AddComponentMenu("管理/任务管理器")]
+public class TaskManager : Singleton<TaskManager>,I_GlobaManager, ITaskService
 {
+    /// <summary>无任务时的中性难度系数（全 0 ⇒ 不缩放）。契约约定见 Interface_Manager.cs。</summary>
+    private static readonly int[] s_neutralExtraDiff = new int[4];
+
+    /// <summary>⚠ 契约约定：不得返回 null，长度固定 4。</summary>
+    int[] ITaskService.ExtraDifficulty => nowTask != null && nowTask.ExtraDifficulty != null ? nowTask.ExtraDifficulty : s_neutralExtraDiff;
+
+    /// <summary>无任务时返回 Normal（等价于"不额外缩放"）。</summary>
+    DifficultyEnum ITaskService.Difficulty => nowTask != null ? nowTask.difficulty : DifficultyEnum.Normal;
+
+    /// <summary>本局需收集的欧帕兹数量表（无任务时返回空表，不返回 null）。</summary>
+    Dictionary<OOPartEnum, int> ITaskService.CollectProperty => nowTask != null ? nowTask.collectProperty : new Dictionary<OOPartEnum, int>();
+
+    // 2026-10-01 补：`MedivacController` 下沉玩法层后需要"有没有任务 / 倒计时 / 进入过渡"这 3 样
+    // （`nowTask` 的类型 `SelectTaskData` 现在属玩法层 ⇒ 契约层无法命名，只能窄投影）
+    bool ITaskService.HasTask => nowTask != null;
+
+    int ITaskService.Countdown
+    {
+        get => nowTask != null ? nowTask.Countdown : 0;
+        set { if (nowTask != null) nowTask.Countdown = value; }
+    }
+    // EnterTransition() 已是本类的公开方法 ⇒ 隐式实现即可，无需再写
 
     public int AreaCount,TaskCount;
 
@@ -65,7 +97,9 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     public void Init()
     {
         Awake();
+        ServiceLocator.Task = this;//注册任务服务：供 05_UnitCore 等下层只读访问（见 ServiceLocator.cs）
         Missions = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<MissionData_SO>("GameData/Mission"),item => item.type);
+        MissionData_SO.Catalog = Missions;//数据自持：玩法层的 TaskCfg 从这里读（见 MissionData_SO.Catalog）
         Camps = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<CampData_SO>("GameData/Camp"),item => item.enemyVarietyType);
         MapData = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<MapData_SO>("GameData/Map"), item => item.name.Substring(3));
         TaskCfgs = new TaskCfg[AreaCount,TaskCount];
@@ -376,329 +410,8 @@ public class TaskManager : Singleton<TaskManager>,I_GlobaManager
     }
 
 
-    [System.Serializable]
-    public class SelectTaskData
-    {
-
-        /// <summary>任务配置</summary>
-        public TaskCfg taskCfg { get; set; }
-        public MapData_SO mapCfg { get; set; }
-        public CampData_SO campData { get; set; }
-
-        public Dictionary<OOPartEnum, int> collectProperty = new();
-        public List<Dictionary<string, int>> BattleData = new();
-        /// <summary>任务所需战备</summary>
-        public List<int> RequiredAD;
-
-        public bool activeTask;
-
-        public TaskItem main;
-        public TaskItem evacuate;
-        public TaskItem[] extras;
-        public TaskItem[][] nests;
-        public TaskItem[] subs;
-
-        public GameResult result { get; set; }
-        public DifficultyEnum difficulty { get; set; }
-
-        public int PlayMode { get; set; }
-        public int Countdown { get; set; } = 16;
-        public int[] ExtraDifficulty { get; set; } = new int[] { 0, 0, 0, 0 };
-        public OOPartEnum[] SpecialtyPropertys { get; set; }
-        public OOPartEnum[] OtherPropertys { get; set; }
-        public MissionMainData_SO MainCfg => main?.cfg as MissionMainData_SO;
-        /// <summary>场景模式下由 CampaignCfg 提供</summary>
-        public SizeType SceneSizeType { get; set; } = SizeType.Mini;
-        private SizeType EffectiveSizeType => MainCfg?.sizeType ?? SceneSizeType;
-
-        public int MapSize => Constants.MapDefaultBorder
-        +EffectiveSizeType switch {
-            SizeType.Small => 256,
-            SizeType.Medium => 384,
-            SizeType.Large => 512,
-            SizeType.Mini => 256,
-            _ => 128,
-        };
-
-        public int CameraSize => EffectiveSizeType switch {
-            SizeType.Mini => 192,
-            _ => MapSize - Constants.MapDefaultBorder,
-        };
-
-        /// <summary>地图边缘的半径</summary>
-        public int MapBorder => (MapSize - CameraSize) / 2;
-
-        public int MapHeight => EffectiveSizeType switch {
-            SizeType.Small => 64,
-            SizeType.Medium => 80,
-            SizeType.Large => 96,
-            _ => 64,
-        };
-
-        public int MainReward =>main.complete ? main.reward : 0;
-        public int ExtraReward => extras.Sum(item => item.complete ? item.reward : 0);
-        public int NestReward {
-            get {
-                int re = 0;
-                for (int i = 0; i < nests.Length; ++i)
-                {
-                    if(nests[i].Length>0) re += nests[i].Sum(item=>item.complete?1:0*item.reward) / nests[i].Length;
-                }
-                return re;
-            }
-        }
-
-    }
-
-    [System.Serializable]
-    /// <summary>任务配置</summary>
-    public struct TaskCfg
-    {
-        public bool enable;
-        public string name;
-        public int seed;
-        public float scale;
-        public MissionEnum main;
-        public MissionEnum[] extra;
-        public int[] nestCount;
-        public TerrainType terrainType;
-        public EnemyVarietyType enemyVarietyType;
-
-        public string TaskType => (Main as MissionMainData_SO).name;
-        public string TaskDesc => Main.desc;
-        public Color Color => (Main as MissionMainData_SO).color;
-        public Sprite Sprite => Main.sprite;
-
-        public int MainReward=> Main.reward.Lerp(scale);
-        public int ExtraReward =>extra.Select(item=> Instance.Missions[item].reward.y).Sum();
-
-        private MissionData_SO Main => Instance.Missions[main];
-    }
-
-    [System.Serializable]
-    public class TaskItem
-    {
-        public MissionData_SO cfg;
-        public int targetCount;//主要任务需要的进度(感觉大部分其实都用不上)
-        public int reward;//最终返回的报酬
-        public bool complete;
-
-        public TaskItem(MissionData_SO cfg)
-        {
-            this.cfg = cfg;
-            targetCount = 0;
-            reward = cfg.reward.x;
-        }
-        public TaskItem(MissionMainData_SO cfg, float scale)
-        {
-            this.cfg = cfg;
-            targetCount = cfg.count.Lerp(scale);
-            reward = cfg.reward.Lerp(scale);
-        }
-    }
 
 
 
 }
-
-
-
-
-
-public enum MissionEnum
-{
-    /// <summary>歼灭</summary>
-    [InspectorName("主线/歼灭")]Annihilation,
-    /// <summary>解救</summary>
-    [InspectorName("主线/解救")]Rescue,
-    /// <summary>采集</summary>
-    [InspectorName("主线/采集")]Explore,
-    /// <summary>护送</summary>
-    [InspectorName("主线/护送")] Escort,
-    /// <summary>上传数据</summary>
-    [InspectorName("主线/上传数据")] RetrieveData,
-    /// <summary>防御</summary>
-    [InspectorName("主线/防御")]Defend,
-    /// <summary>升旗</summary>
-    [InspectorName("主线/升旗")] FlagRaising,
-    /// <summary>彻底消灭</summary>
-    [InspectorName("主线/彻底消灭")] Eradicate,
-    /// <summary>搜索并摧毁</summary>
-    [InspectorName("主线/搜索并摧毁")] SearchAndDestroy,
-
-
-    /// <summary>摧毁虫卵</summary>
-    [InspectorName("主线/摧毁虫卵")] DestroyEggs,
-    /// <summary>采集虫蛋</summary>
-    [InspectorName("主线/采集虫蛋")] CollectEggs,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/钻机摧毁工厂")] NukeNursery,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder23,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder24,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder25,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder26,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder27,
-
-    /// <summary>占位符</summary>
-    [InspectorName("主线/摧毁空军基地")] Airport,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/拦截车队")] Motorcade,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder30,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder31,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder32,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder33,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder34,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder35,
-
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder36,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder37,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder38,
-    /// <summary>占位符</summary>
-    [InspectorName("主线/占位符")] Placeholder39,
-
-
-    [InspectorName("主线/战役")]
-    /// <summary>主线/战役</summary>
-    Campaign,
-
-    /// <summary>撤离/迅速撤离</summary>
-    [InspectorName("撤离/迅速静态撤离")] EvacuateFast,
-    /// <summary>撤离/动态撤离</summary>
-    [InspectorName("撤离/动态撤离")] EvacuateMove,
-    /// <summary>撤离/静态撤离</summary>
-    [InspectorName("撤离/静态撤离")] EvacuateStatic,
-    /// <summary>撤离/迅速动态撤离</summary>
-    [InspectorName("撤离/迅速动态撤离")] EvacuateMoveFast,
-
-
-    /// <summary>次要/黑盒</summary>
-    [InspectorName("次要/黑盒")] BlackBox,
-    /// <summary>次要/激光雷达站</summary>
-    [InspectorName("次要/激光雷达站")] RadarStation,
-    /// <summary>次要/非法广播</summary>
-    [InspectorName("次要/非法广播")] Broadcast,
-    /// <summary>科研哨站</summary>
-    [InspectorName("次要/科研哨站")] ScienceFacility,
-    /// <summary>火炮阵地</summary>
-    [InspectorName("次要/火炮阵地")] ArtilleryPosition,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder3,
-
-    /// <summary>次要/飞龙巢</summary>
-    [InspectorName("次要/飞龙巢")] SpireNest,
-    /// <summary>次要/隐刀巢穴</summary>
-    [InspectorName("次要/隐刀巢穴")] StealthNest,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder4,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder5,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder6,
-
-
-    /// <summary>次要/直升机制造厂</summary>
-    [InspectorName("次要/直升机制造厂")]
-    HelicopterFactory,
-    /// <summary>次要/干扰塔/机器人</summary>
-    [InspectorName("次要/干扰塔/机器人")]
-    JammingTowerRoBot,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder7,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder8,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder9,
-
-    /// <summary>次要/干扰塔/色彩</summary>
-    [InspectorName("次要/干扰塔/色彩")]
-    JammingTowerColour,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder10,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder11,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder12,
-    /// <summary>占位符</summary>
-    [InspectorName("次要/占位符")] Placeholder13,
-
-    /// <summary>次要/次要撤离区(摧毁区域内单位完成，同时作为可选撤离点)</summary>
-    [InspectorName("次要/次要撤离区")] SecondaryEvacuate = 300,
-
-    [InspectorName("巢穴/十字神明-S")] NestDecS = 100,
-    [InspectorName("巢穴/十字神明-M")] NestDecM = 101,
-    [InspectorName("巢穴/十字神明-L")] NestDecL = 102,
-
-    [InspectorName("巢穴/凯撒-S")] NestKaiserS = 104,
-    [InspectorName("巢穴/凯撒-M")] NestKaiserM = 105,
-    [InspectorName("巢穴/凯撒-L")] NestKaiserL = 106,
-
-    [InspectorName("巢穴/色彩-S")] NestColourS = 108,
-    [InspectorName("巢穴/色彩-M")] NestColourM = 109,
-    [InspectorName("巢穴/色彩-L")] NestColourL = 110,
-
-    /// <summary>升旗子任务</summary>
-    [InspectorName("子任务/升旗")] SubFlagRaising = 200,
-    /// <summary>获取高价值数据</summary>
-    [InspectorName("子任务/获取高价值数据")] SubGetData = 201,
-    /// <summary>重启发电机</summary>
-    [InspectorName("子任务/重启发电机")] SubRestartGenerator = 202,
-    /// <summary>连接油管</summary>
-    [InspectorName("子任务/连接油管")] SubConnectPipes = 203,
-    /// <summary>采集虫蛋</summary>
-    [InspectorName("子任务/采集虫蛋")] SubEggHunt = 204,
-}
-
-public enum DifficultyEnum
-{
-    Normal,
-    Hard,
-    VeryHard,
-    HardCode,
-    Extreme,
-    Insane,
-    Torment,
-    Lunatic,
-}
-
-/// <summary>
-/// 游戏结果
-/// </summary>
-public enum GameResult
-{
-    /// <summary>未知</summary>
-    [InspectorName("未知")] Unknow,
-    /// <summary>胜利</summary>
-    [InspectorName("胜利")] Victory,
-    /// <summary>失败</summary>
-    [InspectorName("失败")] Failure,
-    /// <summary>中断</summary>
-    [InspectorName("中断")] Interrupt,
-}
-/// <summary>
-/// 尺寸大小(复制)
-/// </summary>
-public enum SizeType
-{
-    /// <summary> 小型</summary>
-    Small,
-    /// <summary> 中型</summary>
-    Medium,
-    /// <summary> 大型</summary>
-    Large,
-    /// <summary> 迷你</summary>
-    Mini,
 }

@@ -2,6 +2,9 @@
 using UnityEditor;
 using UnityEngine;
 
+namespace FPSGame.EditorExt
+{
+
 public class RenameFile : EditorWindow
 {
 
@@ -476,4 +479,5 @@ public class RenameFile : EditorWindow
         oldName = null;
         window = null;
     }
+}
 }

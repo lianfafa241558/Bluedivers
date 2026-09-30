@@ -1,3 +1,6 @@
+﻿
+namespace FPSGame.Utils
+{
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
@@ -5,7 +8,6 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
-using Tool = Utils.Tool;
 public static class CopyUtils
 {
 
@@ -110,7 +112,7 @@ public static class CopyUtils
     [MenuItem("GameObject/辅助功能/粘贴碰撞箱和伤害组件",false, priority = -100)]
     static void CopyCollider()
     {
-        PasteCompForInterface<GameContract.I_Damageable>();
+        PasteCompForInterface<FPSGame.GameContract.I_Damageable>();
         PasteComp<Collider>();
     }
 
@@ -193,3 +195,4 @@ public static class CopyUtils
     }
 }
 #endif
+}

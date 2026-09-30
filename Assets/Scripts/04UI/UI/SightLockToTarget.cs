@@ -1,18 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Core;
-using GameContract;
+using FPSGame.Core;
+using FPSGame.GameContract;
 
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEngine;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using static FPSGame.WndTools.WndRootTool;
 
-namespace Unity.FPS.UI
+namespace FPSGame.UI
 {
     /// <summary>
     /// 制作图标连到锁定目标,这个是ui，连线是另一个组件
     /// </summary>
+    [AddComponentMenu("UI/HUD/锁定标记")]
     public class SightLockToTarget : MonoBehaviour
     {
         [SerializeField]

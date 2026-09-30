@@ -1,16 +1,23 @@
 using System.Collections.Generic;
 using System.Linq;
-using Unity.FPS.Game;
+using FPSGame.Game;
 
-//using Unity.FPS.Game;
+//using FPSGame.Game;
 using UnityEngine;
-using Utils;
+using FPSGame.Utils;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.GameContract;
+
+namespace FPSGame.Managers
+{
 
 /// <summary>
 /// 天气控制器：由 BattleManager 开局随机抽取天气后通过 Create 工厂创建。
 /// 具体天气组件（WeatherEffect 子类）挂在 Prefabs/Weather 下的特效预制体上，
 /// 控制器按天气类型匹配预制体实例化，并统一驱动周期风暴计时与跟随玩家。
 /// </summary>
+[AddComponentMenu("管理/天气系统")]
 public class WeatherSystem : MonoBehaviour
 {
     /// <summary>天气特效预制体所在目录（Resources 相对路径）</summary>
@@ -131,4 +138,5 @@ public class WeatherSystem : MonoBehaviour
     {
         _effect.OnStormEnd();
     }
+}
 }

@@ -1,0 +1,457 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.Attributes;
+using FPSGame.GameContract;
+
+using FPSGame.Game;
+using UnityEngine;
+using FPSGame.Utils;
+using FPSGame.Data;
+using FPSGame.Gameplay;
+
+namespace FPSGame.Mission
+{
+    public enum MissionType
+    {
+        Main,Extra,Nest,Sub,Evacuate,
+    }
+
+
+    /// <summary>
+    /// 任务目标(逻辑)
+    /// </summary>
+    public abstract class MissionBase : TickBehaviour  //虽然他自己不用，但是他的子类用
+    {
+
+        public event Action<MissionBase> OnMissionCompleted;
+        public event Action<MissionBase> OnMissionEnd;
+        protected FPSGame.GameContract.IBattleService manager;// 走契约（原 BattleManager），玩法层不再点名上层具体类型
+        protected System.Random random;
+
+
+        [Foldout("标旗",true)]
+
+        [InspectorName("标旗")]
+        [UnityEngine.Serialization.FormerlySerializedAs("tag")]
+        public MissionTag missionTag;
+
+
+        [Foldout("信息",true)]
+        public MissionType missionType;
+        [InspectorName("优先级")]
+        public int priority;
+
+        [SerializeField]
+        private List<GameObject> prefabs;
+        [SerializeField]
+        private EnemyActorVariant_SO prefabVarients;
+
+
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        [InspectorName("标题")]
+        public string title;
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        [InspectorName("当前目标提示")]
+        public string tip;
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        [InspectorName("最大任务进度")]
+        public int MaxProgress;
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        [InspectorName("当前任务进度")]
+        public int NowProgress;
+
+        [InspectorName("允许部署战备的范围")]
+        public int AirdropRange = 10;
+
+        [InspectorName("占地面积的取值范围（半径）")]
+        public Vector2Int mapEntitySize = Vector2Int.one * 20;
+
+
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        public MissionBase parent;//主任务
+
+        
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        public TaskItem data;
+        [SerializeField]
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        protected SelectTaskData root;
+
+        [HideInInspector]
+        public Color color;//暂时只有巢穴用
+        [HideInInspector]
+        public Sprite icon;
+        [HideInInspector]
+        public Vector3 pos;
+        [HideInInspector]
+        public int entitySize;//半径
+
+
+
+
+        [Foldout("场景专用", true)]
+        [InspectorName("场景任务数据(场景模式用)")]
+        [SerializeField]
+        protected MissionData_SO _sceneMissionData;
+
+        [Foldout("显示",true)]
+        public MissionBase[] subTask;
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        public float percentage;//完成百分比，用来显示
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        [SerializeField]
+        /// <summary>在部署战备范围内</summary>
+        private bool InAirdropRange;
+        /// <summary>已使用战备</summary>
+        private bool allowUseAirdrop;
+
+        //[HideInInspector]
+        public MissionView entity;
+        public bool end;
+        public bool completed;
+
+        private Transform entityParent;
+
+        public bool IsInitialized { get; set;}
+
+        public void Init(SelectTaskData root, TaskItem data, Sprite icon, Vector3 pos, int entitySize,Transform entityParent)
+        {
+            this.data = data;
+            this.root = root;
+            this.icon = icon;
+            this.pos = pos;
+            this.entitySize = entitySize;
+            this.entityParent = entityParent;
+            manager = FPSGame.GameContract.ServiceLocator.Battle;
+            random = manager.BattleRandom;
+            switch (missionType)
+            {
+                case MissionType.Main:
+                    if (data.cfg is MissionMainData_SO maincfg)
+                    {
+                        color = maincfg.color;
+                    }
+                    else
+                    {
+                        //Debug.LogError("错误:mission"+name+"不是主要任务", gameObject);
+                        color = Color.white;
+                    }
+                    break;
+                case MissionType.Extra:
+                    color = Color.white;
+                    break;
+                case MissionType.Nest:
+                    color = root.campData.Color;
+                    break;
+            }
+            
+            title = data.cfg.desc;
+
+
+            
+            /*
+            FPSGame.GameContract.ServiceLocator.Flow.CreateTimer(() => {
+                if (parent) FPSGame.GameContract.ServiceLocator.Flow.CreateTimer(() => { EventInit(); }, 0.1f);
+                else EventInit();
+
+            },0.8f);*/
+
+            if (data.cfg.RequiredAD.Count > 0) BattleEventSub.OnAirdrop += OnAirdrop;
+            InitMission();
+        }
+
+        /// <summary>
+        /// 场景模式轻量初始化：仅注入数据引用，不实例化 MissionView（场景已有）
+        /// </summary>
+        public void InitFromSceneData(SelectTaskData root)
+        {
+            this.root = root;
+
+            manager = FPSGame.GameContract.ServiceLocator.Battle;
+            random = manager.BattleRandom;
+
+            if (_sceneMissionData != null)
+            {
+                if (_sceneMissionData is MissionMainData_SO maincfg)
+                    data = new TaskItem(maincfg, 1f);
+                else
+                    data = new TaskItem(_sceneMissionData);
+            }
+
+            switch (missionType)
+            {
+                case MissionType.Evacuate:
+                case MissionType.Sub:
+                case MissionType.Main:
+                    if (_sceneMissionData is MissionMainData_SO maincfg)
+                        color = maincfg.color;
+                    else
+                        color = Color.white;
+                    break;
+                case MissionType.Extra:
+                    color = Color.white;
+                    break;
+                case MissionType.Nest:
+                    color = root.campData.Color;
+                    break;
+            }
+
+            // 场景中 MissionView 已作为子对象存在，直接获取引用
+            if (entity == null)
+            {
+                Debug.LogError("没有为其设置实体",this);
+            }
+
+
+            if (entity != null && data?.cfg?.RequiredAD != null)
+            {
+                this.icon = entity.Portrait;
+                this.pos = entity.Pos;
+                this.title = entity.Title;
+                entity.Init(this, data.cfg.RequiredAD.Select(item => item.ID).ToArray());
+            }
+
+            if (data?.cfg?.RequiredAD?.Count > 0)
+                BattleEventSub.OnAirdrop += OnAirdrop;
+
+            if (data == null || data.cfg.RequiredAD.Count == 0)
+                AirdropRange = 0;
+
+            InitMission();
+        }
+
+        public void EventStart()
+        {
+            StartMission();
+            //Debug.LogError("触发事件"+this,this);
+            BattleEventSub.MissionStart(this);
+            if (missionTag.HasFlag(MissionTag.StratDiscovered)&&entity.IsValid()) entity.TryDiscovered();
+            
+        }
+
+
+        protected sealed override void Start()
+        {
+            base.Start();
+            //CreatMission();
+        }
+
+        private void OnDestroy()
+        {
+            if (!end) Uninit();
+        }
+        /// <summary>
+        /// 所有任务初始化完成后执行
+        /// </summary>
+        protected virtual void StartMission()
+        {
+            
+
+        }
+
+        private bool GetEntiryPrefab(out GameObject prefab)
+        {
+            if (prefabs.Count > 0)
+            {
+                prefab=prefabs.RandomTake(manager.BattleRandom);
+                return true;
+            }
+            else if (prefabVarients != null)
+            {
+                prefab = prefabVarients.Get(FPSGame.GameContract.ServiceLocator.Task.EnemyVarietyType);
+                return true;
+            }
+            prefab = null;
+            return false;
+        }
+
+
+        /// <summary>
+        /// 创建后就执行
+        /// </summary>
+        protected virtual void InitMission()
+        {
+            if (!entity && GetEntiryPrefab(out GameObject prefab))
+            {
+                entity = Instantiate(prefab, pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), entityParent).GetComponent<MissionView>();
+                entity.Init(this, this.data.cfg.RequiredAD.Select(item => item.ID).ToArray());
+            }
+            else
+            {
+                IsInitialized = true;
+            }
+            if (data.cfg.RequiredAD.Count == 0) AirdropRange = 0;
+
+        }
+        public virtual void UpdateMission()
+        {
+            BattleEventSub.MissionUpdate(this);
+        }
+
+        public virtual void CompleteMission()
+        {
+            data.complete = true;
+            completed = true;
+            if (missionType == MissionType.Main&&!parent) root.result = GameResult.Victory;
+            BattleEventSub.MissionCompleted(this);
+            OnMissionCompleted?.Invoke(this);
+            EndMission();
+        }
+
+        protected virtual void FailMission()
+        {
+            if (missionType == MissionType.Main) root.result = GameResult.Failure;
+            BattleEventSub.MissionFail(this);
+            EndMission();
+        }
+        protected virtual void EndMission()
+        {
+            end = true;
+            if (InAirdropRange)
+            {
+                foreach (var ad in data.cfg.RequiredAD)
+                {
+                    FPSGame.GameContract.ServiceLocator.Battle.Authorize(ad.ID, false);
+                }
+            }
+            BattleEventSub.MissionEnd(this);
+            OnMissionEnd?.Invoke(this);
+            Uninit();
+        }
+
+        protected virtual void Uninit()
+        {
+            if (entity.IsValid()) entity.Uninit();
+            if (data.cfg.RequiredAD.Count > 0) BattleEventSub.OnAirdrop -= OnAirdrop;
+        }
+
+        /// <summary>
+        /// 任务进度自增（只计数，不做 UI 与结束处理）。
+        /// 已结束的任务不再计数。
+        /// </summary>
+        /// <returns>true = 本次自增后进度已达到 <see cref="MaxProgress"/></returns>
+        protected bool TryAddProgress()
+        {
+            if (completed) return true;
+            if (NowProgress < MaxProgress) ++NowProgress;
+            return NowProgress >= MaxProgress;
+        }
+
+        /// <summary>
+        /// 任务进度自增 + 通用收尾：未达成时刷新 HUD，达成时结束任务。
+        /// 适用于"计满即完成"的任务（摧毁单位、交互指定物体、等子任务等），
+        /// 达成时还有额外业务动作的任务请改用 <see cref="TryAddProgress"/> 自行处理。
+        /// </summary>
+        /// <param name="syncPercentage">是否同步刷新 <see cref="percentage"/>（要显示进度条的任务传 true）</param>
+        /// <param name="updateBeforeComplete">达成时是否先刷新一次进度再结束任务</param>
+        /// <returns>true = 本次调用已达成并结束了任务（可用于顺带退订事件）</returns>
+        protected bool AddProgress(bool syncPercentage = false, bool updateBeforeComplete = false)
+        {
+            if (completed) return true;
+
+            if (!TryAddProgress())
+            {
+                if (syncPercentage) percentage = NowProgress / (MaxProgress + 0f);
+                UpdateMission();
+                return false;
+            }
+
+            if (updateBeforeComplete) UpdateMission();
+            CompleteMission();
+            return true;
+        }
+
+        protected void UpdateTip(string tip)
+        {
+            if (this.tip == tip) return;
+            this.tip = tip;
+            UpdateMission();
+        }
+
+
+        protected void UpdateText(string title, string tip)
+        {
+            this.title = title;
+            this.tip = tip;
+            UpdateMission();
+        }
+
+
+        protected void UpdateHide(bool hide)
+        {
+            if (hide) AddTag(MissionTag.hideAll);
+            else RemoveTag(MissionTag.hideAll);
+            UpdateMission();
+        }
+
+        /// <summary>
+        /// 用来暴露一个任务给另一个任务
+        /// </summary>
+        /// <param name="mission"></param>
+        public virtual void Link(MissionBase mission)
+        {
+
+
+        }
+
+        public override bool Tick()
+        {
+            if (entitySize <= 0) return true;
+            if (allowUseAirdrop) return true;
+            if (!ActorsManager.Player.IsValidMono()) return true;
+            float dis = Vector2.Distance(ActorsManager.Player.Pos.ToVector2(), pos.ToVector2());
+           
+            bool airdropRange = dis < AirdropRange;
+            if (airdropRange != InAirdropRange)
+            {
+                InAirdropRange = airdropRange;
+                foreach (var ad in data.cfg.RequiredAD)
+                {
+                    FPSGame.GameContract.ServiceLocator.Battle.Authorize(ad.ID, airdropRange);
+                }
+            }
+
+            return true;
+        }
+
+        private void OnAirdrop(GameObject source, GameObject _, Vector3 point, AirdropData data)
+        {
+            if (this.data.cfg.RequiredAD.Contains(data.cfg))
+            {
+                if (!HasTag(MissionTag.RepeatCall))
+                {
+                    allowUseAirdrop = true;
+                    FPSGame.GameContract.ServiceLocator.Battle.Authorize(data.cfg.ID, false);
+                    BattleEventSub.OnAirdrop -= OnAirdrop;
+
+                }
+
+            }
+        }
+
+        protected void CreatNotice(string role, string type, Func<bool> func = default,float vaildTime = -1)
+        {
+            FPSGame.GameContract.ServiceLocator.Wnd.CreatNotice(role, type, func,vaildTime);
+        }
+
+
+        public bool HasTag(MissionTag tagToCheck)
+        {
+            return missionTag.HasFlag(tagToCheck);
+        }
+
+        public void AddTag(MissionTag tagToAdd)
+        {
+            missionTag |= tagToAdd;
+        }
+
+        public void RemoveTag(MissionTag tagToRemove)
+        {
+            missionTag &= ~tagToRemove;
+        }
+
+    }
+}

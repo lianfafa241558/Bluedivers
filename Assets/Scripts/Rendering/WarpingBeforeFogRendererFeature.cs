@@ -1,6 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+
+namespace FPSGame.Rendering
+{
 
 /// <summary>
 /// Warping 抓屏扰动特效（Assets/Shader/Warping.shader）的专用渲染器特性。
@@ -12,7 +15,8 @@ using UnityEngine.Rendering.Universal;
 /// <para>
 /// 做法：把 Warping 单独提前到 445 绘制（雾之前），让雾把它一并雾化。
 /// 445 是唯一可行窗口：必须晚于 AfterRenderingSkybox(400)（URP 的 CopyColorPass 在此刻生成
-/// _CameraOpaqueTexture，Warping 抓屏依赖它），又必须早于 450（全屏雾 Pass）。
+/// <c>_CameraOpaqueTexture</c>，Warping 抓屏依赖它），又必须早于 450（全屏雾 Pass）。
+/// 详见 <see cref="BeforeFogHandDrawPassBase"/>。
 /// </para>
 /// <para>
 /// 注意：Warping.shader 的 Pass 已由 UniversalForward 改为 "LightMode" = "WarpingEffect"，
@@ -45,11 +49,7 @@ public class WarpingBeforeFogRendererFeature : ScriptableRendererFeature
     /// <inheritdoc/>
     public override void Create()
     {
-        _warpingPass = new WarpingBeforeFogPass(settings)
-        {
-            // 445：晚于 _CameraOpaqueTexture 生成(400)、早于全屏雾 Pass(450)
-            renderPassEvent = (RenderPassEvent)((int)RenderPassEvent.BeforeRenderingTransparents - 5)
-        };
+        _warpingPass = new WarpingBeforeFogPass(settings);
     }
 
     /// <inheritdoc/>
@@ -66,57 +66,24 @@ public class WarpingBeforeFogRendererFeature : ScriptableRendererFeature
 
     /// <summary>
     /// Warping 手绘 Pass：用自定义 ShaderTag 把 Warping 几何在雾之前重画一遍。
-    /// 结构参照 OutlineRendererFeature，但不需要手动设置主光 uniform（Warping 是无光照抓屏 Shader）
+    /// 只绑颜色不绑深度（抓屏扰动面片不应参与深度遮挡）。
     /// </summary>
-    private class WarpingBeforeFogPass : ScriptableRenderPass
+    private class WarpingBeforeFogPass : BeforeFogHandDrawPassBase
     {
         private const string ProfilerTag = "Draw Warping Before Fog";
         private const string DefaultShaderTag = "WarpingEffect";
 
         private readonly WarpingSettings _settings;
-        private readonly ShaderTagId _shaderTagId;
-
-        private ScriptableRenderer _renderer;
 
         public WarpingBeforeFogPass(WarpingSettings settings)
+            : base(ProfilerTag, DefaultShaderTag, settings.shaderTag)
         {
             _settings = settings;
-            _shaderTagId = new ShaderTagId(string.IsNullOrEmpty(settings.shaderTag) ? DefaultShaderTag : settings.shaderTag);
-            profilingSampler = new ProfilingSampler(ProfilerTag);
         }
 
-        public void Setup(ScriptableRenderer renderer)
-        {
-            _renderer = renderer;
-        }
-
-        /// <inheritdoc/>
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-        {
-            ref CameraData cameraData = ref renderingData.cameraData;
-
-            // 相机堆叠中只有 Base 相机渲染完整场景，与 FullScreenFogRendererFeature 的约定一致
-            if (cameraData.renderType != CameraRenderType.Base
-                || (cameraData.cameraType & _settings.renderCamera) == 0)
-            {
-                return;
-            }
-
-            CommandBuffer cmd = CommandBufferPool.Get(ProfilerTag);
-            cmd.SetRenderTarget(_renderer.cameraColorTargetHandle);
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-
-            // 透明物排序：保证多个 Warping 面片之间的前后关系正确
-            var sortingSettings = new SortingSettings(cameraData.camera)
-            {
-                criteria = SortingCriteria.CommonTransparent
-            };
-            var drawingSettings = new DrawingSettings(_shaderTagId, sortingSettings);
-            // Warping 队列为 Transparent+1，仅在透明队列范围内做筛选
-            var filteringSettings = new FilteringSettings(RenderQueueRange.transparent, _settings.layerMask);
-
-            context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings);
-        }
+        protected override LayerMask DrawLayerMask => _settings.layerMask;
+        protected override CameraType RenderCamera => _settings.renderCamera;
+        protected override bool BindDepthTarget => false;
     }
+}
 }

@@ -1,6 +1,9 @@
-using System;
+﻿using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
+
+namespace FPSGame.EditorExt
+{
 
 /// <summary>数据编辑器的 Tab 类型枚举</summary>
 public enum TabType
@@ -35,4 +38,5 @@ public interface IDataTab
     void MoveSelection(int direction);
     string GetSelectedAssetPath();
     Object GetSelectedData();
+}
 }

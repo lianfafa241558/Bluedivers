@@ -1,4 +1,9 @@
 using UnityEngine;
+using FPSGame.Rendering;
+using FPSGame.GameContract;
+
+namespace FPSGame.Managers
+{
 
 /// <summary>
 /// 下雪组件：挂在暴雪特效预制体上。预制体勾选"启用周期风暴"，
@@ -33,4 +38,5 @@ public class WeatherEffectSnow : WeatherEffect
         base.OnStormEnd();
         SnowController.SetGlobalAmount(_calmAmount);
     }
+}
 }

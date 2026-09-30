@@ -1,10 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
+
+namespace FPSGame.EditorExt
+{
 
 public sealed class WeaponUpgradeTabModule : DataTabModule<WeaponUpgradeData_SO>
 {
@@ -64,4 +67,5 @@ public sealed class WeaponUpgradeTabModule : DataTabModule<WeaponUpgradeData_SO>
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
     }
+}
 }

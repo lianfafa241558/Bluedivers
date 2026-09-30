@@ -1,11 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
-using Core;
-using FPSGame.Attribute;
+using FPSGame.Core;
+using FPSGame.Attributes;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Game;
+using FPSGame.Gameplay;
+
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Data;
+using FPSGame.Managers;
 
 /// <summary>
 /// 战备配置界面（船舰管理 - 战备配置）
@@ -25,6 +32,7 @@ using static WndTools.WndRootTool;
 ///   _eagleView     轰炸型"凤鹰号"系列共用的展示模型（留空则回落战备自身的 creatObect）
 ///   _shopView      轰炸型"轨道"系列共用的展示模型（留空则回落战备自身的 creatObect）
 /// </summary>
+[AddComponentMenu("UI/窗口/战备配置")]
 public class AirdropConfigWnd : Window
 {
     /// <summary>模型每像素旋转角度</summary>
@@ -156,12 +164,10 @@ public class AirdropConfigWnd : Window
 
     public void Init()
     {
-        WndManager.Instance.airdropConfigWnd = this;
     }
 
     public void Uninit()
     {
-        WndManager.Instance.airdropConfigWnd = null;
     }
 
     protected override void FirstShowWnd()
@@ -426,7 +432,7 @@ public class AirdropConfigWnd : Window
     {
         if (_nowData == null || _arch.IsAirdropBought(_nowData.ID)) return;
         var data = _nowData;
-        wndManager.CreatTip(new()
+        WndHub.Tip.Creat(new()
         {
             title = data.showName,
             desc = data.desc + "\n\n要购买这项战备吗?",
@@ -805,4 +811,5 @@ public class AirdropConfigWnd : Window
     }
 
     #endregion
+}
 }

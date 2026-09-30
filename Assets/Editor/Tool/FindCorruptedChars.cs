@@ -1,9 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+
+namespace FPSGame.EditorExt
+{
 
 public class FindCorruptedChars : EditorWindow
 {
@@ -149,4 +152,5 @@ public class FindCorruptedChars : EditorWindow
             window.Repaint();
         }
     }
+}
 }

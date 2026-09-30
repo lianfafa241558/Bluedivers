@@ -1,9 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
+
+namespace FPSGame.EditorExt
+{
 
 public sealed class WeaponModuleTabModule : DataTabModule<WeaponModuleData_SO>
 {
@@ -91,4 +94,5 @@ public sealed class WeaponModuleTabModule : DataTabModule<WeaponModuleData_SO>
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndHorizontal();
     }
+}
 }

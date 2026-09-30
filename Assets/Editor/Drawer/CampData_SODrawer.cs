@@ -1,6 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Data;
+
+namespace FPSGame.EditorExt
+{
 
 
 [CustomPropertyDrawer(typeof(CampData_SO.UnitWeightCfg))]
@@ -432,4 +436,5 @@ public class CampTemplateDrawer : PropertyDrawer
         EditorGUI.indentLevel--;
         EditorGUI.EndProperty();
     }
+}
 }

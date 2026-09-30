@@ -1,8 +1,8 @@
-using Unity.FPS.Game;
+﻿using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.FPS.EditorExt
+namespace FPSGame.EditorExt
 {
     /// <summary>
     /// 单位半高度批量设置工具

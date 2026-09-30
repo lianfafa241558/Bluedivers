@@ -1,13 +1,13 @@
-using System.Collections.Generic;
-using FpsGame.Mission;
+﻿using System.Collections.Generic;
+using FPSGame.Mission;
 using FPSGame.AI;
-using Unity.FPS.Game;
-using Unity.FPS.Gameplay;
+using FPSGame.Game;
+using FPSGame.Gameplay;
 using UnityEditor;
 using UnityEngine;
 
 
-namespace Unity.FPS.EditorExt
+namespace FPSGame.EditorExt
 {
     /// <summary>
     /// 分析器

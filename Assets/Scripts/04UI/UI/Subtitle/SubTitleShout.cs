@@ -1,11 +1,22 @@
-using Core;
-using GameContract;
-using Unity.FPS.Game;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.GameContract;
+using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils;
-using static WndTools.WndRootTool;
+using FPSGame.Utils;
+using FPSGame.Audio;
 
+namespace FPSGame.UI
+{
+using static FPSGame.WndTools.WndRootTool;
+using FPSGame.Data;
+    using FPSGame.Gameplay;
+
+    /// <summary>
+    /// 单位喊话字幕。
+    /// </summary>
+    [AddComponentMenu("UI/字幕/喊话")]
 public class SubTitleShout : SubtitleBase
 {
     private Vector2 baseVector;
@@ -114,4 +125,5 @@ public class SubTitleShout : SubtitleBase
         //mainCamera = Camera.main;
         transform.GetRect().anchoredPosition = baseVector;
     }
+}
 }

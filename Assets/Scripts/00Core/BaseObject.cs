@@ -1,7 +1,7 @@
-using Core.Interface;
-using FPSGame.Attribute;
+using FPSGame.Core.Interface;
+using FPSGame.Attributes;
 using UnityEngine;
-namespace Core
+namespace FPSGame.Core
 {
     public class BaseObject : BaseMono, I_Entity
     {

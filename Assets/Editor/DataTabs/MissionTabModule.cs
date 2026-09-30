@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Game;
+using FPSGame.GameContract;
+
+namespace FPSGame.EditorExt
+{
 
 public sealed class MissionTabModule : DataTabModule<MissionData_SO>
 {
@@ -108,4 +113,5 @@ public sealed class MissionTabModule : DataTabModule<MissionData_SO>
             };
         }
     }
+}
 }

@@ -1,4 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
+
+namespace FPSGame.DayNightSystem
+{
 
 
 /// <summary>
@@ -117,4 +120,5 @@ public static class WeatherAtmosphereController
         SkyDustColor = Color.Lerp(SkyDustColor, TargetSkyDustColor, t);
         FogHeightAdd = Mathf.Lerp(FogHeightAdd, TargetFogHeightAdd, t);
     }
+}
 }

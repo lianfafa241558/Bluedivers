@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Data;
+
+namespace FPSGame.EditorExt
+{
 
 [CustomPropertyDrawer(typeof(SoundItem))]
 public class SoundItemDrawer : PropertyDrawer
@@ -40,4 +44,5 @@ public class SoundItemDrawer : PropertyDrawer
     {
         return EditorGUIUtility.singleLineHeight;
     }*/
+}
 }

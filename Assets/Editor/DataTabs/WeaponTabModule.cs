@@ -1,10 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.FPS.Game;
+using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+
+namespace FPSGame.EditorExt
+{
 
 public sealed class WeaponTabModule : DataTabModule<GameObject>
 {
@@ -90,4 +93,5 @@ public sealed class WeaponTabModule : DataTabModule<GameObject>
     /// <summary>获取预制体上挂载的 WeaponPlayerController 组件</summary>
     private static WeaponPlayerController GetWeapon(GameObject prefab)
         => prefab.GetComponentInChildren<WeaponPlayerController>();
+}
 }

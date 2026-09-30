@@ -1,9 +1,17 @@
 using System.Collections.Generic;
-using Core;
-using Core.Interface;
-using FpsGame.Mission;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.Gameplay;
+using FPSGame.Mission;
 using UnityEngine;
 
+namespace FPSGame.UI
+{
+
+/// <summary>
+/// 任务 HUD 列表窗口。
+/// </summary>
+[AddComponentMenu("UI/窗口/任务列表")]
 public class MissionWnd : Window
 {
 
@@ -132,9 +140,9 @@ public class MissionWnd : Window
         if (m_ObjectivesDictionnary.TryGetValue(mission, out MissionHUDItem toast))
         {
             //隐藏的优先级最高
-            state |= (mission.HasTag(GameContract.MissionTag.StratDiscovered)&& mission.missionType== MissionType.Main);
-            state &= !mission.HasTag(GameContract.MissionTag.hideSelf);
-            state &= !mission.HasTag(GameContract.MissionTag.hideAll);
+            state |= (mission.HasTag(FPSGame.GameContract.MissionTag.StratDiscovered)&& mission.missionType== MissionType.Main);
+            state &= !mission.HasTag(FPSGame.GameContract.MissionTag.hideSelf);
+            state &= !mission.HasTag(FPSGame.GameContract.MissionTag.hideAll);
             toast.StateChange(state);
         }
     }
@@ -194,4 +202,5 @@ public class MissionWnd : Window
         }
         
     }
+}
 }
