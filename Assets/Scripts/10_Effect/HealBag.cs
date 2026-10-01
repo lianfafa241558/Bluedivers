@@ -1,4 +1,4 @@
-﻿using FPSGame.Furn;
+﻿using FPSGame.Gameplay;
 using FPSGame.GameContract;
 using FPSGame.Game;
 using UnityEngine;

@@ -1,18 +1,11 @@
-﻿// 由 AirdropController（01Manager/Battle）解嵌套下沉而来（2026-10-01，P5-3）。
+// 由 AirdropController（01Manager/Battle）解嵌套下沉而来（2026-10-01，P5-3）。
 // 下沉理由：AirdropController 属 09_Managers，而玩法层（Mission/Player/AI/Interactable…）到处用这两个类型
 // ⇒ 不搬出来玩法层无法成集。**放玩法层而不是契约层**：AirdropData 依赖 `AirdropData_SO`（04_Data），
 // 而 04_Data 引用了 01_GameContract ⇒ 契约不能反过来引 04_Data（成环）。
 // ⚠ 不要再把它们塞回 AirdropController；`AirdropController.WaitRelease` 仍在原处（管理器侧运行时状态）。
-//
-// using 原样照搬 AirdropController.cs 的头部（抽取时只搬了类体；`InspectorName` 需要 UnityEngine、
-// `I_Actor` 需要 FPSGame.GameContract，缺一个就 CS0246）。
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using FPSGame.Core;
 using FPSGame.GameContract;
-using FPSGame.Game;
 using UnityEngine;
 using FPSGame.Data;
 
@@ -101,7 +94,7 @@ public class AirdropData {
     /// deathEnable 战备：dead 时也可用（活着时正常可用）；
     /// 普通战备：dead 时不可用，非 dead 时可用。
     /// </summary>
-    public bool IsCurrentlyAvailable(I_Actor player)
+    public bool IsCurrentlyAvailable(IActor player)
     {
         if (State == AirdropState.Unavailable)
             return false;
@@ -117,7 +110,7 @@ public class AirdropData {
     /// 是否仅因死亡状态而不可用（授权和 State 都 OK，只是死亡且没有 deathEnable）。
     /// 用于 UI 判断：授权不满足时隐藏，死亡不可用时虚化显示。
     /// </summary>
-    public bool IsOnlyDeathMismatch(I_Actor player)
+    public bool IsOnlyDeathMismatch(IActor player)
     {
         if (State == AirdropState.Unavailable)
             return false;

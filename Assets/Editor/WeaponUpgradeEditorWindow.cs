@@ -8,6 +8,8 @@ using UnityEditorInternal;
 using UnityEditor;
 using UnityEngine;
 using FPSGame.EditorExt;
+using FPSGame.GameData;
+using FPSGame.Weapon;
 
 namespace FPSGame.Game.Editor
 {

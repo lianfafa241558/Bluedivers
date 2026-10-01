@@ -19,15 +19,16 @@ namespace FPSGame.GameContract
     /// 并把 <see cref="Scanner"/> 设成"重新扫描场景里全部窗口（含未激活）"的委托 —— 这样
     /// **窗口从未被打开过也能被打开**（窗口平时是关着的，`Awake`/`Init` 可能还没跑）。</para>
     ///
-    /// <para>▍退出条件：等 `10_UI` 成集且改为显式装配后，本类应被删除（与 <see cref="ServiceLocator"/> 同命）。</para>
+    /// <para>▍退出条件：等 `10_UI` 成集且改为显式装配后，本类应被删除。
+    /// （⚠ 别再拿 <see cref="BattleHub"/> 当"同命参照"—— 它是"需要返回值/回调"的战斗能力接缝，属**合理保留**、不是过渡物。）</para>
     /// </summary>
     public static class WindowRegistry
     {
         /// <summary>(窗口, 是否打开) → 是否命中；未命中返回 false（调用方静默跳过）。</summary>
-        public static Func<WndTypeEnum, bool, bool> SetWndState { get; internal set; }
+        public static Func<WndType, bool, bool> SetWndState { get; internal set; }
 
         /// <summary>(窗口) → 是否已打开；未登记返回 false。</summary>
-        public static Func<WndTypeEnum, bool> IsOpen { get; internal set; }
+        public static Func<WndType, bool> IsOpen { get; internal set; }
 
         /// <summary>(角色, 语音组, 持续条件, 有效时长) → 弹一条 NPC 提示。</summary>
         public static Action<string, string, Func<bool>, float> CreatNotice { get; internal set; }
@@ -55,14 +56,14 @@ namespace FPSGame.GameContract
         }
 
         /// <summary>按枚举开关窗口。命中返回 true；未登记（或 UI 尚未就绪）返回 false。</summary>
-        public static bool SetState(WndTypeEnum type, bool isActive)
+        public static bool SetState(WndType type, bool isActive)
         {
             EnsureScanned();
             return SetWndState != null && SetWndState(type, isActive);
         }
 
         /// <summary>窗口是否已打开。</summary>
-        public static bool GetOpen(WndTypeEnum type)
+        public static bool GetOpen(WndType type)
         {
             EnsureScanned();
             return IsOpen != null && IsOpen(type);

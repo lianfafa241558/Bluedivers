@@ -1,27 +1,28 @@
-﻿using FPSGame.Core.Interface;
+using FPSGame.Core.Interface;
 using UnityEngine;
+using FPSGame.GameContract;
 
-namespace FPSGame.GameContract
+namespace FPSGame.Gameplay
 {
     [System.Serializable]
     public class TargetData
     {
         [SerializeField] private Vector3 pos;
-        private I_Actor actor;
+        private IActor actor;
 #if UNITY_EDITOR
         [SerializeField] private GameObject show;
 #endif
         //public Vector3 Pos => actor != null && !ReferenceEquals(actor, null) && !actor.Equals(null) ? actor.CenterPos : pos;
         public Vector3 Pos => actor == null ? pos : (actor.CenterPos == default ? pos : actor.CenterPos);
 
-        public I_Actor Actor => actor;
+        public IActor Actor => actor;
 
         public TargetData()
         {
             pos = Vector3.zero;
             actor = null;
         }
-        public void Set(I_Actor entity)
+        public void Set(IActor entity)
         {
             this.actor = entity;
             pos = entity.IsValidMono() ? entity.CenterPos : default;

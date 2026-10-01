@@ -10,7 +10,7 @@ namespace FPSGame.Audio
 /// <summary>
 /// 全局音频播放与音乐管理。
 /// </summary>
-[AddComponentMenu("管理/音频服务")]
+
 public class AudioSvc : AudioManagerBase<AudioSvc>
 {
     static Dictionary<MusicGroup, List<AudioClip>> musicDic;
@@ -100,12 +100,6 @@ public class AudioSvc : AudioManagerBase<AudioSvc>
     /// </summary>
     public static System.Func<string, bool, AudioClip> ClipLoader;
 
-    /// <summary>
-    /// 定时器请求：由上层 AudioEventBridge 注入 <c>GameRoot.CreateTimer</c>（签名与它一致）。
-    /// 同样是为避免 03_Audio 反向依赖 GameRoot 所在的 01Manager。
-    /// </summary>
-    public static System.Func<System.Action, float, int, LogicTimer> TimerRequest;
-
     protected override AudioClip PathToCilp(string path,bool cache)
     {
         return ClipLoader != null ? ClipLoader(path, cache) : null;
@@ -125,16 +119,16 @@ public class AudioSvc : AudioManagerBase<AudioSvc>
 
     public static void Suppressed(float time)
     {
-        //⚠ 计时改走 TimerRequest（由上层注入 GameRoot.CreateTimer），语义与原实现完全一致：
-        //   0.05s 一跳 ×20 把音乐压低；等待 time 秒后再跳 1 次恢复（counter 默认值即 1，这里显式传）。
-        TimerRequest?.Invoke(() => {
+        //⚠ 计时改走 00_Core 的宿主入口（2026-10-01 收编原 `AudioSvc.TimerRequest` 委托字段 + AudioEventBridge 注入）：
+        //   语义与原实现完全一致——0.05s 一跳 ×20 把音乐压低；等待 time 秒后再跳 1 次恢复。
+        FPSGame.Core.TimerHost.CreateTimer(() => {
             float nowValue;
             Instance.audioMixer.GetFloat("vMusic", out nowValue);
             Instance.audioMixer.SetFloat("vMusic", Mathf.Lerp(nowValue, PetToDB(Instance.musicVolume / 2), 0.05f));
         }, 0.05f, 20);
 
-        TimerRequest?.Invoke(() => {
-            TimerRequest?.Invoke(() => {
+        FPSGame.Core.TimerHost.CreateTimer(() => {
+            FPSGame.Core.TimerHost.CreateTimer(() => {
                 float nowValue;
                 Instance.audioMixer.GetFloat("vMusic", out nowValue);
                 Instance.audioMixer.SetFloat("vMusic", Mathf.Lerp(nowValue, PetToDB(Instance.musicVolume), 0.05f));

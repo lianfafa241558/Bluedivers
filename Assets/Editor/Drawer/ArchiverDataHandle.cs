@@ -1,12 +1,10 @@
-﻿using FPSGame.Game;
-using static FPSGame.Game.ArchivesData_SO;
 
 namespace FPSGame.EditorExt
 {
-
+    using static GameData.ArchivesData_SO;
 
 #if UNITY_EDITOR
-using UnityEngine;
+    using UnityEngine;
 using UnityEditor;
 #endif
 

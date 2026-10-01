@@ -3,7 +3,7 @@ using FPSGame.Core;
 using PEMaths;
 using UnityEngine;
 
-namespace FPSGame.Game
+namespace FPSGame.Gameplay
 {
     /// <summary>
     /// 伤害配置接口(FpsHelper.Hit 通过此接口统一处理完整/持续两种伤害配置)

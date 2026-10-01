@@ -33954,7 +33954,6 @@ GameObject:
   - component: {fileID: 5418302881167423055}
   - component: {fileID: 3612785656028530490}
   - component: {fileID: 374169102169105707}
-  - component: {fileID: -1772095017738993164}
   m_Layer: 9
   m_Name: Magic shield
   m_TagString: Untagged
@@ -38998,8 +38997,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -39020,7 +39019,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 50
   MaxShield: 1000
+  showArmorLists: []
   MainPart: {fileID: 3612785656028530490}
+  demolishValue: -1
+  AutoDestroy: 1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -39035,19 +39037,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: b6fc843a6aa2626478dde440f9365756, type: 3}
   - {fileID: 8300000, guid: d50ac343b89226e4eadf988744b386a1, type: 3}
   - {fileID: 8300000, guid: 70e5fc20996e4e54493f5b9350dc58d7, type: 3}
-  showShield: 0
---- !u!114 &-1772095017738993164
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1289543790355709915}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56ebc98c18b6ae14db1083cc145d9aa0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &5419115395095439025
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,6 +6,7 @@ using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
 using FPSGame.GameContract;
+using FPSGame.Weapon;
 
 namespace FPSGame.EditorExt
 {

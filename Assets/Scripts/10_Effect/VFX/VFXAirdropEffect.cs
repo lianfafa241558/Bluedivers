@@ -1,4 +1,4 @@
-﻿using FPSGame.Game;
+using FPSGame.Game;
 using UnityEngine;
 using System.Collections.Generic;
 using FPSGame.Gameplay;
@@ -11,6 +11,7 @@ using FPSGame.Data;
 using FPSGame.Managers;
 using FPSGame.Audio;
 using FPSGame.AI;
+using FPSGame.Weapon;
 
 namespace FPSGame.Effect
 {
@@ -251,8 +252,8 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
                     }
                     if (m_creatObject.TryGetComponentInChildren(out Actor actor))
                     {
-                        actor.Team = m_owner.GetComponent<I_Actor>().Team;
-                        actor.Owner = m_owner.GetComponent<I_Actor>();
+                        actor.Team = m_owner.GetComponent<IActor>().Team;
+                        actor.Owner = m_owner.GetComponent<IActor>();
                     }
                 }
 
@@ -328,8 +329,8 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
             }
             if (go.TryGetComponentInChildren(out Actor actor))
             {
-                actor.Team = m_owner.GetComponent<I_Actor>().Team;
-                actor.Owner = m_owner.GetComponent<I_Actor>();
+                actor.Team = m_owner.GetComponent<IActor>().Team;
+                actor.Owner = m_owner.GetComponent<IActor>();
             }
         }
         else
@@ -434,7 +435,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         Quaternion rotation = transform.rotation;
         var go = VFXManager.Creat(neoNimbusVehicle, transform.position, rotation, null).transform;
         //TODO:单位暂时还不能回收
-        if (data.cfg.creatObect.GetComponent<I_Actor>().IsValidMono())
+        if (data.cfg.creatObect.GetComponent<IActor>().IsValidMono())
         {
             var comp = data.cfg.creatObect.GetComponent<CharacterController>();
             m_creatObject = Instantiate(data.cfg.creatObect, go.TransformPoint(0, -2.5f + comp.center.y - comp.height, 1.5f), rotation, go).transform;

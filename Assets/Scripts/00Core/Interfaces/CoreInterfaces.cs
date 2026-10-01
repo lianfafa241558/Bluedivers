@@ -1,4 +1,4 @@
-﻿using PEMaths;
+using PEMaths;
 using UnityEngine;
 
 namespace FPSGame.Core.Interface
@@ -15,7 +15,7 @@ namespace FPSGame.Core.Interface
         void UnInit();
     }
 
-    public interface I_Entity: IMonoVaild
+    public interface IEntity: IMonoVaild
     {
         public string ShowName { get; set; }
         public string Id { get; set; }

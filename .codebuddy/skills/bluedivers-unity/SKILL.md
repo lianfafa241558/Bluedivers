@@ -7,7 +7,7 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 
 ## 项目环境
 
-- **Unity**: 2022.3.62f2c1（2022 LTS），C# 9.0 / .NET Standard 2.1
+- **Unity**: 2022.3.62f3（2022 LTS；以 `ProjectSettings/ProjectVersion.txt` 为准，本机在 `D:\UnityHub\Editor\2022.3.62f3`），C# 9.0 / .NET Standard 2.1
 - **渲染管线**: URP 14.0.12
 - **网络**: Photon PUN 为旧方案（已弃用）；KCPNet 自研网络库尚未完成，当前为**单机版 demo**，暂不做联机
 - **关键依赖**: TextMeshPro 3.0.9、Navigation 1.1.6、Timeline 1.7.7、ugui
@@ -148,6 +148,21 @@ Inspector 字段暴露示例：
 4. 注意：`DecoratorDrawer` 绘制在字段**上方**且不隐藏字段本体；`PropertyDrawer` 会完全接管字段绘制（OnGUI 不画字段则字段不可见）。
 
 
+## 编译验证（⭐ 离线编译，不打断 Unity）
+
+改完 C# **不要**让 AI 触发 `AssetDatabase.Refresh` / `ImportAsset` / `RequestScriptCompilation`（会重生成 `.csproj`/`.sln`、强制 VS 重载，并与外部编辑器缓冲区赛跑 ⇒ 可能静默覆盖改动）。**改用离线编译**：
+
+```bash
+python -X utf8 .codebuddy/plans/offline_compile.py 06_Gameplay 10_UI 09_Managers
+```
+
+- **原理**：借 Unity 自带 Roslyn（`<UnityEditor>/Data/DotNetSdkRoslyn/csc.dll` + `NetCoreRuntime/dotnet.exe`）按 **Unity 生成的 `.csproj`** 编译，约 **0.5s/程序集**，输出只落 `Temp/offline_compile/`，**完全不碰运行中的编辑器**（无需 Unity 交互、无域重载）。
+- 必须**按依赖顺序**传程序集名（下层在前，如 `00_Core 01_GameContract ... 06_Gameplay 09_Managers 10_UI`）；兄弟程序集引用取 `Temp/offline_compile/<Name>.dll`（本轮新产物）优先，否则退回 `Library/ScriptAssemblies/`。
+- ⚠ **连坐假象**：某程序集编译失败 ⇒ csc **不写 dll** ⇒ 下游会误报「命名空间 `X` 不存在」；**先修最上游报错的那个**再看下游。
+- 全量校验：`python -X utf8 .codebuddy/plans/list_asmdefs.py` 列全部活跃 asmdef，逐个编译即得「整个程序集图 0 错误」。
+- 本机 Unity 在 `D:\UnityHub\Editor\2022.3.62f3`（脚本内已内置）；换机用 `plans/find_unity.py` / `env_probe.py` 重新定位（本机**无 .NET SDK**，`dotnet build` 不可用）。
+- **搬命名空间 / 补 using**：`python -X utf8 .codebuddy/plans/ns_move.py <moves.json> --no-self --apply`（自动同步 `using` 并修 `using static <oldNs>.<Type>`）。⚠ 它**管不了**「全限定代码引用 `OldNs.Type`」，且自省补 using 会误判 ⇒ **一律用离线编译报错兜底**（`plans/add_usings.py` 按报错补，循环 <1s）。
+
 ## 网络层（暂不做联机）
 
 > 当前为**单机版 demo**，暂不做联机。Photon PUN 已弃用，KCPNet 自研网络库尚未完成。目标网络架构：轻服务器（仅房间列表）+ 本地存储。
@@ -187,6 +202,7 @@ Inspector 字段暴露示例：
 - **接口命名不统一**：历史代码中少量接口使用标准 `I_` 前缀，新接口必须使用 `I` 前缀。
 - **字段暴露方式不统一**：存量 `public` 字段较多，新代码优先 `[SerializeField] private`，存量逐步迁移。
 - **枚举后缀不统一**：部分枚举带 `Enum` 后缀（`GameStateEnum`），新代码加后缀。
+- **AI 状态机三个已踩过的坑**（`EnemyMobile`，速查见 `references/module-guide.md`）：① `OnDetectedTarget` 在 Follow/Attack 状态下**不要**重置 `m_TimeStartedDetection`——开火延迟(`detectionFireDelay`)会反复重算 ⇒ `mustStop` 分支跳过开火 ⇒ 武器卡在 `InShoots` 结束不了（表现"开火被打断 / 等换弹完才开火"）；② `AttackStop` 站桩判定必须用 `IsFiringNow`（只含蓄力/激光/射击中，**不含** `CanShoot`），否则进入射程后恒为 true，炮塔永久冻结转不过去；③ `Return` 迁移里**先判"是否已回到原点"、再判"停留时间到没到"**（顺序反了该条件恒真 ⇒ 单位永久卡 Return）。另两条约定：距离判定一律"水平距离 − 目标 `HalfRange`"（否则大型单位被身高抬高距离、一直冲脚下）；速度类状态用 `ModifierType.Extra` 差量修饰（进入 `(目标速度 − FinalValue)`、退出取反移除）。
 - **Unity `Debug` 类没有 `DrawWireSphere`**：运行时调试画线框球**必须用** `Tool.DrawWireSphere(pos, size, color, time)`（`00Tools/Test/Tool.cs`，内部走 Editor 的 `DrawLabelUtils`，已用 `#if UNITY_EDITOR` 保护）。`Debug` 只有 `DrawLine`/`DrawRay`。误用 `Debug.DrawWireSphere` 会导致编译失败。
 - **自定义 Inspector 特性的数组兼容**：`PropertyDrawer` 型特性加在数组/List 字段上时，Unity 只会把它作用到**每个元素**（路径含 `.Array.data[`），数组头部拿不到绘制回调。所以：
   - **纯装饰类特性（分割线/标题等，不读属性上下文）必须用 `DecoratorDrawer`**（`[Header]`/`[Space]` 同款机制），数组头部/嵌套类/任意 Inspector 自动生效。项目现有例子：`DividerDrawer`（`Assets/Editor/Drawer/CustomLabelDrawer.cs`）。
@@ -212,6 +228,7 @@ Inspector 字段暴露示例：
 | `TickBehaviour` / `I_TickClass` | `00Core/Timer/` | 自定义 Tick 系统 |
 | `LogicTimerSystem` / `ViewTimerSystem` | `00Core/Timer/` | 双层定时器（固定逻辑帧 20ms + 表现帧） |
 | `FsmSystem` / `IState<T>` | `00Core/` | 泛型状态机框架 |
+| AI 状态机框架 | `06Gameplay/AI/StateMachine/` | `StateMachineCore<T>` 内核 + `AIInputBaseController<T>`（状态表 / 迁移 / 守卫，注册 `OnDetected*` / `OnLostTarget` / `OnDamaged` / `OnDie`）+ `AIInputUnitController<T>`（多 `turrets` 炮塔瞄准）；单位实现 `EnemyMobile.cs`（**类顶 XML summary = 权威逻辑说明**）+ `EnemyMobile_AboState.cs`，另有 `EnemyTurret` / `SimpleTurret` / `GuardDog` / `EnemyNestBuild` / `SpecUnitKei`。速查见 `references/module-guide.md` |
 | `CustomAttribute` | `00Core/Attribute/` | 项目自定义特性 |
 | `LogicBehaviour` / `I_Login` | `00Tools/` | 固定逻辑帧基类（帧同步基础） |
 | `SingletonNet` / `NetManager` | `00Tools/` → `01Manager/Global/` | 网络单例 + 逻辑帧驱动（当前单机版，暂不联机） |

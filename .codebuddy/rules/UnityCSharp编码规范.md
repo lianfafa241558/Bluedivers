@@ -13,7 +13,7 @@ provider:
 > - **【推荐】**：代码应当遵循，特殊情况下可例外并注明原因
 > - **【可选】**：可参考，按具体情况决定是否采用
 >
-> 项目环境：Unity **2022.3.62f2c1**（2022 LTS），URP **14.0.12**，C# 9.0 / .NET Standard 2.1，使用 Photon PUN、TextMeshPro、Navigation。
+> 项目环境：Unity **2022.3.62f3**（2022 LTS；以 `ProjectSettings/ProjectVersion.txt` 为准），URP **14.0.12**，C# 9.0 / .NET Standard 2.1，使用 Photon PUN、TextMeshPro、Navigation。
 
 ---
 

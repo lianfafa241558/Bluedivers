@@ -5,6 +5,8 @@ using UnityEngine.Experimental.GlobalIllumination;
 using FPSGame.Utils;
 using FPSGame.Data;
 using FPSGame.Gameplay;
+using FPSGame.GameData;
+using FPSGame.Weapon;
 
 namespace FPSGame.Effect
 {

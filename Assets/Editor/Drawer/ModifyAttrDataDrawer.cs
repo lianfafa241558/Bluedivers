@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.Weapon;
 
 namespace FPSGame.Game
 {

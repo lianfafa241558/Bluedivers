@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
-namespace FPSGame.GameContract
+namespace FPSGame.Gameplay
 {
     public interface IVehicleUIController
     {

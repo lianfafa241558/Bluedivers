@@ -1,0 +1,445 @@
+using System;
+using FPSGame.Core;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
+
+namespace FPSGame.WndTools
+{
+    public static class WndRootTool
+    {
+
+        private static ViewTimerController viewTimer;
+        static WndRootTool()
+        {
+            if (Application.isPlaying && GameObject.Find("GameRoot"))
+            {
+                viewTimer = GameObject.Find("GameRoot").GetComponent<ViewTimerController>();
+            }
+        }
+
+
+        public static RectTransform RectTransform(this Transform transform) => transform.GetComponent<RectTransform>();
+
+        //设置窗口UI的激活状态
+        public static bool SetActive(GameObject go, bool state = true)
+        {
+            go.SetActive(state);
+            return state;
+        }
+        public static bool SetActive(MonoBehaviour go, bool state = true)
+        {
+            go.gameObject.SetActive(state);
+            return state;
+        }
+        public static bool SetActive(Transform trans, bool state = true)
+        {
+            trans.gameObject.SetActive(state);
+            return state;
+        }
+
+
+        //设置窗口UI的激活状态
+        public static bool SetActive(bool state, params Component[] trans)
+        {
+            foreach (var obj in trans)
+            {
+                if(obj)obj.gameObject.SetActive(state);
+            }
+            return state;
+        }
+
+
+        public static bool GetActive(GameObject go) => go.activeInHierarchy;
+        public static bool GetActive(MonoBehaviour go) => go.gameObject.activeInHierarchy;
+        public static bool GetActive(Transform trans) => trans.gameObject.activeInHierarchy;
+
+
+        //获取组件
+        public static Transform GetTrans(Transform trans, string name) => trans.Find(name);
+
+        public static Image GetImage(Transform trans, string path) => trans.Find(path).GetComponent<Image>();
+
+        public static Image GetImage(Transform trans) => trans.GetComponent<Image>();
+
+        public static string GetText(Transform trans)
+        {
+            if (trans.TryGetComponent(out TMPro.TextMeshProUGUI tmpu)) return tmpu.text;
+            if (trans.TryGetComponent(out TMPro.TextMeshPro tmp)) return tmp.text;
+            if (trans.TryGetComponent(out Text text)) return text.text;
+            return default;
+        }
+
+        public static float GetFill(Transform trans)
+        {
+            return trans.gameObject.GetComponent<Image>().fillAmount;
+        }
+        public static void SetFill(Transform trans, float value)
+        {
+            trans.gameObject.GetComponent<Image>().fillAmount = value;
+        }
+        public static void SetFill(Transform trans, float value, float speed)
+        {
+            var image = trans.gameObject.GetComponent<Image>();
+            image.fillAmount = Mathf.Lerp(image.fillAmount, value, speed);
+        }
+
+        public static Sprite GetSprite(Transform trans)
+        {
+            return trans.GetComponent<Image>().sprite;
+        }
+
+        public static void CopySprite(Transform from, Transform to)
+        {
+            Image formI = from.GetComponent<Image>();
+            Image toI = to.GetComponent<Image>();
+            toI.sprite = formI.sprite;
+            toI.color = formI.color;
+            if (to.TryGetComponent(out LinkColor linkComp))
+            {
+                var color = formI.color + (linkComp.overlay - new Color(0.5f, 0.5f, 0.5f, 0.5f));
+                linkComp.link.ForEach(item => item.color = color);
+            }
+        }
+
+        public static void SetSprite(Transform trans, Sprite path)
+        {
+            GetOrAddComponent<Image>(trans.gameObject).sprite = path;
+        }
+
+        public static void SetSprite(Image image, Sprite path)
+        {
+            if (image.sprite != path) image.sprite = path;
+        }
+
+        public static void SetSizeDelta(Transform trans, float width, float height)
+        {
+            ((RectTransform)trans).sizeDelta = new(width, height);
+        }
+        public static Vector2 GetSizeDelta(Transform trans)
+        {
+            return ((RectTransform)trans).sizeDelta;
+        }
+
+        public static void SetSizeDelta(Transform trans, int startX, int startY, int targetX, int targetY, int timeMs)
+        {
+            viewTimer.CreateTimer((count) => SetSizeDelta(trans, (int)Mathf.Lerp(startX, targetX, count * 20f / timeMs), (int)Mathf.Lerp(startY, targetY, count * 20f / timeMs)), 0.02f, timeMs / 20, 
+                () => {
+                    SetSizeDelta(trans, targetX, targetY);
+                });
+        }
+
+        //private static System.Text.StringBuilder sb = new(8);
+
+        public static void SetText(Transform trans, int num = 0)
+        {
+            //此处导致的GC无解
+            SetText(trans, num.ToString());
+        }
+        public static void SetText(Transform trans, string context = "")
+        {
+            if (trans==null) return;
+            if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu))
+            {
+                tmpu.text = context;
+                return;
+            }
+            if (trans.TryGetComponent<TMPro.TextMeshPro>(out var tmp))
+            {
+                tmp.text = context;
+                return;
+            }
+            if (trans.TryGetComponent<Text>(out var text))
+            {
+                text.text = context;
+                return;
+            }
+        }
+
+
+
+        public static T GetOrAddComponent<T>(GameObject go) where T : Component
+        {
+            T t = go.GetComponent<T>();
+            if (t == null)
+            {
+                t = go.AddComponent<T>();
+            }
+            return t;
+        }
+
+        /// <summary>
+        /// 立即刷新布局
+        /// </summary>
+        public static void RefreshLayoutImmediate(Transform transform)
+        {
+            if (!transform) return;
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(transform as RectTransform);
+            /*
+            if(transform.TryGetComponent(out LayoutElement le))
+            {
+                le.preferredHeight= LayoutUtility.GetPreferredHeight(transform as RectTransform);
+            }*/
+        }
+        /// <summary>
+        /// 统一标记，下一帧刷新布局
+        /// </summary>
+        public static void RefreshLayout(Transform transform)
+        {
+            if (!transform) return;
+            LayoutRebuilder.MarkLayoutForRebuild(transform.RectTransform());
+        }
+        /// <summary>
+        /// 刷新自身并向上递归刷新
+        /// </summary>
+        /// <param name="rt"></param>
+        public static void RefreshContentSizeFitter(Transform rt)
+        {
+            while (rt != null)
+            {
+                LayoutRebuilder.MarkLayoutForRebuild(rt as RectTransform);
+                /*
+                if (rt.parent.TryGetComponent(out LayoutElement le))
+                {
+                    le.preferredHeight = LayoutUtility.GetPreferredHeight(rt as RectTransform);
+                }*/
+                // 无布局组件也安全，内部自动跳过
+                rt = rt.parent as RectTransform;
+            }
+        }
+
+        public static void SetToggle(Transform tran, bool state)
+        {
+            tran.GetComponent<Toggle>().isOn = state;
+        }
+        public static Color GetColor(Transform trans)
+        {
+            if (trans == null) return Color.black;
+            if (trans.TryGetComponent<Image>(out var image))
+            {
+                
+                return image.color;
+            }
+            if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu))
+            {
+                
+                return tmpu.color;
+            }
+
+            if (trans.TryGetComponent<TMPro.TextMeshPro>(out var tmp))
+            {
+                
+                return tmp.color ;
+            }
+
+            if (trans.TryGetComponent<Text>(out var text))
+            {
+                
+                return text.color;
+            }
+            return Color.black;
+        }
+        public static void SetColor(Transform trans, Color color)
+        {
+            if (trans==null) return;
+            if (trans.TryGetComponent<LinkColor>(out var linkComp))
+            {
+
+                var color2 = color + (linkComp.overlay - new Color(0.5f, 0.5f, 0.5f, 0.5f));
+                linkComp.link.ForEach(item => item.color = color2);
+            }
+
+            if (trans.TryGetComponent<Image>(out var image))
+            {
+                image.color = color;
+                return;
+            }
+            if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu))
+            {
+                tmpu.color = color;
+                return;
+            }
+
+            if (trans.TryGetComponent<Text>(out var text))
+            {
+                text.color = color;
+                return;
+            }
+            if (trans.TryGetComponent<TMPro.TextMeshPro>(out var tmp))
+            {
+                tmp.color = color;
+                return;
+            }
+
+
+        }
+
+        public static void CopyColor(Transform from, Transform to)
+        {
+            Image formI = from.GetComponent<Image>();
+            Image toI = to.GetComponent<Image>();
+            toI.color = formI.color;
+            if (to.TryGetComponent<LinkColor>(out var linkComp))
+            {
+
+                var color = formI.color + (linkComp.overlay - new Color(0.5f, 0.5f, 0.5f, 0.5f));
+                linkComp.link.ForEach(item => item.color = color);
+            }
+        }
+        public static bool SetAlpha(Transform trans, float start, float target, int timeMs,Action action=null)
+        {
+            if (trans.TryGetComponent<CanvasGroup>(out var group)) return SetAlpha(group, start, target, timeMs, action);
+            else if (trans.TryGetComponent<Image>(out var image)) return SetAlpha(image, start, target, timeMs, action);
+            else if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu)) return SetAlpha(tmpu, start, target, timeMs, action);
+
+            SetAlpha(trans, start);
+            viewTimer.CreateTimer((count) => SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => {
+                SetAlpha(trans, target);
+                action?.Invoke();
+            });
+            return true;
+        }
+
+        public static bool SetAlpha(Image trans, float start, float target, int timeMs, Action action = null)
+        {
+            SetAlpha(trans, start);
+            viewTimer.CreateTimer((count) => SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => {
+                SetAlpha(trans, target);
+                action?.Invoke();
+            });
+            return true;
+        }
+        public static bool SetAlpha(CanvasGroup trans, float start, float target, int timeMs, Action action = null)
+        {
+            //Debug.LogError("检查 "+ trans+"设置 "+ start);
+            SetAlpha(trans, start);
+            viewTimer.CreateTimer((count) => {
+                SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs));
+                //Debug.LogError("变为"+ Mathf.Lerp(start, target, count * 20f / timeMs));
+            }, 0.02f, timeMs / 20, () => {
+                SetAlpha(trans, target);
+                //Debug.LogError(trans + "完成设置");
+                action?.Invoke();
+            });
+            return true;
+        }
+
+        public static bool SetAlpha(TMPro.TextMeshProUGUI trans, float start, float target, int timeMs, Action action = null)
+        {
+            SetAlpha(trans, start);
+            viewTimer.CreateTimer((count) => SetAlpha(trans, Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => {
+                SetAlpha(trans, target);
+                action?.Invoke();
+            });
+            return true;
+        }
+
+
+
+        public static void SetText(Transform trans, int start, int target, int timeMs)
+        {
+            SetText(trans, start);
+            viewTimer.CreateTimer((count) => SetText(trans, (int)Mathf.Lerp(start, target, count * 20f / timeMs)), 0.02f, timeMs / 20, () => SetText(trans, target));
+        }
+
+        public static void SetActive(GameObject go, bool state, int timeMs)
+        {
+            viewTimer.CreateTimer(()=>go.SetActive(state), timeMs/1000f);
+
+        }
+        public static void SetActive(MonoBehaviour go, bool state, int timeMs)
+        {
+            viewTimer.CreateTimer(() => go.gameObject.SetActive(state), timeMs / 1000f);
+
+        }
+        public static void SetActive(Transform trans, bool state, int timeMs)
+        {
+            viewTimer.CreateTimer(() => trans.gameObject.SetActive(state), timeMs / 1000f);
+        }
+
+        public static void SetAlpha(Transform trans, float value)
+        {
+            if (trans==null) return;
+            if (trans.TryGetComponent<LinkColor>(out var linkComp))
+            {
+                var color2 = value + (linkComp.overlay.a - 0.5f);
+                linkComp.link.ForEach(item => item.color = new(item.color.r, item.color.g, item.color.b, color2));
+            }
+            if (trans.TryGetComponent<CanvasGroup>(out var group)) SetAlpha(group, value);
+            else if (trans.TryGetComponent<Image>(out var image)) SetAlpha(image, value);
+            else if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu)) SetAlpha(tmpu, value);
+            else if (trans.TryGetComponent<TMPro.TextMeshPro>(out var tmp)) tmp.color = new(tmp.color.r, tmp.color.g, tmp.color.b, value);
+
+        }
+
+        public static void SetAlpha(CanvasGroup group, float value)
+        {
+            if (group != null) group.alpha = value;
+
+        }
+        public static void SetAlpha(Image image, float value)
+        {
+            if (image != null) image.color = new(image.color.r, image.color.g, image.color.b, value);
+            
+        }
+        public static void SetAlpha(TMPro.TextMeshProUGUI tmpu, float value)
+        {
+            if (tmpu == null) return;
+            tmpu.color = new(tmpu.color.r, tmpu.color.g, tmpu.color.b, value);
+        }
+
+
+        public static float GetAlpha(Transform trans)
+        {
+            if (trans.TryGetComponent<CanvasGroup>(out var group))
+            {
+                return group.alpha;
+            }
+
+            if (trans.TryGetComponent<Image>(out var image))
+            {
+                return image.color.a;
+            }
+
+            if (trans.TryGetComponent<TMPro.TextMeshProUGUI>(out var tmpu))
+            {
+                return tmpu.color.a;
+            }
+
+            if (trans.TryGetComponent<TMPro.TextMeshPro>(out var tmp))
+            {
+                return tmp.color.a;
+            }
+            return 0;
+        }
+
+        public static void ClearButton(Transform btn) => btn.GetComponent<Button>().onClick.RemoveAllListeners();
+
+        public static void SetCilck(Transform btn, UnityAction action) => btn.GetComponent<Button>().onClick.AddListener(action);
+
+        public static void ClickButton(Transform btn) => btn.GetComponent<Button>().onClick.Invoke();
+
+        public static void SetButtonInteractable(Transform btn, bool state) => btn.GetComponent<Button>().interactable = state;
+
+
+        public static void SetSlider(Transform btn, UnityAction<float> action)
+        {
+            var slider = btn.GetComponent<Slider>();
+            slider.onValueChanged.AddListener(action);
+        }
+
+
+        public static T TryGetOrAddComponent<T>(this Transform trans) where T : MonoBehaviour
+        {
+
+            if (trans.TryGetComponent<T>(out var re))
+            {
+                return re;
+            }
+            else
+            {
+                return trans.gameObject.AddComponent<T>();
+            }
+        }
+    }
+}

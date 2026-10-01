@@ -4,6 +4,8 @@ using System.Linq;
 using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
+using FPSGame.GameData;
+using FPSGame.Weapon;
 using Object = UnityEngine.Object;
 
 namespace FPSGame.EditorExt

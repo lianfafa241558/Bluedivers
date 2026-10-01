@@ -319,6 +319,9 @@ tar -xf "$env:TEMP\unity-mcp.zip" -C "$env:TEMP\um" "unity-mcp-beta/MCPForUnity"
 |---|---|---|
 | `E:\Bluedivers` | `.codebuddy/rules/UnityMCP_多实例路由.md` | `Bluedivers@3d9f2357`（端口 6400） |
 | `D:\Project\RTSClient` | `.codebuddy/rules/UnityMCP_多实例路由.mdc` | `RTSClient@6365de15`（端口 6401） |
+| `D:\Pro\Bluedivers`（**本机副本**，同一份规则文件） | 同上 `.md` | 实测 **`Bluedivers@4a3e6a7b`（端口 6401）** —— 与上表 `E:` 那台的 hash/端口**不同**，hash 由工程路径派生 ⇒ **每次开局按 `mcpforunity://instances` 实时值钉**，不要跨机照抄 |
+
+> ⚠ `refresh_unity` 的 `scope` 影响是否真的刷新：`scope=scripts` 曾返回 `refresh_triggered:false`（脚本改动未被拾取），改 `mode=force, scope=all, compile=request` 才 `true`。另：注释类改动 Unity 会按**内容 hash** 判定，若文件随后被外部编辑器**原样重存**，会走 `AssetDatabase: script compilation time: 0.001s`（等于"无需重编"）——此时别误判为"没编译"，应回查 `%LOCALAPPDATA%\Unity\Editor\Editor.log` 里那一次**真正的 Csc + domain reload** 是否晚于改动。
 
 规则随会话自动加载，天然按窗口隔离；且**每次调用都带 `unity_instance="..."`**（单次路由，不改会话默认值），比依赖 `set_active_instance` 的隐含状态更稳。
 

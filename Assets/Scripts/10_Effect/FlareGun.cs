@@ -7,6 +7,7 @@ namespace FPSGame.Effect
 {
 using static FPSGame.WndTools.WndRootTool;
 using FPSGame.Managers;
+using FPSGame.Weapon;
 
 /// <summary>
 /// 信号枪特效与照明。
@@ -14,7 +15,7 @@ using FPSGame.Managers;
 [AddComponentMenu("特效/信号枪")]
 public class FlareGun : MonoBehaviour
 {
-    public FPSGame.Game.WeaponController weapon;
+    public FPSGame.Weapon.WeaponController weapon;
     public Infrared line;
     //public Text itemName;
     //public Text distance;

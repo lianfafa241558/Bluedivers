@@ -1,4 +1,4 @@
-﻿using FPSGame.GameContract;
+using FPSGame.GameContract;
 using UnityEngine;
 using FPSGame.Data;
 using FPSGame.Managers;
@@ -36,7 +36,7 @@ public class CreatBuilding : MonoBehaviour
             if (tmp == null) return;
             var go=Instantiate(tmp, pos, rotation, parent);
             if (go.TryGetComponent(out I_AIController cont)) cont.BirthDuration = 0;
-            if (go.TryGetComponent(out I_Actor actor))
+            if (go.TryGetComponent(out IActor actor))
             {
                 actor.IsFixed = true;
                 if(allowfloat) actor.AddFlag(FPSGame.Core.ActorFlag.AllowFloating);

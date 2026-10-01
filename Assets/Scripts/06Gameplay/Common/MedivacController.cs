@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
@@ -26,7 +26,6 @@ public class MedivacController : TickBehaviour
     [InspectorName("状态")]
     public MedivacState state;
     BoxCollider box;
-    FPSGame.GameContract.ITaskService taskSvc;
     //private float time = 0;
     Animator anim;
     [SerializeField]
@@ -39,7 +38,7 @@ public class MedivacController : TickBehaviour
     bool complete, arrive,nextComplete;
     public Transform targetPoint;
 
-    private List<I_Actor> players => ActorsManager.Players;
+    private List<IActor> players => ActorsManager.Players;
 
     private void Awake()
     {
@@ -51,7 +50,6 @@ public class MedivacController : TickBehaviour
     protected override void Start()
     {
         base.Start();
-        taskSvc = FPSGame.GameContract.ServiceLocator.Task;
         //TickTime = 1;
         switch (state)
         {
@@ -63,7 +61,7 @@ public class MedivacController : TickBehaviour
 
     public override bool Tick()
     {
-        if (!taskSvc.HasTask) return true;
+        if (!FPSGame.Data.TaskState.HasTask) return true;
         if (!enabled) return true;
 
         //统计当前在登船舱内的玩家数
@@ -90,7 +88,7 @@ public class MedivacController : TickBehaviour
     protected override void Update()
     {
         base.Update();
-        if (!taskSvc.HasTask) return;
+        if (!FPSGame.Data.TaskState.HasTask) return;
        
         switch (state)
         {
@@ -124,31 +122,37 @@ public class MedivacController : TickBehaviour
     private int showCount, ShowPlayerCount, showTime;
     private void SortieTick(int count,int playerCount)
     {
-        if (taskSvc.Countdown >0)
+        // 撤离倒计时走「数据自持」（2026-10-01 取代 ServiceLocator.Task 槽）：
+        // TaskState.Countdown 是**共享读数**——本类推进它、TaskManager 与倒计时 UI 读它。
+        if (FPSGame.Data.TaskState.Countdown >0)
         {
             // 全队强化"专家救援飞行员"：缩短撤离等待时间
-            float mul = FPSGame.GameContract.ServiceLocator.Battle.HaveBooster(BoosterType.ExpertPilot)?0.6f:1f;
+            float mul = FPSGame.Data.BattleState.HaveBooster(BoosterType.ExpertPilot)?0.6f:1f;
             if (count == 0)
             {
-                taskSvc.Countdown = Mathf.RoundToInt(16 * mul);
+                FPSGame.Data.TaskState.Countdown = Mathf.RoundToInt(16 * mul);
             }
             else if (count < playerCount)
             {
-                --taskSvc.Countdown;
+                --FPSGame.Data.TaskState.Countdown;
             }
             else
             {
                 int fullCount = Mathf.RoundToInt(6 * mul);
-                if (taskSvc.Countdown > fullCount) taskSvc.Countdown = fullCount;
+                if (FPSGame.Data.TaskState.Countdown > fullCount) FPSGame.Data.TaskState.Countdown = fullCount;
 
-                --taskSvc.Countdown;
+                --FPSGame.Data.TaskState.Countdown;
             }
 
         }
         else
         {
             //Debug.LogError("设置进入过场");
-            taskSvc.EnterTransition();
+            //切阶段走**事件**（原 `ServiceLocator.Flow.SetGameState`；更早是 `ServiceLocator.Task.EnterTransition()`）：
+            //撤离流程到此结束 ⇒ 请求进入"配置战备"阶段，由 `GameRoot` 订阅后落成既有的静态 setter（照旧发 SceneChange 广播）。
+            //⚠ 倒计时读数**不在这里复位**：复位是"开始新一局"的职责，已在 `TaskManager.SetTask()` 里
+            //   （本组件一局只会走到这里一次，已确认）。
+            FPSGame.Gameplay.GlobalEventSub.RequestGameState(FPSGame.Core.GameStateEnum.Armament);
             enabled = false;
             foreach (var item in players)
             {
@@ -157,7 +161,7 @@ public class MedivacController : TickBehaviour
         }
         showCount = count;
         ShowPlayerCount= playerCount;
-        showTime= taskSvc.Countdown;
+        showTime= FPSGame.Data.TaskState.Countdown;
     }
     private void LandTick(int count, int playerCount)
     {

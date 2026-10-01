@@ -55,7 +55,7 @@ public class ModifyTerrain : MonoBehaviour
         // ⚠ 这里必须是"战斗服务**已就位**"（= 老的 `BattleManager.Instance != null`），**不是** `IsStartBattle`：
         //   本方法由 Awake/Start 启动的协程调用，那时战斗往往还没开始、`BattleManager` 也还没注册
         //   ⇒ 用 `IsStartBattle` 会永远为 false（空对象），整段地形修改/清物体被跳过（2026-10-01 实际踩过）。
-        if (FPSGame.GameContract.ServiceLocator.Battle.IsPresent)
+        if (FPSGame.GameContract.BattleHub.Current.IsPresent)
         {
             foreach (var data in datas)
             {

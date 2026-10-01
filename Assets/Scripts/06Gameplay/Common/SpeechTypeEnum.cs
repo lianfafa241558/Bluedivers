@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace FPSGame.Game
+namespace FPSGame.Gameplay
 {
     public enum SpeechTypeEnum
     {

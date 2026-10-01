@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace FPSGame.GameContract
@@ -6,10 +6,10 @@ namespace FPSGame.GameContract
     public interface IEquippable
     {
         string ID { get; }
-        public I_Actor Owner { get; }
+        public IActor Owner { get; }
 
         public bool HaveFlag(EquippableFlagEnum flag);
-        void OnInstall(I_Actor actor, Func<IEnumerable<IEquippable>> getEquippableList);
+        void OnInstall(IActor actor, Func<IEnumerable<IEquippable>> getEquippableList);
         void OnUninstall();
 
         /// <summary>装备其他装备时触发，如果true让控制器卸载自己</summary>

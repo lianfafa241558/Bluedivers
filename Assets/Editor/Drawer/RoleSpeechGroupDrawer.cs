@@ -5,6 +5,7 @@ using FPSGame.Game;
 using UnityEditor;
 using UnityEngine;
 using FPSGame.Data;
+using FPSGame.Gameplay;
 
 namespace FPSGame.EditorExt
 {

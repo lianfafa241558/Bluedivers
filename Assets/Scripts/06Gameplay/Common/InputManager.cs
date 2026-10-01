@@ -36,7 +36,7 @@ public class InputManager : InputManagerBase<InputState, WindowStateEnum>,I_Glob
 
     // 走窗口服务契约（原为 WndManager.WindowState ⇒ 本类将随玩法层进 06_Gameplay 程序集，
     // 不能反向依赖 01Manager；契约的 WindowState 语义与静态版一致：服务未就绪时返回 Game）
-    public override WindowStateEnum NowWindowState => FPSGame.GameContract.ServiceLocator.Wnd.WindowState;
+    public override WindowStateEnum NowWindowState => FPSGame.Data.UIState.WindowState;
 
     /// <summary>
     /// 获取存档目录路径

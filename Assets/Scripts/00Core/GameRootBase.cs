@@ -25,6 +25,9 @@ namespace FPSGame.Core
             Screen.fullScreen = false;
             
             _timerSystem = gameObject.AddComponent<ViewTimerController>();
+            // 发布宿主给下层（2026-10-01 取代 ServiceLocator.Flow 的"调度"部分；见 Core/Timer/TimerHost.cs）。
+            // ⚠ 必须发布到**非泛型**静态类：泛型类的静态成员按封闭类型各自独立，放在 GameRootBase<T> 里会各存一份。
+            TimerHost.Host = _timerSystem;
             DontDestroyOnLoad(this);
 
             //ArchivesData_SO.playArchive = ShowArchive;
@@ -39,8 +42,17 @@ namespace FPSGame.Core
 
         }
 
-        private void OnDestroy()
+        /// <summary>
+        /// 销毁时统一调用各管理器的 <see cref="I_GlobaManager.UnInit"/>。
+        /// 改为 <c>protected virtual</c> 是为了让 <c>GameRoot</c> 能 override 它，
+        /// 顺带把 <c>ServiceLocator</c> 的流程服务槽位还回空对象（见 <c>GameRoot.OnDestroy</c>）。
+        /// </summary>
+        protected virtual void OnDestroy()
         {
+            // 与 Awake 的发布成对：宿主组件随本对象销毁 ⇒ 必须归还，否则 TimerHost 会留下"已销毁组件"的引用
+            // （MonoBehaviour 引用不走 Unity 的 ==null 重载 ⇒ 上层不会自动回落到"未就绪"）。用 ReferenceEquals 身份判定。
+            if (ReferenceEquals(TimerHost.Host, _timerSystem)) TimerHost.Host = null;
+
             var managers = GetComponents<I_GlobaManager>();
             foreach (var item in managers) item.UnInit();
             for (int i = 0; i < transform.childCount; ++i)

@@ -2,6 +2,7 @@
 using FPSGame.Game;
 using UnityEngine;
 using FPSGame.Gameplay;
+using FPSGame.Weapon;
 
 namespace FPSGame.Effect
 {

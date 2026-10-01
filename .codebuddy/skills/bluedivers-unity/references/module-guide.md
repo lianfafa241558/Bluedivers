@@ -80,10 +80,20 @@
 
 - `03Player/MainController/` — 玩家控制器（`PlayerController`、`VehicleController`，后者定义 `IDrivable` 接口）
 - `AI/` — AI 系统
-  - `Controller/` — `AIController`（定义 `I_AIController` 接口）
-  - `StateMachine/` — `EnemyMobile` 等
+  - `Controller/` — `AIController`（定义 `I_AIController` 接口）、`EnemyController`（寻路/感知/开火的外壳）
+  - `StateMachine/` — AI 状态机（13 cs）：
+    - 框架：`StateMachineCore.cs`（状态表 + 切换 + 逐帧调度内核，与 `StateMachineFrame` 共用）、`AIInputBaseController<T>`（泛型基类，注册 `OnDetectedTarget`/`OnLostTarget`/`OnDamaged`/`OnDie` 与 `m_TimeStartedDetection`）、`AIInputUnitController<T>`（+ `turrets` 炮塔瞄准 `Aiming`/`Look`）、`Turret.cs`
+    - 单位状态机：`EnemyMobile.cs` + `EnemyMobile_AboState.cs`（**敌人主力，类顶 XML summary 是权威逻辑说明**）、`EnemyTurret.cs`、`SimpleTurret.cs`、`GuardDog.cs`、`EnemyNestBuild.cs`、`SpecUnitKei.cs`
+  - `DetectionModule/` — 目标感知（视野/听力/攻击范围、`BewarePoint`、`SearchPoint`、`LastKnownTargetPos`）
   - `Skill/` — `UnitSkill_Base`（`m_Controller` 受保护字段）、`SympatheticDetonation`
-  - `FxCont/` — 敌人特效控制（`EnemyControllerFX`、`EnemyFXControllerUnit`、`RendererSet`）
+  - `Fx/` — 敌人特效控制（`EnemyControllerFX`、`EnemyFXControllerUnit`、`RendererSet`）
+
+#### `EnemyMobile` 状态机速查（改行为前必读）
+
+- 状态：`Idle`(原地/待命点，超时 80m 无人自毁) / `Patrol`(到巡逻点自毁) / `Follow`(环绕接近) / `Attack`(按 `AttackStopDistanceRatio × AttackRange` 站位开火) / `Beware`(枪声/搜索点查看) / `Return`(回原点) / `Death`。
+- 每帧顺序：`Update()` → `UpdateAiStateTransitions()`（先迁移）→ `UpdateCurrentAiState()`（后行为，守卫链命中即 return）；`LateUpdate()` → `UpdateTurretAiming()`。
+- ⚠ 三个已踩过的坑：① `OnDetectedTarget` 在 Follow/Attack 中**不要**重置 `m_TimeStartedDetection`（否则开火延迟反复重算 ⇒ 武器卡 `InShoots`）；② `AttackStop` 站桩必须用 `IsFiringNow`（含蓄力/激光/射击，**不含** `CanShoot`，否则炮塔永久冻结）；③ `Return` 分支**先判"已回原点"再判"停留时间到"**（顺序反了永久卡 Return）。
+- 约定：距离一律"水平距离 − 目标 `HalfRange`"；速度类状态用 `ModifierType.Extra` 差量修饰（进入 `目标速 − FinalValue`、退出取反）；`PatrolPos` 到达即自毁 vs `HomePoint` 到达即待命。
 - `Game/` — 核心游戏对象
   - `Actor.cs` — 角色基类，`[InspectorName]` 中文化，`WaitSetPos` 协程
   - `Shared/` — 共享组件（`Health`、`Damageable`、`Weapon/` 武器系统）

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
@@ -39,7 +39,7 @@ namespace FPSGame.GameContract
         public void Kill();
 
         public void Revive();
-        public I_Damageable GetMainPart();
+        public IDamageable GetMainPart();
         public void Heal(float healAmount);
 
         /// <summary>恢复护盾</summary>

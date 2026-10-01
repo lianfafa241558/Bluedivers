@@ -3,7 +3,7 @@ using FPSGame.Attributes;
 using UnityEngine;
 namespace FPSGame.Core
 {
-    public class BaseObject : BaseMono, I_Entity
+    public class BaseObject : BaseMono, IEntity
     {
         [Foldout("信息", true)]
         [InspectorName("名称")]
@@ -26,11 +26,11 @@ namespace FPSGame.Core
         /// </summary>
         public virtual float HalfHeight => 0;
 
-        string I_Entity.ShowName { get => ShowName; set => ShowName=value; }
-        string I_Entity.Id { get => Id; set => Id=value; }
-        Sprite I_Entity.Portrait { get => Portrait; set => Portrait = value; }
-        Sprite I_Entity.ExtraPortrait { get => ExtraPortrait; set => ExtraPortrait = value; }
-        Color I_Entity.Color { get => Color; set => Color = value; }
+        string IEntity.ShowName { get => ShowName; set => ShowName=value; }
+        string IEntity.Id { get => Id; set => Id=value; }
+        Sprite IEntity.Portrait { get => Portrait; set => Portrait = value; }
+        Sprite IEntity.ExtraPortrait { get => ExtraPortrait; set => ExtraPortrait = value; }
+        Color IEntity.Color { get => Color; set => Color = value; }
 
        
     }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using FPSGame.Core;
 using PEMaths;
 
@@ -7,7 +7,7 @@ namespace FPSGame.GameContract
     public struct UnitQueryGridNode : System.IEquatable<UnitQueryGridNode>
     {
         //与此节点相交的单位，key：teamID
-        public Dictionary<UnitTypeEnum, List<I_Actor>> units;
+        public Dictionary<UnitTypeEnum, List<IActor>> units;
 
         public PERect rect;
         public int x;

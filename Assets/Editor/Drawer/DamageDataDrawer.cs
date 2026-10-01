@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 using FPSGame.Game;
+using FPSGame.Weapon;
 
 namespace FPSGame.EditorExt
 {

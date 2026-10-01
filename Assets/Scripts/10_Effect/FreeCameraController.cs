@@ -4,6 +4,8 @@ using UnityEngine;
 using FPSGame.Utils;
 using FPSGame.Managers;
 using FPSGame.Gameplay;
+using FPSGame.Game;
+using FPSGame.GameData;
 
 namespace FPSGame.Effect
 {
@@ -112,8 +114,8 @@ public class FreeCameraController : MonoBehaviour
     {
         int keyPrefix = isY ? 1 : 0;
 
-        float speed = ArchiveSvc.GetSetting(SensitivityKeys[keyPrefix]);
-        float sigh = ArchiveSvc.GetSetting(InvertKeys[keyPrefix]) > 0 ? -1 : 1;
+        float speed = ArchivesData_SO.Current.GetSetting(SensitivityKeys[keyPrefix]);
+        float sigh = ArchivesData_SO.Current.GetSetting(InvertKeys[keyPrefix]) > 0 ? -1 : 1;
         float inputValue = Input.GetAxisRaw(AxisKeys[keyPrefix]);
         float i = inputValue * sigh * speed * 0.0001f;
 

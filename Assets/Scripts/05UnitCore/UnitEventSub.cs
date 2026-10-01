@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using FPSGame.GameContract;
 using PEMaths;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace FPSGame.Game
 {
@@ -21,9 +22,9 @@ namespace FPSGame.Game
 /// </summary>
 public static class UnitEventSub
 {
-    public static event Action<I_Actor> OnUnitPosChange;
+    public static event Action<IActor> OnUnitPosChange;
     /// <summary>单位位置改变</summary>
-    public static void UnitPosChange(I_Actor unit) => OnUnitPosChange?.Invoke(unit);
+    public static void UnitPosChange(IActor unit) => OnUnitPosChange?.Invoke(unit);
 
     /// <summary>单位死亡</summary>
     public static event Action<Actor> OnUnitDeath;
@@ -52,6 +53,19 @@ public static class UnitEventSub
     public static event Action<NoiseData> OnNoise;
     /// <summary>逻辑层噪声：AI 听觉的统一入口(开枪/命中/爆炸都发这里)</summary>
     public static void Noise(NoiseData noise) => OnNoise?.Invoke(noise);
+
+    /// <summary>
+    /// AI 寻路请求：单位把"给这个 NavMeshAgent 设目标点"交给寻路服务统一处理（去重 / 真失败重试 / 投影兜底）。
+    ///
+    /// <para>▍2026-10-01 用它取代 <c>ServiceLocator.Path</c> 槽：该调用是**无返回值的命令**
+    /// （失败由订阅方自己 <c>LogWarning</c>、发布方按节流重发）⇒ 事件是最合适的载具，不必做注入。</para>
+    /// <para>▍层归属：发布者 = AI（<c>06_Gameplay</c>），订阅者 = <c>PathRequestManager</c>（<c>09_Managers</c>）
+    /// ⇒ 按"事件放 <c>min(发布者层, 订阅者层)</c>"判据，本总线（<c>05_UnitCore</c>）正确。</para>
+    /// <para>⚠ 无订阅者时**静默丢弃**（与原来空对象 <c>NullPathService</c> 的语义一致）。</para>
+    /// </summary>
+    public static event Action<NavMeshAgent, Vector3, bool> OnPathRequest;
+    /// <summary>请求寻路（agent / 目标点 / 是否打印调试日志）</summary>
+    public static void PathRequest(NavMeshAgent agent, Vector3 destination, bool log) => OnPathRequest?.Invoke(agent, destination, log);
 
 
     #region 单位
@@ -84,8 +98,8 @@ public static class UnitEventSub
     public static void PlayerRevive(Actor unit) => OnPlayerRevive?.Invoke(unit);
 
     /// <summary>玩家被创建（原 GlobalEventSub，2026-09-30 迁入：发布者是 Actor.cs）</summary>
-    public static event Action<I_Actor> OnPlayerCreate;
-    public static void PlayerCreate(I_Actor unit) => OnPlayerCreate?.Invoke(unit);
+    public static event Action<IActor> OnPlayerCreate;
+    public static void PlayerCreate(IActor unit) => OnPlayerCreate?.Invoke(unit);
 
     /// <summary> 盟友被创建（原 GlobalEventSub，2026-09-30 迁入：发布者是 Actor.cs）</summary>
     public static event Action<Actor> OnFriendCreate;
