@@ -83,6 +83,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 5
     DamageDirect: 0
     DamageGroupDirect:
@@ -122,6 +123,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 8300000, guid: 7d057d525d72ff04488429da291ed48d, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -217,8 +219,9 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
-    DamageDirect: 7
+    DamageDirect: 2
     DamageGroupDirect:
     - Key: 0
       Value: 1
@@ -256,6 +259,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 8300000, guid: dd1171dd44d288b4a839a473c72bb98b, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -521,18 +525,18 @@ MonoBehaviour:
   HearingRange: 25
   AttackRange: 18
   AlertRange: 70
+  Lazy: 0
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &310874619371631314
 GameObject:
   m_ObjectHideFlags: 0
@@ -627,6 +631,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 310874619998118166}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -678,6 +683,11 @@ MonoBehaviour:
   PathReachingRadius: 1
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &310874619415933552
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -691,10 +701,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 310874618436466814}
-  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: 9e361c1ed4aeeeb43b46bc7025faa201, type: 2}
   fxMaterial: {fileID: 2100000, guid: 14fce7cbcc8540e458db10c38350d070, type: 2}
+  events: []
+  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
 --- !u!114 &310874619415933553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -748,6 +759,12 @@ MonoBehaviour:
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
+  BewareTimeout: 20
+  BewareObserveDistance: 10
+  SearchObserveDistance: 4
+  ObserveSettleTime: 0.4
+  BewareCooldown: 10
+  BewareCooldownRadius: 10
   IdleMaxDuration: 120
 --- !u!195 &310874619415933558
 NavMeshAgent:
@@ -847,6 +864,7 @@ MonoBehaviour:
   nowDurationTime: 0
   m_LastDetectedTarget: 0
   cilp: {fileID: 8300000, guid: 9fbfe6f7e6a642e49abfad47bd217cfa, type: 3}
+  TramplePoint: {fileID: 0}
 --- !u!1 &310874619644911665
 GameObject:
   m_ObjectHideFlags: 0

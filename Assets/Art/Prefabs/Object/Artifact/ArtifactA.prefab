@@ -185,6 +185,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8222229742909260757}
+  - component: {fileID: 7082196819885186739}
   - component: {fileID: 7029873768802239327}
   - component: {fileID: 5667962336731454236}
   - component: {fileID: 665373291423537848}
@@ -215,6 +216,35 @@ Transform:
   - {fileID: 5138274277828842663}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7082196819885186739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8442975063669286819}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u795E\u5668"
+  Id: Artifact
+  Portrait: {fileID: 21300000, guid: aefc359a194e6f8478dfc76db2fc4f97, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: aefc359a194e6f8478dfc76db2fc4f97, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
+  actorState: 1
+  IsFixed: 0
+  flag: 17
+  type: 8
+  team: -1
+  threat: 0
+  aimPoint: {fileID: 2594456336370438824}
+  UseHpBar: 0
+  HpHeight: 1
+  shape: 0
+  rangeLength: 0.3
+  halfHeight: 0.3
 --- !u!114 &7029873768802239327
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -227,6 +257,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7767616154ec2574a8202bd474611fb3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -238,22 +269,34 @@ MonoBehaviour:
   desc: "\u6361\u8D77"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 665373291423537848}
-  ShowName: "\u795E\u5668"
-  Id: Artifact
-  Portrait: {fileID: 21300000, guid: a93a5af8ab5210249b8f92eb69fc4c01, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: a93a5af8ab5210249b8f92eb69fc4c01, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
+  OnPicked:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 7082196819885186739}
+        m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
+        m_MethodName: set_enabled
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+  OnSubmitted:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &5667962336731454236
 MonoBehaviour:
   m_ObjectHideFlags: 0

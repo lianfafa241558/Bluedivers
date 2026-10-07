@@ -92,7 +92,7 @@ public class AudioListenerController : MonoBehaviour
         if (now != null && now.listener)
         {
             now.listener.enabled = true;
-            Debug.LogWarning("设置音频监听" + now, now);
+            //Debug.LogWarning("设置音频监听" + now, now);
         }
     }
 }

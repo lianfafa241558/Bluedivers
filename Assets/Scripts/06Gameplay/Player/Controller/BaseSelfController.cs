@@ -65,6 +65,10 @@ public class BaseSelfController : MonoBehaviour, IUnit, FPSGame.GameContract.IUn
     [SerializeField]
     protected float m_CameraVerticalAngle = 0;
 
+    /// <summary>相机垂直角（俯仰；正 = 抬头）。**公开只读**：联机要把"我抬没抬头"告诉别人
+    /// （盟友模型的武器挂点靠它俯仰，见 <c>PoseSnapshot.Pitch</c>）。</summary>
+    public float CameraPitch => m_CameraVerticalAngle;
+
 
     protected Dictionary<UnitAttrType, GameAttribute> attrs;
 

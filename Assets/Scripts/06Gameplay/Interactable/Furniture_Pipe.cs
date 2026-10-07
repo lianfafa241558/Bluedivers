@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
+using FPSGame.Core.Interface;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using RootMotion.FinalIK;
@@ -25,9 +26,9 @@ namespace FPSGame.Gameplay
 /// 管道
 /// </summary>
 [AddComponentMenu("交互/管道")]
-public class Furniture_Pipe : Furniture_Base
+public class Furniture_Pipe : Furniture_Attached
 {
-    public static List<Furniture_Base> targets=new();
+    public static List<Furniture_Attached> targets=new();
 
     [Foldout("配置", true)]
     [SerializeField]
@@ -48,7 +49,7 @@ public class Furniture_Pipe : Furniture_Base
     /// <summary>下一根管道</summary>
     Furniture_Pipe nextPipeline;
 
-    private Furniture_Base target;
+    private Furniture_Attached target;
     public override void Operate()
     {
         base.Operate();
@@ -121,7 +122,7 @@ public class Furniture_Pipe : Furniture_Base
         //初始管道一开始就是link；不用走这个阶段
         if (pipeSkeleton) pipeSkeleton.sharedMaterial = pipeSkin.sharedMaterial;
         inOperate = false;
-        Id = "PipeLink";
+        SetId("PipeLink");
         audioOper = null;
         if (pipeSkin) FpsHelper.UpdatePipeBounds(pipeSkin.GetComponent<SkinnedMeshRenderer>(),transform);
         if (pipeSkeleton) FpsHelper.UpdatePipeBounds(pipeSkeleton.GetComponent<SkinnedMeshRenderer>(),transform);
@@ -181,7 +182,7 @@ public class Furniture_Pipe : Furniture_Base
         nextPipeline.owner = owner;
         if (lastPipeline)
         {
-            Id = "PipeWait";
+            SetId("PipeWait");
             desc = "建造管道";
             inOperate = false;
             meetTime = 3;
@@ -196,7 +197,7 @@ public class Furniture_Pipe : Furniture_Base
     public void Complete()
     {
         //Debug.LogError("完成", gameObject);
-        Id = "PipeComplete";
+        SetId("PipeComplete");
         PlaySound(audioClose);
         canOperate = false;
         inOperate = false;
@@ -208,13 +209,22 @@ public class Furniture_Pipe : Furniture_Base
     [ContextMenu("错误")]
     public void Error()
     {
-        Id = "PipeError";
+        SetId("PipeError");
         canOperate = true;
         meetTime = 5;
         pressTime = 0;
         Press = 5;
         if (relatedTrans2) relatedTrans2.gameObject.SetActive(true);
-    }
+        }
 
-}
-}
+        /// <summary>
+        /// 写入状态 Id（PipeLink/PipeWait/PipeComplete/PipeError，任务与 <see cref="MissionSubConnectPipes"/> 依赖它）。
+        /// <para>身份数据统一保存在身份组件（BaseObject）上，家具本地不另存一份，故这里写回身份源。</para>
+        /// </summary>
+        private void SetId(string value)
+        {
+        if (Identity.IsValidMono()) Identity.Id = value;
+        }
+
+        }
+        }

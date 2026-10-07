@@ -1,0 +1,16 @@
+<linker>
+  <!-- ============================================================
+       IL2CPP 托管裁剪的保留声明
+       ============================================================
+       ▍为什么需要：02_Net 的网络消息 DTO 由 NetMsgCodec 用**反射**读写
+       （反射枚举 [MessagePackObject] 类型的 [Key] 字段 + FieldInfo/PropertyInfo 读写）。
+       反射用法对裁剪器是"不可见"的 —— 它会认为这些字段/特性没人用而裁掉。
+       ⚠ 编辑器走 Mono 不裁剪，所以这个坑**只在打包后**表现为"反序列化出来全是默认值"。
+       ⇒ 02_Net 只有十几个小文件，整程序集保留，成本可忽略。
+       ============================================================ -->
+  <assembly fullname="02_Net" preserve="all" />
+
+  <!-- DTO 上的 [MessagePackObject] / [Key(n)] 声明在这个程序集里，
+       NetMsgCodec 运行时要读它们（GetCustomAttribute）⇒ 特性构造器同样不能被裁掉。 -->
+  <assembly fullname="MessagePack.Annotations" preserve="all" />
+</linker>

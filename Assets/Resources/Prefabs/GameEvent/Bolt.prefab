@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1084440582847046986}
   - component: {fileID: 1084440582847046985}
   - component: {fileID: 1084440582847046984}
+  - component: {fileID: 2871791147205105907}
   m_Layer: 0
   m_Name: Bolt
   m_TagString: Untagged
@@ -26,6 +27,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1084440582847046839}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -8.765311, y: 37.237865, z: -4.7213135}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -33,7 +35,6 @@ Transform:
   m_Children:
   - {fileID: 614193293889226148}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1084440582847046986
 MonoBehaviour:
@@ -44,15 +45,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1084440582847046839}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 374b3c2e13591b84cbe9709dac4f9994, type: 3}
+  m_Script: {fileID: 11500000, guid: ba80bf5efd3411047bb9ef36cbd235d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u63A7\u5236\u6813"
-  Id: Bolt
-  Portrait: {fileID: 0}
-  ExtraPortrait: {fileID: 0}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  furnitureId: Bolt
   meetTime: 1
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 1677e80532d3c4d4b94e1118ef49c294, type: 3}
@@ -62,18 +57,24 @@ MonoBehaviour:
   canOperate: 0
   inOperate: 0
   desc: "\u5F00\u542F"
-  ForwardAxis: {x: -1, y: 0, z: 0}
+  anim: {fileID: 0}
+  _audioSource: {fileID: 0}
+  lastOperatetime: 0
+  owner: {fileID: 0}
+  time: 0
+  count: 0
+  _collider: {fileID: 0}
+  ShowName: "\u63A7\u5236\u6813"
+  Id: Bolt
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
   relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
   ExtFloatParameter: 0
   ExtBoolParameter: 0
   particle: {fileID: 0}
-  anim: {fileID: 0}
   obs: {fileID: 0}
-  audio: {fileID: 0}
-  lastOperatetime: 0
-  unit: {fileID: 0}
-  time: 0
-  count: 0
 --- !u!65 &1084440582847046985
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -82,14 +83,22 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1084440582847046839}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.4, y: 0.8, z: 0.4}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!95 &1084440582847046984
 Animator:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -106,12 +115,31 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorControllerStateOnDisable: 0
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &2871791147205105907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1084440582847046839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u63A7\u5236\u6813"
+  Id: Bolt
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &1084440581344371279
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 1084440582847046987}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: dd94978b6ee32bd4fadd8048d31d328a,
@@ -180,6 +208,9 @@ PrefabInstance:
       value: Bolt
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dd94978b6ee32bd4fadd8048d31d328a, type: 3}
 --- !u!4 &614193293889226148 stripped
 Transform:

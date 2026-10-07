@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -44,6 +44,16 @@ namespace FPSGame.Game
 
         public int IndexID => indexID;
         private int indexID;
+
+        /// <summary>
+        /// **跨端稳定的网络标识**（0 = 不是同步单位）。由房主在为"会同步的世界实体"（敌人 / 巡逻队 / 兴趣点）分配时写入，
+        /// 随生成事件下发给成员；两端拿它指同一个单位。
+        ///
+        /// <para>▍为什么不用 <see cref="IndexID"/>：它是**进程内自增**（<c>GlobalIndexID++</c>，Awake 里赋），
+        /// 而且还数着玩家、盟友幽灵、道具等两端创建时机不同的东西 ⇒ 必然错位（工程里早有同类结论，
+        /// 见 <c>NetFriendBridge</c> 的快照注释）。玩家/盟友的身份用 <c>sid</c> 就够，这里只服务于"世界实体"。</para>
+        /// </summary>
+        public int NetId { get; set; }
 
         public ActorState ActorState { 
             get => actorState;
@@ -345,6 +355,18 @@ namespace FPSGame.Game
 
         void OnDestroy()
         {
+            // ⚠ 必须自愈式注销注册表：联机盟友"离场"是直接 Destroy（不走死亡事件，也不会有 UnitDeath），
+            //   不在销毁时摘除 ⇒ 被销毁的 Actor 会永远留在 ActorsManager.Players/Actors 里，
+            //   所有遍历它们的系统都会 MissingReferenceException（2026-10-07 实测）。
+            //   ⚠ 与"死亡"区分：死亡只是倒地（不销毁对象），走 UnitEventSub.OnUnitDeath ⇒ UnRegisterUnit，
+            //     那条路刻意**不移除** Player/Friend（倒地待救 / 全队阵亡统计要靠它们）。
+            //   放最前面：后面的清理可能抛异常/早退，而注销注册表必须无条件完成。
+            ActorsManager.Unregister(this);
+
+            // 盟友离场的事件通知：销毁之后谁也读不出它是谁（name/Type 还能读，但引用已经废了）
+            // ⇒ 必须**在这里、趁引用还有效**发出去，让为它建的 UI/桥做收尾。
+            if (Type == UnitTypeEnum.Friend) UnitEventSub.FriendLeave(this);
+
             /*
             if (ActorState != ActorState.Dead)
             {
@@ -362,6 +384,11 @@ namespace FPSGame.Game
             OnDeath = null;
             OnPosChange = null;
             OnAngleChange = null;
+        }
+
+        public void Kill()
+        {
+            OnDie(null);
         }
 
         private void Update()

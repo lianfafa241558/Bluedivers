@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.AI;
 using FPSGame.Game;
@@ -12,52 +12,36 @@ using FPSGame.GameContract;
 
 namespace FPSGame.Managers
 {
-    public class ZergWave : I_TickClass, System.IDisposable
+    /// <summary>
+    /// 虫族空投波次：开场在预设生成点(或围绕中心的随机环)空投兵营，随后按批次投放单位。
+    /// 生命周期与单位账本由 <see cref="WaveBase"/> 提供，本类只负责生成环维护与批次投放。
+    /// </summary>
+    public class ZergWave : WaveBase
     {
         /// <summary>centerGetter 模式下，实际中心偏离基准中心超过该距离就重新部署空投点</summary>
         const float RedeployDistance = 30f;
 
-        List<GameObject> waveUseObject;
-        List<GameObject> creatObject;
-        Stack<GameObject> creats;
-        List<Actor> units;
+        /// <summary>空投特效存活时长(秒)</summary>
+        const int PodLifeTime = 51;
 
-        WaveState state;
+        List<GameObject> creatObject;
         int perTickCreat;
-        int time;
-        Vector3[] points;
-        Vector3 center;
+        int waitTime;
+
         /// <summary>生成环所依据的基准中心(centerGetter 模式下随重新部署更新，用于判断"离太远")</summary>
         Vector3 anchorCenter;
-        /// <summary>生成环半径参数(来自 param.range，重新部署时复用)</summary>
-        float range;
+
         /// <summary>生成点是否由 center+range 随机得出(即 param.points==null)；只有这种模式能跟随 center 重新部署</summary>
         bool useCenterPoints;
-        bool completeCreat;
-        bool tip;
-        int waitTime;
-        bool IsDisposed;
-        System.Action onEnd;
-        System.Func<Vector3> centerGetter;
 
-        System.Random random;
-        public ZergWave(WaveCreateParams param, Stack<GameObject> creats, List<GameObject> waveUseObject,int waitTime)
+        public ZergWave(WaveCreateParams param, Stack<GameObject> creats, List<GameObject> waveUseObject, int waitTime, string title)
+            : base(param, creats, waveUseObject)
         {
-            random = new Random(RandomUtils.Range(0, 1000));
-            this.waveUseObject = new(waveUseObject);
-            this.creats = creats;
-            this.tip = param.tip;
             this.waitTime = waitTime;
-            onEnd = param.onEnd;
-            centerGetter = param.centerGetter;
             creatObject = new();
-            units = new();
-            center = param.center;
             anchorCenter = center;
-            range = param.range;
-
-            UnitEventSub.OnEnemyDead += OnUnitDeath;
-
+            startTipName = "WaveStart_Zerg";
+            infoTitle = title;
             if (param.points == null)
             {
                 useCenterPoints = true;
@@ -71,132 +55,75 @@ namespace FPSGame.Managers
                 points = new Vector3[perTickCreat];
                 for (int i = 0; i < perTickCreat; ++i)
                 {
-                    points[i] = param.points[i] + random.RandomVector2().ToVector3() * random.Range(0, param.range);
-
-                    if (NavMesh.SamplePosition(points[i], out var hit, 100, NavMesh.AllAreas))
-                    {
-                        points[i] = hit.position;
-                    }
-                    else
-                    {
-                        points[i] = new Vector3(points[i].x, center.y, points[i].z);
-                    }
+                    points[i] = SnapToNavMesh(param.points[i]
+                        + random.RandomVector2().ToVector3() * random.Range(0, param.range));
                 }
             }
+
             Trans(WaveState.Start);
         }
-        public void Dispose()
+
+        protected override void OnDispose()
         {
-            if (IsDisposed) return;
-            UnitEventSub.OnEnemyDead -= OnUnitDeath;
-
-            units?.Clear();
-            waveUseObject?.Clear();
-            creatObject?.Clear();
-            creats?.Clear();
-
-            waveUseObject = null;
-            creatObject = null;
-            creats = null;
-            units = null;
-            points = null;
-            random = null;
-            centerGetter = null;
-
-            IsDisposed = true;
-
-            //波次结束(所有单位清空)回调，用于续航/续刷
-            var callback = onEnd;
-            onEnd = null;
-            callback?.Invoke();
+            creatObject.Clear();
         }
 
-        public bool Tick()
+        protected override void OnCenterUpdated(Vector3 newCenter)
         {
+            center = newCenter;
 
-            --time;
-            //中心点持续跟踪(追击)：有 centerGetter 时每 Tick 刷新，新刷出的单位会走向最新位置
-            if (centerGetter != null)
+            //实际中心偏离基准中心过远：回收当前空投点、以当前中心为新基准重新部署(随机生成点模式，且波次尚未收尾)
+            if (useCenterPoints && state == WaveState.Ongoing && !completeCreat
+                && Vector3.Distance(center, anchorCenter) > RedeployDistance)
             {
-                center = centerGetter();
-                //实际中心偏离基准中心过远：回收当前空投点、以当前中心为新基准重新部署(随机生成点模式，且波次尚未收尾)
-                if (useCenterPoints && state == WaveState.Ongoing && !completeCreat
-                    && Vector3.Distance(center, anchorCenter) > RedeployDistance)
+                RedeployPods();
+            }
+        }
+
+        protected override void TickStart()
+        {
+            if (time == -5) SpawnPods();
+            if (time <= -waitTime) Trans(WaveState.Ongoing);
+        }
+
+        protected override void TickOngoing()
+        {
+            if (creats.Count >= perTickCreat)
+            {
+                for (int i = 0; i < perTickCreat; ++i)
                 {
-                    RedeployPods();
+                    if (!creats.TryPop(out var tmp)) break;
+
+                    var dir = Quaternion.LookRotation(points[i] - center);
+                    dir.eulerAngles = new Vector3(dir.eulerAngles.x, 0, dir.eulerAngles.z);
+
+                    var go = Object.Instantiate(tmp, points[i] + RandomOffset(10f), dir, null);
+                    RegisterUnit(go);
+                    SetUnitHome(go);
                 }
             }
-            switch (state)
+            else if (!completeCreat)
             {
-                case WaveState.Start:
-                    if (time == -5)
-                    {
-                        for (int i = 0; i < perTickCreat; ++i)
-                        {
-                            var go = VFXManager.Creat(waveUseObject[0], points[i], Quaternion.Euler(0f, random.Range(0, 360), 0f));
-                            go.GetComponent<LimitedLife>().ResetLift(51);
-                            creatObject.Add(go);
-                        }
-                    }
-                    if (time <= -waitTime)
-                    {
-                        Trans(WaveState.Ongoing);
-                    }
-                    break;
-                case WaveState.Ongoing:
-                    if (creats.Count >= perTickCreat)
-                    {
-                        for (int i = 0; i < perTickCreat; ++i)
-                        {
-                            if (creats.TryPop(out var tmp))
-                            {
-                                var dir = Quaternion.LookRotation(points[i] - center);
-                                dir.eulerAngles = new Vector3(dir.eulerAngles.x, 0, dir.eulerAngles.z);
-
-                                var go = Object.Instantiate(tmp, points[i] + random.InsideUnitCircle().ToVector3() * 10, dir, null);
-                                units.Add(go.GetComponent<Actor>());
-
-                                var ec = go.GetComponent<EnemyController>();
-                                // 设置长期落点：到达后不移除，途中被中断(回Idle)会继续走向该点
-                                ec.HomePoint = center + random.InsideUnitCircle().ToVector3() * 5;
-                                ec.SetNavDestination(ec.HomePoint);
-
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-
-                    }
-                    else if (completeCreat == false)
-                    {
-                        completeCreat = true;
-                        EndCreatObjects();
-                    }
-                    else if (time % 5 == 0)
-                    {
-                        if (units.Count <= 3)
-                        {
-                            Trans(WaveState.NearEnd);
-                        }
-                    }
-
-                    break;
-                case WaveState.NearEnd:
-                    if (time % 5 == 0)
-                    {
-                        if (units.Count == 0)
-                        {
-                            Trans(WaveState.End);
-                        }
-                    }
-                    break;
-                case WaveState.End:
-                    Dispose();
-                    return false;
+                completeCreat = true;
+                EndCreatObjects();
             }
-            return true;
+            else
+            {
+                TryEnterNearEnd();
+            }
+        }
+
+        /// <summary>在生成环上投放一批兵营特效(开场空投与重新部署共用)</summary>
+        void SpawnPods()
+        {
+            for (int i = 0; i < perTickCreat; ++i)
+            {
+                var go = VFXManager.Creat(waveUseObject[0], points[i], RandomYaw());
+                if (!go) continue;
+
+                go.GetComponent<LimitedLife>().ResetLift(PodLifeTime);
+                creatObject.Add(go);
+            }
         }
 
         /// <summary>按当前 center/range 重新计算随机生成环(仅随机生成点模式使用)</summary>
@@ -207,15 +134,7 @@ namespace FPSGame.Managers
             {
                 var dx = random.Range(-1, 1f);//范围20度
                 points[i] = center + new Vector3(Mathf.Cos(theta + dx), 0, Mathf.Sin(theta + dx)) * random.Range(range, range + 10);
-
-                if (NavMesh.SamplePosition(points[i], out var hit, 100, NavMesh.AllAreas))
-                {
-                    points[i] = hit.position;
-                }
-                else
-                {
-                    points[i] = new Vector3(points[i].x, center.y, points[i].z);
-                }
+                points[i] = SnapToNavMesh(points[i]);
             }
         }
 
@@ -233,13 +152,7 @@ namespace FPSGame.Managers
             ResetPoints();
 
             //3. 重新空投一波
-            for (int i = 0; i < perTickCreat; ++i)
-            {
-                var go = VFXManager.Creat(waveUseObject[0], points[i], Quaternion.Euler(0f, random.Range(0, 360), 0f));
-                if (!go) continue;
-                go.GetComponent<LimitedLife>().ResetLift(51);
-                creatObject.Add(go);
-            }
+            SpawnPods();
         }
 
         /// <summary>回收当前所有空投特效(播放结束动画并让 LimitedLife 自行回收)</summary>
@@ -248,39 +161,14 @@ namespace FPSGame.Managers
             for (int i = 0; i < creatObject.Count; ++i)
             {
                 if (!creatObject[i]) continue;
+
                 var animator = creatObject[i].GetComponentInChildren<Animator>();
                 if (animator) animator.Play("End");
+
                 var life = creatObject[i].GetComponent<LimitedLife>();
                 if (life) life.ResetLift(6);
             }
             creatObject.Clear();
         }
-
-        void OnUnitDeath(Actor actor)
-        {
-            units.Remove(actor);
-        }
-        void Trans(WaveState state)
-        {
-            this.state = state;
-            switch (state)
-            {
-                case WaveState.Start:
-                    if (tip) WndManager.Instance.CreatNotice("Yuuka", "WaveStart_Zerg");
-
-                    if (tip) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Wave, 0.5f);
-                    break;
-                case WaveState.Ongoing:
-                    time = 0;
-                    break;
-                case WaveState.NearEnd:
-                    if (tip) WndManager.Instance.CreatNotice("Yuuka", "WaveEnd_Zerg");
-                    break;
-                case WaveState.End:
-                    if (tip) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Game, 0.5f);
-                    break;
-            }
-        }
-
     }
 }

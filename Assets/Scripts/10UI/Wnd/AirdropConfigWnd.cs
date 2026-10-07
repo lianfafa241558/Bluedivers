@@ -192,7 +192,9 @@ public class AirdropConfigWnd : Window
         InputManager.AddListenerCancel(Cancel);
         //展示相机默认关闭（避免编辑器/场景里误渲染），打开窗口时才启用
         if (_modelCamera) _modelCamera.gameObject.SetActive(true);
-        SetSprite(_bg,FpsHelper.CameraCaptureToSprite(Camera.main));
+        // ⚠ 同 SettingWnd：Camera.main 可能为 null（没有 tag=MainCamera 的激活相机）⇒ 抓不到就保留上一张
+        var bgSprite = FpsHelper.CameraCaptureToSprite(Camera.main);
+        if (bgSprite != null) SetSprite(_bg, bgSprite);
         BuildList();
         SelectFirst();
     }

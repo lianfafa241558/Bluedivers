@@ -33,8 +33,8 @@ namespace FPSGame.GameContract
         /// <summary>(角色, 语音组, 持续条件, 有效时长) → 弹一条 NPC 提示。</summary>
         public static Action<string, string, Func<bool>, float> CreatNotice { get; internal set; }
 
-        /// <summary>(倒计时读数提供者, 样式) → 启动倒计时窗。</summary>
-        public static Action<Func<int>, CountDownTypeEnum> CreatCountDown { get; internal set; }
+        /// <summary>(倒计时读数提供者, 样式, 启动阈值) → 启动倒计时窗；阈值 ≤0 表示沿用窗口 Inspector 配置。</summary>
+        public static Action<Func<int>, CountDownTypeEnum, int> CreatCountDown { get; internal set; }
 
         /// <summary>清掉当前 NPC 提示。</summary>
         public static Action ClearNotice { get; internal set; }
@@ -76,11 +76,11 @@ namespace FPSGame.GameContract
             if (CreatNotice != null) CreatNotice(role, type, func, vaildTime);
         }
 
-        /// <summary>启动倒计时窗（未登记时静默跳过）。</summary>
-        public static void CountDown(Func<int> provider, CountDownTypeEnum type)
+        /// <summary>启动倒计时窗（未登记时静默跳过）。<paramref name="activeBelow"/> ≤0 表示沿用窗口 Inspector 配置。</summary>
+        public static void CountDown(Func<int> provider, CountDownTypeEnum type, int activeBelow = -1)
         {
             EnsureScanned();
-            if (CreatCountDown != null) CreatCountDown(provider, type);
+            if (CreatCountDown != null) CreatCountDown(provider, type, activeBelow);
         }
 
         /// <summary>清掉 NPC 提示。</summary>
@@ -98,8 +98,43 @@ namespace FPSGame.GameContract
                  + " CreatNotice=" + (CreatNotice != null)
                  + " CreatCountDown=" + (CreatCountDown != null)
                  + " ClearNotice=" + (ClearNotice != null)
+                 + " InformationAdd=" + (Information.AddImpl != null)
+                 + " InformationRemove=" + (Information.RemoveImpl != null)
                  + " Scanner=" + (Scanner != null)
                  + " scanned=" + scanned;
+        }
+
+        /// <summary>
+        /// 信息栏（UI 侧 <c>InformationWnd</c>）能力接缝：按 <b>string 键</b>增删一条信息子项，键同时就是子项显示的文字。
+        ///
+        /// <para>▍添加与移除是**两个独立方法**（不是同键切换）：<see cref="Add"/> 添加（已显示则只刷新文字）、
+        /// <see cref="Remove"/> 移除（不在显示中则什么都不做）；移除最后一条时窗口自动隐藏。</para>
+        ///
+        /// <para>▍调用方：管理器 / 玩法层写 <c>WindowRegistry.Information.Add(key)</c> / <c>WindowRegistry.Information.Remove(key)</c>；
+        /// UI 层内部可直接 <c>WndHub.Information.Add(key)</c> / <c>.Remove(key)</c>。
+        /// 实现由 <c>WndHub</c> 登记，UI 未就绪（或没有 InformationWnd）时静默跳过。</para>
+        /// </summary>
+        public static class Information
+        {
+            /// <summary>(信息键) → 由 UI 侧登记的"添加"实现（**只给 `WndHub` 写**）。</summary>
+            public static Action<string> AddImpl { get; internal set; }
+
+            /// <summary>(信息键) → 由 UI 侧登记的"移除"实现（**只给 `WndHub` 写**）。</summary>
+            public static Action<string> RemoveImpl { get; internal set; }
+
+            /// <summary>添加一条信息子项（未登记时静默跳过；键已显示则只刷新它的文字）。</summary>
+            public static void Add(string key)
+            {
+                EnsureScanned();
+                if (AddImpl != null) AddImpl(key);
+            }
+
+            /// <summary>移除一条信息子项（未登记、或该键不在显示中时静默跳过）。</summary>
+            public static void Remove(string key)
+            {
+                EnsureScanned();
+                if (RemoveImpl != null) RemoveImpl(key);
+            }
         }
     }
 }

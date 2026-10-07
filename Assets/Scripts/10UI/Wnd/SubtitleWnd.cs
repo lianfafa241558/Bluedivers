@@ -87,6 +87,7 @@ public class SubtitleWnd : Window
         BattleEventSub.OnAirdrop += OnAirdrop;
         GlobalEventSub.OnSettingCange += OnSettingCange;
         UnitEventSub.OnUnitDeath += OnActorDeath;
+        UnitEventSub.OnFriendLeave += OnFriendLeave;   // 盟友离场：清掉"以他为标记目标"的字幕（对象被销毁，不清就会每帧在死引用上取位置）
         GlobalEventSub.OnOOPartCollect += OOPartCollect;
 
         
@@ -98,6 +99,7 @@ public class SubtitleWnd : Window
         BattleEventSub.OnAirdrop -= OnAirdrop;
         GlobalEventSub.OnSettingCange -= OnSettingCange;
         UnitEventSub.OnUnitDeath -= OnActorDeath;
+        UnitEventSub.OnFriendLeave -= OnFriendLeave;
         GlobalEventSub.OnOOPartCollect -= OOPartCollect;
         //OnSceneChange(null);
     }
@@ -376,6 +378,32 @@ public class SubtitleWnd : Window
     /// 切换场景时直接移除旧??
     /// </summary>
     /// <param name="_"></param>
+    /// <summary>
+    /// 盟友**离场**（对象被销毁）⇒ 清掉"以他为 target"的字幕。
+    /// <para>⚠ 与 <see cref="OnActorDeath"/> 的口径不同：那个比的是 <c>owner</c>（宿主 = 本机玩家，他是被标记者时才清理），
+    /// 而盟友在字幕里是 **target**（被别人标记）⇒ 必须比 <c>target</c>，否则这条永远匹配不上。</para>
+    /// </summary>
+    private void OnFriendLeave(Actor friend)
+    {
+        if (friend == null || Subtitles == null) return;
+
+        var go = friend.gameObject;
+        for (int i = Subtitles.Count - 1; i >= 0; --i)
+        {
+            var s = Subtitles[i];
+            if (s == null) { Subtitles.RemoveAt(i); continue; }
+
+            // ⚠ 两种口径都要认（见 SubtitleWnd 创建处的 owner/target 用法）：
+            //   玩家/盟友自己的标记（SubtitleMark / SubtitleRole）里"他自己"是 **owner**；
+            //   而 NPC 那条（SubtitleNPC）里 owner 是本机玩家、被标记者才是 **target**。
+            if (s.target == go || ReferenceEquals(s.owner, friend))
+            {
+                Tool.Destroy(s.gameObject);
+                Subtitles.RemoveAt(i);
+            }
+        }
+    }
+
     public void OnSceneChange(string _)
     {
         //Debug.LogError("切换场景，清空组??+ Subtitles.Count);

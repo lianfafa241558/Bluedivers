@@ -393,6 +393,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 6
     DamageDirect: 0
     DamageGroupDirect:
@@ -431,6 +432,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 8300000, guid: 8871b7bd8ba4f3b4792ab3ea04b1d818, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -1015,6 +1017,7 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     NoSource: 0
     ExplosionAP: 3
     demolishValue: 20
@@ -1036,13 +1039,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5022651815003707194}
-  - component: {fileID: 910742487}
-  - component: {fileID: 910742488}
+  - component: {fileID: 910742492}
   - component: {fileID: 910742489}
   - component: {fileID: 910742490}
-  - component: {fileID: 910742491}
-  - component: {fileID: 910742492}
   - component: {fileID: 2633842092142326504}
+  - component: {fileID: 910742488}
+  - component: {fileID: 910742487}
+  - component: {fileID: 910742491}
   - component: {fileID: 7590578707099627886}
   m_Layer: 6
   m_Name: Dec_Ultralisk
@@ -1070,7 +1073,7 @@ Transform:
   - {fileID: 1952154324}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &910742487
+--- !u!114 &910742492
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1079,15 +1082,90 @@ MonoBehaviour:
   m_GameObject: {fileID: 5022651815003707193}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80419325f2f428345a61e01db81699ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Animator: {fileID: 2592647363304194666}
-  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
-  fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
-  fxEvent: {fileID: 11400000, guid: 4a85ec0f07649a64f9acea758b0488d5, type: 2}
-  fxMaterial: {fileID: 2100000, guid: 14fce7cbcc8540e458db10c38350d070, type: 2}
-  events: []
+  ShowName: "\u5C60\u622E\u8005"
+  Id: UNG_Ultralisk
+  Portrait: {fileID: 21300000, guid: c9a53bdb4fe66024894f2c05954e81c1, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 25a2e2339cffa8e449c57a6d7df0a9cc, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
+  actorState: 1
+  IsFixed: 0
+  flag: 0
+  type: 4
+  team: 1
+  threat: 1
+  aimPoint: {fileID: 1952154324}
+  UseHpBar: 1
+  HpHeight: 2
+  shape: 0
+  rangeLength: 3
+  halfHeight: 2.94
+--- !u!114 &910742489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5022651815003707193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxHealth: 1000
+  MaxShield: 0
+  showArmorLists: []
+  MainPart: {fileID: 1096021716}
+  demolishValue: -1
+  AutoDestroy: 0
+  showHealth: 0
+  m_IsDead: 0
+  AboGaugeArr: []
+--- !u!114 &910742490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5022651815003707193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3de939d976a5bb0419ccd8dbd0b6836b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DeathDuration: 4
+  BirthDuration: 2
+  birthTime: 0
+  IsRemove: 0
+  PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
+  isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
+--- !u!114 &2633842092142326504
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5022651815003707193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2262e3fb5171014c88070bf9ee662c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  legs:
+  - {fileID: 2053149829}
+  - {fileID: 2066140524}
+  - {fileID: 426259552}
+  - {fileID: 678551047}
+  invincibleArmor: []
+  deathArmor: []
 --- !u!114 &910742488
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1141,8 +1219,14 @@ MonoBehaviour:
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
+  BewareTimeout: 20
+  BewareObserveDistance: 10
+  SearchObserveDistance: 4
+  ObserveSettleTime: 0.4
+  BewareCooldown: 10
+  BewareCooldownRadius: 10
   IdleMaxDuration: 120
---- !u!114 &910742489
+--- !u!114 &910742487
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1151,36 +1235,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 5022651815003707193}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
+  m_Script: {fileID: 11500000, guid: 80419325f2f428345a61e01db81699ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHealth: 1000
-  MaxShield: 0
-  showArmorLists: []
-  MainPart: {fileID: 1096021716}
-  demolishValue: -1
-  showHealth: 0
-  m_IsDead: 0
-  AboGaugeArr: []
---- !u!114 &910742490
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5022651815003707193}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3de939d976a5bb0419ccd8dbd0b6836b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DeathDuration: 4
-  BirthDuration: 2
-  birthTime: 0
-  IsRemove: 0
-  PathReachingRadius: 2
-  m_lastDestination: {x: 0, y: 0, z: 0}
-  isImportant: 0
+  Animator: {fileID: 2592647363304194666}
+  fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
+  fxEvent: {fileID: 11400000, guid: 4a85ec0f07649a64f9acea758b0488d5, type: 2}
+  fxMaterial: {fileID: 2100000, guid: 14fce7cbcc8540e458db10c38350d070, type: 2}
+  events: []
+  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
 --- !u!195 &910742491
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1203,54 +1266,6 @@ NavMeshAgent:
   m_BaseOffset: 0.5
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 1
---- !u!114 &910742492
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5022651815003707193}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowName: "\u5C60\u622E\u8005"
-  Id: UNG_Ultralisk
-  Portrait: {fileID: 21300000, guid: c9a53bdb4fe66024894f2c05954e81c1, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 25a2e2339cffa8e449c57a6d7df0a9cc, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  actorState: 1
-  IsFixed: 0
-  flag: 0
-  type: 4
-  team: 1
-  threat: 1
-  aimPoint: {fileID: 1952154324}
-  UseHpBar: 1
-  HpHeight: 2
-  shape: 0
-  rangeLength: 3
-  halfHeight: 2.94
---- !u!114 &2633842092142326504
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5022651815003707193}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2262e3fb5171014c88070bf9ee662c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  legs:
-  - {fileID: 2053149829}
-  - {fileID: 2066140524}
-  - {fileID: 426259552}
-  - {fileID: 678551047}
-  invincibleArmor: []
-  deathArmor: []
 --- !u!114 &7590578707099627886
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1421,6 +1436,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 6
     DamageDirect: 0
     DamageGroupDirect:
@@ -1459,6 +1475,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 8300000, guid: 8871b7bd8ba4f3b4792ab3ea04b1d818, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}

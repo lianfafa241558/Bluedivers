@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using FPSGame.Core;
 
 using UnityEngine;
@@ -6,7 +6,7 @@ using UnityEngine.Events;
 using FPSGame.Data;
 using FPSGame.Audio;
 using FPSGame.Gameplay;
-
+using FPSGame.GameContract;
 namespace FPSGame.Managers
 {
 
@@ -49,7 +49,7 @@ public class WndManager : Singleton<WndManager>
     //   guideWnd/vehicleWnd/airdropConfigWnd/settingWnd/countDownWnd）**已删除**：
     //   它们是 04UI 的类型，被本类（01Manager）持有 ⇒「管理器 → UI」反向依赖，`09_Managers`/`10_UI` 切不出来。
     //   现在：窗口在 `Window.Awake` 里自注册到 UI 侧 `WndHub`（另有 `WndHub.Scan()` 兜底未激活窗口），
-    //   `WndHub` 把能力以**委托**登记进契约层 `FPSGame.GameContract.WindowRegistry`，本类的动词转调它。
+    //   `WndHub` 把能力以**委托**登记进契约层 `WindowRegistry`，本类的动词转调它。
     //   见 00GameContract/WindowRegistry.cs 与 04UI/WndHub.cs。
 
     public Sprite empty;
@@ -88,7 +88,7 @@ public class WndManager : Singleton<WndManager>
     }
 
     /// <summary>玩法层请求开窗 → 转调契约注册表（UI 未就绪时静默跳过，与 WindowRegistry 语义一致）。</summary>
-    private void OnOpenWndRequest(FPSGame.GameContract.WndType type) => SetWndState(type, true);
+    private void OnOpenWndRequest(WndType type) => SetWndState(type, true);
 
     /// <summary>玩法层请求弹提示 → 转调契约注册表（原调用点写 ServiceLocator.Wnd.CreatNotice）。</summary>
     private void OnNoticeRequest(string role, string type, Func<bool> func, float vaildTime) => CreatNotice(role, type, func, vaildTime);
@@ -135,10 +135,11 @@ public class WndManager : Singleton<WndManager>
         }
     }
 
-    /// <summary>启动倒计时窗（转调契约注册表；UI 未就绪时静默跳过）。</summary>
-    public void CreatCountDown(Func<int> func, CountDownTypeEnum type)
+    /// <summary>启动倒计时窗（转调契约注册表；UI 未就绪时静默跳过）。
+    /// <paramref name="activeBelow"/> ≤0 表示沿用窗口 Inspector 上配置的启动阈值。</summary>
+    public void CreatCountDown(Func<int> func, CountDownTypeEnum type, int activeBelow = -1)
     {
-        FPSGame.GameContract.WindowRegistry.CountDown(func, type);
+        WindowRegistry.CountDown(func, type, activeBelow);
     }
 
     // ⚠ `CreatTip(TipWndInfo)` 已删除：参数类型 `TipWndInfo` 属 04UI，而调用方全在 UI 层
@@ -147,13 +148,13 @@ public class WndManager : Singleton<WndManager>
     /// <summary>弹一条 NPC 提示（转调契约注册表；UI 未就绪时静默跳过）。</summary>
     public void CreatNotice(string role, string type, System.Func<bool> func = default,float vaildTime=-1)
     {
-        FPSGame.GameContract.WindowRegistry.Notice(role, type, func, vaildTime);
+        WindowRegistry.Notice(role, type, func, vaildTime);
     }
 
     /// <summary>清掉当前 NPC 提示（转调契约注册表）。</summary>
     public void ClearNotice()
     {
-        FPSGame.GameContract.WindowRegistry.Clear();
+        WindowRegistry.Clear();
     }
     
     //public void CreatSpeech(NoticeData_SO data, System.Func<bool> func = default)
@@ -172,7 +173,7 @@ public class WndManager : Singleton<WndManager>
     }
 
     /// <summary>
-    /// 按枚举开关窗口，转调契约注册表 <see cref="FPSGame.GameContract.WindowRegistry"/>（由 UI 侧 <c>WndHub</c> 填充）。
+    /// 按枚举开关窗口，转调契约注册表 <see cref="WindowRegistry"/>（由 UI 侧 <c>WndHub</c> 填充）。
     ///
     /// <para>▍2026-10-01 起**不再实现 <c>IWindowService</c>**（该契约连同 <c>ServiceLocator.Wnd</c> 槽已删）：
     /// 玩法层改为发 <c>GlobalEventSub.OnOpenWnd</c> 事件，由本类订阅后转调到本方法；
@@ -185,15 +186,15 @@ public class WndManager : Singleton<WndManager>
     /// <para>▍行为说明：UI 尚未就绪 / 没这个窗口 ⇒ 静默跳过（原字段版是 null 跳过，语义一致）。
     /// ⚠ 新增窗口只改 <c>04UI/WndHub.TypeOf</c> 一处。</para>
     /// </summary>
-    public void SetWndState(FPSGame.GameContract.WndType type, bool isActive = true)
+    public void SetWndState(WndType type, bool isActive = true)
     {
-        FPSGame.GameContract.WindowRegistry.SetState(type, isActive);
+        WindowRegistry.SetState(type, isActive);
     }
 
     /// <summary>窗口是否已打开（转调契约注册表；未登记返回 false）。</summary>
-    public bool IsWndOpen(FPSGame.GameContract.WndType type)
+    public bool IsWndOpen(WndType type)
     {
-        return FPSGame.GameContract.WindowRegistry.GetOpen(type);
+        return WindowRegistry.GetOpen(type);
     }
 }
 }

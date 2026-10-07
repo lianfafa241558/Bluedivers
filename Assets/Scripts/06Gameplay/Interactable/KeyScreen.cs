@@ -190,7 +190,7 @@ public partial class KeyScreen : MonoBehaviour
 
         public int minCount,maxCount;//输入
         public float time;//加载/等待
-        public List<Furniture_Base> furns;//操作特定物体
+        public List<Furniture_Attached> furns;//操作特定物体
         public List<string> UnlockItem;//解除锁定
 
     }

@@ -32,6 +32,9 @@ namespace FPSGame.Core
 
             //ArchivesData_SO.playArchive = ShowArchive;
 
+            // ⚠ 只扫「本物体 + 直接子物体」两级、**不递归** ⇒ 常驻管理器可以挂在一级子物体下
+            //   （例：2026-10-07 收拢的 `GameRoot/NetRoot` 下那 6 个组件），
+            //   但若挂到更深的层级，会被**静默漏掉** Init/UnInit（没有任何报错，最难查）。
             var managers = GetComponents<I_GlobaManager>();
             foreach (var item in managers) item.Init();
             for (int i = 0; i < transform.childCount; ++i)

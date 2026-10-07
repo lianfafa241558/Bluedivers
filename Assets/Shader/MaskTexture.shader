@@ -21,25 +21,28 @@ Shader "LX/MaskTexture"
         struct a2v {
             float4 vertex : POSITION;
             float3 uv : TEXCOORD0;
+            float4 color : COLOR;
         };
 
         struct v2f
         {
             float4 vertex : SV_POSITION;
             float2 uv : TEXCOORD0;
+            float4 color : TEXCOORD1;
         };
 
         v2f vert(a2v v)
         {
             v2f o;
-            o.vertex = GetVertexPositionInputs(v.vertex.xyz).positionCS;//urpĞ´·¨
+            o.vertex = GetVertexPositionInputs(v.vertex.xyz).positionCS;//urpå†™æ³•
             o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+            o.color = v.color;
             return o;
         }
 
         half4 frag(v2f i) : SV_Target
         {
-            half4 col = tex2D(_MainTex, i.uv)*_Color;
+            half4 col = tex2D(_MainTex, i.uv)*_Color*i.color;
             half3 mask = (tex2D(_AlphaMask, i.uv * _AlphaMask_ST.rg + _AlphaMask_ST.ba) * _MaskColor).rgb;
             col.a *= mask.r + mask.g + mask.b;
             //col.a = 0;
@@ -51,17 +54,17 @@ Shader "LX/MaskTexture"
     ENDHLSL
 
     SubShader {
-        LOD 200// Ô½¿¿Ç°µÄsubshaderµÄlodÖµÓ¦Ô½´ó£¬µ«ÊÇÃ»¿´¶®ÊÇ¸ÉÂïµÄ
+        LOD 200// è¶Šé å‰çš„subshaderçš„lodå€¼åº”è¶Šå¤§ï¼Œä½†æ˜¯æ²¡çœ‹æ‡‚æ˜¯å¹²å˜›çš„
         Blend SrcAlpha One
-        ZWrite Off // Éî¶È²»Ğ´Èë£¬Í¸Ã÷¶È»ìºÏÖĞ¶¼Ó¦¹Ø±ÕÉî¶ÈĞ´Èë
-        Cull Off // ²»ÌŞ³ı  Cull Back ÌŞ³ı±³Ãæ£¨±³ÏòÉãÏñ»úµÄÃæ£© Cull Front ÌŞ³ıÇ°Ãæ £¨³¯ÏòÉãÏñ»úµÄÃæ£©
+        ZWrite Off // æ·±åº¦ä¸å†™å…¥ï¼Œé€æ˜åº¦æ··åˆä¸­éƒ½åº”å…³é—­æ·±åº¦å†™å…¥
+        Cull Off // ä¸å‰”é™¤  Cull Back å‰”é™¤èƒŒé¢ï¼ˆèƒŒå‘æ‘„åƒæœºçš„é¢ï¼‰ Cull Front å‰”é™¤å‰é¢ ï¼ˆæœå‘æ‘„åƒæœºçš„é¢ï¼‰
 
         Pass{
             HLSLPROGRAM
-                #pragma vertex vert  //¶¨µã×ÅÉ«Æ÷
-                #pragma fragment frag    //Æ¬¶Î×ÅÉ«Æ÷
+                #pragma vertex vert  //å®šç‚¹ç€è‰²å™¨
+                #pragma fragment frag    //ç‰‡æ®µç€è‰²å™¨
             ENDHLSL
         }
 
-    }Fallback "Diffuse"//±¸Ñ¡×ÅÉ«Æ÷
+    }Fallback "Diffuse"//å¤‡é€‰ç€è‰²å™¨
 }

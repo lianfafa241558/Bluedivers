@@ -5079,9 +5079,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3954876557805036276}
   - component: {fileID: 652725942506706191}
-  - component: {fileID: 8129380694571133639}
   - component: {fileID: 7003831133739272522}
   - component: {fileID: 1375819787446249209}
+  - component: {fileID: 8129380694571133639}
   - component: {fileID: 6643636738298634556}
   m_Layer: 6
   m_Name: Ung_Nest
@@ -5137,6 +5137,57 @@ MonoBehaviour:
   shape: 0
   rangeLength: 2.5
   halfHeight: 2.4899998
+--- !u!114 &7003831133739272522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6744787842231746783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxHealth: 500
+  MaxShield: 0
+  showArmorLists:
+  - Key: 11
+    Value: 10
+  - Key: 8
+    Value: 10
+  - Key: 9
+    Value: 10
+  MainPart: {fileID: 6496387617214491177}
+  demolishValue: 30
+  AutoDestroy: 0
+  showHealth: 0
+  m_IsDead: 0
+  AboGaugeArr: []
+--- !u!114 &1375819787446249209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6744787842231746783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3de939d976a5bb0419ccd8dbd0b6836b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DeathDuration: 10
+  BirthDuration: 0
+  birthTime: 0
+  IsRemove: 0
+  PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
+  isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &8129380694571133639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5165,56 +5216,6 @@ MonoBehaviour:
   damagedTime: 22
   lastDamagedTime: -Infinity
   creatTime: 12
---- !u!114 &7003831133739272522
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6744787842231746783}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MaxHealth: 500
-  MaxShield: 0
-  showArmorLists:
-  - Key: 11
-    Value: 10
-  - Key: 8
-    Value: 10
-  - Key: 9
-    Value: 10
-  MainPart: {fileID: 6496387617214491177}
-  demolishValue: 30
-  showHealth: 0
-  m_IsDead: 0
-  AboGaugeArr: []
---- !u!114 &1375819787446249209
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6744787842231746783}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3de939d976a5bb0419ccd8dbd0b6836b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DeathDuration: 10
-  BirthDuration: 0
-  birthTime: 0
-  IsRemove: 0
-  PathReachingRadius: 2
-  m_lastDestination: {x: 0, y: 0, z: 0}
-  isImportant: 0
-  _knockbackWeight: 1
-  _knockbackDrag: 3
-  _knockbackMaxSpeed: 20
-  _pauseAutoRepathWhileKnocked: 1
-  _knockbackImmune: 0
 --- !u!114 &6643636738298634556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5228,11 +5229,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 2a3cf663277d9b0439baf3273df8c9e5, type: 2}
   fxMaterial: {fileID: 2100000, guid: 8b642f569f829c147ac73330d0d378f2, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!1 &7086799834518095147
 GameObject:

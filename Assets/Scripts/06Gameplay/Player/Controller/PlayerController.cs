@@ -393,8 +393,10 @@ public partial class PlayerController : BaseSelfMoveableController
 
         if (IsThirdPerson)
         {
-            // 第三人称时用世界旋转同步武器朝向（瞄准时瞄准相机方向，非瞄准时跟随角色）
-            if (WeaponsManager.IsAiming)
+            // 第三人称时用世界旋转同步武器朝向（相机俯仰 + 角色朝向）：
+            // 瞄准时角色已转向相机 yaw，等价于完全对齐相机；未瞄准时也同步相机俯仰，
+            // 使枪口跟随视野中心上下摆动（是否在未瞄准时同步由 WeaponsManager.ThirdPersonAimAtViewCenter 控制）
+            if (WeaponsManager.IsAiming || WeaponsManager.ThirdPersonAimAtViewCenter)
             {
                 WeaponsManager.FirstPersonSocket.transform.rotation = Quaternion.Euler(m_CameraVerticalAngle, transform.eulerAngles.y, 0);
             }

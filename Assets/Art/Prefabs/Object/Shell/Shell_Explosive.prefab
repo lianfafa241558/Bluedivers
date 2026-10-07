@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 4919498652898942121}
   - component: {fileID: 3424576168184472821}
   - component: {fileID: 5772083555422772522}
+  - component: {fileID: 2615564710308670635}
   m_Layer: 6
   m_Name: Shell_Explosive
   m_TagString: Untagged
@@ -157,6 +158,23 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.1, z: 0}
+--- !u!114 &2615564710308670635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 783245332362682132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u70B8\u5F39"
+  Id: Shell
+  Portrait: {fileID: 21300000, guid: c8ae2d8c07136e5439a92814d8846d44, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: c8ae2d8c07136e5439a92814d8846d44, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2420338980348300955
 GameObject:
   m_ObjectHideFlags: 0

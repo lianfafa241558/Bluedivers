@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using UnityEngine.AI;
@@ -11,11 +11,6 @@ namespace FPSGame.Utils
     {
 
 #if UNITY_EDITOR
-        public static void SetState(this AudioSource source, bool state)
-        {
-            if (state) source.Play();
-            else source.Stop();
-        }
 
 
         private static DrawLabelUtils drawLabelUtils;
@@ -38,6 +33,11 @@ namespace FPSGame.Utils
                 exchangeArea.transform.position = Vector3.down * 1000;
             }
         }
+        public static void SetState(this AudioSource source, bool state)
+        {
+            if (state) source.Play();
+            else source.Stop();
+        }
 
         //语法糖：
         //if(obj is Health hp&&hp.nowhp>0)
@@ -46,7 +46,12 @@ namespace FPSGame.Utils
         //var array = new[] { 10, 20, 30, 40, 50 };
         //Debug.Log(array[^1]); // 输出最后一个元 ? 50
         //Debug.Log(string.Join(", ", array[1..^1])); // 输出: 20, 30, 40
-
+        /// <summary>
+        /// 比较层级，必须加 1 << XX
+        /// </summary>
+        /// <param name="mask"></param>
+        /// <param name="layout"></param>
+        /// <returns></returns>
         public static bool Contains(this LayerMask mask, int layout)
             => (mask.value & layout) != 0;
 

@@ -1,4 +1,4 @@
-using FPSGame.Game;
+﻿using FPSGame.Game;
 using UnityEngine;
 using System.Collections.Generic;
 using FPSGame.Gameplay;
@@ -163,9 +163,35 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
     /// <summary>空投舱自由落体所需时间(不含缓冲)：t=√(2h/g)，g取20 → √(h/10)；落地速度倍率越高用时越短</summary>
     private float PodFallTime() => Mathf.Sqrt(data.cfg.arriveHeight * 0.1f) / Mathf.Max(m_PodFallScale, 0.01f);
 
+    /// <summary>战备计时的**固定逻辑步长**（与 <c>Constants.LoginFrame</c> 同源；理由见 <see cref="Update"/>）。</summary>
+    private static readonly float LogicStep = FPSGame.Core.Constants.LoginFrame.RawFloat;
+
+    /// <summary>单个渲染帧最多补几步（0.02 × 10 = 0.2s）：长卡顿 / 断点后别一次补完几十帧。</summary>
+    private const int MaxLogicSteps = 10;
+
+    /// <summary>欠下的逻辑帧时间（累加器，按墙钟补步）。</summary>
+    private float _logicLeft;
+
     private void Update()
     {
-        if (data.isTmp) data.Update();
+        // ⚠⚠ 这里原来是"每渲染帧 `data.Update()`"，而 `AirdropData.Update()` 内部是 `time -= 逻辑帧时长(0.02)`
+        //   ⇒ 战备计时**随帧率变快**（60fps 快 1.2 倍、144fps 快 2.88 倍）。单机看不出，
+        //   联机时两端帧率不同 ⇒ 同一发战备一边"即将抵达"、一边已经"正在进行"（2026-10-07 实测）。
+        //   现在按墙钟补帧：固定 0.02s 一步，与本机那份（`AirdropController.Tick`，定步 0.02）同速。
+        if (data.isTmp)
+        {
+            _logicLeft += Time.deltaTime;
+            int steps = 0;
+            while (_logicLeft >= LogicStep && steps < MaxLogicSteps)
+            {
+                _logicLeft -= LogicStep;
+                data.Update();
+                ++steps;
+            }
+            // 欠账超过一步就别再攒（否则下一帧要连补几十步 ⇒ 瞬间跳到结束）
+            if (_logicLeft > LogicStep) _logicLeft = LogicStep;
+        }
+
         showTime += Time.deltaTime;
         switch (data.cfg.deliveryType)
         {
@@ -216,7 +242,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         data = null;
         m_creatObject = null;
         //m_particle.Stop(true);
-        m_Lift.SetLift(1);
+        //m_Lift.SetLift(1);
         
     }
 
@@ -275,7 +301,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         else if(data.State == AirdropState.Sustain && !m_creatObject.IsValid()&& data.time> 0.5f)
         {
             data.time = 0.5f;
-            m_Lift.ResetLift(0.5f);
+            //m_Lift.ResetLift(0.5f);
         }
 
     }
@@ -358,6 +384,21 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         //Destroy(m_creatObject.gameObject);
 
     }
+
+    /// <summary>
+    /// 该战备那把武器的**确定性随机种子**：同一战备在各端取同一个值 ⇒ 弹道散布/落点一致
+    /// （轨道轰炸这类"各端各自执行一次"的战备必须这样，否则看起来就是没同步）。
+    ///
+    /// <para>▍只按 <c>ID</c> 派生（不带落点）：落点是各端各自那份副本算出来的，拿它当种子反而会分叉。
+    /// 代价是同一战备重复呼叫时图案一样 —— 观感上可接受，等你要求"每次不同"再改成带序号（序号要随呼叫同步）。</para>
+    /// <para>无权威种子（单机 / 旧版房主）⇒ 返回 0 ⇒ 武器保持原来的全局随机行为。</para>
+    /// </summary>
+    private static int AirdropWeaponSeed(int airdropId)
+    {
+        int seed = FPSGame.Data.TaskState.Seed;
+        if (seed == 0) return 0;
+        return FPSGame.Utils.SeedUtil.Derive(FPSGame.Utils.SeedUtil.Derive(seed, FPSGame.Utils.SeedStream.Weapon), airdropId);
+    }
     void UpdateBomb()
     {
         if (!m_creatObject)
@@ -368,6 +409,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
                 if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
                 {
                     weapon.Owner = m_owner;
+                    weapon.RandomSeed = AirdropWeaponSeed(data.cfg.ID);   // ★ 两端同一片火海（见方法注释）
                 }
                 if (data.cfg.sustainHideBeacon)
                 {
@@ -401,6 +443,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
         {
             weapon.Owner = m_owner;
+            weapon.RandomSeed = AirdropWeaponSeed(data.cfg.ID);
         }
         //重新设置引导物体的位置
         foreach (var item in m_creatObject.GetComponentsInChildren<GuidedShelling>())
@@ -461,6 +504,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
         {
             weapon.Owner = m_owner;
+            weapon.RandomSeed = AirdropWeaponSeed(data.cfg.ID);
         }
 
         if (data.cfg.sustainHideBeacon)

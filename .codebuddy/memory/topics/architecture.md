@@ -6,7 +6,7 @@
 ## asmdef 层级与归属
 - 拆分 100% 完成：预定义程序集 0；自有 **28** asmdef；`Assets/Scripts` 497 cs + `Assets/Editor` 47 cs
 - 层级（下→上）：`00_Core`→`01_GameContract`→`00_Utils`→`03_Audio`→`04_Data`→`05_UnitCore`/`05_EffectComp`→`06_Gameplay`→`09_Managers`→`10_UI`/`10_Effect`
-- ⚠ `references` 写 asmdef 的 **name 字段**（`08_Map` 的 name=`FpsGame.MapUtils`；`04_UI` 的 name=`04_UI`）；asmdef/`.meta` 带 BOM ⇒ 读用 `utf-8-sig`
+- ⚠ `references` 写 asmdef 的 **name 字段**，与所在**目录名常常不同**（目录 `08Map` 的 name=`FpsGame.MapUtils`；目录 `10UI` 的 name=`10_UI`）⇒ 对照表见「目录约定」；asmdef/`.meta` 带 BOM ⇒ 读用 `utf-8-sig`
 - 工具：`.codebuddy/plans/asmdef_refs.py`（GUID references → 程序集名）
 - **类型归属**：下界 = 依赖层 ∩ 上界 = 消费者最小层；**基类只能待在 `min(子类层, 消费者层)`**
 - ⚠⚠⚠ 搬 `.cs` 一律 `AssetDatabase.MoveAsset`（文件系统 `Move-Item` 会让 Unity 判 guid 冲突 ⇒ 给新路径**重分配 guid** ⇒ **Missing Script**）。**权威判定 = 悬空引用检测**：`plans/find_dangling_guids.py`（引用 guid − 磁盘 meta guid）；修复 `plans/fix_guid_dangling.py --apply`（旧 guid→现文件用「内容哈希→唯一同名→类名」三路匹配，比 `p53_guid_repair.py` 纯同名法更全）→ `AssetDatabase.Refresh(ForceUpdate)` → 复查悬空=0。⚠ 日志 `A meta data file (.meta) exists but its asset ... can't be found` 就是此病的**表象**（多为 Warning 非 Error）
@@ -17,6 +17,20 @@
 ## 目录约定
 - 程序集根下子目录用**纯英文名词、无数字前缀**
 - 历史：`Assets/Scripts` 早期有"数字前缀 + 功能"分层（`00Core`/`01Manager`/`02Game`…），现已换成程序集名（`00Core`→`00_Core`、`01Manager`→`09_Managers`、`02Game`→`06_Gameplay`）⇒ 旧路径出现在注释/脚本里时注意换算
+- ⚠⚠ **「目录名 ↔ asmdef name」权威对照**（2026-10-02 按磁盘+asmdef 实测，共 16 组）：
+
+| 目录 | asmdef name | 目录 | asmdef name |
+|---|---|---|---|
+| `00Attributes` | `00_Attribute` | `06Gameplay` | `06_Gameplay` |
+| `00Core` | `00_Core` | `08Map` | `FpsGame.MapUtils` |
+| `00GameContract` | `01_GameContract` | `09Manager` | `09_Managers` |
+| `00Tools` | `00_Utils` | `10_Effect` | `10_Effect` |
+| `02Rendering` | `02_Rendering` | `10UI` | `10_UI` |
+| `03Audio` | `03_Audio` | `DayNightSystem` | `DayNightSystem` |
+| `04Data` | `04_Data` | `NetTmp` | `02_Net` |
+| `05UnitCore` | `05_UnitCore` | `05_EffectComp` | `05_EffectComp` |
+
+- ⚠ 记忆/daily 里的**旧版路径**按此换算：`01Manager`→`09Manager`、`02Data`→`04Data`、`02Game`→`06Gameplay`、`04UI`(旧 asmdef `04_UI`)→`10UI`(`10_UI`)、`00Attribute`→`00Attributes`、`00_WndTools`(旧 asmdef，已删并)→`00Tools`+`10UI`；**定位代码一律写目录名路径**（`Assets/Scripts/<目录>/…`），asmdef 名只在改 `references` 时用
 
 ## 命名空间
 - 全量 `FPSGame.*`（21 个子命名空间：`Game`/`AI`/`GameContract`/`Core`/`Mission`/`Gameplay`/`Utils`/`Furn`/`Attribute`/`Data`/`Managers`/`UI`/`Effect`/`Net`/`Rendering`/`Audio`/`MapUtils`/`WndTools`/`EditorExt`/`DayNightSystem`/`EffectComp`…）

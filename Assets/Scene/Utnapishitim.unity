@@ -981,6 +981,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -992,6 +993,11 @@ MonoBehaviour:
   desc: "\u5BF9\u8BDD"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -1154,7 +1160,7 @@ PrefabInstance:
     - target: {fileID: 4029898924805708001, guid: cc64248f15da8e04bb032c184219d0be,
         type: 3}
       propertyPath: m_text
-      value: "\u5207\u6362\u89D2\u8272"
+      value: "\u914D\u7F6E\u6218\u5907"
       objectReference: {fileID: 0}
     - target: {fileID: 4029898926444975059, guid: cc64248f15da8e04bb032c184219d0be,
         type: 3}
@@ -1266,6 +1272,16 @@ PrefabInstance:
         type: 3}
       propertyPath: furnitureName
       value: "\u9009\u62E9\u89D2\u8272"
+      objectReference: {fileID: 0}
+    - target: {fileID: 8747452812544007020, guid: cc64248f15da8e04bb032c184219d0be,
+        type: 3}
+      propertyPath: Id
+      value: SelectAirdrop
+      objectReference: {fileID: 0}
+    - target: {fileID: 8747452812544007020, guid: cc64248f15da8e04bb032c184219d0be,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u63A7\u5236\u53F0"
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2637,6 +2653,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -2648,6 +2665,11 @@ MonoBehaviour:
   desc: "\u5BF9\u8BDD"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -3593,6 +3615,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -3604,6 +3627,11 @@ MonoBehaviour:
   desc: "\u5BF9\u8BDD"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -5555,6 +5583,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -5566,6 +5595,11 @@ MonoBehaviour:
   desc: "\u5BF9\u8BDD"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -5853,6 +5887,16 @@ PrefabInstance:
         type: 3}
       propertyPath: furnitureName
       value: SelectRole
+      objectReference: {fileID: 0}
+    - target: {fileID: 8747452812544007020, guid: cc64248f15da8e04bb032c184219d0be,
+        type: 3}
+      propertyPath: Id
+      value: SelectRole
+      objectReference: {fileID: 0}
+    - target: {fileID: 8747452812544007020, guid: cc64248f15da8e04bb032c184219d0be,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u63A7\u5236\u53F0"
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -15857,6 +15901,16 @@ PrefabInstance:
       propertyPath: m_Center.y
       value: 0.15
       objectReference: {fileID: 0}
+    - target: {fileID: 8747452812544007020, guid: cc64248f15da8e04bb032c184219d0be,
+        type: 3}
+      propertyPath: Id
+      value: SelectVehicle
+      objectReference: {fileID: 0}
+    - target: {fileID: 8747452812544007020, guid: cc64248f15da8e04bb032c184219d0be,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u63A7\u5236\u53F0"
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -15923,12 +15977,12 @@ PrefabInstance:
     - target: {fileID: 901270488196871404, guid: ac424b697a9ea1746948dacee4828737,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 224
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 901270488196871404, guid: ac424b697a9ea1746948dacee4828737,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 127
       objectReference: {fileID: 0}
     - target: {fileID: 901270488196871404, guid: ac424b697a9ea1746948dacee4828737,
         type: 3}
@@ -16059,6 +16113,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: SelectMapWnd
+      objectReference: {fileID: 0}
+    - target: {fileID: 3288259753321058564, guid: ac424b697a9ea1746948dacee4828737,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3288259753321058565, guid: ac424b697a9ea1746948dacee4828737,
         type: 3}
@@ -16692,7 +16751,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb33dc725d50262469ef7f29859d83fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  armament: {fileID: 0}
 --- !u!4 &1067752471
 Transform:
   m_ObjectHideFlags: 0
@@ -17740,6 +17798,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1275099204}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 098070dc00c2adc4b8cb18dee7660b70,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1275099205}
   m_SourcePrefab: {fileID: 100100000, guid: 098070dc00c2adc4b8cb18dee7660b70, type: 3}
 --- !u!23 &1275099203 stripped
 MeshRenderer:
@@ -17759,6 +17821,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d1a73430ee99de4296c185ee351d18b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 915b317d03af07547be2e88b48190c87, type: 3}
@@ -17770,22 +17833,33 @@ MonoBehaviour:
   desc: "\u6253\u5F00\u5E2E\u52A9\u754C\u9762"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
+--- !u!114 &1275099205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 372937469}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   ShowName: "\u63A7\u5236\u53F0"
   Id: GuideWnd
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
 --- !u!1 &1279409764
 GameObject:
   m_ObjectHideFlags: 0
@@ -26552,6 +26626,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -26563,6 +26638,11 @@ MonoBehaviour:
   desc: "\u5BF9\u8BDD"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -28705,6 +28785,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -28716,6 +28797,11 @@ MonoBehaviour:
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -32141,6 +32227,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -32152,6 +32239,11 @@ MonoBehaviour:
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -42022,6 +42114,16 @@ PrefabInstance:
       propertyPath: InitialModule.startColor.maxColor.r
       value: 0.48571435
       objectReference: {fileID: 0}
+    - target: {fileID: 6099264558421772679, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
+        type: 3}
+      propertyPath: Id
+      value: SelectTask
+      objectReference: {fileID: 0}
+    - target: {fileID: 6099264558421772679, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u63A7\u5236\u53F0"
+      objectReference: {fileID: 0}
     - target: {fileID: 6285290792082619870, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
         type: 3}
       propertyPath: InitialModule.startColor.maxColor.b
@@ -42071,6 +42173,36 @@ PrefabInstance:
         type: 3}
       propertyPath: InitialModule.startColor.maxColor.r
       value: 0.61956525
+      objectReference: {fileID: 0}
+    - target: {fileID: 7154499571187687422, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
+        type: 3}
+      propertyPath: Id
+      value: SelectTask
+      objectReference: {fileID: 0}
+    - target: {fileID: 7154499571187687422, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u63A7\u5236\u53F0"
+      objectReference: {fileID: 0}
+    - target: {fileID: 7154499572354901001, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
+        type: 3}
+      propertyPath: Id
+      value: SelectTask
+      objectReference: {fileID: 0}
+    - target: {fileID: 7154499572354901001, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u63A7\u5236\u53F0"
+      objectReference: {fileID: 0}
+    - target: {fileID: 7154499572411184140, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
+        type: 3}
+      propertyPath: Id
+      value: SelectTask
+      objectReference: {fileID: 0}
+    - target: {fileID: 7154499572411184140, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
+        type: 3}
+      propertyPath: ShowName
+      value: "\u63A7\u5236\u53F0"
       objectReference: {fileID: 0}
     - target: {fileID: 7565117880996509195, guid: debd6f9400bad7a4381b4b5fdf1cfeb9,
         type: 3}
@@ -45898,6 +46030,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -45909,6 +46042,11 @@ MonoBehaviour:
   desc: "\u5BF9\u8BDD"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
@@ -49736,6 +49874,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 063a767b34daa3d4c97a140ddec83023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -49747,6 +49886,11 @@ MonoBehaviour:
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0

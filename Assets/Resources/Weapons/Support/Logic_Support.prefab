@@ -44,6 +44,7 @@ GameObject:
   - component: {fileID: 2094299153557988144}
   - component: {fileID: 6434782405606229550}
   - component: {fileID: 8854574672254749762}
+  - component: {fileID: 1683177372476338377}
   m_Layer: 0
   m_Name: Logic_Support
   m_TagString: Untagged
@@ -99,12 +100,11 @@ MonoBehaviour:
       Value: 3
     - Key: 10
       Value: 3
-  ProjectilePrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 145
     Gravity: 10
     InheritWeaponSpeed: 0
@@ -113,6 +113,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 16
     DamageGroupDirect:
@@ -155,6 +156,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 8300000, guid: 1862bb40e3ffecc45a49d24648c354ea, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -177,8 +179,8 @@ MonoBehaviour:
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
   PlayerIndex: 0
-  WeaponName: "\u903B\u8F91"
-  WeaponType: "\u7A81\u51FB\u6B66\u5668"
+  WeaponName: "\u903B\u8F91-\u652F\u63F4\u7248"
+  WeaponType: "\u652F\u63F4\u6B66\u5668"
   WeaponTypeEnum: 6
   WeaponIcon: {fileID: 21300000, guid: 286dd0db6d9fd924b8d052cd650e6f82, type: 3}
   Sight: {fileID: 1123618372036048713, guid: 3020ce05020c7a640908f4e4c246cbbe, type: 3}
@@ -253,6 +255,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e89e0ab530d9cdd4b8c87286b3f97a08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -264,10 +267,33 @@ MonoBehaviour:
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
+--- !u!114 &1683177372476338377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3910090344161347191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: 
+  Id: 
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &4343025572940135455
 GameObject:
   m_ObjectHideFlags: 0

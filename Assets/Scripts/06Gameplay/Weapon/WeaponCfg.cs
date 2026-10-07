@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using PEMaths;
-
+using FPSGame.Core;
 using UnityEngine;
 using FPSGame.Utils;
 using Tool = FPSGame.Utils.Tool;
 #if UNITY_EDITOR
 using UnityEditor;
-using FPSGame.Core;
+
 #endif
 
 namespace FPSGame.Weapon

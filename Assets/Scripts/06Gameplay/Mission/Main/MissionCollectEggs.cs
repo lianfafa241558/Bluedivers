@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using UnityEngine;
@@ -61,8 +61,8 @@ namespace FPSGame.Mission
             foreach (var artifact in _artifacts)
             {
                 if (!artifact) continue;
-                artifact.OnPicked -= OnArtifactPicked;
-                artifact.OnSubmitted -= OnArtifactSubmitted;
+                artifact.OnPicked.RemoveListener(OnArtifactPicked);
+                artifact.OnSubmitted.RemoveListener(OnArtifactSubmitted);
             }
             _artifacts.Clear();
             _wavePending.Clear();
@@ -111,12 +111,12 @@ namespace FPSGame.Mission
 
                     _artifacts.Add(item);
                     _wavePending.Add(item);
-                    item.OnPicked += OnArtifactPicked;
-                    item.OnSubmitted += OnArtifactSubmitted;
+                    item.OnPicked.AddListener(OnArtifactPicked);
+                    item.OnSubmitted.AddListener(OnArtifactSubmitted);
                 }
             }
 
-            Debug.Log($"[采集虫蛋] 从 {subTask.Length} 个子任务实体里收集到 {_artifacts.Count} 件神器", this);
+            //Debug.Log($"[采集虫蛋] 从 {subTask.Length} 个子任务实体里收集到 {_artifacts.Count} 件神器", this);
         }
 
         /// <summary>神器被玩家从地面拾起：只认首次，在该神器所在位置引来一波额外波次</summary>

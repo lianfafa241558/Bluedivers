@@ -22,6 +22,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 0
   group: 8
   flags: 0
@@ -47,6 +48,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 0
   group: 8
   flags: 0
@@ -74,6 +76,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 0
   group: 8
   flags: 0
@@ -101,6 +104,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 0
   group: 8
   flags: 0
@@ -128,6 +132,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 0
   group: 8
   flags: 0
@@ -155,6 +160,37 @@ MonoBehaviour:
   - {fileID: 6159787068102271140}
   - {fileID: -5981124706342028120}
   - {fileID: -444270338978695587}
+  - {fileID: 2866638328606819635}
+--- !u!114 &2866638328606819635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Kotama_NestClear
+  m_EditorClassIdentifier: 
+  groupName: NestClear
+  clips:
+  - audioClip: {fileID: 8300000, guid: 6d149dac66c8aeb479f4559d5baa2cfa, type: 3}
+    subtitle: "\u533A\u57DF\u5DF2\u63A7\u5236\u3002"
+  - audioClip: {fileID: 8300000, guid: 83646f01a617cfd43ac7b74e6b612512, type: 3}
+    subtitle: "\u6B63\u4E49\u5DF2\u7ECF\u5F97\u5230\u4F38\u5F20\u3002"
+  - audioClip: {fileID: 8300000, guid: 046aa944dc2aa474fb8b2e3c843e1abd, type: 3}
+    subtitle: "\u533A\u57DF\u5185\u654C\u5BF9\u53CD\u5E94\u6D88\u5931\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 2, y: 3}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 8
+  flags: 0
 --- !u!114 &6017167850996509043
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,6 +215,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 0
   group: 8
   flags: 0
@@ -206,6 +243,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 0
   group: 8
   flags: 0

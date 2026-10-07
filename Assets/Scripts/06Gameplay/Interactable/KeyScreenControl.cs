@@ -27,6 +27,52 @@ public partial class KeyScreen
     [SerializeField]
     int[] itemValue, targetValue;
 
+    #region 谜题随机（2026-10-06 联机改造）
+
+    /// <summary>
+    /// 本谜题的**稳定身份**：世界坐标量化（0.1m）后哈希。
+    /// <para>▍为什么不用 <c>Furniture_Attached.NumberID</c>：那是各端静态自增，实例化顺序可能不同
+    /// ⇒ 两端会得到不同身份。位置由场景 / 地形决定 ⇒ 跨端稳定。</para>
+    /// <para>▍量化到 0.1m 是为了吃掉浮点抖动（两端同一物体的世界坐标可能有 1e-6 级差异）。</para>
+    /// </summary>
+    private int _puzzleId = int.MinValue;
+    private int PuzzleId
+    {
+        get
+        {
+            if (_puzzleId != int.MinValue) return _puzzleId;
+            Vector3 p = transform.position;
+            _puzzleId = unchecked(Mathf.RoundToInt(p.x * 10f) * 73856093
+                                ^ Mathf.RoundToInt(p.y * 10f) * 19349663
+                                ^ Mathf.RoundToInt(p.z * 10f) * 83492791);
+            return _puzzleId;
+        }
+    }
+
+    /// <summary>
+    /// 谜题取值（**纯函数**：同 seed + 同谜题身份 + 同 stage + 同 index ⇒ 恒等）。
+    ///
+    /// <para>▍为什么用纯函数而不是"一条流"：谜题阶段**可能被重试 / 重进**。若用流，
+    /// "重试次数不同的两端"会拿到不同的目标值（A 端重试过一次、B 端没有 ⇒ 序列错位）。
+    /// 纯函数让重试也拿到同一组值 ⇒ 两端永远一致。</para>
+    ///
+    /// <para>▍单机（<c>TaskState.Seed == 0</c>）保持原行为：走全局静态流、每次重试都重新随机。</para>
+    /// </summary>
+    private int PuzzleRange(int stage, int index, int min, int max)
+    {
+        if (max <= min) return min;
+
+        int seed = TaskState.Seed;
+        if (seed == 0) return RandomUtils.Range(min, max);
+
+        int h = SeedUtil.Derive(seed, PuzzleId);
+        h = SeedUtil.Derive(h, stage);
+        h = SeedUtil.Derive(h, index);
+        return min + (int)(unchecked((uint)h) % (uint)(max - min));
+    }
+
+    #endregion
+
     void InitProcedre()
     {
         SetActive(exit, false);
@@ -61,12 +107,14 @@ public partial class KeyScreen
         SetActive(inputs, true);
         targetInput = new();
         nowInput = new();
-        //每次长度一样是因为时间种子的问题
-        int len = RandomUtils.Range(now.minCount, now.maxCount + 1);
+        // 谜题取值改走「本局种子 + 谜题身份 + stage + index」的纯函数（联机两端恒等；单机保持随机）：
+        // 原注释"同步保证每个人一样"的**意图是对的**，但当时吃的是全局静态流 ——
+        // 会被音效 / 弹孔 / 武器散布等无关系统推进游标，导致两端序列漂移。
+        int len = PuzzleRange(nowStage, 0, now.minCount, now.maxCount + 1);
         //Debug.LogError("开始输入"+"长度"+len);
-        for (int i = 0; i < len; ++i)//同步保证每个人一样
+        for (int i = 0; i < len; ++i)
         {
-            targetInput.Add((DirectionEnum)RandomUtils.Range(0, 4));
+            targetInput.Add((DirectionEnum)PuzzleRange(nowStage, 1 + i, 0, 4));
         }
         SetText(inputs, targetInput.OpterTMPString());
     }
@@ -233,10 +281,10 @@ public partial class KeyScreen
     void ParaModifyInit(Procedure now)
     {
         SetActive(paraModify, true);
-        targetValue[0] = RandomUtils.Range(0, 36000);
-        targetValue[1] = RandomUtils.Range(0, 10000);
-        itemValue[0] = RandomUtils.Range(0, 36000);
-        itemValue[1] = RandomUtils.Range(0, 10000);
+        targetValue[0] = PuzzleRange(nowStage, 0, 0, 36000);
+        targetValue[1] = PuzzleRange(nowStage, 1, 0, 10000);
+        itemValue[0] = PuzzleRange(nowStage, 2, 0, 36000);
+        itemValue[1] = PuzzleRange(nowStage, 3, 0, 10000);
         itemValue[2] = CalculatedPower();
 
         SetText(paraModify.GetChild(2, 1), itemValue[0] / 100);
@@ -330,8 +378,8 @@ public partial class KeyScreen
         SetActive(direction, true);
         SetColor(direction.GetChild(0,2), _LightColor);
 
-        targetValue[0] = RandomUtils.Range(0, 36000);
-        itemValue[0] = RandomUtils.Range(0, 36000);
+        targetValue[0] = PuzzleRange(nowStage, 0, 0, 36000);
+        itemValue[0] = PuzzleRange(nowStage, 1, 0, 36000);
         itemState[0] = false;
         direction.GetChild(0, 0).transform.localEulerAngles = new(0, 0, targetValue[0]/100f - 22.5f);
         direction.GetChild(0, 1).transform.localEulerAngles = new(0, 0, targetValue[0]/100f + 22.5f);
@@ -515,7 +563,7 @@ public partial class KeyScreen
         {
             var item = password.GetChild(0, i);
             SetColor(item.GetChild(0), i == 0 ? _LightColor : Color.white);
-            targetValue[i] = RandomUtils.Range(0, 10);
+            targetValue[i] = PuzzleRange(nowStage, i, 0, 10);
             itemValue[i] = 0;
             SetText(item.GetChild(0), 0);
         }

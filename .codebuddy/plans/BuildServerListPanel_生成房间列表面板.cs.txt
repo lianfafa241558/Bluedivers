@@ -1,0 +1,556 @@
+using FPSGame.UI;
+using TMPro;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace FPSGame.EditorTools
+{
+    /// <summary>
+    /// 【临时工具】在 <c>SelectMapWnd.prefab</c> 的 <c>Rooms</c> 节点下生成「房间列表」子界面，
+    /// 并把 <see cref="ServerListPanel"/> 的序列化引用、<see cref="SelectMapWnd.serverPanel"/> 一并回填。
+    ///
+    /// <para>列 = 任务 / 时间 / 状态 / 队伍（4 列，全部来自 <c>KCPNet.LanRoomInfo</c>）。</para>
+    /// <para>筛选栏 = 地图下拉（<c>TaskManager.MapData</c> 的 AreaName）+ 仅可接取开关。</para>
+    ///
+    /// <para>用法：菜单 <c>Tools/生成房间列表面板</c>。构建幂等（先清空 Rooms 的子物体）。
+    /// 结构稳定后可删除本文件。</para>
+    /// </summary>
+    public static class BuildServerListPanel
+    {
+        private const string PrefabPath = "Assets/Resources/UI/Wnd/SelectMapWnd.prefab";
+        private const string FontPath = "Assets/Art/Font/fSimpleRound SDF.asset";
+
+        // ---- 素材（全部复用项目既有 UI 图）----
+        private const string SprPanel = "Assets/Images/AlphaFrame.png";
+        private const string SprLine = "Assets/Images/GradLine_L.png";
+        private const string SprButton = "Assets/Images/FX_TEX_Lock.png";
+        private const string SprArrow = "Assets/Images/Arrow_Down.png";
+        private const string SprClose = "Assets/Images/CloseBtn_Icon.png";
+        private const string SprPip = "Assets/Images/Hexagonal_Frame3.png";
+        private const string SprDot = "Assets/Images/circular_128.png";
+        private const string SprWhite = "Assets/Images/TEX_White_16x16.png";
+        private const string SprLock = "Assets/Images/Common_Icon_Lock.png";
+
+        private const string MenuPath = "Tools/生成房间列表面板";
+
+        // ---- 配色 ----
+        private static readonly Color Accent = new Color(0.651f, 0.867f, 0.867f, 1f);
+        private static readonly Color AccentDim = new Color(0.651f, 0.867f, 0.867f, 0.80f);
+        private static readonly Color TitleColor = new Color(0.651f, 0.867f, 0.867f, 0.45f);
+        private static readonly Color TextMain = new Color(0.92f, 0.94f, 0.96f, 1f);
+        private static readonly Color TextDim = new Color(0.62f, 0.66f, 0.70f, 1f);
+        private static readonly Color OptionOff = new Color(1f, 1f, 1f, 0.05f);
+        private static readonly Color RowNormal = new Color(0.060f, 0.070f, 0.090f, 0.90f);
+        private static readonly Color PipDim = new Color(1f, 1f, 1f, 0.10f);
+        private static readonly Color PopupBg = new Color(0.020f, 0.025f, 0.035f, 0.97f);
+
+        // ---- 布局常量 ----
+        private const float PanelWidth = 1440f;
+        private const float PanelHeight = 780f;
+        private const float FilterWidth = 260f;
+        private const float RowHeight = 68f;
+        private const float HeaderHeight = 38f;
+        private const float ColSpacing = 4f;
+        private const float PipSize = 18f;
+        private const float PipSpacing = 2f;
+        private const int TeamPips = 4;
+
+        // ---- 列定义（表头与数据行共用，改一处必须同步另一处）----
+        private static readonly float[] ColWidth = { 600f, 112f, 160f, 200f };
+        private static readonly string[] ColNode = { "Task", "Time", "State", "Team" };
+        private static readonly string[] ColTitle = { "任务", "时间", "状态", "队伍" };
+        /// <summary>表头对齐：true = 居中，false = 左对齐（并带缩进）。</summary>
+        private static readonly bool[] ColCenter = { false, true, false, false };
+        private static readonly float[] ColHeadInset = { 56f, 0f, 30f, 6f };
+
+        private static TMP_FontAsset _font;
+
+        [MenuItem(MenuPath)]
+        public static void Build()
+        {
+            _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+            if (_font == null)
+            {
+                Debug.LogError("[BuildServerListPanel] 找不到字体：" + FontPath);
+                return;
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            if (root == null)
+            {
+                Debug.LogError("[BuildServerListPanel] 加载预制体失败：" + PrefabPath);
+                return;
+            }
+
+            try
+            {
+                var rooms = root.transform.Find("Rooms");
+                if (rooms == null)
+                {
+                    Debug.LogError("[BuildServerListPanel] 预制体下找不到节点 Rooms");
+                    return;
+                }
+
+                // 幂等：清空旧内容
+                for (int i = rooms.childCount - 1; i >= 0; --i)
+                {
+                    Object.DestroyImmediate(rooms.GetChild(i).gameObject);
+                }
+                var comps = rooms.GetComponents<Component>();
+                for (int i = comps.Length - 1; i >= 0; --i)
+                {
+                    if (!(comps[i] is RectTransform)) Object.DestroyImmediate(comps[i]);
+                }
+
+                var roomsRect = (RectTransform)rooms;
+                Stretch(roomsRect, 0, 0, 0, 0);
+                roomsRect.pivot = new Vector2(0.5f, 0.5f);
+
+                var refs = BuildContent(rooms);
+                rooms.gameObject.SetActive(false);
+
+                // ---- 回填 ServerListPanel ----
+                var panel = rooms.gameObject.AddComponent<ServerListPanel>();
+                var so = new SerializedObject(panel);
+                so.FindProperty("blocker").objectReferenceValue = refs.blocker;
+                so.FindProperty("closeBtn").objectReferenceValue = refs.closeBtn;
+                so.FindProperty("scroll").objectReferenceValue = refs.scroll;
+                so.FindProperty("content").objectReferenceValue = refs.content;
+                so.FindProperty("rowTemplate").objectReferenceValue = refs.rowTemplate;
+                so.FindProperty("statusText").objectReferenceValue = refs.statusText;
+                so.FindProperty("mapBtn").objectReferenceValue = refs.mapBtn;
+                so.FindProperty("mapText").objectReferenceValue = refs.mapText;
+                so.FindProperty("mapList").objectReferenceValue = refs.mapList;
+                so.FindProperty("mapOption").objectReferenceValue = refs.mapOption;
+                so.FindProperty("joinableBtn").objectReferenceValue = refs.joinableBtn;
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                // ---- 回填 SelectMapWnd.serverPanel ----
+                var wnd = root.GetComponent<SelectMapWnd>();
+                if (wnd != null)
+                {
+                    var wso = new SerializedObject(wnd);
+                    var prop = wso.FindProperty("serverPanel");
+                    if (prop != null)
+                    {
+                        prop.objectReferenceValue = panel;
+                        wso.ApplyModifiedPropertiesWithoutUndo();
+                    }
+                    else
+                    {
+                        Debug.LogError("[BuildServerListPanel] SelectMapWnd 上找不到字段 serverPanel");
+                    }
+                }
+                else
+                {
+                    Debug.LogError("[BuildServerListPanel] 根节点上找不到 SelectMapWnd");
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                Debug.Log("[BuildServerListPanel] 生成完成");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
+        }
+
+        #region 内容构建
+
+        /// <summary>⚠ 必须是 class：<see cref="BuildFilter"/> / <see cref="BuildList"/> 会往里回填引用，
+        /// 若用 struct 则按值传递、回填全部丢失。</summary>
+        private class PanelRefs
+        {
+            public Transform blocker;
+            public Transform closeBtn;
+            public ScrollRect scroll;
+            public RectTransform content;
+            public Transform rowTemplate;
+            public Transform statusText;
+            public Transform mapBtn;
+            public Transform mapText;
+            public Transform mapList;
+            public Transform mapOption;
+            public Transform joinableBtn;
+        }
+
+        private static PanelRefs BuildContent(Transform rooms)
+        {
+            var refs = new PanelRefs();
+
+            // ---------- 遮罩 ----------
+            var blocker = NewImage(rooms, "Blocker", Spr(SprWhite), new Color(0f, 0f, 0f, 0.45f), Image.Type.Simple, true);
+            Stretch(blocker.rectTransform, 0, 0, 0, 0);
+            var blockerBtn = blocker.gameObject.AddComponent<Button>();
+            blockerBtn.transition = Selectable.Transition.None;
+            refs.blocker = blocker.transform;
+
+            // ---------- 主面板 ----------
+            var panel = NewImage(rooms, "Panel", Spr(SprPanel), new Color(0f, 0f, 0f, 0.92f), Image.Type.Simple, true);
+            var panelRect = panel.rectTransform;
+            panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.pivot = new Vector2(0.5f, 0.5f);
+            panelRect.anchoredPosition = Vector2.zero;
+            panelRect.sizeDelta = new Vector2(PanelWidth, PanelHeight);
+
+            // 内衬：AlphaFrame 是"边框 + 透明中心"的贴图，必须再垫一层实底，
+            // 否则面板中间会透出场景背景、可读性差。
+            var body = NewImage(panel.transform, "Body", Spr(SprWhite), new Color(0.016f, 0.020f, 0.028f, 0.94f), Image.Type.Simple, false);
+            Stretch(body.rectTransform, 12, 12, 12, 12);
+
+            NewText(panel.transform, "Title", "房间列表", 32, Accent, TextAlignmentOptions.Left, 48, -28, 600, 40);
+            NewText(panel.transform, "SubTitle", "ROOM BROWSER · LAN / SERVER", 15, TitleColor, TextAlignmentOptions.Left, 50, -70, 600, 22);
+
+            var topLine = NewImage(panel.transform, "TopLine", Spr(SprLine), Accent, Image.Type.Simple, false);
+            TopLeft(topLine.rectTransform, 48, -104, PanelWidth - 96, 2);
+
+            var close = NewImage(panel.transform, "Close", Spr(SprClose), Accent, Image.Type.Simple, true);
+            TopLeft(close.rectTransform, PanelWidth - 88, -26, 40, 40);
+            AddButton(close);
+            refs.closeBtn = close.transform;
+
+            refs.statusText = NewText(panel.transform, "Status", "未搜索到房间", 18, TextDim, TextAlignmentOptions.Left, 0, 0, 800, 24).transform;
+            BottomLeft((RectTransform)refs.statusText, 48, 16, 800, 24);
+
+            BuildFilter(panel.transform, refs);
+            BuildList(panel.transform, refs);
+
+            return refs;
+        }
+
+        private static void BuildFilter(Transform panel, PanelRefs refs)
+        {
+            var filter = NewRect("Filter", panel);
+            Stretch(filter, 48, 130, PanelWidth - 48 - FilterWidth, 48);
+
+            NewText(filter, "Title", "筛选", 24, Accent, TextAlignmentOptions.Left, 0, 0, 240, 30);
+            var line = NewImage(filter, "Line", Spr(SprLine), Accent, Image.Type.Simple, false);
+            TopLeft(line.rectTransform, 0, -38, 240, 2);
+
+            // ---------- 地图下拉 ----------
+            NewText(filter, "MapLabel", "地图", 18, TextDim, TextAlignmentOptions.Left, 0, -52, 240, 26);
+            refs.mapBtn = Dropdown(filter, "MapBtn", 0, -82);
+            refs.mapText = refs.mapBtn.Find("Text");
+
+            var mapList = NewImage(filter, "MapList", Spr(SprWhite), PopupBg, Image.Type.Simple, false);
+            TopLeft(mapList.rectTransform, 0, -122, 240, 388);
+            var mapLayout = mapList.gameObject.AddComponent<VerticalLayoutGroup>();
+            mapLayout.padding = new RectOffset(0, 0, 0, 0);
+            mapLayout.spacing = PipSpacing;
+            mapLayout.childAlignment = TextAnchor.UpperLeft;
+            mapLayout.childControlWidth = true;
+            mapLayout.childControlHeight = true;
+            mapLayout.childForceExpandWidth = true;
+            mapLayout.childForceExpandHeight = false;
+            var mapFitter = mapList.gameObject.AddComponent<ContentSizeFitter>();
+            mapFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            mapFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            refs.mapList = mapList.transform;
+
+            var option = NewImage(mapList.transform, "MapOption", Spr(SprWhite), OptionOff, Image.Type.Simple, true);
+            var optionLe = option.gameObject.AddComponent<LayoutElement>();
+            optionLe.preferredHeight = 28f;
+            AddButton(option);
+            var optionCheck = NewImage(option.transform, "Check", Spr(SprDot), new Color(1f, 1f, 1f, 0.15f), Image.Type.Simple, false);
+            MidLeft(optionCheck.rectTransform, 8, 16, 16);
+            var optionText = NewText(option.transform, "Text", "地图", 18, TextMain, TextAlignmentOptions.Left, 0, 0, 0, 0);
+            Stretch(optionText.rectTransform, 30, 2, 8, 2);
+            option.gameObject.SetActive(false);
+            refs.mapOption = option.transform;
+
+            // ---------- 任务状态 ----------
+            NewText(filter, "StatusLabel", "任务状态", 18, TextDim, TextAlignmentOptions.Left, 0, -518, 240, 26);
+            refs.joinableBtn = OptionRow(filter, "JoinableBtn", "仅可接取", 0, -548);
+        }
+
+        private static void BuildList(Transform panel, PanelRefs refs)
+        {
+            var list = NewRect("List", panel);
+            Stretch(list, 308, 130, 48, 48);
+
+            float listWidth = PanelWidth - 308 - 48;
+
+            // ---------- 表头 ----------
+            var header = NewImage(list, "Header", Spr(SprWhite), new Color(1f, 1f, 1f, 0.06f), Image.Type.Simple, false);
+            TopLeft(header.rectTransform, 0, 0, listWidth, HeaderHeight);
+            var headerLayout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
+            ConfigureLayout(headerLayout, true, true, false, true);
+
+            for (int i = 0; i < ColNode.Length; ++i)
+            {
+                var col = NewRect(ColNode[i], header.transform);
+                var le = col.gameObject.AddComponent<LayoutElement>();
+                le.preferredWidth = ColWidth[i];
+                le.preferredHeight = HeaderHeight;
+
+                var label = NewText(col, "Text", ColTitle[i], 18, AccentDim,
+                    ColCenter[i] ? TextAlignmentOptions.Center : TextAlignmentOptions.Left, 0, 0, 0, 0);
+                float inset = ColHeadInset[i];
+                if (ColCenter[i]) Stretch(label.rectTransform, 0, 0, 0, 0);
+                else Stretch(label.rectTransform, inset, 0, 0, 0);
+            }
+
+            // ---------- 滚动区 ----------
+            var scroll = NewImage(list, "Scroll", Spr(SprWhite), new Color(0f, 0f, 0f, 0.35f), Image.Type.Simple, true);
+            Stretch(scroll.rectTransform, 0, HeaderHeight + 8, 0, 0);
+
+            var viewport = NewImage(scroll.transform, "Viewport", Spr(SprWhite), new Color(1f, 1f, 1f, 0f), Image.Type.Simple, true);
+            Stretch(viewport.rectTransform, 0, 0, 0, 0);
+            var mask = viewport.gameObject.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+
+            var content = NewRect("Content", viewport.transform);
+            content.anchorMin = new Vector2(0, 1);
+            content.anchorMax = new Vector2(1, 1);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = Vector2.zero;
+
+            var contentLayout = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            ConfigureLayout(contentLayout, true, true, true, false);
+            var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var scrollRect = scroll.gameObject.AddComponent<ScrollRect>();
+            scrollRect.viewport = viewport.rectTransform;
+            scrollRect.content = content;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Elastic;
+            scrollRect.elasticity = 0.08f;
+            scrollRect.inertia = true;
+            scrollRect.decelerationRate = 0.135f;
+            scrollRect.scrollSensitivity = 45f;
+
+            // ---------- 行模板 ----------
+            var row = NewImage(content, "Row", Spr(SprWhite), RowNormal, Image.Type.Simple, true);
+            var rowLe = row.gameObject.AddComponent<LayoutElement>();
+            rowLe.preferredHeight = RowHeight;
+            rowLe.minHeight = RowHeight;
+            var rowLayout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            ConfigureLayout(rowLayout, true, true, false, false);
+            AddButton(row);
+            row.gameObject.SetActive(false);
+
+            for (int i = 0; i < ColNode.Length; ++i)
+            {
+                var col = NewRect(ColNode[i], row.transform);
+                var le = col.gameObject.AddComponent<LayoutElement>();
+                le.preferredWidth = ColWidth[i];
+                le.preferredHeight = RowHeight;
+
+                switch (ColNode[i])
+                {
+                    case "Task":
+                        {
+                            var frame = NewImage(col, "Frame", Spr(SprPip), new Color(1f, 1f, 1f, 0.45f), Image.Type.Simple, false);
+                            MidLeft(frame.rectTransform, 14, 44, 44);
+
+                            var icon = NewImage(col, "Icon", Spr(SprPip), Color.white, Image.Type.Simple, false);
+                            MidLeft(icon.rectTransform, 19, 34, 34);
+
+                            var name = NewText(col, "Name", "房间名", 22, TextMain, TextAlignmentOptions.Left, 0, 0, 0, 0);
+                            name.overflowMode = TextOverflowModes.Ellipsis;
+                            Stretch(name.rectTransform, 70, 6, 8, RowHeight - 34);
+
+                            var host = NewText(col, "Host", "地图 · 房主", 16, TextDim, TextAlignmentOptions.Left, 0, 0, 0, 0);
+                            host.overflowMode = TextOverflowModes.Ellipsis;
+                            Stretch(host.rectTransform, 70, 34, 8, RowHeight - 34 - 26);
+                        }
+                        break;
+
+                    case "State":
+                        {
+                            var lockIcon = NewImage(col, "Lock", Spr(SprLock), new Color(1f, 0.78f, 0.25f, 1f), Image.Type.Simple, false);
+                            MidLeft(lockIcon.rectTransform, 6, 18, 18);
+                            lockIcon.gameObject.SetActive(false);
+
+                            var text = NewText(col, "Text", "开放", 18, new Color(0.42f, 0.85f, 1f, 1f), TextAlignmentOptions.Left, 0, 0, 0, 0);
+                            MidLeft(text.rectTransform, 30, 124, 28);
+                        }
+                        break;
+
+                    case "Team":
+                        {
+                            var pips = NewRect("Pips", col);
+                            MidLeft(pips, 6, TeamPips * (PipSize + PipSpacing), 28);
+                            var pipLayout = pips.gameObject.AddComponent<HorizontalLayoutGroup>();
+                            pipLayout.padding = new RectOffset(0, 0, 0, 0);
+                            pipLayout.spacing = PipSpacing;
+                            pipLayout.childAlignment = TextAnchor.MiddleLeft;
+                            pipLayout.childControlWidth = false;
+                            pipLayout.childControlHeight = false;
+                            pipLayout.childForceExpandWidth = false;
+                            pipLayout.childForceExpandHeight = false;
+
+                            for (int p = 0; p < TeamPips; ++p)
+                            {
+                                var pip = NewImage(pips, "Pip" + (p + 1), Spr(SprPip), PipDim, Image.Type.Simple, false);
+                                pip.rectTransform.sizeDelta = new Vector2(PipSize, PipSize);
+                            }
+
+                            var count = NewText(col, "Text", "0/4", 18, TextMain, TextAlignmentOptions.Left, 0, 0, 0, 0);
+                            MidLeft(count.rectTransform, 96, 100, 28);
+                        }
+                        break;
+
+                    default:
+                        {
+                            var text = NewText(col, "Text", "-", 20, TextMain, TextAlignmentOptions.Center, 0, 0, 0, 0);
+                            Stretch(text.rectTransform, 0, 0, 0, 0);
+                        }
+                        break;
+                }
+            }
+
+            refs.scroll = scrollRect;
+            refs.content = content;
+            refs.rowTemplate = row.transform;
+        }
+
+        #endregion
+
+        #region 基础构件
+
+        private static void ConfigureLayout(HorizontalOrVerticalLayoutGroup layout,
+            bool controlWidth, bool controlHeight, bool forceExpandWidth, bool forceExpandHeight)
+        {
+            layout.padding = new RectOffset(0, 0, 0, 0);
+            layout.spacing = ColSpacing;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = controlWidth;
+            layout.childControlHeight = controlHeight;
+            layout.childForceExpandWidth = forceExpandWidth;
+            layout.childForceExpandHeight = forceExpandHeight;
+        }
+
+        private static Sprite Spr(string path) => AssetDatabase.LoadAssetAtPath<Sprite>(path);
+
+        private static RectTransform NewRect(string name, Transform parent)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            var rt = (RectTransform)go.transform;
+            rt.SetParent(parent, false);
+            rt.localScale = Vector3.one;
+            return rt;
+        }
+
+        private static Image NewImage(Transform parent, string name, Sprite sprite, Color color, Image.Type type, bool raycast)
+        {
+            var img = NewRect(name, parent).gameObject.AddComponent<Image>();
+            img.sprite = sprite;
+            img.color = color;
+            img.type = type;
+            img.raycastTarget = raycast;
+            return img;
+        }
+
+        private static TextMeshProUGUI NewText(Transform parent, string name, string text, float size,
+            Color color, TextAlignmentOptions align, float x, float y, float w, float h)
+        {
+            var t = NewRect(name, parent).gameObject.AddComponent<TextMeshProUGUI>();
+            t.font = _font;
+            t.text = text;
+            t.fontSize = size;
+            t.color = color;
+            t.alignment = align;
+            t.richText = false;
+            t.raycastTarget = false;
+            if (w > 0 || h > 0) TopLeft(t.rectTransform, x, y, w, h);
+            return t;
+        }
+
+        private static Button AddButton(Image target)
+        {
+            var btn = target.gameObject.AddComponent<Button>();
+            btn.transition = Selectable.Transition.ColorTint;
+            btn.targetGraphic = target;
+
+            var colors = btn.colors;
+            colors.colorMultiplier = 1f;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.35f, 1.35f, 1.35f, 1f);
+            colors.pressedColor = new Color(0.75f, 0.75f, 0.75f, 1f);
+            colors.selectedColor = Color.white;
+            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            colors.fadeDuration = 0.08f;
+            btn.colors = colors;
+            return btn;
+        }
+
+        /// <summary>带下拉箭头的按钮行（地图）。</summary>
+        private static Transform Dropdown(Transform parent, string name, float x, float y)
+        {
+            var bg = NewImage(parent, name, Spr(SprButton), AccentDim, Image.Type.Sliced, true);
+            TopLeft(bg.rectTransform, x, y, 240, 38);
+            AddButton(bg);
+
+            var text = NewText(bg.transform, "Text", "全部地图", 20, Accent, TextAlignmentOptions.Left, 0, 0, 0, 0);
+            Stretch(text.rectTransform, 16, 4, 30, 4);
+
+            var arrow = NewImage(bg.transform, "Arrow", Spr(SprArrow), Accent, Image.Type.Simple, false);
+            TopLeft(arrow.rectTransform, 208, -9, 20, 20);
+
+            return bg.transform;
+        }
+
+        /// <summary>勾选式选项行（仅可接取）。</summary>
+        private static Transform OptionRow(Transform parent, string name, string label, float x, float y)
+        {
+            var bg = NewImage(parent, name, Spr(SprWhite), OptionOff, Image.Type.Simple, true);
+            TopLeft(bg.rectTransform, x, y, 240, 34);
+            AddButton(bg);
+
+            var check = NewImage(bg.transform, "Check", Spr(SprDot), new Color(1f, 1f, 1f, 0.15f), Image.Type.Simple, false);
+            MidLeft(check.rectTransform, 9, 18, 18);
+
+            var text = NewText(bg.transform, "Text", label, 20, TextMain, TextAlignmentOptions.Left, 0, 0, 0, 0);
+            Stretch(text.rectTransform, 36, 2, 8, 2);
+
+            return bg.transform;
+        }
+
+        #endregion
+
+        #region 锚点
+
+        private static void TopLeft(RectTransform rt, float x, float y, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0, 1);
+            rt.pivot = new Vector2(0, 1);
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        private static void BottomLeft(RectTransform rt, float x, float y, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0, 0);
+            rt.pivot = new Vector2(0, 0);
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        private static void MidLeft(RectTransform rt, float x, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0, 0.5f);
+            rt.pivot = new Vector2(0, 0.5f);
+            rt.anchoredPosition = new Vector2(x, 0);
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        private static void Stretch(RectTransform rt, float left, float top, float right, float bottom)
+        {
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.offsetMin = new Vector2(left, bottom);
+            rt.offsetMax = new Vector2(-right, -top);
+        }
+
+        #endregion
+    }
+}

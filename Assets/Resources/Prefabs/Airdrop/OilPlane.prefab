@@ -4937,6 +4937,7 @@ GameObject:
   - component: {fileID: 585756769408159644}
   - component: {fileID: 7919738595368855374}
   - component: {fileID: 4250565515194029180}
+  - component: {fileID: 8854036053251478611}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -5025,6 +5026,23 @@ MonoBehaviour:
   pipeSkeleton: {fileID: 0}
   lastPipeline: {fileID: 0}
   nextPipeline: {fileID: 0}
+--- !u!114 &8854036053251478611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6409203964078883989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u7BA1\u9053"
+  Id: PipeLink
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &6415910010649569223
 GameObject:
   m_ObjectHideFlags: 0
@@ -5165,6 +5183,7 @@ GameObject:
   - component: {fileID: 4697848855635601738}
   - component: {fileID: 8492267320224753177}
   - component: {fileID: 7971734682389988882}
+  - component: {fileID: 4042442211280901209}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -5253,6 +5272,23 @@ MonoBehaviour:
   pipeSkeleton: {fileID: 0}
   lastPipeline: {fileID: 0}
   nextPipeline: {fileID: 0}
+--- !u!114 &4042442211280901209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7127482435449339783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u7BA1\u9053"
+  Id: PipeLink
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &7975491155481284357
 GameObject:
   m_ObjectHideFlags: 0
@@ -10094,6 +10130,7 @@ GameObject:
   - component: {fileID: 6981723134388505972}
   - component: {fileID: 6963950297141789237}
   - component: {fileID: 5636587386334686147}
+  - component: {fileID: 5782675882373377652}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -10182,6 +10219,23 @@ MonoBehaviour:
   pipeSkeleton: {fileID: 0}
   lastPipeline: {fileID: 0}
   nextPipeline: {fileID: 0}
+--- !u!114 &5782675882373377652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8238349763969012660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u7BA1\u9053"
+  Id: PipeLink
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &4743284109354115140
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12138,6 +12192,7 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     NoSource: 0
     ExplosionAP: 10
     demolishValue: 40

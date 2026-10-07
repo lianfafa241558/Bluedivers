@@ -52,7 +52,7 @@ public class GameEndWnd : Window
 
 
         var task = taskManager.nowTask;
-        var players = roomManager.players;
+        var players = teamManager.players;
         int count = players.Count;
         AudioSvc.PlayMusic(task.result == GameResult.Victory ? AudioSvc.MusicGroup.End : AudioSvc.MusicGroup.Fail, 0.5f);
         switch (task.result)
@@ -83,7 +83,7 @@ public class GameEndWnd : Window
                 offset = (count / 2f) - 0.5f;
             }
 
-            var showModle = resManager.CreatPrefab("Prefabs/StudentModle/" + roomManager.players[i].roleName, false);
+            var showModle = resManager.CreatPrefab("Prefabs/StudentModle/" + teamManager.players[i].roleName, false);
             showModle.transform.parent = CreatActorPont;
             var scripts = showModle.GetComponents<MonoBehaviour>();
             foreach (var script in scripts)//关闭注视等组件
@@ -92,7 +92,7 @@ public class GameEndWnd : Window
             }
             actors[i] = showModle.transform.GetComponent<Animator>();
             
-            if(i==roomManager.SelfIndex) AudioSvc.PlaySound(Resources.Load<RoleData_SO>("GameData/Role/RD_" + roomManager.players[i].roleName).SpeechGroup(taskManager.nowTask.main.complete? SpeechTypeEnum.Victory: SpeechTypeEnum.Defeat).Get());
+            if(i==teamManager.SelfIndex) AudioSvc.PlaySound(Resources.Load<RoleData_SO>("GameData/Role/RD_" + teamManager.players[i].roleName).SpeechGroup(taskManager.nowTask.main.complete? SpeechTypeEnum.Victory: SpeechTypeEnum.Defeat).Get());
 
             var go = Instantiate(prefab, UIRoot).transform;
             GameRoot.CreateTimer(() => {
@@ -186,7 +186,7 @@ public class GameEndWnd : Window
         }
 
         // 3. 增加本地玩家角色经验：任务奖励总和 / 5
-        var self = roomManager.Self;
+        var self = teamManager.Self;
         if (self != null && !string.IsNullOrEmpty(self.roleName))
         {
             int exp = totalReward / 5;
@@ -208,14 +208,14 @@ public class GameEndWnd : Window
         for (int i = 0; i < UIRoot.childCount; ++i)
         {
             var item = UIRoot.GetChild(i);
-            if (i < roomManager.players.Count)
+            if (i < teamManager.players.Count)
             {
                 
                 SetActive(item, true);
                
 
                 SetText(item.GetChild(3, 0, 0), animators[i].GetComponent<BaseObject>().ShowName);
-                SetText(item.GetChild(3, 0, 1), roomManager.players[i].roleLevel);
+                SetText(item.GetChild(3, 0, 1), teamManager.players[i].roleLevel);
                 SetSprite(item.GetChild(3, 1, 1), animators[i].GetComponent<BaseObject>().Portrait);
                 for (int u = 0; u < 4; ++u)
                 {

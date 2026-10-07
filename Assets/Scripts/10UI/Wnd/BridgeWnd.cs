@@ -31,6 +31,9 @@ public class BridgeWnd : Window
         taskMap,taskDiff, taskDiffReward,tastExtraDiffRoot, tastPropuctRoot;
 
 
+    /// <summary>已经展开过的任务标识（"地图|任务名|难度"）：同一局被多条路径调 <see cref="DisplayTask"/> 时只展开一次。</summary>
+    private string _shownTaskKey;
+
     protected override void FirstShowWnd()
     {
         //SetActive(taskRoot, false);
@@ -43,6 +46,19 @@ public class BridgeWnd : Window
         GlobalEventSub.OnSwitchRole += OnSwitchRole;
         GlobalEventSub.OnSelectRolePreview += OnSelectRolePreview;
         UnitEventSub.OnPlayerCreate += SwitchRolePreview;
+
+        // 任务面板：Ready 那一刻本窗口可能还是隐藏的（还开着选图/房间列表 ⇒ WindowState = UI），
+        // 这时大厅场景里那张 GameState 状态表调的 DisplayTask 会因"animator 所在物体未激活"**静默失败**
+        //（Console 留一条 `Game object with animator is inactive`，面板停在 Idle）⇒ 窗口一显示就补一次。
+        // 不在 Ready 则清掉"已展开"记录，下一局重新展开。
+        if (GameState == FPSGame.Core.GameStateEnum.Ready)
+        {
+            DisplayTask();
+        }
+        else
+        {
+            _shownTaskKey = null;
+        }
     }
 
     protected override void HideWnd()
@@ -96,8 +112,18 @@ public class BridgeWnd : Window
     /// </summary>
     public void DisplayTask()
     {
-        WndManager.Instance.CreatNotice("Yuuka", "Ready");
         var task = taskManager.nowTask;
+
+        // ⚠ 还没有本局任务（触发源早于 SetTask）⇒ 直接跳过，等真正的 Ready：
+        //   否则 `task.taskCfg.name` 读到空配置，而且就算有值，`Animator.Play` 打在未激活物体上也会静默失败。
+        if (task == null || !task.activeTask) return;
+
+        // 同一局只展开一次（"场景 GameState 状态表"与"窗口重新显示"都会调这里）。
+        string key = taskManager.MapId + "|" + task.taskCfg.name + "|" + task.difficulty;
+        if (key == _shownTaskKey) return;
+        _shownTaskKey = key;
+
+        WndManager.Instance.CreatNotice("Yuuka", "Ready");
         var info = task.taskCfg;
         var cfg = task.MainCfg;
         float diffScale = taskManager.FinalDiffScale();

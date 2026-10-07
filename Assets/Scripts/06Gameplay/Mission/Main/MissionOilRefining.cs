@@ -50,8 +50,8 @@ namespace FPSGame.Mission
             //base.CreatMission();
             subCP = new();
             // 房间人数走「数据自持」（2026-10-01 取代 ServiceLocator.Room）：
-            // RoomState 未就绪时为 0 ⇒ 按"单人"兜底（与原空对象 PlayerCount=1 的语义一致）
-            int playerCount = FPSGame.Data.RoomState.PlayerCount > 0 ? FPSGame.Data.RoomState.PlayerCount : 1;
+            // TeamState 未就绪时为 0 ⇒ 按"单人"兜底（与原空对象 PlayerCount=1 的语义一致）
+            int playerCount = FPSGame.Data.TeamState.PlayerCount > 0 ? FPSGame.Data.TeamState.PlayerCount : 1;
             MaxProgress =Mathf.Min(playerCount,subTask.Length);
             //Debug.LogError("子任务长度"+ MaxProgress);
             foreach (var sub in subTask)

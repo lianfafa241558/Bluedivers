@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: -2613320871530545826}
   - component: {fileID: 5963874847553727993}
   - component: {fileID: 279313612}
+  - component: {fileID: 1582899255286116430}
   m_Layer: 0
   m_Name: Voynich
   m_TagString: Untagged
@@ -27,6 +28,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9180838443765932196}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 84.86761, y: 12.837071, z: 191.02809}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -34,7 +36,6 @@ Transform:
   m_Children:
   - {fileID: 6367132304352349644}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8051783650549640602
 MonoBehaviour:
@@ -48,11 +49,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4e9ce9f163727144956fbda9abc62c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u4F0F\u5C3C\u5951\u624B\u7A3F"
-  Id: Voynich
-  Portrait: {fileID: 21300000, guid: 16dc6a0f61227f443bd9410f54a75f51, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 16dc6a0f61227f443bd9410f54a75f51, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 1a0e4176af8067146b440e0f7d91722d, type: 3}
@@ -62,19 +58,24 @@ MonoBehaviour:
   canOperate: 1
   inOperate: 0
   desc: "\u91C7\u96C6"
-  ForwardAxis: {x: 0, y: 0, z: 0}
+  anim: {fileID: 0}
+  _audioSource: {fileID: 0}
+  lastOperatetime: 0
+  owner: {fileID: 0}
+  time: 0
+  count: 0
+  _collider: {fileID: 0}
+  ShowName: "\u4F0F\u5C3C\u5951\u624B\u7A3F"
+  Id: Voynich
+  Portrait: {fileID: 21300000, guid: 16dc6a0f61227f443bd9410f54a75f51, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 16dc6a0f61227f443bd9410f54a75f51, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
   relatedTrans: {fileID: 0}
   relatedTrans2: {fileID: 0}
   ExtFloatParameter: 1
   ExtBoolParameter: 0
   particle: {fileID: 0}
-  anim: {fileID: 0}
   obs: {fileID: 0}
-  audio: {fileID: 0}
-  lastOperatetime: 0
-  owner: {fileID: 0}
-  time: 0
-  count: 0
 --- !u!114 &-2613320871530545826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -108,16 +109,42 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9180838443765932196}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 1
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.5, y: 1.5, z: 0.5}
   m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &1582899255286116430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9180838443765932196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u4F0F\u5C3C\u5951\u624B\u7A3F"
+  Id: Voynich
+  Portrait: {fileID: 21300000, guid: 16dc6a0f61227f443bd9410f54a75f51, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 16dc6a0f61227f443bd9410f54a75f51, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &6905742700413938215
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 5391082894366705787}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 6d7b437c73a8bc24bb0e8f44e6fc6399,
@@ -181,6 +208,13 @@ PrefabInstance:
       value: Voynich
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6d7b437c73a8bc24bb0e8f44e6fc6399,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3745064747888077125}
   m_SourcePrefab: {fileID: 100100000, guid: 6d7b437c73a8bc24bb0e8f44e6fc6399, type: 3}
 --- !u!1 &5987335268068644726 stripped
 GameObject:

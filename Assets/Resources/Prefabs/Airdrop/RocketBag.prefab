@@ -74,6 +74,7 @@ MonoBehaviour:
     MinRange: 1
     NoSource: 0
     SoundRadius: 30
+    ImpactSoundRadius: 8
     DamageExplosion: 80
     DamageDirect: 220
     DamageGroupDirect:
@@ -118,6 +119,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 50
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 8300000, guid: af816affa8b09494aa3206a041402fe7, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -289,6 +291,7 @@ GameObject:
   - component: {fileID: 4684595234673160673}
   - component: {fileID: 1175991654367393219}
   - component: {fileID: 579282349396053923}
+  - component: {fileID: 550326614114114592}
   m_Layer: 6
   m_Name: RocketBag
   m_TagString: Untagged
@@ -344,7 +347,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8377389435267095782}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80cf9cb3e42ed604db0ec93341c33388, type: 3}
+  m_Script: {fileID: 11500000, guid: 3704b6bfebbc2374da4a9b194065d456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   meetTime: 0
@@ -463,6 +466,23 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   weapon: {fileID: 3575352246385057092}
+--- !u!114 &550326614114114592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8377389435267095782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u706B\u7BAD\u5F39\u80CC\u5305"
+  Id: RocketBag
+  Portrait: {fileID: 21300000, guid: ee84a5b109ae11344ace086bdc21f7bd, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: ee84a5b109ae11344ace086bdc21f7bd, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &4895476382372540892
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -240,7 +240,7 @@ namespace FPSGame.AI
                     obstacle = hit.collider.gameObject;
                     return true;
 
-                }else if (LayerDefinition.SmokeLayers.Contains(hit.collider.gameObject.layer))
+                }else if (LayerDefinition.SmokeLayers.Contains(1 << hit.collider.gameObject.layer))
                 {
                     //立即丢失目标
                     obstacle = hit.collider.gameObject;

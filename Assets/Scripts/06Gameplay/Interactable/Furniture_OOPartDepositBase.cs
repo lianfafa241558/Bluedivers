@@ -19,7 +19,7 @@ namespace FPSGame.Gameplay
 /// 4. 转满 need（即玩家背包清空或本容器已满）时结束，控制器调用 <see cref="Operate"/> 收尾；
 ///    中途松开(<see cref="CancelPress"/>)则保留已转移部分，下次按下按剩余继续。
 /// </summary>
-public abstract class Furniture_OOPartDepositBase : Furniture_Base, IStepPress
+public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPress
 {
     /// <summary>每秒提交到容器的欧帕兹数量（恒定速率）</summary>
     public const int SubmitPerSecond = 5;

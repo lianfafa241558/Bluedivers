@@ -45,6 +45,35 @@ public class EquipController : MonoBehaviour
     }
 
     /// <summary>
+    /// 丢下玩家手上的手持装备（HandEquip），每次只丢一件，返回是否真的丢下了。
+    /// 卸载走 <see cref="UninstallEquip"/>，与"丢弃装备"轮盘（<c>Furniture_HandEquip.Operate</c> 卸载分支）一致：
+    /// 清 IK、落地、恢复移速、按需切回主武器。供交互控制器在"手持物品时按交互键"时调用。
+    /// </summary>
+    /// <param name="replace">
+    /// true = 替换式丢下（本帧紧接着会捡起另一件）。此时跳过两件事：
+    /// ① 不切回主武器（<see cref="HandEquip.SkipRestoreWeaponOnUninstall"/>）——否则先切主武器、又立刻切空手，撞在武器切换状态机上；
+    /// ② 不播"卸载"语音（<see cref="UninstallEquip"/> 的 <c>silent</c>）——紧接着会播"安装"语音，两条连着播会打架。
+    /// </param>
+    public bool TryDropHandEquip(bool replace = false)
+    {
+        // 先取出目标再卸载：UninstallEquip 会修改 equips，不能在枚举过程中直接改
+        IEquippable handEquip = null;
+        foreach (var key in equips.Keys)
+        {
+            if (key is HandEquip)
+            {
+                handEquip = key;
+                break;
+            }
+        }
+        if (handEquip == null) return false;
+
+        if (replace && handEquip is HandEquip hand) hand.SkipRestoreWeaponOnUninstall = true;
+        UninstallEquip(handEquip, silent: replace);
+        return true;
+    }
+
+    /// <summary>
     /// 只通过交互组件装载，自己不调用
     /// </summary>
     public void InstallEquip(IEquippable equip,IFurniture furniture)
@@ -71,12 +100,16 @@ public class EquipController : MonoBehaviour
     /// <summary>
     /// 只通过交互组件卸载，furn调用
     /// </summary>
-    public void UninstallEquip(IEquippable equip)
+    /// <param name="silent">
+    /// true 时不播"卸载"语音。供"替换式丢下"（<see cref="TryDropHandEquip"/>）使用：
+    /// 紧接着就会安装另一件并播"安装"语音，两条连着播会打架。
+    /// </param>
+    public void UninstallEquip(IEquippable equip, bool silent = false)
     {
         if (equips.Remove(equip))
         {
             // 卸载物品语音
-            if (m_actor != null) GlobalEventSub.PlayMeetSpeech(m_actor.gameObject, SpeechTypeEnum.Uninstall);
+            if (!silent && m_actor != null) GlobalEventSub.PlayMeetSpeech(m_actor.gameObject, SpeechTypeEnum.Uninstall);
 
             equip.OnUninstall();
             equip.OnEquipDestroy -= HandleEquipDestroy;

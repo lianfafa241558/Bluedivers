@@ -9805,11 +9805,11 @@ GameObject:
   m_Component:
   - component: {fileID: 6940052628352526431}
   - component: {fileID: 688431549112269281}
-  - component: {fileID: 2176946283355482773}
-  - component: {fileID: 6016710536525159653}
   - component: {fileID: 4282745646855735580}
-  - component: {fileID: 5646794823044989436}
+  - component: {fileID: 6016710536525159653}
+  - component: {fileID: 2176946283355482773}
   - component: {fileID: 2063818073894649154}
+  - component: {fileID: 5646794823044989436}
   m_Layer: 0
   m_Name: AnchorLeader
   m_TagString: Untagged
@@ -9864,6 +9864,51 @@ MonoBehaviour:
   shape: 0
   rangeLength: 2.5
   halfHeight: 2.21
+--- !u!114 &4282745646855735580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4284650576292860461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3de939d976a5bb0419ccd8dbd0b6836b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DeathDuration: 10
+  BirthDuration: 0
+  birthTime: 0
+  IsRemove: 0
+  PathReachingRadius: 2
+  m_lastDestination: {x: 0, y: 0, z: 0}
+  isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
+--- !u!114 &6016710536525159653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4284650576292860461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxHealth: 500
+  MaxShield: 0
+  showArmorLists: []
+  MainPart: {fileID: 3858885123077200169}
+  demolishValue: -1
+  AutoDestroy: 0
+  showHealth: 0
+  m_IsDead: 0
+  AboGaugeArr: []
 --- !u!114 &2176946283355482773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9884,57 +9929,6 @@ MonoBehaviour:
   damagedTime: 22
   lastDamagedTime: -Infinity
   creatTime: 20
---- !u!114 &6016710536525159653
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4284650576292860461}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MaxHealth: 500
-  MaxShield: 0
-  showArmorLists: []
-  MainPart: {fileID: 3858885123077200169}
-  demolishValue: -1
-  showHealth: 0
-  m_IsDead: 0
-  AboGaugeArr: []
---- !u!114 &4282745646855735580
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4284650576292860461}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3de939d976a5bb0419ccd8dbd0b6836b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DeathDuration: 10
-  BirthDuration: 0
-  birthTime: 0
-  IsRemove: 0
-  PathReachingRadius: 2
-  m_lastDestination: {x: 0, y: 0, z: 0}
-  isImportant: 0
---- !u!114 &5646794823044989436
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4284650576292860461}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2760b2c0a27a2ed4b8430df95b03e394, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &2063818073894649154
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9948,11 +9942,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 2a3cf663277d9b0439baf3273df8c9e5, type: 2}
   fxMaterial: {fileID: 2100000, guid: 0c1a506957c9319449b20b1a059b361a, type: 2}
+  events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
+--- !u!114 &5646794823044989436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4284650576292860461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2760b2c0a27a2ed4b8430df95b03e394, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4865599371010859054
 GameObject:
   m_ObjectHideFlags: 0
@@ -14982,18 +14989,18 @@ MonoBehaviour:
   HearingRange: 80
   AttackRange: 0
   AlertRange: 50
+  Lazy: 0
   KnownTargetTimeout: 12
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &8267767245545292819
 GameObject:
   m_ObjectHideFlags: 0

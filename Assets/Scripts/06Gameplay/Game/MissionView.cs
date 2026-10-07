@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -161,7 +161,7 @@ namespace FPSGame.Game
 
         protected void CreatNotice(string role, string type, System.Func<bool> func = default, float delay = 0, float vaildTime = -1)
         {
-            FPSGame.Gameplay.GlobalEventSub.Notice(role, type, func, vaildTime);
+            GlobalEventSub.Notice(role, type, func, vaildTime);
         }
 
         /// <summary>
@@ -199,6 +199,10 @@ namespace FPSGame.Game
         private void OnMissionComplete(MissionBase _)
         {
             actions?.Invoke();
+            if(mission.missionType== MissionType.Nest)
+            {
+                CreatNotice("Kotama", "NestClear",null,0,5);
+            }
         }
     }
 }

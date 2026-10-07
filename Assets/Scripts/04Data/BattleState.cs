@@ -1,5 +1,5 @@
 using FPSGame.GameContract;
-// 写入方 = 09_Managers 的 BattleManager（与 FlowState/RoomState/TaskState/UIState 同一套写入保护手法）。
+// 写入方 = 09_Managers 的 BattleManager（与 FlowState/TeamState/TaskState/UIState 同一套写入保护手法）。
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("09_Managers")]
 
 
@@ -8,7 +8,7 @@ namespace FPSGame.Data
     /// <summary>
     /// 战斗状态**数据自持点**（2026-10-01 取代战斗服务契约的"读值"部分）。
     ///
-    /// <para>▍为什么可行：这类成员是纯粹的"**一处写、多处读**"，与 <c>TaskState</c>/<c>RoomState</c>/<c>FlowState</c>
+    /// <para>▍为什么可行：这类成员是纯粹的"**一处写、多处读**"，与 <c>TaskState</c>/<c>TeamState</c>/<c>FlowState</c>
     /// 同型 ⇒ 走数据自持，连"服务是否就位"都不必判断（未就绪 = 中性值：<see cref="HaveBooster"/> 恒 false、
     /// <see cref="IsStartBattle"/> = false，与 <c>NullBattleService.Instance</c> 逐字一致）。</para>
     ///

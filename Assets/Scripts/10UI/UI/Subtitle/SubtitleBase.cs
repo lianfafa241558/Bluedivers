@@ -10,6 +10,7 @@ using static FPSGame.WndTools.WndRootTool;
 using static FPSGame.Utils.Tool;
 
 using FPSGame.GameContract;
+using FPSGame.Core.Interface;   // IsValidMono（IActor 是接口引用：单位被销毁后不是 Unity 的 null，必须用它判活）
 using FPSGame.Attributes;
 
 public abstract class SubtitleBase : MonoBehaviour
@@ -30,6 +31,16 @@ public abstract class SubtitleBase : MonoBehaviour
     [SerializeField]
     protected Transform title, desc, halo, distance, direction;
     Actor targetActor;
+
+    /// <summary>
+    /// 目标单位是否启用：目标上没有 <see cref="Actor"/> 组件时视为启用。
+    /// 供字幕跟随单位组件 enabled（含 prefab 上初始关闭的单位）—— 与小地图图标口径一致。
+    /// </summary>
+    protected bool TargetEnabled => targetActor == null || targetActor.enabled;
+
+    /// <summary>上一帧的 <see cref="TargetEnabled"/>，用于在翻转时重走一次淡入/淡出</summary>
+    private bool lastTargetEnabled = true;
+
     //[SerializeField]
     protected Camera mainCamera=> Camera.main;
     [SerializeField]
@@ -44,21 +55,40 @@ public abstract class SubtitleBase : MonoBehaviour
         transform.SetParent(parent,false);
         if(direction) SetActive(direction, false);
         root = (RectTransform)transform;
+        //⚠ 基线必须保持 true，才能与首帧真实的 TargetEnabled 比较：
+        //   写成 = TargetEnabled 会让"初始就禁用"的单位首帧判定为"无变化"，淡出永不触发。
+        lastTargetEnabled = true;
         SetShow(alwaysShow);
         return this;
     }
 
     protected virtual void Update()
     {
-        if (!target)
+        // ⚠ owner 是 **IActor 接口引用**：单位被销毁后 `!target` 能判出 target 死了，但 **owner 判不出来**
+        //   ⇒ 后面 `owner.Pos` 会 NRE（2026-10-07 实测：SubtitleBase.GetDistance ← Follow ← Update）。
+        //   ⚠ 这里**只隐藏、不销毁**：销毁交给 ① SubtitleWnd.OnFriendLeave（盟友离场）
+        //     ② OnActorDeath（单位死亡）③ OnSceneChange（换场景整体清）—— 因为空投类是**池化**的，
+        //     在这里直接 Destroy 会让池子里留下死引用。
+        //   ⚠ 另外 target 为空也不能当"失效"处理：有些标记创建时 target 就是 null
+        //     （SubtitleMark / 空投，由 OnMark 之后再补 target）。
+        if (!owner.IsValidMono() || !target)
         {
             SetActive(gameObject, false);
             return;
         }
+        //目标单位组件被禁用 ⇒ 立刻按"不可见"处理，启用后自动淡回（见 TargetEnabled）
+        bool targetEnabled = TargetEnabled;
+        if (targetEnabled != lastTargetEnabled)
+        {
+            lastTargetEnabled = targetEnabled;
+            completeTrans = false;   //目标态翻转 ⇒ 重走一次淡入/淡出
+        }
+
         float alpha = GetAlpha(transform);
+        bool visible = targetState && targetEnabled;
         if (!completeTrans)
         {
-            if (targetState)
+            if (visible)
             {
                 float a = Mathf.Lerp(alpha, 1.1f, 3 * Time.deltaTime);
                 SetAlpha(transform, a);
@@ -67,7 +97,7 @@ public abstract class SubtitleBase : MonoBehaviour
                     completeTrans = true;
                 }
             }
-            else if (!targetState)
+            else
             {
                 float a = Mathf.Lerp(alpha, -0.1f, 3 * Time.deltaTime);
                 SetAlpha(transform, a);
@@ -132,10 +162,25 @@ public abstract class SubtitleBase : MonoBehaviour
     }
 
     protected virtual float GetDistance() {
+        if (!owner.IsValidMono()) return 0f;   // 兜底：本方法也可能被别处调用（不止 Update）
         return Vector3.Distance(owner.Pos, TargetPos);
     }
 
-    protected Vector3 TargetPos => targetPoint != default ? targetPoint : (targetActor ? targetActor.CenterPos + targetActor.HpHeight * Vector3.up : target.transform.position + Vector3.up * 2);
+    /// <summary>
+    /// 标记点（世界坐标）：显式目标点 &gt; 目标单位的血条位置 &gt; 目标物体上方 &gt; 兜底回宿主自己。
+    /// <para>⚠ `targetActor`（组件）与 `target`（GameObject）可能**一个死一个活**（组件被销毁、GO 还在，
+    /// 或反之）⇒ 必须分别判有效性，不能只判其中一个。</para>
+    /// </summary>
+    protected Vector3 TargetPos
+    {
+        get
+        {
+            if (targetPoint != default) return targetPoint;
+            if (targetActor) return targetActor.CenterPos + targetActor.HpHeight * Vector3.up;
+            if (target != null) return target.transform.position + Vector3.up * 2;
+            return owner.IsValidMono() ? owner.transform.position : Vector3.zero;
+        }
+    }
 
 }
 }

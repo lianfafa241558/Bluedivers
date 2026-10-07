@@ -488,6 +488,7 @@ GameObject:
   - component: {fileID: 6815088741124095695}
   - component: {fileID: 360404991916925666}
   - component: {fileID: 5638880195461808156}
+  - component: {fileID: 1429666578752117066}
   m_Layer: 3
   m_Name: KeyScreen
   m_TagString: Untagged
@@ -544,6 +545,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85b7aa7531417544fb81059fc84f70df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnComple:
+    m_PersistentCalls:
+      m_Calls: []
   _LightColor: {r: 0, g: 0.627, b: 1, a: 1}
   procedurePrefabs:
   - {fileID: 2651086928180910819, guid: 30d7070b7db02b646a4fad2b0693bc11, type: 3}
@@ -576,6 +580,7 @@ MonoBehaviour:
     UnlockItem: []
   bg: {fileID: 5896416814272560902}
   furn: {fileID: 0}
+  nowStage: -1
   owner: {fileID: 0}
   m_anim: {fileID: 360404991916925666}
   itemValue: 
@@ -607,6 +612,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ShowName: "\u63A7\u5236\u53F0"
   Id: KeyScreen
   Portrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
@@ -664,6 +670,23 @@ MonoBehaviour:
     go: {fileID: 447553097}
     state: 0
     speech: 0
+--- !u!114 &1429666578752117066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3469273136449682978}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u63A7\u5236\u53F0"
+  Id: KeyScreen
+  Portrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &4103889592775183457
 GameObject:
   m_ObjectHideFlags: 0
@@ -2720,6 +2743,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1136027151}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8c36cce8b791e8c438f9cbddb6b5ab2b,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6683562886144331546}
   m_SourcePrefab: {fileID: 100100000, guid: 8c36cce8b791e8c438f9cbddb6b5ab2b, type: 3}
 --- !u!4 &3737143448430384560 stripped
 Transform:
@@ -2808,6 +2835,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ShowName: "\u9ED1\u76D2\u5B50"
   Id: BlackBox
   Portrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
@@ -2819,6 +2847,23 @@ MonoBehaviour:
   ExtBoolParameter: 0
   particle: {fileID: 0}
   obs: {fileID: 0}
+--- !u!114 &6683562886144331546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8314221227779740127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u9ED1\u76D2\u5B50"
+  Id: BlackBox
+  Portrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!4 &8658694249956674405 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8c36cce8b791e8c438f9cbddb6b5ab2b,

@@ -7,6 +7,8 @@ using UnityEngine;
 using FPSGame.Utils;
 using FPSGame.Game;
 using FPSGame.Gameplay;
+using FPSGame.Net;
+using KCPNet;
 
 namespace FPSGame.UI
 {
@@ -30,6 +32,13 @@ public class SelectMapWnd : Window
     [Foldout("基础",true)]
     [SerializeField]
     private Transform mapRoot,cancel,random,server;
+
+    [Foldout("服务器列表", true)]
+    [SerializeField]
+    private ServerListPanel serverPanel;
+    [InspectorName("展开面板时隐藏的按钮栏")]
+    [SerializeField]
+    private Transform buttonsRoot;
 
     [Foldout("左侧边栏", true)]
     [SerializeField]
@@ -129,6 +138,17 @@ public class SelectMapWnd : Window
             SetWndState(false);
         });
 
+        //点击 Server 展开「服务器列表」子界面（面板自身负责收起/筛选/行填充；
+        //展开期间由 SetServerPanelVisible 隐藏「地图 + 按钮栏」，收起时按当前状态复位）
+        if (serverPanel) serverPanel.OnVisibleChanged = SetServerPanelVisible;
+        // 面板只抛出"选中的房间 + 密码"，回连/入房/超时统一走 NetRoomFlow（见 OnRoomActivated）
+        if (serverPanel) serverPanel.OnRoomActivated = OnRoomActivated;
+        SetCilck(server, () =>
+        {
+            wndManager.PlaySound(new("UI/UI_Bubble"));
+            if (serverPanel) serverPanel.Open();
+        });
+
 
         SetCilck(areaInfoDiffLeft, () =>
         {
@@ -140,24 +160,21 @@ public class SelectMapWnd : Window
             SetDiff(true);
         });
 
+        // 「加入」= 打开房间列表（搜房 → 选行 → 加入，加入动作在 ServerListPanel.OnRoomActivated）
         SetCilck(taskJoin, () =>
         {
+            SelectPlayMode = 0;
             wndManager.PlaySound(new("UI/UI_Bubble"));
-            WndHub.Tip.Creat(new() { 
-                title = "未完成的功能",
-                desc = "该功能尚未完成，请等待后续更新。",
-            });
-            //SelectPlayMode = 0;
+            if (serverPanel) serverPanel.Open();
         });
+        // 「公开/开房」= 只记住"这一局是公开房"，展开的界面与「单人」完全一致（调难度 / 选任务 / 选加成）。
+        // 服务器推迟到按下「准备」时才**静默**创建（见 ConfirmTask）——不再一点按钮就开房、弹提示、
+        // 还把「服务器列表」顶上来（2026-10-06 口径）。
         SetCilck(taskPublic, () =>
         {
+            SelectPlayMode = 1;
             wndManager.PlaySound(new("UI/UI_Bubble"));
-            WndHub.Tip.Creat(new()
-            {
-                title = "未完成的功能",
-                desc = "该功能尚未完成，请等待后续更新。",
-            });
-            //SelectPlayMode = 1;
+            ExpandCfg();
         });
         SetCilck(taskSolo, () =>
         {
@@ -185,7 +202,7 @@ public class SelectMapWnd : Window
 
         SetCilck(areaInfoReady, () =>
         {
-            StartTask();
+            ConfirmTask();
         });
         
     }
@@ -200,6 +217,7 @@ public class SelectMapWnd : Window
         infoRoot.Play("Exit", 0, 1);
         areaInfoRoot.GetComponent<Animator>().Play("Exit", 0, 1);
         InputManager.AddListenerCancel(Cancel);
+        if (serverPanel) serverPanel.Close();
         SetText(areaInfoDiff, ((DifficultyEnum)SelectTaskDiff).ToString());
         RefreshDisplay();
 
@@ -226,10 +244,117 @@ public class SelectMapWnd : Window
         }
     }
 
+    /// <summary>
+    /// 「房间列表」子界面展开 / 收起时切换其它 UI：
+    /// 展开 ⇒ 隐藏「地图(Bg/Map) + 按钮栏(Buttons)」；收起 ⇒ 按钮栏恢复，地图按当前状态复位
+    /// （只有 <see cref="MapWndState.Map"/> 才显示地图，其余状态保持 AreaRoot，与 <see cref="Cancel"/> 的状态机口径一致）。
+    /// </summary>
+    private void SetServerPanelVisible(bool visible)
+    {
+        SetActive(buttonsRoot, !visible);
+        SetActive(mapRoot, !visible && mapState == MapWndState.Map);
+    }
+
+    /// <summary>
+    /// 「房间列表」里点了加入（<see cref="ServerListPanel.OnRoomActivated"/>）：
+    /// 回连房主 → 申请入房 → 等房主回执，全过程与超时都在 <see cref="NetRoomFlow"/> 里。
+    /// </summary>
+    private void OnRoomActivated(LanRoomInfo room, string password)
+    {
+        var flow = NetRoomFlow.Instance;
+        if (flow == null)
+        {
+            WndHub.Tip.Creat(new()
+            {
+                title = "联机不可用",
+                desc = "网络服务未初始化：GameRoot 下缺少 NetSvc / NetHostSvc / NetRoomFlow。",
+            });
+            return;
+        }
+
+        flow.Join(room, string.IsNullOrEmpty(arch.playerName) ? "玩家" : arch.playerName, password);
+    }
+
+    /// <summary>
+    /// 【开房】用当前选中的地图 + 任务难度开房并局域网广播。
+    /// <para>▍当前唯一调用者是「公开房」流程的 <see cref="ConfirmTask"/>（选完任务才建服）。
+    /// 设置界面的空玩家位走的是自己的 <c>SettingWnd.CreateRoomFromEmptySlot</c>（它是常驻窗口，选图窗口不一定在场景里）。</para>
+    /// </summary>
+    /// <param name="silent">
+    /// true = 静默建服：成功不弹提示、不打开「服务器列表」。失败**仍然**弹提示（失败不该静默）。
+    /// </param>
+    public void CreateRoom(bool silent = false)
+    {
+        var flow = NetRoomFlow.Instance;
+        if (flow == null)
+        {
+            WndHub.Tip.Creat(new()
+            {
+                title = "联机不可用",
+                desc = "网络服务未初始化：GameRoot 下缺少 NetSvc / NetHostSvc / NetRoomFlow。",
+            });
+            return;
+        }
+
+        string mapName = mapRoot.childCount > SelectMapIndex ? mapRoot.GetChild(SelectMapIndex).name : string.Empty;
+        string hostName = string.IsNullOrEmpty(arch.playerName) ? "玩家" : arch.playerName;
+
+        var options = new HostRoomOptions
+        {
+            RoomName = hostName + "的房间",
+            MapName = mapName,
+            MaxPlayers = 4,
+            Password = string.Empty,
+            // 难度：库里还没有 Difficulty 字段 ⇒ 先按临时约定拼进 MapName（RoomMeta/HostRoomOptions 里标了 TODO(库)）
+            Difficulty = SelectTaskDiff,
+            HostName = hostName,
+            // ⚠ 此刻本局任务**还没 SetTask**（「公开房」是先建服再确认任务）⇒ 这里拿到的可能是上一局的值；
+            //   真正的权威时刻是下面的 ConfirmTask，它会就地刷新广播房间名。
+            TaskType = taskManager.NowTaskType,
+            TaskMain = taskManager.NowTaskMain,
+        };
+
+        if (!flow.Host(options, out string reason))
+        {
+            WndHub.Tip.Creat(new() { title = "开房失败", desc = reason });
+            return;
+        }
+
+        if (silent) return;   // 静默建服：连"房间已创建"提示与服务器列表都不掀（那是显式开房入口的待遇）
+
+        WndHub.Tip.Creat(new()
+        {
+            title = "房间已创建",
+            desc = "已在局域网广播：" + (string.IsNullOrEmpty(mapName) ? "未指定地图" : mapName) + "\n其他玩家可在「加入」里搜到。",
+        });
+
+        // 开完房把房间列表打开：能立刻看到自己的房间（也是"房间大厅"的临时落脚点）
+        if (serverPanel) serverPanel.Open();
+    }
+
+    /// <summary>
+    /// 本机当前是否已经开好房 —— <c>NetHostSvc.RoomInfo</c> 是"我是不是房主"的唯一判据
+    /// （<c>StartHost</c> 里设、<c>StopHost</c> 里清；<c>ConfirmTask</c> 也按它决定要不要广播本局配置）。
+    /// </summary>
+    private static bool IsHosting()
+    {
+        var host = NetHostSvc.Instance;
+        return host != null && host.RoomInfo != null;
+    }
+
     private bool Cancel()
     {
         if (this==null||!State) return false;
         wndManager.PlaySound(new("UI/UI_Button_Back"));
+
+        //「服务器列表」子界面优先消费 Cancel：先收面板，再退窗口层级
+        if (serverPanel && serverPanel.IsOpen)
+        {
+            serverPanel.Close();
+            InputManager.AddListenerCancel(Cancel);
+            return true;
+        }
+
         switch (mapState)
         {
             case MapWndState.Map:
@@ -533,15 +658,47 @@ public class SelectMapWnd : Window
 
 
     /// <summary>
-    /// 开始任务
+    /// **选完任务**：确认本局的配置并进入 Ready 阶段（⚠ 这时**还在舰桥**，不是"开局"）。
+    /// <para>▍阶段链（用户口径）：Bridge 选任务 →（本方法）Ready → 所有人就位 → Armament（舰桥选战备）
+    /// → 全员准备 → Transition（同时加载战斗场景，由大厅家具/动画那条链触发）→ Game。</para>
     /// </summary>
-    private void StartTask()
+    private void ConfirmTask()
     {
+        // ★ 公开房：**建服推迟到这一刻**（2026-10-06 口径）—— 地图界面的「公开」只负责记住模式，
+        //   玩家像单人一样调难度 / 选任务 / 选加成，按下「准备」时服务器才**静默**创建。
+        //   ⚠ 放在 SetWndState 之前：建服失败（端口刚被占用等）就停在选图界面重试，别先把界面关掉。
+        //   ⚠ 也必须在下面那句 host.ConfirmTask(...) 之前：那段广播是靠 NetHostSvc.RoomInfo
+        //     判断"我是不是房主"的，房间还不存在就轮不到广播本局配置（成员也就拿不到配置）。
+        if (SelectPlayMode == 1 && !IsHosting())
+        {
+            CreateRoom(true);
+            if (!IsHosting()) return;
+        }
+
         SetWndState(false);
-        //现在暂时只能单人
-        taskManager.SetTask(mapRoot.GetChild(SelectMapIndex).name, SelectTaskIndex,(DifficultyEnum)SelectTaskDiff, SelectTaskExtraDiff,SelectPlayMode);
+        string mapId = mapRoot.GetChild(SelectMapIndex).name;
 
+        // 种子传 0 ⇒ SetTask 内部回落到该任务自己的 taskCfg.seed（可复现），并发布到 TaskState.Seed
+        taskManager.SetTask(mapId, SelectTaskIndex,(DifficultyEnum)SelectTaskDiff, SelectTaskExtraDiff,SelectPlayMode);
 
+        // 房主：把这一局的配置广播给成员（地图 / 难度 / 任务下标 / 额外难度 / 种子 / 模式 / 任务指纹）
+        // ⚠ 种子必须与本次 SetTask 用的是同一个 ⇒ 从 TaskState.Seed 读回来（唯一来源，避免两处各算一次）
+        // ⚠ 成员侧由 TeamNetBridge.HandleTaskConfirm 承接：**只落配置**（SetSeed + SetTask ⇒ 进 Ready，仍在舰桥）。
+        //    真正的"加载战斗场景"由 Transition 那条链驱动（房主广播 TransitionNtf → 成员 GameState=Transition
+        //    → 各自大厅的 GameStateController(state:8) → TransSceneController.StartLoad()）。
+        var host = NetHostSvc.Instance;
+        if (host != null && host.RoomInfo != null)
+        {
+            int seed = FPSGame.Data.TaskState.Seed;
+            int fingerprint = taskManager.TaskFingerprint(mapId, SelectTaskIndex);
+            // ★ 连**配置内容**一起下发（不能只发下标）：任务表是各端本地按时间窗口生成的，
+            //   跨窗口 / 刚刷过表时同一个下标会指向另一个任务。带上内容后：
+            //   ① 后进者（Ready/Armament 期间入房）即使本地表里已经没有这个任务，也能按内容复现；
+            //   ② 两端表不同也不再是致命错误（指纹降级为诊断告警，见 TeamNetBridge.HandleTaskConfirm）。
+            // ★ 末尾带上任务类型名：房间可能建在选任务之前（公开房流程）⇒ 由这里刷新房间广播里的类型
+            host.ConfirmTask(mapId, SelectTaskIndex, SelectTaskExtraDiff, seed, SelectPlayMode, fingerprint,
+                TaskManager.ToDto(taskManager.nowTask.taskCfg), taskManager.NowTaskType, taskManager.NowTaskMain);
+        }
     }
 
 

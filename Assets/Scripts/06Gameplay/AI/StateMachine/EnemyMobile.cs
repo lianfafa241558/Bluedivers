@@ -1,4 +1,4 @@
-﻿
+
 using FPSGame.Core.Interface;
 using System.Collections.Generic;
 using System.Linq;
@@ -82,7 +82,7 @@ namespace FPSGame.AI
     /// ④ "以看代到"只在 Beware 用：视线查询走 DetectionModule.HasLineOfSight（无副作用）。**不要**改用 CanLook ——
     /// 它是 protected，且命中烟幕层时会改写 TimeLastSeenTarget，会污染目标锁定的"最后可见时间"。</para>
     /// </summary>
-    [AddComponentMenu("AI/地面单位移动")]
+    [AddComponentMenu("AI/地面单位")]
     public partial class EnemyMobile : AIInputUnitController<EnemyMobile.AIState>
     {
         /// <summary>视线观察时把落点抬高多少米再检测：警惕点多为地面弹着点，直接朝它射线会被地面自身挡住</summary>

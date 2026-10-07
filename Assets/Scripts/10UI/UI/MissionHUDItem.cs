@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Mission;
 using FPSGame.Attributes;
 using FPSGame.UI;
@@ -57,7 +57,7 @@ public class MissionHUDItem : MonoBehaviour
         SetActive(transform, allowShow);
         //RefreshContentSizeFitter(self);
 
-        if (mission.HasTag(MissionTag.HideSelf))
+        if (mission.HasTag(MissionTag.HideSelf)&& subGroup)
         {
             subGroup.padding.left = 0;
         }

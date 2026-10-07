@@ -26,6 +26,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 100
   group: 8
   flags: 0
@@ -60,6 +61,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 101
   group: 8
   flags: 0
@@ -89,6 +91,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: -1
   group: 8
   flags: 0
@@ -124,6 +127,41 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
+  priority: 101
+  group: 8
+  flags: 0
+--- !u!114 &-3133022913835135391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Yuuka2_WaveStart_Robot
+  m_EditorClassIdentifier: 
+  groupName: WaveStart_Robot
+  clips:
+  - audioClip: {fileID: 8300000, guid: 1cedb9d19d8dd634b8256ccb877a5936, type: 3}
+    subtitle: "\u63A2\u6D4B\u5230\u5927\u578B\u98DE\u884C\u5355\u4F4D\uFF0C\u9884\u8BA1\u5230\u8FBE\u65F6\u95F4\u2026\u2026\u5C31\u662F\u73B0\u5728!"
+  - audioClip: {fileID: 8300000, guid: b7a970464fbf3b14ebd8fd870178d030, type: 3}
+    subtitle: "\u4F20\u611F\u5668\u4E0A\u51FA\u73B0\u4E86\u4E24\u4E2A\uFF0C\u56DB\u4E2A\uFF0C\u516B\u4E2A\uFF0C\u5F88\u591A\u8258\u8FD0\u8F93\u673A\u3002"
+  - audioClip: {fileID: 8300000, guid: 3d844a742fd81cf429a18423eec67267, type: 3}
+    subtitle: "\u51EF\u6492\u8FD0\u8F93\u8230\u6B63\u5728\u524D\u5F80\u4F60\u4EEC\u7684\u4F4D\u7F6E\uFF0C\u51C6\u5907\u6218\u6597\u3002"
+  - audioClip: {fileID: 8300000, guid: ce30b6828819e8747994d56e30727322, type: 3}
+    subtitle: "\u4F11\u606F\u65F6\u95F4\u7ED3\u675F\u4E86\uFF0C\u654C\u4EBA\u6B63\u671D\u4F60\u4EEC\u88AD\u6765\u3002"
+  - audioClip: {fileID: 8300000, guid: c1a6cb5604185d948af2e1b01da071b4, type: 3}
+    subtitle: "\u8BE5\u884C\u52A8\u4E86\uFF0C\u51EF\u6492\u90E8\u961F\u6B63\u5728\u524D\u5F80\u4F60\u4EEC\u7684\u4F4D\u7F6E\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 20
+  isOrder: 0
   priority: 101
   group: 8
   flags: 0
@@ -143,18 +181,18 @@ MonoBehaviour:
   ID: Yuuka
   Portrait: {fileID: 21300000, guid: 8dec51654dd1b5b4aa496fa684efc162, type: 3}
   UseResLoad: 1
-  nodes: []
   sounds:
   - {fileID: -8377736606726040402}
+  - {fileID: 7853246982136647948}
+  - {fileID: -5528763908808723027}
+  - {fileID: -3133022913835135391}
   - {fileID: -6670812876739125392}
   - {fileID: 2485493942135106216}
-  - {fileID: -5528763908808723027}
-  - {fileID: 7853246982136647948}
-  - {fileID: -6157594563017489638}
   - {fileID: 6741760547749545342}
-  - {fileID: 3139099456005481443}
   - {fileID: 9130427324410253968}
+  - {fileID: 3139099456005481443}
   - {fileID: 6587959096294743896}
+  - {fileID: -6157594563017489638}
 --- !u!114 &2485493942135106216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185,6 +223,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 101
   group: 8
   flags: 0
@@ -212,6 +251,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 102
   group: 8
   flags: 0
@@ -239,6 +279,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 101
   group: 8
   flags: 0
@@ -266,6 +307,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 101
   group: 8
   flags: 0
@@ -301,6 +343,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 100
   group: 8
   flags: 0
@@ -330,6 +373,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 102
   group: 8
   flags: 0

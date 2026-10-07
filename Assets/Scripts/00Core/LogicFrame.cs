@@ -1,4 +1,5 @@
-// 写入方是"逻辑帧宿主"= 09_Managers 的 NetManager；下层只能读/注册（与 ServiceLocator 同一套硬化手法）。
+// 写入方是"逻辑帧宿主"= 09_Managers 的 LogicFrameHost（原名 NetManager，2026-10-07 改名）；
+// 下层只能读/注册（与 ServiceLocator 同一套硬化手法）。
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("09_Managers")]
 
 namespace FPSGame.Core
@@ -17,7 +18,7 @@ namespace FPSGame.Core
     /// <c>LogicBehaviour</c> 是**26 个武器/逻辑子类的基类**，实例由 prefab 在数十处不同位置生成
     /// ⇒ 注入要落到每个创建点，不可行。</para>
     ///
-    /// <para>▍谁接管：<c>NetManager</c> 在 <c>Init()</c> 里 <c>LogicFrame.Sink = this</c>，
+    /// <para>▍谁接管：<c>LogicFrameHost</c> 在 <c>Init()</c> 里 <c>LogicFrame.Sink = this</c>，
     /// <c>UnInit()</c> 里清空。<c>Sink == null</c> 时注册/摘除都是**空操作**
     /// （等价于原 <c>NullNetService</c> 的"服务未就绪静默跳过"语义）。</para>
     ///
@@ -28,7 +29,7 @@ namespace FPSGame.Core
     /// </summary>
     public static class LogicFrame
     {
-        /// <summary>逻辑帧宿主（实现方：<c>NetManager</c>）。未接管时为 null。</summary>
+        /// <summary>逻辑帧宿主（实现方：<c>LogicFrameHost</c>）。未接管时为 null。</summary>
         public static ILogicFrameSink Sink { get; internal set; }
 
         /// <summary>把对象接入逻辑帧</summary>
@@ -54,7 +55,7 @@ namespace FPSGame.Core
 
     /// <summary>
     /// 逻辑帧宿主的**窄接口**：只有两个动词，刻意不掺任何业务语义。
-    /// 由 <c>NetManager</c> 实现；与 <see cref="I_Login"/> 同住最底层，避免方案里出现中间层。
+    /// 由 <c>LogicFrameHost</c> 实现；与 <see cref="I_Login"/> 同住最底层，避免方案里出现中间层。
     /// </summary>
     public interface ILogicFrameSink
     {

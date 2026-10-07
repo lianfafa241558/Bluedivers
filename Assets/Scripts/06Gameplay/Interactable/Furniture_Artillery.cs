@@ -19,7 +19,7 @@ namespace FPSGame.Gameplay
 /// GlobalEventSub.OnFurnitureOperate 事件推进阶段进度。
 /// </summary>
 [AddComponentMenu("交互/火炮")]
-public class Furniture_Artillery : Furniture_Base
+public class Furniture_Artillery : Furniture_Attached
 {
     [SerializeField]
     [InspectorName("所需物体ID")]
@@ -141,7 +141,7 @@ public class Furniture_Artillery : Furniture_Base
                 go.transform.localEulerAngles = Vector3.zero;
                 Tool.Destroy(go,0.5f);
             }
-            int index = (int)((Furniture_Base)furn).ExtFloatParameter;
+            int index = (int)((Furniture_Attached)furn).ExtFloatParameter;
             shells.Add(index);
             m_weapon.UseDamageIndex = index;
             m_weapon.Magazine.CurrValue = shells.Count;

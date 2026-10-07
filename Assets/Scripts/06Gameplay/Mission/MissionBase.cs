@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
@@ -40,7 +40,7 @@ namespace FPSGame.Mission
 
         public event Action<MissionBase> OnMissionCompleted;
         public event Action<MissionBase> OnMissionEnd;
-        protected FPSGame.GameContract.IBattleService manager;// 走契约（原 BattleManager），玩法层不再点名上层具体类型
+        protected IBattleService manager;// 走契约（原 BattleManager），玩法层不再点名上层具体类型
         protected System.Random random;
 
 
@@ -137,8 +137,8 @@ namespace FPSGame.Mission
             this.pos = pos;
             this.entitySize = entitySize;
             this.entityParent = entityParent;
-            manager = FPSGame.GameContract.BattleHub.Current;
-            random = FPSGame.Data.BattleState.BattleRandom;
+            manager = BattleHub.Current;
+            random = BattleState.BattleRandom;
             switch (missionType)
             {
                 case MissionType.Main:
@@ -182,8 +182,8 @@ namespace FPSGame.Mission
         {
             this.root = root;
 
-            manager = FPSGame.GameContract.BattleHub.Current;
-            random = FPSGame.Data.BattleState.BattleRandom;
+            manager = BattleHub.Current;
+            random = BattleState.BattleRandom;
 
             if (_sceneMissionData != null)
             {
@@ -214,7 +214,7 @@ namespace FPSGame.Mission
             // 场景中 MissionView 已作为子对象存在，直接获取引用
             if (entity == null)
             {
-                Debug.LogError("没有为其设置实体",this);
+                Debug.LogWarning("没有为其设置实体",this);
             }
 
 
@@ -237,6 +237,7 @@ namespace FPSGame.Mission
 
         public void EventStart()
         {
+
             StartMission();
             //Debug.LogError("触发事件"+this,this);
             BattleEventSub.MissionStart(this);
@@ -268,12 +269,12 @@ namespace FPSGame.Mission
         {
             if (prefabs.Count > 0)
             {
-                prefab=prefabs.RandomTake(FPSGame.Data.BattleState.BattleRandom);
+                prefab=prefabs.RandomTake(BattleState.BattleRandom);
                 return true;
             }
             else if (prefabVarients != null)
             {
-                prefab = prefabVarients.Get(FPSGame.Data.TaskState.EnemyVarietyType);
+                prefab = prefabVarients.Get(TaskState.EnemyVarietyType);
                 return true;
             }
             prefab = null;
@@ -282,13 +283,31 @@ namespace FPSGame.Mission
 
 
         /// <summary>
+        /// 任务实体的朝向角（0~359）。**必须两端一致** —— 它决定任务区域（`MissionView` 的矩形/Range）的朝向，
+        /// 各端各摇一次会让同一个任务在两边朝向不同（2026-10-07 用户实测）。
+        ///
+        /// <para>▍口径：从本局权威种子派生（用已吸附的 <c>pos</c> 当细分键，两端位置也由同一种子生成）
+        /// ⇒ 同 seed + 同位置 ⇒ 恒等。单机（<c>TaskState.Seed == 0</c>）保持原来的全局静态流行为。</para>
+        /// </summary>
+        protected int MissionAngle()
+        {
+            int seed = TaskState.Seed;
+            if (seed == 0) return RandomUtils.Range(0, 360);
+
+            int h = SeedUtil.Derive(seed, SeedStream.MissionEntity);
+            h = SeedUtil.Derive(h, Mathf.RoundToInt(pos.x * 10f));
+            h = SeedUtil.Derive(h, Mathf.RoundToInt(pos.z * 10f));
+            return (int)(unchecked((uint)h) % 360u);
+        }
+
+        /// <summary>
         /// 创建后就执行
         /// </summary>
         protected virtual void InitMission()
         {
             if (!entity && GetEntiryPrefab(out GameObject prefab))
             {
-                entity = Instantiate(prefab, pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), entityParent).GetComponent<MissionView>();
+                entity = Instantiate(prefab, pos, Quaternion.Euler(0, MissionAngle(), 0), entityParent).GetComponent<MissionView>();
                 entity.Init(this, this.data.cfg.RequiredAD.Select(item => item.ID).ToArray());
             }
             else

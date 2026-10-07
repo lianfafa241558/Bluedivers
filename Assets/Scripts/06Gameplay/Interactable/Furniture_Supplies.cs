@@ -13,7 +13,7 @@ namespace FPSGame.Gameplay
     /// 提供补给的箱子。
     /// </summary>
     [AddComponentMenu("交互/补给箱")]
-    public class Furniture_Supplies : Furniture_Base
+    public class Furniture_Supplies : Furniture_Attached
     {
         public override string Desc => "采集[" + ShowName + "]";
 

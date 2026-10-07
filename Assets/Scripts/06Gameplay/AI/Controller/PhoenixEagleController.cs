@@ -211,7 +211,6 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
         lastPos.y = transform.position.y;//保证水平
         currentPhase = FlightPhase.Wait;
         progress = 0f;
-        //Debug.Log("到点用时" + (Time.time - time));
         onWait?.Invoke();
     }
 
@@ -247,6 +246,7 @@ public class PhoenixEagleController : MonoBehaviour, IRecyclable
         {
             if (waitTime > 0) SwitchToWaitPhase();
             else SwitchToClimbingPhase();
+            Debug.Log("到点用时" + (Time.time - time));
             return;
         }
         // 计算目标位置

@@ -52,6 +52,14 @@ namespace FPSGame.Core
 
         public static int k_AnimEntry { get; } = Animator.StringToHash("Entry");
 
+        /// <summary>
+        /// 战斗场景名（<c>ResSvc.AsyncLoadScene</c> 吃的是**场景名**，不是路径）。
+        /// <para>▍为什么抽成常量：原先在 <c>TransSceneController</c> 里硬编码 <c>"TestScene"</c>，
+        /// 而联机时房主与成员必须加载**同一张**场景 ⇒ 两边必须共用同一个来源。</para>
+        /// <para>▍为什么不下发：所有战斗场景都是同一张图进入 + 运行时随机生成（见改造方案 R1）。</para>
+        /// </summary>
+        public const string BattleSceneName = "BattleScene";
+
         /// <summary>飞鹰重新装填ID</summary>
         public const int EagleReloadId = 1;
         /// <summary>呼叫增援ID</summary>

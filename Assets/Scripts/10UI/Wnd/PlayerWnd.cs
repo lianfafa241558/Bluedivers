@@ -1,11 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.Attributes;
-using FPSGame.UI;
 using FPSGame.GameContract;
-using PEMaths;
 
 using FPSGame.Game;
 using FPSGame.Gameplay;
@@ -232,9 +229,133 @@ public partial class PlayerWnd : Window
         UpdateTime();
         UpdateCross();
         UpdateWeapon();
+        UpdateSelfDeathState();
+        UpdatePlayerStates();
         UpdateFeedback();
         UpdateKill();
     }
+
+    /// <summary>本机自己那行的倒地遮罩（`PlayerStateSelf/Icon/DeathState`，与盟友行同一套结构）。
+    /// <para>⚠ 它在**另一个嵌套预制体** `PlayerStateSelf.prefab` 里，拿不到序列化引用 ⇒ 按路径找一次并缓存。</para></summary>
+    private GameObject m_SelfDeathState;
+
+    private void UpdateSelfDeathState()
+    {
+        if (m_SelfDeathState == null)
+        {
+            var t = playerRoot != null ? playerRoot.Find(SelfStateRowName + "/Icon/DeathState") : null;
+            if (t == null) return;
+            m_SelfDeathState = t.gameObject;
+        }
+        if (m_Health == null) return;
+        SetActive(m_SelfDeathState, m_Health.GetHpCurrent() <= 0f);
+    }
+
+    #region 盟友状态行（players 下除本机自己那行之外的槽位）
+
+    /// <summary>
+    /// 一条盟友状态行（预制体里这些节点**没有任何脚本组件**，原先就没有驱动代码）。
+    /// <para>▍为什么血/盾/弹药用 <c>UnityEngine.UI.Image.fillAmount</c> 而不是 <c>DynamicBar</c>：
+    /// 预制体里这两套行结构不同 —— 本机的 `PlayerStateSelf` 用 `DynamicBar`（带 Animator 动效），
+    /// 盟友行是 `Type=Filled / FillMethod=Horizontal` 的普通 Image（`ShidleBar_/ShieldBar` 等）⇒ 直接填比例即可。</para>
+    /// </summary>
+    private class AllyStateRow
+    {
+        public GameObject Root;
+        public Transform Name;
+        public Transform Portrait;
+        public Transform Frame;
+        public GameObject DeathState;
+        public DynamicBar Hp, Shield, Ammo;
+    }
+
+    private AllyStateRow[] m_AllyRows;
+
+    /// <summary>本机自己那行的节点名（它由 `UpdateWeapon` 里的 healthBar/shieldBar/ammoBar 驱动，这里要跳过）。</summary>
+    private const string SelfStateRowName = "PlayerStateSelf";
+
+    /// <summary>
+    /// 收集盟友行。⚠ 按**子物体顺序**取、不按名字：Unity 自动编号的名字（`PlayerState (1)`）一改名就废。
+    /// </summary>
+    private void EnsureAllyRows()
+    {
+        if (m_AllyRows != null) return;
+        if (playerRoot == null) { m_AllyRows = new AllyStateRow[0]; return; }
+
+        var rows = new List<AllyStateRow>();
+        for (int i = 0; i < playerRoot.childCount; ++i)
+        {
+            var child = playerRoot.GetChild(i);
+            if (child.name == SelfStateRowName) continue;
+
+            var shield = child.Find("ShidleBar_");   // 资产里的拼写就是 Shidle（勿"修正"）
+            var hp = child.Find("HpBar_");
+            var ammo = child.Find("Ammo_");
+            var death = child.Find("Icon/DeathState");
+            rows.Add(new AllyStateRow
+            {
+                Root = child.gameObject,
+                Name = child.Find("playerName"),
+                Portrait = child.Find("Icon/portrait"),
+                Frame = child.Find("frame"),
+                DeathState = death != null ? death.gameObject : null,
+                // 三根条与 PlayerStateSelf 同款：DynamicBar（bar 主填充 + slider 装饰滑块 + 分段 stage）
+                Shield = shield != null ? shield.GetComponent<DynamicBar>() : null,
+                Hp = hp != null ? hp.GetComponent<DynamicBar>() : null,
+                Ammo = ammo != null ? ammo.GetComponent<DynamicBar>() : null,
+            });
+        }
+        m_AllyRows = rows.ToArray();
+    }
+
+    /// <summary>
+    /// 刷新盟友状态行：名字 / 血 / 盾 / 弹药系数。
+    ///
+    /// <para>▍数据来源是**世界里的盟友实体**（`ActorsManager.Players` 里带 `FriendController` 的那些）：
+    /// 血盾读它身上那份"镜像生命值"（09 的桥把同步值写进去），弹药系数读 `FriendController.AmmoRatio`。
+    /// ⇒ UI 不依赖网络层，房主 / 成员两种角色同一套代码，也不用管"消息什么时候到"。</para>
+    ///
+    /// <para>⚠ 盟友离场时 `ActorsManager.Players` 里可能残留**已销毁**的引用（当前没有"盟友离场"事件），
+    /// 所以必须跳过无效项，多出来的行隐藏掉（这也是现在处理"盟友走了"的唯一办法）。</para>
+    /// </summary>
+    private void UpdatePlayerStates()
+    {
+        if (playerRoot == null) return;
+        EnsureAllyRows();
+
+        int used = 0;
+        var actors = ActorsManager.Players;
+        for (int i = 0; i < actors.Count && used < m_AllyRows.Length; ++i)
+        {
+            var actor = actors[i];
+            if (!actor.IsValidMono() || ReferenceEquals(actor, ActorsManager.Player)) continue;
+
+            var t = actor.transform;
+            var friend = t.GetComponent<FriendController>();
+            if (friend == null) continue;      // 只认盟友实例（本机玩家身上没有这个组件）
+
+            var row = m_AllyRows[used++];
+            SetActive(row.Root, true);
+            SetText(row.Name, string.IsNullOrEmpty(friend.PlayerName) ? actor.ShowName : friend.PlayerName);
+            // 头像/常色：挂角色模型时 FriendController 已把模型的 BaseObject 身份搬到 Actor 上
+            if (row.Portrait != null) SetSprite(row.Portrait, actor.Portrait != null ? actor.Portrait : actor.ExtraPortrait);
+            if (row.Frame != null) SetColor(row.Frame, actor.Color);
+
+            var health = t.GetComponent<IHealth>();
+            float hp = health != null ? health.GetHpRatio() : 0f;
+            float shield = health != null ? health.GetShieldRatio() : 0f;
+            if (row.Hp != null) row.Hp.SetFill(Mathf.Clamp01(hp));
+            if (row.Shield != null) row.Shield.SetFill(Mathf.Clamp01(shield));
+            if (row.Ammo != null) row.Ammo.SetFill(Mathf.Clamp01(friend.AmmoRatio));
+
+            // 倒地遮罩（与 Self 那行同一个节点：Icon/DeathState）
+            if (row.DeathState != null) SetActive(row.DeathState, health != null && health.GetHpCurrent() <= 0f);
+        }
+
+        for (int i = used; i < m_AllyRows.Length; ++i) SetActive(m_AllyRows[i].Root, false);
+    }
+
+    #endregion
 
     void UpdateTime()
     {
@@ -295,9 +416,9 @@ public partial class PlayerWnd : Window
         //迫于无奈，直接这边获取了
         SetText(nowAmmoR, m_ActiveWeapon.Magazine.CurrValue.RawInt);
         SetText(remainAmmoR, m_ActiveWeapon.Ammo.CurrValue.RawInt);
+        // ⚠ 手雷槽可能为空（未解锁/换装中）⇒ 读之前必须判空，否则 HUD 每帧 NRE
         var grenade = m_WeaponsManager.GetWeaponAtSlotIndex(PlayerWeaponsManager.SlotOf(WeaponTypeEnum.Grenade));
-           
-        SetText(GrenadeCount, grenade.Ammo.CurrValue.RawInt + grenade.Magazine.CurrValue.RawInt);
+        if (grenade) SetText(GrenadeCount, grenade.Ammo.CurrValue.RawInt + grenade.Magazine.CurrValue.RawInt);
          
 
         if (m_ActiveSecWeapon)

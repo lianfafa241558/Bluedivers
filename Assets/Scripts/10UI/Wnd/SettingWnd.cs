@@ -11,6 +11,7 @@ using FPSGame.Gameplay;
 namespace FPSGame.UI
 {
 using FPSGame.GameContract;
+using FPSGame.Net;
 using static GameData.ArchivesData_SO;
 using static FPSGame.WndTools.WndRootTool;
 using FPSGame.Data;
@@ -32,6 +33,11 @@ public partial class SettingWnd : Window
         taskName,taskDiff,taskType,taskTypeIcon,
         taskMainDesc, taskExtraDesc, taskMainReward, taskExtraReward, tastExtraDiffRoot,
         selfIcon,selfName,selfLevel,selfExp, selfFrame;
+
+    [Foldout("状态", true)]
+    [InspectorName("空玩家位根（stateWnd/PlayerStateSelf/FriendRoot）")]
+    [SerializeField]
+    private Transform emptySlotRoot;
 
     [Foldout("右上按钮", true)]
     public Transform freeCamera, rebirth,returnShop, exitGame,teach;
@@ -126,6 +132,7 @@ public partial class SettingWnd : Window
         SetCilck(rebirth, TryRebirth);
         SetCilck(exitGame, TryExitGame);
         SetCilck(teach, TryTeach);
+        BindEmptyRoomSlots();
 
         
 
@@ -137,6 +144,18 @@ public partial class SettingWnd : Window
         lookPoint.transform.position = uiCamera.ScreenToWorldPoint(Input.mousePosition);
     }
 
+    /// <summary>本次打开是否动过时间流速。**必须记着**：恢复时不能重算条件 ——
+    /// "打开时房里只有我、关窗时房里变多人"会让重算判成"不用恢复" ⇒ 时间永远停在 0.01（2026-10-07 用户实测）。</summary>
+    private bool _slowedTime;
+
+    /// <summary>本机是不是"单机战斗"（只有我一个真人、且不在联机房间里）。
+    /// 联机时**绝不动**时间流速：两端时间基准一旦不同步，表现就是"对面像快进/慢放"。
+    /// ⚠ <c>BridgeSys</c> 只在舰桥场景 ⇒ 战斗中它回答不了，靠"真人玩家数"兜底。</summary>
+    private bool IsStandaloneBattle =>
+        GameState == GameStateEnum.Game
+        && teamManager != null && teamManager.IsSingle
+        && (BridgeSys.Instance == null || !BridgeSys.InOnlineRoom);
+
     protected override void ShowWnd()
     {
         selfChangeState = true;
@@ -146,15 +165,21 @@ public partial class SettingWnd : Window
 
         //wndManager.WndUI.gameObject.SetActive(false);
         //feature.SetActive(true);
-        if(roomManager.IsSingle&&GameState == GameStateEnum.Game)TimeScale = 0.01f;//TODO:如果是单机的话
-        // 创建临时Texture2D
-        BG.sprite =FpsHelper.CameraCaptureToSprite(Camera.main);
+        // ⚠ 只有单机战斗才降速（联机时降速会与别人时间基准打架，而且退出后必须还回来）
+        if (IsStandaloneBattle)
+        {
+            TimeScale = 0.01f;
+            _slowedTime = true;
+        }
+        // 创建临时Texture2D（⚠ 抓不到就保留上一张背景：Camera.main 可能为 null，见 CameraCaptureToSprite）
+        var bgSprite = FpsHelper.CameraCaptureToSprite(Camera.main);
+        if (bgSprite != null) BG.sprite = bgSprite;
         BG.material.SetFloat("_TimeScale", TimeScale);
         //GlobalEventManager.OnFakeBg(BG.transform);
         haveSettingChagne = false;
         SetActive(returnShop,GameState == GameStateEnum.Game);
         SetActive(rebirth, GameState == GameStateEnum.Bridge);
-        SetActive(freeCamera, roomManager.IsSingle);
+        SetActive(freeCamera, teamManager.IsSingle);
 
         SetStateRoot();
         InputManager.AddListenerCancel(Cancel);
@@ -164,7 +189,11 @@ public partial class SettingWnd : Window
         WindowState = oldStste;
         //wndManager.WndUI.gameObject.SetActive(true);
         //feature.SetActive(false);
-        if (roomManager.IsSingle && GameState == GameStateEnum.Game) TimeScale = 1;//TODO:如果是单机的话
+        if (_slowedTime)
+        {
+            TimeScale = 1;      // 动了就一定要还原（别重算条件，见 _slowedTime 的说明）
+            _slowedTime = false;
+        }
         BG.material.SetFloat("_TimeScale", TimeScale);
         //GlobalEventManager.OnFakeBg(null);
         if (haveSettingChagne)
@@ -536,6 +565,87 @@ public partial class SettingWnd : Window
         }
 
     }
+    /// <summary>
+    /// 把 <c>stateWnd/PlayerStateSelf/FriendRoot</c> 下每个玩家位的**空位**节点绑成"创建房间"入口。
+    ///
+    /// <para>▍节点约定（预制体实测）：每个 <c>PlayerState</c> 有 2 个子节点 ——
+    /// 子0 = 有玩家（头像 + 角色名称，默认 inactive）、子1 = 空位（显示"空位"）。
+    /// 空位底图是 <c>PlayerState(n)/GameObject (1)/Image</c>，它原本没有 Button ⇒ 这里就地补一个
+    /// （同 <c>ServerListPanel.SetItemClick</c> 的做法），并把 raycast 目标指到那张底图上。</para>
+    /// </summary>
+    private void BindEmptyRoomSlots()
+    {
+        if (emptySlotRoot == null) return;
+
+        for (int i = 0; i < emptySlotRoot.childCount; ++i)
+        {
+            var slot = emptySlotRoot.GetChild(i);
+            if (slot.childCount < 2) continue;                 // 子0 = 有人、子1 = 空位
+
+            var empty = slot.GetChild(1);
+            var click = empty.childCount > 0 ? empty.GetChild(0) : empty;
+            var graphic = click.GetComponent<Image>();
+            var btn = click.TryGetOrAddComponent<Button>();
+            btn.transition = Selectable.Transition.None;
+            if (graphic != null)
+            {
+                graphic.raycastTarget = true;
+                btn.targetGraphic = graphic;
+            }
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(() =>
+            {
+                wndManager.PlaySound(new("UI/UI_Bubble"));
+                CreateRoomFromEmptySlot();
+            });
+        }
+    }
+
+    /// <summary>
+    /// 空玩家位 → 以**当前这局的地图与难度**开房并局域网广播（等于地图界面 <c>pubilc</c> 那个入口）。
+    /// 这里不走 <c>SelectMapWnd</c>：设置窗口是常驻窗口，战场里也要能用，而选图窗口不一定在场景里。
+    /// </summary>
+    private void CreateRoomFromEmptySlot()
+    {
+        var flow = NetRoomFlow.Instance;
+        if (flow == null)
+        {
+            ShowTip("联机不可用", "网络服务未初始化：GameRoot 下缺少 NetSvc / NetHostSvc / NetRoomFlow。");
+            return;
+        }
+
+        var archive = ArchivesData_SO.Current;
+        string hostName = archive == null || string.IsNullOrEmpty(archive.playerName) ? "玩家" : archive.playerName;
+
+        var options = new HostRoomOptions
+        {
+            RoomName = hostName + "的房间",
+            MapName = taskManager.MapId,
+            MaxPlayers = 4,
+            Password = string.Empty,
+            // 难度 / 任务类型走临时约定拼进 MapName / RoomName（RoomMeta 里标了 TODO(库)）
+            Difficulty = taskManager.nowTask.activeTask ? (int)taskManager.nowTask.difficulty : -1,
+            HostName = hostName,
+            TaskType = taskManager.NowTaskType,
+            TaskMain = taskManager.NowTaskMain,
+        };
+
+        if (!flow.Host(options, out string reason))
+        {
+            ShowTip("开房失败", reason);
+            return;
+        }
+
+        ShowTip("房间已创建", "已在局域网广播：" + (string.IsNullOrEmpty(options.MapName) ? "未指定地图" : options.MapName));
+    }
+
+    private void ShowTip(string title, string desc)
+    {
+        var tip = WndHub.Tip;
+        if (tip != null) tip.Creat(new() { title = title, desc = desc });
+        else Debug.LogWarning("[SettingWnd] " + title + "：" + desc);
+    }
+
     public void SetStateRoot()
     {
         var player = ActorsManager.Player;
@@ -547,19 +657,24 @@ public partial class SettingWnd : Window
         {
             HideTask();
         }
-        showModle = resManager.CreatPrefab("Prefabs/StudentModle/" + player.Id, false);
-        //var lookAtController = showModle.GetComponentInChildren<LookAtIK>();
-        //lookAtController.enabled = false;
-        showModle.transform.position = transform.TransformPoint(new(600, -650, 600));
-        showModle.transform.eulerAngles = new(0, -170, 0);
-        //showModle.transform.GetChild(0).localScale = new(550, 550, 550);
-        showModle.transform.localScale = new(550, 550, 550);
-        showModle.SetChildLayer(gameObject.layer,3);
-        var comp = showModle.GetComponent<RootMotion.FinalIK.LookAtController>();
-        comp.ik.solver.bodyWeight = 0;
-        comp.target = lookPoint.transform;
+        // ⚠ 两个都可能为 null：没有玩家实体的场合（大厅 / 实体已销毁），或模型路径取不到。
+        //   漏判的表现就是 ESC 打开设置窗直接抛 NullReferenceException（2026-10-07 实测）。
+        showModle = player != null ? resManager.CreatPrefab("Prefabs/StudentModle/" + player.Id, false) : null;
+        if (showModle != null)
+        {
+            showModle.transform.position = transform.TransformPoint(new(600, -650, 600));
+            showModle.transform.eulerAngles = new(0, -170, 0);
+            showModle.transform.localScale = new(550, 550, 550);
+            showModle.SetChildLayer(gameObject.layer, 3);
+            var comp = showModle.GetComponent<RootMotion.FinalIK.LookAtController>();
+            if (comp != null && comp.ik != null && comp.ik.solver != null)
+            {
+                comp.ik.solver.bodyWeight = 0;
+                comp.target = lookPoint.transform;
+            }
+        }
 
-
+        if (player == null) return;   // 下面全是玩家档案数据（名称/头像/等级/经验）
         SetText(selfName, player.ShowName);
         SetSprite(selfIcon, player.Portrait);
         ArchivesData_SO.Current.GetRoleLevel(player.Id, out int level, out float expScale);

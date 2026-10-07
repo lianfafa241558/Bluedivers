@@ -340,6 +340,17 @@ namespace FPSGame.MapUtils
         [SerializeField]
         private int width, height, size, speceHeight;
 
+        /// <summary>
+        /// 地形生成的**两条派生随机流**（联机：由本局权威种子派生 ⇒ 两端同种子即同地形）。
+        /// <para>▍为什么用"专用流"而不是 <c>RandomUtils</c> / <c>BattleRandom</c>：专用流不会被别的系统
+        /// （音效 / 弹孔 / 武器散布 / 谜题）推进游标 ⇒ 中间那些 <c>yield return null</c> 的插队也**无害**
+        /// —— 这正是"静态部分用种子"能成立的关键。</para>
+        /// <para>▍为什么分两条：高度图与装饰物是两件事，分开后以后调整装饰不会影响地形本身。</para>
+        /// <para>⚠ 种子为 0（单机 / 旧版房主）时退回本地随机，行为与改造前一致。</para>
+        /// </summary>
+        private System.Random _terrainRandom;
+        private System.Random _decorRandom;
+
         //比如分辨率1024/512就是2
         private float mapscale => terrain.terrainData.heightmapResolution / terrain.terrainData.size.x;
 
@@ -799,7 +810,14 @@ namespace FPSGame.MapUtils
             {
                 // 原型变了必须刷新，否则 Terrain 内部仍用旧原型（树实例的 prototypeIndex 会错位）。
                 // 树实例随后会被 SetTreeInstances 整表重写，这里不用担心旧实例。
+                //
+                // ⚠⚠ `TerrainData.RefreshPrototypes()` 是 **Editor-only** API：打包运行时调用会抛
+                //   "<i>…is only implemented in the Editor</i>"（2026-10-07 用户实测，栈就在本方法末尾这一句）。
+                //   运行时不需要它 —— 运行时拿到的地形资产是已经烘好的、原型数组与实例都是同一次导入的结果；
+                //   而"换原型"这条路径本来也只在编辑器里生成地形时才走（运行时改原型没有实际用途）。
+#if UNITY_EDITOR
                 terrainData.RefreshPrototypes();
+#endif
             }
         }
 
@@ -840,10 +858,14 @@ namespace FPSGame.MapUtils
         /// <param name="detailPrototypes">细节（草）原型（`MapData_SO.detailPrototypes`）</param>
         /// <param name="treeMultiplier">树密度地图级倍率（1=用预设值，0=本图不长树）</param>
         /// <param name="rockCoverMultiplier">悬崖数量地图级倍率（1=用预设值，0=本图不放悬崖）</param>
+        /// <param name="detailsMultiplier">细节（草）密度地图级倍率</param>
+        /// <param name="seed">本局**权威随机种子**（联机由房主下发；0 = 未指定 ⇒ 退回本地随机）。
+        /// ⚠ 加在末尾并给默认值 ⇒ 不影响既有调用点。</param>
         public IEnumerator ApplyFractalNoiseToTerrain(TerrainType terrainType,
             GameObject[] stonePrototypes = null, GameObject[] treePrototypes = null,
             GameObject[] detailPrototypes = null,
-            float stoneMultiplier = 1f, float treeMultiplier = 1f, float rockCoverMultiplier = 1f,float detailsMultiplier=1f)
+            float stoneMultiplier = 1f, float treeMultiplier = 1f, float rockCoverMultiplier = 1f,float detailsMultiplier=1f,
+            int seed = 0)
         {
             // 地图级倍率（MapData_SO 传进来）：0 = 本图不长树 / 不放悬崖；负数一律按 0 处理
             _stoneMultiplier = Mathf.Max(0f, stoneMultiplier);
@@ -861,6 +883,19 @@ namespace FPSGame.MapUtils
             height = terrainData.heightmapResolution;
             size = terrain.terrainData.alphamapResolution;
             speceHeight = (int)terrain.terrainData.size.y;
+
+            // 本局种子 ⇒ 两条派生流（0 = 未指定：退回本地随机，保持单机行为）
+            if (seed != 0)
+            {
+                _terrainRandom = new System.Random(SeedUtil.Derive(seed, SeedStream.Terrain));
+                _decorRandom = new System.Random(SeedUtil.Derive(seed, SeedStream.TerrainDecor));
+            }
+            else
+            {
+                int localSeed = UnityEngine.Random.Range(1, int.MaxValue);
+                _terrainRandom = new System.Random(localSeed);
+                _decorRandom = new System.Random(unchecked(localSeed * 31 + (int)SeedStream.TerrainDecor));
+            }
 
             // 获取预设参数
             TerrainPresetData preset = GetTerrainPreset(terrainType);
@@ -938,6 +973,9 @@ namespace FPSGame.MapUtils
             preTexture.Apply(false, false);
 
             // NavMesh 构建（首次同步构建填充数据，之后异步增量更新并等待完成）
+            // ⚠ 联机要求：**必须等到烘焙真正完成**才算"这一步做完" —— 否则两端完成时刻不同，
+            //   而刷怪/巡逻用的 NavMesh.SamplePosition / CalculatePath 结果会不同。
+            //   ⇒ 不再"超时即继续"，改为超时只告警、继续等到 isDone。
             yield return null;
             var surface = GetComponent<NavMeshSurface>();
             if (surface != null)
@@ -948,17 +986,21 @@ namespace FPSGame.MapUtils
                 if (surface.navMeshData != null)
                 {
                     var asyncOp = surface.UpdateNavMesh(surface.navMeshData);
-                    float timeout = Time.realtimeSinceStartup + 10f;
-                    while (!asyncOp.isDone && Time.realtimeSinceStartup < timeout)
+                    float nextWarn = Time.realtimeSinceStartup + 10f;
+                    while (!asyncOp.isDone)
                     {
+                        if (Time.realtimeSinceStartup >= nextWarn)
+                        {
+                            nextWarn = Time.realtimeSinceStartup + 10f;
+                            Debug.LogWarning("NavMesh 仍在异步烘焙中（已超过 10s，继续等待）…");
+                        }
                         yield return null;
                     }
-                    if (!asyncOp.isDone)
-                        Debug.LogWarning("NavMesh 异步构建超时，可能仍在后台进行");
                 }
                 else
                 {
-                    Debug.LogWarning("NavMesh 构建失败：navMeshData 为空，跳过 NavMesh 更新");
+                    // 构建失败必须"响亮"：窗口结束前没有 NavMesh，后面所有刷怪点采样都会失败
+                    Debug.LogError("NavMesh 构建失败：navMeshData 为空（后续刷怪点采样会失败）");
                 }
             }
             Debug.Log($"完成总时间: {sw.ElapsedMilliseconds} ms");
@@ -993,10 +1035,9 @@ namespace FPSGame.MapUtils
         /// </summary>
         IEnumerator GenerateBaseTerrain(TerrainPresetData preset)
         {
-            var now = System.DateTime.Now;
-            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));
-            float offsetX = TaskRandom.Range(0, 9999f);
-            float offsetY = TaskRandom.Range(0, 9999f);
+            // 噪声偏移取自「地形派生流」（联机：两端同种子 ⇒ 同一张高度图）
+            float offsetX = _terrainRandom.Range(0, 9999f);
+            float offsetY = _terrainRandom.Range(0, 9999f);
 
             float effectiveBaseScale = _overridePreset ? baseScale : preset.baseScale;
             float effectiveBaseAmplitude = _overridePreset ? baseAmplitude : preset.baseAmplitude;
@@ -1052,10 +1093,9 @@ namespace FPSGame.MapUtils
             float effectiveEdgeDropoff = _overridePreset ? edgeDropoff : preset.edgeDropoff;
             int effectiveErosionIterations = _overridePreset ? 1 : preset.erosionIterations;
 
-            var now = System.DateTime.Now;
-            System.Random TaskRandom = new(now.Month * 100 + now.Day + now.Hour * 100 + (now.Minute / 30 * 30));
-            float noiseOffsetX = TaskRandom.Range(0, 9999f);
-            float noiseOffsetY = TaskRandom.Range(0, 9999f);
+            // 后处理噪声偏移同样取自「地形派生流」（与高度图同一条线，顺序固定）
+            float noiseOffsetX = _terrainRandom.Range(0, 9999f);
+            float noiseOffsetY = _terrainRandom.Range(0, 9999f);
 
             float startTime = Time.realtimeSinceStartup;
 
@@ -1566,7 +1606,7 @@ namespace FPSGame.MapUtils
                 for (int tx = 1; tx < width - 1; tx++)
                 {
                     // 先掷骰再查约束：99% 以上的格子在这一行就被跳过，比逐格算坡度省得多
-                    if (Random.value >= rate) continue;
+                    if (_decorRandom.NextDouble() >= rate) continue;
 
                     // 被巨型地形覆盖石（悬崖）压住的位置不再生成，避免树/石从石头里长出来
                     if (IsInsideRockCoverNormalized(coverCircles, tx / (float)width, tz / (float)height)) continue;
@@ -1581,12 +1621,12 @@ namespace FPSGame.MapUtils
 
                     TreeInstance tree = new TreeInstance();
                     tree.position = new Vector3(tx / (float)width, h, tz / (float)height);
-                    tree.widthScale = Random.Range(0.7f, 1.5f);
-                    tree.heightScale = Random.Range(0.7f, 1.5f);
-                    tree.prototypeIndex = Random.Range(protoMin, protoMax + 1);
+                    tree.widthScale = _decorRandom.Range(0.7f, 1.5f);
+                    tree.heightScale = _decorRandom.Range(0.7f, 1.5f);
+                    tree.prototypeIndex = _decorRandom.Range(protoMin, protoMax + 1);
                     // TreeInstance.rotation 是 X-Z 平面弧度（0~2π），不设的话所有实例朝向完全一致，
                     // 石块尤其明显（像复制粘贴）。rotation 是只读字段语义上要自己构造结构体时写入。
-                    tree.rotation = Random.value * Mathf.PI * 2f;
+                    tree.rotation = (float)_decorRandom.NextDouble() * Mathf.PI * 2f;
 
                     trees.Add(tree);
                 }
@@ -1824,12 +1864,12 @@ namespace FPSGame.MapUtils
 
             for (int attempt = 0; attempt < maxAttempts && placed < targetCount; attempt++)
             {
-                RockCoverEntry entry = PickRockCoverEntry(entries, totalWeight);
+                RockCoverEntry entry = PickRockCoverEntry(entries, totalWeight, _decorRandom);
                 float radius = entry.footprintRadius;
 
                 // 落点要留出整块石头的半径，保证石头完整落在地图内
-                float posX = Random.Range(minX + radius, maxX - radius);
-                float posZ = Random.Range(minZ + radius, maxZ - radius);
+                float posX = _decorRandom.Range(minX + radius, maxX - radius);
+                float posZ = _decorRandom.Range(minZ + radius, maxZ - radius);
                 Vector2 posXZ = new(posX, posZ);
 
                 // 高度约束（归一化 0~1，与植被同一套 heightMap）
@@ -1854,7 +1894,7 @@ namespace FPSGame.MapUtils
                 // 所以按"网格最低点"对齐：网格最低点 = 地表高度 - sinkDepth
                 float surfaceY = SampleWorldHeight(posX, posZ);
                 GameObject go = Instantiate(entry.prefab, new Vector3(posX, surfaceY, posZ),
-                    Quaternion.Euler(0f, Random.value * 360f, 0f), _rockCoverRoot);
+                    Quaternion.Euler(0f, (float)_decorRandom.NextDouble() * 360f, 0f), _rockCoverRoot);
                 go.name = $"{entry.prefab.name}_{placed}";
                 // 先量出"相对 pivot 的最低点"（含随机 Y 旋转后的结果），再把 pivot 挪到目标高度
                 float bottomOffset = GetRendererMinY(go) - go.transform.position.y;
@@ -1905,10 +1945,12 @@ namespace FPSGame.MapUtils
             }
         }
 
-        /// <summary>按权重随机取一个条目（weight &lt; 1 按 1 处理，保证每个条目都可能被选中）</summary>
-        private static RockCoverEntry PickRockCoverEntry(List<RockCoverEntry> entries, int totalWeight)
+        /// <summary>按权重随机取一个条目（weight &lt; 1 按 1 处理，保证每个条目都可能被选中）。
+        /// ⚠ 随机源由调用方传入：本方法是 static，而联机要求它走「装饰派生流」。</summary>
+        private static RockCoverEntry PickRockCoverEntry(List<RockCoverEntry> entries, int totalWeight,
+            System.Random random)
         {
-            int roll = Random.Range(0, totalWeight);
+            int roll = random.Range(0, totalWeight);
             for (int i = 0; i < entries.Count; i++)
             {
                 roll -= Mathf.Max(1, entries[i].weight);

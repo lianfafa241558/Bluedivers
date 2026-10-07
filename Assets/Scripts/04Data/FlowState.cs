@@ -1,5 +1,5 @@
 using FPSGame.Core;
-// 写入方 = 09_Managers 的 GameRoot（与 RoomState/UIState/TaskState 同一套写入保护手法）。
+// 写入方 = 09_Managers 的 GameRoot（与 TeamState/UIState/TaskState 同一套写入保护手法）。
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("09_Managers")]
 
 
@@ -11,7 +11,7 @@ namespace FPSGame.Data
     ///
     /// <para>▍为什么可行：`Flow` 槽其实混着两类东西——① **状态查询**（`GameState`/`IsMainStage`/`IsLocal`，13 处）
     /// ② **调度/命令**（协程、定时器、切阶段，12 处）。第①类是纯粹的"一处写、多处读"，
-    /// 与 <c>UIState.WindowState</c> / <c>RoomState</c> / <c>TaskState</c> 同型 ⇒ 走数据自持，
+    /// 与 <c>UIState.WindowState</c> / <c>TeamState</c> / <c>TaskState</c> 同型 ⇒ 走数据自持，
     /// 连"服务未就绪"都不用处理（未就绪 = 默认值 <c>Front</c> = 未进入主流程，与原空对象语义一致）。</para>
     ///
     /// <para>▍写入方 <c>GameRoot</c> 的 3 个同步点（漏一处就读到过期值）：

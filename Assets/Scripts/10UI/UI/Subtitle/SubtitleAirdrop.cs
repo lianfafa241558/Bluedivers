@@ -56,16 +56,24 @@ public class SubtitleAirdrop : SubtitleBase
     /// </summary>
     public void OnAirdrop(GameObject owner,GameObject target, Vector3 point, AirdropData airdropData)
     {
-        if (owner != this.owner.gameObject) return;
+        // ⚠ 联机：**盟友呼叫的战备**在本机是"远端复现副本"，那条路 `BattleManager.ReleaseAirdrop
+        //   → VFXAirdropEffect.TmpAirdrop` 发出的 `BattleEventSub.Airdrop` 里 **owner = null**
+        //   ⇒ 老实现第一行就 return，盟友叫的空投在这边**完全没有字幕/标记**（2026-10-07 实测）。
+        //   判据用 `isTmp`：远端复现副本是 `new AirdropData(SOn)`（isTmp = true），
+        //   而本机自己那份 useAd 里的项 isTmp = false（仍按"owner 必须是我"筛）。
+        bool remote = owner == null || (airdropData != null && airdropData.isTmp);
+        if (!remote && owner != this.owner.gameObject) return;
+
         this.target = target;
         this.targetPoint = point;
-        var ownerObj = owner.GetComponent<Actor>();
+        var ownerObj = owner != null ? owner.GetComponent<Actor>() : null;
         data = airdropData;
         m_particle = target.GetComponent<LimitedLife>();
         SetText(desc, data.cfg.showName);
 
-        
-        SetText(title, ownerObj.ShowName);
+        // ⚠ 远端那条没有 owner ⇒ 拿不到"是谁叫的"（要显示的话得把呼叫者 sid 传进来，见 AirdropCallMsg.Sid）。
+        //   宁可空着也别显示错的名字（这里原先取的是本机玩家名）。
+        SetText(title, ownerObj != null ? ownerObj.ShowName : string.Empty);
         SetSprite(halo, data.cfg.icon);
         SetColor(halo,data.cfg.IconColor);
         SetActive(gameObject, true);

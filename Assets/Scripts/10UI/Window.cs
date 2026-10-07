@@ -22,7 +22,7 @@ public abstract class Window : MonoBehaviour
 {
     protected WndManager wndManager; 
     protected ResSvc resManager;
-    protected RoomManager roomManager;
+    protected TeamManager teamManager;
     protected TaskManager taskManager;
     protected PropertyManager propertyManager;
     protected GameRoot root;
@@ -46,7 +46,7 @@ public abstract class Window : MonoBehaviour
                     firstInit = true;
                     wndManager = WndManager.Instance;
                     resManager = ResSvc.Instance;
-                    roomManager = RoomManager.Instance;
+                    teamManager = TeamManager.Instance;
                     taskManager = TaskManager.Instance;
                     propertyManager = PropertyManager.Instance;
                     root = GameRoot.Instance;

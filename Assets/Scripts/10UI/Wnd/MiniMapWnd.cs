@@ -182,6 +182,18 @@ public class MiniMapWnd : Window
 
 
 
+        //单位图标显隐跟随"组件是否启用"：组件 enabled 变化不会派发事件，只能每帧同步
+        //（不能放在上面的地图插值分支里——该分支在地图缩放/居中到位后不再进入）
+        if (ActorPoint != null)
+        {
+            foreach (var item in ActorPoint)
+            {
+                if (item.Key is not IActor actor) continue;
+                bool visible = MiniMapVisible(actor);
+                if (item.Value.gameObject.activeSelf != visible) SetActive(item.Value, visible);
+            }
+        }
+
         if ((time += Time.deltaTime) > 2)
         {
             time -= 2;
@@ -369,6 +381,20 @@ public class MiniMapWnd : Window
         SetSprite(ActorPoint[actor], actor.ExtraPortrait);
         actor.OnPosChange += OnGenericMove;
         OnGenericMove(actor);
+        //新注册单位若其组件处于禁用态（含 prefab 上初始关闭），先不上图，等启用后由 Update 同步
+        SetActive(ActorPoint[actor], MiniMapVisible(actor));
+    }
+
+    /// <summary>
+    /// 单位图标是否应当显示：该单位 <see cref="MonoBehaviour.enabled"/> 为 false（含 prefab 上初始关闭）
+    /// 或带 <see cref="ActorFlag.MiniMapIgnore"/> 标记时不显示。
+    /// 组件 enabled 变化不会派发事件，故由 <see cref="Update"/> 每帧同步。
+    /// </summary>
+    private static bool MiniMapVisible(IActor actor)
+    {
+        if (actor is not MonoBehaviour mono) return false;
+        if (!mono.enabled) return false;
+        return !actor.HasFlag(ActorFlag.MiniMapIgnore);
     }
 
     void OtherDeath(IActor actor)

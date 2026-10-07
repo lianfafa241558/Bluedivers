@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
@@ -7,6 +7,7 @@ using FPSGame.GameContract;
 
 using FPSGame.Game;
 using UnityEngine;
+using UnityEngine.AI;
 using FPSGame.Audio;
 using FPSGame.Gameplay;
 
@@ -24,6 +25,10 @@ namespace FPSGame.Gameplay
         public event Action OnOperate;
 
         [Foldout("配置", true)]
+        /// <summary>身份源（Actor 或 BaseObject）。留空则自动在本物体、再在本物体子树查找。</summary>
+        [SerializeField]
+        [InspectorName("身份源")]
+        protected MonoBehaviour identitySource;
 
         [InspectorName("长按时间")]
         public float meetTime;
@@ -63,6 +68,23 @@ namespace FPSGame.Gameplay
         [InspectorName("音频源")]
         private AudioSource _audioSource;
 
+        #region 家具通用配置（2026-10-02 由 Furniture_Base 上提，身份字段已删除）
+        [Foldout("关联", true)]
+        [SerializeField]
+        public Transform relatedTrans;
+        [SerializeField]
+        protected Transform relatedTrans2;
+        [InspectorName("外部浮点数参数")]
+        public float ExtFloatParameter;
+
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        [SerializeField]
+        protected ParticleSystem particle;
+        [DisplayField(DisplayFieldEnum.RunRead)]
+        [SerializeField]
+        protected NavMeshObstacle obs;
+        #endregion
+
 
         [Foldout("状态", true)]
          [DisplayField(DisplayFieldEnum.RunRead)]
@@ -77,17 +99,21 @@ namespace FPSGame.Gameplay
         [SerializeField]
         protected int count;
 
-        private IActor _actor;
+
+
+        /// <summary>身份提供者（Actor 或 BaseObject）：名称/ID/头像/颜色 全工程只存这一份。</summary>
+        protected IEntity Identity { get; private set; }
+
         private Vector3 _colliderCenterOffset = Vector3.up;
 
         public int NumberID { get; private set; }
         
-        public virtual string ShowName { get => _actor.ShowName; }
-        public virtual string Id { get => _actor.Id; }
+        public virtual string ShowName => Identity.IsValidMono() ? Identity.ShowName : string.Empty;
+        public virtual string Id => Identity.IsValidMono() ? Identity.Id : string.Empty;
 
         Sprite IFurniture.Portrait => Icon; 
 
-        protected virtual Sprite Icon { get => _actor.Portrait; }
+        protected virtual Sprite Icon => Identity.IsValidMono() ? Identity.Portrait : null;
 
         public bool InOperate => inOperate; 
         /// <summary>
@@ -131,16 +157,35 @@ namespace FPSGame.Gameplay
         {
             if(!_collider)_collider = GetComponent<Collider>();
             _audioSource = GetComponent<AudioSource>();
-            _actor = GetComponent<IActor>();
             if (!anim) anim = GetComponent<Animator>();
+
+            // 家具通用关联件（2026-10-02 由 Furniture_Base 上提到本类）
+            particle = GetComponentInChildren<ParticleSystem>(true);
+            obs = GetComponent<NavMeshObstacle>();
 
             // 缓存碰撞器中心偏移，避免每帧访问bounds.center导致AABB重算抖动
             if (TryGetComponent<Collider>(out var col))
                 _colliderCenterOffset = col.bounds.center - transform.position;
 
+            ResolveIdentity();
+
             // 首次分配唯一ID
             if (NumberID == 0)
                 NumberID = GetID;
+        }
+
+        /// <summary>
+        /// 解析身份源：显式引用 &gt; 本物体上的 IEntity &gt; 子树中的 IEntity。
+        /// <para>家具自身不再保存名称/头像等身份数据（否则与 Actor/BaseObject 形成两份数据）。</para>
+        /// </summary>
+        private void ResolveIdentity()
+        {
+            if (identitySource != null) Identity = identitySource as IEntity;
+            if (Identity == null) Identity = GetComponent<IEntity>();
+            if (Identity == null) Identity = GetComponentInChildren<IEntity>(true);
+
+            if (!Identity.IsValidMono())
+                Debug.LogError($"[家具] {name} 缺少身份组件（Actor 或 BaseObject）", this);
         }
 
         protected virtual void OnEnable()

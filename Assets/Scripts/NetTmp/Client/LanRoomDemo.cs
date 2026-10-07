@@ -96,7 +96,7 @@ public class LanRoomDemo : MonoBehaviour
         // 注册成员端"房间协议"处理器：接收房主回的消息
         MessageCenter.Register<JoinRoomRsp>(CmdId.JoinRoomRsp, OnJoinRoomRsp);
         MessageCenter.Register<PlayerListSync>(CmdId.PlayerListSync, OnPlayerListSync);
-        MessageCenter.Register<StartGameNtf>(CmdId.StartGameNtf, OnStartGameNtf);
+        MessageCenter.Register<TaskConfirmNtf>(CmdId.TaskConfirm, OnTaskConfirmNtf);
     }
 
     private void Update()
@@ -109,7 +109,7 @@ public class LanRoomDemo : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.J)) StopHost();
 
         // 按 G：作为房主，广播开始游戏（在成员都准备后）
-        if (Input.GetKeyDown(KeyCode.G)) StartGame();
+        if (Input.GetKeyDown(KeyCode.G)) ConfirmTask();
 
         // ===== 成员操作 =====
         // 按 R：作为成员，开始监听 + 扫描局域网房间
@@ -378,9 +378,9 @@ public class LanRoomDemo : MonoBehaviour
     }
 
     /// <summary>按 G：房主广播开始游戏</summary>
-    private void StartGame()
+    private void ConfirmTask()
     {
-        NetHostSvc.Instance?.StartGame();
+        NetHostSvc.Instance?.ConfirmTask();
     }
 
     // ---- 房主回的消息处理器 ----
@@ -429,7 +429,7 @@ public class LanRoomDemo : MonoBehaviour
         return string.Join("  ", parts);
     }
 
-    private void OnStartGameNtf(StartGameNtf ntf)
+    private void OnTaskConfirmNtf(TaskConfirmNtf ntf)
     {
         _lastStatus = $"房主开始游戏！地图 {ntf.MapName} —— 这里应切换到战斗场景";
         _ready = false;
@@ -489,7 +489,7 @@ public class LanRoomDemo : MonoBehaviour
         // 反注册房间消息处理器
         MessageCenter.Unregister(CmdId.JoinRoomRsp);
         MessageCenter.Unregister(CmdId.PlayerListSync);
-        MessageCenter.Unregister(CmdId.StartGameNtf);
+        MessageCenter.Unregister(CmdId.TaskConfirm);
 
         // 退出时清理，避免后台线程残留
         StopHost();

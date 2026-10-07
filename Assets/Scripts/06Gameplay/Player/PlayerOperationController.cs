@@ -25,11 +25,15 @@ public class PlayerOperationController : MonoBehaviour
     private PlayerInputHandler m_InputHandler;
     private AudioSource aud;
 
+    /// <summary>玩家装备总控：用于"手持物品时按交互键丢下手中的物品"</summary>
+    private EquipController m_EquipController;
+
     void Start()
     {
         m_PlayerController = GetComponent<PlayerController>();
         m_Camera = m_PlayerController.PlayerCamera;
         m_InputHandler = GetComponent<PlayerInputHandler>();
+        m_EquipController = GetComponent<EquipController>();
         FPSGame.Gameplay.GlobalEventSub.OnWindowStateChange += OnWindowStateChange;
     }
     private void OnDestroy()
@@ -105,7 +109,34 @@ public class PlayerOperationController : MonoBehaviour
             && m_PlayerController.WeaponsManager.IsAiming
                 ? k_InteractCameraDistanceScale : 1f;
 
-        if (target != null)
+        // 手持物品（HandEquip）时，交互键的三种去向：
+        // 1) 正前方是"按下即拾取的手持物"（Furniture_HandEquip 且 MeetTime == 0，如神器/便携装备）：
+        //    挂点与双手 IK 只有一个，先把手中的丢下、再把它拿起来（本帧连续完成）；
+        // 2) 正前方目标"当前确实可交互"（如炮位/提交点需要用到手中物品）：交互键让给它，物品留着；
+        // 3) 其余（面前无物，或 target 粘滞在已不可交互的旧目标上）：丢下手中的物品。
+        // 判据用 CanOperate 而不是只判 target != null —— target 会粘滞在已失效的旧目标上，
+        // 只看非空会导致玩家怎么按 E 都丢不下手里的东西。
+        bool pickupHeldItem = false;
+        bool droppedHeld = false;
+        if (m_EquipController != null
+            && m_EquipController.IsHoldingHandEquip()
+            && m_InputHandler.GetOperateDown())
+        {
+            bool targetOperable = target != null && target.CanOperate(gameObject);
+            // 只对"按下即拾取"（MeetTime == 0，当前 ArtifactA / Shell_Explosive 都是）的手持物做替换：
+            // 需要长按的拾取物若在按下时就丢掉旧物，玩家中途松手会变成"丢了却没拿到"。
+            pickupHeldItem = targetOperable && target is Furniture_HandEquip && target.MeetTime == 0f;
+
+            if (pickupHeldItem || !targetOperable)
+            {
+                // 紧接着就要捡起面前那件 ⇒ 替换式丢下：跳过"切回主武器"（免得同帧又切主武器又切空手），
+                // 也不播"卸载"语音（紧接着会播"安装"语音，两条连着播会打架）
+                droppedHeld = m_EquipController.TryDropHandEquip(replace: pickupHeldItem);
+            }
+        }
+
+        // 丢下后本帧不再交互；但"面前是手持物"时要把 E 继续用于把它拿起来
+        if (target != null && (!droppedHeld || pickupHeldItem))
         {
             // 逐步长按家具：把按住过程的推进权交给家具（IStepPress）
             if (target is IStepPress step && step.CanOperateStepped(gameObject))

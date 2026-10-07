@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Game;
 using UnityEngine;

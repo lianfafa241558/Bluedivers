@@ -33,7 +33,7 @@ public abstract class RoleManagerBase : MonoBehaviour
 
         var player = Instantiate(PlayerPrefab, GetStartPoint(), default,null);
         m_player = player.GetComponent<PlayerController>();
-        m_player.Init(RoomManager.Instance.SelfIndex);
+        m_player.Init(TeamManager.Instance.SelfIndex);
         EmptyWeapon = resManager.LoadRes<GameObject>("Weapons/WeaponEmpty").GetComponent<WeaponPlayerController>();
 
     }

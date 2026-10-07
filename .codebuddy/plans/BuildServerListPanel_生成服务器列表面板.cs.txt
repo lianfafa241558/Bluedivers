@@ -1,0 +1,514 @@
+using FPSGame.UI;
+using TMPro;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace FPSGame.EditorTools
+{
+    /// <summary>
+    /// 【临时工具】在 <c>SelectMapWnd.prefab</c> 的 <c>Rooms</c> 节点下生成「服务器列表」子界面，
+    /// 并把 <see cref="ServerListPanel"/> 的序列化引用、<see cref="SelectMapWnd.serverPanel"/> 一并回填。
+    ///
+    /// <para>用法：菜单 <c>Tools/生成服务器列表面板</c>。构建幂等（先清空 Rooms 的子物体）。
+    /// 结构稳定后可删除本文件。</para>
+    /// </summary>
+    public static class BuildServerListPanel
+    {
+        private const string PrefabPath = "Assets/Resources/UI/Wnd/SelectMapWnd.prefab";
+        private const string FontPath = "Assets/Art/Font/fSimpleRound SDF.asset";
+
+        // ---- 素材（全部复用项目既有 UI 图）----
+        private const string SprPanel = "Assets/Images/AlphaFrame.png";
+        private const string SprLine = "Assets/Images/GradLine_L.png";
+        private const string SprButton = "Assets/Images/FX_TEX_Lock.png";
+        private const string SprArrow = "Assets/Images/Arrow_Down.png";
+        private const string SprClose = "Assets/Images/CloseBtn_Icon.png";
+        private const string SprPip = "Assets/Images/Hexagonal_Frame3.png";
+        private const string SprDot = "Assets/Images/circular_128.png";
+        private const string SprWhite = "Assets/Images/TEX_White_16x16.png";
+
+        // ---- 配色 ----
+        private static readonly Color Accent = new Color(0.651f, 0.867f, 0.867f, 1f);
+        private static readonly Color AccentDim = new Color(0.651f, 0.867f, 0.867f, 0.80f);
+        private static readonly Color TitleColor = new Color(0.651f, 0.867f, 0.867f, 0.45f);
+        private static readonly Color TextMain = new Color(0.92f, 0.94f, 0.96f, 1f);
+        private static readonly Color TextDim = new Color(0.62f, 0.66f, 0.70f, 1f);
+        private static readonly Color OptionOff = new Color(1f, 1f, 1f, 0.05f);
+        private static readonly Color RowNormal = new Color(0.060f, 0.070f, 0.090f, 0.90f);
+        private static readonly Color PipDim = new Color(1f, 1f, 1f, 0.10f);
+
+        // ---- 布局常量 ----
+        private const float PanelWidth = 1440f;
+        private const float PanelHeight = 780f;
+        private const float FilterWidth = 260f;
+        private const float RowHeight = 68f;
+        private const float HeaderHeight = 38f;
+        private const float ColSpacing = 4f;
+        private const float PipSize = 18f;
+        private const float PipSpacing = 2f;
+
+        /// <summary>表头/数据行的列定义：宽度、节点名、表头文字、格子数（0 = 纯文本列）。</summary>
+        private static readonly float[] ColWidth = { 468f, 80f, 112f, 112f, 96f, 104f, 88f };
+        private static readonly string[] ColNode = { "Task", "Time", "Risk", "Complexity", "Length", "Team", "Distance" };
+        private static readonly string[] ColTitle = { "任务", "时间", "风险等级", "复杂度", "长度", "队伍", "距离" };
+        private static readonly int[] ColPips = { 0, 0, 5, 5, 4, 4, 0 };
+
+        private static TMP_FontAsset _font;
+
+        [MenuItem("Tools/生成服务器列表面板")]
+        public static void Build()
+        {
+            _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+            if (_font == null)
+            {
+                Debug.LogError("[BuildServerListPanel] 找不到字体：" + FontPath);
+                return;
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            if (root == null)
+            {
+                Debug.LogError("[BuildServerListPanel] 加载预制体失败：" + PrefabPath);
+                return;
+            }
+
+            try
+            {
+                var rooms = root.transform.Find("Rooms");
+                if (rooms == null)
+                {
+                    Debug.LogError("[BuildServerListPanel] 预制体下找不到节点 Rooms");
+                    return;
+                }
+
+                // 幂等：清空旧内容
+                for (int i = rooms.childCount - 1; i >= 0; --i)
+                {
+                    Object.DestroyImmediate(rooms.GetChild(i).gameObject);
+                }
+                for (int i = rooms.GetComponents<Component>().Length - 1; i >= 0; --i)
+                {
+                    var c = rooms.GetComponents<Component>()[i];
+                    if (!(c is RectTransform)) Object.DestroyImmediate(c);
+                }
+
+                var roomsRect = (RectTransform)rooms;
+                Stretch(roomsRect, 0, 0, 0, 0);
+                roomsRect.pivot = new Vector2(0.5f, 0.5f);
+
+                var panelRefs = BuildContent(rooms);
+                rooms.gameObject.SetActive(false);
+
+                // ---- 回填 ServerListPanel ----
+                var panel = rooms.gameObject.AddComponent<ServerListPanel>();
+                var so = new SerializedObject(panel);
+                so.FindProperty("blocker").objectReferenceValue = panelRefs.blocker;
+                so.FindProperty("closeBtn").objectReferenceValue = panelRefs.closeBtn;
+                so.FindProperty("scroll").objectReferenceValue = panelRefs.scroll;
+                so.FindProperty("content").objectReferenceValue = panelRefs.content;
+                so.FindProperty("rowTemplate").objectReferenceValue = panelRefs.rowTemplate;
+                so.FindProperty("statusText").objectReferenceValue = panelRefs.statusText;
+                so.FindProperty("distanceText").objectReferenceValue = panelRefs.distanceText;
+                so.FindProperty("distanceBtn").objectReferenceValue = panelRefs.distanceBtn;
+                so.FindProperty("riskText").objectReferenceValue = panelRefs.riskText;
+                so.FindProperty("riskBtn").objectReferenceValue = panelRefs.riskBtn;
+                so.FindProperty("openBtn").objectReferenceValue = panelRefs.openBtn;
+                so.FindProperty("privateBtn").objectReferenceValue = panelRefs.privateBtn;
+                so.FindProperty("autoRefreshBtn").objectReferenceValue = panelRefs.autoRefreshBtn;
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                // ---- 回填 SelectMapWnd.serverPanel ----
+                var wnd = root.GetComponent<SelectMapWnd>();
+                if (wnd != null)
+                {
+                    var wso = new SerializedObject(wnd);
+                    var prop = wso.FindProperty("serverPanel");
+                    if (prop != null)
+                    {
+                        prop.objectReferenceValue = panel;
+                        wso.ApplyModifiedPropertiesWithoutUndo();
+                    }
+                    else
+                    {
+                        Debug.LogError("[BuildServerListPanel] SelectMapWnd 上找不到字段 serverPanel");
+                    }
+                }
+                else
+                {
+                    Debug.LogError("[BuildServerListPanel] 根节点上找不到 SelectMapWnd");
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                Debug.Log("[BuildServerListPanel] 生成完成");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
+        }
+
+        #region 内容构建
+
+        /// <summary>⚠ 必须是 class：<see cref="BuildFilter"/> / <see cref="BuildList"/> 会往里回填引用，
+        /// 若用 struct 则按值传递、回填全部丢失。</summary>
+        private class PanelRefs
+        {
+            public Transform blocker;
+            public Transform closeBtn;
+            public ScrollRect scroll;
+            public RectTransform content;
+            public Transform rowTemplate;
+            public Transform statusText;
+            public Transform distanceText;
+            public Transform distanceBtn;
+            public Transform riskText;
+            public Transform riskBtn;
+            public Transform openBtn;
+            public Transform privateBtn;
+            public Transform autoRefreshBtn;
+        }
+
+        private static PanelRefs BuildContent(Transform rooms)
+        {
+            var refs = new PanelRefs();
+
+            // ---------- 遮罩 ----------
+            var blocker = NewImage(rooms, "Blocker", Spr(SprWhite), new Color(0f, 0f, 0f, 0.45f), Image.Type.Simple, true);
+            Stretch(blocker.rectTransform, 0, 0, 0, 0);
+            var blockerBtn = blocker.gameObject.AddComponent<Button>();
+            blockerBtn.transition = Selectable.Transition.None;
+            refs.blocker = blocker.transform;
+
+            // ---------- 主面板 ----------
+            var panel = NewImage(rooms, "Panel", Spr(SprPanel), new Color(0f, 0f, 0f, 0.92f), Image.Type.Simple, true);
+            var panelRect = panel.rectTransform;
+            panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.pivot = new Vector2(0.5f, 0.5f);
+            panelRect.anchoredPosition = Vector2.zero;
+            panelRect.sizeDelta = new Vector2(PanelWidth, PanelHeight);
+
+            // 内衬：AlphaFrame 是"边框 + 透明中心"的贴图，必须再垫一层实底，
+            // 否则面板中间会透出场景背景、可读性差。
+            var body = NewImage(panel.transform, "Body", Spr(SprWhite), new Color(0.016f, 0.020f, 0.028f, 0.94f), Image.Type.Simple, false);
+            Stretch(body.rectTransform, 12, 12, 12, 12);
+
+            // 标题
+            NewText(panel.transform, "Title", "服务器列表", 32, Accent, TextAlignmentOptions.Left, 48, -28, 600, 40);
+            NewText(panel.transform, "SubTitle", "SERVER LIST · MOD BROWSER", 15, TitleColor, TextAlignmentOptions.Left, 50, -70, 600, 22);
+
+            // 顶部分隔线
+            var topLine = NewImage(panel.transform, "TopLine", Spr(SprLine), Accent, Image.Type.Simple, false);
+            TopLeft(topLine.rectTransform, 48, -104, PanelWidth - 96, 2);
+
+            // 关闭按钮
+            var close = NewImage(panel.transform, "Close", Spr(SprClose), Accent, Image.Type.Simple, true);
+            TopLeft(close.rectTransform, PanelWidth - 88, -26, 40, 40);
+            AddButton(close);
+            refs.closeBtn = close.transform;
+
+            // 底部状态
+            refs.statusText = NewText(panel.transform, "Status", "共 0 个房间", 18, TextDim, TextAlignmentOptions.Left, 0, 0, 800, 24).transform;
+            BottomLeft((RectTransform)refs.statusText, 48, 16, 800, 24);
+
+            BuildFilter(panel.transform, refs);
+            BuildList(panel.transform, refs);
+
+            return refs;
+        }
+
+        private static void BuildFilter(Transform panel, PanelRefs refs)
+        {
+            var filter = NewRect("Filter", panel);
+            Stretch(filter, 48, 130, PanelWidth - 48 - FilterWidth, 48);
+
+            NewText(filter, "Title", "筛选", 24, Accent, TextAlignmentOptions.Left, 0, 0, 240, 30);
+            var line = NewImage(filter, "Line", Spr(SprLine), Accent, Image.Type.Simple, false);
+            TopLeft(line.rectTransform, 0, -38, 240, 2);
+
+            // 搜索距离
+            NewText(filter, "DistanceLabel", "搜索距离", 18, TextDim, TextAlignmentOptions.Left, 0, -52, 240, 26);
+            refs.distanceBtn = Dropdown(filter, "DistanceBtn", 0, -82);
+            refs.distanceText = refs.distanceBtn.Find("Text");
+
+            // 服务器类型
+            NewText(filter, "TypeLabel", "服务器类型", 18, TextDim, TextAlignmentOptions.Left, 0, -132, 240, 26);
+            refs.openBtn = OptionRow(filter, "OpenBtn", "开放", 0, -160);
+            refs.privateBtn = OptionRow(filter, "PrivateBtn", "私人设密", 0, -198);
+
+            // 风险等级
+            NewText(filter, "RiskLabel", "风险等级", 18, TextDim, TextAlignmentOptions.Left, 0, -248, 240, 26);
+            refs.riskBtn = Dropdown(filter, "RiskBtn", 0, -276);
+            refs.riskText = refs.riskBtn.Find("Text");
+
+            // 服务器 MOD
+            NewText(filter, "ModLabel", "服务器 MOD", 18, TextDim, TextAlignmentOptions.Left, 0, -326, 240, 26);
+            refs.autoRefreshBtn = OptionRow(filter, "AutoRefreshBtn", "自动刷新列表", 0, -354);
+        }
+
+        private static void BuildList(Transform panel, PanelRefs refs)
+        {
+            var list = NewRect("List", panel);
+            Stretch(list, 308, 130, 48, 48);
+
+            float listWidth = PanelWidth - 308 - 48;
+
+            // ---------- 表头 ----------
+            var header = NewImage(list, "Header", Spr(SprWhite), new Color(1f, 1f, 1f, 0.06f), Image.Type.Simple, false);
+            TopLeft(header.rectTransform, 0, 0, listWidth, HeaderHeight);
+            var headerLayout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
+            ConfigureLayout(headerLayout, true, true, false, true);
+
+            for (int i = 0; i < ColNode.Length; ++i)
+            {
+                var col = NewRect(ColNode[i], header.transform);
+                var le = col.gameObject.AddComponent<LayoutElement>();
+                le.preferredWidth = ColWidth[i];
+                le.preferredHeight = HeaderHeight;
+
+                var label = NewText(col, "Text", ColTitle[i], 18, AccentDim,
+                    i == 0 ? TextAlignmentOptions.Left : TextAlignmentOptions.Center, 0, 0, 0, 0);
+                var lrt = label.rectTransform;
+                if (i == 0) Stretch(lrt, 56, 0, 0, 0);
+                else Stretch(lrt, 0, 0, 0, 0);
+            }
+
+            // ---------- 滚动区 ----------
+            var scroll = NewImage(list, "Scroll", Spr(SprWhite), new Color(0f, 0f, 0f, 0.35f), Image.Type.Simple, true);
+            Stretch(scroll.rectTransform, 0, HeaderHeight + 8, 0, 0);
+
+            var viewport = NewImage(scroll.transform, "Viewport", Spr(SprWhite), new Color(1f, 1f, 1f, 0f), Image.Type.Simple, true);
+            Stretch(viewport.rectTransform, 0, 0, 0, 0);
+            var mask = viewport.gameObject.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+
+            var content = NewRect("Content", viewport.transform);
+            content.anchorMin = new Vector2(0, 1);
+            content.anchorMax = new Vector2(1, 1);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = Vector2.zero;
+
+            var contentLayout = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            ConfigureLayout(contentLayout, true, true, true, false);
+            var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var scrollRect = scroll.gameObject.AddComponent<ScrollRect>();
+            scrollRect.viewport = viewport.rectTransform;
+            scrollRect.content = content;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Elastic;
+            scrollRect.elasticity = 0.08f;
+            scrollRect.inertia = true;
+            scrollRect.decelerationRate = 0.135f;
+            scrollRect.scrollSensitivity = 45f;
+
+            // ---------- 行模板 ----------
+            var row = NewImage(content, "Row", Spr(SprWhite), RowNormal, Image.Type.Simple, true);
+            var rowLe = row.gameObject.AddComponent<LayoutElement>();
+            rowLe.preferredHeight = RowHeight;
+            rowLe.minHeight = RowHeight;
+            var rowLayout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            ConfigureLayout(rowLayout, true, true, false, false);
+            AddButton(row);
+            row.gameObject.SetActive(false);
+
+            for (int i = 0; i < ColNode.Length; ++i)
+            {
+                var col = NewRect(ColNode[i], row.transform);
+                var le = col.gameObject.AddComponent<LayoutElement>();
+                le.preferredWidth = ColWidth[i];
+                le.preferredHeight = RowHeight;
+
+                if (ColPips[i] > 0)
+                {
+                    var pipLayout = col.gameObject.AddComponent<HorizontalLayoutGroup>();
+                    pipLayout.padding = new RectOffset(6, 0, 0, 0);
+                    pipLayout.spacing = PipSpacing;
+                    pipLayout.childAlignment = TextAnchor.MiddleLeft;
+                    pipLayout.childControlWidth = false;
+                    pipLayout.childControlHeight = false;
+                    pipLayout.childForceExpandWidth = false;
+                    pipLayout.childForceExpandHeight = false;
+
+                    for (int p = 0; p < ColPips[i]; ++p)
+                    {
+                        var pip = NewImage(col, "Pip" + (p + 1), Spr(SprPip), PipDim, Image.Type.Simple, false);
+                        pip.rectTransform.sizeDelta = new Vector2(PipSize, PipSize);
+                    }
+                }
+                else if (i == 0)
+                {
+                    var frame = NewImage(col, "Frame", Spr(SprPip), new Color(1f, 1f, 1f, 0.45f), Image.Type.Simple, false);
+                    MidLeft(frame.rectTransform, 14, 44, 44);
+
+                    var icon = NewImage(col, "Icon", Spr(SprPip), Color.white, Image.Type.Simple, false);
+                    MidLeft(icon.rectTransform, 19, 34, 34);
+
+                    var name = NewText(col, "Name", "任务名", 22, TextMain, TextAlignmentOptions.Left, 0, 0, 0, 0);
+                    name.overflowMode = TextOverflowModes.Ellipsis;
+                    Stretch(name.rectTransform, 70, 6, 8, RowHeight - 34);
+
+                    var host = NewText(col, "Host", "玩家名", 16, TextDim, TextAlignmentOptions.Left, 0, 0, 0, 0);
+                    host.overflowMode = TextOverflowModes.Ellipsis;
+                    Stretch(host.rectTransform, 70, 34, 8, RowHeight - 34 - 26);
+                }
+                else
+                {
+                    var text = NewText(col, "Text", "-", 20, TextMain, TextAlignmentOptions.Center, 0, 0, 0, 0);
+                    Stretch(text.rectTransform, 0, 0, 0, 0);
+                }
+            }
+
+            refs.scroll = scrollRect;
+            refs.content = content;
+            refs.rowTemplate = row.transform;
+        }
+
+        #endregion
+
+        #region 基础构件
+
+        private static void ConfigureLayout(HorizontalOrVerticalLayoutGroup layout,
+            bool controlWidth, bool controlHeight, bool forceExpandWidth, bool forceExpandHeight)
+        {
+            layout.padding = new RectOffset(0, 0, 0, 0);
+            layout.spacing = ColSpacing;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = controlWidth;
+            layout.childControlHeight = controlHeight;
+            layout.childForceExpandWidth = forceExpandWidth;
+            layout.childForceExpandHeight = forceExpandHeight;
+        }
+
+        private static Sprite Spr(string path) => AssetDatabase.LoadAssetAtPath<Sprite>(path);
+
+        private static RectTransform NewRect(string name, Transform parent)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            var rt = (RectTransform)go.transform;
+            rt.SetParent(parent, false);
+            rt.localScale = Vector3.one;
+            return rt;
+        }
+
+        private static Image NewImage(Transform parent, string name, Sprite sprite, Color color, Image.Type type, bool raycast)
+        {
+            var img = NewRect(name, parent).gameObject.AddComponent<Image>();
+            img.sprite = sprite;
+            img.color = color;
+            img.type = type;
+            img.raycastTarget = raycast;
+            return img;
+        }
+
+        private static TextMeshProUGUI NewText(Transform parent, string name, string text, float size,
+            Color color, TextAlignmentOptions align, float x, float y, float w, float h)
+        {
+            var t = NewRect(name, parent).gameObject.AddComponent<TextMeshProUGUI>();
+            t.font = _font;
+            t.text = text;
+            t.fontSize = size;
+            t.color = color;
+            t.alignment = align;
+            t.richText = false;
+            t.raycastTarget = false;
+            if (w > 0 || h > 0) TopLeft((RectTransform)t.transform, x, y, w, h);
+            return t;
+        }
+
+        private static Button AddButton(Image target)
+        {
+            var btn = target.gameObject.AddComponent<Button>();
+            btn.transition = Selectable.Transition.ColorTint;
+            btn.targetGraphic = target;
+
+            var colors = btn.colors;
+            colors.colorMultiplier = 1f;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.35f, 1.35f, 1.35f, 1f);
+            colors.pressedColor = new Color(0.75f, 0.75f, 0.75f, 1f);
+            colors.selectedColor = Color.white;
+            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            colors.fadeDuration = 0.08f;
+            btn.colors = colors;
+            return btn;
+        }
+
+        /// <summary>带下拉箭头的按钮行（搜索距离 / 风险等级）。</summary>
+        private static Transform Dropdown(Transform parent, string name, float x, float y)
+        {
+            var bg = NewImage(parent, name, Spr(SprButton), AccentDim, Image.Type.Sliced, true);
+            TopLeft(bg.rectTransform, x, y, 240, 38);
+            AddButton(bg);
+
+            var text = NewText(bg.transform, "Text", "全部", 20, Accent, TextAlignmentOptions.Left, 0, 0, 0, 0);
+            Stretch(text.rectTransform, 16, 4, 30, 4);
+
+            var arrow = NewImage(bg.transform, "Arrow", Spr(SprArrow), Accent, Image.Type.Simple, false);
+            TopLeft(arrow.rectTransform, 208, -9, 20, 20);
+
+            return bg.transform;
+        }
+
+        /// <summary>勾选式选项行（开放 / 私人设密 / 自动刷新列表）。</summary>
+        private static Transform OptionRow(Transform parent, string name, string label, float x, float y)
+        {
+            var bg = NewImage(parent, name, Spr(SprWhite), OptionOff, Image.Type.Simple, true);
+            TopLeft(bg.rectTransform, x, y, 240, 34);
+            AddButton(bg);
+
+            var check = NewImage(bg.transform, "Check", Spr(SprDot), new Color(1f, 1f, 1f, 0.15f), Image.Type.Simple, false);
+            MidLeft(check.rectTransform, 9, 18, 18);
+
+            var text = NewText(bg.transform, "Text", label, 20, TextMain, TextAlignmentOptions.Left, 0, 0, 0, 0);
+            Stretch(text.rectTransform, 36, 2, 8, 2);
+
+            return bg.transform;
+        }
+
+        #endregion
+
+        #region 锚点
+
+        private static void TopLeft(RectTransform rt, float x, float y, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0, 1);
+            rt.pivot = new Vector2(0, 1);
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        private static void BottomLeft(RectTransform rt, float x, float y, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0, 0);
+            rt.pivot = new Vector2(0, 0);
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        private static void MidLeft(RectTransform rt, float x, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0, 0.5f);
+            rt.pivot = new Vector2(0, 0.5f);
+            rt.anchoredPosition = new Vector2(x, 0);
+            rt.sizeDelta = new Vector2(w, h);
+        }
+
+        private static void Stretch(RectTransform rt, float left, float top, float right, float bottom)
+        {
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.offsetMin = new Vector2(left, bottom);
+            rt.offsetMax = new Vector2(-right, -top);
+        }
+
+        #endregion
+    }
+}

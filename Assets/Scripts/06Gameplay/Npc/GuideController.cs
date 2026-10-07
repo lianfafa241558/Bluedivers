@@ -38,7 +38,7 @@ public class GuideInfo
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(EquipController))]
 [AddComponentMenu("交互/新手引导")]
-public class GuideController : Furniture_Base
+public class GuideController : Furniture_Attached
 {
     [Foldout("移动", true)]
     [SerializeField]

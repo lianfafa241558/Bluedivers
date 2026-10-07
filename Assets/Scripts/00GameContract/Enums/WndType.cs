@@ -33,5 +33,9 @@ namespace FPSGame.GameContract
         AirdropConfig,
         /// <summary>设置（<c>WndManager.settingWnd</c>）。</summary>
         Setting,
+        /// <summary>信息提示（<c>InformationWnd</c>；按 string 键增删一条信息子项）。</summary>
+        Information,
+        /// <summary>单行输入弹窗（<c>PasswordWnd</c>；房间密码 / 首次设置玩家名等）。</summary>
+        Password,
     }
 }

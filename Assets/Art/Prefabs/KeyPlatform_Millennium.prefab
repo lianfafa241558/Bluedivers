@@ -1410,6 +1410,7 @@ GameObject:
   - component: {fileID: 164292964022404810}
   - component: {fileID: 164292964022404809}
   - component: {fileID: 6420868120924106851}
+  - component: {fileID: 3356425123447163875}
   m_Layer: 3
   m_Name: KeyScreen
   m_TagString: Untagged
@@ -1466,6 +1467,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85b7aa7531417544fb81059fc84f70df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnComple:
+    m_PersistentCalls:
+      m_Calls: []
   _LightColor: {r: 0, g: 0.627, b: 1, a: 1}
   procedurePrefabs:
   - {fileID: 2651086928180910819, guid: 30d7070b7db02b646a4fad2b0693bc11, type: 3}
@@ -1499,6 +1503,7 @@ MonoBehaviour:
     UnlockItem: []
   bg: {fileID: 164292964470938906}
   furn: {fileID: 0}
+  nowStage: -1
   owner: {fileID: 0}
   m_anim: {fileID: 6420868120924106851}
   itemValue: 
@@ -1530,6 +1535,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ShowName: "\u63A7\u5236\u53F0"
   Id: KeyScreen
   Portrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
@@ -1562,6 +1568,23 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &3356425123447163875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6420868120924106850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u63A7\u5236\u53F0"
+  Id: KeyScreen
+  Portrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: b1edaf8dbe04d884da24b757cf0202da, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &8055852881368308122
 PrefabInstance:
   m_ObjectHideFlags: 0

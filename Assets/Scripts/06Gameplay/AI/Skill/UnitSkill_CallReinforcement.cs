@@ -1,4 +1,4 @@
-﻿using FPSGame.Core;
+using FPSGame.Core;
 using FPSGame.GameContract;
 
 using FPSGame.Game;

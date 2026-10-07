@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FPSGame.GameContract;
-
-using FPSGame.Game;
-using UnityEngine;
-using FPSGame.Utils;
 using FPSGame.Audio;
+using FPSGame.Data;
+using FPSGame.Game;
+using FPSGame.GameContract;
 using FPSGame.Gameplay;
+using FPSGame.Utils;
+using UnityEngine;
 namespace FPSGame.Mission
 {
     //第一步 空投一个信标下来√播放语音
@@ -72,7 +72,7 @@ namespace FPSGame.Mission
                     {
                         CreatNotice("Yuuka", IsComplete?"Evacuate": "EvacuateFail");
                         //呼叫撤离信标
-                        FPSGame.GameContract.BattleHub.Current.ReleaseAirdrop(areaPoint, 0, InitBeacon);
+                        BattleHub.Current.ReleaseAirdrop(areaPoint, 0, InitBeacon);
                         //次要撤离区同样各呼叫一个信标，玩家可以自行选择在哪一处撤离
                         CallSecondaryBeacons();
                     }
@@ -135,9 +135,16 @@ namespace FPSGame.Mission
 
                     break;
                 case EvacuateState.End:
-                    if (--countDown == 0)
+                    if (--countDown == -6)
                     {
-                        CreatNotice("Yuuka", IsComplete? "End":"Fail");
+                        CreatNotice("Yuuka", IsComplete?
+                            TaskState.EnemyVarietyType.ToEnemyType() switch {
+                                Core.EnemyType.Kaiser => "EndKaiser",
+                                Core.EnemyType.Decagrammaton => "End",
+                                Core.EnemyType.Colour => "End",
+                                _ => "End",
+                            }
+                            : "Fail");
                     }
                     break;
             }
@@ -264,7 +271,9 @@ namespace FPSGame.Mission
             }
             stage = EvacuateState.Wait;
             UpdateText("运输船接近中", "");
-            countDown = m_EvacuateTime;//如果有撤离效果就变短
+            // 全队强化"专家救援飞行员"：缩短撤离等待时间
+            float mul = BattleState.HaveBooster(BoosterType.ExpertPilot) ? 0.6f : 1f;
+            countDown = Mathf.FloorToInt(m_EvacuateTime* mul);//如果有撤离效果就变短
             //if(IsComplete) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
             CreatNotice("Ayane", "CountDownBegins");
             BattleEventSub.Evacuate(new(pos));
@@ -337,7 +346,7 @@ namespace FPSGame.Mission
         void End()
         {
             stage = EvacuateState.End;
-            countDown = 6;
+            countDown = 0;
             CreatNotice("Ayane", "TakeOff");
             //WndManager.Instance.movieWnd.SetWndState(true);
             // 切阶段走事件（原 ServiceLocator.Flow.SetGameState）：GameRoot 订阅后落成既有的静态 setter

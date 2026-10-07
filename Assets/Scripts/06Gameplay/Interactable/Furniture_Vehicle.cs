@@ -13,7 +13,7 @@ namespace FPSGame.Gameplay
 /// 载具组件
 /// </summary>
 [AddComponentMenu("交互/载具交互")]
-public class Furniture_Vehicle : Furniture_Base
+public class Furniture_Vehicle : Furniture_Attached
 {
 
     private IDrivable controller;

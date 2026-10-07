@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using FPSGame.Rendering;
 using FPSGame.GameContract;
 
@@ -17,7 +17,7 @@ public class WeatherEffectSnow : WeatherEffect
 
     /// <summary>下雪类型（控制器据此匹配预制体）</summary>
     public override WeatherType Type => WeatherType.Snow;
-
+    protected override string infoTitle => "暴风雪正在形成";
     public override void OnInit()
     {
         base.OnInit();

@@ -54,6 +54,16 @@ namespace FPSGame.Gameplay
         public OOPartEnum[] SpecialtyPropertys { get; set; }
         public OOPartEnum[] OtherPropertys { get; set; }
         public MissionMainData_SO MainCfg => main?.cfg as MissionMainData_SO;
+
+        /// <summary>场景模式标记：本局由场景里的 <c>CampaignCfg</c> 驱动（见 <c>TaskManager.EnsureSceneData</c>），
+        /// 此时没有任务配置（<c>TaskCfg</c>/<c>main</c>）⇒ <c>TaskState.HasTask</c> 依据本标记为真。</summary>
+        public bool SceneMode { get; set; }
+
+        /// <summary>本局敌人种类：任务模式取任务配置，场景模式取 <c>CampaignCfg.enemy</c>（经 <c>campData</c>）。</summary>
+        public EnemyVarietyType EnemyVarietyType => SceneMode
+            ? (campData != null ? campData.enemyVarietyType : default)
+            : taskCfg.enemyVarietyType;
+
         /// <summary>场景模式下由 CampaignCfg 提供</summary>
         public SizeType SceneSizeType { get; set; } = SizeType.Mini;
         private SizeType EffectiveSizeType => MainCfg?.sizeType ?? SceneSizeType;

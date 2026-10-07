@@ -21,7 +21,8 @@ public class TransSceneController : MonoBehaviour
     {
         
         AudioSvc.PlayMusic("Shooting Athletes", 0.3f);
-        ResSvc.Instance.AsyncLoadScene("TestScene", () => {
+        // 场景名走公共常量（房主与成员必须加载同一张图 ⇒ 不能各自硬编码字符串）
+        ResSvc.Instance.AsyncLoadScene(FPSGame.Core.Constants.BattleSceneName, () => {
             BattleManager.Creat(true);
         }, true,false);
 

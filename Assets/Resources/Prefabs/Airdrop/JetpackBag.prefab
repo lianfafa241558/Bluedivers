@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 175796404969561032}
   - component: {fileID: 5140817550983740911}
   - component: {fileID: 5432209882212260516}
+  - component: {fileID: 8687313111633099714}
   m_Layer: 6
   m_Name: JetpackBag
   m_TagString: Untagged
@@ -194,7 +195,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1062333643228217139}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80cf9cb3e42ed604db0ec93341c33388, type: 3}
+  m_Script: {fileID: 11500000, guid: 3704b6bfebbc2374da4a9b194065d456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   meetTime: 0
@@ -218,6 +219,23 @@ MonoBehaviour:
   id: JetBag
   Portrait: {fileID: 21300000, guid: 42d36355932ba6743ba5335211ed26ba, type: 3}
   ExtraPortrait: {fileID: 21300000, guid: 42d36355932ba6743ba5335211ed26ba, type: 3}
+--- !u!114 &8687313111633099714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1062333643228217139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u55B7\u6C14\u80CC\u5305"
+  Id: JetBag
+  Portrait: {fileID: 21300000, guid: 42d36355932ba6743ba5335211ed26ba, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 42d36355932ba6743ba5335211ed26ba, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &6904369985417243610
 GameObject:
   m_ObjectHideFlags: 0

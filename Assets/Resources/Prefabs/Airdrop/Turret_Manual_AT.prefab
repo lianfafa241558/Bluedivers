@@ -306,6 +306,7 @@ GameObject:
   - component: {fileID: 8959551379176486285}
   - component: {fileID: 6415510742381971665}
   - component: {fileID: 5564868554356684480}
+  - component: {fileID: 4397792114913368988}
   m_Layer: 6
   m_Name: Back
   m_TagString: Untagged
@@ -404,6 +405,23 @@ MonoBehaviour:
   ExtBoolParameter: 0
   particle: {fileID: 0}
   obs: {fileID: 0}
+--- !u!114 &4397792114913368988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7408334126218021431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\"\u97A0\u5F0F\"\u53CD\u5766\u514B\u70AE"
+  Id: Exosuit
+  Portrait: {fileID: 21300000, guid: 2052346977a35da42847418ab56ee25b, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 2052346977a35da42847418ab56ee25b, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &3222199162377746263
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -903,10 +921,10 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 1647108703008065935}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 0
 --- !u!114 &5261405207745180691
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -952,11 +970,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 5cb81ed8afa1e7a4da5646aeb9599652, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!4 &3115704162309591228 stripped
 Transform:

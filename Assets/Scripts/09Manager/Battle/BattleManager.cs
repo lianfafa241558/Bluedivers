@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,6 +55,16 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
     /// <summary>本局天气（开局随机抽取）</summary>
     public WeatherType Weather { get; private set; }
 
+    /// <summary>
+    /// 本局随机种子：**优先用权威种子**（联机由房主随开局广播下发，见 <c>TaskState.Seed</c>），
+    /// 未指定（0）时回落到该任务自己的 <c>taskCfg.seed</c>（单机 / 旧版房主行为不变）。
+    /// </summary>
+    private int ResolveBattleSeed()
+    {
+        int seed = FPSGame.Data.TaskState.Seed;
+        return seed != 0 ? seed : TaskManager.Instance.nowTask.taskCfg.seed;
+    }
+
     /// <summary>开局按地图配置的天气权重表抽取天气并应用（使用 BattleRandom，同种子结果一致）</summary>
     private void RandomWeather()
     {
@@ -108,7 +118,7 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
         mapRoot = transMapRoot.GetComponent<MapRoot>();
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
-        BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
+        BattleRandom = new(ResolveBattleSeed());
         FPSGame.Data.BattleState.BattleRandom = BattleRandom;//数据自持同步点（见 BattleState.cs）
         ApplyTeamEnhance();
         TerrainUtils.Main = mapRoot.terrain;
@@ -161,8 +171,8 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
     {
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
-        BattleRandom = new(TaskManager.Instance.nowTask.taskCfg.seed);
-        FPSGame.Data.BattleState.BattleRandom = BattleRandom;//数据自持同步点（见 BattleState.cs）
+        BattleRandom = new(ResolveBattleSeed());
+        BattleState.BattleRandom = BattleRandom;//数据自持同步点（见 BattleState.cs）
         ApplyTeamEnhance();
 
         yield return InitTerrain();
@@ -207,7 +217,7 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
         WndManager.WindowState = WindowStateEnum.Game;
         DrainInitQueue();
         IsStartBattle = true;
-        FPSGame.Data.BattleState.IsStartBattle = true;//数据自持同步点（见 BattleState.cs）
+        BattleState.IsStartBattle = true;//数据自持同步点（见 BattleState.cs）
         Debug.Log($"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
 
 
@@ -260,7 +270,8 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
             cfg.mapCfg?.StoneSpawnMultiplier ?? 1f,
             cfg.mapCfg?.TreeSpawnMultiplier ?? 1f,
             cfg.mapCfg?.RockCoverMultiplier ?? 1f,
-            cfg.mapCfg?.DetailSpawnMultiplier ?? 1f
+            cfg.mapCfg?.DetailSpawnMultiplier ?? 1f,
+            ResolveBattleSeed()   // 本局权威种子 ⇒ 地形/装饰派生流（两端同种子即同地形）
         );
 
         var debugger = transMapRoot.GetComponent<UnitQueryGridDebugger>();
@@ -591,11 +602,11 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
 
     /// <summary>
     /// 应用本局选择的全队强化效果。
-    /// 从 RoomManager.Self.teamEnhance 读取 ID，映射到对应强化类型并应用到各系统。
+    /// 从 TeamManager.Self.teamEnhance 读取 ID，映射到对应强化类型并应用到各系统。
     /// </summary>
     private void ApplyTeamEnhance()
     {
-        _activeTeamEnhance = RoomManager.Instance.players.Where(item => item.boosterId > 0).Select(item =>ResSvc.boostDic[item.boosterId].type).ToArray();
+        _activeTeamEnhance = TeamManager.Instance.players.Where(item => item.boosterId > 0).Select(item =>ResSvc.boostDic[item.boosterId].type).ToArray();
         FPSGame.Data.BattleState.ActiveTeamEnhance = _activeTeamEnhance;//数据自持同步点（唯一写入点，见 BattleState.cs）
 
     }

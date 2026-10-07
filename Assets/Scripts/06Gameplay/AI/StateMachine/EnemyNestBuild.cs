@@ -74,7 +74,8 @@ namespace FPSGame.AI
                     {
                         SwitchState(AIState.Active);
 
-                        creatTime = Time.time + RandomUtils.Range(5,10);//第一个生产时间随机
+                        // ★ 生产间隔走本单位的确定性流（否则两端出兵节奏不同）
+                    creatTime = Time.time + FPSGame.AI.EnemyRandom.For(this).Range(5f, 10f);//第一个生产时间随机
                     }
                     break;
                 case AIState.Active:

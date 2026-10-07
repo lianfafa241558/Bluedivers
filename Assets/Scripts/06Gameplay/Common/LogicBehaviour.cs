@@ -18,7 +18,7 @@ namespace FPSGame.Gameplay
 
         protected virtual void Awake()
         {
-            // 走 00_Core 的逻辑帧原语：GameRoot/NetManager 都在 01Manager，而本类被玩法层继承 ⇒ 不能直连。
+            // 走 00_Core 的逻辑帧原语：GameRoot/LogicFrameHost 都在 09Manager，而本类被玩法层继承 ⇒ 不能直连。
             // 宿主未接管时 Register 是空操作（等价于原空对象的语义）。
     #if UNITY_EDITOR
             // IsLocal 改走「数据自持」（2026-10-01 取代 ServiceLocator.Flow；原判空是死代码）

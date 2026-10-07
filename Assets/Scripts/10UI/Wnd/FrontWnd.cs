@@ -89,9 +89,8 @@ public class FrontWnd : Window
 #endif
         )
         {
-            ResSvc.Instance.AsyncLoadScene("Teach", () => {
-                BattleManager.Creat(false);
-            });
+            // 首次进入（新建存档）：先让玩家起名，再进新手教学
+            AskPlayerName();
         }
         else
         {
@@ -101,6 +100,45 @@ public class FrontWnd : Window
             });
         }
 
+    }
+
+    /// <summary>
+    /// 首次进入时用可复用的 <see cref="PasswordWnd"/> 收玩家名，写进存档再进教学关。
+    /// ⚠ 输入窗没加载（场景缺 PasswordWnd）时**不能卡住流程**，直接按原名进教学。
+    /// </summary>
+    private void AskPlayerName()
+    {
+        var wnd = WndHub.Password;
+        if (wnd == null)
+        {
+            Debug.LogWarning("[FrontWnd] 场景里没有 PasswordWnd，跳过起名直接进教学关");
+            EnterTeach();
+            return;
+        }
+
+        wnd.Creat(new PasswordWndInfo
+        {
+            title = "起个名字",
+            desc = "以后就用这个名字联机（随时可在设置里改）",
+            placeholder = "输入玩家名",
+            presetText = ArchivesData_SO.Current.playerName,
+            maxLength = 12,
+            onConfirm = name =>
+            {
+                var archive = ArchivesData_SO.Current;
+                archive.playerName = name;
+                archive.Save();
+                EnterTeach();
+            },
+            onCancel = EnterTeach,
+        });
+    }
+
+    private void EnterTeach()
+    {
+        ResSvc.Instance.AsyncLoadScene("Teach", () => {
+            BattleManager.Creat(false);
+        });
     }
 
 

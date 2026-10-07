@@ -182,6 +182,7 @@ GameObject:
   - component: {fileID: 4029898926444975087}
   - component: {fileID: 4515378091114631391}
   - component: {fileID: 8045626671678146786}
+  - component: {fileID: 8747452812544007020}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -227,11 +228,12 @@ MonoBehaviour:
   inOperate: 0
   desc: "\u6FC0\u6D3B\u7EC8\u7AEF"
   anim: {fileID: 0}
-  audio: {fileID: 0}
+  _audioSource: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
+  _collider: {fileID: 0}
   ShowName: 
   Id: 
   Portrait: {fileID: 0}
@@ -264,6 +266,23 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 0.5, z: 0.5}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &8747452812544007020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4029898926444975059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: 
+  Id: 
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &8485051443284531130
 GameObject:
   m_ObjectHideFlags: 0

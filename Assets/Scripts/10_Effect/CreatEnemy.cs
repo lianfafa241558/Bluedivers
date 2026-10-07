@@ -5,6 +5,7 @@ using FPSGame.GameContract;
 using UnityEngine;
 using FPSGame.Utils;
 using FPSGame.Managers;
+using PEMaths;
 
 namespace FPSGame.Effect
 {
@@ -66,13 +67,15 @@ public class CreatEnemy : MonoBehaviour
 
     private void Update()
     {
-        if (GameRoot.GameState != FPSGame.Core.GameStateEnum.Game) return;
+        // ⚠ 判定用 BattleState.IsStartBattle 而不是 GameState == Game：
+        //   BattleManager 在 `GameState = Game` 之后还有一个 yield 才 DrainInitQueue / IsStartBattle，
+        //   这段间隙里本方法会**先消费 BattleRandom**，打乱初始化窗口内的随机顺序（联机两端会分叉）。
+        if (!FPSGame.Data.BattleState.IsStartBattle) return;
 
         if (queue == null || queue.Count == 0)
         {
             return;
         }
-
         float startTime = Time.realtimeSinceStartup;
         while (queue.Count > 0)
         {

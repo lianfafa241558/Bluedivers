@@ -155,7 +155,8 @@ namespace FPSGame.AI
         /// <summary>刷新 Toxicity 乱走目标点（自身周围随机方向）</summary>
         private void RefreshToxicityWanderDestination()
         {
-            Vector2 rand = Random.insideUnitCircle.normalized * _ToxicityWanderRadius;
+            // ★ 走本单位的确定性流（乱走目标点两端才一致）
+            Vector2 rand = FPSGame.AI.EnemyRandom.For(this).InsideUnitCircle().normalized * _ToxicityWanderRadius;
             _toxicityWanderDestination = transform.position + new Vector3(rand.x, 0f, rand.y);
             _toxicityWanderNextTime = Time.time + _ToxicityWanderInterval;
         }

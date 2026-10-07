@@ -1,4 +1,4 @@
-﻿// 写入方唯一 = 09_Managers 的 WndManager（与 RoomState/LogicFrame 同一套写入保护手法）。
+﻿// 写入方唯一 = 09_Managers 的 WndManager（与 TeamState/LogicFrame 同一套写入保护手法）。
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("09_Managers")]
 
 namespace FPSGame.Data

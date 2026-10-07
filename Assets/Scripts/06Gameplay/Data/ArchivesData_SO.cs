@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using FPSGame.Core;
 using FPSGame.Game;
 
@@ -201,7 +202,20 @@ public class ArchivesData_SO : ArchivesDataBase_SO
     /// <para>▍与 <c>AboStateData_SO.Dic</c>、<c>MissionData_SO.Catalog</c> 是同一套路（数据自持）：
     /// 由 <c>ArchiveLoader.Init()</c> 写入 <see cref="Current"/>，全项目直接读数据自身。</para>
     /// </summary>
-    public float GetSetting(string name) => settingDic[name].value.RawFloat;
+    public float GetSetting(string name)
+    {
+        // ⚠ 不要写成 settingDic[name]：DisplayDic 的兜底分支会返回 DefaultValue（其 ArchivesFloat.value 是空串），
+        //   并把这份"占位条目"写进字典；之后 Synchronize 会认为该键已存在而拒绝用默认资产补齐，
+        //   存档就永久停在缺项状态（打包版曾因此每次启动崩两次）。
+        //   这里改用 TryGet：缺键时不产生副作用，并直接报错暴露出来（键应在 ArchiveLoader.Init() 补齐）。
+        if (settingDic.TryGet(name, out var item))
+        {
+            return item.value.RawFloat;
+        }
+
+        Debug.LogError($"[存档] 缺少设置项「{name}」，已按 0 处理。请检查 GameData/Archive_Default 资产与该存档的 settingDic。");
+        return 0f;
+    }
     #endregion
 
 
@@ -323,7 +337,9 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         private string value;
         public ArchivesFloat(float value)
         {
-            this.value = value.ToString("F" + digit); // 保留X位小数
+            // ⚠ 必须用 InvariantCulture：这段字符串是**跨机器/跨平台**的持久数据，
+            //   用当前文化写，在小数点为逗号的区域会写成 "0,10"，读取端必然解析失败。
+            this.value = value.ToString("F" + digit, CultureInfo.InvariantCulture); // 保留X位小数
         }
 
         public static implicit operator ArchivesFloat(float value)
@@ -331,14 +347,16 @@ public class ArchivesData_SO : ArchivesDataBase_SO
             return new ArchivesFloat(value);
         }
 
-        public float RawFloat
-        {
-            get=> float.Parse(value ?? "0");
-        }
-        public int RawInt
-        {
-            get => (int)float.Parse(value ?? "0");
-        }
+        /// <summary>
+        /// 数值读取。⚠ 必须容错：字段本体是 string，空串/非法内容（老存档缺项、文件被改坏）
+        /// 会让 <c>float.Parse</c> 抛 FormatException 冲垮整条调用链（曾导致打包版启动即崩），
+        /// 而 <c>value ?? "0"</c> 只挡 null、挡不住空串。非法值一律按 0 处理，
+        /// 并用 InvariantCulture 与写入端 <see cref="ArchivesFloat(float)"/> 对齐。
+        /// </summary>
+        public float RawFloat =>
+            float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) ? f : 0f;
+
+        public int RawInt => (int)RawFloat;
         public override string ToString()
         {
             return value;

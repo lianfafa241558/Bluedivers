@@ -14,7 +14,7 @@ namespace FPSGame.Gameplay
 /// 按 Id 配置表分发的通用家具。
 /// </summary>
 [AddComponentMenu("交互/通用家具")]
-public class Furniture_General : Furniture_Base
+public class Furniture_General : Furniture_Attached
 {
 
     protected FurnAction<Furniture_General> action;

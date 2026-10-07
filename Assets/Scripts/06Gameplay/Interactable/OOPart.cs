@@ -13,7 +13,7 @@ namespace FPSGame.Gameplay
 /// 场景中的欧帕兹拾取物。
 /// </summary>
 [AddComponentMenu("交互/欧帕兹拾取物")]
-public class OOPart : Furniture_Base
+public class OOPart : Furniture_Attached
 {
 
     public override string Desc=> "采集[" + ShowName + "]";

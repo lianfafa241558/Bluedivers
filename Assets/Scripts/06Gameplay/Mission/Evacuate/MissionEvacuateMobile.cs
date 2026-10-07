@@ -1,12 +1,12 @@
-using FPSGame.Core.Interface;
-using System.Collections;
-using System.Collections.Generic;
-using FPSGame.GameContract;
-using FPSGame.Game;
-using UnityEngine;
-using FPSGame.Utils;
+﻿using System.Collections.Generic;
 using FPSGame.Audio;
+using FPSGame.Core;
+using FPSGame.Game;
+using FPSGame.GameContract;
 using FPSGame.Gameplay;
+using FPSGame.Utils;
+using UnityEngine;
+using FPSGame.Core.Interface;
 
 namespace FPSGame.Mission
 {
@@ -39,7 +39,7 @@ namespace FPSGame.Mission
         [SerializeField]
         [InspectorName("撤离时限(秒)")]
         [Tooltip("从玩家请求撤离开始计时，超时运输船起飞、任务失败")]
-        private int m_EvacuateTime = 300;
+        private int m_EvacuateTime = 180;
 
         [SerializeField]
         [InspectorName("运输船接近时长(秒)")]
@@ -119,7 +119,7 @@ namespace FPSGame.Mission
                     break;
                 case EvacuateState.End:
                     //与静态撤离一致：收尾 6 秒后播报最终台词
-                    if (--countDown == 0) CreatNotice("Yuuka", IsComplete ? "End" : "Fail");
+                    if (--countDown == -6) CreatNotice("Yuuka", IsComplete ? "End" : "Fail");
                     break;
             }
 
@@ -173,6 +173,7 @@ namespace FPSGame.Mission
 
             UpdateText("运输船接近中", "前往撤离点");
             CreatNotice("Ayane", "CountDownBegins");
+            WindowRegistry.CreatCountDown(() => countDown, CountDownTypeEnum.Yellow,61);
             if (user) GlobalEventSub.PlayMeetSpeech(user, SpeechTypeEnum.Evacuate);
             AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
             AudioSvc.SetLockMusic(true);
@@ -270,7 +271,7 @@ namespace FPSGame.Mission
             }
 
             //玩家阵亡(倒地)：暂停本玩家续刷，等复活后恢复
-            if (player.ActorState == FPSGame.Core.ActorState.Dead)
+            if (player.ActorState == ActorState.Dead)
             {
                 if (!m_PausedChase.Contains(player)) m_PausedChase.Add(player);
                 return;
@@ -279,13 +280,11 @@ namespace FPSGame.Mission
             m_PausedChase.Remove(player);
 
             var param = WaveCreateParams.Evacuate.Set(player.Pos).Scale(m_WaveScale);
-            //波次中心持续跟踪该玩家位置(玩家移动时新刷出的单位会走向最新位置)
+            // 波次中心持续跟踪"离当前中心最近的玩家"。
+            // ⚠ 不能绑"某个具体玩家"、更不能绑"本机玩家"：前者在两端可能一个有一个没有（盟友幽灵的存活/清理时机不同），
+            //   后者只有本机是真身 ⇒ 联机时两端会把同一波怪落到不同地方（2026-10-07 用户口径）。
             Vector3 last = player.Pos;
-            param.centerGetter = () =>
-            {
-                if (player.IsValidMono()) last = player.Pos;
-                return last;
-            };
+            param.centerGetter = () => last = ActorsManager.NearestPlayerPos(last);
             param.onEnd = () => CreatChaseWave(player);
             FPSGame.GameContract.BattleHub.Current.CreatWave(param);
         }
@@ -305,7 +304,7 @@ namespace FPSGame.Mission
                     continue;
                 }
                 //还没复活，继续等
-                if (player.ActorState == FPSGame.Core.ActorState.Dead) continue;
+                if (player.ActorState == ActorState.Dead) continue;
 
                 m_PausedChase.RemoveAt(i);
                 CreatChaseWave(player);
@@ -325,7 +324,7 @@ namespace FPSGame.Mission
             float scale = medivac.transform.lossyScale.x;
             Vector3 hover = areaPoint + Vector3.up * (m_HoverHeight * scale);
             Vector3 euler = area.eulerAngles;
-            FPSGame.Core.TimerHost.CreatePerTimer(() => {
+            TimerHost.CreatePerTimer(() => {
                 if (!medivac || stage != EvacuateState.Approach) return;
                 medivac.transform.position = Vector3.Lerp(medivac.transform.position, hover, 30 * Time.deltaTime);
                 medivac.transform.eulerAngles = Vector3.Lerp(medivac.transform.eulerAngles, euler, 30 * Time.deltaTime);
@@ -345,7 +344,7 @@ namespace FPSGame.Mission
             medivac.transform.position = areaPoint + (Vector3.up * 5.5f + area.forward * 10f) * scale;
             medivac.Play("Land");
 
-            FPSGame.Core.TimerHost.CreatePerTimer(() => {
+            TimerHost.CreatePerTimer(() => {
                 if (!medivac || stage != EvacuateState.Land) return;
                 medivac.transform.position = Vector3.Lerp(medivac.transform.position, landPos, 15 * Time.deltaTime);
             }, m_LandTime, null);
@@ -374,11 +373,11 @@ namespace FPSGame.Mission
             stage = EvacuateState.End;
             AudioSvc.SetLockMusic(false);
             StopChaseReinforcement();
-            countDown = 6;
+            countDown = 0;
             CreatNotice("Ayane", "TakeOff");
             // 切阶段走事件（原 ServiceLocator.Flow.SetGameState）：GameRoot 订阅后落成既有的静态 setter
-            FPSGame.Gameplay.GlobalEventSub.RequestGameState(FPSGame.Core.GameStateEnum.Transition);
-            FPSGame.Gameplay.BattleEventSub.EndGame(14);
+            GlobalEventSub.RequestGameState(GameStateEnum.Transition);
+            BattleEventSub.EndGame(14);
         }
 
 

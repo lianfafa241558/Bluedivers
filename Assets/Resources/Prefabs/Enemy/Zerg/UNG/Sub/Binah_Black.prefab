@@ -4908,7 +4908,6 @@ GameObject:
   - component: {fileID: 6699618843173387036}
   - component: {fileID: 4125519380302963803}
   - component: {fileID: 3064629148423665070}
-  - component: {fileID: 1132172911164781714}
   m_Layer: 0
   m_Name: WFX_SmokeGrenade Black
   m_TagString: Untagged
@@ -9605,19 +9604,6 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
---- !u!114 &1132172911164781714
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3904144535808516797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fd2e8874f60266498a388d7229a1bac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  OnlyDeactivate: 0
 --- !u!1 &5164940976938432577
 GameObject:
   m_ObjectHideFlags: 0
@@ -9790,15 +9776,18 @@ MonoBehaviour:
     shape: 0
     innerRadius: 6
     outerRadius: 10
+    rectInnerHalfSize: {x: 0, y: 0}
+    rectHalfSize: {x: 0, y: 0}
     depth: -1
   - localPos: {x: 0, y: 0, z: 0}
     shape: 0
     innerRadius: 2
     outerRadius: 3
+    rectInnerHalfSize: {x: 0, y: 0}
+    rectHalfSize: {x: 0, y: 0}
     depth: 1
   additionTerrain: {fileID: 0}
   transitionDistance: 5
-  clearVegetationRange: {x: 7, y: 10}
   StartModify: 0
 --- !u!1 &6690584420790364778
 GameObject:
@@ -9811,7 +9800,6 @@ GameObject:
   - component: {fileID: 3074162444101460367}
   - component: {fileID: 2239311946163925099}
   - component: {fileID: 2476923364304981680}
-  - component: {fileID: 3729230816836451664}
   m_Layer: 0
   m_Name: WFX_SmokeGrenade Black (1)
   m_TagString: Untagged
@@ -14508,19 +14496,6 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
---- !u!114 &3729230816836451664
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6690584420790364778}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fd2e8874f60266498a388d7229a1bac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  OnlyDeactivate: 0
 --- !u!1 &7464066883586112713
 GameObject:
   m_ObjectHideFlags: 0
@@ -14563,7 +14538,6 @@ GameObject:
   - component: {fileID: 1607596916585956237}
   - component: {fileID: 8760286606936592393}
   - component: {fileID: 2672294427161008219}
-  - component: {fileID: 7863015151057604140}
   m_Layer: 0
   m_Name: WFX_SmokeGrenade Black
   m_TagString: Untagged
@@ -19260,19 +19234,6 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
---- !u!114 &7863015151057604140
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8000827094793832028}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fd2e8874f60266498a388d7229a1bac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  OnlyDeactivate: 0
 --- !u!1001 &2629749684327848307
 PrefabInstance:
   m_ObjectHideFlags: 0

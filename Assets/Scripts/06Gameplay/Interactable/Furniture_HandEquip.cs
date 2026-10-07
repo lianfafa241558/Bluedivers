@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using FPSGame.Attributes;
 using UnityEngine;
 using FPSGame.GameContract;
 
 using FPSGame.Gameplay;
+using UnityEngine.Events;
 
 namespace FPSGame.Gameplay
 {
@@ -14,13 +15,13 @@ namespace FPSGame.Gameplay
 /// <see cref="OnPicked"/>（被从地面拾起）与 <see cref="OnSubmitted"/>（被提交点交出）。</para>
 /// </summary>
 [AddComponentMenu("交互/手持家具")]
-public class Furniture_HandEquip : Furniture_Base, ISubmittableHandItem
+public class Furniture_HandEquip : Furniture_Attached, ISubmittableHandItem
 {
     /// <summary>被玩家从地面拾起时触发。丢弃后重新捡起会再次触发，"是否只处理首次"由订阅方自行决定。</summary>
-    public event Action<Furniture_HandEquip> OnPicked;
+    public UnityEvent<Furniture_HandEquip> OnPicked;
 
     /// <summary>被提交点（如凯伊/Kei）交出时触发；触发后本物体随即被卸载并销毁。</summary>
-    public event Action<Furniture_HandEquip> OnSubmitted;
+    public UnityEvent<Furniture_HandEquip> OnSubmitted;
 
     public override string Desc => "捡起[" + ShowName + "]";
 

@@ -331,6 +331,46 @@ namespace FPSGame.Weapon {
             if (sfx.IsValid())return AudioSvc.PlaySound(new(sfx, transform.position, SFXRange, AudioGroups.Weapon));
             return null;
         }
+
+        /// <summary>
+        /// 【表现层】只播"开火音效"，不产生任何射击逻辑（不发子弹、不结算伤害、不动弹药）。
+        /// <para>▍用途：远程盟友的"枪响"同步 —— 他的伤害在他自己机器上算，这边只需要听见响。
+        /// 本机自己的开枪请走 <c>HandleShoot</c>（那边会连带音效）。</para>
+        /// </summary>
+        public AudioSource PlayShootSfx() => PlaySFX(ShootSfx);
+
+        /// <summary>
+        /// 【表现层】只生成一颗"**不结算伤害**"的子弹：飞行、尾迹、命中特效照常，只把伤害回调摘掉。
+        ///
+        /// <para>▍用途：远程玩家（盟友）的弹道同步 —— 他的伤害由他自己机器结算（各自模拟各自的战场），
+        /// 这边只需要**看得见弹道**。原先只在收到开火消息时放枪口闪光，看起来像"打空枪"。</para>
+        ///
+        /// <para>▍怎么做到"只表现"：<c>ProjectileBase.Shoot</c> 会往 <c>OnHit</c> 上挂 <c>FpsHelper.Hit</c>（伤害），
+        /// 而 <c>ProjectileStandard.OnEnable</c> 挂的是 <c>HitFX</c>（命中特效）—— 两者共用同一个 <c>OnHit</c>，
+        /// 所以 <b>只摘掉 <c>FpsHelper.Hit</c></b>：弹道与命中特效保留、伤害归零。</para>
+        ///
+        /// <para>▍与 <c>ShootFromMuzzle</c> 的差别：不走 <c>OnBulletShoot</c>、不生成落点预示
+        /// （那是本机给玩家看的预测提示）、每"次"射击只给一颗（<c>BulletsPerShot</c> 的多弹丸不必在对端重放）。</para>
+        /// </summary>
+        /// <param name="direction">射击方向（世界空间）；零向量 = 用枪口朝向 + 本武器散布</param>
+        public ProjectileBase SpawnVisualBullet(Transform muzzle, Vector3 direction = default)
+        {
+            if (muzzle == null) muzzle = GetMuzzle(0);
+            if (muzzle == null || Damages == null || Damages.Count == 0) return null;
+
+            var data = CurrentDamgeData;
+            if (data == null || data.BulletPrefab == null) return null;
+
+            // ⚠ 方向优先用**发送端传来的**：盟友模型只同步了 yaw、没有俯仰，
+            //   用枪口朝向会让所有弹道都水平（抬头打空中目标时明显不对）。
+            Vector3 dir = direction.sqrMagnitude > 0.0001f ? direction.normalized : GetShotDirectionWithinSpread(muzzle);
+            var bullet = FPSGame.Core.VfxPool.Creat(data.BulletPrefab, muzzle.position, Quaternion.LookRotation(dir));
+            if (bullet == null) return null;
+
+            bullet.Shoot(this, UseDamageIndex, muzzle);
+            bullet.OnHit -= FpsHelper.Hit;      // ★ 只摘伤害，别用 `OnHit = null`：那会把命中特效一起摘掉
+            return bullet;
+        }
         /// <summary>
         /// 发射音效，需要有连续射击
         /// </summary>
@@ -453,7 +493,10 @@ namespace FPSGame.Weapon {
                 Vector3 shotPos = muzzle.position;
                 if (AttrFinal(Attr.BulletsOffect) > 0)
                 {
-                    Vector2 point = RandomUtils.InsideUnitCircle() * AttrFinal(Attr.BulletsOffect).RawFloat;
+                    // ★ 播种过同样走确定性流（否则"多管齐射的枪口偏移"两端也不同）
+                    var rng = Rng;
+                    Vector2 point = (rng != null ? rng.InsideUnitCircle() : RandomUtils.InsideUnitCircle())
+                        * AttrFinal(Attr.BulletsOffect).RawFloat;
                     shotPos = muzzle.TransformPoint(point);
                 }
                 var bullet = FPSGame.Core.VfxPool.Creat(CurrentDamgeData.BulletPrefab, shotPos, Quaternion.LookRotation(shotDirection));
@@ -578,6 +621,41 @@ namespace FPSGame.Weapon {
 
 
         /// <summary>
+        /// 本武器的**确定性随机种子**（0 = 不指定 ⇒ 沿用 <c>UnityEngine.Random</c> / 全局流的旧行为）。
+        ///
+        /// <para>▍谁来播种：**"各端各自执行一次"的东西**才需要 —— 目前是战备（轨道轰炸 / 飞鹰 / 运输机）在
+        /// <c>VFXAirdropEffect</c> 里生成的那把武器（见那里调用的 <c>SeedUtil</c> 派生）。
+        /// 不播种的后果：同一发轨道轰炸，两端的弹道散布/落点各摇各的 ⇒ 看起来"根本没同步"
+        /// （2026-10-07 用户实测）。</para>
+        /// </summary>
+        public int RandomSeed;
+
+        private System.Random _rng;
+        private bool _rngBuilt;
+
+        /// <summary>本武器的随机流：播种过 ⇒ 确定性 <see cref="System.Random"/>；没播种 ⇒ null（调用方走旧路径）。</summary>
+        private System.Random Rng
+        {
+            get
+            {
+                if (!_rngBuilt)
+                {
+                    _rngBuilt = true;
+                    _rng = RandomSeed != 0 ? new System.Random(RandomSeed) : null;
+                }
+                return _rng;
+            }
+        }
+
+        /// <summary>球内随机方向（与 <c>UnityEngine.Random.insideUnitSphere</c> 同用途，但可走确定性流）。</summary>
+        private static Vector3 InsideUnitSphere(System.Random rng)
+        {
+            var c = rng.InsideUnitCircle();
+            float y = (float)(rng.NextDouble() * 2.0 - 1.0);
+            return new Vector3(c.x, y, c.y);
+        }
+
+        /// <summary>
         /// 设置武器散布
         /// </summary>
         /// <param name="shootTransform"></param>
@@ -588,7 +666,10 @@ namespace FPSGame.Weapon {
             if (bsa == 0) return shootTransform.forward;
             PEInt spreadAngleRatio = bsa / 180;
             //从方向向球面随机方向移动spreadAngleRatio;
-            Vector3 spreadWorldDirection = Vector3.Slerp(shootTransform.forward, UnityEngine.Random.insideUnitSphere,
+            // ★ 播种过就走本武器的确定性流（战备两端各自执行也要落在同一片区域）
+            var rng = Rng;
+            Vector3 spreadWorldDirection = Vector3.Slerp(shootTransform.forward,
+                rng != null ? InsideUnitSphere(rng) : UnityEngine.Random.insideUnitSphere,
                 spreadAngleRatio.RawFloat);
 
             return spreadWorldDirection;

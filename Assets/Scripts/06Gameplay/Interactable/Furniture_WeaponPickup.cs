@@ -74,7 +74,8 @@ namespace FPSGame.Gameplay
                     var oldWeapon = wm.GetWeaponAtSlotIndex(supportSlot);
                     if (oldWeapon != null && oldWeapon != m_Weapon)
                     {
-                        equipController.UninstallEquip(oldWeapon);
+                        // 替换式卸载：紧接着 InstallEquip 会播"安装"语音，两条连着播会打架
+                        equipController.UninstallEquip(oldWeapon, silent: true);
                     }
                 }
 

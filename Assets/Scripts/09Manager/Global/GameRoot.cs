@@ -1,12 +1,7 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using FPSGame.Core;
-using FPSGame.Core.Interface;
-using FPSGame.GameContract;
 using FPSGame.Gameplay;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace FPSGame.Managers
 {
@@ -93,7 +88,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
 
         if (IsLocal)
         {
-            RoomManager.Instance.Self.airdrop = new int[4] {105,104,103,100 };
+            TeamManager.Instance.Self.airdrop = new int[4] {105,104,103,100 };
             BattleManager.Creat(true);
         }
 

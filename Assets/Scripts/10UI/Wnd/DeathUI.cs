@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.GameContract;
 using UnityEngine;
@@ -71,7 +71,7 @@ public class DeathUI : Window
     {
         _countingDown = true;
         time = (int)remaining;
-        WndManager.Instance.CreatCountDown(() => (int)time,CountDownTypeEnum.Red);
+        WndManager.Instance.CreatCountDown(() => (int)time,CountDownTypeEnum.Red,11);
 
         SetWndState(true);
     }

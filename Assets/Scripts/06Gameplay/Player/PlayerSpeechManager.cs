@@ -62,6 +62,9 @@ public class PlayerSpeechManager : MonoBehaviour
             //Debug.LogError("找到的语音"+item,item);
             speechShowTime = item.Clip.length;
             GlobalEventSub.ActorSpeech(gameObject, item);
+
+            // 联机：告诉联机桥"我喊了一句"，由它上行 / 转发（本机表现已经播完，不参与回环）
+            BattleEventSub.PlayerSpeech(gameObject, type);
         }
     }
 
@@ -102,6 +105,8 @@ public class PlayerSpeechManager : MonoBehaviour
         }
 
         GlobalEventSub.ActorSpeech(source, Cfg.SpeechGroup(state).Get(transform.position));
+        // ⚠ 这条没有走 Speech()（空投那套文案要按空投类型挑），所以单独上报一次
+        BattleEventSub.PlayerSpeech(source, state);
 
         if (data.cfg.type == AirdropData_SO.AirdropType.Greed)
         {

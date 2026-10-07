@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using FPSGame.Core;
-
-using FPSGame.Game;
+﻿using FPSGame.Core;
 using UnityEngine;
 using FPSGame.Utils;
 using FPSGame.Audio;
@@ -122,7 +118,7 @@ namespace FPSGame.AI
                 lastTriggerAttackTime = Time.time + 0.5f;
                 //攻击没必要
                 //TriggerFX(OccasionTypeEnum.Attack, m_EnemyController.AimPoint.position, Quaternion.identity, null);
-                Debug.LogError("触发攻击触发器");
+                //Debug.LogError("触发攻击触发器");
                 SetTrigger(name, true);
             }
 

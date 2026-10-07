@@ -105,6 +105,26 @@ public static class UnitEventSub
     public static event Action<Actor> OnFriendCreate;
     public static void FriendCreate(Actor unit) => OnFriendCreate?.Invoke(unit);
 
+    /// <summary>
+    /// 盟友的**角色已确定**（模型挂好、<c>Actor.Id/ShowName/Portrait/Color</c> 就位；发布者是 <c>FriendController.AttachModel</c>）。
+    /// <para>▍为什么不能只靠 <see cref="OnFriendCreate"/>：那是 <c>Actor</c> 刚被创建时发的，
+    /// 那一刻还没有资料/模型 ⇒ <c>Actor.Id</c> 是空的，任何"按角色 id 判断"的逻辑都会漏。</para>
+    /// </summary>
+    public static event Action<Actor> OnFriendRoleChanged;
+    public static void FriendRoleChanged(Actor unit) => OnFriendRoleChanged?.Invoke(unit);
+
+    /// <summary>
+    /// 盟友**离场**（对象被销毁；发布者是 <c>Actor.OnDestroy</c>）。
+    /// <para>▍与"倒地"的区别：倒地走 <see cref="OnUnitDeath"/>（单位还在场上、能被救起）；
+    /// 离场是实例被销毁（掉线/被房主清退/换场景），<b>不可能再回来</b> —— 所有为它建过的实例（UI 行、
+    /// 小地图点、桥的字典…）都必须在此时收尾。</para>
+    /// <para>▍为什么要这个事件：<c>ActorsManager.Unregister</c> 只会把它从注册表摘掉，
+    /// **不会通知任何人**；UI 若靠"遍历注册表"发现它消失，就永远拿不到"谁来清理我"的时机
+    /// （尤其资源/实例是"为它专门创建"的时候）。</para>
+    /// </summary>
+    public static event Action<Actor> OnFriendLeave;
+    public static void FriendLeave(Actor unit) => OnFriendLeave?.Invoke(unit);
+
     #endregion
 }
 

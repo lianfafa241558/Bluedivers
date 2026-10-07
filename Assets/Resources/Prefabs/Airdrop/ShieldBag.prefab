@@ -162,6 +162,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 5562236647405478821}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -187,7 +188,6 @@ MonoBehaviour:
   ShieldFull: {fileID: 0}
   ShieldBreak: {fileID: 0}
   ShieldDamage: []
-  showShield: 0
 --- !u!1 &2317934351446893801
 GameObject:
   m_ObjectHideFlags: 0
@@ -5033,6 +5033,7 @@ GameObject:
   - component: {fileID: 3178527037366814488}
   - component: {fileID: 177813543088722171}
   - component: {fileID: 8275219929734514498}
+  - component: {fileID: 4251269344127117186}
   m_Layer: 6
   m_Name: ShieldBag
   m_TagString: Untagged
@@ -5185,7 +5186,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2382642831774620610}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80cf9cb3e42ed604db0ec93341c33388, type: 3}
+  m_Script: {fileID: 11500000, guid: 3704b6bfebbc2374da4a9b194065d456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   meetTime: 0
@@ -5268,6 +5269,23 @@ MonoBehaviour:
   fxMaterial: {fileID: 0}
   events: []
   _healthGo: {fileID: 207114199184333362}
+--- !u!114 &4251269344127117186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382642831774620610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u62A4\u76FE\u5145\u80FD\u5668"
+  Id: ShieldBag
+  Portrait: {fileID: 21300000, guid: 6fb469b857bdf4841a04dc24de95f97f, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 6fb469b857bdf4841a04dc24de95f97f, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &3823500722809082368
 GameObject:
   m_ObjectHideFlags: 0

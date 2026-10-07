@@ -10,12 +10,10 @@ namespace FPSGame.Core
 /// <para>▍判据：被"管理器 + UI"共见 ⇒ 放**两者共见的最低层**＝`00_Core`。
 /// **保持全局命名空间不变 ⇒ 零调用点改动**（同 `DifficultyEnum`/`BoosterType` 的下沉手法）。</para>
 /// </summary>
-public enum CountDownTypeEnum
-{
-    /// <summary>蓝方样式。</summary>
-    Blue,
-
-    /// <summary>红方样式。</summary>
-    Red,
-}
+    public enum CountDownTypeEnum
+    {
+        Blue,
+        Red,
+        Yellow,
+    }
 }

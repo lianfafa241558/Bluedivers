@@ -79,7 +79,13 @@ Bluedivers 的联机能力由**两层**构成，理解这两层的边界是本 s
    3. 做一次真实序列化往返（`execute_code` 里 `MessagePackSerializer.Serialize/Deserialize<LoginReqMsg>`）；
    4. 若仍报 `Assembly '...' will not be loaded due to errors`，**去 `%LOCALAPPDATA%\Unity\Editor\Editor.log` 看紧接着的那几行 `Unable to resolve reference 'X'`**（Console 面板只显示标题行，原因在里面）。
 5. **挂载**：新建/指定一个常驻 GameObject，按用途挂组件——房主机挂 `NetHostSvc`，成员机挂 `NetSvc`，联调再挂 `LanRoomDemo`（房间流程）与 `NetDemo`（登录/Ping/聊天）。两个 Demo 会自动 `MessageCenter.Register`，可用于验收。
-6. **AOT 提醒**：`ProjectSettings` 的 Standalone `scriptingBackend` 当前是 **IL2CPP(1)**，而 MessagePack 默认走 `DynamicObjectResolver`（Reflection.Emit）。若在 IL2CPP 下运行时抛解析器/格式化器异常，三条路：① MessagePack 源生成/mpc 预生成 resolver 并改用 `StaticCompositeResolver`；② Standalone 切 Mono；③ 换掉 MessagePack（自写 `IKCPMsgSerializer`）。库自身已内置 `MessagePack.GeneratedMessagePackResolver`（为它自己的消息类型生成的），可以参考这个模式。
+6. **AOT（IL2CPP）—— 这个坑已经踩过并修好了（2026-10-06），别再重走**：`ProjectSettings` 的 Standalone `scriptingBackend` 是 **IL2CPP(1)**，而 MessagePack 默认走 `DynamicObjectResolver`（`System.Reflection.Emit`，IL2CPP 不支持）。症状：**打包版一发消息就抛**
+   `PlatformNotSupportedException: Operation is not supported on this platform` at `AssemblyBuilder.DefineDynamicAssembly` ← `DynamicObjectResolver.FormatterCache<T>..cctor`；
+   **编辑器（Mono）完全看不出来**。修法 = 适配层不再用 `MessagePackSerializer`，改用 **`NetTmp/Services/NetMsgCodec.cs`**（只用 `MessagePackWriter/Reader` 写读标准 MessagePack 字节，成员枚举 + 字段读写自己用反射做；`[MessagePackObject]` 类型写 **array 格式**、按 `[Key]` 升序）。⇒ **新增消息仍然只需"CmdId 常量 + `[MessagePackObject]` + `[Key(n)]` 两步**，不必写 formatter。三条注意事项：
+   ① 反射用法对 IL2CPP 托管裁剪**不可见** ⇒ 必须保留 `Assets/link.xml`（`preserve="all"` 保全 `02_Net` 与 `MessagePack.Annotations`），否则打包后"反序列化出来全是默认值"；
+   ② 字段类型只支持 `NetMsgCodec.WriteValue/ReadValue` 里列出的那些（string/int/uint/long/float/bool/short/byte/double/enum/数组/嵌套 DTO），新类型要在那两处补分支（会在编辑器里当场抛 `NotSupportedException`，不静默写坏）；
+   ③ **不要**试图引用 `MessagePack.GeneratedMessagePackResolver`（KCPNet.dll 自带的那份是 `internal`，外部引用报 `CS0122`）；KCPNet 自己显式传 options（DLL 里能搜到 `MessagePackSerializerOptions`）⇒ 库侧本来就安全。
+   备选路（本次没走，因为要多装工具链）：MessagePack 3.1.8 的 nupkg **不含 analyzer/源生成器**，想用 mpc/源生成器预生成 resolver 得自己装 .NET SDK；或者把 Standalone 切 Mono（能立刻绕过，但放弃 IL2CPP）。
 
 ## 库 API 速查（仅列常用，完整签名见 `references/kcpnet-api.md`）
 
@@ -103,12 +109,12 @@ Bluedivers 的联机能力由**两层**构成，理解这两层的边界是本 s
 | 文件 | 职责 | 对外入口 |
 | --- | --- | --- |
 | `Client/NetSvc.cs` | 成员端总入口：建连（`ConnectDefaultServer` / `ConnectToRoom`）、发送（`SendMsg`）、收消息入队、`Update()` 里派发 | `NetSvc.Instance`、`IsConnected`、`JoinRoom/LeaveRoom/SetReady` |
-| `Client/NetHostSvc.cs` | 房主端总入口：`StartHost/StopHost`、成员表、房间协议处理、`SendToAll/SendToSession`、联动 `LanBroadcaster` | `NetHostSvc.Instance`、`RoomInfo`、`StartGame` |
+| `Client/NetHostSvc.cs` | 房主端总入口：`StartHost/StopHost`、成员表、房间协议处理、`SendToAll/SendToSession`、联动 `LanBroadcaster` | `NetHostSvc.Instance`、`RoomInfo`、`ConfirmTask`、`NotifyTransition` |
 | `Client/ClientSession.cs` | 成员端会话钩子：`Serializer`、`OnReciveMsg → NetSvc.Instance.AddMsgQue` | 由库回调 |
 | `Client/HostSession.cs` | 房主端会话钩子：`OnReciveMsg → NetHostSvc.Instance.AddMsgQue(msg, GetSessionID())`（**必须带 sid**） | 由库回调 |
 | `Client/MessageCenter.cs` | 静态注册表：`Register<T>(cmdId, Action<T>)`、`Pack<T>(cmdId, T)`、`Dispatch(NetMessage)`、`Unregister(cmdId)` | 全局静态 |
 | `Services/CmdId.cs` | 命令号常量分段表（1000 通用 / 2000 账号 / 3000 聊天 / 4000 房间） | 常量 |
-| `Services/Msg/*.cs` | `[MessagePackObject]` DTO：`PingMsg`、`LoginMsg`、`ChatMsg`、`RoomMsg`（`PlayerInfo/JoinRoomReq/JoinRoomRsp/LeaveRoomNtf/PlayerListSync/ReadyState/StartGameNtf`） | 数据 |
+| `Services/Msg/*.cs` | `[MessagePackObject]` DTO：`PingMsg`、`LoginMsg`、`ChatMsg`、`RoomMsg`（`PlayerInfo/JoinRoomReq/JoinRoomRsp/LeaveRoomNtf/PlayerListSync/ReadyState/TaskConfirmNtf/TransitionNtf` + 资料与战备若干） | 数据 |
 | `Client/NetDemo.cs` | 直连模式联调 Demo（L 登录 / B 聊天 / 每 3 秒 Ping） | 组件 |
 | `Client/LanRoomDemo.cs` | 局域网房间联调 Demo（房主 `H/J/G`，成员 `R/T/S/C/I/E/Q`）+ OnGUI 状态面板 | 组件 |
 
@@ -132,7 +138,9 @@ Bluedivers 的联机能力由**两层**构成，理解这两层的边界是本 s
 成员：new LanDiscoverer(端口) → StartListening() → Scan() → 等 1.5s → GetRooms()
         → NetSvc.ConnectToRoom(room, cb)  // StartAsClient + ConnectServer 握手
         → NetSvc.JoinRoom(name, pwd) / SetReady(true) / LeaveRoom()
-房主：OnJoinRoomReq 校验 → JoinRoomRsp + BroadcastPlayerList → 全部就绪后 StartGame()
+房主：OnJoinRoomReq 校验(满员/密码/是否已进战斗) → JoinRoomRsp [+ 补发 TaskConfirmNtf] + BroadcastPlayerList
+阶段链（⚠ 用户 2026-10-06 口径，命名都按它）：Bridge 选任务 →（房主 ConfirmTask 广播 TaskConfirmNtf）**Ready —— 仍在舰桥，仍可进人**
+        → 所有人就位 → Armament（仍在舰桥各自选战备）→ 全员准备 → **Transition（房主 NotifyTransition 广播 TransitionNtf，各端各自加载战斗场景）** → Game
 ```
 
 ### C. 改端口 / 改广播参数
@@ -168,7 +176,9 @@ Bluedivers 的联机能力由**两层**构成，理解这两层的边界是本 s
 
 ## 踩坑清单
 
-- **`OnReciveMsg` 可能不在主线程**：绝不能在会话钩子里碰 Unity API（`Debug.Log` 之外），必须先入队、由 `Update` 出队处理；队列访问用 `lock (pkgque_lock)`。`MessageCenter.Dispatch` 里 `try/catch` 是为了兜住单个消息的处理异常，别删。
+- **会话钩子 / 连接回调都可能不在主线程**（2026-10-06 踩过）：`OnReciveMsg`、`OnConnected`、`OnDisConnected`，以及 `host.OnSessionConnected/OnSessionDisconnected` 这类 KCP `UpdateAsync` 续体，**全都在网络 / ThreadPool 线程**上跑 ⇒ 绝不能在里面碰 Unity API（`Debug.Log` 之外）或游戏状态（`_players` 之类的表也别改，有数据竞争）。`NetHostSvc.OnMemberLeft` 原来就是直接 `BroadcastPlayerList()` → 09 侧桥 `ResSvc.LoadRes` ⇒ `UnityException: Load can only be called from the main thread`；更阴的是它抛在**广播名单中途**，导致该清退的盟友留在场上变幽灵。
+  现行模式：会话级事件只入 `Queue<SessionEvent> _sessionEvents`（`lock (pkgque_lock)`），由 `Update()` 开头的 `ProcessSessionEvents()` 在**主线程**按到达顺序处理（出队后在**锁外**处理，别占着锁做网络发送）。**新增任何会话级回调都照这个模式。**
+  `MessageCenter.Dispatch` 里 `try/catch` 是为了兜住单个消息的处理异常，别删。
 - **房主端会话必须带 sid**：`HostSession.OnReciveMsg` 丢的是 `AddMsgQue(msg, GetSessionID())`，漏了 sid 就无法定向回复/维护成员表。
 - **消息未注册就报错**：`Dispatch` 查不到命令号会 `Debug.LogError($"未注册消息:{msg.CmdId}")`，看到它先查 `Register` 是否在 `Awake` 里漏调用、或 `Unregister` 是否提前执行。
 - **MessagePack 版本写法**：`MessageCenter.Dispatch` 用的是非泛型 `MessagePackSerializer.Deserialize(Type, ReadOnlyMemory<byte>)`，参数顺序 `Type` 在前，`byte[]` 隐式转 `ReadOnlyMemory<byte>`，**不需要 `ref`**（3.1.8 的正确写法）。

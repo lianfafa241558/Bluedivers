@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using FPSGame.Game;
@@ -85,9 +85,24 @@ public class BridgeRoleManager : RoleManagerBase
 
 
 
+    /// <summary>本机玩家出生点的**序号间距**（米）。与盟友那边的 <c>NetFriendBridge.spawnSpacing</c> 同一约定
+    /// （第 N 个玩家沿 -Z 让开 N×间距），两处都调一致的观感即可。</summary>
+    [SerializeField]
+    [InspectorName("出生点序号间距(米)")]
+    private float spawnSpacing = 1f;
+
     public override Vector3 GetStartPoint()
     {
-        return GameObject.FindGameObjectWithTag("StartPoint").transform.position + Vector3.up * 0.2f;
+        var go = GameObject.FindGameObjectWithTag("StartPoint");
+        Vector3 p = go != null ? go.transform.position : Vector3.zero;
+
+        // ⚠ 按**本机玩家的队伍序号**让开：以前所有人都拿同一个点 ⇒ 大厅里几个人完全重叠
+        //   （2026-10-07 实测："加入游戏没有根据队伍序号做出生点偏差"）。
+        //   各端只偏移**自己**（SelfIndex），位姿同步之后大家自然分开 ⇒ 不需要额外同步出生点。
+        //   ⚠ 盟友那侧 <c>NetFriendBridge.NextSpawnPos</c> 的初始偏移只是"出生瞬间不打架"，
+        //     它的真实位置由位姿同步覆盖 —— 所以**偏移必须发生在本机自己身上**，否则同步完还是重叠。
+        int index = TeamManager.Instance != null ? TeamManager.Instance.SelfIndex : 0;
+        return p + Vector3.up * 0.2f + new Vector3(0f, 0f, -index * spawnSpacing);
     }
 
     public override void SetPlayerRole(PlayerController player)
@@ -144,14 +159,17 @@ public class BridgeRoleManager : RoleManagerBase
 
         SetPlayerRole(m_player);
 
-        // 同步更新 roomManager.players 中的角色数据，确保其他窗口（GameEndWnd、ArmamentWnd 等）能获取到正确的角色
+        // 同步更新 teamManager.players 中的角色数据，确保其他窗口（GameEndWnd、ArmamentWnd 等）能获取到正确的角色
         ArchivesData_SO.Current.GetRoleLevel(newRoleId, out int level, out float exp);
-        var selfData = RoomManager.Instance.players[RoomManager.Instance.SelfIndex];
+        var selfData = TeamManager.Instance.players[TeamManager.Instance.SelfIndex];
         selfData.roleName = newRoleId;
         selfData.roleLevel = level;
         selfData.roleExp = exp;
         selfData.weapons = ArchivesData_SO.Current.GetWeaponSelect(newRoleId);
         selfData.Upgrades = ArchivesData_SO.Current.GetWeaponUpgrade(newRoleId);
+
+        // 联机：把"我换了角色"上报（房主写进 HostProfile 并广播；单机时是空操作）
+        TeamNetBridge.SendSelfProfile();
     }
     #endregion
 }

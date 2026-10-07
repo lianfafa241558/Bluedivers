@@ -53,6 +53,13 @@ namespace FPSGame.AI
         [InspectorName("敌人认为已到达当前路径目标点的距?")]
         public float PathReachingRadius = 2f;
 
+        /// <summary>联机时"移动由房主决定"（成员端为 true）：本端 AI 不再自己决定目标点，只应用下发的。
+        /// 由 09 的战斗侧在开局时按"是不是房主"置位。</summary>
+        public static bool RemoteDrivenMovement;
+
+        /// <summary>正在应用"网络上来的"伤害（房主结算成员上报的命中）⇒ 不再回传，避免回声。</summary>
+        public static bool ApplyingRemoteDamage;
+
         public bool BirthComplete=>Time.time>=birthTime+BirthDuration;
 
         /// <summary>巡逻目标点</summary>
@@ -232,6 +239,10 @@ namespace FPSGame.AI
         /// </summary>
         public void SetNavDestination(Vector3 destination)
         {
+            // ★ 联机成员：移动意图由房主下发（见 ApplyRemoteDestination），本端 AI 的决策一律作废 ——
+            //   否则两端各追各的目标，怪物位置永远对不上（2026-10-07 用户实测）。
+            if (RemoteDrivenMovement) return;
+
             bool agentReady = FpsHelper.HaveNavMeshAgent(NavMeshAgent);
             bool sameTarget = Vector3.Distance(destination, m_lastDestination) < 1;
 
@@ -260,10 +271,22 @@ namespace FPSGame.AI
 
                     //走事件总线（2026-10-01 取代 ServiceLocator.Path）：订阅方 = PathRequestManager（09_Managers）
                     FPSGame.Game.UnitEventSub.PathRequest(NavMeshAgent, destination, isImportant);
+                    // ★ 房主：把"这只怪要去哪"广播给成员（成员按同一个目标点各自本地算路径 ⇒ 位置接近一致）
+                    if (m_Actor != null && m_Actor.NetId != 0)
+                        FPSGame.Gameplay.BattleEventSub.EnemyMove(m_Actor.NetId, destination);
                 }
             }
         }
 
+
+        /// <summary>【网络下发】应用房主给的移动目标：**绕开**本端的去重/节流（那套判据基于本地状态，两端不一定同步命中）。
+        /// ⚠ 只由 09 的联机桥调用。</summary>
+        public void ApplyRemoteDestination(Vector3 destination)
+        {
+            m_lastDestination = destination;
+            if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
+                FPSGame.Game.UnitEventSub.PathRequest(NavMeshAgent, destination, false);
+        }
 
         public void StopNav()
         {
@@ -277,6 +300,10 @@ namespace FPSGame.AI
 
         protected override void _OnDamaged(PEInt damage, GameObject damageSource, Collider collider,bool noSource)
         {
+            // ★ 联机成员：本机的命中只**上报**给房主结算（血量/死亡以房主为唯一权威）；
+            //   应用远端伤害时（房主侧）不再回传，避免回声。
+            if (!ApplyingRemoteDamage && RemoteDrivenMovement && m_Actor != null && m_Actor.NetId != 0)
+                FPSGame.Gameplay.BattleEventSub.EnemyHit(m_Actor.NetId, Mathf.RoundToInt(damage.RawFloat));
             
             if (damageSource &&damageSource.GetComponent<Actor>().Type != UnitTypeEnum.Other&& !damageSource.GetComponent<Actor>().HasFlag(ActorFlag.Invincible))
             {
@@ -305,8 +332,8 @@ namespace FPSGame.AI
                 PlayerController player;
                 if (source.TryGetComponent(out Actor actor) && actor.Owner != null) actor.Owner.transform.TryGetComponent(out player);
                 else source.TryGetComponent(out player);
-                //房主序号走「数据自持」（2026-10-01 取代 ServiceLocator.Room）：RoomManager 在其 4 个变更点同步 RoomState
-                int masterIndex = FPSGame.Data.RoomState.MasterIndex;
+                //房主序号走「数据自持」（2026-10-01 取代 ServiceLocator.Room）：TeamManager 在其 4 个变更点同步 TeamState
+                int masterIndex = FPSGame.Data.TeamState.MasterIndex;
                 FPSGame.Gameplay.BattleEventSub.AddBattleDataItem(player ? player.PlayerIndex : masterIndex, "击杀敌人");
             }
 

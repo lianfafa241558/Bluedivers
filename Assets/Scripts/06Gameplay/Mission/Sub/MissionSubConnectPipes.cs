@@ -12,11 +12,11 @@ namespace FPSGame.Mission
     public class MissionSubConnectPipes : MissionBase
     {
         public List<Furniture_Pipe> pipes;
-        Furniture_Base furniture;
+        Furniture_Attached furniture;
         int count;
         protected override void StartMission()
         {
-            furniture = entity.GetComponentInChildren<Furniture_Base>();
+            furniture = entity.GetComponentInChildren<Furniture_Attached>();
             furniture.OnOperate += OnOperate;
         }
         protected override void Uninit()

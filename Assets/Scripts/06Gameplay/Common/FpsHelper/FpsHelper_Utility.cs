@@ -50,6 +50,11 @@ public static partial class FpsHelper
 
     public static Sprite CameraCaptureToSprite(Camera targetCamera)
     {
+        // ⚠ 必须先判相机：`Camera.main` 在"没有 tag=MainCamera 的激活相机"的场景/阶段会返回 null
+        //   （实测：撤离结束切到 Armament 后按 ESC 开设置窗，战斗相机已失效）⇒
+        //   原样往下走会在 `targetCamera.targetTexture = rt` 抛 NullReferenceException（2026-10-07 实测）。
+        if (targetCamera == null) return null;
+
         // 创建RenderTexture
         RenderTexture rt = new RenderTexture(Screen.width, Screen.height, 24);
         //int rewordMask = targetCamera.cullingMask;

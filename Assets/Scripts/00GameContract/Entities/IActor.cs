@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using PEMaths;
@@ -15,6 +15,9 @@ namespace FPSGame.GameContract
         public event UnityAction OnDeath;
 
         public int IndexID { get; }
+
+        /// <summary>跨端稳定的网络标识（0 = 非同步单位）。实现见 <c>Actor.NetId</c>。</summary>
+        int NetId { get; }
 
         public UnitTypeEnum Type { get; }
         public IPERange Range { get; }
@@ -38,6 +41,7 @@ namespace FPSGame.GameContract
 
         /// <summary>是否为地图单位只对EnemyMoble有效</summary>
         bool IsFixed { get; set; }
+        public void Kill();
 
         public bool HasFlag(ActorFlag flag);
 

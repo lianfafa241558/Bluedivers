@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4805869233407832283}
   - component: {fileID: 9219097764088125268}
   - component: {fileID: 190231605}
+  - component: {fileID: 5231410517626991024}
   m_Layer: 0
   m_Name: Pyroxene
   m_TagString: Untagged
@@ -27,6 +28,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2567597091833385427}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 86.748375, y: 12.738824, z: 191.97734}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -34,7 +36,6 @@ Transform:
   m_Children:
   - {fileID: 6175879494185739431}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3805648053761581946
 MonoBehaviour:
@@ -48,11 +49,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4e9ce9f163727144956fbda9abc62c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u9752\u8F89\u77F3"
-  Id: Pyroxene
-  Portrait: {fileID: 21300000, guid: ddf168c676e702b49b5f5399e7f21ee8, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: ddf168c676e702b49b5f5399e7f21ee8, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 1a0e4176af8067146b440e0f7d91722d, type: 3}
@@ -62,19 +58,24 @@ MonoBehaviour:
   canOperate: 1
   inOperate: 0
   desc: "\u91C7\u96C6"
-  ForwardAxis: {x: 0, y: 0, z: 0}
+  anim: {fileID: 0}
+  _audioSource: {fileID: 0}
+  lastOperatetime: 0
+  owner: {fileID: 0}
+  time: 0
+  count: 0
+  _collider: {fileID: 0}
+  ShowName: "\u9752\u8F89\u77F3"
+  Id: Pyroxene
+  Portrait: {fileID: 21300000, guid: ddf168c676e702b49b5f5399e7f21ee8, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: ddf168c676e702b49b5f5399e7f21ee8, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
   relatedTrans: {fileID: 0}
   relatedTrans2: {fileID: 0}
   ExtFloatParameter: 100
   ExtBoolParameter: 0
   particle: {fileID: 0}
-  anim: {fileID: 0}
   obs: {fileID: 0}
-  audio: {fileID: 0}
-  lastOperatetime: 0
-  owner: {fileID: 0}
-  time: 0
-  count: 0
 --- !u!114 &4805869233407832283
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -108,16 +109,42 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2567597091833385427}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 1
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.5, y: 1.5, z: 0.5}
   m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &5231410517626991024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2567597091833385427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u9752\u8F89\u77F3"
+  Id: Pyroxene
+  Portrait: {fileID: 21300000, guid: ddf168c676e702b49b5f5399e7f21ee8, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: ddf168c676e702b49b5f5399e7f21ee8, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &5926623656920875852
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8370693374140612037}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: e860f6eb80a37884c94537f533fba443,
@@ -181,6 +208,13 @@ PrefabInstance:
       value: pyroxene
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e860f6eb80a37884c94537f533fba443,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7169128884288424670}
   m_SourcePrefab: {fileID: 100100000, guid: e860f6eb80a37884c94537f533fba443, type: 3}
 --- !u!4 &6175879494185739431 stripped
 Transform:

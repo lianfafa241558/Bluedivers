@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -98,6 +98,12 @@ internal static class WndHub
     /// <summary>操作提示窗（原 <c>WndManager.operationWnd</c>）。</summary>
     public static OperationWnd Operation { get { return Get<OperationWnd>(WndType.Operation); } }
 
+    /// <summary>信息提示窗（按 string 键增删一条信息子项）。</summary>
+    public static InformationWnd Information { get { return Get<InformationWnd>(WndType.Information); } }
+
+    /// <summary>单行输入弹窗（房间密码 / 首次设置玩家名等）。</summary>
+    public static PasswordWnd Password { get { return Get<PasswordWnd>(WndType.Password); } }
+
     // ---------------- 注册 ----------------
 
     /// <summary>
@@ -168,6 +174,8 @@ internal static class WndHub
         if (w is OperationWnd) return WndType.Operation;
         if (w is TipWnd) return WndType.Tip;
         if (w is NoticeWnd) return WndType.Notice;
+        if (w is InformationWnd) return WndType.Information;
+        if (w is PasswordWnd) return WndType.Password;
         return WndType.None;
     }
 
@@ -197,6 +205,10 @@ internal static class WndHub
             if (notice == null) return;
             // 原 WndManager.CreatNotice 的实现（用 ResSvc 取语音；UI 层在管理器之上，直连合法）
             ResSvc.Instance.GetVoice(role, type, out var data, out var sourceName, out var portrait);
+            if (data==null)
+            {
+                Debug.LogError("找不到"+role+"的"+type+"音效");
+            }
             var noticeData = new NoticeWnd.NoticeData()
             {
                 data = data.Get(),
@@ -209,16 +221,28 @@ internal static class WndHub
             notice.Creat(noticeData);
         };
 
-        WindowRegistry.CreatCountDown = (provider, type) =>
+        WindowRegistry.CreatCountDown = (provider, type, activeBelow) =>
         {
             var cd = CountDown;
-            if (cd != null) cd.StartDown(provider, type);
+            if (cd != null) cd.StartDown(provider, type, activeBelow);
         };
 
         WindowRegistry.ClearNotice = () =>
         {
             var notice = Notice;
             if (notice != null) notice.Clear();
+        };
+
+        // 信息栏：跨层（管理器/玩法）按 string 键增 / 删一条（键同时是子项显示的文字）
+        WindowRegistry.Information.AddImpl = key =>
+        {
+            var info = Information;
+            if (info != null) info.Add(key);
+        };
+        WindowRegistry.Information.RemoveImpl = key =>
+        {
+            var info = Information;
+            if (info != null) info.Remove(key);
         };
     }
 
@@ -231,6 +255,7 @@ internal static class WndHub
           .Append(" Notice=").Append(Notice != null)
           .Append(" CountDown=").Append(CountDown != null)
           .Append(" Operation=").Append(Operation != null)
+          .Append(" Information=").Append(Information != null)
           .Append(" | keys=");
         foreach (var kv in map) sb.Append(kv.Key).Append(',');
         return sb.ToString();

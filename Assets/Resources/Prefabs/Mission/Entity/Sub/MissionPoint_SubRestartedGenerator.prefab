@@ -81,8 +81,6 @@ MonoBehaviour:
   datas: []
   additionTerrain: {fileID: 1954428656643466638}
   transitionDistance: 9
-  clearVegetationRange: {x: 7, y: 10}
-  clearRockRange: {x: 0, y: 6}
   StartModify: 0
 --- !u!1 &1954428656643466625
 GameObject:
@@ -861,6 +859,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 5002830927358484981}
+    - targetCorrespondingSourceObject: {fileID: 5317491084562637298, guid: bd3cb037eec792749a95deb9d9f97476,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7813602204733176329}
   m_SourcePrefab: {fileID: 100100000, guid: bd3cb037eec792749a95deb9d9f97476, type: 3}
 --- !u!1 &5968399210953589684 stripped
 GameObject:
@@ -877,7 +879,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5968399210953589684}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 374b3c2e13591b84cbe9709dac4f9994, type: 3}
+  m_Script: {fileID: 11500000, guid: ba80bf5efd3411047bb9ef36cbd235d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   meetTime: 0
@@ -907,6 +909,23 @@ MonoBehaviour:
   ExtBoolParameter: 0
   particle: {fileID: 0}
   obs: {fileID: 0}
+--- !u!114 &7813602204733176329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5968399210953589684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u53D1\u7535\u673A"
+  Id: Generator
+  Portrait: {fileID: 21300000, guid: 3e424e2e43716b24cb62a1e41bd70006, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: 3e424e2e43716b24cb62a1e41bd70006, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!4 &6458113320777685262 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4791923854146141000, guid: bd3cb037eec792749a95deb9d9f97476,

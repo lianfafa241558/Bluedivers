@@ -67,6 +67,10 @@ public class Furniture_NPCChat : Furniture_Attached
         base.OnEnable();
         UnitEventSub.OnPlayerCreate -= OnPlayerCreated;
         UnitEventSub.OnPlayerCreate += OnPlayerCreated;
+        UnitEventSub.OnFriendRoleChanged -= OnFriendRoleChanged;
+        UnitEventSub.OnFriendRoleChanged += OnFriendRoleChanged;
+        UnitEventSub.OnFriendLeave -= OnFriendLeave;
+        UnitEventSub.OnFriendLeave += OnFriendLeave;
         GlobalEventSub.OnSwitchRole -= OnSwitchRole;
         GlobalEventSub.OnSwitchRole += OnSwitchRole;
     }
@@ -78,7 +82,7 @@ public class Furniture_NPCChat : Furniture_Attached
         _playerTransform = player.transform;
         _playerId = player.Id;
 
-        TryHideIfSameIdAsPlayer();
+        RefreshVisibility();
     }
 
     private void OnSwitchRole(PlayerController newPlayer)
@@ -93,20 +97,56 @@ public class Furniture_NPCChat : Furniture_Attached
             _playerId = actor.Id;
         }
 
-        TryHideIfSameIdAsPlayer();
+        RefreshVisibility();
+    }
+
+    /// <summary>联机：别人的角色确定了 ⇒ 也要重新判定（他选了这个角色，NPC 版就该消失）。</summary>
+    private void OnFriendRoleChanged(Actor friend)
+    {
+        if (this == null) return;
+        RefreshVisibility();
+    }
+
+    /// <summary>联机：别人离场 ⇒ 角色空出来了，NPC 要回来。</summary>
+    private void OnFriendLeave(Actor friend)
+    {
+        if (this == null) return;
+        RefreshVisibility();
     }
 
     /// <summary>
-    /// 若NPC的Id与玩家Id相同则隐藏，不同则显示
+    /// 该 NPC 是否"已被玩家占用"：Id 与**本机玩家**或**任一盟友**的角色相同 ⇒ 隐藏。
+    ///
+    /// <para>▍为什么：场景里给每个可选角色都摆了一个 NPC 版本；玩家一旦用了该角色，
+    /// 场上就不该再出现"同一个人的 NPC"（单机只有自己，联机时别人选的角色同理）。</para>
+    ///
+    /// <para>▍自动恢复：改成"每次重新判定"（而不是单向隐藏）⇒ 盟友离场后该角色空出来，NPC 会自己回来。
+    /// ⚠ 本物体被隐藏后 <c>Update</c> 不再跑，但**事件回调照旧会到**（C# 事件与 active 无关）⇒ 这条路可行。</para>
     /// </summary>
-    private void TryHideIfSameIdAsPlayer()
+    private void RefreshVisibility()
     {
-        if (string.IsNullOrEmpty(_playerId)) return;
-
         if (!TryGetComponent(out IActor selfActor)) return;
+        string myId = selfActor.Id;
+        if (string.IsNullOrEmpty(myId)) return;
 
-        bool sameId = selfActor.Id == _playerId;
-        gameObject.SetActive(!sameId);
+        bool hide = false;
+
+        // ① 本机玩家
+        if (!string.IsNullOrEmpty(_playerId) && myId == _playerId) hide = true;
+
+        // ② 联机盟友（ActorsManager.Players 里除本机玩家外的单位；Id 由 FriendController 从角色模型写入）
+        if (!hide)
+        {
+            var players = ActorsManager.Players;
+            for (int i = 0; i < players.Count; ++i)
+            {
+                var p = players[i];
+                if (!p.IsValidMono() || ReferenceEquals(p, ActorsManager.Player)) continue;
+                if (p.Id == myId) { hide = true; break; }
+            }
+        }
+
+        gameObject.SetActive(!hide);
     }
 
     /// <summary>
@@ -239,6 +279,8 @@ public class Furniture_NPCChat : Furniture_Attached
     private void OnDestroy()
     {
         UnitEventSub.OnPlayerCreate -= OnPlayerCreated;
+        UnitEventSub.OnFriendRoleChanged -= OnFriendRoleChanged;
+        UnitEventSub.OnFriendLeave -= OnFriendLeave;
         GlobalEventSub.OnSwitchRole -= OnSwitchRole;
     }
 }

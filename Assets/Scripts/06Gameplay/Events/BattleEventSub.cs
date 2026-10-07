@@ -52,6 +52,15 @@ public static class BattleEventSub
 
     #endregion
 
+    #region 喊话（联机同步用）
+    /// <summary>本机玩家**喊话**（<c>PlayerSpeechManager</c> 是唯一触发点，含"空投/标记/受击/会面"等）。
+    /// <para>▍为什么要抛事件：喊话本体在 <c>06_Gameplay</c>（看不见 <c>02_Net</c>），
+    /// 由 09 的联机桥订阅后上行 ⇒ 别的客户端才能听到/看到盟友喊话（2026-10-07 用户实测"没有同步"）。</para>
+    /// <para>参数：喊话者（本机玩家 GameObject）/ <c>SpeechTypeEnum</c> 的 int。</para></summary>
+    public static event Action<GameObject, int> OnPlayerSpeech;
+    public static void PlayerSpeech(GameObject speaker, SpeechTypeEnum type) => OnPlayerSpeech?.Invoke(speaker, (int)type);
+    #endregion
+
     #region 流程
 
     /// <summary>任务创建时/summary>
@@ -135,6 +144,22 @@ public static class BattleEventSub
     /// </summary>
     public static event Action<int, bool> OnRequestAuthorize;
     public static void RequestAuthorize(int id, bool state) => OnRequestAuthorize?.Invoke(id, state);
+    #endregion
+
+    // 【2026-10-07 联机战斗同步】玩法层（06）拿不到网络层 ⇒ 这里只做"意图/结果的广播"，
+    // 实际收发由 09 的联机桥订阅（方向与上面那批一致：发布者都在玩法层）。
+    #region 联机战斗同步（移动意图 / 命中上报）
+    /// <summary>【房主】某只怪要走向哪里（NetId / 目标点）</summary>
+    public static event Action<int, Vector3> OnEnemyMove;
+    public static void EnemyMove(int netId, Vector3 destination) => OnEnemyMove?.Invoke(netId, destination);
+
+    /// <summary>【成员】本机打中了某只怪（NetId / 伤害）⇒ 上报房主结算（血量/死亡以房主为准）</summary>
+    public static event Action<int, int> OnEnemyHit;
+    public static void EnemyHit(int netId, int damage) => OnEnemyHit?.Invoke(netId, damage);
+
+    /// <summary>【房主】某只怪死了（NetId）⇒ 成员照此干掉自己那份副本</summary>
+    public static event Action<int> OnEnemyDiedRemote;
+    public static void EnemyDiedRemote(int netId) => OnEnemyDiedRemote?.Invoke(netId);
     #endregion
 }
 

@@ -77,6 +77,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 3
     DamageDirect: 0
     DamageGroupDirect:
@@ -116,6 +117,7 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
   ShootSfx: {fileID: 8300000, guid: 71c74369d77d2b84fb81ce2ed79197e2, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -227,6 +229,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 372736655846010548}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -272,10 +275,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 5369069689064056837}
-  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: 50d8223f4adcd3346ae1f233684a3ac3, type: 2}
   fxMaterial: {fileID: 2100000, guid: 14fce7cbcc8540e458db10c38350d070, type: 2}
+  events: []
+  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
 --- !u!114 &7241497091655458308
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -295,6 +299,11 @@ MonoBehaviour:
   PathReachingRadius: 1
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &6320507066045807247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -312,12 +321,12 @@ MonoBehaviour:
     chassis: {fileID: 7265611960910513329}
     barrel: {fileID: 3474697495815350228}
     weapon: {fileID: 7577670470533182702}
-    aimSharpness: 90
+    aimSharpness: 30
     autoRotateSpeed: 0
     detectionFireDelay: 2
     minAttackRange: 0
-    limitRotation: 0
-    limitFollow: {fileID: 0}
+    limitRotation: 38
+    limitFollow: {fileID: 7632891165202482702}
     verticalLimitRotation: 0
     allowDeviation: 0.005
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
@@ -333,6 +342,12 @@ MonoBehaviour:
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
+  BewareTimeout: 20
+  BewareObserveDistance: 10
+  SearchObserveDistance: 4
+  ObserveSettleTime: 0.4
+  BewareCooldown: 10
+  BewareCooldownRadius: 10
   IdleMaxDuration: 120
 --- !u!195 &8923152193124582180
 NavMeshAgent:
@@ -426,18 +441,18 @@ MonoBehaviour:
   HearingRange: 15
   AttackRange: 1.5
   AlertRange: 50
+  Lazy: 0
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &7210008611212690075
 GameObject:
   m_ObjectHideFlags: 0

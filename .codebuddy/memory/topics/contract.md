@@ -19,7 +19,7 @@
 `LogicFrame`（逻辑帧）· `VfxPool`（池入口）· `TimerHost`（计时/协程）· `UnitQuery`（05_UnitCore 单位查询，`InternalsVisibleTo("09_Managers")`）
 
 ## `BattleHub.Current`（原 `ServiceLocator`，已降格改名）
-- 落 `00GameContract/Services/BattleHub.cs`；`NullServices` 并入为 `internal sealed class NullBattleService`
+- 落 `00GameContract/BattleHub.cs`（该目录下已无 `Services/` 子目录）；`NullServices` 并入为 `internal sealed class NullBattleService`
 - **四轮瘦身已收官：契约 19 → 5 成员，消费点 79 → ~21**
 - ⚠ **接缝删不掉**：剩余 5 成员全是"需要返回值/回调" —— `CreatWave`(bool) / `ReleaseAirdrop`(`Action<GameObject>`) / `CreatPatrol`(`List<GameObject>`) / `WaveCount`(会递减，不适合快照) / `IsPresent`(存在性判断)。**它们是合理保留，不是欠债。**
 - 判据：`Battle` 是**战斗系统门面**（非单一能力 ⇒ 只能按成员分而治之）；`06_Gameplay.asmdef` **不引用** `09_Managers` ⇒ 57 处编译期写不出 `BattleManager.Instance` ⇒ 槽是**结构刚需**
@@ -46,14 +46,15 @@
   - ⚠ `WndHub` 是 `internal`：现 `10_UI` 已是独立 asmdef ⇒ **编译期牙齿已生效**（`WndHub.cs:31-33` 注释写"在 Assembly-CSharp 里"已过时）
 - **层判据**：`09_Managers` 不能引用 `10_UI` ⇒ 经契约层 `WindowRegistry` 委托中转切断反向依赖；`WindowRegistry` 的"退出条件（删类）"**未到**（`10_UI` 仍不可反向被 `09` 引用）
 - **`WndType`（契约层枚举，原 `WndTypeEnum`）**：跨层开窗唯一钥匙；具体 UI 类型**只在 `WndHub`/`10UI`**；新增窗口**只改 `WndHub.TypeOf` 一处**映射（`WndType.cs` 注释写"WndManager.SetWndState 的映射"已过时）
+- **新增窗口 SOP（2026-10-03 实例 `InformationWnd`）**：①`WndType` **末尾**追加（枚举重度序列化）②`WndHub.TypeOf` 加一行（**漏了 = 窗口注册不进 map，能力静默失效**）③窗口脚本（**禁 Awake**，初始化放 `FirstShowWnd`）④跨层动词：`WindowRegistry` 加 `Action` 插槽 + `WndHub.Bind()` 登记 + `WndHub.Xxx` 强类型属性；新增 .cs **Unity 不 import 就不进编译**（`manage_asset action=import` 显式导入）
 - ⚠⚠ Unity 不为 `SetActive(false)` 对象调 `Awake` ⇒ 自注册死锁；兜底见上；**`Window` 子类禁定义 `Awake`**（替代 = `FirstShowWnd()`）
 - 往老文件插 Unity 特性前先确认有 `using UnityEngine;`
 
 ## Wnd 槽收尾 · 剩余清单（待执行，尚未改代码）
 1. **编译红（阻塞）**：`00Tools/WndRootTool.cs` 用 `TMPro` 但 `00_Utils.asmdef` 未引用 `Unity.TextMeshPro` ⇒ 2×CS0246。修：给 `00_Utils.asmdef` references 加 `"Unity.TextMeshPro"`。
-2. ~~asmdef 悬空引用~~ ✅ **已执行（2026-10-01）**：从 10_UI/06_Gameplay/09_Managers/10_Effect 的 references 删 `00_WndTools`，从 10_UI 删 `04_UI`；asmdef 内 `00_WndTools`/`04_UI` 已归零，`.cs` 无残留引用（仅 `VehicleWeaponsManager.cs:3` 一行过时注释提及，非代码）。
+2. ~~asmdef 悬空引用~~ ✅ **已执行（2026-10-01）**：从 `10_UI`、`06_Gameplay`、`09_Managers`、`10_Effect` 的 references 删 `00_WndTools`，从 `10_UI` 删 `04_UI`；asmdef 内 `00_WndTools`/`04_UI` 已归零，`.cs` 无残留引用（仅 `VehicleWeaponsManager.cs:3` 一行过时注释提及，非代码）。
 3. **死代码链**：`WndManager.IsWndOpen`（0 调用）+ `WindowRegistry.GetOpen`/`IsOpen` + `WndHub.Bind()` 的 `IsOpen` 登记 → 整条删（无跨层消费者）。
-4. **UI 层直连 `WndManager`**（合法但风格不统一，可选改事件）：`BridgeWnd:98`/`DeathUI:74`/`SettingWnd:582`（`CreatNotice`/`CreatCountDown`/`ClearNotice`）+ `10_Effect/VFXAirdropEffect:551`（`CreatNotice` → 可改 `GlobalEventSub.Notice`）。
+4. **UI 层直连 `WndManager`**（合法但风格不统一，可选改事件）：`BridgeWnd:98`/`DeathUI:74`/`SettingWnd:582`（`CreatNotice`/`CreatCountDown`/`ClearNotice`）+ `10_Effect/VFX/VFXAirdropEffect.cs:551`（`CreatNotice` → 可改 `GlobalEventSub.Notice`）。
 5. **过时注释清理**：`WndHub.cs:31-33`（`04UI` 在 Assembly-CSharp → 已独立 `10_UI`）；`WndType.cs`（`WndManager.xxxWnd` 字段已删、"两处同步"应指 `WndHub.TypeOf`）；`WndManager.cs`（`01Manager`→`09Manager`、`04UI`→`10UI`、`SetWndState 的映射`→`WndHub.TypeOf`）。
 6. **`WndManager` 死代码**：空 `Start()` 方法 + 注释掉的 `CreatSpeech` 块 → 删。
 - ⚠ 玩法层残留 `WndManager` 引用**全是注释/被删代码**（`Furniture_General`/`Furniture_AttachedGeneral`/`MissionEvacuateStatic` 的注释；`WeaponPlayerController:266` 在 `/* */` 块；`InputManager:39` 已改 `UIState.WindowState`）→ 不需改。
@@ -63,6 +64,10 @@
 - ⚠ 本项目枚举**重度序列化**（`.asset`/`.prefab`/`.unity` 里按 **int** 存：`terrainType`/`sizeType`/`missionTag`/`tier`/`difficulty` …）⇒ **成员声明顺序就是取值**，新增只能**追加在末尾**，禁止中间插入/删除
 - ⚠ 显式赋值的成员不会跟着漂移，隐式连续的会 ⇒ **同一枚举里别混用**（`MissionEnum` 是"0 起自增段 + 100/200/300 三段显式"的分段式，段内可加、段尾可加、跨段不可乱序）
 - 纯排版整理的安全做法：写脚本与 `git HEAD` **逐枚举比对「成员名序列」**（工具 `.codebuddy/plans/tidy_contract_enums.py`，输出 `语义差异项` 必须为 0）
-- 具体枚举所在位置：跨层封闭枚举放 `00GameContract/Enums/`；`00_Core/CoreEnums.cs` 是 Core 层枚举大本营（`WindowStateEnum`/`UnitTypeEnum`/`GameStateEnum`/`EnemyType`…）
+- 具体枚举所在位置：跨层封闭枚举放 `00GameContract/Enums/`；`00Core/CoreEnums.cs`（asmdef `00_Core`）是 Core 层枚举大本营（`WindowStateEnum`/`UnitTypeEnum`/`GameStateEnum`/`EnemyType`…）
 - ⚠ `[InspectorName]` = `UnityEngine.InspectorName`（`FPSGame.Attribute` 里另有同名/近似特性，别混）
 - ⚠ 资产 YAML 缺整行字段 = 脚本给类新增字段后**没有重存资产**；新字段加在**结构体/类末尾**最稳
+
+## 家具身份单源化（`Furniture_Attached.Identity`，`Furniture_Base` 已删）
+
+- 全文见 `topics/furniture-identity.md`：改造判据 / 资产批量处理 / 编译后终检 / 遗留项。

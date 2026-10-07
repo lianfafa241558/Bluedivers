@@ -4941,6 +4941,7 @@ MonoBehaviour:
   LiftTime: 1
   PreRelease: 1
   allowSeeRelease: 0
+  EndDelay: 0
   allowRelease: 0
   useDebug: 0
   OnEnd:
@@ -4960,6 +4961,7 @@ GameObject:
   - component: {fileID: 8733004869774225593}
   - component: {fileID: 302507656675619547}
   - component: {fileID: 5779400505596893891}
+  - component: {fileID: 1637444547006318101}
   m_Layer: 6
   m_Name: BlinkBag
   m_TagString: Untagged
@@ -5112,7 +5114,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2717789869141549924}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80cf9cb3e42ed604db0ec93341c33388, type: 3}
+  m_Script: {fileID: 11500000, guid: 3704b6bfebbc2374da4a9b194065d456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   meetTime: 0
@@ -5161,6 +5163,23 @@ MonoBehaviour:
   vfxs:
   - {fileID: 2718146370288285652, guid: ffec244900398db429c687eaea520cc7, type: 3}
   cost: 0.5
+--- !u!114 &1637444547006318101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2717789869141549924}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u4F20\u9001\u80CC\u5305"
+  Id: BlinkBag
+  Portrait: {fileID: 21300000, guid: c5d5e080245501b40afd4cbd071b7b7f, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: c5d5e080245501b40afd4cbd071b7b7f, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &4149808865069840947
 GameObject:
   m_ObjectHideFlags: 0

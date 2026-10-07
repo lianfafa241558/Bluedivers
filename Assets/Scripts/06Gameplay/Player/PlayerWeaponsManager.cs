@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
@@ -110,6 +110,10 @@ namespace FPSGame.Gameplay
         [Foldout("其他", true)]
         [InspectorName("播放瞄准动画的速度")]
         public float AimingAnimationSpeed = 10f;
+
+        [InspectorName("第三人称不瞄准也瞄准视野中心")]
+        [Tooltip("开启后第三人称下即使未按瞄准键，武器朝向与子弹方向也指向屏幕准星（散布仍按未瞄准计算）")]
+        public bool ThirdPersonAimAtViewCenter = true;
 
         [InspectorName("不瞄准时的视野")]
         public float DefaultFov = 60f;
@@ -433,14 +437,22 @@ namespace FPSGame.Gameplay
         }
 
         /// <summary>
-        /// 第三人称瞄准时将屏幕中心目标点注入所有武器，非瞄准时使用枪口方向
+        /// 第三人称时将屏幕中心目标点注入所有武器，使子弹从枪口指向准星对应的世界位置；
+        /// 瞄准时必定注入，未瞄准时由 ThirdPersonAimAtViewCenter 控制（关闭则退回枪口方向）
         /// </summary>
         private void UpdateWeaponThirdPersonAim()
         {
-            Vector3 target = (m_PlayerCharacterController.IsThirdPerson && IsAiming)
+            /*
+            bool aimAtViewCenter = m_PlayerCharacterController.IsThirdPerson
+                && (IsAiming || ThirdPersonAimAtViewCenter);
+
+            Vector3 target = aimAtViewCenter
                 ? m_PlayerCharacterController.ScreenCenterTargetPoint
                 : default;
-
+            */
+            Vector3 target = (m_PlayerCharacterController.IsThirdPerson && IsAiming)
+                 ? m_PlayerCharacterController.ScreenCenterTargetPoint
+                 : default;
             for (int i = 0; i < m_WeaponSlots.Length; i++)
             {
                 if (m_WeaponSlots[i] != null)

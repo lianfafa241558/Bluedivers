@@ -69,7 +69,7 @@ public class SubtitleSpecUnit : SubtitleBase
             SetText(desc,"");
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)desc.parent);
         }
-        if (targetState&&completeTrans&& !noFade)
+        if (targetState&&TargetEnabled&&completeTrans&& !noFade)
         {
             var dis = GetDistance();
             show = Mathf.Clamp01((dis - 60) / 40f);

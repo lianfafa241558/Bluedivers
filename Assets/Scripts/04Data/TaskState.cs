@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.GameContract;
-// 写入方 = 09_Managers 的 TaskManager（与 RoomState/UIState/LogicFrame 同一套写入保护手法）。
+// 写入方 = 09_Managers 的 TaskManager（与 TeamState/UIState/LogicFrame 同一套写入保护手法）。
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("09_Managers")]
 
 
@@ -22,7 +22,7 @@ namespace FPSGame.Data
     /// —— 而 <c>Awake</c> 在 <c>Instantiate</c> 内部就跑完，**晚注入来不及**；数据自持天然没有这个时序问题。</para>
     ///
     /// <para>▍写入约定（重要）：`TaskManager` 必须在**所有**会改这些值的地方调用 <c>SyncTaskState()</c>
-    /// —— 目前 2 处：`Init()`（建任务）与 `SetTask()`（选图/难度）。漏一处就会读到过期值。</para>
+    /// —— 目前 4 处：`Init()`（建任务）、`SetTask()`（选图/难度）、`EnsureSceneData()`（场景模式）与回大厅时的 `ResetTask()`（清空）。漏一处就会读到过期值。</para>
     ///
     /// <para>▍中性值（对齐原 <c>NullTaskService</c> 语义，供"服务未就绪"时使用）：
     /// 系数全 0、难度 <c>Normal</c>、敌人种类 <c>default</c>、收集表空、<c>HasTask=false</c>、<c>Countdown=0</c>。</para>
@@ -35,6 +35,18 @@ namespace FPSGame.Data
 
         /// <summary>当前难度（无任务时 = <c>Normal</c>）。</summary>
         public static DifficultyEnum Difficulty { get; internal set; } = DifficultyEnum.Normal;
+
+        /// <summary>
+        /// 本局**权威随机种子**（房主决定，随开局广播下发；0 = 未指定 ⇒ 各处退回本地随机）。
+        ///
+        /// <para>▍唯一写入点：<c>TaskManager.SetTask()</c>（经 <c>SyncTaskState()</c> 发布）；
+        /// 回大厅时 <c>ResetTask()</c> 归 0（与 <c>HasTask=false</c> 同批）。</para>
+        ///
+        /// <para>▍消费方（必须都读它，才能"四者同源"）：<c>BattleManager</c>（建 <c>BattleRandom</c>）、
+        /// <c>GenerateNoiseTerrain</c>（地形/装饰派生流）、<c>KeyScreenControl</c>（谜题派生流）。
+        /// 注意 <c>RandomUtils</c> 那条静态流走的是 <c>TeamManager.SetSeed</c>，两边共用同一个整数。</para>
+        /// </summary>
+        public static int Seed { get; internal set; }
 
         /// <summary>本局敌人种类（无任务时 = <c>default</c>）。</summary>
         public static EnemyVarietyType EnemyVarietyType { get; internal set; }

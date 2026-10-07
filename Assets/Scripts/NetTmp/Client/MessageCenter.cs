@@ -4,7 +4,6 @@ namespace FPSGame.Net
 using System;
 using System.Collections.Generic;
 using KCPNet;
-using MessagePack;
 using UnityEngine;
 
 /// <summary>
@@ -62,10 +61,14 @@ public static class MessageCenter
     public static NetMessage Pack<T>(int cmdId, T msg) where T : class
     {
         // 创建信封：装命令号 + 序列化后的消息内容
+        // ⚠ 必须走 NetMsgCodec（AOT 安全），不能再写 MessagePackSerializer.Serialize：
+        //   后者默认 StandardResolver → DynamicObjectResolver（Reflection.Emit），
+        //   IL2CPP 不支持动态代码生成 ⇒ 打包版一发消息就抛 PlatformNotSupportedException
+        //   （编辑器走 Mono 所以完全看不出来）。详见 NetMsgCodec 的类注释。
         return new NetMessage
         {
             CmdId = cmdId,
-            Data = MessagePackSerializer.Serialize(msg)
+            Data = NetMsgCodec.Serialize(msg, typeof(T))
         };
     }
 
@@ -86,17 +89,19 @@ public static class MessageCenter
         try
         {
             // 2. 反序列化 Data，还原成具体消息对象（用注册时保存的类型）
-            //    ⚠️ MessagePack 3.1.8 的正确写法：非泛型 Deserialize(Type, ReadOnlyMemory<byte>)
-            //       byte[] 会隐式转成 ReadOnlyMemory<byte>，不需要 ref。
-            //       参数顺序是 Type 在前，别写反了。
-            object body = MessagePackSerializer.Deserialize(handler.MsgType, msg.Data);
+            //    ⚠ 与 Pack 同理：必须走 NetMsgCodec，不能再用 MessagePackSerializer.Deserialize
+            //       （它最终落到 DynamicObjectResolver，IL2CPP 下会抛 PlatformNotSupportedException）。
+            object body = NetMsgCodec.Deserialize(handler.MsgType, msg.Data);
 
             // 3. 调用对应的处理回调
             handler.Callback(body);
         }
         catch (Exception e)
         {
-            Debug.LogError($"消息 {msg.CmdId} 处理失败:{e.Message}");
+            // ⚠ 必须打**完整异常**（e.ToString() = 类型 + 消息 + 调用栈）：
+            //   只打 e.Message 会把"哪个处理器、哪一行"全丢掉（2026-10-06 打包版实测：
+            //   只看到"消息 4004 处理失败:Object reference not set..."，定位不到具体位置）。
+            Debug.LogError($"消息 {msg.CmdId} 处理失败:{e}");
         }
     }
 
