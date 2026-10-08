@@ -73,6 +73,10 @@ namespace FPSGame.Net
         /// <summary>【成员侧】房主说某只怪死了（NetId）。</summary>
         public static event Action<int> OnEnemyDied;
 
+        /// <summary>【成员侧】房主下发场景单位（NPC 等氛围单位）的移动目标 / 停下。
+        /// <para>参数：匹配键（<c>Actor.Id</c>）/ 目标点 / 是否就地停下。键用 Id 而非 NetId 的原因见 <c>SceneUnitMoveMsg</c>。</para></summary>
+        public static event Action<string, Vector3, bool> OnSceneUnitMove;
+
         /// <summary>战备呼叫同步（房主权威转发后触发，**房主自己不发**）。
         /// 参数：发起者 sid / 战备 id / 落点 / 信标朝向（Y 轴角度）。⚠ 发起方要靠 sid 丢掉自己那条（本地已经放过一次）。</summary>
         public static event Action<uint, int, Vector3, float> OnAirdropCall;
@@ -130,6 +134,7 @@ namespace FPSGame.Net
             MessageCenter.Register<EnemyMoveMsg>(CmdId.EnemyMoveSync, HandleEnemyMoveSync);
             MessageCenter.Register<EnemyHitMsg>(CmdId.EnemyHitNtf, HandleEnemyHitNtf);
             MessageCenter.Register<EnemyDiedMsg>(CmdId.EnemyDiedSync, HandleEnemyDiedSync);
+            MessageCenter.Register<SceneUnitMoveMsg>(CmdId.SceneUnitMoveSync, HandleSceneUnitMoveSync);
             MessageCenter.Register<AirdropCallMsg>(CmdId.AirdropCallSync, HandleAirdropCallSync);
             MessageCenter.Register<PlayerLeftMsg>(CmdId.PlayerLeftNtf, HandlePlayerLeftNtf);
             MessageCenter.Register<PlayerSpeechMsg>(CmdId.SpeechSync, HandleSpeechSync);
@@ -155,6 +160,7 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.EnemyMoveSync);
             MessageCenter.Unregister(CmdId.EnemyHitNtf);
             MessageCenter.Unregister(CmdId.EnemyDiedSync);
+            MessageCenter.Unregister(CmdId.SceneUnitMoveSync);
             MessageCenter.Unregister(CmdId.AirdropCallSync);
             MessageCenter.Unregister(CmdId.PlayerLeftNtf);
             MessageCenter.Unregister(CmdId.SpeechSync);
@@ -621,6 +627,21 @@ namespace FPSGame.Net
         private void HandleEnemyDiedSync(EnemyDiedMsg m)
         {
             if (m != null) OnEnemyDied?.Invoke(m.NetId);
+        }
+
+        /// <summary>【房主下行】场景单位（NPC）走向某点 / 就地停下。
+        /// <para>⚠ 不做本地自派发：房主自己那份 NPC 本来就在执行了（与开波广播同款口径）。</para></summary>
+        public void SendSceneUnitMove(string id, Vector3 destination, bool stop = false)
+        {
+            if (!IsHost || string.IsNullOrEmpty(id)) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.SceneUnitMoveSync,
+                new SceneUnitMoveMsg { Id = id, X = destination.x, Y = destination.y, Z = destination.z, Stop = stop }));
+        }
+
+        private void HandleSceneUnitMoveSync(SceneUnitMoveMsg m)
+        {
+            if (m != null && !string.IsNullOrEmpty(m.Id))
+                OnSceneUnitMove?.Invoke(m.Id, new Vector3(m.X, m.Y, m.Z), m.Stop);
         }
 
         private void HandleBoosterSync(PlayerBoosterSync s)

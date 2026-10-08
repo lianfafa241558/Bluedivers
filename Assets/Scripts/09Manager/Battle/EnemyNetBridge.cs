@@ -20,14 +20,19 @@ namespace FPSGame.Managers
     {
         static bool installed;
 
+        /// <summary>NetId → 还没落到单位身上的移动目标（"消息比副本先到"时暂存，见 <see cref="OnRemoteMove"/>）。</summary>
+        static readonly Dictionary<int, Vector3> _pendingMoves = new Dictionary<int, Vector3>();
+
         public static void Install()
         {
             if (installed) return;
             installed = true;
+            _pendingMoves.Clear();
 
             BattleEventSub.OnEnemyMove += OnLocalMove;
             BattleEventSub.OnEnemyHit += OnLocalHit;
             UnitEventSub.OnEnemyDead += OnLocalDeath;
+            UnitEventSub.OnEnemyCreate += OnEnemyCreated;
 
             FPSGame.Net.NetRoomFlow.OnEnemyMove += OnRemoteMove;
             FPSGame.Net.NetRoomFlow.OnEnemyHitUp += OnRemoteHit;
@@ -38,10 +43,12 @@ namespace FPSGame.Managers
         {
             if (!installed) return;
             installed = false;
+            _pendingMoves.Clear();
 
             BattleEventSub.OnEnemyMove -= OnLocalMove;
             BattleEventSub.OnEnemyHit -= OnLocalHit;
             UnitEventSub.OnEnemyDead -= OnLocalDeath;
+            UnitEventSub.OnEnemyCreate -= OnEnemyCreated;
 
             FPSGame.Net.NetRoomFlow.OnEnemyMove -= OnRemoteMove;
             FPSGame.Net.NetRoomFlow.OnEnemyHitUp -= OnRemoteHit;
@@ -74,6 +81,25 @@ namespace FPSGame.Managers
         static void OnRemoteMove(int netId, Vector3 destination)
         {
             var enemy = Find(netId);
+            if (enemy != null)
+            {
+                enemy.ApplyRemoteDestination(destination);
+                return;
+            }
+
+            // 本端这份副本还没建出来（成员靠 WaveStartSync 才生成本波单位，比房主晚半步）⇒ 暂存。
+            // ⚠ 不能直接丢：房主只在"目标变化"时发（<1m 去重），丢了就没有第二条 ⇒ 那只怪会一直原地不动。
+            if (netId != 0) _pendingMoves[netId] = destination;
+        }
+
+        /// <summary>本端把这只怪建出来了 ⇒ 把"早到"的移动目标补上（同帧应用，不必等房主下一次下发）。</summary>
+        static void OnEnemyCreated(Actor actor)
+        {
+            if (actor == null || _pendingMoves.Count == 0) return;
+            if (!_pendingMoves.TryGetValue(actor.NetId, out Vector3 destination)) return;
+
+            _pendingMoves.Remove(actor.NetId);
+            var enemy = actor.GetComponent<EnemyController>();
             if (enemy != null) enemy.ApplyRemoteDestination(destination);
         }
 

@@ -19,7 +19,7 @@ namespace FPSGame.UI
     /// 「房间列表」子面板。挂在 <c>SelectMapWnd/Rooms</c> 上，由 <c>SelectMapWnd</c> 的 Server 按钮驱动显隐。
     ///
     /// <para>▍行 = **搜索到的房间**（KCPNet 局域网 UDP 广播发现，不限于专用服务器），
-    /// 数据来自 <see cref="LanDiscoverer.GetRooms"/>（房间模型 <see cref="LanRoomInfo"/>，共 9 个字段）。</para>
+    /// 数据来自 <see cref="LanDiscoverer.GetRooms"/>（房间模型 <see cref="LanRoomInfo"/>）。</para>
     ///
     /// <para>▍列（节点名对应 <c>Assets/Resources/UI/SelectMap/Row.prefab</c>）：
     /// <b>任务</b> = 任务类型名称（副行 房主名，两者 + 图标 + 边框都染成**该任务类型的颜色**）
@@ -37,10 +37,9 @@ namespace FPSGame.UI
     /// <see cref="OnRoomActivated"/>；房间有密码时先弹 <see cref="PasswordWnd"/> 收密码再回调。
     /// 面板**只负责收集**（哪个房、密码），真正的"回连 + 入房 + 超时"由 <c>NetRoomFlow</c> 负责。</para>
     ///
-    /// <para>⚠⚠ <b>难度 / 任务类型 / 来源 / 是否开局</b>：<see cref="LanRoomInfo"/> 只有 9 个字段，这四样广播都带不出来，
-    /// 因此本面板**不自己解析</b>，一律走 <see cref="RoomMeta"/>（库改造期间唯一的适配点，里面逐条标了
-    /// <c>TODO(库)</c>）。前两样靠房主拼进 <c>MapName</c>（<c>#难度</c>）与 <c>RoomName</c>（<c>#T=任务类型</c>）；
-    /// 后两样还没有真实来源 ⇒ 各留了一行**假数据兜底**（难度回退本机难度、任务退本机当前任务类型），改库后要删。</para>
+    /// <para>⚠ <b>难度 / 任务类型 / 来源 / 是否开局</b>：本面板**不自己判缺省值**，一律走 <see cref="RoomMeta"/>
+    /// （房间字段的唯一适配点）。库 2026-10-08 起已在广播里带上这四样（<c>difficulty / taskMain / inGame / source</c>）；
+    /// 任务**类型名**库不带、只有枚举 ⇒ 用本地 <c>TaskManager.FindMainMission</c> 反查（两端任务资产一致）。</para>
     ///
     /// <para>⚠ 一次性搭建工作在 <see cref="Build"/> 里做（首次 <see cref="Open"/> 调用），别放 <c>Awake</c>；
     /// 面板根节点在预制体里是 **active** 的，靠 <c>SelectMapWnd.ShowWnd()</c> 调 <see cref="Close"/> 收起
@@ -595,7 +594,7 @@ namespace FPSGame.UI
             _rooms.Sort((a, b) =>
             {
                 int byCount = b.PlayerCount.CompareTo(a.PlayerCount);
-                // 排序按**干净房间名**（剥掉 #T=任务类型后缀，别让约定参与排序）
+                // 人数相同的按房间名，保证列表顺序稳定
                 return byCount != 0 ? byCount : string.CompareOrdinal(RoomMeta.RoomName(a), RoomMeta.RoomName(b));
             });
 
@@ -800,21 +799,15 @@ namespace FPSGame.UI
         {
             if (_mapIndex > 0 && _mapIndex < _mapValues.Count && RoomMeta.MapName(room) != _mapValues[_mapIndex]) return false;
 
-            if (_diffIndex > 0 && _diffIndex < _diffValues.Count)
-            {
-                //TODO(库)：难度广播不出来时只能整条过滤掉（显示不出难度就没法按难度筛）；
-                //TODO(库)：库给 LanRoomInfo 加 int Difficulty 后改成直接比较 room.Difficulty，不用再判 explicitDiff。
-                RoomDifficulty(room, out bool explicitDiff);
-                if (!explicitDiff) return false;
-                if (RoomDifficulty(room, out _) != _diffValues[_diffIndex]) return false;
-            }
+            // 难度：未知（旧版房主没带该字段，= -1）不会被具体难度筛中 —— 显示不出难度就没法按难度筛
+            if (_diffIndex > 0 && _diffIndex < _diffValues.Count && RoomMeta.Difficulty(room) != _diffValues[_diffIndex])
+                return false;
 
             // 人数筛选 = 「未满员 **且** 没有开局」：只有人数判据时，排除不了"已进游戏但人还没满"的房间
-            //TODO(库)：RoomMeta.InGame 现在恒为 false（广播里没有 InGame 字段）；库加上之后本行自动生效。
             if (_countIndex == 1 && room.MaxPlayers > 0 && room.PlayerCount >= room.MaxPlayers) return false;
             if (_countIndex == 1 && RoomMeta.InGame(room)) return false;
 
-            // 联机类型：0 = 任意；服务器 / 局域网按房间来源（库缺字段期间 = 按主机地址猜）
+            // 联机类型：0 = 任意；服务器 / 局域网按广播里的来源字段（旧版房主缺该字段 ⇒ 默认局域网）
             if (_netTypeIndex == NetServerIndex && RoomNetType(room) != NetTypeEnum.Server) return false;
             if (_netTypeIndex == NetLanIndex && RoomNetType(room) != NetTypeEnum.Lan) return false;
 
@@ -824,7 +817,7 @@ namespace FPSGame.UI
             // 搜房间名（剥后缀）、地图名、任务类型（"歼灭"也能搜到，后缀反而是个可搜字段）
             return Contains(RoomMeta.RoomName(room), key)
                 || Contains(RoomMeta.MapName(room), key)
-                || Contains(RoomMeta.TaskType(room), key);
+                || Contains(RoomTaskType(room, FindMapData(room)), key);
         }
 
         private static bool Contains(string source, string key)
@@ -855,8 +848,8 @@ namespace FPSGame.UI
         ///   <item><c>Task/Icon</c> ← **任务类型图标** <c>MissionMainData_SO.sprite</c>
         ///         （按 <see cref="RoomTaskMission"/> 反查；查不到才退回 <c>MapData_SO.Icon</c> 这张地图图标），
         ///         其外框 <c>Task/Frame</c> + <c>Task/Name</c> 一并染成**任务类型颜色**；</item>
-        ///   <item><c>Task/Name</c> ← **任务类型名称**（见 <see cref="RoomTaskType"/>；优先取房间广播里
-        ///         房主拼的 <c>#T=</c> 后缀，取不到才退回"本机当前任务"的假数据）；
+        ///   <item><c>Task/Name</c> ← **任务类型名称**（见 <see cref="RoomTaskType"/>：按广播的主任务枚举
+        ///         反查本地任务配置，取不到退回地图名）；
         ///         <c>Task/Host</c> ← **房主名**（广播 <c>PlayerNames</c> 末尾的真名，取不到退 <c>HostIp</c>）；</item>
         ///   <item><c>Diff/Text</c> = 难度名、<c>Team/Pips</c> = 前 <c>PlayerCount</c> 个球员位、
         ///         <c>Type/Text</c> = 服务器 / 局域网（已开局优先显示「进行中」）。</item>
@@ -880,11 +873,11 @@ namespace FPSGame.UI
                     SetSprite(area, mapImage);
                 }
 
-                // ★ 任务类型三件套（图标 / 边框 / 标题）—— 广播只带得出**名字字符串**（RoomMeta.TaskType），
-                //   图标与颜色只有本地的 `MissionMainData_SO` 才有 ⇒ 按名字反查（两端任务资产一致）。
+                // ★ 任务类型三件套（图标 / 边框 / 标题）—— 广播只带**主任务枚举**（RoomMeta.TaskEnum），
+                //   图标 / 颜色 / 名字都在本地的 `MissionMainData_SO` 里 ⇒ 按枚举精确反查（两端任务资产一致）。
                 //   查不到就整体退回"地图图标 + 预制体本色"，**不编假数据**。
+                var mission = RoomTaskMission(room);
                 string taskName = RoomTaskType(room, data);
-                var mission = RoomTaskMission(room, taskName);
 
                 // 里侧那颗图标：换成**任务类型图标**（原来的 `MapData_SO.Icon` 只在查不到任务配置时兜底）
                 var icon = task.Find("Icon");
@@ -911,11 +904,10 @@ namespace FPSGame.UI
                 SetText(task.Find("Host"), string.IsNullOrEmpty(host) ? room.HostIp : host);
             }
 
-            int diff = RoomDifficulty(room, out _);
+            int diff = RoomMeta.Difficulty(room);
             SetText(row.Find("Diff/Text"), diff >= 0 && diff < DiffNames.Length ? DiffNames[diff] : "-");
 
             // 类型列：已开局的房间优先显示「进行中」（加入按钮同时会置灰）
-            //TODO(库)：RoomMeta.InGame 现在恒 false；库给 LanRoomInfo 加 bool InGame 后本分支自动生效。
             var type = RoomNetType(room);
             var typeText = row.Find("Type/Text");
             if (inGame)
@@ -944,61 +936,40 @@ namespace FPSGame.UI
         }
 
         /// <summary>
-        /// 行主标题 = **任务类型的名称**（<c>TaskCfg.TaskType</c> = 主任务 <c>MissionMainData_SO.name</c>，如「歼灭」/「护送」）。
+        /// 房间的**任务类型配置**（图标 / 颜色 / 名字的来源）。
         ///
-        /// <para>▍优先取**房间广播里带的**（房主把类型拼在房间名 <c>#T=</c> 后缀里，解析在 <see cref="RoomMeta.TaskType"/>）
-        /// ⇒ 逐房间真实。⚠ 库还没给 <c>LanRoomInfo</c> 加任务字段，只能这么带（<c>RoomMeta</c> 里标了 TODO(库)）。</para>
+        /// <para>▍按广播里的**主任务枚举**精确取。
+        /// 必须用枚举：任务类型**名字不唯一**（<c>GameData/Mission/Main</c> 里 3 份「进攻任务」、
+        /// 2 份「歼灭任务」…**颜色各不相同**），只靠名字会给错图标/颜色。</para>
         ///
-        /// <para>▍兜底是**假数据**：旧版房主 / 房主还没选任务 ⇒ 只能拿"本机当前任务"的类型垫上，
-        /// 列表里所有房间会是同一个值；本机也没选任务时退地图名（真实信息）。</para>
-        /// </summary>
-        /// <summary>
-        /// 房间的**任务类型配置**（图标 / 颜色的来源）。
-        ///
-        /// <para>▍两条路（房主把任务类型按 <c>#T=</c> 约定拼进房间名，见 <see cref="RoomMeta"/>）：
-        /// <list type="number">
-        ///   <item><b>优先</b>：房间带**真实 <c>MissionEnum</c>**（新约定 <c>"#T=枚举|名字"</c>）
-        ///         ⇒ 直接按枚举精确取。这是必须的 —— 任务类型**名字不唯一**
-        ///         （<c>GameData/Mission/Main</c> 里 3 份「进攻任务」、2 份「歼灭任务」…**颜色各不相同**），
-        ///         只靠名字会给错图标/颜色；</item>
-        ///   <item><b>退回</b>：旧版房主只带名字 ⇒ 按名字反查
-        ///         （<see cref="TaskManager.FindMainMission(string)"/> 取枚举值最小的那份，确定性但可能不同色）。</item>
-        /// </list></para>
-        ///
-        /// <para>▍返回 null 的情形（旧版房主且名字其实是兜底的地图名 / 两端任务资产不一致）：
+        /// <para>▍返回 null 的情形（旧版房主没带该字段 / 还没选任务 / 两端任务资产不一致）：
         /// 调用方退回"地图图标 + 预制体本色"，不编假数据。</para>
         /// </summary>
-        private static MissionMainData_SO RoomTaskMission(LanRoomInfo room, string taskName)
+        private static MissionMainData_SO RoomTaskMission(LanRoomInfo room)
         {
             var taskMgr = TaskManager.Instance;
             if (taskMgr == null) return null;
 
             int mainEnum = RoomMeta.TaskEnum(room);
-            return mainEnum >= 0
-                ? taskMgr.FindMainMission((MissionEnum)mainEnum)
-                : taskMgr.FindMainMission(taskName);
+            return mainEnum >= 0 ? taskMgr.FindMainMission((MissionEnum)mainEnum) : null;
         }
 
+        /// <summary>
+        /// 行主标题 = **任务类型的名称**（= 主任务 <c>MissionMainData_SO.name</c>，如「歼灭」/「护送」）。
+        ///
+        /// <para>▍广播里只带**枚举**（<c>LanRoomInfo.TaskMain</c>）⇒ 名字用本地任务配置反查
+        /// （<see cref="RoomTaskMission"/>，两端任务资产一致）。</para>
+        ///
+        /// <para>▍查不到（旧版房主没带枚举 / 还没选任务 / 两端资产不一致）时退**地图名**（真实信息），别留空。</para>
+        /// </summary>
         private static string RoomTaskType(LanRoomInfo room, MapData_SO data)
         {
-            // ★ 房间自己带的（房主开房/确认任务时拼的）——这是真实值，优先
-            string packed = RoomMeta.TaskType(room);
-            if (!string.IsNullOrEmpty(packed)) return packed;
+            var mission = RoomTaskMission(room);
+            if (mission != null && !string.IsNullOrEmpty(mission.name)) return mission.name;
 
-            // 本端压根没有这张地图的资料 ⇒ 显示广播里的原始串，别再编任务类型
-            if (data == null)
-            {
-                string raw = RoomMeta.MapName(room);
-                return string.IsNullOrEmpty(raw) ? "未知任务" : raw;
-            }
-
-            // ⚠ 兜底（假数据）：本机当前任务的类型（TaskManager.NowTaskType 已内含 Catalog 保护）
-            var taskMgr = TaskManager.Instance;
-            string local = taskMgr != null ? taskMgr.NowTaskType : null;
-            if (!string.IsNullOrEmpty(local)) return local;
-
-            // 本机也还没选任务 ⇒ 退回地图名（真实信息），别留空
-            return MapLabelOf(data);
+            string raw = RoomMeta.MapName(room);
+            if (!string.IsNullOrEmpty(raw)) return raw;
+            return data != null ? MapLabelOf(data) : "未知任务";
         }
 
         /// <summary>
@@ -1091,35 +1062,13 @@ namespace FPSGame.UI
         #region 数据映射
 
         // ============================================================================
-        // ⚠ 以下三个"取值"全部转发给 FPSGame.Net.RoomMeta —— 那是**库缺字段期间的唯一适配点**，
-        //   `#` 难度后缀约定、按 IP 猜来源都集中在那边。库改造（给 LanRoomInfo 加
-        //   Difficulty / InGame / Source）之后：**本区域一行都不用改**，只改 RoomMeta 里带 TODO(库) 的方法体。
-        //   详见 .codebuddy/plans/联机_房间列表接入与KCPNet扩展_计划.md §1
+        // 以下"取值"全部转发给 FPSGame.Net.RoomMeta —— 房间字段的**唯一适配点**
+        // （缺省值归一 + 空引用保护）。库 2026-10-08 起已在广播里带上
+        // Difficulty / TaskMain / InGame / Source。
         // ============================================================================
 
         /// <summary>
-        /// 房间难度。<paramref name="explicit"/> = 难度**是否真的来自广播**。
-        ///
-        /// <para>TODO(库)：难度现在靠"房主把难度拼在 <c>MapName</c> 后面（地图#难度int）"这个临时约定
-        /// （解析在 <see cref="RoomMeta.Difficulty"/>）；拿不到时只能回退**本机当前难度** ⇒ 这是**假数据**
-        /// （列表里所有房间会显示成同一个难度）。库加 <c>int Difficulty</c> 后：
-        /// ① 删掉下面这段回退，直接 <c>return RoomMeta.Difficulty(room, out @explicit);</c>；
-        /// ② 开房侧 <c>NetHostSvc.StartHost</c> 已在 <see cref="HostRoomOptions.Difficulty"/> 里传难度，无需再改。</para>
-        /// </summary>
-        private static int RoomDifficulty(LanRoomInfo room, out bool @explicit)
-        {
-            int value = RoomMeta.Difficulty(room, out @explicit);
-            if (@explicit) return value;
-
-            //TODO(库)：**这一段是假数据，库加上 Difficulty 后整段删除**（含 < 0 / >= DiffNames.Length 的越界保护）。
-            int fallback = (int)TaskState.Difficulty;
-            return fallback >= 0 && fallback < DiffNames.Length ? fallback : value;
-        }
-
-        /// <summary>
         /// 房间的联机类型：来源是局域网广播 ⇒ <see cref="NetTypeEnum.Lan"/>，否则 ⇒ <see cref="NetTypeEnum.Server"/>。
-        /// <para>TODO(库)：来源现在由 <see cref="RoomMeta.Source"/> **按主机地址猜**
-        /// （内网/环回 ⇒ 局域网）。库加 <c>int Source</c> 后自动变准，别再回来改这里。</para>
         /// </summary>
         private static NetTypeEnum RoomNetType(LanRoomInfo room)
         {

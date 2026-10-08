@@ -77,6 +77,9 @@ namespace FPSGame.Net
         public const int SpeechNtf = 4030;
         /// <summary>房主 -> 全体：喊话同步（含房主自己；发起方按 Sid 丢掉自己那条）</summary>
         public const int SpeechSync = 4031;
+        /// <summary>房主 -> 全体：场景单位（NPC 这类由场景摆好、会自己走动的氛围单位）的移动目标 / 停下。
+        /// ⚠ 键是 <c>Actor.Id</c>（不是 NetId）：大厅会反复重建，而每局自增的号段依赖"每局归零 + 两端创建顺序一致"。</summary>
+        public const int SceneUnitMoveSync = 4032;
         /// <summary>成员 -> 房主：请求场景 actor（NPC/特殊单位）快照</summary>
         public const int SceneActorReq = 4021;
         /// <summary>房主 -> 该成员：场景 actor 快照</summary>

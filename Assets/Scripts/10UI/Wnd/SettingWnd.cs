@@ -623,10 +623,8 @@ public partial class SettingWnd : Window
             MapName = taskManager.MapId,
             MaxPlayers = 4,
             Password = string.Empty,
-            // 难度 / 任务类型走临时约定拼进 MapName / RoomName（RoomMeta 里标了 TODO(库)）
             Difficulty = taskManager.nowTask.activeTask ? (int)taskManager.nowTask.difficulty : -1,
             HostName = hostName,
-            TaskType = taskManager.NowTaskType,
             TaskMain = taskManager.NowTaskMain,
         };
 

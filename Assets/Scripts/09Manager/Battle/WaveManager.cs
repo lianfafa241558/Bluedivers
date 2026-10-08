@@ -43,9 +43,6 @@ namespace FPSGame.Managers
         /// <summary>本局已开波数（波次的随机细分键，见 <see cref="WaveBase.PendingWaveIndex"/>）。</summary>
         int waveSeq;
 
-        /// <summary>本局已建单位数：当 <see cref="Actor.NetId"/> 用（两端创建顺序一致 ⇒ 同一个 NetId 指同一个单位）。</summary>
-        int netIdSeq;
-
         [SerializeField]
         int waveValue;
 
@@ -384,9 +381,8 @@ namespace FPSGame.Managers
             }
 
             var go = Object.Instantiate(item.unit, pos, Quaternion.Euler(spawnRandom.RandomVector2().ToVector3()), manager.ACCont.transform);
-            // ★ 跨端稳定的单位标识（波次/巡逻队都走这里，且两端生成顺序一致）
-            var netActor = go.GetComponent<Actor>();
-            if (netActor != null) netActor.NetId = ++netIdSeq;
+            // ★ 跨端稳定的单位标识由 `Actor.Awake` 统一分配（见 `Actor.NetId` 的注释）——
+            //   这里不能自己分：波次单位根本不走本方法（ZergWave/RobotWave 都是裸 Instantiate）。
             if (IsFixed)
             {
                 go.GetComponent<I_AIController>().BirthDuration = 0;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.Core.Interface;
 using FPSGame.Mission;
@@ -17,8 +17,6 @@ public static class BattleEventSub
     public static event Action<GameObject, Vector3> OnCallKai;
     public static void CallKai(GameObject source, Vector3 point) => OnCallKai?.Invoke(source, point);
 
-    // 【2026-09-30 拆分】单位/噪声/命中类事件已迁到 02Game/Game/UnitEventSub.cs（下层总线），
-    // 原因见该文件头注释：这组事件的发布者都在单位内核，将来随 05_UnitCore 一起下沉。
 
     #region 空投
     /// <summary>空投授权状态变化</summary>
@@ -100,8 +98,6 @@ public static class BattleEventSub
 
     #endregion
 
-    // 【2026-09-30 拆分】敌人/特殊单位/玩家 的创建与死亡事件已迁到 02Game/Game/UnitEventSub.cs；
-    // 其中 OnFriendDead / OnFriendRevive 因全仓零订阅被直接删除（需要时可从 git 历史取回）。
 
     #region 团灭判负
     /// <summary>团灭判负倒计时，参数为剩余秒数</summary>
@@ -160,6 +156,13 @@ public static class BattleEventSub
     /// <summary>【房主】某只怪死了（NetId）⇒ 成员照此干掉自己那份副本</summary>
     public static event Action<int> OnEnemyDiedRemote;
     public static void EnemyDiedRemote(int netId) => OnEnemyDiedRemote?.Invoke(netId);
+
+    /// <summary>【房主】场景单位（NPC 这类**由场景摆好**、会自己走动的氛围单位）要走向哪 / 停下；键 = <c>Actor.Id</c>。
+    /// <para>▍为什么另开一条：它们没有 AI 控制器、也不在 <c>ActorsManager.Enemys</c> 里 ⇒ 套不上敌人那条 4024；
+    /// 而它们的游荡用的是**各端各自的随机** ⇒ 两边看到的 NPC 永远不在同一处。这里只发"意图"，
+    /// 由 09 的落地桥（<c>SceneUnitMoveSink</c>，挂对应场景）转发上网络、并把房主下发的目标点应用回本端 NPC。</para></summary>
+    public static event Action<string, Vector3, bool> OnSceneUnitMove;
+    public static void SceneUnitMove(string id, Vector3 destination, bool stop = false) => OnSceneUnitMove?.Invoke(id, destination, stop);
     #endregion
 }
 

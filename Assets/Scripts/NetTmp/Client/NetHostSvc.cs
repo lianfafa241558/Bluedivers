@@ -93,20 +93,12 @@ public class NetHostSvc : MonoBehaviour
     /// <summary>房间密码（空表示无密码）</summary>
     private string _roomPassword = "";
 
-    /// <summary>本房难度（<c>DifficultyEnum</c> 的 int；-1 = 未指定）。
-    /// ⚠ 库缺难度字段期间：广播里带不出去（只拼在 <c>MapName</c> 的 <c>#</c> 后缀里，见 <see cref="RoomMeta"/>），
-    /// 但 <c>TaskConfirmNtf</c> 会带上它，成员据此复现难度。</summary>
+    /// <summary>本房难度（<c>DifficultyEnum</c> 的 int；-1 = 未指定）。随广播下发（<c>LanRoomInfo.Difficulty</c>），
+    /// 同时 <c>TaskConfirmNtf</c> 也带一份给成员复现难度。</summary>
     private int _difficulty = -1;
 
-    /// <summary>本房任务类型名（<c>TaskCfg.TaskType</c>，如「歼灭」；空 = 还没选任务）。
-    /// ⚠ 库缺任务字段期间：广播里带不出去 ⇒ 由 <see cref="RoomMeta.ComposeRoomName"/> 拼进房间名
-    /// （房间列表靠它显示"每个房间真实的任务类型"）；<see cref="ConfirmTask"/> 会就地刷新，改选任务后广播自动跟上。</summary>
-    private string _taskType = "";
-
-    /// <summary>本房**主任务类型枚举值**（<c>MissionEnum</c> 的 int；-1 = 未知/还没选任务）。
-    /// <para>▍为什么除了名字还要它：任务类型**名字不唯一**（`GameData/Mission/Main` 里 3 份「进攻任务」颜色各不相同）
-    /// ⇒ 房间列表要**精确**取图标/颜色只能靠枚举。两者一起由 <see cref="RoomMeta.ComposeRoomName"/> 拼进房间名
-    /// （<c>"#T=枚举|名字"</c>）。</para>
+    /// <summary>本房**主任务类型枚举值**（<c>MissionEnum</c> 的 int；-1 = 未知/还没选任务）。随广播下发，
+    /// 房间列表据此**精确**取任务图标/颜色（任务类型名不唯一，只靠名字会取错）。
     /// ⚠ 本类在 <c>02_Net</c>、看不见 <c>MissionEnum</c>（asmdef references 为空）⇒ 只存 <c>int</c>。</summary>
     private int _taskMain = -1;
 
@@ -114,8 +106,7 @@ public class NetHostSvc : MonoBehaviour
     private string _hostName = "房主";
 
     /// <summary>本房是否已进战斗（= 已过 <see cref="NotifyTransition"/>；此时不再收人）。
-    /// <para>TODO(库)：<c>LanRoomInfo</c> 加上 <c>bool InGame</c> 后，把它写进 <see cref="GetBroadcastInfo"/>，
-    /// 成员端才能区分"没满员但已进游戏"的房间（现在只在房主本机有效）。</para></summary>
+    /// <para>随广播下发（<c>LanRoomInfo.InGame</c>）⇒ 成员端能筛掉"没满员但已进游戏"的房间。</para></summary>
     private bool _started;
 
     /// <summary>本机作为房主时的自标识名称（运行时时间戳生成，用于成员端排除"自己开的房"）</summary>
@@ -294,7 +285,6 @@ public class NetHostSvc : MonoBehaviour
         MaxPlayers = Mathf.Max(1, options.MaxPlayers);
         _roomPassword = options.Password ?? "";
         _difficulty = options.Difficulty;
-        _taskType = options.TaskType ?? "";
         _taskMain = options.TaskMain;
         _hostName = string.IsNullOrEmpty(options.HostName) ? "房主" : options.HostName;
         _started = false;
@@ -338,17 +328,16 @@ public class NetHostSvc : MonoBehaviour
         _hostSelfName = $"Host_{System.DateTime.UtcNow.ToString("HHmmssfff")}";
         RoomInfo = new LanRoomInfo
         {
-            //TODO(库·临时约定)：LanRoomInfo 没有任务类型字段 ⇒ 先拼在房间名后面（"房间名#T=任务类型"），
-            //TODO(库)：库加上 string TaskType 之后改成 `RoomName = options.RoomName, TaskType = _taskType,`
-            //TODO(库)：并删掉 RoomMeta 里的 #T= 解析（那里同样有 TODO 标注）。
-            RoomName = RoomMeta.ComposeRoomName(options.RoomName, _taskType, _taskMain),
+            RoomName = options.RoomName,
             HostPort = hostPort,
             PlayerCount = 1,
             MaxPlayers = MaxPlayers,
-            //TODO(库·临时约定)：LanRoomInfo 没有难度字段 ⇒ 先把难度拼在 MapName 后面（"地图#难度"），
-            //TODO(库)：库加上 int Difficulty 之后改成 `MapName = options.MapName, Difficulty = _difficulty,`
-            //TODO(库)：并删掉 RoomMeta 里的 # 解析（那里同样有 TODO 标注）。
-            MapName = RoomMeta.ComposeMapName(options.MapName, _difficulty),
+            MapName = options.MapName,
+            Difficulty = _difficulty,
+            TaskMain = _taskMain,
+            InGame = false,
+            // 当前唯一的房间来源就是局域网广播（服务器列表尚未实现）⇒ 恒定 0
+            Source = (int)RoomMeta.SourceEnum.LanBroadcast,
             PasswordProtected = !string.IsNullOrEmpty(_roomPassword),
             Version = Application.version,
             // ⚠ PlayerNames[0] 必须是这个**合成名**（成员端靠 IndexOf 排除自己开的房），
@@ -422,14 +411,13 @@ public class NetHostSvc : MonoBehaviour
     }
 
     /// <summary>
-    /// 每次广播前调用，动态返回最新房间信息（人数会随成员进出变化）。
+    /// 每次广播前调用，动态返回最新房间信息（人数 / 是否已开局会变）。
     /// </summary>
     private LanRoomInfo GetBroadcastInfo()
     {
         if (RoomInfo == null) return null;
         RoomInfo.PlayerCount = TotalPlayers; // 房主自己 + 已入房成员
-        //TODO(库)：LanRoomInfo 加上 bool InGame 后在这里写 `RoomInfo.InGame = _started;`，
-        //TODO(库)：成员端才能筛掉"没满员但已进游戏"的房间（见 RoomMeta.InGame）。
+        RoomInfo.InGame = _started;          // 已进战斗 ⇒ 房间列表显示「进行中」且不给加入
         return RoomInfo;
     }
 
@@ -841,15 +829,13 @@ public class NetHostSvc : MonoBehaviour
     /// <para>▍由 09 侧的 <c>TaskManager.ToDto</c> 转换而来（02_Net 看不见 <c>TaskCfg</c>/<c>MissionEnum</c>）。
     /// 带上它之后，本局配置就"以内容为准"：后进者即使本地任务表里已经没有这个任务，也能照打
     /// —— 这正是 <see cref="_lastTaskConfirm"/> 补发机制要保证的语义。</para></param>
-    /// <param name="taskType">★ 本局**任务类型名**（如「歼灭」，取 <c>TaskManager.NowTaskType</c>；空 = 不带）。
-    /// <para>▍为什么要在这里收：房间**可能建得比选任务早** —— 「公开房」流程是按下准备时才建服
-    /// （<c>SelectMapWnd.ConfirmTask</c> 里先 <c>CreateRoom</c> 再 <c>SetTask</c>），建服那一刻 <c>_taskType</c>
-    /// 还是空的/上一局的。确认任务才是权威时刻 ⇒ 在这里就地刷新广播房间名，房间列表一个广播周期内就跟着变。</para></param>
     /// <param name="taskMain">★ 本局**主任务类型枚举值**（<c>MissionEnum</c> 的 int；-1 = 不带；取 <c>TaskManager.NowTaskMain</c>）。
-    /// <para>▍为什么必须带上：任务类型**名字不唯一**（3 份「进攻任务」颜色各不相同）⇒ 房间列表只靠名字会给错图标/颜色。
-    /// 与 <paramref name="taskType"/> 一起拼成 <c>"#T=枚举|名字"</c>。⚠ 同为 <c>int</c> 是因为 02_Net 看不见该枚举。</para></param>
+    /// <para>▍为什么要在这里收：房间**可能建得比选任务早** —— 「公开房」流程是按下准备时才建服
+    /// （<c>SelectMapWnd.ConfirmTask</c> 里先 <c>CreateRoom</c> 再 <c>SetTask</c>），建服那一刻本房任务还是
+    /// 空的/上一局的。确认任务才是权威时刻 ⇒ 在这里就地把广播里的主任务枚举刷新，房间列表一个广播周期内就跟着变。
+    /// ⚠ 用 <c>int</c> 而非 <c>MissionEnum</c> 是因为 02_Net 看不见该枚举。</para></param>
     public void ConfirmTask(string mapName = "", int taskIndex = -1, int[] extraDiff = null,
-        int seed = 0, int playMode = 2, int taskFingerprint = 0, TaskCfgDto cfg = null, string taskType = null,
+        int seed = 0, int playMode = 2, int taskFingerprint = 0, TaskCfgDto cfg = null,
         int taskMain = -1)
     {
         _rosterFrozen = false;   // 新一局放行名单（上一局进 Transition 时冻结过）
@@ -871,14 +857,13 @@ public class NetHostSvc : MonoBehaviour
         };
         _lastTaskConfirm = ntf;   // 供 Ready/Armament 期间入房的新人补发（**含配置内容** ⇒ 后进者按内容复现）
 
-        // ★ 任务已定 ⇒ 刷新广播出去的房间名（"房间名#T=任务类型"）。RoomInfo 是**同一个对象**、
-        //   广播每次读它现取（GetBroadcastInfo）⇒ 这里改完，下一次广播就带上新任务类型了。
+        // ★ 任务已定 ⇒ 刷新广播里的主任务枚举（房间列表据此精确取任务图标/颜色）。RoomInfo 是**同一个对象**、
+        //   广播每次读它现取（GetBroadcastInfo）⇒ 这里改完，下一次广播就带上了。
         //   （公开房流程建服早于选任务，所以这一步不是可选项 —— 见方法参数说明。）
-        if (!string.IsNullOrEmpty(taskType) || taskMain >= 0)
+        if (taskMain >= 0)
         {
-            if (!string.IsNullOrEmpty(taskType)) _taskType = taskType.Trim();
-            if (taskMain >= 0) _taskMain = taskMain;
-            RoomInfo.RoomName = RoomMeta.ComposeRoomName(RoomMeta.RoomName(RoomInfo), _taskType, _taskMain);
+            _taskMain = taskMain;
+            if (RoomInfo != null) RoomInfo.TaskMain = _taskMain;
         }
 
         SendToAll(MessageCenter.Pack(CmdId.TaskConfirm, ntf));

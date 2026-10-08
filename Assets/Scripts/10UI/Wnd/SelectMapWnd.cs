@@ -305,12 +305,10 @@ public class SelectMapWnd : Window
             MapName = mapName,
             MaxPlayers = 4,
             Password = string.Empty,
-            // 难度：库里还没有 Difficulty 字段 ⇒ 先按临时约定拼进 MapName（RoomMeta/HostRoomOptions 里标了 TODO(库)）
             Difficulty = SelectTaskDiff,
             HostName = hostName,
             // ⚠ 此刻本局任务**还没 SetTask**（「公开房」是先建服再确认任务）⇒ 这里拿到的可能是上一局的值；
-            //   真正的权威时刻是下面的 ConfirmTask，它会就地刷新广播房间名。
-            TaskType = taskManager.NowTaskType,
+            //   真正的权威时刻是下面的 ConfirmTask，它会就地刷新广播里的主任务枚举。
             TaskMain = taskManager.NowTaskMain,
         };
 
@@ -695,9 +693,9 @@ public class SelectMapWnd : Window
             //   跨窗口 / 刚刷过表时同一个下标会指向另一个任务。带上内容后：
             //   ① 后进者（Ready/Armament 期间入房）即使本地表里已经没有这个任务，也能按内容复现；
             //   ② 两端表不同也不再是致命错误（指纹降级为诊断告警，见 TeamNetBridge.HandleTaskConfirm）。
-            // ★ 末尾带上任务类型名：房间可能建在选任务之前（公开房流程）⇒ 由这里刷新房间广播里的类型
+            // ★ 末尾带上主任务枚举：房间可能建在选任务之前（公开房流程）⇒ 由这里刷新广播里的任务类型
             host.ConfirmTask(mapId, SelectTaskIndex, SelectTaskExtraDiff, seed, SelectPlayMode, fingerprint,
-                TaskManager.ToDto(taskManager.nowTask.taskCfg), taskManager.NowTaskType, taskManager.NowTaskMain);
+                TaskManager.ToDto(taskManager.nowTask.taskCfg), taskManager.NowTaskMain);
         }
     }
 

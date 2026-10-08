@@ -49,10 +49,13 @@
 - ⚠ `.editorconfig` 的 `charset = utf-8-bom` 的**作用边界**：只对"**IDE 保存**"生效（新建文件 + 已有文件下次保存都带 BOM），**管不到** Unity 自己写的、脚本/PowerShell/git 写的文件（那些要单独补）；**必须写在 `[*.cs]` 或已有的 `[*.{cs,vb}]` 段，别写进 `[*]`**（否则 VS 存 `.json`/`.md` 也会带 BOM）；EditorConfig 规范自己把 `utf-8-bom` 标为 discouraged，但 .NET/本项目规范要它
 
 ## 编译验证
-- ⭐⭐ **首选 = 离线编译 `python -X utf8 .codebuddy/plans/offline_compile.py <AsmName>...`**：借 Unity 自带 Roslyn（`D:\UnityHub\Editor\2022.3.62f3\Editor\Data\DotNetSdkRoslyn\csc.dll` + `NetCoreRuntime\dotnet.exe`）按 Unity 生成的 `.csproj` 编译，**~0.5s/程序集、完全不触发 Unity 域重载**（彻底绕开下面那条红线）。要点：① 兄弟程序集走 `<ProjectReference><Name>` → 映射 `Temp/offline_compile/<Name>.dll`（**优先**，本轮新产物）或 `Library/ScriptAssemblies/<Name>.dll`；② 必须**按依赖顺序**传参，下游才能吃到新 dll；③ `-nostdlib+` + csproj 的 `HintPath` 引用（netstandard + System shims + UnityEngine 模块）；④ 本机**没装 .NET SDK**（`dotnet --list-sdks` 空）⇒ 只能借 Unity 自带 Roslyn，`dotnet build` 走不通；⑤ 输出只落 `Temp/offline_compile/`，安全。**用途：改 ns / using / 搬文件后立刻验证，红了按报错补 using 再跑（循环 <1s）**
+- ⭐⭐ **首选 = 离线编译 `python -X utf8 .codebuddy/plans/offline_compile.py <AsmName>...`**：借 Unity 自带 Roslyn（`D:\UnityHub\Editor\2022.3.62f3\Editor\Data\DotNetSdkRoslyn\csc.dll` + `NetCoreRuntime\dotnet.exe`）按 Unity 生成的 `.csproj` 编译，**~0.5s/程序集、完全不触发 Unity 域重载**（彻底绕开下面那条红线）。要点：① 兄弟程序集走 `<ProjectReference><Name>` → 映射 `Temp/offline_compile/<Name>.dll`（**优先**，本轮新产物）或 `Library/ScriptAssemblies/<Name>.dll`；② 必须**按依赖顺序**传参，下游才能吃到新 dll；③ `-nostdlib+` + csproj 的 `HintPath` 引用（netstandard + System shims + UnityEngine 模块）；④ 本机**没装 .NET SDK**（`dotnet --list-sdks` 空）⇒ 只能借 Unity 自带 Roslyn，`dotnet build` 走不通；⑤ 输出只落 `Temp/offline_compile/`，安全。**用途：改 ns / using / 搬文件后立刻验证，红了按报错补 using 再跑（循环 <1s）**；⑥ 2026-10-08 已改成**自动推导**：`ROOT` = 脚本位置的上两级（可用环境变量 `BLUEDIVERS_ROOT` 覆盖）、Unity 安装路径按候选表探测（本机 = `D:\Unity Hub\Version\2022.3.62f3\Editor\Data`，可用 `UNITY_EDITOR_DATA` 覆盖）⇒ 换机器/换盘符不用改脚本
 - **三证齐**（必须经 Unity 时）：`Library/ScriptAssemblies/*.dll` mtime 前进 + Console 0 error（**先清空再读**）+ `is_compiling:false`
 - **空转判据**：有错 + dll mtime 不动 + 错误行号比源码少 1 行 ⇒ 编译器读的是旧快照；治法 = `ImportAsset + Refresh + RequestScriptCompilation()`，或 Python `os.utime()`
 - ⚠⚠ 某程序集编译失败 ⇒ **依赖它的程序集既不报错也不编译** ⇒ 错误会逐层暴露，必须迭代；决定性判据 = "哪个 dll 没更新" + `GetAssemblies().sourceFiles` 是否含新文件
+- ⚠ **「假缺失」= `.cs.meta` 被写成等长全 `\x00`**（2026-10-08 `TimerHost.cs.meta`/`FlowState.cs.meta`，各 243B = 正常长度 ⇒ `git status` 干净、`read_file` 判 binary、肉眼无异常）⇒ Unity 导入不出 guid ⇒ 该 .cs **不进编译** ⇒ 报 `CS0103: 名称"X"不存在`，而文件明明在磁盘上。
+  判据：`manage_asset get_info` 返回 `guid:""` / `assetType:"Unknown"` / `instanceID:0`；扫描 `plans/fix_zeroed_metas_1008.py`（全项目 7215 个 meta 只此 2 个）。修法 = 按同目录正常 meta 逐字节重写（LF/无 BOM/243B）+ 换新 GUID（`static class` 无引用可安全换，MonoBehaviour 要先查 prefab/scene 是否引用旧 guid）。
+  ⇒ 口径：**CS0103 但源文件确实存在 ⇒ 先查 meta/导入状态，别改代码**
 - ⚠ `editor/state` 的 `external_changes_dirty` **不可信** ⇒ 只看 dll mtime vs 源文件 mtime（`dll_mtime.py`）
 - `refresh` 之后不能立刻读 Console；`isCompiling=True` 时读 dll mtime 太早
 

@@ -18,9 +18,9 @@ namespace FPSGame.Net
 /// </summary>
 public struct HostRoomOptions
 {
-    /// <summary>房间名（列表里显示的名字；⚠ 库缺字段期间由 <see cref="RoomMeta.ComposeRoomName"/> 拼上 "#T=任务类型" 后缀）。</summary>
+    /// <summary>房间名（列表里显示的名字，原样广播）。</summary>
     public string RoomName;
-    /// <summary>地图名（⚠ 库缺难度字段期间由 <see cref="RoomMeta.ComposeMapName"/> 拼上 "#难度" 后缀）。</summary>
+    /// <summary>地图名（原样广播，不再拼后缀）。</summary>
     public string MapName;
     /// <summary>最大人数（含房主）。</summary>
     public int MaxPlayers;
@@ -30,13 +30,9 @@ public struct HostRoomOptions
     public int Difficulty;
     /// <summary>房主玩家名（显示用；广播里的 <c>PlayerNames[0]</c> 仍是用于"排除自己开的房"的合成名）。</summary>
     public string HostName;
-    /// <summary>本局**任务类型名**（如「歼灭」，取 <c>TaskCfg.TaskType</c>；空 = 还没选任务）。
-    /// ⚠ 库缺字段期间由 <see cref="RoomMeta.ComposeRoomName"/> 拼进 <see cref="RoomName"/> ⇒ 房间列表能显示出来。</summary>
-    public string TaskType;
     /// <summary>本局**主任务类型枚举值**（<c>MissionEnum</c> 的 int；-1 = 未知/还没选任务）。
-    /// <para>▍为什么要它：任务类型**名字不唯一**（`GameData/Mission/Main` 里 3 份「进攻任务」颜色各不相同）
-    /// ⇒ 房间列表要**精确**取图标/颜色只能靠枚举；与 <see cref="TaskType"/> 一起拼进房间名
-    /// （<c>"#T=枚举|名字"</c>，见 <see cref="RoomMeta.ComposeRoomName"/>）。</para>
+    /// <para>▍为什么只带枚举、不带类型名：任务类型**名字不唯一**（`GameData/Mission/Main` 里 3 份「进攻任务」颜色各不相同）
+    /// ⇒ 房间列表要**精确**取图标/颜色只能靠枚举；名字由接收端用本地任务配置反查（两端资产一致）。</para>
     /// ⚠ 这里用 <c>int</c> 而非 <c>MissionEnum</c>：本结构体在 <c>02_Net</c>，看不见 <c>01_GameContract</c> 的枚举。</summary>
     public int TaskMain;
 
@@ -51,7 +47,6 @@ public struct HostRoomOptions
             Password = "",
             Difficulty = -1,
             HostName = "",
-            TaskType = "",
             TaskMain = -1,
         };
     }
@@ -408,6 +403,23 @@ public class EnemyMoveMsg
     [Key(1)] public float X;
     [Key(2)] public float Y;
     [Key(3)] public float Z;
+}
+
+/// <summary>【房主 → 全体】场景单位（NPC 这类由场景摆好、会自己走动的氛围单位）的移动目标 / 停下。
+///
+/// <para>▍为什么键是 <see cref="Id"/> 而不是 NetId：这类单位只在大厅/场景里摆着，回大厅会**整批重建**，
+/// 而 NetId 的口径是"每局归零 + 两端创建顺序一致"⇒ 在大厅不成立；而 <c>Actor.Id</c> 在两端同一份场景里
+/// 天然一致（现有 <see cref="SceneActorSync"/> 也拿它当"匹配主键"）。</para></summary>
+[MessagePackObject]
+public class SceneUnitMoveMsg
+{
+    /// <summary>匹配主键：<c>Actor.Id</c>（如 <c>Noa</c> / <c>Mika</c>）。</summary>
+    [Key(0)] public string Id;
+    [Key(1)] public float X;
+    [Key(2)] public float Y;
+    [Key(3)] public float Z;
+    /// <summary>true = 就地停下（谈话/剧情定住 NPC）⇒ 接收端 <c>ResetPath</c>，不要"走过去"。</summary>
+    [Key(4)] public bool Stop;
 }
 
 /// <summary>【成员 → 房主】本机打中了某只怪 ⇒ 上报房主结算（血量/死亡以房主为唯一权威）。</summary>

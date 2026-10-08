@@ -101,6 +101,12 @@ namespace FPSGame.AI
         /// <summary>同一目标点下一次允许重发的时间（请求失败/被挡掉后按 <see cref="NavRetryInterval"/> 节流重试）</summary>
         private float _nextNavRetryTime;
 
+        /// <summary>网络下发但**当帧应用不了**的目标点（见 <see cref="ApplyRemoteDestination"/>）。</summary>
+        private Vector3 _pendingRemoteDestination;
+
+        /// <summary>是否有待落地的网络目标点（agent 被禁用时置位，由 <see cref="Update"/> 重试到成功）。</summary>
+        private bool _hasPendingRemoteDestination;
+
 
 
         private Transform EyePoint;
@@ -173,6 +179,9 @@ namespace FPSGame.AI
 
             // 结算外力推挤(爆炸/踩踏击退，见 EnemyController_Physical.cs)
             UpdateKnockback();
+
+            // 补发"早到/当时 agent 不可用"的网络目标点（见 ApplyRemoteDestination）
+            RetryPendingRemoteDestination();
 
             //DetectionModule?.HandleTargetDetection();
 
@@ -280,12 +289,35 @@ namespace FPSGame.AI
 
 
         /// <summary>【网络下发】应用房主给的移动目标：**绕开**本端的去重/节流（那套判据基于本地状态，两端不一定同步命中）。
+        /// <para>▍为什么要缓存重试：成员的移动**全靠这条**下发，而房主只在"目标变化"时发（`&lt;1m` 去重）⇒
+        /// 丢掉一条就再也不会来第二条，那只怪会一直原地不动。收到时 agent 正好被禁用（空投单位在落地前
+        /// 整套 Behaviour 都是关的）就会丢 ⇒ 先存下来，等 agent 启用后在 <see cref="Update"/> 里补发。</para>
         /// ⚠ 只由 09 的联机桥调用。</summary>
         public void ApplyRemoteDestination(Vector3 destination)
         {
             m_lastDestination = destination;
-            if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
-                FPSGame.Game.UnitEventSub.PathRequest(NavMeshAgent, destination, false);
+            _pendingRemoteDestination = destination;
+            _hasPendingRemoteDestination = true;
+            RetryPendingRemoteDestination();
+        }
+
+        /// <summary>把待落地的网络目标点补发出去；成功后清标记（失败时每帧只做一次状态判断，开销可忽略）。</summary>
+        private void RetryPendingRemoteDestination()
+        {
+            if (!_hasPendingRemoteDestination) return;
+            if (TryRequestPath(_pendingRemoteDestination)) _hasPendingRemoteDestination = false;
+        }
+
+        /// <summary>agent 真正可用时才发寻路请求。
+        /// <para>⚠ 只拦"agent 被禁用"这一种（<c>SetDestination</c> 对它必然失败、还会刷错误日志）；
+        /// 其余情况（含离网格/飞行单位）保持原行为 —— 交给 <c>PathRequestManager</c> 的投影兜底处理。</para></summary>
+        /// <returns>true = 本次算处理完（无论 agent 存不存在），false = agent 暂不可用、需要重试</returns>
+        private bool TryRequestPath(Vector3 destination)
+        {
+            if (!FpsHelper.HaveNavMeshAgent(NavMeshAgent)) return true;
+            if (!NavMeshAgent.isActiveAndEnabled) return false;
+            FPSGame.Game.UnitEventSub.PathRequest(NavMeshAgent, destination, false);
+            return true;
         }
 
         public void StopNav()
@@ -316,6 +348,7 @@ namespace FPSGame.AI
         protected override void _OnDie(GameObject source)
         {
             base._OnDie(source);
+            _hasPendingRemoteDestination = false;   // 已死：agent 会被禁用，别再每帧去补发
             if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
             {
                 NavMeshAgent.isStopped = true;

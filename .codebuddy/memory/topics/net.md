@@ -17,16 +17,9 @@
 - `LanDiscoverer(port)`：默认 `LanDiscoveryConfig.ListenPort`(29800)；**本机同时开房时 29800 被 `LanBroadcaster` 占用**，要降级到 `NetConfig.LanSelfBroadcastPort`(29801)，此时收不到 ANNOUNCE，只能靠周期 `Scan()` 维持列表；`RoomExpireMs=6000`、`AnnounceIntervalMs=2000`、`DiscoveryTimeoutMs=1500`
 - `NetHostSvc` 广播的 `PlayerNames[0]` 是**合成名** `Host_<HHmmssfff>`（成员端用来排除自己开的房），不是真实玩家名
 - 常量实测：`KCPNet.NetConfig` = `HostGamePort 17666` / `LanBroadcastPort 29800` / `LanSelfBroadcastPort 29801`；`LanDiscoveryConfig` = `ListenPort/BroadcastPort 29800`、`AnnounceIntervalMs 2000`、`DiscoveryTimeoutMs 1500`、`RoomExpireMs 6000`、`BroadcastTtl 1`、`BroadcastAddress 255.255.255.255`（可用 `Setup(...)` 注入覆盖）。`LanRoomInfo.ToJson()` 是**实例**方法、`FromJson(json)` 是**静态**方法 ⇒ 加字段时两处都要改，且 `FromJson` 缺 key 要给默认值（兼容旧版本房主）。
-- ⭐ **房间列表的"库缺字段"补丁：任务类型拼进房间名（2026-10-07 用户要求"把缺的字符串化进房间名称，UI 做解析"）**：
-  `KCPNet.LanRoomInfo` 只有 9 个字段（RoomName/HostIp/HostPort/PlayerCount/MaxPlayers/MapName/PasswordProtected/Version/PlayerNames）
-  ⇒ **难度**拼 `MapName`（`"地图#难度int"`，旧约定），**任务类型**拼 `RoomName`（`"房间名#T=任务类型名"`，新增）。
-  解析全部收在 `NetTmp/Client/RoomMeta.cs`（唯一适配点，逐条 `TODO(库)`）：`ComposeRoomName/RoomName(剥后缀)/TaskType`，
-  与旧难度那套并列。⚠ 标记用 `#T=` 而非单 `#`：房间名是玩家名拼的，且解析取 **LastIndexOf**（房主名里真带 `#T=` 也能切对）。
-  ⚠ 显示侧**必须走 `RoomMeta.RoomName`**（房间列表排序 / 搜索 / 密码弹窗都用它），否则玩家会看到 `#T=歼灭`。
-  **任务类型的值**只发名字字符串（房间行的任务列只有文字，没有任务图标 ⇒ 不必下发 MissionEnum 下标）。
-  **权威时刻是 `ConfirmTask`**：公开房流程先 `CreateRoom` 再 `SetTask`（建服时任务还没定）⇒ `NetHostSvc.ConfirmTask` 新增
-  `taskType` 参数，在那里就地改写 `RoomInfo.RoomName`（广播每次现取同一个对象 ⇒ 一个广播周期内生效）。
-  `TaskManager.NowTaskType` 是"安全取类型名"的唯一入口（`TaskCfg.TaskType` 内部索引 `MissionData_SO.Catalog[main]`，未初始化/缺键会抛）。
+- ~~**房间列表的"库缺字段"补丁**（难度拼 `MapName` 的 `#难度`、任务类型拼 `RoomName` 的 `#T=枚举|名字`，2026-10-07 那套）~~ **2026-10-08 库改完后已整体删除**：
+  `RoomMeta` 只剩 `Difficulty/TaskEnum/InGame/Source/RoomName/MapName` 六个薄取值；`ComposeRoomName`/`ComposeMapName`/`IsLanAddress`/`RoomMeta.TaskType`
+  与 `TaskManager.NowTaskType`/`FindMainMission(string)` 全部删掉。任务**显示名**改由 UI 用枚举反查 `TaskManager.FindMainMission(MissionEnum)`（任务类型名不唯一，枚举才是精确键）。
 - ⚠⚠ **心跳必须对"任何会话"都回，包括还没入房的**（2026-10-07 用户实测"战备界面等一会儿就反复断开/控制台刷串"）：
   库的会话超时判的是"**收不到数据**就判掉线"（`TimeoutMs` 默认 15s），而成员在"连上房主 → 入房成功"这段
   **只有心跳一条报文** ⇒ 房主若按"没入房就不回应"早退，那条连接**一个字节都收不到** ⇒ 必然被**它自己的库**判死 →
@@ -97,7 +90,7 @@
   ⚠ 成员端的 `centerGetter`（每 Tick 跟踪本机玩家）也得关掉，否则它的 center 会飘走。
 - ⭐ **战斗同步 阶段 2/3/4 已落地（2026-10-07，全部编译+反射验证通过）**：
   **NetId**：`WaveManager.CreatUnit` 用每局自增计数写 `Actor.NetId`（`Actor.IndexID` 是进程内自增、还数着玩家/幽灵/道具 ⇒ 不能当网络 id）。
-  ⚠ 因此"两端创建顺序一致"是硬前提（波次已确定性 ⇒ 成立）；**不经 `CreatUnit` 生成的单位 NetId=0 ⇒ 不参与同步**（`Effect/CreatEnemy`、`UnitSkill_Summoner` 的直接 Instantiate、任务召唤等，待收口）。
+  ⚠ 因此"两端创建顺序一致"是硬前提（波次已确定性 ⇒ 成立）；**不经 `CreatUnit` 生成的单位 NetId=0 ⇒ 不参与同步**（`Effect/CreatEnemy`、`UnitSkill_Summoner` 的直接 Instantiate、任务召唤等）——**2026-10-08 已收口**，见下面那条 ⭐。
   **移动（意图式）**：钩子 = `EnemyController.SetNavDestination`（唯一漏斗）→ 房主发 `EnemyMoveSync(4024){NetId,目标点}`；
   成员端 `RemoteDrivenMovement=true` 时**本端 AI 决策一律作废**，只走 `ApplyRemoteDestination`（**绕开**本端那套 `<1m + hasPath + 重试节流` 的本地去抖）。两端各自本地算路径 ⇒ 位置接近。
   **命中/生死（权威在房主）**：成员 `_OnDamaged` → `EnemyHit(4025)` 上报；房主 `EnemyNetBridge.OnRemoteHit` 用 `DamagePacket`（⚠ `DamageGroups` 不能空，空则 `InflictDamage` 直接返回）结算，
@@ -105,6 +98,16 @@
   **确定性随机**：`06Gameplay/AI/EnemyRandom.cs`（`SeedUtil.Derive(Derive(seed, SeedStream.Ai), NetId)`，按 NetId 缓存；无种子时也按实体分开，避免共用静态流被推进），
   `WaveManager.Awake` 里 `EnemyRandom.Clear()`；已改 `UnitSkill_Blink`/`EnemyNestBuild`/`EnemyMobile_AboState`。
   **仍未做**：移动纠偏/优先级轮询（会漂）、`DieLoot`/`NPCWalk`/`MissionOilRefining`/`UnitSkill_Summoner` 的随机、成员端血量非权威（只保证"死亡一致"）。
+- ⭐⭐ **`NetId` 分配点已下沉到 `Actor.Awake`（2026-10-08，修"客机敌人全程原地罚站"）**：
+  原唯一赋值点在 `WaveManager.CreatUnit`，而 **`ZergWave`/`RobotWave` 刷单位是裸 `Instantiate`**（`ZergWave.cs:100`、`RobotWave.cs:212/244`）⇒ 全部波次敌人 `NetId==0` ⇒
+  ①房主 `SetNavDestination` 的 `NetId != 0` 门挡掉广播 ②成员端 `RemoteDrivenMovement` 又让本地决策整体早退 ⇒ **既无本地也无远端目标 = 永久静止**
+  （死亡/命中同步同样被那道门废掉，同一处修复一并治好）。
+  现：`ActorsManager` 持每局归零的 `_enemyNetIdSeq` + `NextEnemyNetId()`，**`Actor.Awake` 里 `type==Enemy` 就分号**（覆盖波次/巡逻队/巢穴/召唤/场景刷新等全部路径，新增刷怪方式不必再补）。
+  ⚠ 必须在 `Awake`：放 `WaitSetPos` 的 `OnEnemyCreate` 会晚一帧，而波次单位创建后**同帧**就 `SetNavDestination`（房主要在那里广播）；
+  ⚠ 判 `ActorsManager.Instance != null`（它由 `BattleManager.Init` 早于一切运行时刷怪创建；更早诞生的 Actor 分 0，防与归零后的号段撞号）。
+  配套两条"别丢消息"：`EnemyController.ApplyRemoteDestination` 改为 **pending + `Update` 重试**（只拦 agent 被禁用的空投落地前阶段，其余仍交 `PathRequestManager` 兜底）；
+  `EnemyNetBridge` 加 `_pendingMoves`，**目标点比副本先到就暂存**，`UnitEventSub.OnEnemyCreate` 时补发（房主只在目标变化时发 ⇒ 丢一条就没有第二条）。
+  安全性实测：93 个带 `Actor` 的预制体里 `type=4(Enemy)` 恰好 35 个且全在 `Resources/Prefabs/Enemy/`（炮塔=8、地雷/场景物=16）⇒ 不会把非敌人物体算进号段。
 - ⚠ **"开火同步"≠"命中/血量同步"**（2026-10-07 用户问"开火同步了，命中应该也同步，那血量是不是不用同步"，答案：不能省）：
   ① `FpsHelper.Hit(ProjectileHitData)`（`06Gameplay/Common/FpsHelper/FpsHelper_Hit.cs:148`）是**本地子弹碰撞**的伤害结算入口，调用者全是本地模拟事件
   （`ProjectileStandard.HitFX`、`DeployableMine.DoExplosion`、`SustainedEffect.ApplyEffect`、`AirdropPod.Hit`）—— 它读 `hitData.collider` 然后 `IDamageable.InflictDamage`；
@@ -122,12 +125,21 @@
   下行按 Sid 找盟友 → `FriendController.SetActiveWeaponSlot/PlayShoot/ApplyVital`；自己发的用 `NetRoomFlow.SelfSid` 丢掉）。
   ⚠ 盟友的**伤害仍由各自主机权威**：`PlayerFriend.prefab` 上刻意**没有 `Damageable`**，血量只由 4017/4018 镜像进它新增的 `HealthPlayer`。
   ⚠ 盟友离场**没有事件**（`FriendDead` 早被删）⇒ 任何"为盟友建的 UI"（如头顶血条）都要自己兜底清理，否则就是 `MissingReferenceException`。
+- ⭐ **场景单位（NPC/`NPCWalk`）移动同步 = 路线 A（2026-10-08 落码，未挂场景）**：走**新通道 4032**（`SceneUnitMoveMsg{ Id=Actor.Id, X/Y/Z, Stop }`），**不复用 4024 的 NetId**——大厅会反复重建、NetId 的"每局归零+两端创建顺序一致"不成立。链路：房主 `NPCWalk` 决策 → `BattleEventSub.OnSceneUnitMove` → **场景内**的 `09Manager/Global/SceneUnitMoveSink`（挂哪个场景管哪个场景）转发 → `NetRoomFlow.SendSceneUnitMove`；下行按 `Actor.Id` 找本端 NPC 应用（待用户在大厅场景里挂 1 个 sink 节点）。
+  ⚠ 注册/收信留在常驻 `NetRoomFlow`（否则场景不在时"未注册消息:4032"）；`NPCWalk.RemoteDriven` 语义 = **有桥在场且我是成员**（桥没了退回各自本地游荡，不会全体罚站）；⚠ 大厅**没有 `PathRequestManager`**（战场 `BattleManager` 才建）⇒ 不能用 `UnitEventSub.PathRequest`，只能直接 `SetDestination`；⚠ 大厅**没有 `ActorsManager` 实例** ⇒ 只能扫静态 `ActorsManager.Actors`（`Actor.Awake` 无条件登记）。
 - ⚠ 「服务器 / 局域网」**没有数据来源**：`NetSvc.SRV_IP="127.0.0.1"` 是硬编码示例、`ConnectDefaultServer()` 无调用点，房间只来自 `LanDiscoverer` 广播 ⇒ 房间列表面板只能**按 `HostIp` 猜**（内网/环回 ⇒ 局域网，其余 ⇒ 服务器，详见 `ServerListPanel.RoomNetType`/`IsLanAddress`）。要让类型真实，得让房间数据自带「来源」字段。
 - ⚠⚠ **`02_Net` 至今未挂进游戏**（2026-10-06 实测）：`NetSvc` / `NetHostSvc` / `LanRoomDemo` / `NetDemo` 在**所有场景与 prefab 里 0 命中**（只在各自 `.meta` 命中）⇒ 任何 UI 调 `NetSvc.Instance` 都是 null。联机改造第一步必须是"网络根节点引导"（推荐 `[RuntimeInitializeOnLoadMethod]` 建 `DontDestroyOnLoad("NetRoot")`，同 `WndHub.Bootstrap` 手法）。
 - ⚠⚠ **KCPNet 无源码**（2026-10-06 探测 6 个根目录 × 深 5，`plans/find_kcp_source.py` 0 命中）⇒「给 `LanRoomInfo` 加 Difficulty/InGame/Source 再重出 DLL」需用户提供源码；退路 = 02_Net 自研 UDP 发现层（自带模型），回连仍可复用 `NetSvc.ConnectToRoom(new LanRoomInfo{HostIp,HostPort})`（实测该方法只用这两个字段）。库实测：`LanRoomInfo` public/not sealed/`[Serializable]`，恰好 9 个 public 字段，`ToJson`(实例)/`FromJson`(静态)（工具 `plans/dll_type_dump.py`）。
 - 房间列表接入的完整计划 + Rooms 预制体实测层级（无 Status 节点、Server/Cancel 是 Rooms 兄弟节点、`Filter/placeholder` 只是 LayoutElement 占位）见 `.codebuddy/plans/联机_房间列表接入与KCPNet扩展_计划.md`；层级可复现脚本 `plans/rooms_hierarchy.py`。
 - ✅ **已接入游戏**（2026-10-06）：`NetSvc`/`NetHostSvc`/`NetRoomFlow` 挂在 `Assets/Resources/Prefabs/Manager/GameRoot.prefab` 的**根 GameObject（名字就叫 GameRoot，脚本原本也在这个根上，不是子物体）**；`GameRoot.unity` 里有该 prefab 实例 ⇒ 常驻。`Assets/Scripts/10UI/10_UI.asmdef` 已加 `02_Net` 引用（`10_UI → 02_Net` 无环）。
-- ⭐ **`FPSGame.Net.RoomMeta`（新）= 库缺字段期间的唯一适配点**：`Difficulty/InGame/Source/MapName/IsLanAddress/ComposeMapName`。库加 `Difficulty/InGame/Source` 之后**只改这个文件里三处 `TODO(库)`** + `NetHostSvc` 的两处（`StartHost` 的 `MapName` 拼接、`GetBroadcastInfo` 的 `InGame`），UI 一行不用动。`RoomMeta.InGame` 现在恒 `false`、`Source` 是按 IP 猜、`Difficulty` 走 `MapName#难度` 临时约定。
+- ⭐ **`FPSGame.Net.RoomMeta` = 房间字段的唯一薄适配层**（2026-10-08 库改完后收尾）：只留 `Difficulty`（`out bool fromBroadcast` = `room.Difficulty >= 0`）/`TaskEnum`/`InGame`/`Source`/`RoomName`/`MapName`，职责 = 缺省值归一 + 空引用保护。
+  房主侧：`NetHostSvc.StartHost` 直接写字面量 `RoomName/MapName/Difficulty/TaskMain/InGame/Source`（`Source=0`），`GetBroadcastInfo` 每轮刷 `InGame = _started`，
+  `ConfirmTask(..., int taskMain)`（**`taskType` 参数已删**）就地刷 `RoomInfo.TaskMain`；`HostRoomOptions.TaskType` 字段已删。
+- ⭐ **库 DLL 换代（2026-10-08 实测，`KCPNet.LanRoomInfo` 9 → 13 字段）**：新增 `int Difficulty=-1 / int TaskMain=-1 / bool InGame / int Source`（**没有 `TaskType` 字符串**）；
+  JSON 键 `difficulty/taskMain/inGame/source`，旧键名 `roomName/hostIp/hostPort/playerCount/maxPlayers/mapName/passwordProtected/version/playerNames` 未动。
+  `FromJson` **忽略未知 key、缺 key 给默认值**（实测：只带 3 个键的旧包 ⇒ `diff=-1/task=-1/inGame=false/source=0`）⇒ 新旧房主可混联。
+  `LanBroadcaster`/`LanDiscoverer` 无公开房间字段 ⇒ 库改动只落在 `LanRoomInfo` + 两个 JSON 方法。
+  ⚠⚠ **换 DLL 后 Unity 里的旧程序集不会自动换**：本次 `AssetDatabase.ImportAsset(ForceUpdate)` 单独调用**无效**（反射仍是 9 字段），必须再 `refresh_unity(force, all, request)` 触发域重载才生效（判据 = `unity_reflect` 数出 13 字段）。
 - `FPSGame.Net.NetRoomFlow`（新，挂 GameRoot）= 成员入房唯一入口：`Join(room, name, pwd, cb)` 内部「ConnectToRoom → JoinRoom」，**带超时（默认 10s）**、事件 `OnJoinResult/OnPlayerList/OnStartGame`、`Host(HostRoomOptions, out reason)`；`MessageCenter` 同命令号单处理器 ⇒ 它与 `LanRoomDemo`/`NetDemo` 不能同时挂。
 - `HostRoomOptions`（`Services/Msg/RoomMsg.cs`）：`StartHost(HostRoomOptions)` 是推荐入口（旧 4 参签名保留给 demo）；`StartGameNtf` 已扩 `Difficulty/TaskIndex/ExtraDiff/Seed/PlayMode`（成员侧应用仍是 TODO）。
 - `PasswordWnd`（`10UI/Wnd/PasswordWnd.cs` + `Resources/UI/Wnd/PasswordWnd.prefab`）：通用单行输入窗，`WndType.Password` + `WndHub.Password`；已用于**房间密码**（`ServerListPanel.Activate`）与**首次起名**（`FrontWnd.AskPlayerName`）；预制体由 TipWnd 复制改造，输入框是从 SelectMapWnd 的 `Filter/InputField (TMP)` 复制来的。

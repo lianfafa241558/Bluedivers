@@ -22,6 +22,11 @@ namespace FPSGame.Game
         public static List<IActor> SpecUnits { get; private set; } = new();
 
 
+        /// <summary>本局敌人 <c>NetId</c> 计数器（每局在 <see cref="Awake"/> 归零）。
+        /// <para>▍为什么计数挂在这里：分配点只有 <c>Actor.Awake</c> 一处（见 <c>Actor.NetId</c>），
+        /// 它比任何刷怪调用点都早、且枚举不全刷怪路径 ⇒ 需要一个"每局一份、且早于全部敌人"的对象来持计数。</para></summary>
+        private static int _enemyNetIdSeq;
+
         public static IActor Player { get; private set; }
 
         /// <summary>
@@ -79,6 +84,10 @@ namespace FPSGame.Game
             //Debug.LogError("特殊单位出生"+ specUnit, specUnit);
             Enemys.Add(specUnit);
         }
+
+        /// <summary>【联机】分配下一个敌人网络标识（唯一调用点 = <c>Actor.Awake</c>）。
+        /// <para>按创建顺序自增 ⇒ 两端同序同号；⚠ 未经 <see cref="Instance"/> 判定不得调用（见调用点注释）。</para></summary>
+        public static int NextEnemyNetId() => ++_enemyNetIdSeq;
         /// <summary>
         /// 【单位死亡事件入口】⚠ 死亡 **只是"倒地"**，单位还在场上、还可能被救起
         /// <para>▍"离场"走的是另一条路（对象被销毁）⇒ 见 <see cref="Unregister"/>。</para>
@@ -145,6 +154,7 @@ namespace FPSGame.Game
             Players = new();
             SpecUnits = new();
             OnActorCreat = new();
+            _enemyNetIdSeq = 0;   // 本局的敌人编号从头开始（分配点会先判 Instance，保证不会有人在归零之前分号）
             base.Awake();
             UnitEventSub.OnPlayerCreate += RegisterPlayer;
             UnitEventSub.OnFriendCreate += RegisterFriend;

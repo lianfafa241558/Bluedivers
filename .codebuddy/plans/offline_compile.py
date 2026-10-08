@@ -13,8 +13,23 @@ import time
 import subprocess
 import xml.etree.ElementTree as ET
 
-ROOT = r'd:\Pro\Bluedivers'
-UNITY = r'D:\UnityHub\Editor\2022.3.62f3\Editor\Data'
+# 工程根：优先环境变量，其次按脚本位置推导（<根>/.codebuddy/plans/本文件）⇒ 换机器不用改脚本
+ROOT = os.environ.get('BLUEDIVERS_ROOT') or os.path.abspath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+
+# Unity 安装位置各机器不同（本机是 "D:\Unity Hub\Version\<版本>\Editor\Data"）⇒ 逐个探测
+def _find_unity_data():
+    cands = [os.environ.get('UNITY_EDITOR_DATA', ''),
+             r'D:\Unity Hub\Version\2022.3.62f3\Editor\Data',
+             r'D:\UnityHub\Editor\2022.3.62f3\Editor\Data',
+             r'C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Data']
+    for c in cands:
+        if c and os.path.exists(os.path.join(c, 'DotNetSdkRoslyn', 'csc.dll')):
+            return c
+    return cands[1]
+
+
+UNITY = _find_unity_data()
 CSC = os.path.join(UNITY, 'DotNetSdkRoslyn', 'csc.dll')
 DOTNET = os.path.join(UNITY, 'NetCoreRuntime', 'dotnet.exe')
 OUTDIR = os.path.join(ROOT, 'Temp', 'offline_compile')

@@ -157,34 +157,11 @@ namespace FPSGame.Managers
 
 
         /// <summary>
-        /// 本机当前任务的**主任务类型名**（如「歼灭」/「护送」，= <c>TaskCfg.TaskType</c>）。
-        /// 没选任务 / 任务目录未就绪 / 该任务不在目录里 ⇒ null（**不抛异常**）。
-        ///
-        /// <para>▍为什么要这个属性：<c>TaskCfg.TaskType</c> 内部直接索引 <c>MissionData_SO.Catalog[main]</c>，
-        /// Catalog 未初始化或键缺失都会抛；开房（<c>SettingWnd</c>/<c>SelectMapWnd</c>）与房间列表兜底
-        /// 都要读它 ⇒ 保护只写一份，调用点直接判 null。</para>
-        /// </summary>
-        public string NowTaskType
-        {
-            get
-            {
-                var task = nowTask;
-                if (task == null || !task.activeTask) return null;
-
-                var catalog = MissionData_SO.Catalog;
-                if (catalog == null || !catalog.ContainsKey(task.taskCfg.main)) return null;
-
-                try { return task.taskCfg.TaskType; }
-                catch { return null; }
-            }
-        }
-
-        /// <summary>
         /// 本机当前任务的**主任务类型枚举值**（<c>-1</c> = 没选任务 / 未就绪；**不抛异常**）。
         /// <para>▍为什么要这个属性：<c>taskCfg.main</c> 在没选任务时是 <c>default</c>（= 第 0 个枚举，是个**合法值**）
-        /// ⇒ 直接取会把"还没选任务"误报成一个真任务（开房时房间名就会带上错的枚举）。
+        /// ⇒ 直接取会把"还没选任务"误报成一个真任务（开房时广播里就会带上错的枚举）。
         /// 保护只写一份，调用点一律判 <c>&lt; 0</c>。</para>
-        /// <para>▍用途：开房 / 确认任务时随房间名下发（<c>RoomMeta</c> 的 <c>"#T=枚举|名字"</c>），
+        /// <para>▍用途：开房 / 确认任务时随广播下发（<c>LanRoomInfo.TaskMain</c>），
         /// 房间列表据此**精确**取任务类型图标与颜色。</para>
         /// </summary>
         public int NowTaskMain
@@ -198,7 +175,7 @@ namespace FPSGame.Managers
         }
 
         /// <summary>
-        /// 按**主任务枚举**精确取配置（房间列表**优先**走这条：广播里的 <c>MissionEnum</c> 是两端一致的整数）。
+        /// 按**主任务枚举**精确取配置（房间列表走这条：广播里的 <c>LanRoomInfo.TaskMain</c> 是两端一致的整数）。
         /// 取不到（目录未就绪 / 枚举对不上）⇒ null，**不抛异常**。
         /// </summary>
         public MissionMainData_SO FindMainMission(MissionEnum main)
@@ -208,46 +185,6 @@ namespace FPSGame.Managers
 
             MissionData_SO so;
             return catalog.TryGetValue(main, out so) ? so as MissionMainData_SO : null;
-        }
-
-        /// <summary>
-        /// 按**任务类型名**（如「歼灭」/「收集任务」）反查主任务配置 —— 房间列表拿**图标 + 颜色**用。
-        ///
-        /// <para>▍为什么靠名字反查：局域网广播（<c>LanRoomInfo</c>）只有 9 个字段，任务类型只能由房主
-        /// 把**名字**按 <c>#T=</c> 约定拼进房间名（<c>RoomMeta.TaskType</c>）⇒ 图标/颜色得自己找；
-        /// 而"任务类型名"就是 <c>MissionMainData_SO.name</c>（= <c>TaskCfg.TaskType</c>），
-        /// 两端任务资产一致 ⇒ **名字即键**（不必随广播下发 <c>MissionEnum</c> 下标）。</para>
-        ///
-        /// <para>▍取不到（旧版房主没拼后缀 / 传进来的其实是兜底的地图名 / 两端任务资产不一致）
-        /// ⇒ 返回 null（**不抛异常**），调用方退回"地图图标 + 预制体本色"。</para>
-        /// </summary>
-        public MissionMainData_SO FindMainMission(string typeName)
-        {
-            if (string.IsNullOrEmpty(typeName)) return null;
-
-            var catalog = MissionData_SO.Catalog;
-            if (catalog == null) return null;
-
-            // ⚠ **同名不唯一**（`Resources/GameData/Mission` 里「进攻任务」有 3 份、「歼灭任务」「渗透任务」各 2 份）
-            //   ⇒ 这里取**确定性**的第一个（按 MissionEnum 值升序）：两端结果一致，
-            //   不会因为 `Catalog` 的枚举顺序不同而给同一个房间换出不同的图标/颜色（同 OrderedMaps 的教训）。
-            //   ⚠ 代价：同名任务若图标/颜色不同，展示层只会取到枚举值最小的那一份
-            //   —— 要精确就得让广播带上 `MissionEnum`（现在只带得出名字，见 RoomMeta 的 TODO(库)）。
-            MissionMainData_SO found = null;
-            int best = int.MaxValue;
-            foreach (var kv in catalog)
-            {
-                if (kv.Value is MissionMainData_SO main && main.name == typeName)
-                {
-                    int key = (int)kv.Key;
-                    if (key < best)
-                    {
-                        best = key;
-                        found = main;
-                    }
-                }
-            }
-            return found;
         }
 
         public void Init()

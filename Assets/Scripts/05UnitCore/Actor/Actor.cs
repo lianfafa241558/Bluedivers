@@ -214,6 +214,17 @@ namespace FPSGame.Game
         private void Awake()
         {
             indexID = GlobalIndexID++;
+            // ★ 联机：敌人网络标识的**唯一分配点**。放在这里（Instantiate 内同步执行）而不是各生成点 ——
+            //   刷怪路径既多又互不相干（ZergWave/RobotWave 走裸 Instantiate、巡逻队与场景刷新走
+            //   WaveManager.CreatUnit、巢穴/召唤/任务召唤各走各的），漏掉任何一处就是"那只怪 NetId=0"⇒
+            //   房主不广播它的移动意图、成员端（RemoteDrivenMovement）又不自行决策 ⇒ 永远原地罚站（2026-10-08 实测）。
+            //   ⚠ 不能在 WaitSetPos 的 EnemyCreate 事件里分配：那条事件要等 IsMainStage 且晚于本帧，
+            //     而波次单位创建后**同帧**就会 SetNavDestination（房主要在那里广播）。
+            //   两端创建顺序一致 ⇒ 同一个 NetId 指同一个单位；ActorsManager 未就绪时分 0（不参与同步）。
+            if (type == UnitTypeEnum.Enemy && ActorsManager.Instance != null)
+            {
+                NetId = ActorsManager.NextEnemyNetId();
+            }
             switch (shape)
             {
                 case ShapeType.Circle:
