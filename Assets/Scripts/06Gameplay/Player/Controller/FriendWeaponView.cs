@@ -136,6 +136,10 @@ namespace FPSGame.Gameplay
                 var toAim = aimPoint - muzzle.position;
                 if (toAim.sqrMagnitude > 0.0001f) direction = toAim.normalized;
             }
+
+            // 数据说话：这一发到底"有没有收到瞄准点"、方向算成什么
+            FPSGame.Utils.NetSyncLog.BulletLog("远端开火", $"槽{_active} 方向={direction:F2} 瞄准点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")}" +
+                (muzzle != null ? $" 枪口={muzzle.position:F2} 枪口到瞄准点={(aimPoint - muzzle.position).magnitude:F1}m" : " 枪口=<无>"));
             if (muzzle != null && w.MuzzleFlashPrefab != null)
             {
                 var fx = VfxPool.Creat(w.MuzzleFlashPrefab, muzzle.position, muzzle.rotation, muzzle);
@@ -147,7 +151,9 @@ namespace FPSGame.Gameplay
 
             // 弹道：生成一颗"不结算伤害"的真子弹（飞行/尾迹/命中特效照常；伤害由他自己机器算）
             // ⚠ 每"次"射击只给一颗：连发与多弹丸不必在对端逐颗重放
-            w.SpawnVisualBullet(muzzle, direction);
+            // ★ aimPoint 一并传下去（2026-10-09）：只给方向时那颗子弹会一路飞到射程尽头、从目标身上"穿过去"，
+            //   看起来就是"没命中" —— 有终点后飞抵即收尾并按命中播火花（见 ProjectileBase.SetVisualEndPoint）。
+            w.SpawnVisualBullet(muzzle, direction, aimPoint);
 
             var anim = w.GetComponentInChildren<Animator>(true);
             if (anim != null) anim.SetTrigger(AnimAttack);

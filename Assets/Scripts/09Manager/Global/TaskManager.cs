@@ -190,7 +190,7 @@ namespace FPSGame.Managers
         public void Init()
         {
             Awake();
-            GlobalEventSub.OnGameStateChange += OnGameStateChange;//回大厅（Bridge）清空上一局任务（与 UnInit 的退订成对）
+            GlobalEventBus.OnGameStateChange += OnGameStateChange;//回大厅（Bridge）清空上一局任务（与 UnInit 的退订成对）
             Missions = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<MissionData_SO>("GameData/Mission"),item => item.type);
             MissionData_SO.Catalog = Missions;//数据自持：玩法层的 TaskCfg 从这里读（见 MissionData_SO.Catalog）
             Camps = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<CampData_SO>("GameData/Camp"),item => item.enemyVarietyType);
@@ -215,7 +215,7 @@ namespace FPSGame.Managers
 
         public void UnInit()
         {
-            GlobalEventSub.OnGameStateChange -= OnGameStateChange;//与 Init 的订阅成对
+            GlobalEventBus.OnGameStateChange -= OnGameStateChange;//与 Init 的订阅成对
         }
 
         /// <summary>

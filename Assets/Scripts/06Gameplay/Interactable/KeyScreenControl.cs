@@ -227,7 +227,7 @@ public partial class KeyScreen
             }
         }
         itemState[4] = false;
-        GlobalEventSub.OnFurnitureOperate += OnFurnitureOperate;
+        GlobalEventBus.OnFurnitureOperate += OnFurnitureOperate;
     }
 
     bool ActionItemUpdate()
@@ -269,7 +269,7 @@ public partial class KeyScreen
             if (complete)
             {
                 itemState[4] = true;
-                GlobalEventSub.OnFurnitureOperate -= OnFurnitureOperate;
+                GlobalEventBus.OnFurnitureOperate -= OnFurnitureOperate;
                 PlaySound(new(FinishS));
                 SetColor(actionItem.GetChild(1), _LightColor);
             }
@@ -651,7 +651,7 @@ public partial class KeyScreen
         {
             SetActive(artillery.GetChild(i, 0), false);
         }
-        GlobalEventSub.OnFurnitureOperate += OnArtilleryFurnitureOperate;
+        GlobalEventBus.OnFurnitureOperate += OnArtilleryFurnitureOperate;
     }
 
     bool ArtilleryUpdate()
@@ -684,7 +684,7 @@ public partial class KeyScreen
         if (artilleryProgress >= 5)
         {
             artilleryComplete = true;
-            GlobalEventSub.OnFurnitureOperate -= OnArtilleryFurnitureOperate;
+            GlobalEventBus.OnFurnitureOperate -= OnArtilleryFurnitureOperate;
             SetColor(artillery.GetChild(0), _LightColor);
         }
     }

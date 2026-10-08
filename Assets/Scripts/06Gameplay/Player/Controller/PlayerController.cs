@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.Attributes;
@@ -193,7 +193,7 @@ public partial class PlayerController : BaseSelfMoveableController
             if (lookAtIK) lookAtIK.enabled = true;
         }
 
-        GlobalEventSub.ViewSwitch(IsThirdPerson);
+        GlobalEventBus.ViewSwitch(IsThirdPerson);
 
         // 视角切换后刷新武器瞄准状态，确保准星等UI正确
         WeaponsManager.RefreshAimState();
@@ -494,8 +494,8 @@ public partial class PlayerController : BaseSelfMoveableController
         // 呼叫
         if (InputHandler.GetJumpInputUp())
         {
-            BattleEventSub.CallKai(gameObject, transform.position);
-            GlobalEventSub.PlayMeetSpeech(gameObject, SpeechTypeEnum.Help);
+            BattleEventBus.CallKai(gameObject, transform.position);
+            GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Help);
         }
     }
 
@@ -518,7 +518,7 @@ public partial class PlayerController : BaseSelfMoveableController
         m_Anim.SetBool("IsDeath", true);
         WeaponsManager.SwitchToWeaponIndex("", true, false, true);
 
-        if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game) FPSGame.Gameplay.BattleEventSub.AddBattleDataItem(PlayerIndex, "死亡次数");
+        if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game) FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(PlayerIndex, "死亡次数");
         WeaponsManager.enabled = false;
     }
 
@@ -531,7 +531,7 @@ public partial class PlayerController : BaseSelfMoveableController
 
         WeaponsManager.enabled = true;
         WeaponsManager.SwitchToWeaponIndex(1, true, false, true);
-        GlobalEventSub.PlayMeetSpeech(gameObject, SpeechTypeEnum.Thank);
+        GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Thank);
         Actor.ActorState = ActorState.Normal;
         m_Anim.SetBool("IsDeath",false);
         //喘息之时现在免费送
@@ -544,7 +544,7 @@ public partial class PlayerController : BaseSelfMoveableController
             IsThirdPerson = true;
             PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
             WeaponsManager.WeaponCamera.enabled = false;
-            GlobalEventSub.ViewSwitch(true);
+            GlobalEventBus.ViewSwitch(true);
         }
         else
         {
@@ -557,8 +557,8 @@ public partial class PlayerController : BaseSelfMoveableController
     {
         if (!IsDead && InputHandler.GetMuleDown())
         {
-            BattleEventSub.CallKai(gameObject, transform.position);
-            GlobalEventSub.PlayMeetSpeech(gameObject, SpeechTypeEnum.Kei);
+            BattleEventBus.CallKai(gameObject, transform.position);
+            GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Kei);
         }
     }
 

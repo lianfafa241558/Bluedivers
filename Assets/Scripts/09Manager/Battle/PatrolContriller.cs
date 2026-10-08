@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.Mission;
@@ -139,12 +139,12 @@ namespace FPSGame.Managers
             _basePatrolHeat *= 1 - DIFFICULTY_REDUCTION_PER_LEVEL * (int)TaskManager.Instance.nowTask.difficulty - PLAYER_REDUCTION_PER_EXTRA * (ActorsManager.Players.Count - 1);
 
             // 订阅全局事件
-            BattleEventSub.OnMissionStart += OnMissionCreated;
-            BattleEventSub.OnMissionCompleted += OnMissionCompleted;
-            BattleEventSub.OnEvacuate += OnEvacuateStart;
+            BattleEventBus.OnMissionStart += OnMissionCreated;
+            BattleEventBus.OnMissionCompleted += OnMissionCompleted;
+            BattleEventBus.OnEvacuate += OnEvacuateStart;
 
-            UnitEventSub.OnPlayerCreate += OnPlayerJoin;
-            UnitEventSub.OnFriendCreate += OnPlayerJoin;
+            UnitEventBus.OnPlayerCreate += OnPlayerJoin;
+            UnitEventBus.OnFriendCreate += OnPlayerJoin;
 
             // 初始化玩家热度数据
             InitHeatData();
@@ -153,12 +153,12 @@ namespace FPSGame.Managers
         private void OnDestroy()
         {
             // 取消事件订阅
-            BattleEventSub.OnMissionStart -= OnMissionCreated;
-            BattleEventSub.OnMissionCompleted -= OnMissionCompleted;
-            BattleEventSub.OnEvacuate -= OnEvacuateStart;
+            BattleEventBus.OnMissionStart -= OnMissionCreated;
+            BattleEventBus.OnMissionCompleted -= OnMissionCompleted;
+            BattleEventBus.OnEvacuate -= OnEvacuateStart;
 
-            UnitEventSub.OnPlayerCreate -= OnPlayerJoin;
-            UnitEventSub.OnFriendCreate -= OnPlayerJoin;
+            UnitEventBus.OnPlayerCreate -= OnPlayerJoin;
+            UnitEventBus.OnFriendCreate -= OnPlayerJoin;
         }
 
         public override bool Tick()

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 using UnityEngine;
@@ -19,7 +19,7 @@ public class MiniShopMove : MonoBehaviour
 
     protected void Start()
     {
-        GlobalEventSub.OnGameStateChange += OnGameStateChange;
+        GlobalEventBus.OnGameStateChange += OnGameStateChange;
 
     }
 

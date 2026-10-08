@@ -22,7 +22,16 @@
 - ⚠ **`Library/ScriptAssemblies/*.dll` 的 mtime 不可靠**：2026-10-07 实测"域重载确实发生了（`editor/state` 的 `last_domain_reload_after` 前移），但 dll 时间戳纹丝不动" ⇒ 别用它判断"有没有编译"，**要看加载进来的类型**（反射 `execute_code`）。
 - ⚠ **Unity 可能静默不重编译**：`external_changes_dirty:false` + 编辑器未聚焦（`is_focused:false`）时，`refresh_unity`（`compile:"request"`）会返回成功但**什么都没做**。
   可靠触发：`execute_code` 里对目标文件逐个 `AssetDatabase.ImportAsset(path, ForceUpdate | ForceSynchronousImport)`（之后 `EditorApplication.isCompiling` 立刻为 true）。
-- ⚠⚠ **尤其绝不在 Play 中刷新/编译**：那会触发 Play 中的**域重载**（MCP 表现为 `refresh recovered after Unity disconnect/retry`），场景里 MonoBehaviour 的**非序列化字段会被归零**。2026-10-07 疑似实例：几次 `refresh_unity` 落在用户 Play 大厅期间，随后 Console 刷屏 `NullReferenceException @ Actor.cs:388`（`Range.GetXY()`），反射读 11 个 Actor 的 `range` **全 null** 而 `isInitialized` 却为 true（未能复证：Play 已停 + Console 被清空）。⇒ **刷新前后都先读 `mcpforunity://editor/state`，确认 `play_mode.is_playing == false` 再动**
+- ⭐ **诊断日志开关 = `FPSGame.Utils.NetSyncLog`（`Assets/Scripts/00Tools/NetSyncLog.cs`，2026-10-09 建）**：默认全关（2026-10-09 晚调整：**打包端也默认关**了，原来"打包端默认开"会把 `Player.log` 刷爆）；
+  `Enabled` 总开关 + `Bullet`/`Ai`/`Sync` 三路分管 + `Warn`（"不正常"用 Warning，便于在 Console 筛）。
+  **Play 里开**：`execute_code` → `FPSGame.Utils.NetSyncLog.Enabled = true;`（跑到关键操作后用 `read_console` 读）。
+  **打包端开**（它没有 execute_code，日志只落自己的 `Player.log`）：命令行 `-netsynclog` 或环境变量 `NETSYNC_LOG=1` 或 `PlayerPrefs["NetSyncLog"]=1`。
+  ⚠ 放 `00_Utils` 是因为 05/06/09/10 都引用它；**`07_NetGame` 只引用 `02_Net`，看不见它** ⇒ 传输层日志点要放在 09 的桥里。
+  已下的点：子弹（`FriendWeaponView.PlayShoot` / `WeaponBaseController.SpawnVisualBullet` / `ProjectileStandard.Update`+`Hit` / `FpsHelper.PlayImpactFx`）、
+  AI（`EnemyController.SetNavDestination` / `EnemyNetBridge` 收发暂存补发 / `NPCWalk` / `SceneUnitMoveSink` 的 `RemoteDriven` 总闸）、
+  收尾（`NetFriendBridge.HandlePlayerLeft` / `MiniMapWnd.FriendLeave` / `PlayerWnd` 盟友行数）。
+- ⚠ **Play 模式规矩（2026-10-09 用户修订，取代旧的"绝对禁止"）**：用户进 Play **就是为了让我读运行中的真实数据**
+  ⇒ 先取数据、**数据到手就可以导入/编译**；只有"这局的数据我还需要继续取"时才先不动编辑器（旧口径 = 一律中止，会白白浪费他的一次复现）。：那会触发 Play 中的**域重载**（MCP 表现为 `refresh recovered after Unity disconnect/retry`），场景里 MonoBehaviour 的**非序列化字段会被归零**。2026-10-07 疑似实例：几次 `refresh_unity` 落在用户 Play 大厅期间，随后 Console 刷屏 `NullReferenceException @ Actor.cs:388`（`Range.GetXY()`），反射读 11 个 Actor 的 `range` **全 null** 而 `isInitialized` 却为 true（未能复证：Play 已停 + Console 被清空）。⇒ **刷新前后都先读 `mcpforunity://editor/state`，确认 `play_mode.is_playing == false` 再动**
 - 开工先 `set_active_instance`（用 `mcpforunity://instances` 的**实时** ID）；写操作前确认 `projectRoot`
 - 新建 `.cs` 先 `refresh_unity(force, assets)`；改已存在文件只对**单个文件**做 `ImportAsset(path, ForceUpdate)`
 - ⚠ `execute_code` 报 `No result found` 但实际可能已执行 ⇒ 先查实际效果再决定是否重试；`refresh_unity(wait_for_ready:true)` 必报该错，用 `false`

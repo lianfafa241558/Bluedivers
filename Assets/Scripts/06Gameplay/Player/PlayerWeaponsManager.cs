@@ -214,12 +214,12 @@ namespace FPSGame.Gameplay
             //m_WeaponSwitchState = WeaponSwitchState.Down;
             OnSwitchedToWeapon += OnWeaponSwitched;
             OnAim += OnAiming;
-            FPSGame.Gameplay.GlobalEventSub.OnWindowStateChange += OnAirdrop;
+            FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange += OnAirdrop;
 
-            BattleEventSub.OnSelectAirdrop += OnInputCompletedAirdrop;
-            BattleEventSub.OnCancelAirdrop += OnCancelAirdrop;
-            BattleEventSub.OnAirdrop += OnAirdrop;
-            GlobalEventSub.OnFurnitureOperate += OnOperation;
+            BattleEventBus.OnSelectAirdrop += OnInputCompletedAirdrop;
+            BattleEventBus.OnCancelAirdrop += OnCancelAirdrop;
+            BattleEventBus.OnAirdrop += OnAirdrop;
+            GlobalEventBus.OnFurnitureOperate += OnOperation;
         }
 
         void Start()
@@ -237,11 +237,11 @@ namespace FPSGame.Gameplay
         {
             OnSwitchedToWeapon -= OnWeaponSwitched;
             OnAim -= OnAiming;
-            FPSGame.Gameplay.GlobalEventSub.OnWindowStateChange -= OnAirdrop;
-            BattleEventSub.OnSelectAirdrop -= OnInputCompletedAirdrop;
-            BattleEventSub.OnCancelAirdrop -= OnCancelAirdrop;
-            BattleEventSub.OnAirdrop -= OnAirdrop;
-            GlobalEventSub.OnFurnitureOperate -= OnOperation;
+            FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange -= OnAirdrop;
+            BattleEventBus.OnSelectAirdrop -= OnInputCompletedAirdrop;
+            BattleEventBus.OnCancelAirdrop -= OnCancelAirdrop;
+            BattleEventBus.OnAirdrop -= OnAirdrop;
+            GlobalEventBus.OnFurnitureOperate -= OnOperation;
         }
 
         void Update()
@@ -856,7 +856,7 @@ namespace FPSGame.Gameplay
             //3.允许双持？("武器和主手不一样"或者"武器和主手一样，但是有副手")
             if (force || (newWeaponIndex != ActiveWeaponIndex && newWeaponIndex >= 0)||(allowDual&&GetActiveSecWeapon()))
             {
-                if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun) && AirdropReleaseState.WaitRelease.IsValid()) BattleEventSub.CancelAirdrop(gameObject,AirdropReleaseState.WaitRelease);
+                if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun) && AirdropReleaseState.WaitRelease.IsValid()) BattleEventBus.CancelAirdrop(gameObject,AirdropReleaseState.WaitRelease);
                 //存储与武器切换动画相关的数据
                 m_SwitchNewWeaponIndex = newWeaponIndex;
                 m_TimeStartedWeaponSwitch = Time.time;
@@ -1299,7 +1299,7 @@ namespace FPSGame.Gameplay
             var wpc = weapon as WeaponPlayerController;
             OnShoot?.Invoke(wpc);
             if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game && !string.IsNullOrEmpty(weapon.name) && weapon.name!="信号枪")
-                FPSGame.Gameplay.BattleEventSub.AddBattleDataItem(m_PlayerCharacterController.PlayerIndex, "开火次数");
+                FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(m_PlayerCharacterController.PlayerIndex, "开火次数");
 
             if (wpc != null)
             {

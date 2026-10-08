@@ -1,4 +1,4 @@
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using FPSGame.GameContract;
 using FPSGame.Game;
 using UnityEngine;
@@ -25,7 +25,7 @@ public class OOPartBagWnd : HoldListHud
     //检视器调用
     public void Init() 
     {
-        UnitEventSub.OnPlayerCreate += SetPlayer;
+        UnitEventBus.OnPlayerCreate += SetPlayer;
         HideAtStart();
     }
 
@@ -37,7 +37,7 @@ public class OOPartBagWnd : HoldListHud
 
     private void OnDestroy()
     {
-        UnitEventSub.OnPlayerCreate -= SetPlayer;
+        UnitEventBus.OnPlayerCreate -= SetPlayer;
         if (m_Bag != null) m_Bag.OnChanged -= OnBagChanged;
     }
 

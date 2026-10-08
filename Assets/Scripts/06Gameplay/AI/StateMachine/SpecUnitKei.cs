@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
@@ -93,8 +93,8 @@ namespace FPSGame.AI
         protected override void Start()
         {
             base.Start();
-            BattleEventSub.OnCallKai += OnCall;
-            BattleEventSub.OnEvacuate += OnEvacuate;
+            BattleEventBus.OnCallKai += OnCall;
+            BattleEventBus.OnEvacuate += OnEvacuate;
             m_audioSource = AudioSvc.CreatSource(gameObject, AudioGroups.General);
             m_audioSource.loop = false;
             m_Controller = base.m_Controller as SpecUnitController;
@@ -106,8 +106,8 @@ namespace FPSGame.AI
 
         private void OnDestroy()
         {
-            BattleEventSub.OnCallKai -= OnCall;
-            BattleEventSub.OnEvacuate -= OnEvacuate;
+            BattleEventBus.OnCallKai -= OnCall;
+            BattleEventBus.OnEvacuate -= OnEvacuate;
 
         }
 
@@ -250,7 +250,7 @@ namespace FPSGame.AI
             lastSpeechTime = Time.time;
             var item = group.Get(transform.position);
             speechShowTime = item.Clip.length;
-            GlobalEventSub.ActorSpeech(gameObject, item);
+            GlobalEventBus.ActorSpeech(gameObject, item);
         }
 
         protected override Dictionary<AIState, AiStateHook> InitState()

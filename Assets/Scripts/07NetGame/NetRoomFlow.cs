@@ -67,8 +67,13 @@ namespace FPSGame.Net
         /// <summary>【成员侧】房主下发了某只怪的移动目标（NetId / 目标点）。</summary>
         public static event Action<int, Vector3> OnEnemyMove;
 
-        /// <summary>【房主侧】成员上报打中了某只怪（NetId / 伤害）。</summary>
-        public static event Action<int, int> OnEnemyHitUp;
+        /// <summary>【房主侧】成员上报打中了某只怪。参数：开枪者 sid / NetId / 伤害。
+        /// <para>⚠ 带上 sid 才能把"这一枪"归到那个成员的盟友实例上（受击表现/仇恨要落在他身上）。</para></summary>
+        public static event Action<uint, int, int> OnEnemyHitUp;
+
+        /// <summary>【成员侧】房主打中了某只怪。参数：开枪者 sid（房主 = 0）/ NetId / 伤害。
+        /// <para>▍为什么要往下播：以前只有"成员 → 房主"，房主打出的伤害**从不下发** ⇒ 两侧副本血量各算各的。</para></summary>
+        public static event Action<uint, int, int> OnEnemyDamaged;
 
         /// <summary>【成员侧】房主说某只怪死了（NetId）。</summary>
         public static event Action<int> OnEnemyDied;
@@ -105,6 +110,28 @@ namespace FPSGame.Net
         /// <c>GameStateController(state:8) → TransSceneController.StartLoad()</c> 链上，自己再调一次会双加载。</para></summary>
         public static event Action<int> OnTransition;
 
+        /// <summary>【成员侧】房主宣告本局结束（结果 / 延迟）⇒ 本地走 BattleManager.EndGame。
+        /// <para>⚠ 接收端必须"本局只结束一次"（BattleManager 有门），否则会排两个定时器。</para></summary>
+        public static event Action<GameOverMsg> OnGameOver;
+
+        /// <summary>【成员侧】房主宣告开始撤离（撤离点）⇒ 本地触发撤离。</summary>
+        public static event Action<EvacuateMsg> OnEvacuate;
+
+        /// <summary>【成员侧】房主下发任务状态 / 进度（Key = MissionBase.netOrder）⇒ 本地直接置位，不自行判定。</summary>
+        public static event Action<MissionUpdateMsg> OnMissionUpdate;
+
+        /// <summary>【双向】家具交互（<c>SyncId</c> = 家具跨端稳定键）⇒ 远端重放同一交互。</summary>
+        public static event Action<FurnitureOperateMsg> OnFurnitureOperate;
+
+        /// <summary>【双向】标记点位（表现类；目标实体是引用不能过网 ⇒ 只传点）⇒ 远端在自己的字幕/光环上复现。</summary>
+        public static event Action<MarkMsg> OnMark;
+
+        /// <summary>【双向】呼叫凯伊（点）⇒ 远端让本机凯伊走到同一点（放信标 / 就近救人）。</summary>
+        public static event Action<CallKaiMsg> OnCallKai;
+
+        /// <summary>【成员侧】房主下发的追击波次中心（~2Hz）⇒ 本端只跟随，不自己算"最近玩家"。</summary>
+        public static event Action<WaveCenterMsg> OnWaveCenter;
+
         /// <summary>连接 + 入房的总超时（秒）。超时按失败处理，避免 UI 一直转圈。</summary>
         [InspectorName("入房总超时(秒)")]
         [SerializeField] private float joinTimeout = 10f;
@@ -134,6 +161,7 @@ namespace FPSGame.Net
             MessageCenter.Register<EnemyMoveMsg>(CmdId.EnemyMoveSync, HandleEnemyMoveSync);
             MessageCenter.Register<EnemyHitMsg>(CmdId.EnemyHitNtf, HandleEnemyHitNtf);
             MessageCenter.Register<EnemyDiedMsg>(CmdId.EnemyDiedSync, HandleEnemyDiedSync);
+            MessageCenter.Register<EnemyDamagedMsg>(CmdId.EnemyDamagedSync, HandleEnemyDamagedSync);
             MessageCenter.Register<SceneUnitMoveMsg>(CmdId.SceneUnitMoveSync, HandleSceneUnitMoveSync);
             MessageCenter.Register<AirdropCallMsg>(CmdId.AirdropCallSync, HandleAirdropCallSync);
             MessageCenter.Register<PlayerLeftMsg>(CmdId.PlayerLeftNtf, HandlePlayerLeftNtf);
@@ -142,6 +170,14 @@ namespace FPSGame.Net
             // 也避免"注册时角色还没定"（本组件在 Awake 注册，那时可能还没开房/还没连上）
             MessageCenter.Register<SceneActorSync>(CmdId.SceneActorReq, HandleSceneActorReq);
             MessageCenter.Register<SceneActorSync>(CmdId.SceneActorNtf, HandleSceneActorNtf);
+            // 局内世界状态（本局结束 / 撤离）：房主广播，成员应用
+            MessageCenter.Register<GameOverMsg>(CmdId.GameOverNtf, HandleGameOverNtf);
+            MessageCenter.Register<EvacuateMsg>(CmdId.EvacuateNtf, HandleEvacuateNtf);
+            MessageCenter.Register<MissionUpdateMsg>(CmdId.MissionUpdateNtf, HandleMissionUpdateNtf);
+            MessageCenter.Register<FurnitureOperateMsg>(CmdId.FurnitureOperateNtf, HandleFurnitureOperateNtf);
+            MessageCenter.Register<MarkMsg>(CmdId.MarkNtf, HandleMarkNtf);
+            MessageCenter.Register<CallKaiMsg>(CmdId.CallKaiNtf, HandleCallKaiNtf);
+            MessageCenter.Register<WaveCenterMsg>(CmdId.WaveCenterNtf, HandleWaveCenterNtf);
         }
 
         private void OnDestroy()
@@ -160,12 +196,20 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.EnemyMoveSync);
             MessageCenter.Unregister(CmdId.EnemyHitNtf);
             MessageCenter.Unregister(CmdId.EnemyDiedSync);
+            MessageCenter.Unregister(CmdId.EnemyDamagedSync);
             MessageCenter.Unregister(CmdId.SceneUnitMoveSync);
             MessageCenter.Unregister(CmdId.AirdropCallSync);
             MessageCenter.Unregister(CmdId.PlayerLeftNtf);
             MessageCenter.Unregister(CmdId.SpeechSync);
             MessageCenter.Unregister(CmdId.SceneActorReq);
             MessageCenter.Unregister(CmdId.SceneActorNtf);
+            MessageCenter.Unregister(CmdId.GameOverNtf);
+            MessageCenter.Unregister(CmdId.EvacuateNtf);
+            MessageCenter.Unregister(CmdId.MissionUpdateNtf);
+            MessageCenter.Unregister(CmdId.FurnitureOperateNtf);
+            MessageCenter.Unregister(CmdId.MarkNtf);
+            MessageCenter.Unregister(CmdId.CallKaiNtf);
+            MessageCenter.Unregister(CmdId.WaveCenterNtf);
             if (ReferenceEquals(Instance, this)) Instance = null;
         }
 
@@ -614,6 +658,14 @@ namespace FPSGame.Net
             NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.EnemyDiedSync, new EnemyDiedMsg { NetId = netId }));
         }
 
+        /// <summary>【房主】把自己打出的伤害下发给成员（成员扣自己那份副本 ⇒ 血量口径统一在房主）。</summary>
+        public void SendEnemyDamaged(int netId, int damage)
+        {
+            if (!IsHost || netId == 0 || damage <= 0) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.EnemyDamagedSync,
+                new EnemyDamagedMsg { Sid = 0, NetId = netId, Damage = damage }));
+        }
+
         private void HandleEnemyMoveSync(EnemyMoveMsg m)
         {
             if (m != null) OnEnemyMove?.Invoke(m.NetId, new Vector3(m.X, m.Y, m.Z));
@@ -621,7 +673,12 @@ namespace FPSGame.Net
 
         private void HandleEnemyHitNtf(EnemyHitMsg m)
         {
-            if (m != null) OnEnemyHitUp?.Invoke(m.NetId, m.Damage);
+            if (m != null) OnEnemyHitUp?.Invoke(m.Sid, m.NetId, m.Damage);
+        }
+
+        private void HandleEnemyDamagedSync(EnemyDamagedMsg m)
+        {
+            if (m != null) OnEnemyDamaged?.Invoke(m.Sid, m.NetId, m.Damage);
         }
 
         private void HandleEnemyDiedSync(EnemyDiedMsg m)
@@ -642,6 +699,112 @@ namespace FPSGame.Net
         {
             if (m != null && !string.IsNullOrEmpty(m.Id))
                 OnSceneUnitMove?.Invoke(m.Id, new Vector3(m.X, m.Y, m.Z), m.Stop);
+        }
+
+        // ==================== 局内世界状态（本局结束 / 撤离） ====================
+
+        /// <summary>【房主】广播"本局结束"（⚠ 一局只广播一次，由 09 侧的桥保证）。</summary>
+        public void SendGameOver(int matchId, int delay, int result)
+        {
+            if (!IsHost) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.GameOverNtf,
+                new GameOverMsg { MatchId = matchId, Delay = delay, Result = result }));
+        }
+
+        /// <summary>【房主】广播"开始撤离"（⚠ 一局只广播一次，由 09 侧的桥保证）。</summary>
+        public void SendEvacuate(float x, float y, float z)
+        {
+            if (!IsHost) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.EvacuateNtf,
+                new EvacuateMsg { X = x, Y = y, Z = z }));
+        }
+
+        private void HandleGameOverNtf(GameOverMsg m)
+        {
+            if (m != null) OnGameOver?.Invoke(m);
+        }
+
+        private void HandleEvacuateNtf(EvacuateMsg m)
+        {
+            if (m != null) OnEvacuate?.Invoke(m);
+        }
+
+        /// <summary>【房主】广播某任务的状态 / 进度（去重由 09 侧的桥负责，见 NetMissionBridge.Broadcast）。</summary>
+        public void SendMissionUpdate(int key, int state, int progress, int maxProgress, float percentage)
+        {
+            if (!IsHost) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.MissionUpdateNtf,
+                new MissionUpdateMsg
+                {
+                    Key = key,
+                    State = state,
+                    Progress = progress,
+                    MaxProgress = maxProgress,
+                    Percentage = percentage,
+                }));
+        }
+
+        private void HandleMissionUpdateNtf(MissionUpdateMsg m)
+        {
+            if (m != null) OnMissionUpdate?.Invoke(m);
+        }
+
+        /// <summary>家具交互：成员上报房主 / 房主转发全体（由 09 侧的 NetFurnitureBridge 决定走向）。</summary>
+        public void SendFurnitureOperate(int syncId, uint sid)
+        {
+            var msg = MessageCenter.Pack(CmdId.FurnitureOperateNtf,
+                new FurnitureOperateMsg { SyncId = syncId, Sid = sid });
+
+            if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
+            else NetSvc.Instance?.SendMsg(msg);
+        }
+
+        private void HandleFurnitureOperateNtf(FurnitureOperateMsg m)
+        {
+            if (m != null) OnFurnitureOperate?.Invoke(m);
+        }
+
+        /// <summary>标记点位：成员上报房主 / 房主转发全体（走向由 09 侧的 NetActionBridge 决定）。</summary>
+        public void SendMark(uint sid, float x, float y, float z)
+        {
+            var msg = MessageCenter.Pack(CmdId.MarkNtf,
+                new MarkMsg { Sid = sid, Kind = 0, X = x, Y = y, Z = z });
+
+            if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
+            else NetSvc.Instance?.SendMsg(msg);
+        }
+
+        /// <summary>呼叫凯伊：成员上报房主 / 房主转发全体。</summary>
+        public void SendCallKai(uint sid, float x, float y, float z)
+        {
+            var msg = MessageCenter.Pack(CmdId.CallKaiNtf,
+                new CallKaiMsg { Sid = sid, X = x, Y = y, Z = z });
+
+            if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
+            else NetSvc.Instance?.SendMsg(msg);
+        }
+
+        private void HandleMarkNtf(MarkMsg m)
+        {
+            if (m != null) OnMark?.Invoke(m);
+        }
+
+        private void HandleCallKaiNtf(CallKaiMsg m)
+        {
+            if (m != null) OnCallKai?.Invoke(m);
+        }
+
+        /// <summary>【房主】下发追击波次的中心点（~2Hz 节流在 09 侧的 WaveManager 里）。</summary>
+        public void SendWaveCenter(int waveIndex, Vector3 center)
+        {
+            if (!IsHost) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.WaveCenterNtf,
+                new WaveCenterMsg { WaveIndex = waveIndex, X = center.x, Y = center.y, Z = center.z }));
+        }
+
+        private void HandleWaveCenterNtf(WaveCenterMsg m)
+        {
+            if (m != null) OnWaveCenter?.Invoke(m);
         }
 
         private void HandleBoosterSync(PlayerBoosterSync s)

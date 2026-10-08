@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using FPSGame.GameContract;
 using PEMaths;
 using UnityEngine;
@@ -20,7 +20,7 @@ namespace FPSGame.Game
 /// Assembly-CSharp，将来一起进 05_UnitCore），签名里可以直接用具体类型 Actor，
 /// 因此 12 个事件与全部订阅处理函数一个字都不用改（避免 20 处无谓改动与 cast 风险）。</para>
 /// </summary>
-public static class UnitEventSub
+public static class UnitEventBus
 {
     public static event Action<IActor> OnUnitPosChange;
     /// <summary>单位位置改变</summary>
@@ -87,7 +87,7 @@ public static class UnitEventSub
     public static event Action<Actor> OnSpecUnitDead;
     public static void SpecUnitDead(Actor unit) => OnSpecUnitDead?.Invoke(unit);
 
-    //盟友创建在全局
+    //盟友创建还没有
 
     /// <summary>玩家倒地</summary>
     public static event Action<Actor> OnPlayerDead;

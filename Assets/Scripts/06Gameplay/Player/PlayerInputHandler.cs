@@ -1,4 +1,4 @@
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using FPSGame.Attributes;
 using FPSGame.Game;
 
@@ -44,7 +44,7 @@ public class PlayerInputHandler : MonoBehaviour
     */
     void Start()
     {
-        GlobalEventSub.OnFurnitureOperate += OnOperation;
+        GlobalEventBus.OnFurnitureOperate += OnOperation;
         //m_PlayerCharacterController = GetComponent<PlayerController>();
         //GlobalEventManager.OnWndSwitch += OnWndSwitch;
 
@@ -55,7 +55,7 @@ public class PlayerInputHandler : MonoBehaviour
     }
     void OnDestroy()
     {
-        GlobalEventSub.OnFurnitureOperate -= OnOperation;
+        GlobalEventBus.OnFurnitureOperate -= OnOperation;
         //GlobalEventManager.OnWndSwitch -= OnWndSwitch;
     }
 

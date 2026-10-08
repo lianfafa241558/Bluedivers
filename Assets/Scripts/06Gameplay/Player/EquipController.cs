@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.GameContract;
 using FPSGame.Game;
@@ -81,7 +81,7 @@ public class EquipController : MonoBehaviour
         if(equips.TryAdd(equip, furniture))
         {
             // 装备物品语音
-            if (m_actor != null) GlobalEventSub.PlayMeetSpeech(m_actor.gameObject, SpeechTypeEnum.Install);
+            if (m_actor != null) GlobalEventBus.PlayMeetSpeech(m_actor.gameObject, SpeechTypeEnum.Install);
 
             equip.OnInstall(m_actor, AllEquips);
             equip.OnEquipDestroy += HandleEquipDestroy;
@@ -109,7 +109,7 @@ public class EquipController : MonoBehaviour
         if (equips.Remove(equip))
         {
             // 卸载物品语音
-            if (!silent && m_actor != null) GlobalEventSub.PlayMeetSpeech(m_actor.gameObject, SpeechTypeEnum.Uninstall);
+            if (!silent && m_actor != null) GlobalEventBus.PlayMeetSpeech(m_actor.gameObject, SpeechTypeEnum.Uninstall);
 
             equip.OnUninstall();
             equip.OnEquipDestroy -= HandleEquipDestroy;

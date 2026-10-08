@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
@@ -396,7 +396,7 @@ public class SelectRoleWnd : Window
         ArchivesData_SO.Current.GetRoleLevel(data.ID,out int level,out float exp);
         SetText(txt_Level,level);
         SetActive(btn_Select, !isNow);
-        GlobalEventSub.SelectRolePreview(data);
+        GlobalEventBus.SelectRolePreview(data);
         var list = data.GetStartingWeapons(arch);
 
         for(int i = 0; i < 6; ++i)

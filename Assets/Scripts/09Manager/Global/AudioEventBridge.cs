@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using FPSGame.Core;
 using UnityEngine;
 using FPSGame.Audio;
@@ -11,7 +11,7 @@ namespace FPSGame.Managers
 /// AudioSvc 依赖反转桥（2026-09-30 为把 AudioSvc 下沉到 <c>03_Audio</c> 程序集而加）。
 ///
 /// <para>背景：<c>AudioSvc</c> 现在位于 <c>03_Audio</c>（在 <c>01Manager</c> 之下），
-/// 不能再直接引用 <see cref="GlobalEventSub"/>／<c>ResSvc</c>／<c>GameRoot</c>。
+/// 不能再直接引用 <see cref="GlobalEventBus"/>／<c>ResSvc</c>／<c>GameRoot</c>。
 /// 本类留在 01Manager（上层），负责：</para>
 /// <list type="number">
 ///   <item>把 <c>GlobalEventSub</c> 的两个全局事件转发给 AudioSvc 的公开方法（订阅时序与原先"AudioSvc 在自己的 Awake 里订阅"等价）；</item>
@@ -24,8 +24,8 @@ public static class AudioEventBridge
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Hook()
     {
-        GlobalEventSub.OnGameStateChange += ForwardGameState;
-        GlobalEventSub.OnSettingCange += ForwardSetting;
+        GlobalEventBus.OnGameStateChange += ForwardGameState;
+        GlobalEventBus.OnSettingCange += ForwardSetting;
 
         AudioSvc.ClipLoader = LoadClip;
         // ⚠ `AudioSvc.TimerRequest` 的注入已于 2026-10-01 删除：定时器统一走 00_Core 的 `TimerHost`

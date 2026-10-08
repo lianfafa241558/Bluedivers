@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.Gameplay;
@@ -37,24 +37,24 @@ public class MissionWnd : Window
     protected override void ShowWnd()
     {
         //Debug.LogError("完成missionWnd初始化");
-        BattleEventSub.OnMissionStart += OnObjectiveCreated;
-        BattleEventSub.OnMissionStateChange += OnMissionShowStateChange;
-        BattleEventSub.OnMissionUpdate += OnObjectiveUpdate;
-        BattleEventSub.OnMissionCompleted += OnObjectiveCompleted;
-        BattleEventSub.OnMissionFail += OnObjectiveFail;
-        BattleEventSub.OnMissionEnd += OnObjectiveEnd;
-        BattleEventSub.OnMissionEntityShow += OnMissionShow;
+        BattleEventBus.OnMissionStart += OnObjectiveCreated;
+        BattleEventBus.OnMissionStateChange += OnMissionShowStateChange;
+        BattleEventBus.OnMissionUpdate += OnObjectiveUpdate;
+        BattleEventBus.OnMissionCompleted += OnObjectiveCompleted;
+        BattleEventBus.OnMissionFail += OnObjectiveFail;
+        BattleEventBus.OnMissionEnd += OnObjectiveEnd;
+        BattleEventBus.OnMissionEntityShow += OnMissionShow;
     }
 
     protected override void HideWnd()
     {
-        BattleEventSub.OnMissionStart -= OnObjectiveCreated;
-        BattleEventSub.OnMissionStateChange -= OnMissionShowStateChange;
-        BattleEventSub.OnMissionUpdate -= OnObjectiveUpdate;
-        BattleEventSub.OnMissionCompleted -= OnObjectiveCompleted;
-        BattleEventSub.OnMissionFail -= OnObjectiveFail;
-        BattleEventSub.OnMissionEnd -= OnObjectiveEnd;
-        BattleEventSub.OnMissionEntityShow -= OnMissionShow;
+        BattleEventBus.OnMissionStart -= OnObjectiveCreated;
+        BattleEventBus.OnMissionStateChange -= OnMissionShowStateChange;
+        BattleEventBus.OnMissionUpdate -= OnObjectiveUpdate;
+        BattleEventBus.OnMissionCompleted -= OnObjectiveCompleted;
+        BattleEventBus.OnMissionFail -= OnObjectiveFail;
+        BattleEventBus.OnMissionEnd -= OnObjectiveEnd;
+        BattleEventBus.OnMissionEntityShow -= OnMissionShow;
     }
 
     /// <summary>

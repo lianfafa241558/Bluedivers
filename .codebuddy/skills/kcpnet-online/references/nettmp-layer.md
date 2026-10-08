@@ -1,158 +1,142 @@
-# NetTmp 适配层逐文件要点
+# 网络层逐文件要点（**2026-10-09 结构，已重构为三层**）
 
-> 目录：`Assets/Scripts/NetTmp/`（`Client/` 7 个脚本 + `Services/` 1 个常量表 + 4 个消息文件）。
-> 该目录**没有 asmdef**，因此编译进 `Assembly-CSharp`；除自身外无任何工程代码引用它。
-> 文件夹名 `NetTmp`（Tmp = temporary），属于试验性质模块——改造时按“新代码”，不要假定它已接入游戏主流程。
+> ⚠⚠ 本文档旧版描述的是"`NetTmp` 单目录 + 无 asmdef + 编译进 `Assembly-CSharp` + **未挂载到场景**"——
+> **那套说法已全部作废**。网络层已按依赖方向拆成三层并接进了游戏主流程，见 §0。
 
-## 1. 数据流与线程边界（最重要）
+## 0. 三层与程序集（先记住这张表）
+
+| 层 | asmdef | 目录 | `references` | 约束 |
+| --- | --- | --- | --- | --- |
+| **传输 / 编解码** | `02_Net` | `Assets/Scripts/NetTmp/` | **`[]`**（只 Unity + BCL） | 看不见任何游戏程序集 ⇒ 不许引用 SO/枚举/游戏类型 |
+| **业务网络层** | `07_NetGame` | `Assets/Scripts/07NetGame/` | **`[02_Net]`** | 看不见 `01_GameContract` / `04_Data` / `05_UnitCore` / `06_Gameplay` ⇒ **DTO 只能用基础类型**（枚举要当 `int` 传，见下方的 `TaskCfgDto`） |
+| **消费方** | `09_Managers` / `10_UI` / `10_Effect` | — | 都含 `07_NetGame` | ⚠ **`10_UI` 现在看得见网络业务层** —— 旧的"UI 看不见网络层、所以必须绕道 `09_Managers`"的结论**已作废** |
+
+**分层规则**：DTO/命令号/协议放 `07_NetGame`（只用基础类型）；队列与编解码放 `02_Net`；**游戏对象 ↔ 网络值的转换只能在 09/10 做**（`09Manager/Global/TeamNetBridge.cs`、`NetFriendBridge.cs`、`EnemyNetBridge.cs` 就是这三座桥）。
+
+> 这套拆法的收益（也是拆的顺序）：让 `02_Net` 能"下沉"到任何地方复用 —— 会话类不再反向依赖游戏层的 `NetSvc/NetHostSvc`（旧版 `ClientSession` 直接调 `NetSvc.Instance.AddMsgQue`）。
+
+## 1. 数据流与线程边界（最重要，重构后仍成立）
 
 ```
-[主线程] 业务 → MessageCenter.Pack → NetSvc.SendMsg / NetHostSvc.SendToAll
-[主线程] KCPSession.SendMsg → 库写入 UDP（KCP 内部有独立 update 循环）
-[后台线程] UDP 收包 → KCPSession.OnReciveMsg(msg)     ← 不能在里做 Unity 操作
-[后台线程] NetSvc.AddMsgQue(msg) / NetHostSvc.AddMsgQue(msg, sid)  ← lock (pkgque_lock)
-[主线程] 组件 Update() 出队 → MessageCenter.Dispatch(msg) → 注册的 Action<T>
+[主线程]   业务 → MessageCenter.Pack(cmdId, dto)      // 内部走 NetMsgCodec（AOT 安全）
+[主线程]   NetSvc.SendMsg / NetHostSvc.SendToAll|SendToSession
+[主线程]   KCPSession<NetMessage>.SendMsg → 库写 UDP（KCP 自带 update 循环）
+─────────────── 网络 ───────────────
+[传输线程] 库回调 KCPSession.OnReciveMsg(msg)
+[传输线程] NetInbox.Enqueue(msg) / NetInbox.Enqueue(msg, sid)   // 静态队列 + lock
+[主线程]   NetSvc.Update() / NetHostSvc.Update() 出队 → MessageCenter.Dispatch(msg) → 注册的 Action<T>
 ```
 
-`AddMsgQue` 与 `Update` 出队都持 `lock (NetSvc.pkgque_lock)`（房主端是 `NetHostSvc.pkgque_lock`，同一个字符串常量 "pkgque_lock"）。
+- 队列已从游戏层搬到传输层：**`NetTmp/Client/NetInbox.cs`**（`_client` / `_host` 两条 `Queue` + 一个 `_lock`；房主那条带 `Sid`）。
+  ⚠ 旧的 `NetSvc.pkgque_lock` / `NetHostSvc.AddMsgQue` 已不再是队列所有者（类里可能仍留有薄的取件封装）。
+- **任何 `OnReciveMsg` / `OnConnected` / `OnDisConnected` 都在库的线程池线程上** ⇒ 只能做纯数据操作（入队、`Debug.Log`、`DateTime`），**不能碰 Unity API、不能改游戏表**。
 
-## 2. Client/NetSvc.cs —— 成员端总入口
+## 2. `02_Net`（`Assets/Scripts/NetTmp/`）逐文件
 
-| 成员 | 说明 |
+| 文件 | 职责 / 要点 |
 | --- | --- |
-| `static NetSvc Instance` | 单例，`Awake` 赋值，`OnDestroy` 置 null |
-| `KCPNet<ClientSession, NetMessage> client` | 成员端只有一条连接 |
-| `bool IsConnected` | `client != null && client.clientSession != null && client.clientSession.IsConnected()` |
-| `Awake()` | `InitSvc(false)` —— **默认不自动连固定服务器**（P2P 模式，等搜到房间再回连） |
-| `InitSvc(bool connectDefault = true)` | 建消息队列 + 可选 `ConnectDefaultServer()` |
-| `ConnectDefaultServer()` | 直连模式：`StartAsClient(SRV_IP, SRV_PORT)` + `ConnectServer(200, 5000)`；`SRV_IP = "127.0.0.1"`、`SRV_PORT = NetConfig.HostGamePort` |
-| `ConnectToRoom(LanRoomInfo room, Action<bool> cb = null)` | **回连房主唯一入口**：`Disconnect()` → `StartAsClient(room.HostIp, room.HostPort)` → `await ConnectServer(200, 5000)` → `cb(result.Success)` |
-| `Disconnect()` | `client.CloseClient()` + 清空队列 |
-| `JoinRoom(name, pwd)` / `LeaveRoom()` / `SetReady(bool)` | 房间协议发起端，全部经 `SendToHost` |
-| `SendMsg(NetMessage, Action<bool> cb)` | 业务发送统一入口；未连接时 `Debug.LogError("服务器未连接")` 并回调 false |
-| `SendToHost(NetMessage)`（private） | 未连接时 `LogError("[NetSvc] 尚未连接房主，无法发送房间消息")` |
-| `AddMsgQue(NetMessage)` | 由 `ClientSession.OnReciveMsg` 调用 |
-| `Update()` | 出队 + `MessageCenter.Dispatch`（旧项目这里是 40+ 行巨型 switch，本项目改成一行） |
+| `Transport/NetClient.cs` | 成员端传输封装：持有 `KCPNet<ClientSession, NetMessage>`，暴露 `IsConnected`、`RttMs`、`CloseClient()`；心跳（`PingReq`）也在这一层。 |
+| `Transport/NetServer.cs` | 房主端传输封装：`StartAsServer(0.0.0.0, port)`、会话表、`SendToAll`/`TryGetSession`、`CloseServer()`；`SocketException` 在此转成清晰报错。 |
+| `Client/ClientSession.cs` | 成员端会话钩子：`Serializer => NetMessageSerializer.Instance`；`OnReciveMsg → NetInbox.Enqueue(msg)`。 |
+| `Client/HostSession.cs` | 房主端会话钩子：`OnReciveMsg → NetInbox.Enqueue(msg, GetSessionID())`（**必须带 sid**）；另有 `PeerAddress`（反射读库私有 `m_remotePoint`，只为日志排查）；`OnConnected/OnDisConnected` **做了日志限流**，见 §7 的"反复握手"。 |
+| `Client/NetInbox.cs` | 传输层入站队列（成员 / 房主两条）+ `TryDequeueClient/TryDequeueHost` + `ClearClient/ClearHost`。 |
+| `Client/MessageCenter.cs` | 注册表 + 打包 + 分发：`Register<T>(cmdId, Action<T>)` / `Pack<T>` / `Dispatch` / `Unregister`。⚠ **`Pack`/`Dispatch` 现在走 `NetMsgCodec`**（不再是 `MessagePackSerializer`，见 SKILL 的 AOT 一节）；`Dispatch` 的 catch 打 **`e.ToString()`**（只打 `e.Message` 会丢掉处理器与行号）。 |
+| `Services/NetCmdId.cs` | **传输层自有命令号**：`1001 PingReq` / `1002 PingRsp`（与游戏命令号分表，别往这里塞业务）。 |
+| `Services/NetMsgCodec.cs` | AOT 安全的 MessagePack 读写器：只用 `MessagePackWriter/Reader`，`[MessagePackObject]` 类型按 **array 格式 + `[Key]` 升序**；反射成员（靠 `Assets/link.xml` 保全）。新增字段类型要在 `WriteValue/ReadValue` 补分支。 |
+| `Services/Msg/PingMsg.cs` | 心跳 DTO。 |
 
-`ConnectTo`（private）是建连模板方法：`new KCPNet<ClientSession, NetMessage>()` → `startAction(绑定UDP)` → `connectAction(握手)`。
+## 3. `07_NetGame`（`Assets/Scripts/07NetGame/`）逐文件
 
-## 3. Client/NetHostSvc.cs —— 房主端总入口
-
-| 成员 | 说明 |
+| 文件 | 职责 / 要点 |
 | --- | --- |
-| `static NetHostSvc Instance` | 单例 |
-| `struct HostMsg { NetMessage Msg; uint Sid; }` | 队列元素，**必须带来源 sid** |
-| `KCPNet<HostSession, NetMessage> host` | 服务器实例；每个连进来的成员对应一个 `HostSession` |
-| `[SerializeField] int hostPort = NetConfig.HostGamePort` | 面板可改监听端口 |
-| `LanBroadcaster _broadcaster` | 房间广播 |
-| `LanRoomInfo RoomInfo { get; private set; }` | 当前房间（广播与 UI 共用） |
-| `int MaxPlayers`、`int MemberCount`、`int TotalPlayers` | 人数（`TotalPlayers = 1 + 成员数`，含房主自己） |
-| `Dictionary<uint, PlayerInfo> _players` | sid → 玩家信息（不含房主） |
-| `_hostSelfName` | 房主名，用 `Host_{HHmmssfff}` 时间戳生成，写进 `RoomInfo.PlayerNames[0]`，供成员**排除自己开的房** |
-| `Awake()` | 注册三个房间协议处理器：`JoinRoomReq` / `LeaveRoomNtf` / `ReadyState` |
-| `StartHost(roomName, mapName = "", maxPlayers = 4, password = "")` | 创建 `KCPNet<HostSession, NetMessage>()` → `try { host.StartAsServer("0.0.0.0", hostPort) } catch (SocketException)`（转成清晰报错并回滚）→ 订阅 `OnSessionConnected/OnSessionDisconnected` → 构造 `RoomInfo` → `new LanBroadcaster(GetBroadcastInfo()).Start()` |
-| `StopHost()` | 退订事件 → `CloseServer()` → 停广播 → 清房间与成员表 |
-| `GetBroadcastInfo()` | `LanBroadcaster` 每轮广播前回调，刷新 `RoomInfo.PlayerCount = TotalPlayers` 后返回同一引用 |
-| `OnMemberJoined(sid)` / `OnMemberLeft(sid)` | 传输层事件；离开时若在 `_players` 中则移除并广播玩家列表 |
-| `OnJoinRoomReq(JoinRoomReq)` | 读 `CurrentSid` → 满员校验（`TotalPlayers >= MaxPlayers`）→ 密码校验 → 记录 `PlayerInfo` → 回 `JoinRoomRsp`（`ErrorCode=0` + `Self` + `Players`）→ `BroadcastPlayerList()` |
-| `OnLeaveRoomNtf` / `OnReadyState` | 更新成员表并广播玩家列表 |
-| `StartGame(mapName = "")` | 广播 `StartGameNtf` |
-| `SendToAll(NetMessage)` / `SendToSession(uint sid, NetMessage)` | 房主权威广播/定向（定向用 `TryGetSession` + `IsConnected()`） |
-| `AddMsgQue(NetMessage, uint sid)` / `Update()` | 出队时写 `CurrentSid`，`Dispatch` 后 `finally { CurrentSid = 0; }` |
-| `OnDestroy()` | `MessageCenter.Unregister` 三条协议 + `StopHost()` |
+| `NetSvc.cs` | 成员端总入口（MonoBehaviour，单例）：`ConnectToRoom(room, cb)`、`JoinRoom/LeaveRoom/SetReady`、`SendMsg`、`Update()` 出队分发、`IsConnected`、`RttMs`。 |
+| `NetHostSvc.cs` | 房主端总入口（48KB，最大）：`StartHost(HostRoomOptions)` / `StopHost` / 成员表 / 房间协议处理 / `SendToAll` / `SendToSession` / `ConfirmTask` / `NotifyTransition` / `SetHostReady` / 位姿下发节流（`poseBroadcastHz`）/ 场景 actor 快照应答。**所有会话级回调都走"入队 → 主线程处理"**。 |
+| `NetRoomFlow.cs` | 业务编排层（41KB）：把"上行/下行"收敛成一套 `Send*` / `On*`（房主本地自派发 + 广播，成员发给房主）；对外暴露 `Instance`、`IsHost`、`SelfSid`、`CurrentMatchId` 与一堆静态事件（`OnPlayerList/OnTaskConfirm/OnTransition/OnArmamentSync/OnBoosterSync/OnWeaponSwitch/OnShoot/OnVital/OnAmmo/OnSceneActorReq/OnSceneActors/OnAirdropCall/OnSpeech/OnPlayerLeft/OnWaveStart/OnEnemyMove/OnEnemyHitUp/OnEnemyDamaged/OnGameOver/OnEvacuate/…`）。**业务层要收发都从它走，别直接找 NetSvc/NetHostSvc。** |
+| `NetTransformFlow.cs` | 玩家位姿同步（成员上行 `PlayerTransformUp`、房主聚合广播 `TransformBatchSync`；对外 `OnPose` 事件）。 |
+| `CmdId.cs` | **游戏业务命令号全表**（见 §5）。 |
+| `RoomMeta.cs` | **库缺字段期间的唯一适配点**（房间名/地图名里的 `#T=` / `#` 约定解析，逐条标了 `TODO(库)`），见 §6。 |
+| `Msg/RoomMsg.cs` | 房间 + 开局 + 玩家表现 + 敌人同步的 DTO（26KB，见 §5.2）。
+  ⚠ DTO 上的 `[MessagePackObject]` / `[Key(n)]` **必须保留**（`NetMsgCodec` 反射读 `[Key]` 决定 array 顺序）⇒ `07_NetGame` 对 `MessagePack` 的依赖是**必需的**，别去"清理"；真正要禁的是 `MessagePackSerializer` 调用（全仓 0 处，只在注释里）。 |
+| `Msg/BattleMsg.cs` | `PoseSnapshot` / `PoseBatchMsg`（位姿批次）。 |
+| `Msg/SyncMsg.cs` | 局内世界状态：`GameOverMsg` / `EvacuateMsg` / `MissionUpdateMsg` / `FurnitureOperateMsg` / `MarkMsg` / `CallKaiMsg` / `WaveCenterMsg`。 |
 
-⚠ `StartHost` 里 **`SocketException` 会被 catch 后重新 `throw`**（先清理 `host`/广播/`RoomInfo` 再抛），调用方需自行 try/catch，不要在捕获后立即重试开房，会再次失败。
+## 4. 挂载点与三座桥
 
-## 4. 两个会话钩子
+- **常驻组件**：`Assets/Resources/Prefabs/Manager/GameRoot.prefab` → 子物体 **`NetRoot`** 下挂 6 个：
+  `NetSvc` / `NetHostSvc` / `NetRoomFlow` / `NetTransformFlow` / `TeamNetBridge` / `NetFriendBridge`。
+  ⚠⚠ `GameRootBase.Awake/OnDestroy` 收集 `I_GlobaManager` **只扫「根物体 + 直接子物体」两级、不递归** ⇒ 常驻管理器挂**一级子物体**安全，挂更深会被**静默漏掉** Init/UnInit。
+  （`NetManager` 名字带 Net 但与网络无关——它是 50Hz 逻辑帧宿主，已改名 `LogicFrameHost`，留在根上。）
+- **三座桥**（`09_Managers`，负责"网络值 ↔ 游戏对象"，因为 07/02 都看不见游戏层）：
+  | 桥 | 位置 | 职责 |
+  | --- | --- | --- |
+  | `TeamNetBridge` | `09Manager/Global/` | 名单/准备/资料/战备/强化/开局（`SetSeed` + `SetTask`）/转场 |
+  | `NetFriendBridge` | `09Manager/Global/` | 盟友实体：创建/销毁/模型/武器/位姿/血盾/弹药/切枪/开火/喊话 |
+  | `EnemyNetBridge` | `09Manager/Battle/` | 敌人：NetId、移动意图、命中上报、房主结算、死亡、伤害下行 |
+- 场景/其它：`NetRoomFlow` 的房间列表 UI 在 `10UI/Comp/ServerListPanel.cs`；舰桥战备在 `BridgeSys` + `ArmamentWnd`。
 
-`ClientSession : KCPSession<NetMessage>`
+## 5. 协议
 
-```csharp
-protected override IKCPMsgSerializer Serializer => NetMessageSerializer.Instance;
-protected override void OnConnected()    { Debug.Log("[ClientSession] 连接服务器成功"); }
-protected override void OnDisConnected() { Debug.Log("[ClientSession] 断开服务器连接"); }
-protected override void OnReciveMsg(NetMessage msg) { NetSvc.Instance.AddMsgQue(msg); }
-protected override void OnUpdate(DateTime now) { }
+### 5.1 阶段链（**命名按用户 2026-10-06 口径**）
+
 ```
-
-`HostSession : KCPSession<NetMessage>`
-
-```csharp
-public string PlayerName = "";                     // 预留给房主管理成员，当前未使用
-protected override IKCPMsgSerializer Serializer => NetMessageSerializer.Instance;
-protected override void OnReciveMsg(NetMessage msg)
-    => NetHostSvc.Instance.AddMsgQue(msg, GetSessionID());   // ← 必须带 sid
+Bridge（舰桥选任务）--房主 ConfirmTask 广播 TaskConfirmNtf--> Ready（**仍在舰桥，仍可进人**）
+   --所有人就位--> Armament（仍在舰桥各自选战备）--全员准备--> Transition（房主 NotifyTransition 广播 TransitionNtf，
+   各端**各自**加载战斗场景）--> Game
 ```
+⚠ "开局"不是某一条消息：**配置**由 `TaskConfirmNtf` 定（含种子），**加载**由 `TransitionNtf` 触发。
 
-两者 `OnUpdate` 都留空。新增会话类型（例如“专用服务器端”）照抄这两个文件重写 `Serializer` + `OnReciveMsg` 即可。
+### 5.2 命令号全表（`07NetGame/CmdId.cs`，2026-10-09）
 
-## 5. Client/MessageCenter.cs —— 分发核心
-
-```csharp
-private sealed class Handler { public Type MsgType; public Action<object> Callback; }
-private static readonly Dictionary<int, Handler> _handlers = new();
-
-public static void Register<T>(int cmdId, Action<T> handler) where T : class
-    // 存 typeof(T) 与 obj => handler(obj as T)，同一 cmdId 重复注册会覆盖
-public static NetMessage Pack<T>(int cmdId, T msg) where T : class
-    // new NetMessage { CmdId = cmdId, Data = MessagePackSerializer.Serialize(msg) }
-public static void Dispatch(NetMessage msg)
-    // 查表 → 未注册则 LogError($"未注册消息:{msg.CmdId}")
-    // → MessagePackSerializer.Deserialize(handler.MsgType, msg.Data)
-    // → handler.Callback(body) 包在 try/catch 里，异常只 LogError 不中断循环
-public static void Unregister(int cmdId)
-```
-
-关键细节：
-
-- 非泛型反序列化写法为 `MessagePackSerializer.Deserialize(Type, ReadOnlyMemory<byte>)`，**Type 在前**，`msg.Data`（`byte[]`）隐式转 `ReadOnlyMemory<byte>`，**不要加 `ref`**（MessagePack 3.1.8 的签名）。
-- `Dispatch` 的 `try/catch` 是逐条消息的隔离网：单条坏包不会打断 `NetSvc.Update()` 的 `while` 循环。
-- 静态表**没有清空机制**，模块切换场景时务必 `Unregister`，否则残留处理器会在新场景里被间接触发。
-
-## 6. Services/ 数据定义
-
-`CmdId.cs` 分段：
-
-| 段 | 命令号 | 消息 |
+| 命令号 | 常量 | 方向 / 用途 |
 | --- | --- | --- |
-| 通用 | `1001 PingReq` / `1002 PingRsp` | — |
-| 账号 | `2001 LoginReq` / `2002 LoginRsp` | `LoginReqMsg` / `LoginRspMsg` |
-| 聊天 | `3001 ChatSend` / `3002 ChatBroadcast` | `ChatSendMsg` / `ChatBroadcastMsg` |
-| 房间 | `4001 JoinRoomReq` / `4002 JoinRoomRsp` / `4003 LeaveRoomNtf` / `4004 PlayerListSync` / `4005 ReadyState` / `4006 StartGameNtf` | `RoomMsg.cs` 内 6 个 DTO + `PlayerInfo` |
+| 1001 / 1002 | `NetCmdId.PingReq / PingRsp` | 传输层心跳（在 `NetTmp/Services/NetCmdId.cs`） |
+| 4001 / 4002 / 4003 / 4004 / 4005 | `JoinRoomReq / JoinRoomRsp / LeaveRoomNtf / PlayerListSync / ReadyState` | 房间协议 |
+| 4006 | `TaskConfirm` | 房主 → 全体：本局配置（`MapName/Difficulty/TaskIndex/ExtraDiff/Seed/PlayMode/TaskFingerprint/MatchId/Cfg`），进 Ready |
+| 4007 | `PlayerProfileNtf` | 成员 → 房主：资料（角色/等级/武器/改装/战备/强化/准备） |
+| 4008 / 4009 / 4010 / 4011 | `PlayerArmamentNtf/Sync`、`PlayerBoosterNtf/Sync` | 战备 / 全队强化（房主自己也走 Sync） |
+| 4012 | `Transition` | 房主 → 全体：进 Transition（同时开始加载战斗） |
+| 4013–4016 | `PlayerWeaponSwitchNtf/Sync`、`PlayerShootNtf/Sync` | 切枪 / 开火（**只做表现，不结算伤害**） |
+| 4017–4020 | `PlayerVitalNtf/Sync`、`PlayerAmmoNtf/Sync` | 盟友血盾倒地 / 弹药系数 |
+| 4021 / 4022 | `SceneActorReq / Ntf` | 场景单位（NPC）快照：成员请求、房主应答 |
+| 4023 | `WaveStartSync` | 房主 → 全体：开波（时机 + 参数，成员按同一 `waveIndex` 复刻） |
+| 4024 / 4025 / 4026 | `EnemyMoveSync` / `EnemyHitNtf` / `EnemyDiedSync` | 敌人移动意图 / 成员上报命中 / 房主广播死亡 |
+| 4027 / 4028 | `AirdropCallNtf / Sync` | 局内呼叫战备 |
+| 4029 | `PlayerLeftNtf` | 房主 → 全体：某成员离开。⚠ 与 `PlayerListSync` 分开：战斗期名单**冻结**（重排会让下标漂移），但"有人走了"必须传出去 ⇒ 只带 sid、不重排 |
+| 4030 / 4031 | `SpeechNtf / Sync` | 角色喊话 |
+| 4032 | `SceneUnitMoveSync` | 场景单位移动目标（键是 `Actor.Id`，不是 NetId） |
+| 4033–4039 | `GameOverNtf` / `EvacuateNtf` / `MissionUpdateNtf` / `FurnitureOperateNtf` / `MarkNtf` / `CallKaiNtf` / `WaveCenterNtf` | 局内世界状态（见 `Msg/SyncMsg.cs`） |
+| 4040 | `EnemyDamagedSync` | 房主 → 全体：房主打中的伤害下行（与 4025 成对，血量口径统一"房主权威"） |
+| 5001 / 5002 | `PlayerTransformUp` / `TransformBatchSync` | 位姿：成员上行 / 房主聚合广播 |
 
-DTO 约定：`[MessagePackObject]` + 每字段 `[Key(n)]` 连续编号；字段 `public`（MessagePack 需要）；`PlayerInfo` 的 `Sid/PlayerName/IsReady/IsHost` 对应 `[Key(0..3)]`。
+### 5.3 DTO 约定
 
-消息类里存在“方向注释”：`JoinRoomReq`(成员→房主)、`JoinRoomRsp`(房主→成员)、`LeaveRoomNtf`(成员→房主)、`PlayerListSync`(房主→全体)、`ReadyState`(成员→房主)、`StartGameNtf`(房主→全体)。新增消息请照此写明方向。
+- `[MessagePackObject]` + 每字段 `[Key(n)]`；**新字段一律追加在末尾并取下一个 Key**（旧版端拿默认值），不要插在中间。
+- 方向写进注释（照现有消息的风格）。
+- **`07_NetGame` 看不见游戏层枚举/SO** ⇒ 网络 DTO 里**只准基础类型**；需要传枚举就用 `int`，转换在 09/10 的桥里做。
+  例：`TaskCfgDto` 全字段是 `int/int[]/float/bool/string`（承载 `TaskCfg` 的内容：`main/extra/nestCount/seed/scale/terrain/enemyVariety/enable/name`）。
 
-## 7. 两个 Demo
+## 6. 库缺字段的临时约定（`RoomMeta`，唯一适配点）
 
-### NetDemo.cs（直连模式联调）
+`KCPNet.LanRoomInfo` 只有 9 个字段（**没有**难度 / 任务类型 / 是否开局 / 来源）⇒ 项目把前两样**串进字符串**：
 
-- `Awake` 注册：`LoginRsp` / `PingRsp` / `ChatBroadcast`。
-- 按键：`L` 发登录、`B` 发聊天；`Update` 内每 3 秒自动发 `PingReq`（带 `DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()`，`OnPingRsp` 里算 RTT）。
-- 所有发送前走 `EnsureConnected(action)`：未连接时写 UI 提示 + `LogWarning` 并返回 false。
-- 注意注释：**不用 `C` 键**，因为 `LanRoomDemo` 已占用 C（避免同场景按键冲突）。
-- 说明直连模式需要外部先调 `NetSvc.ConnectDefaultServer()`（`InitSvc(false)` 不自动连）。
+| 丢的字段 | 拼在哪 | 格式 | 解析 |
+| --- | --- | --- | --- |
+| 难度 | `MapName` 尾部 | `地图#难度int` | `RoomMeta.Difficulty` / `MapName`（按 `#` 切） |
+| **任务类型** | `RoomName` 尾部 | `房间名#T=<MissionEnum:int>\|<任务类型名>` | `RoomMeta.TaskEnum`（**精确**取图标/颜色）/ `TaskType`（显示）/ `RoomName`（干净名） |
 
-### LanRoomDemo.cs（局域网房间联调）
+要点：
+- 标记用 `#T=` 而不是单 `#`（房间名是玩家自己名字拼的）；解析固定取 **`LastIndexOf`** ⇒ 名字里真带 `#T=` 也能切对。
+- **为什么既要枚举又要名字**：任务类型**名字不唯一**（`Resources/GameData/Mission/Main` 里「进攻任务」有 **3** 份、「歼灭」「渗透」各 2 份，**颜色各不相同**）⇒ 只靠名字必然给错色；枚举是两端一致的整数 ⇒ 精确。名字留给显示与旧版兼容（旧版只有名字时 `TaskEnum` 返 -1，退化成按名字反查）。
+- 「公开房」流程**先建服、再确认任务**（`SelectMapWnd.ConfirmTask`）⇒ 房间名必须在确认任务时**就地刷新**（`ComposeRoomName` 幂等，先剥旧后缀再拼）。
+- 改这两个字段的**唯一入口**是 `RoomMeta`：先把库的 `ToJson/FromJson` 与 `LanRoomInfo` 加上字段，再改 `RoomMeta` 里带 `TODO(库)` 的方法体，UI 一行都不用动。
 
-- `Awake` 注册：`JoinRoomRsp` / `PlayerListSync` / `StartGameNtf`。
-- 按键：房主 `H` 开房、`J` 关房、`G` 开局；成员 `R` 搜房、`T` 再扫、`S` 停监听、`C` 连第一个房间、`I` 申请入房、`E` 准备/取消、`Q` 离开。
-- `HostRestartCooldown = 2f`：`StopHost` 记录 `_lastHostStopTime`，冷却期内按 H 直接拒绝并提示（规避 UDP 端口未释放导致的 `SocketException`）。
-- `StartMemberScan` 用 `new LanDiscoverer(isSame ? NetConfig.LanSelfBroadcastPort : NetConfig.LanBroadcastPort)`，`isSame` 开关用于**同机双实例测试**。
-- `ScanAgain` 里 `_member.Scan()` 是异步的，用 `Invoke(nameof(PrintRooms), 1.5f)` 延后取结果。
-- `GetFilteredRooms()` 通过 `_selfHostName`（取自 `NetHostSvc.Instance.RoomInfo.PlayerNames[0]`）排除本机自己开的房；`PrintRooms` 会区分“扫到 N 个但全是自己的”与“扫到 0 个”两种提示。
-- `EnsureMemberConnected(action)`：入房/准备/离开前必须已回连房主。
-- `OnGUI` 右侧面板显示：房主状态、成员状态、本机角色、最新状态、房间列表、玩家列表（`FormatPlayers` 用 👑 标房主、(准备)/(未准备)）。
+## 7. 联机踩坑（按症状查）
 
-## 8. 场景使用方式（当前未挂载）
-
-推荐 GameObject 组合：
-
-| 机器 | 组件 |
-| --- | --- |
-| 房主 | `NetHostSvc`（+ 可选 `NetSvc` 让房主也能作为本地客户端收发） |
-| 成员 | `NetSvc` |
-| 两端联调 | 再加 `LanRoomDemo`（房间流程 UI）、`NetDemo`（登录/Ping/聊天 UI） |
-
-两个 Demo 的 `OnDestroy` 都会 `Unregister` 自己注册的命令号并停掉广播/发现器，避免后台线程残留。
+- **「只有两个客户端，房主的 Console 却一直在报成员进进出出」**：同一条 socket 被库**反复重握手**（`HostSession.OnConnected` 反复触发、sid 一串）⇒ 先看 `HostSession.PeerAddress`（反射读库的 `m_remotePoint`）确认对端是否同一个；`HostSession` 里已给这对回调**限流**（前 3 次 + 之后每 10s）。
+- **「未入房就断线、循环重连」**：库的判活是"**收不到数据**就判掉线"（~15s），而"连上→入房"之间只有心跳一条报文 ⇒ 房主若对**未入房**会话不回 Pong，它会被自己的库判死并重连。**修法：`OnPingReq` 一律回 Pong**（不管有没有入房）。
+- **「有人退房后，他的幽灵位姿还在下发 / 名单干净但位姿表还在涨」**：退房路径必须**立刻关会话 + 清四张表** —— `_players` / `_profiles` / `_poses` / `_lastSeen`（`_poses` 不清 ⇒ 该 sid 的位姿会继续跟着每批快照下发）。
+- **「同一个人被提示离开两遍」**：主动踢人（`EvictIdleMembers`）会先 `HandleMemberLeft` 再 `CloseSession`，库回调 `OnSessionDisconnected` 又进来一次 ⇒ 用 `HashSet<uint> _selfClosed` + `CloseSessionOf(sid)`（先登记再关）去重；`StopHost` 要清这个集合。
+- **「成员在转场/加载时被房主踢掉，回来又进不了房」**：`NetHostSvc.memberIdleTimeout` 默认 **8s**，比库自己的 15s 更严 ⇒ 客户端一卡帧（加载战斗）就超时被踢；而战斗中 `_joinClosed` / `_rosterFrozen` 会**拒绝重连**。三条路：抬高/关闭 idle 超时、转场期间不踢、支持重连复用身份。
+- **「跨端 `TaskIndex` 指向的任务不一样」**：任务表 `TaskCfgs` 的行下标来自 `Resources.LoadAll` 的枚举顺序（编辑器 ↔ 打包版可不同）+ 每区域消费随机次数随地图不同 ⇒ **下标不是跨端标识**。修法两件：生成端**按 mapId 排序**（`TaskManager.OrderedMaps/MapIndex`）、本局配置**随 `TaskConfirmNtf` 下发内容**（`Cfg`，含"以内容为准、不查本地表"的 `SetTask(..., remoteCfg)` 分支），指纹因此从"硬校验"降级为"诊断告警"。
+- **「后进房的人拿不到本局任务」**：`NetHostSvc._lastTaskConfirm` 会缓存整条广播，`OnJoinRoomReq` 里给新人**补发**（顺序在 `JoinRoomRsp` 之后，KCP 可靠有序）⇒ 所以那条消息必须**自足**（带种子 + 配置内容），而不是"让成员自己查表"。
+- **`MarkNtf` 这类纯表现可以不可靠/乱序**（丢了无所谓）；**配置、名单、伤害、死亡必须可靠**（KCP 只有可靠有序通道 ⇒ 快照类消息要在应用层"丢旧 tick + 只发最新值"）。

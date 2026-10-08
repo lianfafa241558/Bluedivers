@@ -25,14 +25,14 @@ public class MouseMoveEffect : MonoBehaviour
     void Awake()
     {
         //WndManager.OnWindowStateChange += OnWindowStateChange;
-        GlobalEventSub.OnTimeScaleChange += OnTimeScaleChange;
+        GlobalEventBus.OnTimeScaleChange += OnTimeScaleChange;
         //GlobalEventManager.OnFakeBg += OnFakeBG;
     }
 
     private void OnDestroy()
     {
         //WndManager.OnWindowStateChange -= OnWindowStateChange;
-        GlobalEventSub.OnTimeScaleChange -= OnTimeScaleChange;
+        GlobalEventBus.OnTimeScaleChange -= OnTimeScaleChange;
         //GlobalEventManager.OnFakeBg -= OnFakeBG;
     }
 

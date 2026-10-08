@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.GameContract;
@@ -41,14 +41,14 @@ namespace FPSGame.UI
             {
                 isStartHave = false;
             }
-            UnitEventSub.OnPlayerCreate += OnPlayerCreate;
-            GlobalEventSub.OnViewSwitch += OnViewSwitch;
+            UnitEventBus.OnPlayerCreate += OnPlayerCreate;
+            GlobalEventBus.OnViewSwitch += OnViewSwitch;
         }
 
         protected override void OnDestroy()
         {
-            UnitEventSub.OnPlayerCreate -= OnPlayerCreate;
-            GlobalEventSub.OnViewSwitch -= OnViewSwitch;
+            UnitEventBus.OnPlayerCreate -= OnPlayerCreate;
+            GlobalEventBus.OnViewSwitch -= OnViewSwitch;
             if (m_WeaponsManager)
             {
                 m_WeaponsManager.OnSwitchedToWeapon -= SwitchWeapon;

@@ -35,7 +35,7 @@ public class KeyScreenContGo : MonoBehaviour
             {
                 if (item.go) item.go.SetActive(item.state);
                 //Debug.LogError("尝试触发语音" + item.speech + (item.speech != SpeechTypeEnum.Supply));
-                if (item.speech != SpeechTypeEnum.Supply) GlobalEventSub.PlayMeetSpeech(m_keyScreen.owner, SpeechTypeEnum.HaloBomb);
+                if (item.speech != SpeechTypeEnum.Supply) GlobalEventBus.PlayMeetSpeech(m_keyScreen.owner, SpeechTypeEnum.HaloBomb);
             }
 
         }

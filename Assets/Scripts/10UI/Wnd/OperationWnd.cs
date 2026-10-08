@@ -28,14 +28,14 @@ public class OperationWnd : Window
 
     public void Init()
     {
-        GlobalEventSub.OnFurnitureOperate += RefreshDisplay;
-        GlobalEventSub.OnViewSwitch += OnViewSwitch;
+        GlobalEventBus.OnFurnitureOperate += RefreshDisplay;
+        GlobalEventBus.OnViewSwitch += OnViewSwitch;
         OnViewSwitch(ArchivesData_SO.Current.GetSetting("默认操作视角") > 0);
     }
     public void UnInit()
     {
-        GlobalEventSub.OnFurnitureOperate -= RefreshDisplay;
-        GlobalEventSub.OnViewSwitch -= OnViewSwitch;
+        GlobalEventBus.OnFurnitureOperate -= RefreshDisplay;
+        GlobalEventBus.OnViewSwitch -= OnViewSwitch;
     }
 
     private void OnViewSwitch(bool isThirdPerson)

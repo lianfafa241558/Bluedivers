@@ -19,8 +19,20 @@ namespace FPSGame.Gameplay
     {
         public static Dictionary<int, IFurniture> list = new();
 
+        /// <summary>同步键 → 家具 的**跨端稳定**索引（键 = <see cref="SyncId"/>）。联机同步用。</summary>
+        public static readonly Dictionary<int, Furniture_Attached> listBySyncId = new();
+
         private static int nowID = 0;
         private static int GetID => ++nowID;
+
+        /// <summary>
+        /// 跨端稳定的同步键 = <c>FNV1a(身份Id + 世界坐标 0.1m 量化)</c>，**创建时算一次并缓存**。
+        /// <para>▍为什么不能只用 <c>Id</c>：同类家具存在多个实例（同 Id 多份）。</para>
+        /// <para>▍为什么不每帧重算：家具会位移，键必须稳定。</para>
+        /// <para>▍为什么不用 <c>NumberID</c>：那是各端静态自增且从不复位（同 <c>KeyScreenControl</c> 的结论）。</para>
+        /// <para>▍量化到 0.1m 是为了吃掉两端浮点抖动；位置来自场景 / 已同步的生成落点 ⇒ 跨端一致。</para>
+        /// </summary>
+        public int SyncId { get; private set; }
 
         public event Action OnOperate;
 
@@ -172,6 +184,39 @@ namespace FPSGame.Gameplay
             // 首次分配唯一ID
             if (NumberID == 0)
                 NumberID = GetID;
+
+            ComputeSyncId();
+        }
+
+        /// <summary>算一次 <see cref="SyncId"/>（必须在 <see cref="ResolveIdentity"/> 之后，因为要用到 <see cref="Id"/>）。</summary>
+        private void ComputeSyncId()
+        {
+            Vector3 p = transform.position;
+            int qx = Mathf.RoundToInt(p.x * 10f);
+            int qy = Mathf.RoundToInt(p.y * 10f);
+            int qz = Mathf.RoundToInt(p.z * 10f);
+            SyncId = Fnv1a($"{Id}|{qx}|{qy}|{qz}");
+        }
+
+        /// <summary>FNV-1a 32 位（零分配、跨端稳定；与任务指纹同族做法）。</summary>
+        private static int Fnv1a(string s)
+        {
+            unchecked
+            {
+                uint h = 2166136261u;
+                for (int i = 0; i < s.Length; ++i)
+                {
+                    h ^= s[i];
+                    h *= 16777619u;
+                }
+                return (int)h;
+            }
+        }
+
+        /// <summary>【联机】按 <see cref="SyncId"/> 找本地家具（找不到 = 本端没这个家具）。</summary>
+        public static Furniture_Attached FindBySyncId(int syncId)
+        {
+            return listBySyncId.TryGetValue(syncId, out Furniture_Attached f) ? f : null;
         }
 
         /// <summary>
@@ -191,17 +236,28 @@ namespace FPSGame.Gameplay
         protected virtual void OnEnable()
         {
             list[NumberID] = this;
+            if (SyncId != 0) listBySyncId[SyncId] = this;
         }
 
         protected virtual void OnDisable()
         {
             list.Remove(NumberID);
+            UnregisterSyncId();
         }
 
         private void OnDestroy()
         {
             OnOperate = null;
             list.Remove(NumberID);
+            UnregisterSyncId();
+        }
+
+        /// <summary>摘掉同步索引 —— ⚠ 只在"当前登记的就是我"时删，避免同键的另一份实例被误删。</summary>
+        private void UnregisterSyncId()
+        {
+            if (SyncId == 0) return;
+            if (listBySyncId.TryGetValue(SyncId, out Furniture_Attached cur) && ReferenceEquals(cur, this))
+                listBySyncId.Remove(SyncId);
         }
 
         protected virtual void Update()
@@ -261,13 +317,33 @@ namespace FPSGame.Gameplay
 
             if (HaveFlag(FurnitureFlag.Speech))
             {
-                GlobalEventSub.PlayMeetSpeech(user, SpeechTypeEnum.Responded);
+                GlobalEventBus.PlayMeetSpeech(user, SpeechTypeEnum.Responded);
             }
 
             if (audioOper) PlaySound(audioOper);
             lastOperatetime = Time.time;
-            GlobalEventSub.FurnitureOperate(user, this);
+            GlobalEventBus.FurnitureOperate(user, this);
             OnOperate?.Invoke();
+        }
+
+        /// <summary>
+        /// 【联机】远端重放一次交互：把操作者设成**远端的那个单位**，再走同一条 <see cref="Operate"/> 链。
+        ///
+        /// <para>▍为什么"重放本地逻辑"而不是"只派发事件"：共享状态的推进（<c>TaskState</c> / 谜题进度 /
+        /// 物件消失 / 欧帕兹计数）都写在各自的 <c>Operate</c> 覆写里 ⇒ 只有真跑一遍，两端状态才会自然一致
+        /// （所以 <c>OnOOPartCollect</c>/<c>OnSubmitOOPart</c>/<c>OnKeiSubmit</c> 都不需要单独同步）。</para>
+        ///
+        /// <para>▍⚠ 操作者必须传**远端单位**（该端的盟友实例；解析不到传 null），**绝不能传本机玩家**：
+        /// <c>PlayerInputHandler.OnOperation</c> / <c>PlayerWeaponsManager.OnOperation</c> 靠 <c>user == gameObject</c>
+        /// 判定"是不是我在操作" ⇒ 传远端单位它们自然早退，不会误动本机玩家。</para>
+        ///
+        /// <para>▍⚠ "给操作者个人收益"的部分在远端会因拿不到对应组件而自然跳过
+        /// （例：<c>OOPart</c> 走 <c>owner.TryGetComponent&lt;PlayerOOPartInventory&gt;</c>）；仍需逐类复核。</para>
+        /// </summary>
+        public void ApplyRemoteOperate(GameObject remoteUser)
+        {
+            owner = remoteUser;
+            Operate();
         }
 
         public virtual bool CanOperate(GameObject unit)

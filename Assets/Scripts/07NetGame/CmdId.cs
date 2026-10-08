@@ -11,20 +11,6 @@ namespace FPSGame.Net
     /// </summary>
     public static class CmdId
     {
-        // ===== 通用 =====
-        public const int PingReq = 1001;
-        public const int PingRsp = 1002;
-
-        // ===== 账号模块 =====
-        public const int LoginReq = 2001;
-        public const int LoginRsp = 2002;
-
-        // ===== 聊天模块 =====
-        /// <summary>客户端 -> 服务器</summary>
-        public const int ChatSend = 3001;
-        /// <summary>服务器 -> 所有客户端</summary>
-        public const int ChatBroadcast = 3002;
-
         // ===== 房间模块（房主权威 / 局域网联机）=====
         /// <summary>成员 -> 房主：请求加入房间</summary>
         public const int JoinRoomReq = 4001;
@@ -77,6 +63,9 @@ namespace FPSGame.Net
         public const int SpeechNtf = 4030;
         /// <summary>房主 -> 全体：喊话同步（含房主自己；发起方按 Sid 丢掉自己那条）</summary>
         public const int SpeechSync = 4031;
+        /// <summary>房主 -> 全体：房主打中了某只怪（伤害 / NetId / 开枪者）⇒ 成员扣自己那份副本的血。
+        /// <para>⚠ 与 4025（成员上报命中）成对：那条只往上、这条只往下 ⇒ 血量口径统一在"房主权威"。</para></summary>
+        public const int EnemyDamagedSync = 4040;
         /// <summary>房主 -> 全体：场景单位（NPC 这类由场景摆好、会自己走动的氛围单位）的移动目标 / 停下。
         /// ⚠ 键是 <c>Actor.Id</c>（不是 NetId）：大厅会反复重建，而每局自增的号段依赖"每局归零 + 两端创建顺序一致"。</summary>
         public const int SceneUnitMoveSync = 4032;
@@ -84,6 +73,26 @@ namespace FPSGame.Net
         public const int SceneActorReq = 4021;
         /// <summary>房主 -> 该成员：场景 actor 快照</summary>
         public const int SceneActorNtf = 4022;
+
+        // ===== 局内世界状态同步（4033+；设计见 .codebuddy/plans/联机_未同步清单与同步方案.md）=====
+        /// <summary>房主 -> 全体：本局结束（结果/延迟）⇒ 各端本地走 <c>BattleManager.EndGame</c>。
+        /// ⚠ 接收端必须"本局只结束一次"（否则会排两个定时器）。</summary>
+        public const int GameOverNtf = 4033;
+        /// <summary>房主 -> 全体：开始撤离（撤离点）⇒ 各端本地触发撤离。</summary>
+        public const int EvacuateNtf = 4034;
+        /// <summary>房主 -> 全体：任务状态/进度（<c>Key = MissionBase.netOrder</c>）。</summary>
+        public const int MissionUpdateNtf = 4035;
+        /// <summary>双向：家具交互（<c>SyncId</c> = 家具确定性键）⇒ 远端重放同一交互。</summary>
+        public const int FurnitureOperateNtf = 4036;
+        /// <summary>双向：标记点位（表现类，可不可靠通道，丢了无所谓）。</summary>
+        public const int MarkNtf = 4037;
+        /// <summary>双向：呼叫凯伊（带表现 + 凯伊移动）。</summary>
+        public const int CallKaiNtf = 4038;
+        /// <summary>房主 -> 全体：波次中心点（每 Tick 会移动的"追击"中心，低频补发）。
+        /// <para>▍为什么单独一条：开波时的 center 由 <see cref="WaveStartSync"/> 权威下发；但有些波的 center
+        /// 会跟随玩家移动 ⇒ 各端若自己算"最近玩家"会因位姿延迟翻边（离散判定）。改由房主 ~2Hz 下发，
+        /// 客户端只做插值跟随 ⇒ 判定只存在一处。</para></summary>
+        public const int WaveCenterNtf = 4039;
 
         // ===== 舰桥准备（战备/强化/资料；对应原 BridgeSys 的三条本地回环）=====
         /// <summary>成员 -> 房主：本机玩家资料（角色/等级/武器/战备/强化）</summary>

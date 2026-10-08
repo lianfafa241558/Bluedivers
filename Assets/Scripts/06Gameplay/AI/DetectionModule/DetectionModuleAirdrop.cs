@@ -41,12 +41,12 @@ namespace FPSGame.AI
         private void OnEnable()
         {
             _activeCount++;
-            BattleEventSub.OnAirdrop += OnAirdrop;
+            BattleEventBus.OnAirdrop += OnAirdrop;
         }
         private void OnDisable()
         {
             _activeCount--;
-            BattleEventSub.OnAirdrop -= OnAirdrop;
+            BattleEventBus.OnAirdrop -= OnAirdrop;
         }
 
         private float GetRadius()

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using FPSGame.Core;
 using FPSGame.Attributes;
 using PEMaths;
@@ -214,7 +214,7 @@ namespace FPSGame.Weapon
             // 非玩家武器 Owner 无匹配订阅，自动忽略。
             if (Owner != null&&!WeaponFlag.HasFlag( WeaponFlag.AutomaticReload) && !WeaponFlag.HasFlag(WeaponFlag.NoManualReload))
             {
-                GlobalEventSub.PlayMeetSpeech(Owner, !InfiniteAmmo && Ammo.CurrValue == 0 ? SpeechTypeEnum.FinalMaga : SpeechTypeEnum.ReLoad);
+                GlobalEventBus.PlayMeetSpeech(Owner, !InfiniteAmmo && Ammo.CurrValue == 0 ? SpeechTypeEnum.FinalMaga : SpeechTypeEnum.ReLoad);
             }
         }
 

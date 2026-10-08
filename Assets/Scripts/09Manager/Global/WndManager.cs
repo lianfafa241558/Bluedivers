@@ -32,7 +32,7 @@ public class WndManager : Singleton<WndManager>
             if (oldState != value)
             {
                 OnWindowStateChange?.Invoke(oldState, value);//给上层（UI）订阅
-                GlobalEventSub.WindowStateChange(oldState, value);//给下层（玩法层）订阅，取代 ServiceLocator.Wnd
+                GlobalEventBus.WindowStateChange(oldState, value);//给下层（玩法层）订阅，取代 ServiceLocator.Wnd
             }
         }
     }
@@ -65,11 +65,11 @@ public class WndManager : Singleton<WndManager>
         FPSGame.Data.UIState.WindowState = windowState;
 
         //订阅玩法层的"开窗 / 提示"请求（2026-10-01 取代 ServiceLocator.Wnd 槽：无返回值的命令走事件）
-        GlobalEventSub.OnOpenWnd += OnOpenWndRequest;
-        GlobalEventSub.OnNotice += OnNoticeRequest;
+        GlobalEventBus.OnOpenWnd += OnOpenWndRequest;
+        GlobalEventBus.OnNotice += OnNoticeRequest;
 
         OnWindowStateChange += OnWindowStateChangeHandler;
-        GlobalEventSub.OnSettingCange += OnSettingCange;
+        GlobalEventBus.OnSettingCange += OnSettingCange;
     }
 
     protected void Start()
@@ -80,11 +80,11 @@ public class WndManager : Singleton<WndManager>
     void OnDestroy()
     {
         OnWindowStateChange -= OnWindowStateChangeHandler;
-        GlobalEventSub.OnSettingCange -= OnSettingCange;
+        GlobalEventBus.OnSettingCange -= OnSettingCange;
 
         //退订必须成对（静态事件不退订会留下已销毁实例的引用）
-        GlobalEventSub.OnOpenWnd -= OnOpenWndRequest;
-        GlobalEventSub.OnNotice -= OnNoticeRequest;
+        GlobalEventBus.OnOpenWnd -= OnOpenWndRequest;
+        GlobalEventBus.OnNotice -= OnNoticeRequest;
     }
 
     /// <summary>玩法层请求开窗 → 转调契约注册表（UI 未就绪时静默跳过，与 WindowRegistry 语义一致）。</summary>

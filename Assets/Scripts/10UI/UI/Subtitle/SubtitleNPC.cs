@@ -1,4 +1,4 @@
-using FPSGame.GameContract;
+﻿using FPSGame.GameContract;
 using UnityEngine;
 using UnityEngine.UI;
 using FPSGame.Audio;
@@ -31,13 +31,13 @@ public class SubtitleNPC : SubtitleBase
         // 默认整体隐藏，等待 OnActorSpeech 触发时显示
         SetAlpha(transform, 0);
 
-        GlobalEventSub.OnActorSpeech += OnActorSpeech;
+        GlobalEventBus.OnActorSpeech += OnActorSpeech;
         return this;
     }
 
     private void OnDestroy()
     {
-        GlobalEventSub.OnActorSpeech -= OnActorSpeech;
+        GlobalEventBus.OnActorSpeech -= OnActorSpeech;
     }
 
     private float _lastSpeechTime = Mathf.NegativeInfinity;

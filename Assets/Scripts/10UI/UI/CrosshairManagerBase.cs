@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -29,12 +29,12 @@ public abstract class CrosshairManagerBase : MonoBehaviour
 
     protected virtual void Start()
     {
-        UnitEventSub.OnUnitHit += Hit;
+        UnitEventBus.OnUnitHit += Hit;
     }
 
     protected virtual void OnDestroy()
     {
-        UnitEventSub.OnUnitHit -= Hit;
+        UnitEventBus.OnUnitHit -= Hit;
         SwitchWeapon(null, false);
     }
     protected virtual void SwitchWeapon(WeaponPlayerController weapon,bool isSec = false)

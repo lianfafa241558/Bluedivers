@@ -38,7 +38,7 @@ public abstract class Window : MonoBehaviour
         if (gameObject.activeSelf != isActive||(isActive&&!firstInit))
         {
             gameObject.SetActive(isActive);
-            GlobalEventSub.WndSwitch(gameObject.name, isActive);
+            GlobalEventBus.WndSwitch(gameObject.name, isActive);
             if (isActive)
             {
                 if (!firstInit)

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.GameContract;
@@ -62,7 +62,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnArmamentSync += HandleArmamentSync;
             NetRoomFlow.OnBoosterSync += HandleBoosterSync;
             NetRoomFlow.OnJoinResult += HandleJoinResult;
-            GlobalEventSub.OnGameStateChange += HandleGameStateChange;
+            GlobalEventBus.OnGameStateChange += HandleGameStateChange;
         }
 
         public void UnInit()
@@ -73,7 +73,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnArmamentSync -= HandleArmamentSync;
             NetRoomFlow.OnBoosterSync -= HandleBoosterSync;
             NetRoomFlow.OnJoinResult -= HandleJoinResult;
-            GlobalEventSub.OnGameStateChange -= HandleGameStateChange;
+            GlobalEventBus.OnGameStateChange -= HandleGameStateChange;
             _lastReady.Clear();
         }
 

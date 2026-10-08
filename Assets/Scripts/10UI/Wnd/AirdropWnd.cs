@@ -65,17 +65,17 @@ public class AirdropWnd : Window
 
     protected override void ShowWnd()
     {
-        GlobalEventSub.OnGameStateChange += GameStateChange;
+        GlobalEventBus.OnGameStateChange += GameStateChange;
         WndManager.OnWindowStateChange += WindowStateChange;
-        BattleEventSub.OnInputAirdrop += OnInput;
-        BattleEventSub.OnAuthorizeAirdrop += OnAuthorizeAirdrop;
+        BattleEventBus.OnInputAirdrop += OnInput;
+        BattleEventBus.OnAuthorizeAirdrop += OnAuthorizeAirdrop;
     }
     protected override void HideWnd()
     {
-        GlobalEventSub.OnGameStateChange -= GameStateChange;
+        GlobalEventBus.OnGameStateChange -= GameStateChange;
         WndManager.OnWindowStateChange -= WindowStateChange;
-        BattleEventSub.OnInputAirdrop -= OnInput;
-        BattleEventSub.OnAuthorizeAirdrop -= OnAuthorizeAirdrop;
+        BattleEventBus.OnInputAirdrop -= OnInput;
+        BattleEventBus.OnAuthorizeAirdrop -= OnAuthorizeAirdrop;
     }
     private void ResetAirdrop(AirdropController cont)
     {

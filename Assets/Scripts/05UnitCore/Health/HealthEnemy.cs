@@ -43,7 +43,15 @@ namespace FPSGame.Game
                     scale *= (PEInt)1.35f;
                     break;
             }
-            MaxHealth = showHealth = (CurrentHealth * scale).RawInt;
+            // ★ 上限与当前血必须**一起**缩放。血在 base.Awake() 里刚被置成**未缩放**的 MaxHealth，
+            //   原来这里只写了 MaxHealth（⇒ 血留着旧值）：
+            //   - 系数 <1（Normal 0.5 / Hard 0.6 / VeryHard 0.7 / **HardCode 0.85**）⇒ 血 200 / 上限 169
+            //     （**血超上限**），随后在 Actor.OnDie 那条"单位死亡时生命值>0"的守卫里被当真异常报出来；
+            //   - 系数 >1（Insane 1.15 等）⇒ 反而**出生不满血**（血 200 / 上限 230）。
+            //   口径对齐 Damageable.cs 的护甲（remainArmor = maxArmor = armorValue * scale）：缩放后满血出生。
+            PEInt scaled = CurrentHealth * scale;
+            MaxHealth = showHealth = scaled.RawInt;
+            CurrentHealth = MaxHealth;      // 满血（与 base.Awake 的 CurrentHealth = MaxHealth 同口径）
             foreach (var item in AboGauge)
             {
                 item.Value.Max *= scale;

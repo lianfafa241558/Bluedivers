@@ -125,6 +125,17 @@ namespace FPSGame.Mission
         public bool end;
         public bool completed;
 
+        /// <summary>跨端稳定键：由 <c>MissionController</c> 按创建顺序赋值（每局归零），联机同步用。
+        /// <para>⚠ 用属性而非字段 ⇒ 不参与序列化（不产生 prefab / .meta 变动）。</para></summary>
+        public int netOrder { get; set; }
+
+        /// <summary>成员侧 = true：任务**不自行推进 / 完成**，状态与进度一律以房主下发为准。
+        /// <para>由 09 侧的 <c>NetMissionBridge</c> 在 Install 时按角色置位（同 <c>EnemyController.RemoteDrivenMovement</c>）。</para></summary>
+        public static bool RemoteDriven;
+
+        /// <summary>远端应用中的放行标记（见 <see cref="ApplyRemoteState"/>）：只影响"是否被 <see cref="RemoteDriven"/> 门住"。</summary>
+        static bool _applyingRemote;
+
         private Transform entityParent;
 
         public bool IsInitialized { get; set;}
@@ -171,7 +182,7 @@ namespace FPSGame.Mission
 
             },0.8f);*/
 
-            if (data.cfg.RequiredAD.Count > 0) BattleEventSub.OnAirdrop += OnAirdrop;
+            if (data.cfg.RequiredAD.Count > 0) BattleEventBus.OnAirdrop += OnAirdrop;
             InitMission();
         }
 
@@ -227,7 +238,7 @@ namespace FPSGame.Mission
             }
 
             if (data?.cfg?.RequiredAD?.Count > 0)
-                BattleEventSub.OnAirdrop += OnAirdrop;
+                BattleEventBus.OnAirdrop += OnAirdrop;
 
             if (data == null || data.cfg.RequiredAD.Count == 0)
                 AirdropRange = 0;
@@ -240,7 +251,7 @@ namespace FPSGame.Mission
 
             StartMission();
             //Debug.LogError("触发事件"+this,this);
-            BattleEventSub.MissionStart(this);
+            BattleEventBus.MissionStart(this);
             if (missionTag.HasFlag(MissionTag.StratDiscovered)&&entity.IsValid()) entity.TryDiscovered();
             
         }
@@ -319,23 +330,28 @@ namespace FPSGame.Mission
         }
         public virtual void UpdateMission()
         {
-            BattleEventSub.MissionUpdate(this);
+            BattleEventBus.MissionUpdate(this);
         }
 
         public virtual void CompleteMission()
         {
+            // 成员：完成与否由房主下发（ApplyRemoteState）⇒ 本端自判一律作废，避免双重触发
+            if (RemoteDriven && !_applyingRemote) return;
+
             data.complete = true;
             completed = true;
             if (missionType == MissionType.Main&&!parent) root.result = GameResult.Victory;
-            BattleEventSub.MissionCompleted(this);
+            BattleEventBus.MissionCompleted(this);
             OnMissionCompleted?.Invoke(this);
             EndMission();
         }
 
         protected virtual void FailMission()
         {
+            if (RemoteDriven && !_applyingRemote) return;   // 同 CompleteMission：成员不自判
+
             if (missionType == MissionType.Main) root.result = GameResult.Failure;
-            BattleEventSub.MissionFail(this);
+            BattleEventBus.MissionFail(this);
             EndMission();
         }
         protected virtual void EndMission()
@@ -345,10 +361,10 @@ namespace FPSGame.Mission
             {
                 foreach (var ad in data.cfg.RequiredAD)
                 {
-                    FPSGame.Gameplay.BattleEventSub.RequestAuthorize(ad.ID, false);
+                    FPSGame.Gameplay.BattleEventBus.RequestAuthorize(ad.ID, false);
                 }
             }
-            BattleEventSub.MissionEnd(this);
+            BattleEventBus.MissionEnd(this);
             OnMissionEnd?.Invoke(this);
             Uninit();
         }
@@ -356,7 +372,7 @@ namespace FPSGame.Mission
         protected virtual void Uninit()
         {
             if (entity.IsValid()) entity.Uninit();
-            if (data.cfg.RequiredAD.Count > 0) BattleEventSub.OnAirdrop -= OnAirdrop;
+            if (data.cfg.RequiredAD.Count > 0) BattleEventBus.OnAirdrop -= OnAirdrop;
         }
 
         /// <summary>
@@ -366,9 +382,39 @@ namespace FPSGame.Mission
         /// <returns>true = 本次自增后进度已达到 <see cref="MaxProgress"/></returns>
         protected bool TryAddProgress()
         {
+            // 成员：进度以房主为准（返回 false = "尚未达成"，安全，不会被上层当成"已完成"）
+            if (RemoteDriven && !_applyingRemote) return false;
+
             if (completed) return true;
             if (NowProgress < MaxProgress) ++NowProgress;
             return NowProgress >= MaxProgress;
+        }
+
+        /// <summary>
+        /// 【联机】成员侧：按房主权威的"状态 / 进度"**直接置位**（不自行判定）。
+        /// <para>由 09 侧的 <c>NetMissionBridge</c> 收包后调用。内部短暂放行 <see cref="RemoteDriven"/> 门，
+        /// 让 <c>CompleteMission/FailMission/UpdateMission</c> 走完同一条链（UI 刷新与收尾都复用）。</para>
+        /// <para>状态约定（与 <c>NetMissionBridge</c> 一致）：1=进行中 2=完成 3=失败。</para>
+        /// </summary>
+        public void ApplyRemoteState(int state, int progress, int maxProgress, float percentage)
+        {
+            if (end) return;                    // 已结束的不再改
+
+            MaxProgress = maxProgress;
+            NowProgress = progress;
+            this.percentage = percentage;
+
+            _applyingRemote = true;
+            try
+            {
+                if (state == 2) { if (!completed) CompleteMission(); return; }
+                if (state == 3) { FailMission(); return; }
+                UpdateMission();
+            }
+            finally
+            {
+                _applyingRemote = false;
+            }
         }
 
         /// <summary>
@@ -441,7 +487,7 @@ namespace FPSGame.Mission
                 InAirdropRange = airdropRange;
                 foreach (var ad in data.cfg.RequiredAD)
                 {
-                    FPSGame.Gameplay.BattleEventSub.RequestAuthorize(ad.ID, airdropRange);
+                    FPSGame.Gameplay.BattleEventBus.RequestAuthorize(ad.ID, airdropRange);
                 }
             }
 
@@ -455,8 +501,8 @@ namespace FPSGame.Mission
                 if (!HasTag(MissionTag.RepeatCall))
                 {
                     allowUseAirdrop = true;
-                    FPSGame.Gameplay.BattleEventSub.RequestAuthorize(data.cfg.ID, false);
-                    BattleEventSub.OnAirdrop -= OnAirdrop;
+                    FPSGame.Gameplay.BattleEventBus.RequestAuthorize(data.cfg.ID, false);
+                    BattleEventBus.OnAirdrop -= OnAirdrop;
 
                 }
 
@@ -465,7 +511,7 @@ namespace FPSGame.Mission
 
         protected void CreatNotice(string role, string type, Func<bool> func = default,float vaildTime = -1)
         {
-            FPSGame.Gameplay.GlobalEventSub.Notice(role, type, func, vaildTime);
+            FPSGame.Gameplay.GlobalEventBus.Notice(role, type, func, vaildTime);
         }
 
 

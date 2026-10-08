@@ -63,16 +63,16 @@ public class HpWnd : Window
     protected override void ShowWnd()
     {
 
-        UnitEventSub.OnEnemyCreate += OnEnemyCreate;
-        UnitEventSub.OnEnemyDead += OnEnemyDead;
-        UnitEventSub.OnUnitHit += OnUnitHit;
+        UnitEventBus.OnEnemyCreate += OnEnemyCreate;
+        UnitEventBus.OnEnemyDead += OnEnemyDead;
+        UnitEventBus.OnUnitHit += OnUnitHit;
     }
 
     protected override void HideWnd()
     {
-        UnitEventSub.OnEnemyCreate -= OnEnemyCreate;
-        UnitEventSub.OnEnemyDead -= OnEnemyDead;
-        UnitEventSub.OnUnitHit -= OnUnitHit;
+        UnitEventBus.OnEnemyCreate -= OnEnemyCreate;
+        UnitEventBus.OnEnemyDead -= OnEnemyDead;
+        UnitEventBus.OnUnitHit -= OnUnitHit;
     }
     private void Update()
     {

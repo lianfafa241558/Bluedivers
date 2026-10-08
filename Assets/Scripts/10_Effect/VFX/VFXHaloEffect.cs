@@ -22,7 +22,7 @@ public class VFXHaloEffect : MonoBehaviour,IVfxEffect
         {
             //Debug.LogError("目标物体不存在 "+collider+" owner"+owner,gameObject);
         }
-        else GlobalEventSub.Mark(owner, collider.gameObject, point);
+        else GlobalEventBus.Mark(owner, collider.gameObject, point);
     }
     
 

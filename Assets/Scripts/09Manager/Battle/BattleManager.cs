@@ -44,6 +44,11 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
     public PathRequestManager RequestManager;
     public WeatherSystem WeatherCont;
 
+    /// <summary>本局"结束"是否已经请求过。
+    /// <para>▍联机：房主广播(4033)与本地触发（团灭/撤离）可能并存 ⇒ 不加门会排两个定时器（两次加载场景）。
+    /// 本类由 <see cref="Creat"/> 每局新建 ⇒ 不需要额外复位。</para></summary>
+    private bool _gameOverRequested;
+
     private UnitQueryGrid unitQueryGrid;
     private MapRoot mapRoot;
 
@@ -301,19 +306,19 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
         // ⇒ 不清就会把上一局的全队强化 / 开战状态 / 随机源带进新一局（原实例字段是天然归零的）。
         FPSGame.Data.BattleState.Reset();
 
-        UnitEventSub.OnUnitPosChange += OnUnitPosChange;
-        UnitEventSub.OnEnemyCreate += OnEnemyCreate;
-        UnitEventSub.OnEnemyDead += OnEnemyDeath;
-        UnitEventSub.OnPlayerCreate += OnPlayerCreate;
-        UnitEventSub.OnPlayerDead += OnPlayerDeath;
+        UnitEventBus.OnUnitPosChange += OnUnitPosChange;
+        UnitEventBus.OnEnemyCreate += OnEnemyCreate;
+        UnitEventBus.OnEnemyDead += OnEnemyDeath;
+        UnitEventBus.OnPlayerCreate += OnPlayerCreate;
+        UnitEventBus.OnPlayerDead += OnPlayerDeath;
         //GlobalEventSub.OnOOPartCollect += OOPartCollect;
-        GlobalEventSub.OnDaySwitch += OnDatSwitch;
+        GlobalEventBus.OnDaySwitch += OnDatSwitch;
         // 战斗命令事件（2026-10-01 由服务契约下沉，见 BattleEventSub）
-        BattleEventSub.OnEndGame += EndGame;
-        BattleEventSub.OnSubmitOOPart += SubmitOOPart;
-        BattleEventSub.OnRevealAllMissions += HandleRevealAllMissions;
-        BattleEventSub.OnAddBattleDataItem += AddBattleDataItem;
-        BattleEventSub.OnRequestAuthorize += Authorize;
+        BattleEventBus.OnEndGame += EndGame;
+        BattleEventBus.OnSubmitOOPart += SubmitOOPart;
+        BattleEventBus.OnRevealAllMissions += HandleRevealAllMissions;
+        BattleEventBus.OnAddBattleDataItem += AddBattleDataItem;
+        BattleEventBus.OnRequestAuthorize += Authorize;
     }
 
     private void Start()
@@ -327,19 +332,19 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
 
     private void OnDestroy()
     {
-        UnitEventSub.OnUnitPosChange -= OnUnitPosChange;
-        UnitEventSub.OnEnemyCreate -= OnEnemyCreate;
-        UnitEventSub.OnEnemyDead -= OnEnemyDeath;
-        UnitEventSub.OnPlayerCreate -= OnPlayerCreate;
-        UnitEventSub.OnPlayerDead -= OnPlayerDeath;
+        UnitEventBus.OnUnitPosChange -= OnUnitPosChange;
+        UnitEventBus.OnEnemyCreate -= OnEnemyCreate;
+        UnitEventBus.OnEnemyDead -= OnEnemyDeath;
+        UnitEventBus.OnPlayerCreate -= OnPlayerCreate;
+        UnitEventBus.OnPlayerDead -= OnPlayerDeath;
         //GlobalEventSub.OnOOPartCollect -= OOPartCollect;
-        GlobalEventSub.OnDaySwitch -= OnDatSwitch;
+        GlobalEventBus.OnDaySwitch -= OnDatSwitch;
         // 战斗命令事件退订（成对，见 Awake）
-        BattleEventSub.OnEndGame -= EndGame;
-        BattleEventSub.OnSubmitOOPart -= SubmitOOPart;
-        BattleEventSub.OnRevealAllMissions -= HandleRevealAllMissions;
-        BattleEventSub.OnAddBattleDataItem -= AddBattleDataItem;
-        BattleEventSub.OnRequestAuthorize -= Authorize;
+        BattleEventBus.OnEndGame -= EndGame;
+        BattleEventBus.OnSubmitOOPart -= SubmitOOPart;
+        BattleEventBus.OnRevealAllMissions -= HandleRevealAllMissions;
+        BattleEventBus.OnAddBattleDataItem -= AddBattleDataItem;
+        BattleEventBus.OnRequestAuthorize -= Authorize;
         if (_reinforceAd != null) _reinforceAd.OnStateChange -= OnReinforceStateChange;
         if (_wipeTimer != null) GameRoot.RemoveTimer(_wipeTimer);
         _initQueue.Clear();
@@ -451,7 +456,7 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
                 return;
             }
             // 首次回调在 1 秒后（count=0），此时剩余 WipeFailGrace-1 秒
-            BattleEventSub.WipeFailCountdown(WipeFailGrace - count - 1);
+            BattleEventBus.WipeFailCountdown(WipeFailGrace - count - 1);
         }, 1, Mathf.CeilToInt(WipeFailGrace), () =>
         {
             _wipeTimer = null;
@@ -461,7 +466,7 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
             EndGame(1, GameResult.Failure);
         });
         // 立即广播初始值，避免首发回调前界面空白
-        BattleEventSub.WipeFailCountdown(WipeFailGrace);
+        BattleEventBus.WipeFailCountdown(WipeFailGrace);
     }
 
     /// <summary>团灭判负条件是否仍然成立</summary>
@@ -483,7 +488,7 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
         }
         if (!_wipeCheckPending) return;
         _wipeCheckPending = false;
-        BattleEventSub.WipeFailCancel();
+        BattleEventBus.WipeFailCancel();
     }
 
     /// <summary>增援战备状态变化：次数耗尽（Unavailable）且全队阵亡时进入判负流程</summary>
@@ -524,6 +529,12 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
     public void EndGame(int delay,GameResult result= GameResult.Unknow)
     {
         if (result != GameResult.Unknow) TaskManager.Instance.nowTask.result = result;
+
+        // ★ 联机：本局只结束一次 —— 房主广播(4033)与本地触发可能并存，重复调用会排两个定时器。
+        //   这里只挡"再排一次"，**结果仍允许被补正**（如本地以 Unknow 结束、随后收到房主权威的 Victory）。
+        if (_gameOverRequested) return;
+        _gameOverRequested = true;
+
         //GlobalEventManager.Evacuate();
         GameRoot.CreateTimer(() => {
             // 先切到 UI 状态，让 PlayerWnd/SubtitleWnd 的 Update 不再执行，避免场景卸载期间 NRE
@@ -558,7 +569,7 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
         var dic = TaskManager.Instance.nowTask.collectProperty;
         if (!dic.TryAdd(type, count)) dic[type] += count;
         AddBattleDataItem(user.GetComponent<PlayerController>().PlayerIndex, "采集欧帕兹数量");
-        GlobalEventSub.KeiSubmit(type, count);
+        GlobalEventBus.KeiSubmit(type, count);
     }
     private void OnDatSwitch(bool isNoon)
     {
@@ -578,7 +589,7 @@ public class BattleManager : Singleton<BattleManager>, IBattleService, FPSGame.G
     /// </summary>
     private void ApplyInitDaySwitch()
     {
-        bool? lastNoon = GlobalEventSub.LastDaySwitchIsNoon;
+        bool? lastNoon = GlobalEventBus.LastDaySwitchIsNoon;
         if (lastNoon.HasValue) _dayIsNoon = lastNoon;
         ApplyDaySwitch();
     }

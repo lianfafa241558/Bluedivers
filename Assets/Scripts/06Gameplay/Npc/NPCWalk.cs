@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using FPSGame.AI;
 using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.AI;
@@ -10,7 +11,7 @@ namespace FPSGame.Gameplay
 /// <summary>
 /// NPC 在 NavMesh 上游荡行走。
 /// <para>▍联机：<see cref="RemoteDriven"/> = true（成员端）时**不自己决策**，只应用房主下发的目标点；
-/// 房主决策/停下时发 <see cref="BattleEventSub.OnSceneUnitMove"/>，由 09 的场景桥收发。</para>
+/// 房主决策/停下时发 <see cref="BattleEventBus.OnSceneUnitMove"/>，由 09 的场景桥收发。</para>
 /// </summary>
 [AddComponentMenu("NPC/游荡行走")]
 public class NPCWalk : MonoBehaviour
@@ -35,9 +36,57 @@ public class NPCWalk : MonoBehaviour
     /// <summary>同步用的键：<c>Actor.Id</c>（两端同一份场景 ⇒ 同 Id）。空 = 不参与同步。</summary>
     private string _unitId;
 
-    /// <summary>网络下发但**当帧应用不了**的目标点（agent 未就绪时暂存，<see cref="Update"/> 里补）。</summary>
-    private Vector3 _pendingDestination;
-    private bool _hasPendingDestination;
+    /// <summary>
+    /// 在场 NPC 自记一份（供 09 的 <c>SceneUnitMoveSink</c> 按 Id 查）。
+    /// <para>▍为什么不能依赖 <c>ActorsManager.Actors</c>：那张表在 <c>ActorsManager.Awake</c> 里被 <c>Actors = new()</c> **整个换新**，
+    /// 而场景里先于它 Awake 的 NPC 登记的是旧表 ⇒ 之后永远查不到（2026-10-09 实测：客机 NPC 全员罚站、指令全卡在 sink 暂存区）。</para>
+    /// </summary>
+    static readonly List<NPCWalk> s_all = new List<NPCWalk>();
+
+    /// <summary>同步键（<c>Actor.Id</c>；空 = 不参与同步）。</summary>
+    public string UnitId => _unitId;
+
+    /// <summary>按同步键找在场的 NPC（只在 NPCWalk 之间找 ⇒ 天然不会撞上同名的玩家角色）。</summary>
+    public static NPCWalk FindById(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        for (int i = 0; i < s_all.Count; ++i)
+        {
+            var w = s_all[i];
+            if (w == null) continue;
+            if (string.Equals(w._unitId, id, System.StringComparison.Ordinal)) return w;
+        }
+        return null;
+    }
+
+    private void OnEnable()
+    {
+        if (!s_all.Contains(this)) s_all.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        s_all.Remove(this);
+    }
+
+    /// <summary>联机落点组件（2026-10-08 接入）：网络目标点的缓存 / 重试全在它里面。
+    /// <para>⚠ 本类的落地通道**不能**走 <c>UnitEventBus.PathRequest</c>（<c>PathRequestManager</c> 由战场的
+    /// <c>BattleManager</c> 创建，大厅里没人订阅 ⇒ 请求会被静默丢弃、NPC 一动不动）
+    /// ⇒ **不注入 applyHandler**，用组件的默认实现（<c>NavMeshAgent.SetDestination</c>，未就绪时自己等）。</para></summary>
+    private SyncedNavMover _mover;
+
+    private SyncedNavMover Mover
+    {
+        get
+        {
+            if (_mover == null)
+            {
+                if (!TryGetComponent(out _mover)) _mover = gameObject.AddComponent<SyncedNavMover>();
+                // 故意不设 applyHandler：见上面注释（大厅里没有 PathRequestManager）
+            }
+            return _mover;
+        }
+    }
 
     void Start()
     {
@@ -51,15 +100,14 @@ public class NPCWalk : MonoBehaviour
             Debug.LogError("WanderController: 需要 NavMeshAgent 组件！");
             return;
         }
-        TryApplyPendingDestination();
+        // ⚠ "补发早到的远端目标点"由 SyncedNavMover 自己的 Update 负责（2026-10-08），这里不再驱动
         StartWandering();
     }
 
 
     void Update()
     {
-        // 补发"早到 / 当时 agent 不可用"的远端目标点
-        TryApplyPendingDestination();
+        // ⚠ "补发远端目标点"已挪进 SyncedNavMover 自己的 Update（2026-10-08）
 
         // 每一帧检测是否在移动，更新动画
         UpdateAnimation();
@@ -93,33 +141,19 @@ public class NPCWalk : MonoBehaviour
     {
         if (stop)
         {
-            _hasPendingDestination = false;
-            if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh) agent.ResetPath();
+            // 清待落地点 + ResetPath（组件内部已判 "agent 未就绪"）
+            Mover.Stop();
             return;
         }
 
-        _pendingDestination = destination;
-        _hasPendingDestination = true;
-        TryApplyPendingDestination();
-    }
-
-    /// <summary>agent 真正可用时才落点。
-    /// <para>⚠ 这里**不能**走 <c>UnitEventSub.PathRequest</c>（敌人那条统一漏斗）：<c>PathRequestManager</c> 由战场的
-    /// <c>BattleManager</c> 创建，大厅里没人订阅 ⇒ 请求会被静默丢弃、NPC 一动不动。</para></summary>
-    private void TryApplyPendingDestination()
-    {
-        if (!_hasPendingDestination || agent == null) return;
-        if (!agent.isActiveAndEnabled || !agent.isOnNavMesh) return;
-
-        agent.SetDestination(_pendingDestination);
-        _hasPendingDestination = false;
+        Mover.ApplyRemoteDestination(destination);   // 缓存 + 立即尝试 + 失败则每帧重试
     }
 
     /// <summary>【房主】把"我要去哪 / 停下"发出去（转发的桥内部判 IsHost，成员与单机会自动忽略）。</summary>
     private void PublishMove(Vector3 destination, bool stop)
     {
         if (string.IsNullOrEmpty(_unitId)) return;
-        BattleEventSub.SceneUnitMove(_unitId, destination, stop);
+        BattleEventBus.SceneUnitMove(_unitId, destination, stop);
     }
 
     public void PauseWandering()
@@ -130,8 +164,7 @@ public class NPCWalk : MonoBehaviour
             wanderCoroutine = StartCoroutine(WanderRoutine());
         }
         if (RemoteDriven) return;      // 成员：位置的权威在房主（他暂停时会发 stop），本地别动 agent
-        if (agent != null && agent.isActiveAndEnabled)
-            agent.ResetPath();
+        Mover.Stop();                  // 顺带清掉待落地点：否则"暂停"会被下一帧的补发顶掉
         animator.SetBool("IsMove", false);
         PublishMove(transform.position, true);
     }
@@ -143,8 +176,7 @@ public class NPCWalk : MonoBehaviour
             wanderCoroutine = null;
         }
         if (RemoteDriven) return;
-        if (agent != null && agent.isActiveAndEnabled)
-            agent.ResetPath();
+        Mover.Stop();
         animator.SetBool("IsMove", false);
         PublishMove(transform.position, true);
     }
@@ -167,7 +199,7 @@ public class NPCWalk : MonoBehaviour
             // 检查目标点是否在 NavMesh 上
             if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, wanderRadius, NavMesh.AllAreas))
             {
-                agent.SetDestination(hit.position);
+                Mover.SetDestination(hit.position);   // 本端决策也走组件：agent 未就绪时先存着、就绪后再落地
                 PublishMove(hit.position, false);
             }
         }

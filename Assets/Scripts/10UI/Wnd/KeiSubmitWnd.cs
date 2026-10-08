@@ -1,4 +1,4 @@
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using UnityEngine;
 using FPSGame.Utils;
 
@@ -21,7 +21,7 @@ public class KeiSubmitWnd : HoldListHud
 {
     private void Start()
     {
-        GlobalEventSub.OnKeiSubmit += OnKeiSubmit;
+        GlobalEventBus.OnKeiSubmit += OnKeiSubmit;
         if (listRoot == null) return;
         // 初始隐藏，等待首次交付再显示
         HideAtStart();
@@ -29,7 +29,7 @@ public class KeiSubmitWnd : HoldListHud
 
     private void OnDestroy()
     {
-        GlobalEventSub.OnKeiSubmit -= OnKeiSubmit;
+        GlobalEventBus.OnKeiSubmit -= OnKeiSubmit;
     }
 
     private void OnKeiSubmit(OOPartEnum type, int count)

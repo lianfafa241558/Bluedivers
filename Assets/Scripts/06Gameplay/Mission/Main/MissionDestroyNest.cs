@@ -21,7 +21,7 @@ namespace FPSGame.Mission
         protected override void StartMission()
         {
 
-            UnitEventSub.OnEnemyDead += OnActorDeath;
+            UnitEventBus.OnEnemyDead += OnActorDeath;
             MaxProgress = (int)(data.targetCount* root.campData.enemyVarietyType.ToEnemyType() switch {
                 FPSGame.Core.EnemyType.Kaiser => 0.625f,
                 FPSGame.Core.EnemyType.Decagrammaton => 1,
@@ -35,7 +35,7 @@ namespace FPSGame.Mission
         protected override void Uninit()
         {
             base.Uninit();
-            UnitEventSub.OnEnemyDead -= OnActorDeath;
+            UnitEventBus.OnEnemyDead -= OnActorDeath;
         }
 
         void OnActorDeath(Actor actor)

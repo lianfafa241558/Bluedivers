@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
@@ -57,8 +57,8 @@ public class SubtitleWnd : Window
     public void Init()
     {
         OnViewSwitch(ArchivesData_SO.Current.GetSetting("默认操作视角")>0);
-        GlobalEventSub.OnViewSwitch += OnViewSwitch;
-        GlobalEventSub.OnSceneChange += OnSceneChange;
+        GlobalEventBus.OnViewSwitch += OnViewSwitch;
+        GlobalEventBus.OnSceneChange += OnSceneChange;
     }
 
     protected override void FirstShowWnd()
@@ -84,11 +84,11 @@ public class SubtitleWnd : Window
 
     protected override void ShowWnd()
     {
-        BattleEventSub.OnAirdrop += OnAirdrop;
-        GlobalEventSub.OnSettingCange += OnSettingCange;
-        UnitEventSub.OnUnitDeath += OnActorDeath;
-        UnitEventSub.OnFriendLeave += OnFriendLeave;   // 盟友离场：清掉"以他为标记目标"的字幕（对象被销毁，不清就会每帧在死引用上取位置）
-        GlobalEventSub.OnOOPartCollect += OOPartCollect;
+        BattleEventBus.OnAirdrop += OnAirdrop;
+        GlobalEventBus.OnSettingCange += OnSettingCange;
+        UnitEventBus.OnUnitDeath += OnActorDeath;
+        UnitEventBus.OnFriendLeave += OnFriendLeave;   // 盟友离场：清掉"以他为标记目标"的字幕（对象被销毁，不清就会每帧在死引用上取位置）
+        GlobalEventBus.OnOOPartCollect += OOPartCollect;
 
         
         GainObjectTime = -5;
@@ -96,18 +96,18 @@ public class SubtitleWnd : Window
 
     protected override void HideWnd()
     {
-        BattleEventSub.OnAirdrop -= OnAirdrop;
-        GlobalEventSub.OnSettingCange -= OnSettingCange;
-        UnitEventSub.OnUnitDeath -= OnActorDeath;
-        UnitEventSub.OnFriendLeave -= OnFriendLeave;
-        GlobalEventSub.OnOOPartCollect -= OOPartCollect;
+        BattleEventBus.OnAirdrop -= OnAirdrop;
+        GlobalEventBus.OnSettingCange -= OnSettingCange;
+        UnitEventBus.OnUnitDeath -= OnActorDeath;
+        UnitEventBus.OnFriendLeave -= OnFriendLeave;
+        GlobalEventBus.OnOOPartCollect -= OOPartCollect;
         //OnSceneChange(null);
     }
 
     public override void OnDestroy()
     {
-        GlobalEventSub.OnSceneChange -= OnSceneChange;
-        GlobalEventSub.OnViewSwitch -= OnViewSwitch;
+        GlobalEventBus.OnSceneChange -= OnSceneChange;
+        GlobalEventBus.OnViewSwitch -= OnViewSwitch;
         base.OnDestroy();
     }
 

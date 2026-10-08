@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Game;      // Actor / ActorState（单位内核，05_UnitCore）
 using FPSGame.Weapon;    // WeaponPlayerController（武器槽位装配用）
@@ -122,7 +122,7 @@ namespace FPSGame.Gameplay
 
             // 角色确定了 ⇒ 广播一次（"按角色 id 判断"的系统要在这时才拿得到 Id，
             // 例如 Furniture_NPCChat 要把"被玩家占用的角色 NPC"藏起来）
-            if (_actor != null) UnitEventSub.FriendRoleChanged(_actor);
+            if (_actor != null) UnitEventBus.FriendRoleChanged(_actor);
 
             _anim = model.GetComponentInChildren<Animator>(true);
             ResetAnimState();      // 新模型先给一套"站立不动"基线，否则参数是默认 0，可能停在异常姿态

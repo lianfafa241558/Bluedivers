@@ -63,13 +63,13 @@ public class PathRequestManager : Singleton<PathRequestManager>
         // 重复实例已被 base.Awake 判为待销毁 ⇒ 不得订阅，否则一次请求会被处理两次。
         if (Instance != this) return;
 
-        FPSGame.Game.UnitEventSub.OnPathRequest += RequestPath;
+        FPSGame.Game.UnitEventBus.OnPathRequest += RequestPath;
     }
 
     /// <summary>退订。与 <see cref="Awake"/> 的订阅**成对**：静态事件若不退订，会留下已销毁实例的引用。</summary>
     private void OnDestroy()
     {
-        FPSGame.Game.UnitEventSub.OnPathRequest -= RequestPath;
+        FPSGame.Game.UnitEventBus.OnPathRequest -= RequestPath;
     }
 
     public void RequestPath(NavMeshAgent agent, Vector3 destination, bool log = false)

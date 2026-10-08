@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Game;
 using FPSGame.Gameplay;
 using FPSGame.Net;
@@ -9,7 +9,7 @@ namespace FPSGame.Managers
     /// <summary>
     /// 场景单位（NPC 这类**由场景摆好**、会自己走动的氛围单位）的移动同步落地端 —— **挂哪个场景就管哪个场景**。
     ///
-    /// <para>▍分工：房主的 <c>NPCWalk</c> 决策 → <see cref="BattleEventSub.OnSceneUnitMove"/> → 本组件转上网络；
+    /// <para>▍分工：房主的 <c>NPCWalk</c> 决策 → <see cref="BattleEventBus.OnSceneUnitMove"/> → 本组件转上网络；
     /// 收到房主下发的目标点后按 <c>Actor.Id</c> 找本端那只 NPC 应用。</para>
     /// <para>⚠ 本组件**不做消息注册**（注册在常驻的 <c>NetRoomFlow</c>）：否则场景不在时收到这条会刷
     /// "未注册消息:4032" 并丢包。它只负责"场景内找对象 + 落地"。</para>
@@ -29,10 +29,31 @@ namespace FPSGame.Managers
         /// <summary>遍历 <see cref="_pending"/> 时的键暂存（避免遍历中改字典，也避免每帧产生垃圾）。</summary>
         private readonly List<string> _flushBuffer = new List<string>();
 
+        /// <summary>
+        /// 【自举】保证本组件一定在场（2026-10-09）。
+        ///
+        /// <para>▍为什么需要：本类原本的设计是"**挂哪个场景就管哪个场景**"，但实测**全项目没有任何场景/预制体挂过它**
+        /// ⇒ <c>NPCWalk.RemoteDriven</c> 永远是 false ⇒ 成员端照旧自己摇随机游荡 ⇒ 两端 NPC 位置各走各的
+        /// （用户实测"NPC 位置没有同步成功"）。手挂容易再被漏掉，改成与 <c>NetRoot</c> 同款的常驻自举。</para>
+        ///
+        /// <para>▍常驻为什么不会串场景：本组件只订阅全局事件，找对象走 <c>NPCWalk</c> 自记的在场表
+        /// （<c>OnEnable</c>/<c>OnDisable</c> 维护）⇒ 换场景时旧 NPC 随场景卸载自动出表，新场景的自动被接管。
+        /// 场景里若**手工挂过**（老做法），本方法直接让位、不重复建。</para>
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void Bootstrap()
+        {
+            if (FindObjectOfType<SceneUnitMoveSink>() != null) return;   // 场景里手工挂了的就用那个
+
+            var go = new GameObject("SceneUnitMoveSink(Auto)");
+            DontDestroyOnLoad(go);
+            go.AddComponent<SceneUnitMoveSink>();
+        }
+
         private void Awake()
         {
             NetRoomFlow.OnSceneUnitMove += OnRemoteMove;
-            BattleEventSub.OnSceneUnitMove += OnLocalMove;
+            BattleEventBus.OnSceneUnitMove += OnLocalMove;
             NetRoomFlow.OnJoinResult += OnJoinResult;
         }
 
@@ -44,7 +65,7 @@ namespace FPSGame.Managers
         private void OnDestroy()
         {
             NetRoomFlow.OnSceneUnitMove -= OnRemoteMove;
-            BattleEventSub.OnSceneUnitMove -= OnLocalMove;
+            BattleEventBus.OnSceneUnitMove -= OnLocalMove;
             NetRoomFlow.OnJoinResult -= OnJoinResult;
 
             // 桥不在场 ⇒ 退回"各端本地游荡"（不能让标志留给下一个场景的 NPC）
@@ -67,6 +88,8 @@ namespace FPSGame.Managers
         {
             var flow = NetRoomFlow.Instance;
             NPCWalk.RemoteDriven = flow != null && flow.SelfSid != 0u;
+            // 数据说话：这一句就是"NPC 会不会各走各的"的总闸（成员端 true、房主/单机 false）
+            FPSGame.Utils.NetSyncLog.SyncLog("NPC 总闸", $"RemoteDriven={NPCWalk.RemoteDriven} (flow={(flow != null)} SelfSid={(flow != null ? flow.SelfSid.ToString() : "-")})");
         }
 
         /// <summary>【上行】本端（房主）的 NPC 决策 ⇒ 转发出去（<c>SendSceneUnitMove</c> 内部判 IsHost，成员/单机自动忽略）。</summary>
@@ -105,29 +128,14 @@ namespace FPSGame.Managers
             }
         }
 
-        /// <summary>按 <c>Actor.Id</c> 找本端那只 NPC。
-        /// <para>⚠ 不能用 <c>ActorsManager.SpecUnits</c>：那张表要靠 <c>ActorsManager</c> 实例订阅事件才有内容，
-        /// 而**大厅里没有 ActorsManager**（只有战场的 <c>BattleManager</c> 才建）⇒ 只能扫静态的
-        /// <c>ActorsManager.Actors</c>（<c>Actor.Awake</c> 无条件登记，大厅同样成立）。</para></summary>
-        private static NPCWalk Find(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return null;
-
-            var all = ActorsManager.Actors;
-            for (int i = 0; i < all.Count; ++i)
-            {
-                var a = all[i];
-                // 接口引用不能用 == null 判"已销毁"（Unity 假 null）⇒ 借组件引用判一次
-                var comp = a as Component;
-                if (comp == null) continue;
-                if (!string.Equals(a.Id, id, System.StringComparison.Ordinal)) continue;
-
-                // ⚠ 同名也要继续找：Id 只保证"同一份场景里唯一"，**玩家角色可能与 NPC 同名**
-                //   （角色 Aris ↔ NPC Aris），先撞上玩家那个 Actor 并不代表这条指令没有落点
-                var walk = comp.GetComponent<NPCWalk>();
-                if (walk != null) return walk;
-            }
-            return null;
-        }
+        /// <summary>
+        /// 按同步键找本端那只 NPC —— 走 <see cref="NPCWalk.FindById"/>（NPC 自己维护的在场表）。
+        ///
+        /// <para>▍为什么不扫 <c>ActorsManager.Actors</c>（2026-10-09 修）：那张表在 <c>ActorsManager.Awake</c> 里被
+        /// <c>Actors = new()</c> 整个换新 ⇒ **场景里先 Awake 的 NPC 不在表里**，按它查永远查不到，
+        /// 指令只会堆在 <c>_pending</c>（实测症状：客机 NPC 全员罚站）。
+        /// 换成 NPC 自记的表后，顺带也解决了"玩家角色与 NPC 同名"（只在 NPC 之间找，撞不上玩家）。</para>
+        /// </summary>
+        private static NPCWalk Find(string id) => NPCWalk.FindById(id);
     }
 }

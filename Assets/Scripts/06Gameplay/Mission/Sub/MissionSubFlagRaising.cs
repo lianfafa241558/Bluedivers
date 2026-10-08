@@ -27,7 +27,7 @@ namespace FPSGame.Mission
         int adID;
         protected override void StartMission()
         {
-            BattleEventSub.OnSelectAirdrop += OnSelectAirdrop;
+            BattleEventBus.OnSelectAirdrop += OnSelectAirdrop;
             adID = data.cfg.RequiredAD[0].ID;
         }
 
@@ -122,7 +122,7 @@ namespace FPSGame.Mission
             //这里多人情况下也得同步（现在没办法获取其他玩家按
             if (adID == data.cfg.ID&& Vector3.Distance(go.transform.position,pos)<=AirdropRange)
             {
-                BattleEventSub.OnSelectAirdrop -= OnSelectAirdrop;
+                BattleEventBus.OnSelectAirdrop -= OnSelectAirdrop;
  
                 FPSGame.GameContract.BattleHub.Current.ReleaseAirdrop(entity.Pos, adID, InitFlag);
             }

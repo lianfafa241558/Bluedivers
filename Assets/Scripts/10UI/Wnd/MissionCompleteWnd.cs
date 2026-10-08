@@ -36,7 +36,7 @@ public class MissionCompleteWnd : Window
 
     public void Init()
     {
-        BattleEventSub.OnMissionCompleted += MissionCompleted;
+        BattleEventBus.OnMissionCompleted += MissionCompleted;
         SetWndState(false);
     }
 
@@ -48,7 +48,7 @@ public class MissionCompleteWnd : Window
     public override void OnDestroy()
     {
         base.OnDestroy();
-        BattleEventSub.OnMissionCompleted -= MissionCompleted;
+        BattleEventBus.OnMissionCompleted -= MissionCompleted;
 
     }
 

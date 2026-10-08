@@ -50,6 +50,19 @@ namespace FPSGame.Managers
         /// <summary>sid → 盟友实例。</summary>
         private readonly Dictionary<uint, FriendController> _friends = new Dictionary<uint, FriendController>();
 
+        /// <summary>【联机】按 sid 取盟友实例的 GameObject（<c>0</c> = 房主）。找不到给 null。
+        /// <para>家具交互重放要用它把"操作者"指到远端的那个单位上（见 <c>NetFurnitureBridge</c>）。</para></summary>
+        public bool TryGetFriendObject(uint sid, out GameObject go)
+        {
+            go = null;
+            if (_friends.TryGetValue(sid, out FriendController fc) && fc != null)
+            {
+                go = fc.gameObject;
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>名单里已消失的 sid（遍历时不能改字典，收集完再删）。</summary>
         private readonly List<uint> _stale = new List<uint>();
 
@@ -75,13 +88,13 @@ namespace FPSGame.Managers
             NetRoomFlow.OnSceneActorReq += HandleSceneActorReq; // 【房主】响应场景 actor 快照请求
             NetRoomFlow.OnSceneActors += HandleSceneActors;     // 【成员】应用场景 actor 快照
             NetRoomFlow.OnAirdropCall += HandleAirdropCall;     // 盟友呼叫战备（在同一个点上复现一份）
-            BattleEventSub.OnAirdrop += HandleLocalAirdrop;     // 我释放了一次战备 ⇒ 上报
+            BattleEventBus.OnAirdrop += HandleLocalAirdrop;     // 我释放了一次战备 ⇒ 上报
             NetRoomFlow.OnPlayerLeft += HandlePlayerLeft;       // 有人离开 ⇒ 销毁他的盟友实例（战斗期名单冻结，靠这条）
             NetRoomFlow.OnSpeech += HandleSpeech;               // 盟友喊话（字幕 + 语音）
-            BattleEventSub.OnPlayerSpeech += HandleLocalSpeech; // 我喊话 ⇒ 上报
-            UnitEventSub.OnFriendLeave += HandleFriendLeave;    // 盟友实例被销毁（字典收尾兜底）
-            UnitEventSub.OnPlayerCreate += HandleLocalPlayerCreated;   // 本机玩家出生 ⇒ 绑武器管理器（直接从玩家身上取）
-            GlobalEventSub.OnSceneChange += HandleSceneChanged;   // 换场景后按缓存名单重建
+            BattleEventBus.OnPlayerSpeech += HandleLocalSpeech; // 我喊话 ⇒ 上报
+            UnitEventBus.OnFriendLeave += HandleFriendLeave;    // 盟友实例被销毁（字典收尾兜底）
+            UnitEventBus.OnPlayerCreate += HandleLocalPlayerCreated;   // 本机玩家出生 ⇒ 绑武器管理器（直接从玩家身上取）
+            GlobalEventBus.OnSceneChange += HandleSceneChanged;   // 换场景后按缓存名单重建
         }
 
         public void UnInit()
@@ -95,13 +108,13 @@ namespace FPSGame.Managers
             NetRoomFlow.OnSceneActorReq -= HandleSceneActorReq;
             NetRoomFlow.OnSceneActors -= HandleSceneActors;
             NetRoomFlow.OnAirdropCall -= HandleAirdropCall;
-            BattleEventSub.OnAirdrop -= HandleLocalAirdrop;
+            BattleEventBus.OnAirdrop -= HandleLocalAirdrop;
             NetRoomFlow.OnPlayerLeft -= HandlePlayerLeft;
             NetRoomFlow.OnSpeech -= HandleSpeech;
-            BattleEventSub.OnPlayerSpeech -= HandleLocalSpeech;
-            UnitEventSub.OnFriendLeave -= HandleFriendLeave;
-            UnitEventSub.OnPlayerCreate -= HandleLocalPlayerCreated;
-            GlobalEventSub.OnSceneChange -= HandleSceneChanged;
+            BattleEventBus.OnPlayerSpeech -= HandleLocalSpeech;
+            UnitEventBus.OnFriendLeave -= HandleFriendLeave;
+            UnitEventBus.OnPlayerCreate -= HandleLocalPlayerCreated;
+            GlobalEventBus.OnSceneChange -= HandleSceneChanged;
             BindLocalWeapons(null);
             ClearFriends();
             _lastInfos = null;
@@ -285,6 +298,7 @@ namespace FPSGame.Managers
 
             if (fc != null) Tool.Destroy(fc.gameObject);
             Debug.Log($"[NetFriendBridge] 盟友 sid={sid} 已离开 ⇒ 销毁实例");
+            FPSGame.Utils.NetSyncLog.SyncLog("盟友离场", $"sid={sid}（房主本地也应收到这条 —— 若房主端没打这句，就是 NetHostSvc 漏了自派发）");
         }
 
         /// <summary>本机喊话 → 上报（远端用**喊话者那个角色**的配置播同一条）。</summary>
@@ -318,7 +332,7 @@ namespace FPSGame.Managers
             var group = roleCfg.SpeechGroup((SpeechTypeEnum)speech);
             if (group == null) return;                       // 该类型没配语音 ⇒ 静默跳过
 
-            GlobalEventSub.ActorSpeech(fc.gameObject, group.Get(fc.transform.position));
+            GlobalEventBus.ActorSpeech(fc.gameObject, group.Get(fc.transform.position));
         }
 
         /// <summary>盟友呼叫战备（房主权威转发；自己发的那条按 sid 丢掉 —— 我本地已经真放过一次）。</summary>

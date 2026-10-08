@@ -1,4 +1,4 @@
-using FPSGame.Core.Interface;
+﻿using FPSGame.Core.Interface;
 using FPSGame.Attributes;
 using FPSGame.Game;
 using UnityEngine;
@@ -20,6 +20,7 @@ public class BridgeWnd : Window
 {
     [Foldout("玩家", true)]
     [SerializeField]
+    // ⚠ friendRoot 的**填充与显隐**已抽成共用件 FriendSlotGroup（挂在该节点上自驱动，2026-10-09）⇒ 本窗口不再使用它。
     private Transform selfRoot, friendRoot,
         selfLevel,selfName,selfIcon,selfExp, selfFrame;
 
@@ -42,12 +43,12 @@ public class BridgeWnd : Window
 
     protected override void ShowWnd()
     {
-        GlobalEventSub.OnGainExp += OnGainExp;
-        GlobalEventSub.OnSwitchRole += OnSwitchRole;
-        GlobalEventSub.OnSelectRolePreview += OnSelectRolePreview;
-        UnitEventSub.OnPlayerCreate += SwitchRolePreview;
+        GlobalEventBus.OnGainExp += OnGainExp;
+        GlobalEventBus.OnSwitchRole += OnSwitchRole;
+        GlobalEventBus.OnSelectRolePreview += OnSelectRolePreview;
+        UnitEventBus.OnPlayerCreate += SwitchRolePreview;
 
-        // 任务面板：Ready 那一刻本窗口可能还是隐藏的（还开着选图/房间列表 ⇒ WindowState = UI），
+            // 任务面板：Ready 那一刻本窗口可能还是隐藏的（还开着选图/房间列表 ⇒ WindowState = UI），
         // 这时大厅场景里那张 GameState 状态表调的 DisplayTask 会因"animator 所在物体未激活"**静默失败**
         //（Console 留一条 `Game object with animator is inactive`，面板停在 Idle）⇒ 窗口一显示就补一次。
         // 不在 Ready 则清掉"已展开"记录，下一局重新展开。
@@ -59,14 +60,18 @@ public class BridgeWnd : Window
         {
             _shownTaskKey = null;
         }
+
+        // ⚠ 队友位（谁在房间里）**本窗口不再自己管**：已抽成共用件 <see cref="FriendSlotGroup"/>，
+        //   挂在 `PlayerStateSelf/FriendRoot` 上**自驱动**（每帧按场上盟友实体对账；单机时整块隐藏）。
+        //   ⇒ BridgeWnd / SettingWnd 共用同一份，别再往这里加槽位代码（细节见 FriendSlotGroup 的类注释）。
     }
 
     protected override void HideWnd()
     {
-        GlobalEventSub.OnGainExp -= OnGainExp;
-        GlobalEventSub.OnSwitchRole -= OnSwitchRole;
-        GlobalEventSub.OnSelectRolePreview -= OnSelectRolePreview;
-        UnitEventSub.OnPlayerCreate -= SwitchRolePreview;
+        GlobalEventBus.OnGainExp -= OnGainExp;
+        GlobalEventBus.OnSwitchRole -= OnSwitchRole;
+        GlobalEventBus.OnSelectRolePreview -= OnSelectRolePreview;
+        UnitEventBus.OnPlayerCreate -= SwitchRolePreview;
     }
 
 
@@ -128,7 +133,8 @@ public class BridgeWnd : Window
         var cfg = task.MainCfg;
         float diffScale = taskManager.FinalDiffScale();
         
-        SetActive(friendRoot, task.PlayMode !=2);
+        // ⚠ 队友位的显隐**不在这里**：谁在房间里随时会变（且单机要整块隐藏）
+        //   ⇒ 统一交给每帧的 RefreshFriendRoot()（判据 BridgeSys.InOnlineRoom），避免两处各写一份又会互相覆盖。
 
         //SetActive(taskRoot, true);
         taskRoot.GetComponent<Animator>().Play("Entry",0,0);

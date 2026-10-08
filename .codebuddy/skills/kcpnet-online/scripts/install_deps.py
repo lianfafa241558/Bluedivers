@@ -201,12 +201,17 @@ def check(dest: str) -> int:
     log("")
 
     log("-- downstream evidence --")
-    asm = r"d:\Pro\Bluedivers\Library\ScriptAssemblies\Assembly-CSharp.dll"
-    if os.path.exists(asm):
-        blob = open(asm, "rb").read()
-        log(f"  Assembly-CSharp.dll references: KCPNet={b'KCPNet' in blob}  MessagePack={b'MessagePack' in blob}")
-    else:
-        log("  Assembly-CSharp.dll not found (project never compiled?)")
+    # 2026-10-09 起网络代码分在 02_Net(NetTmp) 与 07_NetGame 两个程序集里（不再只落 Assembly-CSharp）
+    asm_dir = r"d:\Pro\Bluedivers\Library\ScriptAssemblies"
+    for _name in ("02_Net", "07_NetGame", "Assembly-CSharp"):
+        asm = os.path.join(asm_dir, _name + ".dll")
+        if os.path.exists(asm):
+            blob = open(asm, "rb").read()
+            extra = "   (正常: DTO 的 [MessagePackObject]/[Key] 特性需要它)" if _name == "07_NetGame" else ""
+            log(f"  {_name}.dll references: KCPNet={b'KCPNet' in blob}  MessagePack={b'MessagePack' in blob}{extra}")
+        else:
+            note = "（本项目已全部走 asmdef，没有 Assembly-CSharp 属正常）" if _name == "Assembly-CSharp" else "（未编译过？）"
+            log(f"  {_name}.dll not found {note}")
     log("")
 
     log("-- assembly load result of the LAST domain reload --")

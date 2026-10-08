@@ -25,7 +25,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
             var oldstste = Instance.timeScale;
             Instance.timeScale = Time.timeScale = value;
             Debug.LogWarning("时间刻度被设置为" + value);
-            GlobalEventSub.TimeScaleChange(oldstste, value);
+            GlobalEventBus.TimeScaleChange(oldstste, value);
         }
     }
 
@@ -41,7 +41,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
                 Instance.gameState = value;
                 FPSGame.Data.FlowState.GameState = value;//数据自持（2026-10-01 取代 ServiceLocator.Flow 的状态查询）
                 Debug.LogWarning("游戏状态被设置为" + value);
-                GlobalEventSub.SceneChange(oldState, value);
+                GlobalEventBus.SceneChange(oldState, value);
             }
         }
     }
@@ -83,7 +83,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
         // ⚠ IsLocal 是本类上的**序列化字段**，只在启动时确定 ⇒ 在此镜像一次（见 FPSGame.Data.FlowState）
         FPSGame.Data.FlowState.IsLocal = IsLocal;
         // 订阅"请求切阶段"命令（2026-10-01 取代 IFlowService.SetGameState；见 GlobalEventSub）
-        GlobalEventSub.OnRequestGameState += OnRequestGameState;
+        GlobalEventBus.OnRequestGameState += OnRequestGameState;
         timeScale = Time.timeScale;
 
         if (IsLocal)
@@ -112,7 +112,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
     /// </summary>
     protected override void OnDestroy()
     {
-        GlobalEventSub.OnRequestGameState -= OnRequestGameState;//与 Awake 的订阅成对
+        GlobalEventBus.OnRequestGameState -= OnRequestGameState;//与 Awake 的订阅成对
         base.OnDestroy();
     }
 

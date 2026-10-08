@@ -77,7 +77,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
             //Debug.LogError("point"+point+"击中点"+hit.point);
             transform.position = point = hit.point;
         }
-        BattleEventSub.Airdrop(owner, gameObject, point, data);
+        BattleEventBus.Airdrop(owner, gameObject, point, data);
         //武器参数取自信号枪(weaponRoot)，信标特效物体自身不含武器组件
         if (weaponRoot.IsValid()
             && weaponRoot.TryGetComponent(out WeaponPlayerController weapon)
@@ -115,7 +115,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         {
             transform.position = point = hit.point;
         }
-        BattleEventSub.Airdrop(null, gameObject, point, this.data);
+        BattleEventBus.Airdrop(null, gameObject, point, this.data);
 
         transform.parent = null;
         //transform.eulerAngles = Vector3.zero;

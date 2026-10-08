@@ -27,7 +27,7 @@ public class CanvasController : MonoBehaviour
         {
             canvas.worldCamera = UICamera.uiCamera;
         }
-        GlobalEventSub.OnSettingCange += OnSettingCange;
+        GlobalEventBus.OnSettingCange += OnSettingCange;
         if (isHUD) WndManager.OnWindowStateChange += OnWindowStateChange;
         if (isHUD && ArchivesData_SO.Current.GetSetting("沉浸模式") > 0) SetAlpha(transform, 0);
 
@@ -35,7 +35,7 @@ public class CanvasController : MonoBehaviour
 
     void OnDestroy()
     {
-        GlobalEventSub.OnSettingCange -= OnSettingCange;
+        GlobalEventBus.OnSettingCange -= OnSettingCange;
         if (isHUD) WndManager.OnWindowStateChange -= OnWindowStateChange;
     }
 

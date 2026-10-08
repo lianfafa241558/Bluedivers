@@ -22,8 +22,8 @@ using UnityEngine;
 ///   分发时按 CmdId 查字典找到对应处理器调用，不再需要 switch。
 ///
 /// ▍流程：
-///   业务模块注册：  MessageCenter.Register<LoginRspMsg>(CmdId.LoginRsp, OnLoginRsp);
-///   收到消息分发：  MessageCenter.Dispatch(msg);  ← 自动找到 OnLoginRsp 并调用
+///   业务模块注册：  MessageCenter.Register<某消息类型>(某命令号, OnXxx);
+///   收到消息分发：  MessageCenter.Dispatch(msg);  ← 自动找到 OnXxx 并调用
 /// </summary>
 public static class MessageCenter
 {

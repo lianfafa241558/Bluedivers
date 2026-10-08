@@ -30,20 +30,62 @@ public class HostSession : KCPSession<NetMessage>
     public string PlayerName = "";
 
     /// <summary>
-    /// 【连接成功回调】某个成员完成握手接入时，KCPNet 调用此方法。
+    /// 对端地址（<c>ip:port</c>），用于排查"**谁在反复握手**"（2026-10-09：只有两个客户端却出现一串从未入房的会话）。
+    /// <para>▍为什么用反射：基类只有 <c>private IPEndPoint m_remotePoint</c>（另有一个名字很怪的属性 <c>mremotePoint</c>）；
+    /// 拿不到就返回 <c>?</c>，不影响任何逻辑。</para>
     /// </summary>
-    protected override void OnConnected()
+    public string PeerAddress
     {
-        Debug.Log($"[HostSession] 新成员接入, sid={GetSessionID()}");
+        get
+        {
+            try
+            {
+                var f = typeof(KCPSession<NetMessage>).GetField("m_remotePoint",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                if (f != null)
+                {
+                    var ep = f.GetValue(this) as System.Net.IPEndPoint;
+                    if (ep != null) return ep.ToString();
+                }
+            }
+            catch { }
+            return "?";
+        }
     }
 
     /// <summary>
-    /// 【断开回调】某个成员断开时调用。
+    /// 【连接成功回调】某个成员完成握手接入时，KCPNet 调用此方法。
+    /// <para>⚠ 它是**握手成功**才会来的。实测（2026-10-09）：**同一条 socket 会被库反复重握手**，
+    /// 服务端因此建出一串 sid（房主 console 看起来像"一直有人进进出出"，其实只有一个客机）。
+    /// 所以这里对日志**限流**（前 3 次 + 之后每 10s 一次，带累计次数），既留证据又不刷屏。</para>
+    /// </summary>
+    protected override void OnConnected()
+    {
+        int n = ++s_connectCount;
+        bool firstFew = n <= 3;
+        bool periodic = (System.DateTime.UtcNow - s_lastLogUtc).TotalSeconds >= 10.0;
+        if (!firstFew && !periodic) return;
+
+        s_lastLogUtc = System.DateTime.UtcNow;
+        Debug.Log($"[HostSession] 新成员接入, sid={GetSessionID()} 对端={PeerAddress}（累计 {n} 次）{System.DateTime.Now:HH:mm:ss.fff}");
+    }
+
+    /// <summary>
+    /// 【断开回调】某个成员断开时调用（同样限流，见 <see cref="OnConnected"/>）。
     /// </summary>
     protected override void OnDisConnected()
     {
-        Debug.Log($"[HostSession] 成员断开, sid={GetSessionID()}");
+        int n = ++s_disconnectCount;
+        if (n > 3 && (System.DateTime.UtcNow - s_lastLogUtc).TotalSeconds < 10.0) return;
+
+        s_lastLogUtc = System.DateTime.UtcNow;
+        Debug.Log($"[HostSession] 成员断开, sid={GetSessionID()} 对端={PeerAddress}（累计 {n} 次）");
     }
+
+    // ⚠ 这两个回调跑在库的线程池线程上 ⇒ 不能碰 Unity API（所以用 DateTime 而不是 Time.unscaledTime）。
+    static int s_connectCount;
+    static int s_disconnectCount;
+    static System.DateTime s_lastLogUtc = System.DateTime.MinValue;
 
     /// <summary>
     /// 【收到消息回调】某个成员发来一条消息时，KCPNet 调用此方法。
@@ -54,7 +96,7 @@ public class HostSession : KCPSession<NetMessage>
     protected override void OnReciveMsg(NetMessage msg)
     {
         // 带上本会话的 sid 一起入队（成员端不用带，因为只有一条连接）
-        NetHostSvc.Instance.AddMsgQue(msg, GetSessionID());
+        NetInbox.Enqueue(msg, GetSessionID());
     }
 
     /// <summary>

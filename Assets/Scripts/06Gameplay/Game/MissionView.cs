@@ -68,15 +68,15 @@ namespace FPSGame.Game
             this.discovered = HaveTag(MissionTag.StratDiscovered);
             areaRange = HaveTag(MissionTag.IsArea) ? mission.entitySize : 0;
             this.mission.OnMissionCompleted += OnMissionComplete;
-            GlobalEventSub.OnMark += Mark;
-            if (requiredAD.Length > 0) BattleEventSub.OnAirdrop += OnAirdrop;
+            GlobalEventBus.OnMark += Mark;
+            if (requiredAD.Length > 0) BattleEventBus.OnAirdrop += OnAirdrop;
         }
 
         public void Uninit()
         {
             this.mission.OnMissionCompleted -= OnMissionComplete;
-            if (!discovered) GlobalEventSub.OnMark -= Mark;
-            if (requiredAD!=null&&requiredAD.Length > 0) BattleEventSub.OnAirdrop -= OnAirdrop;
+            if (!discovered) GlobalEventBus.OnMark -= Mark;
+            if (requiredAD!=null&&requiredAD.Length > 0) BattleEventBus.OnAirdrop -= OnAirdrop;
             enabled = false;
         }
 
@@ -115,7 +115,7 @@ namespace FPSGame.Game
                 if (entityRange != InHalfRange)
                 {
                     InHalfRange = entityRange;
-                    BattleEventSub.MissionStateChange(mission, entityRange);
+                    BattleEventBus.MissionStateChange(mission, entityRange);
                 }
             }
 
@@ -161,7 +161,7 @@ namespace FPSGame.Game
 
         protected void CreatNotice(string role, string type, System.Func<bool> func = default, float delay = 0, float vaildTime = -1)
         {
-            GlobalEventSub.Notice(role, type, func, vaildTime);
+            GlobalEventBus.Notice(role, type, func, vaildTime);
         }
 
         /// <summary>
@@ -170,11 +170,11 @@ namespace FPSGame.Game
         public void TryDiscovered()
         {
             discovered = true;
-            BattleEventSub.MissionEnityShow(this);
-            GlobalEventSub.OnMark -= Mark;
+            BattleEventBus.MissionEnityShow(this);
+            GlobalEventBus.OnMark -= Mark;
             if (HaveTag(MissionTag.OneDiscovered))
             {
-                BattleEventSub.MissionStateChange(mission, true);
+                BattleEventBus.MissionStateChange(mission, true);
             }
         }
         private void Mark(GameObject owner, GameObject target, Vector3 point)
@@ -192,7 +192,7 @@ namespace FPSGame.Game
             if (requiredAD.Contains(data.cfg.ID))
             {
                 allowUseAirdrop = true;
-                BattleEventSub.OnAirdrop -= OnAirdrop;
+                BattleEventBus.OnAirdrop -= OnAirdrop;
             }
         }
 

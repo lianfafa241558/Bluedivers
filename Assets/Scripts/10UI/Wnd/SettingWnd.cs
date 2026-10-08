@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
 
@@ -480,7 +480,7 @@ public partial class SettingWnd : Window
                     data.value = Tool.PositiveRemainder(data.value.RawInt - 1, data.showTexts.Length);
                     SetText(textD, data.showTexts[data.value.RawInt]);
                     haveSettingChagne = true;
-                    GlobalEventSub.SettingCange(name, data.value.RawInt);
+                    GlobalEventBus.SettingCange(name, data.value.RawInt);
                     wndManager.PlaySound(new("UI/UI_Bubble"));
                 });
                 right.onClick.AddListener(() => {
@@ -489,7 +489,7 @@ public partial class SettingWnd : Window
                     data.value = Tool.PositiveRemainder(data.value.RawInt + 1, data.showTexts.Length);
                     SetText(textD, data.showTexts[data.value.RawInt]);
                     haveSettingChagne = true;
-                    GlobalEventSub.SettingCange(name, data.value.RawInt);
+                    GlobalEventBus.SettingCange(name, data.value.RawInt);
                     wndManager.PlaySound(new("UI/UI_Bubble"));
                 });
                 break;
@@ -501,7 +501,7 @@ public partial class SettingWnd : Window
 
                     data.value = value?1:0;
                     haveSettingChagne = true;
-                    GlobalEventSub.SettingCange(name, data.value.RawInt);
+                    GlobalEventBus.SettingCange(name, data.value.RawInt);
                     wndManager.PlaySound(new("UI/UI_Bubble"));
                 });
                 break;
@@ -518,7 +518,7 @@ public partial class SettingWnd : Window
                     data.value = value;
                     haveSettingChagne = true;
                     SetText(textS, (int)value + data.sliderSuffix);
-                    GlobalEventSub.SettingCange(name, data.value.RawInt);
+                    GlobalEventBus.SettingCange(name, data.value.RawInt);
                     //AudioManager.PlaySound(new("UI/UI_Bubble"));
                 });
                 break;
@@ -566,12 +566,16 @@ public partial class SettingWnd : Window
 
     }
     /// <summary>
-    /// 把 <c>stateWnd/PlayerStateSelf/FriendRoot</c> 下每个玩家位的**空位**节点绑成"创建房间"入口。
+    /// 把 <c>ExpandRoot/stateWnd/PlayerStateSelf/FriendRoot</c> 下每个玩家位的**空位**节点绑成"创建房间"入口。
     ///
-    /// <para>▍节点约定（预制体实测）：每个 <c>PlayerState</c> 有 2 个子节点 ——
-    /// 子0 = 有玩家（头像 + 角色名称，默认 inactive）、子1 = 空位（显示"空位"）。
-    /// 空位底图是 <c>PlayerState(n)/GameObject (1)/Image</c>，它原本没有 Button ⇒ 这里就地补一个
-    /// （同 <c>ServerListPanel.SetItemClick</c> 的做法），并把 raycast 目标指到那张底图上。</para>
+    /// <para>▍节点命名（2026-10-09 在预制体里**规范化过**，与 <c>BridgeWnd</c> 那份同构）：
+    /// <c>Occupied/{Icon/{BG, portrait}, frame, name}</c> = 有玩家（默认 inactive）；
+    /// <c>Empty/{frame, Shadow/name}</c> = 空位（默认 active，显示"空位"）。
+    /// 空位那张六边形框 <c>Empty/frame</c> 原本没有 Button ⇒ 这里就地补一个
+    /// （同 <c>ServerListPanel.SetItemClick</c> 的做法），并把 raycast 目标指到它上面。</para>
+    ///
+    /// <para>⚠ 规范化**之前**"头像 / 六边形边框 / 空位框"都叫 <c>Image</c> ⇒ 只能靠下标区分；
+    /// 这里按名取并保留**下标兜底**，兼容被回退到改名前的老资产。</para>
     /// </summary>
     private void BindEmptyRoomSlots()
     {
@@ -582,8 +586,11 @@ public partial class SettingWnd : Window
             var slot = emptySlotRoot.GetChild(i);
             if (slot.childCount < 2) continue;                 // 子0 = 有人、子1 = 空位
 
-            var empty = slot.GetChild(1);
-            var click = empty.childCount > 0 ? empty.GetChild(0) : empty;
+            var empty = slot.Find("Empty");
+            if (empty == null) empty = slot.GetChild(1);       // 兜底：改名前的老资产
+
+            var click = empty.Find("frame");
+            if (click == null) click = empty.childCount > 0 ? empty.GetChild(0) : empty;
             var graphic = click.GetComponent<Image>();
             var btn = click.TryGetOrAddComponent<Button>();
             btn.transition = Selectable.Transition.None;
