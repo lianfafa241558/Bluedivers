@@ -1,4 +1,4 @@
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using FPSGame.GameContract;
 using UnityEngine;
 using FPSGame.Gameplay;
@@ -20,7 +20,7 @@ public class SubtitleMark : SubtitleBase
     public override SubtitleBase Creat(IActor owner, GameObject target, Transform parent, bool alwaysShow)
     {
         base.Creat(owner, target, parent, alwaysShow);
-        GlobalEventSub.OnMark += OnMark;
+        GlobalEventBus.OnMark += OnMark;
 
         SetText(title, owner.ShowName);
         SetSprite(halo, owner.ExtraPortrait);
@@ -32,7 +32,7 @@ public class SubtitleMark : SubtitleBase
 
     private void OnDestroy()
     {
-        GlobalEventSub.OnMark -= OnMark;
+        GlobalEventBus.OnMark -= OnMark;
     }
 
     protected override void Update()

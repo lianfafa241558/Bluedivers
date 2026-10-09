@@ -19,11 +19,11 @@ namespace FPSGame.AI
 
         private void OnEnable()
         {
-            GlobalEventSub.OnMark += OnMark;
+            GlobalEventBus.OnMark += OnMark;
         }
         private void OnDisable()
         {
-            GlobalEventSub.OnMark -= OnMark;
+            GlobalEventBus.OnMark -= OnMark;
         }
 
         void OnMark(GameObject owner, GameObject target, Vector3 point)

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using FPSGame.Core.Interface;
 using UnityEngine;
 using FPSGame.Game;
@@ -51,7 +51,7 @@ namespace FPSGame.Managers
         IEnumerator SyncDefaultSettings()
         {
             yield return null;//等管理器与窗口 Awake 完（订阅 OnSettingCange）再广播
-            showArchive.settingDic.ForEach((key, item) => GlobalEventSub.SettingCange(key, item.value.RawInt));
+            showArchive.settingDic.ForEach((key, item) => GlobalEventBus.SettingCange(key, item.value.RawInt));
 
             if (_haveNewSetting)
                 showArchive.Save();

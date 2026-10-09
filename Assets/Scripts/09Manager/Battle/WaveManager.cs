@@ -121,18 +121,29 @@ namespace FPSGame.Managers
 
             // 联机：成员按房主的开波广播复刻同一波
             FPSGame.Net.NetRoomFlow.OnWaveStart += ApplyRemoteWave;
+            // 联机：追击波次的中心由房主下发（成员不再自己算"最近玩家"，见 ApplyRemoteWaveCenter）
+            FPSGame.Net.NetRoomFlow.OnWaveCenter += ApplyRemoteWaveCenter;
 
             // 联机战斗同步：成员端"移动由房主决定"（本端 AI 不再自己定目标点），并挂上同步桥
             var flow = FPSGame.Net.NetRoomFlow.Instance;
             EnemyController.RemoteDrivenMovement = flow != null && flow.SelfSid != 0u;
             FPSGame.AI.EnemyRandom.Clear();   // NetId 是本局重新分配的 ⇒ 上一局的随机流要丢
             EnemyNetBridge.Install();
+            NetGameFlowBridge.Install();      // 局内世界状态（本局结束 / 撤离）
+            NetMissionBridge.Install();       // 任务状态 / 进度（房主权威）
+            NetFurnitureBridge.Install();     // 家具交互（共享世界物件，一处收口）
+            NetActionBridge.Install();        // 标记点位 / 呼叫凯伊
         }
 
         private void OnDestroy()
         {
             FPSGame.Net.NetRoomFlow.OnWaveStart -= ApplyRemoteWave;
+            FPSGame.Net.NetRoomFlow.OnWaveCenter -= ApplyRemoteWaveCenter;
             EnemyNetBridge.Uninstall();
+            NetGameFlowBridge.Uninstall();
+            NetMissionBridge.Uninstall();
+            NetFurnitureBridge.Uninstall();
+            NetActionBridge.Uninstall();
         }
 
 
@@ -154,6 +165,21 @@ namespace FPSGame.Managers
                 // ★ 波次确定性：把"这是第几波"交给 WaveBase 当随机细分键（同一波 ⇒ 同一构成/同一落点，两端一致）
                 WaveBase.PendingWaveIndex = ++waveSeq;
                 if (online) PublishWaveStart(param, waveSeq);   // ★ 房主：广播（成员按同一 waveSeq 复刻）
+
+                // ★ 追击中心：房主是**唯一**判定方 —— "离中心最近的玩家"会因位姿延迟翻边，
+                //   各端自己算必然算出不同答案（2026-10-08 定案）。在房主的 centerGetter 外面包一层，
+                //   按 ~2Hz 把解析结果下发；成员只跟随（见 SmoothRemoteCenter）。
+                if (online && param.centerGetter != null)
+                {
+                    var inner = param.centerGetter;
+                    int wave = waveSeq;
+                    param.centerGetter = () =>
+                    {
+                        Vector3 c = inner();
+                        PublishWaveCenter(wave, c);
+                        return c;
+                    };
+                }
             }
             else WaveBase.PendingWaveIndex = waveSeq;           // 复刻：waveSeq 已在 ApplyRemoteWave 里设成房主的波序
 
@@ -235,8 +261,11 @@ namespace FPSGame.Managers
             };
             if (msg.ChaseCenter)
             {
-                Vector3 c = param.center;
-                param.centerGetter = () => c = ActorsManager.NearestPlayerPos(c);
+                // ★ 追击中心：**不再自己算"最近玩家"**（位姿延迟会翻转答案 ⇒ 中心跳变）。
+                //   只跟随房主 ~2Hz 下发的中心，并在两包之间做插值平滑（见 ApplyRemoteWaveCenter / Tick）。
+                m_remoteCenterTarget = param.center;
+                m_remoteCenter = param.center;
+                param.centerGetter = SmoothRemoteCenter;
             }
 
             applyingRemoteWave = true;
@@ -282,6 +311,53 @@ namespace FPSGame.Managers
             }
         }
 #endif
+
+        /// <summary>房主下发中心的最小间隔（秒）：~2Hz 足够（成员做插值），不必跟 Tick 同频。</summary>
+        const float CenterSendInterval = 0.5f;
+
+        /// <summary>成员端"跟随房主中心"的最大速度（米/秒）：要把 2Hz 的台阶平滑掉，但不该瞬间贴过去。</summary>
+        const float RemoteCenterFollowSpeed = 24f;
+
+        float m_lastCenterSend = Mathf.NegativeInfinity;
+
+        /// <summary>房主下发的追击中心（"目标值"，由 <see cref="ApplyRemoteWaveCenter"/> 写入）。</summary>
+        Vector3 m_remoteCenterTarget;
+        /// <summary>成员端实际交出去的追击中心（向 <see cref="m_remoteCenterTarget"/> 平滑逼近）。</summary>
+        Vector3 m_remoteCenter;
+        /// <summary>是否收到过房主的中心（没收到前用开波包里的 center 兜底）。</summary>
+        bool m_hasRemoteCenter;
+
+        /// <summary>【房主】下发追击中心（~2Hz 节流）。由包在 <c>centerGetter</c> 外层的那个委托调用。</summary>
+        void PublishWaveCenter(int waveIndex, Vector3 center)
+        {
+            if (Time.time < m_lastCenterSend + CenterSendInterval) return;
+            m_lastCenterSend = Time.time;
+            FPSGame.Net.NetRoomFlow.Instance?.SendWaveCenter(waveIndex, center);
+        }
+
+        /// <summary>【成员】收到房主的追击中心。
+        /// <para>⚠ 按 <c>WaveCenterMsg.WaveIndex</c> 丢过期包：迟到的上一波中心会把这一波拽回去。</para></summary>
+        void ApplyRemoteWaveCenter(FPSGame.Net.WaveCenterMsg msg)
+        {
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            if (msg == null || flow == null || flow.IsHost) return;
+            if (msg.WaveIndex != waveSeq) return;                  // 过期 / 未来包
+
+            m_remoteCenterTarget = new Vector3(msg.X, msg.Y, msg.Z);
+            if (!m_hasRemoteCenter)
+            {
+                m_hasRemoteCenter = true;
+                m_remoteCenter = m_remoteCenterTarget;             // 第一包直接贴上，不要从旧的猜值慢慢挪
+            }
+        }
+
+        /// <summary>【成员】把中心平滑逼近房主给的目标值。包在 <c>centerGetter</c> 里，被波次每 Tick 调用一次。</summary>
+        Vector3 SmoothRemoteCenter()
+        {
+            if (m_hasRemoteCenter)
+                m_remoteCenter = Vector3.MoveTowards(m_remoteCenter, m_remoteCenterTarget, RemoteCenterFollowSpeed * Time.deltaTime);
+            return m_remoteCenter;
+        }
 
         public override bool Tick()
         {

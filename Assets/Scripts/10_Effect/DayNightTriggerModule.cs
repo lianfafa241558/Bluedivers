@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.DayNightSystem;
 using FPSGame.Gameplay;
@@ -26,7 +26,7 @@ public class DayNightTriggerModule: MonoBehaviour, IDayNightModule
 
     public void Initialize(DayNightState state)
     {
-        GlobalEventSub.DaySwitch(isNoon = IsNoon(state));
+        GlobalEventBus.DaySwitch(isNoon = IsNoon(state));
     }
 
 
@@ -38,7 +38,7 @@ public class DayNightTriggerModule: MonoBehaviour, IDayNightModule
            {
                isNoon = true;
                 //Debug.LogError("现在变为白天");
-               GlobalEventSub.DaySwitch(isNoon);
+               GlobalEventBus.DaySwitch(isNoon);
            }
        }
        else
@@ -47,7 +47,7 @@ public class DayNightTriggerModule: MonoBehaviour, IDayNightModule
            {
                isNoon = false;
                 //Debug.LogError("现在变为晚上");
-                GlobalEventSub.DaySwitch(isNoon);
+                GlobalEventBus.DaySwitch(isNoon);
            }
        }
     }

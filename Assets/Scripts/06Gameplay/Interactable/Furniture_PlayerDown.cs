@@ -35,7 +35,7 @@ namespace FPSGame.Gameplay
             Health.Revive();
             canOperate = false;
             //PlaySound(audioOper);
-            FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.HealBag, false);
+            FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.HealBag, false);
         }
 
 
@@ -43,7 +43,7 @@ namespace FPSGame.Gameplay
         {
             canOperate = true;
             PlaySound(audioClose);
-            FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.HealBag, true);
+            FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.HealBag, true);
         }
     }
 }

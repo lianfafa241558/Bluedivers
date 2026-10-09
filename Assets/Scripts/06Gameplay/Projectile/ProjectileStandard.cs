@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.GameContract;
 
 using FPSGame.Game;
@@ -105,11 +105,28 @@ namespace FPSGame.Gameplay
         {
 
             if (m_isStop) return;
+
+            // ★【表现弹】先判"是否已飞抵发送端给的终点"（联机远程弹道，见 ProjectileBase.SetVisualEndPoint）。
+            //   ⚠ 必须放在 Move/TryHit **之前**：那颗终点通常就在目标身上，而本端 SphereCast 未必撞得到
+            //   （两端的敌人位置只是近似一致）⇒ 只在"自己撞上"才停的话，子弹就从目标身上穿过去了（2026-10-09 实测）。
+            if (ReachedVisualEndPoint())
+            {
+                m_isStop = true;
+                // 数据说话：到点收尾（这才是"命中"该有的样子）
+                NetSyncLog.BulletLog("到终点收尾", $"位置={transform.position:F2} 终点={VisualEndPoint:F2} 本帧位移={(transform.position - m_LastRootPosition).magnitude:F2}m");
+                // collider = null ⇒ 走 HitFX 的"无碰撞箱"分支：停下 + 收尾迹，不结算任何伤害
+                OnHit?.Invoke(BuildHitData(VisualEndPoint, -transform.forward));
+                return;
+            }
+
             var dis = Vector3.Distance(InitialPosition, transform.position);
             //超出范围
             if (MaxRange > 0 && dis > MaxRange)
             {
                 m_isStop = true;
+                // 数据说话：这一条就是"子弹从目标身上飞过去"的直接证据（有终点约束时不该走到这里）
+                FPSGame.Utils.NetSyncLog.BulletLog("超射程消散", $"起点={InitialPosition:F2} 位置={transform.position:F2} 飞了={dis:F1}m/上限{MaxRange:F1}m " +
+                    (HasVisualEndPoint ? $"终点={VisualEndPoint:F2} 到终点还差={Vector3.Distance(transform.position, VisualEndPoint):F1}m ←不该发生" : "终点=<无>"));
                 //GlobalEventManager.BulletHit(Owner,transform.position);
                 Debug.Log("落空"+gameObject.name,gameObject);
                 OnHit?.Invoke(BuildHitData(transform.position, transform.forward));
@@ -127,6 +144,28 @@ namespace FPSGame.Gameplay
             m_LastRootPosition = Root.position;
         }
 
+
+        /// <summary>
+        /// 【表现弹】是否已飞抵 / 越过"发送端给的终点"（普通子弹恒 false）。
+        ///
+        /// <para>▍判据用"本帧位移"而不是单纯的距离：子弹单帧位移可能有几米（高速弹），
+        /// 只看"当前位置离终点近不近"会整套漏过去 ⇒ 把终点投影到本帧位移方向上，落在本帧走过的长度内就算到点。</para>
+        /// </summary>
+        private bool ReachedVisualEndPoint()
+        {
+            if (!HasVisualEndPoint) return false;
+
+            float reach = Mathf.Max(Radius, 0.15f);        // 与弹体半径同量级，别让子弹"擦着过去"
+            Vector3 toEnd = VisualEndPoint - m_LastRootPosition;
+            Vector3 step = transform.position - m_LastRootPosition;
+            float stepLen = step.magnitude;
+            if (stepLen > 0.0001f)
+            {
+                float along = Vector3.Dot(toEnd, step) / stepLen;   // 终点在"本帧位移"上的投影长度
+                if (along > 0f && along <= stepLen + reach) return true;
+            }
+            return toEnd.sqrMagnitude <= reach * reach;
+        }
 
         protected virtual void TryHit()
         {
@@ -179,6 +218,10 @@ namespace FPSGame.Gameplay
                 closestHit.point = Root.position;
                 closestHit.normal = -transform.forward;
             }
+
+            // 数据说话：是"自己撞上了"还是"被终点收尾"—— 两条日志对照就知道表现弹怎么收场的
+            FPSGame.Utils.NetSyncLog.BulletLog("撞到碰撞体", $"对象={closestHit.collider.name} 点={closestHit.point:F2} 层={LayerMask.LayerToName(closestHit.collider.gameObject.layer)}" +
+                (HasVisualEndPoint ? $" 终点={VisualEndPoint:F2} 距终点={Vector3.Distance(closestHit.point, VisualEndPoint):F1}m" : " 终点=<无>"));
             //Debug.LogError("击中于" + gameObject.name, gameObject);
             //Debug.LogError("击中了 "+ closestHit.collider.name, closestHit.collider);
 

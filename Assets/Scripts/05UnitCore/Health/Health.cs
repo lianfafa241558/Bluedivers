@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
@@ -261,7 +261,7 @@ namespace FPSGame.Game {
                 if(response)OnHit?.Invoke(damageSource,pos, (pos - damageAffected.bounds.center).normalized,isWeakness);
                 if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
                 //这个是控制hpui的，所以总是响应
-                UnitEventSub.UnitHit(gameObject, damageSource);
+                UnitEventBus.UnitHit(gameObject, damageSource);
             }
             showHealth = CurrentHealth.RawInt;
             HandleDeath(damageSource);

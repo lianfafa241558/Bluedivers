@@ -70,9 +70,9 @@ namespace FPSGame.Managers
             TickTime = 0.02f;
             InputManager.BindDown(WindowStateEnum.Game,InputState.Airdrop, Open);
             InputManager.BindDown(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
-            BattleEventSub.OnCancelAirdrop += OnCancel;
-            BattleEventSub.OnAirdrop += OnRelease;
-            UnitEventSub.OnPlayerDead += OnPlayerDeath;
+            BattleEventBus.OnCancelAirdrop += OnCancel;
+            BattleEventBus.OnAirdrop += OnRelease;
+            UnitEventBus.OnPlayerDead += OnPlayerDeath;
         }
 
         public override bool Tick()
@@ -85,9 +85,9 @@ namespace FPSGame.Managers
         {
             InputManager.UnBindDown(WindowStateEnum.Game, InputState.Airdrop, Open);
             InputManager.UnBindDown(WindowStateEnum.Airdrop, InputState.Airdrop, Close);
-            BattleEventSub.OnCancelAirdrop -= OnCancel;
-            BattleEventSub.OnAirdrop -= OnRelease;
-            UnitEventSub.OnPlayerDead -= OnPlayerDeath;
+            BattleEventBus.OnCancelAirdrop -= OnCancel;
+            BattleEventBus.OnAirdrop -= OnRelease;
+            UnitEventBus.OnPlayerDead -= OnPlayerDeath;
         }
 
 
@@ -220,7 +220,7 @@ namespace FPSGame.Managers
                 inputDir.Clear();
                 AudioSvc.PlaySound(new("AirDrop/superbeacon_throw"));
             }
-            BattleEventSub.InputAirdrop(inputDir);
+            BattleEventBus.InputAirdrop(inputDir);
 
         }
         /// <summary>完成输入，等待释放</summary>
@@ -230,7 +230,7 @@ namespace FPSGame.Managers
             WaitRelease = item;
             Close();
             //通过这个事件来让对应的类调用来直接强制释放
-            BattleEventSub.SelectAirdrop(Player.gameObject,item);
+            BattleEventBus.SelectAirdrop(Player.gameObject,item);
 
             if (item.cfg.isDirect)//直接释放（飞鹰装填和HealBag）
             {
@@ -314,7 +314,7 @@ namespace FPSGame.Managers
         private void _Authorize(AirdropData data,bool state)
         {
             data.authorizeCounter += state ? 1 : -1;
-            if ((state && data.authorizeCounter == 1) || (!state && data.authorizeCounter == 0)) BattleEventSub.AuthorizeAirdrop();
+            if ((state && data.authorizeCounter == 1) || (!state && data.authorizeCounter == 0)) BattleEventBus.AuthorizeAirdrop();
             //Debug.LogError(ad.cfg.showName+"授权状态"+ad.authorizeCounter+ " "+ad.IsAuthorize);
         }
 

@@ -156,19 +156,19 @@ namespace FPSGame.Game
             OnActorCreat = new();
             _enemyNetIdSeq = 0;   // 本局的敌人编号从头开始（分配点会先判 Instance，保证不会有人在归零之前分号）
             base.Awake();
-            UnitEventSub.OnPlayerCreate += RegisterPlayer;
-            UnitEventSub.OnFriendCreate += RegisterFriend;
-            UnitEventSub.OnSpecUnitCreate += RegisterSpecUnit;
-            UnitEventSub.OnUnitDeath += UnRegisterUnit;
-            UnitEventSub.OnEnemyCreate += RegisterEnemy;
+            UnitEventBus.OnPlayerCreate += RegisterPlayer;
+            UnitEventBus.OnFriendCreate += RegisterFriend;
+            UnitEventBus.OnSpecUnitCreate += RegisterSpecUnit;
+            UnitEventBus.OnUnitDeath += UnRegisterUnit;
+            UnitEventBus.OnEnemyCreate += RegisterEnemy;
         }
         private void OnDestroy()
         {
-            UnitEventSub.OnPlayerCreate -= RegisterPlayer;
-            UnitEventSub.OnFriendCreate -= RegisterFriend;
-            UnitEventSub.OnSpecUnitCreate -= RegisterSpecUnit;
-            UnitEventSub.OnUnitDeath -= UnRegisterUnit;
-            UnitEventSub.OnEnemyCreate -= RegisterEnemy;
+            UnitEventBus.OnPlayerCreate -= RegisterPlayer;
+            UnitEventBus.OnFriendCreate -= RegisterFriend;
+            UnitEventBus.OnSpecUnitCreate -= RegisterSpecUnit;
+            UnitEventBus.OnUnitDeath -= UnRegisterUnit;
+            UnitEventBus.OnEnemyCreate -= RegisterEnemy;
         }
     }
 

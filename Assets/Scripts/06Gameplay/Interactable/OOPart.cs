@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Game;
 using UnityEngine;
@@ -43,11 +43,11 @@ public class OOPart : Furniture_Attached
             else
             {
                 bag.TryAdd(type, count);
-                GlobalEventSub.OOPartCollect(owner, type, count);
+                GlobalEventBus.OOPartCollect(owner, type, count);
                 Tool.Destroy(gameObject);
             }
         }
-        GlobalEventSub.PlayMeetSpeech(owner, enumtype);
+        GlobalEventBus.PlayMeetSpeech(owner, enumtype);
         
     }
     

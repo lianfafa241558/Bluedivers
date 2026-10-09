@@ -40,7 +40,7 @@ public abstract class RoleManagerBase : MonoBehaviour
 
     public virtual void SetPlayerRole(PlayerController player)
     {
-        GlobalEventSub.OnSwitchRole?.Invoke(player);
+        GlobalEventBus.OnSwitchRole?.Invoke(player);
     }
 
     public abstract Vector3 GetStartPoint();

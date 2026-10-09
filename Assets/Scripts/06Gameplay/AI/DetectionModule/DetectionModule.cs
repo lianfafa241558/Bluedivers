@@ -116,12 +116,12 @@ namespace FPSGame.AI
             //不知道为什么=无效，只能老老实实if
             //if (!SearchPoint) SearchPoint = transform;
             //逻辑层噪声统一入口(开枪/命中/爆炸都发这里，不再直接听"命中点"事件)
-            UnitEventSub.OnNoise += OnNoise;
+            UnitEventBus.OnNoise += OnNoise;
 
         }
         private void OnDestroy()
         {
-            UnitEventSub.OnNoise -= OnNoise;
+            UnitEventBus.OnNoise -= OnNoise;
         }
 
         [DisplayField]

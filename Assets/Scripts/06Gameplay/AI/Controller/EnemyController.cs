@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
@@ -101,11 +101,24 @@ namespace FPSGame.AI
         /// <summary>同一目标点下一次允许重发的时间（请求失败/被挡掉后按 <see cref="NavRetryInterval"/> 节流重试）</summary>
         private float _nextNavRetryTime;
 
-        /// <summary>网络下发但**当帧应用不了**的目标点（见 <see cref="ApplyRemoteDestination"/>）。</summary>
-        private Vector3 _pendingRemoteDestination;
+        /// <summary>联机落点组件：网络目标点的缓存 / 重试 / 绕过去重全在它里面。
+        /// <para>2026-10-08 从本类抽出 —— 同一套逻辑每个"房主权威移动"的单位都要一份
+        /// （见 <see cref="SyncedNavMover"/> 的类注释）。</para></summary>
+        private SyncedNavMover _mover;
 
-        /// <summary>是否有待落地的网络目标点（agent 被禁用时置位，由 <see cref="Update"/> 重试到成功）。</summary>
-        private bool _hasPendingRemoteDestination;
+        private SyncedNavMover Mover
+        {
+            get
+            {
+                if (_mover == null)
+                {
+                    if (!TryGetComponent(out _mover)) _mover = gameObject.AddComponent<SyncedNavMover>();
+                    // 敌人的落地通道：走 UnitEventBus.PathRequest（09 的 PathRequestManager 带投影兜底）
+                    _mover.applyHandler = TryRequestPath;
+                }
+                return _mover;
+            }
+        }
 
 
 
@@ -180,8 +193,7 @@ namespace FPSGame.AI
             // 结算外力推挤(爆炸/踩踏击退，见 EnemyController_Physical.cs)
             UpdateKnockback();
 
-            // 补发"早到/当时 agent 不可用"的网络目标点（见 ApplyRemoteDestination）
-            RetryPendingRemoteDestination();
+            // ⚠ "补发早到的网络目标点"已挪进 SyncedNavMover 自己的 Update（2026-10-08），这里不再重复驱动
 
             //DetectionModule?.HandleTargetDetection();
 
@@ -250,7 +262,11 @@ namespace FPSGame.AI
         {
             // ★ 联机成员：移动意图由房主下发（见 ApplyRemoteDestination），本端 AI 的决策一律作废 ——
             //   否则两端各追各的目标，怪物位置永远对不上（2026-10-07 用户实测）。
-            if (RemoteDrivenMovement) return;
+            if (RemoteDrivenMovement)
+            {
+                FPSGame.Utils.NetSyncLog.AiLog("移动·本端作废", $"netId={(m_Actor != null ? m_Actor.NetId : 0)} 本端想去={destination:F2}（成员端只认房主下发）");
+                return;
+            }
 
             bool agentReady = FpsHelper.HaveNavMeshAgent(NavMeshAgent);
             bool sameTarget = Vector3.Distance(destination, m_lastDestination) < 1;
@@ -279,10 +295,17 @@ namespace FPSGame.AI
                     if (isImportant) Debug.LogError("发送目标点" + destination, gameObject);
 
                     //走事件总线（2026-10-01 取代 ServiceLocator.Path）：订阅方 = PathRequestManager（09_Managers）
-                    FPSGame.Game.UnitEventSub.PathRequest(NavMeshAgent, destination, isImportant);
+                    FPSGame.Game.UnitEventBus.PathRequest(NavMeshAgent, destination, isImportant);
                     // ★ 房主：把"这只怪要去哪"广播给成员（成员按同一个目标点各自本地算路径 ⇒ 位置接近一致）
                     if (m_Actor != null && m_Actor.NetId != 0)
-                        FPSGame.Gameplay.BattleEventSub.EnemyMove(m_Actor.NetId, destination);
+                    {
+                        FPSGame.Utils.NetSyncLog.AiLog("移动·房主决策", $"netId={m_Actor.NetId} 目标={destination:F2} 当前={transform.position:F2} 本端该怪={m_Actor.Id}");
+                        FPSGame.Gameplay.BattleEventBus.EnemyMove(m_Actor.NetId, destination);
+                    }
+                    else
+                    {
+                        FPSGame.Utils.NetSyncLog.Warn("移动·房主决策", $"这只怪 NetId=0 ⇒ **不广播**（成员端不会收到它的移动） 本端该怪={m_Actor?.Id}");
+                    }
                 }
             }
         }
@@ -296,16 +319,7 @@ namespace FPSGame.AI
         public void ApplyRemoteDestination(Vector3 destination)
         {
             m_lastDestination = destination;
-            _pendingRemoteDestination = destination;
-            _hasPendingRemoteDestination = true;
-            RetryPendingRemoteDestination();
-        }
-
-        /// <summary>把待落地的网络目标点补发出去；成功后清标记（失败时每帧只做一次状态判断，开销可忽略）。</summary>
-        private void RetryPendingRemoteDestination()
-        {
-            if (!_hasPendingRemoteDestination) return;
-            if (TryRequestPath(_pendingRemoteDestination)) _hasPendingRemoteDestination = false;
+            Mover.ApplyRemoteDestination(destination);   // 缓存 + 立即尝试 + 失败则每帧重试（都在组件里）
         }
 
         /// <summary>agent 真正可用时才发寻路请求。
@@ -316,7 +330,7 @@ namespace FPSGame.AI
         {
             if (!FpsHelper.HaveNavMeshAgent(NavMeshAgent)) return true;
             if (!NavMeshAgent.isActiveAndEnabled) return false;
-            FPSGame.Game.UnitEventSub.PathRequest(NavMeshAgent, destination, false);
+            FPSGame.Game.UnitEventBus.PathRequest(NavMeshAgent, destination, false);
             return true;
         }
 
@@ -332,23 +346,31 @@ namespace FPSGame.AI
 
         protected override void _OnDamaged(PEInt damage, GameObject damageSource, Collider collider,bool noSource)
         {
-            // ★ 联机成员：本机的命中只**上报**给房主结算（血量/死亡以房主为唯一权威）；
-            //   应用远端伤害时（房主侧）不再回传，避免回声。
-            if (!ApplyingRemoteDamage && RemoteDrivenMovement && m_Actor != null && m_Actor.NetId != 0)
-                FPSGame.Gameplay.BattleEventSub.EnemyHit(m_Actor.NetId, Mathf.RoundToInt(damage.RawFloat));
+            // ★ 联机命中：**成员往上报、房主往下播**（血量/死亡以房主为唯一权威）。
+            //   ⚠ 两个方向必须互斥，否则回声；应用远端伤害时（ApplyingRemoteDamage）两边都不发。
+            if (!ApplyingRemoteDamage && m_Actor != null && m_Actor.NetId != 0)
+            {
+                int dmg = Mathf.RoundToInt(damage.RawFloat);
+                if (dmg > 0)
+                {
+                    if (RemoteDrivenMovement) FPSGame.Gameplay.BattleEventBus.EnemyHit(m_Actor.NetId, dmg);
+                    else FPSGame.Gameplay.BattleEventBus.EnemyDamaged(m_Actor.NetId, dmg);   // 房主：下发给成员
+                }
+            }
             
             if (damageSource &&damageSource.GetComponent<Actor>().Type != UnitTypeEnum.Other&& !damageSource.GetComponent<Actor>().HasFlag(ActorFlag.Invincible))
             {
                 DetectionModule?.OnDamaged(damageSource, noSource);
                 OnDamaged?.Invoke(collider);
             }
-            if (!noSource&&FPSGame.Data.FlowState.GameState == GameStateEnum.Game && damageSource.TryGetComponent(out PlayerController player)) FPSGame.Gameplay.BattleEventSub.AddBattleDataItem(player.PlayerIndex, "命中次数");
+            if (!noSource&&FPSGame.Data.FlowState.GameState == GameStateEnum.Game && damageSource.TryGetComponent(out PlayerController player)) FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(player.PlayerIndex, "命中次数");
         }
 
         protected override void _OnDie(GameObject source)
         {
             base._OnDie(source);
-            _hasPendingRemoteDestination = false;   // 已死：agent 会被禁用，别再每帧去补发
+            // 已死：agent 会被禁用，别再每帧去补发（⚠ 故意不碰 Mover 属性，避免为一个「取消」白建组件）
+            if (_mover != null) _mover.CancelPending();
             if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
             {
                 NavMeshAgent.isStopped = true;
@@ -367,7 +389,7 @@ namespace FPSGame.AI
                 else source.TryGetComponent(out player);
                 //房主序号走「数据自持」（2026-10-01 取代 ServiceLocator.Room）：TeamManager 在其 4 个变更点同步 TeamState
                 int masterIndex = FPSGame.Data.TeamState.MasterIndex;
-                FPSGame.Gameplay.BattleEventSub.AddBattleDataItem(player ? player.PlayerIndex : masterIndex, "击杀敌人");
+                FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(player ? player.PlayerIndex : masterIndex, "击杀敌人");
             }
 
         }

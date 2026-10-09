@@ -174,11 +174,11 @@ namespace FPSGame.Mission
             UpdateText("运输船接近中", "前往撤离点");
             CreatNotice("Ayane", "CountDownBegins");
             WindowRegistry.CreatCountDown(() => countDown, CountDownTypeEnum.Yellow,61);
-            if (user) GlobalEventSub.PlayMeetSpeech(user, SpeechTypeEnum.Evacuate);
+            if (user) GlobalEventBus.PlayMeetSpeech(user, SpeechTypeEnum.Evacuate);
             AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
             AudioSvc.SetLockMusic(true);
             //通知凯伊带队前往撤离点(沿途留下回收标记)，巡逻队也会随之向撤离点收缩
-            BattleEventSub.Evacuate(new(areaPoint));
+            BattleEventBus.Evacuate(new(areaPoint));
 
             CreatReinforcement();
             CreatMedivac();
@@ -376,8 +376,8 @@ namespace FPSGame.Mission
             countDown = 0;
             CreatNotice("Ayane", "TakeOff");
             // 切阶段走事件（原 ServiceLocator.Flow.SetGameState）：GameRoot 订阅后落成既有的静态 setter
-            GlobalEventSub.RequestGameState(GameStateEnum.Transition);
-            BattleEventSub.EndGame(14);
+            GlobalEventBus.RequestGameState(GameStateEnum.Transition);
+            BattleEventBus.EndGame(14);
         }
 
 

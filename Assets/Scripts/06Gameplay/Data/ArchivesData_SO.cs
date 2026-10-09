@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using FPSGame.Core;
@@ -102,7 +102,7 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         level = data.Level;
         expScale = data.Exp/1000f;
 
-        GlobalEventSub.OnGainExp?.Invoke(ID, level, expScale);
+        GlobalEventBus.OnGainExp?.Invoke(ID, level, expScale);
     }
 
     #endregion

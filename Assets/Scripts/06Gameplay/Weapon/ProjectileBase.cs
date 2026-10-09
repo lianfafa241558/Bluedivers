@@ -46,6 +46,25 @@ namespace FPSGame.Weapon
         public UnityAction OnShoot;
         public UnityAction<ProjectileHitData> OnHit;
 
+        /// <summary>【表现弹专用】是否约束了终点（见 <see cref="SetVisualEndPoint"/>）。普通子弹恒为 false。</summary>
+        public bool HasVisualEndPoint { get; private set; }
+
+        /// <summary>【表现弹专用】期望的终点（世界空间）。</summary>
+        public Vector3 VisualEndPoint { get; private set; }
+
+        /// <summary>
+        /// 【表现弹专用】指定"飞到这个点就算命中"（只影响弹道收尾，不改伤害）。
+        ///
+        /// <para>▍用途：联机远程弹道的终点来自**开枪者准心实指的那一点**（<c>PlayerShoot.HitX/Y/Z</c>，已同步）。
+        /// 本端那颗"表现弹"是本地物理模拟的，而两端的敌人/世界只是近似一致 ⇒ 靠 <c>SphereCast</c> 自己撞常常擦不到，
+        /// 表现上就是"子弹从目标身上穿过去、没命中"（2026-10-09 用户实测）。给个终点后，飞抵即按命中收尾。</para>
+        /// </summary>
+        public void SetVisualEndPoint(Vector3 point)
+        {
+            VisualEndPoint = point;
+            HasVisualEndPoint = true;
+        }
+
         public void Shoot(WeaponBaseController controller,int damageDataIndex=0)
         {
             Shoot(controller, damageDataIndex, controller.GetMuzzle(0));
@@ -68,6 +87,8 @@ namespace FPSGame.Weapon
             Gravity = controller.CurrentGravity;
             BulletFlag = controller.BulletFlag;
             IgnoredColliders = controller.IgnoredColliders;
+            // ★ 池化复用：上一次当"表现弹"时留下的终点必须清掉（普通子弹永不约束弹道）
+            HasVisualEndPoint = false;
             OnHit += FpsHelper.Hit;
             OnShoot?.Invoke();
         }

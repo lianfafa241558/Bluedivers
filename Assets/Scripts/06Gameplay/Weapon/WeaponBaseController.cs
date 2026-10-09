@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
@@ -353,7 +353,10 @@ namespace FPSGame.Weapon {
         /// （那是本机给玩家看的预测提示）、每"次"射击只给一颗（<c>BulletsPerShot</c> 的多弹丸不必在对端重放）。</para>
         /// </summary>
         /// <param name="direction">射击方向（世界空间）；零向量 = 用枪口朝向 + 本武器散布</param>
-        public ProjectileBase SpawnVisualBullet(Transform muzzle, Vector3 direction = default)
+        /// <param name="endPoint">★ 开枪者**准心实指的目标点**（世界空间，来自 <c>PlayerShoot.HitX/Y/Z</c>）；
+        /// 零向量 = 未知（退回"自由飞"的老行为）。给了它就约束弹道"飞抵即命中"，
+        /// 见 <see cref="ProjectileBase.SetVisualEndPoint"/>（2026-10-09：修"远端子弹穿过目标"）。</param>
+        public ProjectileBase SpawnVisualBullet(Transform muzzle, Vector3 direction = default, Vector3 endPoint = default)
         {
             if (muzzle == null) muzzle = GetMuzzle(0);
             if (muzzle == null || Damages == null || Damages.Count == 0) return null;
@@ -367,8 +370,17 @@ namespace FPSGame.Weapon {
             var bullet = FPSGame.Core.VfxPool.Creat(data.BulletPrefab, muzzle.position, Quaternion.LookRotation(dir));
             if (bullet == null) return null;
 
+            // 数据说话：表现弹的身份 / 起点 / 有没有终点约定（有终点就该在终点收尾，没终点才会"飞过去"）
+            FPSGame.Utils.NetSyncLog.BulletLog("生成表现弹", $"{bullet.GetType().Name} 起点={muzzle.position:F2} 方向={dir:F2}" +
+                (endPoint.sqrMagnitude > 0.0001f ? $" 终点={endPoint:F2} 距终点={(endPoint - muzzle.position).magnitude:F1}m" : " 终点=<无>（自由飞，会飞到射程尽头）"));
+
             bullet.Shoot(this, UseDamageIndex, muzzle);
             bullet.OnHit -= FpsHelper.Hit;      // ★ 只摘伤害，别用 `OnHit = null`：那会把命中特效一起摘掉
+            // ★ 但"命中表现"要补回来（2026-10-09）：FpsHelper.Hit 里除了伤害还包含命中特效/音效/弹痕，
+            //   摘掉后对方屏幕上看不到任何命中反馈 ⇒ 表现弹命中时改成只播表现那一半。
+            bullet.OnHit += FpsHelper.PlayImpactFx;
+            // ★ 终点约束：飞抵开枪者瞄的那一点就收尾（否则会从目标身上穿过去，见 SetVisualEndPoint 说明）
+            if (endPoint.sqrMagnitude > 0.0001f) bullet.SetVisualEndPoint(endPoint);
             return bullet;
         }
         /// <summary>
@@ -457,7 +469,7 @@ namespace FPSGame.Weapon {
             if (FPSGame.GameContract.BattleHub.Current.IsPresent && FireNoiseRadius > 0)
             {
                 var muzzle = GetMuzzle(0);
-                UnitEventSub.Noise(new NoiseData
+                UnitEventBus.Noise(new NoiseData
                 {
                     source = Owner,
                     pos = (PEVector3)(muzzle ? muzzle.position : transform.position),

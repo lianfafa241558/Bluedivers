@@ -250,7 +250,7 @@ namespace FPSGame.Game
 
             Range.SetXY((PEVector2)Pos);
             lastAngle = transform.eulerAngles;
-            UnitEventSub.UnitPosChange(this);
+            UnitEventBus.UnitPosChange(this);
             StartCoroutine(WaitSetPos());
         }
 
@@ -271,22 +271,22 @@ namespace FPSGame.Game
             switch (type)
             {
                 case UnitTypeEnum.Enemy:
-                    UnitEventSub.EnemyCreate(this);
+                    UnitEventBus.EnemyCreate(this);
                     break;
                 case UnitTypeEnum.Player:
                     //Debug.Log("创建了玩家" + this.gameObject, this.gameObject);
-                    UnitEventSub.PlayerCreate(this);
+                    UnitEventBus.PlayerCreate(this);
                     break;
                 case UnitTypeEnum.Friend:
-                    UnitEventSub.FriendCreate(this);
+                    UnitEventBus.FriendCreate(this);
                     break;
                 case UnitTypeEnum.SpecUnit:
                     //Debug.LogError("特殊单位出生" + ShowName, this);
-                    if (!HasFlag(ActorFlag.Unimportant)) UnitEventSub.SpecUnitCreate(this);
+                    if (!HasFlag(ActorFlag.Unimportant)) UnitEventBus.SpecUnitCreate(this);
                     //Debug.LogError("创建特殊单位"+ShowName);
                     break;
                 case UnitTypeEnum.Other:
-                    if (HasFlag(ActorFlag.AutoRegister)) UnitEventSub.SpecUnitCreate(this);
+                    if (HasFlag(ActorFlag.AutoRegister)) UnitEventBus.SpecUnitCreate(this);
                     break;
             }
             isInitialized = true;
@@ -301,7 +301,7 @@ namespace FPSGame.Game
                 //transform.position = TerrainUtils.WSToTS(transform.position);
             }
             Range.SetXY(LogicPos);
-            UnitEventSub.UnitPosChange(this);
+            UnitEventBus.UnitPosChange(this);
             OnPosChange?.Invoke(this);
 
         }
@@ -314,7 +314,7 @@ namespace FPSGame.Game
             switch (type)
             {
                 case UnitTypeEnum.Player:
-                    UnitEventSub.PlayerRevive(this);
+                    UnitEventBus.PlayerRevive(this);
                     break;
                 case UnitTypeEnum.Friend:
                     //GlobalEventManager.FriendDead(this);
@@ -333,7 +333,7 @@ namespace FPSGame.Game
         void OnDie(GameObject source)
         {
             //Debug.LogError("单位死亡"+gameObject,gameObject);
-            UnitEventSub.UnitDeath(this);
+            UnitEventBus.UnitDeath(this);
             OnDeath?.Invoke();
             ActorState = ActorState.Dead;
             var m_Health = GetComponent<IHealth>();
@@ -341,24 +341,24 @@ namespace FPSGame.Game
             {
                 Debug.LogError($"[Health] 单位死亡时生命值>0！CurrentHealth={m_Health.GetHpCurrent()}, MaxHealth={m_Health.GetHpMax()}", gameObject);
             }
-            if (source.IsValid()) UnitEventSub.UnitKill(source.GetComponent<Actor>(),this);
+            if (source.IsValid()) UnitEventBus.UnitKill(source.GetComponent<Actor>(),this);
             switch (type)
             {
                 case UnitTypeEnum.Player:
-                    UnitEventSub.PlayerDead(this);
+                    UnitEventBus.PlayerDead(this);
                     //StartCoroutine(WaitSetPos());//防止死天上
                     break;
                 case UnitTypeEnum.Friend:
                     //FriendDead 事件已删除（全仓零订阅者），此处不再派发
                     break;
                 case UnitTypeEnum.Enemy:
-                    UnitEventSub.EnemyDead(this);
+                    UnitEventBus.EnemyDead(this);
                     break;
                 case UnitTypeEnum.SpecUnit:
-                    UnitEventSub.SpecUnitDead(this);
+                    UnitEventBus.SpecUnitDead(this);
                     break;
                 case UnitTypeEnum.Other:
-                    if (HasFlag(ActorFlag.AutoRegister)) UnitEventSub.SpecUnitDead(this);
+                    if (HasFlag(ActorFlag.AutoRegister)) UnitEventBus.SpecUnitDead(this);
                     break;
             }
             //Debug.LogError("剩余的移动回调"+ OnPosChange, gameObject);
@@ -376,7 +376,7 @@ namespace FPSGame.Game
 
             // 盟友离场的事件通知：销毁之后谁也读不出它是谁（name/Type 还能读，但引用已经废了）
             // ⇒ 必须**在这里、趁引用还有效**发出去，让为它建的 UI/桥做收尾。
-            if (Type == UnitTypeEnum.Friend) UnitEventSub.FriendLeave(this);
+            if (Type == UnitTypeEnum.Friend) UnitEventBus.FriendLeave(this);
 
             /*
             if (ActorState != ActorState.Dead)
@@ -409,7 +409,7 @@ namespace FPSGame.Game
             if (Range.GetXY() != LogicPos)
             {
                 Range.SetXY(LogicPos);
-                UnitEventSub.UnitPosChange(this);
+                UnitEventBus.UnitPosChange(this);
                 OnPosChange?.Invoke(this);
             }
             if (lastAngle!= transform.eulerAngles)

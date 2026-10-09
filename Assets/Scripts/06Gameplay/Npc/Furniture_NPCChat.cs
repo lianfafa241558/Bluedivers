@@ -1,4 +1,4 @@
-using FPSGame.Core.Interface;
+﻿using FPSGame.Core.Interface;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using UnityEngine;
@@ -65,14 +65,14 @@ public class Furniture_NPCChat : Furniture_Attached
     protected override void OnEnable()
     {
         base.OnEnable();
-        UnitEventSub.OnPlayerCreate -= OnPlayerCreated;
-        UnitEventSub.OnPlayerCreate += OnPlayerCreated;
-        UnitEventSub.OnFriendRoleChanged -= OnFriendRoleChanged;
-        UnitEventSub.OnFriendRoleChanged += OnFriendRoleChanged;
-        UnitEventSub.OnFriendLeave -= OnFriendLeave;
-        UnitEventSub.OnFriendLeave += OnFriendLeave;
-        GlobalEventSub.OnSwitchRole -= OnSwitchRole;
-        GlobalEventSub.OnSwitchRole += OnSwitchRole;
+        UnitEventBus.OnPlayerCreate -= OnPlayerCreated;
+        UnitEventBus.OnPlayerCreate += OnPlayerCreated;
+        UnitEventBus.OnFriendRoleChanged -= OnFriendRoleChanged;
+        UnitEventBus.OnFriendRoleChanged += OnFriendRoleChanged;
+        UnitEventBus.OnFriendLeave -= OnFriendLeave;
+        UnitEventBus.OnFriendLeave += OnFriendLeave;
+        GlobalEventBus.OnSwitchRole -= OnSwitchRole;
+        GlobalEventBus.OnSwitchRole += OnSwitchRole;
     }
 
     private void OnPlayerCreated(IActor player)
@@ -220,7 +220,7 @@ public class Furniture_NPCChat : Furniture_Attached
     private void DoChat()
     {
         RuntimeSoundData soundData = _soundGroup.Get(transform.position);
-        GlobalEventSub.ActorSpeech(gameObject, soundData);
+        GlobalEventBus.ActorSpeech(gameObject, soundData);
 
         // 停下脚步，面向玩家
         NPCWalk?.PauseWandering();
@@ -278,10 +278,10 @@ public class Furniture_NPCChat : Furniture_Attached
 
     private void OnDestroy()
     {
-        UnitEventSub.OnPlayerCreate -= OnPlayerCreated;
-        UnitEventSub.OnFriendRoleChanged -= OnFriendRoleChanged;
-        UnitEventSub.OnFriendLeave -= OnFriendLeave;
-        GlobalEventSub.OnSwitchRole -= OnSwitchRole;
+        UnitEventBus.OnPlayerCreate -= OnPlayerCreated;
+        UnitEventBus.OnFriendRoleChanged -= OnFriendRoleChanged;
+        UnitEventBus.OnFriendLeave -= OnFriendLeave;
+        GlobalEventBus.OnSwitchRole -= OnSwitchRole;
     }
 }
 }

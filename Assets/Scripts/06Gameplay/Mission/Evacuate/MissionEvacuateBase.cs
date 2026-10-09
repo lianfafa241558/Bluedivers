@@ -109,8 +109,8 @@ namespace FPSGame.Mission
 
             RemoveTag(MissionTag.HideAll);
             AddTag(MissionTag.IsActive);
-            BattleEventSub.MissionStateChange(this, true);
-            BattleEventSub.MissionEnityShow(entity);
+            BattleEventBus.MissionStateChange(this, true);
+            BattleEventBus.MissionEnityShow(entity);
             //UpdateText("激活撤离终端", "");
         }
 

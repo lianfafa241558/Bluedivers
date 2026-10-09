@@ -49,7 +49,14 @@
   `NetFriendBridge` 挂 `BattleEventSub.OnAirdrop` 上报**自己放的**那一次（远端复现走 `BattleManager.ReleaseAirdrop` ⇒ `owner=null` ⇒ 天然不回声），
   收同步时 `IsSelf(sid)` 跳过自己、别人 `BattleManager.ReleaseAirdrop(point, id)` 就地复现；⚠ 房主**不在 Ntf 里本地复现**，
   靠转发回来的 Sync 走同一条应用路径。⚠ 复现那份不计"呼叫战备次数"（统计只在发起方本机）。
-- ⚠ **会话生命周期：房主侧"人走了"的两个入口必须同一套清表**（2026-10-07 用户实测"另一客户端强关后重复提示好几次、退房后没做处理"）：
+- ✅ **会话生命周期：房主侧"人走了"已收成唯一入口 `NetHostSvc.RemoveMemberAndNotify(sid)`（2026-10-09，修"战斗中队友强退、房主端模型与 HUD 行都不消失"）**：
+  三个调用点（`HandleMemberLeft` 断线/踢人、`OnLeaveRoomNtf` 主动退房、`EvictIdleMembers` 空闲踢人）全部改调它；
+  它做齐：清 `_players/_profiles/_poses` → `BroadcastPlayerList()`（战斗期冻结 ⇒ 空操作）→ `SendToAll(PlayerLeftNtf)`
+  → **`MessageCenter.Dispatch(msg)` 房主本地自派发**（⚠ `SendToAll` 按定义**不含房主本地**，漏这句房主就永远收不到"人走了"；
+  与 `BroadcastPlayerList` 的自派发同款手法）。UI 不用改：`PlayerWnd.UpdatePlayerStates` 每帧按 `ActorsManager.Players` 重排，
+  实例一销毁下一帧行自动隐藏。顺带给 `MiniMapWnd` 补上漏的 `OnFriendLeave`（原来只订阅 `OnFriendCreate`，注释还留着"应该还有盟友离开游戏?"）。
+  ⚠ 仍未做：`FriendSlotGroup` 靠轮询兜底（够用）；成员端"房主走了"未处理。
+- ⚠ **（历史记录，2026-10-07）房主侧"人走了"的两个入口必须同一套清表**（用户实测"另一客户端强关后重复提示好几次、退房后没做处理"）：
   ①**主动退房** = `OnLeaveRoomNtf`（4003）：原实现**只删 `_players`**，`_profiles/_poses/_lastSeen` 全留 ⇒ `_poses` 会让该人的"幽灵位姿"**继续跟着每批快照广播**（`BuildProfileArray` 按 `_players` 遍历，所以 `_profiles` 只占内存）；且**不关会话**，客户端 `NetRoomFlow.Leave()` 自己 `Disconnect()` 只关本地 ⇒ 房主这条会话要等**库内超时**才回收，十几秒后再多报一条"成员断连（未入房）"⇒ 来回加入/退出几次就攒一串幽灵会话。
   ②**强杀/断网** = `EvictIdleMembers`（`memberIdleTimeout` 默认 8s，靠 `Update` 出队时刷新的 `_lastSeen`）：踢人后主动 `CloseSession()` ⇒ 库再回调一次 `OnSessionDisconnected` ⇒ **同一个 sid 第二次进 `HandleMemberLeft`**（原注释说"幂等"，但**日志没去重** ⇒ 用户看到同一个人提示两遍）。
   ⇒ 修法（`NetHostSvc.cs`）：`_selfClosed: HashSet<uint>` 登记"本端主动关的 sid" + `CloseSessionOf(sid)`（先登记再 `CloseSession`）；`HandleMemberLeft` 命中 `_selfClosed` 只静默清痕迹；`OnLeaveRoomNtf` 补齐三张表的清理并立刻关会话；else 分支（未入房）也要清 `_poses/_lastSeen`（⚠ `Update` 对**任何来源**的消息都记 `_lastSeen`，含未入房会话 ⇒ 不清就是每次连接留一条永久条目）；`StopHost` 一并清 `_selfClosed`。
@@ -125,7 +132,31 @@
   下行按 Sid 找盟友 → `FriendController.SetActiveWeaponSlot/PlayShoot/ApplyVital`；自己发的用 `NetRoomFlow.SelfSid` 丢掉）。
   ⚠ 盟友的**伤害仍由各自主机权威**：`PlayerFriend.prefab` 上刻意**没有 `Damageable`**，血量只由 4017/4018 镜像进它新增的 `HealthPlayer`。
   ⚠ 盟友离场**没有事件**（`FriendDead` 早被删）⇒ 任何"为盟友建的 UI"（如头顶血条）都要自己兜底清理，否则就是 `MissingReferenceException`。
-- ⭐ **场景单位（NPC/`NPCWalk`）移动同步 = 路线 A（2026-10-08 落码，未挂场景）**：走**新通道 4032**（`SceneUnitMoveMsg{ Id=Actor.Id, X/Y/Z, Stop }`），**不复用 4024 的 NetId**——大厅会反复重建、NetId 的"每局归零+两端创建顺序一致"不成立。链路：房主 `NPCWalk` 决策 → `BattleEventSub.OnSceneUnitMove` → **场景内**的 `09Manager/Global/SceneUnitMoveSink`（挂哪个场景管哪个场景）转发 → `NetRoomFlow.SendSceneUnitMove`；下行按 `Actor.Id` 找本端 NPC 应用（待用户在大厅场景里挂 1 个 sink 节点）。
+- ⭐ **场景单位（NPC/`NPCWalk`）移动同步 = 路线 A（2026-10-08 落码 → 2026-10-09 改为自举，已可用）**：走**新通道 4032**（`SceneUnitMoveMsg{ Id=Actor.Id, X/Y/Z, Stop }`），**不复用 4024 的 NetId**——大厅会反复重建、NetId 的"每局归零+两端创建顺序一致"不成立。链路：房主 `NPCWalk` 决策 → `BattleEventSub.OnSceneUnitMove` → `09Manager/Global/SceneUnitMoveSink` 转发 → `NetRoomFlow.SendSceneUnitMove`；下行按 `Actor.Id` 找本端 NPC 应用。
+  ⚠⚠ **原来的失败原因**：设计是"挂哪个场景就管哪个场景"，结果**全项目没有任何场景/预制体挂过 sink**（实测 0 命中，只有 `Utnapishitim.unity` 挂了 `NPCWalk`）⇒ `NPCWalk.RemoteDriven` 永远 false ⇒ 成员端照旧自己摇随机 ⇒ 两端 NPC 各走各的。
+  修 = `SceneUnitMoveSink` 加 `[RuntimeInitializeOnLoadMethod(AfterSceneLoad)] Bootstrap()`：没有就建一个 `DontDestroyOnLoad` 的（场景里手工挂了就让位）。常驻不串场景：它只订阅全局事件 + 扫静态 `ActorsManager.Actors`（`Actor.OnDestroy` 会摘）。
+  ✅ 已核实 `Utnapishitim.unity` 里 4 个带 `NPCWalk` 的 GameObject 都带 `Actor` ⇒ 同步键 `Actor.Id` 成立（若某 NPC 没有 `Actor`，它的 `_unitId` 为空 ⇒ 不参与同步）。
+  ⚠⚠ **但挂上 sink 后客机 NPC 会全员罚站 —— 真因（2026-10-09）**：sink 的 `Find` 扫的是 `ActorsManager.Actors`，而该表在 `ActorsManager.Awake` 里被 **`Actors = new()` 整个换新**
+  ⇒ **场景里先于它 Awake 的 NPC 全被丢出表**（实测大厅 `Actors` 只剩 7 项：Yuuka/Nagisa/Cafe_Moe_Original/Modle/Kotama_Original/Player(Clone)/Friend_0，四个 NPC 一个都不在）
+  ⇒ `Find` 永远失败、指令全堆在 `sink._pending`（实测 `_pending=3 键=[Aris][Hare][Mika]`）。**这是"路线 A 落码却从未跑通"的真正原因。**
+  修：`NPCWalk` 自记在场表（`static s_all` + `OnEnable/OnDisable` + `UnitId` + `static FindById(id)`），`SceneUnitMoveSink.Find(id) => NPCWalk.FindById(id)`（顺带解决"玩家角色与 NPC 同名"）。
+  ⚠ 05 层的根（`ActorsManager.Awake` 换表丢掉先注册者）**没修**，任何扫 `Actors` 的功能在大厅都会漏；本次只是绕过。
+  ⚠ `Noa` 的 GameObject `activeInHierarchy=False` **是设计如此**（主机玩家选了 Noa 这个角色 ⇒ 客机端对应 NPC 被隐藏，用户 2026-10-09 确认）⇒ 它两端都不动、从不发布（日志里只有 Mika/Hare/Aris）；`OnDisable` 已把它移出自记表，无害。
+  ✅ **2026-10-09 用户实测：NPC 位置同步已正常**（修完 `Find` 后），随即将 NPC 相关日志断掉（`NPCWalk`/`SceneUnitMoveSink` 里的每移动一条都删了，只留一次性/异常级）。
+- ⚠ **"反复进房出房"（幽灵会话）已定性 = KCPNet 内部重握手，无害**（2026-10-09 用数据钉死）：
+  房主侧 `[HostSession]` 打印的**所有**会话都是**同一个对端 `192.168.1.12:60476`**（= 客机那一台的那条 socket，`Get-NetUDPEndpoint` 查到该端口属客机进程），
+  而客机自己只打过**一次** `[NetRoomFlow] 回连房主 … / [NetClient] 回连房主 → 成功`；客机 `SelfSid` 稳定、`IsConnected=True`、`RttMs=32`
+  ⇒ 同一 socket 被库反复重握手 ⇒ 服务端每次新建一个 sid，旧的在库超时后自己关。**典型症状：名单里一串"尚未入房"的日志，隔一会儿自己断。**
+  ⚠ 排除过"广播打的"：发现层端口（`LanBroadcastPort=29800/29801`）与 KCP 端口（`HostGamePort=17666`）不撞。
+  ⚠ 也排除过"多进程"：进程快照里只有一个 `BlueDivers.exe`（就是房主）+ 一个编辑器（客机）+ 两个 AssetImportWorker。
+  ⇒ 现状：`HostSession` 的会话日志**已限流**（前 3 次 + 之后每 10s 一条，带累计次数；回调在库线程上 ⇒ 用 `DateTime` 不能用 `Time.xxx`）。要根治得改库（无源码）。
+- ✅ **远程弹道"穿过去、没命中"已修（2026-10-09）**：`PlayerShoot` 早就带了命中点（`HitX/Y/Z`，4015/4016），但接收端 `FriendWeaponView.PlayShoot` **只用它重算方向**、
+  随后把命中点丢掉（`SpawnVisualBullet(muzzle, direction)`）。远端那颗"表现弹"是**真物理子弹**（`ProjectileStandard` 靠 `SphereCast` 自己撞），而两端敌人位置只是近似
+  ⇒ 撞不到 ⇒ 一路飞到 `MaxRange` 消散，观感就是"从目标身上穿过去"。
+  修：`SpawnVisualBullet(muzzle, direction, endPoint)` 把命中点传下去 → `ProjectileBase.SetVisualEndPoint`（`Shoot` 里复位，池化安全）
+  → `ProjectileStandard.ReachedVisualEndPoint()`（**用"本帧位移"投影判定**，高速弹单帧数米也不会漏）→ 到点即 `OnHit(终点, -forward)` 按命中收尾。
+  ⚠ `SpawnVisualBullet` 摘掉 `FpsHelper.Hit` 时**连带**摘掉了命中特效/音效/弹痕 ⇒ 抽出 `FpsHelper.PlayImpactFx(hitData)`（`Hit` 改为调它 ⇒ 本地零变化），表现弹补挂它。
+  ⚠ 子类 `Update` 都调 `base.Update()`（`ProjectilePlayerStandard:91`/`PlayerLaser:28`/`PlayerHoming:71`/`LockStandard:32`）⇒ 判定不会被绕过（若将来新增不回调基类的子弹类型要留意）。
   ⚠ 注册/收信留在常驻 `NetRoomFlow`（否则场景不在时"未注册消息:4032"）；`NPCWalk.RemoteDriven` 语义 = **有桥在场且我是成员**（桥没了退回各自本地游荡，不会全体罚站）；⚠ 大厅**没有 `PathRequestManager`**（战场 `BattleManager` 才建）⇒ 不能用 `UnitEventSub.PathRequest`，只能直接 `SetDestination`；⚠ 大厅**没有 `ActorsManager` 实例** ⇒ 只能扫静态 `ActorsManager.Actors`（`Actor.Awake` 无条件登记）。
 - ⚠ 「服务器 / 局域网」**没有数据来源**：`NetSvc.SRV_IP="127.0.0.1"` 是硬编码示例、`ConnectDefaultServer()` 无调用点，房间只来自 `LanDiscoverer` 广播 ⇒ 房间列表面板只能**按 `HostIp` 猜**（内网/环回 ⇒ 局域网，其余 ⇒ 服务器，详见 `ServerListPanel.RoomNetType`/`IsLanAddress`）。要让类型真实，得让房间数据自带「来源」字段。
 - ⚠⚠ **`02_Net` 至今未挂进游戏**（2026-10-06 实测）：`NetSvc` / `NetHostSvc` / `LanRoomDemo` / `NetDemo` 在**所有场景与 prefab 里 0 命中**（只在各自 `.meta` 命中）⇒ 任何 UI 调 `NetSvc.Instance` 都是 null。联机改造第一步必须是"网络根节点引导"（推荐 `[RuntimeInitializeOnLoadMethod]` 建 `DontDestroyOnLoad("NetRoot")`，同 `WndHub.Bootstrap` 手法）。
@@ -197,4 +228,42 @@
 - **程序集方向（战斗同步相关，别搞反）**：`02_Net` refs=`[]` ⇒ 看不见 `05_UnitCore`/`06_Gameplay`（只能碰 `GameObject/Transform/基础类型`）；`09_Managers` 同时可见二者 + `02_Net` ⇒ **桥放 `09Manager/Global/NetBattleBridge.cs`**；而 `10_Effect`（`CreatEnemy/CreatOOPart/CreateSupple/CreateBuilding`）与 `06_Gameplay`（`EnemyNestBuild`/技能）**看不见 02_Net** ⇒ 「成员端跳过本地生成」的生成门**必须走 `01_GameContract` 接口**（同 `IBridgeArmamentSink` 模式）。
 - 位置写回 API 的坑：`AIController.Pos` setter（`AIController.cs:79-85`）在 `EnemyController` 里被 override 成 `NavMeshAgent.Warp`（`:43-51`），**agent 被禁用/离网格时 Warp 返回 false 且不生效** ⇒ 远端实体应关 agent 后直写 transform。玩家侧用 `BaseSelfMoveableController.Move(pos, isTeleport:true)`（`:438-441`）→ `FpsHelper_Controller.Teleport`。远端实体要关的不止 AI：`EnemyController.Update`、`StateMachineFrame.Update`、`NavMeshAgent` 三处都会写 transform。KCP 只有可靠有序通道 ⇒ 快照必须在应用层丢旧 tick；高频快照建议手写 `byte[]` 而非 MessagePack（压缩成本；AOT 风险已由 `NetMsgCodec` 解决）。详见 `.codebuddy/plans/联机_关键物体位置同步_计划.md`。
 - ✅ **`BridgeSys` 不挂 GameRoot 是对的**（2026-10-06 用户质疑后查证）：`BridgeSys` 与 `ArmamentWnd.prefab` 的实例**都只在 `Utnapishitim.unity`**（guid `fb33dc72…` / `19c30446…` 全仓交叉验证），三条链唯一触发点就是 `ArmamentWnd` 的点击，而 `ArmamentWnd.Init()` 又要写 `BridgeSys.Instance.armament` ⇒ 同生共死；挂常驻只会与其构成 `SingletonNet` 重复（重复实例会 Destroy 整个 GameObject）。**代价 = 跨场景调用点必须判空**。战备/强化的**数据落点已从 `ArmamentWnd.Receive*` 上移到常驻的 `TeamNetBridge`**（先写 `TeamManager.players[i]`，再 `BridgeSys.Instance?.Receive*` 叫醒界面），否则"不在舰桥时收到的同步"会被静默丢弃。
+- ⭐ **三大事件总线「同步覆盖」审计结论（2026-10-08，只读调研，未改码）**：现有桥只有 5 处（`NetFriendBridge`/`EnemyNetBridge`/`TeamNetBridge`/`SceneUnitMoveSink`/`WaveManager`），覆盖「玩家表现 + 敌人 + 波次 + 场景单位 + 舰桥流程」；**「任务系统 / 战局结果 / 共享世界物件」三类完全没桥**，`CmdId` 也无对应消息号（只用到 4001~4032+5001/5002）。
+  **BattleEventBus 缺**：`OnMissionStart/Completed/Fail/End/Update/StateChange`(65-87)、`OnMissionEntityShow`(90)、`OnEvacuate`(96)、`OnWipeFailCountdown/Cancel`(104/108)、`OnEndGame`(118)、`OnSubmitOOPart`(122)、`OnRevealAllMissions`(126)、`OnRequestAuthorize`/`OnAuthorizeAirdrop`(138/23)、`OnCallKai`(17)＝凯伊（详见 10-08 daily「凯伊有没有同步」）、`OnCancelAirdrop`（取消战备无消息）。
+  **GlobalEventBus 缺**：`OnFurnitureOperate`(139,共享家具/密码锁/雷达站=任务推进触发点)、`OnOOPartCollect`(151,`BattleManager` 订阅被注释)、`OnKeiSubmit`(158)、`OnMark`(115,标记点位)、`OnPlayMeetSpeech`(165,只桥了 `OnPlayerSpeech` 而非这条)、`OnDaySwitch`(48,待评估)、`OnRequestGameState` 仅 Transition 已做。
+  **UnitEventBus 缺**：`OnSpecUnitCreate/Dead`(84/87)、非敌人单位的 `OnUnitDeath`/`OnUnitKill`（敌人已由 4026 覆盖）、`OnNoise`(53,低优先)。
+  已实现：`OnPlayerSpeech`、`OnEnemyMove/Hit/DiedRemote`、`OnSceneUnitMove`、`OnAirdrop`(=AirdropCall)、`OnPlayerCreate/FriendCreate/FriendRoleChanged/FriendLeave`、`OnPlayerDead/Revive`(Vital 镜像)、`OnSwitchRole`(profile)。
+  建议优先级：**P0** 结算/团灭/撤离（`OnEndGame`/`OnWipeFail*`/`OnEvacuate`）；**P1** 任务组+Reveal；**P2** 共享世界物件（Furniture/OOPart/KeiSubmit）；**P3** 表现（Mark/Speech/Authorize/CallKai）。最小动作＝新增 `CmdId` 4033+ 段 + DTO + `NetMissionBridge`（09 层）。
+- ⭐ **`02_Net` 已收窄为纯传输、游戏协议独立成 `07_NetGame`（2026-10-08 落地，编译+反射双证）**：
+  `02_Net`(7 文件) = `ClientSession`/`HostSession`/`MessageCenter`/`NetMsgCodec`/`NetInbox`(新)/`NetCmdId`(新)/`Msg/PingMsg`；
+  `07_NetGame`(8 文件, `references:["02_Net"]`) = `NetSvc`/`NetHostSvc`/`NetRoomFlow`/`NetTransformFlow`/`RoomMeta`/`CmdId`/`Msg/{RoomMsg,BattleMsg}`；删 `LoginMsg`/`ChatMsg`（全仓 0 消费方）。
+  ⚠ 关键手法：原先 `ClientSession→NetSvc.Instance.AddMsgQue`、`HostSession→NetHostSvc.Instance.AddMsgQue`（会话回调游戏层）⇒ 会话若留 02、Service 进 07 就**成环**；改走 `02_Net/NetInbox`（线程安全入站队列，07 主线程泵）打断。
+  ⚠ ping 属传输控制 ⇒ 迁 `NetCmdId`(1001/1002)，从 `CmdId` 移除；`CmdId` 其余值**全部不变**（保线兼容）。
+  ⚠ 移动 `.cs` 用 MCP `AssetDatabase.MoveAsset`（保 GUID ⇒ `GameRoot.prefab` 上 `NetSvc/NetHostSvc/NetRoomFlow/NetTransformFlow` 组件引用不受影响；`find_dangling_guids.py` 脚本悬空=0）。
+  ⚠ 桥**不搬**：`NetFriendBridge` 用 `ResSvc`(09) ⇒ 搬进 07 会 `09↔07` 成环，全留 09。
+  ⚠ 遗留（二期）：socket 仍在 07 的 `NetSvc/NetHostSvc` ⇒ 可选把 `ClientNet`/`HostNet` 纯类下沉到 02；`LanRoomInfo` 由 KCPNet.dll 固定、字段含游戏语义（Difficulty/TaskMain/InGame）⇒ 传输层无法 100% 游戏无关。
+- ⭐⭐ **二期落地（2026-10-08）：连接/会话也进 02 ⇒ `02_Net` = 传输全套**（编译+反射双证，**尚未实测联机**）：
+  `02_Net` 新增两个纯类 —— `Transport/NetClient.cs`（`ConnectToRoom`/`Disconnect`/`Send`/`IsConnected`/心跳+RTT/`Pump`）与 `Transport/NetServer.cs`（`Start`/`Stop`/`SendToAll`/`SendTo`/`CloseSession`/`CurrentSid`/`OnConnected`/`OnDisconnected(sid,selfClosed)`/`LastSeen`/`Touch`/心跳应答/`Pump`）；共 **9 文件**、`references` 仍 `[]`。
+  `07_NetGame` 的 `NetSvc`/`NetHostSvc` **保类名保 GUID 仍在 `GameRoot.prefab` 上**，只变成"持一个纯类 + 每帧 `Pump()`" ⇒ **零 prefab 改动**；`NetHostSvc` 只剩房间语义，`CurrentSid`/`SendToAll`/`SendToSession` 改委托。
+  ⚠ 行为等价关键点：① 存活表 `_lastSeen` + "主动关闭登记表 `_selfClosed`" 搬进 `NetServer`，`OnDisconnected(sid, selfClosed)` 把"是不是我自己关的"带回 07（保日志去重口径）；② **空闲踢人仍在 07**（只有它知道"谁是玩家"）—— 07 遍历 `_players` 问 `NetServer.LastSeen(sid)`，再 `CloseSession`；③ 心跳应答（必须对任何会话都回）搬进 `NetServer`；④ `Update` 顺序仍是「会话事件 → 分发 → 踢人 → 位姿广播」。
+  ⚠ 待办：**必须运行期实测**（开房/入房/名册准备/进战斗/强杀踢人/心跳不误杀）—— 本次只过了编译与反射。
+- ⭐ **玩法层"未同步清单 + 同步方案"已定稿（2026-10-08）→ `.codebuddy/plans/联机_未同步清单与同步方案.md`**。
+  一句话版：`CmdId` **4033 `GameOverNtf` / 4034 `EvacuateNtf` / 4035 `MissionUpdateNtf`(Key=`MissionBase.netOrder`) / 4036 `FurnitureOperateNtf`(键=`FNV1a(Id+位置量化)`) / 4037 `MarkNtf` / 4038 `CallKaiNtf`**（DTO 在 `07NetGame/Msg/SyncMsg.cs`，已编译通过、桥与玩法侧改动待做）。
+  桥 = **每局静态桥**（同 `EnemyNetBridge`），安装点 `WaveManager.Awake` ⇒ 零 prefab 改动。
+  三个易踩结论：① **hash 不产生唯一性** ⇒ 家具同 `Id` 多实例不能用 `Id`/`FNV(Id)`，要 `Id+位置`，且**键要创建时缓存**（家具会位移）；`NumberID` 不可用（`nowID` 自增不复位）。② 家具远端重放**不需要新事件总线**：`PlayerInputHandler/PlayerWeaponsManager` 的 `OnOperation` 自带 `user == gameObject` 过滤 ⇒ 远端传 Friend/null 即早退；`KeyScreenControl` 无过滤正是要处理的。③ `BattleManager.EndGame` 是"延迟加载场景" ⇒ 成员端二次调用会排**两个 timer**，必须加"本局只结束一次"门。
+  不同步（已拍板）：团灭倒计时（本地判定）、战备授权（每人独立）、UI/输入/本机视角。
+  追加：**4039 `WaveCenterMsg`** —— 波次 center 改"**房主 ~2Hz 周期下发**"（客户端只插值跟随）⇒ 判定只存在一处、翻边风险 0（否掉了"客户端本地算最近玩家 + eps"的方案）。创建位置核查：玩家出生点两端一致（`BattleManager` 侧 `Medivac` 固定变换 `TransformPoint(0,-4,6)`），盟友出生点不一致但被**首条位姿 `Teleport`** 吸附纠正。
+  ⭐ **P0 已落地（2026-10-08）**：`09Manager/Battle/NetGameFlowBridge.cs`（静态桥，`WaveManager.Awake` Install ⇒ 零 prefab 改动）接 4033/4034；`BattleManager._gameOverRequested` 门（**只挡第二个 timer，`nowTask.result` 仍可补正**）；`NetRoomFlow` 加 `SendGameOver/SendEvacuate` + `OnGameOver/OnEvacuate`。编译+反射验证通过，**运行期实测待做**。
+  ⚠ 通用坑（P0 已验证、后续照抄）：远端应用时桥会**直接派发本桥也订阅的玩法事件** ⇒ 必须有 `_applyingRemote` **回环门**，否则把远端的当成自己产生的再上报一次。
+  ⭐ **P1/P2/P3 已全部落地（2026-10-08，编译+反射验证；运行期实测待做）**：
+  - **P1 任务(4035)**：键 `MissionBase.netOrder`（`MissionController` 赋值；数据生成模式按 `missions.Count`，**场景模式按 0.1m 量化位置排序**因为 `FindObjectsByType` 顺序两端不保证）；消息**必须带 State**（完成有"进度/事件触发"两个出口）；成员端靠 `MissionBase.RemoteDriven` 门"不自判"（⚠ `Uninstall` 要复位）。桥 = `NetMissionBridge`。
+  - **P2 家具(4036)**：键 `Furniture_Attached.SyncId = FNV1a(Id + 位置0.1m)`（`Awake` 算一次缓存；`Id` 不唯一、`NumberID` 各端自增 ⇒ 都不能用）；**一处收口** —— 远端重放 `ApplyRemoteOperate(remoteUser)` 跑同一条 `Operate()` ⇒ `OnOOPartCollect`/`OnSubmitOOPart`/`OnKeiSubmit` **不需单独同步**；⚠ 操作者只能传**远端单位**（`PlayerInputHandler/PlayerWeaponsManager.OnOperation` 靠 `user == gameObject` 过滤）。桥 = `NetFurnitureBridge`。
+  - **P3 表现(4037/4038)**：桥 = `NetActionBridge`；`Mark` 只传点（目标实体是引用过不了网）；`CallKai` 的 `SpecUnitKei.OnCall` 不按 source 过滤。
+  - ⭐ **纠正审计**：`OnPlayMeetSpeech` **不需要收口** —— `PlayerSpeechManager.OnMeetSpeech → Speech() → BattleEventBus.PlayerSpeech` 本来就是已同步的那条链（早前写的"只桥了 `OnPlayerSpeech`（部分缺口）"是错的）。
+  - ⚠ 踩点：`MissionController.cs` 是 **CRLF**，其余 P1-P3 文件是 LF ⇒ 批量改写脚本必须做**行尾自适应**（否则 `HIT=0` 静默漏改）。
+  - ⭐ **波次中心(4039) / 昼夜墙钟 / SyncedNavMover 也已落地（2026-10-08）**：
+    - **4039 波次中心**：追击波（`centerGetter != null`）**只有房主判定**"离中心最近的玩家"（各端自己算会因位姿延迟**翻边**）；房主在 `centerGetter` 外**包一层**按 ~2Hz 下发（`CenterSendInterval=0.5s`），成员端 `SmoothRemoteCenter` 用 `MoveTowards`（24 m/s）插值跟随，**按 `WaveIndex` 丢过期包**。
+    - **昼夜墙钟**：`TimeProgressionModule.Tick` **不再累加 `deltaTime`**，角度 = 纯函数 `AngleAt(state, WallClockSeconds())`（分段：前 2/3 白天 0→180°、后 1/3 夜晚 180→360°）⇒ 各端不再随运行时长漂移。⚠ 起点映射与旧版略有不同（最多差 60°）、且不再受 `timeScale` 影响；⚠ 前提是两端系统时钟对齐。它属 **`DayNightSystem` 独立 asmdef**。
+    - **`SyncedNavMover`**（`06Gameplay/AI/`，`FPSGame.AI`）：把 `EnemyController` 里"缓存远端点 + agent 可用才落地 + 每帧重试 + 绕开本地去重/节流"抽成组件；落地方式**注入**（`applyHandler`，敌人注入 `TryRequestPath` 走 `UnitEventBus.PathRequest`）。**纯结构收敛、对外行为与消息不变**。⚠ `EnemyController` 是 `partial` ⇒ 动它的私有成员前必须先全仓搜一遍（本次已做）。
+    - ⭐ **已接入三处**（2026-10-08）：`EnemyController`（注入 `TryRequestPath`）、`NPCWalk`（**故意不注入** —— 它不能走 `PathRequestManager`：那是战场 `BattleManager` 创建的，大厅里没人订阅 ⇒ 请求被静默丢弃）、`SpecUnitController`（凯伊；获得"缓存+重试"⇒ 修掉 4038 重放时"凯伊还没 Warp 上网格 ⇒ 这次呼叫就没了"）。默认落地判据含 `!isOnNavMesh` 就等（`SetDestination` 在网格外会报错）。
 

@@ -74,16 +74,32 @@ namespace FPSGame.Gameplay
             }
 
         }
+        /// <summary>联机落点组件（2026-10-08 接入）：目标点的缓存 / 重试在它里面。</summary>
+        private SyncedNavMover _mover;
+
+        private SyncedNavMover Mover
+        {
+            get
+            {
+                if (_mover == null)
+                {
+                    if (!TryGetComponent(out _mover)) _mover = gameObject.AddComponent<SyncedNavMover>();
+                    // 特殊单位在大厅也要能动 ⇒ 不注入 applyHandler（默认 = NavMeshAgent.SetDestination）
+                }
+                return _mover;
+            }
+        }
+
         /// <summary>
         /// 设置目标点
+        /// <para>▍对凯伊为什么是真修复：它的落点是**网络上重放**过来的（4038 <c>CallKai</c>），
+        /// 而重放那一刻这只凯伊可能还没 Warp 上导航网格 ⇒ 旧实现 <c>SetDestination</c> 静默失败、
+        /// 这条呼叫就没了；现在会先存下来，等 agent 就绪再落地。</para>
         /// </summary>
         /// <param name="destination"></param>
         public void SetNavDestination(Vector3 destination)
         {
-            if (NavMeshAgent)
-            {
-                NavMeshAgent.SetDestination(destination);
-            }
+            Mover.SetDestination(destination);
         }
         /// <summary>尝试使用某个武器攻击</summary>
         public bool TryAtack(WeaponEnemyController weapon)

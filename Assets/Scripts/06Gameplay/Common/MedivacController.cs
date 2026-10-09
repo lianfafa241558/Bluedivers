@@ -158,7 +158,7 @@ namespace FPSGame.Gameplay
                 //撤离流程到此结束 ⇒ 请求进入"配置战备"阶段，由 `GameRoot` 订阅后落成既有的静态 setter（照旧发 SceneChange 广播）。
                 //⚠ 倒计时读数**不在这里复位**：复位是"开始新一局"的职责，已在 `TaskManager.SetTask()` 里
                 //   （本组件一局只会走到这里一次，已确认）。
-                GlobalEventSub.RequestGameState(GameStateEnum.Armament);
+                GlobalEventBus.RequestGameState(GameStateEnum.Armament);
                 enabled = false;
                 foreach (var item in players)
                 {

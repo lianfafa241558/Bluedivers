@@ -53,7 +53,7 @@ namespace FPSGame.Gameplay
             {
                 foreach (var kvp in FPSGame.Data.TaskState.CollectProperty)
                 {
-                    GlobalEventSub.KeiSubmit(kvp.Key, kvp.Value);
+                    GlobalEventBus.KeiSubmit(kvp.Key, kvp.Value);
                 }
             }
         }
@@ -84,13 +84,13 @@ namespace FPSGame.Gameplay
                 if (SubmitHeldItems(user) > 0)
                 {
                     // 交完手持物即结束本次交互，"想交欧帕兹需要再交互一次"
-                    GlobalEventSub.PlayMeetSpeech(user, SpeechTypeEnum.Responded);
+                    GlobalEventBus.PlayMeetSpeech(user, SpeechTypeEnum.Responded);
                 }
                 else
                 {
                     // 手里没有可提交的手持物，才交背包里的欧帕兹
                     SubmitBagOOParts(user);
-                    GlobalEventSub.PlayMeetSpeech(user, SpeechTypeEnum.Responded);
+                    GlobalEventBus.PlayMeetSpeech(user, SpeechTypeEnum.Responded);
                 }
             }
 
@@ -111,7 +111,7 @@ namespace FPSGame.Gameplay
                 int count = kvp.Value;
                 bag.Remove(type, count);
                 // 计入任务采集计数
-                FPSGame.Gameplay.BattleEventSub.SubmitOOPart(user, type, count);
+                FPSGame.Gameplay.BattleEventBus.SubmitOOPart(user, type, count);
             }
         }
 

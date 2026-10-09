@@ -438,6 +438,25 @@ public class EnemyDiedMsg
     [Key(0)] public int NetId;
 }
 
+/// <summary>
+/// 【房主 → 全体】房主这一枪打中了某只怪（NetId / 伤害 / 开枪者 sid）。
+///
+/// <para>▍为什么要下行：命中上报只有**成员 → 房主**（<see cref="EnemyHitMsg"/>），房主打中谁**从不下发**
+/// ⇒ 两侧副本的血量各算各的：房主那只怪快死了，成员这边血条还是满的
+/// （2026-10-07 实测"本地看见命中、对端看不见"的另一半；2026-10-09 用户再次报告）。
+/// 血量口径统一成"**房主权威**"：房主要把自己打出的伤害也播下去，成员照数扣自己那份副本。</para>
+///
+/// <para>⚠ 只同步"伤害数值"，不重放弹道：两边各自的表现弹照旧（那是 <c>PlayerShootSync</c> 的事）。</para>
+/// </summary>
+[MessagePackObject]
+public class EnemyDamagedMsg
+{
+    /// <summary>开枪者（房主 = 0，成员 = 其会话 sid）—— 接收端据此把受击表现归给对应的盟友实例。</summary>
+    [Key(0)] public uint Sid;
+    [Key(1)] public int NetId;
+    [Key(2)] public int Damage;
+}
+
 /// <summary>选择全队强化：成员 -> 房主。</summary>
 [MessagePackObject]
 public class PlayerBoosterNtf

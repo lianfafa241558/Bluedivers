@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
@@ -68,18 +68,18 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
     protected override void OnEnable()
     {
         base.OnEnable();
-        BattleEventSub.OnAirdrop += OnAirdrop;
-        FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.PlayerArtilleryAId, true);
-        FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.PlayerArtilleryBId, true);
+        BattleEventBus.OnAirdrop += OnAirdrop;
+        FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.PlayerArtilleryAId, true);
+        FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.PlayerArtilleryBId, true);
         Invoke(nameof(StartSubmit),0.1f);
     }
 
     protected override void OnDisable()
     {
         base.OnDisable();
-        BattleEventSub.OnAirdrop -= OnAirdrop;
-        FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.PlayerArtilleryAId, false);
-        FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.PlayerArtilleryBId, false);
+        BattleEventBus.OnAirdrop -= OnAirdrop;
+        FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.PlayerArtilleryAId, false);
+        FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.PlayerArtilleryBId, false);
     }
 
     void StartSubmit()
@@ -112,7 +112,7 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
         //刚好到0时
         else if (data.cfg.ID == Constants.PlayerArtilleryBId && shells.Count == 1)
         {
-            FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.PlayerArtilleryBId, false);
+            FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.PlayerArtilleryBId, false);
         }
     }
 
@@ -146,7 +146,7 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
         //重新有了
         if (shells.Count == 0)
         {
-            FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.PlayerArtilleryBId, true);
+            FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.PlayerArtilleryBId, true);
         }
         var rand = FPSGame.Data.BattleState.BattleRandom;
         int idx = ShellIndexPool[rand.Range(0, ShellIndexPool.Length)];

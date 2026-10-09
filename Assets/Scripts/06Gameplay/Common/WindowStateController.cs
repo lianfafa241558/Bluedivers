@@ -1,4 +1,4 @@
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using UnityEngine;
 
 namespace FPSGame.Gameplay
@@ -16,12 +16,12 @@ public class WindowStateController : MonoBehaviour
 
     private void Awake()
     {
-        FPSGame.Gameplay.GlobalEventSub.OnWindowStateChange += WindowStateChange;
+        FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange += WindowStateChange;
 
     }
     private void OnDestroy()
     {
-        FPSGame.Gameplay.GlobalEventSub.OnWindowStateChange -= WindowStateChange;
+        FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange -= WindowStateChange;
     }
 
     private void WindowStateChange(WindowStateEnum exit, WindowStateEnum entry)

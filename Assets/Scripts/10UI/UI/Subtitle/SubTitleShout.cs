@@ -1,4 +1,4 @@
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.GameContract;
 using FPSGame.Game;
@@ -24,8 +24,8 @@ public class SubTitleShout : SubtitleBase
     public override SubtitleBase Creat(IActor owner, GameObject _, Transform parent,bool alwaysShow)
     {
         base.Creat(owner, _, parent, alwaysShow);
-        GlobalEventSub.OnMark += OnMark;
-        GlobalEventSub.OnActorSpeech += OnActorSpeech;
+        GlobalEventBus.OnMark += OnMark;
+        GlobalEventBus.OnActorSpeech += OnActorSpeech;
         if(owner.transform.TryGetComponent(out IHealth health))
         {
             health.OnRevive += OnRevive;
@@ -41,8 +41,8 @@ public class SubTitleShout : SubtitleBase
 
     private void OnDestroy()
     {
-        GlobalEventSub.OnMark -= OnMark;
-        GlobalEventSub.OnActorSpeech -= OnActorSpeech;
+        GlobalEventBus.OnMark -= OnMark;
+        GlobalEventBus.OnActorSpeech -= OnActorSpeech;
         if (owner.IsValidMono() && owner.transform.TryGetComponent(out IHealth health))
         {
             health.OnRevive += OnRevive;

@@ -137,8 +137,8 @@ public partial class PlayerWnd : Window
         m_Health.OnDie += OnDie;
         m_Health.OnHit += OnTakeDamage;
         m_Health.OnHealed += OnHealed;
-        UnitEventSub.OnBulletHit += BulletHit;
-        UnitEventSub.OnUnitKill += UnitKill;
+        UnitEventBus.OnBulletHit += BulletHit;
+        UnitEventBus.OnUnitKill += UnitKill;
     }
 
     /// <summary>
@@ -199,8 +199,8 @@ public partial class PlayerWnd : Window
     protected override void HideWnd()
     {
         initPlayer = false;
-        UnitEventSub.OnBulletHit -= BulletHit;
-        UnitEventSub.OnUnitKill -= UnitKill;
+        UnitEventBus.OnBulletHit -= BulletHit;
+        UnitEventBus.OnUnitKill -= UnitKill;
         if (m_WeaponsManager)
         {
             m_WeaponsManager.OnAddedWeapon -= AddWeapon;
@@ -271,6 +271,9 @@ public partial class PlayerWnd : Window
 
     private AllyStateRow[] m_AllyRows;
 
+    /// <summary>上次打日志时的盟友行数（只在"行数变化"时打，避免每帧刷屏）。</summary>
+    private int _lastLoggedAllyRows = -1;
+
     /// <summary>本机自己那行的节点名（它由 `UpdateWeapon` 里的 healthBar/shieldBar/ammoBar 驱动，这里要跳过）。</summary>
     private const string SelfStateRowName = "PlayerStateSelf";
 
@@ -315,8 +318,12 @@ public partial class PlayerWnd : Window
     /// 血盾读它身上那份"镜像生命值"（09 的桥把同步值写进去），弹药系数读 `FriendController.AmmoRatio`。
     /// ⇒ UI 不依赖网络层，房主 / 成员两种角色同一套代码，也不用管"消息什么时候到"。</para>
     ///
-    /// <para>⚠ 盟友离场时 `ActorsManager.Players` 里可能残留**已销毁**的引用（当前没有"盟友离场"事件），
-    /// 所以必须跳过无效项，多出来的行隐藏掉（这也是现在处理"盟友走了"的唯一办法）。</para>
+    /// <para>▍盟友离场（掉线/强退）怎么收尾：<c>ActorsManager.Unregister</c> 会把它摘出 <c>Players</c>
+    /// ⇒ 本方法下一帧自然把多出来的行隐藏掉（本方法每帧由 <c>Update</c> 调用，不需要额外订阅事件）。</para>
+    ///
+    /// <para>⚠ 真正的前提在上游：**房主端必须收到 <c>PlayerLeftNtf</c>** 才会销毁盟友实例、才会走到这里。
+    /// 2026-10-09 修的正是这个 —— <c>SendToAll</c> 不含房主本地、且主动退房那条路根本没发这条消息
+    /// ⇒ 房主屏幕上模型与这一行都不会消失（见 <c>NetHostSvc.RemoveMemberAndNotify</c>）。</para>
     /// </summary>
     private void UpdatePlayerStates()
     {
@@ -353,6 +360,13 @@ public partial class PlayerWnd : Window
         }
 
         for (int i = used; i < m_AllyRows.Length; ++i) SetActive(m_AllyRows[i].Root, false);
+
+        // 数据说话：盟友行数变化时打一条 —— "强退后 UI 有没有回落"直接看这行
+        if (used != _lastLoggedAllyRows)
+        {
+            _lastLoggedAllyRows = used;
+            FPSGame.Utils.NetSyncLog.SyncLog("HUD 盟友行", $"显示 {used} 行（ActorsManager.Players={ActorsManager.Players.Count} 项）");
+        }
     }
 
     #endregion

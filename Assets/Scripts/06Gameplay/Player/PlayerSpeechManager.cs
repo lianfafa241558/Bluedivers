@@ -32,20 +32,20 @@ public class PlayerSpeechManager : MonoBehaviour
     {
         m_health = GetComponent<IHealth>();
         m_health.OnDamaged += OnDamage;
-        GlobalEventSub.OnMark += OnMark;
-        BattleEventSub.OnAirdrop += OnAirdrop;
+        GlobalEventBus.OnMark += OnMark;
+        BattleEventBus.OnAirdrop += OnAirdrop;
         //GlobalEventManager.OnCallKai += CallKai;
         //GlobalEventManager.OnFurnitureOperate += OnFurnitureOperate;
-        GlobalEventSub.OnPlayMeetSpeech += OnMeetSpeech;
+        GlobalEventBus.OnPlayMeetSpeech += OnMeetSpeech;
     }
     private void OnDestroy()
     {
         m_health.OnDamaged -= OnDamage;
-        GlobalEventSub.OnMark -= OnMark;
-        BattleEventSub.OnAirdrop -= OnAirdrop;
+        GlobalEventBus.OnMark -= OnMark;
+        BattleEventBus.OnAirdrop -= OnAirdrop;
         //GlobalEventManager.OnCallKai -= CallKai;
         //GlobalEventManager.OnFurnitureOperate -= OnFurnitureOperate;
-        GlobalEventSub.OnPlayMeetSpeech -= OnMeetSpeech;
+        GlobalEventBus.OnPlayMeetSpeech -= OnMeetSpeech;
     }
 
     bool CanSpeech(SpeechTypeEnum type)
@@ -61,10 +61,10 @@ public class PlayerSpeechManager : MonoBehaviour
             var item = Cfg.SpeechGroup(type).Get(transform.position);
             //Debug.LogError("找到的语音"+item,item);
             speechShowTime = item.Clip.length;
-            GlobalEventSub.ActorSpeech(gameObject, item);
+            GlobalEventBus.ActorSpeech(gameObject, item);
 
             // 联机：告诉联机桥"我喊了一句"，由它上行 / 转发（本机表现已经播完，不参与回环）
-            BattleEventSub.PlayerSpeech(gameObject, type);
+            BattleEventBus.PlayerSpeech(gameObject, type);
         }
     }
 
@@ -104,9 +104,9 @@ public class PlayerSpeechManager : MonoBehaviour
             state = SpeechTypeEnum.Supply;
         }
 
-        GlobalEventSub.ActorSpeech(source, Cfg.SpeechGroup(state).Get(transform.position));
+        GlobalEventBus.ActorSpeech(source, Cfg.SpeechGroup(state).Get(transform.position));
         // ⚠ 这条没有走 Speech()（空投那套文案要按空投类型挑），所以单独上报一次
-        BattleEventSub.PlayerSpeech(source, state);
+        BattleEventBus.PlayerSpeech(source, state);
 
         if (data.cfg.type == AirdropData_SO.AirdropType.Greed)
         {
@@ -137,7 +137,7 @@ public class PlayerSpeechManager : MonoBehaviour
         }
         void Notice(string name,string type)
         {
-            FPSGame.Gameplay.GlobalEventSub.Notice(name, type, null, data.arriveTime);
+            FPSGame.Gameplay.GlobalEventBus.Notice(name, type, null, data.arriveTime);
         }
     }
 

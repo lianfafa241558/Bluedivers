@@ -29,20 +29,20 @@ public class DeathUI : Window
     }
     public void Init()
     {
-        UnitEventSub.OnPlayerDead += OnPlayerDead;
-        UnitEventSub.OnPlayerRevive += OnPlayerRevive;
-        BattleEventSub.OnWipeFailCountdown += OnWipeFailCountdown;
-        BattleEventSub.OnWipeFailCancel += OnWipeFailCancel;
+        UnitEventBus.OnPlayerDead += OnPlayerDead;
+        UnitEventBus.OnPlayerRevive += OnPlayerRevive;
+        BattleEventBus.OnWipeFailCountdown += OnWipeFailCountdown;
+        BattleEventBus.OnWipeFailCancel += OnWipeFailCancel;
         SetWndState(false);
     }
 
     public override void OnDestroy()
     {
         base.OnDestroy();
-        UnitEventSub.OnPlayerDead -= OnPlayerDead;
-        UnitEventSub.OnPlayerRevive -= OnPlayerRevive;
-        BattleEventSub.OnWipeFailCountdown -= OnWipeFailCountdown;
-        BattleEventSub.OnWipeFailCancel -= OnWipeFailCancel;
+        UnitEventBus.OnPlayerDead -= OnPlayerDead;
+        UnitEventBus.OnPlayerRevive -= OnPlayerRevive;
+        BattleEventBus.OnWipeFailCountdown -= OnWipeFailCountdown;
+        BattleEventBus.OnWipeFailCancel -= OnWipeFailCancel;
     }
 
     protected override void ShowWnd()

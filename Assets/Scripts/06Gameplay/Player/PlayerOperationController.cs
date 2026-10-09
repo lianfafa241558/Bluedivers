@@ -34,11 +34,11 @@ public class PlayerOperationController : MonoBehaviour
         m_Camera = m_PlayerController.PlayerCamera;
         m_InputHandler = GetComponent<PlayerInputHandler>();
         m_EquipController = GetComponent<EquipController>();
-        FPSGame.Gameplay.GlobalEventSub.OnWindowStateChange += OnWindowStateChange;
+        FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange += OnWindowStateChange;
     }
     private void OnDestroy()
     {
-        FPSGame.Gameplay.GlobalEventSub.OnWindowStateChange -= OnWindowStateChange;
+        FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange -= OnWindowStateChange;
     }
 
     void Update()

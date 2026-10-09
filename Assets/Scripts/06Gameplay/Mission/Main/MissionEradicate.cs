@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 
@@ -27,7 +27,7 @@ namespace FPSGame.Mission
         private int showCount;
         protected override void StartMission()
         {
-            UnitEventSub.OnEnemyDead += EnemyDead;
+            UnitEventBus.OnEnemyDead += EnemyDead;
             MaxProgress = enemyBaseValue * root.campData.enemyVarietyType.ToEnemyType() switch {
                 EnemyType.Kaiser => 5,
                 EnemyType.Decagrammaton => 6,
@@ -64,7 +64,7 @@ namespace FPSGame.Mission
         void EnemyDead(Actor unit)
         {
             //达成后立刻退订，避免继续计数
-            if (AddProgress()) UnitEventSub.OnEnemyDead -= EnemyDead;
+            if (AddProgress()) UnitEventBus.OnEnemyDead -= EnemyDead;
         }
 
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -175,6 +175,8 @@ public class MissionController : MonoBehaviour
         var size = RandomUtils.Range(random, go.mapEntitySize.x, go.mapEntitySize.y);
         go.Init(root, task, task.cfg.sprite, GenerateNewMissionPoint(size), size, EntityRoot);
         while (!go.IsInitialized) yield return null;
+        // 联机稳定键：按创建顺序（本模式的顺序由本局配置 + 稳定排序决定 ⇒ 两端一致）
+        go.netOrder = missions.Count;
         missions.Add(go);
         go.enabled = false;
         onComplete?.Invoke(go);
@@ -256,6 +258,9 @@ public class MissionController : MonoBehaviour
             mission.enabled = false;
             yield return null;
         }
+
+        // 联机稳定键：本模式走 FindObjectsByType，**顺序两端不保证一致** ⇒ 按世界坐标排序后再赋值
+        AssignNetOrdersByPosition(missions);
 
         // 按 MissionEnum 分类（与 InitAllMission 的分类逻辑一致）
         MissionBase main = null, evacuate = null;
@@ -487,6 +492,40 @@ public class MissionController : MonoBehaviour
     }
 
 
+
+    /// <summary>
+    /// 【联机】按世界坐标（0.1m 量化）排序后赋 <c>netOrder</c>。
+    /// <para>用于 <see cref="MissionInitMode.FindFromScene"/>：<c>FindObjectsByType</c> 的顺序两端不保证一致，
+    /// 而场景预置任务的位置由场景决定 ⇒ 位置才是跨端稳定的排序键（量化是为了吃掉浮点抖动）。</para>
+    /// <para>⚠ 只决定"赋值顺序"，**不改动 <paramref name="list"/> 本身**（下游 main/subTask 分类依赖原顺序）。</para>
+    /// </summary>
+    static void AssignNetOrdersByPosition(List<MissionBase> list)
+    {
+        if (list == null || list.Count == 0) return;
+
+        var sorted = new List<MissionBase>(list);
+        sorted.Sort((a, b) =>
+        {
+            Vector3 pa = a.transform.position, pb = b.transform.position;
+            int c = Mathf.RoundToInt(pa.x * 10f).CompareTo(Mathf.RoundToInt(pb.x * 10f));
+            if (c != 0) return c;
+            c = Mathf.RoundToInt(pa.z * 10f).CompareTo(Mathf.RoundToInt(pb.z * 10f));
+            if (c != 0) return c;
+            return Mathf.RoundToInt(pa.y * 10f).CompareTo(Mathf.RoundToInt(pb.y * 10f));
+        });
+        for (int i = 0; i < sorted.Count; ++i) sorted[i].netOrder = i;
+    }
+
+    /// <summary>【联机】按 <c>netOrder</c> 找本地任务实例（任务量小，线性查找足够）。</summary>
+    public MissionBase FindByNetOrder(int order)
+    {
+        if (missions == null) return null;
+        for (int i = 0; i < missions.Count; ++i)
+        {
+            if (missions[i] != null && missions[i].netOrder == order) return missions[i];
+        }
+        return null;
+    }
 
     public void AddBattleDataItem(int playerIndex,string name)
     {

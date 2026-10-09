@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using FPSGame.Audio;
 
 namespace FPSGame.UI
@@ -27,12 +27,12 @@ public class SubtitleSpecUnit : SubtitleBase
         SetText(title, tarActor.ShowName);
         SetSprite(halo, tarActor.ExtraPortrait);
         SetActive(gameObject, tarActor != owner);
-        GlobalEventSub.OnActorSpeech += OnActorSpeech;
+        GlobalEventBus.OnActorSpeech += OnActorSpeech;
         return this;
     }
     void OnDestroy()
     {
-        GlobalEventSub.OnActorSpeech -= OnActorSpeech;
+        GlobalEventBus.OnActorSpeech -= OnActorSpeech;
     }
     bool noFade;
     float lastSpeechTime = Mathf.NegativeInfinity;

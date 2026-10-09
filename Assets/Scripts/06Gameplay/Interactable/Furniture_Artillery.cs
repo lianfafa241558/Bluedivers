@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.Attributes;
@@ -153,7 +153,7 @@ public class Furniture_Artillery : Furniture_Attached
     /// </summary>
     public void AuthorizeAirdrop()
     {
-        FPSGame.Gameplay.BattleEventSub.RequestAuthorize(Constants.ArtilleryId,true);
+        FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.ArtilleryId,true);
     }
 
 

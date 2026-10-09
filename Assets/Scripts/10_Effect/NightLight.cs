@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Gameplay;
 using UnityEngine;
@@ -17,11 +17,11 @@ public class NightLight : MonoBehaviour
 
     private void Awake()
     {
-        GlobalEventSub.OnDaySwitch += OnDatSwitch;
+        GlobalEventBus.OnDaySwitch += OnDatSwitch;
     }
     private void OnDestroy()
     {
-        GlobalEventSub.OnDaySwitch -= OnDatSwitch;
+        GlobalEventBus.OnDaySwitch -= OnDatSwitch;
     }
 
     private void OnDatSwitch(bool isNoon)

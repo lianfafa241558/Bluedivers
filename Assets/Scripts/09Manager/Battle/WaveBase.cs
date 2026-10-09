@@ -71,7 +71,7 @@ namespace FPSGame.Managers
             center = param.center;
             units = new();
 
-            UnitEventSub.OnEnemyDead += OnUnitDeath;
+            UnitEventBus.OnEnemyDead += OnUnitDeath;
 
             //注意：子类字段初始化完成后需自行调用 Trans(WaveState.Start)
         }
@@ -81,7 +81,7 @@ namespace FPSGame.Managers
             if (IsDisposed) return;
             IsDisposed = true;
 
-            UnitEventSub.OnEnemyDead -= OnUnitDeath;
+            UnitEventBus.OnEnemyDead -= OnUnitDeath;
 
             //先让子类回收自身资源(此时基类的集合仍然可用)
             OnDispose();

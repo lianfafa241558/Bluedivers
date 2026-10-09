@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using FPSGame.Core;
 using FPSGame.GameContract;
 using FPSGame.Game;
@@ -29,11 +29,11 @@ public class InterestPoint : BaseObject, IMissionPoint
 
     private void Awake()
     {
-        GlobalEventSub.OnMark += Mark;
+        GlobalEventBus.OnMark += Mark;
     }
     private void OnDestroy()
     {
-        GlobalEventSub.OnMark -= Mark;
+        GlobalEventBus.OnMark -= Mark;
     }
 
 
@@ -57,13 +57,13 @@ public class InterestPoint : BaseObject, IMissionPoint
 
     protected void CreatNotice(string role, string type, System.Func<bool> func = default,  float vaildTime = -1)
     {
-        FPSGame.Gameplay.GlobalEventSub.Notice(role, type, func, vaildTime);
+        FPSGame.Gameplay.GlobalEventBus.Notice(role, type, func, vaildTime);
     }
 
     public void TryDiscovered()
     {
         discovered = true;
-        BattleEventSub.MissionEnityShow(this);
+        BattleEventBus.MissionEnityShow(this);
     }
     private void Mark(GameObject owner, GameObject target, Vector3 point)
     {

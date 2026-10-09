@@ -143,6 +143,64 @@ namespace FPSGame.Gameplay
         }
 
         /// <summary>
+        /// 只播"命中表现"：命中特效 / 命中音效 / 弹痕（**不结算任何伤害、不发噪声、不推命中事件**）。
+        ///
+        /// <para>▍为什么要单独抽出来（2026-10-09）：联机里"别人开枪"的表现弹
+        /// （<c>WeaponBaseController.SpawnVisualBullet</c>）必须摘掉 <see cref="Hit"/>（伤害由开枪者本机结算），
+        /// 但特效/音效/弹痕也都住在 <see cref="Hit"/> 里 ⇒ 一起被摘掉后，**对方屏幕上那颗子弹命中时没有任何反馈**，
+        /// 看起来就是"穿过去了、没命中"（用户实测）。现在拆开：表现弹只挂本方法 ⇒ 伤害为零、表现照旧。</para>
+        ///
+        /// <para>⚠ 调用方应传**已经算好的命中点**（表现弹用同步过来的终点）。</para>
+        /// </summary>
+        public static void PlayImpactFx(ProjectileHitData hitData)
+        {
+            var damageData = hitData.data;
+            if (damageData == null) return;
+
+            FPSGame.Utils.NetSyncLog.BulletLog("命中表现", $"点={hitData.pos:F2} 命中物={(hitData.collider != null ? hitData.collider.name : "<无>")}" +
+                $" 特效={damageData.ImpactVfx} 音效={damageData.ImpactSfx} 弹痕={damageData.UseHole}");
+
+            Vector3 point = hitData.pos;
+            Vector3 normal = hitData.normal;
+            Collider collider = hitData.collider;   // 允许为空（表现弹只有终点、没有碰撞体）
+            GameObject soure = hitData.soure;
+
+            //特效
+            if (damageData.ImpactVfx)
+            {
+                if (damageData.ImpactVfx.TryGetComponent(out ProjectileBase projectile))
+                {
+                    // 走特效服务契约（VFXManager 在 01Manager，本文件未来要随玩法层进 asmdef）
+                    Component ps = VfxPool.Creat(projectile, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default);
+                    ps?.GetComponentInChildren<IVfxEffect>()?.SetOwner(soure, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+                    ps?.GetComponentInChildren<ProjectileBase>()?.Shoot(hitData.weapon);
+                }
+                else
+                {
+                    GameObject ps = VfxPool.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
+                    ps?.GetComponentInChildren<IVfxEffect>()?.SetOwner(soure, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+                }
+
+            }
+            //音效
+            if (damageData.ImpactSfx)
+            {
+                AudioSvc.PlaySound(new(damageData.ImpactSfx, point, hitData.sfxRange, AudioGroups.Impact));
+            }
+            //弹痕
+            if (damageData.UseHole)
+            {
+                var parent = (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null;
+                var go=VfxPool.Creat(damageData.Hole.IsValid() ? damageData.Hole : bulletHoles.RandomTake(), point, Quaternion.LookRotation(normal), parent);
+                //Debug.LogError(parent != null?( 1 << parent.gameObject.layer)+"/"+ LayerDefinition.UnitLayers.value: "无父级");
+                if (parent!=null&&LayerDefinition.UnitLayers.Contains(1 << parent.gameObject.layer))
+                {
+                    go.transform.localScale *= 0.5f;
+                }
+            }
+        }
+
+        /// <summary>
         /// 击中
         /// </summary>
         public static void Hit(ProjectileHitData hitData)
@@ -300,7 +358,7 @@ namespace FPSGame.Gameplay
                 //表现层：HUD 擦弹/受击提示(仍用旧的音效半径口径)
                 if (soundRadius > 0)
                 {
-                    UnitEventSub.BulletHit(soure, (PEVector3)point, soundRadius);
+                    UnitEventBus.BulletHit(soure, (PEVector3)point, soundRadius);
                 }
 
                 //逻辑层噪声：命中点发出(开火处的枪声由 WeaponBaseController 在开火时另发)
@@ -309,43 +367,13 @@ namespace FPSGame.Gameplay
                 if (damageData.UseExplode && damageOuterRadius > impactNoise) impactNoise = damageOuterRadius;
                 if (impactNoise > 0)
                 {
-                    UnitEventSub.Noise(new NoiseData { source = soure, pos = (PEVector3)point, radius = impactNoise });
+                    UnitEventBus.Noise(new NoiseData { source = soure, pos = (PEVector3)point, radius = impactNoise });
                 }
             }
 
-            //特效
-            if (damageData.ImpactVfx)
-            {
-                if (damageData.ImpactVfx.TryGetComponent(out ProjectileBase projectile))
-                {
-                    // 走特效服务契约（VFXManager 在 01Manager，本文件未来要随玩法层进 asmdef）
-                    Component ps = VfxPool.Creat(projectile, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default);
-                    ps?.GetComponentInChildren<IVfxEffect>()?.SetOwner(soure, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
-                    ps?.GetComponentInChildren<ProjectileBase>()?.Shoot(hitData.weapon);
-                }
-                else
-                {
-                    GameObject ps = VfxPool.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
-                    ps?.GetComponentInChildren<IVfxEffect>()?.SetOwner(soure, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
-                }
-
-            }
-            //音效
-            if (damageData.ImpactSfx)
-            {
-                AudioSvc.PlaySound(new(damageData.ImpactSfx, point, hitData.sfxRange, AudioGroups.Impact));
-            }
-            //弹痕
-            if (damageData.UseHole)
-            {
-                var parent = (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null;
-                var go=VfxPool.Creat(damageData.Hole.IsValid() ? damageData.Hole : bulletHoles.RandomTake(), point, Quaternion.LookRotation(normal), parent);
-                //Debug.LogError(parent != null?( 1 << parent.gameObject.layer)+"/"+ LayerDefinition.UnitLayers.value: "无父级");
-                if (parent!=null&&LayerDefinition.UnitLayers.Contains(1 << parent.gameObject.layer))
-                {
-                    go.transform.localScale *= 0.5f;
-                }
-            }
+            // 命中表现（特效 / 音效 / 弹痕）：抽进 PlayImpactFx —— 联机的"表现弹"要单独复用它
+            // （只摘伤害、保留表现），见那个方法的说明。
+            PlayImpactFx(hitData);
         }
 
 

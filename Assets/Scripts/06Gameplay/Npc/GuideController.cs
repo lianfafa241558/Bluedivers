@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
@@ -155,10 +155,10 @@ public class GuideController : Furniture_Attached
     protected override void OnEnable()
     {
         base.OnEnable();
-        UnitEventSub.OnPlayerCreate -= OnPlayerCreated;
-        UnitEventSub.OnPlayerCreate += OnPlayerCreated;
-        GlobalEventSub.OnSwitchRole -= OnSwitchRole;
-        GlobalEventSub.OnSwitchRole += OnSwitchRole;
+        UnitEventBus.OnPlayerCreate -= OnPlayerCreated;
+        UnitEventBus.OnPlayerCreate += OnPlayerCreated;
+        GlobalEventBus.OnSwitchRole -= OnSwitchRole;
+        GlobalEventBus.OnSwitchRole += OnSwitchRole;
 
         // 重力协程持续运行（组件禁用后协程会被停止，重新启用时恢复）
         if (_gravityCoroutine == null)
@@ -185,8 +185,8 @@ public class GuideController : Furniture_Attached
     protected override void OnDisable()
     {
         base.OnDisable();
-        UnitEventSub.OnPlayerCreate -= OnPlayerCreated;
-        GlobalEventSub.OnSwitchRole -= OnSwitchRole;
+        UnitEventBus.OnPlayerCreate -= OnPlayerCreated;
+        GlobalEventBus.OnSwitchRole -= OnSwitchRole;
         StopMoving();
         StopSpeak();
         // 组件禁用时 Unity 会停止协程，置空引用以便重新启用时恢复
@@ -737,7 +737,7 @@ public class GuideController : Furniture_Attached
         RuntimeSoundData soundData = soundGroup.Get(transform.position);
         if (soundData.Clip == null) return false;
 
-        GlobalEventSub.ActorSpeech(gameObject, soundData);
+        GlobalEventBus.ActorSpeech(gameObject, soundData);
         _lastSpeakTime = Time.time;
 
         float clipLength = soundData.Clip.length;

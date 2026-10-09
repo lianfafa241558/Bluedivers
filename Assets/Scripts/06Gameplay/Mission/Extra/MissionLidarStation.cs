@@ -26,7 +26,7 @@ namespace FPSGame.Mission
             CompleteMission();
             //雷达站完成，暴露全图所有未结束的任务
             // 走战斗事件总线：原先这里遍历 MissionCont.missions 的逻辑已收进 MissionController.RevealAll()
-            FPSGame.Gameplay.BattleEventSub.RevealAllMissions();
+            FPSGame.Gameplay.BattleEventBus.RevealAllMissions();
         }
     }
 }

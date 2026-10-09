@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
@@ -140,7 +140,7 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager, FPSGame.GameContract.IRe
         sceneLoadedFlag = false;
 
         // 通知场景变更，触发各系统初始化
-        GlobalEventSub.SceneChange(SceneManager.GetActiveScene().name);
+        GlobalEventBus.SceneChange(SceneManager.GetActiveScene().name);
 
         // 将回调延后到下一帧执行，让场景中所有 Awake/Start 先完成
         StartCoroutine(DelayedInvoke(sceneLoadedCallback));

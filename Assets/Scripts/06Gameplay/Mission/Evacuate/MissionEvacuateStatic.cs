@@ -276,7 +276,7 @@ namespace FPSGame.Mission
             countDown = Mathf.FloorToInt(m_EvacuateTime* mul);//如果有撤离效果就变短
             //if(IsComplete) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
             CreatNotice("Ayane", "CountDownBegins");
-            BattleEventSub.Evacuate(new(pos));
+            BattleEventBus.Evacuate(new(pos));
         }
 
         private void EndWait()
@@ -350,8 +350,8 @@ namespace FPSGame.Mission
             CreatNotice("Ayane", "TakeOff");
             //WndManager.Instance.movieWnd.SetWndState(true);
             // 切阶段走事件（原 ServiceLocator.Flow.SetGameState）：GameRoot 订阅后落成既有的静态 setter
-            FPSGame.Gameplay.GlobalEventSub.RequestGameState(FPSGame.Core.GameStateEnum.Transition);
-            FPSGame.Gameplay.BattleEventSub.EndGame(14);
+            FPSGame.Gameplay.GlobalEventBus.RequestGameState(FPSGame.Core.GameStateEnum.Transition);
+            FPSGame.Gameplay.BattleEventBus.EndGame(14);
         }
 
 

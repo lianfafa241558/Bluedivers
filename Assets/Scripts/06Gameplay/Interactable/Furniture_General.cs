@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -55,7 +55,7 @@ public class Furniture_General : Furniture_Attached
         {
             _Operate = (furn) =>
             {
-                FPSGame.Gameplay.GlobalEventSub.OpenWnd(FPSGame.GameContract.WndType.SelectRole);
+                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.SelectRole);
                 furn.BaseOp();
             }
         },
@@ -63,39 +63,39 @@ public class Furniture_General : Furniture_Attached
         {
             _Operate = (furn) =>
             {
-                FPSGame.Gameplay.GlobalEventSub.OpenWnd(FPSGame.GameContract.WndType.SelectMap);
+                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.SelectMap);
                 furn.BaseOp();
             }
         },
         ["SelectVehicle"] = new() {
             _Operate = (furn) => {
-                FPSGame.Gameplay.GlobalEventSub.OpenWnd(FPSGame.GameContract.WndType.Vehicle);
+                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.Vehicle);
                 furn.BaseOp();
             }
         },
         ["SelectAirdrop"] = new() {
             _Operate = (furn) => {
-                FPSGame.Gameplay.GlobalEventSub.OpenWnd(FPSGame.GameContract.WndType.AirdropConfig);
+                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.AirdropConfig);
                 furn.BaseOp();
             }
         },
         ["GuideWnd"] = new() {
             _Operate = (furn) => {
-                FPSGame.Gameplay.GlobalEventSub.OpenWnd(FPSGame.GameContract.WndType.Guide);
+                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.Guide);
                 furn.BaseOp();
             }
         },
 
         ["SettingWnd"] = new() {
             _Operate = (furn) => {
-                FPSGame.Gameplay.GlobalEventSub.OpenWnd(FPSGame.GameContract.WndType.Setting);
+                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.Setting);
                 furn.BaseOp();
             }
         },
 
         ["AirdropConfigWnd"] = new() {
             _Operate = (furn) => {
-                FPSGame.Gameplay.GlobalEventSub.OpenWnd(FPSGame.GameContract.WndType.AirdropConfig);
+                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.AirdropConfig);
                 furn.BaseOp();
             }
         },
@@ -153,7 +153,7 @@ public class Furniture_General : Furniture_Attached
                     furn.BaseOp();
                     // 原来这里判 "BattleManager.Instance != null"；服务未就绪时 AddBattleDataItem 是空实现；
                     // 2026-10-01 起改走事件（BattleEventSub）⇒ 无订阅者时静默丢弃，守卫彻底冗余。
-                    FPSGame.Gameplay.BattleEventSub.AddBattleDataItem(player.PlayerIndex, "使用补给次数");
+                    FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(player.PlayerIndex, "使用补给次数");
                 }
             }
         },

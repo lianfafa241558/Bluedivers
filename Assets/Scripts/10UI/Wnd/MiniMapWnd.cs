@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -98,15 +98,15 @@ public class MiniMapWnd : Window
         InputManager.BindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
 
         //此时玩家已经诞生
-        UnitEventSub.OnPlayerCreate += PlayerCreat;
-        UnitEventSub.OnFriendCreate += FriendCreat;
-        //应该还有盟友离开游戏?
-        UnitEventSub.OnSpecUnitCreate += OtherCreat;
-        UnitEventSub.OnSpecUnitDead += OtherDeath;
-        BattleEventSub.OnMissionStart += MissionPointCreat;
-        BattleEventSub.OnMissionEntityShow += OnMissionShow;
-        BattleEventSub.OnMissionUpdate += OnMissionUpdate;
-        BattleEventSub.OnMissionEnd += MissionPointEnd;
+        UnitEventBus.OnPlayerCreate += PlayerCreat;
+        UnitEventBus.OnFriendCreate += FriendCreat;
+        UnitEventBus.OnFriendLeave += FriendLeave;   // ★ 补上"离场"（2026-10-09）：原来只有创建 ⇒ 队友强退后小地图上的点会一直留着
+        UnitEventBus.OnSpecUnitCreate += OtherCreat;
+        UnitEventBus.OnSpecUnitDead += OtherDeath;
+        BattleEventBus.OnMissionStart += MissionPointCreat;
+        BattleEventBus.OnMissionEntityShow += OnMissionShow;
+        BattleEventBus.OnMissionUpdate += OnMissionUpdate;
+        BattleEventBus.OnMissionEnd += MissionPointEnd;
 
         SetActive(gameObject, false);
 
@@ -115,15 +115,15 @@ public class MiniMapWnd : Window
     {
         base.OnDestroy();
         InputManager.UnBindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
-        UnitEventSub.OnPlayerCreate -= PlayerCreat;
-        UnitEventSub.OnFriendCreate -= FriendCreat;
-        //应该还有盟友离开游戏?
-        UnitEventSub.OnSpecUnitCreate -= OtherCreat;
-        UnitEventSub.OnSpecUnitDead -= OtherDeath;
-        BattleEventSub.OnMissionStart -= MissionPointCreat;
-        BattleEventSub.OnMissionEntityShow -= OnMissionShow;
-        BattleEventSub.OnMissionUpdate -= OnMissionUpdate;
-        BattleEventSub.OnMissionEnd -= MissionPointEnd;
+        UnitEventBus.OnPlayerCreate -= PlayerCreat;
+        UnitEventBus.OnFriendCreate -= FriendCreat;
+        UnitEventBus.OnFriendLeave -= FriendLeave;
+        UnitEventBus.OnSpecUnitCreate -= OtherCreat;
+        UnitEventBus.OnSpecUnitDead -= OtherDeath;
+        BattleEventBus.OnMissionStart -= MissionPointCreat;
+        BattleEventBus.OnMissionEntityShow -= OnMissionShow;
+        BattleEventBus.OnMissionUpdate -= OnMissionUpdate;
+        BattleEventBus.OnMissionEnd -= MissionPointEnd;
         WndManager.OnWindowStateChange -= OnWindowStateChange;
 
         ActorPoint = null;
@@ -138,7 +138,7 @@ public class MiniMapWnd : Window
         //InputManager.Bind(WindowStateEnum.Airdrop, InputState.Airdrop, CloseWnd);
         //Debug.LogError("注册事件");
         WndManager.OnWindowStateChange += OnWindowStateChange;
-        UnitEventSub.OnPlayerDead += OnPlayerDown;
+        UnitEventBus.OnPlayerDead += OnPlayerDown;
     }
 
     protected override void HideWnd()
@@ -147,7 +147,7 @@ public class MiniMapWnd : Window
         //InputManager.UnBind(WindowStateEnum.Airdrop, InputState.Airdrop, CloseWnd);
         //Debug.LogError("注销事件");
         WndManager.OnWindowStateChange -= OnWindowStateChange;
-        UnitEventSub.OnPlayerDead -= OnPlayerDown;
+        UnitEventBus.OnPlayerDead -= OnPlayerDown;
     }
 
 
@@ -367,6 +367,25 @@ public class MiniMapWnd : Window
 
         OnGenericRotate(actor);
         OnGenericMove(actor);
+    }
+
+    /// <summary>
+    /// 盟友**离场**（实例被销毁：掉线 / 被清退 / 换场景）⇒ 把为他建的小地图点收掉，与 <see cref="FriendCreat"/> 成对。
+    ///
+    /// <para>▍为什么必须有（2026-10-09）：原来只订阅了创建 ⇒ 队友强退后那个图标会一直留在图上
+    /// （越退越多，且 <c>Update</c> 还会继续读已销毁的 <c>actor.Pos</c>）。语义与"倒地"不同：
+    /// 倒地走 <c>OnUnitDeath</c>（还能被救起，Should 留点），这里是真的不会回来了。</para>
+    /// </summary>
+    void FriendLeave(FPSGame.Game.Actor actor)
+    {
+        if (actor == null || ActorPoint == null) return;
+        if (!ActorPoint.TryGetValue(actor, out var point)) return;
+
+        ActorPoint.Remove(actor);
+        actor.OnPosChange -= OnGenericMove;
+        actor.OnAngleChange -= OnGenericRotate;
+        if (point != null) Tool.Destroy(point.gameObject);
+        FPSGame.Utils.NetSyncLog.SyncLog("盟友离场", $"小地图点已收掉 actor={actor.name}（剩余点位 {ActorPoint.Count}）");
     }
 
 

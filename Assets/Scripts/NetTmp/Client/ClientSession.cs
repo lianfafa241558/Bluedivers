@@ -59,8 +59,8 @@ public class ClientSession : KCPSession<NetMessage>
     /// </summary>
     protected override void OnReciveMsg(NetMessage msg)
     {
-        // 丢进 NetSvc 的消息队列，等主线程处理
-        NetSvc.Instance.AddMsgQue(msg);
+        // 丢进传输层队列（NetInbox），等主线程处理
+        NetInbox.Enqueue(msg);
     }
 
     /// <summary>
