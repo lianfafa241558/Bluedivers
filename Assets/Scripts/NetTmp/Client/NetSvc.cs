@@ -6,18 +6,11 @@ namespace FPSGame.Net
 {
 
 /// <summary>
-/// 【网络服务层】网络模块的"总入口"，对应旧项目的 NetSvc.cs。
-///
-/// ▍它的职责（新手重点）：
+/// 【网络服务层】网络模块的"总入口"
 ///   1. 创建 KCPNet 客户端并连接服务器
 ///   2. 提供 SendMsg() 供业务代码发送消息
 ///   3. 维护一个消息队列，把网络线程收到的消息转到主线程处理
 ///   4. 在 Update() 里取出队列中的消息，交给 MessageCenter 分发
-///
-/// ▍对比旧项目 NetSvc 的改进：
-///   旧项目在 Update() 里用 40+ 行的巨型 switch 分发消息。
-///   这里改成一行 MessageCenter.Dispatch(msg)，分发逻辑全部迁移到 MessageCenter，
-///   各业务模块自己注册处理器，NetSvc 不再需要知道"每种消息该怎么处理"。
 /// </summary>
 public class NetSvc : MonoBehaviour
 {
@@ -30,6 +23,13 @@ public class NetSvc : MonoBehaviour
     ///   <NetMessage>   ：这条连接收发消息的类型（我们的信封）
     /// </summary>
     private KCPNet<ClientSession, NetMessage> client;
+
+    /// <summary>
+    /// 【客户端身份】进程内固定的身份 ID（整局不变，只读 ⇒ 重连/换端口都复用同一个值）。
+    /// 房主侧按它认人，避免同一玩家反复重连时堆出多条会话。必须注入 <c>client.ClientId</c> 才生效，
+    /// 不注入则退回库的"按 ip:端口 去重"（换端口就认不出是同一个人）。
+    /// </summary>
+    private readonly string _clientId = System.Guid.NewGuid().ToString("N");
 
     /// <summary>消息队列：网络线程收到的消息先进这里，主线程再取出处理（线程安全缓冲）</summary>
     private Queue<NetMessage> msgPackQue;
@@ -194,6 +194,8 @@ public class NetSvc : MonoBehaviour
     {
         // 创建 KCP 客户端（指定会话类型和消息类型）
         client = new KCPNet<ClientSession, NetMessage>();
+        // 注入本机身份：握手时随 REQUEST_CONNECT:<clientId> 上报 ⇒ 房主按 clientId 去重（换端口重连也认得出）
+        client.ClientId = _clientId;
         // 以客户端身份启动（StartAsClient：绑定本机 UDP，指向目标 IP:端口）
         startAction(client);
         // 异步发起真正的连接（connect 握手）

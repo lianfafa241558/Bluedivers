@@ -140,6 +140,19 @@
   `FromJson` **忽略未知 key、缺 key 给默认值**（实测：只带 3 个键的旧包 ⇒ `diff=-1/task=-1/inGame=false/source=0`）⇒ 新旧房主可混联。
   `LanBroadcaster`/`LanDiscoverer` 无公开房间字段 ⇒ 库改动只落在 `LanRoomInfo` + 两个 JSON 方法。
   ⚠⚠ **换 DLL 后 Unity 里的旧程序集不会自动换**：本次 `AssetDatabase.ImportAsset(ForceUpdate)` 单独调用**无效**（反射仍是 9 字段），必须再 `refresh_unity(force, all, request)` 触发域重载才生效（判据 = `unity_reflect` 数出 13 字段）。
+- ⭐ **库 DLL 再换代（2026-10-09，自动心跳 + 持久 clientId）**：新 `KCPNet.dll`（48128 B）新增 `KCPNet<T,K>.ClientId`（get/set）、`KCPSession<T>.{HeartbeatIntervalMs,TimeoutMs,EnableTimeoutCheck}`、`NetConfig.{HeartbeatIntervalMs=3000,DefaultTimeoutMs=15000}`。⚠ **`NetConfig` 在库内部（工程里没有 `NetConfig.cs`）** ⇒ 那两条常量改不了，要调只能逐会话设属性。
+  **心跳** = 写在 `KCPSession` 基类、3s 双向互发 ⇒ `ClientSession`/`HostSession` 自动继承、业务零改动，且**不进 `MessageCenter`**（不污染游戏逻辑）。
+  **去重** = 握手 `REQUEST_CONNECT:<clientId>` / 道别 `DISCONNECT:<clientId>`（不带该段仍兼容）；客户端要做的两行已落 `NetSvc.cs`：字段 `private readonly string _clientId = Guid.NewGuid().ToString("N")` + `ConnectTo()` 里 `client.ClientId = _clientId`（换端口重连复用同值 ⇒ 房主侧只留一条会话）。`NetHostSvc` 无需改（房主是服务器侧，不填 `ClientId`）。
+  ⚠⚠ **库心跳不喂 `NetHostSvc._lastSeen`**（它只在 `Update` 出队、经 `MessageCenter.Dispatch` 时刷新）⇒ 应用层 2s `PingReq` 心跳**必须保留**，否则 `EvictIdleMembers`（8s）会把健康成员误踢。
+  验证：`Library/ScriptAssemblies/02_Net.dll` 字节能搜到 `_clientId`、Console 0 error、离线编译 0 错误；`KCPNet` 反射出上面 5 个新成员。
+- ⭐ **库心跳的真实机理（2026-10-09 反射 + IL 反汇编实测，别再靠猜）**：`KCPSession<T>` 内部有
+  `static byte[] HeartbeatMarker` / `_lastHeartbeatSendTicks` / `_lastRecvTimeUtcTicks` / `_heartbeatLock` +
+  私有 `TrySendHeartbeat(DateTime)` / `static IsHeartbeat(byte[])` / `RefreshLastRecvTime()`。
+  - `TrySendHeartbeat` IL：`HeartbeatIntervalMs<=0` 直接 ret；用 `_lastHeartbeatSendTicks` 节流；把 `HeartbeatMarker.Clone()`（有 `AesKey` 先 `Encrypt`）**直接 `m_kcp.Send(...)`** ⇒ **发的是带魔数的裸字节，不是 `NetMessage`**。
+  - `IsHeartbeat` IL：先比长度、再逐字节比 `HeartbeatMarker`（全等）⇒ 这是"进入反序列化之前的判据"，所以心跳**永远到不了 `OnReciveMsg`/`MessageCenter`**。
+  - `UpdateAsync` 状态机 IL 顺序：`OnUpdate(now)` → `TrySendHeartbeat(now)` → `if(EnableTimeoutCheck)` 锁读 `_lastRecvTimeUtcTicks`，`(now.Ticks-last)/10000 > TimeoutMs` ⇒ `WarnLog` + **`CloseSession()`** 退循环 → 之后才是 KCP `Update/Recv`。
+  - `ReciveData(byte[])`（UDP 入口）：`RefreshLastRecvTime(); m_kcp.Input(bytes)` ⇒ **任意 UDP 包到达都刷库时钟**；心跳只是"空闲时也保证有包可刷"。
+  ⇒ 两条独立时钟：**库超时看 `_lastRecvTimeUtcTicks`（15s，库自己 `CloseSession`）**；**房主 `EvictIdleMembers` 看 `_lastSeen`（8s，只由业务消息出队刷新，`NetHostSvc.cs` Update 出队循环）**。判据与作用域都不同 ⇒ 库心跳**替代不了**应用层 Ping；且库未暴露"某会话最后活动时间"（`RefreshLastRecvTime` 私有、`OnUpdate` 不带 sid）⇒ 现状下应用层 Ping 是房主感知成员存活的**唯一通道**。`RttMs` 也依赖 Pong。
 - `FPSGame.Net.NetRoomFlow`（新，挂 GameRoot）= 成员入房唯一入口：`Join(room, name, pwd, cb)` 内部「ConnectToRoom → JoinRoom」，**带超时（默认 10s）**、事件 `OnJoinResult/OnPlayerList/OnStartGame`、`Host(HostRoomOptions, out reason)`；`MessageCenter` 同命令号单处理器 ⇒ 它与 `LanRoomDemo`/`NetDemo` 不能同时挂。
 - `HostRoomOptions`（`Services/Msg/RoomMsg.cs`）：`StartHost(HostRoomOptions)` 是推荐入口（旧 4 参签名保留给 demo）；`StartGameNtf` 已扩 `Difficulty/TaskIndex/ExtraDiff/Seed/PlayMode`（成员侧应用仍是 TODO）。
 - `PasswordWnd`（`10UI/Wnd/PasswordWnd.cs` + `Resources/UI/Wnd/PasswordWnd.prefab`）：通用单行输入窗，`WndType.Password` + `WndHub.Password`；已用于**房间密码**（`ServerListPanel.Activate`）与**首次起名**（`FrontWnd.AskPlayerName`）；预制体由 TipWnd 复制改造，输入框是从 SelectMapWnd 的 `Filter/InputField (TMP)` 复制来的。
