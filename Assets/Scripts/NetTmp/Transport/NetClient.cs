@@ -15,6 +15,13 @@ namespace FPSGame.Net
     {
         private KCPNet<ClientSession, NetMessage> _client;
 
+        /// <summary>
+        /// 【客户端身份】进程内固定的身份 ID（只读 ⇒ 换端口重连复用同一个值）。
+        /// 房主侧按它认人 ⇒ 同一玩家反复重连只保留一条会话；不注入则退回库的"按 ip:端口 去重"
+        /// （换端口就认不出是同一个人）。必须在 <see cref="ConnectToRoom"/> 里注入 client.ClientId。
+        /// </summary>
+        private readonly string _clientId = System.Guid.NewGuid().ToString("N");
+
         /// <summary>是否已建立 KCP 连接（供业务层判断能否发送消息）。</summary>
         public bool IsConnected => _client != null && _client.clientSession != null && _client.clientSession.IsConnected();
 
@@ -51,6 +58,8 @@ namespace FPSGame.Net
             Disconnect(); // 换房间/首次回连前，先清理旧连接
 
             _client = new KCPNet<ClientSession, NetMessage>();
+            // 注入本机身份：随握手上报 ⇒ 房主按 clientId 去重（换端口重连也认得出是同一个人）
+            _client.ClientId = _clientId;
             _client.StartAsClient(room.HostIp, room.HostPort);
 
             var kcp = _client;

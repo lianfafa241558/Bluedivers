@@ -173,9 +173,11 @@
   ⚠⚠ **换 DLL 后 Unity 里的旧程序集不会自动换**：本次 `AssetDatabase.ImportAsset(ForceUpdate)` 单独调用**无效**（反射仍是 9 字段），必须再 `refresh_unity(force, all, request)` 触发域重载才生效（判据 = `unity_reflect` 数出 13 字段）。
 - ⭐ **库 DLL 再换代（2026-10-09，自动心跳 + 持久 clientId）**：新 `KCPNet.dll`（48128 B）新增 `KCPNet<T,K>.ClientId`（get/set）、`KCPSession<T>.{HeartbeatIntervalMs,TimeoutMs,EnableTimeoutCheck}`、`NetConfig.{HeartbeatIntervalMs=3000,DefaultTimeoutMs=15000}`。⚠ **`NetConfig` 在库内部（工程里没有 `NetConfig.cs`）** ⇒ 那两条常量改不了，要调只能逐会话设属性。
   **心跳** = 写在 `KCPSession` 基类、3s 双向互发 ⇒ `ClientSession`/`HostSession` 自动继承、业务零改动，且**不进 `MessageCenter`**（不污染游戏逻辑）。
-  **去重** = 握手 `REQUEST_CONNECT:<clientId>` / 道别 `DISCONNECT:<clientId>`（不带该段仍兼容）；客户端要做的两行已落 `NetSvc.cs`：字段 `private readonly string _clientId = Guid.NewGuid().ToString("N")` + `ConnectTo()` 里 `client.ClientId = _clientId`（换端口重连复用同值 ⇒ 房主侧只留一条会话）。`NetHostSvc` 无需改（房主是服务器侧，不填 `ClientId`）。
-  ⚠⚠ **库心跳不喂 `NetHostSvc._lastSeen`**（它只在 `Update` 出队、经 `MessageCenter.Dispatch` 时刷新）⇒ 应用层 2s `PingReq` 心跳**必须保留**，否则 `EvictIdleMembers`（8s）会把健康成员误踢。
-  验证：`Library/ScriptAssemblies/02_Net.dll` 字节能搜到 `_clientId`、Console 0 error、离线编译 0 错误；`KCPNet` 反射出上面 5 个新成员。
+  **去重** = 握手 `REQUEST_CONNECT:<clientId>` / 道别 `DISCONNECT:<clientId>`（不带该段仍兼容）。
+  ⚠⚠ **两行要加在传输层 `NetTmp/Transport/NetClient.cs`（`02_Net`），不是 07 的 `NetSvc`**（`NetSvc` 现在是薄壳，`new KCPNet<...>` 只在 `NetClient.ConnectToRoom` 里）：字段 `private readonly string _clientId = Guid.NewGuid().ToString("N")` + 在 `new KCPNet<ClientSession, NetMessage>()` **之后、`StartAsClient` 之前** 设 `_client.ClientId = _clientId`。`NetServer`/`NetHostSvc` 无需改（房主是服务器侧，不填 `ClientId`）。
+  ⚠⚠ 该两行今天**被覆盖过 2 次**（① `45106548 Merge` 把 `NetTmp` 拆成 `02_Net`+`07NetGame`，旧 `NetTmp/Client/NetSvc.cs` 整体消失；② 外部编辑器缓冲区把 `NetClient.cs` 存回原样）⇒ 改完必须用 `02_Net.dll` **字节含 `_clientId`** 收尾核对，别只信 `replace_in_file` 的返回值。
+  ⚠⚠ **库心跳不喂房主的存活表**（新布局里表在 `02_Net` 的 `NetServer`（`LastSeen`/`Touch`），只在 `Pump` 出队、经 `MessageCenter.Dispatch` 时刷新；`NetHostSvc.EvictIdleMembers` 只做"谁是玩家"的判断）⇒ 应用层 2s `PingReq` 心跳**必须保留**，否则 8s 误踢健康成员。
+  验证（17:27 重做后）：`git diff` 两处 hunk 正确 + `offline_compile.py 02_Net` 0 错误 + `Library/ScriptAssemblies/02_Net.dll` 17:27:53 产出（晚于源 17:27:52）且字节含 `_clientId` + Console 0 error；`KCPNet` 反射出上面 5 个新成员。
 - ⭐ **库心跳的真实机理（2026-10-09 反射 + IL 反汇编实测，别再靠猜）**：`KCPSession<T>` 内部有
   `static byte[] HeartbeatMarker` / `_lastHeartbeatSendTicks` / `_lastRecvTimeUtcTicks` / `_heartbeatLock` +
   私有 `TrySendHeartbeat(DateTime)` / `static IsHeartbeat(byte[])` / `RefreshLastRecvTime()`。
