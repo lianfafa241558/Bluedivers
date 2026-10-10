@@ -157,6 +157,7 @@ public class TeamManager : Singleton<TeamManager> ,I_GlobaManager
             airdrop = new int[4],
             weapons = arch.GetWeaponSelect(arch.lastSelectRole),
             Upgrades = arch.GetWeaponUpgrade(arch.lastSelectRole),
+            weaponModules = arch.GetWeaponModules(arch.lastSelectRole),
             boosterId = 0,
         });
         Self = players[0];
@@ -181,7 +182,11 @@ public class PlayerData
     public float roleExp;
     public int[] airdrop;
     public int[] weapons;
+    /// <summary>每把武器的改装：按 <c>(int)WeaponTypeEnum</c> 索引，每项是该武器各档**选中的改装下标**（-1 = 未选）。</summary>
     public int[][] Upgrades;
+    /// <summary>每把武器**选中的模组下标**（按 <c>(int)WeaponTypeEnum</c> 索引；-1/越界 = 无模组）。
+    /// <para>▍联机同步来的（<c>PlayerLoadoutMsg.Modules</c>）：盟友要按它装模组，否则"你装了模组、别人看不见"。</para></summary>
+    public int[] weaponModules;
     /// <summary>是否已就绪（由 09 的桥按名单权威写入）。⚠ 窗口要**按它渲染**、不能只靠"变化事件"：
     /// 事件只在值变化时推一次，而窗口可能是在变化之后才打开的（2026-10-07 实测：客机看不到主机的就绪）。</summary>
     public bool isReady;

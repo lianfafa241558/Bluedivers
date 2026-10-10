@@ -78,3 +78,4 @@
 ## 地形 / 渲染
 - NavMesh 在 `MapRoot`；跨层只传 `GameObject[]` / 基础类型
 - ToonLit 5 pass 共用 `ToonLit_Shared.hlsl`；`GetFinalBaseColor` = albedo 唯一入口；未进 CBUFFER = 死属性；溶解 `clip(step(dissolve,v)-dissolve+_EdgeWidth)`
+- 天气 `WeatherSystem.RollWeather` 的随机源**必须按权威种子派生独立流**（`SeedStream.Weather=14`，2026-10-10）：原来抽全局 `BattleRandom`，它在开局被任务点/兴趣点生成推进到不同位置 ⇒ 联机"一边晴一边雨"；单机（`TaskState.Seed==0`）仍沿用全局流

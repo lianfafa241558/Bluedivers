@@ -40,12 +40,18 @@ namespace FPSGame.Net
         /// <summary>全队强化同步（同上，房主自己也收）。参数：sid / 房主视角下标 / 强化 id。</summary>
         public static event Action<uint, int, int> OnBoosterSync;
 
+        /// <summary>玩家配置（改装）同步：武器改装档位/模组 + 载具改装。
+        /// <para>▍入房时每个玩家各来一次，之后**改配置**（SelectRoleWnd / VehicleWnd 关窗）再来一次；
+        /// 新人入房时房主会**补发全量**（含已在房间里的其他玩家），所以订阅方按 <c>Sid</c> 覆盖即可。</para></summary>
+        public static event Action<PlayerLoadoutMsg> OnLoadoutSync;
+
         /// <summary>局内切枪同步（房主权威转发后触发，**房主自己也会收到**）。参数：sid / 武器槽位。</summary>
         public static event Action<uint, int> OnWeaponSwitch;
 
-        /// <summary>开火表现同步（同上，房主自己也收）。参数：sid / 武器槽位 / **射击方向**（世界空间，零向量 = 未知）
-        /// / **目标点**（开枪者准心实指那一点；零向量 = 未知 ⇒ 接收端只用方向）。</summary>
-        public static event Action<uint, int, UnityEngine.Vector3, UnityEngine.Vector3> OnShoot;
+        /// <summary>开火表现同步（同上，房主自己也收）。参数：sid / 武器槽位 / **伤害档位**
+        /// （<c>WeaponBaseController.UseDamageIndex</c>：接收端必须用**开枪者**的档位，否则命中特效/表现弹取错配置）
+        /// / **射击方向**（世界空间，零向量 = 未知）/ **目标点**（开枪者准心实指那一点；零向量 = 未知 ⇒ 只用方向）。</summary>
+        public static event Action<uint, int, int, UnityEngine.Vector3, UnityEngine.Vector3> OnShoot;
 
         /// <summary>【房主侧】收到成员请求"场景 actor 快照"。参数：请求方 sid。
         /// <para>▍为什么要绕一手：快照要从 <c>ActorsManager</c> 里取（05/09 才看得见），而本程序集 <b>不引用</b>玩法层
@@ -110,6 +116,11 @@ namespace FPSGame.Net
         /// <c>GameStateController(state:8) → TransSceneController.StartLoad()</c> 链上，自己再调一次会双加载。</para></summary>
         public static event Action<int> OnTransition;
 
+        /// <summary>【全体加载完成 ⇒ 一起开打】房主广播后触发（房主自己也收）。参数 = 本局局号。
+        /// <para>▍与 <see cref="OnTransition"/> 的区别：那条是"开始加载"（各端加载快慢差很多），
+        /// 这条才是"都加载完了"，也就是各端真正开打的时刻（见 <see cref="BattleStarted"/>）。</para></summary>
+        public static event Action<int> OnBattleStart;
+
         /// <summary>【成员侧】房主宣告本局结束（结果 / 延迟）⇒ 本地走 BattleManager.EndGame。
         /// <para>⚠ 接收端必须"本局只结束一次"（BattleManager 有门），否则会排两个定时器。</para></summary>
         public static event Action<GameOverMsg> OnGameOver;
@@ -122,6 +133,11 @@ namespace FPSGame.Net
 
         /// <summary>【双向】家具交互（<c>SyncId</c> = 家具跨端稳定键）⇒ 远端重放同一交互。</summary>
         public static event Action<FurnitureOperateMsg> OnFurnitureOperate;
+
+        /// <summary>【双向】场景可破坏物（油桶这类）被打掉 ⇒ 远端把同一件也打掉（键 = 跨端稳定 SyncId）。
+        /// <para>▍只传"死了"、不传伤害：这类物件没有血量口径要一致（打爆才是唯一有意义的状态），
+        /// 少一条伤害通道就少一处两端不一致。</para></summary>
+        public static event Action<SceneDestructibleMsg> OnSceneDestructible;
 
         /// <summary>【双向】标记点位（表现类；目标实体是引用不能过网 ⇒ 只传点）⇒ 远端在自己的字幕/光环上复现。</summary>
         public static event Action<MarkMsg> OnMark;
@@ -139,8 +155,44 @@ namespace FPSGame.Net
         /// <summary>当前是否在"入房进行中"（防重复点）。</summary>
         public bool IsJoining { get; private set; }
 
+        /// <summary>本机当前所在的那个房间（我作为**成员**回连成功的那一间）；不在别人的房里 = null。
+        /// <para>▍用途：房间列表里判"我要加入的这间我已经在里面了"（见 <see cref="IsInRoom"/>）——
+        /// 不然会对着自己所在的房再回连一次。</para></summary>
+        public LanRoomInfo CurrentRoom { get; private set; }
+
+        /// <summary>
+        /// 本机玩家在**房主视角名单**里的序号（房主 = 0；成员 = 自己在房主名单里的下标；名单还没到位 = -1）。
+        ///
+        /// <para>▍为什么不能用 <c>TeamManager.SelfIndex</c>：本地名单把"自己"固定放在 <c>players[0]</c>
+        /// （自己视角，见 <c>TeamNetBridge.HandlePlayerList</c> 的 ①）⇒ 它**恒为 0**，
+        /// 拿它做"按序号错开"等于不错开（大厅出生点/准备点都要靠这个序号摊开，2026-10-10 实测）。</para>
+        /// </summary>
+        public int SelfHostIndex { get; private set; } = -1;
+
+        /// <summary>本机是不是在一次**联机房间会话**里（房主，或已入房的成员）。单机 = false。
+        /// <para>▍用途：开局加载闸门（<c>BattleManager.WaitAllPlayersLoaded</c>）—— 单机没人可等，直接开打。</para></summary>
+        public bool InRoom
+        {
+            get
+            {
+                if (IsHost) return true;
+                return NetSvc.Instance != null && NetSvc.Instance.IsConnected;
+            }
+        }
+
+        /// <summary>本局是否已经"全体加载完成 ⇒ 一起开打"。
+        /// <para>▍房主看权威位（<c>NetHostSvc.IsBattleStarted</c>，他收齐票才置位）；成员看广播位
+        /// （收到 <c>BattleStartSync</c> 才翻）。两者由同一条广播驱动，判据只有一处。</para></summary>
+        public bool BattleStarted => IsHost
+            ? NetHostSvc.Instance != null && NetHostSvc.Instance.IsBattleStarted
+            : _battleStarted;
+
         private float _timeoutLeft;
         private Action<bool, string> _joinCallback;
+        /// <summary>正在回连的那间房（连上并成功入房后转正到 <see cref="CurrentRoom"/>）。</summary>
+        private LanRoomInfo _pendingRoom;
+        /// <summary>【成员位】收到房主"一起开打"广播即置位（新一局由 <see cref="HandleTaskConfirmNtf"/> 复位）。</summary>
+        private bool _battleStarted;
 
         private void Awake()
         {
@@ -152,6 +204,8 @@ namespace FPSGame.Net
             // 舰桥准备：房主转发出来的两条（成员收广播、房主收本地自派发，走同一条路）
             MessageCenter.Register<PlayerArmamentSync>(CmdId.PlayerArmamentSync, HandleArmamentSync);
             MessageCenter.Register<PlayerBoosterSync>(CmdId.PlayerBoosterSync, HandleBoosterSync);
+            // 玩家配置（改装）同步：房主 -> 全体（房主自己那条也是本地自派发）
+            MessageCenter.Register<PlayerLoadoutMsg>(CmdId.PlayerLoadoutSync, HandleLoadoutSync);
             // 局内表现同步（切枪 / 开火 / 生命状态）
             MessageCenter.Register<PlayerWeaponSwitch>(CmdId.PlayerWeaponSwitchSync, HandleWeaponSwitchSync);
             MessageCenter.Register<PlayerShoot>(CmdId.PlayerShootSync, HandleShootSync);
@@ -178,6 +232,10 @@ namespace FPSGame.Net
             MessageCenter.Register<MarkMsg>(CmdId.MarkNtf, HandleMarkNtf);
             MessageCenter.Register<CallKaiMsg>(CmdId.CallKaiNtf, HandleCallKaiNtf);
             MessageCenter.Register<WaveCenterMsg>(CmdId.WaveCenterNtf, HandleWaveCenterNtf);
+            // 开局加载闸门：房主"全体加载完成 ⇒ 一起开打"（成员收广播、房主收本地自派发，走同一条路）
+            MessageCenter.Register<BattleStartMsg>(CmdId.BattleStartSync, HandleBattleStartSync);
+            // 场景可破坏物（油桶这类）被打掉 ⇒ 远端把同一件也打掉（双向一条）
+            MessageCenter.Register<SceneDestructibleMsg>(CmdId.SceneDestructibleNtf, HandleSceneDestructibleNtf);
         }
 
         private void OnDestroy()
@@ -188,6 +246,7 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.Transition);
             MessageCenter.Unregister(CmdId.PlayerArmamentSync);
             MessageCenter.Unregister(CmdId.PlayerBoosterSync);
+            MessageCenter.Unregister(CmdId.PlayerLoadoutSync);
             MessageCenter.Unregister(CmdId.PlayerWeaponSwitchSync);
             MessageCenter.Unregister(CmdId.PlayerShootSync);
             MessageCenter.Unregister(CmdId.PlayerVitalSync);
@@ -210,6 +269,8 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.MarkNtf);
             MessageCenter.Unregister(CmdId.CallKaiNtf);
             MessageCenter.Unregister(CmdId.WaveCenterNtf);
+            MessageCenter.Unregister(CmdId.BattleStartSync);
+            MessageCenter.Unregister(CmdId.SceneDestructibleNtf);
             if (ReferenceEquals(Instance, this)) Instance = null;
         }
 
@@ -254,6 +315,7 @@ namespace FPSGame.Net
             IsJoining = true;
             _timeoutLeft = Mathf.Max(1f, joinTimeout);
             _joinCallback = cb;
+            _pendingRoom = room;
 
             Debug.Log($"[NetRoomFlow] 回连房主 {room.HostIp}:{room.HostPort} …");
 
@@ -278,7 +340,63 @@ namespace FPSGame.Net
             NetSvc.Instance?.Disconnect();
             IsJoining = false;
             _joinCallback = null;
+            _pendingRoom = null;
+            CurrentRoom = null;      // 已经不在任何房间里了（房间列表据此判"我是不是已经在里面"）
+            _battleStarted = false;
+            SelfHostIndex = -1;      // 退房：序号作废（下次入房由名单重算）
             SelfSid = 0;
+        }
+
+        // ==================== 开局加载闸门（等所有人都加载完再一起开打，2026-10-10） ====================
+
+        /// <summary>我是不是这个房间的**房主**（= 广播里带着本机的合成房主名）。
+        /// <para>▍判据取 <c>NetHostSvc.SelfHostName</c>（<c>PlayerNames[0]</c> 那个运行时合成名），
+        /// 那是"排除自己开的房"的既有约定 —— 比 IP/端口稳（本机房间的 HostIp 可能是 127.0.0.1 / 网卡地址之一）。</para></summary>
+        public bool IsHostOfRoom(LanRoomInfo room)
+        {
+            var host = NetHostSvc.Instance;
+            if (host == null || host.RoomInfo == null || room == null) return false;
+            if (room.HostPort != host.RoomInfo.HostPort) return false;
+
+            string self = host.SelfHostName;
+            var names = room.PlayerNames;
+            if (string.IsNullOrEmpty(self) || names == null) return false;
+            for (int i = 0; i < names.Length; ++i)
+            {
+                if (names[i] == self) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 我是不是**已经在这个房间里了**（自己开的房，或我已经连着的就是这间）。
+        /// <para>▍用途：房间列表里点"加入"时先判它 ⇒ 只提示"已经在里面了"，不再回连一次
+        /// （对已连着的房主再 <c>ConnectToRoom</c> 会把现有会话顶掉）。</para>
+        /// </summary>
+        public bool IsInRoom(LanRoomInfo room)
+        {
+            if (room == null) return false;
+            if (IsHostOfRoom(room)) return true;
+
+            var cur = CurrentRoom;
+            return cur != null && cur.HostPort == room.HostPort && cur.HostIp == room.HostIp;
+        }
+
+        /// <summary>
+        /// 【成员】上报"本机战斗场景加载完成"。房主收齐所有人（或超时）后广播"一起开打"。
+        /// <para>调用点：<c>BattleManager.WaitAllPlayersLoaded</c>（开局闸门）。</para>
+        /// </summary>
+        public void SendLoaded()
+        {
+            if (IsHost) return;
+            if (NetSvc.Instance == null || !NetSvc.Instance.IsConnected) return;
+            NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.LoadCompleteNtf, new LoadCompleteMsg { MatchId = CurrentMatchId }));
+        }
+
+        /// <summary>【房主】本机战斗场景加载完成 ⇒ 记一票（人到齐就广播，见 <c>NetHostSvc.MarkLocalLoaded</c>）。</summary>
+        public void HostLoaded()
+        {
+            NetHostSvc.Instance?.MarkLocalLoaded();
         }
 
         // ==================== 上行（房主/成员分流） ====================
@@ -356,6 +474,28 @@ namespace FPSGame.Net
             }));
         }
 
+        /// <summary>
+        /// 【上行】上报本机**配置**（武器改装档位/模组 + 载具改装）。
+        /// <para>▍何时调：① 入房成功各报一次（见 <c>TeamNetBridge.HandleJoinResult</c>）；
+        /// ② <c>SelectRoleWnd</c> / <c>VehicleWnd</c> 关窗、且确实改过时再报一次。</para>
+        /// <para>▍房主分流与其它 Ntf 一致：**本地权威 + 广播给全体**（不单发自己，避免双份）；
+        /// 成员则发给房主，由房主校验 sid 后统一广播（含补发给新人）。</para>
+        /// </summary>
+        public void SendLoadout(PlayerLoadoutMsg msg)
+        {
+            if (msg == null) return;
+
+            if (IsHost)
+            {
+                NetHostSvc.Instance?.SetLocalLoadout(msg);   // SetLocalLoadout 内部：落表 + 广播 + 本地自派发
+                return;
+            }
+            if (!CanSendToHost) return;
+
+            msg.Sid = SelfSid;
+            NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.PlayerLoadoutNtf, msg));
+        }
+
         /// <summary>【上行】准备状态：房主天然算准备（<c>NetHostSvc</c> 里 IsReady 恒 true）⇒ 不上报。</summary>
         public void SendReady(bool ready)
         {
@@ -419,8 +559,25 @@ namespace FPSGame.Net
 
         private void HandlePlayerListSync(PlayerListSync sync)
         {
+            // ★ 先算"我在房主名单里的序号"，再抛事件：订阅方（大厅角色管理）要靠它决定"我站哪一位"
+            UpdateSelfHostIndex(sync != null ? sync.Players : null);
             OnPlayerList?.Invoke(sync != null ? sync.Players : null,
                                 sync != null ? sync.Profiles : null);
+        }
+
+        /// <summary>从房主下发的名单里算出"我在房主视角的序号"（房主自己恒 0；找不到 = -1）。</summary>
+        private void UpdateSelfHostIndex(PlayerInfo[] players)
+        {
+            if (IsHost) { SelfHostIndex = 0; return; }   // 房主视角里自己必然是 0
+
+            uint self = SelfSid;
+            if (players == null || players.Length == 0 || self == 0u) { SelfHostIndex = -1; return; }
+
+            for (int i = 0; i < players.Length; ++i)
+            {
+                if (players[i] != null && players[i].Sid == self) { SelfHostIndex = i; return; }
+            }
+            SelfHostIndex = -1;
         }
 
         private void HandleArmamentSync(PlayerArmamentSync s)
@@ -449,15 +606,17 @@ namespace FPSGame.Net
         /// <para>▍为什么要有它：接收端的"表现弹"是本地模拟的，只给方向时落点由本端地形与枪口偏移决定
         /// ⇒ 与开枪者看到的落点不一致（2026-10-07 实测）。带上它，接收端改成"枪口 → 目标点"的方向，
         /// 弹道就穿过同一个点（旧版发送端没有这个字段 ⇒ 全 0 ⇒ 自动退回老行为）。</para></param>
-        public void SendShoot(int slotIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hitPoint = default)
+        /// <param name="damageIndex">开枪那把枪的**伤害档位**（<c>WeaponBaseController.UseDamageIndex</c>）：
+        /// 接收端要按它取"命中特效/表现弹"（信号枪 0=标记 / 1=呼叫战备，不同步会放错特效，见 <see cref="PlayerShoot.DamageIndex"/>）。</param>
+        public void SendShoot(int slotIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hitPoint = default, int damageIndex = 0)
         {
             if (IsHost)
             {
-                OnShoot?.Invoke(0, slotIndex, dir, hitPoint);
+                OnShoot?.Invoke(0, slotIndex, damageIndex, dir, hitPoint);
                 NetHostSvc.Instance.SendToAll(MessageCenter.Pack(CmdId.PlayerShootSync,
                     new PlayerShoot
                     {
-                        Sid = 0, SlotIndex = slotIndex,
+                        Sid = 0, SlotIndex = slotIndex, DamageIndex = damageIndex,
                         DirX = dir.x, DirY = dir.y, DirZ = dir.z,
                         HitX = hitPoint.x, HitY = hitPoint.y, HitZ = hitPoint.z,
                     }));
@@ -467,7 +626,7 @@ namespace FPSGame.Net
             NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.PlayerShootNtf,
                 new PlayerShoot
                 {
-                    Sid = SelfSid, SlotIndex = slotIndex,
+                    Sid = SelfSid, SlotIndex = slotIndex, DamageIndex = damageIndex,
                     DirX = dir.x, DirY = dir.y, DirZ = dir.z,
                     HitX = hitPoint.x, HitY = hitPoint.y, HitZ = hitPoint.z,
                 }));
@@ -551,7 +710,7 @@ namespace FPSGame.Net
         private void HandleShootSync(PlayerShoot s)
         {
             if (s != null)
-                OnShoot?.Invoke(s.Sid, s.SlotIndex,
+                OnShoot?.Invoke(s.Sid, s.SlotIndex, s.DamageIndex,
                     new UnityEngine.Vector3(s.DirX, s.DirY, s.DirZ),
                     new UnityEngine.Vector3(s.HitX, s.HitY, s.HitZ));
         }
@@ -764,6 +923,21 @@ namespace FPSGame.Net
             if (m != null) OnFurnitureOperate?.Invoke(m);
         }
 
+        /// <summary>场景可破坏物被打掉：成员上报房主 / 房主转发全体（走向由 09 侧的 NetDestructibleBridge 决定）。</summary>
+        public void SendSceneDestructible(int syncId, uint sid)
+        {
+            var msg = MessageCenter.Pack(CmdId.SceneDestructibleNtf,
+                new SceneDestructibleMsg { SyncId = syncId, Sid = sid });
+
+            if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
+            else NetSvc.Instance?.SendMsg(msg);
+        }
+
+        private void HandleSceneDestructibleNtf(SceneDestructibleMsg m)
+        {
+            if (m != null) OnSceneDestructible?.Invoke(m);
+        }
+
         /// <summary>标记点位：成员上报房主 / 房主转发全体（走向由 09 侧的 NetActionBridge 决定）。</summary>
         public void SendMark(uint sid, float x, float y, float z)
         {
@@ -812,10 +986,16 @@ namespace FPSGame.Net
             if (s != null) OnBoosterSync?.Invoke(s.Sid, s.PlayerIndex, s.BoosterId);
         }
 
+        private void HandleLoadoutSync(PlayerLoadoutMsg m)
+        {
+            if (m != null) OnLoadoutSync?.Invoke(m);
+        }
+
         private void HandleTaskConfirmNtf(TaskConfirmNtf ntf)
         {
             IsJoining = false;
             CurrentMatchId = ntf != null ? ntf.MatchId : 0;
+            _battleStarted = false;   // ★ 新一局：加载闸门复位 —— 要重新等"全体加载完成"，不能用上一局的位
 
             // 成员侧「确认本局配置」由 09_Managers 的 TeamNetBridge.HandleTaskConfirm 承接：
             //   幂等（MatchId）→ 校验（地图/任务下标 + 任务指纹）→ SetSeed + SetTask(…, ntf.Seed)
@@ -828,6 +1008,14 @@ namespace FPSGame.Net
         private void HandleTransitionNtf(TransitionNtf ntf)
         {
             OnTransition?.Invoke(ntf != null ? ntf.MatchId : 0);
+        }
+
+        /// <summary>房主广播"全体加载完成 ⇒ 一起开打"（房主自己那条由 <c>NetHostSvc</c> 本地自派发）。</summary>
+        private void HandleBattleStartSync(BattleStartMsg m)
+        {
+            _battleStarted = true;
+            if (m != null && m.MatchId != 0) CurrentMatchId = m.MatchId;
+            OnBattleStart?.Invoke(m != null ? m.MatchId : 0);
         }
 
         private void FinishJoin(bool ok, string reason)
@@ -845,11 +1033,16 @@ namespace FPSGame.Net
 
             if (!ok)
             {
+                _pendingRoom = null;
                 Debug.LogWarning($"[NetRoomFlow] 入房失败：{reason}");
                 cb?.Invoke(false, reason);
                 OnJoinResult?.Invoke(false, reason);
                 return;
             }
+
+            CurrentRoom = _pendingRoom;   // 现在"我在这个房间里"（房间列表靠它判"已经在里面了"）
+            _pendingRoom = null;
+            _battleStarted = false;       // 新入房 = 新一局：加载闸门复位
 
             Debug.Log("[NetRoomFlow] 入房成功");
             cb?.Invoke(true, string.Empty);

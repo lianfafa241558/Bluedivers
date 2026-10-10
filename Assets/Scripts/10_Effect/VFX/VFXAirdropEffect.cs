@@ -8,6 +8,7 @@ using FPSGame.Core.Interface;
 using FPSGame.Utils;
 using FPSGame.GameContract;
 using FPSGame.Data;
+using FPSGame.GameData;
 using FPSGame.Managers;
 using FPSGame.Audio;
 using FPSGame.AI;
@@ -62,6 +63,38 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
     private LimitedLife m_Lift;
     private GameObject m_owner;
 
+    /// <summary>本次呼叫者的会话 sid（0 = 房主；-1 = 还没落定，两个入口各自补上）。</summary>
+    private int _callerSid = -1;
+
+    /// <summary>
+    /// 本次呼叫者的 sid —— 这次生成的载具（外骨骼/炮台/运输机）按它取载具改装。
+    /// <para>▍两个入口分别落定：<see cref="SetOwner"/>（**本机玩家自己**叫的）⇒ 本机 sid；
+    /// <see cref="TmpAirdrop(Vector3, int, System.Action{GameObject})"/>（远端复现 / 任务脚本）⇒
+    /// <see cref="SetCallerSid"/> 带来的值，没人带就是 <c>0</c>（房主）。</para>
+    /// </summary>
+    private uint CallerSid => _callerSid < 0 ? 0u : (uint)_callerSid;
+
+    /// <summary>契约实现：远端复现时由 <c>BattleManager.ReleaseAirdrop</c> 带上呼叫者 sid（0 = 房主）。</summary>
+    public void SetCallerSid(uint sid) => _callerSid = (int)sid;
+
+    /// <summary>
+    /// 把"本次呼叫者"的归属写到刚生成的载具上（含子物体）。
+    /// <para>▍为什么是"生成后再打标"而不是"生成时就知道"：<c>Instantiate</c> 会**同步**跑完
+    /// <c>Awake</c>（那时只知道默认归属）⇒ 必须生成后调 <c>SetOwnerSid</c> 纠正一次
+    /// （<c>BattleApplyVehicleData</c> 的应用是**可重入**的，代价只是重建一次武器/贴图）。</para>
+    /// </summary>
+    private void StampCaller(params Transform[] roots)
+    {
+        for (int r = 0; r < roots.Length; ++r)
+        {
+            var root = roots[r];
+            if (root == null) continue;
+
+            var targets = root.GetComponentsInChildren<BattleApplyVehicleData>(true);
+            for (int i = 0; i < targets.Length; ++i) targets[i].SetOwnerSid(CallerSid);
+        }
+    }
+
     /// <summary>本次呼叫是否跳过信标等待阶段("取消空投准备时间"强化)，回收时复位</summary>
     private bool m_SkipDeployWait;
     /// <summary>本次呼叫空投舱的落地速度倍率("空投降落速度"强化，1=配置值)，回收时复位</summary>
@@ -71,12 +104,28 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
     public void SetOwner(GameObject owner, GameObject weaponRoot, Collider collider, Vector3 point) {
         //其实这里有个bug，如果连续放，就会变成同时落地，但是实际上拍空投有Cd，所以直接不管！
         data = AirdropController.WaitRelease;
+        // ⚠ 没有待释放的战备时**直接忽略**：远端重放"开枪命中特效"也会走到这里（命中特效/伤害配置都是
+        //   本端自己的状态），那时 WaitRelease 为 null ⇒ 后面 data.cfg 必 NRE。
+        //   ⚠ 必须顺手**回收信标**：只 return 的话组件还激活、`data` 是 null ⇒ Update 每帧 NRE（2026-10-10 打包端实测）。
+        if (data == null || owner == null)
+        {
+            Debug.LogWarning("[VFXAirdropEffect] 释放信标但没有待释放的战备（远端重放/脚本误触发）⇒ 回收信标");
+            RecycleSelf();
+            return;
+        }
         //同时,锁定的点总是会是实际的脚下而不是单位头顶
         if (Physics.Raycast(point+Vector3.up*10,Vector3.down, out var hit,200, LayerDefinition.GroundLayers))
         {
             //Debug.LogError("point"+point+"击中点"+hit.point);
             transform.position = point = hit.point;
         }
+        // ⚠ 朝向必须在**抛事件之前**定好：`NetFriendBridge.HandleLocalAirdrop` 正是在这个事件里读信标的
+        //   eulerAngles 当"释放朝向"发出去的；原来这两句写在事件之后 ⇒ 过网的是特效创建时的旋转
+        //   （identity / 命中面法线），远端那份信标朝向与释放者无关（2026-10-10 用户实测"方向不对"）。
+        transform.parent = null;
+        transform.eulerAngles = new(0, owner.transform.eulerAngles.y, 0);
+        m_owner = owner;
+
         BattleEventBus.Airdrop(owner, gameObject, point, data);
         //武器参数取自信号枪(weaponRoot)，信标特效物体自身不含武器组件
         if (weaponRoot.IsValid()
@@ -102,13 +151,31 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
             }
         }
 
-        transform.parent = null;
-        transform.eulerAngles = new(0, owner.transform.eulerAngles.y, 0);
-        m_owner = owner;
+        // 本机玩家自己叫的（信号枪/超级信标）⇒ 归属就是本机 ⇒ 生成的载具按**本机**载具改装渲染
+        if (_callerSid < 0) _callerSid = (int)VehicleCustomState.LocalSid;
         Init();
     }
+    /// <summary>
+    /// 回收"没有数据可用"的信标本体（回池 + 关掉）。
+    /// <para>▍为什么必须关掉：本组件的 <see cref="Update"/> 每帧都跑，而 <c>data</c> 为 null 时第一句就 NRE
+    /// ⇒ 打包端每帧刷异常（2026-10-10 实测：<c>VFXAirdropEffect.Update</c> NRE 刷屏）。</para>
+    /// </summary>
+    private void RecycleSelf()
+    {
+        data = null;
+        VFXManager.Release(gameObject);
+        gameObject.SetActive(false);
+    }
+
     public void TmpAirdrop(Vector3 point, AirdropData_SO data, System.Action<GameObject> action)
     {
+        // 兜底：id 解析失败（配置被删/旧包）时别把信标留成一个"激活但无数据"的对象（Update 会每帧 NRE）
+        if (data == null)
+        {
+            Debug.LogWarning("[VFXAirdropEffect] TmpAirdrop 收到空配置（战备 id 解析失败？）⇒ 回收信标");
+            RecycleSelf();
+            return;
+        }
         this.data = new(data);
 
         if (Physics.Raycast(point + Vector3.up * 100, Vector3.down, out var hit, 150, LayerDefinition.GroundLayers))
@@ -120,6 +187,9 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         transform.parent = null;
         //transform.eulerAngles = Vector3.zero;
         m_owner = ActorsManager.Player.gameObject;
+        // ⚠ 上面那句 m_owner 是给表现/归属用的，**不代表呼叫者**（远端复现时也会被写成我）
+        //   ⇒ 呼叫者只认 SetCallerSid 带来的值；没人带（任务脚本自己放的）就是房主。
+        if (_callerSid < 0) _callerSid = 0;
         if(action.IsValid()) OnCreatObject += action;
         Init();
     }
@@ -174,6 +244,8 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
 
     private void Update()
     {
+        if (data == null) return;   // 兜底：本组件被激活但没有数据（见 SetOwner/TmpAirdrop 的早退）⇒ 什么都不做
+
         // ⚠⚠ 这里原来是"每渲染帧 `data.Update()`"，而 `AirdropData.Update()` 内部是 `time -= 逻辑帧时长(0.02)`
         //   ⇒ 战备计时**随帧率变快**（60fps 快 1.2 倍、144fps 快 2.88 倍）。单机看不出，
         //   联机时两端帧率不同 ⇒ 同一发战备一边"即将抵达"、一边已经"正在进行"（2026-10-07 实测）。
@@ -216,6 +288,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
         //强化状态只对本次呼叫有效，特效被回收(池化复用)前必须复位
         m_SkipDeployWait = false;
         m_PodFallScale = 1f;
+        _callerSid = -1;   // 同上：呼叫者也只对本次呼叫有效（信标是池化复用的）
 
         if (!m_creatObject.IsValid()) return;
 
@@ -282,6 +355,8 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
                         actor.Owner = m_owner.GetComponent<IActor>();
                     }
                 }
+
+                StampCaller(m_creatObject);   // ★ 归属：这次呼叫者（谁叫的算谁的）
 
                 if (m_creatObject.TryGetComponentInChildren(out AirdropPod pro))//补给舱
                 {
@@ -367,6 +442,7 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
             }
         }
 
+        StampCaller(m_creatObject);   // ★ 归属：这次呼叫者
         OnCreatObject?.Invoke(m_creatObject.gameObject);
     }
 
@@ -415,6 +491,8 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
                 {
                     transform.ForEach(item => item.gameObject.SetActive(false));
                 }
+
+                StampCaller(m_creatObject);   // ★ 归属：这次呼叫者
             }
         }
     }
@@ -445,6 +523,8 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
             weapon.Owner = m_owner;
             weapon.RandomSeed = AirdropWeaponSeed(data.cfg.ID);
         }
+        StampCaller(go, m_creatObject);   // ★ 归属：这次呼叫者（运输机 go 本体也带 BattleApplyVehicleData）
+
         //重新设置引导物体的位置
         foreach (var item in m_creatObject.GetComponentsInChildren<GuidedShelling>())
         {
@@ -492,6 +572,8 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
             m_creatObject = VFXManager.Creat(data.cfg.creatObect, go.TransformPoint(0, -2.5f + comp.center.y - comp.height, 1.5f), rotation, go).transform;
             m_creatObject.GetComponent<CharacterController>().enabled = false;
         }
+
+        StampCaller(go, m_creatObject);   // ★ 归属：这次呼叫者（NeoNimbus_Vehicle 本体带 BattleApplyVehicleData）
 
         // 根据 arriveTime 调整运输机俯冲时长：俯冲阶段 = arriveTime - 2 秒
         const float diveArriveOffset = 2f;

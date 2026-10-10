@@ -1,3 +1,4 @@
+using FPSGame.Game;      // ActorsManager（本机玩家：标记上报要按它过滤）
 using FPSGame.Gameplay;
 using FPSGame.Net;
 using UnityEngine;
@@ -54,12 +55,22 @@ namespace FPSGame.Managers
         }
 
         #region 本端 -> 网络
-        // 这两个事件的发布点都只有"本机玩家"（Mark ← VFXHaloEffect / CallKai ← PlayerController 的输入）
-        // ⇒ 不需要再比对身份，按角色取 sid 即可。
+        // CallKai 的发布点只有"本机玩家"（PlayerController 的输入）⇒ 不需要比对身份；
+        // Mark 还有第二个发布源（重放远端开枪的命中特效）⇒ **必须**比对，见 OnLocalMark。
 
         static void OnLocalMark(GameObject owner, GameObject target, Vector3 point)
         {
             if (_applyingRemote) return;
+
+            // ⚠ 只有"本机玩家自己打的标记"才上报（口径同 NetFriendBridge.HandleLocalAirdrop）。
+            //   另一个发布源是**重放远端开枪的命中特效**（WeaponBaseController.SpawnVisualBullet
+            //   → FpsHelper.PlayImpactFx → VFXHaloEffect.SetOwner，owner = 盟友实例）：那条要留在本地
+            //   （驱动本端的任务点发现 / 敌情喊话），一旦被当成本端标记上报，房主分不出真实发起者、
+            //   只能标成 sid=0 ⇒ 发起者收到一份"图标是房主"的假标记，屏幕上就出现两个重叠的标记
+            //   （2026-10-10 用户实测；客机放战备时那条也是这么来的）。
+            var self = ActorsManager.Player;
+            if (owner == null || self == null || self.gameObject == null || owner != self.gameObject) return;
+
             var flow = NetRoomFlow.Instance;
             if (flow == null) return;
             flow.SendMark(flow.IsHost ? 0u : flow.SelfSid, point.x, point.y, point.z);

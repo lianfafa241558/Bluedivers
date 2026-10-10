@@ -154,7 +154,13 @@ namespace FPSGame.Gameplay
         /// <summary>【桥调用】按角色的武器预制体清单装配槽位并应用改装（资料变化时重调）。</summary>
         public void SetWeapons(IList<WeaponPlayerController> prefabs, int[][] upgrades)
         {
-            if (_weapons != null) _weapons.Setup(prefabs, upgrades);
+            SetWeapons(prefabs, upgrades, null);
+        }
+
+        /// <summary>【桥调用】同上，外加**模组**（下标 = (int)WeaponTypeEnum，&lt;0 = 无模组）。</summary>
+        public void SetWeapons(IList<WeaponPlayerController> prefabs, int[][] upgrades, int[] modules)
+        {
+            if (_weapons != null) _weapons.Setup(prefabs, upgrades, modules);
         }
 
         /// <summary>【桥调用】切换显示的武器槽（网络同步落点）。</summary>
@@ -166,9 +172,10 @@ namespace FPSGame.Gameplay
         /// <summary>【桥调用】开火表现（枪口闪光 + 枪响 + 弹道 + 枪械动画）。</summary>
         /// <param name="direction">开火瞬间的射击方向（世界空间）；零向量 = 用枪口朝向</param>
         /// <param name="aimPoint">开枪者准心实指的目标点（世界空间）；零向量 = 未知（见 <see cref="FriendWeaponView.PlayShoot"/>）</param>
-        public void PlayShoot(Vector3 direction = default, Vector3 aimPoint = default)
+        /// <param name="damageIndex">开枪者那把枪的伤害档位（见 <c>PlayerShoot.DamageIndex</c>）</param>
+        public void PlayShoot(Vector3 direction = default, Vector3 aimPoint = default, int damageIndex = 0)
         {
-            if (_weapons != null) _weapons.PlayShoot(direction, aimPoint);
+            if (_weapons != null) _weapons.PlayShoot(direction, aimPoint, damageIndex);
         }
 
         // ==================== 生命状态（只做镜像 + 表现） ====================

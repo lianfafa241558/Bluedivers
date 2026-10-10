@@ -196,7 +196,7 @@ namespace FPSGame.Game {
             {
                 CurrentHealth = 0;
                 showHealth = 0;
-                if (response) OnHit?.Invoke(damageSource, pos,(pos-damageAffected.bounds.center).normalized, isWeakness);
+                if (response) OnHit?.Invoke(damageSource, pos, HitNormal(pos, damageAffected), isWeakness);
                 HandleDeath(damageSource);
                 return;
             }
@@ -258,7 +258,7 @@ namespace FPSGame.Game {
             if (trueDamageAmount > 0) {
                 m_LastHitTime = Time.time;
                 OnDamaged?.Invoke(trueDamageAmount, damageSource,damageAffected, noSource);
-                if(response)OnHit?.Invoke(damageSource,pos, (pos - damageAffected.bounds.center).normalized,isWeakness);
+                if(response)OnHit?.Invoke(damageSource,pos, HitNormal(pos, damageAffected),isWeakness);
                 if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
                 //这个是控制hpui的，所以总是响应
                 UnitEventBus.UnitHit(gameObject, damageSource);
@@ -266,6 +266,18 @@ namespace FPSGame.Game {
             showHealth = CurrentHealth.RawInt;
             HandleDeath(damageSource);
         }
+
+        /// <summary>
+        /// 受击法线（表现层用来摆弹痕/火花）：以受击体的包围盒中心为基准。
+        ///
+        /// <para>▍⚠ <paramref name="damageAffected"/> **可能为 null**：网络同步过来的伤害只有
+        /// "伤害值 + 落点"，没有真实命中体（见 <c>EnemyNetBridge.ApplyRemoteDamage</c>）。
+        /// 老实现是 <c>damageAffected.bounds.center</c> 直接解引用 ⇒ <c>NullReferenceException</c>
+        /// 把整条网络消息的处理打断（2026-10-10 用户实测：客机应用房主下发的 <c>EnemyDamagedSync</c> 时崩）。</para>
+        /// <para>▍兜底取 <c>Vector3.up</c>：只影响特效朝向，不影响任何结算数值。</para>
+        /// </summary>
+        private static Vector3 HitNormal(Vector3 pos, Collider damageAffected)
+            => damageAffected != null ? (pos - damageAffected.bounds.center).normalized : Vector3.up;
 
         private PEInt HandleDamage(DamageTypeEnum type, PEInt value, GameObject damageSource, bool isAboTick = false) {
             //只有需求特殊处理的才单独写，目前没有状态槽，直接全部默认

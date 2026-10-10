@@ -55,6 +55,19 @@ namespace FPSGame.Net
         [Key(1)] public int SyncId;
     }
 
+    /// <summary>场景可破坏物（双向）：某件摆在场上的物件（油桶这类）被谁打掉了 ⇒ 远端把同一件也打掉。
+    /// <para>▍键 = <c>FNV1a(Actor.Id + 位置 0.1m 量化)</c>（同 <see cref="FurnitureOperateMsg.SyncId"/> 的口径：
+    /// 同类物件多实例 ⇒ 只用 <c>Actor.Id</c> 会撞车；<c>IndexID</c> 是各端自增的，跨端不一致）。</para>
+    /// <para>▍只传"死了"这件事、不传伤害：这类物件的血量**不是**关键状态（打爆才是），
+    /// 少一条伤害通道就少一处两端不一致。</para></summary>
+    [MessagePackObject]
+    public class SceneDestructibleMsg
+    {
+        /// <summary>权威标识：打掉它的那个会话号（房主 = 0）。远端据此丢弃"自己发的那条回环"。</summary>
+        [Key(0)] public uint Sid;
+        [Key(1)] public int SyncId;
+    }
+
     /// <summary>标记点位（双向；表现类，可不可靠）。</summary>
     [MessagePackObject]
     public class MarkMsg

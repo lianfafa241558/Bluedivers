@@ -2,6 +2,7 @@
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.GameContract;
+using FPSGame.GameData;
 using FPSGame.Gameplay;
 using FPSGame.Managers;
 using FPSGame.Net;
@@ -61,6 +62,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnTransition += HandleTransition;
             NetRoomFlow.OnArmamentSync += HandleArmamentSync;
             NetRoomFlow.OnBoosterSync += HandleBoosterSync;
+            NetRoomFlow.OnLoadoutSync += HandleLoadoutSync;
             NetRoomFlow.OnJoinResult += HandleJoinResult;
             GlobalEventBus.OnGameStateChange += HandleGameStateChange;
         }
@@ -72,6 +74,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnTransition -= HandleTransition;
             NetRoomFlow.OnArmamentSync -= HandleArmamentSync;
             NetRoomFlow.OnBoosterSync -= HandleBoosterSync;
+            NetRoomFlow.OnLoadoutSync -= HandleLoadoutSync;
             NetRoomFlow.OnJoinResult -= HandleJoinResult;
             GlobalEventBus.OnGameStateChange -= HandleGameStateChange;
             _lastReady.Clear();
@@ -92,6 +95,7 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow != null && flow.IsHost) return;   // 房主的资料由 Ready 那条路推（见 HandleGameStateChange）
             SendSelfProfile();
+            SendSelfLoadout();   // ★ 入房时把**本机配置**（武器改装 + 载具改装）也报一次
         }
 
         // ==================== 名单同步（网络 → TeamManager） ====================
@@ -163,6 +167,10 @@ namespace FPSGame.Managers
                 var profile = profiles != null && i < profiles.Length ? profiles[i] : null;
                 NotifyReadyChanged(team.players[localIndex], info, profile);
             }
+
+            // ★ 有人进/出 ⇒ 让场景里已存在的载具重刷一次外观（新玩家进房那一刻，房主那份配置可能刚到；
+            //   载具侧自带"无变化跳过"，名单每次同步都调也不会白烧）
+            VehicleCustomState.RefreshAll();
         }
 
         /// <summary>
@@ -316,6 +324,15 @@ namespace FPSGame.Managers
             task.SetTask(ntf.MapName, ntf.TaskIndex, (DifficultyEnum)difficulty,
                 ntf.ExtraDiff ?? new int[4], ntf.PlayMode, ntf.Seed, ntf.Cfg);   // ★ 内容优先（见 ② / SetTask）
 
+            // ③c ★ 房主**可能已经进到 Armament**（后进房的人）：SetTask 只会把本机推到 Ready
+            //     ⇒ 按房主随消息带下来的阶段补一步，否则新人在"等人"、其他人已经在"配战备"（2026-10-10 用户报）。
+            var hostPhase = (GameStateEnum)ntf.Phase;
+            if (hostPhase == GameStateEnum.Armament && GameRoot.GameState != GameStateEnum.Armament)
+            {
+                GameRoot.GameState = GameStateEnum.Armament;
+                Debug.Log("[TeamNetBridge] 房主已在 Armament ⇒ 本机立刻跟到同一阶段（不再停在 Ready 干等）");
+            }
+
             // ⚠ 到此为止：**不要**在这里 AsyncLoadScene。加载归 Transition ——
             //   房主广播 TransitionNtf → HandleTransition 把本机 GameState 推到 Transition
             //   → 各自大厅既有的 GameStateController(state:8) → TransSceneController.StartLoad()。
@@ -331,8 +348,10 @@ namespace FPSGame.Managers
         /// <list type="number">
         ///   <item><c>→ Ready</c>（选完任务）：复位"本局已广播 Transition"标记；**房主**顺带推一次自己的资料
         ///         （<c>HostProfile</c> 为空时成员端看房主是"没有身体"的盟友）；</item>
-        ///   <item><c>→ Armament</c>（所有人就位，仅房主）：<c>NetHostSvc.CloseJoin()</c> —— 从这一阶段起不再收人
-        ///         （⚠ 只关闸、不冻名单：<c>ArmamentWnd</c> 的"全员就绪"判定靠名单里的准备状态）；</item>
+        ///   <item><c>→ Armament</c>（所有人就位，仅房主）：**什么都不做** —— 收人窗口一直开到
+        ///         <c>Transition</c>（2026-10-10 用户口径：Armament 阶段要能进人）。
+        ///         ⚠ 别在这里关闸/冻名单：关闸会让晚来的人被回"人员已就位"；冻名单会让
+        ///         <c>ArmamentWnd</c> 的"全员就绪"判定拿不到准备状态；</item>
         ///   <item><c>→ Transition</c>（Armament 结束、开始加载战斗，仅房主）：广播 <see cref="NetHostSvc.NotifyTransition"/>。</item>
         /// </list>
         /// <para>▍为什么 Transition 要房主广播：<c>ArmamentWnd</c> 全员就绪后是**每端各自**把 GameState
@@ -343,12 +362,20 @@ namespace FPSGame.Managers
         {
             var flow = NetRoomFlow.Instance;
 
+            // ★ 房主：把"本房现在处于哪个阶段"同步进 NetHostSvc —— 它随"本局配置"下发，
+            //   后进房的人凭它立刻切到同一阶段（否则会在 Ready 干等，而其他人已经在配战备）。
+            if (flow != null && flow.IsHost) NetHostSvc.Instance?.SetRoomPhase((int)entry);
+
             if (entry == GameStateEnum.Ready)
             {
                 _transitionSent = false;   // 新一局开始配置 ⇒ 允许再广播一次
                 // 房主：把自己的资料（角色/武器/强化）也推一次 ⇒ 写进 HostProfile 并广播，
                 // 成员端才能给房主建出"有身体"的盟友（否则只有名字占位资料）。
-                if (flow != null && flow.IsHost) SendSelfProfile();
+                if (flow != null && flow.IsHost)
+                {
+                    SendSelfProfile();
+                    SendSelfLoadout();   // ★ 同上：房主自己的配置也要有（成员端按它装模组/渲染载具）
+                }
                 return;
             }
 
@@ -356,9 +383,13 @@ namespace FPSGame.Managers
 
             if (entry == GameStateEnum.Armament)
             {
-                // 人员已就位 ⇒ 关闸（此后 OnJoinRoomReq 回"人员已就位"）；
-                // 名单继续照常广播 —— ArmamentWnd 要靠它拿"谁已就绪"。
-                NetHostSvc.Instance?.CloseJoin();
+                // ★ **不再关闸**（2026-10-10 用户口径：Armament 阶段其他玩家要能进来）。
+                //   原来在这里 NetHostSvc.CloseJoin() ⇒ 一进 Armament 入房就被回"人员已就位"，
+                //   晚来的人只能干看着；而真正该拦的是"本局已开始"—— 那道闸在 NotifyTransition
+                //   （_rosterFrozen，过渡到战斗场景时冻结名单 + 广播 InGame）里，已经够用。
+                //   ▍晚来的人为什么能跟得上：房主入房时**补发** TaskConfirmNtf（含 Phase = Armament）
+                //   ⇒ TeamNetBridge.HandleTaskConfirm 会把他本机也推到 Armament（见那条注释），
+                //   名单继续照常广播 ⇒ ArmamentWnd 能拿到"谁已就绪"。
                 return;
             }
 
@@ -462,6 +493,133 @@ namespace FPSGame.Managers
                 Airdrop = data.airdrop,
                 BoosterId = data.boosterId,
             };
+        }
+
+        // ==================== 配置（武器改装：档位 + 模组；载具改装）====================
+
+        /// <summary>
+        /// 【上行】把本机**配置**（武器改装档位/模组 + 载具改装）发给房主（房主则落表 + 广播全体）。
+        /// <para>▍调用点两处：① 入房成功 / 房主进 Ready（见 <see cref="HandleJoinResult"/>、
+        /// <see cref="HandleGameStateChange"/>）；② <c>SelectRoleWnd</c> / <c>VehicleWnd</c> 关窗且确实改过时。</para>
+        /// <para>▍实现上**每次都从本机存档重算**（而不是读 <c>TeamManager.Self</c>）：
+        /// 那两个窗口是直接改存档对象的，Self 上那份可能还是旧值。</para>
+        /// </summary>
+        public static void SendSelfLoadout()
+        {
+            var flow = NetRoomFlow.Instance;
+            var team = TeamManager.Instance;
+            if (flow == null || team == null || team.Self == null) return;
+
+            RefreshSelfWeaponConfig(team.Self);
+            SyncLocalSid();
+            flow.SendLoadout(ToLoadout(team.Self));
+        }
+
+        /// <summary>按存档重算"自己那份"武器选择 / 改装 / 模组（窗口改完存档后调，保持 Self 与存档一致）。</summary>
+        private static void RefreshSelfWeaponConfig(PlayerData self)
+        {
+            if (self == null || string.IsNullOrEmpty(self.roleName)) return;
+            var arch = ArchivesData_SO.Current;
+            if (arch == null) return;
+
+            self.weapons = arch.GetWeaponSelect(self.roleName);
+            self.Upgrades = arch.GetWeaponUpgrade(self.roleName);
+            self.weaponModules = arch.GetWeaponModules(self.roleName);
+        }
+
+        /// <summary><see cref="PlayerData"/> → 配置消息（载具部分直接从存档读全量）。</summary>
+        private static PlayerLoadoutMsg ToLoadout(PlayerData data)
+        {
+            if (data == null) return null;
+            return new PlayerLoadoutMsg
+            {
+                Upgrades = data.Upgrades,
+                Modules = data.weaponModules,
+                Vehicles = BuildVehicleDtos(),
+            };
+        }
+
+        /// <summary>把存档里的全部载具改装打包成 DTO（按 vehicleName 键控，不依赖保存顺序）。</summary>
+        private static VehicleCustomDto[] BuildVehicleDtos()
+        {
+            var arch = ArchivesData_SO.Current;
+            if (arch == null) return null;
+
+            var list = new List<VehicleCustomDto>();
+            arch.VehicleCustomDic.ForEach((name, v) =>
+            {
+                if (string.IsNullOrEmpty(name) || v == null) return;
+                list.Add(new VehicleCustomDto
+                {
+                    VehicleName = name,
+                    LeftWeaponIndex = v.leftWeaponIndex,
+                    RightWeaponIndex = v.rightWeaponIndex,
+                    SkinIndex = v.skinIndex,
+                    BlendIndex = v.blendIndex,
+                    BlendScale = v.blendScale.RawFloat,
+                });
+            });
+            return list.Count > 0 ? list.ToArray() : null;
+        }
+
+        /// <summary>网络载具配置 → 存档对象（供 <see cref="VehicleCustomState"/> 的分 sid 表使用）。</summary>
+        private static Dictionary<string, ArchivesData_SO.ArchVehicleData> ToVehicleMap(VehicleCustomDto[] dtos)
+        {
+            if (dtos == null || dtos.Length == 0) return null;
+
+            var map = new Dictionary<string, ArchivesData_SO.ArchVehicleData>(dtos.Length);
+            for (int i = 0; i < dtos.Length; ++i)
+            {
+                var d = dtos[i];
+                if (d == null || string.IsNullOrEmpty(d.VehicleName)) continue;
+                map[d.VehicleName] = new ArchivesData_SO.ArchVehicleData
+                {
+                    leftWeaponIndex = d.LeftWeaponIndex,
+                    rightWeaponIndex = d.RightWeaponIndex,
+                    skinIndex = d.SkinIndex,
+                    blendIndex = d.BlendIndex,
+                    blendScale = d.BlendScale,
+                };
+            }
+            return map.Count > 0 ? map : null;
+        }
+
+        /// <summary>本机会话 sid（房主 = 0）→ 决定 <see cref="VehicleCustomState.TryGet"/> 走本机存档还是同步表。</summary>
+        private static void SyncLocalSid()
+        {
+            var flow = NetRoomFlow.Instance;
+            VehicleCustomState.SetLocalSid(flow != null && !flow.IsHost ? flow.SelfSid : 0u);
+        }
+
+        /// <summary>
+        /// 【下行】收到配置（房主广播，含房主自己那条）：落表 + 写进对应 <see cref="PlayerData"/> + 让盟友重装武器。
+        /// <para>▍载具配置走 <see cref="VehicleCustomState"/>（按 sid）：渲染侧（<c>BattleApplyVehicleData</c>）
+        /// 在"有人上车"时按驾驶者 sid 取 —— 载具外观因此跟着持有者走。</para>
+        /// </summary>
+        private void HandleLoadoutSync(PlayerLoadoutMsg m)
+        {
+            if (m == null) return;
+
+            SyncLocalSid();
+            VehicleCustomState.Set(m.Sid, ToVehicleMap(m.Vehicles));   // 载具配置：按 sid 落"数据自持"表
+            // ★ 配置到了 ⇒ 立刻让场景里已存在的载具按新配置重刷（进战斗场景后配置才到、或中途改配置都靠它）
+            VehicleCustomState.RefreshAll();
+
+            var team = TeamManager.Instance;
+            if (team == null) return;
+
+            int localIndex = LocalIndexOf(team, m.Sid);
+            if (localIndex < 0) return;
+
+            var data = team.players[localIndex];
+            if (data != null)
+            {
+                if (m.Upgrades != null && m.Upgrades.Length > 0) data.Upgrades = m.Upgrades;
+                if (m.Modules != null && m.Modules.Length > 0) data.weaponModules = m.Modules;
+            }
+
+            // 改装变了 ⇒ 让盟友实体按新配置重装武器（角色没变时 AttachRoleWeapons 不会自己触发）
+            if (!IsMySid(m.Sid)) NetFriendBridge.Instance?.RefreshLoadout(m.Sid, m);
         }
 
         /// <summary>sid → 本地 <c>PlayerData.id</c>（房主 0 ⇒ <see cref="HostDataId"/>；成员 ⇒ -(sid+1)）。</summary>

@@ -129,6 +129,7 @@ namespace FPSGame.Managers
             EnemyController.RemoteDrivenMovement = flow != null && flow.SelfSid != 0u;
             FPSGame.AI.EnemyRandom.Clear();   // NetId 是本局重新分配的 ⇒ 上一局的随机流要丢
             EnemyNetBridge.Install();
+            NetDestructibleBridge.Install();  // 场景可破坏物（油桶这类）被打掉 ⇒ 远端也炸（2026-10-10）
             NetGameFlowBridge.Install();      // 局内世界状态（本局结束 / 撤离）
             NetMissionBridge.Install();       // 任务状态 / 进度（房主权威）
             NetFurnitureBridge.Install();     // 家具交互（共享世界物件，一处收口）
@@ -140,6 +141,7 @@ namespace FPSGame.Managers
             FPSGame.Net.NetRoomFlow.OnWaveStart -= ApplyRemoteWave;
             FPSGame.Net.NetRoomFlow.OnWaveCenter -= ApplyRemoteWaveCenter;
             EnemyNetBridge.Uninstall();
+            NetDestructibleBridge.Uninstall();
             NetGameFlowBridge.Uninstall();
             NetMissionBridge.Uninstall();
             NetFurnitureBridge.Uninstall();

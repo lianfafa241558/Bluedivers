@@ -359,10 +359,20 @@ namespace FPSGame.Weapon {
         public ProjectileBase SpawnVisualBullet(Transform muzzle, Vector3 direction = default, Vector3 endPoint = default)
         {
             if (muzzle == null) muzzle = GetMuzzle(0);
-            if (muzzle == null || Damages == null || Damages.Count == 0) return null;
+            if (muzzle == null || Damages == null || Damages.Count == 0)
+            {
+                // 数据说话：静默 return 的三种成因（枪口没解析到 / 这把枪没有伤害配置）⇒ "对端开了枪但本端没有弹道"
+                FPSGame.Utils.NetSyncLog.Warn("生成表现弹", $"生成失败：枪口={(muzzle != null ? muzzle.name : "<无>")} " +
+                    $"伤害配置数={(Damages != null ? Damages.Count : -1)} 武器={name}");
+                return null;
+            }
 
             var data = CurrentDamgeData;
-            if (data == null || data.BulletPrefab == null) return null;
+            if (data == null || data.BulletPrefab == null)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("生成表现弹", $"生成失败：伤害配置={(data != null)} 子弹预制体={(data != null ? data.BulletPrefab : null)} 武器={name}");
+                return null;
+            }
 
             // ⚠ 方向优先用**发送端传来的**：盟友模型只同步了 yaw、没有俯仰，
             //   用枪口朝向会让所有弹道都水平（抬头打空中目标时明显不对）。

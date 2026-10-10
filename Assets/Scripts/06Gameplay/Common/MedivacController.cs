@@ -306,6 +306,8 @@ namespace FPSGame.Gameplay
             [InspectorName("降落")] Land,
             /// <summary>撤离</summary>
             [InspectorName("撤离")] Evacuate,
+            /// <summary>加载过程中什么也不做</summary>
+            [InspectorName("加载")] Load,
         }
     }
 }

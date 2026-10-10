@@ -68,7 +68,9 @@ namespace FPSGame.Gameplay
         /// </summary>
         /// <param name="prefabs">角色携带的武器预制体（可含 null）</param>
         /// <param name="upgrades">每类武器的改装选择（可为 null）；下标 = (int)WeaponTypeEnum</param>
-        public void Setup(IList<WeaponPlayerController> prefabs, int[][] upgrades)
+        /// <param name="modules">每类武器**选中的模组下标**（可为 null）；下标 = (int)WeaponTypeEnum，&lt;0 = 无模组。
+        /// <para>▍以前没有它 ⇒ 模组恒按 0（= 空模组）装，别人看不到你装的模组；来源见 <c>PlayerLoadoutMsg.Modules</c>。</para></param>
+        public void Setup(IList<WeaponPlayerController> prefabs, int[][] upgrades, int[] modules = null)
         {
             Clear();
 
@@ -90,7 +92,7 @@ namespace FPSGame.Gameplay
                 inst.ShowWeapon(false);      // 先全部收起，由 SetActiveSlot 决定显示哪把
                 _slots[slot] = inst;
 
-                ApplyUpgrade(inst, upgrades);
+                ApplyUpgrade(inst, upgrades, modules);
             }
 
             // 有武器就默认拿主手（与玩家 EquipGroundWeapon 的"自动切换"一致）
@@ -123,10 +125,24 @@ namespace FPSGame.Gameplay
         /// <param name="aimPoint">**开枪者准心实指的目标点**（世界空间）；零向量 = 未知。
         /// <para>▍有它就把方向重算成"枪口 → 目标点"：表现弹是**本地模拟**的（<c>SpawnVisualBullet</c>），
         /// 只给方向时落点由本端地形与枪口偏移决定 ⇒ 与开枪者看到的落点对不上（2026-10-07 实测）。</para></param>
-        public void PlayShoot(Vector3 direction = default, Vector3 aimPoint = default)
+        /// <param name="damageIndex">开枪那把枪的伤害档位（<c>WeaponBaseController.UseDamageIndex</c>）。
+        /// <para>▍必须用**他的**档位：命中特效/表现弹都取自 <c>CurrentDamgeData</c>。信号枪 0 = 标记、1 = 呼叫战备
+        /// （由 <c>PlayerWeaponsManager.OnInputCompletedAirdrop</c> 本地切）—— 用本端档位会把"客机叫的空投"重放成"标记"，
+        /// 房主端凭空多一个标记（2026-10-10 实测）。越界一律夹到有效范围。</para></param>
+        public void PlayShoot(Vector3 direction = default, Vector3 aimPoint = default, int damageIndex = 0)
         {
             var w = GetSlot(_active);
-            if (w == null) return;
+            if (w == null)
+            {
+                // 数据说话：最常见的一种"对端开火本端毫无反应" —— 当前槽位没有武器实例
+                // （盟友的武器是按角色配置装配的，槽位对不上 / 装配失败都会走到这里）
+                FPSGame.Utils.NetSyncLog.Warn("远端开火", $"当前槽 {_active} 没有武器实例 ⇒ 这一发没有表现（有武器的槽：{SlotList()}）");
+                return;
+            }
+
+            // ★ 先落到"他的档位"，再生成表现弹/命中特效（旧版发送端档位恒 0 ⇒ 与改造前一致）
+            if (w.Damages != null && w.Damages.Count > 0)
+                w.UseDamageIndex = Mathf.Clamp(damageIndex, 0, w.Damages.Count - 1);
 
             var muzzle = w.GetMuzzle(0);
 
@@ -138,7 +154,7 @@ namespace FPSGame.Gameplay
             }
 
             // 数据说话：这一发到底"有没有收到瞄准点"、方向算成什么
-            FPSGame.Utils.NetSyncLog.BulletLog("远端开火", $"槽{_active} 方向={direction:F2} 瞄准点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")}" +
+            FPSGame.Utils.NetSyncLog.BulletLog("远端开火", $"槽{_active} 档位={w.UseDamageIndex} 方向={direction:F2} 瞄准点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")}" +
                 (muzzle != null ? $" 枪口={muzzle.position:F2} 枪口到瞄准点={(aimPoint - muzzle.position).magnitude:F1}m" : " 枪口=<无>"));
             if (muzzle != null && w.MuzzleFlashPrefab != null)
             {
@@ -203,6 +219,19 @@ namespace FPSGame.Gameplay
         private WeaponPlayerController GetSlot(int slot) =>
             slot >= 0 && slot < _slots.Length ? _slots[slot] : null;
 
+        /// <summary>当前装了武器的槽位清单（诊断日志用：判断"是槽位对不上还是压根没装配"）。</summary>
+        private string SlotList()
+        {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < _slots.Length; ++i)
+            {
+                if (_slots[i] == null) continue;
+                if (sb.Length > 0) sb.Append(',');
+                sb.Append(i).Append(':').Append(_slots[i].name);
+            }
+            return sb.Length > 0 ? sb.ToString() : "<一个都没有>";
+        }
+
         private int FindFirstSlot()
         {
             // 只有可切换槽位（0-3）优先，没有才退到任意槽
@@ -213,18 +242,22 @@ namespace FPSGame.Gameplay
             return -1;
         }
 
-        /// <summary>应用改装：<c>select</c> 用资料里的数组；<c>module</c> 资料里没带 ⇒ 走 0（见类注释）。</summary>
-        private static void ApplyUpgrade(WeaponPlayerController inst, int[][] upgrades)
+        /// <summary>应用改装：<c>select</c> 与 <c>module</c> 都用资料里的数组（模组缺失/越界时退回 0 = 空模组）。</summary>
+        private static void ApplyUpgrade(WeaponPlayerController inst, int[][] upgrades, int[] modules = null)
         {
-            if (inst == null || upgrades == null) return;
+            if (inst == null) return;
 
             int type = (int)inst.WeaponTypeEnum;
-            if (type < 0 || type >= upgrades.Length) return;
+            if (type < 0) return;
 
-            var select = upgrades[type];
+            int[][] selectArr = upgrades != null && type < upgrades.Length ? upgrades : null;
+            var select = selectArr != null ? selectArr[type] : null;
             if (select == null || select.Length == 0) return;
 
-            inst.ApplyUpgrade(select, 0);
+            int module = modules != null && type < modules.Length ? modules[type] : 0;
+            if (module < 0) module = 0;   // -1 = 未选 ⇒ 与"空模组 0"同义
+
+            inst.ApplyUpgrade(select, module);
         }
 
         /// <summary>手部 IK：照 <c>PlayerMountPoint.SetHandIK</c> 的写法，把模型双手吸到武器的握点上。</summary>

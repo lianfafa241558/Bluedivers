@@ -348,14 +348,23 @@ namespace FPSGame.AI
         {
             // ★ 联机命中：**成员往上报、房主往下播**（血量/死亡以房主为唯一权威）。
             //   ⚠ 两个方向必须互斥，否则回声；应用远端伤害时（ApplyingRemoteDamage）两边都不发。
-            if (!ApplyingRemoteDamage && m_Actor != null && m_Actor.NetId != 0)
+            int netId = m_Actor != null ? m_Actor.NetId : 0;
+            int dmg = Mathf.RoundToInt(damage.RawFloat);
+            bool toNetwork = !ApplyingRemoteDamage && netId != 0 && dmg > 0;
+            // 数据说话：这是"客机打中 ⇒ 主机真扣血"这条链的**起点**
+            // （后续依次是「命中上报·发」/「伤害下发·发」→ 对端「远端伤害落地」→「远端伤害落地后」）
+            FPSGame.Utils.NetSyncLog.BulletLog("本地命中结算", $"本端该怪={netId} 伤害={dmg} 来源={(damageSource != null ? damageSource.name : "<无>")} " +
+                $"成员模式={RemoteDrivenMovement} 应用远端伤害中={ApplyingRemoteDamage} ⇒ " +
+                (toNetwork ? (RemoteDrivenMovement ? "上报房主" : "下发给成员") : "**不往网络走**"));
+            if (toNetwork)
             {
-                int dmg = Mathf.RoundToInt(damage.RawFloat);
-                if (dmg > 0)
-                {
-                    if (RemoteDrivenMovement) FPSGame.Gameplay.BattleEventBus.EnemyHit(m_Actor.NetId, dmg);
-                    else FPSGame.Gameplay.BattleEventBus.EnemyDamaged(m_Actor.NetId, dmg);   // 房主：下发给成员
-                }
+                if (RemoteDrivenMovement) FPSGame.Gameplay.BattleEventBus.EnemyHit(netId, dmg);
+                else FPSGame.Gameplay.BattleEventBus.EnemyDamaged(netId, dmg);   // 房主：下发给成员
+            }
+            else if (!ApplyingRemoteDamage && m_Actor != null && netId == 0)
+            {
+                // NetId=0 的怪不参与同步（上报会被 SendEnemyHit 静默挡掉）⇒ 这就是"本端看得见命中、对端毫无反应"的成因
+                FPSGame.Utils.NetSyncLog.Warn("本地命中结算", $"这只怪没有 NetId ⇒ **打了也不会同步到对端** 该怪={gameObject.name} 伤害={dmg}");
             }
             
             if (damageSource &&damageSource.GetComponent<Actor>().Type != UnitTypeEnum.Other&& !damageSource.GetComponent<Actor>().HasFlag(ActorFlag.Invincible))

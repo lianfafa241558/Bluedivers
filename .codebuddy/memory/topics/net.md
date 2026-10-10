@@ -150,6 +150,15 @@
   ⚠ 排除过"广播打的"：发现层端口（`LanBroadcastPort=29800/29801`）与 KCP 端口（`HostGamePort=17666`）不撞。
   ⚠ 也排除过"多进程"：进程快照里只有一个 `BlueDivers.exe`（就是房主）+ 一个编辑器（客机）+ 两个 AssetImportWorker。
   ⇒ 现状：`HostSession` 的会话日志**已限流**（前 3 次 + 之后每 10s 一条，带累计次数；回调在库线程上 ⇒ 用 `DateTime` 不能用 `Time.xxx`）。要根治得改库（无源码）。
+- ⭐⭐ **2026-10-10 复查（新 DLL 之后仍复现）⇒ 主责在库里"去重不幂等"**：房主侧 `clientKeyDic` 实测**同一对端有两条键** ——
+  `cid:36c2a6d2…`（**稳定**，sid 就是 `_players` 里那个真玩家）与 `ep:192.168.1.4:64156`（**幽灵**，每秒被重建 ~5 次，sid 在 `3120579841`/`2140566683` 等固定值间循环）；
+  两条 session 的 `m_remotePoint` 完全相同。断开速率由 `HostSession.s_disconnectCount` 反推 ≈ **5 次/秒**。
+  **机理（IL 实证）** `KCPNet<T,K>.BuildIdentityKey(clientId, ep)`：`IsNullOrEmpty(clientId)` ⇒ `"ep:"+EndpointKey(ep)`，否则 `"cid:"+clientId`；
+  `ParseClientId` 在"没有分隔符 / 分隔符后为空"时返回 `null` ⇒ 落回 `ep:`。
+  ⇒ 结论：**带 clientId 的握手被正确去重（玩家那条稳）**；**不带 clientId 的握手每来一次就"新建会话 + 关掉旧会话"**（不做幂等复用）⇒ 每次关都触发一次 `OnDisConnected` 刷屏。
+  我们侧**无责**（我们那时是房主；自己的 `NetClient` 全程 `IsConnected=false`、`KCPNet=null`，没发过包）。
+  ⚠ 仍未钉死的一环：**谁在发"不带 clientId 的握手"**（对端老包 / 库自身的握手重试 / KCP 分包）—— 需要 Play 中逐秒采样 `sidToKey`（看 `cid` 是否也在换）才能定；编辑器当时已退出 Play 故未做。
+  给库作者的诉求（可直接转发）：① 会话表按 identityKey/endpoint **幂等复用**（已有就复用，别 close+new）；② 重复/重传的 `REQUEST_CONNECT` 不产生新会话；③ 未完成握手的会话及时回收。
 - ✅ **远程弹道"穿过去、没命中"已修（2026-10-09）**：`PlayerShoot` 早就带了命中点（`HitX/Y/Z`，4015/4016），但接收端 `FriendWeaponView.PlayShoot` **只用它重算方向**、
   随后把命中点丢掉（`SpawnVisualBullet(muzzle, direction)`）。远端那颗"表现弹"是**真物理子弹**（`ProjectileStandard` 靠 `SphereCast` 自己撞），而两端敌人位置只是近似
   ⇒ 撞不到 ⇒ 一路飞到 `MaxRange` 消散，观感就是"从目标身上穿过去"。
@@ -261,6 +270,19 @@
   - **P1 任务(4035)**：键 `MissionBase.netOrder`（`MissionController` 赋值；数据生成模式按 `missions.Count`，**场景模式按 0.1m 量化位置排序**因为 `FindObjectsByType` 顺序两端不保证）；消息**必须带 State**（完成有"进度/事件触发"两个出口）；成员端靠 `MissionBase.RemoteDriven` 门"不自判"（⚠ `Uninstall` 要复位）。桥 = `NetMissionBridge`。
   - **P2 家具(4036)**：键 `Furniture_Attached.SyncId = FNV1a(Id + 位置0.1m)`（`Awake` 算一次缓存；`Id` 不唯一、`NumberID` 各端自增 ⇒ 都不能用）；**一处收口** —— 远端重放 `ApplyRemoteOperate(remoteUser)` 跑同一条 `Operate()` ⇒ `OnOOPartCollect`/`OnSubmitOOPart`/`OnKeiSubmit` **不需单独同步**；⚠ 操作者只能传**远端单位**（`PlayerInputHandler/PlayerWeaponsManager.OnOperation` 靠 `user == gameObject` 过滤）。桥 = `NetFurnitureBridge`。
   - **P3 表现(4037/4038)**：桥 = `NetActionBridge`；`Mark` 只传点（目标实体是引用过不了网）；`CallKai` 的 `SpecUnitKei.OnCall` 不按 source 过滤。
+    ⚠ **`GlobalEventBus.Mark` 的 target 是可空契约**（2026-10-10 修）：订阅方必须容忍 `target == null`，用 `owner + point` 出表现。
+    踩过的坑：`SubtitleMark.OnMark` 裸 `target.GetComponentInParent`（4037 NRE）、`SubTitleShout.OnMark` 裸 `markTarget.GetComponentInChildren`；
+    且 `SubtitleMark.Update` 原来把 `!target` 当"失效"⇒ 联机标记**永远不显示**（用 `pointMark` 区分"本来没目标"和"目标被销毁"）。
+    ⚠ **标记上报只认本机玩家**（`NetActionBridge.OnLocalMark` 加门，2026-10-10）：`Mark` 的第二个发布源是
+    "重放远端开枪的命中特效"（`SpawnVisualBullet → PlayImpactFx → VFXHaloEffect`，owner = 盟友实例），那条要留在本地；
+    原来看都不看 owner 就上报 ⇒ 房主只能标 `sid=0` ⇒ 发起者没被自己那条去重挡掉，屏幕上多一个"图标是房主"的假标记。
+    ⚠ **信号枪两档伤害配置由本端 `UseDamageIndex` 决定（0=标记 VFX_SignalFlare / 1=空投 VFX_AirdropPoint）**：
+    2026-10-10 起**已随 `PlayerShoot.DamageIndex`（`[Key(8)]`）过网**，接收端在 `FriendWeaponView.PlayShoot` 里先夹到
+    `Damages.Count-1` 再生成表现弹 ⇒ 命中特效/弹道用**开枪者**的档位（旧版发送端该字段为 0 = 与改造前一致）。
+    ⚠ 于是"客机叫的空投"那一发在房主端会用**空投档**重放 → `VFXAirdropEffect.SetOwner` 里 `WaitRelease == null`
+    ⇒ 靠那里的早退兜住（不重复放空投、不打 NRE，只打一条 warning）。
+    ⚠ **信标朝向**：`VFXAirdropEffect.SetOwner` 的 `eulerAngles` 必须在 `BattleEventBus.Airdrop(...)` **之前**赋值 ——
+    `HandleLocalAirdrop` 就是在那个事件里读信标朝向当过网 yaw 的（写在后面 ⇒ 过网的是特效创建时的 identity/命中面法线）。
   - ⭐ **纠正审计**：`OnPlayMeetSpeech` **不需要收口** —— `PlayerSpeechManager.OnMeetSpeech → Speech() → BattleEventBus.PlayerSpeech` 本来就是已同步的那条链（早前写的"只桥了 `OnPlayerSpeech`（部分缺口）"是错的）。
   - ⚠ 踩点：`MissionController.cs` 是 **CRLF**，其余 P1-P3 文件是 LF ⇒ 批量改写脚本必须做**行尾自适应**（否则 `HIT=0` 静默漏改）。
   - ⭐ **波次中心(4039) / 昼夜墙钟 / SyncedNavMover 也已落地（2026-10-08）**：

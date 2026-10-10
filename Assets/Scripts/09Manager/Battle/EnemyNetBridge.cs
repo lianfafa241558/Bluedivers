@@ -70,12 +70,18 @@ namespace FPSGame.Managers
 
         static void OnLocalHit(int netId, int damage)
         {
-            FPSGame.Net.NetRoomFlow.Instance?.SendEnemyHit(netId, damage);         // 内部判"成员才发"
+            // 数据说话：本端上报的每一发 —— 与房主侧的「远端伤害落地」配对，中间没有别的步骤，
+            // 两条日志一对一出现才说明"客机打中 ⇒ 主机真扣血"这条链是通的
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            FPSGame.Utils.NetSyncLog.BulletLog("命中上报·发", $"netId={netId} 伤害={damage} 是房主={(flow != null && flow.IsHost)} 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")}");
+            flow?.SendEnemyHit(netId, damage);         // 内部判"成员才发"
         }
 
         static void OnLocalDamaged(int netId, int damage)
         {
-            FPSGame.Net.NetRoomFlow.Instance?.SendEnemyDamaged(netId, damage);     // 内部判"房主才发"
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            FPSGame.Utils.NetSyncLog.BulletLog("伤害下发·发", $"netId={netId} 伤害={damage} 是房主={(flow != null && flow.IsHost)}");
+            flow?.SendEnemyDamaged(netId, damage);     // 内部判"房主才发"
         }
 
         static void OnLocalDeath(Actor actor)
@@ -144,14 +150,26 @@ namespace FPSGame.Managers
         static void ApplyRemoteDamage(uint attackerSid, int netId, int damage)
         {
             var actor = FindActor(netId);
-            if (actor == null || damage <= 0) return;
+            if (actor == null || damage <= 0)
+            {
+                // 数据说话：远端报了命中，却在本端找不到对应副本（或伤害<=0）⇒ **静默丢弃**，对方那边是白打的
+                FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"找不到 netId={netId} 的本端副本（或伤害={damage}<=0）⇒ 这一发被静默丢弃");
+                return;
+            }
 
-            var dmg = actor.GetComponent<IDamageable>();
-            if (dmg == null) return;
+            var dmg = ResolveDamageable(actor);
+            if (dmg == null)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={netId} 的副本找不到任何 IDamageable ⇒ 这一发被静默丢弃（本端该怪={actor.Id}）");
+                return;
+            }
 
             var source = ResolveRemoteUser(attackerSid);
+            // ★ 受击体：远端这条链没有真实命中信息，而 `Health.TakeDamage` 要拿它的 bounds 算受击法线
+            //   （不传 ⇒ 那边 `damageAffected.bounds` 直接 NRE，整条消息处理失败；2026-10-10 用户实测）。
+            var hitCollider = ResolveHitCollider(dmg, actor.transform.position);
 
-            FPSGame.Utils.NetSyncLog.AiLog("远端伤害落地", $"netId={netId} 伤害={damage} 开枪者sid={attackerSid} 本端实例={(source != null ? source.name : "<没解析到，将静默结算>")} 落点={actor.transform.position:F2}");
+            FPSGame.Utils.NetSyncLog.AiLog("远端伤害落地", $"netId={netId} 伤害={damage} 开枪者sid={attackerSid} 本端实例={(source != null ? source.name : "<没解析到，将静默结算>")} 受击体={(hitCollider != null ? hitCollider.name : "<无>")} 落点={actor.transform.position:F2}");
             EnemyController.ApplyingRemoteDamage = true;
             try
             {
@@ -163,12 +181,73 @@ namespace FPSGame.Managers
                     DamageSource = source,
                     NoSource = source == null,
                     Pos = actor.transform.position,
+                    damageAffected = hitCollider,
                 });
             }
             finally { EnemyController.ApplyingRemoteDamage = false; }
+
+            // 数据说话：落完之后本端这份副本的血量 —— 与"开枪端自己看到的血量"对照，一眼看出两边是否同步
+            var hp = actor.GetComponent<IHealth>();
+            FPSGame.Utils.NetSyncLog.BulletLog("远端伤害落地后", $"netId={netId} 扣={damage} 本端该怪={actor.Id} 血量=" +
+                (hp != null ? hp.GetHpCurrent().ToString("F0") + "/" + hp.GetHpMax().ToString("F0") : "<无生命组件>"));
         }
 
         static NetFriendBridge _friendBridge;
+
+        /// <summary>
+        /// 取这份副本的"可伤害组件"。
+        ///
+        /// <para>▍为什么不能只 <c>actor.GetComponent&lt;IDamageable&gt;()</c>：不少敌人的伤害体挂在**子物体**上
+        /// （子物体上的 <c>Damageable</c>／HitBox；<c>Actor.Awake</c> 也是用
+        /// <c>GetComponentsInChildren&lt;Damageable&gt;()</c> 收的），根上取不到
+        /// ⇒ 远端伤害被静默丢弃。表现就是「客机把怪打死了、主机这只怪毫发无伤」（2026-10-10 实测：
+        /// 主机日志 `[异常/远端伤害落地] netId=15 的副本没有 IDamageable`）。</para>
+        ///
+        /// <para>▍顺序：主躯干（<c>Actor.MainDamageable</c> = <c>IHealth.GetMainPart()</c>）→ 根上组件 →
+        /// <c>Actor.Damageables</c>（预制体里配好的肢体表）→ 子物体里的任意 <c>IDamageable</c>（含 inactive）。
+        /// 选"主躯干"优先是为了让远端伤害打在**伤害结算该打的那一部件**上（弱点倍率/装甲都挂在它身上）。</para>
+        /// </summary>
+        static IDamageable ResolveDamageable(Actor actor)
+        {
+            if (actor == null) return null;
+
+            var main = actor.MainDamageable;
+            if (main != null) return main;
+
+            var own = actor.GetComponent<IDamageable>();
+            if (own != null) return own;
+
+            var parts = actor.Damageables;
+            if (parts != null)
+            {
+                for (int i = 0; i < parts.Length; ++i)
+                {
+                    if (parts[i] != null) return parts[i];
+                }
+            }
+
+            var all = actor.GetComponentsInChildren<IDamageable>(true);
+            for (int i = 0; i < all.Length; ++i)
+            {
+                if (all[i] != null) return all[i];
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 给远端伤害找一个"受击体"（<c>DamagePacket.damageAffected</c>）：优先这个伤害体自己身上的碰撞体，
+        /// 其次它的子物体。找不到给 null —— 引擎侧（<c>Health.HitNormal</c>）已能容忍 null，只是法线兜底朝上。
+        /// <para>▍为什么要传：受击表现（火花/弹痕朝向、<c>OnHit</c> 订阅者）要拿它的 bounds 算，传 null 会让
+        /// 表现链退化。取"最近的那个"没必要 —— 这是同步伤害，本来就没有真实命中点。</para>
+        /// </summary>
+        static Collider ResolveHitCollider(IDamageable dmg, Vector3 pos)
+        {
+            var mono = dmg as Component;
+            if (mono == null) return null;
+
+            var own = mono.GetComponent<Collider>();
+            return own != null ? own : mono.GetComponentInChildren<Collider>();
+        }
 
         /// <summary>权威 sid → 本端那个玩家的实例（<c>0</c> = 房主）。解析不到给 null。</summary>
         static GameObject ResolveRemoteUser(uint sid)

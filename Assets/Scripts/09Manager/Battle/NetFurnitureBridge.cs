@@ -114,7 +114,9 @@ namespace FPSGame.Managers
         /// </summary>
         static GameObject ResolveRemoteUser(uint sid)
         {
-            // ⚠ NetFriendBridge 没有静态 Instance（它是挂在常驻 GameRoot 上的 I_GlobaManager）⇒ 惰性解析一次并缓存
+            // NetFriendBridge 现在带静态 Instance（它在 Init 里自登记；见其字段注释）⇒ 优先直连，
+            // 兜底才 FindObjectOfType（例如桥还没来得及 Init 的极端时序）。
+            if (_friendBridge == null) _friendBridge = NetFriendBridge.Instance;
             if (_friendBridge == null) _friendBridge = UnityEngine.Object.FindObjectOfType<NetFriendBridge>();
             if (_friendBridge != null && _friendBridge.TryGetFriendObject(sid, out GameObject go)) return go;
             return null;

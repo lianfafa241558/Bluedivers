@@ -363,6 +363,24 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
         return m_WeaponSlots.Length>0;
     }
 
+    /// <summary>
+    /// 清空全部武器槽（销毁挂上来的武器实例）。
+    /// <para>▍用途：联机时载具要按**驾驶者的配置**重装一次武器（见 <c>BattleApplyVehicleData.ApplyForOwner</c>），
+    /// 没有它就会在原武器上再 `AddWeapon` 一份 ⇒ 双份武器。</para>
+    /// </summary>
+    public void ClearWeapons()
+    {
+        for (int i = 0; i < m_WeaponSlots.Length; i++)
+        {
+            var w = m_WeaponSlots[i];
+            if (w == null) continue;
+            SetWeaponStateInternal(w, false);   // 退订 OnWantShootChange
+            w.Owner = null;
+            Destroy(w.gameObject);
+        }
+        m_WeaponSlots = new WeaponController[0];
+    }
+
     #endregion
 
     #region 事件

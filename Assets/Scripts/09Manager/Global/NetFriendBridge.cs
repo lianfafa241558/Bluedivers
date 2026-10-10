@@ -31,6 +31,9 @@ namespace FPSGame.Managers
     /// </summary>
     public class NetFriendBridge : MonoBehaviour, I_GlobaManager
     {
+        /// <summary>单例（桥上 <c>TeamNetBridge</c> 在收到配置同步时用它转发"重装盟友武器"）。</summary>
+        public static NetFriendBridge Instance;
+
         [Header("盟友预制体（⚠ 必填）")]
         [InspectorName("盟友预制体")]
         [Tooltip("要求：Actor.type = Friend、无 PlayerController/相机/AudioListener，并已挂 FriendController + NetTransformView")]
@@ -42,13 +45,18 @@ namespace FPSGame.Managers
 
         [Header("落点")]
         [InspectorName("出生点间隔(米)")]
-        [Tooltip("第 N 个玩家 ⇒ 出生点 -(0,0,N*间隔)（原先按圆环分布，见 NextSpawnPos 的注释）")]
-        [SerializeField] private float spawnSpacing = 1f;
+        [Tooltip("以出生点为中心、按房主名单下标沿 +X 对称铺开的间距（见 SpawnSlots；与玩家那边共用同一口径）")]
+        [SerializeField] private float spawnSpacing = 0.5f;
         [InspectorName("出生点标签")]
         [SerializeField] private string spawnPointTag = "StartPoint";
 
         /// <summary>sid → 盟友实例。</summary>
         private readonly Dictionary<uint, FriendController> _friends = new Dictionary<uint, FriendController>();
+
+        /// <summary>sid → 该玩家的**配置**（武器改装：档位 + 模组；载具改装）。
+        /// <para>▍为什么盟友侧也要存一份：武器装配要用**模组**（<c>PlayerProfile</c> 里没带），
+        /// 而配置是**独立一条消息**、到达时机与名单不同步 ⇒ 得自己按 sid 缓存、两边到齐才装。</para></summary>
+        private readonly Dictionary<uint, PlayerLoadoutMsg> _loadouts = new Dictionary<uint, PlayerLoadoutMsg>();
 
         /// <summary>【联机】按 sid 取盟友实例的 GameObject（<c>0</c> = 房主）。找不到给 null。
         /// <para>家具交互重放要用它把"操作者"指到远端的那个单位上（见 <c>NetFurnitureBridge</c>）。</para></summary>
@@ -79,6 +87,7 @@ namespace FPSGame.Managers
 
         public void Init()
         {
+            Instance = this;
             NetRoomFlow.OnPlayerList += HandleRoster;
             NetTransformFlow.OnPose += HandlePoses;
             NetRoomFlow.OnWeaponSwitch += HandleWeaponSwitch;   // 局内切枪（盟友换槽）
@@ -99,6 +108,8 @@ namespace FPSGame.Managers
 
         public void UnInit()
         {
+            if (ReferenceEquals(Instance, this)) Instance = null;
+            _loadouts.Clear();
             NetRoomFlow.OnPlayerList -= HandleRoster;
             NetTransformFlow.OnPose -= HandlePoses;
             NetRoomFlow.OnWeaponSwitch -= HandleWeaponSwitch;
@@ -162,6 +173,8 @@ namespace FPSGame.Managers
             }
 
             _localWeapons = wm;
+            // 数据说话：这一行决定"本机开火会不会上报" —— 客机侧一条射击日志都没有时，先看它
+            FPSGame.Utils.NetSyncLog.BulletLog("绑本机武器", $"本机玩家武器管理器={(wm != null ? wm.name : "<无>")} ⇒ 开火上报{(wm != null ? "已订阅" : "**未订阅**（本机开火不会上报）")}");
 
             if (_localWeapons != null)
             {
@@ -201,7 +214,11 @@ namespace FPSGame.Managers
         /// <summary>本机开火 → 上报（只做表现同步）。</summary>
         private void OnLocalShoot(FPSGame.Weapon.WeaponPlayerController weapon)
         {
-            if (_localWeapons == null) return;
+            if (_localWeapons == null)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("开火·发", "本机武器管理器已解绑 ⇒ 这一发**没有上报**（对端不会有任何表现）");
+                return;
+            }
 
             // 射击方向：优先用**实际开火那把枪**的枪口朝向 + 本武器散布（含第三人称瞄准目标的方向）——
             // 盟友模型只同步了 yaw、没有俯仰，不带上方向就只能水平打。
@@ -212,9 +229,33 @@ namespace FPSGame.Managers
                 if (muzzle != null) dir = weapon.GetShotDirectionWithinSpread(muzzle);
             }
 
+            // ★ "呼叫战备"那一发**不上报表现弹**（判据 = 信号枪的非 0 档位，即"呼叫战备"档）：
+            //   空投有自己的同步通道（AirdropCallNtf/Sync 4027/4028，带落点+朝向+呼叫者），而"开枪那一发"
+            //   在对端只会按**命中特效**重放 ⇒ 对端把空投当成"标记"放出一个假标记（2026-10-10 实测）
+            //   —— 且与对端版本无关（旧包连档位都收不到）。其余武器的多档位（火炮炮弹等）不受影响。
+            if (weapon != null
+                && weapon.WeaponTypeEnum == FPSGame.GameData.WeaponTypeEnum.FlareGun
+                && weapon.UseDamageIndex > 0)
+            {
+                FPSGame.Utils.NetSyncLog.BulletLog("开火·发", $"档位={weapon.UseDamageIndex}（信号枪·呼叫战备那一发）" +
+                    "⇒ 不上报表现弹（空投由 AirdropCall 4027/4028 同步，避免对端放出假标记）");
+                return;
+            }
+
             // ★ 连**目标点**一起发：第三人称下"枪口朝向"与"准心落点"不在同一条线上，
             //   只发方向时对端的表现弹会沿枪口打过去、落点对不上（2026-10-07 实测）
-            NetRoomFlow.Instance?.SendShoot(_localWeapons.ActiveWeaponIndex, dir, LocalAimPoint());
+            var aim = LocalAimPoint();
+            // 数据说话：这一发"发出去了没有、带的槽位/方向/落点是什么"，以及**发得出去吗**——
+            // 与对端「开火·收」/「生成表现弹」对照即可判断是"没发出去"还是"发出去没落地"
+            var flow = NetRoomFlow.Instance;
+            bool connected = FPSGame.Net.NetSvc.Instance != null && FPSGame.Net.NetSvc.Instance.IsConnected;
+            bool isHost = flow != null && flow.IsHost;
+            FPSGame.Utils.NetSyncLog.BulletLog("开火·发", $"槽={_localWeapons.ActiveWeaponIndex} 枪={(weapon != null ? weapon.name : "<无>")}" +
+                $" 档位={(weapon != null ? weapon.UseDamageIndex : -1)} 方向={dir:F2} 落点={(aim.sqrMagnitude > 0.0001f ? aim.ToString("F2") : "<无>")}" +
+                $" 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")} 已连房主={connected} 是房主={isHost}" +
+                ((connected || isHost) ? "" : " ←**发不出去**：SendShoot 会静默 return（没连上房主）"));
+            // ★ 伤害档位一起发：接收端要按**开枪者**的档位取命中特效（信号枪 0=标记 / 1=呼叫战备）
+            flow?.SendShoot(_localWeapons.ActiveWeaponIndex, dir, aim, weapon != null ? weapon.UseDamageIndex : 0);
         }
 
         /// <summary>准心射程（取目标点时的最大距离；打空时用户点取射线远端）。</summary>
@@ -254,11 +295,24 @@ namespace FPSGame.Managers
 
         /// <summary>盟友开火（表现：枪口闪光 + 枪响 + 弹道 + 枪械动画）。</summary>
         /// <param name="dir">开火瞬间的射击方向（世界空间）；零向量 = 用枪口朝向</param>
+        /// <param name="damageIndex">开枪那把枪的伤害档位（<c>WeaponBaseController.UseDamageIndex</c>）——
+        /// 必须用**他**的档位摆命中特效/表现弹，否则信号枪的"标记/呼叫战备"两档会放错（见 <c>PlayerShoot.DamageIndex</c>）</param>
         /// <param name="aimPoint">开枪者准心实指的目标点（世界空间）；零向量 = 未知 ⇒ 只用方向</param>
-        private void HandleShoot(uint sid, int slotIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 aimPoint)
+        private void HandleShoot(uint sid, int slotIndex, int damageIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 aimPoint)
         {
             if (IsSelf(sid)) return;
-            if (_friends.TryGetValue(sid, out var fc) && fc != null) fc.PlayShoot(dir, aimPoint);
+
+            // 数据说话：收到的这一发到底有没有**落到盟友实体**上（找不到实体是最常见的"没反应"原因）
+            FriendController fc;
+            bool found = _friends.TryGetValue(sid, out fc) && fc != null;
+            FPSGame.Utils.NetSyncLog.BulletLog("开火·收", $"sid={sid} 槽={slotIndex} 档位={damageIndex} 方向={dir:F2} " +
+                $"落点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")} 盟友实体={(found ? fc.name : "<没有>")}");
+            if (!found)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("开火·收", $"sid={sid} 找不到盟友实体 ⇒ 这一发在**本端完全没表现**（盟友是没建出来，还是已被销毁？）");
+                return;
+            }
+            fc.PlayShoot(dir, aimPoint, damageIndex);
         }
 
         // ==================== 呼叫战备（局内释放） ====================
@@ -345,7 +399,9 @@ namespace FPSGame.Managers
 
             // ⚠ 必须用带 angle 的重载：那个 angle 会变成信标的 rotation，而轰炸的炮位/弹道按它摆
             //   （不带 yaw 时远端那份炮击方向与发起方不同 ⇒ "时间对了位置不对"）
-            bm.ReleaseAirdrop(point, yaw, airdropId);    // owner = null ⇒ 不计"呼叫战备次数"、不回声
+            // ★ callerSid：这次空投是**他**叫的 ⇒ 生成的载具（外骨骼/炮台）在他的机器上按**他的**载具改装渲染，
+            //   我这边也照同一份配置渲染（见 BattleApplyVehicleData 的归属口径）
+            bm.ReleaseAirdrop(point, yaw, airdropId, null, sid);    // owner = null ⇒ 不计"呼叫战备次数"、不回声
         }
 
         private static bool IsSelf(uint sid) =>
@@ -482,7 +538,39 @@ namespace FPSGame.Managers
                 if (prefab != null) list.Add(prefab);
             }
 
-            fc.SetWeapons(list, profile.Upgrades);
+            // ★ 改装优先用**配置消息**（它带模组）；PlayerProfile 只作为"配置还没到"时的旧版兜底
+            _loadouts.TryGetValue(fc != null ? fc.NetSid : 0u, out var loadout);
+            int[][] upgrades = loadout != null && loadout.Upgrades != null && loadout.Upgrades.Length > 0
+                ? loadout.Upgrades
+                : profile.Upgrades;
+
+            fc.SetWeapons(list, upgrades, loadout?.Modules);
+        }
+
+        /// <summary>
+        /// 【桥调用】某玩家的**配置**（武器改装 + 模组）到了 / 变了 ⇒ 缓存，并在他已在场时按新配置重装武器。
+        /// <para>▍为什么需要：配置是独立一条消息（<c>PlayerLoadoutMsg</c>），到达时机与名单不同步 ——
+        /// 可能在盟友实例建好后到（这条路径负责重装），也可能先到（存进缓存，建实例时用）。</para>
+        /// </summary>
+        public void RefreshLoadout(uint sid, PlayerLoadoutMsg loadout)
+        {
+            if (loadout != null) _loadouts[sid] = loadout;
+
+            if (!_friends.TryGetValue(sid, out var fc) || fc == null) return;
+
+            var profile = FindProfile(sid);
+            if (profile != null) AttachRoleWeapons(fc, profile);
+        }
+
+        /// <summary>按 sid 在最近一次名单里找该玩家的资料（配置到达时要用它取"带了哪些武器"）。</summary>
+        private PlayerProfile FindProfile(uint sid)
+        {
+            if (_lastInfos == null || _lastProfiles == null) return null;
+            for (int i = 0; i < _lastInfos.Length && i < _lastProfiles.Length; ++i)
+            {
+                if (_lastInfos[i] != null && _lastInfos[i].Sid == sid) return _lastProfiles[i];
+            }
+            return null;
         }
 
         // ==================== 名单 → 实例 ====================
@@ -809,10 +897,12 @@ namespace FPSGame.Managers
         /// <summary>
         /// 出生点：优先用标签点，退化到"本机玩家位置"（战斗场景未必有 StartPoint）。
         ///
-        /// <para>▍**按第几个玩家沿 -Z 排开**：第 N 个 ⇒ <c>出生点 -(0,0,N*spawnSpacing)</c>。
-        /// 原先按圆环（半径 spawnRadius）分布，但**首次位姿会把盟友吸附到他的真实位置**
-        /// ⇒ 主机站在出生点没动时两人必然重合、被物理互相顶开（盟友挂的角色模型自带 CapsuleCollider）
-        /// ⇒ 出生点错开至少让出生瞬间不打架（长期重合由 <c>FriendController</c> 的"忽略与本地玩家碰撞"兜住）。</para>
+        /// <para>▍**与"本机玩家自己该站的那一位"共用同一套摊算**（<see cref="SpawnSlots.Spread"/>）：
+        /// 序号取该玩家在**房主名单**里的下标（<paramref name="playerOrdinal"/> 是 1 起的"第几个"，减 1 即下标）
+        /// ⇒ 盟友出生的那一格，正好是他本机给自己算的那一格，第一次位姿到达时不会跳一下。</para>
+        /// <para>▍为什么必须摊开：**首次位姿会把盟友吸附到他的真实位置**，主机站在出生点没动时两人必然重合、
+        /// 被物理互相顶开（盟友挂的角色模型自带 CapsuleCollider）⇒ 出生瞬间错开至少不打架
+        /// （长期重合由 <c>FriendController</c> 的"忽略与本地玩家碰撞"兜住）。</para>
         /// </summary>
         /// <param name="playerOrdinal">该玩家在房间名单里的序号（房主 = 1）</param>
         private Vector3 NextSpawnPos(int playerOrdinal)
@@ -826,7 +916,7 @@ namespace FPSGame.Managers
                 center = self != null ? self.position : Vector3.zero;
             }
 
-            return center + new Vector3(0f, 0f, -Mathf.Max(0, playerOrdinal) * spawnSpacing);
+            return SpawnSlots.Spread(center, Mathf.Max(0, playerOrdinal - 1), spawnSpacing);
         }
 
         // ==================== 位姿：上行 ====================

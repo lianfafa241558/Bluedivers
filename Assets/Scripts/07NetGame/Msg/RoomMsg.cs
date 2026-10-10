@@ -210,9 +210,7 @@ public class PlayerWeaponSwitch
 }
 
 /// <summary>
-/// 开火（**只做表现同步**：枪口闪光/音效/枪械动画；伤害由开枪者本机结算，这里不重放）。
-/// <para>▍为什么不带方向/命中：那是弹道与判定的同步，属于战斗同步的另一条线（见关键物体同步计划）；
-/// 表现层只需要"哪把枪在什么时候响了"。</para>
+/// 开火（**只做表现同步**：枪口闪光/音效/枪械动画/表现弹；伤害由开枪者本机结算，这里不重放）。
 /// </summary>
 [MessagePackObject]
 public class PlayerShoot
@@ -237,6 +235,16 @@ public class PlayerShoot
     [Key(5)] public float HitX;
     [Key(6)] public float HitY;
     [Key(7)] public float HitZ;
+
+    /// <summary>
+    /// 开枪时那把枪的**伤害档位**（<c>WeaponBaseController.UseDamageIndex</c>，指向 <c>Damages</c> 数组）。
+    /// <para>▍为什么必须同步：档位是**每把枪的本机状态**，而"命中特效/表现弹"都取自它。信号枪就是典型——
+    /// 0 = 标记（<c>VFX_SignalFlare</c>）、1 = 呼叫战备（<c>VFX_AirdropPoint</c>），由
+    /// <c>PlayerWeaponsManager.OnInputCompletedAirdrop</c> 本地切换。不同步的话接收端用**自己那把**的档位重放
+    /// ⇒ 客机叫的空投在房主端被当成"标记"重放（凭空多一个标记，2026-10-10 用户实测）。</para>
+    /// <para>0 = 旧版发送端 ⇒ 接收端退回本端当前档位。</para>
+    /// </summary>
+    [Key(8)] public int DamageIndex;
 }
 
 /// <summary>
@@ -524,6 +532,11 @@ public class TaskConfirmNtf
     public int MatchId;           // 本局局号（房主每次"确认本局配置"时自增，0 = 未提供）⇒ 幂等 + 后续战斗消息的局标识
     [Key(8)]
     public TaskCfgDto Cfg;        // ★ 选中项 TaskCfg 的**内容**（null = 旧版房主 ⇒ 成员退回"按本地表下标取"，跨窗口会错位；见 TaskCfgDto）
+    [Key(9)]
+    public int Phase;             // ★ 房主**当前所在阶段**（`GameStateEnum` 的位值：4 = Ready、128 = Armament；0 = 未提供）
+                                  //   ▍为什么要有：房主可能已经进到 Armament 才放人进来（后进房）⇒ 成员只落配置会被推到
+                                  //     Ready 停在"等人"，而其他人已经在"配战备"（2026-10-10 用户报）。
+                                  //     ⚠ 用 int 而非枚举：07_NetGame 看不见 `01_GameContract` 的 `GameStateEnum`。
 }
 
 /// <summary>
@@ -581,5 +594,80 @@ public class TransitionNtf
     /// <summary>本局局号（= 刚才那条 <see cref="TaskConfirmNtf.MatchId"/>；0 = 未提供）。仅用于日志与幂等判定。</summary>
     [Key(0)]
     public int MatchId;
+}
+
+/// <summary>
+/// **本机战斗场景加载完成**（成员 -> 房主）。
+///
+/// <para>▍为什么需要：各端各自加载战斗场景，快慢能差十几秒。原来的 <c>BattleManager</c> 一加载完就
+/// <c>IsStartBattle = true</c>（开波 / 刷怪 / 任务 / 敌 AI 全开）⇒ 慢的那台还在读条，快的那台已经在打，
+/// 甚至已经掉血/被围（2026-10-10 用户口径：要等所有人都加载完再一起开打）。</para>
+///
+/// <para>▍房主收齐（或超时 / 有人掉线被清退）后广播 <see cref="BattleStartMsg"/> 才真正开打。</para>
+/// </summary>
+[MessagePackObject]
+public class LoadCompleteMsg
+{
+    /// <summary>本局局号（= <see cref="TaskConfirmNtf.MatchId"/>；0 = 未提供）。仅用于日志与幂等判定。</summary>
+    [Key(0)]
+    public int MatchId;
+}
+
+/// <summary>
+/// **全体加载完成 ⇒ 一起开打**（房主 -> 全体）。
+/// <para>▍接收端动作：把 <c>BattleManager.IsStartBattle</c>（和自持的 <c>BattleState.IsStartBattle</c>）打开。
+/// 房主自己也收（<see cref="NetHostSvc"/> 广播后会本地自派发一次），判据因此只有一处。</para>
+/// </summary>
+[MessagePackObject]
+public class BattleStartMsg
+{
+    /// <summary>本局局号（= <see cref="TaskConfirmNtf.MatchId"/>；0 = 未提供）。</summary>
+    [Key(0)]
+    public int MatchId;
+}
+
+/// <summary>
+/// **单个载具的改装**（联机镜像，与 <c>ArchivesData_SO.ArchVehicleData</c> 一一对应）。
+/// <para>▍为什么带 <see cref="VehicleName"/> 而不是按数组下标：载具是**按名字键控**的
+/// （<c>ArchivesData_SO.VehicleCustomDic[vehicleName]</c>），用下标会依赖两端资产的枚举/保存顺序 —— 跨窗口必错位。</para>
+/// </summary>
+[MessagePackObject]
+public class VehicleCustomDto
+{
+    [Key(0)] public string VehicleName;
+    [Key(1)] public int LeftWeaponIndex;
+    [Key(2)] public int RightWeaponIndex;
+    [Key(3)] public int SkinIndex;
+    [Key(4)] public int BlendIndex;
+    [Key(5)] public float BlendScale;
+}
+
+/// <summary>
+/// **玩家配置（改装）同步**：武器改装（档位 + 模组）+ 载具改装。
+///
+/// <para>▍为什么单独一条、而不塞进 <see cref="PlayerProfile"/>：资料那条是"名单广播"的一部分
+/// （跟着准备状态/角色一起发，频率高），而本配置**只在入房与真正改动时**才有意义；
+/// 混在一起会让"每次准备切换"都重传一整车配置。</para>
+///
+/// <para>▍方向：成员 -> 房主（<c>PlayerLoadoutNtf</c>）/ 房主 -> 全体（<c>PlayerLoadoutSync</c>），
+/// 同一个 DTO 两个命令号（同 <c>SceneActorSync</c> 的手法）。</para>
+/// </summary>
+[MessagePackObject]
+public class PlayerLoadoutMsg
+{
+    /// <summary>权威标识（房主 = 0，成员 = 其会话 sid；由房主/发送方填，接收端不要采信 DTO 里的值）。</summary>
+    [Key(0)] public uint Sid;
+
+    /// <summary>武器改装：每类武器（下标 = <c>WeaponTypeEnum</c>）每档**选中的改装项**；与
+    /// <see cref="PlayerProfile.Upgrades"/> 同形（-1 = 该档未选）。</summary>
+    [Key(1)] public int[][] Upgrades;
+
+    /// <summary>武器模组：每类武器**选中的模组下标**（-1/越界 = 无模组）。
+    /// <para>▍为什么要单独一项：<c>WeaponUpgradeData.selectModuleIndex</c> 是**独立于档位**的选择，
+    /// 而 <see cref="PlayerProfile.Upgrades"/> 当初只导出了 <c>selectIndex</c> ⇒ 盟友那侧一直按 0 处理。</para></summary>
+    [Key(2)] public int[] Modules;
+
+    /// <summary>载具改装（按 vehicleName 键控；null/空 = 没同步过 ⇒ 消费方退回本机存档）。</summary>
+    [Key(3)] public VehicleCustomDto[] Vehicles;
 }
 }

@@ -94,6 +94,22 @@ namespace FPSGame.Net
         /// 客户端只做插值跟随 ⇒ 判定只存在一处。</para></summary>
         public const int WaveCenterNtf = 4039;
 
+        // ===== 开局加载闸门（4041+；2026-10-10）=====
+        /// <summary>成员 -> 房主：本机**战斗场景加载完成**（本地初始化跑到 <c>BattleManager</c> 的开局闸门）。</summary>
+        public const int LoadCompleteNtf = 4041;
+        /// <summary>房主 -> 全体：**全体加载完成 ⇒ 一起开打**（各端凭它把 <c>IsStartBattle</c> 打开）。
+        /// <para>⚠ 单独一条而不是复用 <c>Transition</c>：Transition 是"开始加载"（各端加载快慢差很多），
+        /// 这条才是"都加载完了"，差的就是各端开打的时机。</para></summary>
+        public const int BattleStartSync = 4042;
+
+        /// <summary>双向：**场景可破坏物**（油桶这类摆在场上的物件）被打掉 ⇒ 远端把同一件也打掉。
+        /// <para>▍为什么单独一条：这类物件**没有 NetId**（<c>Actor.NetId</c> 只发给敌人），
+        /// 也不走家具那条交互通道（它不是家具、没有交互，是被打爆的）；不加这条就是
+        /// "客机打爆了油桶、房主那边还是完好"（2026-10-10 用户实测）。</para>
+        /// <para>▍键 = <c>FNV1a(Actor.Id + 位置 0.1m 量化)</c>（同 <c>Furniture_Attached.SyncId</c> 口径：
+        /// 同类物件多实例，只用 Id 会撞车、用 IndexID 两端不一致）。</para></summary>
+        public const int SceneDestructibleNtf = 4043;
+
         // ===== 舰桥准备（战备/强化/资料；对应原 BridgeSys 的三条本地回环）=====
         /// <summary>成员 -> 房主：本机玩家资料（角色/等级/武器/战备/强化）</summary>
         public const int PlayerProfileNtf = 4007;
@@ -105,6 +121,12 @@ namespace FPSGame.Net
         public const int PlayerBoosterNtf = 4010;
         /// <summary>房主 -> 全体：全队强化（房主自己也走这条）</summary>
         public const int PlayerBoosterSync = 4011;
+        /// <summary>成员 -> 房主：本机**配置**（武器改装：档位 + 模组；载具改装）。
+        /// <para>▍与 <c>PlayerProfileNtf</c> 分开：资料那条走"名单广播"（高频、跟着准备状态一起发），
+        /// 而本配置**只在入房与真正改动时**各发一次（改档位/模组/载具才有意义）。</para></summary>
+        public const int PlayerLoadoutNtf = 4044;
+        /// <summary>房主 -> 全体：玩家配置（含房主自己）。⚠ 新人入房时房主**补发全量**（见 NetHostSvc.BroadcastLoadouts）。</summary>
+        public const int PlayerLoadoutSync = 4045;
 
         // ===== 战斗·关键物体位姿同步（5000 段；房主权威"聚合 + 广播"）=====
         /// <summary>成员 -> 房主：本机权威实体的位姿（当前：本机玩家）</summary>

@@ -48,3 +48,7 @@
 - ⚠⚠ **"槽位数 = `Constants.MaxPlayer`，但数据列表可能更短"**：`ArmamentWnd.FirstShowWnd` 的行是按 `MaxPlayer`(4) 建的，而 `teamManager.players` 可能只有 1~2 人 ⇒ **任何 `players[i]` 都要用 `i < players.Count` 守卫**（2026-10-07 实测：1 人局撤离完回到战备界面，`FirstShowWnd` 直接 `ArgumentOutOfRangeException: List.get_Item`，整个窗口打不开）。`ShowWnd` 里那个 `if (i < players.Count)` 不是装饰，新代码别绕开它。
 - ⚠ **`Camera.main` 不是"永远有"**：没有 tag=MainCamera 的激活相机时它返回 **null**（实测：撤离结束切到 `Armament` 后战斗相机已失效，此时按 ESC 开设置窗）⇒ `FpsHelper.CameraCaptureToSprite(Camera.main)` 在第一句 `targetCamera.targetTexture = rt` 抛 NRE，把整个 `ShowWnd` 打断。修法 = helper 判空返回 null + 调用点 `if (sprite != null)` 保留上一张背景（`SettingWnd` / `AirdropConfigWnd` 两处都是这个模式）。同窗口里 `ActorsManager.Player`、`CreatPrefab` 的返回值也要判（一个 NRE 会遮住后面的一串）。
 - ⚠ **`IsValidMono()` 是 `IMonoVaild`（接口）上的扩展**（`00Core/Interfaces/CoreInterfaces.cs`），**不是** `UnityEngine.Object`/`MonoBehaviour` 上的 ⇒ 对 `Animator`、`Transform` 之类调它会 `CS1061`（编译不过）。那些地方用 Unity 自带的 `x != null`（销毁过的对象会判成 false，语义就是要的）。同文件里还有个 `IsValid(this UnityEngine.Object)`（`00Tools/ObjectIsValid.cs`）可用，别把两者搞混。
+- ⚠ **`Invalid AABB inAABB`（+ `Canvas.SendWillRenderCanvases`）**= 某个 UI 元素的 AABB 含 NaN/±Inf（原生日志、**不带对象名**）⇒ 根因是"世界→屏幕/地图"算出的坐标或尺寸非法后写进了 RectTransform。
+  2026-10-10 已加兜底：`Tool.IsFinite(float/Vector2/Vector3)`（`00Tools/Tool_Geometry.cs`）+ `WndRootTool.SetSizeDelta` 丢弃非有限写入
+  + `SubtitleBase.Follow`/`SubtitleMark.Follow` 非有限就跳过 + `MiniMapWnd` 的 `Zoom`/`MapSizeValid`（除零一律夹成 1）。
+  ⚠ 同款写法的**其余位置未加**：`SubtitleWnd`(152/171 行 `WorldToScreenPoint`→`transform.position`)、`HitFlashWnd`(249)、`SightLockToTarget`(70)。

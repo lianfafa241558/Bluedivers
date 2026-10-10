@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace FPSGame.Utils
 {
@@ -31,13 +31,17 @@ namespace FPSGame.Utils
         /// <summary>丢消息 / 找不到对象 / 决策作废这类"不正常"，用 Warning 便于在 Console 里筛。</summary>
         public static void Warn(string tag, string msg) { if (!Enabled) return; Debug.LogWarning($"[异常/{tag}] {msg}"); }
 
-        /// <summary>启动时定默认值：**两端都默认关**（这些是诊断日志，常年开会把 Player.log 刷爆）。
-        /// 要查就显式开：编辑器用 execute_code，打包端用启动参数 <c>-netsynclog</c> / 环境变量 <c>NETSYNC_LOG=1</c>。</summary>
+        /// <summary>启动时定默认值：**编辑器默认关、打包端默认开**（与类注释一致）。
+        /// <para>▍为什么打包端要给"开"：它没有 <c>execute_code</c>，日志只能落 <c>Player.log</c> 再回读；
+        /// 默认关掉就等于"客机一侧什么都看不到"（2026-10-10 实测踩到：主机有日志、客机一条都没有，
+        /// 于是没法判断客机到底发没发）。</para>
+        /// <para>想静默：启动参数 <c>-nonetsynclog</c> 或 <c>PlayerPrefs["NetSyncLog"]=0</c>；
+        /// ⚠ 正式发布前应改成"只认启动参数"（常年开会把 Player.log 刷爆）。</para></summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void InitFromStartup()
         {
-            Enabled = false;
-
+            //Enabled = !Application.isEditor;
+            Enabled = true;
             if (System.Environment.GetEnvironmentVariable("NETSYNC_LOG") == "1") Enabled = true;
 
             string[] args = System.Environment.GetCommandLineArgs();

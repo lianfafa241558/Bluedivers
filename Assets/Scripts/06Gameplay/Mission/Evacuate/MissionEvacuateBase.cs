@@ -40,7 +40,7 @@ namespace FPSGame.Mission
         protected override void StartMission()
         {
 
-
+            medivac.SetType(MedivacController.MedivacState.Land);
 
 
         }
@@ -91,7 +91,7 @@ namespace FPSGame.Mission
             var keiGo = Res.CreatPrefab("Prefabs/BattleBase/Kei", false, point.TransformPoint(0, 0, 10));
             if (keiGo) kei = keiGo.GetComponent<SpecUnitKei>();
             medivac = Res.CreatPrefab("Prefabs/BattleBase/NeoNimbus", true, point.TransformPoint(0, 12, 0)).GetComponent<MedivacController>();
-            medivac.SetType(MedivacController.MedivacState.Land);
+            medivac.SetType(MedivacController.MedivacState.Load);
             medivac.targetPoint = point;
         }
 

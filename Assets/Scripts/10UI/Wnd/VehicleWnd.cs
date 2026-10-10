@@ -160,7 +160,12 @@ public class VehicleWnd : Window
     protected override void HideWnd()
     {
 
-        if (meetSave) ArchivesData_SO.Current.Save();
+        if (meetSave)
+        {
+            ArchivesData_SO.Current.Save();
+            // 联机：载具改装（左右武器/涂装/混色）改完要同步给别人（载具部分由 SendSelfLoadout 从存档读全量）
+            TeamNetBridge.SendSelfLoadout();
+        }
         m_SelectVehicleCamera.gameObject.SetActive(false);
         if(ActorsManager.Player.IsValidMono()) ActorsManager.Player.gameObject.SetActive(true);
         WindowState = WindowStateEnum.Game;

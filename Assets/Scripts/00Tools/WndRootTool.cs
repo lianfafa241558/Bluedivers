@@ -114,6 +114,9 @@ namespace FPSGame.WndTools
 
         public static void SetSizeDelta(Transform trans, float width, float height)
         {
+            // ⚠ 兜底：NaN/±Inf 写进 sizeDelta ⇒ Canvas 每帧刷 "Invalid AABB inAABB"（原生日志、不指名对象）
+            //   ⇒ 这类写入直接丢弃（正常尺寸一律不受影响）。
+            if (!FPSGame.Utils.Tool.IsFinite(width) || !FPSGame.Utils.Tool.IsFinite(height)) return;
             ((RectTransform)trans).sizeDelta = new(width, height);
         }
         public static Vector2 GetSizeDelta(Transform trans)

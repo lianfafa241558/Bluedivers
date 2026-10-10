@@ -250,7 +250,13 @@ public class SelectRoleWnd : Window
     protected override void HideWnd()
     {
 
-        if(meetSave)ArchivesData_SO.Current.Save();
+        if (meetSave)
+        {
+            ArchivesData_SO.Current.Save();
+            // 联机：本窗口改的是"武器选择 / 改装档位 / 模组"，都只落在存档上 ⇒ 关窗时把本机配置重发一次
+            //（SendSelfLoadout 内部会从存档重算并写回 TeamManager.Self，见其注释）
+            TeamNetBridge.SendSelfLoadout();
+        }
         if(ActorsManager.Player.IsValidMono()) ActorsManager.Player.gameObject.SetActive(true);
         WindowState = WindowStateEnum.Game;
         if (m_SelectRoleCamera) SetActive(m_SelectRoleCamera.gameObject, false);

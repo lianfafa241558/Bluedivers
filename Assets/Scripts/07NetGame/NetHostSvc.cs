@@ -25,9 +25,9 @@ namespace FPSGame.Net
 ///   成员 JoinRoomReq → 房主校验(满员 / 密码 / 是否已进战斗) → JoinRoomRsp(结果) [+ 补发本局配置]
 ///   成功 → 房主广播 PlayerListSync 给全体
 ///   成员 ReadyState → 房主汇总 → 广播 PlayerListSync
-///   房主在 Bridge 选完任务 → 广播 TaskConfirmNtf（双方进 Ready；**收人窗口只有 Ready**）
-///   所有人就位 → Armament：`CloseJoin()` 关闸（不再收人，但名单继续同步——准备状态要靠它）
-///   全员准备 → 房主广播 TransitionNtf（同时开始加载战斗）+ **冻结名单**
+///   房主在 Bridge 选完任务 → 广播 TaskConfirmNtf（双方进 Ready；**收人窗口一路开到 Transition**）
+///   所有人就位 → Armament：**继续收人**（晚来的人靠补发的 Phase 立刻跟到 Armament）
+///   全员准备 → 房主广播 TransitionNtf（同时开始加载战斗）+ **冻结名单**（这时才不再收人）
 ///
 /// ▍使用方式（挂到房主机的 GameObject 上）：
 ///   NetHostSvc.Instance.StartHost(roomName, map, maxPlayers);  // 开房+广播
@@ -81,6 +81,11 @@ public class NetHostSvc : MonoBehaviour
 
     /// <summary>成员资料表：sid -> <see cref="PlayerProfile"/>（角色/武器/战备/强化，由成员自己上报）。</summary>
     private readonly Dictionary<uint, PlayerProfile> _profiles = new Dictionary<uint, PlayerProfile>();
+
+    /// <summary>玩家配置表：sid -> <see cref="PlayerLoadoutMsg"/>（武器改装：档位 + 模组；载具改装；房主自己 = 0）。
+    /// <para>▍为什么要房主落一份：新人入房时得**补发全量**（他错过的那些配置），
+    /// 与 <c>_lastTaskConfirm</c> 补发同一个道理。</para></summary>
+    private readonly Dictionary<uint, PlayerLoadoutMsg> _loadouts = new Dictionary<uint, PlayerLoadoutMsg>();
 
     /// <summary>房主自己的资料（角色/武器/战备/强化）。由 09 侧的桥在资料变化时写入，见 <see cref="SetLocalProfile"/>。</summary>
     public PlayerProfile HostProfile { get; private set; }
@@ -196,6 +201,8 @@ public class NetHostSvc : MonoBehaviour
         // 舰桥准备（战备/强化/资料）：成员上行到房主，房主校验后转发（见 RelayToAll）
         MessageCenter.Register<PlayerProfileNtf>(CmdId.PlayerProfileNtf, OnPlayerProfileNtf);
         MessageCenter.Register<PlayerArmamentNtf>(CmdId.PlayerArmamentNtf, OnPlayerArmamentNtf);
+        // 玩家配置（武器改装档位/模组 + 载具改装）：成员上行 → 房主落表后全量广播（含补发给新人）
+        MessageCenter.Register<PlayerLoadoutMsg>(CmdId.PlayerLoadoutNtf, OnPlayerLoadoutNtf);
         // 局内战备呼叫：成员上行 → 房主转发给全体（房主自己那条不走这里，见 NetRoomFlow.SendAirdropCall）
         MessageCenter.Register<AirdropCallMsg>(CmdId.AirdropCallNtf, OnAirdropCallNtf);
         // 角色喊话：成员上行 → 房主转发给全体
@@ -208,6 +215,8 @@ public class NetHostSvc : MonoBehaviour
         MessageCenter.Register<PlayerAmmo>(CmdId.PlayerAmmoNtf, OnPlayerAmmoNtf);
         // 位姿同步：成员上行 → 房主聚合（下行在 Update 里按固定频率广播）
         MessageCenter.Register<PoseBatchMsg>(CmdId.PlayerTransformUp, OnPoseUp);
+        // 开局加载闸门：成员上报"战斗场景加载完成" → 房主收齐后广播开打（见 TryStartBattle）
+        MessageCenter.Register<LoadCompleteMsg>(CmdId.LoadCompleteNtf, OnLoadCompleteMsg);
         // 心跳（NetCmdId.PingReq → 回 Pong）在传输层 NetServer 里注册：它必须对"任何会话"都回
     }
 
@@ -245,6 +254,7 @@ public class NetHostSvc : MonoBehaviour
         _lastTaskConfirm = null;      // 也没有"上一局配置"可补发
         _matchId = 0;
         _players.Clear();
+        ResetLoadGate();              // 上一局的"已加载"票不能带进新房间
 
         // ① 创建并启动传输层服务器：socket / 会话 / 心跳 / 存活都交给 02_Net 的 NetServer，
         //    房主本地只跑游戏逻辑（P2P 模式下 DLL 直接放客户端，房主内嵌一个迷你"服务器"）。
@@ -321,7 +331,9 @@ public class NetHostSvc : MonoBehaviour
         _lastTaskConfirm = null;
         _players.Clear();
         _profiles.Clear();
+        _loadouts.Clear();       // 关房：配置表一并清掉（否则下一房会带出上个房间的配置）
         _poses.Clear();          // 关房：位姿表一并清掉（否则下一房会带出旧位姿）
+        ResetLoadGate();         // 同上：加载闸门状态一并复位
         _ghostLogged.Clear();    // "未入房断连"日志去重表（存活表/主动关闭登记表由 NetServer.Stop 清）
         HostProfile = null;
         KCPTool.ColorLog(KCPLogColor.Cyan, "房主服务器已停止");
@@ -396,9 +408,13 @@ public class NetHostSvc : MonoBehaviour
         }
 
         _profiles.Remove(sid);   // 资料跟人走，人走了资料也删（否则 BuildProfileArray 会漏出僵尸项）
+        _loadouts.Remove(sid);   // 配置同理（否则会给新人补发"已经走了的人"的配置）
         _poses.Remove(sid);      // 位姿表同样要清：不清的话这条"幽灵位姿"会跟着每一批快照一直下发
+        _loadedSids.Remove(sid); // "加载完成"的票也跟人走
         Debug.Log($"[NetHostSvc] 成员离开 sid={sid}，剩余玩家 {TotalPlayers}");
         BroadcastPlayerList();   // ⚠ 战斗期名单**冻结**，这一句会被跳过（下面那条"离开"消息才是关键）
+        // ★ 走掉的人不用再等他的"加载完成"⇒ 条件可能就此满足（整队正在等他，他却强退了）
+        TryStartBattle();
 
         // ★ 无论名单冻不冻结都要告诉各端"这个人走了"（只带 sid、不重排）：
         //   否则战斗中强退的盟友模型会一直留在别人屏幕上（2026-10-07 实测）。
@@ -462,9 +478,10 @@ public class NetHostSvc : MonoBehaviour
         uint sid = CurrentSid;
         if (sid == 0) return;
 
-        // 收人窗口只有 **Ready**（选完任务 → 所有人就位）：① 进 Armament 就不再收人；
-        // ② 进 Transition（名单已冻结、正在加载战斗）更不可能。进来只会卡在舰桥，
-        // 还会破坏"players 下标 = 名单下标"的假设。
+        // 收人窗口 = **Bridge/Ready/Armament 全程**，到 Transition（名单冻结、开始加载战斗）为止
+        // （2026-10-10 用户口径：Armament 阶段其他玩家要能进来）。
+        // ▍晚来的人不算"卡在舰桥"：入房会**补发** TaskConfirmNtf（含 Phase）⇒ 本机立刻跟到 Armament。
+        // ⚠ "players 下标 = 名单下标"的假设依然成立：Armament 期名单照常广播、各端一起重建。
         if (_rosterFrozen)
         {
             SendJoinFail(sid, "本局已开始");
@@ -519,6 +536,10 @@ public class NetHostSvc : MonoBehaviour
 
         // 广播最新玩家列表给所有成员
         BroadcastPlayerList();
+
+        // ★ 补发**全量配置**：新人得拿到"已在房间里的人"的武器改装/载具改装
+        //   （他自己的那份随后由 TeamNetBridge 在入房成功时上报；到时这里会再广播一次，把他也带上）。
+        BroadcastLoadouts();
     }
 
     /// <summary>处理成员离开房间（成员主动退房：先发这条通知，随后自己断开连接）</summary>
@@ -574,6 +595,56 @@ public class NetHostSvc : MonoBehaviour
 
         Debug.Log($"[NetHostSvc] 收到资料上报 sid={sid} 角色={ntf.Profile.RoleName}");
         BroadcastPlayerList();
+    }
+
+    // ==================== 玩家配置（武器改装：档位 + 模组；载具改装） ====================
+
+    /// <summary>
+    /// 成员上报自己的配置 ⇒ 落表 + 全量广播。
+    /// <para>▍同样**只认当前会话 sid**（不采信 DTO 里的 Sid），与 <see cref="OnPlayerProfileNtf"/> 一个口径。</para>
+    /// </summary>
+    private void OnPlayerLoadoutNtf(PlayerLoadoutMsg msg)
+    {
+        uint sid = CurrentSid;
+        if (sid == 0 || msg == null) return;
+        if (!_players.ContainsKey(sid)) return;   // 还没入房就上报 → 忽略
+
+        msg.Sid = sid;
+        _loadouts[sid] = msg;
+        Debug.Log($"[NetHostSvc] 收到配置上报 sid={sid}（载具 {msg.Vehicles?.Length ?? 0} 项）");
+        BroadcastLoadouts();
+    }
+
+    /// <summary>【房主本地】设置房主自己的配置 ⇒ 落表 + 全量广播（含本地自派发）。</summary>
+    public void SetLocalLoadout(PlayerLoadoutMsg msg)
+    {
+        if (msg == null) return;
+        msg.Sid = 0;
+        _loadouts[0] = msg;
+        BroadcastLoadouts();
+    }
+
+    /// <summary>
+    /// 把**当前已知的全部配置**广播给所有成员，并本地自派发一次。
+    ///
+    /// <para>▍为什么"全量"而不是只发变化那一条：新人入房时他要拿到**所有人**的配置
+    /// （入房那一刻房主只发他自己的那条是不够的）—— 全量发天然覆盖"入房补发"这个场景，
+    /// 且 N ≤ 4，流量可忽略。</para>
+    /// <para>▍与 <c>BroadcastPlayerList</c> 同款：<c>SendToAll</c> 只发成员，所以额外
+    /// <c>MessageCenter.Dispatch</c> 一次让房主本地也走同一条处理链。</para>
+    /// <para>⚠ 战斗期不冻结（与名册不同）：配置变化只是换外观，不影响 <c>players</c> 下标/数量。</para>
+    /// </summary>
+    private void BroadcastLoadouts()
+    {
+        if (RoomInfo == null) return;
+
+        foreach (var kv in _loadouts)
+        {
+            if (kv.Value == null) continue;
+            var msg = MessageCenter.Pack(CmdId.PlayerLoadoutSync, kv.Value);
+            SendToAll(msg);
+            MessageCenter.Dispatch(msg);   // 房主本地自派发
+        }
     }
 
     /// <summary>成员选择战备 → 以房主权威的索引转发给全体（房主本地也走一遍）。</summary>
@@ -727,8 +798,9 @@ public class NetHostSvc : MonoBehaviour
         int taskMain = -1)
     {
         _rosterFrozen = false;   // 新一局放行名单（上一局进 Transition 时冻结过）
-        _joinClosed = false;     // 同时重开入房（收人窗口 = Ready，进 Armament 会再关闸）
+        _joinClosed = false;     // 同时重开入房（正常流程里没人关过闸，这里只是兜底）
         _started = false;
+        ResetLoadGate();         // ★ 新一局：清掉上一局的"已加载"票与"已开打"位
         BroadcastPlayerList();   // 进 Ready 前给全体推一次最新名册
 
         var ntf = new TaskConfirmNtf
@@ -742,6 +814,7 @@ public class NetHostSvc : MonoBehaviour
             TaskFingerprint = taskFingerprint,
             Cfg = cfg,
             MatchId = ++_matchId,
+            Phase = _roomPhase,   // ★ 房主当前阶段（Ready/Armament）⇒ 后进房的人能立刻跟到同一阶段
         };
         _lastTaskConfirm = ntf;   // 供 Ready/Armament 期间入房的新人补发（**含配置内容** ⇒ 后进者按内容复现）
 
@@ -761,18 +834,21 @@ public class NetHostSvc : MonoBehaviour
     }
 
     /// <summary>
-    /// 【关闸】进入 <c>Armament</c> 阶段（所有人就位、开始选战备）时由 09 侧的桥调用 ⇒ 之后不再收人。
-    /// <para>▍⚠ 只关"入房"，**不动名单广播**：<c>ArmamentWnd</c> 的"全员就绪 → 进 Transition"判定
-    /// 就靠 <c>PlayerListSync</c> 里同步的准备状态，若在这里冻名单，准备状态会被一起冻住、
-    /// 这个阶段就再也走不完了（所以关闸与冻名单是两件事，别合并）。</para>
-    /// <para>▍重新放行：下一局 <see cref="ConfirmTask"/>（Bridge 选完任务 ⇒ 回到 Ready）。</para>
+    /// 【关闸】手动关闭入房（<c>OnJoinRoomReq</c> 之后回"人员已就位"）。
+    ///
+    /// <para>▍⚠ **目前没有调用点**（2026-10-10 用户口径变更）：原先在进 <c>Armament</c> 时由 09 侧的桥调用，
+    /// 结果"Armament 阶段其他玩家进不来"；现在收人窗口一直开到 <c>Transition</c>
+    /// （那道闸是 <see cref="NotifyTransition"/> 里的名单冻结 ⇒ 回"本局已开始"）。</para>
+    /// <para>▍保留本方法只当"想更早关闸"的开关；关闸**不动名单广播**（<c>ArmamentWnd</c> 的
+    /// "全员就绪 → 进 Transition"判定靠 <c>PlayerListSync</c> 里的准备状态，冻名单会把它冻住）。
+    /// 重新放行：下一局 <see cref="ConfirmTask"/>。</para>
     /// </summary>
     public void CloseJoin()
     {
         if (_joinClosed) return;
 
         _joinClosed = true;
-        Debug.Log("[NetHostSvc] 已进入 Armament（人员已就位）⇒ 关闭入房，不再接受新成员");
+        Debug.Log("[NetHostSvc] 关闭入房（人员已就位），不再接受新成员");
     }
 
     /// <summary>
@@ -819,8 +895,10 @@ public class NetHostSvc : MonoBehaviour
     /// </summary>
     private bool _rosterFrozen;
 
-    /// <summary>入房闸门：进 <c>Armament</c>（人员已就位）后关闭，<see cref="ConfirmTask"/>（新一局）放行。
-    /// <para>▍为什么不复用 <see cref="_rosterFrozen"/>：删名（关闸）与冻名单是两件事 —— 关闸只该拦入房，
+    /// <summary>入房闸门：只有 <see cref="CloseJoin"/> 会置位，<see cref="ConfirmTask"/>（新一局）放行。
+    /// <para>▍⚠ 目前**没有任何地方调用 <see cref="CloseJoin"/>**（2026-10-10：收人窗口开到 Transition 为止），
+    /// 所以本字段在正常流程里恒为 false；保留它是为了"想更早关闸"时有现成开关。</para>
+    /// <para>▍为什么不复用 <see cref="_rosterFrozen"/>：关闸（拦入房）与冻名单是两件事 —— 关闸时
     /// 名单必须继续广播，否则 ArmamentWnd 收不到"谁已就绪"，全员就绪判定永远不成立。</para></summary>
     private bool _joinClosed;
 
@@ -829,6 +907,119 @@ public class NetHostSvc : MonoBehaviour
 
     /// <summary>本局局号（每次 <see cref="ConfirmTask"/> 自增；0 保留给"未指定"）。</summary>
     private int _matchId;
+
+    /// <summary>本房**当前阶段**（= 房主 <c>GameStateEnum</c> 的位值：4 = Ready、128 = Armament；0 = 未上报）。
+    /// <para>▍为什么要有：房主可能已经进到 Armament 才让人入房（后进房）⇒ 只给新人补发"本局配置"还不够，
+    /// 他会被推到 Ready 干等（而其他人已经在配战备）。随 <see cref="TaskConfirmNtf.Phase"/> 下发；
+    /// ⚠ 07_NetGame 看不见 <c>GameStateEnum</c>，所以只存 <c>int</c>，由 09 侧的 <c>TeamNetBridge</c> 每次状态变化时写入。</para></summary>
+    private int _roomPhase;
+
+    /// <summary>【09 侧桥调用】同步本房当前阶段（<c>GameStateEnum</c> 的位值）。
+    /// <para>顺手刷新已缓存的"本局配置"里的 <c>Phase</c> ⇒ 之后入房的新人补发到的是**最新**阶段。</para></summary>
+    public void SetRoomPhase(int phase)
+    {
+        _roomPhase = phase;
+        if (_lastTaskConfirm != null) _lastTaskConfirm.Phase = phase;
+    }
+
+    // ==================== 开局加载闸门（等所有人都加载完再一起开打，2026-10-10） ====================
+
+    /// <summary>已经上报"战斗场景加载完成"的成员 sid（每局在 <see cref="ConfirmTask"/> 清空）。</summary>
+    private readonly HashSet<uint> _loadedSids = new HashSet<uint>();
+
+    /// <summary>房主自己是否已加载完成。</summary>
+    private bool _hostLoaded;
+
+    /// <summary>本局是否已经广播过"一起开打"（幂等）。</summary>
+    private bool _battleStarted;
+
+    /// <summary>等成员上报加载完成的剩余时间（房主自己加载完才开始计时）。</summary>
+    private float _loadWaitLeft;
+
+    /// <summary>【超时兜底】房主自己加载完成后，最多再等成员多久（秒）。
+    /// <para>▍为什么要有兜底：成员卡在读条 / 半天不上报时不能把整队干等死。
+    /// 掉线 / 强退的人会被 <see cref="EvictIdleMembers"/> 从 <c>_players</c> 摘掉 ⇒ 那种情况条件会自动满足，走不到这里。</para></summary>
+    [InspectorName("等成员加载超时(秒)")]
+    [Tooltip("房主自己加载完成后，最多再等这么久成员上报「加载完成」；到点照常开打。<=0 = 不设上限")]
+    [SerializeField] private float loadWaitTimeout = 60f;
+
+    /// <summary>本局是否已"全体加载完成、一起开打"（**房主权威位**；成员侧看 <c>NetRoomFlow.BattleStarted</c>）。</summary>
+    public bool IsBattleStarted => _battleStarted;
+
+    /// <summary>清空加载闸门的全部状态（开房 / 关房 / 新一局都要调）。</summary>
+    private void ResetLoadGate()
+    {
+        _loadedSids.Clear();
+        _hostLoaded = false;
+        _battleStarted = false;
+        _loadWaitLeft = 0f;
+    }
+
+    /// <summary>
+    /// 【房主】本机战斗场景加载完成 ⇒ 记一票，人到齐就广播开打。
+    /// <para>调用点：<c>BattleManager.WaitAllPlayersLoaded</c>（开局闸门）。</para>
+    /// </summary>
+    public void MarkLocalLoaded()
+    {
+        _hostLoaded = true;
+        if (loadWaitTimeout > 0f) _loadWaitLeft = loadWaitTimeout;
+        TryStartBattle();
+    }
+
+    /// <summary>【房主】收到成员上报"加载完成" ⇒ 记一票（幂等），人到齐就广播开打。</summary>
+    private void OnLoadCompleteMsg(LoadCompleteMsg m)
+    {
+        uint sid = CurrentSid;
+        if (sid == 0 || !_players.ContainsKey(sid)) return;   // 还没入房就上报 ⇒ 忽略
+        if (!_loadedSids.Add(sid)) return;                    // KCP 重传 / 重复上报 ⇒ 幂等
+
+        Debug.Log($"[NetHostSvc] 成员 sid={sid} 已加载完战斗场景（{_loadedSids.Count}/{_players.Count}）");
+        TryStartBattle();
+    }
+
+    /// <summary>
+    /// 【房主】够条件就开打：房主自己已加载 + 房间里**每个人**都上报过。
+    /// <para>▍"差谁"只认 <c>_players</c>（当前名册）：掉线 / 强退的人已被摘掉 ⇒ 条件自动满足
+    /// （见 <see cref="RemoveMemberAndNotify"/>，不让整队等一个已经不在的人）。</para>
+    /// </summary>
+    private void TryStartBattle()
+    {
+        if (_battleStarted || !_hostLoaded || RoomInfo == null) return;
+
+        foreach (var kv in _players)
+        {
+            if (!_loadedSids.Contains(kv.Key)) return;   // 还差人
+        }
+        StartBattle();
+    }
+
+    /// <summary>真正广播"一起开打"（幂等；房主本地也自派发一次，与 <c>BroadcastPlayerList</c> 同款）。</summary>
+    private void StartBattle()
+    {
+        if (_battleStarted || RoomInfo == null) return;
+        _battleStarted = true;
+
+        var msg = MessageCenter.Pack(CmdId.BattleStartSync, new BattleStartMsg { MatchId = _matchId });
+        SendToAll(msg);
+        // ★ 房主**本地**也要收：房主自己的 NetRoomFlow 靠这条翻"已开打"（SendToAll 按定义不含房主）
+        MessageCenter.Dispatch(msg);
+        Debug.Log($"[NetHostSvc] 全体加载完成 ⇒ 广播开打（局号 {_matchId}，玩家 {TotalPlayers}）");
+    }
+
+    /// <summary>还没上报"加载完成"的成员名（超时告警用；空 = 没人缺）。</summary>
+    private string MissingLoadDesc()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var kv in _players)
+        {
+            if (_loadedSids.Contains(kv.Key)) continue;
+            if (sb.Length > 0) sb.Append('、');
+            sb.Append(kv.Value != null && !string.IsNullOrEmpty(kv.Value.PlayerName)
+                ? kv.Value.PlayerName
+                : "sid" + kv.Key);
+        }
+        return sb.Length > 0 ? sb.ToString() : "无";
+    }
 
     /// <summary>
     /// 把玩家列表（+详细资料）广播给所有成员。
@@ -955,6 +1146,17 @@ public class NetHostSvc : MonoBehaviour
         EvictIdleMembers();
 
         BroadcastPoses();   // 位姿聚合下行（固定频率，见 poseBroadcastHz）
+
+        // ★ 等成员加载完成的超时兜底：房主自己加载完后开始计时，到点照常开打（别让整队卡在读条上）
+        if (_hostLoaded && !_battleStarted && RoomInfo != null && loadWaitTimeout > 0f)
+        {
+            _loadWaitLeft -= Time.unscaledDeltaTime;
+            if (_loadWaitLeft <= 0f)
+            {
+                Debug.LogWarning($"[NetHostSvc] 等待成员加载完成超时（{loadWaitTimeout:0.#}s）⇒ 先行开打；未上报：{MissingLoadDesc()}");
+                StartBattle();
+            }
+        }
     }
 
     /// <summary>销毁时清理</summary>
@@ -971,6 +1173,7 @@ public class NetHostSvc : MonoBehaviour
         MessageCenter.Unregister(CmdId.PlayerVitalNtf);
         MessageCenter.Unregister(CmdId.PlayerAmmoNtf);
         MessageCenter.Unregister(CmdId.PlayerTransformUp);
+        MessageCenter.Unregister(CmdId.LoadCompleteNtf);
         StopHost();
         Instance = null;
     }

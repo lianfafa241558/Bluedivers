@@ -64,6 +64,25 @@ public class MiniMapWnd : Window
     float NowMapSize=> mapSize* mapScale.Now;//当前地图展示的尺寸
     Vector2 zeroPoint=>center.Now - Vector2.one* NowMapSize/2;//当前的视野起点
 
+    /// <summary>
+    /// 当前缩放系数（**兜底成合法正数**）。
+    /// <para>▍为什么要兜底（2026-10-10）：本类所有换算都是"除 NowMapSize / 除 mapScale.Now"。它们为 0 时
+    /// 算出 Inf/NaN 写进 RectTransform（anchoredPosition/sizeDelta），Canvas 就会**每帧**刷
+    /// "<c>Invalid AABB inAABB</c>"（Unity 原生日志、不带对象名，极难定位）⇒ 统一在这里夹住。</para>
+    /// </summary>
+    float Zoom
+    {
+        get
+        {
+            float v = mapScale != null && Tool.IsFinite(mapScale.Now) ? mapScale.Now : 1f;
+            // 极小正数同样会把图标尺寸顶成天文数字（画面上就是一块糊满屏的图标）⇒ 与缩放上限 32 倍同量级地兜一下
+            return v >= 0.01f ? v : 1f;
+        }
+    }
+
+    /// <summary>视野尺寸是否可用于换算（false ⇒ 除零 ⇒ 结果必为 Inf/NaN）</summary>
+    bool MapSizeValid => mapSize > 0 && Tool.IsFinite(NowMapSize) && NowMapSize > 0f;
+
     int UISize;//小地图ui的尺寸
 
     IActor player;
@@ -157,7 +176,8 @@ public class MiniMapWnd : Window
        
         if (/*player.IsValid()&&*/(!mapScale.Update()|!center.Update()))//不能使用短路或
         {
-            rawImage.uvRect = new((zeroPoint - Vector2.one * border) / mapSize, Vector2.one * mapScale.Now);
+            if (mapSize > 0)
+                rawImage.uvRect = new((zeroPoint - Vector2.one * border) / mapSize, Vector2.one * Zoom);
 
             foreach (var item in ActorPoint)
             {
@@ -165,11 +185,11 @@ public class MiniMapWnd : Window
                 if(item.Key is IMissionPoint mission&&mission.AreaRange>0)
                 {
                     //*2.5是因为要稍微往外拓一点
-                    int size = Mathf.CeilToInt(mission.AreaRange * areaMultScale / mapScale.Now);
+                    int size = Mathf.CeilToInt(mission.AreaRange * areaMultScale / Zoom);
                     SetSizeDelta(item.Value.GetChild(0), size, size);
                     if (mission.HaveTag(MissionTag.FollowAreaScale))
                     {
-                        var iconSize = Mathf.Max(mission.HalfRange / mapScale.Now, 25);
+                        var iconSize = Mathf.Max(mission.HalfRange / Zoom, 25);
                         SetSizeDelta(item.Value.GetChild(1, 1), iconSize, iconSize);
                     }
                 }
@@ -286,14 +306,21 @@ public class MiniMapWnd : Window
         //Debug.LogError("原位置"+vector);
         //var zeroPoint = new Vector2(Mathf.Clamp(targetCenter.x- targetNowMapSize,0,mapSize-targetNowMapSize), Mathf.Clamp(targetCenter.y - targetNowMapSize, 0, mapSize - targetNowMapSize));
         //Debug.LogError("零点" + targetZeroPoint);
+        // ⚠ 兜底：divisor 为 0（初始化那一帧 / 地图尺寸没配）会算出 Inf/NaN，写进 anchoredPosition 就是
+        //   Canvas "Invalid AABB inAABB" + 图标飞到天外 ⇒ 这种情况退回原点（0 = 小地图左上，至少不出错）。
+        if (!MapSizeValid || UISize <= 0) return Vector2.zero;
         Vector2 re=(vector - zeroPoint);//计算出对于零点的偏移
         //Debug.LogError("偏移" + re+"映射系数"+(UISize/(float)targetNowMapSize));
-        return re/ NowMapSize * UISize;//重映射为anchPos
+        Vector2 mapped = re/ NowMapSize * UISize;//重映射为anchPos
+        return Tool.IsFinite(mapped) ? mapped : Vector2.zero;
     }
 
     private Vector2 MapPosToWorldPos(Vector2 vector)
     {
-        return vector / UISize* NowMapSize + zeroPoint;
+        // ⚠ 兜底：UISize 为 0 ⇒ Inf 世界坐标（点一下地图就可能把玩家挪到无穷远）⇒ 退回视野原点
+        if (!MapSizeValid || UISize <= 0) return zeroPoint;
+        Vector2 mapped = vector / UISize* NowMapSize + zeroPoint;
+        return Tool.IsFinite(mapped) ? mapped : zeroPoint;
     }
 
     private void OnDrawGizmos()
@@ -453,7 +480,7 @@ public class MiniMapWnd : Window
             SetActive(go.GetChild(0), entity.AreaRange > 0);
 
             //*2.5是因为要稍微往外拓一点
-            int size = Mathf.CeilToInt(entity.AreaRange * areaMultScale / mapScale.Now);
+            int size = Mathf.CeilToInt(entity.AreaRange * areaMultScale / Zoom);
             //Debug.LogError("任务" + mission.title + "区域"+size+"像素 区域范围"+ entity.AreaRange);
             SetSizeDelta(go.GetChild(0), size, size);
             if (mission.entity.HaveTag(MissionTag.FollowAreaScale))
@@ -522,7 +549,7 @@ public class MiniMapWnd : Window
                     if (mapScale.Comple)
                     {
                         //*2.5是因为要稍微往外拓一点
-                        int size = Mathf.CeilToInt(entity.AreaRange * areaMultScale / mapScale.Now);
+                        int size = Mathf.CeilToInt(entity.AreaRange * areaMultScale / Zoom);
                         SetSizeDelta(go.GetChild(0), size, size);
                     }
                 },0.05f,40);

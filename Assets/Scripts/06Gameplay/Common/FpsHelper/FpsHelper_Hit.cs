@@ -155,10 +155,17 @@ namespace FPSGame.Gameplay
         public static void PlayImpactFx(ProjectileHitData hitData)
         {
             var damageData = hitData.data;
-            if (damageData == null) return;
+            if (damageData == null)
+            {
+                // 数据说话：表现弹的伤害配置为空 ⇒ 命中时**一点反馈都没有**（本方法直接返回）
+                FPSGame.Utils.NetSyncLog.Warn("命中表现", $"伤害配置为空 ⇒ 跳过全部命中表现 点={hitData.pos:F2} 武器={(hitData.weapon.IsValid() ? hitData.weapon.name : "<无>")}");
+                return;
+            }
 
             FPSGame.Utils.NetSyncLog.BulletLog("命中表现", $"点={hitData.pos:F2} 命中物={(hitData.collider != null ? hitData.collider.name : "<无>")}" +
-                $" 特效={damageData.ImpactVfx} 音效={damageData.ImpactSfx} 弹痕={damageData.UseHole}");
+                $" 特效={damageData.ImpactVfx} 音效={damageData.ImpactSfx} 弹痕={damageData.UseHole}" +
+                // 三项都没有 ⇒ "打中了但什么也看不见"，这条日志就是那件事的直接证据
+                ((!damageData.ImpactVfx && !damageData.ImpactSfx && !damageData.UseHole) ? " ←三项全空：本发命中注定没有任何视觉反馈" : ""));
 
             Vector3 point = hitData.pos;
             Vector3 normal = hitData.normal;

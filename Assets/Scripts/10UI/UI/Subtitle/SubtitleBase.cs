@@ -126,10 +126,15 @@ public abstract class SubtitleBase : MonoBehaviour
         //point += Vector3.up * (Mathf.Log(dis+1,2)-0.5f);
         //Tool.DrawLabel(point, (Mathf.Log(dis + 1, 2)-0.5f)+" "+ (dis + 1), Time.deltaTime);
         //Debug.DrawLine(point- Vector3.up * Mathf.Log(dis + 1, 2), point,Color.red,Time.deltaTime);
+        // ⚠ 兜底（2026-10-10）：dis/point 可能是 NaN（单位坐标被写坏、除零、目标点非法…），
+        //   而下面算出的屏幕坐标会**直接写进 RectTransform** ⇒ Canvas 每帧刷 "Invalid AABB inAABB"
+        //   （Unity 原生日志、不带对象名，极难定位）⇒ 非有限值这一帧干脆不跟随。
+        if (mainCamera == null || !IsFinite(point)) return;
         // 将世界坐标转换为屏幕坐标
         Vector3 screenPosition = mainCamera.WorldToScreenPoint(point);
         screenPosition *= Mathf.Sign(screenPosition.z);
         screenPosition.z = 0;
+        if (!IsFinite(screenPosition)) return;
 
         //这个计算方式还是有点不对
         Vector3 modiflyPos = screenPosition;

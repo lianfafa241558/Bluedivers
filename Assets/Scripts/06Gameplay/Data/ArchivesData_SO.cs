@@ -135,6 +135,25 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         }
         return re;
     }
+
+    /// <summary>
+    /// 每类武器**选中的模组下标**（下标 = <c>(int)WeaponTypeEnum</c>）。
+    /// <para>▍与 <see cref="GetWeaponUpgrade"/> 分开：那个只导出 <c>selectIndex</c>（改装档位），
+    /// 模组是**独立**选择（<c>WeaponUpgradeData.selectModuleIndex</c>）—— 联机同步缺它时，
+    /// 盟友那侧只能按 0 装（看起来"我装了模组、别人看不见"）。</para>
+    /// </summary>
+    public int[] GetWeaponModules(string ID)
+    {
+        var re = new int[6];
+        var role = roleDataDic[ID];
+        var data = Resources.Load<RoleData_SO>("GameData/Role/RD_" + ID).weapons;
+        for (int i = 0; i < 6; ++i)
+        {
+            var weapon = data[(WeaponTypeEnum)i][role.weaponSelect[(WeaponTypeEnum)i] % data[(WeaponTypeEnum)i].Count];
+            re[i] = weaponUpgradeDic.TryGet(ID + "_" + weapon.WeaponName, new(ID + "_" + weapon.WeaponName, weapon.UpgradeCount().Length)).selectModuleIndex;
+        }
+        return re;
+    }
     #endregion
 
     #region 载具改装
@@ -361,6 +380,91 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         {
             return value;
         }
+    }
+}
+
+/// <summary>
+/// 【联机】各玩家的**载具改装**表（数据自持，仿 <c>TeamState</c>/<c>BattleState</c>）。
+///
+/// <para>▍为什么需要它：载具（外骨骼 / 炮台）在各端都读**本机存档**渲染
+/// （<c>BattleApplyVehicleData.Awake</c>）⇒ 别人看你的载具用的是**他自己**的配置，各看各的。
+/// 这里按 sid 存一份同步来的配置，渲染侧按"这台载具的持有者（驾驶者）"去取。</para>
+///
+/// <para>▍写入方：09 侧的网络桥（<c>TeamNetBridge</c>）；读取方：06/10 的载具渲染组件。
+/// 本类在 06_Gameplay/Data，对 06/09/10 都可见，且不依赖任何网络类型。</para>
+///
+/// <para>▍⭐ **车的归属口径（用户 2026-10-10 口径）**：载具一般由**战备呼叫**生成 ⇒ **谁呼叫的算谁的**；
+/// 不是呼叫出来的（场景摆好的、任务脚本放的）⇒ **按房主（sid 0）**。</para>
+/// </summary>
+public static class VehicleCustomState
+{
+    /// <summary>本机在房主那边的会话 sid（房主 = 0）。由 09 的桥在开房/入房成功时写入。</summary>
+    public static uint LocalSid { get; private set; }
+
+    private static readonly Dictionary<uint, Dictionary<string, ArchivesData_SO.ArchVehicleData>> BySid
+        = new Dictionary<uint, Dictionary<string, ArchivesData_SO.ArchVehicleData>>();
+
+    /// <summary>已注册的载具渲染目标（<c>BattleApplyVehicleData</c> 在 Awake 自登记）。
+    /// <para>▍为什么要这个注册表：配置/名单到达时要**重刷场景里已存在的载具**（新玩家进房那一刻，
+    /// 场景里的载具是按"默认归属(房主)"渲染的，但房主那份配置可能刚到；进战斗场景后也可能后到）。
+    /// 而 09 的桥看不见 10_Effect（10 在 09 之上）⇒ 只能用 <see cref="Action"/> 反向回调。</para></summary>
+    private static readonly List<Action> RefreshTargets = new List<Action>();
+
+    /// <summary>写入本机会话 sid（决定 <see cref="TryGet"/> 走"本机存档"还是"同步表"）。</summary>
+    public static void SetLocalSid(uint sid) => LocalSid = sid;
+
+    /// <summary>写入某玩家的载具配置（sid = 0 = 房主自己）。传 null/空表 = 清掉该 sid。</summary>
+    public static void Set(uint sid, Dictionary<string, ArchivesData_SO.ArchVehicleData> map)
+    {
+        if (map == null || map.Count == 0) { BySid.Remove(sid); return; }
+        BySid[sid] = map;
+    }
+
+    /// <summary>关房/退房时清空（否则下一房会带出上一房的配置）。</summary>
+    public static void Clear()
+    {
+        BySid.Clear();
+        LocalSid = 0;
+    }
+
+    /// <summary>【载具侧】登记一个"可以重刷自己外观"的目标（同 <see cref="UnregisterRefresh"/> 成对）。</summary>
+    public static void RegisterRefresh(Action cb)
+    {
+        if (cb != null && !RefreshTargets.Contains(cb)) RefreshTargets.Add(cb);
+    }
+
+    /// <summary>【载具侧】注销（目标销毁时必须调，否则会留在表里变悬空委托）。</summary>
+    public static void UnregisterRefresh(Action cb) => RefreshTargets.Remove(cb);
+
+    /// <summary>【09 桥调用】配置/名单变化后重刷场景里所有已注册载具的外观（各目标自己决定归属 sid）。</summary>
+    public static void RefreshAll()
+    {
+        if (RefreshTargets.Count == 0) return;
+        // 快照遍历：回调里可能反注册（换场景/销毁）
+        var snapshot = RefreshTargets.ToArray();
+        for (int i = 0; i < snapshot.Length; ++i) snapshot[i]?.Invoke();
+    }
+
+    /// <summary>
+    /// 取"某玩家"的某辆载具改装。
+    /// <para>▍本机（<paramref name="sid"/> == <see cref="LocalSid"/>，或该 sid 没同步过）**直接读本机存档**：
+    /// 这样舰桥里改完立刻生效，不用等自己那条同步绕房主一圈回来。</para>
+    /// </summary>
+    public static bool TryGet(uint sid, string vehicleName, out ArchivesData_SO.ArchVehicleData data)
+    {
+        data = null;
+        if (string.IsNullOrEmpty(vehicleName)) return false;
+
+        Dictionary<string, ArchivesData_SO.ArchVehicleData> remote;
+        if (sid != LocalSid && BySid.TryGetValue(sid, out remote) && remote != null)
+        {
+            if (remote.TryGetValue(vehicleName, out data) && data != null) return true;
+            return false;   // 该 sid 有同步表但没有这辆车 ⇒ 不回退（避免"用本机配置冒充别人的"）
+        }
+
+        var arch = ArchivesData_SO.Current;
+        if (arch == null) return false;
+        return arch.VehicleCustomDic.TryGet(vehicleName, out data) && data != null;
     }
 }
 

@@ -24,10 +24,17 @@ using FPSGame.GameData;
 public class SelectMapWnd : Window
 {
     private const float _SwitchTime=0.5f;
+    /// <summary>「加入」快速匹配的搜房等待上限（秒）。库的 <c>LanDiscoverer.Scan()</c> 是异步的
+    /// （等 <c>DiscoveryTimeoutMs</c> ≈1.5s 才有结果）⇒ 必须给它一轮时间，否则永远搜不到房间。
+    /// 期间一旦搜到就提前结束（见 <see cref="MatchRoutine"/>）。</summary>
+    private const float MatchSearchSeconds=2f;
+
     private MapWndState mapState;
     private float magnifc;
     private Vector2 primeRootSize, primeRootPos;
     private float nowtime;
+    /// <summary>进行中的快速匹配协程（重复点「加入」时先停掉上一条）。</summary>
+    private Coroutine _matchRoutine;
 
     [Foldout("基础",true)]
     [SerializeField]
@@ -160,12 +167,15 @@ public class SelectMapWnd : Window
             SetDiff(true);
         });
 
-        // 「加入」= 打开房间列表（搜房 → 选行 → 加入，加入动作在 ServerListPanel.OnRoomActivated）
+        // 「加入」= 快速匹配（2026-10-10 口径）：先按"当前地图 + 当前任务"搜局域网里的房，
+        // 搜到就直接回连入房（<see cref="QuickMatch"/>）；一个都没有才自己开一个 —— 走「公开房」那条链，
+        // 由玩家按「准备」时才静默建服（<see cref="ConfirmTask"/>）⇒ 房间广播里才带得上本局正确的任务枚举。
+        // （想看/挑房仍然走 <see cref="server"/> 那个「服务器列表」入口）
         SetCilck(taskJoin, () =>
         {
             SelectPlayMode = 0;
             wndManager.PlaySound(new("UI/UI_Bubble"));
-            if (serverPanel) serverPanel.Open();
+            QuickMatch();
         });
         // 「公开/开房」= 只记住"这一局是公开房"，展开的界面与「单人」完全一致（调难度 / 选任务 / 选加成）。
         // 服务器推迟到按下「准备」时才**静默**创建（见 ConfirmTask）——不再一点按钮就开房、弹提示、
@@ -228,6 +238,9 @@ public class SelectMapWnd : Window
     {
         WindowState = WindowStateEnum.Game;
         InputManager.RemoveListenerCancel(Cancel);
+        // ★ 窗口收起时把「房间列表」一并收掉：它的发现器占着局域网 UDP 广播端口，而本机随后要开房时
+        //   <c>LanBroadcaster</c> 也要同一个端口 ⇒ 监听不能留到窗口之外（否则开房直接 SocketException）。
+        if (serverPanel) serverPanel.Close();
         //GlobalEventManager.OnFakeBg(null);
     }
 
@@ -246,13 +259,17 @@ public class SelectMapWnd : Window
 
     /// <summary>
     /// 「房间列表」子界面展开 / 收起时切换其它 UI：
-    /// 展开 ⇒ 隐藏「地图(Bg/Map) + 按钮栏(Buttons)」；收起 ⇒ 按钮栏恢复，地图按当前状态复位
-    /// （只有 <see cref="MapWndState.Map"/> 才显示地图，其余状态保持 AreaRoot，与 <see cref="Cancel"/> 的状态机口径一致）。
+    /// 展开 ⇒ 隐藏「地图(Bg/Map) + 地图放大视图(AreaRoot) + 按钮栏(Buttons)」；
+    /// 收起 ⇒ 按钮栏恢复，地图与放大视图按当前状态复位
+    /// （<see cref="MapWndState.Map"/> 显示地图、其余状态显示 AreaRoot，与 <see cref="Cancel"/> 的状态机口径一致）。
+    /// <para>▍AreaRoot 也要收：它只由「点地图」那条链点亮（那时 mapRoot 已经藏了），
+    /// 不收就会连"任务图标 + 配置面板"一起压在地图上面，房间列表看着像半透明叠图。</para>
     /// </summary>
     private void SetServerPanelVisible(bool visible)
     {
         SetActive(buttonsRoot, !visible);
         SetActive(mapRoot, !visible && mapState == MapWndState.Map);
+        SetActive(areaRoot, !visible && mapState != MapWndState.Map);
     }
 
     /// <summary>
@@ -261,6 +278,11 @@ public class SelectMapWnd : Window
     /// </summary>
     private void OnRoomActivated(LanRoomInfo room, string password)
     {
+        // ★ 要去别人的房间了 ⇒ 收起本地的任务配置面板：进了房以后本局配置由房主说了算，
+        //   面板留着还能点「单人 / 公开」把本机切成单机（与所在房间冲突）。收起来之后
+        //   也点不开（见 SelectTask 的 IsRoomMember 门）。
+        if (mapState == MapWndState.SelectTask) CancelTask();
+
         var flow = NetRoomFlow.Instance;
         if (flow == null)
         {
@@ -276,6 +298,71 @@ public class SelectMapWnd : Window
     }
 
     /// <summary>
+    /// 【快速匹配】点「加入」：先搜有没有**同地图 + 同任务**的房，有就直接进；没有就自己开一个。
+    /// <para>▍搜房走 <see cref="ServerListPanel"/>（发现器在那边），但**不展开面板**；
+    /// 面板从没打开过时发现器还没在听广播 ⇒ 先把它拉起来再扫（见 <see cref="MatchRoutine"/>）。</para>
+    /// </summary>
+    private void QuickMatch()
+    {
+        if (SelectTaskIndex < 0)
+        {
+            WndHub.Tip.Creat(new() { title = "还没选任务", desc = "先点地图上的任务图标，再点「加入」。" });
+            return;
+        }
+
+        if (_matchRoutine != null) StopCoroutine(_matchRoutine);
+        _matchRoutine = StartCoroutine(MatchRoutine());
+    }
+
+    /// <summary>
+    /// 快速匹配主体：拉起发现器 → 扫描 → 轮询等结果（最多 <see cref="MatchSearchSeconds"/>）→
+    /// 搜到就 <see cref="OnRoomActivated"/> 入房；搜不到就**直接自己公开一个**（静默建服 + 展开配置，
+    /// 见方法末尾），玩家按「准备」时 <see cref="ConfirmTask"/> 再把本局任务补进广播。
+    /// <para>▍为什么必须等：库的 <c>LanDiscoverer.Scan()</c> 是异步的（<c>DiscoveryTimeoutMs</c> 量级），
+    /// 扫完下一行就 <c>GetRooms()</c> 必然拿到空表 ⇒ 每次都会误判成"没人开房"。</para>
+    /// </summary>
+    private IEnumerator MatchRoutine()
+    {
+        string mapName = mapRoot.childCount > SelectMapIndex ? mapRoot.GetChild(SelectMapIndex).name : string.Empty;
+        int taskMain = (int)taskManager.TaskCfgs[SelectMapIndex, SelectTaskIndex].main;
+
+        var panel = serverPanel;
+        if (panel) panel.EnsureDiscovery();   // 面板没打开过 ⇒ 先让发现器在听广播
+        if (panel) panel.Scan();
+
+        var tip = WndHub.Tip;
+        if (tip) tip.Creat(new() { title = "正在搜索房间", desc = "正在搜索相同任务的房间…" });
+
+        LanRoomInfo room = null;
+        float left = MatchSearchSeconds;
+        while (left > 0f)
+        {
+            if (panel) room = panel.FindJoinableRoom(mapName, taskMain);
+            if (room != null) break;
+            left -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+        _matchRoutine = null;
+
+        // 收掉"搜索中"那条；队列里若还排着别的提示，TipWnd.Close 会自动接着显示下一条
+        if (tip) tip.Close();
+
+        if (room != null)
+        {
+            OnRoomActivated(room, string.Empty);
+            yield break;   // 迭代器里收尾用 yield break（普通 return 会被判 CS1622）
+        }
+
+        // 没有同任务的房 ⇒ **直接自己公开一个**（2026-10-10 用户口径：不再弹"没找到房间"的提示）。
+        // 静默建服（不弹"房间已创建"、不掀服务器列表），配置面板照常展开。
+        // ⚠ 建服时就把**当前选中的任务枚举**写进广播（CreateRoom 的 taskMain 形参）：不写的话房间广播里
+        //   还是上一局的任务，别人按同任务搜房就搜不到这一间（要等按「准备」时 ConfirmTask 才刷新）。
+        SelectPlayMode = 1;
+        if (!IsHosting()) CreateRoom(true, taskMain);   // ⚠ 已经在开房就别重开：同端口会 SocketException
+        ExpandCfg();
+    }
+
+    /// <summary>
     /// 【开房】用当前选中的地图 + 任务难度开房并局域网广播。
     /// <para>▍当前唯一调用者是「公开房」流程的 <see cref="ConfirmTask"/>（选完任务才建服）。
     /// 设置界面的空玩家位走的是自己的 <c>SettingWnd.CreateRoomFromEmptySlot</c>（它是常驻窗口，选图窗口不一定在场景里）。</para>
@@ -283,7 +370,10 @@ public class SelectMapWnd : Window
     /// <param name="silent">
     /// true = 静默建服：成功不弹提示、不打开「服务器列表」。失败**仍然**弹提示（失败不该静默）。
     /// </param>
-    public void CreateRoom(bool silent = false)
+    /// <param name="taskMain">本房**主任务类型枚举值**（<c>MissionEnum</c> 的 int；&lt;0 = 用 <c>TaskManager.NowTaskMain</c>）。
+    /// <para>▍快速匹配要传它：建服发生在"选完任务"之前，<c>NowTaskMain</c> 还是**上一局**的值
+    /// ⇒ 广播出去的任务对不上，别人按同任务搜房就搜不到这一间。</para></param>
+    public void CreateRoom(bool silent = false, int taskMain = -1)
     {
         var flow = NetRoomFlow.Instance;
         if (flow == null)
@@ -309,7 +399,8 @@ public class SelectMapWnd : Window
             HostName = hostName,
             // ⚠ 此刻本局任务**还没 SetTask**（「公开房」是先建服再确认任务）⇒ 这里拿到的可能是上一局的值；
             //   真正的权威时刻是下面的 ConfirmTask，它会就地刷新广播里的主任务枚举。
-            TaskMain = taskManager.NowTaskMain,
+            //   （快速匹配那条路会显式传 taskMain，避开这个"上一局的值"的坑。）
+            TaskMain = taskMain >= 0 ? taskMain : taskManager.NowTaskMain,
         };
 
         if (!flow.Host(options, out string reason))
@@ -338,6 +429,23 @@ public class SelectMapWnd : Window
     {
         var host = NetHostSvc.Instance;
         return host != null && host.RoomInfo != null;
+    }
+
+    /// <summary>
+    /// 本机是不是"已经进了别人的房间"（= 正在回连/入房中，或已连上房主且自己不是房主）。
+    /// <para>▍用途：进了别人的房以后，本局的地图 / 任务 / 难度 / 模式都由房主下发
+    /// ⇒ 再展开任务配置面板就会把本机切成「单人 / 公开房」，与所在房间冲突。
+    /// 所以 <see cref="SelectTask"/>（展开面板的唯一入口）在这里设门。房主自己、单机都不受影响。</para>
+    /// </summary>
+    private static bool IsRoomMember()
+    {
+        var flow = NetRoomFlow.Instance;
+        if (flow == null) return false;
+        if (flow.IsJoining) return true;      // 正在回连/入房：这一局已经交给别人了
+        if (flow.IsHost) return false;
+
+        var svc = NetSvc.Instance;
+        return svc != null && svc.IsConnected;   // 连上了但自己不是房主 ⇒ 我是成员
     }
 
     private bool Cancel()
@@ -571,6 +679,8 @@ public class SelectMapWnd : Window
     /// </summary>
     private void SelectTask(int index)
     {
+        // ★ 已经在别人的房间里 ⇒ 禁止展开任务配置面板（任务/难度/模式都归房主，见 IsRoomMember）
+        if (IsRoomMember()) return;
         if (SelectTaskIndex == index) return;
         //Debug.LogWarning("鼠标点击任务");
         mapState = MapWndState.SelectTask;

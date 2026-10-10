@@ -20,6 +20,20 @@ namespace FPSGame.Utils
         }
 
         /// <summary>
+        /// 是否为有限值（不是 NaN、不是 ±Inf）。
+        /// <para>▍为什么要它：世界坐标/换算结果一旦是 NaN，写进 RectTransform 就让 Canvas **每帧**刷
+        /// "<c>Invalid AABB inAABB</c>"（Unity 原生日志、**不带对象名**，极难定位）⇒ UI 侧从"世界→屏幕/
+        /// 地图"算出来的坐标与尺寸，落盘前都应过一道。</para>
+        /// </summary>
+        public static bool IsFinite(float v) => !float.IsNaN(v) && !float.IsInfinity(v);
+
+        /// <inheritdoc cref="IsFinite(float)"/>
+        public static bool IsFinite(Vector2 v) => IsFinite(v.x) && IsFinite(v.y);
+
+        /// <inheritdoc cref="IsFinite(float)"/>
+        public static bool IsFinite(Vector3 v) => IsFinite(v.x) && IsFinite(v.y) && IsFinite(v.z);
+
+        /// <summary>
         /// 碰撞体上的随机一 ?
         /// </summary>
         public static Vector3 RandomBoundsPoint(this Collider collider, out Quaternion normal)

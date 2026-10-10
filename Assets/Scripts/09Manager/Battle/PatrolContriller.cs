@@ -145,6 +145,10 @@ namespace FPSGame.Managers
 
             UnitEventBus.OnPlayerCreate += OnPlayerJoin;
             UnitEventBus.OnFriendCreate += OnPlayerJoin;
+            // ★ 盟友离场（被销毁）必须把热度记录一起摘掉：原来只订阅了"创建" ⇒
+            //   客机强退 / 被清退后，表里留着已销毁的 IActor，下一秒 Tick 取 Pos 就炸 NRE
+            //   （2026-10-10 实测：BaseMono.get_Pos → PatrolContriller.GetInfluencePointHeatBonus）。
+            UnitEventBus.OnFriendLeave += OnPlayerLeave;
 
             // 初始化玩家热度数据
             InitHeatData();
@@ -159,11 +163,18 @@ namespace FPSGame.Managers
 
             UnitEventBus.OnPlayerCreate -= OnPlayerJoin;
             UnitEventBus.OnFriendCreate -= OnPlayerJoin;
+            UnitEventBus.OnFriendLeave -= OnPlayerLeave;
         }
 
         public override bool Tick()
         {
             if (Players == null || Players.Count == 0) return true;
+
+            // ★ 兜底清表：盟友被销毁（客机强退 / 房主清退 / 换场景）就走人，别留着死引用。
+            //   ⚠ 接口引用上的 == 是**引用比较**：已销毁的 MonoBehaviour 在 IActor 变量里**不等于 null**
+            //     ⇒ 直接取 player.Pos 会在 BaseMono.get_Pos（transform 已为 null）里抛 NRE。
+            _playerHeatList.RemoveAll(item => !IsAlive(item.player));
+            if (_playerHeatList.Count == 0) return true;
 
             // 刷新玩家列表（防止玩家进出）
             //RefreshPlayerHeatData();
@@ -357,12 +368,24 @@ namespace FPSGame.Managers
             RefreshAllPlayerRequiredHeat();
         }
         /// <summary>
-        /// 玩家离开（先填着）
+        /// 玩家离开（盟友被销毁 / 换场景）：热度记录一并摘掉。
+        /// <para>▍订阅的是 <c>UnitEventBus.OnFriendLeave</c>（房主自己那条走 <c>OnPlayerCreate</c>，不受影响）。</para>
         /// </summary>
         private void OnPlayerLeave(IActor player)
         {
-            _playerHeatList.RemoveAll(item => item.player == player);
+            _playerHeatList.RemoveAll(item => ReferenceEquals(item.player, player) || !IsAlive(item.player));
             RefreshAllPlayerRequiredHeat();
+        }
+
+        /// <summary>
+        /// 这个 <see cref="IActor"/> 还活着吗。
+        /// <para>⚠ 必须走 <c>UnityEngine.Object</c> 的 <c>== null</c> 判定：接口引用上直接 <c>== null</c>
+        /// 是**引用比较**，已销毁的 MonoBehaviour 在接口变量里不等于 null（这正是那次 NRE 的根因）。</para>
+        /// </summary>
+        private static bool IsAlive(IActor actor)
+        {
+            if (actor == null) return false;                             // 真 null
+            return !(actor is UnityEngine.Object obj) || obj != null;    // 是 Unity 对象就得没被销毁
         }
 
 

@@ -72,7 +72,8 @@ public class SubTitleShout : SubtitleBase
         //if (markOwner == owner.gameObject&&owner.actorState!=ActorState.Dead) return;
         SetActive(gameObject, true);
         //这个不对，要换成玩家配置里面的东西
-        SetText(desc, MarkDesc(markTarget.GetComponentInChildren<BaseObject>()));
+        // ⚠ markTarget 可能为 null（联机标记只带点，见 NetActionBridge.OnRemoteMark）⇒ 交给 MarkDesc 走默认文案
+        SetText(desc, MarkDesc(markTarget ? markTarget.GetComponentInChildren<BaseObject>() : null));
         /*
         if (string.IsNullOrEmpty(GetText(title)))
         {

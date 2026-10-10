@@ -161,6 +161,9 @@ namespace FPSGame.UI
         private bool _built;
         private LanDiscoverer _discoverer;
         private bool _listenFailed;
+        /// <summary>发现器当前是否**正在听**。⚠ 与 <c>_discoverer != null</c> 不同：
+        /// <see cref="Close"/> 只 <c>Stop()</c>（对象留着、内部 socket 拆掉），要靠本字段才知道要不要重开。</summary>
+        private bool _listening;
 
         private readonly List<Transform> _rows = new List<Transform>();
         /// <summary>地图下拉项（下标 0 = 任意地图）。</summary>
@@ -471,17 +474,38 @@ namespace FPSGame.UI
 
         #region 房间发现
 
-        /// <summary>启动监听：优先库默认端口，失败则降级到「同机自测端口」。</summary>
+        /// <summary>
+        /// 启动 / 恢复监听：优先库默认端口，失败则降级到「同机自测端口」。
+        /// <para>⚠ 发现器对象是**复用**的：库的 <c>Stop()</c> 只是把内部 socket / 线程拆掉
+        /// （实测 2026-10-10：Stop 后 <c>_udp/_cts</c> 置空，再 <c>StartListening()</c> 能重新起来），
+        /// 而本方法的入口 <see cref="Open"/> 每次都会调它 ⇒ 之前那句 <c>if (_discoverer != null) return;</c>
+        /// 会让「关掉面板再打开」之后再也收不到任何广播（列表永远空）。改为按 <see cref="_listening"/> 判断。</para>
+        /// </summary>
         private void StartListening()
         {
-            if (_discoverer != null) return;
+            if (_discoverer == null)
+            {
+                int port = listenPort > 0 ? listenPort : LanDiscoveryConfig.ListenPort;
+                if (TryListen(port)) return;
+                if (port != NetConfig.LanSelfBroadcastPort && TryListen(NetConfig.LanSelfBroadcastPort)) return;
 
-            int port = listenPort > 0 ? listenPort : LanDiscoveryConfig.ListenPort;
-            if (TryListen(port)) return;
-            if (port != NetConfig.LanSelfBroadcastPort && TryListen(NetConfig.LanSelfBroadcastPort)) return;
+                _listenFailed = true;
+                Debug.LogWarning("[ServerListPanel] 房间发现不可用：UDP 端口 " + port + " 绑定失败（可能被本机开房占用或防火墙拦截）");
+                return;
+            }
 
-            _listenFailed = true;
-            Debug.LogWarning("[ServerListPanel] 房间发现不可用：UDP 端口 " + port + " 绑定失败（可能被本机开房占用或防火墙拦截）");
+            if (_listening) return;
+
+            try
+            {
+                _discoverer.StartListening();
+                _listening = true;
+                _listenFailed = false;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[ServerListPanel] 恢复房间发现失败：" + e.Message);
+            }
         }
 
         private bool TryListen(int port)
@@ -491,6 +515,7 @@ namespace FPSGame.UI
                 var discoverer = new LanDiscoverer(port);
                 discoverer.StartListening();
                 _discoverer = discoverer;
+                _listening = true;
                 _listenFailed = false;
                 return true;
             }
@@ -503,6 +528,8 @@ namespace FPSGame.UI
 
         private void StopListening()
         {
+            if (!_listening) return;
+            _listening = false;
             if (_discoverer == null) return;
             try
             {
@@ -532,7 +559,7 @@ namespace FPSGame.UI
         /// <summary>主动扫描一次（异步，结果进 <see cref="LanDiscoverer.GetRooms"/>）。</summary>
         public void Scan()
         {
-            if (_discoverer == null) return;
+            if (_discoverer == null || !_listening) return;
             try
             {
                 _discoverer.Scan();
@@ -541,6 +568,46 @@ namespace FPSGame.UI
             {
                 Debug.LogWarning("[ServerListPanel] 扫描房间失败：" + e.Message);
             }
+        }
+
+        /// <summary>
+        /// 【快速匹配】确保房间发现在跑 —— 面板没打开过（或已 <see cref="Close"/> 掉）时发现器没在听广播，
+        /// <c>SelectMapWnd</c> 的「加入」要在**不展开面板**的前提下也能搜到房间（见 <c>SelectMapWnd.MatchRoutine</c>）。
+        /// <para>⚠ 只拉起发现器，**不触发 <see cref="OnVisibleChanged"/>**（不隐藏地图/按钮栏）。</para>
+        /// </summary>
+        public void EnsureDiscovery()
+        {
+            if (_listening) return;
+            StartListening();
+        }
+
+        /// <summary>
+        /// 【快速匹配】找一个**能直接进**的房间：地图与主任务类型都对得上，且无密码、未开局、未满员。
+        /// <para>▍返回 null = 没有可加入的房间（调用方据此"自己开一个"）。
+        /// 任务枚举对不上的房间算不匹配（旧版房主没带该字段 ⇒ -1，同样不匹配）；
+        /// 人数相同时挑人多的那间。</para>
+        /// <para>▍难度**不**参与匹配：难度是进房后由房主说了算，而玩家此刻还没调过难度。</para>
+        /// </summary>
+        /// <param name="mapName">地图短名（= <c>MapData</c> 的键，也是房主写进广播 <c>MapName</c> 的那个）</param>
+        /// <param name="taskMain">主任务枚举值（<c>MissionEnum</c> 的 int；&lt;0 = 不筛任务）</param>
+        public LanRoomInfo FindJoinableRoom(string mapName, int taskMain)
+        {
+            // 没在听广播 ⇒ 表里只会有上一次的残留 ⇒ 一律当"没搜到"（宁可自己开房，也别回连一个可能已经关掉的房）
+            if (_discoverer == null || !_listening) return null;
+
+            LanRoomInfo best = null;
+            foreach (var room in _discoverer.GetRooms())
+            {
+                if (room == null) continue;
+                if (room.PasswordProtected) continue;                                     // 有密码：不能静默加入
+                if (RoomMeta.InGame(room)) continue;                                      // 已开局
+                if (room.MaxPlayers > 0 && room.PlayerCount >= room.MaxPlayers) continue;  // 满员
+                if (!string.IsNullOrEmpty(mapName) && RoomMeta.MapName(room) != mapName) continue;
+                if (taskMain >= 0 && RoomMeta.TaskEnum(room) != taskMain) continue;
+
+                if (best == null || room.PlayerCount > best.PlayerCount) best = room;
+            }
+            return best;
         }
 
         private static string RoomKey(LanRoomInfo room) => room.HostIp + ":" + room.HostPort;
@@ -1025,6 +1092,24 @@ namespace FPSGame.UI
         private void Activate(LanRoomInfo room)
         {
             if (room == null) return;
+
+            // ★ 已经在这个房间里了（自己开的房 / 已经连着的那个房主）⇒ 只提示"已经在里面了"，
+            //   不再回连一次（对已连着的房主再 ConnectToRoom 会把现有会话顶掉、白重连一遍）。
+            //   ⚠ 必须放在下面那句"已开局不给进"**之前**：自己那间房开打后 InGame=true，
+            //     排在后面前面就先被那句静默挡掉了，玩家点自己房间什么反应都没有。
+            var flow = NetRoomFlow.Instance;
+            if (flow != null && flow.IsInRoom(room))
+            {
+                WndHub.Tip?.Creat(new TipWndInfo
+                {
+                    title = "已经在这个房间里",
+                    desc = flow.IsHostOfRoom(room)
+                        ? "这个房间是你自己开的，直接按「准备」就能开局。"
+                        : "你已经在这个房间里了，不用再加入一次。",
+                });
+                return;
+            }
+
             if (RoomMeta.InGame(room)) return; // 已开局：不给进
 
             // 无密码：直接抛给上层
