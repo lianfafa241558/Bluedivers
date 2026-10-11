@@ -68,8 +68,15 @@ namespace FPSGame.AI
             m_Controller.OnDie -= OnDie;
         }
 
+        /// <summary>AI LOD 用：本单位当前是否"在打 / 在追"（true ⇒ 这一帧一定不降频）。
+        /// <para>默认 false = 允许降（只对成员端的敌人生效，见 <see cref="AiLod"/>）；交战状态由子类按自己的状态机给。</para></summary>
+        protected virtual bool AiLodEngaged => false;
+
         protected virtual void Update()
         {
+            // ★ 联机 · 成员端 AI LOD：只降"感知 / 决策"的频率；远端意图落地在 SyncedNavMover 里，不受影响
+            if (!AiLod.ShouldTick(m_Controller != null ? m_Controller.Actor : null, AiLodEngaged)) return;
+
             UpdateAiStateTransitions();
             UpdateCurrentAiState();
         }

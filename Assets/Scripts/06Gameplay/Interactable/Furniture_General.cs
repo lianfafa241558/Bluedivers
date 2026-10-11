@@ -19,12 +19,12 @@ public class Furniture_General : Furniture_Attached
 
     protected FurnAction<Furniture_General> action;
 
-    // 打开窗口一律经**事件总线**（GlobalEventSub.OpenWnd(WndTypeEnum.X)），由 WndManager 订阅后转调 WindowRegistry；
-    // 不要再直连 WndManager 的具体窗口字段（那是 04UI 的类型 ⇒ 玩法层会反向依赖 UI 层，程序集切不开）。
-    // 见 FPSGame.GameContract/WndTypeEnum.cs 与 06Gameplay/GlobalEventSub.cs。
-    // （2026-10-01 之前这里写的是 ServiceLocator.Wnd.SetWndState；Wnd 槽已删除。）
+        // 打开窗口一律经**事件总线**（GlobalEventSub.OpenWnd(WndTypeEnum.X)），由 WndManager 订阅后转调 WindowRegistry；
+        // 不要再直连 WndManager 的具体窗口字段（那是 04UI 的类型 ⇒ 玩法层会反向依赖 UI 层，程序集切不开）。
+        // 见 FPSGame.GameContract/WndType.cs 与 06Gameplay/GlobalEventSub.cs。
+        // （2026-10-01 之前这里写的是 ServiceLocator.Wnd.SetWndState；Wnd 槽已删除。）
 
-    private static Dictionary<string, FurnAction<Furniture_General>> furnData = new Dictionary<string, FurnAction<Furniture_General>>()
+        private static Dictionary<string, FurnAction<Furniture_General>> furnData = new Dictionary<string, FurnAction<Furniture_General>>()
     {
         /*
 
@@ -214,6 +214,10 @@ public class Furniture_General : Furniture_Attached
         action._Start?.Invoke(this);
     }
 
+    /// <summary>⚠ 本覆写**不调用 <c>base.Operate()</c>**：交互事件（4036 同步的 <c>GlobalEventBus.FurnitureOperate</c>）、
+    /// <c>inOperate</c> 置位、语音都在基类里 ⇒ **只配了 <c>_InOperateUpdate</c>/<c>_CanOperate</c> 而没有 <c>_Operate</c>
+    /// 的家具会"点了没反应"**（<c>SignaTower</c> 就是：它的旋转依赖 <c>inOperate == true</c>，没人置真 ⇒ 旋转不生效、
+    /// 联机 4036 也永远不会为它上报）。新增配置项时：要么给 <c>_Operate</c>，要么在 lambda 里显式调 <c>furn.BaseOp()</c>。</summary>
     public override void Operate() {
         action._Operate?.Invoke(this);
     }

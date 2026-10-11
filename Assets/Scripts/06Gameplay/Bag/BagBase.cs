@@ -74,11 +74,18 @@ namespace FPSGame.Gameplay
             Owner = actor;
             m_PlayerCharacterController = Owner.gameObject.GetComponent<PlayerController>();
             m_InputHandler = Owner.gameObject.GetComponent<PlayerInputHandler>();
-            // 挂到玩家承载组件的背部点位，未配置则回退到玩家模型根
+            // 挂到承载组件的背部点位；没有就退到"模型根"；两者都没有（联机盟友实例）时**保持原父级** ——
+            // 绝不能再像原来那样直接取 .ModleRoot（PlayerController 为 null ⇒ 整条远端重放链炸掉）。
             var mountPoint = Owner.gameObject.GetComponent<PlayerMountPoint>();
-            transform.parent = mountPoint != null && mountPoint.BackPoint ? mountPoint.BackPoint : m_PlayerCharacterController.ModleRoot.transform;
-            transform.localEulerAngles = Vector3.zero;
-            transform.localPosition = Vector3.zero;
+            Transform anchor = mountPoint != null ? mountPoint.BackPoint : null;
+            if (anchor == null && m_PlayerCharacterController != null && m_PlayerCharacterController.ModleRoot != null)
+                anchor = m_PlayerCharacterController.ModleRoot.transform;
+            if (anchor != null)
+            {
+                transform.parent = anchor;
+                transform.localEulerAngles = Vector3.zero;
+                transform.localPosition = Vector3.zero;
+            }
             //CurrentFillRatio = 1f;
             OnInstallEvent?.Invoke();
         }

@@ -143,6 +143,45 @@ namespace FPSGame.Gameplay
         }
 
         /// <summary>
+        /// 命中/爆炸的**逻辑噪声半径**（与 <see cref="Hit"/> 内原本的算法逐字一致 ⇒ 单一事实来源）。
+        /// 抽出来是为了让"远端表现弹"也能复刻同一条噪声（见 <see cref="PlayImpactFxRemote"/>）。
+        /// </summary>
+        private static PEInt ImpactNoiseRadius(ProjectileHitData hitData)
+        {
+            var data = hitData.data;
+            if (data == null) return 0;
+
+            PEInt noise = data.GetImpactSoundRadius(hitData.chargeScale);
+            //爆炸本来就该是大动静：至少按伤害外半径发声
+            if (data.UseExplode)
+            {
+                PEInt outer = data.GetDamageOuterRadius(hitData.chargeScale);
+                if (outer > noise) noise = outer;
+            }
+            return noise;
+        }
+
+        /// <summary>
+        /// 【表现层】**远端表现弹**的命中：照常播表现 + **本地验算一次命中/爆炸噪声**（2026-10-11 用户口径"两边一致"）。
+        ///
+        /// <para>▍为什么要复刻：原来命中噪声只在**开枪者本机**发 ⇒ 本端的怪完全听不到"队友的子弹落地 / 爆炸"。</para>
+        /// <para>⚠ 为什么单开一个方法（而不是给 <see cref="PlayImpactFx"/> 加参数）：它是挂到子弹 <c>OnHit</c> 委托上的，
+        /// 与"真命中"那条路（<c>OnHit -= FpsHelper.Hit</c> 那套）共用同一个签名容易被误摘/误加。</para>
+        /// </summary>
+        public static void PlayImpactFxRemote(ProjectileHitData hitData)
+        {
+            PEInt noise = ImpactNoiseRadius(hitData);
+            if (noise > 0)
+            {
+                FPSGame.Utils.NetSyncLog.AiLog("噪声·发(命中·远端复刻)",
+                    $"{((hitData.soure != null) ? hitData.soure.name : "<无源>")} @{hitData.pos:F2} 半径={noise}",
+                    (hitData.soure != null) ? hitData.soure.GetInstanceID() : 0, 0.5f);
+                UnitEventBus.Noise(new NoiseData { source = hitData.soure, pos = (PEVector3)hitData.pos, radius = noise });
+            }
+            PlayImpactFx(hitData);
+        }
+
+        /// <summary>
         /// 只播"命中表现"：命中特效 / 命中音效 / 弹痕（**不结算任何伤害、不发噪声、不推命中事件**）。
         ///
         /// <para>▍为什么要单独抽出来（2026-10-09）：联机里"别人开枪"的表现弹
@@ -369,11 +408,13 @@ namespace FPSGame.Gameplay
                 }
 
                 //逻辑层噪声：命中点发出(开火处的枪声由 WeaponBaseController 在开火时另发)
-                PEInt impactNoise = damageData.GetImpactSoundRadius(charg);
-                //爆炸本来就该是大动静：至少按伤害外半径发声
-                if (damageData.UseExplode && damageOuterRadius > impactNoise) impactNoise = damageOuterRadius;
+                // ⚠ 算法抽进 ImpactNoiseRadius ⇒ 与"远端表现弹的本地复刻"（PlayImpactFxRemote）共用同一份
+                PEInt impactNoise = ImpactNoiseRadius(hitData);
                 if (impactNoise > 0)
                 {
+                    FPSGame.Utils.NetSyncLog.AiLog("噪声·发(命中)",
+                        $"{((soure != null) ? soure.name : "<无源>")} @{point:F2} 半径={impactNoise}",
+                        (soure != null) ? soure.GetInstanceID() : 0, 0.5f);
                     UnitEventBus.Noise(new NoiseData { source = soure, pos = (PEVector3)point, radius = impactNoise });
                 }
             }

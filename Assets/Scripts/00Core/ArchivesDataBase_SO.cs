@@ -90,10 +90,13 @@ namespace FPSGame.Core
             if (fileInfo.Exists)
             {
 
-                Debug.LogWarning(DeletePaths + "找到了存档"+fileInfo.OpenText().ReadToEnd());
-                JsonUtility.FromJsonOverwrite(fileInfo.OpenText().ReadToEnd(), tmp);
+                // ⚠ 原来把**整份存档 JSON** 打进日志（一行几万字符，Console / Player.log 直接被刷掉，2026-10-10 用户口径
+                //   "没用的内容先不打印"）⇒ 只留一行摘要；顺带把三次 OpenText() 收成一次（原来每次都会重新打开文件）。
+                string json = fileInfo.OpenText().ReadToEnd();
+                Debug.Log(DeletePaths + "找到了存档（" + json.Length + " 字符）");
+                JsonUtility.FromJsonOverwrite(json, tmp);
                 tmp.isNew = false;
-                teststring += "存档内容" + fileInfo.OpenText().ReadToEnd();
+                teststring += "存档内容" + json;
             }
             else
             {

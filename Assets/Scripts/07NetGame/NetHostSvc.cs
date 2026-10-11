@@ -589,12 +589,35 @@ public class NetHostSvc : MonoBehaviour
         //   照抄下来会让"点完就绪后再上报一次资料（切枪/战备/换角色都会触发）"把它重置成未就绪，
         //   名单广播给全体后连房主那边也跟着变（2026-10-07 实测）。
         ntf.Profile.IsReady = _players[sid] != null && _players[sid].IsReady;
+
+        // ⚠ 只在**资料真的变了**时打日志：切枪 / 战备 / 强化 / 换角色都会走这条上报，
+        //   每次无条件打会把 Console 刷满同一个人的同一行（2026-10-10 用户实测：11 秒 5 行）。
+        PlayerProfile old;
+        bool changed = !_profiles.TryGetValue(sid, out old) || old == null
+                       || old.Name != ntf.Profile.Name
+                       || old.RoleName != ntf.Profile.RoleName
+                       || old.BoosterId != ntf.Profile.BoosterId
+                       || !SameInts(old.Airdrop, ntf.Profile.Airdrop);
+
         _profiles[sid] = ntf.Profile;
 
         if (_players[sid] != null && !string.IsNullOrEmpty(ntf.Profile.Name)) _players[sid].PlayerName = ntf.Profile.Name;
 
-        Debug.Log($"[NetHostSvc] 收到资料上报 sid={sid} 角色={ntf.Profile.RoleName}");
+        if (changed) Debug.Log($"[NetHostSvc] 资料变化 sid={sid} 角色={ntf.Profile.RoleName}");
         BroadcastPlayerList();
+    }
+
+    /// <summary>两个 int 数组"内容相同"（null 与空数组视为相同）。用于 <see cref="OnPlayerProfileNtf"/> 的变化判定。</summary>
+    private static bool SameInts(int[] a, int[] b)
+    {
+        int na = a != null ? a.Length : 0;
+        int nb = b != null ? b.Length : 0;
+        if (na != nb) return false;
+        for (int i = 0; i < na; ++i)
+        {
+            if (a[i] != b[i]) return false;
+        }
+        return true;
     }
 
     // ==================== 玩家配置（武器改装：档位 + 模组；载具改装） ====================
@@ -663,6 +686,32 @@ public class NetHostSvc : MonoBehaviour
             SlotIndex = ntf.SlotIndex,
             Sid = sid,               // 权威标识：各端按它映射自己的本地下标
         });
+
+        // ★ 顺手把**房主存的那份资料**里对应的战备槽也更新：这样成员侧就不必为"改一个战备"再重发整份资料
+        //   （重发会触发一次**全量 PlayerListSync 广播** ⇒ 点几个槽就刷几轮名单，2026-10-10 用户实测）。
+        //   后进者 / 结算读的就是这份 <c>_profiles</c>（见 BroadcastPlayerList / BuildProfileArray）。
+        PlayerProfile prof;
+        if (_profiles.TryGetValue(sid, out prof)) ApplyArmament(prof, ntf.AirdropId, ntf.SlotIndex);
+    }
+
+    /// <summary>成员选择全队强化 → 转发给全体（并顺手更新房主存的那份资料，见 <see cref="OnPlayerArmamentNtf"/> 的说明）。</summary>
+    private void OnPlayerBoosterNtf(PlayerBoosterNtf ntf)
+    {
+        uint sid = CurrentSid;
+        if (sid == 0 || ntf == null) return;
+
+        int index = IndexOfSession(sid);
+        if (index < 0) return;
+
+        RelayToAll(CmdId.PlayerBoosterSync, new PlayerBoosterSync
+        {
+            PlayerIndex = index,
+            BoosterId = ntf.BoosterId,
+            Sid = sid,
+        });
+
+        PlayerProfile prof;
+        if (_profiles.TryGetValue(sid, out prof) && prof != null) prof.BoosterId = ntf.BoosterId;
     }
 
     /// <summary>成员呼叫战备 → 转发给全体。
@@ -691,23 +740,6 @@ public class NetHostSvc : MonoBehaviour
         if (sid == 0 || ntf == null) return;
 
         RelayToAll(CmdId.SpeechSync, new PlayerSpeechMsg { Sid = sid, Speech = ntf.Speech });
-    }
-
-    /// <summary>成员选择全队强化 → 转发给全体。</summary>
-    private void OnPlayerBoosterNtf(PlayerBoosterNtf ntf)
-    {
-        uint sid = CurrentSid;
-        if (sid == 0 || ntf == null) return;
-
-        int index = IndexOfSession(sid);
-        if (index < 0) return;
-
-        RelayToAll(CmdId.PlayerBoosterSync, new PlayerBoosterSync
-        {
-            PlayerIndex = index,
-            BoosterId = ntf.BoosterId,
-            Sid = sid,
-        });
     }
 
     /// <summary>成员切枪 → 以房主权威的 sid 转发给全体（房主本地也走一遍）。</summary>
@@ -1101,6 +1133,37 @@ public class NetHostSvc : MonoBehaviour
         if (RoomInfo != null) BroadcastPlayerList();
     }
 
+    // ==================== 房主本地：只改一个字段（不重发整份资料） ====================
+
+    /// <summary>
+    /// 【房主本地】把"我改了某个战备槽"写进 <c>HostProfile</c>（成员端后进房 / 结算读它）。
+    ///
+    /// <para>▍为什么不重发整份资料（<c>SetLocalProfile</c>）：那会触发一次**全量 PlayerListSync 广播** ——
+    /// 点 4 个战备槽就是 4 轮名单广播（2026-10-10 用户实测"选一次战备就提交一次"）。
+    /// 成员端同理：改战备/强化时房主会在转发那条消息时就地更新 <c>_profiles</c>，成员不必重发资料。</para>
+    ///
+    /// <para>▍不需要额外广播：战备本身已经由 <c>PlayerArmamentSync</c> 播过；这里只影响
+    /// "后进房的人拿到的房主资料"与结算读的那份，而它们在下次 <c>BroadcastPlayerList</c>（有人入房等）时自然带上。</para>
+    /// </summary>
+    public void SetLocalArmament(int airdropId, int slotIndex)
+    {
+        ApplyArmament(HostProfile, airdropId, slotIndex);
+    }
+
+    /// <summary>【房主本地】同上，改的是全队强化。</summary>
+    public void SetLocalBooster(int boosterId)
+    {
+        if (HostProfile != null) HostProfile.BoosterId = boosterId;
+    }
+
+    /// <summary>把一个战备选择写进某份资料（槽位越界 / 资料未初始化时**不动**，不造半份假资料）。</summary>
+    private static void ApplyArmament(PlayerProfile profile, int airdropId, int slotIndex)
+    {
+        if (profile == null || slotIndex < 0) return;
+        if (profile.Airdrop == null || profile.Airdrop.Length != 4) profile.Airdrop = new int[4];
+        if (slotIndex < profile.Airdrop.Length) profile.Airdrop[slotIndex] = airdropId;
+    }
+
     /// <summary>
     /// 【权威转发】房主把一条同步消息发给所有成员，**并本地自派发一次**（房主自己要处理同样的消息）。
     /// ⚠ 用 <c>MessageCenter.Dispatch</c> 直接投递（而不是排队）：调用点已经在主线程的消息处理里了。
@@ -1130,6 +1193,19 @@ public class NetHostSvc : MonoBehaviour
 
     /// <summary>定向发送给指定成员（按 sid）。房主权威下常用来做私密回复。</summary>
     public void SendToSession(uint sid, NetMessage msg) => _server?.SendTo(msg, sid);
+
+    /// <summary>广播给所有成员，**排除某个 sid**（不含房主本地）。
+    /// <para>▍用途：把"某个成员上报的伤害"转发给**其他人** —— 来源端本地已经扣过一次，再发回去就是双扣。
+    /// （库侧只有 `SendToAll` / `SendTo(sid)`，没有 except 版本 ⇒ 这里按 sid 逐个发。）</para></summary>
+    public void SendToAllExcept(uint exceptSid, NetMessage msg)
+    {
+        if (_server == null) return;
+        foreach (var kv in _players)
+        {
+            if (kv.Key == exceptSid) continue;
+            _server.SendTo(msg, kv.Key);
+        }
+    }
 
     // ==================== 每帧泵 ====================
     /// <summary>

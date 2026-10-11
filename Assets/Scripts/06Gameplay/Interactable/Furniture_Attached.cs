@@ -196,6 +196,8 @@ namespace FPSGame.Gameplay
             int qy = Mathf.RoundToInt(p.y * 10f);
             int qz = Mathf.RoundToInt(p.z * 10f);
             SyncId = Fnv1a($"{Id}|{qx}|{qy}|{qz}");
+            // 联机诊断（可开关）：跨端稳定键在创建时打一条 —— 两端对不上时用它和 NetFurnitureBridge 的键表对照。
+            FPSGame.Utils.NetSyncLog.SyncLog("家具/键", $"{name} id={Id} sync={SyncId} 量化位置=({qx},{qy},{qz})");
         }
 
         /// <summary>FNV-1a 32 位（零分配、跨端稳定；与任务指纹同族做法）。</summary>
@@ -343,8 +345,31 @@ namespace FPSGame.Gameplay
         public void ApplyRemoteOperate(GameObject remoteUser)
         {
             owner = remoteUser;
-            Operate();
+            // ⚠ 重放期间置位：某些"本端表现"副作用（改地形高度图 / 重算包围盒）**不能两端各做一遍**（不是幂等、会叠加）
+            IsRemoteReplay = true;
+            try { Operate(); }
+            finally { IsRemoteReplay = false; }
         }
+
+        /// <summary>true = 当前在"重放远端交互"的调用栈内（见 <see cref="ApplyRemoteOperate"/>）。
+        /// <para>▍用途：把"只该由本机操作者做一次"的副作用挡掉（<c>Furniture_Pipe</c> 的 <c>ModifyHeightMap</c> 是典型：
+        /// 它是往地形高度图上挖坑，两端各做一次就是挖两遍）。</para></summary>
+        public static bool IsRemoteReplay { get; private set; }
+
+        /// <summary>家具"需要两端一致的状态"发生了变化（子类调用 <see cref="ReportState"/> 触发）。
+        /// <para>参数：(家具, int 编码, 原始键)。由 09 侧 <c>NetFurnitureBridge</c> 订阅后走 4036 上行。</para></summary>
+        public static event Action<Furniture_Attached, int, string> OnStateChanged;
+
+        /// <summary>子类在改完"两端必须一致"的状态后调用（如管道的 PipeLink / PipeWait / PipeError）。
+        /// <para>▍只用于**没有交互驱动**的状态变更（任务把管道打成 PipeError）；交互路径本身走 4036 重放，不用调这个。</para></summary>
+        protected void ReportState(int code, string key = null)
+        {
+            OnStateChanged?.Invoke(this, code, key);
+        }
+
+        /// <summary>【联机】应用远端下发的状态（与 <see cref="ReportState"/> 成对，走同一条 4036）。
+        /// <para>默认空实现；有状态机的子类覆写它（如 <c>Furniture_Pipe</c> 还原 <c>Id</c>）。</para></summary>
+        public virtual void ApplyRemoteState(int code, string key) { }
 
         public virtual bool CanOperate(GameObject unit)
         {

@@ -50,7 +50,9 @@ namespace FPSGame.Net
         public const int EnemyMoveSync = 4024;
         /// <summary>成员 -> 房主：打中了某只怪 ⇒ 房主结算（血量/死亡权威在房主）</summary>
         public const int EnemyHitNtf = 4025;
-        /// <summary>房主 -> 全体：某只怪死亡 ⇒ 成员干掉自己的副本</summary>
+        /// <summary>房主 -> 全体：某只怪死亡 ⇒ 成员干掉自己的副本。
+        /// <para>⚠ 2026-10-12 已并入 <c>EnemyDamagedSync</c>(4040) 的 <c>DamageMsg.IsDeath</c>（死亡就是"被打到 0 血"的特例）
+        /// ⇒ 不再注册、不再外发。常量保留只为不与历史日志/抓包对不上号。</para></summary>
         public const int EnemyDiedSync = 4026;
         /// <summary>成员 -> 房主：呼叫了一次战备（战备 id + 落点）</summary>
         public const int AirdropCallNtf = 4027;
@@ -109,6 +111,55 @@ namespace FPSGame.Net
         /// <para>▍键 = <c>FNV1a(Actor.Id + 位置 0.1m 量化)</c>（同 <c>Furniture_Attached.SyncId</c> 口径：
         /// 同类物件多实例，只用 Id 会撞车、用 IndexID 两端不一致）。</para></summary>
         public const int SceneDestructibleNtf = 4043;
+
+        /// <summary>双向：**按键终端(KeyScreen)的阶段推进**（键 = 终端家具的 <c>Furniture_Attached.SyncId</c>）。
+        /// <para>▍为什么单独一条：阶段推进原本纯本地（<c>OnUpdateStage</c> 只在本地抛），而任务的**中间阶段标志**
+        /// （黑盒子的 <c>startDefense</c>、炼油的 Start/Repair、撤离的 Wait、<c>KeyScreenContGo</c> 的显隐）
+        /// 全靠它 ⇒ 两端阶段一分叉，后续任务行为就各走各的（2026-10-11 用户实测）。只传"推进到第几阶段"。</para>
+        /// <para>▍驱动口径：只有**驱动端**（操作者所在那台 / 无人阶段时房主）上报，其余端只应用 ——
+        /// 判定唯一收口在 <c>KeyScreen.IsStageDriver</c>，桥是 09 的 <c>NetKeyScreenBridge</c>。</para></summary>
+        public const int KeyScreenStageNtf = 4046;
+
+        /// <summary>房主 -> 全体：**巡逻队生成**（生成点 + 逐单位目标点）。
+        /// <para>⚠ 2026-10-12 已并入 <c>HostSpawnNtf</c>(4052) 的 <c>Kind = Patrol</c>（与"运行时生成的单只单位"同族：
+        /// 前提都是"房主是唯一生成权威 + 号由房主分配"）⇒ 不再注册、不再外发。</para>
+        /// <para>▍为什么当初必须房主权威：巡逻队（任务的维修巡逻 / 据点的压力巡逻）原本是**本地生成**的 ⇒ 成员端自己也会造一批，
+        /// 而 <c>Actor.Awake</c> 会给新单位分配 <c>NetId</c>（口径是"房主分配 + 两端创建顺序一致"）
+        /// ⇒ 成员端自造的单位与房主下发的号段**撞号**（移动指令打到别的怪身上、死亡错杀）。</para></summary>
+        public const int PatrolSpawnNtf = 4047;
+
+        /// <summary>双向：**容器类家具的一次提交已完成**（键 = 家具 <c>SyncId</c>；值 = 个数 + 主类型）。
+        /// <para>▍为什么单独一条：这类家具的效果写在 <c>IStepPress.StepPress</c>（逐个扣背包 + <c>OnSubmit</c>），
+        /// 而远端重放只走 <c>Operate()</c>（只收尾）⇒ 必须把"提交了几个"传过去，由远端在盟友的幽灵背包上重放。</para></summary>
+        public const int OOPartSubmitNtf = 4048;
+
+        /// <summary>双向：**玩家对按键终端(KeyScreen)的操作**（键 = 终端家具 <c>SyncId</c>；值 = 按键 + 类型）。
+        /// <para>▍与 4046（阶段推进）分工：4046 保证"阶段权威、不分叉"；本条让"终端上正在发生什么"对所有端可见
+        /// （非驱动端把本机键盘换成远端按键，逻辑照跑 ⇒ 显示自然一致）。</para></summary>
+        public const int KeyScreenInputNtf = 4049;
+
+        /// <summary>双向：**把某个倒地的玩家扶起来**（值 = 被救者 sid，房主 = 0）。
+        /// <para>▍为什么不能蹭家具交互那条（4036）：<c>Furniture_PlayerDown</c> 的键 = <c>FNV1a(Id + 位置量化)</c>，
+        /// 而盟友实例的出生点与本人出生点**差 0.2m（Y）**（<c>NetFriendBridge.NextSpawnPos</c> 没带
+        /// <c>BridgeRoleManager.RawStartPoint</c> 的 +0.2 抬升）⇒ 两端键必然对不上、救人消息必被丢弃；
+        /// 且同机多个盟友实例（Id 都空）位置键还会互相覆盖。⇒ 按 **sid** 直指被救者，由它本机执行复活。</para>
+        /// <para>▍走向：救人者（操作盟友"倒地"实例）发 → 房主转发全体 → 被救者本机应用。</para></summary>
+        public const int PlayerReviveNtf = 4050;
+
+        /// <summary>房主 -> 全体：**运行时生成的单位**（巢穴 / 召唤师 / 刷怪器）。
+        /// <para>⚠ 2026-10-12 已并入 <c>HostSpawnNtf</c>(4052) 的 <c>Kind = Unit</c> ⇒ 不再注册、不再外发。</para>
+        /// <para>▍为什么当时不能再各生各的：这类生成的**时机由各自的 AI / 计时驱动**，两端必然不同 ⇒ 各自生成就会把
+        /// <c>Actor.Awake</c> 的号段整体推歪（其后所有单位错位：伤害打到别的怪身上、移动指令发错对象）。</para></summary>
+        public const int EnemySpawnNtf = 4051;
+
+        /// <summary>房主 -> 全体：**房主生成族**（原 4047 巡逻队 + 4051 运行时生成合并，2026-10-12）。
+        /// <para>▍为什么合并：两者的前提完全同型 —— 都是"房主是唯一的生成权威"，都是因为 <c>Actor.Awake</c> 会领 NetId
+        /// （号的口径是"房主分配 + 两端创建顺序一致"，成员端自造必然错位）。合并后一条消息、一处回环门、一处日志口径。</para>
+        /// <para>▍形态（<c>HostSpawnMsg.Kind</c>）：<c>Patrol</c> = 巡逻队（生成点 + 逐单位目标点；构成由落点派生 ⇒ 不传）、
+        /// <c>Unit</c> = 单只单位（来源键 + 槽位 ⇒ 成员让本端同一份生成器复刻并覆盖号，见 <c>INetSpawner</c>）。</para>
+        /// <para>▍与 <c>WaveStartSync</c>(4023) / <c>SceneActorNtf</c>(4039) 的分工：波次是**逐 Tick 投放**、场景单位是**加载期摆好**，
+        /// 频率档与本条不同 ⇒ 不合并（它们各自的路由已被验证，见 <c>WaveManager</c> 的整批复刻与 <c>SceneActorSync</c>）。</para></summary>
+        public const int HostSpawnNtf = 4052;
 
         // ===== 舰桥准备（战备/强化/资料；对应原 BridgeSys 的三条本地回环）=====
         /// <summary>成员 -> 房主：本机玩家资料（角色/等级/武器/战备/强化）</summary>

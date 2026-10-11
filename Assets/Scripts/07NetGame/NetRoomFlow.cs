@@ -29,6 +29,18 @@ namespace FPSGame.Net
         /// <summary>入房结果：ok / 失败原因（成功时为空串）。</summary>
         public static event Action<bool, string> OnJoinResult;
 
+        /// <summary>【成员侧】与房主断开（房主退出 / 崩溃 / 网络断）—— 本端已自动清掉房间标记，**这一局退回单机**。
+        /// <para>▍消费方**必须**把"依赖房主权威"的开关全部复位，否则会永远卡在"等房主下发"
+        /// （2026-10-10 实测：敌人不动 + 每帧刷"本端作废"）。目前三处，**新增同类开关时请一并补进这张清单**：</para>
+        /// <list type="bullet">
+        ///   <item><c>EnemyController.RemoteDrivenMovement</c>（<c>EnemyNetBridge</c>）—— 敌人恢复本端自主 AI；</item>
+        ///   <item><c>MissionBase.RemoteDriven</c>（<c>NetMissionBridge</c>）—— 任务恢复本端判定，否则**这一局打不完**；</item>
+        ///   <item><c>NPCWalk.RemoteDriven</c>（<c>SceneUnitMoveSink</c>）—— NPC 恢复各端本地游荡，否则**永远站着不动**。</item>
+        /// </list>
+        /// <para>另：<c>NetFriendBridge</c> 会销毁**全部**盟友实例（房主没了 ⇒ 别人的位姿/血量再也不会更新，
+        /// 留着只会骗人）⇒ 模型与 <c>PlayerWnd</c> 那几行一起收掉，观感就是回到单机。</para></summary>
+        public static event Action OnHostLost;
+
         /// <summary>房主广播的玩家列表 + 详细资料（入房成功、有人进出、准备/资料变化时都会来）。
         /// ⚠ <c>profiles</c> 可能为 null（旧版本房主不带资料）⇒ 消费方要判空。</summary>
         public static event Action<PlayerInfo[], PlayerProfile[]> OnPlayerList;
@@ -50,8 +62,9 @@ namespace FPSGame.Net
 
         /// <summary>开火表现同步（同上，房主自己也收）。参数：sid / 武器槽位 / **伤害档位**
         /// （<c>WeaponBaseController.UseDamageIndex</c>：接收端必须用**开枪者**的档位，否则命中特效/表现弹取错配置）
-        /// / **射击方向**（世界空间，零向量 = 未知）/ **目标点**（开枪者准心实指那一点；零向量 = 未知 ⇒ 只用方向）。</summary>
-        public static event Action<uint, int, int, UnityEngine.Vector3, UnityEngine.Vector3> OnShoot;
+        /// / **射击方向**（世界空间，零向量 = 未知）/ **目标点**（开枪者准心实指那一点；零向量 = 未知 ⇒ 只用方向）
+        /// / **发射点下标**（<c>-1</c> = 齐射；多管枪轮流开火，接收端没有那份计数 ⇒ 必须传）。</summary>
+        public static event Action<uint, int, int, UnityEngine.Vector3, UnityEngine.Vector3, int> OnShoot;
 
         /// <summary>【房主侧】收到成员请求"场景 actor 快照"。参数：请求方 sid。
         /// <para>▍为什么要绕一手：快照要从 <c>ActorsManager</c> 里取（05/09 才看得见），而本程序集 <b>不引用</b>玩法层
@@ -64,6 +77,10 @@ namespace FPSGame.Net
         /// <summary>玩家生命状态同步（血/盾/倒地；房主自己也收）。参数：整条 DTO（含权威 Sid）。</summary>
         public static event Action<PlayerVital> OnVital;
 
+        /// <summary>有人把某个玩家扶起来了（<c>PlayerReviveNtf</c>(4050)）。参数：被救者的 sid（房主 = 0）。
+        /// <para>▍各端都收：房主收到成员的请求要**转发全体**，成员只应用（sid 必然是自己）。</para></summary>
+        public static event Action<uint> OnPlayerRevive;
+
         /// <summary>玩家弹药系数同步（房主自己也收）。参数：sid / 剩余弹药比例 0~1。</summary>
         public static event Action<uint, float> OnAmmo;
 
@@ -73,16 +90,14 @@ namespace FPSGame.Net
         /// <summary>【成员侧】房主下发了某只怪的移动目标（NetId / 目标点）。</summary>
         public static event Action<int, Vector3> OnEnemyMove;
 
-        /// <summary>【房主侧】成员上报打中了某只怪。参数：开枪者 sid / NetId / 伤害。
-        /// <para>⚠ 带上 sid 才能把"这一枪"归到那个成员的盟友实例上（受击表现/仇恨要落在他身上）。</para></summary>
-        public static event Action<uint, int, int> OnEnemyHitUp;
+        /// <summary>【房主侧】成员上报"打中了 / 打死了"（统一的 <c>DamageMsg</c>；方向由到达的 cmdId 决定）。
+        /// <para>⚠ 带上 <c>Sid</c> 才能把"这一枪"归到那个成员的盟友实例上（受击表现/仇恨要落在他身上）。</para></summary>
+        public static event Action<DamageMsg> OnEnemyHitUp;
 
-        /// <summary>【成员侧】房主打中了某只怪。参数：开枪者 sid（房主 = 0）/ NetId / 伤害。
-        /// <para>▍为什么要往下播：以前只有"成员 → 房主"，房主打出的伤害**从不下发** ⇒ 两侧副本血量各算各的。</para></summary>
-        public static event Action<uint, int, int> OnEnemyDamaged;
-
-        /// <summary>【成员侧】房主说某只怪死了（NetId）。</summary>
-        public static event Action<int> OnEnemyDied;
+        /// <summary>【成员侧】房主下发"打中了 / 打死了"（统一的 <c>DamageMsg</c>；<c>IsDeath</c> = 这一发打死了）。
+        /// <para>▍为什么要往下播：以前只有"成员 → 房主"，房主打出的伤害**从不下发** ⇒ 两侧副本血量各算各的。
+        /// ▍死亡也走这条（原来单开 4026）：死亡就是"被打到 0 血"的特例。</para></summary>
+        public static event Action<DamageMsg> OnEnemyDamaged;
 
         /// <summary>【成员侧】房主下发场景单位（NPC 等氛围单位）的移动目标 / 停下。
         /// <para>参数：匹配键（<c>Actor.Id</c>）/ 目标点 / 是否就地停下。键用 Id 而非 NetId 的原因见 <c>SceneUnitMoveMsg</c>。</para></summary>
@@ -137,7 +152,7 @@ namespace FPSGame.Net
         /// <summary>【双向】场景可破坏物（油桶这类）被打掉 ⇒ 远端把同一件也打掉（键 = 跨端稳定 SyncId）。
         /// <para>▍只传"死了"、不传伤害：这类物件没有血量口径要一致（打爆才是唯一有意义的状态），
         /// 少一条伤害通道就少一处两端不一致。</para></summary>
-        public static event Action<SceneDestructibleMsg> OnSceneDestructible;
+        public static event Action<DamageMsg> OnSceneDestructible;
 
         /// <summary>【双向】标记点位（表现类；目标实体是引用不能过网 ⇒ 只传点）⇒ 远端在自己的字幕/光环上复现。</summary>
         public static event Action<MarkMsg> OnMark;
@@ -147,6 +162,19 @@ namespace FPSGame.Net
 
         /// <summary>【成员侧】房主下发的追击波次中心（~2Hz）⇒ 本端只跟随，不自己算"最近玩家"。</summary>
         public static event Action<WaveCenterMsg> OnWaveCenter;
+
+        /// <summary>【双向】按键终端(KeyScreen)阶段推进（键 = 终端家具 SyncId）⇒ 其余端只应用、不自行推进。</summary>
+        public static event Action<KeyScreenStageMsg> OnKeyScreenStage;
+
+        /// <summary>【成员侧】房主广播的"实体生成"（原巡逻队 4047 + 运行时生成 4051 合并，见 <c>HostSpawnMsg</c>）⇒
+        /// 本端按 <c>Kind</c> 复刻：巡逻队（生成点 + 逐单位目标点）/ 单只单位（来源键 + 槽位 ⇒ 生成器自己复刻）。</summary>
+        public static event Action<HostSpawnMsg> OnHostSpawn;
+
+        /// <summary>【双向】容器类家具的一次提交（个数 / 类型）⇒ 远端在盟友幽灵背包上重放。</summary>
+        public static event Action<OOPartSubmitMsg> OnOOPartSubmit;
+
+        /// <summary>【双向】玩家对终端(KeyScreen)的一次输入 ⇒ 非驱动端复现。</summary>
+        public static event Action<KeyScreenInputMsg> OnKeyScreenInput;
 
         /// <summary>连接 + 入房的总超时（秒）。超时按失败处理，避免 UI 一直转圈。</summary>
         [InspectorName("入房总超时(秒)")]
@@ -194,6 +222,10 @@ namespace FPSGame.Net
         /// <summary>【成员位】收到房主"一起开打"广播即置位（新一局由 <see cref="HandleTaskConfirmNtf"/> 复位）。</summary>
         private bool _battleStarted;
 
+        /// <summary>【成员位】上一帧"我在房间里"（见 <see cref="DetectHostLost"/>）：断线时靠它区分
+        /// "房主掉了" 与 "本来就没入房 / 已主动退房"。</summary>
+        private bool _wasInRoom;
+
         private void Awake()
         {
             Instance = this;
@@ -210,12 +242,13 @@ namespace FPSGame.Net
             MessageCenter.Register<PlayerWeaponSwitch>(CmdId.PlayerWeaponSwitchSync, HandleWeaponSwitchSync);
             MessageCenter.Register<PlayerShoot>(CmdId.PlayerShootSync, HandleShootSync);
             MessageCenter.Register<PlayerVital>(CmdId.PlayerVitalSync, HandleVitalSync);
+            MessageCenter.Register<PlayerReviveMsg>(CmdId.PlayerReviveNtf, HandlePlayerReviveNtf);
             MessageCenter.Register<PlayerAmmo>(CmdId.PlayerAmmoSync, HandleAmmoSync);
             MessageCenter.Register<WaveStartMsg>(CmdId.WaveStartSync, HandleWaveStartSync);
             MessageCenter.Register<EnemyMoveMsg>(CmdId.EnemyMoveSync, HandleEnemyMoveSync);
-            MessageCenter.Register<EnemyHitMsg>(CmdId.EnemyHitNtf, HandleEnemyHitNtf);
-            MessageCenter.Register<EnemyDiedMsg>(CmdId.EnemyDiedSync, HandleEnemyDiedSync);
-            MessageCenter.Register<EnemyDamagedMsg>(CmdId.EnemyDamagedSync, HandleEnemyDamagedSync);
+            // 伤害 / 生死族合并成一条 DTO（2026-10-12）：同一类挂两个号，**方向由到达的号决定**
+            MessageCenter.Register<DamageMsg>(CmdId.EnemyHitNtf, HandleDamageUp);          // 成员 → 房主
+            MessageCenter.Register<DamageMsg>(CmdId.EnemyDamagedSync, HandleDamageDown);   // 房主 → 全体（含 IsDeath）
             MessageCenter.Register<SceneUnitMoveMsg>(CmdId.SceneUnitMoveSync, HandleSceneUnitMoveSync);
             MessageCenter.Register<AirdropCallMsg>(CmdId.AirdropCallSync, HandleAirdropCallSync);
             MessageCenter.Register<PlayerLeftMsg>(CmdId.PlayerLeftNtf, HandlePlayerLeftNtf);
@@ -234,8 +267,14 @@ namespace FPSGame.Net
             MessageCenter.Register<WaveCenterMsg>(CmdId.WaveCenterNtf, HandleWaveCenterNtf);
             // 开局加载闸门：房主"全体加载完成 ⇒ 一起开打"（成员收广播、房主收本地自派发，走同一条路）
             MessageCenter.Register<BattleStartMsg>(CmdId.BattleStartSync, HandleBattleStartSync);
-            // 场景可破坏物（油桶这类）被打掉 ⇒ 远端把同一件也打掉（双向一条）
-            MessageCenter.Register<SceneDestructibleMsg>(CmdId.SceneDestructibleNtf, HandleSceneDestructibleNtf);
+            // 场景可破坏物（油桶这类）被打掉 ⇒ 远端把同一件也打掉（双向一条；DTO 与伤害族共用，键走 DamageMsg.Key）
+            MessageCenter.Register<DamageMsg>(CmdId.SceneDestructibleNtf, HandleSceneDestructibleNtf);
+            // 按键终端阶段推进（驱动端上报 / 房主转发全体）
+            MessageCenter.Register<KeyScreenStageMsg>(CmdId.KeyScreenStageNtf, HandleKeyScreenStageNtf);
+            // 房主生成族（原 4047 巡逻队 + 4051 运行时生成合并）：房主唯一生成 + 成员按 Kind 复刻
+            MessageCenter.Register<HostSpawnMsg>(CmdId.HostSpawnNtf, HandleHostSpawnNtf);
+            MessageCenter.Register<OOPartSubmitMsg>(CmdId.OOPartSubmitNtf, HandleOOPartSubmitNtf);
+            MessageCenter.Register<KeyScreenInputMsg>(CmdId.KeyScreenInputNtf, HandleKeyScreenInputNtf);
         }
 
         private void OnDestroy()
@@ -250,12 +289,13 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.PlayerWeaponSwitchSync);
             MessageCenter.Unregister(CmdId.PlayerShootSync);
             MessageCenter.Unregister(CmdId.PlayerVitalSync);
+            MessageCenter.Unregister(CmdId.PlayerReviveNtf);
             MessageCenter.Unregister(CmdId.PlayerAmmoSync);
             MessageCenter.Unregister(CmdId.WaveStartSync);
             MessageCenter.Unregister(CmdId.EnemyMoveSync);
             MessageCenter.Unregister(CmdId.EnemyHitNtf);
-            MessageCenter.Unregister(CmdId.EnemyDiedSync);
             MessageCenter.Unregister(CmdId.EnemyDamagedSync);
+            // ⚠ CmdId.EnemyDiedSync(4026) 已并入 4040（DamageMsg.IsDeath）⇒ 不再注册（常量保留，不外发）
             MessageCenter.Unregister(CmdId.SceneUnitMoveSync);
             MessageCenter.Unregister(CmdId.AirdropCallSync);
             MessageCenter.Unregister(CmdId.PlayerLeftNtf);
@@ -271,17 +311,55 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.WaveCenterNtf);
             MessageCenter.Unregister(CmdId.BattleStartSync);
             MessageCenter.Unregister(CmdId.SceneDestructibleNtf);
+            MessageCenter.Unregister(CmdId.KeyScreenStageNtf);
+            MessageCenter.Unregister(CmdId.HostSpawnNtf);
+            // ⚠ CmdId.PatrolSpawnNtf(4047) / EnemySpawnNtf(4051) 已并入 HostSpawnNtf(4052) ⇒ 不再注册/外发
+            MessageCenter.Unregister(CmdId.OOPartSubmitNtf);
+            MessageCenter.Unregister(CmdId.KeyScreenInputNtf);
             if (ReferenceEquals(Instance, this)) Instance = null;
         }
 
         private void Update()
         {
+            DetectHostLost();
+
             if (!IsJoining) return;
 
             _timeoutLeft -= Time.unscaledDeltaTime;
             if (_timeoutLeft > 0f) return;
 
             FinishJoin(false, "入房超时（对端无响应）");
+        }
+
+        /// <summary>
+        /// 【成员侧】"房主掉了"要能**自己发现**。
+        ///
+        /// <para>▍背景（2026-10-10 用户实测）：房主因为报错退出后，客机这边**没有任何人告诉它** —— 房间标记还在
+        /// （<c>CurrentRoom</c> 非空 ⇒ 房间列表还显示"已在房间"）、<c>EnemyController.RemoteDrivenMovement</c>
+        /// 还是 true ⇒ 敌人永远等房主下发，而本端 AI 每次决策都被作废并刷日志。</para>
+        ///
+        /// <para>▍判据：传输层连接已断，且本端**本来是在房间里**（上一帧 <c>CurrentRoom != null</c>）。
+        /// 只判连接会误伤"还没入房"与"主动退房"两种正常状态（那时连接本来就是断的）。</para>
+        ///
+        /// <para>▍动作：清房间标记 + 广播 <see cref="OnHostLost"/>（由 09 的桥恢复本端自主）。</para>
+        /// </summary>
+        private void DetectHostLost()
+        {
+            var svc = NetSvc.Instance;
+            if (svc == null) return;
+
+            if (IsHost) { _wasInRoom = true; return; }      // 房主自己没有"房主掉了"这回事
+
+            if (svc.IsConnected) { _wasInRoom = CurrentRoom != null; return; }
+            if (!_wasInRoom) return;                        // 本来就没连着（没入过房 / 已主动退房）
+
+            _wasInRoom = false;
+            Debug.LogWarning("[NetRoomFlow] ⚠ 与房主断开（房主退出/崩溃/断网）⇒ 本端退出房间，改为本端自主");
+            CurrentRoom = null;
+            SelfSid = 0u;
+            SelfHostIndex = -1;
+            _battleStarted = false;
+            OnHostLost?.Invoke();
         }
 
         // ==================== 对外动词 ====================
@@ -345,6 +423,9 @@ namespace FPSGame.Net
             _battleStarted = false;
             SelfHostIndex = -1;      // 退房：序号作废（下次入房由名单重算）
             SelfSid = 0;
+            // ★ 必须清：DetectHostLost 靠它区分"房主掉了"与"我主动退房"，而 Disconnect 是**同步**把
+            //   IsConnected 置 false 的 ⇒ 不清的话下一帧就按"房主掉了"走一遍（误报 + 白跑一次 OnHostLost 的收尾）。
+            _wasInRoom = false;
         }
 
         // ==================== 开局加载闸门（等所有人都加载完再一起开打，2026-10-10） ====================
@@ -608,15 +689,19 @@ namespace FPSGame.Net
         /// 弹道就穿过同一个点（旧版发送端没有这个字段 ⇒ 全 0 ⇒ 自动退回老行为）。</para></param>
         /// <param name="damageIndex">开枪那把枪的**伤害档位**（<c>WeaponBaseController.UseDamageIndex</c>）：
         /// 接收端要按它取"命中特效/表现弹"（信号枪 0=标记 / 1=呼叫战备，不同步会放错特效，见 <see cref="PlayerShoot.DamageIndex"/>）。</param>
-        public void SendShoot(int slotIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hitPoint = default, int damageIndex = 0)
+        /// <param name="muzzleIndex">开枪用的是**第几个发射点**（<c>-1</c> = 齐射；见 <see cref="PlayerShoot.MuzzleIndex"/>）。
+        /// <para>▍为什么必须有：多管枪是轮流开火（<c>Muzzles[shootCount++ % N]</c>），而接收端那把武器从不本机开火
+        /// ⇒ 它的计数永远是 0 ⇒ 弹道全从 0 号管出（2026-10-11 修）。</para></param>
+        public void SendShoot(int slotIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hitPoint = default, int damageIndex = 0,
+            int muzzleIndex = 0)
         {
             if (IsHost)
             {
-                OnShoot?.Invoke(0, slotIndex, damageIndex, dir, hitPoint);
+                OnShoot?.Invoke(0, slotIndex, damageIndex, dir, hitPoint, muzzleIndex);
                 NetHostSvc.Instance.SendToAll(MessageCenter.Pack(CmdId.PlayerShootSync,
                     new PlayerShoot
                     {
-                        Sid = 0, SlotIndex = slotIndex, DamageIndex = damageIndex,
+                        Sid = 0, SlotIndex = slotIndex, DamageIndex = damageIndex, MuzzleIndex = muzzleIndex,
                         DirX = dir.x, DirY = dir.y, DirZ = dir.z,
                         HitX = hitPoint.x, HitY = hitPoint.y, HitZ = hitPoint.z,
                     }));
@@ -626,7 +711,7 @@ namespace FPSGame.Net
             NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.PlayerShootNtf,
                 new PlayerShoot
                 {
-                    Sid = SelfSid, SlotIndex = slotIndex, DamageIndex = damageIndex,
+                    Sid = SelfSid, SlotIndex = slotIndex, DamageIndex = damageIndex, MuzzleIndex = muzzleIndex,
                     DirX = dir.x, DirY = dir.y, DirZ = dir.z,
                     HitX = hitPoint.x, HitY = hitPoint.y, HitZ = hitPoint.z,
                 }));
@@ -712,7 +797,8 @@ namespace FPSGame.Net
             if (s != null)
                 OnShoot?.Invoke(s.Sid, s.SlotIndex, s.DamageIndex,
                     new UnityEngine.Vector3(s.DirX, s.DirY, s.DirZ),
-                    new UnityEngine.Vector3(s.HitX, s.HitY, s.HitZ));
+                    new UnityEngine.Vector3(s.HitX, s.HitY, s.HitZ),
+                    s.MuzzleIndex);
         }
 
         private void HandleAirdropCallSync(AirdropCallMsg m)
@@ -759,6 +845,27 @@ namespace FPSGame.Net
             if (v != null) OnVital?.Invoke(v);
         }
 
+        /// <summary>【双向】把"某人被扶起来了"送出去（房主 = 广播给成员；成员 = 发给房主）。
+        /// <para>⚠ 房主分支**不做本地自派发**（与 <see cref="SendWaveStart"/> 同款）：本地应用由桥在转发之后自己做。</para>
+        /// <para>⚠ <paramref name="sid"/> 允许为 0（房主自己也会被救）⇒ 不能像别处那样当"无效值"挡掉。</para></summary>
+        public void SendPlayerRevive(uint sid)
+        {
+            var msg = MessageCenter.Pack(CmdId.PlayerReviveNtf, new PlayerReviveMsg { Sid = sid });
+
+            if (IsHost)
+            {
+                NetHostSvc.Instance?.SendToAll(msg);
+                return;
+            }
+            if (!CanSendToHost) return;
+            NetSvc.Instance.SendMsg(msg);
+        }
+
+        private void HandlePlayerReviveNtf(PlayerReviveMsg m)
+        {
+            if (m != null) OnPlayerRevive?.Invoke(m.Sid);
+        }
+
         /// <summary>【上行】弹药系数（分流规则同 <see cref="SendArmament"/>）。</summary>
         public void SendAmmo(float ratio)
         {
@@ -802,27 +909,37 @@ namespace FPSGame.Net
         }
 
         /// <summary>【成员】上报一次命中，由房主结算。</summary>
-        public void SendEnemyHit(int netId, int damage)
+        /// <param name="attackerNetId">攻击者单位的 NetId（0 = 未知/玩家 ⇒ 房主退回按 sid 找盟友实例）</param>
+        /// <param name="groups">原始伤害成分（摊平 `[count,type,coeff,...]`；null = 中性）⇒ 对端补护甲破坏/异常状态积蓄</param>
+        public void SendEnemyHit(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0)
         {
             if (IsHost || netId == 0 || damage <= 0) return;
             if (!CanSendToHost) return;
             NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.EnemyHitNtf,
-                new EnemyHitMsg { Sid = SelfSid, NetId = netId, Damage = damage }));
+                new DamageMsg { Sid = SelfSid, NetId = netId, Damage = damage, AttackerNetId = attackerNetId, Groups = groups, Part = part }));
         }
 
-        /// <summary>【房主】广播某只怪死亡。</summary>
+        /// <summary>【房主】广播某只怪死亡 —— 死亡已并入伤害族（<c>DamageMsg.IsDeath</c>，走 4040），不再单开 4026。
+        /// <para>⚠ 与"这一发把它打到 0"的区别：这里是**只报死亡**（<c>Damage = 0</c>），用于"本地判定死亡但没走伤害事件"的场合
+        /// （如 <c>EnemyNetBridge.OnLocalDeath</c> 收到 <c>UnitEventBus</c> 的死亡事件）。</para></summary>
         public void SendEnemyDied(int netId)
         {
             if (!IsHost || netId == 0) return;
-            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.EnemyDiedSync, new EnemyDiedMsg { NetId = netId }));
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.EnemyDamagedSync, new DamageMsg { NetId = netId, IsDeath = true }));
         }
 
-        /// <summary>【房主】把自己打出的伤害下发给成员（成员扣自己那份副本 ⇒ 血量口径统一在房主）。</summary>
-        public void SendEnemyDamaged(int netId, int damage)
+        /// <summary>【房主】把伤害下发给成员（成员扣自己那份副本 ⇒ 血量口径统一在房主）。
+        /// <para>▍<paramref name="exceptSid"/> 非 0 = 这是**转发某个成员上报的伤害**，要排除来源端本身
+        /// （它本地已经扣过一次，发回去就是双扣）；同时把权威 `<c>Sid</c>` 填成**开枪者**（原来是恒 0 = 房主），
+        /// 这样接收端能把"这一发"归到开枪者那个单位上（受击表现/仇恨）。</para></summary>
+        public void SendEnemyDamaged(int netId, int damage, uint exceptSid = 0u, int attackerNetId = 0, float[] groups = null, int part = 0)
         {
             if (!IsHost || netId == 0 || damage <= 0) return;
-            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.EnemyDamagedSync,
-                new EnemyDamagedMsg { Sid = 0, NetId = netId, Damage = damage }));
+            var msg = MessageCenter.Pack(CmdId.EnemyDamagedSync,
+                new DamageMsg { Sid = exceptSid, NetId = netId, Damage = damage, AttackerNetId = attackerNetId, Groups = groups, Part = part });
+
+            if (exceptSid != 0u) NetHostSvc.Instance?.SendToAllExcept(exceptSid, msg);
+            else NetHostSvc.Instance?.SendToAll(msg);
         }
 
         private void HandleEnemyMoveSync(EnemyMoveMsg m)
@@ -830,19 +947,16 @@ namespace FPSGame.Net
             if (m != null) OnEnemyMove?.Invoke(m.NetId, new Vector3(m.X, m.Y, m.Z));
         }
 
-        private void HandleEnemyHitNtf(EnemyHitMsg m)
+        /// <summary>成员上报（4025）⇒ 交给房主侧的桥结算 / 转发。⚠ 死亡也走这条（<c>IsDeath</c>）。</summary>
+        private void HandleDamageUp(DamageMsg m)
         {
-            if (m != null) OnEnemyHitUp?.Invoke(m.Sid, m.NetId, m.Damage);
+            if (m != null) OnEnemyHitUp?.Invoke(m);
         }
 
-        private void HandleEnemyDamagedSync(EnemyDamagedMsg m)
+        /// <summary>房主下发（4040）⇒ 成员按数扣自己那份副本（<c>IsDeath</c> 的话直接干掉）。</summary>
+        private void HandleDamageDown(DamageMsg m)
         {
-            if (m != null) OnEnemyDamaged?.Invoke(m.Sid, m.NetId, m.Damage);
-        }
-
-        private void HandleEnemyDiedSync(EnemyDiedMsg m)
-        {
-            if (m != null) OnEnemyDied?.Invoke(m.NetId);
+            if (m != null) OnEnemyDamaged?.Invoke(m);
         }
 
         /// <summary>【房主下行】场景单位（NPC）走向某点 / 就地停下。
@@ -908,11 +1022,14 @@ namespace FPSGame.Net
             if (m != null) OnMissionUpdate?.Invoke(m);
         }
 
-        /// <summary>家具交互：成员上报房主 / 房主转发全体（由 09 侧的 NetFurnitureBridge 决定走向）。</summary>
-        public void SendFurnitureOperate(int syncId, uint sid)
+        /// <summary>家具交互：成员上报房主 / 房主转发全体（由 09 侧的 NetFurnitureBridge 决定走向）。
+        /// <para>▍<paramref name="stateKey"/> 非空 = 这是一条**状态**同步（不是交互重放）：接收端走
+        /// <c>Furniture_Attached.ApplyRemoteState</c> 而不是 <c>Operate()</c> —— 用于"改了状态但没人交互"
+        /// （如任务把管道打成 <c>PipeError</c>）。<paramref name="state"/> 只是编码，接收端可用 Key 自行解析。</para></summary>
+        public void SendFurnitureOperate(int syncId, uint sid, int state = 0, string stateKey = null)
         {
             var msg = MessageCenter.Pack(CmdId.FurnitureOperateNtf,
-                new FurnitureOperateMsg { SyncId = syncId, Sid = sid });
+                new FurnitureOperateMsg { SyncId = syncId, Sid = sid, State = state, StateKey = stateKey });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
             else NetSvc.Instance?.SendMsg(msg);
@@ -923,17 +1040,74 @@ namespace FPSGame.Net
             if (m != null) OnFurnitureOperate?.Invoke(m);
         }
 
-        /// <summary>场景可破坏物被打掉：成员上报房主 / 房主转发全体（走向由 09 侧的 NetDestructibleBridge 决定）。</summary>
-        public void SendSceneDestructible(int syncId, uint sid)
+        /// <summary>终端阶段推进：驱动端上报 / 房主转发全体（走向由 09 侧的 NetKeyScreenBridge 决定）。</summary>
+        public void SendKeyScreenStage(int syncId, uint sid, int stage)
         {
-            var msg = MessageCenter.Pack(CmdId.SceneDestructibleNtf,
-                new SceneDestructibleMsg { SyncId = syncId, Sid = sid });
+            var msg = MessageCenter.Pack(CmdId.KeyScreenStageNtf,
+                new KeyScreenStageMsg { SyncId = syncId, Sid = sid, Stage = stage });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
             else NetSvc.Instance?.SendMsg(msg);
         }
 
-        private void HandleSceneDestructibleNtf(SceneDestructibleMsg m)
+        private void HandleKeyScreenStageNtf(KeyScreenStageMsg m)
+        {
+            if (m != null) OnKeyScreenStage?.Invoke(m);
+        }
+
+        /// <summary>房主生成族（巡逻队 / 运行时生成）：**只有房主发**（生成时机与号都由他定）。</summary>
+        public void SendHostSpawn(HostSpawnMsg msg)
+        {
+            if (!IsHost || msg == null) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.HostSpawnNtf, msg));
+        }
+
+        private void HandleHostSpawnNtf(HostSpawnMsg m)
+        {
+            if (m != null) OnHostSpawn?.Invoke(m);
+        }
+
+        /// <summary>容器类家具提交：成员上报房主 / 房主转发全体（走向由 09 侧的 NetFurnitureBridge 决定）。</summary>
+        public void SendOOPartSubmit(int syncId, uint sid, int count, int type)
+        {
+            var msg = MessageCenter.Pack(CmdId.OOPartSubmitNtf,
+                new OOPartSubmitMsg { SyncId = syncId, Sid = sid, Count = count, Type = type });
+
+            if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
+            else NetSvc.Instance?.SendMsg(msg);
+        }
+
+        private void HandleOOPartSubmitNtf(OOPartSubmitMsg m)
+        {
+            if (m != null) OnOOPartSubmit?.Invoke(m);
+        }
+
+        /// <summary>终端输入：驱动端上报 / 房主转发全体（走向由 09 侧的 NetKeyScreenBridge 决定）。</summary>
+        public void SendKeyScreenInput(int syncId, uint sid, int key, int kind)
+        {
+            var msg = MessageCenter.Pack(CmdId.KeyScreenInputNtf,
+                new KeyScreenInputMsg { SyncId = syncId, Sid = sid, Key = key, Kind = kind });
+
+            if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
+            else NetSvc.Instance?.SendMsg(msg);
+        }
+
+        private void HandleKeyScreenInputNtf(KeyScreenInputMsg m)
+        {
+            if (m != null) OnKeyScreenInput?.Invoke(m);
+        }
+
+        /// <summary>场景可破坏物被打掉：成员上报房主 / 房主转发全体（走向由 09 侧的 NetDestructibleBridge 决定）。</summary>
+        public void SendSceneDestructible(int syncId, uint sid)
+        {
+            var msg = MessageCenter.Pack(CmdId.SceneDestructibleNtf,
+                new DamageMsg { Sid = sid, Key = syncId, IsDeath = true });
+
+            if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
+            else NetSvc.Instance?.SendMsg(msg);
+        }
+
+        private void HandleSceneDestructibleNtf(DamageMsg m)
         {
             if (m != null) OnSceneDestructible?.Invoke(m);
         }

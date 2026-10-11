@@ -283,14 +283,20 @@ namespace FPSGame.Game
             //Debug.LogWarning("友军减伤" + damage,gameObject);
 
 
-            //爆炸抗性
-            PEInt hitExplosionResistance = PEMath.Clamp(packet.isDirect ? 1 : (1 - (PEInt)explosionResistance),0,1);
-            //Debug.LogWarning("爆炸抗性" + hitExplosionResistance, gameObject);
+            // ⚠ 联机镜像（2026-10-11 修）：`packet.Resolved` = 伤害**已在开枪端算过这些乘区**（上报的是最终值）
+            //   ⇒ 这里**不能再乘一遍**，否则护甲/爆炸抗性被二次减免、两端血量与死亡判定不一致。
+            //   （远端包没带 AP ⇒ 原来按 AP=0 算出最大减伤；也没带 isDirect ⇒ 爆炸抗性也再算一遍。）
+            if (!packet.Resolved)
+            {
+                //爆炸抗性
+                PEInt hitExplosionResistance = PEMath.Clamp(packet.isDirect ? 1 : (1 - (PEInt)explosionResistance),0,1);
+                //Debug.LogWarning("爆炸抗性" + hitExplosionResistance, gameObject);
 
-            //穿甲等级
-            PEInt armorFactor = PEMath.Clamp(1 - (armorLevel - packet.AP) * (PEInt)ArmorPenaltyPerLevel, new(0.1f), 1);
-            //Debug.LogWarning("穿甲系数" + armorFactor.RawFloat+"护甲等级"+armorLevel+"穿甲等级"+packet.AP, gameObject);
-            damage *= hitExplosionResistance* armorFactor;
+                //穿甲等级
+                PEInt armorFactor = PEMath.Clamp(1 - (armorLevel - packet.AP) * (PEInt)ArmorPenaltyPerLevel, new(0.1f), 1);
+                //Debug.LogWarning("穿甲系数" + armorFactor.RawFloat+"护甲等级"+armorLevel+"穿甲等级"+packet.AP, gameObject);
+                damage *= hitExplosionResistance* armorFactor;
+            }
 
             //Debug.LogWarning("AP减伤" + damage, gameObject);
 
@@ -313,7 +319,15 @@ namespace FPSGame.Game
                 }
             }
             
-            Health.TakeDamage(finalDamageGroups, packet.NoSource, damageSource, packet.damageAffected, packet.Pos,true,isWeakness, packet.DemolishValue);
+            // ★ 把这一发的**原始成分**（类型 + 系数）挂在 Health 上，供联机上报（见 Health.LastRawGroups）：
+            //   接收端要拿它补"护甲破坏 / 异常状态积蓄"——只带总伤害时那两条分支整段被跳过。
+            //   ⚠ try/finally 包住 TakeDamage：OnDamaged 是在它内部同步触发的，出来后必须清掉（别让流血/tick 复用上一发的成分）。
+            Health.LastRawGroups = packet.DamageGroups;
+            try
+            {
+                Health.TakeDamage(finalDamageGroups, packet.NoSource, damageSource, packet.damageAffected, packet.Pos,true,isWeakness, packet.DemolishValue);
+            }
+            finally { Health.LastRawGroups = null; }
             
         }
 
@@ -389,11 +403,18 @@ namespace FPSGame.Game
 
 
 
+        /// <summary>本单位是不是玩家 / 盟友（他们的血量**本机权威** ⇒ tick 伤害任何角色下都要本地算）。</summary>
+        private bool IsPlayerLike
+            => Actor != null && (Actor.Type == UnitTypeEnum.Player || Actor.Type == UnitTypeEnum.Friend);
+
         /// <summary>每帧tick：护甲已破坏时按流血速度对自身施加真实伤害（流血效果）</summary>
         /// <returns>是否继续 tick</returns>
         public override bool Tick()
         {
-            if (armorValue>0&&remainArmor <= 0)
+            // ★ 联机（2026-10-12）：tick 伤害**只由房主（或单机）本地结算并广播** —— 若成员端也结算，
+            //   它还会把这一拍上报给房主（`EnemyController._OnDamaged`）⇒ 同一段流血被叠加 N 份。
+            //   玩家/盟友例外（他们的血本机权威）。见 BattleState.IsTickDamageAuthority。
+            if (armorValue > 0 && remainArmor <= 0 && FPSGame.Data.BattleState.ShouldApplyTickDamage(IsPlayerLike))
             {
                 Health.TakeDamage(new() {new( DamageTypeEnum.Real,BleedValue)}, true, ArmorBreaker, m_colliders[0], m_colliders[0].bounds.center,true);
             }

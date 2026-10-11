@@ -136,6 +136,9 @@ namespace FPSGame.AI
         public override bool Tick()
         {
             if(!FPSGame.GameContract.BattleHub.Current.IsPresent) return true;
+            // ★ 成员端 AI LOD（见 AiLod）：远处的**敌人**不必每秒重扫一遍（FindUnits + 视线判定是最贵的一步）；
+            //   有目标 / 非敌人 / 房主 / 单机 ⇒ 照常扫。⚠ 必须 return true：返回 false 会被 TickBehaviour 摘出 ticks 列表。
+            if (!AiLod.ShouldTick(m_Actor, Target.Actor != null)) return true;
             HandleTargetDetection();
 
             return true;
@@ -513,6 +516,14 @@ namespace FPSGame.AI
 
             if (PEVector3.Distance(noise.pos, m_Actor.Logic3Pos) - noise.radius < (PEInt)HearingRange)
             {
+                // 数据说话：**只有听见的单位**打一行（含距离/半径/听力）——"怪没反应"时先区分
+                // "没听见"（这行不出现）还是"听见了没起身"（看 EnemyMobile 的起身日志）。
+                // 限流 1s/单位：一枪能惊动几十只，不限流会刷屏（2026-10-10 用户口径）。
+                FPSGame.Utils.NetSyncLog.AiLog("噪声·听见",
+                    $"{m_Actor.Id}(netId={m_Actor.NetId}) 声源@{noise.pos.RawVector3:F2} 半径={noise.radius} " +
+                    $"本机@{m_Actor.Logic3Pos.RawVector3:F2} 水平距离={Vector3.Distance(noise.pos.RawVector3, m_Actor.Logic3Pos.RawVector3):F1} 听力={HearingRange}",
+                    m_Actor.NetId != 0 ? m_Actor.NetId : m_Actor.GetInstanceID(), 1f);
+
                 Beware(noise.pos, noise.radius, false);
             }
         }

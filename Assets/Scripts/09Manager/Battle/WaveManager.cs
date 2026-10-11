@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
+using FPSGame.Core.Interface;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 
@@ -127,6 +128,9 @@ namespace FPSGame.Managers
             // 联机战斗同步：成员端"移动由房主决定"（本端 AI 不再自己定目标点），并挂上同步桥
             var flow = FPSGame.Net.NetRoomFlow.Instance;
             EnemyController.RemoteDrivenMovement = flow != null && flow.SelfSid != 0u;
+            // ★ tick 伤害（破甲流血 / 异常状态跳伤）**只由房主（或单机）本地结算并广播**：
+            //   两端各算各的、各报各的 ⇒ 同一段 tick 会被叠加 N 份（见 BattleState.IsTickDamageAuthority）。
+            FPSGame.Data.BattleState.IsTickDamageAuthority = flow == null || flow.IsHost || flow.SelfSid == 0u;
             FPSGame.AI.EnemyRandom.Clear();   // NetId 是本局重新分配的 ⇒ 上一局的随机流要丢
             EnemyNetBridge.Install();
             NetDestructibleBridge.Install();  // 场景可破坏物（油桶这类）被打掉 ⇒ 远端也炸（2026-10-10）
@@ -134,6 +138,8 @@ namespace FPSGame.Managers
             NetMissionBridge.Install();       // 任务状态 / 进度（房主权威）
             NetFurnitureBridge.Install();     // 家具交互（共享世界物件，一处收口）
             NetActionBridge.Install();        // 标记点位 / 呼叫凯伊
+            NetKeyScreenBridge.Install();     // 按键终端阶段推进（驱动端上报 / 其余端只应用）
+            NetHostSpawnBridge.Install();     // 房主生成族（巡逻队 + 巢穴/召唤师/刷怪器/环绕装甲）：房主唯一生成 + 4052 复刻
         }
 
         private void OnDestroy()
@@ -146,6 +152,8 @@ namespace FPSGame.Managers
             NetMissionBridge.Uninstall();
             NetFurnitureBridge.Uninstall();
             NetActionBridge.Uninstall();
+            NetKeyScreenBridge.Uninstall();
+            NetHostSpawnBridge.Uninstall();
         }
 
 
@@ -417,9 +425,11 @@ namespace FPSGame.Managers
             return unit && unit.GetComponent<Actor>() is { } actor && actor.HasFlag(ActorFlag.Boss);
         }
 
-        public GameObject CreatUnit(UnitTier tier, Vector3 pos, float range, bool IsFixed = true)
+        /// <summary>按 tier 取一把 prefab，并把落点吸附 / 抖动、朝向一并算好（上面那条 tier 重载与刷怪器那条共用）。
+        /// <para>⚠ 取值顺序 = 权重 → 落点抖动 → 朝向：改顺序等于改随机序列（两端会错位）。</para></summary>
+        GameObject TakeTierUnit(UnitTier tier, ref Vector3 pos, float range, Random rand, out Quaternion rot)
         {
-            //var random = BattleManager.Instance.BattleRandom;
+            rot = default;
             if (!TierItemWeight.TryGetValue(tier, out var weightList) || weightList.Count == 0)
             {
                 // 降级：如果指定 tier 不存在，尝试使用字典中任意可用的 tier
@@ -432,14 +442,9 @@ namespace FPSGame.Managers
                 }
                 weightList = firstKvp.Value;
             }
-            // ⚠ 落点抖动/朝向也不能用 `random`（= 全局战斗流，两端游标不同 ⇒ 同一只怪会落在不同地方）。
-            //   按"本波波序"派生一条独立流；无权威种子（单机）时退回原行为。
-            int seed = FPSGame.Data.TaskState.Seed;
-            Random spawnRandom = seed != 0
-                ? new Random(SeedUtil.Derive(seed, (int)SeedStream.UnitPlacement * 1000 + waveSeq))
-                : random;
 
-            var item = weightList.WeightTake(100, spawnRandom);
+            var item = weightList.WeightTake(100, rand);
+
             //先取到地点
             if (NavMesh.SamplePosition(pos, out var hit, 50, NavMesh.AllAreas))
             {
@@ -447,7 +452,7 @@ namespace FPSGame.Managers
             }
 
             //再随机偏移
-            if (NavMesh.SamplePosition(pos + spawnRandom.RandomVector2().ToVector3() * range, out hit, 10, UnityEngine.AI.NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(pos + rand.RandomVector2().ToVector3() * range, out hit, 10, UnityEngine.AI.NavMesh.AllAreas))
             {
                 pos = hit.position;
             }
@@ -458,9 +463,28 @@ namespace FPSGame.Managers
                 Debug.LogWarning($"CreatUnit: 随机偏移点不在导航网格上，已回退到吸附点 {pos}");
             }
 
-            var go = Object.Instantiate(item.unit, pos, Quaternion.Euler(spawnRandom.RandomVector2().ToVector3()), manager.ACCont.transform);
+            rot = Quaternion.Euler(rand.RandomVector2().ToVector3());
+            return item.unit;
+        }
+
+        /// <summary>落点 / 取样用的随机源：有权威种子走**派生流**，单机退回全局战斗流。
+        /// ⚠ 绝不能用全局战斗流做"两端必须一致"的抽取（它会被音效 / 弹孔 / 武器散布推进游标）。</summary>
+        Random NewSpawnRandom()
+        {
+            int seed = FPSGame.Data.TaskState.Seed;
+            return seed != 0
+                ? new Random(SeedUtil.Derive(seed, (int)SeedStream.UnitPlacement * 1000 + waveSeq))
+                : random;
+        }
+
+        public GameObject CreatUnit(UnitTier tier, Vector3 pos, float range, bool IsFixed = true)
+        {
+            var prefab = TakeTierUnit(tier, ref pos, range, NewSpawnRandom(), out var rot);
+            if (prefab == null) return null;
+
             // ★ 跨端稳定的单位标识由 `Actor.Awake` 统一分配（见 `Actor.NetId` 的注释）——
             //   这里不能自己分：波次单位根本不走本方法（ZergWave/RobotWave 都是裸 Instantiate）。
+            var go = Object.Instantiate(prefab, pos, rot, manager.ACCont.transform);
             if (IsFixed)
             {
                 go.GetComponent<I_AIController>().BirthDuration = 0;
@@ -470,8 +494,92 @@ namespace FPSGame.Managers
             return go;
         }
 
+        /// <summary>【联机·刷怪器】房主侧：按 tier 抽 prefab + 落点/朝向，再走统一入口（自动上报 4052）。
+        /// <para>▍为什么不复用上面那条 tier 重载：那条两端各自生成、靠"同落点派生构成"对齐、**不发消息**；
+        /// 刷怪器的生成时机由场景摆放 + 概率驱动、两端必然不同 ⇒ 必须房主唯一生成。槽位 = <c>(int)tier</c>，
+        /// 成员按 <c>PrefabId</c> 回同一张 tier 表取回同一把 prefab（见 <see cref="FindTierPrefab"/>）。</para></summary>
+        public GameObject CreatSpawnerUnit(UnitTier tier, Vector3 pos, float range, INetSpawner source)
+        {
+            var prefab = TakeTierUnit(tier, ref pos, range, NewSpawnRandom(), out var rot);
+            if (prefab == null) return null;
+
+            var go = CreatUnit(prefab, pos, rot, source, (int)tier, default);
+            if (go != null)
+            {
+                // 与上面那条的默认 IsFixed=true 对齐（成员复刻时也照抄这两行）
+                go.GetComponent<I_AIController>().BirthDuration = 0;
+                go.GetComponent<IActor>().IsFixed = true;
+            }
+            return go;
+        }
+
+        /// <summary>【成员】按 (tier, prefabId) 在同一张 tier 表里取回房主抽中的那把 prefab（取不到就退回该 tier 第一把）。</summary>
+        public GameObject FindTierPrefab(UnitTier tier, string prefabId)
+        {
+            if (!TierItemWeight.TryGetValue(tier, out var list) || list.Count == 0) return null;
+            if (!string.IsNullOrEmpty(prefabId))
+            {
+                for (int i = 0; i < list.Count; ++i)
+                {
+                    var unit = list[i].Value.unit;
+                    if (unit == null) continue;
+                    var entity = unit.GetComponent<IEntity>();
+                    if (entity != null && entity.Id == prefabId) return unit;
+                }
+            }
+            return list[0].Value.unit;
+        }
+
+        /// <summary>【联机】所有"运行时生成"的**唯一入口**（巢穴 / 召唤师 / 刷怪器）：房主（或单机）创建，成员直接返回 null
+        /// （不生成、等 4052 复刻）—— 否则两端各生一份，<c>Actor.Awake</c> 的号段立刻错位。
+        ///
+        /// <para>▍取号：房主侧走 <c>ActorsManager.HostSpawnNetIdBase</c> 段（与敌人自增段解耦：这类生成的时机由各自 AI / 计时
+        /// 驱动，两端必然交错）；成员复刻回来的号由 <c>INetSpawner.ReplaySpawn</c> 覆盖。</para>
+        /// <para>⚠ 波次（ZergWave/RobotWave，走 4023 整批复刻、两端同序）与场景 / 任务实体（派生号）**不要**走这条。</para>
+        /// </summary>
+        /// <param name="slot">生成者自己表里的下标（由生成器决定口径，成员复刻时按同一口径取回同一把 prefab）。</param>
+        /// <param name="target">首帧目标点（全 0 = 无）。</param>
+        public GameObject CreatUnit(GameObject prefab, Vector3 pos, Quaternion rot, INetSpawner source, int slot, Vector3 target = default)
+        {
+            if (prefab == null || source == null) return null;
+
+            // ★ 成员端不生成：本端生成的单位会领号 ⇒ 与房主下发的号撞车（其后整条号段全错位）
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            if (flow != null && !flow.IsHost && flow.SelfSid != 0u) return null;
+
+            GameObject go;
+            ActorsManager.ForceHostSpawnNetId = true;
+            try
+            {
+                // ⚠ 挂到 ActorsManager 下（不是生成者下）：生成者（巢穴）死了不能把它生出来的单位一起带走
+                var parent = ActorsManager.Instance != null ? ActorsManager.Instance.transform : null;
+                go = Object.Instantiate(prefab, pos, rot, parent);
+            }
+            finally { ActorsManager.ForceHostSpawnNetId = false; }
+
+            // 房主侧自己先设目标（成员那份由图中的消息带来，顺序见第 6 步的桥）
+            if (target.sqrMagnitude > 0.0001f)
+            {
+                var ec = go.GetComponent<EnemyController>();
+                if (ec != null) ec.SetNavDestination(target);
+            }
+
+            NetHostSpawnBridge.ReportUnit(source, slot, go, rot, target);   // 房主：把"怎么造出来的"下发（成员据此复刻）
+            return go;
+        }
+
+        /// <summary>正在"复刻房主广播的巡逻队"（见 <see cref="CreatPatrolRemote"/>）：跳过本端的成员闸门。</summary>
+        bool applyingRemotePatrol;
+
         public List<GameObject> CreatPatrol(Vector3 pos)
         {
+            // ★ 联机：巡逻队是**房主权威**（2026-10-11）—— 成员端不在本地造：`Actor.Awake` 会给新单位分配 NetId，
+            //   而 NetId 的口径是"房主分配 + 两端创建顺序一致" ⇒ 成员端自造就会与房主下发的号段撞号（移错位/错杀）。
+            //   成员端等房主广播（4052）后由 NetHostSpawnBridge 调 CreatPatrolRemote 复刻（同 CreatWave 的 applyingRemoteWave 模式）。
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            bool online = flow != null && (flow.IsHost || flow.SelfSid != 0u);
+            if (!applyingRemotePatrol && online && !flow.IsHost) return new List<GameObject>();
+
             // ⚠ 巡逻队构成也不能用全局战斗流（`random`）：按**落点位置**派生一条流 ——
             //   位置本身由种子生成（任务点/兴趣点），两端一致 ⇒ 抽到的巡逻队也一致（2026-10-07）。
             int seed = FPSGame.Data.TaskState.Seed;
@@ -485,6 +593,15 @@ namespace FPSGame.Managers
             var temp = Patrol.WeightTake(100, patrolRandom);
             temp.ForEach(item => re.Add(CreatUnit(item, pos, 5, false)));
             return re;
+        }
+
+        /// <summary>【联机】按房主广播复刻一支巡逻队（跳过成员闸门）。返回本端新建的单位，**顺序与房主一致**
+        /// （构成由落点派生流决定 ⇒ 同落点同顺序），供 <c>NetHostSpawnBridge</c> 逐单位设目标点。</summary>
+        public List<GameObject> CreatPatrolRemote(Vector3 pos)
+        {
+            applyingRemotePatrol = true;
+            try { return CreatPatrol(pos); }
+            finally { applyingRemotePatrol = false; }
         }
 
 

@@ -214,26 +214,31 @@ namespace FPSGame.Mission
         }
 
         /// <summary>
-        /// 取发起撤离的玩家位置：优先用发起交互的玩家，其次用离当前撤离点最近的玩家，
-        /// 最后退回当前撤离点(快速模式没有玩家近距离交互时)。
+        /// 取"用来挑撤离点"的位置：**触发者优先**（发起撤离的那个人在哪，就按他的位置挑最近的一处）；
+        /// 没有触发者（快速模式）则一律按**房主**位置。
+        /// <para>▍为什么要换（2026-10-11）：原来第二档是"离当前撤离点最近的玩家" —— 那是**本机视角**的判定，
+        /// 两端的玩家集合/位姿都不同 ⇒ 各挑各的撤离点，随后 area/areaPoint、运输机落点、通知凯伊的点全分叉。
+        /// 换成"同一个触发者 / 房主"后，两端的输入位置同源 ⇒ 选出同一处。</para>
         /// </summary>
         private Vector3 GetEvacuateRequestPos(GameObject user)
         {
             if (user) return user.transform.position;
+            return GetHostPos();
+        }
 
-            IActor nearest = null;
-            float best = float.MaxValue;
-            foreach (var player in ActorsManager.Players)
+        /// <summary>房主的位置：本机是房主 ⇒ 本机玩家；成员 ⇒ 房主的盟友实例（<see cref="FriendController.NetSid"/> == 0）。
+        /// <para>都没找到（房主掉线 / 盟友实例还没建出来）⇒ 退回本机玩家位置。</para></summary>
+        private Vector3 GetHostPos()
+        {
+            var players = ActorsManager.Players;
+            for (int i = 0; i < players.Count; ++i)
             {
-                if (!player.IsValidMono()) continue;
-                float d = Vector3.Distance(player.Pos, areaPoint);
-                if (d < best)
-                {
-                    best = d;
-                    nearest = player;
-                }
+                var p = players[i];
+                if (!p.IsValidMono()) continue;
+                if (p.gameObject.TryGetComponent(out FriendController friend) && friend.NetSid == 0u) return p.Pos;
             }
-            return nearest != null ? nearest.Pos : areaPoint;
+            var self = ActorsManager.Player;
+            return self.IsValidMono() ? self.Pos : areaPoint;
         }
 
         /// <summary>为每名玩家刷出一波以其位置为目标的追击增援，波次结束后自动续刷(不会结束)</summary>

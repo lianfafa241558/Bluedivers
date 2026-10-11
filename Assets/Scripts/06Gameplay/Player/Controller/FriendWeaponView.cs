@@ -129,7 +129,7 @@ namespace FPSGame.Gameplay
         /// <para>▍必须用**他的**档位：命中特效/表现弹都取自 <c>CurrentDamgeData</c>。信号枪 0 = 标记、1 = 呼叫战备
         /// （由 <c>PlayerWeaponsManager.OnInputCompletedAirdrop</c> 本地切）—— 用本端档位会把"客机叫的空投"重放成"标记"，
         /// 房主端凭空多一个标记（2026-10-10 实测）。越界一律夹到有效范围。</para></param>
-        public void PlayShoot(Vector3 direction = default, Vector3 aimPoint = default, int damageIndex = 0)
+        public void PlayShoot(Vector3 direction = default, Vector3 aimPoint = default, int damageIndex = 0, int muzzleIndex = 0)
         {
             var w = GetSlot(_active);
             if (w == null)
@@ -139,6 +139,23 @@ namespace FPSGame.Gameplay
                 FPSGame.Utils.NetSyncLog.Warn("远端开火", $"当前槽 {_active} 没有武器实例 ⇒ 这一发没有表现（有武器的槽：{SlotList()}）");
                 return;
             }
+
+            PlayVisual(w, direction, aimPoint, damageIndex, muzzleIndex);
+        }
+
+        /// <summary>
+        /// 【通用开火表现】枪口闪光 + 枪响 + 逻辑噪声 + 表现弹 + 开火动画（**不结算伤害**）。
+        /// <para>▍为什么抽成静态：背包武器（<c>WeaponBag</c>）不在玩家槽位里，由
+        /// <see cref="FriendController.PlayBagShoot"/> 直接拿那把 <c>WeaponEnemyController</c> 复用同一套表现，
+        /// 免得抄第二份（抄了就会出现"改一处、另一处还是老行为"）。</para>
+        /// </summary>
+        /// <param name="direction">开火瞬间的射击方向（世界空间）；零向量 = 用枪口朝向</param>
+        /// <param name="aimPoint">开枪者准心实指的目标点（世界空间）；零向量 = 未知 ⇒ 只用方向</param>
+        /// <param name="damageIndex">开枪那把枪的伤害档位（接收端必须用**他的**档位取命中特效）</param>
+        /// <param name="muzzleIndex">开枪者用的是第几个发射点（<c>-1</c> = 齐射）</param>
+        public static void PlayVisual(WeaponBaseController w, Vector3 direction, Vector3 aimPoint, int damageIndex, int muzzleIndex)
+        {
+            if (w == null) return;
 
             // ★ 先落到"他的档位"，再生成表现弹/命中特效（旧版发送端档位恒 0 ⇒ 与改造前一致）
             if (w.Damages != null && w.Damages.Count > 0)
@@ -154,7 +171,7 @@ namespace FPSGame.Gameplay
             }
 
             // 数据说话：这一发到底"有没有收到瞄准点"、方向算成什么
-            FPSGame.Utils.NetSyncLog.BulletLog("远端开火", $"槽{_active} 档位={w.UseDamageIndex} 方向={direction:F2} 瞄准点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")}" +
+            FPSGame.Utils.NetSyncLog.BulletLog("远端开火", $"{w.name} 档位={w.UseDamageIndex} 方向={direction:F2} 瞄准点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")}" +
                 (muzzle != null ? $" 枪口={muzzle.position:F2} 枪口到瞄准点={(aimPoint - muzzle.position).magnitude:F1}m" : " 枪口=<无>"));
             if (muzzle != null && w.MuzzleFlashPrefab != null)
             {
@@ -165,11 +182,20 @@ namespace FPSGame.Gameplay
             // 枪响：走武器的公开入口（内部复用 SFXRange / 武器音频组），不产生射击逻辑
             w.PlayShootSfx();
 
+            // ★ 逻辑噪声**本地验算一次**（用户 2026-10-10 口径）：原来噪声只在开枪者本机发 ⇒ 本端的怪
+            //   完全听不到队友的枪声（"主机开枪、客机的怪毫无反应"的成因）。这里用**本地这份武器实例**
+            //   的枪口与噪声半径复刻一条，本端的怪就与开枪者那边一样会起身去看。
+            //   ⚠ 只在本方法（"收到远端开火"）调 ⇒ 不会与"本机真开火"那条重复。
+            w.EmitFireNoise(true);
+
             // 弹道：生成一颗"不结算伤害"的真子弹（飞行/尾迹/命中特效照常；伤害由他自己机器算）
             // ⚠ 每"次"射击只给一颗：连发与多弹丸不必在对端逐颗重放
             // ★ aimPoint 一并传下去（2026-10-09）：只给方向时那颗子弹会一路飞到射程尽头、从目标身上"穿过去"，
             //   看起来就是"没命中" —— 有终点后飞抵即收尾并按命中播火花（见 ProjectileBase.SetVisualEndPoint）。
-            w.SpawnVisualBullet(muzzle, direction, aimPoint);
+            // ★ 按**本武器真实弹丸数**重放（2026-10-11）：原来固定只重放 1 颗 ⇒ 霰弹/多管齐射在对端
+            //   看起来"子弹少一半"。远端这把武器实例带着同样的改装配置 ⇒ 弹丸数可本地验算，不必上网。
+            // ★ 发射点也按**开枪者用的那一个**（多管枪轮流开火，本端没有那份计数 ⇒ 靠消息传下标）
+            w.SpawnVisualSalvo(muzzle, direction, aimPoint, muzzleIndex);
 
             var anim = w.GetComponentInChildren<Animator>(true);
             if (anim != null) anim.SetTrigger(AnimAttack);

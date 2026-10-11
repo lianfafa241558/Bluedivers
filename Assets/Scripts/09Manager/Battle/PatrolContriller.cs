@@ -464,6 +464,10 @@ namespace FPSGame.Managers
                 ? baseHit.position
                 : spawnPos;   // 投影不到就退回出生点（至少是个能站人的地方）
 
+            // ★ 联机（2026-10-11）：逐单位目标点收集起来交给桥 —— 房主广播后成员端才能复刻出同一支（4052）。
+            //   成员端这一步不会走到：CreatPatrol 有成员闸门 ⇒ list 为空 ⇒ 上面的早退已 return。
+            var targets = new List<Vector3>(list.Count);
+
             foreach (var item in list)
             {
                 // ⚠ 旧实现用 ForEach + GetComponent，任一个单位取不到控制器就抛 NRE 中断整个循环，
@@ -477,11 +481,16 @@ namespace FPSGame.Managers
                     baseTarget.y,
                     baseTarget.z + (spawnPos.z - unitPos.z));
 
-                controller.PatrolPos = UnityEngine.AI.NavMesh.SamplePosition(
+                Vector3 unitTarget = UnityEngine.AI.NavMesh.SamplePosition(
                     point, out var hit, PATROL_TARGET_UNIT_SAMPLE_RADIUS, UnityEngine.AI.NavMesh.AllAreas)
                     ? hit.position
                     : baseTarget;
+
+                controller.PatrolPos = unitTarget;
+                targets.Add(unitTarget);
             }
+
+            NetHostSpawnBridge.ReportPatrol(spawnPos, targets, PatrolTargetKind.PatrolPos);
         }
 
         /// <summary>

@@ -1,4 +1,4 @@
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using FPSGame.Game;
@@ -27,13 +27,10 @@ namespace FPSGame.Gameplay
             m_Weapon = GetComponent<WeaponPlayerController>();
         }
 
-        /// <summary>武器上无 I_Actor，基类 ShowName 取 _actor 会 NRE，改为武器名</summary>
         public override string ShowName => m_Weapon.WeaponName;
 
-        /// <summary>武器上无 I_Actor，覆写避免 NRE</summary>
         public override string Id => m_Weapon ? m_Weapon.WeaponName : name;
 
-        /// <summary>武器上无 I_Actor，覆写 Icon 避免 NRE（供轮盘图标显示）</summary>
         protected override Sprite Icon => m_Weapon ? m_Weapon.WeaponIcon : null;
 
         public override string Desc => "拾取 " + ShowName;

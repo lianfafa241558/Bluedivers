@@ -58,7 +58,7 @@
 | `Msg/RoomMsg.cs` | 房间 + 开局 + 玩家表现 + 敌人同步的 DTO（26KB，见 §5.2）。
   ⚠ DTO 上的 `[MessagePackObject]` / `[Key(n)]` **必须保留**（`NetMsgCodec` 反射读 `[Key]` 决定 array 顺序）⇒ `07_NetGame` 对 `MessagePack` 的依赖是**必需的**，别去"清理"；真正要禁的是 `MessagePackSerializer` 调用（全仓 0 处，只在注释里）。 |
 | `Msg/BattleMsg.cs` | `PoseSnapshot` / `PoseBatchMsg`（位姿批次）。 |
-| `Msg/SyncMsg.cs` | 局内世界状态：`GameOverMsg` / `EvacuateMsg` / `MissionUpdateMsg` / `FurnitureOperateMsg` / `MarkMsg` / `CallKaiMsg` / `WaveCenterMsg`。 |
+| `Msg/SyncMsg.cs` | 局内世界状态：`GameOverMsg` / `EvacuateMsg` / `MissionUpdateMsg` / `FurnitureOperateMsg`（⚠ 已扩 `int State` + `string StateKey`，**StateKey 非空 = 状态同步**，接收端走 `ApplyRemoteState` 而**不**重放 `Operate()`）/ `MarkMsg` / `CallKaiMsg` / `WaveCenterMsg` / `SceneDestructibleMsg` / `KeyScreenStageMsg` / `PatrolSpawnMsg` / `OOPartSubmitMsg` / `KeyScreenInputMsg`。 |
 
 ## 4. 挂载点与三座桥
 
@@ -106,6 +106,14 @@ Bridge（舰桥选任务）--房主 ConfirmTask 广播 TaskConfirmNtf--> Ready�
 | 4032 | `SceneUnitMoveSync` | 场景单位移动目标（键是 `Actor.Id`，不是 NetId） |
 | 4033–4039 | `GameOverNtf` / `EvacuateNtf` / `MissionUpdateNtf` / `FurnitureOperateNtf` / `MarkNtf` / `CallKaiNtf` / `WaveCenterNtf` | 局内世界状态（见 `Msg/SyncMsg.cs`） |
 | 4040 | `EnemyDamagedSync` | 房主 → 全体：房主打中的伤害下行（与 4025 成对，血量口径统一"房主权威"） |
+| 4041 | `LoadCompleteNtf` | 成员 → 房主：本机战斗场景加载完成 |
+| 4042 | `BattleStartSync` | 房主 → 全体：**全体加载完 ⇒ 一起开打**（各端凭它开 `IsStartBattle`）。⚠ 与 4012 分开：各端加载快慢差很多 |
+| 4043 | `SceneDestructibleNtf` | 双向：场景可破坏物（油桶这类）被打掉。键 = `FNV1a(Actor.Id + 位置0.1m)`（同 `SyncId` 口径）；**只传"死了"不传伤害**；房主侧有账本、新人入房补发 |
+| 4044 / 4045 | `PlayerLoadoutNtf / Sync` | 改装（档位 / 模组 / 载具）上报与广播 |
+| 4046 | `KeyScreenStageNtf` | 双向：**按键终端(KeyScreen)阶段推进**（键 = 终端家具 `SyncId`）。⚠ **驱动端**上报（操作者那台 / 无人阶段房主）、其余端只应用（见 `KeyScreen.IsStageDriver`） |
+| 4047 | `PatrolSpawnNtf` | 房主 → 全体：**巡逻队生成**（生成点 + 逐单位目标点）。构成靠"同落点派生流"，成员端 `CreatPatrolRemote` 复刻 |
+| 4048 | `OOPartSubmitNtf` | 双向：容器类家具的一次提交（`SyncId` + 个数 + 主类型）⇒ 远端在盟友的**幽灵背包**(`FriendOOPartInventory`)上真跑 `BeginPress/StepPress` |
+| 4049 | `KeyScreenInputNtf` | 双向：玩家对终端的**按键**（`SyncId` + `InputState` + 类型 0 单次/1 按住/2 松开）⇒ 非驱动端把输入换成远端按键、跑同一套阶段逻辑 |
 | 5001 / 5002 | `PlayerTransformUp` / `TransformBatchSync` | 位姿：成员上行 / 房主聚合广播 |
 
 ### 5.3 DTO 约定
@@ -115,20 +123,27 @@ Bridge（舰桥选任务）--房主 ConfirmTask 广播 TaskConfirmNtf--> Ready�
 - **`07_NetGame` 看不见游戏层枚举/SO** ⇒ 网络 DTO 里**只准基础类型**；需要传枚举就用 `int`，转换在 09/10 的桥里做。
   例：`TaskCfgDto` 全字段是 `int/int[]/float/bool/string`（承载 `TaskCfg` 的内容：`main/extra/nestCount/seed/scale/terrain/enemyVariety/enable/name`）。
 
-## 6. 库缺字段的临时约定（`RoomMeta`，唯一适配点）
+## 6. 房间字段的读取（`RoomMeta` = 取值薄适配层）
 
-`KCPNet.LanRoomInfo` 只有 9 个字段（**没有**难度 / 任务类型 / 是否开局 / 来源）⇒ 项目把前两样**串进字符串**：
+⚠ **2026-10-11 复核：旧写法作废。** 本文档之前这节讲"库缺字段 ⇒ 把难度/任务类型串进 `MapName`/`RoomName`（`#难度`、`#T=枚举|名字`）"——
+那套约定**已经删掉了**（全仓搜 `ComposeRoomName` / `#T=` / `TODO(库)` 均 **0 命中**）。原因：**2026-10-08 库换代后这些已是 `LanRoomInfo` 的真字段**（`Difficulty` / `TaskMain` / `InGame` / `Source`，见 `references/kcpnet-api.md` §6）。
 
-| 丢的字段 | 拼在哪 | 格式 | 解析 |
-| --- | --- | --- | --- |
-| 难度 | `MapName` 尾部 | `地图#难度int` | `RoomMeta.Difficulty` / `MapName`（按 `#` 切） |
-| **任务类型** | `RoomName` 尾部 | `房间名#T=<MissionEnum:int>\|<任务类型名>` | `RoomMeta.TaskEnum`（**精确**取图标/颜色）/ `TaskType`（显示）/ `RoomName`（干净名） |
+现在 `RoomMeta`（`07NetGame/RoomMeta.cs`，仍存在）只剩**取值薄适配**：
+
+| 成员 | 作用 |
+| --- | --- |
+| `RoomMeta.RoomName(room)` / `MapName(room)` | 空引用保护 + 空串归一 |
+| `RoomMeta.Difficulty(room)` | `room.Difficulty`，`< 0` = 广播里没带 ⇒ 返缺省 |
+| `RoomMeta.TaskEnum(room)` / `TaskType(room)` | `room.TaskMain`（**两端一致的整数**）；名字用本地任务配置反查（⚠ 任务名不唯一，别只靠名字） |
+| `RoomMeta.InGame(room)` | `room.InGame` ⇒ 房间列表"进行中"、且不给加入 |
+| `RoomMeta.Source(room)` | `room.Source`（`RoomMeta.SourceEnum.LanBroadcast` 等）⇒ 判"局域网 / 服务器" |
+| `RoomMeta.SourceEnum` | 来源枚举（房主侧 `StartHost` 写 `Source = (int)RoomMeta.SourceEnum.LanBroadcast`） |
 
 要点：
-- 标记用 `#T=` 而不是单 `#`（房间名是玩家自己名字拼的）；解析固定取 **`LastIndexOf`** ⇒ 名字里真带 `#T=` 也能切对。
-- **为什么既要枚举又要名字**：任务类型**名字不唯一**（`Resources/GameData/Mission/Main` 里「进攻任务」有 **3** 份、「歼灭」「渗透」各 2 份，**颜色各不相同**）⇒ 只靠名字必然给错色；枚举是两端一致的整数 ⇒ 精确。名字留给显示与旧版兼容（旧版只有名字时 `TaskEnum` 返 -1，退化成按名字反查）。
-- 「公开房」流程**先建服、再确认任务**（`SelectMapWnd.ConfirmTask`）⇒ 房间名必须在确认任务时**就地刷新**（`ComposeRoomName` 幂等，先剥旧后缀再拼）。
-- 改这两个字段的**唯一入口**是 `RoomMeta`：先把库的 `ToJson/FromJson` 与 `LanRoomInfo` 加上字段，再改 `RoomMeta` 里带 `TODO(库)` 的方法体，UI 一行都不用动。
+- **唯一入口**：UI（`ServerListPanel` 等）一律经 `RoomMeta` 取值，**不自己判缺省**（面板里"取值"那一组方法全是转发）。房间字段要加/改，先动库的 `LanRoomInfo` 与 `FromJson`，再改 `RoomMeta`，UI 一行不用动。
+- 房主侧：`NetHostSvc.StartHost` 直接写字段字面量；`GetBroadcastInfo()` 每轮刷 `InGame = _started`（把"最新值"喂给 `RoomInfoProvider`）；`ConfirmTask(..., int taskMain)` 就地刷 `RoomInfo.TaskMain`。
+- `FromJson` **忽略未知 key、缺 key 给默认值** ⇒ 新旧版本的房主/成员可混联（`Difficulty < 0` 就是"对面没带这个字段"的表达）。
+
 
 ## 7. 联机踩坑（按症状查）
 

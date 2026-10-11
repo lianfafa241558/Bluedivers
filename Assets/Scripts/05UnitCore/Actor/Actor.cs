@@ -90,6 +90,27 @@ namespace FPSGame.Game
         public IDamageable MainDamageable => mainDamageable;
         public IDamageable[] Damageables => damageables;
 
+        /// <summary>【联机】把一次真实命中映射成**部位下标**（<see cref="Damageables"/> 的稳定下标）：命中体自己、
+        /// 或它父级上的那个 <c>Damageable</c>，在表里排第几。<c>-1</c> = 认不出（接收端退回自己挑主躯干）。
+        ///
+        /// <para>▍为什么要传下标（2026-10-12）：两端"挑哪个部位"的算法不完全等价（装甲 / 弱点倍率口径会差一点），
+        /// 传下标就能让对端打在**同一部位**上（见 <c>DamageMsg.Part</c> / <c>EnemyNetBridge.ResolveDamageable</c>）。</para>
+        /// <para>▍下标为何跨端稳定：<see cref="damageables"/> 由 <c>GetComponentsInChildren&lt;Damageable&gt;</c> 按层级序采集，
+        /// 同一把 prefab 两端同序。</para></summary>
+        public int IndexOfDamageable(Collider hit)
+        {
+            if (hit == null || damageables == null) return -1;
+
+            var d = hit.GetComponentInParent<Damageable>();
+            if (d == null) return -1;
+
+            for (int i = 0; i < damageables.Length; ++i)
+            {
+                if (ReferenceEquals(damageables[i], d)) return i;
+            }
+            return -1;
+        }
+
         public float Threat => threat;
 
         public override Vector3 CenterPos {
@@ -221,9 +242,42 @@ namespace FPSGame.Game
             //   ⚠ 不能在 WaitSetPos 的 EnemyCreate 事件里分配：那条事件要等 IsMainStage 且晚于本帧，
             //     而波次单位创建后**同帧**就会 SetNavDestination（房主要在那里广播）。
             //   两端创建顺序一致 ⇒ 同一个 NetId 指同一个单位；ActorsManager 未就绪时分 0（不参与同步）。
-            if (type == UnitTypeEnum.Enemy && ActorsManager.Instance != null)
+            // ★ 联机取号分两档（判据 = "两端能不能算出同一个出生坐标"）：
+            //   ① 战斗开始**前**就存在的（场景摆放 / 大厅）⇒ **派生号**（Id + 位置量化 + 同组序号，两端各算各的、零消息）。
+            //      它们从此不受任何"创建顺序分叉"影响 —— 巢穴/召唤师多生几只也不会把它们挤错号。
+            //   ② 战斗开始**后**由运行时生成的（波次 / 巢穴 / 召唤 / 刷怪器）⇒ 自增号（波次那条链路两端同序）。
+            //      ⚠ 这批正是"两端会分叉"的，后续由"房主唯一创建 + 4052"接管（见 topics/net-battle §7.1）。
+            //   ⚠ 玩家 / 盟友不取号：它们的身份就是 sid（房主 = 0），不参与这套号空间。
+            //   ★ 2026-10-12 再拆两档：③ 战斗开始后的"运行时生成"（巢穴 / 召唤师 / 刷怪器）改走**房主分配段**
+            //     （NextHostSpawnNetId，两端时机必然不同、不能再赌同序）；④ 复刻期间**不发号**（Replicating，号随 4052 来）。
+            if (ActorsManager.Instance != null && type != UnitTypeEnum.Player && type != UnitTypeEnum.Friend)
             {
-                NetId = ActorsManager.NextEnemyNetId();
+                if (ActorsManager.Replicating)
+                {
+                    // ★ 联机复刻（4052）：号随消息带来，由 INetSpawner.ReplaySpawn 覆盖 ⇒ 这里**一个号都不能领**，
+                    //   领了就会把房主与自己这侧的计数器推歪（其后所有自增号整体错位）。
+                }
+                else if (ActorsManager.ForceHostSpawnNetId)
+                {
+                    // ★ 运行时生成（巢穴 / 召唤师 / 刷怪器）在**房主侧**取"房主分配"号段（与敌人自增段解耦，见 HostSpawnNetIdBase）
+                    NetId = ActorsManager.NextHostSpawnNetId();
+                }
+                else if (ActorsManager.ForceDerivedNetId || !FPSGame.Data.BattleState.IsStartBattle)
+                {
+                    NetId = ActorsManager.DerivedNetId(Id, transform.position);
+                }
+                else if (type == UnitTypeEnum.Enemy)
+                {
+                    NetId = ActorsManager.NextEnemyNetId();
+                }
+                else if (type == UnitTypeEnum.SpecUnit && !HasFlag(ActorFlag.Unimportant))
+                {
+                    // 独立号段（见 ActorsManager.SpecNetIdBase）：与敌人共用一个计数器会让"任一端的 SpecUnit
+                    // 数量差一只"把其后所有敌人的号整体平移。
+                    // ⚠ 排除 Unimportant：它们连 SpecUnits 都不注册，且多半是背景物/无敌物
+                    //   （如 Turret_Mission_Machine 的 flag 177 含 Unimportant + Invincible）⇒ 发了号也查不到。
+                    NetId = ActorsManager.NextSpecUnitNetId();
+                }
             }
             switch (shape)
             {

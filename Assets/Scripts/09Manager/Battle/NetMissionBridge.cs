@@ -56,6 +56,7 @@ namespace FPSGame.Managers
             BattleEventBus.OnMissionEnd += OnLocalMissionChanged;
 
             NetRoomFlow.OnMissionUpdate += OnRemoteMissionUpdate;
+            NetRoomFlow.OnHostLost += OnHostLost;
         }
 
         public static void Uninstall()
@@ -70,8 +71,17 @@ namespace FPSGame.Managers
             BattleEventBus.OnMissionEnd -= OnLocalMissionChanged;
 
             NetRoomFlow.OnMissionUpdate -= OnRemoteMissionUpdate;
+            NetRoomFlow.OnHostLost -= OnHostLost;
 
             MissionBase.RemoteDriven = false;   // 退场复位：否则单机时任务会一直不自判、永远完不成
+        }
+
+        /// <summary>房主掉了（退出/崩溃/断网）⇒ 本端接管任务判定。
+        /// <para>⚠ 不复位的话这一局的进度/完成/失败会全被 <c>RemoteDriven</c> 门住 ⇒ **任务永远打不完**
+        /// （同款坑的清单见 <see cref="NetRoomFlow.OnHostLost"/>）。</para></summary>
+        static void OnHostLost()
+        {
+            MissionBase.RemoteDriven = false;
         }
 
         #region 本端 -> 网络（房主权威）

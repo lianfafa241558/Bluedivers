@@ -264,7 +264,10 @@ namespace FPSGame.AI
             //   否则两端各追各的目标，怪物位置永远对不上（2026-10-07 用户实测）。
             if (RemoteDrivenMovement)
             {
-                FPSGame.Utils.NetSyncLog.AiLog("移动·本端作废", $"netId={(m_Actor != null ? m_Actor.NetId : 0)} 本端想去={destination:F2}（成员端只认房主下发）");
+                // ⚠ 这里是**每帧**都会被调到（成员端 AI 仍在跑）⇒ 必须用**限流版**日志，否则一只怪一行/帧，
+                //   客机 Console 被这条刷屏（2026-10-10 用户实测）；限流键用 NetId，各怪互不影响。
+                int logNetId = m_Actor != null ? m_Actor.NetId : 0;
+                FPSGame.Utils.NetSyncLog.AiLog("移动·本端作废", $"netId={logNetId} 本端想去={destination:F2}（成员端只认房主下发）", logNetId, 5f);
                 return;
             }
 
@@ -292,14 +295,17 @@ namespace FPSGame.AI
             {
                 if (BirthComplete)
                 {
-                    if (isImportant) Debug.LogError("发送目标点" + destination, gameObject);
+                    // ⚠ 原来这里是 `Debug.LogError`（正常路径打红字）⇒ 2026-10-10 用户口径"没用的先不打印"，改成限流日志
+                    if (isImportant)
+                        FPSGame.Utils.NetSyncLog.AiLog("发送目标点", $"{destination:F2} {name}", GetInstanceID(), 2f);
 
                     //走事件总线（2026-10-01 取代 ServiceLocator.Path）：订阅方 = PathRequestManager（09_Managers）
                     FPSGame.Game.UnitEventBus.PathRequest(NavMeshAgent, destination, isImportant);
                     // ★ 房主：把"这只怪要去哪"广播给成员（成员按同一个目标点各自本地算路径 ⇒ 位置接近一致）
                     if (m_Actor != null && m_Actor.NetId != 0)
                     {
-                        FPSGame.Utils.NetSyncLog.AiLog("移动·房主决策", $"netId={m_Actor.NetId} 目标={destination:F2} 当前={transform.position:F2} 本端该怪={m_Actor.Id}");
+                        // ⚠ 限流 2s/单位：这条是"每次决策"一条，战斗中一只怪几十条 ⇒ 不限流会刷屏（同上）
+                        FPSGame.Utils.NetSyncLog.AiLog("移动·房主决策", $"netId={m_Actor.NetId} 目标={destination:F2} 当前={transform.position:F2} 本端该怪={m_Actor.Id}", m_Actor.NetId, 2f);
                         FPSGame.Gameplay.BattleEventBus.EnemyMove(m_Actor.NetId, destination);
                     }
                     else
@@ -358,8 +364,21 @@ namespace FPSGame.AI
                 (toNetwork ? (RemoteDrivenMovement ? "上报房主" : "下发给成员") : "**不往网络走**"));
             if (toNetwork)
             {
-                if (RemoteDrivenMovement) FPSGame.Gameplay.BattleEventBus.EnemyHit(netId, dmg);
-                else FPSGame.Gameplay.BattleEventBus.EnemyDamaged(netId, dmg);   // 房主：下发给成员
+                // ★ 带上"攻击者单位的 NetId"：接收端要拿它重建 DamageSource，否则非玩家来源（怪/炮塔互殴）
+                //   过网后只能退成 NoSource ⇒ 对端 DetectionModule 的阵营过滤/受击改目标与开枪端不是一个口径。
+                var attackerActor = damageSource != null ? damageSource.GetComponent<Actor>() : null;
+                int attackerNetId = attackerActor != null ? attackerActor.NetId : 0;
+
+                // ★ 带上这一发的**原始伤害成分**（类型 + 系数）：接收端要拿它补"护甲破坏 / 异常状态积蓄"
+                //   （只带总伤害时那两条分支会被整段跳过 —— 见 Health.LastRawGroups / Damageable.InflictDamage）
+                float[] groups = PackDamageGroups(m_Health != null ? m_Health.LastRawGroups : null);
+
+                // ★ 带上**命中部位下标**（`Actor.IndexOfDamageable`，-1 = 认不出）：接收端据此打在同一部位上
+                //   （两端"挑部位"的算法不完全等价 —— 装甲 / 弱点倍率口径会差一点）
+                int part = m_Actor is Actor me ? me.IndexOfDamageable(collider) : -1;
+
+                if (RemoteDrivenMovement) FPSGame.Gameplay.BattleEventBus.EnemyHit(netId, dmg, attackerNetId, groups, part);
+                else FPSGame.Gameplay.BattleEventBus.EnemyDamaged(netId, dmg, attackerNetId, groups, part);   // 房主：下发给成员
             }
             else if (!ApplyingRemoteDamage && m_Actor != null && netId == 0)
             {
@@ -373,6 +392,27 @@ namespace FPSGame.AI
                 OnDamaged?.Invoke(collider);
             }
             if (!noSource&&FPSGame.Data.FlowState.GameState == GameStateEnum.Game && damageSource.TryGetComponent(out PlayerController player)) FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(player.PlayerIndex, "命中次数");
+        }
+
+        /// <summary>伤害成分的摊平缓冲（`[count, type0, coeff0, ...]`）：只在打包网络消息内复用（序列化是**同步**的），
+        /// 所以不分配、也不要缓存 —— 见 <c>EnemyNetBridge.UnpackDamageGroups</c> 的读取侧。</summary>
+        static float[] m_groupScratch;
+
+        /// <summary>把 <c>Health.LastRawGroups</c> 摊平成 <c>[count, type, coeff, ...]</c>（null/空 ⇒ null = 中性成分）。</summary>
+        static float[] PackDamageGroups(List<SKVP<DamageTypeEnum, float>> groups)
+        {
+            if (groups == null || groups.Count == 0) return null;
+
+            int need = 1 + groups.Count * 2;
+            if (m_groupScratch == null || m_groupScratch.Length < need) m_groupScratch = new float[need];
+
+            m_groupScratch[0] = groups.Count;
+            for (int i = 0; i < groups.Count; ++i)
+            {
+                m_groupScratch[1 + i * 2] = (int)groups[i].Key;
+                m_groupScratch[2 + i * 2] = groups[i].Value;
+            }
+            return m_groupScratch;
         }
 
         protected override void _OnDie(GameObject source)

@@ -1,6 +1,6 @@
 # KCPNet 库 API 参考（反射导出）
 
-> 来源：对 `Assets/Plugins/KCPNet/*.dll` 的反射/元数据解析结果（2026-09-30 实测）。
+> 来源：对 `Assets/Plugins/KCPNet/*.dll` 的反射/元数据解析结果（2026-09-30 首测，**2026-10-11 复核并补入库 2026-10-08 / 10-09 两代新增成员**）。
 > 库无源码，本文件是**唯一可信的 API 事实来源**；升级 DLL 后用 Unity MCP `unity_reflect`（首选）或 `scripts/inspect_dll.py`（离线）重新核对。
 > 命名空间：`KCPNet`（另有子命名空间 `KCPNet.Config`、`KCPNet.Util`）；底层 KCP 实现在 `System.Net.Sockets.Kcp`（`Kcp.dll`）。
 
@@ -96,6 +96,7 @@ public KCPNet(bool isUnityEnvironment = true)   // ← 可选参数，所以 new
 | `OnSessionConnected` / `OnSessionDisconnected` / `OnServerRestartDetected` | `Action<uint>` | 事件（也可用 `+=` 订阅，项目即如此） |
 | `sid` | `uint` | 会话 ID 计数器 |
 | `clientSession` | `T` | 客户端模式下自己那条会话（`NetSvc` 直接读它） |
+| `ClientId` | `string` | **持久会话标识**（库 2026-10-09 版新增）：注入后，库的会话表按 `cid:` 复用而不是按 `ep:`（endpoint）⇒ 换端口/重连不会被当成"新的人"。⚠ 项目在 `NetTmp/Transport/NetClient.cs` 里注入（`private readonly string _clientId = Guid.NewGuid().ToString("N")` + `_client.ClientId = _clientId`）——**这两行被外部编辑覆盖过 2 次**，改完要核对字节 |
 | `_isAttemptingConnect` | `bool` | 连接中标记 |
 | `SERVER_RESTART_CODE` | `uint` | 服务器重启特殊码，静态常量 = `4294967295`（`uint.MaxValue`） |
 
@@ -150,6 +151,7 @@ protected virtual void OnUpdate(DateTime now);                       // 周期�
 | `IPEndPoint mremotePoint` / `Action<...> mudpSender` | 公开字段，一般不用 |
 | `byte[] AesKey` | 会话 AES 密钥 |
 | `long TimeoutMs` / `bool EnableTimeoutCheck` / `void SetTimeout(long)` / `void RefreshLastRecvTime()` | 心跳超时控制 |
+| `HeartbeatIntervalMs` | 库内部心跳间隔（默认 `NetConfig.HeartbeatIntervalMs = 3000`）：基类每 3s 双向发**心跳裸字节**（带魔数、`IsHeartbeat` 全等判定）⇒ **永远到不了 `OnReciveMsg` / `MessageCenter`**；超时判据是 `_lastRecvTimeUtcTicks`（15s，任意 UDP 包都刷） |
 | `T Deserialize(byte[] bytes)` | 用 `Serializer` 反序列化 |
 
 `SessionState` 枚举：`None = 0`、`Connected = 1`、`DisConnected = 2`。
@@ -189,6 +191,11 @@ public class NetMessageSerializer            // 具体实现，单例
 public const int HostGamePort      = 17666;   // 房主 KCP 监听端口
 public const int LanBroadcastPort  = 29800;   // 局域网广播/发现端口
 public const int LanSelfBroadcastPort = 29801;// 同机双实例时成员侧用
+public const int HeartbeatIntervalMs  = 3000; // 库内部心跳间隔（裸字节，不进 MessageCenter）
+public const int DefaultTimeoutMs     = 15000;// 库内部会话超时（任意 UDP 包都刷 _lastRecvTimeUtcTicks）
+
+// ⚠ 这几个常量在**库内部**（工程里没有对应 .cs）⇒ 改不了；能改的只有
+//   逐会话属性：TimeoutMs / EnableTimeoutCheck / SetTimeout(long)。
 ```
 
 ### `LanDiscoveryConfig`（静态可注入，默认值如下）
@@ -248,10 +255,21 @@ public string MapName;
 public bool   PasswordProtected;
 public string Version;
 public string[] PlayerNames;
+// ↓ 库 2026-10-08 版新增的 4 个真字段（此前项目只能把它们串进房间名/地图名，那套约定已删除）
+public int    Difficulty;      // -1 = 广播里没带（缺省）；JSON 键 difficulty
+public int    TaskMain;        // 主任务枚举（两端一致的整数）；JSON 键 taskMain
+public bool   InGame;          // 已进战斗 ⇒ 房间列表显示「进行中」且不给加入；JSON 键 inGame
+public int    Source;          // 来源（局域网广播 / 服务器…）；JSON 键 source
 
-public string ToJson();
-public LanRoomInfo FromJson(string json);
+public string ToJson();                       // 反射首测（2026-09-30）记为**实例方法**；项目内无人调用 ⇒ 用前先 unity_reflect 确认
+public LanRoomInfo FromJson(string json);     // ⚠ 同上：首测记为**实例方法**（不是 static）——2026-10-11 复核时全仓无调用点，
+                                              //   所以别再凭记忆改成 LanRoomInfo.FromJson(...)；都支持"忽略未知 key、
+                                              //   缺 key 给默认值"的语义（这也是新旧房主能混联的原因）
+public int    Difficulty;      // -1 = 广播里没带（缺省）；JSON 键 difficulty
 ```
+
+> ⚠ 项目实测在用的字段（代码证据）：`NetHostSvc.cs` 写 `RoomInfo.InGame`(:374) / `RoomInfo.TaskMain`(:859) / `RoomInfo.Difficulty`(:60 注释) / `Source = (int)RoomMeta.SourceEnum.LanBroadcast`(:294)；
+> 读侧统一走 `RoomMeta`（`ServerListPanel.cs` 全量转发）与 `TaskManager`。⇒ 房间字段**不再需要字符串约定**。
 
 ### `LanBroadcaster`（房主侧）
 

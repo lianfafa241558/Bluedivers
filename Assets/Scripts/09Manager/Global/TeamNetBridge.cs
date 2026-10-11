@@ -445,7 +445,12 @@ namespace FPSGame.Managers
             // 界面刷新（不在舰桥时 Instance 为 null，静默跳过——数据已经落好了）
             BridgeSys.Instance?.ReceivePlayerSelectArmament(localIndex, airdropId, slotIndex);
 
-            if (IsMySid(sid)) SendSelfProfile();   // 自己改的 ⇒ 把最新资料推给房主，供后来者/结算读
+            // 自己改的 ⇒ 让**权威资料**跟着更新（后进者 / 结算读的是它）。
+            // ⚠ 但**不再重发整份资料**：那会触发一次**全量 PlayerListSync 广播**（点 4 个槽 = 4 轮名单广播，
+            //   2026-10-10 用户实测"选一次战备就提交一次"）。成员那份由房主在转发这条消息时就地更新
+            //   （见 NetHostSvc.OnPlayerArmamentNtf）⇒ 这里只需补**房主自己**那份。
+            if (IsMySid(sid) && NetRoomFlow.Instance != null && NetRoomFlow.Instance.IsHost)
+                NetHostSvc.Instance?.SetLocalArmament(airdropId, slotIndex);
         }
 
         private void HandleBoosterSync(uint sid, int networkIndex, int boosterId)
@@ -461,7 +466,9 @@ namespace FPSGame.Managers
 
             BridgeSys.Instance?.ReceivePlayerSelectTeamEnhance(localIndex, boosterId);
 
-            if (IsMySid(sid)) SendSelfProfile();
+            // 同 HandleArmamentSync：只补房主自己那份资料，**不重发整份资料**
+            if (IsMySid(sid) && NetRoomFlow.Instance != null && NetRoomFlow.Instance.IsHost)
+                NetHostSvc.Instance?.SetLocalBooster(boosterId);
         }
 
         // ==================== 对外的小工具（BridgeRoleManager 等改完本地资料后调用） ====================

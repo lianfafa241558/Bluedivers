@@ -42,6 +42,12 @@ public partial class SettingWnd : Window
     [Foldout("右上按钮", true)]
     public Transform freeCamera, rebirth,returnShop, exitGame,teach;
 
+    [Foldout("右上按钮", true)]
+    [InspectorName("与小队终止任务（联机·房主）")]
+    [Tooltip("只在\"联机 + 房主\"时显示，同时隐藏\"中止任务\"。⚠ 预制体里没接上（留空）就不换，房主仍用\"中止任务\"。")]
+    [SerializeField]
+    private Transform abortSquad;
+
     [Foldout("设置",true)]
     public GameObject tempTitle, tempDrop, tempToggle, tempSilder;
     public Transform settingRoot,updateTitle, updateTime, updateDesc, updateCount, updateLeft, updateRight;
@@ -129,6 +135,7 @@ public partial class SettingWnd : Window
 
         SetCilck(freeCamera, EnterFreeCamera);
         SetCilck(returnShop, TryReturnShop);
+        if (abortSquad != null) SetCilck(abortSquad, TryAbortSquad);
         SetCilck(rebirth, TryRebirth);
         SetCilck(exitGame, TryExitGame);
         SetCilck(teach, TryTeach);
@@ -156,6 +163,24 @@ public partial class SettingWnd : Window
         && teamManager != null && teamManager.IsSingle
         && (BridgeSys.Instance == null || !BridgeSys.InOnlineRoom);
 
+    /// <summary>本机是不是"联机房间的房主"（开着房）。判据同 <c>SelectMapWnd.IsHosting</c>：
+    /// <c>NetHostSvc.RoomInfo != null</c>（由 <c>NetRoomFlow.IsHost</c> 暴露）。</summary>
+    private static bool IsOnlineHost
+    {
+        get
+        {
+            var flow = NetRoomFlow.Instance;
+            return flow != null && flow.IsHost;
+        }
+    }
+
+    /// <summary>本机在不在联机房间里（房主，或已入房的成员）。
+    /// <para>⚠ 房主掉了/已主动退房后 <c>InRoom</c> 就是 false ⇒ 消费方自然退回单机口径。</para></summary>
+    private static bool IsInRoom => NetRoomFlow.Instance != null && NetRoomFlow.Instance.InRoom;
+
+    /// <summary>本机是不是"别人房里的成员"（有房主、且连接还在）。</summary>
+    private static bool IsOnlineMember => IsInRoom && !IsOnlineHost;
+
     protected override void ShowWnd()
     {
         selfChangeState = true;
@@ -177,9 +202,16 @@ public partial class SettingWnd : Window
         BG.material.SetFloat("_TimeScale", TimeScale);
         //GlobalEventManager.OnFakeBg(BG.transform);
         haveSettingChagne = false;
-        SetActive(returnShop,GameState == GameStateEnum.Game);
+        // ★ 联机（2026-10-11 用户口径）：房主把"中止任务"换成"与小队终止任务"（他要中止就得带上全队，见 TryAbortSquad）。
+        //   ⚠ 新按钮没在预制体里接上（abortSquad 空）就不换 ⇒ 绝不会出现"房主两个按钮都没有"。
+        bool squadHost = GameState == GameStateEnum.Game && abortSquad != null && IsOnlineHost;
+        SetActive(returnShop, GameState == GameStateEnum.Game && !squadHost);
+        if (abortSquad != null) SetActive(abortSquad, squadHost);
         SetActive(rebirth, GameState == GameStateEnum.Bridge);
         SetActive(freeCamera, teamManager.IsSingle);
+        // ★ 新手教程（2026-10-11 用户口径）：**已联机**（开了房 / 在别人房里）或**战斗中**都不显示 ——
+        //   教程关是单人流程，联机时点它会把房间和队友晾在半路。
+        SetActive(teach, GameState != GameStateEnum.Game && !IsInRoom);
 
         SetStateRoot();
         InputManager.AddListenerCancel(Cancel);
@@ -689,24 +721,54 @@ public partial class SettingWnd : Window
         Color.RGBToHSV(player.Color, out var h, out var s, out var v);
         SetColor(selfExp, Color.HSVToRGB(h, s * 0.5f, v));
     }
-    /// <summary>返回舰船</summary>
+    /// <summary>返回舰船（右上"中止任务"按钮）。两副面孔（2026-10-11 用户口径）：
+    /// <list type="bullet">
+    ///   <item><b>单机</b>（含房主掉了之后）：就是原来的"中止任务" —— 本机结算回大厅；</item>
+    ///   <item><b>联机成员</b>（在别人房里）：**不能替全队决定**，所以这一下只做两件事 ——
+    ///         退出联机（<c>NetRoomFlow.Leave</c>：通知房主"我走了" + 断开）+ 本机走同一条 EndGame 回大厅。</item>
+    /// </list>
+    /// <para>⚠ 房主走不到这里：他在战斗里这一格显示的是"与小队终止任务"（见 <see cref="TryAbortSquad"/>）。</para></summary>
     void TryReturnShop()
     {
         //不需要判定状态，已经隐藏??
-        
+        bool online = IsOnlineMember;   // 点确认那一刻再读也来得及（下面的闭包里用的是这个快照）
+
         WndHub.Tip.Creat(new() {
-            title = "中止任务",
-            desc = "\n确定要中止任务吗?",
+            title = online ? "退出联机" : "中止任务",
+            desc = online ? "\n确定要退出联机并返回大厅吗?" : "\n确定要中止任务吗?",
             optA_Click = () =>
             {
                 SetWndState(false);
                 wndManager.ClearNotice();
+                // 先退联机再回大厅：房主那一端要收到"我走了"（4003），战斗期他才好把盟友模型/HUD 行收掉
+                if (online) NetRoomFlow.Instance?.Leave();
                 BattleManager.Instance.EndGame(1, GameResult.Interrupt);
             },
             optA_Text = "确认",
             optB_Text = "取消"
         });
 
+    }
+
+    /// <summary>与小队终止任务（联机 · 房主的"中止任务"）：本地效果与单机那条完全相同，区别只在**广播**。
+    /// <para>▍为什么走 <c>BattleEventBus.EndGame</c> 而不是 <c>BattleManager.Instance.EndGame</c>：
+    /// <c>NetGameFlowBridge</c> 订阅的是这个事件 —— 房主一触发就 <c>SendGameOver</c>(4033) 广播给全队，
+    /// 各端跑同一条 EndGame ⇒ 大家一起进中止（2026-10-11 用户口径）。
+    /// 直接调 <c>BattleManager</c> 只结束本机，别人继续打。</para></summary>
+    void TryAbortSquad()
+    {
+        WndHub.Tip.Creat(new() {
+            title = "与小队终止任务",
+            desc = "\n确定要终止任务吗?（小队全员都会一起中止）",
+            optA_Click = () =>
+            {
+                SetWndState(false);
+                wndManager.ClearNotice();
+                BattleEventBus.EndGame(1, GameResult.Interrupt);
+            },
+            optA_Text = "确认",
+            optB_Text = "取消"
+        });
     }
 
     /// <summary>(在舰船上)新手教程</summary>

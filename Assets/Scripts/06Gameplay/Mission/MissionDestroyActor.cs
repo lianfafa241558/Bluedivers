@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Attributes;
@@ -30,19 +30,7 @@ namespace FPSGame.Mission
             FindUnit();
             if (missionTag.HasFlag(MissionTag.DisplayProgress)) percentage = 0.01f;
         }
-        
-        IEnumerator WaitCreatUnit()
-        {
-            yield return new WaitForSeconds(1.0f);
-            var list = FPSGame.Game.UnitQuery.FindUnits(new PECircle((PEVector2)((PEVector3)pos), (PEInt)entitySize), new());
-            var actors = list.Where(item => actorNames.Contains(item.Id)).ToArray();
-            NowProgress = 0;
-            MaxProgress = actors.Length;
-            foreach (var item in actors)
-            {
-                item.OnDeath += OnActorDeath;
-            }
-        }
+      
         private void FindUnit()
         {
             var list = FPSGame.Game.UnitQuery.FindUnits(new PECircle((PEVector2)((PEVector3)pos), (PEInt)entitySize), new());

@@ -108,6 +108,9 @@ GameObject:
   - component: {fileID: 1874897767959485236}
   - component: {fileID: 6269269444833507368}
   - component: {fileID: 6263169208724637883}
+  - component: {fileID: 1782427892615314827}
+  - component: {fileID: 4719844139616001834}
+  - component: {fileID: 173358966094703085}
   m_Layer: 0
   m_Name: PlayerFriend
   m_TagString: Untagged
@@ -203,6 +206,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   weaponSocket: {fileID: 8492863606584912816}
+  aimSocketOffset: {x: 0, y: 1.21, z: 0.34}
 --- !u!114 &6263169208724637883
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232,3 +236,65 @@ MonoBehaviour:
   ShieldFull: {fileID: 0}
   ShieldBreak: {fileID: 0}
   ShieldDamage: []
+--- !u!114 &1782427892615314827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4192714201095393807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63713c26566ac6c4ab07d055be869295, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
+  meetTime: 3
+  audioPress: {fileID: 8300000, guid: 23f5b0610a1ee914f9a4b1071bc082b5, type: 3}
+  audioOper: {fileID: 8300000, guid: 93ad50821722b5246a515b8ee803d561, type: 3}
+  audioClose: {fileID: 8300000, guid: 2f7352a4434ea4a4a93e8cf1bcaf22fb, type: 3}
+  flags: 260
+  pressTime: 0
+  canOperate: 1
+  inOperate: 0
+  desc: "\u6276\u8D77\u540C\u5B66"
+  anim: {fileID: 0}
+  _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
+  lastOperatetime: 0
+  owner: {fileID: 0}
+  time: 0
+  count: 0
+  _collider: {fileID: 0}
+--- !u!114 &4719844139616001834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4192714201095393807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d720b2a869fc4e4e88a391d68059c3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &173358966094703085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4192714201095393807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e5287b84827e424e8ffb07a2384f527, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  handPoint: {fileID: 0}
+  backPoint: {fileID: 0}
+  fullIK: {fileID: 0}
+  BackPointTag: BackPoint

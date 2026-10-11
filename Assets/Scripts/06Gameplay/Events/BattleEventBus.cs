@@ -17,6 +17,12 @@ using FPSGame.Gameplay;
         public static event Action<GameObject, Vector3> OnCallKai;
         public static void CallKai(GameObject source, Vector3 point) => OnCallKai?.Invoke(source, point);
 
+        /// <summary>背包武器（<see cref="WeaponBag"/>）本机开了一发（发起者 GameObject / 方向 / 伤害档位）。
+        /// <para>▍为什么单独一条：背包武器**不在** <c>PlayerWeaponsManager</c> 的槽位里（它是装备装的），
+        /// 那条 <c>OnShoot</c> 永远不响 ⇒ 队友看不见你开火（2026-10-11 用户实测）。</para></summary>
+        public static event Action<GameObject, Vector3, int> OnBagShoot;
+        public static void BagShoot(GameObject owner, Vector3 direction, int damageIndex) => OnBagShoot?.Invoke(owner, direction, damageIndex);
+
 
         #region 空投
         /// <summary>空投授权状态变化</summary>
@@ -130,6 +136,13 @@ using FPSGame.Gameplay;
         public static event Action<int, string> OnAddBattleDataItem;
         public static void AddBattleDataItem(int playerIndex, string name) => OnAddBattleDataItem?.Invoke(playerIndex, name);
 
+        /// <summary>报告"一支巡逻队已生成"（生成点 / 目标点 / 是否设 <c>HomePoint</c>）。
+        /// <para>▍为什么走事件：任务在 <c>06_Gameplay</c>、联机桥在 <c>09_Managers</c>（06 看不见 09）⇒
+        /// 由 <c>NetHostSpawnBridge</c> 订阅后统一决定"房主广播 / 成员复刻"。</para></summary>
+        public static event Action<Vector3, Vector3, bool> OnPatrolSpawnReport;
+        public static void ReportPatrolSpawn(Vector3 spawnPos, Vector3 target, bool home)
+            => OnPatrolSpawnReport?.Invoke(spawnPos, target, home);
+
         /// <summary>
         /// **请求**授权 / 取消某战备（战备 Id / 是否授权）。
         /// ⚠ 与上方 <see cref="OnAuthorizeAirdrop"/> 区分：那个是授权**状态变化后的广播**（订阅方刷新 UI），
@@ -146,19 +159,19 @@ using FPSGame.Gameplay;
         public static event Action<int, Vector3> OnEnemyMove;
         public static void EnemyMove(int netId, Vector3 destination) => OnEnemyMove?.Invoke(netId, destination);
 
-        /// <summary>【成员】本机打中了某只怪（NetId / 伤害）⇒ 上报房主结算（血量/死亡以房主为准）</summary>
-        public static event Action<int, int> OnEnemyHit;
-        public static void EnemyHit(int netId, int damage) => OnEnemyHit?.Invoke(netId, damage);
+        /// <summary>【成员】本机打中了某只怪（NetId / 伤害 / 攻击者号 / **原始伤害成分** / **命中部位下标**）⇒ 上报房主结算（血量/死亡以房主为准）
+        /// <para>▍成分 `groups` 摊平编码 <c>[count, type0, coeff0, ...]</c>（null = 中性）：接收端要拿它补护甲破坏/异常状态积蓄。</para>
+        /// <para>▍部位下标 `part`（<c>Actor.IndexOfDamageable</c>，-1 = 认不出）：让对端打在**同一部位**上。</para></summary>
+        public static event Action<int, int, int, float[], int> OnEnemyHit;
+        public static void EnemyHit(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = -1)
+            => OnEnemyHit?.Invoke(netId, damage, attackerNetId, groups, part);
 
-        /// <summary>【房主】**我**打中了某只怪（NetId / 伤害）⇒ 下发给成员，让他们那份副本一起掉血。
+        /// <summary>【房主】**我**打中了某只怪（NetId / 伤害 / 攻击者号 / 成分 / 部位下标）⇒ 下发给成员，让他们那份副本一起掉血。
         /// <para>▍为什么与 <see cref="OnEnemyHit"/> 分两条：那条是"成员往上报"，这条是"房主往下播" ——
         /// 两边都往一条事件里塞会让订阅方分不清方向（同一个 `_OnDamaged` 里按角色二选一发射）。</para></summary>
-        public static event Action<int, int> OnEnemyDamaged;
-        public static void EnemyDamaged(int netId, int damage) => OnEnemyDamaged?.Invoke(netId, damage);
-
-        /// <summary>【房主】某只怪死了（NetId）⇒ 成员照此干掉自己那份副本</summary>
-        public static event Action<int> OnEnemyDiedRemote;
-        public static void EnemyDiedRemote(int netId) => OnEnemyDiedRemote?.Invoke(netId);
+        public static event Action<int, int, int, float[], int> OnEnemyDamaged;
+        public static void EnemyDamaged(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = -1)
+            => OnEnemyDamaged?.Invoke(netId, damage, attackerNetId, groups, part);
 
         /// <summary>【房主】场景单位（NPC 这类**由场景摆好**、会自己走动的氛围单位）要走向哪 / 停下；键 = <c>Actor.Id</c>。
         /// <para>▍为什么另开一条：它们没有 AI 控制器、也不在 <c>ActorsManager.Enemys</c> 里 ⇒ 套不上敌人那条 4024；

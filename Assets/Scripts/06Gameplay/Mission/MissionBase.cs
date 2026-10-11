@@ -318,7 +318,21 @@ namespace FPSGame.Mission
         {
             if (!entity && GetEntiryPrefab(out GameObject prefab))
             {
-                entity = Instantiate(prefab, pos, Quaternion.Euler(0, MissionAngle(), 0), entityParent).GetComponent<MissionView>();
+                // ★ 任务实体里的 Actor 要取**派生号**（落点/朝向两端都由同一种子决定 ⇒ 号天然一致），
+                //   但这一刻 `IsStartBattle` 已是 true ⇒ 光看时间会误判成"运行时生成"、去挤自增号。
+                //   ⚠ `Instantiate` 同步跑完子树所有 `Awake` 才返回 ⇒ try/finally 包住这一句就够。
+                MissionView view;
+                ActorsManager.ForceDerivedNetId = true;
+                try
+                {
+                    view = Instantiate(prefab, pos, Quaternion.Euler(0, MissionAngle(), 0), entityParent).GetComponent<MissionView>();
+                }
+                finally
+                {
+                    ActorsManager.ForceDerivedNetId = false;
+                }
+
+                entity = view;
                 entity.Init(this, this.data.cfg.RequiredAD.Select(item => item.ID).ToArray());
             }
             else

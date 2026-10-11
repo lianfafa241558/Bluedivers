@@ -245,6 +245,15 @@ public class PlayerShoot
     /// <para>0 = 旧版发送端 ⇒ 接收端退回本端当前档位。</para>
     /// </summary>
     [Key(8)] public int DamageIndex;
+
+    /// <summary>
+    /// 开枪用的是**第几个发射点**（<c>WeaponBaseController.Muzzles</c> 下标；<c>-1</c> = 齐射，所有多发射点一起）。
+    /// <para>▍为什么必须同步（2026-10-11 修）：多管枪是**轮流开火**（<c>Muzzles[shootCount++ % Muzzles.Length]</c>），
+    /// 而接收端那把武器**从不本机开火** ⇒ 它自己的计数永远是 0 ⇒ 所有弹道都从 0 号管出、与开枪端错位，
+    /// 表现为"对端子弹从错误的枪管里冒出来"。</para>
+    /// <para>0 = 旧版发送端 ⇒ 接收端用 0 号发射点（与旧行为一致）。</para>
+    /// </summary>
+    [Key(9)] public int MuzzleIndex;
 }
 
 /// <summary>
@@ -359,6 +368,14 @@ public class PlayerVital
     [Key(5)] public bool Down;        // 倒地（= 本人 ActorState.Dead），驱动盟友的倒地姿态
 }
 
+/// <summary>有人把某个玩家扶起来了（同型双向：救人者 -> 房主 -> 全体）。
+/// <para>▍为什么按 <c>Sid</c> 而不是复用家具交互（4036）：见 <c>CmdId.PlayerReviveNtf</c> 的注释。</para></summary>
+[MessagePackObject]
+public class PlayerReviveMsg
+{
+    [Key(0)] public uint Sid;         // 被救者（房主 = 0）
+}
+
 /// <summary>
 /// 玩家弹药系数（0~1）：成员 -> 房主 / 房主 -> 全体（同型双向）。
 ///
@@ -430,39 +447,45 @@ public class SceneUnitMoveMsg
     [Key(4)] public bool Stop;
 }
 
-/// <summary>【成员 → 房主】本机打中了某只怪 ⇒ 上报房主结算（血量/死亡以房主为唯一权威）。</summary>
-[MessagePackObject]
-public class EnemyHitMsg
-{
-    [Key(0)] public uint Sid;
-    [Key(1)] public int NetId;
-    [Key(2)] public int Damage;
-}
-
-/// <summary>【房主 → 全体】某只怪死亡 ⇒ 成员干掉自己那份副本（保证在场敌人集合一致）。</summary>
-[MessagePackObject]
-public class EnemyDiedMsg
-{
-    [Key(0)] public int NetId;
-}
-
-/// <summary>
-/// 【房主 → 全体】房主这一枪打中了某只怪（NetId / 伤害 / 开枪者 sid）。
+/// <summary>**统一的"伤害 / 生死"事件**（房主与成员共用；三条号共挂这一个 DTO）。
 ///
-/// <para>▍为什么要下行：命中上报只有**成员 → 房主**（<see cref="EnemyHitMsg"/>），房主打中谁**从不下发**
-/// ⇒ 两侧副本的血量各算各的：房主那只怪快死了，成员这边血条还是满的
-/// （2026-10-07 实测"本地看见命中、对端看不见"的另一半；2026-10-09 用户再次报告）。
-/// 血量口径统一成"**房主权威**"：房主要把自己打出的伤害也播下去，成员照数扣自己那份副本。</para>
+/// <para>▍方向由**到达的 cmdId** 决定：<c>EnemyHitNtf</c>(4025) = 成员上报房主；
+/// <c>EnemyDamagedSync</c>(4040) = 房主下发全体；<c>SceneDestructibleNtf</c>(4043) = 无号可破坏物的双向兜底 + 房主"已打掉"账本补发。</para>
 ///
-/// <para>⚠ 只同步"伤害数值"，不重放弹道：两边各自的表现弹照旧（那是 <c>PlayerShootSync</c> 的事）。</para>
-/// </summary>
+/// <para>▍为什么合成一条（2026-10-12）：原来"伤害上行 / 伤害下行 / 敌人死了(4026) / 可破坏物死了(4043)"四条形状几乎一样 ——
+/// 死者本来就是"被打到 0 血"的特例 ⇒ 用 <see cref="IsDeath"/> 表达即可；无号物件用 <see cref="Key"/> 兜底。
+/// 一处 DTO、一处回环门、一处日志口径。</para>
+///
+/// <para>⚠ 只同步"数值结果"，不重放弹道：两边各自的表现弹照旧（那是 <c>PlayerShootSync</c> 的事）。</para></summary>
 [MessagePackObject]
-public class EnemyDamagedMsg
+public class DamageMsg
 {
-    /// <summary>开枪者（房主 = 0，成员 = 其会话 sid）—— 接收端据此把受击表现归给对应的盟友实例。</summary>
+    /// <summary>开枪者（房主 = 0，成员 = 其会话 sid）—— 接收端据此把受击表现归给对应的盟友实例；
+    /// 房主转发某成员上报的那条时填**开枪者**（不是转发者），这样接收端能把这一发归到开枪者身上。</summary>
     [Key(0)] public uint Sid;
+    /// <summary>受害者号（0 = 无号 ⇒ 用 <see cref="Key"/> 认）。</summary>
     [Key(1)] public int NetId;
-    [Key(2)] public int Damage;
+    /// <summary>无号受害者的兜底键 = <c>FNV1a(Actor.Id + 位置0.1m)</c>（同 <c>NetDestructibleBridge.KeyOf</c>）；<see cref="NetId"/> != 0 时忽略。</summary>
+    [Key(2)] public int Key;
+    /// <summary>伤害值：来源端算完护甲/抗性的**最终扣减量**；0 + <see cref="IsDeath"/> = 只报"死了"。</summary>
+    [Key(3)] public int Damage;
+    /// <summary>**攻击者单位的 NetId**（0 = 未知/玩家 ⇒ 退回按 <see cref="Sid"/> 找盟友实例）。
+    /// <para>▍为什么需要：接收端要用它重建 <c>DamagePacket.DamageSource</c> —— 非玩家来源（怪/炮塔/凯伊互殴）
+    /// 只带 sid 时会被当成"上报者那个玩家"，或者直接退成 NoSource，对端 <c>DetectionModule</c> 的阵营过滤/
+    /// 受击改目标就跟开枪端不是一个口径。</para></summary>
+    [Key(4)] public int AttackerNetId;
+    /// <summary>伤害成分，摊平编码 <c>[count, type0, coeff0, type1, coeff1, ...]</c>（null/空 = 按中性成分结算）。
+    /// <para>▍为什么必须带（2026-10-12）：接收端要拿它补**护甲破坏**（<c>Damageable.ArmorDestruction</c>）
+    /// 与**异常状态积蓄**（<c>Health.AddAboGauge</c>）—— 只带总伤害时这两条分支整段被跳过
+    /// （表现：主机把怪冻住/破甲了，成员那边它照常跑、护甲还在）。</para></summary>
+    [Key(5)] public float[] Groups;
+    /// <summary>命中部位：**下标 + 1**（<c>0</c> = 未指定 ⇒ 接收端按自己的受击体挑主躯干）。
+    /// <para>▍为什么要 +1：下标 <c>0</c> 本身是合法部位（<c>IActor.Damageables[0]</c>），不能拿它当"没值"。</para>
+    /// <para>▍为什么需要它：两端"挑哪个部位"的算法不完全等价（装甲 / 弱点倍率口径会差一点）⇒ 传下标才能让对端
+    /// 打在**同一部位**上（发送端 = <c>Actor.IndexOfDamageable(collider)</c>）。</para></summary>
+    [Key(6)] public int Part;
+    /// <summary>true = 这一发把它打死了（合并原 4026 / 4043 的"只报死了"；<see cref="Damage"/> 可为 0）。</summary>
+    [Key(7)] public bool IsDeath;
 }
 
 /// <summary>选择全队强化：成员 -> 房主。</summary>

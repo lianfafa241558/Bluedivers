@@ -39,6 +39,11 @@ namespace FPSGame.Utils
         /// <summary>开局**天气**抽取。▍必须独立：天气原来抽全局战斗流，而那条流在开局被任务点/兴趣点生成等系统
         /// 推进到不同的位置 ⇒ 同一颗种子也抽出不同天气（2026-10-10 用户实测"一边晴一边雨"）。</summary>
         Weather = 14,
+        /// <summary>**场景摆放生成器**的落点抖动/概率（<c>CreatOOPart</c> / <c>CreatSupple</c>）——
+        /// 用 <c>SeedUtil.NewPlacementStream</c> 按生成器坐标细分 ⇒ 两端同落点同数量。</summary>
+        PropSpawn = 15,
+        /// <summary>**敌人死亡掉落数量**（<c>DieLoot</c>）—— 按单位 NetId 细分 ⇒ 两端掉落数量一致（零消息）。</summary>
+        DieLoot = 16,
     }
 
     /// <summary>
@@ -65,5 +70,19 @@ namespace FPSGame.Utils
 
         /// <summary>新建一条派生随机线（枚举版）。</summary>
         public static System.Random NewStream(int seed, SeedStream stream) => NewStream(seed, (int)stream);
+
+        /// <summary>【联机】按"**生成器所在位置**"取一条派生流（场景摆放的生成器两端坐标一致 ⇒ 两端同流）。
+        /// <para>▍用途：**开场初始化窗**里那些"随机落点 / 随机概率"的场景生成器（<c>CreatOOPart</c> / <c>CreatSupple</c>）——
+        /// 它们原来吃全局静态流 <see cref="RandomUtils"/>，两端落点不同；而生成物是在**战斗开始前**创建的
+        /// ⇒ <c>Actor.Awake</c> 取的是**派生号**（含位置）⇒ 落点一分叉，号就跟着错。</para>
+        /// <para>⚠ 位置量化到 0.1m（同 <c>ActorsManager.DerivedNetId</c>）；<paramref name="seed"/> = 0（单机 / 无权威种子）⇒
+        /// 返回 null，由调用方回落到原来的本地随机。</para></summary>
+        public static System.Random NewPlacementStream(int seed, SeedStream purpose, UnityEngine.Vector3 pos)
+        {
+            if (seed == 0) return null;
+
+            int key = UnityEngine.Mathf.RoundToInt(pos.x * 10f) * 31 + UnityEngine.Mathf.RoundToInt(pos.z * 10f);
+            return new System.Random(Derive(Derive(seed, (int)purpose), key));
+        }
     }
 }

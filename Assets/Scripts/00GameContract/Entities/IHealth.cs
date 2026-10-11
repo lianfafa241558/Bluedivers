@@ -12,6 +12,11 @@ namespace FPSGame.GameContract
     {
         /// <summary>收到伤害时,值，来源，受击点,无源伤害</summary>
         public event UnityAction<PEInt, GameObject, Collider, bool> OnDamaged;
+
+        /// <summary>**本次伤害的原始成分**（类型 + 系数），结算期间有效（实现见 <c>Health.LastRawGroups</c>）。
+        /// <para>▍用途：联机上报 —— 接收端要拿它补"护甲破坏 / 异常状态积蓄"（只带总伤害时那两条分支会被整段跳过）。</para>
+        /// <para>⚠ 直接调 <c>TakeDamage</c> 的路径（流血 / 异常状态 tick）为 null ⇒ 上报退回中性成分。</para></summary>
+        List<SKVP<DamageTypeEnum, float>> LastRawGroups { get; set; }
         /// <summary>被击中时 来源，受击点</summary>
         public event UnityAction<GameObject, Vector3, Vector3, bool> OnHit;
 

@@ -53,19 +53,14 @@ namespace FPSGame.Net
         /// <summary>权威标识：操作者会话号（房主 = 0）。远端据此解析"操作者"（Friend 实例）。</summary>
         [Key(0)] public uint Sid;
         [Key(1)] public int SyncId;
-    }
 
-    /// <summary>场景可破坏物（双向）：某件摆在场上的物件（油桶这类）被谁打掉了 ⇒ 远端把同一件也打掉。
-    /// <para>▍键 = <c>FNV1a(Actor.Id + 位置 0.1m 量化)</c>（同 <see cref="FurnitureOperateMsg.SyncId"/> 的口径：
-    /// 同类物件多实例 ⇒ 只用 <c>Actor.Id</c> 会撞车；<c>IndexID</c> 是各端自增的，跨端不一致）。</para>
-    /// <para>▍只传"死了"这件事、不传伤害：这类物件的血量**不是**关键状态（打爆才是），
-    /// 少一条伤害通道就少一处两端不一致。</para></summary>
-    [MessagePackObject]
-    public class SceneDestructibleMsg
-    {
-        /// <summary>权威标识：打掉它的那个会话号（房主 = 0）。远端据此丢弃"自己发的那条回环"。</summary>
-        [Key(0)] public uint Sid;
-        [Key(1)] public int SyncId;
+        /// <summary>状态的 int 编码（可选，2026-10-11 追加）。接收端**优先**用 <see cref="StateKey"/> 自己解析，
+        /// 这个只在对方没带 Key 时兜底。默认 0 ⇒ 旧发送端 = "无状态负载"。</summary>
+        [Key(2)] public int State;
+        /// <summary>状态的原始键（可选，如管道的 <c>PipeWait</c>/<c>PipeError</c>）。
+        /// <para>▍非空 = 这是一条**状态**同步（不是操作重放）：接收端走 <c>ApplyRemoteState</c>，**不调用</b> <c>Operate()</c>。
+        /// 用于"改了状态但没有人交互"的场合（任务把管道打成 PipeError）。</para></summary>
+        [Key(3)] public string StateKey;
     }
 
     /// <summary>标记点位（双向；表现类，可不可靠）。</summary>
@@ -102,4 +97,99 @@ namespace FPSGame.Net
         [Key(2)] public float Y;
         [Key(3)] public float Z;
     }
+
+    /// <summary>按键终端(KeyScreen)阶段推进（双向）。<c>SyncId</c> = 终端家具的 <c>Furniture_Attached.SyncId</c>
+    /// （与 4036 同口径 ⇒ 两端日志可直接对照）。
+    /// <para>只传"推进到第几阶段"：阶段本身的语义（UI 显隐 / 谜题初始化 / 任务标志）由各端跑同一条本地
+    /// <c>SetStage</c> 逻辑，不需要过网。</para></summary>
+    [MessagePackObject]
+    public class KeyScreenStageMsg
+    {
+        /// <summary>权威标识：推进者的会话号（房主 = 0）⇒ 接收端据此丢掉"自己发出去的那条回环"。</summary>
+        [Key(0)] public uint Sid;
+        /// <summary>终端家具的跨端稳定键。</summary>
+        [Key(1)] public int SyncId;
+        /// <summary>目标阶段号。</summary>
+        [Key(2)] public int Stage;
+    }
+
+    /// <summary>房主生成消息的两种形态（＝ <see cref="HostSpawnMsg.Kind"/>）。</summary>
+    public enum HostSpawnKind
+    {
+        /// <summary>巡逻队（用 X/Y/Z 生成点 + <c>Targets[]</c> 逐单位目标点；构成由落点派生 ⇒ 不传）。</summary>
+        Patrol = 0,
+        /// <summary>运行时生成的**单只**单位（用 SourceKey/Slot ⇒ 让本端同一份生成器复刻）。</summary>
+        Unit = 1,
+    }
+
+    /// <summary>【房主 → 全体】**实体生成**的统一消息（原 4047 巡逻队 + 4051 运行时生成合并，2026-10-12）。
+    ///
+    /// <para>▍为什么合成一条：两者的前提完全同型 —— 都是"房主是唯一的生成权威"，都是因为
+    /// <c>Actor.Awake</c> 会领 NetId（号的口径是"房主分配 + 两端创建顺序一致"，成员端自造必然错位）。
+    /// 合并后一条消息、一处回环门、一处日志口径，差异用 <see cref="Kind"/> + 可选字段表达。</para>
+    ///
+    /// <para>▍Kind = Patrol（0）：构成不传 —— <c>WaveManager.CreatPatrol</c> 按**落点位置**派生随机流 ⇒
+    /// 同落点 ⇒ 同构成同顺序；但**逐单位目标点必须传**（它由房主侧的几何 / 玩家位置算出，成员算不出同一个值）。</para>
+    /// <para>▍Kind = Unit（1）：不传 prefab 引用（过不了网）—— 成员的生成器拿 <see cref="Slot"/> 回自己的表取同一把 prefab，
+    /// <see cref="PrefabId"/> 只是给"按类型抽表"的刷怪器做二次确认。</para></summary>
+    [MessagePackObject]
+    public class HostSpawnMsg
+    {
+        /// <summary>形态：见 <see cref="HostSpawnKind"/>。</summary>
+        [Key(0)] public int Kind;
+
+        /// <summary>生成点（Patrol）/ 单位位置（Unit）—— 两类共用。</summary>
+        [Key(1)] public float X;
+        [Key(2)] public float Y;
+        [Key(3)] public float Z;
+        /// <summary>水平朝向（Unit 用；单位只用 yaw，俯仰由 AI/瞄准点决定）。</summary>
+        [Key(4)] public float Yaw;
+
+        /// <summary>【Patrol】目标点类型：0 = <c>PatrolPos</c>（据点巡逻，逐单位不同），1 = <c>HomePoint</c>（任务维修巡逻，全体同一处）。</summary>
+        [Key(5)] public int Sub;
+        /// <summary>【Patrol】逐单位目标点（x,y,z 三元组，长度 = 单位数 × 3；Sub=1 时取第 0 组给所有单位）。</summary>
+        [Key(6)] public float[] Targets;
+
+        /// <summary>【Unit】生成者身份键（<c>INetSpawner.SpawnSourceKey</c>）—— 成员用它在本端找到"同一份生成器"。</summary>
+        [Key(7)] public int SourceKey;
+        /// <summary>【Unit】生成者自己表里的下标（巢穴 = creatData 序 / 召唤师 = summoned 序 / 刷怪器 = (int)tier / 环绕装甲 = 装甲表序）。</summary>
+        [Key(8)] public int Slot;
+        /// <summary>【Unit】房主分配的号（<c>ActorsManager.HostSpawnNetIdBase</c> 段）⇒ 成员复刻后**覆盖**自己的 NetId。</summary>
+        [Key(9)] public int NetId;
+        /// <summary>【Unit】首帧目标点（全 0 = 无；接收端复刻后按它设目标，避免"复刻出来原地罚站"）。</summary>
+        [Key(10)] public float Tx;
+        [Key(11)] public float Ty;
+        [Key(12)] public float Tz;
+        /// <summary>【Unit】单位的 <c>Actor.Id</c>（可为空）：刷怪器按 tier 抽表时用它精确取回同一把 prefab。</summary>
+        [Key(13)] public string PrefabId;
+    }
+
+    /// <summary>容器类家具的一次提交（双向）。</summary>
+    [MessagePackObject]
+    public class OOPartSubmitMsg
+    {
+        /// <summary>提交者会话号（房主 = 0）⇒ 接收端据此解析"操作者"（盟友实例）并丢弃自己的回环。</summary>
+        [Key(0)] public uint Sid;
+        /// <summary>家具跨端稳定键（<c>Furniture_Attached.SyncId</c>）。</summary>
+        [Key(1)] public int SyncId;
+        /// <summary>本次提交个数。</summary>
+        [Key(2)] public int Count;
+        /// <summary>主类型（<c>OOPartEnum</c> 的 int；-1 = 未知）。</summary>
+        [Key(3)] public int Type;
+    }
+
+    /// <summary>玩家对终端(KeyScreen)的一次输入（双向）。
+    /// <para>▍Key = <c>InputState</c> 的 int；Kind：0 = 本帧按下、1 = 按住开始、2 = 松开。</para>
+    /// <para>▍只传"按键"而不是传终端状态：非驱动端把本机键盘换成远端按键后，**跑的是同一套阶段逻辑**
+    /// ⇒ UI/判定/光标位置全部自然一致，不用再抽一堆"刷新 UI"的接口。</para></summary>
+    [MessagePackObject]
+    public class KeyScreenInputMsg
+    {
+        [Key(0)] public uint Sid;
+        [Key(1)] public int SyncId;
+        [Key(2)] public int Key;
+        [Key(3)] public int Kind;
+    }
+
 }
+

@@ -173,15 +173,35 @@ namespace FPSGame.Gameplay
         /// <param name="direction">开火瞬间的射击方向（世界空间）；零向量 = 用枪口朝向</param>
         /// <param name="aimPoint">开枪者准心实指的目标点（世界空间）；零向量 = 未知（见 <see cref="FriendWeaponView.PlayShoot"/>）</param>
         /// <param name="damageIndex">开枪者那把枪的伤害档位（见 <c>PlayerShoot.DamageIndex</c>）</param>
-        public void PlayShoot(Vector3 direction = default, Vector3 aimPoint = default, int damageIndex = 0)
+        /// <param name="muzzleIndex">开枪者用的是第几个发射点（<c>-1</c> = 齐射；见 <c>PlayerShoot.MuzzleIndex</c>）</param>
+        public void PlayShoot(Vector3 direction = default, Vector3 aimPoint = default, int damageIndex = 0, int muzzleIndex = 0)
         {
-            if (_weapons != null) _weapons.PlayShoot(direction, aimPoint, damageIndex);
+            if (_weapons != null) _weapons.PlayShoot(direction, aimPoint, damageIndex, muzzleIndex);
+        }
+
+        /// <summary>【桥调用】盟友的**背包武器**（战备投下的火箭背包等）开了一发 —— 只做表现，不结算伤害。
+        /// <para>▍为什么不能走 <see cref="FriendWeaponView.PlayShoot"/>：那用"当前槽位那把枪"出门；
+        /// 背包武器是**装备**装上去的（不在槽位里），枪口位置完全不同。</para></summary>
+        public void PlayBagShoot(Vector3 direction, int damageIndex)
+        {
+            // 这件背包是"远端重放捡起"时挂到盟友身上的 ⇒ 每次现找（一个背包总共也没几发）
+            var bag = GetComponentInChildren<WeaponBag>(true);
+            if (bag == null || bag.weapon == null)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("远端开火", "盟友身上没有已装备的背包武器 ⇒ 这一发没有表现（捡起那一下没同步过来？）");
+                return;
+            }
+
+            FriendWeaponView.PlayVisual(bag.weapon, direction, Vector3.zero, damageIndex, 0);
         }
 
         // ==================== 生命状态（只做镜像 + 表现） ====================
 
         /// <summary>预制体上的生命组件（若有）；只读它做"镜像"，不参与本地伤害结算。</summary>
         private Health _health;
+
+        /// <summary>预制体上的倒地救援组件（联机时必须与 <c>Player.prefab</c> 一样带上，见 <see cref="ApplyVital"/>）。</summary>
+        private Furniture_PlayerDown _downFurn;
 
         /// <summary>
         /// 【桥调用】应用同步过来的生命状态：血 / 盾的当前值与上限 + 是否倒地。
@@ -205,6 +225,12 @@ namespace FPSGame.Gameplay
 
             if (_actor == null) _actor = GetComponent<Actor>();
             if (_actor != null) _actor.ActorState = down ? ActorState.Dead : ActorState.Normal;
+
+            // ★ "能不能被救"必须显式驱动：镜像血量是**直写字段**（Health.CurrentHealth 是自动属性，
+            //   不会触发 Health.OnDie）⇒ 盟友身上的 Furniture_PlayerDown 永远等不到 OnDown、canOperate 恒 false，
+            //   表现就是"队友倒地了、凑上去却扶不起来"（2026-10-11 用户实测）。
+            if (_downFurn == null) _downFurn = GetComponent<Furniture_PlayerDown>();
+            if (_downFurn != null) _downFurn.ApplyRemoteDown(down);
         }
 
         /// <summary>【桥调用】应用同步过来的弹药系数（0~1，口径 = 对方 <c>TotalRemainAmmoRatio()</c>）。

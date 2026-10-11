@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace FPSGame.Utils
 {
@@ -27,6 +28,28 @@ namespace FPSGame.Utils
         public static void BulletLog(string tag, string msg) { if (!Enabled || !Bullet) return; Debug.Log($"[子弹/{tag}] {msg}"); }
         public static void AiLog(string tag, string msg) { if (!Enabled || !Ai) return; Debug.Log($"[AI/{tag}] {msg}"); }
         public static void SyncLog(string tag, string msg) { if (!Enabled || !Sync) return; Debug.Log($"[同步/{tag}] {msg}"); }
+
+        /// <summary>
+        /// **限流版** <see cref="AiLog"/>：同一个 <paramref name="key"/> 每 <paramref name="interval"/> 秒最多一条。
+        ///
+        /// <para>▍为什么需要：有些调用点是"**每帧**都会走、且每帧都被判无效"的（例：
+        /// <c>EnemyController.SetNavDestination</c>——成员端 AI 仍在跑，目标每帧都被"只认房主下发"作废）
+        /// ⇒ 用普通 <c>AiLog</c> 就是**一只怪一行/帧**，客机 Console 直接被刷屏（2026-10-10 用户实测）。</para>
+        /// </summary>
+        /// <param name="key">限流键：用单位标识（如 <c>Actor.NetId</c>）；不同单位互不影响。</param>
+        public static void AiLog(string tag, string msg, int key, float interval = 5f)
+        {
+            if (!Enabled || !Ai) return;
+
+            float now = Time.unscaledTime;
+            float last;
+            if (_aiThrottle.TryGetValue(key, out last) && now - last < interval) return;
+            _aiThrottle[key] = now;
+            Debug.Log($"[AI/{tag}] {msg}");
+        }
+
+        /// <summary>限流表（键 = 单位标识；一局内单位数量有限，不必手动清理）。</summary>
+        private static readonly Dictionary<int, float> _aiThrottle = new Dictionary<int, float>();
 
         /// <summary>丢消息 / 找不到对象 / 决策作废这类"不正常"，用 Warning 便于在 Console 里筛。</summary>
         public static void Warn(string tag, string msg) { if (!Enabled) return; Debug.LogWarning($"[异常/{tag}] {msg}"); }

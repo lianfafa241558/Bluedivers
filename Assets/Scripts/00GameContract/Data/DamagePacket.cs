@@ -31,5 +31,15 @@ namespace FPSGame.GameContract
         /// <summary>击中的碰撞体 </summary>
         public Collider damageAffected;
 
+        /// <summary>
+        /// **伤害是否已结算过减伤乘区**（爆炸抗性 × 穿甲）。
+        ///
+        /// <para>▍联机镜像专用（2026-10-11 修）：开枪端上报的 <c>Damage</c> 取自受伤回调
+        /// （<c>EnemyController._OnDamaged</c>）⇒ 它**已经是乘完护甲/爆炸抗性的最终值**。
+        /// 远端落地时若再走一遍那两个乘区，等于把护甲**减两次** ⇒ 两端血量/死亡判定不一致
+        /// （表现：客机打中、主机端那只怪还剩不少血）。置 true ⇒ <c>Damageable.InflictDamage</c> 跳过乘区、
+        /// 按上报值原样扣。</para>
+        /// </summary>
+        public bool Resolved;
     }
 }

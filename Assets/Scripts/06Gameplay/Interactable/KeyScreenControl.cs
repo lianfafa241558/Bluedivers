@@ -121,22 +121,22 @@ public partial class KeyScreen
     bool InputUpdate()
     {
         bool haveInput = false;
-        if (InputManager.GetDown(InputState.Left))
+        if (InputGetDown(InputState.Left))
         {
             haveInput = true;
             nowInput.Add(DirectionEnum.Left);
         }
-        else if (InputManager.GetDown(InputState.Right))
+        else if (InputGetDown(InputState.Right))
         {
             haveInput = true;
             nowInput.Add(DirectionEnum.Right);
         }
-        else if (InputManager.GetDown(InputState.Up))
+        else if (InputGetDown(InputState.Up))
         {
             haveInput = true;
             nowInput.Add(DirectionEnum.Up);
         }
-        else if (InputManager.GetDown(InputState.Down))
+        else if (InputGetDown(InputState.Down))
         {
             haveInput = true;
             nowInput.Add(DirectionEnum.Down);
@@ -232,7 +232,7 @@ public partial class KeyScreen
 
     bool ActionItemUpdate()
     {
-        if (InputManager.GetDown(InputState.Up))
+        if (InputGetDown(InputState.Up))
         {
             if (itemState[4])
             {
@@ -323,22 +323,22 @@ public partial class KeyScreen
 
         if (!owner) return false;
         bool haveInput1=false, haveInput2 = false;
-        if (InputManager.Get(InputState.Left))
+        if (InputGet(InputState.Left))
         {
             itemValue[0] = (int)(itemValue[0] + 2500 * Time.deltaTime) % 36000;
             haveInput1 = true;
         }
-        else if (InputManager.Get(InputState.Right))
+        else if (InputGet(InputState.Right))
         {
             itemValue[0] = (int)(itemValue[0] + 36000 - 2500 * Time.deltaTime) % 36000;
             haveInput1 = true;
         }
-        else if (InputManager.Get(InputState.Up))
+        else if (InputGet(InputState.Up))
         {
             itemValue[1] = Mathf.CeilToInt(Mathf.Clamp(itemValue[1] + 2000 * Time.deltaTime,0,10000));
             haveInput2 = true;
         }
-        else if (InputManager.Get(InputState.Down))
+        else if (InputGet(InputState.Down))
         {
             itemValue[1] = Mathf.CeilToInt(Mathf.Clamp(itemValue[1] - 2000 * Time.deltaTime, 0, 10000));
             haveInput2 = true;
@@ -394,20 +394,20 @@ public partial class KeyScreen
     bool DirectionUpdate()
     {
         //实际上应该是控制广播
-        if (InputManager.Get(InputState.Left))
+        if (InputGet(InputState.Left))
         {
             //Debug.LogError("按住左键"+ (int)(itemValue[0] + 2000 * Time.deltaTime) % 36000);
             itemValue[0] = (int)(itemValue[0] + 1000 * Time.deltaTime) % 36000;
             nowProcedure.furns[0].ExtFloatParameter+=10 * Time.deltaTime;
             CalibrationDirection();
         }
-        else if (InputManager.Get(InputState.Right))
+        else if (InputGet(InputState.Right))
         {
             itemValue[0] = (int)(itemValue[0] + 36000 - 1000*Time.deltaTime) % 36000;
             nowProcedure.furns[0].ExtFloatParameter -= 10 * Time.deltaTime;
             CalibrationDirection();
         }
-        else if (InputManager.GetDown(InputState.Up))
+        else if (InputGetDown(InputState.Up))
         {
             if (itemState[0])
             {
@@ -482,7 +482,7 @@ public partial class KeyScreen
     bool UnlockUpdate()
     {
         var nowPro = nowProcedure;
-        if (InputManager.GetDown(InputState.Left))
+        if (InputGetDown(InputState.Left))
         {
             if (nowSelectIndex > 0)
             {
@@ -496,7 +496,7 @@ public partial class KeyScreen
                 PlaySound(new(ErrorS));
             }
         }
-        else if (InputManager.GetDown(InputState.Right))
+        else if (InputGetDown(InputState.Right))
         {
             if (nowSelectIndex < nowPro.UnlockItem.Count - 1)
             {
@@ -510,7 +510,7 @@ public partial class KeyScreen
                 PlaySound(new(ErrorS));
             }
         }
-        else if (InputManager.GetDown(InputState.Up))
+        else if (InputGetDown(InputState.Up))
         {
             if (itemState[nowSelectIndex] == false)
             {
@@ -536,7 +536,7 @@ public partial class KeyScreen
                 PlayInputCilp();
             }
         }
-        else if (InputManager.GetDown(InputState.Down))
+        else if (InputGetDown(InputState.Down))
         {
             if (itemState[nowSelectIndex] == true)
             {
@@ -573,7 +573,7 @@ public partial class KeyScreen
     bool PasswordUpdate()
     {
         bool haveInput = false;
-        if (InputManager.GetDown(InputState.Left))
+        if (InputGetDown(InputState.Left))
         {
             if (nowSelectIndex > 0)
             {
@@ -588,7 +588,7 @@ public partial class KeyScreen
                 PlaySound(new(ErrorS));
             }
         }
-        else if (InputManager.GetDown(InputState.Right))
+        else if (InputGetDown(InputState.Right))
         {
             if (nowSelectIndex < 4)
             {
@@ -603,7 +603,7 @@ public partial class KeyScreen
                 PlaySound(new(ErrorS));
             }
         }
-        else if (InputManager.GetDown(InputState.Up))
+        else if (InputGetDown(InputState.Up))
         {
             PlayInputCilp();
 
@@ -615,7 +615,7 @@ public partial class KeyScreen
             }
             haveInput = true;
         }
-        else if (InputManager.GetDown(InputState.Down))
+        else if (InputGetDown(InputState.Down))
         {
             PlayInputCilp();
             itemValue[nowSelectIndex] = (itemValue[nowSelectIndex] + 9) % 10;

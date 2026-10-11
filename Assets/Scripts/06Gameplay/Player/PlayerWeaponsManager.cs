@@ -215,6 +215,7 @@ namespace FPSGame.Gameplay
             OnSwitchedToWeapon += OnWeaponSwitched;
             OnAim += OnAiming;
             FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange += OnAirdrop;
+            FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange += OnTempWeaponReconcile;
 
             BattleEventBus.OnSelectAirdrop += OnInputCompletedAirdrop;
             BattleEventBus.OnCancelAirdrop += OnCancelAirdrop;
@@ -238,6 +239,7 @@ namespace FPSGame.Gameplay
             OnSwitchedToWeapon -= OnWeaponSwitched;
             OnAim -= OnAiming;
             FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange -= OnAirdrop;
+            FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange -= OnTempWeaponReconcile;
             BattleEventBus.OnSelectAirdrop -= OnInputCompletedAirdrop;
             BattleEventBus.OnCancelAirdrop -= OnCancelAirdrop;
             BattleEventBus.OnAirdrop -= OnAirdrop;
@@ -415,6 +417,48 @@ namespace FPSGame.Gameplay
                     //投掷重置原武器
                     SwitchToWeaponIndex(m_LastWeaponIndex, true, false, true);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 【跨窗口状态收尾】从"会吞输入的状态"（设置界面 / 自由相机）切回 <c>Game</c> 时，对账手里那把**临时武器**。
+        ///
+        /// <para>▍为什么需要：扔雷与蹲-信号枪的收尾全靠**按键抬起**这个边沿（<c>GetThrowUP</c>/<c>GetCrouchUp</c>），
+        /// 而这两个查询在 UI / 自由相机状态恒为 false（鼠标被解锁 ⇒ <c>CanProcessInput</c> 直接失败），
+        /// 边沿被吞掉就是**永久丢失** ⇒ 出来时手雷卡在手上（<c>UpdateFirstWeapon</c> 里"拿手雷不能开火"
+        /// ⇒ 既扔不出去也打不了枪），或者一直举着信号枪（2026-10-11 实测定位）。</para>
+        ///
+        /// <para>▍判据：切回来那一刻状态已经是 <c>Game</c> ⇒ 常规键位查询恢复正常，直接问"键还按着吗"
+        /// （**按住查询**，不是边沿）—— 已经松了就按原分支补一次收尾。</para>
+        ///
+        /// <para>▍⚠ 只认 <c>UI</c> / <c>FreeCamera</c> 作为来源：从 <c>Airdrop</c> 回来有它自己那条
+        /// （<see cref="OnAirdrop(WindowStateEnum, WindowStateEnum)"/>，且"等待释放"期间**刻意**继续举着信号枪，
+        /// 不能被这里抢走还原）。</para>
+        /// </summary>
+        private void OnTempWeaponReconcile(WindowStateEnum oldState, WindowStateEnum newState)
+        {
+            if (newState != WindowStateEnum.Game) return;
+            if (oldState != WindowStateEnum.UI && oldState != WindowStateEnum.FreeCamera) return;
+            // 只有战斗中才有"临时武器"这回事（`GetThrow/GetCrouch` 本身也以 GameState==Game 为门）
+            if (FPSGame.Data.FlowState.GameState != FPSGame.Core.GameStateEnum.Game) return;
+            if (m_PlayerCharacterController == null || m_InputHandler == null) return;
+
+            var actor = m_PlayerCharacterController.Actor;
+            if (actor == null || actor.ActorState != ActorState.Normal) return;
+
+            // 手雷：扔键早松了 ⇒ 补扔出去 + 还原武器（与 UpdateThrow 的抬手分支同一套）
+            if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.Grenade) && !m_InputHandler.GetThrow())
+            {
+                WeaponPlayerController grenadeWeapon = GetActiveWeapon();
+                if (grenadeWeapon != null) grenadeWeapon.HandleShootInputs(true, false, false, IsAiming);
+                SwitchToWeaponIndex(m_LastWeaponIndex, true, false, true);
+                return;
+            }
+
+            // 蹲-信号枪：蹲键早松了 ⇒ 还原武器（与 UpdateFlareGun 的抬蹲分支同一套）
+            if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun) && !m_InputHandler.GetCrouch())
+            {
+                SwitchToWeaponIndex(m_LastWeaponIndex, true, false, false);
             }
         }
         
@@ -1243,8 +1287,14 @@ namespace FPSGame.Gameplay
             if (m_PlayerCharacterController.Actor.ActorState == ActorState.Normal) {
                 if (newState == WindowStateEnum.Airdrop)
                 {
-                    //Debug.LogError("记录上一次武器为"+ ActiveWeaponIndex);
-                    m_LastWeaponIndex = ActiveWeaponIndex;
+                    // ★ 只在手里是**普通武器**时才记录上一次武器（信号枪/手雷这种**临时武器**不记）。
+                    //   原来是无条件记录，于是这种情况会把记录写坏：战备菜单开着时打开设置窗口 —— SettingWnd 把状态
+                    //   记成 UI，关窗时又**还原成 Airdrop** ⇒ 本分支被**二次**触发，而此刻手里正是信号枪
+                    //   ⇒ `m_LastWeaponIndex` 被覆盖成信号枪槽 ⇒ 随后 Airdrop→Game / 释放时的还原
+                    //   命中兜底 `? 0 :` ⇒ 切回 0 号槽，而不是玩家进战备前那把（2026-10-11 实测定位）。
+                    //   ⚠ 手雷同理：按住 G 的途中按 Tab 进战备，手里是手雷槽 ⇒ 记下来只会让"还原"回到手雷槽。
+                    int cur = ActiveWeaponIndex;
+                    if (cur != SlotOf(WeaponTypeEnum.FlareGun) && cur != SlotOf(WeaponTypeEnum.Grenade)) m_LastWeaponIndex = cur;
                     SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.FlareGun), false, false, false);
                 }
                 else if (oldSstate == WindowStateEnum.Airdrop && AirdropReleaseState.WaitRelease == null)

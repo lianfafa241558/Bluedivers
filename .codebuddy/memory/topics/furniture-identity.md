@@ -28,3 +28,12 @@
 - **`Furniture_General.Id` ↔ `furnData` 键比对**（14 键）：命中 `BlackBox / Caisson / KeyScreen / PipeTarget / SignaTower / Supply`；**唯一无配置的是 `Assets/Art/Prefabs/Beacon.prefab` 的 4 个 `Plane`（Id 空）** ⇒ `Operate()` 只做 `action._Operate?.Invoke`，空 action 时**连 `base.Operate()` 都不走，等于点了没反应**（改造前后一致，非回归，但建议给它们补 Id 或改 `Operate()` 兜底 `base`）。另有 8 个键（`AirdropConfigWnd / GuideWnd / MedicalBag / SelectAirdrop / SelectRole / SelectTask / SelectVehicle / SettingWnd`）**场上无同 Id 家具**，全仓也搜不到任何"给家具写 Id"的代码（除 `Furniture_Pipe` 的状态键）⇒ 要么由别处运行时写，要么是死配置，待用户确认。
 - **非本次引入的遗留缺失脚本（92 个，独立排查）**：89 个在第三方 `Assets/Plugins/Art/WarFX/**`；项目自己的 2 个 = `Resources/Prefabs/Projectiles/Projectile_Disc.prefab`（1 个）与 `Resources/VFX/Environment/Directional Light.prefab`（1 个），其 `m_Script` guid `474bcb49…`/`dd9e0c18…`/`da2b0de2…` 在 AssetDatabase 里解析不到（`de99b30e…=ProjectileStandard`、`3614fdf6…=ProjectileChargeParameters` 正常）。
 - **建议 Play 回归点**：① `Furniture_Pipe` 的 `SetId` 现在把状态写进自身 `BaseObject`（管道任务 `MissionSubConnectPipes` 依赖 `Id=="PipeWait"`）；② `Healdrone_*`/`Kei` 的 `IEquippable.ID` 由空串变真实值，影响 `BagBase`/`HandEquip` 槽位匹配与存档。
+
+### ⚠ 更正（2026-10-11）：上面"雷达站行为派发（含 `_InOperateUpdate` 旋转）**恢复生效**"这句**不成立**，别照抄
+
+- `Furniture_General.Operate()`（`Furniture_General.cs:217-219`）只做 `action._Operate?.Invoke(this)`，**不调 `base.Operate()`**；
+  而 `furnData["SignaTower"]` 只配了 `_InOperateUpdate`、没配 `_Operate` ⇒ 一次 `Operate()` 什么都不做（`inOperate` 保持 false）
+  ⇒ `Furniture_Attached.Update` 的 `if (inOperate) InOperateUpdate()` 永不进 ⇒ **旋转仍然不生效**。
+  连带：`GlobalEventBus.FurnitureOperate` 不派发 ⇒ **联机 4036（`NetFurnitureBridge`）对 SignaTower 永远收不到**。
+  同款空 action 的还有 `Beacon.prefab` 的 4 个 `Plane`（Id 为空，见本文档上面那条）——它们是"点了没反应"而非"行为生效"。
+- 判据：`furnData[Id]` 有 `_InOperateUpdate` 但无 `_Operate` ⇒ 该家具的 Operate 是空转（目前只有 `SignaTower` 这一例）。

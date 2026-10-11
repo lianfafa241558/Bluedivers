@@ -1,3 +1,4 @@
+using System;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using UnityEngine;
@@ -24,6 +25,11 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
     /// <summary>每秒提交到容器的欧帕兹数量（恒定速率）</summary>
     public const int SubmitPerSecond = 5;
 
+    /// <summary>一次提交已产生效果（家具 / 本次提交个数 / 主类型 index）⇒ 09 侧联机桥据此在**远端**重放这次提交。
+    /// <para>▍为什么要报：本类的效果写在 <c>IStepPress.StepPress</c>（逐个扣背包 + <see cref="OnSubmit"/>），
+    /// 而远端重放只走 <c>Operate()</c>（只收尾）⇒ 不报个数的话远端 <c>held</c> 永远不动、<c>OnSubmit</c> 也不触发。</para></summary>
+    public static event Action<Furniture_OOPartDepositBase, int, int> OnSubmitReported;
+
     /// <summary>单个欧帕兹所需的长按时间（秒）</summary>
     private const float PerUnitTime = 1f / SubmitPerSecond;
 
@@ -44,6 +50,8 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
     private int _need;               // 本次按下锁定的需转移个数
     private int _transferred;        // 本次已转移个数
     private float _stepAcc;          // 转移节拍累加器
+    private OOPartEnum _lastSubmitType;  // 最近一次转移的类型（联机上报时当"主类型"）
+    private bool _reported;          // 本次长按是否已经上报过（完成 + 松开两条路都调，防重复上报）
 
     /// <summary>容纳上限</summary>
     public int Capacity => capacity;
@@ -66,7 +74,7 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
     private bool CoreCanOperate(GameObject unit)
     {
         if (!base.CanOperate(unit)) return false;
-        if (unit == null || !unit.TryGetComponent(out PlayerOOPartInventory bag)) return false;
+        if (unit == null || !unit.TryGetComponent(out IOOPartInventory bag)) return false;
         return bag.CurrentCount > 0 && RemainingSpace > 0;
     }
 
@@ -81,7 +89,7 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
 
     bool IStepPress.BeginPress(GameObject unit)
     {
-        if (unit == null || !unit.TryGetComponent(out PlayerOOPartInventory bag)) return false;
+        if (unit == null || !unit.TryGetComponent(out IOOPartInventory bag)) return false;
 
         // 只在按下瞬间锁定需求与总时长
         _need = Mathf.Min(RemainingSpace, bag.CurrentCount);
@@ -91,6 +99,7 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
         _pressUser = unit;
         _transferred = 0;
         _stepAcc = 0;
+        _reported = false;
         pressTime = 0;
         // 供 UI(OperationWnd) 显示总进度分母
         meetTime = _need * PerUnitTime;
@@ -100,7 +109,7 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
     bool IStepPress.StepPress(float deltaTime)
     {
         if (!_pressing) return false;
-        if (!_pressUser || !_pressUser.TryGetComponent(out PlayerOOPartInventory bag))
+        if (!_pressUser || !_pressUser.TryGetComponent(out IOOPartInventory bag))
         {
             ResetPressState();
             return false;
@@ -118,6 +127,7 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
             {
                 held++;
                 _transferred++;
+                _lastSubmitType = type;
                 OnSubmit(_pressUser, type);
             }
             else
@@ -136,9 +146,18 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
     {
         GameObject user = _pressUser;
         int transferred = _transferred;
+        ReportSubmitted();          // ★ 松手也算"已提交了 transferred 个"（否则远端会漏掉这一批）
         ResetPressState();
         if (user != null)
             OnPressCancel(user, transferred);
+    }
+
+    /// <summary>把"本次提交了几个"报给联机桥（幂等：一次长按只报一次）。</summary>
+    private void ReportSubmitted()
+    {
+        if (_reported || _transferred <= 0) return;
+        _reported = true;
+        OnSubmitReported?.Invoke(this, _transferred, (int)_lastSubmitType);
     }
 
     /// <summary>复位按压运行时状态（不触发任何钩子，供完成收尾等内部使用）</summary>
@@ -154,6 +173,9 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
 
     public override void Operate()
     {
+        // ★ 联机：转满收尾时报一次"本次提交了几个"（远端据此在盟友的幽灵背包上重放这次提交）
+        ReportSubmitted();
+
         base.Operate();
 
         // 正常转满收尾：仅复位按压状态，不触发"松开"钩子（完成由本方法收尾表达）
@@ -166,7 +188,7 @@ public abstract class Furniture_OOPartDepositBase : Furniture_Attached, IStepPre
     /// <summary>
     /// 从玩家背包取出任意类型 1 个欧帕兹，成功返回 true 并输出其类型。
     /// </summary>
-    private static bool RemoveAnyOne(PlayerOOPartInventory bag, out OOPartEnum type)
+    private static bool RemoveAnyOne(IOOPartInventory bag, out OOPartEnum type)
     {
         foreach (var kv in bag.GetAll())
         {

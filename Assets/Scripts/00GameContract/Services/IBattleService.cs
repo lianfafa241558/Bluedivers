@@ -64,6 +64,15 @@ namespace FPSGame.GameContract
         /// <summary>在马点位置生成巡逻队（返回实例根物体；MissionOilRefining 用）。</summary>
         List<GameObject> CreatPatrol(Vector3 pos);
 
+        /// <summary>【联机】运行时生成的**唯一入口**（巢穴 / 召唤师 / 刷怪器）：房主创建并上报 4052，成员返回 null（等复刻）。
+        /// <para>▍为什么必须收口：这类生成的时机由各自 AI / 计时驱动，两端必然不同 ⇒ 各自生成就会把 <c>Actor.Awake</c>
+        /// 的号段整体推歪。⚠ 场景摆放 / 任务实体（派生号）与波次（4023 整批复刻）**不要**走这条。</para></summary>
+        /// <param name="source">生成者（实现 <see cref="INetSpawner"/>）：房主上报身份键、成员凭它找回本端那份生成器。</param>
+        /// <param name="slot">生成者自己表里的下标（巢穴 = creatData 序 / 召唤师 = summoned 序 / 刷怪器 = (int)tier）。</param>
+        /// <param name="target">首帧目标点（全 0 = 无；接收端复刻后按它设目标）。</param>
+        /// <returns>房主（或单机）= 新建单位；成员 = null。</returns>
+        GameObject CreatUnit(GameObject prefab, Vector3 pos, Quaternion rot, INetSpawner source, int slot, Vector3 target = default);
+
         /// <summary>当前波次（等价 <c>BattleManager.WaveCont.WaveCount</c>；MissionEradicate 用）。</summary>
         int WaveCount { get; }
     }

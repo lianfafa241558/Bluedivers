@@ -53,6 +53,13 @@ public class MapData_SO : ScriptableObject
 
     [Divider]
     [Header("地形")]
+    [InspectorName("地形资产（本图专用 TerrainData）")]
+    [Tooltip("运行时由 BattleManager.InitTerrain 赋给 BattleScene 里那个 Terrain（terrain.terrainData = 本字段）。\n" +
+             "⚠ 为什么必须每图一份：打包端**改不了** TerrainData 的原型数组（treePrototypes / detailPrototypes 是\n" +
+             "Editor-only，调用只刷 \"only implemented in editor\"），所以\"本图用哪些石头/树/草\"只能烘在资产里。\n" +
+             "生成入口：Tools/地形/生成每图 TerrainData（方案A）。留空 = 退回 MainMap 那套原型。")]
+    public TerrainData terrainAsset;
+
     [InspectorName("纹理配置")]
     public TerrainItemInfo[] TerrainItem;
 

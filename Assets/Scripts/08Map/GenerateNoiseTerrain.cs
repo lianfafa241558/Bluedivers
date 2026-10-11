@@ -699,36 +699,60 @@ namespace FPSGame.MapUtils
             stoneRange = new Vector2Int(0, stoneCount - 1);
             treeRange = new Vector2Int(stoneCount, stoneCount + treeCount - 1);
 
+            // 清理侧（TerrainClearer）用的是同一套区间，必须同步，否则"清石块"会清到树上。
+            // ⚠ 与平台无关 ⇒ 放在平台分支**之前**（打包端不重建原型，但仍要靠这套区间清地表物；
+            //   顺带修掉旧行为：数量为 0 时原来会保留上一张图的区间）。
+            TerrainClearer.RockPrototypeRange = stoneRange;
+            TerrainClearer.TreePrototypeRange = treeRange;
+
+            // 细节层的"提供了 / 配了几层"是**跨平台语义**（决定后面 SpawnDetails/SpawnVegetation 跑不跑）
+            // ⇒ 也先定下来，别留在编辑器专属分支里。
+            _detailProvided = detailPrototypes != null;
+            _detailConfigured = _detailProvided && detailPrototypes.Length > 0;
+
+            // ⚠⚠ 本方法里**只有"改原型数组"是编辑器专属**（`TerrainData.treePrototypes` / `detailPrototypes`
+            //   的 setter：打包运行时调用只会往 Player.log 刷 "only implemented in editor …/DetailDatabase.cpp"，
+            //   而且**什么都不会改**）。其余全是运行时 API、打包端照常跑 —— 尤其：
+            //   · `SetTreeInstances`（重写树实例）· `SetDetailLayer`（`ClearDetailLayers` 内部只用它，**清草不受影响**）
+            //   · 读 `treeInstances` · 区间与开关的推导。
+            //   ⇒ **现场生成（高度 / 树实例 / 草层）在打包端完全不受影响**，受影响的只有"本图用哪几个原型"。
+            //
+            //   ▍2026-10-10 实测到的老现实：战斗地形原本只有**一份** `Assets/Art/TerrainData/MainMap.asset`
+            //   （`BattleScene` 里那个 Terrain 引用它、`BattleManager.InitTerrain` 从不换 `terrain.terrainData`）
+            //   ⇒ 打包端各图都只能用 MainMap 那一套原型（数量不匹配时靠 <see cref="ClampTreeRangesToAsset"/> 兜）。
+            //
+            //   ▍解法（**方案 A 已落地**）：每张图一份 TerrainData 资产，运行时换 `terrain.terrainData`
+            //   （该 setter 是运行时 API ✓）——
+            //   · `MapData_SO.terrainAsset` 持有它；`BattleManager.InitTerrain` 在读 `terrainData` **之前**赋值；
+            //   · 资产由编辑器工具 `Tools/地形/生成每图 TerrainData（方案A）`（`TerrainDataBaker`）用
+            //     <see cref="BuildTreePrototypes"/> / <see cref="BuildDetailPrototypes"/> **烘**出来；
+            //   · 从此打包端**不需要**在运行时改原型 ⇒ 本段在打包端被 `#if` 挡掉是"多余"而非"缺功能"，
+            //     编辑器端这段仍在跑（它把值写进**本图自己的**资产，因此不会再污染 MainMap、构建也可复现 ✓）。
             if (stoneCount + treeCount > 0)
             {
-                // 沿用地形资产同索引原型的其余配置（bendFactor 等），只替换 prefab；
-                // 数量超出的部分用结构体默认值。
-                TreePrototype[] existing = terrainData.treePrototypes;
-                TreePrototype[] protos = new TreePrototype[stoneCount + treeCount];
-                for (int i = 0; i < protos.Length; i++)
-                {
-                    GameObject prefab = i < stoneCount ? stonePrototypes[i] : treePrototypes[i - stoneCount];
-                    if (prefab == null)
-                    {
-                        Debug.LogWarning($"[原型] 第 {i} 个地形树原型为空，已跳过（该索引不会生成植被）");
-                        continue;
-                    }
-                    protos[i] = i < existing.Length ? existing[i] : new TreePrototype();
-                    protos[i].prefab = prefab;
-                }
+                // 沿用地形资产同索引原型的其余配置（bendFactor 等），只替换 prefab。
+                // ⚠ 构造逻辑抽成静态方法，因为**编辑器烘焙工具（TerrainDataBaker）要用同一份**
+                //   —— 否则"运行时重建"与"烘进资产"两套逻辑会漂移（这里曾经就是唯一的来源）。
+                TreePrototype[] protos = BuildTreePrototypes(stonePrototypes, treePrototypes, terrainData.treePrototypes);
 
                 // ⚠ 换原型数组之前必须先清掉已烘焙的树实例：地形资产里可能已有一批引用旧原型索引的实例，
                 // 原型数组一变短，Unity 就会把越界的实例逐条剔除并在控制台刷一堆
                 // "Tree removed: invalid prototype N"（编辑器下还会弄脏地形资产）。
                 // 本方法之后马上会用 SetTreeInstances 重写整表，所以这里清空不会丢东西。
+                // ⚠ 这一步是**运行时 API**（打包端照跑）：打包端原型数组不变，清完随后被整表重写。
                 if (terrainData.treeInstances.Length > 0)
                     terrainData.SetTreeInstances(Array.Empty<TreeInstance>(), false);
 
-                terrainData.treePrototypes = protos;
+#if UNITY_EDITOR
+                terrainData.treePrototypes = protos;          // ← Editor-only
+#endif
 
-                // 清理侧（TerrainClearer）用的是同一套区间，必须同步，否则"清石块"会清到树上
-                TerrainClearer.RockPrototypeRange = stoneRange;
-                TerrainClearer.TreePrototypeRange = treeRange;
+                // ★ 区间必须夹进**资产现有原型**范围（放在平台分支**外面** ⇒ 两种平台都编到、都能测）：
+                //   · 编辑器：上面刚把 `treePrototypes` 赋成同样长度 ⇒ 这一步天然是 no-op；
+                //   · 打包端：数组改不了，本图数量又常常 > MainMap 的 32 ⇒ 不夹就会让 `SetTreeInstances`
+                //     为越界的每条逐条报 "Tree removed: invalid prototype N"（Console 被刷爆）。
+                ClampTreeRangesToAsset(terrainData, ref stoneRange, ref treeRange);
+
                 Debug.Log($"[原型] 地形树原型已按地图数据重建：石块 {stoneCount} 个（区间 {stoneRange}），"
                     + $"树 {treeCount} 个（区间 {treeRange}）");
             }
@@ -741,51 +765,27 @@ namespace FPSGame.MapUtils
             // 长度为 0 = 调用方明确表示"本图没有草" → 清空细节层。两者语义不同，不能混。
             bool detailProvided = detailPrototypes != null;
             int detailCount = detailProvided ? detailPrototypes.Length : 0;
-            _detailProvided = detailProvided;
-            _detailConfigured = detailCount > 0;
             if (_detailConfigured)
             {
                 DetailPrototype[] existing = terrainData.detailPrototypes;
                 // ⚠ 细节层数变少时，被裁掉的那几层草数据不会随原型数组一起消失（它们仍留在 TerrainData
                 // 里），表现为"换成细节更少的地图后，上一张图的草还在原地长着"。必须在改原型数组之前
                 // 显式清零——数组一换短，这些层就再也寻址不到了。
+                // ⚠ `ClearDetailLayers` 内部**只有 `SetDetailLayer`** ⇒ 运行时可用、打包端照跑。
                 int existingDetailCount = existing?.Length ?? 0;
                 if (existingDetailCount > detailCount)
                     ClearDetailLayers(terrainData, detailCount, existingDetailCount - detailCount);
 
-                DetailPrototype[] protos = new DetailPrototype[detailCount];
-                // ⚠ 渲染模式（是否 GPU 实例化）必须在这里写死，不能靠继承资产里同索引原型，原因三条：
-                //   1. 资产里的原型本身就是混合模式（实测 MainMap：索引 0~3 = Grass + 不实例化、
-                //      4~6 = VertexLit + 实例化）→ 只继承会让"哪一层实例化"取决于资产里的顺序；
-                //   2. 索引超出资产原型数量的层只会拿到 new DetailPrototype() 的默认值
-                //      （usePrototypeMesh=false / useInstancing=false / renderMode=Grass）；
-                //   3. 越是原型数量各图不同的项目（本仓 3~8 个不等），继承越不可控。
-                // Unity 2022.3 手册「Grass and other details」：勾上 Use GPU Instancing 后 Render Mode 会失效，
-                // 走 Instanced mesh 路径——用 prefab 自带的材质与 shader 渲染、用持久化实例常量缓冲，
-                // 实例多时 CPU/GPU 更省（代价：禁用 Healthy/Dry Color 噪声，本项目 ToonLit 不读这两个颜色；
-                // 每批 ≤1023 实例、不吃 lightprobe/lightmap）。
-                // 尺寸/宽高噪声/颜色等"手感参数"仍沿用资产里同索引原型；getter 返回的是新对象副本，
-                // 所以改写这些字段不会污染地形资产。
                 List<string> materialsWithoutInstancing = new List<string>();
-                for (int i = 0; i < detailCount; i++)
-                {
-                    if (detailPrototypes[i] == null)
-                    {
-                        Debug.LogWarning($"[原型] 第 {i} 个细节原型为空，已跳过（该索引不会生成草）");
-                        continue;
-                    }
-                    protos[i] = i < existing.Length ? existing[i] : new DetailPrototype();
-                    // 用网格原型：接管贴图模式下的 prototype，并清掉万一残留的 billboard 贴图
-                    protos[i].prototype = detailPrototypes[i];
-                    protos[i].usePrototypeMesh = true;
-                    protos[i].prototypeTexture = null;
-                    // VertexLit 只是"没勾实例化时"的兜底取值（勾了实例化后 Unity 会把 Render Mode 置灰忽略）
-                    protos[i].renderMode = DetailRenderMode.VertexLit;
-                    protos[i].useInstancing = true;
-                    // 实例化的前提是材质勾了 Enable GPU Instancing，否则 Unity 会静默退回非实例化
-                    CollectMaterialsWithoutInstancing(protos[i].prototype, materialsWithoutInstancing);
-                }
-                terrainData.detailPrototypes = protos;
+                DetailPrototype[] protos = BuildDetailPrototypes(detailPrototypes, existing, materialsWithoutInstancing);
+#if UNITY_EDITOR
+                terrainData.detailPrototypes = protos;        // ← Editor-only
+#else
+                // 打包端改不了细节原型数组（`protos` 只是白构造）⇒ 用资产里那几层。
+                // ⚠ 但**"上一张图的草残留"在打包端照样会被清掉**：`SpawnDetails` 结束时会**无条件把
+                //   资产的所有细节层整层重写**（不撒草就提交全零）⇒ 不需要这里的"裁层"能力。
+                //   （这里只写注释、不写代码：`#else` 分支两个工具都编不到，能不写就不写。）
+#endif
                 Debug.Log($"[原型] 细节（草）原型已按地图数据重建：共 {detailCount} 个（统一 VertexLit + GPU 实例化）");
                 LogDetailPrototypes(protos);
                 if (materialsWithoutInstancing.Count > 0)
@@ -811,10 +811,9 @@ namespace FPSGame.MapUtils
                 // 原型变了必须刷新，否则 Terrain 内部仍用旧原型（树实例的 prototypeIndex 会错位）。
                 // 树实例随后会被 SetTreeInstances 整表重写，这里不用担心旧实例。
                 //
-                // ⚠⚠ `TerrainData.RefreshPrototypes()` 是 **Editor-only** API：打包运行时调用会抛
-                //   "<i>…is only implemented in the Editor</i>"（2026-10-07 用户实测，栈就在本方法末尾这一句）。
-                //   运行时不需要它 —— 运行时拿到的地形资产是已经烘好的、原型数组与实例都是同一次导入的结果；
-                //   而"换原型"这条路径本来也只在编辑器里生成地形时才走（运行时改原型没有实际用途）。
+                // ⚠⚠ `TerrainData.RefreshPrototypes()` 是 **Editor-only**：打包运行时刷同一条
+                //   "…is only implemented in the Editor"（2026-10-07 实测）⇒ 单独包一层。
+                //   打包端也不需要它：运行时拿到的地形资产是烘好的、原型数组与实例同源。
 #if UNITY_EDITOR
                 terrainData.RefreshPrototypes();
 #endif
@@ -1718,6 +1717,120 @@ namespace FPSGame.MapUtils
                 yield return null;
             }
         }
+
+        /// <summary>
+        /// 由地图数据造出 <c>TerrainData.treePrototypes</c>：**石块在前、树紧随其后**
+        /// （这正是 <c>stoneRange</c>/<c>treeRange</c> 那套区间语义的根基，两边必须同序）。
+        ///
+        /// <para>▍与资产里同索引原型的其余配置（<c>bendFactor</c> 等）是**继承**关系：
+        /// 索引 &lt; <paramref name="existing"/>.Length 时沿用，超出的部分用结构体默认值。</para>
+        ///
+        /// <para>⚠⚠ **单一事实来源**：运行时重建（<see cref="ApplyMapPrototypes"/>）与编辑器烘焙
+        /// （`TerrainDataBaker` 生成每图 TerrainData）都调它 ⇒ 两边不会漂移。改这里，烘出来的资产才会跟着对。</para>
+        /// </summary>
+        public static TreePrototype[] BuildTreePrototypes(GameObject[] stonePrototypes, GameObject[] treePrototypes,
+            TreePrototype[] existing)
+        {
+            int stoneCount = stonePrototypes?.Length ?? 0;
+            int treeCount = treePrototypes?.Length ?? 0;
+            int inherited = existing != null ? existing.Length : 0;
+
+            TreePrototype[] protos = new TreePrototype[stoneCount + treeCount];
+            for (int i = 0; i < protos.Length; i++)
+            {
+                GameObject prefab = i < stoneCount ? stonePrototypes[i] : treePrototypes[i - stoneCount];
+                if (prefab == null)
+                {
+                    Debug.LogWarning($"[原型] 第 {i} 个地形树原型为空，已跳过（该索引不会生成植被）");
+                    continue;
+                }
+                protos[i] = i < inherited ? existing[i] : new TreePrototype();
+                protos[i].prefab = prefab;
+            }
+            return protos;
+        }
+
+        /// <summary>
+        /// 由地图数据造出 <c>TerrainData.detailPrototypes</c>（细节/草的原型）。
+        ///
+        /// <para>⚠ 渲染模式（是否 GPU 实例化）必须在这里写死，不能靠继承资产里同索引原型，原因三条：
+        /// 1. 资产里的原型本身就是混合模式（实测 MainMap：索引 0~3 = Grass + 不实例化、4~6 = VertexLit + 实例化）
+        /// ⇒ 只继承会让"哪一层实例化"取决于资产里的顺序；
+        /// 2. 索引超出资产原型数量的层只会拿到 <c>new DetailPrototype()</c> 的默认值
+        /// （<c>usePrototypeMesh=false / useInstancing=false / renderMode=Grass</c>）；
+        /// 3. 越是原型数量各图不同的项目（本仓 3~25 个不等），继承越不可控。</para>
+        ///
+        /// <para>Unity 2022.3 手册「Grass and other details」：勾上 Use GPU Instancing 后 Render Mode 会失效，
+        /// 走 Instanced mesh 路径——用 prefab 自带的材质与 shader 渲染、用持久化实例常量缓冲，
+        /// 实例多时 CPU/GPU 更省（代价：禁用 Healthy/Dry Color 噪声，本项目 ToonLit 不读这两个颜色；
+        /// 每批 ≤1023 实例、不吃 lightprobe/lightmap）。
+        /// 尺寸/宽高噪声/颜色等"手感参数"仍沿用资产里同索引原型（getter 返回的是新对象副本，改写不污染资产）。</para>
+        ///
+        /// <para>⚠ 同样是**单一事实来源**（运行时重建 + 编辑器烘焙共用，见 <see cref="BuildTreePrototypes"/>）。</para>
+        /// </summary>
+        /// <param name="materialsWithoutInstancing">输出：没勾 Enable GPU Instancing 的材质名（去重）；
+        /// 由调用方决定怎么告警（运行时打 Warning、烘焙工具汇总打印）。</param>
+        public static DetailPrototype[] BuildDetailPrototypes(GameObject[] detailPrototypes, DetailPrototype[] existing,
+            List<string> materialsWithoutInstancing)
+        {
+            int count = detailPrototypes?.Length ?? 0;
+            int inherited = existing != null ? existing.Length : 0;
+
+            DetailPrototype[] protos = new DetailPrototype[count];
+            for (int i = 0; i < count; i++)
+            {
+                if (detailPrototypes[i] == null)
+                {
+                    Debug.LogWarning($"[原型] 第 {i} 个细节原型为空，已跳过（该索引不会生成草）");
+                    continue;
+                }
+                protos[i] = i < inherited ? existing[i] : new DetailPrototype();
+                if (protos[i] == null) protos[i] = new DetailPrototype();   // 资产里可能是空槽 ⇒ 别让下面 NRE
+                // 用网格原型：接管贴图模式下的 prototype，并清掉万一残留的 billboard 贴图
+                protos[i].prototype = detailPrototypes[i];
+                protos[i].usePrototypeMesh = true;
+                protos[i].prototypeTexture = null;
+                // VertexLit 只是"没勾实例化时"的兜底取值（勾了实例化后 Unity 会把 Render Mode 置灰忽略）
+                protos[i].renderMode = DetailRenderMode.VertexLit;
+                protos[i].useInstancing = true;
+                // 实例化的前提是材质勾了 Enable GPU Instancing，否则 Unity 会静默退回非实例化
+                if (materialsWithoutInstancing != null)
+                    CollectMaterialsWithoutInstancing(protos[i].prototype, materialsWithoutInstancing);
+            }
+            return protos;
+        }
+
+        /// <summary>
+        /// 把石块/树区间**夹进** <c>terrainData</c> 里现有树原型的范围，并同步 <see cref="TerrainClearer"/>。
+        ///
+        /// <para>▍为什么必须有（2026-10-10）：打包端**改不了** <c>TerrainData.treePrototypes</c>（Editor-only），
+        /// 只拿得到资产里烘着的那一套；而本图要求的数量（如 Gehanna 石块 19 + 树 21 = 40）常常**超过**
+        /// <c>MainMap.asset</c> 里的 32 个 ⇒ 不夹的话 <c>SetTreeInstances</c> 会为越界的每条逐条报
+        /// "Tree removed: invalid prototype N"，把 Console 刷爆，而且日志里看不出是"原型不匹配"。</para>
+        ///
+        /// <para>▍编辑器里天然是 no-op（<c>treePrototypes</c> 刚被赋成同样长度）；放在平台分支外是因为
+        /// <c>#if/#else</c> 的 build 分支离线编译与 Unity 编辑器都编不到 ⇒ 能共用就共用，别让代码"测不到"。</para>
+        /// </summary>
+        private static void ClampTreeRangesToAsset(TerrainData data, ref Vector2Int stoneRange, ref Vector2Int treeRange)
+        {
+            int assetCount = data != null && data.treePrototypes != null ? data.treePrototypes.Length : 0;
+            if (stoneRange.y < assetCount && treeRange.y < assetCount) return;   // 本来就装得下
+
+            Debug.LogWarning($"[原型] 本图要求 石块{RangeCount(stoneRange)}+树{RangeCount(treeRange)} 个原型，" +
+                             $"而当前 TerrainData 资产里只有 {assetCount} 个 ⇒ 已把区间夹进资产范围" +
+                             "（打包端改不了原型数组，植被种类会与编辑器不同；根因与解法见 ApplyMapPrototypes 注释）");
+
+            if (stoneRange.y >= assetCount) stoneRange.y = assetCount - 1;
+            if (treeRange.y >= assetCount) treeRange.y = assetCount - 1;
+            if (stoneRange.x > stoneRange.y) stoneRange = new Vector2Int(0, -1);   // y < x = 空区间
+            if (treeRange.x > treeRange.y) treeRange = new Vector2Int(0, -1);
+
+            TerrainClearer.RockPrototypeRange = stoneRange;   // 夹过之后必须和清理侧同步
+            TerrainClearer.TreePrototypeRange = treeRange;
+        }
+
+        /// <summary>区间里的原型个数（<c>y &lt; x</c> = 空区间 ⇒ 0）。</summary>
+        private static int RangeCount(Vector2Int range) => range.y >= range.x ? range.y - range.x + 1 : 0;
 
         /// <summary>
         /// 把 <paramref name="data"/> 里指定区间的细节（草）层数据清零。

@@ -39,8 +39,17 @@ namespace FPSGame.Gameplay
         /// <summary>拾取道具点（手持装备挂载点）</summary>
         public Transform HandPoint => handPoint;
 
-        /// <summary>背部点位（背包装备挂载点）</summary>
-        public Transform BackPoint => backPoint;
+        /// <summary>背部点位（背包装备挂载点）。
+        /// <para>▍惰性解析：盟友实例没有 <c>PlayerController</c>（⇒ 收不到 <c>OnBodySet</c>），
+        /// 模型是运行时装上去的 ⇒ 第一次取时按标签现找一次（找到即缓存）。</para></summary>
+        public Transform BackPoint
+        {
+            get
+            {
+                if (backPoint == null) backPoint = FindInChildren(transform, BackPointTag);
+                return backPoint;
+            }
+        }
 
         void Awake()
         {

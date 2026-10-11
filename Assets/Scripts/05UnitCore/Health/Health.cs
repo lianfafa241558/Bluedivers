@@ -123,6 +123,13 @@ namespace FPSGame.Game {
         /// <summary>标记当前 TakeDamage 调用来自异常状态 tick，HandleDamage 据此跳过积蓄槽更新</summary>
         private bool _isAboTickDamage;
 
+        /// <summary>**本次伤害的原始成分**（类型 + 系数），由 <c>Damageable.InflictDamage</c> 在结算前写入、结算后清空。
+        /// <para>▍给联机上报用（见 <c>EnemyController._OnDamaged</c>）：接收端只带总伤害时，
+        /// `Damageable.ArmorDestruction`（护甲破坏/流血）与 `Health.HandleDamage → AddAboGauge`（异常状态积蓄）
+        /// 两条分支会被**整段跳过** ⇒ 主机把怪冻住、成员那边它照常跑。</para>
+        /// <para>⚠ 直接调 <c>TakeDamage</c> 的路径（流血 / 异常状态 tick）拿到的是 null ⇒ 上报退回中性成分。</para></summary>
+        public List<SKVP<DamageTypeEnum, float>> LastRawGroups { get; set; }
+
         /// <summary>整体伤害抗性缓存字典（由 showArmorLists 构建，避免每帧遍历列表）</summary>
         private readonly Dictionary<DamageTypeEnum, float> _armorResistance = new();
 
@@ -262,6 +269,8 @@ namespace FPSGame.Game {
                 if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
                 //这个是控制hpui的，所以总是响应
                 UnitEventBus.UnitHit(gameObject, damageSource);
+                // ★ 联机伤害通道的上行点：**实际扣减量**（见 UnitEventBus.OnUnitDamaged 的注释）
+                UnitEventBus.UnitDamaged(gameObject, trueDamageAmount, damageSource, damageAffected);
             }
             showHealth = CurrentHealth.RawInt;
             HandleDeath(damageSource);

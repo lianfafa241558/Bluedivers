@@ -36,16 +36,21 @@ public class WeaponBag : BagBase
         if (!Owner.IsValidMono()) return;
         if (!weapon) return;
 
-        // 使用背包键(UseBag)控制开火
-        bool inputDown = m_InputHandler.GetUseBagDown();
-        bool inputHeld = m_InputHandler.GetUseBagHeld();
-        bool inputUp = inputHeld == false && m_FirePressed;
-        m_FirePressed = inputHeld;
-
-        // 有键按下才提交射击指令，避免自动武器一直开火
-        if (inputDown || inputHeld || inputUp)
+        // ⚠ 盟友实例上这件背包是**远端重放**装上去的：那边没有 PlayerInputHandler
+        //   （BagBase.OnInstall 取到 null）⇒ 不能拿它当输入源，否则每帧 NRE。
+        if (m_InputHandler != null)
         {
-            weapon.ShootInputs(inputDown, inputHeld, inputUp);
+            // 使用背包键(UseBag)控制开火
+            bool inputDown = m_InputHandler.GetUseBagDown();
+            bool inputHeld = m_InputHandler.GetUseBagHeld();
+            bool inputUp = inputHeld == false && m_FirePressed;
+            m_FirePressed = inputHeld;
+
+            // 有键按下才提交射击指令，避免自动武器一直开火
+            if (inputDown || inputHeld || inputUp)
+            {
+                weapon.ShootInputs(inputDown, inputHeld, inputUp);
+            }
         }
 
         // 每帧把武器状态返回给 UI
@@ -56,6 +61,19 @@ public class WeaponBag : BagBase
         {
             AutoUnload();
         }
+    }
+
+    /// <summary>
+    /// 本机真开了一发 ⇒ 抛给 09 的桥上报（对端只做表现）。
+    /// <para>▍为什么挂 <c>weapon.OnShoot</c> 而不是在 Update 里按输入猜：输入"按下/按住"不等于真开火
+    /// （弹匣空、冷却中都不发射），按输入猜会给对端放一堆假弹道。</para>
+    /// </summary>
+    private void HandleWeaponShoot(WeaponBaseController w)
+    {
+        if (weapon == null || !Owner.IsValidMono()) return;
+        var muzzle = weapon.GetMuzzle(0);
+        Vector3 dir = muzzle != null ? muzzle.forward : Owner.transform.forward;
+        FPSGame.Gameplay.BattleEventBus.BagShoot(Owner.gameObject, dir, weapon.UseDamageIndex);
     }
 
     /// <summary>
@@ -95,6 +113,8 @@ public class WeaponBag : BagBase
         {
             weapon.Owner = Owner.gameObject;
             weapon.ShowWeapon(true);
+            weapon.OnShoot -= HandleWeaponShoot;   // 幂等：反复装卸不重复挂
+            weapon.OnShoot += HandleWeaponShoot;
         }
 
         OnStateChange?.Invoke(true);
@@ -102,9 +122,18 @@ public class WeaponBag : BagBase
 
     public override void OnUninstall()
     {
-        if (weapon) weapon.ShowWeapon(false);
+        if (weapon)
+        {
+            weapon.OnShoot -= HandleWeaponShoot;
+            weapon.ShowWeapon(false);
+        }
 
         base.OnUninstall();//内部会 OnStateChange?.Invoke(false)
+    }
+
+    private void OnDestroy()
+    {
+        if (weapon) weapon.OnShoot -= HandleWeaponShoot;
     }
 }
 }

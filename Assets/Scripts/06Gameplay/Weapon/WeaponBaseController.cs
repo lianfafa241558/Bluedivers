@@ -135,6 +135,34 @@ namespace FPSGame.Weapon {
         [Tooltip("AI 听觉用的开火噪声半径(米)：每次射击从枪口发出一条噪声，越大越响；<=0 表示不产生开火噪声。表现层音效播放距离用上面的音效范围 SFXRange")]
         public int FireNoiseRadius = 20;
 
+        /// <summary>最近一次开火用的是**第几个发射点**（<c>Muzzles</c> 下标；<c>-1</c> = 齐射）。
+        /// <para>▍用途：随开火消息上报，让接收端的弹道从**同一个枪管**出（多管枪轮流开火，接收端没有那份计数）。</para></summary>
+        public int LastMuzzleIndex;
+
+        /// <summary>
+        /// 【逻辑噪声】从枪口发一条"开火噪声"（AI 听觉用）。**单一事实来源**，两条路都调它：
+        /// ① 本机真开火（<c>HandleShoot</c>，<c>remote=false</c>）；
+        /// ② **远端复刻**（<c>remote=true</c>）：收到别人开火的**表现**时，用**本地这份武器实例**
+        /// （枪口 + 本实例的 <see cref="FireNoiseRadius"/>）再验算一遍 ⇒ 两端对"同一枪"的怪反应一致。
+        /// ⚠ 刻意**不新增网络字段**：方向/落点本来就在同步，枪口与噪声半径取本地实例的即可（最多差一个位姿周期）。
+        /// </summary>
+        public void EmitFireNoise(bool remote)
+        {
+            if (!FPSGame.GameContract.BattleHub.Current.IsPresent || FireNoiseRadius <= 0) return;
+
+            var muzzle = GetMuzzle(0);
+            FPSGame.Utils.NetSyncLog.AiLog(remote ? "噪声·发(枪声·远端复刻)" : "噪声·发(枪声)",
+                $"{(Owner != null ? Owner.name : name)} @{(muzzle ? muzzle.position : transform.position):F2} 半径={FireNoiseRadius}",
+                Owner != null ? Owner.GetInstanceID() : GetInstanceID(), 0.5f);
+
+            UnitEventBus.Noise(new NoiseData
+            {
+                source = Owner,
+                pos = (PEVector3)(muzzle ? muzzle.position : transform.position),
+                radius = (PEInt)FireNoiseRadius,
+            });
+        }
+
         [InspectorName("射击音效")]
         [Compare("UseContinuousShootSound", 0, CompareOperate.Equal)]
         public AudioClip ShootSfx;
@@ -388,10 +416,45 @@ namespace FPSGame.Weapon {
             bullet.OnHit -= FpsHelper.Hit;      // ★ 只摘伤害，别用 `OnHit = null`：那会把命中特效一起摘掉
             // ★ 但"命中表现"要补回来（2026-10-09）：FpsHelper.Hit 里除了伤害还包含命中特效/音效/弹痕，
             //   摘掉后对方屏幕上看不到任何命中反馈 ⇒ 表现弹命中时改成只播表现那一半。
-            bullet.OnHit += FpsHelper.PlayImpactFx;
+            // ★ 改挂"表现 + **本地验算一次命中噪声**"（2026-10-11，用户口径"两边一致"）：
+            //   原来只挂 PlayImpactFx ⇒ 本端的怪听不到"队友的子弹落地/爆炸"。
+            bullet.OnHit += FpsHelper.PlayImpactFxRemote;
             // ★ 终点约束：飞抵开枪者瞄的那一点就收尾（否则会从目标身上穿过去，见 SetVisualEndPoint 说明）
             if (endPoint.sqrMagnitude > 0.0001f) bullet.SetVisualEndPoint(endPoint);
             return bullet;
+        }
+
+        /// <summary>
+        /// 【表现层】按本武器**真实弹丸数**重放一轮表现弹（联机"远端开火"用）。
+        ///
+        /// <para>▍口径与 <c>HandleShoot</c> 一致：<c>AttrFinal(Attr.BulletsPerShot)</c> × (齐射 ? 多发射点数 : 1)——
+        /// 远端这把武器实例带着**同样的改装配置** ⇒ 弹丸数可本地验算，不必上网（同"枪声本地复刻"的思路）。</para>
+        ///
+        /// <para>⚠ 只有**首颗**吃开枪端传来的 <paramref name="direction"/>/<paramref name="endPoint"/>（那是他准心实指的点）；
+        /// 其余各颗用本端散布自由飞 —— 否则多弹丸会全部挤在同一点，看起来反而更假。</para>
+        /// </summary>
+        /// <param name="muzzleIndex">开枪者用的是第几个发射点（<c>&gt;=0</c> = 该枪管；<c>&lt;0</c> = 齐射所有多发射点）。
+        /// ⚠ 多管枪轮流开火，本端那把武器**从不本机开火** ⇒ 自己的计数永远是 0，必须靠消息里的下标。</param>
+        public void SpawnVisualSalvo(Transform muzzle, Vector3 direction = default, Vector3 endPoint = default,
+            int muzzleIndex = 0)
+        {
+            int count = Mathf.Clamp(AttrFinal(Attr.BulletsPerShot, 1).RawInt, 1, 64);
+
+            if (muzzleIndex < 0 && UseManyMuzzle && WeaponManyMuzzles != null && WeaponManyMuzzles.Count > 0)
+            {
+                for (int u = 0; u < WeaponManyMuzzles.Count; ++u)
+                    for (int i = 0; i < count; ++i)
+                        SpawnVisualBullet(WeaponManyMuzzles[u], (u == 0 && i == 0) ? direction : default,
+                            (u == 0 && i == 0) ? endPoint : default);
+                return;
+            }
+
+            // ★ 发射点与开枪端对齐（多管轮流开火）
+            Transform pipe = muzzle;
+            if (Muzzles != null && muzzleIndex >= 0 && muzzleIndex < Muzzles.Length) pipe = Muzzles[muzzleIndex];
+
+            for (int i = 0; i < count; ++i)
+                SpawnVisualBullet(pipe, i == 0 ? direction : default, i == 0 ? endPoint : default);
         }
         /// <summary>
         /// 发射音效，需要有连续射击
@@ -455,6 +518,7 @@ namespace FPSGame.Weapon {
 
             if (UseManyMuzzle)
             {
+                LastMuzzleIndex = -1;   // 齐射：所有发射点一起开
                 // 齐射:所有发射点位一起开火
                 for (int u = 0; u < WeaponManyMuzzles.Count; ++u)
                 {
@@ -464,6 +528,7 @@ namespace FPSGame.Weapon {
             else
             {
                 // 交替射击
+                LastMuzzleIndex = shootCount % Muzzles.Length;   // ★ 先记下标再自增（接收端按它选枪管）
                 Transform muzzle = WeaponMuzzle = Muzzles[shootCount++ % Muzzles.Length];
                 ShootFromMuzzle(muzzle, bulletsPerShotFinal);
             }
@@ -476,16 +541,7 @@ namespace FPSGame.Weapon {
 
             //逻辑层噪声：枪声从枪口发出(每次射击一条，齐射/多弹丸也只发一条)。
             //表现层音效距离走上面的 SFXRange，两者互不影响
-            if (FPSGame.GameContract.BattleHub.Current.IsPresent && FireNoiseRadius > 0)
-            {
-                var muzzle = GetMuzzle(0);
-                UnitEventBus.Noise(new NoiseData
-                {
-                    source = Owner,
-                    pos = (PEVector3)(muzzle ? muzzle.position : transform.position),
-                    radius = (PEInt)FireNoiseRadius,
-                });
-            }
+            EmitFireNoise(false);
 
             // 热量系统：每次射击增加热量，蓄力武器受蓄力热量倍率影响
             var heatPerShot = AttrFinal(Attr.HeatPerShot).RawFloat;

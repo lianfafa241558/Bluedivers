@@ -16,15 +16,30 @@ namespace FPSGame.AI
         //创建时就已决定
         private int lootCount;
 
-        private void Awake()
-        {
-            lootCount = Random.Range(DropRate.x, DropRate.y);
-        }
-
         void Start()
         {
-           var m_Health = GetComponent<IHealth>();
+            // ★ 静态同步（2026-10-12）：掉落数量改走**派生流** —— 原来 `UnityEngine.Random` 是全局流 ⇒ 两端数量必然不同。
+            //   键 = 本单位的 NetId（两端一致：波次同序 / 场景派生号 / 4052 房主分配）⇒ 两端数量一致，**零消息**。
+            //   ⚠ 必须放 Start：同一 GameObject 上 Actor 与 DieLoot 的 Awake 顺序不保证 ⇒ Awake 里读不到 NetId。
+            lootCount = RollLootCount();
+
+            var m_Health = GetComponent<IHealth>();
             m_Health.OnDie += OnDie;
+        }
+
+        /// <summary>掉落数量：有权威种子 ⇒ 按 (种子, NetId) 派生；无种子（单机 / 旧版房主）⇒ 退回原来的全局随机。</summary>
+        private int RollLootCount()
+        {
+            if (DropRate.y <= DropRate.x) return DropRate.x;
+
+            int seed = FPSGame.Data.TaskState.Seed;
+            if (seed == 0) return Random.Range(DropRate.x, DropRate.y);
+
+            var actor = GetComponent<IActor>();
+            int netId = actor != null ? actor.NetId : 0;
+            var rand = new System.Random(
+                FPSGame.Utils.SeedUtil.Derive(FPSGame.Utils.SeedUtil.Derive(seed, FPSGame.Utils.SeedStream.DieLoot), netId));
+            return DropRate.x + rand.Next(DropRate.y - DropRate.x);   // 与 UnityEngine.Random.Range(int,int) 同口径：上界不含
         }
 
         void OnDie(GameObject source)

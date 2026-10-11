@@ -19,6 +19,9 @@ namespace FPSGame.Mission
     {
         List<Vector3> wavePoints;
         KeyScreen keyScreen;
+
+        /// <summary>本任务监听的守方单位（⚠ 成对退订要在 <see cref="Uninit"/> 里做；原来只存在局部变量里 ⇒ 永远退不掉）。</summary>
+        private readonly List<I_AIController> _targets = new();
         [SerializeField]
         string targetId; 
         [SerializeField]
@@ -48,6 +51,7 @@ namespace FPSGame.Mission
             {
                 item.OnDamaged += OnTargetDamage;
                 item.OnDie += OnTargetDeath;
+                _targets.Add(item);
             }
             m_TargetCount = targets.Count;
             keyScreen.OnUpdateStage += OnStageChange;
@@ -56,6 +60,16 @@ namespace FPSGame.Mission
         {
             base.Uninit();
             keyScreen.OnUpdateStage -= OnStageChange;
+
+            // ⚠ 成对退订守方单位（2026-10-11 补）：原来只退终端阶段，单位事件挂着已结束的任务
+            for (int i = 0; i < _targets.Count; ++i)
+            {
+                var item = _targets[i];
+                if (item == null) continue;
+                item.OnDamaged -= OnTargetDamage;
+                item.OnDie -= OnTargetDeath;
+            }
+            _targets.Clear();
         }
 
         public override bool Tick()

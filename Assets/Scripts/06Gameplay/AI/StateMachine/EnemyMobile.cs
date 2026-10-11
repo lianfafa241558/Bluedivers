@@ -374,6 +374,12 @@ namespace FPSGame.AI
                 var bewarePoint = module.BewarePoint;
                 m_BewareDestination = bewarePoint.HasValue ? bewarePoint.Value : m_OriginPos;
             }
+            // 数据说话：**谁起身去查看、去哪**（搜索点 / 噪声点 / 出生点）—— 与 DetectionModule 的"听见"日志配对，
+            // 就能区分"没听见"、"听见但没起身（冷却/超范围/在攻击）"、"起身了但两端目标不同"三类问题。限流 1s/单位。
+            FPSGame.Utils.NetSyncLog.AiLog("移动·起身警惕",
+                $"{name} 目的={m_BewareDestination.RawVector3:F2} " +
+                $"来源={(module.SearchPoint.HasValue ? "搜索点" : module.BewarePoint.HasValue ? "噪声点/枪声" : "出生点兜底")}",
+                GetInstanceID(), 1f);
             // 消费掉警惕点：离开警惕/返回后回到 Idle/Patrol 时，不会因为同一个点再次进入 Beware(来回摆动)；
             // 之后新的枪声/示警会重新写入 BewarePoint，再触发一次查看
             module.ClearBeware();
@@ -619,6 +625,11 @@ namespace FPSGame.AI
 
             return true;
         }
+
+        /// <summary>AI LOD（见 <see cref="AiLod"/>）：只有"没在打 / 没在追"的状态允许降频 ——
+        /// Follow/Attack/Beware 下开火节奏是本机算的（连"敌人打我这个玩家"的伤害都由本机权威）⇒ 一拍都不能少。</summary>
+        protected override bool AiLodEngaged
+            => AiState == AIState.Follow || AiState == AIState.Attack || AiState == AIState.Beware;
 
         /// <summary>状态机切换</summary>
         protected override void UpdateAiStateTransitions()

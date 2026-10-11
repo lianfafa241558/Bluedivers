@@ -157,6 +157,10 @@ namespace FPSGame.Game
             }
         }
 
+        /// <summary>本单位是不是玩家 / 盟友（血量本机权威 ⇒ tick 伤害任何角色下都要本地算）。</summary>
+        private bool IsPlayerLike
+            => m_Actor != null && (m_Actor.Type == UnitTypeEnum.Player || m_Actor.Type == UnitTypeEnum.Friend);
+
         /// <summary>异常状态 tick 伤害：满槽造成 fullDamage + 百分比伤害，未满造成 damage，类型为状态自身 typeEnum，不更新积蓄槽</summary>
         private void DealAboTickDamage(AboGaugeEntry entry, AboStateData_SO stateData, bool isFull)
         {
@@ -164,6 +168,10 @@ namespace FPSGame.Game
                 ? (PEInt)stateData.fullDamage + (PEInt)(stateData.fullPerDamage / 100f * MaxHealth)
                 : (PEInt)stateData.damage;
             if (dmg <= 0) return;
+
+            // ★ 联机（2026-10-12）：异常状态跳伤**只由房主（或单机）结算并广播**（理由同 Damageable.Tick 的流血）——
+            //   成员端只保留积蓄槽/特效（那是从已同步的状态推导的表现），血量等伤害广播落地。
+            if (!FPSGame.Data.BattleState.ShouldApplyTickDamage(IsPlayerLike)) return;
 
             _AboDmgBuffer.Clear();
             _AboDmgBuffer.Add(new SKVP<DamageTypeEnum, PEInt>(stateData.typeEnum, dmg));

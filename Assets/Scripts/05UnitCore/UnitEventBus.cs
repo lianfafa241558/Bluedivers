@@ -38,6 +38,16 @@ public static class UnitEventBus
     public static event Action<GameObject, GameObject> OnUnitHit;
     public static void UnitHit(GameObject victim, GameObject attacker) => OnUnitHit?.Invoke(victim, attacker);
 
+    /// <summary>单位**实际掉血**（受击者 / 真实扣减量 / 来源 / 受击体）。
+    /// <para>▍与 <see cref="OnUnitHit"/> 的分工：那条是给血条表现的（没有伤害量）；这条供**联机伤害通道**用，
+    /// 给的是 <c>Health.TakeDamage</c> 里算出来的**最终扣减量**（已乘完护甲 / 爆炸抗性）⇒ 接收端
+    /// <c>DamagePacket.Resolved = true</c> 直接用，不能再算一遍。</para>
+    /// <para>⚠ 发布点在 <c>Health.TakeDamage</c>（真伤害 > 0 才发）；订阅方**必须自己挡回环**
+    /// （应用远端伤害期间 <c>EnemyController.ApplyingRemoteDamage</c> 为 true）—— 否则两端互相转发。</para></summary>
+    public static event Action<GameObject, PEInt, GameObject, Collider> OnUnitDamaged;
+    public static void UnitDamaged(GameObject victim, PEInt damage, GameObject source, Collider hitBody)
+        => OnUnitDamaged?.Invoke(victim, damage, source, hitBody);
+
 
     /// <summary>表现层：子弹击中地面(近战，超射程消失也算)，给 HUD 做擦弹/受击提示用</summary>
     public static event Action<GameObject, PEVector3, PEInt> OnBulletHit;

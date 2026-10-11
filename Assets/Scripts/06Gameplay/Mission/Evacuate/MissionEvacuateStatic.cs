@@ -157,24 +157,13 @@ namespace FPSGame.Mission
             this.beacon = beacon.transform;
             keyScreen = beacon.GetComponentInChildren<KeyScreen>();
             _beacons.Add(beacon);
-            //var tower = area.Find("SignaTower").GetComponent<Furniture_Base>();
-            //var bolts = area.FindAll(item=>item.name.Contains("Bolt")).Select(item=>item.GetComponent<Furniture_Base>()).ToList();
-            if (IsFast)
+             if (IsFast)
             {
 
             }
             foreach (var item in keyScreen.procedure)
             {
-                /*
-                if(item.type == KeyScreen.ProcedureType.ActionItem)
-                {
-                    item.furns = bolts;
-                }
-                else if (item.type == KeyScreen.ProcedureType.Direction|| item.type == KeyScreen.ProcedureType.Load)
-                {
-                    item.furns.Add(tower);
-                }
-                else */
+
                 if (item.type == KeyScreen.ProcedureType.Wait)
                 {
                     item.time = m_EvacuateTime;

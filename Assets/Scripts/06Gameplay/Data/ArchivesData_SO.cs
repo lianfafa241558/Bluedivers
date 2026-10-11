@@ -250,7 +250,8 @@ public class ArchivesData_SO : ArchivesDataBase_SO
 
     protected override void InLoad()
     {
-        Debug.LogWarning("加载了存档"+name+"数据数量"+roleDataDic.Count);
+        // ⚠ 正常路径不需要黄字（2026-10-10 用户口径：没用的内容先不打印）
+        Debug.Log("加载了存档" + name + "数据数量" + roleDataDic.Count);
     }
 
     //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]

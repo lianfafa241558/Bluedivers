@@ -39,6 +39,18 @@ namespace FPSGame.Data
         /// <summary>是否已开战（未就绪时 = false）。</summary>
         public static bool IsStartBattle { get; internal set; }
 
+        /// <summary>【联机】本端是不是 **tick 伤害（破甲流血 / 异常状态跳伤）的权威端**。
+        /// <para>▍为什么需要（2026-10-12）：tick 是从**已同步的状态**推导出来的（护甲破了 → 每拍流血；积蓄满 → 每拍跳伤），
+        /// 而 <c>Damageable.Tick</c> / <c>Health.AboTick</c> 会**各自本地结算、再各自上报** ⇒ 同一段 tick 被 N 份上报叠加（N 端 ≈ N 倍伤害）。
+        /// 所以钉成：**房主（或单机）本地结算并广播；成员端非玩家单位不本地扣血**（靠伤害广播落地，见 <c>EnemyNetBridge.ApplyRemoteDamage</c>）。</para>
+        /// <para>⚠ 玩家/盟友是例外：他们的血量本来就是**本机权威**（自己管自己的血）⇒ 见 <see cref="ShouldApplyTickDamage"/>。</para>
+        /// <para>写入方 = <c>WaveManager.Awake</c>（按角色）与 <c>EnemyNetBridge.OnHostLost</c>（房主没了 ⇒ 自己重新权威）。</para></summary>
+        public static bool IsTickDamageAuthority { get; internal set; } = true;
+
+        /// <summary>本端该不该本地结算这个单位的 tick 伤害 —— 见 <see cref="IsTickDamageAuthority"/>。</summary>
+        /// <param name="isPlayerLike">是不是玩家 / 盟友（他们的血本机权威，任何角色下都要本地算）。</param>
+        public static bool ShouldApplyTickDamage(bool isPlayerLike) => IsTickDamageAuthority || isPlayerLike;
+
         /// <summary>
         /// 确定性战斗随机源（未就绪时 = 固定种子 0 的中性实例）。
         ///
@@ -57,6 +69,7 @@ namespace FPSGame.Data
             ActiveTeamEnhance = System.Array.Empty<BoosterType>();
             IsStartBattle = false;
             BattleRandom = NullRandom;
+            IsTickDamageAuthority = true;   // 未就绪 = 中性（单机）⇒ 本端自己算 tick
         }
     }
 }

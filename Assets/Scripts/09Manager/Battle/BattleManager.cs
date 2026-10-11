@@ -280,6 +280,26 @@ namespace FPSGame.Managers
             //var terrain = TerrainUtils.Main = mapRoot.terrain;
             var terrain = mapRoot.terrain;
             var cfg = TaskManager.Instance.nowTask;
+
+            // ★ 换成本图**专属的 TerrainData**（方案A，2026-10-10）：
+            //   `TerrainData.treePrototypes` / `detailPrototypes` 的 setter 是 **Editor-only**（打包运行时调用
+            //   只刷 "only implemented in editor"、什么都不会改）⇒ 打包端"本图用哪些石头/树/草"**只能靠资产自带**。
+            //   所以每张图一份资产（`MapData_SO.terrainAsset`，由编辑器工具
+            //   `Tools/地形/生成每图 TerrainData（方案A）` 烘出），这里在**读 terrainData / 设 size / SetTextures
+            //   之前**换掉；现场生成（高度、树实例、草层）全部照旧。
+            //   留空（旧数据 / 没烘焙）= 沿用 BattleScene 里那套 MainMap，行为与改动前完全一致。
+            //   ⚠ 已有树实例随旧资产一起被换走，新资产的实例随后由 SpawnVegetation 整表重写 ⇒ 不用手动清。
+            if (cfg.mapCfg != null && cfg.mapCfg.terrainAsset != null && terrain.terrainData != cfg.mapCfg.terrainAsset)
+            {
+                terrain.terrainData = cfg.mapCfg.terrainAsset;
+                // ★ TerrainCollider 自带**独立**一份 terrainData 引用（不跟随 Terrain 组件）：只换 Terrain 那份的话，
+                //   物理仍按旧资产的高度场/尺寸算 ⇒ "看着是新地形、脚底下踩空/悬空"（2026-10-11 用户实测）。
+                //   ⚠ 碰撞体与 Terrain 同挂在那一个 "Terrain" 物体上（BattleScene 里全场景仅此一个）。
+                var terrainCollider = terrain.GetComponent<TerrainCollider>();
+                if (terrainCollider != null) terrainCollider.terrainData = cfg.mapCfg.terrainAsset;
+                Debug.Log($"[地形] 已切换到本图地形资产：{cfg.mapCfg.terrainAsset.name}（地图数据 {cfg.mapCfg.name}）");
+            }
+
             var terrainData = terrain.terrainData;
 
 
@@ -432,6 +452,30 @@ namespace FPSGame.Managers
         public GameObject CreatUnit(UnitTier tier,Vector3 pos,float range,bool isFixed=true)
         {
            return WaveCont.CreatUnit(tier, pos,range, isFixed);
+        }
+
+        /// <summary>【联机】运行时生成的唯一入口（见 <see cref="IBattleService.CreatUnit"/>）。</summary>
+        public GameObject CreatUnit(GameObject prefab, Vector3 pos, Quaternion rot, INetSpawner source, int slot, Vector3 target = default)
+        {
+            return WaveCont.CreatUnit(prefab, pos, rot, source, slot, target);
+        }
+
+        /// <summary>【联机·刷怪器】按 tier 生成一只（房主唯一生成 + 上报 4052；给 <c>10_Effect/CreatEnemy</c> 用）。</summary>
+        public GameObject CreatSpawnerUnit(UnitTier tier, Vector3 pos, float range, INetSpawner source)
+        {
+            return WaveCont.CreatSpawnerUnit(tier, pos, range, source);
+        }
+
+        /// <summary>【联机】本端是不是"只能等房主"的成员（单机 / 房主 = false）。
+        /// <para>▍为什么暴露这个：<c>10_Effect</c> 的程序集看不见 <c>07_NetGame</c>（拿不到 <c>NetRoomFlow</c>），
+        /// 而刷怪器必须知道"本端该不该跑自己那套随机 + 生成"。</para></summary>
+        public bool IsNetMember
+        {
+            get
+            {
+                var flow = NetRoomFlow.Instance;
+                return flow != null && !flow.IsHost && flow.SelfSid != 0u;
+            }
         }
 
         public List<GameObject> CreatPatrol(Vector3 pos)

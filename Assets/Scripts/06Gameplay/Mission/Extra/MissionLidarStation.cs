@@ -17,7 +17,9 @@ namespace FPSGame.Mission
         protected override void StartMission()
         {
             keyScreen = entity.transform.GetComponentInChildren<KeyScreen>();
-            keyScreen.OnComple.RemoveListener(OnKeyScreenComple);
+            // ⚠ 2026-10-11 修：原来写的是 RemoveListener（在 StartMission 里退订一个从没订阅过的回调）
+            //   ⇒ 终端完成事件永远打不到本任务 ⇒ 雷达站任务永远完不成、RevealAllMissions 也不触发。
+            keyScreen.OnComple.AddListener(OnKeyScreenComple);
 
         }
 

@@ -1,6 +1,6 @@
 ---
 name: kcpnet-online
-description: Bluedivers 项目的 KCPNet 联机网络层（预编译库 Assets/Plugins/KCPNet + 自研适配层 Assets/Scripts/NetTmp）专用指南。当需要部署/安装/升级 KCPNet.dll 与 Kcp.dll、安装或自检 NetTmp 需要的 NuGet 依赖（MessagePack 及其传递依赖，scripts/install_deps.py 与 --check）、排查 NetTmp 下 “未能找到类型或命名空间名 MessagePackObject” 之类 CS0246 编译报错、排查 `Assembly '...' will not be loaded due to errors` / `Unable to resolve reference` 这类程序集加载失败、新增或修改网络消息（CmdId 常量 + [MessagePackObject] DTO + MessageCenter.Register/Pack/Dispatch）、编写或调试 NetSvc / NetHostSvc / ClientSession / HostSession、实现局域网开房与搜房回连（LanDiscoverer / LanBroadcaster / LanRoomInfo / LanDiscoveryConfig）、排查开房 SocketException 或端口占用/防火墙/同机双实例问题、以及需要确认 KCPNet 库对外 API 与默认端口时触发。
+description: Bluedivers 项目的 KCPNet 联机网络层（预编译库 Assets/Plugins/KCPNet + 自研适配层 Assets/Scripts/NetTmp）专用指南。当需要部署/安装/升级 KCPNet.dll 与 Kcp.dll、安装或自检 NetTmp 需要的 NuGet 依赖（MessagePack 及其传递依赖，scripts/install_deps.py 与 --check）、排查 NetTmp 下 “未能找到类型或命名空间名 MessagePackObject” 之类 CS0246 编译报错、排查 `Assembly '...' will not be loaded due to errors` / `Unable to resolve reference` 这类程序集加载失败、新增或修改网络消息（CmdId 常量 + [MessagePackObject] DTO + MessageCenter.Register/Pack/Dispatch）、编写或调试 NetSvc / NetHostSvc / ClientSession / HostSession、实现局域网开房与搜房回连（LanDiscoverer / LanBroadcaster / LanRoomInfo / LanDiscoveryConfig）、排查开房 SocketException 或端口占用/防火墙/同机双实例问题、以及需要确认 KCPNet 库对外 API 与默认端口、**排查"某玩法在两端状态不一致 / 没同步 / 键对不上 / 回环"这类同步问题时触发**。
 ---
 
 # KCPNet 联机层（Bluedivers）
@@ -101,13 +101,13 @@ Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方
 
 | 类型 | 关键成员 | 说明 |
 | --- | --- | --- |
-| `KCPNet<T,K>` | `ctor(bool isUnityEnvironment = true)`、`StartAsClient(ip,port)`、`StartAsServer(ip,port)`、`Task<ConnectResult> ConnectServer(int interval, int maxintervalSum = 5000)`、`SendToAll(K)`、`TryGetSession(uint, out T)`、`GetSessions()`、`CloseClient()` / `CloseServer()`、事件 `OnSessionConnected/OnSessionDisconnected/OnServerRestartDetected(Action<uint>)`、字段 `clientSession` | `T`=会话类型，`K`=消息类型（本项目为 `NetMessage`） |
-| `KCPSession<T>` | 抽象属性 `Serializer`；虚方法 `OnConnected()` / `OnDisConnected()` / `OnReciveMsg(T)` / `OnUpdate(DateTime)`；`SendMsg(T)` / `SendMsg(byte[])`、`IsConnected()`、`GetSessionID()`、`InitSession(...)`、`CloseSession()`；属性 `AesKey`、`TimeoutMs`、`EnableTimeoutCheck`、`SetTimeout(long)` | 必须继承并 override `Serializer` + 至少 `OnReciveMsg` |
+| `KCPNet<T,K>` | `ctor(bool isUnityEnvironment = true)`、`StartAsClient(ip,port)`、`StartAsServer(ip,port)`、`Task<ConnectResult> ConnectServer(int interval, int maxintervalSum = 5000)`、`SendToAll(K)`、`TryGetSession(uint, out T)`、`GetSessions()`、`CloseClient()` / `CloseServer()`、事件 `OnSessionConnected/OnSessionDisconnected/OnServerRestartDetected(Action<uint>)`、字段 `clientSession`、**`ClientId`**（持久会话标识，库 2026-10-09 版新增 ⇒ 见踩坑清单"两行 clientId"） | `T`=会话类型，`K`=消息类型（本项目为 `NetMessage`） |
+| `KCPSession<T>` | 抽象属性 `Serializer`；虚方法 `OnConnected()` / `OnDisConnected()` / `OnReciveMsg(T)` / `OnUpdate(DateTime)`；`SendMsg(T)` / `SendMsg(byte[])`、`IsConnected()`、`GetSessionID()`、`InitSession(...)`、`CloseSession()`；属性 `AesKey`、`TimeoutMs`、`EnableTimeoutCheck`、`SetTimeout(long)`、`HeartbeatIntervalMs` | 必须继承并 override `Serializer` + 至少 `OnReciveMsg`。⚠ **库基类自己每 3s 双向发"心跳裸字节"**（带魔数、**不进 `MessageCenter`**），超时看 `_lastRecvTimeUtcTicks`（15s，任意 UDP 包都刷）⇒ **它替代不了应用层 `PingReq/Rsp`**（1001/1002 是 `RttMs` 的唯一来源，且判"谁是玩家"的那只时钟口径不同） |
 | `IKCPMsgSerializer` | `byte[] Serialize(KCPMsg)`、`KCPMsg Deserialize(byte[])` | 信封级序列化器，项目直接用库里的 `NetMessageSerializer.Instance` |
 | `KCPMsg` / `NetMessage` | `NetMessage : KCPMsg`，字段 `int CmdId`、`byte[] Data` | 项目自己的“信封”，`Data` 是 DTO 的 MessagePack 字节 |
-| `NetConfig` | 常量 `HostGamePort = 17666`、`LanBroadcastPort = 29800`、`LanSelfBroadcastPort = 29801` | 端口唯一来源，别在业务里硬编码 |
+| `NetConfig` | 常量 `HostGamePort = 17666`、`LanBroadcastPort = 29800`、`LanSelfBroadcastPort = 29801`、`HeartbeatIntervalMs = 3000`、`DefaultTimeoutMs = 15000` | 端口/心跳唯一来源，别在业务里硬编码。⚠ 它在**库内部**（工程里没有 .cs）⇒ 只能逐会话设 `TimeoutMs` 等属性，常量改不了 |
 | `LanDiscoveryConfig` | 静态 `BroadcastPort=29800`、`ListenPort=29800`、`BroadcastAddress=255.255.255.255`、`AnnounceIntervalMs=2000`、`DiscoveryTimeoutMs=1500`、`RoomExpireMs=6000`、`BroadcastTtl=1`、`Magic="KCPLAN:"`、`AnnounceType/DiscType`；`Setup(...)` 全部参数可选 | 改广播参数的唯一入口（`Setup` 注入，不改库） |
-| `LanRoomInfo` | 字段 `RoomName/HostIp/HostPort/PlayerCount/MaxPlayers/MapName/PasswordProtected/Version/PlayerNames[]`、`ToJson()/FromJson()` | 房间模型，广播包与 UI 都用它 |
+| `LanRoomInfo` | 字段 `RoomName/HostIp/HostPort/PlayerCount/MaxPlayers/MapName/PasswordProtected/Version/PlayerNames[]` + **`int Difficulty(-1)` / `int TaskMain(-1)` / `bool InGame` / `int Source`**（共 **13** 个）、`ToJson()/FromJson()` | 房间模型，广播包与 UI 都用它。⚠ 2026-10-08 换代后**难度/任务/是否开局/来源已是真字段**，别再串字符串；`FromJson` **忽略未知 key、缺 key 给默认值** ⇒ 新旧房主可混联 |
 | `LanBroadcaster` | `ctor(LanRoomInfo)`、属性 `RoomInfoProvider : Func<LanRoomInfo>`、`Start()/Stop()` | 房主侧周期性 ANNOUNCE + 应答 DISCOVER |
 | `LanDiscoverer` | `ctor(int listenPort = -1)`、属性 `VersionFilter`、`AutoExpire`、`StartListening()`、`Task Scan()`、`List<LanRoomInfo> GetRooms()`、`Stop()`、`PurgeExpired()` | 成员侧发现器；`Scan()` 是异步的，不能立刻取结果 |
 | `KCPTool` | `Log/ColorLog/WarnLog/ErrLog`、`Compress/DeCompress`、静态委托 `LogFunc/ColorLogFunc/...` | 库日志出口，`KCPLogColor` 有 None/Red/Green/Blue/Cyan/Magenta/Yellow |
@@ -128,21 +128,31 @@ Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方
 
 ## 主要工作流
 
-### A. 新增一条网络消息（四步，固定顺序）
+### A. 新增一条网络消息（六步 + 验证，固定顺序）
+
+> 决策口径见下方 §E「同步一条新东西」。**别跳过第 4/5 步** —— 历史上一半的"两端不一致"都出在桥与回环门上。
 
 1. `07NetGame/CmdId.cs` 加命令号常量，遵循分段（新模块另开千位段，编号不重复、不复用、不改旧值）。传输层控制报文另放 `NetTmp/Services/NetCmdId.cs`（1xxx）。
-2. `07NetGame/Msg/` 下（可按模块新建文件，如 `SyncMsg.cs`）加 `[MessagePackObject]` 类，字段用 `[Key(0..n)]` 连续编号。新增字段**追加在末尾**并取下一个 Key，不要插在中间。**字段只能用基础类型**（`07_NetGame` 看不见 `01_GameContract`/`04_Data`/`06_Gameplay`）。
-3. 在 `Awake()` 中注册处理器：`MessageCenter.Register<XxxMsg>(CmdId.Xxx, OnXxx);`，并在 `OnDestroy()` 中 `MessageCenter.Unregister(CmdId.Xxx);`（房主侧协议处理则由 `NetHostSvc` 注册）。
-4. 发送：**业务侧优先走 `NetRoomFlow`**（它把"房主本地自派发 + 广播 / 成员发给房主"收敛成一套 `Send*`/`On*`）；底层才是
-   成员端 `NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.Xxx, dto))`、房主端 `NetHostSvc.Instance.SendToAll(...)` 或 `SendToSession(sid, ...)`）。
-   房主端若要“识别这条消息来自哪个成员”，在处理器中读 `CurrentSid`（`Update()` 出队时写入，`Dispatch` 后清 0），**不要**自己从 DTO 里带 sid。
+2. `07NetGame/Msg/` 下（可按模块新建文件，如 `SyncMsg.cs`）加 `[MessagePackObject]` 类，字段用 `[Key(0..n)]` 连续编号。新增字段**一律追加在末尾**并取下一个 Key，不要插在中间（对端拿默认值即向后兼容）。**字段只能用基础类型**（`07_NetGame` 看不见 `01_GameContract`/`04_Data`/`06_Gameplay`；要传枚举就传 `int`）。
+3. **在 `NetRoomFlow` 里加三件套**（它是业务收发的唯一入口，别在别处注册业务消息）：
+   `public static event Action<XxxMsg> OnXxx;` + `public void SendXxx(...)`（房主 `NetHostSvc.SendToAll`、成员 `NetSvc.SendMsg`）+ `private void HandleXxxNtf(XxxMsg m) => OnXxx?.Invoke(m);`；
+   再到 `Awake()` `MessageCenter.Register<XxxMsg>(CmdId.Xxx, HandleXxxNtf)`、`OnDestroy()` `Unregister`（⚠ 同一个 CmdId **只能有一个注册者**）。
+4. **在 09 侧写桥**（`Net*Bridge`）：订阅"本地产生的那个事件"→ 上报；订阅 `NetRoomFlow.OnXxx` → 应用。桥是**唯一**能同时看见游戏层与网络层的地方（05/06 看不见 07）。
+5. **回环门**：应用远端时会派发本地事件（`Operate()` 之类）⇒ 用 `NetApplyGuard.Begin()/End()` 包住；**两条桥可能互相回环时，门必须共享**（别各持一个私有 bool）。
+6. **过滤与自派发**：上报点先判 `flow == null || !flow.InRoom`（单机/不在房里直接 return）；接收端按 `Sid` 丢掉"自己发出去绕回来的那条"。⚠ **房主广播的任何状态都要再 `MessageCenter.Dispatch(msg)` 本地自派发一次**（`SendToAll` 按定义不含房主自己）。
+   房主端若要"**识别这条消息来自哪个成员**"，在处理器里读 **`CurrentSid`**（`Update()` 出队时写入、`Dispatch` 后清 0），**不要**自己从 DTO 里带 sid。
+
+**验证**（别只看 Console 0 error）：① `offline_compile.py <asm>…`；② 新增 `.cs` 让 Unity 编一次后**反射核验类型/成员真的存在**（防"假空转"，见踩坑清单）；③ 两端都开 `NetSyncLog` 跑一遍，对照 `·发` / `·收` 两侧日志。
+
 
 ### B. 局域网联机最小闭环
 
 ```
 房主：NetHostSvc.StartHost(HostRoomOptions{ RoomName, MapName, MaxPlayers, Password, Difficulty, HostName, TaskType, TaskMain })
         → StartAsServer("0.0.0.0", hostPort) + LanBroadcaster.Start()（广播含 HostPort）
-        ⚠ 房间名/地图名里的 `#T=枚举|任务类型` 与 `#难度` 由 RoomMeta.ComposeRoomName/ComposeMapName 拼（库缺字段的临时约定）
+        ⚠ 房间字段**不用再串字符串**了：2026-10-08 库换代后 `LanRoomInfo` 已有真字段
+        （`Difficulty` / `TaskMain` / `InGame` / `Source`，见 `references/kcpnet-api.md` §6），
+        旧的 `RoomMeta.ComposeRoomName` / `#T=` 约定**已删除**（2026-10-11 复核：全仓 0 命中）；`RoomMeta` 现在只剩"取值薄适配"
 成员：new LanDiscoverer(端口) → StartListening() → Scan() → 等 1.5s → GetRooms()
         → NetSvc.ConnectToRoom(room, cb)  // StartAsClient + ConnectServer 握手
         → NetSvc.JoinRoom(name, pwd) / SetReady(true) / LeaveRoom()
@@ -182,6 +192,50 @@ Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方
 
 升级后要重点确认的三件事：① `KCPNet.dll` 是否仍只引用 `MessagePack 3.1.8`（版本变了就要换 DLL）；② `NetConfig` / `LanDiscoveryConfig` 的静态默认值有没有变；③ `KCPNet<T,K>` 的构造与 `ConnectServer` 签名——适配层（`02_Net`）里 `new KCPNet<...>()` 之所以合法，是因为库的 ctor 是 `KCPNet(bool isUnityEnvironment = true)`，**可选参数**，别误判成应该传参。
 
+### E. 同步一条新东西（决策树，2026-10-11 补）
+
+听到"XX 两端不一致"时按这五问走，**别上来就加消息**：
+
+**① 键用哪个？** 跨端稳定 = "创建时确定 + 两端一致"；⚠ 一律在 `Awake`/生成时算一次并缓存 —— 会位移的实体不能每次现算。
+
+| 对象 | 键 | 注意 |
+| --- | --- | --- |
+| 家具 / 终端 | `Furniture_Attached.SyncId = FNV1a(Id + 世界坐标0.1m)` | 依赖"`BaseObject` 配好 Id + 摆位两端一致"；量化 0.1m 吃掉浮点抖动 |
+| 任务 | `MissionBase.netOrder` | 创建序赋值；场景模式按 0.1m 位置排序（`MissionController.AssignNetOrdersByPosition`） |
+| 场景单位（NPC） | `Actor.Id` | 同名多实例会撞 ⇒ 成组刷的单位改用 NetId |
+| 成组新生成的单位（波次 / 巡逻队） | **生成点**（+ 逐单位目标点） | 构成靠"按落点派生流"⇒ 同落点同构成，不必传 |
+| 波次 / 敌人 | `Actor.NetId`（`Actor.Awake` 按 `type==Enemy` 分配、每局归零） | 0 = 非同步；⚠ 分配点必须在 `Awake`（放 `WaitSetPos` 会晚一帧） |
+| ⛔ **不能当键** | `Actor.IndexID`（进程内自增、跨局不清零）、`Furniture_NumberID`（各端自增）、`Resources.LoadAll` 下标 | 两端必然不同 |
+
+**② 谁权威？**
+- **房主**：生成（波次 / 巡逻队 / 空投）、生死、任务结果、加载闸门、位姿聚合、共享选择（选哪个撤离点）。
+- **操作者那台**：玩家点出来的东西（终端阶段 4046 / 终端按键 4049）。口径 = "**有人操作时只有操作者所在的那台推；无人阶段（Load/Wait）才归房主**"；判定收口在 `KeyScreen.IsStageDriver()`，别在别处再判一遍。
+- ⛔ **成员端绝对不能"本地生成"**：`Actor.Awake` 会吃 `NetId` 号段 ⇒ 与房主下发的单位**撞号**（后续 `EnemyMoveSync`/`EnemyDiedSync` 作用到别的单位上）。生成类一律"成员闸门（return 空）+ 房主广播生成事件 + 成员按**同一生成点**复刻"（`WaveManager.CreatWave` / `CreatPatrol` / `CreatPatrolRemote`）。
+- ⛔ **别拿"本机视角"做共享选择**：`最近玩家` / `本机玩家位置` / `本机背包` 这类输入两端必然不同（撤离点选择就踩过）⇒ 换成"**触发者位置 / 房主位置**"。
+
+**③ 同步"操作重放"还是"结果状态"？**
+- 效果写在**交互入口**（`Operate()`）里的 ⇒ 走"重放 `Operate()`"（4036 的路子，一处收口）。
+- 效果写在**过程**里的（`IStepPress.StepPress` 逐个扣背包 + `OnSubmit`）⇒ 重放 `Operate()` **只能收尾**；两条出路：① 送"结果状态"（如 `held` / `_destroyed` 账本）；② 给远端造一个可扣的**替身** —— `FriendOOPartInventory`（幽灵背包）⇒ 真跑 `BeginPress/StepPress`（4048 的做法）。
+
+**④ 应用远端会不会触发本地事件（回环）？**
+会就必须进回环门，且**门要跨桥共享**：`ApplyRemoteStage` → `furn.Operate()` → `GlobalEventBus.FurnitureOperate` → 又回到 `NetFurnitureBridge` 的上报点。
+⇒ 统一用 `NetApplyGuard.Begin()/End()`（**计数式**，`internal static`，`Applying` 供各桥读）。
+
+**⑤ 有没有非幂等副作用？**（改地形高度图、重算包围盒、累加计数）
+⇒ 远端重放时**必须跳过**：`Furniture_Attached.ApplyRemoteOperate` 期间 `IsRemoteReplay == true`，`Furniture_Pipe.Place()` 靠它挡掉 `ModifyHeightMap`（两端各挖一次会**叠加**）。
+
+**降级手段（还没做同步时的"治乱"）**：随机类优先改成**纯函数** `SeedUtil.Derive(seed, 细分键)`，而不是一条 `System.Random(seed)` 流（两端消费次数不同就错位）；单机（`TaskState.Seed == 0`）保留原随机路径。
+
+## 诊断日志（`00Tools/NetSyncLog.cs` —— 排查联机的第一工具）
+
+- 三路分管 `Bullet` / `Ai` / `Sync`，另有 `Warn`（"不正常"用 Warning，便于 Console 筛）与**限流重载** `AiLog(tag, msg, key, interval)` —— **每帧都会走的调用点必须用它**，否则"一只怪一行/帧"直接把 Console 刷爆。
+- ⚠ 实测默认 `Enabled = true`（**两端都开**）。静默：启动参数 `-nonetsynclog` / 环境变量 `NETSYNC_LOG` / `PlayerPrefs["NetSyncLog"]`。**正式发布前应改成"只认启动参数"**（否则常年把 `Player.log` 刷爆）。
+- 放 `00_Utils`（05/06/09/10 都引用它）；⚠ **`07_NetGame` 只引用 `02_Net`、看不见它** ⇒ 传输层的日志点要放在 09 的桥里。
+- 读日志：编辑器 = Console（MCP `read_console(filter_text="…")`）；打包端 = `Player.log`（启动时会打 `Application.consoleLogPath`）。
+- 常用 tag：`家具/操作·发|收`、`家具/键`、`家具/状态·发|收`、`终端/发|收`、`巡逻/发|收`、`容器/发|收`、`可破坏物·发|收`。
+- ⭐ **口径**：凡是"**找不到对应实体**"这类静默 `return`，必须留 `Warn` + **打整张键表**（否则现象就是"这个东西怎么都不同步"，且完全无从下手）。
+- **两端对照法**：同一条消息在两端各留一条 `·发` / `·收`（带"键 + 值 + 发起 sid"）⇒ 一眼分清"键不一致 / 本端没生成 / 根本没收到"。
+
 ## 踩坑清单
 
 - **会话钩子 / 连接回调都可能不在主线程**（2026-10-06 踩过）：`OnReciveMsg`、`OnConnected`、`OnDisConnected`，以及 `host.OnSessionConnected/OnSessionDisconnected` 这类 KCP `UpdateAsync` 续体，**全都在网络 / ThreadPool 线程**上跑 ⇒ 绝不能在里面碰 Unity API（`Debug.Log` 之外）或游戏状态（`_players` 之类的表也别改，有数据竞争）。`NetHostSvc.OnMemberLeft` 原来就是直接 `BroadcastPlayerList()` → 09 侧桥 `ResSvc.LoadRes` ⇒ `UnityException: Load can only be called from the main thread`；更阴的是它抛在**广播名单中途**，导致该清退的盟友留在场上变幽灵。
@@ -208,6 +262,13 @@ Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方
 - **跨端的"下标"都不可信**：任务表 `TaskCfgs` 的行下标来自 `Resources.LoadAll` 枚举顺序（编辑器 ↔ 打包版可不同）⇒ 生成端按 `mapId` 排序（`TaskManager.OrderedMaps/MapIndex`）**且**本局配置随 `TaskConfirmNtf.Cfg`（`TaskCfgDto`）**下发内容**，成员侧 `SetTask(..., remoteCfg)` 以内容为准、不查本地表；端到端指纹因此从"硬校验"降级为**诊断告警**（否则跨窗口/后进房的玩家会被永久拒之门外）。
 - **那条"后进房的人也能拿到本局配置"靠的是补发**：`NetHostSvc._lastTaskConfirm` 缓存**整条**广播，`OnJoinRoomReq` 里给新人补发（在 `JoinRoomRsp` 之后，KCP 可靠有序）⇒ 消息必须**自足**（种子 + 配置内容），别设计成"让成员自己查表"。
 - **`Dispatch` 的异常要打全**：`Debug.LogError($"消息 {cmdId} 处理失败:{e}")` —— 只打 `e.Message` 会把"哪个处理器、哪一行"全丢掉（打包版实测过）。
+- **应用远端消息会"派发本地事件"（回环）**（2026-10-11）：`ApplyRemoteOperate` 跑的还是本地 `Operate()` ⇒ 会触发本端桥订阅的 `FurnitureOperate` / `UnitEventBus` 等 ⇒ 不挡就是无限回环。⚠ 门要**跨桥共享**：终端阶段的应用会走到 `furn.Operate()`（`NetFurnitureBridge` 的订阅点），各持一个私有 bool 挡不住 ⇒ 统一 `NetApplyGuard`（计数式）。
+- **`SendToAll` 按定义不含房主自己**：凡"房主广播的状态"，都要**再 `MessageCenter.Dispatch(msg)` 自派发一次**（名单、开局、巡逻队、可破坏物都踩过）。
+- **成员端不得本地生成单位**：`Actor.Awake` 会吃 `NetId` 号段 ⇒ 与房主下发的单位撞号（错杀 / 错移）。生成类一律"成员闸门 + 房主广播生成事件 + 按同一生成点复刻"（见 §E ②）。
+- **别拿"本机视角"做共享选择**：`最近玩家` / `本机玩家位置` 这类输入两端必然不同（撤离点选择踩过）⇒ 由**触发者 / 房主**定（见 §E ②）。
+- **随机同步要纯函数**：`SeedUtil.Derive(seed, 细分键)`（`SeedStream` 枚举）；⚠ 一条 `System.Random(seed)` 流在"重试 / 两端调用次数不同"时**必然错位**（谜题、炼油都踩过）。
+- **"改了内容却没编上"的两种假象**（2026-10-11）：① **假空转** = dll mtime 不动 / Console **也 0 error** / `refresh_unity` 照样返成功 —— 三个"通过"全是假象，**判据改反射**（`GetType`/`GetMethod` 是否为 null），解药 `CompilationPipeline.RequestScriptCompilation(CleanBuildCache)`（⚠ `external_changes_dirty:true` 时先 `AssetDatabase.Refresh(ForceUpdate)`）；② **假缺失** = `.cs.meta` 被写成等长全 `\x00` ⇒ Unity 导不出 guid ⇒ 该 `.cs` 不进编译、报 `CS0103 名称"X"不存在` 而文件明明在 ⇒ 先查 `manage_asset get_info` 的 `guid`，**别改代码**。
+- **改完一批联机代码，收尾做三件**：`offline_compile.py` 编一遍 → 让 Unity 编一次并**反射核验新成员** → 双端开 `NetSyncLog` 对照 `·发`/`·收`。
 
 ## 工具约定（本项目）
 

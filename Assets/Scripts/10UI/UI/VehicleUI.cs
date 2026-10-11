@@ -92,6 +92,8 @@ public class VehicleUI : MonoBehaviour
                 // 进入UI或自由相机时立即隐藏
                 SetAlpha(Canvas, 0);
                 break;
+            case WindowStateEnum.Airdrop:   // ★ 同 Game：Airdrop 只是叠加在 HUD 上的战备菜单，载具UI照旧要显示
+                                            //   （否则"开战备菜单 → 开设置 → 关设置"之后载具UI一直是 0 透明度）
             case WindowStateEnum.Game:
                 // 退出UI/自由相机时渐入恢复
                 if (_shouldShow)

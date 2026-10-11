@@ -18,16 +18,21 @@ public class CreatSupple : MonoBehaviour
 
     void Start()
     {
-        var pos = transform.position + RandomUtils.RandomVector2().ToVector3() * range;
+        // ★ 静态同步（2026-10-12）：落点 / 概率 / 抽哪个 prefab 全改走**按本生成器坐标派生的流** ——
+        //   理由同 CreatOOPart（生成物在战斗开始前创建 ⇒ 取派生号 ⇒ 落点一分叉号就错）。
+        var rand = FPSGame.Utils.SeedUtil.NewPlacementStream(FPSGame.Data.TaskState.Seed, FPSGame.Utils.SeedStream.PropSpawn, transform.position);
+
+        Vector2 dir = rand != null ? rand.RandomVector2() : RandomUtils.RandomVector2();
+        var pos = transform.position + dir.ToVector3() * range;
         var parent = transform.parent;
         var copiedProbability = probability;
         //Debug.LogError("自注册");
         BattleManager.EnqueueInit(() =>
         {
-            if (BattleManager.Instance.BattleRandom.Bool(copiedProbability))
+            bool pass = rand != null ? rand.Bool(copiedProbability) : BattleManager.Instance.BattleRandom.Bool(copiedProbability);
+            if (pass)
             {
-
-                Instantiate(prefabs.RandomTake(BattleManager.Instance.BattleRandom), pos, default, parent);
+                Instantiate(rand != null ? prefabs.RandomTake(rand) : prefabs.RandomTake(BattleManager.Instance.BattleRandom), pos, default, parent);
             }
         });
 

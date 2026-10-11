@@ -124,8 +124,13 @@ public class Furniture_Pipe : Furniture_Attached
         inOperate = false;
         SetId("PipeLink");
         audioOper = null;
-        if (pipeSkin) FpsHelper.UpdatePipeBounds(pipeSkin.GetComponent<SkinnedMeshRenderer>(),transform);
-        if (pipeSkeleton) FpsHelper.UpdatePipeBounds(pipeSkeleton.GetComponent<SkinnedMeshRenderer>(),transform);
+        // ⚠ 下面这些是"本端表现 / 会改地形"的副作用：**远端重放时跳过** —— 两端各做一次会叠加
+        //   （ModifyHeightMap 是往地形高度图上挖坑，不是幂等操作）。
+        if (!IsRemoteReplay)
+        {
+            if (pipeSkin) FpsHelper.UpdatePipeBounds(pipeSkin.GetComponent<SkinnedMeshRenderer>(),transform);
+            if (pipeSkeleton) FpsHelper.UpdatePipeBounds(pipeSkeleton.GetComponent<SkinnedMeshRenderer>(),transform);
+        }
         if (root.TryGetComponent<CCDIK>(out var cCDIK))
         {
             cCDIK.enabled = false;
@@ -134,7 +139,9 @@ public class Furniture_Pipe : Furniture_Attached
                 item.enabled = true;
                 item.gameObject.layer = 0;
                 //ModifyHeightMap 是协程（迭代器），必须用 StartCoroutine 启动，直接调用不会执行
-                FPSGame.Core.TimerHost.RunCoroutine(TerrainUtils.ModifyHeightMap(item.transform.position,0, 2f,0.5f, ShapeType.Circle, false,false));
+                // ⚠ 远端重放要跳过：这是"改本端地形高度图"的副作用，两端各挖一次会叠加（见 IsRemoteReplay）。
+                if (!IsRemoteReplay)
+                    FPSGame.Core.TimerHost.RunCoroutine(TerrainUtils.ModifyHeightMap(item.transform.position,0, 2f,0.5f, ShapeType.Circle, false,false));
             }
         }
 
@@ -221,9 +228,49 @@ public class Furniture_Pipe : Furniture_Attached
         /// 写入状态 Id（PipeLink/PipeWait/PipeComplete/PipeError，任务与 <see cref="MissionSubConnectPipes"/> 依赖它）。
         /// <para>身份数据统一保存在身份组件（BaseObject）上，家具本地不另存一份，故这里写回身份源。</para>
         /// </summary>
+        /// <summary>状态名的 int 编码（接收端**优先**用原始串解析，这个只在对方没带 Key 时兜底）。</summary>
+        public const int StatePipe = 0, StateLink = 1, StateWait = 2, StateComplete = 3, StateError = 4;
+
         private void SetId(string value)
         {
         if (Identity.IsValidMono()) Identity.Id = value;
+        // ★ 联机（2026-10-11）：管道状态（决定 CanOperate 与任务进度）必须两端一致 ⇒ 上报（键 = 家具 SyncId，值 = 状态名）。
+        //   没有交互驱动的那条路径（任务 EnterRepair 直接调 Error()）也能靠它传出去。
+        ReportState(EncodeState(value), value);
+        }
+
+        private static int EncodeState(string value)
+        {
+            switch (value)
+            {
+                case "Pipe": return StatePipe;
+                case "PipeLink": return StateLink;
+                case "PipeWait": return StateWait;
+                case "PipeComplete": return StateComplete;
+                case "PipeError": return StateError;
+                default: return -1;
+            }
+        }
+
+        private static string DecodeState(int code)
+        {
+            switch (code)
+            {
+                case StatePipe: return "Pipe";
+                case StateLink: return "PipeLink";
+                case StateWait: return "PipeWait";
+                case StateComplete: return "PipeComplete";
+                case StateError: return "PipeError";
+                default: return null;
+            }
+        }
+
+        /// <summary>【联机】应用远端状态：还原到同一个 <c>Id</c>（<c>CanOperate</c> 与任务的判定随之一致）。</summary>
+        public override void ApplyRemoteState(int code, string key)
+        {
+            string value = !string.IsNullOrEmpty(key) ? key : DecodeState(code);
+            if (string.IsNullOrEmpty(value)) return;
+            SetId(value);
         }
 
         }

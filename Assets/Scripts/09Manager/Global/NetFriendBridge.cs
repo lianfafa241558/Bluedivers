@@ -99,6 +99,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnAirdropCall += HandleAirdropCall;     // 盟友呼叫战备（在同一个点上复现一份）
             BattleEventBus.OnAirdrop += HandleLocalAirdrop;     // 我释放了一次战备 ⇒ 上报
             NetRoomFlow.OnPlayerLeft += HandlePlayerLeft;       // 有人离开 ⇒ 销毁他的盟友实例（战斗期名单冻结，靠这条）
+            NetRoomFlow.OnHostLost += HandleHostLost;           // 房主退出/断线 ⇒ 清空全部盟友实例（本端回到单机）
             NetRoomFlow.OnSpeech += HandleSpeech;               // 盟友喊话（字幕 + 语音）
             BattleEventBus.OnPlayerSpeech += HandleLocalSpeech; // 我喊话 ⇒ 上报
             UnitEventBus.OnFriendLeave += HandleFriendLeave;    // 盟友实例被销毁（字典收尾兜底）
@@ -121,6 +122,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnAirdropCall -= HandleAirdropCall;
             BattleEventBus.OnAirdrop -= HandleLocalAirdrop;
             NetRoomFlow.OnPlayerLeft -= HandlePlayerLeft;
+            NetRoomFlow.OnHostLost -= HandleHostLost;
             NetRoomFlow.OnSpeech -= HandleSpeech;
             BattleEventBus.OnPlayerSpeech -= HandleLocalSpeech;
             UnitEventBus.OnFriendLeave -= HandleFriendLeave;
@@ -255,7 +257,10 @@ namespace FPSGame.Managers
                 $" 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")} 已连房主={connected} 是房主={isHost}" +
                 ((connected || isHost) ? "" : " ←**发不出去**：SendShoot 会静默 return（没连上房主）"));
             // ★ 伤害档位一起发：接收端要按**开枪者**的档位取命中特效（信号枪 0=标记 / 1=呼叫战备）
-            flow?.SendShoot(_localWeapons.ActiveWeaponIndex, dir, aim, weapon != null ? weapon.UseDamageIndex : 0);
+            // ★ 发射点下标一起发：多管枪轮流开火，接收端没有那份计数 ⇒ 不发就都从 0 号管出（2026-10-11）
+            flow?.SendShoot(_localWeapons.ActiveWeaponIndex, dir, aim,
+                weapon != null ? weapon.UseDamageIndex : 0,
+                weapon != null ? weapon.LastMuzzleIndex : 0);
         }
 
         /// <summary>准心射程（取目标点时的最大距离；打空时用户点取射线远端）。</summary>
@@ -298,21 +303,31 @@ namespace FPSGame.Managers
         /// <param name="damageIndex">开枪那把枪的伤害档位（<c>WeaponBaseController.UseDamageIndex</c>）——
         /// 必须用**他**的档位摆命中特效/表现弹，否则信号枪的"标记/呼叫战备"两档会放错（见 <c>PlayerShoot.DamageIndex</c>）</param>
         /// <param name="aimPoint">开枪者准心实指的目标点（世界空间）；零向量 = 未知 ⇒ 只用方向</param>
-        private void HandleShoot(uint sid, int slotIndex, int damageIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 aimPoint)
+        private void HandleShoot(uint sid, int slotIndex, int damageIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 aimPoint,
+            int muzzleIndex)
         {
             if (IsSelf(sid)) return;
 
             // 数据说话：收到的这一发到底有没有**落到盟友实体**上（找不到实体是最常见的"没反应"原因）
             FriendController fc;
             bool found = _friends.TryGetValue(sid, out fc) && fc != null;
-            FPSGame.Utils.NetSyncLog.BulletLog("开火·收", $"sid={sid} 槽={slotIndex} 档位={damageIndex} 方向={dir:F2} " +
+            FPSGame.Utils.NetSyncLog.BulletLog("开火·收", $"sid={sid} 槽={slotIndex} 档位={damageIndex} 发射点={(muzzleIndex < 0 ? "齐射" : muzzleIndex.ToString())} 方向={dir:F2} " +
                 $"落点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")} 盟友实体={(found ? fc.name : "<没有>")}");
             if (!found)
             {
                 FPSGame.Utils.NetSyncLog.Warn("开火·收", $"sid={sid} 找不到盟友实体 ⇒ 这一发在**本端完全没表现**（盟友是没建出来，还是已被销毁？）");
                 return;
             }
-            fc.PlayShoot(dir, aimPoint, damageIndex);
+
+            // ★ 虚拟槽位 = 背包武器（见 NetPlayerStateBridge.BagSlotIndex）：那不是玩家槽位上的枪，
+            //   得走盟友身上"已装备的那件背包武器"播表现（枪口/弹道位置完全不是一回事）。
+            if (slotIndex == NetPlayerStateBridge.BagSlotIndex)
+            {
+                fc.PlayBagShoot(dir, damageIndex);
+                return;
+            }
+
+            fc.PlayShoot(dir, aimPoint, damageIndex, muzzleIndex);
         }
 
         // ==================== 呼叫战备（局内释放） ====================
@@ -353,6 +368,29 @@ namespace FPSGame.Managers
             if (fc != null) Tool.Destroy(fc.gameObject);
             Debug.Log($"[NetFriendBridge] 盟友 sid={sid} 已离开 ⇒ 销毁实例");
             FPSGame.Utils.NetSyncLog.SyncLog("盟友离场", $"sid={sid}（房主本地也应收到这条 —— 若房主端没打这句，就是 NetHostSvc 漏了自派发）");
+        }
+
+        /// <summary>
+        /// 【成员侧】与房主断开（房主退出 / 崩溃 / 断网）⇒ **本端退回单机**：清掉**所有**盟友实例。
+        ///
+        /// <para>▍为什么必须做：上面那条 <c>PlayerLeftNtf</c> 只有房主会发 —— 房主自己走了就没人再发位姿、
+        /// 也没人告诉我们"谁离开了" ⇒ 全队的模型与 <c>PlayerWnd</c> 那些行会**永远留在客机屏幕上**
+        /// （本端这会儿已改成自主继续玩，观感就是"人早没了、HUD 里还挂着他们"）。</para>
+        ///
+        /// <para>▍为什么是全清（用户 2026-10-11 口径）：客机之间没有直连、没有任何成员间通道 ⇒ 房主一走，
+        /// 别人的位置/血量也就永远停在最后一帧了，"留着"只会骗人；清光之后剩下的这一局就是单机。</para>
+        ///
+        /// <para>⚠ 名单缓存也要一起丢（<c>_lastInfos/_lastProfiles</c>）：否则回大厅/换场景时
+        /// <see cref="HandleSceneChanged"/> 会拿这份旧名单把这队盟友**重新建出来**（幽灵复活）。</para>
+        /// </summary>
+        private void HandleHostLost()
+        {
+            int count = _friends.Count;
+            ClearFriends();
+            _lastInfos = null;
+            _lastProfiles = null;
+            _loadouts.Clear();   // 配置跟人走：人都不在了，留着只会在下一次"恰巧同 sid"时串味
+            FPSGame.Utils.NetSyncLog.SyncLog("房主离场", $"与房主断开 ⇒ 已清空 {count} 个盟友实例，本端回到单机");
         }
 
         /// <summary>本机喊话 → 上报（远端用**喊话者那个角色**的配置播同一条）。</summary>
@@ -587,6 +625,18 @@ namespace FPSGame.Managers
             RequestSceneActors();
 
             if (_lastInfos == null) return;
+
+            // ⚠ 只有在"我还在这个房间里"时，这份缓存的名单才成立：主动退房 / 房主掉了之后它已经作废，
+            //   照它重建就是往大厅里摆一排**不会动的幽灵队友**（2026-10-11：SettingWnd 的"退出联机"是
+            //   NetRoomFlow.Leave 的第一个调用点，之前没人踩到）。作废了就直接丢，别留着。
+            var flow = NetRoomFlow.Instance;
+            if (flow == null || !flow.InRoom)
+            {
+                _lastInfos = null;
+                _lastProfiles = null;
+                return;
+            }
+
             HandleRoster(_lastInfos, _lastProfiles);
         }
 
@@ -672,6 +722,10 @@ namespace FPSGame.Managers
                 AttachRoleModel(fc, profile);
                 AttachRoleWeapons(fc, profile);
             }
+
+            // 盟友的"幽灵背包"：容器类家具（欧帕兹提交台 / 玩家火炮）的远端重放要有背包可扣
+            // （见 FriendOOPartInventory / IOOPartInventory 的注释）
+            if (go.GetComponent<FriendOOPartInventory>() == null) go.AddComponent<FriendOOPartInventory>();
 
             _friends[info.Sid] = fc;
             _firstPoseSent = false;   // 新人进来 ⇒ 下一条位姿用"吸附"，避免从原点飞过去

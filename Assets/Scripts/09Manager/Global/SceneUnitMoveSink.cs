@@ -55,6 +55,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnSceneUnitMove += OnRemoteMove;
             BattleEventBus.OnSceneUnitMove += OnLocalMove;
             NetRoomFlow.OnJoinResult += OnJoinResult;
+            NetRoomFlow.OnHostLost += OnHostLost;
         }
 
         private void Start()
@@ -67,6 +68,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnSceneUnitMove -= OnRemoteMove;
             BattleEventBus.OnSceneUnitMove -= OnLocalMove;
             NetRoomFlow.OnJoinResult -= OnJoinResult;
+            NetRoomFlow.OnHostLost -= OnHostLost;
 
             // 桥不在场 ⇒ 退回"各端本地游荡"（不能让标志留给下一个场景的 NPC）
             NPCWalk.RemoteDriven = false;
@@ -81,6 +83,14 @@ namespace FPSGame.Managers
         private void OnJoinResult(bool ok, string reason)
         {
             if (ok) RefreshRemoteDriven();
+        }
+
+        /// <summary>房主掉了（退出/崩溃/断网）⇒ 重算总闸：`SelfSid` 已被清 0 ⇒ <c>RemoteDriven=false</c>，
+        /// NPC 回到各端本地游荡。
+        /// <para>⚠ 不复位的话它们会一直"等房主下发"= **永远站着不动**（不报错、不刷日志，最容易漏看）。</para></summary>
+        private void OnHostLost()
+        {
+            RefreshRemoteDriven();
         }
 
         /// <summary>成员端：NPC 不自己决策，等房主下发。单机 / 房主 = false（行为与联机前完全一致）。</summary>

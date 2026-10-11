@@ -69,6 +69,9 @@ namespace FPSGame.GameContract
         /// <summary>⚠ 每次返回**新实例**，避免调用方 <c>Remove</c> 污染共享列表。</summary>
         public List<GameObject> CreatPatrol(Vector3 pos) => new List<GameObject>();
 
+        /// <summary>服务未就位 ⇒ 不生成（等同于"成员端等复刻"的中性结果）。</summary>
+        public GameObject CreatUnit(GameObject prefab, Vector3 pos, Quaternion rot, INetSpawner source, int slot, Vector3 target = default) => null;
+
         public int WaveCount => 0;
     }
 }

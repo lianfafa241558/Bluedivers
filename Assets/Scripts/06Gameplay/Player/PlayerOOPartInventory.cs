@@ -14,7 +14,7 @@ namespace FPSGame.Gameplay
 /// 死亡保留携带量（倒在原地等救援，不掉落）。
 /// </summary>
 [AddComponentMenu("玩家/欧帕兹背包")]
-public class PlayerOOPartInventory : MonoBehaviour
+public class PlayerOOPartInventory : MonoBehaviour, IOOPartInventory
 {
     /// <summary>每种类型携带上限</summary>
     public const int MaxPerType = 5;
