@@ -251,7 +251,7 @@ namespace FPSGame.Managers
                     targetPoint = hit.point;
                 }
                 var beacon = VFXManager.Creat(ResSvc.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), targetPoint, Quaternion.Euler(0, camera.transform.eulerAngles.y, 0), null);
-                beacon.GetComponent<IVfxEffect>()?.SetOwner(Player.gameObject, Player.transform.GetComponent<PlayerWeaponsManager>().GetWeapon(WeaponTypeEnum.FlareGun).gameObject, null, targetPoint);
+                beacon.GetComponent<IVfxEffect>()?.SetOrigin(Player.gameObject, Player.transform.GetComponent<PlayerWeaponsManager>().GetWeapon(WeaponTypeEnum.FlareGun).gameObject, null, targetPoint);
                 //BattleEventSub.Airdrop(Player.gameObject, null, targetPoint, item);
             }
 

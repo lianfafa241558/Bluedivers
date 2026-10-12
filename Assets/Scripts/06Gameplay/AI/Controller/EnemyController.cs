@@ -350,7 +350,9 @@ namespace FPSGame.AI
             m_lastDestination = default;
         }
 
-        protected override void _OnDamaged(PEInt damage, GameObject damageSource, Collider collider,bool noSource)
+        /// <param name="caused">**直接来源**（显示 / AI / 上网重建用）</param>
+        /// <param name="origin">**起源**（统计口径，见下方"命中次数"）</param>
+        protected override void _OnDamaged(PEInt damage, GameObject caused, GameObject origin, Collider collider,bool noSource)
         {
             // ★ 联机命中：**成员往上报、房主往下播**（血量/死亡以房主为唯一权威）。
             //   ⚠ 两个方向必须互斥，否则回声；应用远端伤害时（ApplyingRemoteDamage）两边都不发。
@@ -359,15 +361,19 @@ namespace FPSGame.AI
             bool toNetwork = !ApplyingRemoteDamage && netId != 0 && dmg > 0;
             // 数据说话：这是"客机打中 ⇒ 主机真扣血"这条链的**起点**
             // （后续依次是「命中上报·发」/「伤害下发·发」→ 对端「远端伤害落地」→「远端伤害落地后」）
-            FPSGame.Utils.NetSyncLog.BulletLog("本地命中结算", $"本端该怪={netId} 伤害={dmg} 来源={(damageSource != null ? damageSource.name : "<无>")} " +
+            FPSGame.Utils.NetSyncLog.BulletLog("本地命中结算", $"本端该怪={netId} 伤害={dmg} 来源={(caused != null ? caused.name : "<无>")} " +
                 $"成员模式={RemoteDrivenMovement} 应用远端伤害中={ApplyingRemoteDamage} ⇒ " +
                 (toNetwork ? (RemoteDrivenMovement ? "上报房主" : "下发给成员") : "**不往网络走**"));
             if (toNetwork)
             {
-                // ★ 带上"攻击者单位的 NetId"：接收端要拿它重建 DamageSource，否则非玩家来源（怪/炮塔互殴）
-                //   过网后只能退成 NoSource ⇒ 对端 DetectionModule 的阵营过滤/受击改目标与开枪端不是一个口径。
-                var attackerActor = damageSource != null ? damageSource.GetComponent<Actor>() : null;
+                // ★ 两个来源号一起带：
+                //   AttackerNetId = **起源**（谁该记这笔账）—— 语义与拆分前**一字不变**（旧 DamageSource 就是起源），
+                //     非玩家来源（怪/炮塔互殴）不带号 ⇒ 接收端退成按 Sid 找盟友实例 / NoSource，与旧行为一致。
+                //   CausedNetId   = **直接来源**（炮台/地雷本身）—— 接收端靠它重建"显示 / AI 用的那个身份"。
+                var attackerActor = origin != null ? origin.GetComponent<Actor>() : null;
                 int attackerNetId = attackerActor != null ? attackerActor.NetId : 0;
+                var causedActorNet = caused != null ? caused.GetComponent<Actor>() : null;
+                int causedNetId = causedActorNet != null ? causedActorNet.NetId : 0;
 
                 // ★ 带上这一发的**原始伤害成分**（类型 + 系数）：接收端要拿它补"护甲破坏 / 异常状态积蓄"
                 //   （只带总伤害时那两条分支会被整段跳过 —— 见 Health.LastRawGroups / Damageable.InflictDamage）
@@ -377,28 +383,36 @@ namespace FPSGame.AI
                 //   （两端"挑部位"的算法不完全等价 —— 装甲 / 弱点倍率口径会差一点）
                 int part = m_Actor is Actor me ? me.IndexOfDamageable(collider) : -1;
 
-                if (RemoteDrivenMovement) FPSGame.Gameplay.BattleEventBus.EnemyHit(netId, dmg, attackerNetId, groups, part);
-                else FPSGame.Gameplay.BattleEventBus.EnemyDamaged(netId, dmg, attackerNetId, groups, part);   // 房主：下发给成员
+                if (RemoteDrivenMovement) FPSGame.Gameplay.BattleEventBus.EnemyHit(netId, dmg, attackerNetId, groups, part, causedNetId);
+                else FPSGame.Gameplay.BattleEventBus.EnemyDamaged(netId, dmg, attackerNetId, groups, part, causedNetId);   // 房主：下发给成员
             }
             else if (!ApplyingRemoteDamage && m_Actor != null && netId == 0)
             {
                 // NetId=0 的怪不参与同步（上报会被 SendEnemyHit 静默挡掉）⇒ 这就是"本端看得见命中、对端毫无反应"的成因
                 FPSGame.Utils.NetSyncLog.Warn("本地命中结算", $"这只怪没有 NetId ⇒ **打了也不会同步到对端** 该怪={gameObject.name} 伤害={dmg}");
             }
-            
-            if (damageSource &&damageSource.GetComponent<Actor>().Type != UnitTypeEnum.Other&& !damageSource.GetComponent<Actor>().HasFlag(ActorFlag.Invincible))
+
+            // ★ 表现 / AI（阵营过滤、受击改目标）走**直接来源**：炮台打的目标不该记到呼叫者身上。
+            //   ⚠ 直接来源取不到可用单位身份时（地雷 / 空投舱这类无 Actor 的物件、或本身就是"非战斗物件"）
+            //     回落起源 —— 保持"地雷炸了怪、怪照样被激怒"这条既有行为，也避开原来那句
+            //     `damageSource.GetComponent<Actor>().Type` 在无 Actor 来源上的空引用。
+            GameObject felt = caused;
+            Actor feltActor = felt != null ? felt.GetComponent<Actor>() : null;
+            if (feltActor == null || feltActor.Type == UnitTypeEnum.Other || feltActor.HasFlag(ActorFlag.Invincible))
             {
-                DetectionModule?.OnDamaged(damageSource, noSource);
+                felt = origin;
+                feltActor = felt != null ? felt.GetComponent<Actor>() : null;
+            }
+            if (felt != null && feltActor != null && feltActor.Type != UnitTypeEnum.Other && !feltActor.HasFlag(ActorFlag.Invincible))
+            {
+                DetectionModule?.OnDamaged(felt, noSource);
                 OnDamaged?.Invoke(collider);
             }
-            // 统计"命中次数"按**起源**记（炮台/无人机这类召唤物算呼叫者的账）；
+            // 统计"命中次数"按**起源**记（炮台/无人机这类召唤物算呼叫者的账）—— 起源已由 DamagePacket 算好，
+            // 不必再像拆分前那样在这里从 source→Actor.Owner 自己推一遍。
             // ⚠ 归换算走 IPlayerUnit（PlayerUnitUtil）：队友在本端是 FriendController 实例 ⇒ 只认 PlayerController 必落空。
-            if (!noSource && FPSGame.Data.FlowState.GameState == GameStateEnum.Game && damageSource != null)
+            if (!noSource && FPSGame.Data.FlowState.GameState == GameStateEnum.Game && origin != null)
             {
-                GameObject origin = damageSource;
-                if (damageSource.TryGetComponent(out Actor srcActor) && srcActor.Owner != null && srcActor.Owner is Component srcOwner)
-                    origin = srcOwner.gameObject;
-
                 if (FPSGame.GameContract.PlayerUnitUtil.TryGetPlayerIndex(origin, out int hitIndex))
                     FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(hitIndex, "命中次数");
             }
@@ -425,9 +439,9 @@ namespace FPSGame.AI
             return m_groupScratch;
         }
 
-        protected override void _OnDie(GameObject source)
+        protected override void _OnDie(GameObject caused, GameObject origin)
         {
-            base._OnDie(source);
+            base._OnDie(caused, origin);
             // 已死：agent 会被禁用，别再每帧去补发（⚠ 故意不碰 Mover 属性，避免为一个「取消」白建组件）
             if (_mover != null) _mover.CancelPending();
             if (FpsHelper.HaveNavMeshAgent(NavMeshAgent))
@@ -441,15 +455,13 @@ namespace FPSGame.AI
             }
             Speed.AddModifier(ModifierType.Factor, -1);
 
-            if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game && source && m_Actor.Team != 1)
+            if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game && origin && m_Actor.Team != 1)
             {
-                // ★ 击杀归属 = **起源**：召唤物（炮台/无人机）算呼叫者的账 ⇒ 先看 Actor.Owner，没有再退回 source 自己。
+                // ★ 击杀归属 = **起源**：召唤物（炮台/无人机）算呼叫者的账。
+                //   起源已由 `ProjectileBase.BuildHitData` 收口写进 `DamagePacket.DamageOrigin`（= 武器持有者
+                //   / 呼叫者）⇒ 这里**不再**从 source→Actor.Owner 自己推一遍。
                 //   ⚠ 认"玩家序号"必须走 IPlayerUnit（PlayerUnitUtil）：队友在本端是 FriendController 实例，
                 //     只认 PlayerController 会落空 ⇒ 旧实现把"队友的炮台击杀"记到房主头上（2026-10-12 查实）。
-                GameObject origin = source;
-                if (source.TryGetComponent(out Actor actor) && actor.Owner != null && actor.Owner is Component ownerComp)
-                    origin = ownerComp.gameObject;
-
                 // 认不出（敌人互殴 / 起源已离场 / 无源伤害）⇒ 维持旧口径：算房主。
                 // 房主序号走「数据自持」（2026-10-01 取代 ServiceLocator.Room）：TeamManager 在其 4 个变更点同步 TeamState。
                 if (!FPSGame.GameContract.PlayerUnitUtil.TryGetPlayerIndex(origin, out int playerIndex))

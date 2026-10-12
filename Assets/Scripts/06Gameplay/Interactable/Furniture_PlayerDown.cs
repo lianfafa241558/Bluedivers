@@ -61,25 +61,30 @@ namespace FPSGame.Gameplay
         /// <para>⚠ 幂等：救人的那一下已经把 <c>canOperate</c> 置回 false，重复的 down=false 消息不能重复归还授权。</para>
         /// <para>⚠ 这条路径**拿不到伤害来源**（盟友的死亡结算发生在对方机器上）⇒ 播报会省掉"被谁"。</para></summary>
         public void ApplyRemoteDown(bool down) => ApplyDown(down, null);
+        /// <param name="caused">**直接来源**——播报"被谁击倒"显示的是它（炮台击倒就报炮台，不报呼叫者）</param>
+        /// <param name="origin">**起源**（统计口径；播报不用）</param>
+        void OnDown(GameObject caused, GameObject origin)
+        {
+           
+            ApplyDown(true, caused);
+        }
 
         /// <summary>倒地置位（本机 <c>Health.OnDie</c> 与联机 down 标志共用同一条链）。</summary>
-        private void ApplyDown(bool down, GameObject source)
+        private void ApplyDown(bool down, GameObject caused)
         {
             if (down == canOperate) return;
             canOperate = down;
             BattleEventBus.RequestAuthorize(Constants.HealBag, down);
             if (down)
             {
+                Debug.LogError("击杀来源"+caused);
                 PlaySound(audioClose);
                 // 消息窗：谁被谁击倒了。名字/颜色都走 GameMsg.Of（玩家单位取玩家名 + 角色色），
                 // 来源同一个漏斗（无源伤害 / 认不出 ⇒ 空串 ⇒ 播报省掉"被谁"）。
-                GameMsg.PlayerDown(GameMsg.Of(Identity), GameMsg.NameOf(source));
+                GameMsg.PlayerDown(GameMsg.Of(Identity), GameMsg.NameOf(caused));
             }
         }
 
-        void OnDown(GameObject source)
-        {
-            ApplyDown(true, source);
-        }
+
     }
 }

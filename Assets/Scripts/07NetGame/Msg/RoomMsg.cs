@@ -469,10 +469,11 @@ public class DamageMsg
     [Key(2)] public int Key;
     /// <summary>伤害值：来源端算完护甲/抗性的**最终扣减量**；0 + <see cref="IsDeath"/> = 只报"死了"。</summary>
     [Key(3)] public int Damage;
-    /// <summary>**攻击者单位的 NetId**（0 = 未知/玩家 ⇒ 退回按 <see cref="Sid"/> 找盟友实例）。
-    /// <para>▍为什么需要：接收端要用它重建 <c>DamagePacket.DamageSource</c> —— 非玩家来源（怪/炮塔/凯伊互殴）
+    /// <summary>**起源**单位的 NetId（谁该记这笔账；0 = 未知/玩家 ⇒ 退回按 <see cref="Sid"/> 找盟友实例）。
+    /// <para>▍为什么需要：接收端要用它重建 <c>DamagePacket.DamageOrigin</c> —— 非玩家来源（怪/凯伊互殴）
     /// 只带 sid 时会被当成"上报者那个玩家"，或者直接退成 NoSource，对端 <c>DetectionModule</c> 的阵营过滤/
-    /// 受击改目标就跟开枪端不是一个口径。</para></summary>
+    /// 受击改目标就跟开枪端不是一个口径。</para>
+    /// <para>⚠ 语义与拆分前（旧 <c>DamageSource</c>）**一字不变** ⇒ 统计口径不受本次拆分影响。</para></summary>
     [Key(4)] public int AttackerNetId;
     /// <summary>伤害成分，摊平编码 <c>[count, type0, coeff0, type1, coeff1, ...]</c>（null/空 = 按中性成分结算）。
     /// <para>▍为什么必须带（2026-10-12）：接收端要拿它补**护甲破坏**（<c>Damageable.ArmorDestruction</c>）
@@ -486,6 +487,14 @@ public class DamageMsg
     [Key(6)] public int Part;
     /// <summary>true = 这一发把它打死了（合并原 4026 / 4043 的"只报死了"；<see cref="Damage"/> 可为 0）。</summary>
     [Key(7)] public bool IsDeath;
+    /// <summary>**直接来源**单位的 NetId（屏幕上该显示谁；0 = 拿不到 ⇒ 接收端退成
+    /// <see cref="AttackerNetId"/> / 按 <see cref="Sid"/> 找盟友实例）。
+    /// <para>▍与 <see cref="AttackerNetId"/> 的分工：那条是**起源**（统计），这条是**直接来源**
+    /// （炮台 / 地雷 / 补给舱本身）—— 见 <c>DamagePacket.DamageCaused</c>。</para>
+    /// <para>▍为什么必须带（2026-10-12 拍板④）：不带就只带起源 ⇒ 远端重建不出"直接来源"，
+    /// 队友的炮台在别人屏幕上会显示成**队友本人**。⚠ 追加字段（旧端 Skip 掉 ⇒ 退化成拆分前的显示口径，
+    /// 能跑但显示不准）⇒ 属**破坏性协议变更**，双端必须同时换成新包。</para></summary>
+    [Key(8)] public int CausedNetId;
 }
 
 /// <summary>选择全队强化：成员 -> 房主。</summary>

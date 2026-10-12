@@ -159,19 +159,22 @@ using FPSGame.Gameplay;
         public static event Action<int, Vector3> OnEnemyMove;
         public static void EnemyMove(int netId, Vector3 destination) => OnEnemyMove?.Invoke(netId, destination);
 
-        /// <summary>【成员】本机打中了某只怪（NetId / 伤害 / 攻击者号 / **原始伤害成分** / **命中部位下标**）⇒ 上报房主结算（血量/死亡以房主为准）
+        /// <summary>【成员】本机打中了某只怪（NetId / 伤害 / **起源**号 / **原始伤害成分** / **命中部位下标** / **直接来源**号）
+        /// ⇒ 上报房主结算（血量/死亡以房主为准）
         /// <para>▍成分 `groups` 摊平编码 <c>[count, type0, coeff0, ...]</c>（null = 中性）：接收端要拿它补护甲破坏/异常状态积蓄。</para>
-        /// <para>▍部位下标 `part`（<c>Actor.IndexOfDamageable</c>，-1 = 认不出）：让对端打在**同一部位**上。</para></summary>
-        public static event Action<int, int, int, float[], int> OnEnemyHit;
-        public static void EnemyHit(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = -1)
-            => OnEnemyHit?.Invoke(netId, damage, attackerNetId, groups, part);
+        /// <para>▍部位下标 `part`（<c>Actor.IndexOfDamageable</c>，-1 = 认不出）：让对端打在**同一部位**上。</para>
+        /// <para>▍两个来源号：<paramref name="attackerNetId"/> = **起源**（统计，语义与拆分前一致）、
+        /// <paramref name="causedNetId"/> = **直接来源**（显示/AI，炮台/地雷本身）。见 <c>DamagePacket</c>。</para></summary>
+        public static event Action<int, int, int, float[], int, int> OnEnemyHit;
+        public static void EnemyHit(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = -1, int causedNetId = 0)
+            => OnEnemyHit?.Invoke(netId, damage, attackerNetId, groups, part, causedNetId);
 
-        /// <summary>【房主】**我**打中了某只怪（NetId / 伤害 / 攻击者号 / 成分 / 部位下标）⇒ 下发给成员，让他们那份副本一起掉血。
+        /// <summary>【房主】**我**打中了某只怪（NetId / 伤害 / 起源号 / 成分 / 部位下标 / 直接来源号）⇒ 下发给成员，让他们那份副本一起掉血。
         /// <para>▍为什么与 <see cref="OnEnemyHit"/> 分两条：那条是"成员往上报"，这条是"房主往下播" ——
         /// 两边都往一条事件里塞会让订阅方分不清方向（同一个 `_OnDamaged` 里按角色二选一发射）。</para></summary>
-        public static event Action<int, int, int, float[], int> OnEnemyDamaged;
-        public static void EnemyDamaged(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = -1)
-            => OnEnemyDamaged?.Invoke(netId, damage, attackerNetId, groups, part);
+        public static event Action<int, int, int, float[], int, int> OnEnemyDamaged;
+        public static void EnemyDamaged(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = -1, int causedNetId = 0)
+            => OnEnemyDamaged?.Invoke(netId, damage, attackerNetId, groups, part, causedNetId);
 
         /// <summary>【房主】场景单位（NPC 这类**由场景摆好**、会自己走动的氛围单位）要走向哪 / 停下；键 = <c>Actor.Id</c>。
         /// <para>▍为什么另开一条：它们没有 AI 控制器、也不在 <c>ActorsManager.Enemys</c> 里 ⇒ 套不上敌人那条 4024；

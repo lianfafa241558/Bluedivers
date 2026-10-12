@@ -227,6 +227,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8184225223948610173}
   - component: {fileID: 8184225223948610147}
+  - component: {fileID: -6767475100373832622}
   m_Layer: 10
   m_Name: Eagle Smoke
   m_TagString: Untagged
@@ -343,6 +344,7 @@ MonoBehaviour:
   UnparentMuzzleFlash: 0
   SFXRange: 100
   FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: f0b629fe049f0c94a8fd1365ff509733, type: 3}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 0}
@@ -351,6 +353,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -363,6 +366,23 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+--- !u!114 &-6767475100373832622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8184225223948610144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\"\u51E4\u9E70\u53F7\"\u70DF\u5E55"
+  Id: 
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &8184225224088515705
 GameObject:
   m_ObjectHideFlags: 0

@@ -104,7 +104,8 @@ namespace FPSGame.Game
         }
 
         /// <summary>增加指定异常类型的积蓄值并刷新上次获得时间</summary>
-        private void AddAboGauge(DamageTypeEnum type, PEInt amount, GameObject source)
+        /// <param name="damageCaused">**直接来源**（显示/AI 口径）：满槽特效挂载点、Terror 逃逸方向都取它</param>
+        private void AddAboGauge(DamageTypeEnum type, PEInt amount, GameObject damageCaused)
         {
             if (amount <= 0) return;
             if (!AboGauge.TryGetValue(type, out AboGaugeEntry entry) || entry.Max <= 0) return;
@@ -112,7 +113,7 @@ namespace FPSGame.Game
             entry.Current += amount;
             if (entry.Current > entry.Max) entry.Current = entry.Max;
             entry.LastGainTime = (PEInt)Time.time;
-            entry.Source = source;
+            entry.Source = damageCaused;
             NotifyFullChanged(type, entry);
         }
         
@@ -177,7 +178,8 @@ namespace FPSGame.Game
             _AboDmgBuffer.Add(new SKVP<DamageTypeEnum, PEInt>(stateData.typeEnum, dmg));
             // 标记为异常状态 tick 伤害，HandleDamage 据此跳过 AddAboGauge（不更新 Current/LastGainTime）
             _isAboTickDamage = true;
-            TakeDamage(_AboDmgBuffer, entry.Source == null, entry.Source, null, transform.position, stateData.damageTriggeredResponse);
+            // 无源 tick：caused = origin = entry.Source（都为空 ⇒ NoSource 分支，行为同改动前）
+            TakeDamage(_AboDmgBuffer, entry.Source == null, entry.Source, null, transform.position, stateData.damageTriggeredResponse, false, -1, entry.Source);
             _isAboTickDamage = false;
         }
 

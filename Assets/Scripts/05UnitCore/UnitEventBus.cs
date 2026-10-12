@@ -34,19 +34,21 @@ public static class UnitEventBus
     public static event Action<Actor, Actor> OnUnitKill;
     public static void UnitKill(Actor attacker, Actor victim) => OnUnitKill?.Invoke(attacker, victim);
 
-    /// <summary>单位被击中(受击者，来源)</summary>
+    /// <summary>单位被击中（受击者，**直接来源**）</summary>
     public static event Action<GameObject, GameObject> OnUnitHit;
-    public static void UnitHit(GameObject victim, GameObject attacker) => OnUnitHit?.Invoke(victim, attacker);
+    public static void UnitHit(GameObject victim, GameObject caused) => OnUnitHit?.Invoke(victim, caused);
 
-    /// <summary>单位**实际掉血**（受击者 / 真实扣减量 / 来源 / 受击体）。
+    /// <summary>单位**实际掉血**（受击者 / 真实扣减量 / **直接来源** / 受击体 / **起源**）。
     /// <para>▍与 <see cref="OnUnitHit"/> 的分工：那条是给血条表现的（没有伤害量）；这条供**联机伤害通道**用，
     /// 给的是 <c>Health.TakeDamage</c> 里算出来的**最终扣减量**（已乘完护甲 / 爆炸抗性）⇒ 接收端
     /// <c>DamagePacket.Resolved = true</c> 直接用，不能再算一遍。</para>
+    /// <para>▍两个来源的区别：<paramref name="caused"/>（直接来源）是"屏幕上该显示谁"（炮台/地雷本身），
+    /// <paramref name="origin"/>（起源）是"这笔账记在谁头上"（呼叫者/放置者）。见 <c>DamagePacket</c>。</para>
     /// <para>⚠ 发布点在 <c>Health.TakeDamage</c>（真伤害 > 0 才发）；订阅方**必须自己挡回环**
     /// （应用远端伤害期间 <c>EnemyController.ApplyingRemoteDamage</c> 为 true）—— 否则两端互相转发。</para></summary>
-    public static event Action<GameObject, PEInt, GameObject, Collider> OnUnitDamaged;
-    public static void UnitDamaged(GameObject victim, PEInt damage, GameObject source, Collider hitBody)
-        => OnUnitDamaged?.Invoke(victim, damage, source, hitBody);
+    public static event Action<GameObject, PEInt, GameObject, Collider, GameObject> OnUnitDamaged;
+    public static void UnitDamaged(GameObject victim, PEInt damage, GameObject caused, Collider hitBody, GameObject origin)
+        => OnUnitDamaged?.Invoke(victim, damage, caused, hitBody, origin);
 
 
     /// <summary>表现层：子弹击中地面(近战，超射程消失也算)，给 HUD 做擦弹/受击提示用</summary>

@@ -106,6 +106,13 @@ namespace FPSGame.UI
         [InspectorName("加入按钮（Rooms/Join）")]
         [SerializeField] private Transform joinBtn;
 
+        [Header("手动直连（广播被挡时的兜底）")]
+        [InspectorName("直连地址输入（Rooms/Direct/Input）")]
+        [SerializeField] private TMP_InputField directInput;
+
+        [InspectorName("直连按钮（Rooms/Direct/Join）")]
+        [SerializeField] private Transform directBtn;
+
         [Header("搜索")]
         [InspectorName("搜索框")]
         [SerializeField] private TMP_InputField searchInput;
@@ -138,6 +145,9 @@ namespace FPSGame.UI
         [Header("状态提示")]
         [InspectorName("底部状态文本（Rooms/Panel/Status）")]
         [SerializeField] private Transform statusText;
+
+        [InspectorName("本机 IP 提示（Rooms/Panel/LocalIp）")]
+        [SerializeField] private Transform localIpText;
 
         [Header("房间发现")]
         [InspectorName("监听端口（-1 = 库默认 29800）")]
@@ -227,6 +237,7 @@ namespace FPSGame.UI
 
             OnVisibleChanged?.Invoke(true);
 
+            RefreshLocalAddress();   // 每次展开都重算：期间可能刚连上虚拟网卡 / 换了网络
             StartListening();
             Scan();
             Refresh(true);
@@ -322,6 +333,16 @@ namespace FPSGame.UI
                 Activate(SelectedRoom);
             });
             RefreshJoinButton();
+
+            // 手动直连：不依赖任何"发现"能力（⚠ SetCilck 不判 null，没绑上就别调）
+            if (directBtn != null)
+            {
+                SetCilck(directBtn, () =>
+                {
+                    PlayClick();
+                    ActivateDirect();
+                });
+            }
 
             // 四个筛选组：抓出各自的项容器，并把 Title 绑成「点一下开/关下拉」
             _groups = new[] { mapGroup, diffGroup, countGroup, netTypeGroup };
@@ -1140,6 +1161,189 @@ namespace FPSGame.UI
                 isPassword = true,
                 onConfirm = pwd => OnRoomActivated?.Invoke(room, pwd),
             });
+        }
+
+        /// <summary>
+        /// 【手动直连】把输入框里的「IP」或「IP:端口」拼成一个房间对象，交给与列表点击**同一条** <see cref="Activate"/> 路径。
+        ///
+        /// <para>▍为什么要有：UDP 广播只在同一广播域有效 —— 展会 / 公司网的路由器一旦开了「客户端隔离」，
+        /// 房间列表永远是空的。直连不经过"发现"，只要房主的监听端口可达就能进房，也便于现场判断
+        /// "到底是发现层被挡，还是网络根本不通"。</para>
+        /// <para>⚠ 直连只知道地址、不知道房名与是否有密码 ⇒ 一律按"无密码"处理：房主真设了密码时由它回绝，
+        /// 失败原因经 <c>NetRoomFlow</c> 提示给玩家。端口可省略，默认 <see cref="NetConfig.HostGamePort"/>。</para>
+        /// </summary>
+        private void ActivateDirect()
+        {
+            string ip;
+            int port;
+            if (!TryParseDirect(directInput != null ? directInput.text : null, out ip, out port))
+            {
+                WndHub.Tip?.Creat(new TipWndInfo
+                {
+                    title = "地址不正确",
+                    desc = "请填「房主IP:端口」，例如 192.168.1.5:17666（端口可省，默认 " + NetConfig.HostGamePort + "）；IPv6 写成 [地址]:端口。",
+                });
+                return;
+            }
+
+            var room = new LanRoomInfo
+            {
+                RoomName = "手动直连",
+                HostIp = ip,
+                HostPort = port,
+                PlayerCount = 0,
+                MaxPlayers = 0,                                 // 0 = 人数未知 ⇒ 满员判断自动跳过
+                PasswordProtected = false,
+                InGame = false,
+                Source = (int)RoomMeta.SourceEnum.ServerList,   // 非广播发现（只影响列表里显示的类型，这里不进列表）
+                // ⚠ 故意不填 PlayerNames：NetRoomFlow.IsHostOfRoom 靠"广播里的合成房主名"认自己的房，
+                //   留空才不会被误判成"我已经在这个房间里了"。
+            };
+            Debug.Log($"[ServerListPanel] 手动直连 {ip}:{port}");
+            Activate(room);
+        }
+
+        /// <summary>
+        /// 解析「IP」或「IP:端口」，支持方括号的 IPv6：
+        /// <c>192.168.1.5</c> / <c>192.168.1.5:17666</c> / <c>[2408:8207::1]:17666</c> / <c>::1</c>。
+        ///
+        /// <para>▍为什么要专门处理 IPv6：裸 IPv6 里全是冒号，用"最后一个冒号切端口"会把 <c>::1</c>
+        /// 切成 ip=":"、port=1 ⇒ 只能靠方括号区分「地址」与「端口」（URL 也是这个约定）。
+        /// 无方括号时：0 个冒号 = 纯 IPv4、1 个冒号 = IPv4:端口、≥2 个冒号 = 裸 IPv6（用默认端口）。</para>
+        /// </summary>
+        private static bool TryParseDirect(string text, out string ip, out int port)
+        {
+            ip = string.Empty;
+            port = NetConfig.HostGamePort;
+            if (string.IsNullOrEmpty(text)) return false;
+
+            string s = text.Trim();
+
+            if (s[0] == '[')
+            {
+                int close = s.IndexOf(']');
+                if (close < 0) return false;
+
+                ip = s.Substring(1, close - 1).Trim();
+                string rest = s.Substring(close + 1).Trim();
+                if (rest.Length > 0)
+                {
+                    if (rest[0] != ':') return false;                        // [地址] 后面只允许跟 :端口
+                    if (!int.TryParse(rest.Substring(1).Trim(), out port)) return false;
+                }
+            }
+            else
+            {
+                int first = s.IndexOf(':');
+                if (first >= 0 && first != s.LastIndexOf(':'))
+                {
+                    ip = s;                                                 // ≥2 个冒号 ⇒ 整串当 IPv6
+                }
+                else if (first >= 0)
+                {
+                    ip = s.Substring(0, first).Trim();
+                    if (!int.TryParse(s.Substring(first + 1).Trim(), out port)) return false;
+                }
+                else
+                {
+                    ip = s;
+                }
+            }
+
+            if (ip.Length == 0 || port <= 0 || port > 65535) return false;
+
+            System.Net.IPAddress parsed;
+            return System.Net.IPAddress.TryParse(ip, out parsed);
+        }
+
+        /// <summary>把「本机 IP」提示刷到界面上（每次展开房间列表算一次）。</summary>
+        private void RefreshLocalAddress()
+        {
+            if (localIpText == null) return;
+
+            string text = LocalAddressText();
+            SetText(localIpText, text);
+            Debug.Log("[ServerListPanel] " + text);
+        }
+
+        /// <summary>
+        /// 【本机地址一览】列出「已启用、非环回、非自动私有地址」网卡的 IPv4，**带网卡名**；
+        /// 有网关的（以太网 / WLAN）排前面，没有网关的（点对点虚拟网卡）排后面。
+        ///
+        /// <para>▍为什么不能用"有没有网关"过滤：Radmin VPN / Hamachi 这类点对点虚拟网卡可能**没有网关**，
+        /// 按网关筛会把整张网卡漏掉 —— 而房主恰恰要把**虚拟网卡的地址**报给网友。</para>
+        /// <para>没有可用 IPv4 时退回列一条全局 IPv6（家庭宽带无公网 IPv4 时只剩这条路）。</para>
+        /// </summary>
+        private static string LocalAddressText()
+        {
+            var routed = new System.Collections.Generic.List<string>();
+            var others = new System.Collections.Generic.List<string>();
+            string ipv6 = null;
+
+            try
+            {
+                var nics = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
+                for (int i = 0; i < nics.Length; ++i)
+                {
+                    var nic = nics[i];
+                    if (nic.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
+                    if (nic.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Loopback) continue;
+
+                    var props = nic.GetIPProperties();
+
+                    bool hasGateway = false;
+                    foreach (var gw in props.GatewayAddresses)
+                    {
+                        if (gw.Address != null && !gw.Address.Equals(System.Net.IPAddress.Any))
+                        {
+                            hasGateway = true;
+                            break;
+                        }
+                    }
+                    var bucket = hasGateway ? routed : others;
+
+                    string nicName = nic.Name;
+                    if (nicName.Length > 20) nicName = nicName.Substring(0, 20);
+
+                    foreach (var ua in props.UnicastAddresses)
+                    {
+                        var addr = ua.Address;
+                        if (addr == null || System.Net.IPAddress.IsLoopback(addr)) continue;
+
+                        if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        {
+                            // 169.254.x.x = 没拿到 DHCP 时的自动私有地址（APIPA），报出去别人也连不上
+                            byte[] b = addr.GetAddressBytes();
+                            if (b.Length == 4 && b[0] == 169 && b[1] == 254) continue;
+                            bucket.Add(addr.ToString() + "（" + nicName + "）");
+                        }
+                        else if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                        {
+                            if (addr.IsIPv6LinkLocal) continue;   // fe80:: 别人连不上，不列
+                            if (ipv6 == null) ipv6 = addr.ToString();
+                        }
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[ServerListPanel] 枚举本机网卡失败：" + e.Message);
+            }
+
+            var all = new System.Text.StringBuilder();
+            for (int i = 0; i < routed.Count; ++i) { if (all.Length > 0) all.Append("  |  "); all.Append(routed[i]); }
+            for (int i = 0; i < others.Count; ++i) { if (all.Length > 0) all.Append("  |  "); all.Append(others[i]); }
+
+            // 全局 IPv6 一并报出来（没有公网 IPv4 的人只能靠它直连）；可能略超宽，完整内容同时打 Console
+            if (!string.IsNullOrEmpty(ipv6))
+            {
+                if (all.Length > 0) all.Append("   IPv6: ");
+                all.Append(ipv6);
+            }
+
+            if (all.Length == 0) return "本机 IP：未找到可用网卡（检查网络是否已连接）";
+
+            return "本机 IP：" + all;
         }
 
         #endregion

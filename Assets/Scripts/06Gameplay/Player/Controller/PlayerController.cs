@@ -520,7 +520,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
 
     private bool _wasThirdPersonBeforeDeath;
 
-    void OnDie(GameObject source)
+    void OnDie(GameObject caused, GameObject origin)
     {
         IsDead = true;
         _wasThirdPersonBeforeDeath = IsThirdPerson;

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using FPSGame.GameContract;
 using PEMaths;
@@ -53,7 +53,7 @@ namespace FPSGame.Gameplay
         private SustainedDamageData DamageData;
 
         /// <summary>伤害来源</summary>
-        public GameObject Owner { get; private set; }
+        public GameObject Origin { get; private set; }
 
         /// <summary>命中回调(外部挂接，用于在落地时创建实际物体)</summary>
         public UnityAction<ProjectileHitData> OnHit;
@@ -117,10 +117,10 @@ namespace FPSGame.Gameplay
         /// <summary>
         /// 部署空投舱并开始自由落体
         /// </summary>
-        /// <param name="owner">伤害来源(空投发起者)</param>
-        public void Launch(GameObject owner)
+        /// <param name="origin">伤害来源(空投发起者)</param>
+        public void Launch(GameObject origin)
         {
-            Owner = owner;
+            Origin = origin;
 
             m_Gravity = m_BaseGravity * m_FallSpeedScale * m_FallSpeedScale;
             m_InitialPosition = Root.position;
@@ -150,7 +150,7 @@ namespace FPSGame.Gameplay
         /// <param name="weaponRoot">武器物体，空投舱不使用</param>
         /// <param name="target">命中碰撞体，空投舱不使用</param>
         /// <param name="point">部署点，空投舱由创建方定位，不使用</param>
-        public void SetOwner(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point) => Launch(owner);
+        public void SetOrigin(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point) => Launch(owner);
 
         /// <summary>推进一帧位移，返回是否还需要做碰撞检测(已落地时为 false)</summary>
         private bool Move()
@@ -235,7 +235,7 @@ namespace FPSGame.Gameplay
 
             Stop();
         }
-
+        
         private ProjectileHitData BuildHitData(Vector3 pos, Vector3 normal, Collider collider)
             => new ProjectileHitData
             {
@@ -244,7 +244,8 @@ namespace FPSGame.Gameplay
                 collider = collider,
                 data = DamageData,
                 chargeScale = 1,//无蓄力概念
-                soure = Owner,
+                origin = Origin,          // 起源 = 空投发起者（统计）
+                caused = gameObject,    // 直接来源 = 空投舱自己（拍板③：无武器的物件显示成它自己）
                 self = gameObject,
                 sfxRange = DamageData.IsValid() ? DamageData.SoundRadius : 0,
                 weapon = null,//纯自部署，无武器来源

@@ -20,8 +20,11 @@ namespace FPSGame.GameContract
         public int AP;
         /// <summary>无源伤害</summary>
         public bool NoSource;
-        /// <summary>伤害来源</summary>
-        public GameObject DamageSource;
+        /// <summary>**起源**（统计口径）：这笔伤害该记在谁头上（武器持有者 / 召唤物的呼叫者）。</summary>
+        public GameObject DamageOrigin;
+        /// <summary>**直接来源**（显示 / AI 口径）：真正发出这一发的东西（玩家本人的枪 / 炮台本身 / 地雷）。
+        /// <para>null ⇒ 消费方回落 <see cref="DamageOrigin"/>（兼容老路径）。</para></summary>
+        public GameObject DamageCaused;
         /// <summary>伤害位置</summary>
         public Vector3 Pos;
         /// <summary>拆毁值（大于目标 Health 拆毁值则秒杀）</summary>

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.AI;
 using FPSGame.Core;
 using FPSGame.Game;
@@ -98,7 +98,7 @@ namespace FPSGame.Managers
         /// 房主那边还是满血（血条 / 受击表现不一致）。战斗前创建的 <c>Other</c> 现在有**派生号**，于是能并进
         /// <c>EnemyDamagedMsg</c> 那条通道（同一套 <c>attackerNetId</c> / <c>DamagePacket.Resolved</c> 口径）。
         /// ⚠ 没号的物件（战斗中途生成）照旧只靠 4043 兜底。</para></summary>
-        static void OnLocalDamaged(GameObject victim, PEInt damage, GameObject source, Collider hitBody)
+        static void OnLocalDamaged(GameObject victim, PEInt damage, GameObject caused, Collider hitBody, GameObject origin)
         {
             if (_applyingRemote) return;                       // 本端正在重放"远端那次打爆"
             if (EnemyController.ApplyingRemoteDamage) return;  // 本端正在应用远端伤害 ⇒ 必须挡回环（否则两端互相转发）
@@ -115,15 +115,19 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow == null || !flow.InRoom) return;          // 单机 / 不在房里：两端本来就一致
 
-            // 攻击者号：接收端拿它重建 DamageSource（玩家是 0 ⇒ 那边退回按 Sid 找盟友实例，同 EnemyController 口径）
-            var attacker = source != null ? source.GetComponent<Actor>() : null;
-            int attackerNetId = attacker != null ? attacker.NetId : 0;
+            // 两个来源号一起带（口径同 EnemyController._OnDamaged）：
+            //   attackerNetId = **起源**（统计；玩家是 0 ⇒ 对端退回按 Sid 找盟友实例）
+            //   causedNetId   = **直接来源**（显示/AI；炮台 / 地雷本身）
+            var agent = origin != null ? origin.GetComponent<Actor>() : null;
+            int attackerNetId = agent != null ? agent.NetId : 0;
+            var causer = caused != null ? caused.GetComponent<Actor>() : null;
+            int causedNetId = causer != null ? causer.NetId : 0;
 
             NetSyncLog.BulletLog("可破坏物·伤",
-                $"{actor.ShowName}({actor.Id}) netId={netId} 伤害={dmg} 攻击者号={attackerNetId} 是房主={flow.IsHost}");
+                $"{actor.ShowName}({actor.Id}) netId={netId} 伤害={dmg} 起源号={attackerNetId} 直接来源号={causedNetId} 是房主={flow.IsHost}");
 
-            if (flow.IsHost) BattleEventBus.EnemyDamaged(netId, dmg, attackerNetId);   // 房主：下发全体
-            else BattleEventBus.EnemyHit(netId, dmg, attackerNetId);                   // 成员：上报房主（由他转发）
+            if (flow.IsHost) BattleEventBus.EnemyDamaged(netId, dmg, attackerNetId, null, -1, causedNetId);   // 房主：下发全体
+            else BattleEventBus.EnemyHit(netId, dmg, attackerNetId, null, -1, causedNetId);                   // 成员：上报房主（由他转发）
         }
 
         #endregion

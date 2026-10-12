@@ -48,7 +48,7 @@ namespace FPSGame.Weapon
             nowSpeed += AttrFinal(WeaponAttrType.LockDistance).RawFloat;//使用锁定距离代替装弹增长范围
         }
 
-        private void Stop(GameObject _)
+        private void Stop(GameObject caused, GameObject origin)
         {
             Ammo.CurrValue = 0;
             Magazine.CurrValue = 0;

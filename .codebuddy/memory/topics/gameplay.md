@@ -29,6 +29,20 @@
 - `TransferDamageable` = 子肢体代理，`ArmorLevel`/`ExplosionResistance`/`ActorGo` 全转发给 `Source`
 - ⚠ **已废弃**：早期"每个肢体按伤害类型各自持抗性 `GetArmor(DamageTypeEnum)`"的模型 —— 照旧代码写会错
 - ⚠ `.codebuddy/plans/伤害抗性迁移到Health_穿甲等级结算_b1f3efdc(未完成).md` 的 `(未完成)` 是**文件名过期**，重构**已落地**
+- ⭐ **来源分两个口径（2026-10-12 拆分；动任何伤害代码前先选对）**：
+  `DamagePacket.DamageOrigin` = **起源**（谁该记这笔账：武器持有者 / 召唤物呼叫者）、`DamagePacket.DamageCaused` = **直接来源**
+  （屏幕上该显示谁：玩家本人的枪 / **炮台本身** / 地雷 / 补给舱；`null` ⇒ `Health` 内部回落 origin）。
+  - 生产者**一处收口**在 `ProjectileBase.BuildHitData`：`soure = Owner`（起源）、`caused = WeaponBase.GetComponentInParent<Actor>()?.gameObject ?? Owner`；
+    地雷 / 空投舱在各自构造点显式 `caused = gameObject`（拍板：无 Actor 的物件显示成它自己）。
+  - **读 origin**：减伤/友伤/全队强化、`ArmorDestruction`、命中次数、击杀归属、`Actor.OnDie → UnitKill`。
+  - **读 caused**：`Health.OnHit` 第 1 参、`Health.OnDamaged` 的第 2 参（受击方向/闪变）、`DetectionModule.OnDamaged`（阵营过滤 + 受击改目标）、
+    `EnemyController._OnDamaged` 的 AI 分支、`Furniture_PlayerDown`（"被谁击倒"播报）、`PlayerSpeechManager`、`UnitEventBus.UnitHit/UnitDamaged`。
+  - 事件签名：`Health.OnDie(caused, origin)`、`Health.OnDamaged(value, caused, origin, collider, noSource)`；
+    `IHealth.TakeDamage(..., demolishValue, damageCaused = null)`（第 3 参是 origin）。
+    ⚠ `OnDamaged` 有 5 参 ⇒ **只能用 `System.Action<...>`**（`UnityAction` 最多 4 个泛型参数，5 参不存在）。
+  - ⚠ `caused` 可能是**无 `Actor` 的物件**（地雷/空投舱）⇒ 每处 `caused.GetComponent<Actor>()` 都要判空；
+    `EnemyController._OnDamaged` 的口径 = "取不到可用单位身份就回落 origin 做阵营判定"（保持"地雷炸了怪、怪照样被激怒"）。
+  - 联机侧字段与远端重建见 `net-battle.md`（`DamageMsg.CausedNetId`）。
 
 ## 寻路
 - NavMesh 异步管线由 `PathRequestManager` 统一排队

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using FPSGame.Core;
@@ -155,7 +155,9 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit, FPSGa
         m_Health.OnDamaged += _OnDamaged;
     }
 
-    protected virtual void _OnDie(GameObject source)
+    /// <param name="caused">**直接来源**（显示/AI 口径）</param>
+    /// <param name="origin">**起源**（统计口径）</param>
+    protected virtual void _OnDie(GameObject caused, GameObject origin)
     {
         if (!IsRemove)
         {
@@ -181,7 +183,9 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit, FPSGa
     {
         OnDetectedTarget?.Invoke();
     }
-    protected virtual void _OnDamaged(PEInt damage, GameObject damageSource, Collider collider, bool noSource)
+    /// <param name="caused">**直接来源**（AI 阵营过滤/受击改目标用这个；起源会让炮台打的目标记到玩家身上）</param>
+    /// <param name="origin">**起源**（统计口径）</param>
+    protected virtual void _OnDamaged(PEInt damage, GameObject caused, GameObject origin, Collider collider, bool noSource)
     {
         OnDamaged?.Invoke(collider);
     }

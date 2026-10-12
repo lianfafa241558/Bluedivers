@@ -914,14 +914,15 @@ namespace FPSGame.Net
         }
 
         /// <summary>【成员】上报一次命中，由房主结算。</summary>
-        /// <param name="attackerNetId">攻击者单位的 NetId（0 = 未知/玩家 ⇒ 房主退回按 sid 找盟友实例）</param>
+        /// <param name="attackerNetId">**起源**单位的 NetId（0 = 未知/玩家 ⇒ 房主退回按 sid 找盟友实例）</param>
         /// <param name="groups">原始伤害成分（摊平 `[count,type,coeff,...]`；null = 中性）⇒ 对端补护甲破坏/异常状态积蓄</param>
-        public void SendEnemyHit(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0)
+        /// <param name="causedNetId">**直接来源**单位的 NetId（0 = 拿不到 ⇒ 接收端退成 attackerNetId/sid）</param>
+        public void SendEnemyHit(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0, int causedNetId = 0)
         {
             if (IsHost || netId == 0 || damage <= 0) return;
             if (!CanSendToHost) return;
             NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.EnemyHitNtf,
-                new DamageMsg { Sid = SelfSid, NetId = netId, Damage = damage, AttackerNetId = attackerNetId, Groups = groups, Part = part }));
+                new DamageMsg { Sid = SelfSid, NetId = netId, Damage = damage, AttackerNetId = attackerNetId, Groups = groups, Part = part, CausedNetId = causedNetId }));
         }
 
         /// <summary>【房主】广播某只怪死亡 —— 死亡已并入伤害族（<c>DamageMsg.IsDeath</c>，走 4040），不再单开 4026。
@@ -937,11 +938,11 @@ namespace FPSGame.Net
         /// <para>▍<paramref name="exceptSid"/> 非 0 = 这是**转发某个成员上报的伤害**，要排除来源端本身
         /// （它本地已经扣过一次，发回去就是双扣）；同时把权威 `<c>Sid</c>` 填成**开枪者**（原来是恒 0 = 房主），
         /// 这样接收端能把"这一发"归到开枪者那个单位上（受击表现/仇恨）。</para></summary>
-        public void SendEnemyDamaged(int netId, int damage, uint exceptSid = 0u, int attackerNetId = 0, float[] groups = null, int part = 0)
+        public void SendEnemyDamaged(int netId, int damage, uint exceptSid = 0u, int attackerNetId = 0, float[] groups = null, int part = 0, int causedNetId = 0)
         {
             if (!IsHost || netId == 0 || damage <= 0) return;
             var msg = MessageCenter.Pack(CmdId.EnemyDamagedSync,
-                new DamageMsg { Sid = exceptSid, NetId = netId, Damage = damage, AttackerNetId = attackerNetId, Groups = groups, Part = part });
+                new DamageMsg { Sid = exceptSid, NetId = netId, Damage = damage, AttackerNetId = attackerNetId, Groups = groups, Part = part, CausedNetId = causedNetId });
 
             if (exceptSid != 0u) NetHostSvc.Instance?.SendToAllExcept(exceptSid, msg);
             else NetHostSvc.Instance?.SendToAll(msg);

@@ -13,6 +13,7 @@
 - ⚠ 注释口径：AI 写的多段式长篇 doc 注释会被用户精简掉 ⇒ 默认写 **1~3 行**、只讲"为什么 + 陷阱 + 别怎么写"；长文档/权衡放 `memory/topics/*.md`
 - ⚠ **Play 模式规矩（2026-10-09 修订）**：用户进 Play **就是为了让我读运行中的真实数据** ⇒ 先取数据、**数据到手就可以导入/编译**；只有"这局数据还要继续取"时才先不动编辑器
 - 调试要用数据说话 ⇒ 同步/子弹/AI 的日志走 `FPSGame.Utils.NetSyncLog`（`00Tools/NetSyncLog.cs`，**默认两端都开**，`-nonetsynclog` / `NETSYNC_LOG` 可静默）
+- ⭐ 伤害来源两个口径：`DamageOrigin`（**统计**）/ `DamageCaused`（**显示·AI**）—— 新增伤害路径必须先选对，细则 → `topics/gameplay.md §伤害管线`
 
 ## 热区 2 · 环境
 - Unity **2022.3.62f3** / URP 14.0.12 / C#9 / netstandard2.0；单机 PvE + 局域网联机；随机源 `BattleRandom` + `SeedUtil.Derive`

@@ -34,7 +34,7 @@ namespace FPSGame.Gameplay
 
 
         /// <summary>伤害来源</summary>
-        public GameObject Owner { get; set; }
+        public GameObject Origin { get;private set; }
 
         //LimitedLife m_limitedLife;
         float m_NextTickTime;
@@ -75,7 +75,7 @@ namespace FPSGame.Gameplay
                 collider = null,//不产生直击伤害，仅范围伤害
                 data = DamageData,
                 chargeScale = 1,
-                soure = Owner,
+                origin = Origin,
                 self =gameObject,
                 sfxRange = DamageData.SoundRadius,
                 weapon = null,
@@ -99,9 +99,9 @@ namespace FPSGame.Gameplay
             }
         }
 
-        public void SetOwner(GameObject owner, GameObject _, Collider _2, Vector3 _3)
+        public void SetOrigin(GameObject origin, GameObject _, Collider _2, Vector3 _3)
         {
-            Owner = owner;
+            Origin = origin;
         }
     }
 }

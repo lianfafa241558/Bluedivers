@@ -51,14 +51,14 @@ namespace FPSGame.AI
             UpdateFx();
         }
 
-        /// <summary>受击   来源，受击点,法线，是弱点</summary>
-        protected virtual void OnDamaged(GameObject _, Vector3 pos, Vector3 normal, bool _2)
+        /// <summary>受击   第 1 参 = **直接来源**（显示口径），受击点,法线，是弱点</summary>
+        protected virtual void OnDamaged(GameObject caused, Vector3 pos, Vector3 normal, bool _2)
         {
             PlayHitFx(pos, normal);
         }
 
-        /// <summary>死亡</summary>
-        protected virtual void OnDie(GameObject source)
+        /// <summary>死亡（caused = 直接来源，origin = 起源；表现只看直接来源）</summary>
+        protected virtual void OnDie(GameObject caused, GameObject origin)
         {
             PlayDieFx(transform.position);
         }

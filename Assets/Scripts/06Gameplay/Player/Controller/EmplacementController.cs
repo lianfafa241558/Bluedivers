@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
@@ -83,7 +83,7 @@ public class EmplacementController : BaseSelfController, IDrivable
         OnSetOwner?.Invoke(owner);
     }
 
-    void OnDie(GameObject _)
+    void OnDie(GameObject caused, GameObject origin)
     {
         SetOwener(null);
 

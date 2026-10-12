@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.GameContract;
@@ -15,7 +15,7 @@ namespace FPSGame.Gameplay
 {
     /// <summary>
     /// 地雷
-    /// 由外部脚本 Instantiate 后调用 <see cref=" SetOwner(GameObject, GameObject, Collider, Vector3)"/> 部署。
+    /// 由外部脚本 Instantiate 后调用 <see cref=" SetOrigin(GameObject, GameObject, Collider, Vector3)"/> 部署。
     /// - Actor 提供队伍(Team)，用于智能触发判定敌我
     /// - Health 提供被破坏时引爆(OnDie)以及触发引爆(Kill)
     /// - LimitedLife 提供超时回收
@@ -182,7 +182,7 @@ namespace FPSGame.Gameplay
         }
 
         /// <summary>Health 死亡(被摧毁) → 引爆</summary>
-        private void OnHealthDie(GameObject _) => TriggerExplosion();
+        private void OnHealthDie(GameObject caused, GameObject origin) => TriggerExplosion();
 
         /// <summary>
         /// 触发爆炸：外部(含其它物体的 UnityEvent)也可直接调用，幂等(只生效一次)。
@@ -234,7 +234,8 @@ namespace FPSGame.Gameplay
                 collider = null,//不产生直击伤害
                 data = DamageData,
                 chargeScale = 1,
-                soure = Owner,
+                origin = Owner,          // 起源 = 放置者（统计）
+                caused = gameObject,    // 直接来源 = 地雷自己（拍板③：无武器/无 Actor 的物件显示成它自己）
                 self = gameObject,
                 sfxRange = DamageData.SoundRadius,
                 weapon = null,//纯自部署，无武器来源
@@ -257,7 +258,7 @@ namespace FPSGame.Gameplay
             Gizmos.DrawWireSphere(Root.position, TriggerRange);
         }
 
-        public void SetOwner(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point)
+        public void SetOrigin(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point)
         {
             transform.position = point;
             Owner = owner;

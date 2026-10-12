@@ -548,7 +548,7 @@ public partial class PlayerWnd : Window
         }
     }
 
-    void OnDie(GameObject source)
+    void OnDie(GameObject caused, GameObject origin)
     {
         //m_Controller = null;
 
@@ -572,7 +572,7 @@ public partial class PlayerWnd : Window
         if (team == null) return;
 
         GameObject origin = attacker.gameObject;
-        if (attacker.Owner != null && attacker.Owner is Component ownerComp) origin = ownerComp.gameObject;
+        if (attacker.Origin != null && attacker.Origin is Component ownerComp) origin = ownerComp.gameObject;
 
         if (!PlayerUnitUtil.TryGetPlayerIndex(origin, out int index) || index != team.SelfIndex) return;
 

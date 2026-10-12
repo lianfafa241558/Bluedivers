@@ -109,20 +109,20 @@ namespace FPSGame.Managers
             flow?.SendEnemyMove(netId, destination);   // 内部判 IsHost
         }
 
-        static void OnLocalHit(int netId, int damage, int attackerNetId, float[] groups, int part)
+        static void OnLocalHit(int netId, int damage, int attackerNetId, float[] groups, int part, int causedNetId)
         {
             // 数据说话：本端上报的每一发 —— 与房主侧的「远端伤害落地」配对，中间没有别的步骤，
             // 两条日志一对一出现才说明"客机打中 ⇒ 主机真扣血"这条链是通的
             var flow = FPSGame.Net.NetRoomFlow.Instance;
-            FPSGame.Utils.NetSyncLog.BulletLog("命中上报·发", $"netId={netId} 伤害={damage} 攻击者号={attackerNetId} 部位={part} 成分={GroupText(groups)} 是房主={(flow != null && flow.IsHost)} 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")}");
-            flow?.SendEnemyHit(netId, damage, attackerNetId, groups, EncodePart(part));   // 内部判"成员才发"
+            FPSGame.Utils.NetSyncLog.BulletLog("命中上报·发", $"netId={netId} 伤害={damage} 起源号={attackerNetId} 直接来源号={causedNetId} 部位={part} 成分={GroupText(groups)} 是房主={(flow != null && flow.IsHost)} 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")}");
+            flow?.SendEnemyHit(netId, damage, attackerNetId, groups, EncodePart(part), causedNetId);   // 内部判"成员才发"
         }
 
-        static void OnLocalDamaged(int netId, int damage, int attackerNetId, float[] groups, int part)
+        static void OnLocalDamaged(int netId, int damage, int attackerNetId, float[] groups, int part, int causedNetId)
         {
             var flow = FPSGame.Net.NetRoomFlow.Instance;
-            FPSGame.Utils.NetSyncLog.BulletLog("伤害下发·发", $"netId={netId} 伤害={damage} 攻击者号={attackerNetId} 部位={part} 成分={GroupText(groups)} 是房主={(flow != null && flow.IsHost)}");
-            flow?.SendEnemyDamaged(netId, damage, 0u, attackerNetId, groups, EncodePart(part));   // 内部判"房主才发"
+            FPSGame.Utils.NetSyncLog.BulletLog("伤害下发·发", $"netId={netId} 伤害={damage} 起源号={attackerNetId} 直接来源号={causedNetId} 部位={part} 成分={GroupText(groups)} 是房主={(flow != null && flow.IsHost)}");
+            flow?.SendEnemyDamaged(netId, damage, 0u, attackerNetId, groups, EncodePart(part), causedNetId);   // 内部判"房主才发"
         }
 
         /// <summary>部位下标 → 线上编码（<c>Part</c> 用"+1"表示：<c>0</c> = 未指定 ⇒ 接收端自己挑；
@@ -242,12 +242,12 @@ namespace FPSGame.Managers
                 return;
             }
 
-            ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part));
+            ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId);
 
             // ★ 结算完**再转发给除来源外的其他成员**：原来应用完就结束了（`ApplyingRemoteDamage` 把回传也挡了）
             //   ⇒ 成员 A 打出的伤害**从不到达成员 B**：B 那边这只怪的血一动不动，直到死亡消息才突然消失
             //   （≥3 人必现；2 人时 B 就是房主，所以测不出来）。⚠ 必须排除来源端（它本地已扣过一次）。
-            FPSGame.Net.NetRoomFlow.Instance?.SendEnemyDamaged(m.NetId, m.Damage, m.Sid, m.AttackerNetId, m.Groups, m.Part);
+            FPSGame.Net.NetRoomFlow.Instance?.SendEnemyDamaged(m.NetId, m.Damage, m.Sid, m.AttackerNetId, m.Groups, m.Part, m.CausedNetId);
         }
 
         /// <summary>成员侧应用房主下发的"打中 / 打死"（房主是血量权威）。⚠ 死亡是"打到 0 血"的特例，同一条消息带来。</summary>
@@ -255,20 +255,23 @@ namespace FPSGame.Managers
         {
             if (m == null) return;
 
-            if (m.Damage > 0) ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part));
+            if (m.Damage > 0) ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId);
             if (m.IsDeath) ApplyRemoteDeath(m);
         }
 
         /// <summary>
         /// 把远端伤害落到本端那份副本上，并**当作一次正常命中**跑完整条链（受击特效 / 血条 / 仇恨 / 命中统计）。
         ///
-        /// <para>▍为什么必须给 <c>DamageSource</c>：老实现是 <c>DamageSource=null + NoSource=true</c> ⇒ 那只怪
+        /// <para>▍为什么必须给来源（<c>DamageOrigin</c> / <c>DamageCaused</c>）：老实现是空来源 + <c>NoSource=true</c> ⇒ 那只怪
         /// **静默掉血** —— 对端屏幕上没有受击表现、血条也不刷新，看起来就是"这边命中、那边没命中"
         /// （2026-10-09 用户实测）。传上"开枪者那个单位的实例"后，走的正是本端自己挨打时的同一条链。</para>
         ///
+        /// <para>▍两个来源号各自解析：<paramref name="causedNetId"/>（直接来源：炮台/地雷本身，显示/AI 用）
+        /// 与 <paramref name="attackerNetId"/>（起源：谁该记这笔账，统计用），都取不到再退上报者那个盟友实例。</para>
+        ///
         /// <para>⚠ 解析不到开枪者（盟友实例还没建出来 / 已离开）⇒ 退回静默结算：宁可不表现，也别报错。</para>
         /// </summary>
-        static void ApplyRemoteDamage(uint attackerSid, int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0)
+        static void ApplyRemoteDamage(uint attackerSid, int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0, int causedNetId = 0)
         {
             var actor = FindActor(netId);
             if (actor == null || damage <= 0)
@@ -285,22 +288,20 @@ namespace FPSGame.Managers
                 return;
             }
 
-            // ★ 来源**三级解析**：① 攻击者单位的号（怪 / 炮塔 / 凯伊这类非玩家来源）→ ② 上报者的盟友实例（玩家）
-            //   → ③ null（NoSource）。⚠ 顺序不能反：只按 sid 找会把"炮塔打怪"误算成"上报者那个玩家"，
-            //   对端 DetectionModule 的阵营过滤/受击改目标就会跟开枪端不一致。
-            GameObject source = null;
-            var srcActor = attackerNetId != 0 ? FindActor(attackerNetId) : null;
-            if (srcActor != null)
-            {
-                var srcComp = srcActor as Component;
-                if (srcComp != null) source = srcComp.gameObject;
-            }
-            if (source == null) source = ResolveRemoteUser(attackerSid);
+            // ★ 两个来源**各自三级解析**（① 线上给的号 → ② 上报者的盟友实例（玩家）→ ③ null = NoSource）：
+            //   · DamageCaused（直接来源，显示 / AI）= ①(causedNetId：炮台 / 地雷 / SpecUnit) ?? ③(玩家)
+            //   · DamageOrigin（起源，统计）        = ①(attackerNetId：怪 / 凯伊)          ?? ③(玩家)
+            //   ⚠ 顺序不能反：只按 sid 找会把"炮塔打怪"误算成"上报者那个玩家"，
+            //     对端 DetectionModule 的阵营过滤 / 受击改目标就会跟开枪端不一致。
+            //   ⚠ DamageOrigin 这条链与拆分前**逐字等价**（旧 source = ①(attackerNetId) ?? ③）⇒ 数值与统计零变化。
+            var remoteUser = ResolveRemoteUser(attackerSid);
+            GameObject caused = ResolveNetEmitter(causedNetId) ?? remoteUser;
+            GameObject origin = ResolveNetEmitter(attackerNetId) ?? remoteUser;
             // ★ 受击体：远端这条链没有真实命中信息，而 `Health.TakeDamage` 要拿它的 bounds 算受击法线
             //   （不传 ⇒ 那边 `damageAffected.bounds` 直接 NRE，整条消息处理失败；2026-10-10 用户实测）。
             var hitCollider = ResolveHitCollider(dmg, actor.transform.position);
 
-            FPSGame.Utils.NetSyncLog.AiLog("远端伤害落地", $"netId={netId} 伤害={damage} 开枪者sid={attackerSid} 本端实例={(source != null ? source.name : "<没解析到，将静默结算>")} 受击体={(hitCollider != null ? hitCollider.name : "<无>")} 落点={actor.transform.position:F2}");
+            FPSGame.Utils.NetSyncLog.AiLog("远端伤害落地", $"netId={netId} 伤害={damage} 开枪者sid={attackerSid} 直接来源={(caused != null ? caused.name : "<没解析到，将静默结算>")} 起源={(origin != null ? origin.name : "<无>")} 受击体={(hitCollider != null ? hitCollider.name : "<无>")} 落点={actor.transform.position:F2}");
             EnemyController.ApplyingRemoteDamage = true;
             try
             {
@@ -312,8 +313,10 @@ namespace FPSGame.Managers
                     //   与"异常状态积蓄"（Health.HandleDamage → AddAboGauge）—— 只给总伤害时这两条分支整段被跳过，
                     //   表现就是"主机把怪冻住/破甲了，成员那边它照常跑、护甲还在"（2026-10-12 修）。
                     DamageGroups = UnpackDamageGroups(groups) ?? NeutralGroups(),
-                    DamageSource = source,
-                    NoSource = source == null,
+                    // 直接来源（显示/AI）与起源（统计）分开落地；两者都取不到 ⇒ NoSource（保持拆分前口径）
+                    DamageCaused = caused,
+                    DamageOrigin = origin,
+                    NoSource = origin == null,
                     Pos = actor.transform.position,
                     damageAffected = hitCollider,
                     // ★ `damage` 是**开枪端算完护甲/爆炸抗性的最终值**（来自 `EnemyController._OnDamaged` 的上报）
@@ -427,6 +430,16 @@ namespace FPSGame.Managers
 
             var own = mono.GetComponent<Collider>();
             return own != null ? own : mono.GetComponentInChildren<Collider>();
+        }
+
+        /// <summary>线上的来源号 → 本端实例（<c>0</c> / 本端没有这份副本 ⇒ null）。
+        /// <para>▍为什么单独抽：<c>DamageMsg</c> 上有**两个**来源号（<c>CausedNetId</c> = 直接来源、
+        /// <c>AttackerNetId</c> = 起源），解析算法完全一样。</para></summary>
+        static GameObject ResolveNetEmitter(int netId)
+        {
+            if (netId == 0) return null;
+            var actor = FindActor(netId);
+            return actor is Component comp ? comp.gameObject : null;
         }
 
         /// <summary>权威 sid → 本端那个玩家的实例（<c>0</c> = 房主）。解析不到给 null。</summary>

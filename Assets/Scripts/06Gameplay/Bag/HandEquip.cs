@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.GameContract;
 using RootMotion.FinalIK;
@@ -287,8 +287,8 @@ namespace FPSGame.Gameplay
             Drop();
         }
 
-        /// <summary>玩家倒地时丢下装备</summary>
-        void OnPlayerDie(GameObject source)
+        /// <summary>玩家倒地时丢下装备（行为不依赖来源）</summary>
+        void OnPlayerDie(GameObject caused, GameObject origin)
         {
             Drop();
         }

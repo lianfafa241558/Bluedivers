@@ -122,6 +122,13 @@ Bridge（舰桥选任务）--房主 ConfirmTask 广播 TaskConfirmNtf--> Ready�
 - 方向写进注释（照现有消息的风格）。
 - **`07_NetGame` 看不见游戏层枚举/SO** ⇒ 网络 DTO 里**只准基础类型**；需要传枚举就用 `int`，转换在 09/10 的桥里做。
   例：`TaskCfgDto` 全字段是 `int/int[]/float/bool/string`（承载 `TaskCfg` 的内容：`main/extra/nestCount/seed/scale/terrain/enemyVariety/enable/name`）。
+- ⚠ **`DamageMsg`（4025 / 4040 / 4043 三个号共用的"伤害·生死"DTO，9 字段）**：
+  `Sid(0) / NetId(1) / Key(2) / Damage(3) / AttackerNetId(4) / Groups(5) / Part(6) / IsDeath(7) / CausedNetId(8)`。
+  两个来源号**语义不同、别混**：`AttackerNetId` = **起源**（谁该记这笔账，统计口径，语义自上线未变）、
+  `CausedNetId` = **直接来源**（炮台 / 地雷 / 补给舱本身，显示与 AI 口径）。
+  接收端两者**各自**解析（`EnemyNetBridge.ResolveNetEmitter(号)` → 失败再 `ResolveRemoteUser(sid)` → 都失败 `NoSource`）；
+  发送端 `attackerNetId` 取起源单位的 `NetId`、`causedNetId` 取直接来源单位的 `NetId`（玩家都没有号 ⇒ 都是 0 ⇒ 靠 sid 找盟友实例）。
+  ⚠ `CausedNetId` 是 **2026-10-12 追加**的（旧端 `Skip()` 掉 ⇒ 显示退化成"开枪者"，能跑但显示不准）⇒ **破坏性协议变更，双端必须同版本换包**。
 
 ## 6. 房间字段的读取（`RoomMeta` = 取值薄适配层）
 

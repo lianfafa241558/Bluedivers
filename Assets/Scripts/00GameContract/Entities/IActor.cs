@@ -23,7 +23,7 @@ namespace FPSGame.GameContract
         public IPERange Range { get; }
         public ActorState ActorState { get; set; }
 
-        public IActor Owner { get; set; }
+        public IActor Origin { get; set; }
 
         public int Team { get; set; }
 

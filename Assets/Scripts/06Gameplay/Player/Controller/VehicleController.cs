@@ -1,4 +1,4 @@
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using RootMotion.FinalIK;
@@ -110,7 +110,7 @@ public class VehicleController : BaseSelfMoveableController,IDrivable
         CameraBasePoint = transform.InverseTransformPoint(vector);
     }
 
-    void OnDie(GameObject _)
+    void OnDie(GameObject caused, GameObject origin)
     {
         SetOwener(null);
     }

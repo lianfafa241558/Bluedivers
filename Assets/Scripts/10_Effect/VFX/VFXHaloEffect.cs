@@ -9,22 +9,21 @@ using FPSGame.Gameplay;
 namespace FPSGame.Effect
 {
 
-/// <summary>
-/// 光晕类特效的播放控制。
-/// </summary>
-[AddComponentMenu("特效/光晕特效")]
-public class VFXHaloEffect : MonoBehaviour,IVfxEffect
-{
-
-    public void SetOwner(GameObject owner, GameObject weaponRoot, Collider collider,Vector3 point)
+    /// <summary>
+    /// 光晕类特效的播放控制。
+    /// </summary>
+    [AddComponentMenu("特效/光晕特效")]
+    public class VFXHaloEffect : MonoBehaviour,IVfxEffect
     {
-        if (!collider)
-        {
-            //Debug.LogError("目标物体不存在 "+collider+" owner"+owner,gameObject);
-        }
-        else GlobalEventBus.Mark(owner, collider.gameObject, point);
-    }
-    
 
-}
+        public void SetOrigin(GameObject origin, GameObject weaponRoot, Collider collider,Vector3 point)
+        {
+            if (!collider)
+            {
+                //Debug.LogError("目标物体不存在 "+collider+" origin"+origin,gameObject);
+            }
+            else GlobalEventBus.Mark(origin, collider.gameObject, point);
+        }
+
+    }
 }

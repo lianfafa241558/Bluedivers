@@ -1,4 +1,4 @@
-using FPSGame.Core.Interface;
+﻿using FPSGame.Core.Interface;
 using FPSGame.GameContract;
 using PEMaths;
 using UnityEngine;
@@ -47,7 +47,7 @@ namespace FPSGame.Gameplay
                 data = DamageData,
                 groups = DamageData.DamageGroupExplosion,//成分需配成 {动能,1}
                 pos = (PEVector3)DamageAnchor.position,
-                soure = self.IsValidMono() ? self.gameObject : Owner,
+                soure = self.IsValidMono() ? self.gameObject : Origin,
                 exclude = self,
                 filter = null,//允许友伤：不做队伍过滤
                 knockbackForce = (PEInt)KnockbackForce,
@@ -60,7 +60,7 @@ namespace FPSGame.Gameplay
         IActor ResolveSelf()
         {
             if (m_Self.IsValidMono()) return m_Self;
-            if (Owner) m_Self = Owner.GetComponentInParent<IActor>();
+            if (Origin) m_Self = Origin.GetComponentInParent<IActor>();
             if (!m_Self.IsValidMono()) m_Self = GetComponentInParent<IActor>();
             return m_Self;
         }

@@ -3,6 +3,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using FPSGame.Utils;
+using FPSGame.Game;
 using FPSGame.Gameplay;
 
 namespace FPSGame.Weapon
@@ -113,7 +114,12 @@ namespace FPSGame.Weapon
                 collider = collider,
                 data = damageData ?? DamageData,
                 chargeScale = Charge,
-                soure = Owner,
+                // ⭐ 收口：一处算两个身份
+                //   soure  = **起源**（统计）—— 空投武器被 VFXAirdropEffect 写成"呼叫者" ⇒ 天然正确
+                //   caused = **直接来源**（显示/AI）—— 武器挂在谁身上就是谁：玩家手持=玩家；空投炮台=炮台自己
+                //   （地雷/补给舱那类无武器的物件在各自的构造点显式置为自身，见 DeployableMine / AirdropPod）
+                origin = Owner,
+                caused = WeaponBase ? (WeaponBase.GetComponentInParent<Actor>()?.gameObject ?? Owner) : Owner,
                 self = gameObject,
                 sfxRange = SFXRange,
                 weapon = WeaponBase,
@@ -132,8 +138,11 @@ namespace FPSGame.Weapon
     public struct ProjectileHitData {
         public Vector3 pos, normal; 
         public Collider collider;
-        /// <summary>伤害来源</summary>
-        public GameObject soure;
+        /// <summary>伤害来源（**起源**：统计口径 = 武器持有者 / 召唤物的呼叫者）</summary>
+        public GameObject origin;
+        /// <summary>**直接来源**（显示 / AI 口径）：真正发出这一发的东西（炮台本身 / 地雷）；
+        /// null ⇒ 回落 <see cref="origin"/>。见 <c>ProjectileBase.BuildHitData</c> 的收口。</summary>
+        public GameObject caused;
         /// <summary>伤害物体(自身)</summary>
         public GameObject self;
         /// <summary>伤害信息</summary>

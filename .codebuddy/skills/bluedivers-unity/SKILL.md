@@ -32,6 +32,27 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 - 全局事件（非战斗相关）在 `GlobalEventSub` 中定义（`Assets/Scripts/01Manager/Global/GlobalEventSub.cs`）；战斗相关事件在 `BattleEventSub` 中定义。
 - 新增跨多组件通知的功能时，优先在 `GlobalEventSub` 或 `BattleEventSub` 中加 `static event` 和对应的 `static` 触发方法。
 
+### 伤害来源两个口径（**新增伤害路径必须先选对**）
+
+`DamagePacket`（`00GameContract/Data/DamagePacket.cs`）带**两个**来源字段：
+
+| 字段 | 含义 | 谁读 |
+|---|---|---|
+| `DamageOrigin` | **起源**：谁该记这笔账（武器持有者 / 召唤物·战备的呼叫者） | 数值与统计 —— 减伤·友伤·全队强化、护甲破坏、命中次数、击杀归属、`Actor.OnDie → UnitKill` |
+| `DamageCaused` | **直接来源**：屏幕上该显示谁（玩家本人的枪 / **炮台本身** / 地雷 / 补给舱） | 显示与 AI —— 受击方向与闪变、倒地播报、`DetectionModule` 阵营过滤与受击改目标 |
+
+- 生产者**一处收口**在 `ProjectileBase.BuildHitData`：`soure = Owner`（起源）、
+  `caused = WeaponBase.GetComponentInParent<Actor>()?.gameObject ?? Owner`（炮台武器挂在炮台根下 ⇒ 直接来源自然是炮台）；
+  无 `Actor` 的物件（地雷 `DeployableMine` / 空投舱 `AirdropPod`）在各自构造点显式 `caused = gameObject`。
+- `DamageCaused == null` ⇒ `Health.TakeDamage` 内部回落成 `DamageOrigin` ⇒ **新增构造点可以只填 origin**（等价于拆分前行为）；
+  但"要显示成物件自己"就必须显式填 `caused`。
+- 事件签名：`Health.OnDie(caused, origin)`、`Health.OnDamaged(value, caused, origin, collider, noSource)`；
+  `IHealth.TakeDamage(..., demolishValue, damageCaused = null)`（第 3 参仍是 origin）。
+  ⚠ `OnDamaged` 有 5 个参数，**超出 `UnityAction` 上限**（只有 ≤4 个泛型版本）⇒ 该事件必须用 `System.Action<...>`。
+- ⚠ `caused` 可能是**没有 `Actor` 的物件** ⇒ 每处 `caused.GetComponent<Actor>()` 都要判空；
+  参考口径（`EnemyController._OnDamaged`）：取不到可用单位身份就**回落 origin** 做阵营判定。
+- 联机：`DamageMsg.CausedNetId`（`AttackerNetId` 仍是**起源**，语义未变），接收端两个来源各自解析。详见 `memory/topics/net-battle.md`。
+
 ### 数字前缀模块划分
 
 脚本位于 `Assets/Scripts/`，按数字前缀编号划分模块，编号体现程序集依赖顺序。上层模块（编号大）可引用下层模块（编号小），反之禁止：

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2488172934623984574}
   - component: {fileID: 2488172934623984544}
+  - component: {fileID: 1837421520942508947}
   m_Layer: 10
   m_Name: Track Illuminator
   m_TagString: Untagged
@@ -56,12 +57,11 @@ MonoBehaviour:
       Value: 1
     - Key: 2
       Value: 1
-  ProjectilePrefab: {fileID: 3880394256255513869, guid: 58676a78fe5bbcf4db991f9d83ad3d55,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 3880394256255513869, guid: 58676a78fe5bbcf4db991f9d83ad3d55,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 1
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -70,6 +70,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 100
     DamageDirect: 100
     DamageGroupDirect:
@@ -113,6 +114,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 80
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -121,6 +124,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -133,6 +137,23 @@ MonoBehaviour:
   ChangeWeaponSfx: {fileID: 0}
   ChargeVfx: {fileID: 0}
   WeaponAnimator: {fileID: 0}
+--- !u!114 &1837421520942508947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2488172934623984547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u8F68\u9053\u7167\u660E\u5F39"
+  Id: 
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2488172934769223098
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,15 +1,15 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using FPSGame.Core;
 using FPSGame.Attributes;
+using FPSGame.Core;
+using FPSGame.Data;
 using FPSGame.GameContract;
+using FPSGame.Utils;
 using PEMaths;
-
-
 using UnityEngine;
 using UnityEngine.Events;
-using FPSGame.Utils;
-using FPSGame.Data;
+using static UnityEngine.UI.Image;
 
 namespace FPSGame.Game {
     public abstract partial class Health : MonoBehaviour, IHealth
@@ -65,10 +65,11 @@ namespace FPSGame.Game {
 
         #region 事件
 
-        /// <summary>收到伤害时,值，来源，受击点,无源伤害</summary>
-        public event UnityAction<PEInt, GameObject, Collider, bool> OnDamaged;
+        /// <summary>收到伤害时：值、**直接来源**（显示/AI）、**起源**（统计）、受击点、无源伤害
+        /// <para>⚠ 用 Action 而非 UnityAction：后者最多只支持 4 个泛型参数。</para></summary>
+        public event Action<PEInt, GameObject, GameObject, Collider, bool> OnDamaged;
 
-        /// <summary>被击中时 来源，受击点,法线，是弱点</summary>
+        /// <summary>被击中时 第 1 参 = **直接来源**（显示口径），受击点,法线，是弱点</summary>
         public event UnityAction<GameObject, Vector3,Vector3, bool> OnHit;
 
         /// <summary>是否是破盾伤害（ShieldBehaviour 等外挂护盾逻辑需要订阅，故为 public）</summary>
@@ -80,8 +81,8 @@ namespace FPSGame.Game {
         /// <summary>恢复护盾时 恢复值</summary>
         public event UnityAction<PEInt> OnRestoreShield;
 
-        /// <summary>死亡时</summary>
-        public event UnityAction<GameObject> OnDie;
+        /// <summary>死亡时：**直接来源**（显示/AI）、**起源**（统计）</summary>
+        public event UnityAction<GameObject, GameObject> OnDie;
 
         /// <summary>复活时</summary>
         public event UnityAction OnRevive;
@@ -194,17 +195,22 @@ namespace FPSGame.Game {
         }
 
         /// <summary>受到伤害</summary>
-        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageSource,Collider damageAffected,Vector3 pos,bool response=true,bool isWeakness=false,int demolishValue=-1) {
+        /// <param name="damageOrigin">**起源**（统计口径：击杀归属 / 命中次数）</param>
+        /// <param name="damageCaused">**直接来源**（显示 / AI 口径）；null ⇒ 回落 <paramref name="damageOrigin"/></param>
+        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageOrigin,Collider damageAffected,Vector3 pos,bool response=true,bool isWeakness=false,int demolishValue=-1,GameObject damageCaused=null) {
             if (m_IsDead || (m_Actor != null && m_Actor.HasFlag(ActorFlag.Invincible)))
                 return;
+
+            // 回落：直接来源缺省时用起源 ⇒ 下游消费点（表现/AI）不必到处判空
+            if (damageCaused == null) damageCaused = damageOrigin;
 
             // 拆毁秒杀：自身拆毁值 -1 视为无法被拆毁；否则伤害拆毁值大于自身拆毁值则直接击杀，无视护盾，但受上面无敌标记保护
             if (this.demolishValue >0 && demolishValue >= this.demolishValue)
             {
                 CurrentHealth = 0;
                 showHealth = 0;
-                if (response) OnHit?.Invoke(damageSource, pos, HitNormal(pos, damageAffected), isWeakness);
-                HandleDeath(damageSource);
+                if (response) OnHit?.Invoke(damageCaused, pos, HitNormal(pos, damageAffected), isWeakness);
+                HandleDeath(damageCaused, damageOrigin);
                 return;
             }
 
@@ -214,7 +220,7 @@ namespace FPSGame.Game {
             {
                 // 整体伤害抗性减伤乘区（未配置的类型为 1，不缩放）
                 PEInt resistedValue = PEMath.Max(item.Value, 0) * (PEInt)GetResistance(item.Key);
-                var re= HandleDamage(item.Key, resistedValue, damageSource, _isAboTickDamage);
+                var re= HandleDamage(item.Key, resistedValue, damageCaused, _isAboTickDamage);
                 //Debug.LogError("伤害类型" + item.Key + "值" + item.Value + "剩余值" + resistedValue+"最终计数"+re,gameObject);
                 finaldamgage += re;
 #if UNITY_EDITOR
@@ -233,7 +239,7 @@ namespace FPSGame.Game {
                         }
                     }
                     if (damageAffected) Tool.DrawLabel(pos + RandomUtils.RandomVector3XZ(), "" + Tool.Round(finaldamgage.RawFloat), 3, dmgColor);
-                    Debug.LogWarning(damageSource+"对" + m_Actor.ShowName + "造成"+ item.Key+ "伤害" + finaldamgage + "血量" + CurrentHealth, gameObject);
+                    Debug.LogWarning(damageCaused+"对" + m_Actor.ShowName + "造成"+ item.Key+ "伤害" + finaldamgage + "血量" + CurrentHealth, gameObject);
                 }
 #endif
 
@@ -264,16 +270,17 @@ namespace FPSGame.Game {
             PEInt trueDamageAmount = healthBefore - CurrentHealth + shieldBefore - CurrentShield;
             if (trueDamageAmount > 0) {
                 m_LastHitTime = Time.time;
-                OnDamaged?.Invoke(trueDamageAmount, damageSource,damageAffected, noSource);
-                if(response)OnHit?.Invoke(damageSource,pos, HitNormal(pos, damageAffected),isWeakness);
+                OnDamaged?.Invoke(trueDamageAmount, damageCaused, damageOrigin, damageAffected, noSource);
+                if(response)OnHit?.Invoke(damageCaused,pos, HitNormal(pos, damageAffected),isWeakness);
                 if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
                 //这个是控制hpui的，所以总是响应
-                UnitEventBus.UnitHit(gameObject, damageSource);
+                UnitEventBus.UnitHit(gameObject, damageCaused);
                 // ★ 联机伤害通道的上行点：**实际扣减量**（见 UnitEventBus.OnUnitDamaged 的注释）
-                UnitEventBus.UnitDamaged(gameObject, trueDamageAmount, damageSource, damageAffected);
+                UnitEventBus.UnitDamaged(gameObject, trueDamageAmount, damageCaused, damageAffected, damageOrigin);
             }
             showHealth = CurrentHealth.RawInt;
-            HandleDeath(damageSource);
+            //Debug.LogError("击杀者" + damageCaused + "起源" + damageOrigin);
+            HandleDeath(damageCaused, damageOrigin);
         }
 
         /// <summary>
@@ -288,7 +295,7 @@ namespace FPSGame.Game {
         private static Vector3 HitNormal(Vector3 pos, Collider damageAffected)
             => damageAffected != null ? (pos - damageAffected.bounds.center).normalized : Vector3.up;
 
-        private PEInt HandleDamage(DamageTypeEnum type, PEInt value, GameObject damageSource, bool isAboTick = false) {
+        private PEInt HandleDamage(DamageTypeEnum type, PEInt value, GameObject damageCaused, bool isAboTick = false) {
             //只有需求特殊处理的才单独写，目前没有状态槽，直接全部默认
             //Debug.LogWarning("对"+gameObject.name+"伤害:类型"+type+"值"+value);
             // 异常状态 tick 伤害：不更新积蓄槽（Current/LastGainTime），直接造成对应类型伤害
@@ -308,14 +315,14 @@ namespace FPSGame.Game {
                 
                 case DamageTypeEnum.Electric:
                 case DamageTypeEnum.Radiation:
-                    AddAboGauge(type, value, damageSource);
+                    AddAboGauge(type, value, damageCaused);
                     return value;//燃烧/雷击/辐射 伤害计入伤害量
                 case DamageTypeEnum.Freeze:
                 case DamageTypeEnum.Toxicity:
                 case DamageTypeEnum.Hacker:
                 case DamageTypeEnum.Terror:
                 case DamageTypeEnum.Vertigo:
-                    AddAboGauge(type, value, damageSource);
+                    AddAboGauge(type, value, damageCaused);
                     return 0;//冰冻/毒/骇入/恐慌/眩晕不计入伤害量
 
                 default:
@@ -353,11 +360,13 @@ namespace FPSGame.Game {
             // call OnDamage action
             //OnDamaged?.Invoke(MaxHealth, null,null,true);
 
-            HandleDeath(null);
+            HandleDeath(null, null);
         }
 
         /// <summary>死亡处理</summary>
-        protected virtual void HandleDeath(GameObject source) {
+        /// <param name="caused">**直接来源**（显示/AI）</param>
+        /// <param name="origin">**起源**（统计）</param>
+        protected virtual void HandleDeath(GameObject caused, GameObject origin) {
             if (m_IsDead)
                 return;
 
@@ -368,7 +377,7 @@ namespace FPSGame.Game {
                 // 确保血量不超过0，防止异常恢复导致僵尸单位
                 CurrentHealth = 0;
                 showHealth = 0;
-                OnDie?.Invoke(source);
+                OnDie?.Invoke(caused, origin);
                 if (AutoDestroy) Destroy();
             }
 

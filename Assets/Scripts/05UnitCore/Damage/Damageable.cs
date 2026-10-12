@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
@@ -243,19 +243,24 @@ namespace FPSGame.Game
 
 
         /// <summary>结算伤害入口：依次处理友军减伤、全队强化、弱点加成、爆炸抗性、穿甲等级，拆分伤害类型后交给 Health 结算，并处理护甲破坏成分</summary>
-        /// <param name="packet">伤害数据包（伤害值、来源、伤害成分、穿甲等级等）</param>
+        /// <param name="packet">伤害数据包。
+        /// <para>▍来源有**两个**：<c>DamageOrigin</c>（起源 = 统计口径，本方法所有减伤/友伤判定都用它）
+        /// 与 <c>DamageCaused</c>（直接来源 = 显示/AI 口径，原样透传给 <c>Health</c>）。见 <c>DamagePacket</c>。</para></param>
         public void InflictDamage(DamagePacket packet) {
             if (!Health.IsValidMono()) return;
             if (!packet.DamageGroups.IsValid()|| packet.DamageGroups.Count==0) return;
 
             PEInt damage = packet.Damage;
-            GameObject damageSource = packet.DamageSource;
+            // ⚠ 减伤/友伤/归属三件事一律读 **起源**（与拆分前的 `DamageSource` 逐字等价 ⇒ 数值零变化）；
+            //   **直接来源**只往下传给 Health 供显示/AI 用。见 DamagePacket 的字段注释。
+            GameObject damageOrigin = packet.DamageOrigin;
+            GameObject damageCaused = packet.DamageCaused;
             //I_Damagable source = packet.Source;
 
             Actor SourceActor=null;
-            if (damageSource)
+            if (damageOrigin)
             {
-                SourceActor = damageSource.GetComponent<Actor>();
+                SourceActor = damageOrigin.GetComponent<Actor>();
             }
 
             // 友军减伤
@@ -310,7 +315,8 @@ namespace FPSGame.Game
                     PEInt value = (damage * (PEInt)item.Value);
 
                     if (item.Key == DamageTypeEnum.Destruction) {
-                        ArmorDestruction(value, damageSource);
+                        // 护甲破坏归属不显示 ⇒ 用起源
+                        ArmorDestruction(value, damageOrigin);
                     }
                     else
                     {
@@ -325,7 +331,7 @@ namespace FPSGame.Game
             Health.LastRawGroups = packet.DamageGroups;
             try
             {
-                Health.TakeDamage(finalDamageGroups, packet.NoSource, damageSource, packet.damageAffected, packet.Pos,true,isWeakness, packet.DemolishValue);
+                Health.TakeDamage(finalDamageGroups, packet.NoSource, damageOrigin, packet.damageAffected, packet.Pos,true,isWeakness, packet.DemolishValue, damageCaused);
             }
             finally { Health.LastRawGroups = null; }
             
@@ -390,12 +396,13 @@ namespace FPSGame.Game
             }
             ArmorBreaker = source;
             OnDamage?.Invoke(this);
-            DestroyPart(null);
+            DestroyPart(null, null);
         }
 
         /// <summary>部件销毁处理：广播 OnDestroyPart 事件</summary>
-        /// <param name="_">未使用的参数（用于匹配 Health.OnDie 签名）</param>
-        private void DestroyPart(GameObject _)
+        /// <param name="caused">未使用（用于匹配 Health.OnDie 签名：直接来源）</param>
+        /// <param name="origin">未使用（用于匹配 Health.OnDie 签名：起源）</param>
+        private void DestroyPart(GameObject caused, GameObject origin)
         {
             OnDestroyPart?.Invoke(this);
         }
@@ -416,7 +423,8 @@ namespace FPSGame.Game
             //   玩家/盟友例外（他们的血本机权威）。见 BattleState.IsTickDamageAuthority。
             if (armorValue > 0 && remainArmor <= 0 && FPSGame.Data.BattleState.ShouldApplyTickDamage(IsPlayerLike))
             {
-                Health.TakeDamage(new() {new( DamageTypeEnum.Real,BleedValue)}, true, ArmorBreaker, m_colliders[0], m_colliders[0].bounds.center,true);
+                // 流血：无源（NoSource=true），来源两头都用"最后打破护甲的那个人"（与改动前同口径）
+                Health.TakeDamage(new() {new( DamageTypeEnum.Real,BleedValue)}, true, ArmorBreaker, m_colliders[0], m_colliders[0].bounds.center,true,false,-1,ArmorBreaker);
             }
             return true;
         }

@@ -116,7 +116,7 @@ public class SubTitleShout : SubtitleBase
                 return "嘿，看这里！";
         }
     }
-    void OnDeath(GameObject _)
+    void OnDeath(GameObject caused, GameObject origin)
     {
         //mainCamera = Camera.main;
         transform.GetRect().anchoredPosition = baseVector;

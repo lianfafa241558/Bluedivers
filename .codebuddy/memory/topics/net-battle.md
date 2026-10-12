@@ -254,4 +254,13 @@
   `BattleEventBus.OnEnemyHit/OnEnemyDamaged` 与 `NetRoomFlow.OnEnemyHitUp/OnEnemyDamaged` 改成带该参数的签名（订阅方只有 `EnemyNetBridge`，
   已同步改）；`EnemyController._OnDamaged` 从 `damageSource` 取 `Actor.NetId` 带上；`SendEnemyHit/SendEnemyDamaged` 加可选参数；
   `ApplyRemoteDamage` 来源改**三级解析**（攻击者号 → 上报者盟友实例 → NoSource）。⚠ **破坏性协议变更，双端必须一起换包**。
-  ⚠ `HitPartIndex` 仍未做：接收端目前仍按自己的 `ResolveHitCollider` 挑部位（装甲结算可能与开枪端略不同）。
+  ~~⚠ `HitPartIndex` 仍未做~~ ⇒ ✅ 发送端已落地（见上 §"④ HitPartIndex"）。
+- ✅ **已落地（2026-10-12）「直接来源 / 起源」拆分**（详见 `plans/伤害_直接来源与起源拆分_执行计划.md` + 当日 daily）：
+  `DamagePacket` 的 `DamageSource` **改名 `DamageOrigin`**（语义不变：所有减伤/友伤/归属读它）+ 新增 `DamageCaused`；
+  生产者收口在 `ProjectileBase.BuildHitData`（`soure = Owner` 起源 / `caused = WeaponBase.GetComponentInParent<Actor>() ?? Owner` 直接来源），
+  地雷/空投舱显式 `caused = gameObject`。**消费口径**：显示/AI（`DetectionModule`/受击改目标/倒地播报/`OnHit`/`OnDamaged`）走 **caused**；
+  统计（`命中次数`/`击杀敌人`/`UnitKill`/`ArmorDestruction`）走 **origin**。
+  联机：`DamageMsg` 追加 **`[Key(8)] CausedNetId`**（旧 8 个 Key 未动）、`BattleEventBus.EnemyHit/EnemyDamaged` 尾加 `causedNetId`、
+  `ApplyRemoteDamage(..., causedNetId)` 两个来源**各自**解析（`ResolveNetEmitter`），`AttackerNetId` 语义仍是**起源**；
+  `UnitEventBus.UnitDamaged` 加第 5 参 `origin`（唯一订阅方 `NetDestructibleBridge` 两个号都要）。
+  ⚠ **破坏性协议变更：双端必须同版本一起换包**（旧端 `Skip()` 掉 Key(8) ⇒ 退化成"显示成开枪者"）。

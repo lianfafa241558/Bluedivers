@@ -380,7 +380,9 @@ namespace FPSGame.AI
             //Debug.LogError("" + damageSource + "击中，无源伤害" + noSource);
             if (damageSource != null) {
                 var actor = damageSource.GetComponent<Actor>();
-                if (actor.Team == m_Actor.Team) return;
+                // ⚠ 地雷 / 空投舱这类**直接来源**自身没有 Actor（原来这里会空引用）⇒ 判不出同队就照常往下走，
+                //   后面的 OnDamagedDiffuse 自己会用 IsValidMono 跳过"不是单位"的来源。
+                if (actor != null && actor.Team == m_Actor.Team) return;
                 //damageSource = actor.AimPoint.gameObject;
             }
             //无源伤害

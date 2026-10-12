@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using PEMaths;
@@ -27,6 +27,7 @@ namespace FPSGame.Weapon
         public override void LogicInit()
         {
             base.LogicInit();
+            Owner = gameObject;
         }
 
         public override void LogicTick()
@@ -37,9 +38,9 @@ namespace FPSGame.Weapon
         }
 
 
-        public void SetOwner(GameObject owner, GameObject weaponRoot, Collider target, Vector3 point)
+        public void SetOrigin(GameObject origin, GameObject weaponRoot, Collider target, Vector3 point)
         {
-            Owner = owner;
+            Origin = origin;
         }
 
 

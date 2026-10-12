@@ -95,7 +95,7 @@ namespace FPSGame.Game
         }
 
         /// <summary>单位被击毁</summary>
-        private void OnUnitDie(GameObject _) => StartRebuild();
+        private void OnUnitDie(GameObject caused, GameObject origin) => StartRebuild();
 
         /// <summary>击毁后：延迟收起护盾物体，再延时重塑</summary>
         private void StartRebuild()

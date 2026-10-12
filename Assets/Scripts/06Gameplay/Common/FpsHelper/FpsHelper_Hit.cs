@@ -99,7 +99,10 @@ namespace FPSGame.Gameplay
                     WeaknessBonus = 0,
                     AP = 10,
                     NoSource = false,
-                    DamageSource = target.gameObject,
+                    // §6-⑤：荆棘反伤 = "反伤护甲的主人"造成的；它既是直接来源也是起源
+                    // （target.gameObject 在上面已确认带 Actor，取不到就直接用 target.gameObject ⇒ 保持今天行为）
+                    DamageOrigin = target.gameObject,
+                    DamageCaused = targetActor ? targetActor.gameObject : target.gameObject,
                     Pos = point,
                     DemolishValue = 0,
                     isDirect = true,
@@ -174,9 +177,9 @@ namespace FPSGame.Gameplay
             if (noise > 0)
             {
                 FPSGame.Utils.NetSyncLog.AiLog("噪声·发(命中·远端复刻)",
-                    $"{((hitData.soure != null) ? hitData.soure.name : "<无源>")} @{hitData.pos:F2} 半径={noise}",
-                    (hitData.soure != null) ? hitData.soure.GetInstanceID() : 0, 0.5f);
-                UnitEventBus.Noise(new NoiseData { source = hitData.soure, pos = (PEVector3)hitData.pos, radius = noise });
+                    $"{((hitData.origin != null) ? hitData.origin.name : "<无源>")} @{hitData.pos:F2} 半径={noise}",
+                    (hitData.origin != null) ? hitData.origin.GetInstanceID() : 0, 0.5f);
+                UnitEventBus.Noise(new NoiseData { source = hitData.origin, pos = (PEVector3)hitData.pos, radius = noise });
             }
             PlayImpactFx(hitData);
         }
@@ -209,22 +212,21 @@ namespace FPSGame.Gameplay
             Vector3 point = hitData.pos;
             Vector3 normal = hitData.normal;
             Collider collider = hitData.collider;   // 允许为空（表现弹只有终点、没有碰撞体）
-            GameObject soure = hitData.soure;
+            GameObject origin = hitData.origin;
 
             //特效
             if (damageData.ImpactVfx)
             {
                 if (damageData.ImpactVfx.TryGetComponent(out ProjectileBase projectile))
                 {
-                    // 走特效服务契约（VFXManager 在 01Manager，本文件未来要随玩法层进 asmdef）
                     Component ps = VfxPool.Creat(projectile, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default);
-                    ps?.GetComponentInChildren<IVfxEffect>()?.SetOwner(soure, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+                    ps?.GetComponentInChildren<IVfxEffect>()?.SetOrigin(origin, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
                     ps?.GetComponentInChildren<ProjectileBase>()?.Shoot(hitData.weapon);
                 }
                 else
                 {
                     GameObject ps = VfxPool.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
-                    ps?.GetComponentInChildren<IVfxEffect>()?.SetOwner(soure, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+                    ps?.GetComponentInChildren<IVfxEffect>()?.SetOrigin(origin, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
                 }
 
             }
@@ -255,14 +257,14 @@ namespace FPSGame.Gameplay
 
             //真的会有这种情况吗？？？
             if (!hitData.data.IsValid()) {
-                Debug.LogError("没有伤害组件"+ hitData.soure + hitData.pos);
+                Debug.LogError("没有伤害组件"+ hitData.origin + hitData.pos);
                 return;
             }
             Vector3 point = hitData.pos;
             Vector3 normal = hitData.normal;
             Collider collider = hitData.collider;//要考虑碰撞体为空（爆炸）
             PEInt charg = hitData.chargeScale;
-            GameObject soure = hitData.soure;
+            GameObject soure = hitData.origin;
         
             var damageData = hitData.data;
             PEInt damageOuterRadius = damageData.GetDamageOuterRadius(charg);
@@ -291,7 +293,9 @@ namespace FPSGame.Gameplay
                     WeaknessBonus = damageData.GetWeaknessBonus(),
                     AP = damageData.GetDirectAP(charg),
                     NoSource = damageData.NoSource || !soure,
-                    DamageSource = soure,
+                    // 起源 = 统计口径（空投炮台 ⇒ 呼叫者）；直接来源 = 显示/AI 口径（⇒ 炮台自己）
+                    DamageOrigin = soure,
+                    DamageCaused = hitData.caused,
                     Pos = point,
                     DemolishValue = damageData.GetDemolishValue(0),
                     isDirect = true,
@@ -350,7 +354,8 @@ namespace FPSGame.Gameplay
                             WeaknessBonus = damageData.GetWeaknessBonus(),
                             AP = damageData.GetExplosionAP(charg),
                             NoSource = damageData.NoSource || !soure,
-                            DamageSource = soure,
+                            DamageOrigin = soure,
+                            DamageCaused = hitData.caused,
                             //Pos = point,//大范围爆炸时所有目标都显示在同一处
                             //Pos = exolosionCollider.bounds.center,//巨型单位会把伤害点显示在包围盒中心，看不出命中位置
                             Pos = hitPoint,
@@ -358,6 +363,7 @@ namespace FPSGame.Gameplay
                             isDirect = false,
                             damageAffected = exolosionCollider,
                         };
+                       
                         //爆炸
                         item.InflictDamage(explosionPacket);
                     }
@@ -473,7 +479,8 @@ namespace FPSGame.Gameplay
                     WeaknessBonus = hitData.data.GetWeaknessBonus(),
                     AP = hitData.data.GetExplosionAP(1),
                     NoSource = noSource,
-                    DamageSource = hitData.soure,
+                    // 范围动能（踩踏等）：发起者自己即直接来源 ⇒ 不填 caused，由 Health 回落成起源
+                    DamageOrigin = hitData.soure,
                     Pos = collider.ClosestPointOnBounds(hitData.pos.RawVector3),
                     DemolishValue = hitData.data.GetDemolishValue(distance),
                     isDirect = true,//直击包：绕开爆炸抗性/爆炸遮挡，即"非爆炸伤害"

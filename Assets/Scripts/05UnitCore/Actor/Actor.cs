@@ -219,7 +219,7 @@ namespace FPSGame.Game
 
         //[DisplayField]
         //[InspectorName("召唤者")]
-        public IActor Owner { get; set; }
+        public IActor Origin { get; set; }
 
         private Vector3 lastAngle;
         private IPERange range;
@@ -384,7 +384,9 @@ namespace FPSGame.Game
                     break;
             }
         }
-        void OnDie(GameObject source)
+        /// <param name="caused">**直接来源**（显示/AI；本类只用于调试/排查）</param>
+        /// <param name="origin">**起源**（统计）—— `UnitKill` 报的是它，保证"炮台击杀算呼叫者"的口径不变</param>
+        void OnDie(GameObject caused, GameObject origin)
         {
             //Debug.LogError("单位死亡"+gameObject,gameObject);
             UnitEventBus.UnitDeath(this);
@@ -395,7 +397,7 @@ namespace FPSGame.Game
             {
                 Debug.LogError($"[Health] 单位死亡时生命值>0！CurrentHealth={m_Health.GetHpCurrent()}, MaxHealth={m_Health.GetHpMax()}", gameObject);
             }
-            if (source.IsValid()) UnitEventBus.UnitKill(source.GetComponent<Actor>(),this);
+            if (origin.IsValid()) UnitEventBus.UnitKill(origin.GetComponent<Actor>(),this);
             switch (type)
             {
                 case UnitTypeEnum.Player:
@@ -453,7 +455,7 @@ namespace FPSGame.Game
 
         public void Kill()
         {
-            OnDie(null);
+            OnDie(null, null);
         }
 
         private void Update()

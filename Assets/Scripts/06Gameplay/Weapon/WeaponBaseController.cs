@@ -222,7 +222,14 @@ namespace FPSGame.Weapon {
         }
         #endregion
 
+        /// <summary>
+        /// 武器来源:一般为对应单位
+        /// </summary>
+        public GameObject Origin { get; set; }
 
+        /// <summary>
+        /// 武器所有者:一般为对应单位，轰炸类武器重定向至自己
+        /// </summary>
         public GameObject Owner{ get; set; }
 
         public virtual PEInt WeaponChargeScale_D => 1;

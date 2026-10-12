@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -51,7 +51,7 @@ namespace FPSGame.AI
             if (!TramplePoint) return;
             if (active && TramplePoint.TryGetComponent(out IVfxEffect vfx))
             {
-                vfx.SetOwner(m_Controller.gameObject, null, null, m_Controller.CenterPos);
+                vfx.SetOrigin(m_Controller.gameObject, null, null, m_Controller.CenterPos);
             }
             TramplePoint.SetActive(active);
         }

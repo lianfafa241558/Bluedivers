@@ -152,7 +152,9 @@ public class PlayerSpeechManager : MonoBehaviour
     }
 
     //因为要进来结算上传呼叫啥的防止重复喊话，所以要放这里
-    void OnDamage(PEInt dmg, GameObject damageSource, Collider collider, bool noSource)
+    /// <param name="caused">**直接来源**（表现口径：被炮台打时喊话按炮台算）</param>
+    /// <param name="origin">**起源**（统计口径）</param>
+    void OnDamage(PEInt dmg, GameObject caused, GameObject origin, Collider collider, bool noSource)
     {
         //if (m_health.GetShieldRatio() > 0) return;
         var type = SpeechTypeEnum.Damage;

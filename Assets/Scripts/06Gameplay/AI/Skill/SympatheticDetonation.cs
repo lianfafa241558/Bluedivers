@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using FPSGame.Core;
 using FPSGame.Game;
 using UnityEngine;
@@ -87,7 +87,7 @@ namespace FPSGame.AI
                 collider = null,//不产生直击伤害，仅范围伤害
                 data = DamageData,
                 chargeScale = 1,
-                soure = go,
+                origin = go,
                 self = go,
                 sfxRange = DamageData.SoundRadius,
                 weapon = null,

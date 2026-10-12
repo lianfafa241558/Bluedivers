@@ -1,4 +1,4 @@
-using FPSGame.GameContract;
+﻿using FPSGame.GameContract;
 using UnityEngine;
 namespace FPSGame.AI
 {
@@ -42,7 +42,7 @@ namespace FPSGame.AI
             return DropRate.x + rand.Next(DropRate.y - DropRate.x);   // 与 UnityEngine.Random.Range(int,int) 同口径：上界不含
         }
 
-        void OnDie(GameObject source)
+        void OnDie(GameObject caused, GameObject origin)
         {
             if (lootCount > 0)
             {
