@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using FPSGame.Core;
-using FPSGame.Core.Interface;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using PEMaths;
@@ -8,9 +7,7 @@ using RootMotion.FinalIK;
 
 using FPSGame.Game;
 using UnityEngine;
-using UnityEngine.Events;
 using FPSGame.Utils;
-using FPSGame.Gameplay;
 using FPSGame.GameData;
 using FPSGame.AI;
 using FPSGame.Weapon;
@@ -23,7 +20,7 @@ namespace FPSGame.Gameplay
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(PlayerInputHandler), typeof(AudioSource))]
 [AddComponentMenu("玩家/玩家控制器")]
-public partial class PlayerController : BaseSelfMoveableController
+public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
 {
 
     [Foldout("一般", true)]
@@ -79,6 +76,28 @@ public partial class PlayerController : BaseSelfMoveableController
     [DisplayField]
     [InspectorName("所属玩家")]
     public int PlayerIndex;
+
+    /// <summary><see cref="IPlayerUnit"/> 的实现（= 上面的 <see cref="PlayerIndex"/> 字段）。
+    /// <para>▍为什么用**显式实现**：上面那个是 public 字段，而字段**不能**实现接口属性
+    /// ⇒ 显式实现既能满足接口，又不动既有字段（全工程读它的地方一处都不用改）。</para></summary>
+    int IPlayerUnit.PlayerIndex => PlayerIndex;
+
+    /// <summary><see cref="IPlayerUnit.PlayerName"/> 的实现：本机玩家的**存档昵称**
+    /// （= <c>ArchivesData_SO.playerName</c>，开房 / 入房上报的就是它，所以两端报出来的名字一致）。
+    ///
+    /// <para>▍同样用显式实现：基类的 <c>PlayerName</c> 是 <c>Actor.ShowName</c>，那是**角色名**
+    /// （"演谁"），与这里要的"谁"口径不同 ⇒ 显式实现让两者各归各的
+    /// （既有的 <c>PlayerWnd</c> / <c>BridgeWnd</c> 依旧读到角色名，消息窗播报读到昵称）。</para>
+    /// <para>▍老存档 / 起名前（<c>playerName</c> 空）**就地返回空**，由调用方按接口约定回落角色名
+    /// （<c>GameMsg.Of</c> 就是这么做的）—— 回落只写一处，别在这里再判一次。</para></summary>
+    string IPlayerUnit.PlayerName
+    {
+        get
+        {
+            var arch = ArchivesData_SO.Current;
+            return arch != null ? arch.playerName : null;
+        }
+    }
 
     /// <summary>
     /// 是否处于第三人称视角

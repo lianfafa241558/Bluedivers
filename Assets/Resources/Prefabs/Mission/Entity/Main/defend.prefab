@@ -646,11 +646,11 @@ MonoBehaviour:
     shape: 0
     innerRadius: 50
     outerRadius: 70
+    rectInnerHalfSize: {x: 0, y: 0}
+    rectHalfSize: {x: 0, y: 0}
     depth: 0
   additionTerrain: {fileID: 8134641666659700897}
   transitionDistance: 10
-  clearVegetationRange: {x: 7, y: 10}
-  clearRockRange: {x: 0, y: 6}
   StartModify: 0
 --- !u!114 &1865969588
 MonoBehaviour:
@@ -664,7 +664,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a1764301bb944469e18e45baed981a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: 
+  ShowName: "\u6821\u533A"
   Id: 
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
@@ -8081,10 +8081,10 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 7294893088266950093}
   demolishValue: -1
+  AutoDestroy: 1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 1
 --- !u!114 &7294893088266950093
 MonoBehaviour:
   m_ObjectHideFlags: 0

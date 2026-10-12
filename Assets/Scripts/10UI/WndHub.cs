@@ -104,6 +104,9 @@ internal static class WndHub
     /// <summary>单行输入弹窗（房间密码 / 首次设置玩家名等）。</summary>
     public static PasswordWnd Password { get { return Get<PasswordWnd>(WndType.Password); } }
 
+    /// <summary>消息播报窗（玩家倒地 / 发现任务点 / 加入·退出任务…）。</summary>
+    public static MsgWnd Msg { get { return Get<MsgWnd>(WndType.Msg); } }
+
     // ---------------- 注册 ----------------
 
     /// <summary>
@@ -176,6 +179,7 @@ internal static class WndHub
         if (w is NoticeWnd) return WndType.Notice;
         if (w is InformationWnd) return WndType.Information;
         if (w is PasswordWnd) return WndType.Password;
+        if (w is MsgWnd) return WndType.Msg;
         return WndType.None;
     }
 
@@ -233,6 +237,13 @@ internal static class WndHub
             if (notice != null) notice.Clear();
         };
 
+        // 消息播报：跨层（管理器 / 玩法层）推一条系统消息（文本自带 TMP 富文本标签）
+        WindowRegistry.MsgImpl = text =>
+        {
+            var msg = Msg;
+            if (msg != null) msg.Push(text);
+        };
+
         // 信息栏：跨层（管理器/玩法）按 string 键增 / 删一条（键同时是子项显示的文字）
         WindowRegistry.Information.AddImpl = key =>
         {
@@ -256,6 +267,7 @@ internal static class WndHub
           .Append(" CountDown=").Append(CountDown != null)
           .Append(" Operation=").Append(Operation != null)
           .Append(" Information=").Append(Information != null)
+          .Append(" Msg=").Append(Msg != null)
           .Append(" | keys=");
         foreach (var kv in map) sb.Append(kv.Key).Append(',');
         return sb.ToString();

@@ -78,6 +78,33 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
     public void SetCallerSid(uint sid) => _callerSid = (int)sid;
 
     /// <summary>
+    /// 按"呼叫者 sid"解析出**本端的那个单位**：本机 sid ⇒ 本机玩家；别人的 sid ⇒ 本端那份盟友实例（0 = 房主）。
+    ///
+    /// <para>▍为什么必须按 sid 解析：远端复现（<see cref="TmpAirdrop"/>）时本机**不是**呼叫者
+    /// ⇒ 生成物的归属（<c>weapon.Owner</c> / <c>Actor.Owner</c>）绝不能写成"我"，否则"队友的炮台打死人"
+    /// 会被算到我头上（击杀统计 / <c>PlayerWnd</c> 击杀数都错，2026-10-12 查实）。</para>
+    ///
+    /// <para>▍解析不到（盟友实例还没建出来 / 已离场）⇒ 退回本机玩家，即**改动前**的行为：
+    /// 宁可归属可能错，也不能让 <c>weapon.Owner</c> / <c>actor.Team</c> 变 null（不结算友伤、队伍过滤失效）。</para>
+    ///
+    /// <para>▍判"本机 sid"用 <see cref="VehicleCustomState.LocalSid"/>（房主 = 0）：这是本层唯一能看见的
+    /// "我是谁" —— <c>NetRoomFlow</c> 在 <c>07_NetGame</c>，而 <c>10_Effect</c> 不引用它。</para>
+    /// </summary>
+    private static GameObject ResolveCaller(uint sid)
+    {
+        if (sid != VehicleCustomState.LocalSid)
+        {
+            var bridge = NetFriendBridge.Instance;
+            if (bridge != null && bridge.TryGetFriendObject(sid, out var go) && go != null) return go;
+
+            NetSyncLog.Warn("空投/归属", $"呼叫者 sid={sid} 在本端找不到对应单位（盟友实例没建出来 / 已离场）⇒ 归属退回本机玩家");
+        }
+
+        var self = ActorsManager.Player;
+        return self.IsValidMono() ? self.gameObject : null;
+    }
+
+    /// <summary>
     /// 把"本次呼叫者"的归属写到刚生成的载具上（含子物体）。
     /// <para>▍为什么是"生成后再打标"而不是"生成时就知道"：<c>Instantiate</c> 会**同步**跑完
     /// <c>Awake</c>（那时只知道默认归属）⇒ 必须生成后调 <c>SetOwnerSid</c> 纠正一次
@@ -186,10 +213,10 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
 
         transform.parent = null;
         //transform.eulerAngles = Vector3.zero;
-        m_owner = ActorsManager.Player.gameObject;
-        // ⚠ 上面那句 m_owner 是给表现/归属用的，**不代表呼叫者**（远端复现时也会被写成我）
-        //   ⇒ 呼叫者只认 SetCallerSid 带来的值；没人带（任务脚本自己放的）就是房主。
+        // ⚠ 顺序不能反：先把"没人带 sid"归成房主(0)，再按它解析出**真呼叫者**。
+        //   老实现这里写死 ActorsManager.Player（= 本机玩家）⇒ 远端复现时归属记成"我"（见 ResolveCaller）。
         if (_callerSid < 0) _callerSid = 0;
+        m_owner = ResolveCaller(CallerSid);
         if(action.IsValid()) OnCreatObject += action;
         Init();
     }
@@ -349,10 +376,12 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
                     {
                         weapon.Owner = m_owner;
                     }
-                    if (m_creatObject.TryGetComponentInChildren(out Actor actor))
+                    // ⚠ m_owner 可能解析不到（盟友实例还没建出来 / 呼叫者已离场）⇒ 不许裸解引用
+                    if (m_owner != null && m_owner.TryGetComponent(out IActor ownerActor)
+                        && m_creatObject.TryGetComponentInChildren(out Actor actor))
                     {
-                        actor.Team = m_owner.GetComponent<IActor>().Team;
-                        actor.Owner = m_owner.GetComponent<IActor>();
+                        actor.Team = ownerActor.Team;
+                        actor.Owner = ownerActor;
                     }
                 }
 
@@ -428,10 +457,12 @@ public class VFXAirdropEffect : MonoBehaviour, IVfxEffect, IAirdropEffect
             {
                 weapon.Owner = m_owner;
             }
-            if (go.TryGetComponentInChildren(out Actor actor))
+            // ⚠ 同 UpdatePod：m_owner 允许为 null（解析不到呼叫者）
+            if (m_owner != null && m_owner.TryGetComponent(out IActor ownerActor)
+                && go.TryGetComponentInChildren(out Actor actor))
             {
-                actor.Team = m_owner.GetComponent<IActor>().Team;
-                actor.Owner = m_owner.GetComponent<IActor>();
+                actor.Team = ownerActor.Team;
+                actor.Owner = ownerActor;
             }
         }
         else

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using FPSGame.Core;
 
 // 注册方是 UI 层的 `WndHub`（10_UI）⇒ 只放给它写；管理器/玩法/表现层**只能读**。
@@ -38,6 +38,10 @@ namespace FPSGame.GameContract
 
         /// <summary>清掉当前 NPC 提示。</summary>
         public static Action ClearNotice { get; internal set; }
+
+        /// <summary>(消息文本) → 由 UI 侧登记的"推一条系统消息"实现（**只给 `WndHub` 写**）。
+        /// <para>文本走 TMP 富文本；格式与措辞统一由玩法层 <c>GameMsg</c> 给。</para></summary>
+        public static Action<string> MsgImpl { get; internal set; }
 
         /// <summary>
         /// UI 层登记的"重新扫描"委托（扫场景里**全部**窗口，含未激活）。
@@ -90,6 +94,13 @@ namespace FPSGame.GameContract
             if (ClearNotice != null) ClearNotice();
         }
 
+        /// <summary>推一条系统消息到消息窗（未登记时静默跳过）。</summary>
+        public static void Msg(string text)
+        {
+            EnsureScanned();
+            if (MsgImpl != null) MsgImpl(text);
+        }
+
         /// <summary>登记状态摘要（排查用）。</summary>
         public static string Dump()
         {
@@ -98,6 +109,7 @@ namespace FPSGame.GameContract
                  + " CreatNotice=" + (CreatNotice != null)
                  + " CreatCountDown=" + (CreatCountDown != null)
                  + " ClearNotice=" + (ClearNotice != null)
+                 + " Msg=" + (MsgImpl != null)
                  + " InformationAdd=" + (Information.AddImpl != null)
                  + " InformationRemove=" + (Information.RemoveImpl != null)
                  + " Scanner=" + (Scanner != null)

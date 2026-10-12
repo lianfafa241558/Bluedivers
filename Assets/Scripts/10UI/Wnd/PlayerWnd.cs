@@ -560,22 +560,30 @@ public partial class PlayerWnd : Window
 
     void UnitKill(Actor attacker, Actor victim)
     {
+        if (attacker == null || victim == null) return;
         //击杀其他单位不算
         if (victim.Type == UnitTypeEnum.Other) return;
-        //Debug.LogError(attacker);
-        //故意不判定队伍的，这样子友军击毙也能算
-        //不需要判定是玩家几，只要知道是本机玩家就行
-        if ((attacker as IActor) == ActorsManager.Player || attacker.Owner == ActorsManager.Player)
-        {
-            ++m_KillCount;
-            m_LastKillTime = Time.time;
-            wndManager.PlaySound(new("UI/HUD/Kill", AudioGroups.UI) {cache=true });
-            SetText(killCount,"x"+m_KillCount);
-            var color = Color.HSVToRGB(Mathf.Clamp01(0.5f + m_KillCount / 100f), 0.5f, 1);
-            SetColor(killIcon, color);
-            SetColor(killCount, color);
-            //SetAlpha(killRoot,1);
-        }
+
+        // ★ "算不算我的击杀" = 起源是不是我：召唤物（炮台/无人机）算呼叫者的账。
+        //   ⚠ 判"是不是我"必须走 IPlayerUnit（PlayerUnitUtil）：队友在本端是 FriendController 实例，
+        //     只认 PlayerController / ActorsManager.Player 会漏判与误判（2026-10-12 查实）。
+        //   本机序号：窗口还没显示过时基类字段是 null ⇒ 退回单例。
+        var team = teamManager != null ? teamManager : FPSGame.Managers.TeamManager.Instance;
+        if (team == null) return;
+
+        GameObject origin = attacker.gameObject;
+        if (attacker.Owner != null && attacker.Owner is Component ownerComp) origin = ownerComp.gameObject;
+
+        if (!PlayerUnitUtil.TryGetPlayerIndex(origin, out int index) || index != team.SelfIndex) return;
+
+        ++m_KillCount;
+        m_LastKillTime = Time.time;
+        wndManager.PlaySound(new("UI/HUD/Kill", AudioGroups.UI) {cache=true });
+        SetText(killCount,"x"+m_KillCount);
+        var color = Color.HSVToRGB(Mathf.Clamp01(0.5f + m_KillCount / 100f), 0.5f, 1);
+        SetColor(killIcon, color);
+        SetColor(killCount, color);
+        //SetAlpha(killRoot,1);
     }
 
     void UpdateKill()

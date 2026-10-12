@@ -5,6 +5,7 @@ using FPSGame.Core;
 using FPSGame.Game;
 using FPSGame.GameContract;
 using FPSGame.Gameplay;
+using FPSGame.Mission;
 using FPSGame.Utils;
 using UnityEngine;
 using UnityEngine.AI;
@@ -25,12 +26,22 @@ namespace FPSGame.Managers
         /// <summary>Start 阶段默认倒计时(Tick)：到点即进入 Ongoing</summary>
         protected const int StartDelayTick = -4;
 
+        /// <summary>NearEnd 阶段的最长等待(Tick)：到点仍有残余单位 ⇒ 让它们撤向最近的巢穴任务、并从本波账本摘除。
+        /// 本波每 Tick = 1s(见 <c>WaveManager</c> 的 TickTime) ⇒ 12 = 12 秒。</summary>
+        protected const int NearEndRetreatTick = 12;
+
+        /// <summary>归巢落点的导航网格吸附范围(米)：超出这个距离才算"取不到有效落点"。
+        /// ⚠ 不能用 <see cref="SnapToNavMesh"/> 的 100 米兜底 —— 那只保证"随便找个点"，判不出这里要的"有效"。</summary>
+        protected const float NestPointSnapRange = 20f;
+
         protected List<GameObject> waveUseObject;
         protected Stack<GameObject> creats;
         protected List<Actor> units;
 
         protected WaveState state;
         protected int time;
+        /// <summary>NearEnd 已等待的 Tick 数(进入 NearEnd 时归零，见 <see cref="Trans"/>)</summary>
+        protected int nearEndWait;
         protected Vector3 center;
         protected Vector3[] points;
         protected float range;
@@ -149,10 +160,23 @@ namespace FPSGame.Managers
         /// <summary>Ongoing 阶段：子类实现各自刷怪逻辑，收尾判定调用 <see cref="TryEnterNearEnd"/></summary>
         protected abstract void TickOngoing();
 
-        /// <summary>NearEnd 阶段：单位全部清空即结束</summary>
+        /// <summary>
+        /// NearEnd 阶段：账本清空即进入结束；等了 <see cref="NearEndRetreatTick"/> 秒仍没清完 ⇒ 让残余单位归巢
+        /// (见 <see cref="RetreatRemainingUnits"/>)。
+        /// ⚠ 这里**不能**再调 <see cref="TryEnterNearEnd"/>：那条最终又是 <c>Trans(WaveState.NearEnd)</c>，
+        /// 而 NearEnd 阶段每个 <see cref="PhaseCheckInterval"/> Tick 都会满足条件 ⇒ 反复重入 NearEnd、
+        /// 每 5 秒重播一次「波次结束」提示，且永远走不到 End(波次永不回收)。2026-10-12 用户报「反复一直出
+        /// WaveEnd_Zerg」的根因就在这里。
+        /// </summary>
         protected virtual void TickNearEnd()
         {
-            TryEnterNearEnd(0);
+            if (units.Count == 0)
+            {
+                Trans(WaveState.End);
+                return;
+            }
+
+            if (++nearEndWait >= NearEndRetreatTick) RetreatRemainingUnits();
         }
 
         /// <summary>收尾判定：每隔 <see cref="PhaseCheckInterval"/> Tick 检查一次，单位数不超过阈值则切到 NearEnd</summary>
@@ -160,6 +184,82 @@ namespace FPSGame.Managers
         {
             if (time % PhaseCheckInterval != 0) return;
             if (units.Count <= threshold) Trans(WaveState.NearEnd);
+        }
+
+        /// <summary>
+        /// 【收尾归巢】NearEnd 超时后仍未清掉的残余单位：**一律从本波账本摘除**(本波立即可以结束)；
+        /// 同时**尽量**让它们改去最近的巢穴任务(<see cref="MissionType.Nest"/>)内的随机位置。
+        ///
+        /// <para>▍找不到有效归巢目标(没有巢穴任务 / 该单位没有 <see cref="EnemyController"/> / 落点不落在导航网格上)时：
+        /// 照样摘账本，但**不修改它的导航目标**(不硬塞一个假点把单位引到乱七八糟的地方)。</para>
+        ///
+        /// <para>▍只换目标点，不击杀也不销毁：单位继续活在场上(不凭空消失) ⇒ 不走联机死亡通道。
+        /// 房主端 <c>SetNavDestination</c> 会经既有 4033(敌人移动) 把新目标下发给成员；成员端该调用本就作废
+        /// (只认房主下发，见 <c>EnemyController.RemoteDrivenMovement</c>)，两端只需同步"摘账本"这一步。</para>
+        /// </summary>
+        protected virtual void RetreatRemainingUnits()
+        {
+            int count = units.Count;
+            int retreated = 0;
+            var nest = FindNearestNestMission(center);
+
+            // 倒序遍历：内容只在本方法里删，倒序只是为了边删边遍历不出错
+            for (int i = units.Count - 1; i >= 0; --i)
+            {
+                var actor = units[i];
+                if (nest != null && actor && actor.TryGetComponent(out EnemyController ec) && TrySampleNestPoint(nest, out Vector3 target))
+                {
+                    // 与 SetUnitHome 同口径：既设长期落点、又立刻下发(途中被打断会继续走向巢穴)
+                    ec.HomePoint = target;
+                    ec.SetNavDestination(target);
+                    ++retreated;
+                }
+                // 没拿到有效目标 ⇒ 只摘账本，导航目标保持原样
+                units.RemoveAt(i);
+            }
+
+            NetSyncLog.SyncLog("波次归巢",
+                $"收尾 {NearEndRetreatTick}s 未清完 ⇒ {count} 个单位从本波账本摘除(其中 {retreated} 个改去最近巢穴，其余没找到有效目标、导航目标不动)");
+        }
+
+        /// <summary>取最近的、还没结束的巢穴任务(没有则返回 null)</summary>
+        static MissionBase FindNearestNestMission(Vector3 from)
+        {
+            var manager = BattleManager.Instance;
+            var missions = manager != null && manager.MissionCont != null ? manager.MissionCont.missions : null;
+            if (missions == null) return null;
+
+            MissionBase best = null;
+            float bestSqr = float.MaxValue;
+            for (int i = 0; i < missions.Count; ++i)
+            {
+                var m = missions[i];
+                if (m == null || m.missionType != MissionType.Nest || m.end) continue;
+                float sqr = (m.pos - from).sqrMagnitude;
+                if (sqr < bestSqr)
+                {
+                    bestSqr = sqr;
+                    best = m;
+                }
+            }
+            return best;
+        }
+
+        /// <summary>
+        /// 在巢穴任务范围内取一个随机落点，**必须确实落在导航网格上**才算有效。
+        /// <para>⚠ 不能用 <see cref="SnapToNavMesh"/>：它在采样失败时返回"保持原水平位置 + 取中心高度"的兜底点，
+        /// 那个点同样可能在网格外 ⇒ 达不到这里"没找到有效目标就别改导航目标"的要求。</para>
+        /// </summary>
+        bool TrySampleNestPoint(MissionBase nest, out Vector3 point)
+        {
+            Vector3 candidate = nest.pos + RandomOffset(Mathf.Max(1f, nest.entitySize));
+            if (NavMesh.SamplePosition(candidate, out var hit, NestPointSnapRange, NavMesh.AllAreas))
+            {
+                point = hit.position;
+                return true;
+            }
+            point = default;
+            return false;
         }
 
         /// <summary>状态切换：阶段计时、提示语音与背景音乐统一在此处理</summary>
@@ -187,8 +287,9 @@ namespace FPSGame.Managers
                     {
                         WndManager.Instance.CreatNotice("Yuuka", "WaveEnd_Zerg");
                         WindowRegistry.Information.Remove(infoTitle);
-                        //TODO:玩家看不见的就消失
                     }
+                    // 收尾计时归零：等 NearEndRetreatTick 秒仍未清完 ⇒ 残余单位归巢(见 TickNearEnd)
+                    nearEndWait = 0;
                     break;
 
                 case WaveState.End:

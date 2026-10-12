@@ -25,13 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8559943016807702174}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 205.83678, y: 13.257465, z: 158.14}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3582263480034534753
 MonoBehaviour:
@@ -45,11 +45,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a1764301bb944469e18e45baed981a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: 
+  ShowName: "\u91C7\u96C6\u9999\u6599"
   Id: 
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
   Color: {r: 1, g: 1, b: 1, a: 1}
+  Title: 
+  mission: {fileID: 0}
+  actions:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &3724723341373676061
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,6 +72,8 @@ MonoBehaviour:
     shape: 0
     innerRadius: 15
     outerRadius: 20
+    rectInnerHalfSize: {x: 0, y: 0}
+    rectHalfSize: {x: 0, y: 0}
     depth: 3
   additionTerrain: {fileID: 0}
   transitionDistance: 5

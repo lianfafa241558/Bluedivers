@@ -391,7 +391,17 @@ namespace FPSGame.AI
                 DetectionModule?.OnDamaged(damageSource, noSource);
                 OnDamaged?.Invoke(collider);
             }
-            if (!noSource&&FPSGame.Data.FlowState.GameState == GameStateEnum.Game && damageSource.TryGetComponent(out PlayerController player)) FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(player.PlayerIndex, "命中次数");
+            // 统计"命中次数"按**起源**记（炮台/无人机这类召唤物算呼叫者的账）；
+            // ⚠ 归换算走 IPlayerUnit（PlayerUnitUtil）：队友在本端是 FriendController 实例 ⇒ 只认 PlayerController 必落空。
+            if (!noSource && FPSGame.Data.FlowState.GameState == GameStateEnum.Game && damageSource != null)
+            {
+                GameObject origin = damageSource;
+                if (damageSource.TryGetComponent(out Actor srcActor) && srcActor.Owner != null && srcActor.Owner is Component srcOwner)
+                    origin = srcOwner.gameObject;
+
+                if (FPSGame.GameContract.PlayerUnitUtil.TryGetPlayerIndex(origin, out int hitIndex))
+                    FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(hitIndex, "命中次数");
+            }
         }
 
         /// <summary>伤害成分的摊平缓冲（`[count, type0, coeff0, ...]`）：只在打包网络消息内复用（序列化是**同步**的），
@@ -433,12 +443,19 @@ namespace FPSGame.AI
 
             if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game && source && m_Actor.Team != 1)
             {
-                PlayerController player;
-                if (source.TryGetComponent(out Actor actor) && actor.Owner != null) actor.Owner.transform.TryGetComponent(out player);
-                else source.TryGetComponent(out player);
-                //房主序号走「数据自持」（2026-10-01 取代 ServiceLocator.Room）：TeamManager 在其 4 个变更点同步 TeamState
-                int masterIndex = FPSGame.Data.TeamState.MasterIndex;
-                FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(player ? player.PlayerIndex : masterIndex, "击杀敌人");
+                // ★ 击杀归属 = **起源**：召唤物（炮台/无人机）算呼叫者的账 ⇒ 先看 Actor.Owner，没有再退回 source 自己。
+                //   ⚠ 认"玩家序号"必须走 IPlayerUnit（PlayerUnitUtil）：队友在本端是 FriendController 实例，
+                //     只认 PlayerController 会落空 ⇒ 旧实现把"队友的炮台击杀"记到房主头上（2026-10-12 查实）。
+                GameObject origin = source;
+                if (source.TryGetComponent(out Actor actor) && actor.Owner != null && actor.Owner is Component ownerComp)
+                    origin = ownerComp.gameObject;
+
+                // 认不出（敌人互殴 / 起源已离场 / 无源伤害）⇒ 维持旧口径：算房主。
+                // 房主序号走「数据自持」（2026-10-01 取代 ServiceLocator.Room）：TeamManager 在其 4 个变更点同步 TeamState。
+                if (!FPSGame.GameContract.PlayerUnitUtil.TryGetPlayerIndex(origin, out int playerIndex))
+                    playerIndex = FPSGame.Data.TeamState.MasterIndex;
+
+                FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(playerIndex, "击杀敌人");
             }
 
         }

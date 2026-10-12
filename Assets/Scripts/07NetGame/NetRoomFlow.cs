@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using KCPNet;
 using UnityEngine;
 
@@ -485,6 +485,11 @@ namespace FPSGame.Net
         /// <summary>本机是不是房主（开了房）。房主的"上行"= 本地权威处理 + 广播；成员的"上行"= 发给房主。</summary>
         public bool IsHost => NetHostSvc.Instance != null && NetHostSvc.Instance.RoomInfo != null;
 
+        /// <summary>成员侧"能不能发给房主"：单机 / 未连接 ⇒ false。
+        /// <para>▍⚠ "上行"的 send 一律用它收口，**别写 <c>NetSvc.Instance?.SendMsg(msg)</c> 直发**：
+        /// <c>SendMsg</c> 在没连接时会 <c>Debug.LogError("服务器未连接")</c>，而单机下这些动作（标记 / 终端 /
+        /// 家具 / 呼叫凯伊…）本来就该留在本地 ⇒ 直发会让单机玩家每次点击都刷一条像 Bug 的报错
+        /// （2026-10-12 用户实测：单机单击标记点即刷）。真正的"与房主断开"由 <c>DetectHostLost</c> 统一告警，不靠这条。</para></summary>
         private static bool CanSendToHost => NetSvc.Instance != null && NetSvc.Instance.IsConnected;
 
         /// <summary>
@@ -1032,7 +1037,7 @@ namespace FPSGame.Net
                 new FurnitureOperateMsg { SyncId = syncId, Sid = sid, State = state, StateKey = stateKey });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
-            else NetSvc.Instance?.SendMsg(msg);
+            else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
         }
 
         private void HandleFurnitureOperateNtf(FurnitureOperateMsg m)
@@ -1047,7 +1052,7 @@ namespace FPSGame.Net
                 new KeyScreenStageMsg { SyncId = syncId, Sid = sid, Stage = stage });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
-            else NetSvc.Instance?.SendMsg(msg);
+            else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
         }
 
         private void HandleKeyScreenStageNtf(KeyScreenStageMsg m)
@@ -1074,7 +1079,7 @@ namespace FPSGame.Net
                 new OOPartSubmitMsg { SyncId = syncId, Sid = sid, Count = count, Type = type });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
-            else NetSvc.Instance?.SendMsg(msg);
+            else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
         }
 
         private void HandleOOPartSubmitNtf(OOPartSubmitMsg m)
@@ -1089,7 +1094,7 @@ namespace FPSGame.Net
                 new KeyScreenInputMsg { SyncId = syncId, Sid = sid, Key = key, Kind = kind });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
-            else NetSvc.Instance?.SendMsg(msg);
+            else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
         }
 
         private void HandleKeyScreenInputNtf(KeyScreenInputMsg m)
@@ -1104,7 +1109,7 @@ namespace FPSGame.Net
                 new DamageMsg { Sid = sid, Key = syncId, IsDeath = true });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
-            else NetSvc.Instance?.SendMsg(msg);
+            else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
         }
 
         private void HandleSceneDestructibleNtf(DamageMsg m)
@@ -1119,7 +1124,7 @@ namespace FPSGame.Net
                 new MarkMsg { Sid = sid, Kind = 0, X = x, Y = y, Z = z });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
-            else NetSvc.Instance?.SendMsg(msg);
+            else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
         }
 
         /// <summary>呼叫凯伊：成员上报房主 / 房主转发全体。</summary>
@@ -1129,7 +1134,7 @@ namespace FPSGame.Net
                 new CallKaiMsg { Sid = sid, X = x, Y = y, Z = z });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
-            else NetSvc.Instance?.SendMsg(msg);
+            else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
         }
 
         private void HandleMarkNtf(MarkMsg m)

@@ -47,6 +47,19 @@ namespace FPSGame.Managers
         /// <summary>本地 id → 上一次的"已准备"，用于把名单同步里的变化转成 UI 事件。</summary>
         private readonly Dictionary<int, bool> _lastReady = new Dictionary<int, bool>();
 
+        /// <summary>上一次名单同步里的"别人"：sid → <see cref="PlayerData"/>（**活引用**，资料更新就地生效）。
+        /// <para>▍用途：算"谁新来了 / 谁走了" ⇒ 消息窗播报"XX加入任务 / XX退出任务"（见 <see cref="AnnounceRoster"/>）。
+        /// 存对象而不是只存 sid：走掉的人已经不在 <c>players</c> 里了，名字与角色只能从这份记录读。</para></summary>
+        private readonly Dictionary<uint, PlayerData> _lastRoster = new Dictionary<uint, PlayerData>();
+
+        /// <summary>已经播报过"加入任务"的 sid —— 每条只报一次；退出播报与它**对称**（没报过加入就不报退出）。
+        /// <para>▍为什么不等 "sid 一出现就报"：颜色取的是**所选角色**的颜色，而角色资料（<c>roleName</c>）
+        /// 往往比名单晚到一步（成员入房后才上报资料）⇒ 等资料到齐再报，颜色才对。</para></summary>
+        private readonly HashSet<uint> _announcedJoin = new HashSet<uint>();
+
+        /// <summary>退出播报的复用缓冲（避免每次名单同步都 new 一个 List）。</summary>
+        private readonly List<uint> _goneBuffer = new List<uint>();
+
         /// <summary>已处理过的本局局号（幂等键：KCP 重传 / 房主重复点按钮会重复到达同一个 <c>TaskConfirmNtf</c>）。
         /// <para>▍用 <c>MatchId</c> 而不是种子：下一局的 MatchId 必然不同 ⇒ **不需要"回大厅清键"**（同种子会撞车）。</para></summary>
         private int _handledMatchId;
@@ -64,6 +77,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnBoosterSync += HandleBoosterSync;
             NetRoomFlow.OnLoadoutSync += HandleLoadoutSync;
             NetRoomFlow.OnJoinResult += HandleJoinResult;
+            NetRoomFlow.OnPlayerLeft += HandlePlayerLeft;
             GlobalEventBus.OnGameStateChange += HandleGameStateChange;
         }
 
@@ -76,8 +90,11 @@ namespace FPSGame.Managers
             NetRoomFlow.OnBoosterSync -= HandleBoosterSync;
             NetRoomFlow.OnLoadoutSync -= HandleLoadoutSync;
             NetRoomFlow.OnJoinResult -= HandleJoinResult;
+            NetRoomFlow.OnPlayerLeft -= HandlePlayerLeft;
             GlobalEventBus.OnGameStateChange -= HandleGameStateChange;
             _lastReady.Clear();
+            _lastRoster.Clear();
+            _announcedJoin.Clear();
         }
 
         /// <summary>
@@ -117,6 +134,7 @@ namespace FPSGame.Managers
             if (FPSGame.Data.BattleState.IsStartBattle)
             {
                 ApplyListFieldsOnly(team, infos, profiles);
+                AnnounceRoster(team, infos);   // 局内名单冻结 ⇒ 正常没有差异；留着是为了"资料补到"也能补报
                 return;
             }
 
@@ -147,6 +165,8 @@ namespace FPSGame.Managers
             }
 
             team.ReplacePlayers(order);   // ★ 先落表：Reindex 会把每个 PlayerData.index 归位
+
+            AnnounceRoster(team, infos);   // ★ 名单变化 ⇒ 消息窗播报"XX加入任务 / XX退出任务"
 
             // ★ 名册变化 ⇒ 叫醒战备界面：有人退出时**那一行必须消失**，名册重排后各行身份也可能换人。
             //   （桥常驻、窗口只在舰桥场景 ⇒ 这里只发通知，窗口自己判"我显示过没有"）
@@ -191,6 +211,116 @@ namespace FPSGame.Managers
                 ApplyInfo(data, info, profile);
                 NotifyReadyChanged(data, info, profile);
             }
+        }
+
+        // ==================== 名单变化 ⇒ 消息窗播报（加入 / 退出任务） ====================
+
+        /// <summary>
+        /// 名单 diff ⇒ 消息窗播报"XX加入任务 / XX退出任务"。
+        ///
+        /// <para>▍口径（与本类其它方法一致）：键是**权威 sid**，跳过"自己"那条（自己的进出不播报）；
+        /// 加入要等 <c>roleName</c> 到齐才报（颜色取的是所选角色的颜色，见 <see cref="RoleColor"/>），
+        /// 每条只报一次；退出与加入**对称**（没报过加入的人不报退出）。</para>
+        ///
+        /// <para>▍为什么由本类承担：它是唯一同时看得见"网络名单"与 <see cref="PlayerData"/> 的地方，
+        /// 且 4004 的两条分支（名单重建 / 局内只更新字段）都汇到这里 ⇒ diff 只写一份。</para>
+        /// </summary>
+        private void AnnounceRoster(TeamManager team, PlayerInfo[] infos)
+        {
+            // ① 本次在场的 sid + 加入播报
+            for (int i = 0; i < infos.Length; ++i)
+            {
+                var info = infos[i];
+                if (info == null || IsSelfEntry(info)) continue;
+
+                var data = FindBySid(team, info.Sid);
+                if (data == null) continue;
+
+                _lastRoster[info.Sid] = data;          // 记住"见过"，走掉时才有名字可用
+                if (string.IsNullOrEmpty(data.roleName)) continue;   // 角色未定 ⇒ 等下一轮（颜色才对）
+                if (_announcedJoin.Add(info.Sid)) GameMsg.JoinMission(WhoOf(data));
+            }
+
+            // ② 退出播报：上次在、这次不在（先收集再删，不能边遍历边改字典）
+            _goneBuffer.Clear();
+            foreach (var kv in _lastRoster)
+            {
+                bool stillThere = false;
+                for (int i = 0; i < infos.Length; ++i)
+                {
+                    if (infos[i] != null && infos[i].Sid == kv.Key) { stillThere = true; break; }
+                }
+                if (!stillThere) _goneBuffer.Add(kv.Key);
+            }
+            for (int i = 0; i < _goneBuffer.Count; ++i)
+            {
+                uint sid = _goneBuffer[i];
+                PlayerData data = _lastRoster[sid];
+                _lastRoster.Remove(sid);
+                if (_announcedJoin.Remove(sid)) GameMsg.ExitMission(WhoOf(data));
+            }
+            _goneBuffer.Clear();
+        }
+
+        /// <summary>
+        /// 局内有人离开（<c>PlayerLeftNtf</c>/4029，只带 sid、名单**不重排**）⇒ 补一条"退出任务"。
+        /// <para>▍为什么必须单独接：战斗期房主不再广播名单（<c>BroadcastPlayerList</c> 冻结），
+        /// 上面那条 diff 看不到这次离开 —— 2026-10-09 修的正是"房主端从来没人告诉他有人走了"。</para>
+        /// </summary>
+        private void HandlePlayerLeft(uint sid)
+        {
+            if (sid == 0u) return;                                     // 0 = 房主自己走（成员端由"与房主断开"那条链收尾）
+
+            var flow = NetRoomFlow.Instance;
+            if (flow != null && !flow.IsHost && sid == flow.SelfSid) return;   // 自己走 ⇒ 不播报
+
+            PlayerData data;
+            if (!_lastRoster.TryGetValue(sid, out data)) return;       // 不在名册里（没见过 / 已处理）⇒ 静默
+            _lastRoster.Remove(sid);
+            if (_announcedJoin.Remove(sid)) GameMsg.ExitMission(WhoOf(data));
+        }
+
+        /// <summary>sid → 本地 <see cref="PlayerData"/>（找不到 ⇒ null）。</summary>
+        private static PlayerData FindBySid(TeamManager team, uint sid)
+        {
+            if (team == null || team.players == null) return null;
+            int at = team.IdToIndex(IdOfSid(sid));
+            return at >= 0 && at < team.players.Count ? team.players[at] : null;
+        }
+
+        /// <summary><see cref="PlayerData"/> → 播报用的"是谁"（玩家名 + 所选角色的颜色）。</summary>
+        private static GameMsg.Who WhoOf(PlayerData data)
+            => data == null ? GameMsg.Who.None : new GameMsg.Who(data.name, RoleColor(data.roleName));
+
+        /// <summary>
+        /// 角色 id → 该角色的显示色（角色模型上的 <c>BaseObject.Color</c>，与战斗中 <c>Actor.Color</c> **同源** ——
+        /// <c>PlayerController.SetBody</c> 就是把它拷进 Actor 的）。
+        ///
+        /// <para>▍为什么走模型预制体：入房 / 舰桥阶段还没有 Actor，手里只有角色 id（<c>RoleData_SO</c> 没有颜色字段）
+        /// ⇒ 模型上那份是唯一现成来源。结果缓存起来，避免每条名单消息都 Load 一次角色模型。</para>
+        /// </summary>
+        private static readonly Dictionary<string, Color> _roleColors = new Dictionary<string, Color>();
+
+        private static Color RoleColor(string roleName)
+        {
+            if (string.IsNullOrEmpty(roleName)) return Color.white;
+
+            Color color;
+            if (_roleColors.TryGetValue(roleName, out color)) return color;
+
+            color = Color.white;
+            var res = ResSvc.Instance;
+            // ⚠ ResSvc 未就绪（装配早期 / 编辑器）时降级 Resources.Load —— 与项目里取图标那套口径一致
+            var path = "Prefabs/StudentModle/" + roleName;
+            var prefab = res != null ? res.LoadRes<Transform>(path) : Resources.Load<Transform>(path);
+            if (prefab != null)
+            {
+                var bo = prefab.GetComponent<BaseObject>();
+                if (bo == null) bo = prefab.GetComponentInChildren<BaseObject>(true);
+                if (bo != null) color = bo.Color;
+            }
+            _roleColors[roleName] = color;   // ⚠ 取不到也记白色：别每次都去 Load 一遍缺的资源
+            return color;
         }
 
         /// <summary>把一条网络信息（+可选资料）写进本地 <see cref="PlayerData"/>。</summary>
@@ -649,6 +779,14 @@ namespace FPSGame.Managers
 
             return team.IdToIndex(IdOfSid(sid));
         }
+
+        /// <summary>【同程序集只读】sid → <b>本局玩家序号</b>（= <c>TeamManager.players</c> 下标；认不出 ⇒ -1）。
+        ///
+        /// <para>▍为什么要暴露这个口子：玩法层/表现层（06/10）要做"击杀归属 / 统计"时手里只有"可能是玩家、
+        /// 可能是盟友实例"的物体，而"sid → 本地下标"的表在本类 + <c>TeamManager</c>（09）里，它们看不见
+        /// ⇒ 由 <c>NetFriendBridge</c> 在创建盟友实例时把下标写进 <c>IPlayerUnit.PlayerIndex</c>，消费方走接口。</para>
+        /// </summary>
+        public static int LocalIndexOfSid(uint sid) => LocalIndexOf(TeamManager.Instance, sid);
 
         /// <summary>这条名单项是不是"我自己"。</summary>
         private static bool IsSelfEntry(PlayerInfo info)

@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using FPSGame.Core;
 using FPSGame.GameContract;
-using FPSGame.Game;
 using UnityEngine;
 using FPSGame.Utils;
 using FPSGame.Gameplay;
@@ -49,8 +48,6 @@ public class InterestPoint : BaseObject, IMissionPoint
         if (entityRange && !discovered)
         {
             TryDiscovered();
-            //应该是提示谁谁谁已发现地点
-            //CreatNotice("Kotama", "ApproachingTarget", () => !InAirdropRange);
         }
 
     }
@@ -62,8 +59,12 @@ public class InterestPoint : BaseObject, IMissionPoint
 
     public void TryDiscovered()
     {
+        // ⚠ 播报只在"首次发现"：Mark（标记点位）与 Update 都会调到这里
+        bool first = !discovered;
         discovered = true;
         BattleEventBus.MissionEnityShow(this);
+        // 消息窗：发现兴趣点（触发者 = 最近的玩家，与本类 Update 的距离口径同一套）
+        if (first) GameMsg.Discover(GameMsg.Of(ActorsManager.NearestPlayer(Pos)), "兴趣点");
     }
     private void Mark(GameObject owner, GameObject target, Vector3 point)
     {

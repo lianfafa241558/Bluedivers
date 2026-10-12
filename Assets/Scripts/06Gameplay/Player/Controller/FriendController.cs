@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Game;      // Actor / ActorState（单位内核，05_UnitCore）
+using FPSGame.GameContract;   // IPlayerUnit（"本局玩家序号"的跨类型身份）
 using FPSGame.Weapon;    // WeaponPlayerController（武器槽位装配用）
 using PEMaths;           // PEInt（写镜像血量/护盾）
 using UnityEngine;
@@ -32,8 +33,16 @@ namespace FPSGame.Gameplay
     [AddComponentMenu("玩家/盟友控制器")]
     [RequireComponent(typeof(NetTransformView))]
     [RequireComponent(typeof(FriendWeaponView))]
-    public class FriendController : MonoBehaviour
+    public class FriendController : MonoBehaviour, IPlayerUnit
     {
+        /// <summary>本局玩家序号（= <c>TeamManager.players</c> 下标；<c>&lt; 0</c> = 还没写入）。
+        /// <para>▍由 09 的 <c>NetFriendBridge</c> 在建实例时按 sid→下标写入（那张表只有 09 有，
+        /// 而伤害归属/统计在 06/10 侧）⇒ 有了它，"队友（或他的炮台）做的事"才认得出来。</para></summary>
+        public int PlayerIndex { get; private set; } = -1;
+
+        /// <summary>【桥调用】写入本局玩家序号（与 <see cref="SetIdentity"/> 同一条名单同步链）。</summary>
+        public void SetPlayerIndex(int index) => PlayerIndex = index;
+
         [SerializeField]
         [InspectorName("身体挂点")]
         [Tooltip("运行时会在这里挂 StudentModle/<角色id>；留空则直接挂在自己身上")]
@@ -42,7 +51,9 @@ namespace FPSGame.Gameplay
         /// <summary>网络身份（= 该玩家在房主那边的会话 sid）。</summary>
         public uint NetSid { get; private set; }
 
-        /// <summary>显示名（资料里带来的玩家名；调试 / 抬头显示用）。</summary>
+        /// <summary>显示名（资料里带来的玩家名；调试 / 抬头显示用）。
+        /// <para>⚠ 本属性同时是 <see cref="IPlayerUnit.PlayerName"/> 的实现（消息窗播报"谁…"用的就是它）
+        /// —— 盟友侧的 <c>PlayerName</c> 天然就是玩家名，所以**隐式实现**即可，无需额外成员。</para></summary>
         public string PlayerName { get; private set; }
 
         /// <summary>当前挂着的角色 id（= 上一次 <see cref="AttachModel"/> 传入的值；空 = 还没挂过）。

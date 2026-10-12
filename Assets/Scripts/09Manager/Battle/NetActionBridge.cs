@@ -1,4 +1,4 @@
-using FPSGame.Game;      // ActorsManager（本机玩家：标记上报要按它过滤）
+﻿using FPSGame.Game;      // ActorsManager（本机玩家：标记上报要按它过滤）
 using FPSGame.Gameplay;
 using FPSGame.Net;
 using UnityEngine;
@@ -72,7 +72,7 @@ namespace FPSGame.Managers
             if (owner == null || self == null || self.gameObject == null || owner != self.gameObject) return;
 
             var flow = NetRoomFlow.Instance;
-            if (flow == null) return;
+            if (flow == null || !flow.InRoom) return;   // 单机 / 不在房里：没有对端要收，标记本来就是纯本地表现
             flow.SendMark(flow.IsHost ? 0u : flow.SelfSid, point.x, point.y, point.z);
         }
 
@@ -80,7 +80,7 @@ namespace FPSGame.Managers
         {
             if (_applyingRemote) return;
             var flow = NetRoomFlow.Instance;
-            if (flow == null) return;
+            if (flow == null || !flow.InRoom) return;   // 同上：单机呼叫凯伊是纯本地玩法，不用上报
             flow.SendCallKai(flow.IsHost ? 0u : flow.SelfSid, point.x, point.y, point.z);
         }
         #endregion

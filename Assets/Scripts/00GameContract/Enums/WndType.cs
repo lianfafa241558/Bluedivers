@@ -1,4 +1,4 @@
-namespace FPSGame.GameContract
+﻿namespace FPSGame.GameContract
 {
     /// <summary>
     /// 窗口标识 —— <b>跨层"开窗"的唯一钥匙</b>。玩法层只发 <c>GlobalEventSub.OpenWnd</c> 事件，
@@ -37,5 +37,7 @@ namespace FPSGame.GameContract
         Information,
         /// <summary>单行输入弹窗（<c>PasswordWnd</c>；房间密码 / 首次设置玩家名等）。</summary>
         Password,
+        /// <summary>消息播报（<c>MsgWnd</c>；玩家倒地 / 发现任务点 / 加入·退出任务…）。</summary>
+        Msg,
     }
 }

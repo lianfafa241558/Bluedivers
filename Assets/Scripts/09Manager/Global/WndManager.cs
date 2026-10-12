@@ -67,6 +67,7 @@ public class WndManager : Singleton<WndManager>
         //订阅玩法层的"开窗 / 提示"请求（2026-10-01 取代 ServiceLocator.Wnd 槽：无返回值的命令走事件）
         GlobalEventBus.OnOpenWnd += OnOpenWndRequest;
         GlobalEventBus.OnNotice += OnNoticeRequest;
+        GlobalEventBus.OnMsg += OnMsgRequest;
 
         OnWindowStateChange += OnWindowStateChangeHandler;
         GlobalEventBus.OnSettingCange += OnSettingCange;
@@ -85,6 +86,7 @@ public class WndManager : Singleton<WndManager>
         //退订必须成对（静态事件不退订会留下已销毁实例的引用）
         GlobalEventBus.OnOpenWnd -= OnOpenWndRequest;
         GlobalEventBus.OnNotice -= OnNoticeRequest;
+        GlobalEventBus.OnMsg -= OnMsgRequest;
     }
 
     /// <summary>玩法层请求开窗 → 转调契约注册表（UI 未就绪时静默跳过，与 WindowRegistry 语义一致）。</summary>
@@ -92,6 +94,9 @@ public class WndManager : Singleton<WndManager>
 
     /// <summary>玩法层请求弹提示 → 转调契约注册表（原调用点写 ServiceLocator.Wnd.CreatNotice）。</summary>
     private void OnNoticeRequest(string role, string type, Func<bool> func, float vaildTime) => CreatNotice(role, type, func, vaildTime);
+
+    /// <summary>玩法层请求推一条系统消息 → 转调契约注册表（UI 未就绪 / 没有消息窗时静默跳过）。</summary>
+    private void OnMsgRequest(string text) => WindowRegistry.Msg(text);
 
     private void OnWindowStateChangeHandler(WindowStateEnum oldState, WindowStateEnum state)
     {

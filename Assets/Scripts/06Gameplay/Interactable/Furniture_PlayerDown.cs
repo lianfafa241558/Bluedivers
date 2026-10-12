@@ -30,7 +30,7 @@ namespace FPSGame.Gameplay
         {
             if (Health != null) Health.OnDie -= OnDown;
             // 倒地中离场（盟友实例被销毁 / 换场景）：把本机的"待救"授权还回去，否则增援授权计数会漏一个
-            if (canOperate) FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.HealBag, false);
+            if (canOperate) BattleEventBus.RequestAuthorize(Constants.HealBag, false);
         }
 
         public override void Operate()
@@ -54,22 +54,32 @@ namespace FPSGame.Gameplay
 
             if (Health != null) Health.Revive();
             canOperate = false;
-            FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.HealBag, false);
+            BattleEventBus.RequestAuthorize(Constants.HealBag, false);
         }
 
         /// <summary>【联机】按同步来的"倒地"标志置位——盟友实例的血量是镜像值，改血量不会走 <c>OnDie</c>。
-        /// <para>⚠ 幂等：救人的那一下已经把 <c>canOperate</c> 置回 false，重复的 down=false 消息不能重复归还授权。</para></summary>
-        public void ApplyRemoteDown(bool down)
+        /// <para>⚠ 幂等：救人的那一下已经把 <c>canOperate</c> 置回 false，重复的 down=false 消息不能重复归还授权。</para>
+        /// <para>⚠ 这条路径**拿不到伤害来源**（盟友的死亡结算发生在对方机器上）⇒ 播报会省掉"被谁"。</para></summary>
+        public void ApplyRemoteDown(bool down) => ApplyDown(down, null);
+
+        /// <summary>倒地置位（本机 <c>Health.OnDie</c> 与联机 down 标志共用同一条链）。</summary>
+        private void ApplyDown(bool down, GameObject source)
         {
             if (down == canOperate) return;
             canOperate = down;
-            FPSGame.Gameplay.BattleEventBus.RequestAuthorize(Constants.HealBag, down);
-            if (down) PlaySound(audioClose);
+            BattleEventBus.RequestAuthorize(Constants.HealBag, down);
+            if (down)
+            {
+                PlaySound(audioClose);
+                // 消息窗：谁被谁击倒了。名字/颜色都走 GameMsg.Of（玩家单位取玩家名 + 角色色），
+                // 来源同一个漏斗（无源伤害 / 认不出 ⇒ 空串 ⇒ 播报省掉"被谁"）。
+                GameMsg.PlayerDown(GameMsg.Of(Identity), GameMsg.NameOf(source));
+            }
         }
 
-        void OnDown(GameObject _)
+        void OnDown(GameObject source)
         {
-            ApplyRemoteDown(true);
+            ApplyDown(true, source);
         }
     }
 }

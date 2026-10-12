@@ -683,9 +683,14 @@ namespace FPSGame.Managers
 
         private void EnsureFriend(PlayerInfo info, PlayerProfile profile, int playerOrdinal)
         {
+            // ★ 本局玩家序号（= TeamManager.players 下标）：伤害归属/统计（06/10）看不见"sid→下标"的表
+            //   ⇒ 在这里写进实例的 IPlayerUnit.PlayerIndex（名单每次同步都刷一次，跟着 sid 走）。
+            int localIndex = TeamNetBridge.LocalIndexOfSid(info.Sid);
+
             if (_friends.TryGetValue(info.Sid, out var exist) && exist != null)
             {
                 exist.SetIdentity(info.Sid, DisplayName(info, profile));
+                exist.SetPlayerIndex(localIndex);
                 // 武器只在"换角色"时重建：名单同步很频繁（入房/准备/资料变更），每次重建会不停 Instantiate
                 bool roleChanged = profile != null && !string.IsNullOrEmpty(profile.RoleName) && exist.RoleId != profile.RoleName;
                 AttachRoleModel(exist, profile);   // 角色可能刚同步过来/被换过（内部会去重）
@@ -715,6 +720,7 @@ namespace FPSGame.Managers
                 fc = go.AddComponent<FriendController>();
             }
             fc.SetIdentity(info.Sid, DisplayName(info, profile));
+            fc.SetPlayerIndex(localIndex);
 
             // 资料已经到位（角色/武器齐）就立刻挂上，不必等下一次名单同步
             if (profile != null && !string.IsNullOrEmpty(profile.RoleName))

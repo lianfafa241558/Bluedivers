@@ -169,6 +169,8 @@ namespace FPSGame.Game
         /// </summary>
         public void TryDiscovered()
         {
+            // ⚠ 播报只在"首次发现"：雷达站 RevealAll / EventStart 会对已发现的任务再调一遍这里
+            bool first = !discovered;
             discovered = true;
             BattleEventBus.MissionEnityShow(this);
             GlobalEventBus.OnMark -= Mark;
@@ -176,6 +178,8 @@ namespace FPSGame.Game
             {
                 BattleEventBus.MissionStateChange(mission, true);
             }
+            // 消息窗：发现任务点（触发者 = 本机玩家，与本方法上面的距离判定同一口径）
+            if (first) GameMsg.Discover(GameMsg.Of(ActorsManager.Player), ShowName);
         }
         private void Mark(GameObject owner, GameObject target, Vector3 point)
         {

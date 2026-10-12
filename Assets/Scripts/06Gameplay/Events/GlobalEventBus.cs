@@ -91,6 +91,15 @@ namespace FPSGame.Gameplay
         public static event Action<string, string, Func<bool>, float> OnNotice;
         public static void Notice(string role, string type, Func<bool> func, float vaildTime) => OnNotice?.Invoke(role, type, func, vaildTime);
 
+        /// <summary>推一条系统消息到消息窗（内容走 TMP 富文本，格式见 <c>GameMsg</c>）。
+        ///
+        /// <para>▍层判据：发布者 = 玩法层（<c>Furniture_PlayerDown</c> / <c>MissionBase</c> / <c>MissionView</c> /
+        /// <c>InterestPoint</c>），订阅者 = <c>WndManager</c>(09_Managers) ⇒ 事件总线放 <c>min(两层)</c> = 06_Gameplay ✓
+        /// （与 <see cref="OnOpenWnd"/> / <see cref="OnNotice"/> 同链）。</para></summary>
+        public static event Action<string> OnMsg;
+        /// <summary>推一条系统消息（无人订阅时静默丢弃）。</summary>
+        public static void Msg(string text) => OnMsg?.Invoke(text);
+
         /// <summary>
         /// 请求切换游戏流程阶段（原 <c>ServiceLocator.Flow.SetGameState</c>）。
         ///
