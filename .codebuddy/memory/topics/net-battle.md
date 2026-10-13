@@ -74,6 +74,9 @@
 - 位姿：`PlayerTransformUp`(5001) 20Hz 上行 → 房主**聚合** → `TransformBatchSync`(5002) 15Hz 批量下行 + 房主本地自派发。⚠ **插值缓冲必须多点**（`BufferSize=6`，`RenderDelay` 大于包间隔时两点插值会退化成"每包跳一下"）；且**吸附判定要与"上一个快照"比**（与当前 transform 比会因渲染滞后误判传送）。
 - ⚠ 俯仰必须过网（`PoseSnapshot.Key(6) Pitch`）：只带 yaw ⇒ 别人看你永远平举枪。身体仍 yaw-only，pitch 推给武器挂点。
 - ⚠ 远程弹道"穿过去没命中"已修：`SpawnVisualBullet(muzzle, direction, endPoint)` 把命中点传下去（`SetVisualEndPoint` 复位、`ReachedVisualEndPoint` 用**本帧位移投影**判定）；`FpsHelper.PlayImpactFx` 抽出来给表现弹复用。
+- ⚠ **"需要每帧制导"的弹（`ProjectilePlayerHoming`＝火箭背包 `Pro_Guided_Rocket`）在接收端曾恒不制导（2026-10-13 已修）**：表现弹是真子弹但 `Owner`＝盟友 GO ⇒ `Owner.GetComponent<PlayerWeaponsManager>()` 为 null ⇒ `m_Camera=null`，制导分支整段跳过；且背包那条路连开火落点都没传（`FriendWeaponView.cs:206` 传 `Vector3.zero`）。同类：`ProjectilePlayerLaser.Update` 读的是 `FpsHelper.PlayerCameraLookPoint`＝**本机玩家**的点。
+  - **判据**：需要"实时瞄准"的弹一律**收端本地重算**（yaw 在 transform、pitch 在 `NetTransformView.RenderedPitch` ⇒ 自己打射线），**不要**新加同步字段（目视点是派生量、会跳变，源量 yaw/pitch 已在传）；制导弹的 `SetVisualEndPoint` 要用**实时**点，开火时的落点是过期点。⚠ 别拿 `WeaponBag` 的 `muzzle.forward`（"武器朝向保持 prefab 默认"）。
+  - **落地（全在 `06_Gameplay`）**：`FpsHelper.TryGetAimPoint(owner,…)`（相机优先 → 否则 `FriendController.TryGetAimRay`：`dir=Euler(RenderedPitch, transform.eulerAngles.y,0)*forward`，origin 用 `Actor.AimPoint`）；`ProjectilePlayerHoming` 每帧取它 + `IsVisualBullet` ⇒ `SetVisualEndPoint(实时点)`（新标记在 `ProjectileBase`，`Shoot` 里复位）；`ProjectilePlayerLaser` 同入口。⚠ 背包**非制导**武器仍没传落点（当前只有这一个背包投射物 ⇒ 未补）。
 - ⚠ 标记上报**只认本机玩家**（另一发布源是"重放远端开枪的命中特效"）；⚠ `GlobalEventBus.Mark` 的 `target` 是**可空契约**，订阅方必须容忍 null（用 `owner + point` 出表现）（字幕类还要用 `pointMark` 区分"本来没目标/目标被销毁"）。
 - 场景单位（NPC）：`NPCWalk` 自记在场表（`static s_all` + `FindById`），`SceneUnitMoveSink`（`[RuntimeInitializeOnLoadMethod]` 自举常驻）转发 4032。⚠ **不要扫 `ActorsManager.Actors`**（`ActorsManager.Awake` 会 `Actors = new()` 丢掉先注册的 NPC）。
 

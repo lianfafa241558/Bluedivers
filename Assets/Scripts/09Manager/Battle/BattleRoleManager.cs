@@ -24,7 +24,7 @@ public class BattleRoleManager : RoleManagerBase
         // 医疗船旁的固定点；再按**队伍序号沿 +X 铺开**（<see cref="RoleManagerBase.Spread"/>）——
         // 否则两端各自在自己机器上把玩家刷到同一个点，开打瞬间会互相顶开（2026-10-10 用户报）。
         var medivac = GameObject.FindGameObjectWithTag("Medivac");
-        Vector3 p = medivac != null ? medivac.transform.TransformPoint(0, -4, 6) : Vector3.zero;
+        Vector3 p = medivac != null ? medivac.transform.TransformPoint(0, -4, 5) : Vector3.zero;
         return Spread(p);
     }
 

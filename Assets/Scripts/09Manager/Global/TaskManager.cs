@@ -616,6 +616,31 @@ namespace FPSGame.Managers
             SyncTaskState();//发布给下层：HasTask / 敌人种类 / 难度 / 收集表
         }
 
+        /// <summary>
+        /// 把 <see cref="SelectTaskData.BattleData"/> 的行数补齐到"当前玩家数"（新行 = <see cref="DefaultBattleData"/> 的一份副本）。
+        ///
+        /// <para>▍为什么必须有：<c>BattleData</c> 只在 <see cref="SetTask"/> / <see cref="EnsureSceneData"/> 那一刻按
+        /// <c>players.Count</c> 建，而 Ready/Armament 阶段**仍允许玩家入房**（<c>TeamNetBridge</c>：名单重建 ⇒
+        /// <c>players</c> 变长、<c>BattleData</c> 不变）⇒ 局内任何按 <c>players</c> 下标写统计的地方都会越界。
+        /// 实测（2026-10-13）：房主收成员 4025 命中上报 → 起源解析成盟友实例 → <c>PlayerIndex</c> 已是新下标 →
+        /// <c>BattleData[1]</c> 抛 <c>ArgumentOutOfRangeException</c>，整条消息处理失败；结算窗口
+        /// （<c>GameEndWnd</c>，按 <c>players.Count</c> 遍历）同样会崩。</para>
+        ///
+        /// <para>▍只增不减：多出来的尾行没有任何消费方（除了结算窗口按 <c>players.Count</c> 取），
+        /// 而"数量对不上"本身才是崩的根源 ⇒ 不做裁剪。名单每次重建后调用一次（见 <c>TeamNetBridge.HandlePlayerList</c>）。</para>
+        /// </summary>
+        public void EnsureBattleDataSize()
+        {
+            var task = nowTask;
+            if (task == null) return;
+
+            if (task.BattleData == null) task.BattleData = new List<Dictionary<string, int>>();
+
+            var team = TeamManager.Instance;
+            int need = team != null && team.players != null ? team.players.Count : 0;
+            while (task.BattleData.Count < need) task.BattleData.Add(new Dictionary<string, int>(DefaultBattleData));
+        }
+
         // ⚠ `EnterTransition()` 已于 2026-10-01 删除（原实现 = `TaskState.Countdown = 16` + `GameRoot.GameState = Armament`）：
         //   · **切阶段** → 交给发布方 `MedivacController` 走事件 `GlobalEventBus.RequestGameState(GameStateEnum.Armament)`
         //     （⚠ 同日 `IFlowService` 与 `ServiceLocator.Flow` 已整体删除：`MissionEvacuate*` 各自的 1 处也改成同一事件）

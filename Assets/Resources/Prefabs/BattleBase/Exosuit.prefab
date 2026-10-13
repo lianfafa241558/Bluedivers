@@ -115,6 +115,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7039769bf4a0172489098d31bad4053c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 915b317d03af07547be2e88b48190c87, type: 3}
@@ -126,22 +127,16 @@ MonoBehaviour:
   desc: "\u8FDB\u5165\u9A7E\u9A76"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 1511148981}
+  relatedTrans2: {fileID: 8285114060990241583}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
-  ShowName: "\u673A\u68B0\u5916\u9AA8\u9ABC"
-  Id: Exosuit
-  Portrait: {fileID: 21300000, guid: b0d10bc69700d594da3a30b7ce736a85, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: b0d10bc69700d594da3a30b7ce736a85, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 1511148981}
-  relatedTrans2: {fileID: 8285114060990241583}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
 --- !u!114 &4599810288965371884
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -230,7 +225,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1580976320674639369}
-  - component: {fileID: 6376981404204896718}
+  - component: {fileID: 1509844753863958127}
   m_Layer: 6
   m_Name: Left
   m_TagString: Untagged
@@ -254,7 +249,7 @@ Transform:
   - {fileID: 5727818581927321791}
   m_Father: {fileID: 8285114060990241583}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6376981404204896718
+--- !u!114 &1509844753863958127
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -263,51 +258,28 @@ MonoBehaviour:
   m_GameObject: {fileID: 2925565917890612679}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1fefde50582945046a4ddc355073c6d6, type: 3}
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  WeaponRoot: {fileID: 2925565917890612679}
-  UseManyMuzzle: 0
-  WeaponMuzzle: {fileID: 5727818581927321791}
-  WeaponMuzzle2: {fileID: 0}
-  WeaponManyMuzzles: []
-  cfg:
-    _fakeAttrs:
-    - Key: 1
-      Value: -1
-    - Key: 2
-      Value: 1
-    - Key: 4
-      Value: 10
-  BulletFlag: 0
-  Damages:
-  - BulletPrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
-      type: 3}
-    LandingPrefab: {fileID: 0}
-    Speed: 0
-    Gravity: 5
-    InheritWeaponSpeed: 0
-    MaxLifeTime: 0.1
-    MaxRange: 0
-    MinRange: 0
-    NoSource: 0
-    SoundRadius: 20
-    ImpactSoundRadius: 8
+  DamageAnchor: {fileID: 5727818581927321791}
+  TickInterval: 0.5
+  UseDiffScale: 0
+  DamageData:
     DamageExplosion: 20
-    DamageDirect: 0
-    DamageGroupDirect:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
-    WeaknessBonus: 0
     ExplosionInnerRange: 1
     ExplosionRange: 1.1
     DestructeRadius: 0
-    ShockwaveRadius: 0
+    ShockwaveRadius: 2.2
     DamageGroupExplosion:
-    - Key: 0
+    - Key: 1
       Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
@@ -315,45 +287,8 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
-    DirectAPChargeScale: 1
-    ExplosionAP: 0
-    ExplosionAPChargeScale: 1
-    demolishValue: 0
-    UseCharge: 0
-    ChargeDamageScale: 0
-    ChargeAOERangeScale: 0
-    ChargeSpeedScale: 0
-    ChargeGravityScale: 0
-    ChargeSoundScale: 1
-    ChargeHeatScale: 1
-    ChargeSpreadScale: 1
-  UseDamageIndex: 0
-  MuzzleFlashPrefab: {fileID: 0}
-  FlashSizeScale: 1
-  UnparentMuzzleFlash: 0
-  SFXRange: 20
-  FireNoiseRadius: 20
-  ShootSfx: {fileID: 0}
-  UseContinuousShootSound: 0
-  ContinuousShootStartSfx: {fileID: 0}
-  ContinuousShootLoopSfx: {fileID: 0}
-  ContinuousShootEndSfx: {fileID: 0}
-  _currentHeat: 0
-  wantsToShoot: 0
-  ShootCost: 1
-  showAmmo: 0
-  showInReload: 0
-  showReloadTime: 0
-  showCool: 0
-  ShootType: 0
-  WeaponFlag: 0
-  AutomaticReleaseOnCharged: 0
-  Lockshape: 0
-  ReloadSfx: {fileID: 0}
-  ChangeWeaponSfx: {fileID: 0}
-  ChargeVfx: {fileID: 0}
-  WeaponAnimator: {fileID: 0}
+  KnockbackForce: 1
+  KnockbackUpScale: 1
 --- !u!1 &3377941763065800961
 GameObject:
   m_ObjectHideFlags: 0
@@ -5374,7 +5309,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2681748333058794032}
-  - component: {fileID: 260487571830834652}
+  - component: {fileID: 8284829771470152753}
   m_Layer: 6
   m_Name: Right
   m_TagString: Untagged
@@ -5398,7 +5333,7 @@ Transform:
   - {fileID: 8776330143266258236}
   m_Father: {fileID: 8285114060990241583}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &260487571830834652
+--- !u!114 &8284829771470152753
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5407,51 +5342,28 @@ MonoBehaviour:
   m_GameObject: {fileID: 5674222723094562531}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1fefde50582945046a4ddc355073c6d6, type: 3}
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  WeaponRoot: {fileID: 5674222723094562531}
-  UseManyMuzzle: 0
-  WeaponMuzzle: {fileID: 8776330143266258236}
-  WeaponMuzzle2: {fileID: 0}
-  WeaponManyMuzzles: []
-  cfg:
-    _fakeAttrs:
-    - Key: 1
-      Value: -1
-    - Key: 2
-      Value: 1
-    - Key: 4
-      Value: 10
-  BulletFlag: 0
-  Damages:
-  - BulletPrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
-      type: 3}
-    LandingPrefab: {fileID: 0}
-    Speed: 0
-    Gravity: 5
-    InheritWeaponSpeed: 0
-    MaxLifeTime: 0.1
-    MaxRange: 0
-    MinRange: 0
-    NoSource: 0
-    SoundRadius: 20
-    ImpactSoundRadius: 8
+  DamageAnchor: {fileID: 8776330143266258236}
+  TickInterval: 0.5
+  UseDiffScale: 0
+  DamageData:
     DamageExplosion: 20
-    DamageDirect: 0
-    DamageGroupDirect:
-    - Key: 0
-      Value: 1
-    - Key: 2
-      Value: 1
-    WeaknessBonus: 0
     ExplosionInnerRange: 1
     ExplosionRange: 1.1
     DestructeRadius: 0
-    ShockwaveRadius: 0
+    ShockwaveRadius: 2.2
     DamageGroupExplosion:
-    - Key: 0
+    - Key: 1
       Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
@@ -5459,45 +5371,8 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
-    DirectAPChargeScale: 1
-    ExplosionAP: 0
-    ExplosionAPChargeScale: 1
-    demolishValue: 0
-    UseCharge: 0
-    ChargeDamageScale: 0
-    ChargeAOERangeScale: 0
-    ChargeSpeedScale: 0
-    ChargeGravityScale: 0
-    ChargeSoundScale: 1
-    ChargeHeatScale: 1
-    ChargeSpreadScale: 1
-  UseDamageIndex: 0
-  MuzzleFlashPrefab: {fileID: 0}
-  FlashSizeScale: 1
-  UnparentMuzzleFlash: 0
-  SFXRange: 20
-  FireNoiseRadius: 20
-  ShootSfx: {fileID: 0}
-  UseContinuousShootSound: 0
-  ContinuousShootStartSfx: {fileID: 0}
-  ContinuousShootLoopSfx: {fileID: 0}
-  ContinuousShootEndSfx: {fileID: 0}
-  _currentHeat: 0
-  wantsToShoot: 0
-  ShootCost: 1
-  showAmmo: 0
-  showInReload: 0
-  showReloadTime: 0
-  showCool: 0
-  ShootType: 0
-  WeaponFlag: 0
-  AutomaticReleaseOnCharged: 0
-  Lockshape: 0
-  ReloadSfx: {fileID: 0}
-  ChangeWeaponSfx: {fileID: 0}
-  ChargeVfx: {fileID: 0}
-  WeaponAnimator: {fileID: 0}
+  KnockbackForce: 1
+  KnockbackUpScale: 1
 --- !u!1 &6833826880032055157
 GameObject:
   m_ObjectHideFlags: 0
@@ -5523,7 +5398,7 @@ Transform:
   m_GameObject: {fileID: 6833826880032055157}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -0.91000366}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5554,7 +5429,7 @@ Transform:
   m_GameObject: {fileID: 7413248338588677192}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0, y: -0, z: -0.91}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

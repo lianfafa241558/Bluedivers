@@ -133,7 +133,8 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     private float m_LastTimeLand = 0;
     /// <summary>在跳跃进过一段时间后才开始检测是否落地</summary>
     const float k_JumpGroundingPreventionTime = 0.2f;
-    const float k_GroundCheckDistanceInAir = 0.07f;
+    // ⚠ 原 `k_GroundCheckDistanceInAir = 0.07f`（空中把探测距离压小）已于 2026-10-14 删除：
+    //   它是"站在地上却被判空中 ⇒ 走不动"的成因之一（见 GroundCheck 里的说明）。
     /// <summary>地面法线</summary>
     [SerializeField]
     Vector3 m_GroundNormal;
@@ -162,10 +163,17 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     private const float GrounderWeightSpeed = 2f;
 
     /// <summary>重叠查询复用缓冲</summary>
-    static readonly Collider[] s_OverlapBuffer = new Collider[16];
+    /// <para>⚠ 不能太小：NonAlloc 系列**按缓冲区长度截断**，而大单位（机甲）自己的骨/武器碰撞体就有十几个，
+    /// 会先把缓冲区占满 ⇒ 后面的真实命中被丢掉（见 <see cref="s_GroundHitBuffer"/> 的坑）。</para>
+    static readonly Collider[] s_OverlapBuffer = new Collider[64];
 
     /// <summary>地面检测命中复用缓冲</summary>
-    static readonly RaycastHit[] s_GroundHitBuffer = new RaycastHit[16];
+    /// <para>⚠⚠ **不能是 16**（2026-10-14 修"平地走两步就走不动"）：`CapsuleCastNonAlloc` 会**按缓冲区长度截断**，
+    /// 而机甲的探测胶囊（半径 1.3）整个套在自己身上 ⇒ 18 个自身碰撞体会以"初始重叠 dist=0"的形式**排在最前**、
+    /// 把 16 格全占满 ⇒ **真正的地面命中被截断丢弃** ⇒ `hasGroundHit=false` ⇒ `IsGrounded=false` ⇒ 走 `AirMove`
+    /// ⇒ 机甲（`AccelerationSpeedInAir=0`）零水平控制 = 站着不动。实测复算：19 条命中里 [0..16] 全是自身、
+    /// 地面在 [17]。PhysX 不保证返回顺序 ⇒ 表现就是**时好时坏**（走两步卡住）。</para>
+    static readonly RaycastHit[] s_GroundHitBuffer = new RaycastHit[64];
 
     /// <summary>被物体压住/盖住时是否允许挣脱（动态生成物压在玩家身上的兜底）。
     /// 总开关：同时控制悬空自动脱困与跳跃键触发的挣脱；
@@ -180,11 +188,50 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     /// <summary>上次脱困时间（脱困冷却，防止连续瞬移抖动）</summary>
     private float _lastEscapeTime = -10f;
 
+    /// <summary>自身碰撞体忽略关系（见 <see cref="IgnoreSelfCollisions"/>）的复用缓冲，避免每次调用都分配</summary>
+    readonly List<Collider> m_SelfIgnoreBuffer = new List<Collider>();
+
+    /// <summary>下次重刷"自身忽略关系"的时间（见 <see cref="IgnoreSelfCollisions"/>）</summary>
+    float m_NextSelfIgnoreTime;
+
+    /// <summary>
+    /// 让 <see cref="Controller"/> **忽略自身层级里的所有碰撞体**（骨 / 武器 / 背包 / 模型件……）。
+    ///
+    /// <para>▍为什么必须（2026-10-14 定位到"机甲半悬空 + 平地走不动"）：Unity 的 CC 与"挂在同一层级下的子碰撞体"
+    /// **并不默认互斥**，而机甲（`Exosuit`）有 **20 个**自身碰撞体泡在 CC 胶囊里（实测 `ComputePenetration`：
+    /// `bone_Root` 深 1.59m、`bone_Leg_L1` 0.32m、`Exo_Fire` 0.27m…）⇒ 两个后果：</para>
+    /// <list type="number">
+    ///   <item>CC 被自己的腿**架住**、永远沉不到真正的地面：实测机甲 CC 底面离地 0.206m、脚下空无一物，
+    ///         但向下 `Move` 连 1mm 都走不动，`flags=Below` / `isGrounded=true` 全是"踩在自己身上"的假象
+    ///         = 玩家看到的**半悬空**；</item>
+    ///   <item>`GroundCheck` 的吸附验证需要向下 `Move` 一个 0.2m ⇒ 被自己的腿挡住 ⇒ 实际位移 0 ⇒ 判**不接地**
+    ///         ⇒ 走 `AirMove` ⇒ 机甲（`AccelerationSpeedInAir=0`）**零水平控制**，只剩惯性滑行 = **走不动**。</item>
+    /// </list>
+    /// <para>⚠ 实测证据：现场加上这条忽略后，同一帧内 `IsGrounded` 立刻变 true、`CharacterVelocity.y` 从 -42.9 归零。</para>
+    ///
+    /// <para>▍为什么要**定期**重刷：`Physics.IgnoreCollision` 的关系在**碰撞体被禁用/重新启用后会失效**
+    /// （Unity 的既有行为），而运行时挂模型（玩家 `StudentModle`）、换武器都会 enable/disable 碰撞体
+    /// ⇒ 每秒重刷一次足够（调用点见 <see cref="GroundCheck"/> 开头），只跳过触发器（触发器本来就不阻挡 CC）。</para>
+    /// </summary>
+    void IgnoreSelfCollisions()
+    {
+        if (!Controller) return;
+        m_SelfIgnoreBuffer.Clear();
+        GetComponentsInChildren(true, m_SelfIgnoreBuffer);
+        for (int i = 0; i < m_SelfIgnoreBuffer.Count; i++)
+        {
+            Collider c = m_SelfIgnoreBuffer[i];
+            if (c == null || c == Controller || c.isTrigger) continue;
+            Physics.IgnoreCollision(Controller, c, true);
+        }
+    }
+
     protected override void Awake()
     {
         base.Awake();
         Controller = GetComponent<CharacterController>();
         if(PlayerCamera) CameraBasePoint = PlayerCamera.transform.localPosition;
+        IgnoreSelfCollisions();
     }
 
     protected virtual void Start()
@@ -274,6 +321,14 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     /// </summary>
     void GroundCheck()
     {
+        // 重刷"CC 忽略自身碰撞体"（`IgnoreCollision` 会被 enable/disable 清掉，见 IgnoreSelfCollisions）。
+        // ⚠ 放在这里而不是 `Awake` 一次性搞定：玩家模型/武器是运行时挂上来的，且换武器会 enable/disable 碰撞体。
+        if (Time.time >= m_NextSelfIgnoreTime)
+        {
+            m_NextSelfIgnoreTime = Time.time + 1f;
+            IgnoreSelfCollisions();
+        }
+
         //防止掉出地面
         if (transform.position.y < Constants.KillHeight)
         {
@@ -288,15 +343,21 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         HasJumpedThisFrame = false;
 
 
-        //确保已经在空中时的地面检查距离非常小，以防止突然撞击地面
-        float chosenGroundCheckDistance =
-            IsGrounded ? (Controller.skinWidth + GroundCheckDistance) : k_GroundCheckDistanceInAir;
+        // ⚠ 空中不再把探测距离压到 0.07（2026-10-14）：CC 天然离地一个 skinWidth(0.1)，且探测只是**一条竖直线**、
+        //   而 CC 可能"踩在半径内某处凸起上" ⇒ 探测点下方低几厘米就整段漏掉。现在与接地态同口径取
+        //   `skinWidth + GroundCheckDistance`；多出来的那段由下面的 needVerify 吸附验证兜住（吸附被挡住 ⇒ 不算接地）。
+        //   （这一条是**加固**；当时"平地走不动"的**主因**是 `s_GroundHitBuffer` 只有 16 格被自身命中占满、地面被截断。）
+        float chosenGroundCheckDistance = Controller.skinWidth + GroundCheckDistance;
 
         //接地检查前重置
         bool lastState = IsGrounded;
         IsGrounded = false;
         _isOnSteepSlope = false;
         m_GroundNormal = Vector3.up;
+
+        // 探测结果提到 if 外面：下面的"射线兜底"要判断"是不是一个候选都没找到"
+        RaycastHit groundHit = default;
+        bool hasGroundHit = false;
 
         //只有在距离上次跳跃时间较短的情况下，才尝试探测地面；否则，我们可能会在尝试跳跃后立即倒贴地面
         if (Time.time >= m_LastTimeJumped + k_JumpGroundingPreventionTime)
@@ -316,8 +377,6 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
             //注意：必须排除自身碰撞体/自身子物体——NonAlloc 版与旧单结果 Cast 不同，
             //会报告初始重叠的碰撞体(探测胶囊整体在自己 CC 内部, dist=0 的假命中)，
             //把自己当成地面会导致空中被判定接地：不掉落、可无限跳
-            RaycastHit hit = default;
-            bool hasGroundHit = false;
             float bestGroundScore = float.MinValue;
             for (int i = 0; i < groundHitCount; i++)
             {
@@ -330,7 +389,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
                 if (score > bestGroundScore)
                 {
                     bestGroundScore = score;
-                    hit = candidate;
+                    groundHit = candidate;
                     hasGroundHit = true;
                 }
             }
@@ -339,12 +398,12 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
             {
 
                 //存储所找到表面的向上方向
-                m_GroundNormal = hit.normal;
+                m_GroundNormal = groundHit.normal;
 
 
                 //只有当地面法线与角色向上的方向相同时，才认为这是一次有效的落地(斜坡不算)
                 //如果倾斜角度低于角色控制器的限制
-                if (Vector3.Dot(hit.normal, transform.up) > 0f &&
+                if (Vector3.Dot(groundHit.normal, transform.up) > 0f &&
                     IsNormalUnderSlopeLimit(m_GroundNormal))
                 {
                     //探测起点比脚底高 0.05。命中距离 ≤ 0.05+蒙皮+余量 说明表面就在脚底高度
@@ -353,12 +412,12 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
                     //只有表面明显低于脚底时才验证吸附：吸附位移被挡住(悬在坎沿上方、被棱角顶住，
                     //脚下并无真实支撑)时不能判定接地，否则会以"接地"状态悬浮：重力被跳过不掉落、还能无限起跳
                     bool snapGrounded = true;
-                    if (hit.distance > Controller.skinWidth)
+                    if (groundHit.distance > Controller.skinWidth)
                     {
                         Vector3 preSnapPos = transform.position;
-                        Move(Vector3.down * hit.distance);
-                        bool needVerify = hit.distance > 0.05f + Controller.skinWidth + 0.02f;
-                        snapGrounded = !needVerify || (preSnapPos.y - transform.position.y) >= hit.distance - 0.02f;
+                        Move(Vector3.down * groundHit.distance);
+                        bool needVerify = groundHit.distance > 0.05f + Controller.skinWidth + 0.02f;
+                        snapGrounded = !needVerify || (preSnapPos.y - transform.position.y) >= groundHit.distance - 0.02f;
                     }
 
                     if (snapGrounded)
@@ -377,12 +436,32 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
                     // 玩家既不能移动也不能跳跃、也不会滑落，被直接粘在坡上。
                     // 完全垂直的墙面/台阶立面(normal.y≈0)仍被排除，避免贴墙时误判抖动；
                     // 上升阶段(velocity.y>0)不标记：避免贴着陡坡跳跃时起跳速度被投影到坡面上吃掉
-                    if (Vector3.Dot(hit.normal, transform.up) > 0.05f && CharacterVelocity.y <= 0)
+                    if (Vector3.Dot(groundHit.normal, transform.up) > 0.05f && CharacterVelocity.y <= 0)
                     {
                         _isOnSteepSlope = true;
                     }
                 }
             }
+        }
+
+        // 兜底（2026-10-14）：上面那套胶囊探测**没能得出接地结论**、而 CC 自己说"贴在东西上"时，就直接采纳 CC 的结论。
+        // 为什么不能只信那套探测：它是"胶囊往下扫一段 + 自己筛候选 + 向下吸附验证"，任何一环出问题都会把
+        // "其实站在地上"判成空中 ⇒ 走 `AirMove` ⇒ 机甲（`AccelerationSpeedInAir=0`）零水平控制、平地也走不动。
+        // 已知会把好判成坏的两条路（都实测过）：
+        //   ① 缓冲区被自身命中截断 ⇒ `hasGroundHit=false`（已把缓冲区加大，见 s_GroundHitBuffer）；
+        //   ② 候选合格但**吸附被挡住**（CC 自己的骨碰撞体卡住它，见 IgnoreSelfCollisions）⇒ 位移 0 ⇒ snapGrounded=false。
+        // ⇒ 所以这里不再要求"完全没候选"，只要**最终没判接地、也不是陡坡**，就用 `Controller.isGrounded` 兜住。
+        // ⚠ 陡坡（`_isOnSteepSlope=true`）仍然排除，滑落行为不变。
+        // ⚠ 别再改成"从 `GetCapsuleBottomHemisphere()` 往下打短射线"：那是**底部半球中心**，离地还有一整个
+        //   `Controller.radius`（机甲 1.3m），短距离射线根本够不到地面（实测 `no hit`，等于没写）。
+        if (!IsGrounded && !_isOnSteepSlope && Controller != null && Controller.isGrounded &&
+            Time.time >= m_LastTimeJumped + k_JumpGroundingPreventionTime)
+        {
+            m_GroundNormal = transform.up;
+            if (!lastState) OnLand();
+            IsGrounded = true;
+            JumpCount = 0;
+            _lastGroundedTime = Time.time;
         }
 
         //地面IK权重防抖：不随单帧接地判定硬切，而是在宽限期内保持开启，再平滑过渡到目标值
@@ -658,7 +737,13 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         for (int i = 0; i < count; i++)
         {
             Collider c = s_OverlapBuffer[i];
-            if (c != Controller && c.transform != transform) return true;
+            if (c == null || c == Controller) continue;
+            // ★ 自身 / 自身子物体不算"被压住"。⚠ 载具（机甲这类）的**骨碰撞体**就在自己胶囊里 ⇒
+            //   原判据只排根上的 CC ⇒ 恒为 true ⇒ 每 ~1.3s 自动脱困把机体往上抬 Controller.height*1.2 米，
+            //   重力再拽回来 = "落到地上又悬浮几米再掉下来"死循环（2026-10-13 实测：Exosuit 胶囊 4.5m ⇒ 抬 ~4m）。
+            //   排除口径与 GroundCheck 里那条 `IsChildOf(transform)` 一致。
+            if (c.transform == transform || c.transform.IsChildOf(transform)) continue;
+            return true;
         }
         return false;
     }
@@ -740,11 +825,11 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         for (int i = 0; i < count; i++)
         {
             Collider c = s_OverlapBuffer[i];
-            if (c != Controller)
-            {
-                Debug.LogWarning("障碍物" + c);
-                return true;
-            }
+            if (c == null || c == Controller) continue;
+            // ★ 同 IsPenetrating：自己的子碰撞体不是"障碍物"（否则带骨碰撞体的单位永远判"有障碍"⇒ 跳不起来）
+            if (c.transform == transform || c.transform.IsChildOf(transform)) continue;
+            Debug.LogWarning("障碍物" + c);
+            return true;
         }
         return false;
     }

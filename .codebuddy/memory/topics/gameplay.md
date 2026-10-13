@@ -59,6 +59,7 @@
 - `PhoenixEagleController` 旋转乱跳：阶段切换时**不要**改 `lastPos.y`，统一在 `Update` 里按阶段 flatten y
 - 第三人称武器朝向 = `FirstPersonSocket` 世界旋转 `Euler(m_CameraVerticalAngle, transform.eulerAngles.y)`（`PlayerController.LateUpdate`）+ 子弹方向由 `PlayerWeaponsManager.UpdateWeaponThirdPersonAim` 注入 `ThirdPersonAimTarget`。⚠ yaw 用**角色朝向**而非 `_cameraYaw`（非瞄准移动时二者可差 180°，硬对齐会让枪口与身体撕裂、手臂 IK 崩）
 - 玩家欧帕兹背包 `PlayerOOPartInventory`（每种上限 `MaxPerType=5`）：`CurrentCount/IsFull/TryAdd/Remove/GetCount/GetAll`；⚠ 远端盟友那份是 `FriendOOPartInventory`（幽灵背包，见 `net-battle.md`），容器类家具**面向 `IOOPartInventory`** 取背包
+- ⚠⭐ **"被压住自动脱困"的排除条件**（`BaseSelfMoveableController.IsPenetrating`/`HaveObstacle`）：`Overlap*` 系列必须排除**自身 + 全部子物体**（`c.transform.IsChildOf(transform)`），只排根上的 `CharacterController` 会恒判"被压住" ⇒ 每 ~1.3s 把单位往上瞬移 `height*1.2` 米（Exosuit 高 4.5 ⇒ 抬 4m）⇒ **"落地→悬浮→又掉下来"死循环**（2026-10-13 修，机甲/玩家都会中；`LayerDefinition.MoveableLayers` 是 Everything，放大了它）。取证口：Console 筛 `自动挣脱`、或 `execute_code` 复算 `OverlapCapsuleNonAlloc` 打印每个命中的 `isSelfChild`。
 
 ## 组件存活 / 回收 / 表现
 - `VFXManager.Release` 只认根上的 `ParticleSystem`/`LimitedLife`；`LimitedLife` 到寿先 `InvokeEnd()` 再等 `EndDelay`

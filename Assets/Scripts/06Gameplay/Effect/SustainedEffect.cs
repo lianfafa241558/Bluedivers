@@ -58,7 +58,7 @@ namespace FPSGame.Gameplay
             if (Time.time < m_NextTickTime) return;
             m_NextTickTime = Time.time + TickInterval;
             if (!DamageData.IsValid()) return;
-
+            if (!DamageAnchor.gameObject.activeInHierarchy) return;
             ApplyEffect();
         }
 

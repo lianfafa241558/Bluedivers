@@ -48,6 +48,11 @@ namespace FPSGame.Gameplay
         [Tooltip("运行时会在这里挂 StudentModle/<角色id>；留空则直接挂在自己身上")]
         private Transform modelRoot;
 
+        [SerializeField]
+        [InspectorName("瞄准射线起点")]
+        [Tooltip("给'需要实时瞄准'的投射物算准心射线用（见 TryGetAimRay）；留空则用 Actor 的 AimPoint，再退回'自身 +1.2m'")]
+        private Transform aimOrigin;
+
         /// <summary>网络身份（= 该玩家在房主那边的会话 sid）。</summary>
         public uint NetSid { get; private set; }
 
@@ -269,6 +274,31 @@ namespace FPSGame.Gameplay
 
         /// <summary>兼容旧调用（不带俯仰）。</summary>
         public void ApplyPose(Vector3 pos, float yaw, bool teleport) => ApplyPose(pos, yaw, 0f, teleport);
+
+        /// <summary>
+        /// 【远端瞄准源】本盟友**当前**的准心射线（世界空间 <paramref name="origin"/> + <paramref name="dir"/>）。
+        ///
+        /// <para>▍为什么当地就能算出来：身体只吃 yaw（<c>NetTransformView</c> 写 <c>transform</c>），俯仰在
+        /// <see cref="NetTransformView.RenderedPitch"/>（同一份数据已经喂给武器挂点）⇒ 与玩家的
+        /// <c>FirstPersonSocket = Euler(pitch, bodyYaw, 0)</c> **同口径**。
+        /// 消费方是"每帧都要知道射手瞄哪"的投射物（<c>ProjectilePlayerHoming</c> 的远端表现弹），
+        /// 走 <c>FpsHelper.TryGetAimPoint</c> ⇒ 两端不需要为"目视点"新增任何同步字段。</para>
+        ///
+        /// <para>⚠ 不要拿背包武器的 <c>muzzle.forward</c> 代替：<c>WeaponBag</c> 的武器朝向是 **prefab 默认**
+        /// （不跟准心）⇒ 算出来的是背包自己的朝向，不是射手瞄的方向。</para>
+        /// </summary>
+        public bool TryGetAimRay(out Vector3 origin, out Vector3 dir)
+        {
+            if (_actor == null) _actor = GetComponent<Actor>();
+
+            if (aimOrigin != null) origin = aimOrigin.position;
+            else if (_actor != null && _actor.AimPoint != null) origin = _actor.AimPoint.position;
+            else origin = transform.position + Vector3.up * 1.2f;   // 兜底：与预制体上的 AimPoint 同高
+
+            float pitch = _view != null ? _view.RenderedPitch : 0f;
+            dir = Quaternion.Euler(pitch, transform.eulerAngles.y, 0f) * Vector3.forward;
+            return true;
+        }
 
         private void Update()
         {

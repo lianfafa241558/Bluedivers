@@ -522,12 +522,31 @@ public class MissionController : MonoBehaviour
         return null;
     }
 
-    public void AddBattleDataItem(int playerIndex,string name)
+    /// <summary>战斗统计**唯一写入口**（其他层统一走 <c>BattleEventBus.AddBattleDataItem</c>）。
+    ///
+    /// <para>▍这里同时兜三层防御（2026-10-13 修越界后保留）：<paramref name="playerIndex"/> 越界 ⇒ 就地补行；
+    /// 行是 null ⇒ 补一份默认表；<paramref name="name"/> 不在表里（新增统计项忘了进 <c>DefaultBattleData</c>）
+    /// ⇒ 先建 0 再累加。原来这三条都会抛（越界 / 空引用 / <c>KeyNotFoundException</c>），
+    /// 而它们的来源是"远端消息"，抛出去等于整条消息处理失败。</para>
+    /// <para>▍正常路径下表长已由 <c>TaskManager.EnsureBattleDataSize</c>（名单重建时）对好，这里只是兜底。</para>
+    /// </summary>
+    public void AddBattleDataItem(int playerIndex, string name)
     {
-        //Debug.LogError("root"+root);
-        //Debug.LogError("BattleData" + root.BattleData);
-        //Debug.LogError("playerIndex" + root.BattleData[playerIndex]);
-        ++root.BattleData[playerIndex][name];
+        if (root == null || string.IsNullOrEmpty(name) || playerIndex < 0) return;
+        if (root.BattleData == null) root.BattleData = new();
+
+        // ⚠ 只能补到 playerIndex 本身：'players.Count' 在这一层看不到，正常对齐由 EnsureBattleDataSize 负责
+        while (root.BattleData.Count <= playerIndex) root.BattleData.Add(new(TaskManager.DefaultBattleData));
+
+        var dict = root.BattleData[playerIndex];
+        if (dict == null)
+        {
+            dict = new(TaskManager.DefaultBattleData);
+            root.BattleData[playerIndex] = dict;
+        }
+
+        if (!dict.ContainsKey(name)) dict[name] = 0;
+        ++dict[name];
     }
 
 

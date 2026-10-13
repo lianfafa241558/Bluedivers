@@ -53,6 +53,14 @@ namespace FPSGame.Weapon
         /// <summary>【表现弹专用】期望的终点（世界空间）。</summary>
         public Vector3 VisualEndPoint { get; private set; }
 
+        /// <summary>【表现弹专用】本颗是不是"只表现"的弹（由 <c>WeaponBaseController.SpawnVisualBullet</c> 标记）。
+        /// <para>▍为什么要能分辨：制导弹（<c>ProjectilePlayerHoming</c>）要按**实时**准心刷新自己的终点，
+        /// 而"真人子弹"的 <c>OnHit</c> 上挂着伤害 ⇒ 绝不能给它补终点（会在半路凭空结算 / 凭空播爆点）。</para></summary>
+        public bool IsVisualBullet { get; private set; }
+
+        /// <summary>【表现弹专用】标记为"只表现"（见 <see cref="IsVisualBullet"/>）。</summary>
+        public void MarkVisualBullet() => IsVisualBullet = true;
+
         /// <summary>
         /// 【表现弹专用】指定"飞到这个点就算命中"（只影响弹道收尾，不改伤害）。
         ///
@@ -88,8 +96,9 @@ namespace FPSGame.Weapon
             Gravity = controller.CurrentGravity;
             BulletFlag = controller.BulletFlag;
             IgnoredColliders = controller.IgnoredColliders;
-            // ★ 池化复用：上一次当"表现弹"时留下的终点必须清掉（普通子弹永不约束弹道）
+            // ★ 池化复用：上一次当"表现弹"时留下的终点/标记必须清掉（普通子弹永不约束弹道）
             HasVisualEndPoint = false;
+            IsVisualBullet = false;
             OnHit += FpsHelper.Hit;
             OnShoot?.Invoke();
         }

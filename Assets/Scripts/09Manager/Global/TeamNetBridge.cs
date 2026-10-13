@@ -166,6 +166,10 @@ namespace FPSGame.Managers
 
             team.ReplacePlayers(order);   // ★ 先落表：Reindex 会把每个 PlayerData.index 归位
 
+            // ★ 名册变长（Ready/Armament 期仍可入房）⇒ 统计表必须跟着长：`task.BattleData` 是按
+            //   "SetTask 那一刻的 players.Count" 建的，不同步会让局内按新下标写统计直接越界（见 EnsureBattleDataSize）。
+            TaskManager.Instance?.EnsureBattleDataSize();
+
             AnnounceRoster(team, infos);   // ★ 名单变化 ⇒ 消息窗播报"XX加入任务 / XX退出任务"
 
             // ★ 名册变化 ⇒ 叫醒战备界面：有人退出时**那一行必须消失**，名册重排后各行身份也可能换人。

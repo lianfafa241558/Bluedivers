@@ -765,7 +765,85 @@ PrefabInstance:
         type: 3}
       insertIndex: 5
       addedObject: {fileID: 1532146355348755804}
+    - targetCorrespondingSourceObject: {fileID: 6881257384920666475, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5835664289704539940}
+    - targetCorrespondingSourceObject: {fileID: 4835684867840640568, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7941239599642786751}
+    - targetCorrespondingSourceObject: {fileID: 2600059288007973867, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6320859877691856149}
+    - targetCorrespondingSourceObject: {fileID: 1777453659935333410, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 986403301651746393}
+    - targetCorrespondingSourceObject: {fileID: 2122243876452532434, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6434258939074943044}
+    - targetCorrespondingSourceObject: {fileID: 3669271122309108442, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6597985109820197902}
+    - targetCorrespondingSourceObject: {fileID: 8871058704627978953, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8201052878208035809}
+    - targetCorrespondingSourceObject: {fileID: 602528267953674058, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1731150408417685805}
   m_SourcePrefab: {fileID: 100100000, guid: 69f60d47b5ab83e4e86488b11ee1a7e4, type: 3}
+--- !u!1 &189119941262767488 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8871058704627978953, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8201052878208035809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 189119941262767488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 8694380560691960067}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 1
+    ExplosionInnerRange: 1.2
+    ExplosionRange: 1.5
+    DestructeRadius: 0
+    ShockwaveRadius: 3
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 5
+  KnockbackUpScale: 1
 --- !u!4 &491615670932343052 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9174156421743521349, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
@@ -826,6 +904,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1925424471e3fe949a952edf108dc17b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &2058414913529037293 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7283237609639765668, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2068578535304324433 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7293199467809587736, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
@@ -844,6 +928,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &2700375732366358713 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6699700494561714160, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2809283354530084386 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6881257384920666475, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5835664289704539940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2809283354530084386}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 8969432585780083892}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 1
+    ExplosionInnerRange: 1.2
+    ExplosionRange: 1.5
+    DestructeRadius: 0
+    ShockwaveRadius: 3
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 5
+  KnockbackUpScale: 1
 --- !u!4 &3102125417622175277 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5949045994892056932, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
@@ -868,9 +1004,113 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 8756043799451674441}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &4222259572649992561 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4835684867840640568, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7941239599642786751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4222259572649992561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 5631064503702758887}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 1
+    ExplosionInnerRange: 1.2
+    ExplosionRange: 1.5
+    DestructeRadius: 0
+    ShockwaveRadius: 3
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 5
+  KnockbackUpScale: 1
 --- !u!4 &4227800113193961755 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4841262655414758994, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5253756538238042048 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3560835261309147273, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5433709312188970387 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3669271122309108442, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6597985109820197902
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5433709312188970387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 8804823206077041775}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 1
+    ExplosionInnerRange: 1.2
+    ExplosionRange: 1.5
+    DestructeRadius: 0
+    ShockwaveRadius: 3
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 5
+  KnockbackUpScale: 1
+--- !u!4 &5631064503702758887 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4009954251573265070, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
     type: 3}
   m_PrefabInstance: {fileID: 8756043799451674441}
   m_PrefabAsset: {fileID: 0}
@@ -1033,6 +1273,9 @@ MonoBehaviour:
   BewareReachRadius: 2
   BewareStayDuration: 2
   BewareTimeout: 20
+  BewareObserveDistance: 10
+  SearchObserveDistance: 4
+  ObserveSettleTime: 0.4
   BewareCooldown: 10
   BewareCooldownRadius: 10
   IdleMaxDuration: 120
@@ -1077,6 +1320,7 @@ MonoBehaviour:
     Value: 9
   MainPart: {fileID: 2099042117010003610}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -1094,18 +1338,162 @@ MonoBehaviour:
     Value: 500
   - Key: 10
     Value: 500
+--- !u!4 &6297895208933224101 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3379152323984837100, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6627845032337287688 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2484124977186016577, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
     type: 3}
   m_PrefabInstance: {fileID: 8756043799451674441}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6743845034686135458 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2600059288007973867, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6320859877691856149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6743845034686135458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 6297895208933224101}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 1
+    ExplosionInnerRange: 1.2
+    ExplosionRange: 1.5
+    DestructeRadius: 0
+    ShockwaveRadius: 3
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 5
+  KnockbackUpScale: 1
 --- !u!4 &6797256803881437379 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2870766023540338570, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
     type: 3}
   m_PrefabInstance: {fileID: 8756043799451674441}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7001267687271562091 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1777453659935333410, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &986403301651746393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7001267687271562091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 2700375732366358713}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 1
+    ExplosionInnerRange: 1.2
+    ExplosionRange: 1.5
+    DestructeRadius: 0
+    ShockwaveRadius: 3
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 5
+  KnockbackUpScale: 1
+--- !u!1 &7273329882533701531 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2122243876452532434, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6434258939074943044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7273329882533701531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 5253756538238042048}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 1
+    ExplosionInnerRange: 1.2
+    ExplosionRange: 1.5
+    DestructeRadius: 0
+    ShockwaveRadius: 3
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 5
+  KnockbackUpScale: 1
 --- !u!114 &7340609772975028494 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2043687293364723271, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
@@ -1130,6 +1518,52 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 8756043799451674441}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8205324555990249475 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 602528267953674058, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1731150408417685805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8205324555990249475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 2058414913529037293}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 1
+    ExplosionInnerRange: 1.2
+    ExplosionRange: 1.5
+    DestructeRadius: 0
+    ShockwaveRadius: 3
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 0
+    ImpactSoundRadius: 0
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 5
+  KnockbackUpScale: 1
 --- !u!4 &8410577446781042974 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 953611734212404823, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
@@ -1148,3 +1582,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1925424471e3fe949a952edf108dc17b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &8694380560691960067 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 84181357626867274, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8804823206077041775 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 266472689840073510, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8969432585780083892 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 430766784046963709, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}

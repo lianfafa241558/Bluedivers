@@ -39,7 +39,7 @@ public class AudioSvc : AudioManagerBase<AudioSvc>
                 audioMixer.SetFloat("vMaster", PetToDB(value));
                 return;
             case "音乐音量":
-                audioMixer.SetFloat("vMusic", PetToDB(value));
+                audioMixer.SetFloat("vMusic", PetToDB(value * 0.3f));
                 musicVolume = value;
                 return;
             case "音效音量":

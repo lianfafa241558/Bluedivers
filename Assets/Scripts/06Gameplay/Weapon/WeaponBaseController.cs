@@ -420,6 +420,7 @@ namespace FPSGame.Weapon {
                 (endPoint.sqrMagnitude > 0.0001f ? $" 终点={endPoint:F2} 距终点={(endPoint - muzzle.position).magnitude:F1}m" : " 终点=<无>（自由飞，会飞到射程尽头）"));
 
             bullet.Shoot(this, UseDamageIndex, muzzle);
+            bullet.MarkVisualBullet();           // ★ 标记"只表现"（必须在 Shoot 之后：Shoot 里会复位）
             bullet.OnHit -= FpsHelper.Hit;      // ★ 只摘伤害，别用 `OnHit = null`：那会把命中特效一起摘掉
             // ★ 但"命中表现"要补回来（2026-10-09）：FpsHelper.Hit 里除了伤害还包含命中特效/音效/弹痕，
             //   摘掉后对方屏幕上看不到任何命中反馈 ⇒ 表现弹命中时改成只播表现那一半。
