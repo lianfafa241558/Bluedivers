@@ -4,7 +4,7 @@ using UnityEngine;
 namespace FPSGame.GameContract
 {
     /// <summary>
-    /// 空投信标特效契约（2026-10-01 为切断 `01Manager → Effect` 的反向引用而建）。
+    /// 空投信标特效契约（2026-10-01 为切断 `09Manager → Effect` 的反向引用而建）。
     ///
     /// <para>▍问题：<c>BattleManager.ReleaseAirdrop</c> 原来写
     /// <c>beacon.GetComponent&lt;VFXAirdropEffect&gt;()?.TmpAirdrop(point, ResSvc.GetAirdrop(id), action)</c>

@@ -621,6 +621,7 @@ namespace FPSGame.UI
             {
                 if (room == null) continue;
                 if (room.PasswordProtected) continue;                                     // 有密码：不能静默加入
+                if (!RoomMeta.IsVersionCompatible(room)) continue;                        // 版本不同：可看不可连（提示在入房时给）
                 if (RoomMeta.InGame(room)) continue;                                      // 已开局
                 if (room.MaxPlayers > 0 && room.PlayerCount >= room.MaxPlayers) continue;  // 满员
                 if (!string.IsNullOrEmpty(mapName) && RoomMeta.MapName(room) != mapName) continue;
@@ -633,15 +634,56 @@ namespace FPSGame.UI
 
         private static string RoomKey(LanRoomInfo room) => room.HostIp + ":" + room.HostPort;
 
+        /// <summary>
+        /// 房间列表数据源 = 发现器缓存（库已按「收包源地址:端口」去重）。
+        ///
+        /// <para>▍这里再按「房主合成名 + 端口」去重一次。理由：库的去重键用的是它**收到包的源地址**，
+        /// 而房主侧不挑网卡（广播器/发现器都绑 <c>IPAddress.Any</c>）⇒ 周期广播与 DISCOVER 的单播应答
+        /// **可能从不同网卡发出**，同一房间就以两个源 IP 进表、列表里显示成两行。
+        /// <c>PlayerNames[0]</c>（= <c>Host_&lt;HHmmssfff&gt;</c>，房主开房时生成、与网卡无关）才是房间身份。</para>
+        /// <para>▍保留先出现的那条，并打一条 <c>LogWarning</c> 带上被丢的 IP —— 这是"多网卡出口不一致"
+        /// 唯一的现场证据，别静默吞掉。丢哪条都不影响连通性：一方是广播源、另一方是应答源，
+        /// 应答既然能路由到本机，就说明那条路也通。</para>
+        /// </summary>
         private List<LanRoomInfo> QueryRooms()
         {
             var list = new List<LanRoomInfo>();
             if (_discoverer == null) return list;
+
+            var seen = new HashSet<string>();
             foreach (var room in _discoverer.GetRooms())
             {
-                if (room != null) list.Add(room);
+                if (room == null) continue;
+
+                string key = RoomIdentity(room);
+                if (!seen.Add(key))
+                {
+                    Debug.LogWarning("[ServerListPanel] 同一房间出现两个源地址（房主多网卡/虚拟网卡），已去重：" +
+                                     key + " ← 丢弃 " + room.HostIp + ":" + room.HostPort);
+                    continue;
+                }
+                list.Add(room);
             }
             return list;
+        }
+
+        /// <summary>
+        /// 房间身份 = 房主合成名（<c>PlayerNames[0]</c>，见 <c>NetHostSvc.BuildHostPlayerNames</c>）+ 端口；
+        /// 没有名字的（手动直连构造的房间 / 老版本房主）退回 <c>HostIp:HostPort</c>。
+        /// </summary>
+        private static string RoomIdentity(LanRoomInfo room)
+        {
+            // ① 首选 RoomId（房主开房生成的 GUID，与网卡无关）
+            string id = RoomMeta.RoomId(room);
+            if (!string.IsNullOrEmpty(id)) return id;
+
+            // ② 老版本房主：退回"合成房主名 + 端口"
+            var names = room.PlayerNames;
+            if (names != null && names.Length > 0 && !string.IsNullOrEmpty(names[0]))
+                return names[0] + ":" + room.HostPort;
+
+            // ③ 都没有（手动直连构造的房间）：源地址 + 端口
+            return room.HostIp + ":" + room.HostPort;
         }
 
         /// <summary>用于判断「房间集合或筛选是否变化」。</summary>
@@ -1068,6 +1110,10 @@ namespace FPSGame.UI
         /// </summary>
         private static string RoomHostName(LanRoomInfo room)
         {
+            // ★ 新字段优先：房主自报的真名（老版本房主没有 ⇒ 往下走老启发式）
+            string named = RoomMeta.HostName(room);
+            if (!string.IsNullOrEmpty(named)) return named;
+
             var names = room != null ? room.PlayerNames : null;
             if (names == null) return null;
 

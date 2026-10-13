@@ -45,6 +45,15 @@ public class NetHostSvc : MonoBehaviour
     [InspectorName("监听端口")]
     [SerializeField] private int hostPort = NetConfig.HostGamePort;
 
+    /// <summary>{要让成员用哪个地址回连我}（可选；空 = 让库用"收包源地址"兜底）。
+    /// <para>▍用途：多网卡 / 虚拟局域网（ZeroTier、Radmin…）时，"广播出去的网卡"与"想让成员走的网卡"
+    /// 可能不是同一块 ⇒ 在这里显式指定。库侧语义（2026-10-13 起）：**填了可解析 IP 就信任它**，
+    /// 没填才退回"收包源地址"（旧行为）。</para>
+    /// <para>⚠ 必须是 IP 字面量（不支持域名）；填错 = 成员全都连不上（不会再被源地址兜回来）⇒ 默认留空。
+    /// 房间列表面板会把本机每块网卡的 IP 列出来（<c>LocalAddressText</c>），照抄即可。</para></summary>
+    [InspectorName("广播地址(可选)")]
+    [SerializeField] private string advertiseIp = "";
+
     /// <summary>房主局域网广播器（把房间信息广播出去）</summary>
     private LanBroadcaster _broadcaster;
 
@@ -75,6 +84,15 @@ public class NetHostSvc : MonoBehaviour
 
     /// <summary>本机作为房主时的自标识名称（运行时时间戳生成，用于成员端排除"自己开的房"）</summary>
     private string _hostSelfName = null;
+
+    /// <summary>本房**地图内任务下标**（<c>TaskManager.TaskCfgs[map, task]</c> 的第二维；-1 = 未知/还没选任务）。
+    /// 随广播下发（<c>LanRoomInfo.TaskIndex</c>），让接收端能定位"与房主同一份"的 <c>TaskCfg</c>。</summary>
+    private int _taskIndex = -1;
+
+    /// <summary>本房的**稳定身份**（开房时生成一次，<see cref="StopHost"/> 清空）。
+    /// <para>⚠ 与 <see cref="_hostSelfName"/>（时间戳合成名）分工不同：RoomId 是 GUID，
+    /// 成员端"排除自己开的房"与"房间列表去重"都以它为首选判据。</para></summary>
+    private string _roomId = null;
 
     /// <summary>成员玩家信息表：sid -> PlayerInfo（不含房主自己）</summary>
     private readonly Dictionary<uint, PlayerInfo> _players = new Dictionary<uint, PlayerInfo>();
@@ -280,6 +298,8 @@ public class NetHostSvc : MonoBehaviour
         // 房主名称用"运行时时间戳"生成，每次开房都不同，成员端可据此精确排除"自己开的房"，
         // 同机多个实例也不会互相误判。
         _hostSelfName = $"Host_{System.DateTime.UtcNow.ToString("HHmmssfff")}";
+        // 房间身份：每次开房一个新 GUID（成员端"这房是不是我开的"/列表去重都首选它）
+        _roomId = System.Guid.NewGuid().ToString("N");
         RoomInfo = new LanRoomInfo
         {
             RoomName = options.RoomName,
@@ -289,12 +309,19 @@ public class NetHostSvc : MonoBehaviour
             MapName = options.MapName,
             Difficulty = _difficulty,
             TaskMain = _taskMain,
+            TaskIndex = _taskIndex,
             InGame = false,
             // 当前唯一的房间来源就是局域网广播（服务器列表尚未实现）⇒ 恒定 0
             Source = (int)RoomMeta.SourceEnum.LanBroadcast,
             PasswordProtected = !string.IsNullOrEmpty(_roomPassword),
             Version = Application.version,
-            // ⚠ PlayerNames[0] 必须是这个**合成名**（成员端靠 IndexOf 排除自己开的房），
+            // ★ 房主名：列表直接读它，不必再从 PlayerNames 末尾"猜"哪个不是合成名
+            HostName = _hostName,
+            // ★ 房间身份（GUID）：与网卡/端口/时间戳无关
+            RoomId = _roomId,
+            // ★ 成员回连地址：填了就用（库信任），空/非法 ⇒ 空串（库退回"收包源地址"，与旧行为一致）
+            HostIp = AdvertiseIp(),
+            // ⚠ PlayerNames[0] 必须是这个**合成名**（老版本成员端靠它排除自己开的房），
             //   真名追加在末尾，不影响那条排除逻辑。
             PlayerNames = BuildHostPlayerNames(),
         };
@@ -325,6 +352,8 @@ public class NetHostSvc : MonoBehaviour
         _difficulty = -1;
         _taskMain = -1;
         _started = false;
+        _taskIndex = -1;
+        _roomId = null;
         _rosterFrozen = false;
         _joinClosed = false;
         _hostReady = false;      // 新房：房主也是"未就绪"，等他点
@@ -352,6 +381,22 @@ public class NetHostSvc : MonoBehaviour
 
     /// <summary>本房是否已进战斗（Transition 之后不再收人）。</summary>
     public bool IsStarted => _started;
+
+    /// <summary>本房的稳定身份（RoomId）。未开房时为 null。</summary>
+    public string RoomId => _roomId;
+
+    /// <summary>广播要带的"成员回连地址"。空 / 非法 ⇒ 空串（= 让库退回"收包源地址"兜底）。</summary>
+    private string AdvertiseIp()
+    {
+        if (string.IsNullOrEmpty(advertiseIp)) return "";
+
+        string ip = advertiseIp.Trim();
+        if (System.Net.IPAddress.TryParse(ip, out _)) return ip;
+
+        // 不静默失败：填错会影响所有成员能不能连上
+        Debug.LogWarning($"[NetHostSvc] 广播地址 \"{advertiseIp}\" 不是合法 IP ⇒ 本次广播不带它（成员按收包源地址回连）");
+        return "";
+    }
 
     /// <summary>
     /// 广播用的玩家名数组：<c>[0]</c> = 排除自己开的房用的合成名，末尾追加真房主名。
@@ -857,6 +902,13 @@ public class NetHostSvc : MonoBehaviour
         {
             _taskMain = taskMain;
             if (RoomInfo != null) RoomInfo.TaskMain = _taskMain;
+        }
+
+        // ★ 任务下标同一个道理（建服早于选任务 ⇒ 这里才是权威时刻）
+        if (taskIndex >= 0)
+        {
+            _taskIndex = taskIndex;
+            if (RoomInfo != null) RoomInfo.TaskIndex = _taskIndex;
         }
 
         SendToAll(MessageCenter.Pack(CmdId.TaskConfirm, ntf));

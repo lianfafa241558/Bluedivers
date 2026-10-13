@@ -289,8 +289,8 @@ namespace FPSGame.Managers
                             _ => 0
                         }),
                         nestCount = missionCfg.sizeType switch {
-                            SizeType.Small => new int[3] { 1, 0, 0 },
-                            SizeType.Medium => new int[3] { 2, 1, 0 },
+                            SizeType.Small => new int[3] { 4, 0, 0 },
+                            SizeType.Medium => new int[3] { 3, 1, 0 },
                             SizeType.Large => new int[3] { 2, 2, 1 },
                             _ => new int[3] { 0, 0, 0 },
                         },
@@ -301,8 +301,6 @@ namespace FPSGame.Managers
             }
             MissionEnum[] CreatExtra(MissionEnum[] arr,int count)
             {
-            //TODO:为了方便测试
-            //count = 5;
                 MissionEnum[] re = new MissionEnum[count];
                 for(int i = 0; i < re.Length; ++i)
                 {
@@ -310,26 +308,6 @@ namespace FPSGame.Managers
                 }
                 return re;
             }
-            /*
-            TaskItem[][] CreatNest(MissionEnum[] arr, int[] counts)
-            {
-                //TODO:Ϊ�˷������
-                counts = new int[3] { 8, 4, 1 };
-                TaskItem[][] re = new TaskItem[counts.Length][];
-                for (int u=0;u< counts.Length;++u)
-                {
-                        //Debug.LogError("类型 "+arr[u]+arr[u].GetEnumString());
-                        //Debug.LogError("实例 " + Missions[arr[u]]);
-
-                    TaskItem[] item = new TaskItem[counts[u]];
-                    for (int i = 0; i < item.Length; ++i)
-                    {
-                        item[i] = new(Missions[arr[u]]);
-                    }
-                    re[u] = item;
-                }
-                return re;
-            }*/
         }
 
 
@@ -544,31 +522,7 @@ namespace FPSGame.Managers
             bool overSkyColor = mapData.skyColor != null && mapData.equatorColor != null;
             WeatherAtmosphereController.SkyColorGradient = overSkyColor ? mapData.skyColor : null;
             WeatherAtmosphereController.EquatorColorGradient = overSkyColor ? mapData.equatorColor : null;
-                //Debug.LogError("选择的敌人类�? + mapData.enemyVarietyType+" 名称" + task.campData.name);
-                /*
-                //TODO:测试
-                var size = (Missions[MissionEnum.Explore] as MissionMainData_SO).sizeType;
-                task.taskCfg = new() {
-                    main = MissionEnum.Explore,
-                    extra = task.taskCfg.extra.Take(size switch {
-                        SizeType.Small => 2,
-                        SizeType.Medium => 3,
-                        SizeType.Large => 5,
-                        _ => 0
-                    }).ToArray(),
-                    //extra = task.taskCfg.extra,
-                    nestCount = size switch {
-                        SizeType.Small => new int[3] { 1, 1, 0 },
-                        SizeType.Medium => new int[3] { 3, 1, 0 },
-                        SizeType.Large => new int[3] { 2, 2, 1 },
-                        _ => new int[3] { 0, 0, 0 },
-                    },
-                    name = task.taskCfg.name,
-                    scale = task.taskCfg.scale,
-                    seed = task.taskCfg.seed,
-                    enable = task.taskCfg.enable,
-                };
-                */
+            //Debug.LogError("选择的敌人类�? + mapData.enemyVarietyType+" 名称" + task.campData.name);
 
 
             task.collectProperty.Clear();
@@ -663,7 +617,7 @@ namespace FPSGame.Managers
         }
 
         // ⚠ `EnterTransition()` 已于 2026-10-01 删除（原实现 = `TaskState.Countdown = 16` + `GameRoot.GameState = Armament`）：
-        //   · **切阶段** → 交给发布方 `MedivacController` 走事件 `GlobalEventSub.RequestGameState(GameStateEnum.Armament)`
+        //   · **切阶段** → 交给发布方 `MedivacController` 走事件 `GlobalEventBus.RequestGameState(GameStateEnum.Armament)`
         //     （⚠ 同日 `IFlowService` 与 `ServiceLocator.Flow` 已整体删除：`MissionEvacuate*` 各自的 1 处也改成同一事件）
         //   · **倒计时复位** → 归位到"开始新一局"的职责（本类 `SetTask()`），不再由"结束一局"兼任
         //   ⇒ 于是不需要专属事件；`OnGameStateChange` 广播直到 2026-10-02 才被本类订阅 ——

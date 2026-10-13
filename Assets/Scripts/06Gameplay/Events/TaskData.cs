@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -12,7 +12,7 @@ namespace FPSGame.Gameplay
 {
 
 // ============================================================================
-// 以下三个 DTO 原先是 `TaskManager` 的**嵌套类型**（写在 01Manager/Global/TaskManager.cs 里），
+// 以下三个 DTO 原先是 `TaskManager` 的**嵌套类型**（写在 09Manager/Global/TaskManager.cs 里），
 // 2026-09-30 抽出到玩法层并**解嵌套**（文件作用域）：
 //   ① 玩法核心类 MissionBase/MissionItem 的公开 API 用了 `TaskManager.TaskItem`/`SelectTaskData`
 //      ⇒ 不搬出来，它们就进不了 06_Gameplay；
@@ -70,11 +70,11 @@ namespace FPSGame.Gameplay
 
         public int MapSize => Constants.MapDefaultBorder
         +EffectiveSizeType switch {
-            SizeType.Small => 256,
-            SizeType.Medium => 384,
-            SizeType.Large => 512,
-            SizeType.Mini => 256,
-            _ => 128,
+            SizeType.Small => 390,
+            SizeType.Medium => 585,
+            SizeType.Large => 780,
+            SizeType.Mini => 360,
+            _ => 256,
         };
 
         public int CameraSize => EffectiveSizeType switch {

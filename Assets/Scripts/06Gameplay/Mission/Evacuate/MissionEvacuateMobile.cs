@@ -15,7 +15,7 @@ namespace FPSGame.Mission
     //第二步 等待玩家和ReturnBag交互
     //第三步 创建运输机并落地等待登机，要在300秒内完成撤离√播放语音
     //此时会在玩家和撤离点的中点刷一波小规模波次
-    // SpecUnitKei会在触发BattleEventSub.Evacuate后尝试前往撤离点，并且每5米往地上放一根returnPoint
+    // SpecUnitKei会在触发BattleEventBus.Evacuate后尝试前往撤离点，并且每5米往地上放一根returnPoint
     //第四步 玩家全部登机或者时间到了就起飞
     /// <summary>
     /// 撤离任务(移动)

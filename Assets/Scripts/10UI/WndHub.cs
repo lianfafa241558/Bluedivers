@@ -11,7 +11,7 @@ namespace FPSGame.UI
 /// <summary>
 /// UI 侧窗口中心（2026-10-01 建）：替代 <c>WndManager</c> 原先持有的 10 个**具体窗口字段**。
 ///
-/// <para>▍背景：那些字段都是 `04UI` 的类型，被 `01Manager` 持有 ⇒「管理器 → UI」反向依赖，
+/// <para>▍背景：那些字段都是 `10UI` 的类型，被 `09Manager` 持有 ⇒「管理器 → UI」反向依赖，
 /// `09_Managers`/`10_UI` 都切不出来。现在改成：</para>
 /// <list type="bullet">
 ///   <item>窗口在 `Window.Awake` 里把 `this` 注册到**本类**（不再往 `WndManager` 塞字段）；</item>
@@ -24,13 +24,13 @@ namespace FPSGame.UI
 /// <para>▍取值方式（2026-10-01 按评审意见改为"单一数据源 + 泛型"）：所有窗口只存在于
 /// <see cref="map"/> 一个字典里（键 <see cref="WndType"/>、值实例），
 /// UI 内部取实例用 <see cref="Get{T}(WndType)"/>/<see cref="Get{T}()"/>（带强类型、免强转）。
-/// <b>⚠ 纪律：`Get&lt;T&gt;` 只能在 `04UI` 内使用</b>（它要求调用方写出具体窗口类型）；
-/// 跨层（管理器）一律用契约动词 <c>WindowRegistry.*</c>；玩法层则发 <c>GlobalEventSub.OpenWnd</c>（2026-10-01 起 Wnd 槽已删）。</para>
+/// <b>⚠ 纪律：`Get&lt;T&gt;` 只能在 `10UI` 内使用</b>（它要求调用方写出具体窗口类型）；
+/// 跨层（管理器）一律用契约动词 <c>WindowRegistry.*</c>；玩法层则发 <c>GlobalEventBus.OnOpenWnd</c>（2026-10-01 起 Wnd 槽已删）。</para>
 ///
 /// <para>▍为什么是 <c>internal</c>：把上面那条纪律**交给编译器**（连 `Register`/`Scan` 也不外露）。
-/// ⚠ 但它今天还**没有牙齿** —— `04UI/` 根目录目前仍在 `Assembly-CSharp` 里，和 `01Manager`/`06Gameplay` 同集
-/// ⇒ 同集内 `internal` 拦不住。**等 `10_UI` 切成独立 asmdef（`04UI/` 整体迁进 asmdef 目录）后，
-/// `internal` 才会真正挡住管理器/玩法/表现层** —— 这是"意图自证 + 未来自动生效"，不是现在就有强制力。</para>
+/// `10_UI` 已是独立 asmdef ⇒ 这就是**编译期牙齿**：本类只对 `10_UI` 内部可见，
+/// 管理器 / 玩法 / 表现层想在外部调 `Get&lt;T&gt;` / `Register` / `Scan` 会直接编译不过
+/// （跨层只能经契约层 <see cref="WindowRegistry"/> 的委托）。</para>
 /// </summary>
 internal static class WndHub
 {
@@ -55,9 +55,9 @@ internal static class WndHub
         WindowRegistry.Scanner = Scan;
     }
 
-    // ---------------- 取值（仅限 04UI 内使用） ----------------
+    // ---------------- 取值（仅限 10UI 内使用） ----------------
 
-    /// <summary>按枚举取窗口实例（类型不符或未登记 ⇒ null）。⚠ 仅在 `04UI` 内使用。</summary>
+    /// <summary>按枚举取窗口实例（类型不符或未登记 ⇒ null）。⚠ 仅在 `10UI` 内使用。</summary>
     public static T Get<T>(WndType type) where T : Window
     {
         Window w;
@@ -68,7 +68,7 @@ internal static class WndHub
 
     /// <summary>
     /// 按类型取窗口实例（免写枚举；窗口总数 ≤ 26，线性扫足够）。
-    /// ⚠ 仅在 `04UI` 内使用；跨层请用契约动词。
+    /// ⚠ 仅在 `10UI` 内使用；跨层请用契约动词。
     /// </summary>
     public static T Get<T>() where T : Window
     {

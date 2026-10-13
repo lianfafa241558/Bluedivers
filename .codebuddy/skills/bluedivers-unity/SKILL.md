@@ -9,7 +9,7 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 
 - **Unity**: 2022.3.62f3（2022 LTS；以 `ProjectSettings/ProjectVersion.txt` 为准，本机在 `D:\UnityHub\Editor\2022.3.62f3`），C# 9.0 / .NET Standard 2.1
 - **渲染管线**: URP 14.0.12
-- **网络**: Photon PUN 为旧方案（已弃用）；KCPNet 自研网络库尚未完成，当前为**单机版 demo**，暂不做联机
+- **网络**: **联机已落地** —— KCPNet 自研库（`Assets/Plugins/KCPNet/*.dll`）+ 局域网 P2P（房主权威），协议层在 `07NetGame`、传输层在 `NetTmp`（`02_Net`）；Photon PUN 已**彻底移除**（`SingletonNet.cs` / `NetManager.cs` 已删，只剩注释里的历史提及）⇒ 细节看 skill `kcpnet-online`
 - **关键依赖**: TextMeshPro 3.0.9、Navigation 1.1.6、Timeline 1.7.7、ugui
 - **游戏类型**: 单机版 PvE 第三人称/第一人称**射击割草** demo（对标《绝地潜兵2》+《深岩银河》融合）
 - **逻辑数学**: `PEMaths`（Photon Engine 固定点数库，PEInt/PEVector），用于逻辑层确定性计算
@@ -29,8 +29,8 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 
 ### 解耦与事件
 - **降低耦合度**：避免组件之间直接互相获取引用（如 `GetComponent<PlayerController>()`）。跨模块/跨层通知优先使用事件机制。
-- 全局事件（非战斗相关）在 `GlobalEventSub` 中定义（`Assets/Scripts/01Manager/Global/GlobalEventSub.cs`）；战斗相关事件在 `BattleEventSub` 中定义。
-- 新增跨多组件通知的功能时，优先在 `GlobalEventSub` 或 `BattleEventSub` 中加 `static event` 和对应的 `static` 触发方法。
+- 全局事件（非战斗相关）在 `GlobalEventBus` 中定义（`Assets/Scripts/06Gameplay/Events/GlobalEventBus.cs`）；战斗相关事件在 `BattleEventBus`（同目录）。⚠ 旧名 `GlobalEventSub`/`BattleEventSub` 与旧路径 `01Manager/Global/` **都已作废**。
+- 新增跨多组件通知的功能时，优先在 `GlobalEventBus` 或 `BattleEventBus` 中加 `static event` 和对应的 `static` 触发方法。
 
 ### 伤害来源两个口径（**新增伤害路径必须先选对**）
 
@@ -184,29 +184,22 @@ python -X utf8 .codebuddy/plans/offline_compile.py 06_Gameplay 10_UI 09_Managers
 - 本机 Unity 在 `D:\UnityHub\Editor\2022.3.62f3`（脚本内已内置）；换机用 `plans/find_unity.py` / `env_probe.py` 重新定位（本机**无 .NET SDK**，`dotnet build` 不可用）。
 - **搬命名空间 / 补 using**：`python -X utf8 .codebuddy/plans/ns_move.py <moves.json> --no-self --apply`（自动同步 `using` 并修 `using static <oldNs>.<Type>`）。⚠ 它**管不了**「全限定代码引用 `OldNs.Type`」，且自省补 using 会误判 ⇒ **一律用离线编译报错兜底**（`plans/add_usings.py` 按报错补，循环 <1s）。
 
-## 网络层（暂不做联机）
+## 网络层（**已落地联机**，细则看 skill `kcpnet-online`）
 
-> 当前为**单机版 demo**，暂不做联机。Photon PUN 已弃用，KCPNet 自研网络库尚未完成。目标网络架构：轻服务器（仅房间列表）+ 本地存储。
+> 现在跑的是 **KCPNet 自研库**（`Assets/Plugins/KCPNet/*.dll` 预编译 + 自研适配层）+ **局域网 P2P（房主权威）**。
+> 分层：传输/编解码 `02_Net`（`Assets/Scripts/NetTmp/`）→ 游戏协议 `07_NetGame`（`Assets/Scripts/07NetGame/`）→ 消费方 `09_Managers` / `10_UI`。
+> ⚠ **Photon PUN 已彻底移除**：`00Tools/SingletonNet.cs`、`01Manager/Global/NetManager.cs` 已删除，全工程只剩注释里的历史提及（`LogicFrameHost` / `BridgeSys`）。
 
-### 现有网络基础设施（保留备用）
-- `00Tools/SingletonNet.cs` — 网络单例基类（旧封装 `MonoBehaviourPunCallbacks` 的 RPC 重载）
-- `01Manager/Global/NetManager.cs` — 继承 `SingletonNet<NetManager>`，驱动 `I_Login` 固定逻辑帧 `LogicTick`
-- `00Tools/LogicBehaviour.cs` — 固定逻辑帧基类
-- `PEMaths`（PEInt/PEVector 定点数）— 逻辑层确定性计算，避免浮点同步不一致
+### 要点（详见 `kcpnet-online` skill、`memory/topics/net.md`・`net-flow.md`・`net-battle.md`）
+- **业务层收发一律走 `NetRoomFlow` 的 `Send*` / `On*`**，别直接找 `NetSvc`/`NetHostSvc`；能发起回连的只有 `NetRoomFlow.Join`（UI）与 `LanRoomDemo`（演示类，场景里没有引用）。
+- **传输层回调跑在 ThreadPool 线程** ⇒ 回调里绝不能碰 Unity API/游戏状态：只入队（`NetInbox`），主线程 `Update` 里分发。
+- **房主权威**：成员上报 → 房主结算/转发 → 全体应用；**每条同步都要有回环门**（远端应用后本地触发的事件不能再被上行桥看到而重发）。
+- `MessageCenter` 按命令号**单处理器** ⇒ 同一命令号只能有一个注册者。
+- 命令号**只增不改**（`07NetGame/CmdId.cs`）；`4026 / 4047 / 4051` 已停发但保留常量（只为与历史日志对号）。
 
-### 业务代码中的 Photon 依赖点（未来迁移时参考）
-| 文件 | 依赖情况 |
-|------|---------|
-| `00Tools/SingletonNet.cs` | RPC 封装基类 |
-| `01Manager/Global/NetManager.cs` | 继承 SingletonNet |
-| `01Manager/Bridge/BridgeSys.cs` | `SendPlayerSelectArmament`/`SendPlayerReady` 两个 RPC |
-| `04UI/BridgeWnd.cs` | 仅 using Photon，无实际调用 |
-| `04UI/ArmamentWnd.cs` | 仅 using Photon，无实际调用 |
-
-### 未来网络开发约定
-- 战斗逻辑（AI 出生、随机种子、伤害）走**确定性逻辑帧**，用确定性随机源。
-- `I_Actor`/`I_Entity` 已有 `LogicPos`/`Logic3Pos` 定点坐标，可直接作为同步载体。
-- 网络传输只走定点数/ID，Unity 类型（GameObject/Vector3）仅在表现层恢复。
+### 确定性约定（仍成立）
+- 战斗逻辑（AI 出生、随机种子、伤害）走**确定性随机源**（`BattleRandom` + `SeedUtil.Derive`），**不要用 `UnityEngine.Random`**。
+- `I_Actor`/`I_Entity` 的 `LogicPos`/`Logic3Pos`（`PEMaths` 定点）仍可用于确定性计算；⚠ `Lib/PEMaths.dll` 的 PEInt/PEVector3 是**米标量**（`RawInt == RawFloat`），换算后不可再参与运算。
 
 ## 性能注意事项
 

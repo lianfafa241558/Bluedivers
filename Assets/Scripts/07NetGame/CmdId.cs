@@ -157,7 +157,7 @@ namespace FPSGame.Net
         /// （号的口径是"房主分配 + 两端创建顺序一致"，成员端自造必然错位）。合并后一条消息、一处回环门、一处日志口径。</para>
         /// <para>▍形态（<c>HostSpawnMsg.Kind</c>）：<c>Patrol</c> = 巡逻队（生成点 + 逐单位目标点；构成由落点派生 ⇒ 不传）、
         /// <c>Unit</c> = 单只单位（来源键 + 槽位 ⇒ 成员让本端同一份生成器复刻并覆盖号，见 <c>INetSpawner</c>）。</para>
-        /// <para>▍与 <c>WaveStartSync</c>(4023) / <c>SceneActorNtf</c>(4039) 的分工：波次是**逐 Tick 投放**、场景单位是**加载期摆好**，
+        /// <para>▍与 <c>WaveStartSync</c>(4023) / <c>SceneActorNtf</c>(4022) 的分工：波次是**逐 Tick 投放**、场景单位是**加载期摆好**，
         /// 频率档与本条不同 ⇒ 不合并（它们各自的路由已被验证，见 <c>WaveManager</c> 的整批复刻与 <c>SceneActorSync</c>）。</para></summary>
         public const int HostSpawnNtf = 4052;
 

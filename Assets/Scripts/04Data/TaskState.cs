@@ -15,7 +15,7 @@ namespace FPSGame.Data
     /// （`Damageable`/`HealthEnemy`/`FpsHelper_Extension` 读难度系数、`MissionBase` 读敌人种类、
     /// `MissionEradicate` 读难度、`Furniture_KeiSubmit`/`OOPart` 读写欧帕兹收集表），
     /// 只有 `MedivacController` 涉及"推进倒计时 + 请求切到配置战备阶段" ⇒ 值走数据自持；
-    /// 切阶段由它自己走事件 `GlobalEventSub.RequestGameState(GameStateEnum.Armament)`
+    /// 切阶段由它自己走事件 `GlobalEventBus.RequestGameState(GameStateEnum.Armament)`
     /// （本类为此**不**提供任何命令；`Countdown` 的复位归"开始新一局" = `TaskManager.SetTask()`）。</para>
     ///
     /// <para>▍为什么不能靠注入：`Damageable`/`HealthEnemy` 是在 <c>Awake</c> 里读难度系数的

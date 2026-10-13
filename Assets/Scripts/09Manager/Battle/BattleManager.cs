@@ -67,7 +67,7 @@ namespace FPSGame.Managers
         /// </summary>
         private int ResolveBattleSeed()
         {
-            int seed = FPSGame.Data.TaskState.Seed;
+            int seed = TaskState.Seed;
             return seed != 0 ? seed : TaskManager.Instance.nowTask.taskCfg.seed;
         }
 
@@ -80,7 +80,7 @@ namespace FPSGame.Managers
         /// </summary>
         private System.Random ResolveWeatherRandom()
         {
-            int seed = FPSGame.Data.TaskState.Seed;
+            int seed = TaskState.Seed;
             return seed != 0 ? SeedUtil.NewStream(seed, SeedStream.Weather) : BattleRandom;
         }
 
@@ -132,7 +132,7 @@ namespace FPSGame.Managers
             System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
             BattleRandom = new(ResolveBattleSeed());
-            FPSGame.Data.BattleState.BattleRandom = BattleRandom;//数据自持同步点（见 BattleState.cs）
+            BattleState.BattleRandom = BattleRandom;//数据自持同步点（见 BattleState.cs）
             ApplyTeamEnhance();
             TerrainUtils.Main = mapRoot.terrain;
             mapRoot.Init(false);
@@ -165,7 +165,7 @@ namespace FPSGame.Managers
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
             WeatherCont = WeatherSystem.Create(Weather, transform);
-            Debug.Log($"[BattleManager] 本局天气: {Weather}（权威种子 {FPSGame.Data.TaskState.Seed}）");
+            Debug.Log($"[BattleManager] 本局天气: {Weather}（权威种子 {TaskState.Seed}）");
 
                 Debug.Log("完成主要内容初始?");
             yield return null;
@@ -177,7 +177,7 @@ namespace FPSGame.Managers
             DrainInitQueue();
             yield return WaitAllPlayersLoaded();   // ★ 联机：等所有端都加载完战斗场景再一起开打
             IsStartBattle = true;
-            FPSGame.Data.BattleState.IsStartBattle = true;//数据自持同步点（见 BattleState.cs）
+            BattleState.IsStartBattle = true;//数据自持同步点（见 BattleState.cs）
             Debug.Log($"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
 
 
@@ -224,7 +224,7 @@ namespace FPSGame.Managers
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
             WeatherCont = WeatherSystem.Create(Weather, transform);
-            Debug.Log($"[BattleManager] 本局天气: {Weather}（权威种子 {FPSGame.Data.TaskState.Seed}）");
+            Debug.Log($"[BattleManager] 本局天气: {Weather}（权威种子 {TaskState.Seed}）");
 
                 Debug.Log("完成主要内容初始?");
             yield return null;
@@ -369,16 +369,16 @@ namespace FPSGame.Managers
 
             // 数据自持的**跨局重置**：BattleState 是静态的，不会随新实例自动归零
             // ⇒ 不清就会把上一局的全队强化 / 开战状态 / 随机源带进新一局（原实例字段是天然归零的）。
-            FPSGame.Data.BattleState.Reset();
+            BattleState.Reset();
 
             UnitEventBus.OnUnitPosChange += OnUnitPosChange;
             UnitEventBus.OnEnemyCreate += OnEnemyCreate;
             UnitEventBus.OnEnemyDead += OnEnemyDeath;
             UnitEventBus.OnPlayerCreate += OnPlayerCreate;
             UnitEventBus.OnPlayerDead += OnPlayerDeath;
-            //GlobalEventSub.OnOOPartCollect += OOPartCollect;
+            //GlobalEventBus.OnOOPartCollect += OOPartCollect;
             GlobalEventBus.OnDaySwitch += OnDatSwitch;
-            // 战斗命令事件（2026-10-01 由服务契约下沉，见 BattleEventSub）
+            // 战斗命令事件（2026-10-01 由服务契约下沉，见 BattleEventBus）
             BattleEventBus.OnEndGame += EndGame;
             BattleEventBus.OnSubmitOOPart += SubmitOOPart;
             BattleEventBus.OnRevealAllMissions += HandleRevealAllMissions;
@@ -402,7 +402,7 @@ namespace FPSGame.Managers
             UnitEventBus.OnEnemyDead -= OnEnemyDeath;
             UnitEventBus.OnPlayerCreate -= OnPlayerCreate;
             UnitEventBus.OnPlayerDead -= OnPlayerDeath;
-            //GlobalEventSub.OnOOPartCollect -= OOPartCollect;
+            //GlobalEventBus.OnOOPartCollect -= OOPartCollect;
             GlobalEventBus.OnDaySwitch -= OnDatSwitch;
             // 战斗命令事件退订（成对，见 Awake）
             BattleEventBus.OnEndGame -= EndGame;
@@ -421,7 +421,7 @@ namespace FPSGame.Managers
             {
                 BattleHub.Current = NullBattleService.Instance;
                 if (ReferenceEquals(UnitQuery.Sink, this)) UnitQuery.Sink = null;
-                FPSGame.Data.BattleState.Reset();
+                BattleState.Reset();
             }
         }
 
@@ -689,7 +689,7 @@ namespace FPSGame.Managers
         /// 战备控制器就绪后补一次昼夜授权。
         /// 场景里的 DayNightBrain.Start 会抛开局那次昼夜事件，但 BattleManager 是被
         /// AsyncLoadScene 的回调（被延后一帧）创建的，订阅永远晚于事件 → 开局那一次会漏，
-        /// 所以这里按 GlobalEventSub 缓存的状态补一次（开局即夜晚时尤其重要）。
+        /// 所以这里按 GlobalEventBus 缓存的状态补一次（开局即夜晚时尤其重要）。
         /// </summary>
         private void ApplyInitDaySwitch()
         {
@@ -722,7 +722,7 @@ namespace FPSGame.Managers
         private void ApplyTeamEnhance()
         {
             _activeTeamEnhance = TeamManager.Instance.players.Where(item => item.boosterId > 0).Select(item =>ResSvc.boostDic[item.boosterId].type).ToArray();
-            FPSGame.Data.BattleState.ActiveTeamEnhance = _activeTeamEnhance;//数据自持同步点（唯一写入点，见 BattleState.cs）
+            BattleState.ActiveTeamEnhance = _activeTeamEnhance;//数据自持同步点（唯一写入点，见 BattleState.cs）
 
         }
 

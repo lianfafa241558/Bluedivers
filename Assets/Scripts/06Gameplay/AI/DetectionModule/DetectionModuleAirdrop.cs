@@ -8,7 +8,7 @@ using FPSGame.Gameplay;
 namespace FPSGame.AI
 {
     /// <summary>
-    /// 侦测模块：监听战备空投事件（BattleEventSub.OnAirdrop），
+    /// 侦测模块：监听战备空投事件（BattleEventBus.OnAirdrop），
     /// 收到空投时把落点设为当前目标并触发发现，令单位转向攻击该点。
     /// 不做强制锁定，攻击超时（AirdropAttackTimeout）后自动清除点位目标停止攻击，
     /// 期间/之后仍可被常规侦测的敌人目标覆盖。

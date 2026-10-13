@@ -108,7 +108,7 @@ namespace FPSGame.Gameplay
         /// 它是**无返回值的命令** ⇒ 事件比"下层调用上层服务"更贴语义。</para>
         ///
         /// <para>⚠ 为什么不能"直接写 <c>FPSGame.Data.FlowState.GameState</c>"：那会**绕过广播副作用**
-        /// （<c>GameRoot.GameState</c> 的 setter 会发 <c>GlobalEventSub.SceneChange</c>，UI/音频都在听）
+        /// （<c>GameRoot.GameState</c> 的 setter 会发 <c>GlobalEventBus.SceneChange</c>，UI/音频都在听）
         /// —— **切阶段是命令，不是数据**：数据自持只承担"状态查询"，写入必须走命令通道。</para>
         /// </summary>
         public static event Action<GameStateEnum> OnRequestGameState;

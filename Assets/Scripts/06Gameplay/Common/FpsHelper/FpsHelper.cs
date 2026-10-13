@@ -41,7 +41,7 @@ public static partial class FpsHelper
     /// </summary>
     public static bool IsMainStage()
     {
-        // 走「数据自持」（2026-10-01 取代 ServiceLocator.Flow）：GameRoot 在 01Manager 发布，本层直读。
+        // 走「数据自持」（2026-10-01 取代 ServiceLocator.Flow）：GameRoot 在 09Manager 发布，本层直读。
         // ⚠ 原来的 `flow != null &&` 是**死判空**（槽位永不 null，空对象返回 false）⇒ 已清掉。
         return FPSGame.Data.FlowState.IsMainStage;
     }

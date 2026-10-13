@@ -1,4 +1,4 @@
-﻿// 由 AirdropController（01Manager/Battle）解嵌套下沉而来（2026-10-01，P5-3）。
+﻿// 由 AirdropController（09Manager/Battle）解嵌套下沉而来（2026-10-01，P5-3）。
 // 下沉理由：AirdropController 属 09_Managers，而玩法层（Mission/Player/AI/Interactable…）到处用这两个类型
 // ⇒ 不搬出来玩法层无法成集。**放玩法层而不是契约层**：AirdropData 依赖 `AirdropData_SO`（04_Data），
 // 而 04_Data 引用了 01_GameContract ⇒ 契约不能反过来引 04_Data（成环）。
@@ -208,7 +208,7 @@ namespace FPSGame.Gameplay
     /// <para>▍为什么必须搬：该字段的类型 <see cref="AirdropData"/> 现在属**玩法层**，而读写它的既有两类代码是
     /// 玩法层（<c>PlayerWeaponsManager</c>）与上层（<c>AirdropController</c>/<c>Effect/FlareGun</c>）。
     /// 玩法层若直连 <c>AirdropController</c> 就是上行依赖；而它的值还要被**原样传进**
-    /// <c>BattleEventSub.CancelAirdrop(go, data)</c> ⇒ **无法用契约投影**（契约层命名不了玩法层的
+    /// <c>BattleEventBus.CancelAirdrop(go, data)</c> ⇒ **无法用契约投影**（契约层命名不了玩法层的
     /// <see cref="AirdropData"/>）。⇒ 状态与类型放同一层最省。</para>
     ///
     /// <para>▍<c>AirdropController</c> 里保留了**同名转发属性**，故管理器/表现层的既有调用点零改动。</para>

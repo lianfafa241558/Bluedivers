@@ -14,7 +14,7 @@
 
         /*
          * [P1] UnitQueryGrid / BattleManager 的空间查询分配
-         * 位置：Assets/Scripts/02Game/Game/UnitQueryGrid.cs、Assets/Scripts/01Manager/Battle/BattleManager.cs
+         * 位置：Assets/Scripts/06Gameplay/Game/UnitQueryGrid.cs、Assets/Scripts/09Manager/Battle/BattleManager.cs
          * 现状：QueryUnits 内部节点列表已用对象池复用；但 FindUnits / GetOverlapsUnits 仍每次
          *       new List<I_Actor>(...) / new HashSet，高频调用（武器锁敌、AI、爆炸、小地图）会造成 GC 压力。
          * 方案：为高频调用方引入可复用的缓冲 List（传入缓存实例，或按调用线程复用池化列表），

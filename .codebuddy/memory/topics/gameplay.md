@@ -44,6 +44,11 @@
     `EnemyController._OnDamaged` 的口径 = "取不到可用单位身份就回落 origin 做阵营判定"（保持"地雷炸了怪、怪照样被激怒"）。
   - 联机侧字段与远端重建见 `net-battle.md`（`DamageMsg.CausedNetId`）。
 
+## 战备（AirdropController）
+- 表**各端各自一份**：`useAd` 只装本机玩家那份（`Self.airdrop` + `RequiredADOf(自己角色)`）；别人的呼叫只以"结果"过网（4027/4028 → `NetFriendBridge.HandleAirdropCall` → `ReleaseAirdrop` 复现，`owner = null` ⇒ 不计呼叫次数、不回声）。
+- ⭐ **团队冷却 `teamCool`（2026-10-13 实装）**：任一玩家释放 ⇒ **每台机器把自己那份同名战备**置 Cool（`time = item.cool`，与 `coolGroup` 同口径）。两个触发点：① 本机释放 = `OnAirdropStateChange(Arrive)` 里 `ApplyTeamCool(id, except: data)`（那一发自己走 Arrive→Sustain→Cool，`cool - 持续 - 部署` ⇒ 结束时刻正好对齐）；② 队友释放 = 4028 接收钩子 `HandleAirdropCall` 里 `bm.ADCont?.ApplyTeamCool(id)`。判据 `cfg.teamCool` 在 `ApplyTeamCool` 内查；`Unavailable`（次数耗尽）不动（团灭判负读它）。
+- ⚠ `isDirect`（增援 HealBag）**不走信标、也不发 4027/4028** ⇒ `teamCool` 对它不生效（2026-10-13 用户拍板：保持次数制 + "有层数不读条"不改）。另一种共 CD 是 `coolGroup`（同组条目一起 Cool，只在本机 useAd 内生效）。
+
 ## 寻路
 - NavMesh 异步管线由 `PathRequestManager` 统一排队
 - ⚠ 老坑：单位多（~40）时 `pathPending` 被误判超时 ⇒ 重试风暴 ⇒ 队列堆积、单位执行过时旧路径乱走（`agent.destination` 仍是旧目标）。**修法：只在 `pathPending=false` 之后判真正失败**（`PathInvalid`/单点 `PathPartial`）+ 投影重试 + 10m 兜底；`RequestPath` 的 `log` 参数由 `EnemyController.SetNavDestination(isImportant)` 控制

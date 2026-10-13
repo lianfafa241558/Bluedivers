@@ -60,6 +60,9 @@ namespace FPSGame.Net
             _client = new KCPNet<ClientSession, NetMessage>();
             // 注入本机身份：随握手上报 ⇒ 房主按 clientId 去重（换端口重连也认得出是同一个人）
             _client.ClientId = _clientId;
+            // TODO(加密)：公网直连要开就**两端一起开** —— 在这里（StartAsClient 之前）写
+            //   `_client.EnableEncryption = true;`，房主侧同款见 NetServer.Start。
+            //   库默认 false = 明文（局域网够用）；只开一端会握手不上（走的是 RSA 换 AES 那套）。
             _client.StartAsClient(room.HostIp, room.HostPort);
 
             var kcp = _client;

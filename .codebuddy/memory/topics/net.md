@@ -21,12 +21,25 @@
 - 库自带的 `MessagePack.GeneratedMessagePackResolver` 是 **internal**（外部引用 `CS0122`）；库侧自己传 options ⇒ 库本身 AOT 安全，只有我们的 DTO 会踩默认 resolver。
 
 ## 3. 库（KCPNet.dll）要点
-- `LanRoomInfo` 现 **13 字段**：`RoomName/HostIp/HostPort/PlayerCount/MaxPlayers/MapName/PasswordProtected/Version/PlayerNames[]` + `int Difficulty(-1)/int TaskMain(-1)/bool InGame/int Source`；JSON 键 `difficulty/taskMain/inGame/source`；`ToJson()` 实例方法、`FromJson(json)` 静态方法，**忽略未知 key、缺 key 给默认值** ⇒ 新旧房主可混联。`Difficulty < 0` 表示"广播里没有"。
+- `LanRoomInfo` 现 **16 字段**：`RoomName/HostIp/HostPort/PlayerCount/MaxPlayers/MapName/PasswordProtected/Version/PlayerNames[]` + `int Difficulty(-1)/int TaskMain(-1)/bool InGame/int Source` + **2026-10-13 新增** `string HostName`（显示用真房主名）/`string RoomId`（开房生成的 GUID = 房间身份）/`int TaskIndex`（地图内任务下标）；JSON 键 `difficulty/taskMain/inGame/source/hostName/roomId/taskIndex`；`ToJson()` 实例方法、`FromJson(json)` 静态方法，**忽略未知 key、缺 key 给默认值** ⇒ 新旧房主可混联。`Difficulty < 0` 表示"广播里没有"。
 - 常量：`NetConfig.HostGamePort=17666 / LanBroadcastPort=29800 / LanSelfBroadcastPort=29801 / HeartbeatIntervalMs=3000 / DefaultTimeoutMs=15000`；`LanDiscoveryConfig.ListenPort=29800 / AnnounceIntervalMs=2000 / DiscoveryTimeoutMs=1500 / RoomExpireMs=6000`。⚠ `NetConfig` 在**库内部**（工程里没有 .cs）⇒ 常量改不了，只能逐会话设属性。
 - ⚠ 本机同时开房时 29800 被 `LanBroadcaster` 占用 ⇒ `LanDiscoverer` 降级 29801，此时收不到 ANNOUNCE，只能靠周期 `Scan()` 维持列表。
 - ⚠ `PlayerNames[0]` 是**合成名** `Host_<HHmmssfff>`（成员端用它排除自己开的房），不是真实玩家名。
 - ⚠ **换 DLL 后 Unity 里的旧程序集不会自动换**：`ImportAsset(ForceUpdate)` 单独调用无效，必须再 `refresh_unity(force,all,request)` 触发域重载；判据 = `unity_reflect` 数出的字段数变了。
 - ⚠ "服务器/局域网"**没有数据来源**：`NetSvc.SRV_IP="127.0.0.1"` 是硬编码示例、`ConnectDefaultServer()` 无调用点 ⇒ 房间列表只能按 `HostIp` 猜（`ServerListPanel.RoomNetType`/`IsLanAddress`）。
+
+### 3.0 发现层 `HostIp` 口径（2026-10-13 源码核对；报告 `.codebuddy/plans/KCPNet源码分析报告.md`）
+- **库 0 个 `HostIp` 赋值点**（`LanBroadcaster.cs:95,147` 只 `info.ToJson()` 透传；`LanRoomInfo.cs:24` 默认 `""`）；**不挑网卡、不排 Loopback**（全库无 `NetworkInterface/Dns./AddressFamily`）⇒ 广播出口网卡 = OS 路由表（255.255.255.255 受限广播）。
+- ⭐ **成员端每次都覆盖**：`LanDiscoverer` 收 ANNOUNCE 后 `info.HostIp = result.RemoteEndPoint.Address`（`LanDiscoverer.cs:154-156`），去重键也用 `sourceIp:HostPort`（`:163`）⇒ **房主侧给 `RoomInfo.HostIp` 赋值对成员无效**（2s 一次被冲掉）；也别指望"手工改 `GetRooms()` 里的值"（每 2s 换新对象）。
+- 跨机时该 source IP **天然可达**（能收到这包就证明同域）；"HostIp=127.0.0.1"**只同机**成立、而同机也能连 ⇒ **排障别看"HostIp 值对不对"**，直接看 `NetRoomFlow.cs:398` 打出的 `<ip>:<port>`。
+- ⚠ 残留唯一风险：多网卡时周期广播与 `RespondLoop` 单播应答共用 `Bind(IPAddress.Any)` 的同一 socket（`LanBroadcaster.cs:68,150`）⇒ 两者 source 可能是不同网卡 ⇒ 库按 `sourceIp:HostPort` 去重会出现**同一房间两行**（一行连不通）。我方 `ServerListPanel.QueryRooms():636-645` 无去重；`RoomKey():634` 仅供 `BuildSignature` ⇒ 要去重得在 `QueryRooms` 按 `PlayerNames[0] + HostPort` 分组。
+- 报告 §0 提醒：若 DLL 早于 2026-10-10 的服务端会话重构，§3.2 幽灵会话结论不适用（自检判据见 §3.2）。
+
+### 3.0b 库 2026-10-13 更新（DLL 已换；`LanRoomInfo` 16 字段 / 方法含 `IsFromExpectedPeer`・`ResolveAddress`・`EnableEncryption`）
+- **⑤ 覆盖口径反转**：`LanDiscoverer` 现在**房主显式填了可解析 IP 就信任**，只有在 `HostIp` 为空/不可解析时才退回"收包 source"。⇒ 我方新增可选字段 `NetHostSvc.advertiseIp`（`[InspectorName("广播地址(可选)")]`，空 = 旧行为；非 IP 字面量 ⇒ 打 `LogWarning` 并当空串，**填错会让所有成员连不上**）。多网卡 / 虚拟局域网内测就靠它。
+- **① 域名**（`StartAsClient` 走 `ResolveAddress`）/ **② 回包源校验放宽**（同 IP 不同端口会被接受并把 `remotePoint` 学习成实际来源 —— 端口映射 / 中转的前提）/ **③ 握手按 `NetConfig.HandshakeRetryIntervalMs=300` 重发** / **④ `EnableEncryption`（默认 false，旧行为不变）** —— 全在库内，我方零改动。
+- **⑥ 去重键**：`LanDiscoverer` 优先用 `RoomId`；我方同步改为 `ServerListPanel.RoomIdentity` 首选 `RoomMeta.RoomId`、`NetRoomFlow.IsHostOfRoom` 首选 `host.RoomInfo.RoomId == room.RoomId`（老房主无该字段 ⇒ 自动退回旧判据）。
+- ⚠ `TaskIndex` **目前没有消费点**：列表的任务三件套（图标/颜色/名）靠 `TaskMain` 枚举已精确，`TaskIndex` 只在"要显示具体任务名 / 双端校验同一份 `TaskCfg`"时才有用 ⇒ 已进广播 + 留了 `RoomMeta.TaskIndex` 读取口，别为它硬改 UI。
 
 ### 3.1 心跳 / 超时（两条独立时钟，别混）
 - 库：`KCPSession` 基类每 3s 双向发**心跳裸字节**（带魔数，`IsHeartbeat` 全等判定）⇒ **永远到不了 `OnReciveMsg`/`MessageCenter`**；超时看 `_lastRecvTimeUtcTicks`（15s，任意 UDP 包都刷）⇒ 库自己 `CloseSession()`。
@@ -39,6 +52,7 @@
 - 现象：房主侧同一对端反复"新建会话 + 关旧会话"（实测 ~5 次/秒），sid 在固定几个值间循环、`ep:` 键每秒重建。
 - IL 实证：`BuildIdentityKey(clientId, ep)` ⇒ 有 clientId 用 `cid:`（**玩家那条稳**）、否则 `ep:`；`ParseClientId` 解析不出返回 null ⇒ 落回 `ep:` ⇒ **不带 clientId 的握手每来一次就新建会话（不幂等复用）**，每次关都触发 `OnDisConnected` 刷屏。
 - 诉求（可直接转发作者）：① 会话表按 identityKey/endpoint **幂等复用**；② 重复/重传的 `REQUEST_CONNECT` 不建新会话；③ 未完成握手的会话及时回收。
+- ✅ **2026-10-13 源码核对：三条诉求在 10-10 版已全部实现** —— 未知 sid 数据包**直接丢弃不建会话**、`HandleConnectRequest` 只复用不替换（`KCPNet.cs:323-339,162-196`）；握手期 8s 短超时回收（`KCPNet.cs:207-231`）。**自检判据**（日志文案）：`会话ID:{0}（身份 {1}）添加到会话字典` = 新版 / `会话ID:{0}添加到会话字典` = 旧版。⚠ 若仍复现幽灵会话 ⇒ 说明工程里的 DLL 还是旧版，需替换。
 - ⚠ 仍未钉死：**谁在发"不带 clientId 的握手"**（对端老包 / 库自重试 / KCP 分包）—— 需 Play 中逐秒采样 `sidToKey` 看 `cid:` 是否也在换。
 - ⚠ **持久 clientId 的两行**（库 2026-10-09 版新增 `KCPNet<T,K>.ClientId`）：写在 `02_Net/Transport/NetClient.cs`（`private readonly string _clientId = Guid.NewGuid().ToString("N")` + 在 `new KCPNet<...>` 之后、`StartAsClient` 之前设 `_client.ClientId`）。⚠ 这两行**被覆盖过 2 次**（拆分改名 + 外部编辑器缓冲区存回）⇒ 改完必须用 `02_Net.dll` **字节含 `_clientId`** 收尾核对，别只信编辑返回值。
 

@@ -15,7 +15,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
     // ⚠ `IFlowService` 实现已于 2026-10-01 全部删除（本类不再实现该接口，接口文件也已删除）：
     //   · 状态查询（GameState/IsMainStage/IsLocal）→ 数据自持 `FPSGame.Data.FlowState`（本类负责**发布**）
     //   · 调度（RunCoroutine/CreateTimer/CreatePerTimer）→ `00_Core` 的 `TimerHost`（宿主由 GameRootBase 发布）
-    //   · 切阶段命令（SetGameState）→ 事件 `GlobalEventSub.OnRequestGameState`（本类订阅，见 OnRequestGameState）
+    //   · 切阶段命令（SetGameState）→ 事件 `GlobalEventBus.OnRequestGameState`（本类订阅，见 OnRequestGameState）
 
     public static float TimeScale
     {
@@ -79,10 +79,10 @@ public partial class GameRoot : GameRootBase<GameRoot>
         if (Instance != this) return;
         // ⚠ 2026-10-01：不再向 ServiceLocator 注册（`Flow` 槽已删除）——本类改当**发布方**：
         //   状态查询发布到 `FPSGame.Data.FlowState`、调度宿主由 GameRootBase 发布到 `TimerHost`、
-        //   切阶段命令由本类订阅 `GlobalEventSub.OnRequestGameState`。
+        //   切阶段命令由本类订阅 `GlobalEventBus.OnRequestGameState`。
         // ⚠ IsLocal 是本类上的**序列化字段**，只在启动时确定 ⇒ 在此镜像一次（见 FPSGame.Data.FlowState）
         FPSGame.Data.FlowState.IsLocal = IsLocal;
-        // 订阅"请求切阶段"命令（2026-10-01 取代 IFlowService.SetGameState；见 GlobalEventSub）
+        // 订阅"请求切阶段"命令（2026-10-01 取代 IFlowService.SetGameState；见 GlobalEventBus）
         GlobalEventBus.OnRequestGameState += OnRequestGameState;
         timeScale = Time.timeScale;
 

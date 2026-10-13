@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.GameContract;
-using Unity.Burst.CompilerServices;
 using FPSGame.Game;
 using FPSGame.Gameplay;
 using UnityEngine;
-using UnityEngine.UIElements;
 using FPSGame.Audio;
-using static UnityEngine.UI.Image;
 using FPSGame.Data;
 using FPSGame.Utils;
 using FPSGame.GameData;
@@ -24,7 +20,7 @@ namespace FPSGame.Managers
     /// 
     /// 【普通释放】（isDirect = false）
     ///   Open → Input（输入方向键）→ OnWaitRelease（state=Wait）→ 关闭面板
-    ///   → 玩家选点 → VFXAirdropEffect.SetOwner → BattleEventSub.Airdrop
+    ///   → 玩家选点 → VFXAirdropEffect.SetOwner → BattleEventBus.Airdrop
     ///   → OnRelease（state=Arrive）→ 落地 → state=Sustain → 结束 → state=Cool/Unavailable
     /// 
     /// 【直接释放】（isDirect = true，如飞鹰装填、HealBag）
@@ -38,7 +34,7 @@ namespace FPSGame.Managers
     {
 
         /// <summary>当前待释放的空投。**实际状态已下沉玩法层**（见 <c>AirdropReleaseState</c>：
-        /// 它的类型属玩法层，且要被原样传进 `BattleEventSub` 事件 ⇒ 无法走契约投影），
+        /// 它的类型属玩法层，且要被原样传进 `BattleEventBus` 事件 ⇒ 无法走契约投影），
         /// 这里只保留同名转发属性，让管理器/表现层既有调用点零改动。</summary>
         public static AirdropData WaitRelease
         {
@@ -252,7 +248,7 @@ namespace FPSGame.Managers
                 }
                 var beacon = VFXManager.Creat(ResSvc.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), targetPoint, Quaternion.Euler(0, camera.transform.eulerAngles.y, 0), null);
                 beacon.GetComponent<IVfxEffect>()?.SetOrigin(Player.gameObject, Player.transform.GetComponent<PlayerWeaponsManager>().GetWeapon(WeaponTypeEnum.FlareGun).gameObject, null, targetPoint);
-                //BattleEventSub.Airdrop(Player.gameObject, null, targetPoint, item);
+                //BattleEventBus.Airdrop(Player.gameObject, null, targetPoint, item);
             }
 
         }
@@ -316,6 +312,34 @@ namespace FPSGame.Managers
             data.authorizeCounter += state ? 1 : -1;
             if ((state && data.authorizeCounter == 1) || (!state && data.authorizeCounter == 0)) BattleEventBus.AuthorizeAirdrop();
             //Debug.LogError(ad.cfg.showName+"授权状态"+ad.authorizeCounter+ " "+ad.IsAuthorize);
+        }
+
+        /// <summary>
+        /// 团队冷却（<see cref="AirdropData_SO.teamCool"/>）：把本机玩家那份**同名战备**置为冷却。
+        ///
+        /// <para>▍为什么要外部来调：战备表是**各端各自一份**的（<see cref="useAd"/> 只装本机玩家那份），
+        /// 队友放的那一发在本机只是"呼叫同步"（4027/4028）⇒ 由 <c>NetFriendBridge.HandleAirdropCall</c> 调本方法冻住本机这份。
+        /// 判据（<c>cfg.teamCool</c>）在这里查，调用方只管给 id。</para>
+        /// <para>⚠ <paramref name="except"/> 传"本机正在释放的那一发"：它自己走 Arrive→Sustain→Cool，
+        /// 且 <c>Cool</c> 的时长是 <c>cool - 持续 - 部署</c> ⇒ 结束时刻与这里写的 <c>time = cool</c> 正好对齐，别再去动它。</para>
+        /// </summary>
+        /// <param name="airdropId">被释放的战备 id（<c>AirdropData_SO.ID</c>）。</param>
+        /// <param name="except">本机自己正在释放的那一发，跳过。</param>
+        public void ApplyTeamCool(int airdropId, AirdropData except = null)
+        {
+            if (airdropId <= 0 || useAd == null) return;
+            var dic = adDic;
+            if (dic == null || !dic.TryGetValue(airdropId, out var cfg) || cfg == null || !cfg.teamCool) return;
+
+            foreach (var item in useAd)
+            {
+                if (item == except || item.cfg == null || item.cfg.ID != airdropId) continue;
+                // 次数耗尽的（Unavailable）不动：冻它没意义，还会破坏"用完了"这个判据（团灭判负读它）
+                if (item.State == AirdropState.Unavailable) continue;
+                item.State = AirdropState.Cool;
+                item.time = item.cool;   // 同 coolGroup 口径：从"释放瞬间"起算完整冷却
+                NetSyncLog.SyncLog("战备/团队冷却", $"{cfg.showName}(id={airdropId}) {item.cool}s");
+            }
         }
 
         private void OnAirdropStateChange(AirdropData data,AirdropState state)
@@ -392,6 +416,10 @@ namespace FPSGame.Managers
                             }
                         }
                     }
+                    //团队冷却：这一发勾了 teamCool ⇒ 本机其余同名条目立刻进 CD；队友那几台靠呼叫同步（4027/4028）
+                    //到 NetFriendBridge.HandleAirdropCall 后各调一次 ApplyTeamCool。
+                    //⚠ 直接释放(isDirect)的战备不走信标、也到不了这里 ⇒ 目前对它们不生效（见 AirdropData_SO.teamCool）
+                    ApplyTeamCool(data.cfg.ID, data);
                     break;
                 case AirdropState.Cool:
                     if (data.cfg.ID == Constants.HealBag)

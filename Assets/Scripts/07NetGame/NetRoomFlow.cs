@@ -379,6 +379,18 @@ namespace FPSGame.Net
                 FinishJoin(false, "房间数据为空");
                 return;
             }
+
+            // ★ 版本门槛（2026-10-13 用户口径）：不同版本的房间**照常在列表里可见**，
+            //   只在"点加入"这一刻拦下来。两句提示分得清是谁该更新：
+            //   对方更旧 ⇒ 对方版本不同无法联机；自己更旧 ⇒ 提示本端该更新。
+            //   ⚠ 判不出来（老房主没带 Version / 手动直连）一律放行，见 RoomMeta.TryParseVersion。
+            string versionBlock = RoomMeta.VersionBlockTip(room);
+            if (versionBlock != null)
+            {
+                FinishJoin(false, versionBlock);
+                return;
+            }
+
             if (IsJoining)
             {
                 cb?.Invoke(false, "正在连接中，请稍候");
@@ -439,6 +451,12 @@ namespace FPSGame.Net
             if (host == null || host.RoomInfo == null || room == null) return false;
             if (room.HostPort != host.RoomInfo.HostPort) return false;
 
+            // ★ 首选 RoomId（房主开房时生成的 GUID）：与网卡 / 端口 / 合成名都无关 ⇒ 最稳的"这是我的房"判据
+            string selfRoomId = host.RoomInfo.RoomId;
+            if (!string.IsNullOrEmpty(selfRoomId) && !string.IsNullOrEmpty(room.RoomId))
+                return selfRoomId == room.RoomId;
+
+            // 老版本房主（没带 RoomId）退回"合成房主名"那条既有约定
             string self = host.SelfHostName;
             var names = room.PlayerNames;
             if (string.IsNullOrEmpty(self) || names == null) return false;

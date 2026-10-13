@@ -19,9 +19,9 @@ public class Furniture_General : Furniture_Attached
 
     protected FurnAction<Furniture_General> action;
 
-        // 打开窗口一律经**事件总线**（GlobalEventSub.OpenWnd(WndTypeEnum.X)），由 WndManager 订阅后转调 WindowRegistry；
-        // 不要再直连 WndManager 的具体窗口字段（那是 04UI 的类型 ⇒ 玩法层会反向依赖 UI 层，程序集切不开）。
-        // 见 FPSGame.GameContract/WndType.cs 与 06Gameplay/GlobalEventSub.cs。
+        // 打开窗口一律经**事件总线**（GlobalEventBus.OpenWnd(WndType.X)），由 WndManager 订阅后转调 WindowRegistry；
+        // 不要再直连 WndManager 的具体窗口字段（那是 10UI 的类型 ⇒ 玩法层会反向依赖 UI 层，程序集切不开）。
+        // 见 FPSGame.GameContract/WndType.cs 与 06Gameplay/GlobalEventBus.cs。
         // （2026-10-01 之前这里写的是 ServiceLocator.Wnd.SetWndState；Wnd 槽已删除。）
 
         private static Dictionary<string, FurnAction<Furniture_General>> furnData = new Dictionary<string, FurnAction<Furniture_General>>()
@@ -152,7 +152,7 @@ public class Furniture_General : Furniture_Attached
                     player.UseSupply();
                     furn.BaseOp();
                     // 原来这里判 "BattleManager.Instance != null"；服务未就绪时 AddBattleDataItem 是空实现；
-                    // 2026-10-01 起改走事件（BattleEventSub）⇒ 无订阅者时静默丢弃，守卫彻底冗余。
+                    // 2026-10-01 起改走事件（BattleEventBus）⇒ 无订阅者时静默丢弃，守卫彻底冗余。
                     FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(player.PlayerIndex, "使用补给次数");
                 }
             }

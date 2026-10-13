@@ -7,15 +7,15 @@ using FPSGame.Core;
 namespace FPSGame.GameContract
 {
     /// <summary>
-    /// 窗口注册表（2026-10-01 建，用于**切断 `01Manager → 04UI` 的反向依赖**）。
+    /// 窗口注册表（2026-10-01 建，用于**切断 `09Manager → 10UI` 的反向依赖**）。
     ///
     /// <para>▍它解决什么：<c>WndManager</c> 原先持有 10 个**具体窗口字段**
-    /// （<c>selectRoleWnd</c>/<c>guideWnd</c>/<c>settingWnd</c>…，都是 `04UI` 类型）⇒
+    /// （<c>selectRoleWnd</c>/<c>guideWnd</c>/<c>settingWnd</c>…，都是 `10UI` 类型）⇒
     /// 「管理器 → UI」的反向依赖，`09_Managers` 与 `10_UI` 都切不出来。
     /// 本类用**委托**当插槽（不存窗口对象、不出现任何 UI 类型），UI 层把自己登记进来，
     /// 管理器经它转调 ⇒ 契约层对"窗口"只剩**动词**。</para>
     ///
-    /// <para>▍谁登记：UI 层的 <c>WndHub</c>（`04UI/WndHub.cs`）在窗口自注册时填充这些插槽，
+    /// <para>▍谁登记：UI 层的 <c>WndHub</c>（`10UI/WndHub.cs`）在窗口自注册时填充这些插槽，
     /// 并把 <see cref="Scanner"/> 设成"重新扫描场景里全部窗口（含未激活）"的委托 —— 这样
     /// **窗口从未被打开过也能被打开**（窗口平时是关着的，`Awake`/`Init` 可能还没跑）。</para>
     ///

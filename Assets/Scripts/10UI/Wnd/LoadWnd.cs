@@ -24,7 +24,7 @@ public class LoadWnd : Window
 
     protected override void FirstShowWnd()
     {
-        //GlobalEventSub.OnGameStateChange += GameStateChange;
+        //GlobalEventBus.OnGameStateChange += GameStateChange;
     }
 
 

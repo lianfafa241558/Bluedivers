@@ -27,7 +27,7 @@ namespace FPSGame.GameData
         // ⚠ `frame`（模组边框图标）已于 2026-10-01 **移除**：它原先在本类（数据层）里直接调
         //   `ServiceLocator.Res.LoadSprite(...)` 并返回 `Sprite` ⇒ 双重违规：
         //   ① 数据层调用上层服务；② 表现概念（Sprite）进入数据层。
-        //   现在由**表现侧按 type 查表加载**：见 `04UI/SelectRoleWnd.LoadModuleFrame(data)`。
+        //   现在由**表现侧按 type 查表加载**：见 `10UI/SelectRoleWnd.LoadModuleFrame(data)`。
         //   （`icon`/`typeName`/`color` 留在这里是合理的：前两者是本 SO 自带的序列化资产/纯字符串，
         //    `color` 是纯值；真正越界的是"向服务要资源"。）
 

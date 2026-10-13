@@ -665,6 +665,7 @@ public partial class SettingWnd : Window
             Difficulty = taskManager.nowTask.activeTask ? (int)taskManager.nowTask.difficulty : -1,
             HostName = hostName,
             TaskMain = taskManager.NowTaskMain,
+            TaskIndex = -1,   // ⚠ 结构体默认值是 0（不是 -1）⇒ 不显式写会被当成"第 0 个任务"
         };
 
         if (!flow.Host(options, out string reason))

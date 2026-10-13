@@ -29,6 +29,10 @@ public class SelectMapWnd : Window
     /// 期间一旦搜到就提前结束（见 <see cref="MatchRoutine"/>）。</summary>
     private const float MatchSearchSeconds=2f;
 
+    /// <summary>快速匹配期间**重发 DISCOVER 的间隔**（秒）。库的 <c>Scan()</c> 是裸 UDP 一次性发出、不重传，
+    /// 只扫一次的话那一个包丢了就整轮空 ⇒ 搜不到同伴、两人各自开房、互相看不见（展会现场最易翻车的点）。</summary>
+    private const float MatchRescanSeconds=1f;
+
     private MapWndState mapState;
     private float magnifc;
     private Vector2 primeRootSize, primeRootPos;
@@ -320,6 +324,8 @@ public class SelectMapWnd : Window
     /// 见方法末尾），玩家按「准备」时 <see cref="ConfirmTask"/> 再把本局任务补进广播。
     /// <para>▍为什么必须等：库的 <c>LanDiscoverer.Scan()</c> 是异步的（<c>DiscoveryTimeoutMs</c> 量级），
     /// 扫完下一行就 <c>GetRooms()</c> 必然拿到空表 ⇒ 每次都会误判成"没人开房"。</para>
+    /// <para>▍窗口内**反复重扫**（<see cref="MatchRescanSeconds"/>）：DISCOVER 是裸 UDP、库不重传，
+    /// 只扫一次的话那一个包丢了就整轮空 ⇒ 两人都点「加入」却各自开房、互相看不见。</para>
     /// </summary>
     private IEnumerator MatchRoutine()
     {
@@ -328,15 +334,23 @@ public class SelectMapWnd : Window
 
         var panel = serverPanel;
         if (panel) panel.EnsureDiscovery();   // 面板没打开过 ⇒ 先让发现器在听广播
-        if (panel) panel.Scan();
 
         var tip = WndHub.Tip;
         if (tip) tip.Creat(new() { title = "正在搜索房间", desc = "正在搜索相同任务的房间…" });
 
         LanRoomInfo room = null;
         float left = MatchSearchSeconds;
+        float rescan = 0f;                    // ≤0 ⇒ 进循环立刻发第一枪（等价于原来"进循环前 Scan 一次"）
         while (left > 0f)
         {
+            // 每 MatchRescanSeconds 补一枪（库的 Scan 要 ~DiscoveryTimeoutMs 才出结果，别每帧扫）
+            if (panel && rescan <= 0f)
+            {
+                panel.Scan();
+                rescan = MatchRescanSeconds;
+            }
+            rescan -= Time.unscaledDeltaTime;
+
             if (panel) room = panel.FindJoinableRoom(mapName, taskMain);
             if (room != null) break;
             left -= Time.unscaledDeltaTime;
@@ -358,7 +372,7 @@ public class SelectMapWnd : Window
         // ⚠ 建服时就把**当前选中的任务枚举**写进广播（CreateRoom 的 taskMain 形参）：不写的话房间广播里
         //   还是上一局的任务，别人按同任务搜房就搜不到这一间（要等按「准备」时 ConfirmTask 才刷新）。
         SelectPlayMode = 1;
-        if (!IsHosting()) CreateRoom(true, taskMain);   // ⚠ 已经在开房就别重开：同端口会 SocketException
+        if (!IsHosting()) CreateRoom(true, taskMain, SelectTaskIndex);   // ⚠ 已经在开房就别重开：同端口会 SocketException
         ExpandCfg();
     }
 
@@ -373,7 +387,9 @@ public class SelectMapWnd : Window
     /// <param name="taskMain">本房**主任务类型枚举值**（<c>MissionEnum</c> 的 int；&lt;0 = 用 <c>TaskManager.NowTaskMain</c>）。
     /// <para>▍快速匹配要传它：建服发生在"选完任务"之前，<c>NowTaskMain</c> 还是**上一局**的值
     /// ⇒ 广播出去的任务对不上，别人按同任务搜房就搜不到这一间。</para></param>
-    public void CreateRoom(bool silent = false, int taskMain = -1)
+    /// <param name="taskIndex">本局**地图内任务下标**（<c>SelectTaskIndex</c>；-1 = 未知）。
+    /// 随广播下发，供接收端定位"与房主同一份"的 <c>TaskCfg</c>。</param>
+    public void CreateRoom(bool silent = false, int taskMain = -1, int taskIndex = -1)
     {
         var flow = NetRoomFlow.Instance;
         if (flow == null)
@@ -401,6 +417,7 @@ public class SelectMapWnd : Window
             //   真正的权威时刻是下面的 ConfirmTask，它会就地刷新广播里的主任务枚举。
             //   （快速匹配那条路会显式传 taskMain，避开这个"上一局的值"的坑。）
             TaskMain = taskMain >= 0 ? taskMain : taskManager.NowTaskMain,
+            TaskIndex = taskIndex,
         };
 
         if (!flow.Host(options, out string reason))
@@ -779,7 +796,7 @@ public class SelectMapWnd : Window
         //     判断"我是不是房主"的，房间还不存在就轮不到广播本局配置（成员也就拿不到配置）。
         if (SelectPlayMode == 1 && !IsHosting())
         {
-            CreateRoom(true);
+            CreateRoom(true, -1, SelectTaskIndex);   // 任务枚举/下标随后由 host.ConfirmTask 就地刷新（那才是权威时刻）
             if (!IsHosting()) return;
         }
 

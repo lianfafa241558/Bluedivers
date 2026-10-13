@@ -77,7 +77,7 @@ namespace FPSGame.Weapon
         [SerializeField]
         private float DestructeRadius = 0;
 
-        //TODO:还没实现
+        
         /// <summary>冲击波半径</summary>
         [SerializeField]
         private float ShockwaveRadius = 0;

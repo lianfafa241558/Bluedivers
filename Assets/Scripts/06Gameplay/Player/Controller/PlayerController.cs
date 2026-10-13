@@ -184,8 +184,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
             IsThirdPerson = defaultThirdPerson;
             ApplyViewMode();
         }
-        //TODO: 临时诊断日志，定位完成后删除
-        Debug.LogWarning($"[挣脱诊断] {name} 被压住自动挣脱开关 = {_autoEscapeFromOverlap}", gameObject);
+        //Debug.LogWarning($"[挣脱诊断] {name} 被压住自动挣脱开关 = {_autoEscapeFromOverlap}", gameObject);
 
     }
 

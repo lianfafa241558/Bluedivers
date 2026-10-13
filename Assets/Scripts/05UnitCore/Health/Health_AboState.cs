@@ -189,7 +189,7 @@ namespace FPSGame.Game
             if (entry.VfxInstance != null) return;
             if (stateData.vfx == null || entry.Source == null) return;
             if (m_Unit == null) return;
-            // 走特效服务契约（原先直连 VFXManager ⇒ 单位内核反向依赖 01Manager，拆不动程序集）
+            // 走特效服务契约（原先直连 VFXManager ⇒ 单位内核反向依赖 09Manager，拆不动程序集）
             entry.VfxInstance = FPSGame.Core.VfxPool.Creat(
                 stateData.vfx,
                 transform.position,

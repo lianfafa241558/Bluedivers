@@ -25,7 +25,7 @@ public class ArchivesData_SO : ArchivesDataBase_SO
     /// 当前存档实例（**数据自持**，2026-09-30 为 P5 加入）。
     ///
     /// <para>▍为什么需要它：玩法层要读 <c>GetRoleCfg(...)</c> / <c>.weaponUpgradeDic</c> /
-    /// <c>.VehicleCustomDic</c>，而存档的**持有者** <c>ArchiveLoader</c> 在 01Manager
+    /// <c>.VehicleCustomDic</c>，而存档的**持有者** <c>ArchiveLoader</c> 在 09Manager
     /// ⇒ 进 asmdef 后玩法层看不见它。于是把 SO 引用留在**数据自己**身上
     /// （与 <c>AboStateData_SO.Dic</c> 完全同一套路）：上层 <c>ArchiveLoader.Init()</c> 写入，
     /// 全项目直接读 <c>ArchivesData_SO.Current</c>。</para>

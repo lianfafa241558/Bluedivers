@@ -12,7 +12,7 @@ namespace FPSGame.Gameplay
         protected FurnAction<Furniture_AttachedGeneral> action;
 
         // 原 `private static WndManager wndManager => WndManager.Instance;` 已于 2026-09-30 删除：
-    // 全类未使用，且玩法层不该点名上层具体类型（要开窗口一律发 GlobalEventSub.OpenWnd）。
+    // 全类未使用，且玩法层不该点名上层具体类型（要开窗口一律发 GlobalEventBus.OpenWnd）。
 
         private static Dictionary<string, FurnAction<Furniture_AttachedGeneral>> furnData = new Dictionary<string, FurnAction<Furniture_AttachedGeneral>>() 
         {

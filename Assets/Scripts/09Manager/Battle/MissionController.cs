@@ -41,9 +41,9 @@ public class MissionController : MonoBehaviour
 
     /// <summary>
     /// 暴露全图所有未结束任务（雷达站完成时调用）。
-    /// ▍原先这段遍历写在玩法层 `MissionLidarStation` 里（要访问 MissionCont.missions ⇒ 反向依赖 01Manager），
+    /// ▍原先这段遍历写在玩法层 `MissionLidarStation` 里（要访问 MissionCont.missions ⇒ 反向依赖 09Manager），
     /// 2026-09-30 收进本类，契约只暴露语义；2026-10-01 更进一步：契约成员本身已删，改由
-    /// <c>BattleEventSub.OnRevealAllMissions</c> 事件驱动（订阅方 = <c>BattleManager.HandleRevealAllMissions</c>）。
+    /// <c>BattleEventBus.OnRevealAllMissions</c> 事件驱动（订阅方 = <c>BattleManager.HandleRevealAllMissions</c>）。
     /// </summary>
     public void RevealAll()
     {
@@ -119,12 +119,7 @@ public class MissionController : MonoBehaviour
                 yield return null;
             }
         }
-        //TODO:为了方便测试。这个不该扔到战备控制器里
-        /*
-        foreach (var ad in root.RequiredAD)
-        {
-            BattleManager.Instance.Authorize(ad, true);
-        }*/
+
         isInitialized = true;
         while (!manager.IsStartBattle)
         {

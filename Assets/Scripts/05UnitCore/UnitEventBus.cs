@@ -8,13 +8,13 @@ namespace FPSGame.Game
 {
 
 /// <summary>
-/// 单位 / 噪声 / 命中 相关事件的**下层总线**（2026-09-30 从 BattleEventSub 拆出）。
+/// 单位 / 噪声 / 命中 相关事件的**下层总线**（2026-09-30 从 BattleEventBus 拆出）。
 ///
 /// <para>▍为什么单独拆：按"一个事件该放哪一层 = min(发布者层, 订阅者层)"的判据，
 /// 本组事件的<strong>发布者全部在单位内核</strong>（Actor / Health / Damageable / ActorsManager / FpsHelper，
 /// 将来进 05_UnitCore），所以本文件将来要随 05_UnitCore 一起下沉；
 /// 其余事件（任务 / 空投 / 撤离 / 团灭 / 窗口…）的发布者与订阅者都在 managers / gameplay / UI 层，
-/// 留在上层总线 BattleEventSub。</para>
+/// 留在上层总线 BattleEventBus。</para>
 ///
 /// <para>▍为什么没有把 Actor 改成 I_Actor：本文件与 Actor 类<strong>同处一个程序集</strong>（现在都是
 /// Assembly-CSharp，将来一起进 05_UnitCore），签名里可以直接用具体类型 Actor，
@@ -109,11 +109,11 @@ public static class UnitEventBus
     public static event Action<Actor> OnPlayerRevive;
     public static void PlayerRevive(Actor unit) => OnPlayerRevive?.Invoke(unit);
 
-    /// <summary>玩家被创建（原 GlobalEventSub，2026-09-30 迁入：发布者是 Actor.cs）</summary>
+    /// <summary>玩家被创建（原 GlobalEventBus，2026-09-30 迁入：发布者是 Actor.cs）</summary>
     public static event Action<IActor> OnPlayerCreate;
     public static void PlayerCreate(IActor unit) => OnPlayerCreate?.Invoke(unit);
 
-    /// <summary> 盟友被创建（原 GlobalEventSub，2026-09-30 迁入：发布者是 Actor.cs）</summary>
+    /// <summary> 盟友被创建（原 GlobalEventBus，2026-09-30 迁入：发布者是 Actor.cs）</summary>
     public static event Action<Actor> OnFriendCreate;
     public static void FriendCreate(Actor unit) => OnFriendCreate?.Invoke(unit);
 

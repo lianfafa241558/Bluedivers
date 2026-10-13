@@ -50,14 +50,14 @@ public class SubtitleAirdrop : SubtitleBase
         //不受影响
     }
     /// <summary>
-    /// 收到空投事件。<paramref name="airdropData"/> 由 `BattleEventSub.OnAirdrop` 直接带来
+    /// 收到空投事件。<paramref name="airdropData"/> 由 `BattleEventBus.OnAirdrop` 直接带来
     /// （Java：原先这里写 `target.GetComponent&lt;VFXAirdropEffect&gt;().data` ⇒ UI 反向依赖 `10_Effect`，
     /// 而 Effect 在 UI **之上** ⇒ `10_UI` 切不出来。数据本来就在事件里，透传即可）。
     /// </summary>
     public void OnAirdrop(GameObject owner,GameObject target, Vector3 point, AirdropData airdropData)
     {
         // ⚠ 联机：**盟友呼叫的战备**在本机是"远端复现副本"，那条路 `BattleManager.ReleaseAirdrop
-        //   → VFXAirdropEffect.TmpAirdrop` 发出的 `BattleEventSub.Airdrop` 里 **owner = null**
+        //   → VFXAirdropEffect.TmpAirdrop` 发出的 `BattleEventBus.Airdrop` 里 **owner = null**
         //   ⇒ 老实现第一行就 return，盟友叫的空投在这边**完全没有字幕/标记**（2026-10-07 实测）。
         //   判据用 `isTmp`：远端复现副本是 `new AirdropData(SOn)`（isTmp = true），
         //   而本机自己那份 useAd 里的项 isTmp = false（仍按"owner 必须是我"筛）。

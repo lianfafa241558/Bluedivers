@@ -336,7 +336,7 @@ namespace FPSGame.Managers
         /// 本机**释放了一次战备** → 上报（远端各自在同一个点上复现）。
         ///
         /// <para>▍只报"我放的"：远端复现走 <c>BattleManager.ReleaseAirdrop ⇒ VFXAirdropEffect.TmpAirdrop</c>，
-        /// 那条路发出的 <c>BattleEventSub.Airdrop</c> 里 <c>owner = null</c> ⇒ 天然不会回声。</para>
+        /// 那条路发出的 <c>BattleEventBus.Airdrop</c> 里 <c>owner = null</c> ⇒ 天然不会回声。</para>
         /// </summary>
         private void HandleLocalAirdrop(GameObject owner, GameObject target, UnityEngine.Vector3 point, AirdropData data)
         {
@@ -440,6 +440,10 @@ namespace FPSGame.Managers
             // ★ callerSid：这次空投是**他**叫的 ⇒ 生成的载具（外骨骼/炮台）在他的机器上按**他的**载具改装渲染，
             //   我这边也照同一份配置渲染（见 BattleApplyVehicleData 的归属口径）
             bm.ReleaseAirdrop(point, yaw, airdropId, null, sid);    // owner = null ⇒ 不计"呼叫战备次数"、不回声
+
+            // ★ 团队冷却（teamCool）：他叫的这一发若勾了团队冷却，本机玩家那份同名战备也进 CD
+            //   （各端只持有自己那份 useAd ⇒ 只能各端冷各端的；他那一发自己走 Arrive→Sustain→Cool，见 ApplyTeamCool）
+            bm.ADCont?.ApplyTeamCool(airdropId);
         }
 
         private static bool IsSelf(uint sid) =>

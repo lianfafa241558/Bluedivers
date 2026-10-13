@@ -59,6 +59,9 @@ namespace FPSGame.Net
             error = string.Empty;
 
             var host = new KCPNet<HostSession, NetMessage>();
+            // TODO(加密)：公网直连要开就**两端一起开** —— 在这里（StartAsServer 之前）写
+            //   `host.EnableEncryption = true;`，成员侧同款见 NetClient.ConnectToRoom。
+            //   库默认 false = 明文（局域网够用）；只开一端会握手不上（走的是 RSA 换 AES 那套）。
             try
             {
                 host.StartAsServer(bindAddress, port);

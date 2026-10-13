@@ -13,7 +13,7 @@ namespace FPSGame.GameContract
     /// <para>▍为什么只剩它：2026-10-01 的逐槽收缩把另外 9 个槽全部拆掉了（`Archive` 数据自持 / `Net`→<c>LogicFrame</c>
     /// / `Path`→事件 / `Room`→<c>TeamState</c> / `Wnd`→数据+事件 / `Task`→<c>TaskState</c> / `Vfx`→<c>VfxPool</c>
     /// / `Res`→装配根注入 / `Flow`→<c>FlowState</c>+<c>TimerHost</c>+事件；`Battle` 自身也做了四轮瘦身：
-    /// 死成员删除、纯读值 → <c>FPSGame.Data.BattleState</c>、无返回值命令 → <c>BattleEventSub</c>、
+    /// 死成员删除、纯读值 → <c>FPSGame.Data.BattleState</c>、无返回值命令 → <c>BattleEventBus</c>、
     /// <c>FindUnits</c> → <c>FPSGame.Game.UnitQuery</c>）⇒ "槽位/定位器"这层抽象只剩一个实例，名字便不再贴切。</para>
     ///
     /// <para>▍⚠ 为什么**不能彻底删掉这个接缝**：剩下的 5 个成员全都"**需要返回值或回调**"

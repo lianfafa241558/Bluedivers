@@ -3,7 +3,7 @@ namespace FPSGame.GameContract
     /// <summary>
     /// 战备界面接收器（2026-10-01 建；同日从 `WindowRegistry.cs` 拆出独立文件——两者毫无关系）。
     ///
-    /// <para>▍为什么需要它：<c>BridgeSys</c>（01Manager）要调 <c>ArmamentWnd</c>（04UI）的 4 个方法
+    /// <para>▍为什么需要它：<c>BridgeSys</c>（09Manager）要调 <c>ArmamentWnd</c>（10UI）的 4 个方法
     /// （<c>ReceivePlayerSelectAemament</c>/<c>ReceivePlayerSelectTeamEnhance</c>/<c>ReceivePlayerReady</c>/<c>ReceiveRosterChanged</c>），
     /// 而它原先直接持有 <c>ArmamentWnd</c> 字段 ⇒ 「管理器 → UI」反向依赖。改为对接口编程
     /// （实现方 = <c>ArmamentWnd</c>，登记点仍是 <c>BridgeSys.Instance.armament = this</c>）。</para>

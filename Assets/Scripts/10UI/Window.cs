@@ -64,7 +64,7 @@ public abstract class Window : MonoBehaviour
     /// <summary>
     /// 窗口自注册（2026-10-01）：把"我是哪个窗口"登记到 UI 侧 <see cref="WndHub"/>，
     /// 由它把"开关窗口/弹提示/倒计时"以委托登记进契约层 <c>WindowRegistry</c>，
-    /// 使 <c>01Manager</c> 不必再持有具体窗口字段（切断「管理器 → UI」反向依赖）。
+    /// 使 <c>09Manager</c> 不必再持有具体窗口字段（切断「管理器 → UI」反向依赖）。
     /// ⚠ 未激活的窗口不会跑本方法 ⇒ <c>WndHub.Scan()</c> 会用
     /// <c>FindObjectsOfType&lt;Window&gt;(true)</c> 兜底。**本类以下不要再定义 `Awake`**（会被顶掉）。
     /// </summary>
@@ -72,7 +72,7 @@ public abstract class Window : MonoBehaviour
     /// <para>⚠⚠⚠【禁令】<b>`Window` 的任何子类都不要再定义 `Awake`（`OnEnable` 同理）</b>。
     /// Unity 的消息方法**只找最派生的那一个** ⇒ 子类的 `Awake` 会**静默顶掉**本方法。
     /// 后果不是编译错误，而是：该窗口**永不注册** ⇒ `WndHub`/`WindowRegistry` 里没有它 ⇒
-    /// 跨层 `GlobalEventSub.OpenWnd(WndTypeEnum.X)`（2026-10-01 前是 `ServiceLocator.Wnd.SetWndState`）对它**静默无效**
+    /// 跨层 `GlobalEventBus.OpenWnd(WndType.X)`（2026-10-01 前是 `ServiceLocator.Wnd.SetWndState`）对它**静默无效**
     /// （`WindowRegistry` 对未注册 key 的语义正是"静默跳过"）⇒ 表现为**"偶发打不开"**，
     /// 只有 `WndHub.Scan()` 的兜底扫描能救回来，而扫描时序不定。</para>
     ///

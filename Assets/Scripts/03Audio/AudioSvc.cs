@@ -24,12 +24,12 @@ public class AudioSvc : AudioManagerBase<AudioSvc>
         base.Awake();
         musicDic = musicList.ToDictionary();
         musicList.Clear();
-        //⚠ 本类已下沉到 03_Audio 程序集（位于 01Manager 之下），不能引用 GlobalEventSub。
+        //⚠ 本类已下沉到 03_Audio 程序集（位于 09Manager 之下），不能引用 GlobalEventBus。
         //  游戏状态变化 / 设置变化 改由上层 AudioEventBridge 转发到 InGameStateChange / OnSettingCange（订阅时机与原先等价）。
     }
 
     private float musicVolume;
-    /// <summary>由上层 AudioEventBridge 转发（原先是订阅 GlobalEventSub.OnSettingCange）</summary>
+    /// <summary>由上层 AudioEventBridge 转发（原先是订阅 GlobalEventBus.OnSettingCange）</summary>
     public void OnSettingCange(string key, float value)
     {
         float sound;
@@ -66,7 +66,7 @@ public class AudioSvc : AudioManagerBase<AudioSvc>
         }
     }
 
-    /// <summary>由上层 AudioEventBridge 转发（原先是订阅 GlobalEventSub.OnGameStateChange）</summary>
+    /// <summary>由上层 AudioEventBridge 转发（原先是订阅 GlobalEventBus.OnGameStateChange）</summary>
     public void InGameStateChange(GameStateEnum exit, GameStateEnum entry)
     {
         switch (entry)
@@ -96,7 +96,7 @@ public class AudioSvc : AudioManagerBase<AudioSvc>
     }
     /// <summary>
     /// 音频片段加载器：由上层 AudioEventBridge 在初始化时注入 <c>ResSvc.LoadAudio</c>。
-    /// ⚠ 本类位于 03_Audio（01Manager 之下），不能直接引用 ResSvc ⇒ 用委托反转依赖。
+    /// ⚠ 本类位于 03_Audio（09Manager 之下），不能直接引用 ResSvc ⇒ 用委托反转依赖。
     /// </summary>
     public static System.Func<string, bool, AudioClip> ClipLoader;
 

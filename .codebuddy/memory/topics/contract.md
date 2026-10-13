@@ -60,12 +60,12 @@
   `GameMsg` 另有 `Of(GameObject)`（自身→父物体找 `IEntity`）与 `NameOf(GameObject)`（倒地"被谁"）。⚠ 编辑器里 `ArchivesData_SO.Current == null`（存档运行时才加载）⇒ 编辑模式回落角色名，属预期。
 
 ## Wnd 槽收尾 · 剩余清单（待执行，尚未改代码）
-1. **编译红（阻塞）**：`00Tools/WndRootTool.cs` 用 `TMPro` 但 `00_Utils.asmdef` 未引用 `Unity.TextMeshPro` ⇒ 2×CS0246。修：给 `00_Utils.asmdef` references 加 `"Unity.TextMeshPro"`。
+1. ~~**编译红（阻塞）**：`00Tools/WndRootTool.cs` 用 `TMPro` 但 `00_Utils.asmdef` 未引用 `Unity.TextMeshPro` ⇒ 2×CS0246。修：给 `00_Utils.asmdef` references 加 `"Unity.TextMeshPro"`。~~ ✅ **2026-10-13 复核为已解决**：`offline_compile 00_Utils 00_Core` = **0 error**，该阻塞项不存在。
 2. ~~asmdef 悬空引用~~ ✅ **已执行（2026-10-01）**：从 `10_UI`、`06_Gameplay`、`09_Managers`、`10_Effect` 的 references 删 `00_WndTools`，从 `10_UI` 删 `04_UI`；asmdef 内 `00_WndTools`/`04_UI` 已归零，`.cs` 无残留引用（仅 `VehicleWeaponsManager.cs:3` 一行过时注释提及，非代码）。
-3. **死代码链**：`WndManager.IsWndOpen`（0 调用）+ `WindowRegistry.GetOpen`/`IsOpen` + `WndHub.Bind()` 的 `IsOpen` 登记 → 整条删（无跨层消费者）。
-4. **UI 层直连 `WndManager`**（合法但风格不统一，可选改事件）：`BridgeWnd:98`/`DeathUI:74`/`SettingWnd:582`（`CreatNotice`/`CreatCountDown`/`ClearNotice`）+ `10_Effect/VFX/VFXAirdropEffect.cs:551`（`CreatNotice` → 可改 `GlobalEventSub.Notice`）。
-5. **过时注释清理**：`WndHub.cs:31-33`（`04UI` 在 Assembly-CSharp → 已独立 `10_UI`）；`WndType.cs`（`WndManager.xxxWnd` 字段已删、"两处同步"应指 `WndHub.TypeOf`）；`WndManager.cs`（`01Manager`→`09Manager`、`04UI`→`10UI`、`SetWndState 的映射`→`WndHub.TypeOf`）。
-6. **`WndManager` 死代码**：空 `Start()` 方法 + 注释掉的 `CreatSpeech` 块 → 删。
+3. **死代码链**：`WndManager.IsWndOpen`（0 调用）+ `WindowRegistry.GetOpen`/`IsOpen` + `WndHub.Bind()` 的 `IsOpen` 登记 → 整条删（无跨层消费者）。✅ **2026-10-13 复核：仍在** —— `WndManager.cs:200` 的 `IsWndOpen` 全仓 **0 调用者**；`WindowRegistry.cs:31` 的 `IsOpen` 只被 `GetOpen:70` 与排查用 `Dump():108` 读 ⇒ 整条可删。
+4. **UI 层直连 `WndManager`**（合法但风格不统一，可选改事件）：行号已漂 —— `BridgeWnd.cs:131`、`DeathUI.cs:74`、`SettingWnd.cs:743` 与 `:767`（`CreatNotice`/`CreatCountDown`/`ClearNotice`）+ `10_Effect/VFX/VFXAirdropEffect.cs:709`（`CreatNotice` → 可改 `GlobalEventBus.OnNotice`，注意**旧名 `GlobalEventSub.Notice` 已作废**）。✅ 仍在
+5. **过时注释清理**：`WndHub.cs:31`（仍写"`04UI/` 根目录在 `Assembly-CSharp` 里、还没有牙齿" ⇒ 实际 `10_UI` 早已独立、牙齿已生效）；`WndType.cs:4-9`（仍写 `GlobalEventSub.OpenWnd` / `WndManager.SetWndState 的映射` / `04UI` ⇒ 应为 `GlobalEventBus.OnOpenWnd` + `WndHub.TypeOf`；枚举值注释里的 `WndManager.xxxWnd` 字段早已删除）；`WndManager.cs`（`01Manager`→`09Manager`、`04UI`→`10UI`、`SetWndState 的映射`→`WndHub.TypeOf`）。✅ 仍在
+6. **`WndManager` 死代码**：空 `Start()`（`WndManager.cs:76-79` 方法体只有一句注释）+ 注释掉的 `CreatSpeech` 块（`:165-168`）→ 删。✅ 仍在
 - ⚠ 玩法层残留 `WndManager` 引用**全是注释/被删代码**（`Furniture_General`/`Furniture_AttachedGeneral`/`MissionEvacuateStatic` 的注释；`WeaponPlayerController:266` 在 `/* */` 块；`InputManager:39` 已改 `UIState.WindowState`）→ 不需改。
 - ⚠ **改 asmdef 会触发 Unity 重编译**（用户前台即时重编）→ 执行前须告知用户。
 

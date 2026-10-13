@@ -46,7 +46,7 @@ provider:
 - **【必须】** 仅编辑器使用的代码必须用 `#if UNITY_EDITOR` 预处理指令包裹。
 - **【推荐】** 文件夹按功能/模块进一步细分，避免单目录堆积过多文件。
 
-> 项目现状提醒：当前存在运行时脚本误引 `UnityEditor` 的情况（如 `00Core/ObjectPool.cs` 的 `using static UnityEditor.Progress;`、`02Data/` 下多个 `_SO` 脚本 `using UnityEditor`），会导致非 Editor 平台编译失败，需逐步清理。
+> 项目现状（2026-10-13 复核）：运行时脚本误引 `UnityEditor` 的**存量已清理干净** —— 全工程 10 处 `using UnityEditor` 逐个查过上下文，**全部在 `#if UNITY_EDITOR` 内**（`WeaponCfg` / `KeyScreen` / `PrefabReplacerOnInstance` / `InputManager` / `RoleData_SO` / `Wreckage` / `SoundGroup_SO` / `DisplayBone` / `CopyUtils` / `TurretDrawer`）；`00Core/ObjectPool.cs` 那处 `using static UnityEditor.Progress;` 也早已删除。⇒ 新代码按上面两条【必须】执行即可（Editor 专属代码必须 `#if UNITY_EDITOR` 包裹）；这类问题**只在打包（非 Editor 平台）时才暴露 CS0246**，离线编译查不出来。
 
 ## 3. 命名规范
 

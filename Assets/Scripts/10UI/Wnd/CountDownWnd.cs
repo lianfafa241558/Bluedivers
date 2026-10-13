@@ -13,7 +13,7 @@ using static FPSGame.WndTools.WndRootTool;
 
 
 // `CountDownTypeEnum` 已于 2026-10-01 下沉到 `00Core/CountDownTypeEnum.cs`（00_Core）：
-// 它被 TaskManager/WndManager（01Manager）与 DeathUI（04UI）共见 ⇒ 住在这里会让管理器反向依赖 UI，
+// 它被 TaskManager/WndManager（09Manager）与 DeathUI（10UI）共见 ⇒ 住在这里会让管理器反向依赖 UI，
 // `09_Managers` 切不出来。全局命名空间未变 ⇒ 调用点零改动。
 
 /// <summary>

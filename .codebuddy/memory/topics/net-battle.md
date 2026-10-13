@@ -91,9 +91,8 @@
 - ⚠⚠ **NetId 错位的最大来源 = "两端各自本地生成敌人"的路径**（2026-10-11 Console 实证：`[异常/敌人移动·放弃] … 仍没有本端副本` + `[异常/远端伤害落地] 找不到 netId=… 的本端副本`）。**无广播、无成员闸门**的生成点：`CreatEnemy`（场景/Nest/Camp 内嵌刷怪器，24 prefab，读全局 `BattleRandom` 抽概率）、`UnitSkill_Summoner`、`EnemyNestBuild`、`UnitSkill_OrbitArmor`、`EnqueueInit` 的 `CreatSupple/CreatOOPart/CreatBuilding`。`NetId` 是**全局单调计数器**且只发给 `type==Enemy` ⇒ 任一处数量/顺序分叉，**其后所有 NetId 整体错位**。修法要么给这些点加房主闸门 + 复刻消息，要么把 NetId 改成"身份派生"（勿把 SpecUnit 塞进同一计数器）。
 - ⚠ **SpecUnit 炮塔/探照灯完全没有伤害与死亡同步**：`Actor.type = 8`（`Turret_*.prefab` 8 个 + `LampTower`）⇒ `NetId == 0` ⇒ `EnemyController._OnDamaged` 只打 `[异常/本地命中结算] 这只怪没有 NetId`，`EnemyNetBridge.OnLocalDeath` 有 `NetId == 0` 门、`FindActor` 也只查 `ActorsManager.Enemys` ⇒ 两端血量/生死各算各的（守方任务按 `OnDie` 计数 ⇒ 任务判定也可能分叉）。建议沿用 4043 的 `FNV1a(Id+位置)` 键只同步死亡。
 
-### 7.1 ⏳ NetId 一律统一 + 伤害增量广播（用户逐条确认；2026-10-12 已出交接计划）
-> ⭐ **执行交接文档（开新对话照它做）**：`.codebuddy/plans/联机_NetId统一_伤害通道_执行计划.md`
-> —— 含"已完成 1~6 项（勿重做）/ 待做第 4~8 步（逐文件锚点+改法+红线）/ 验证 SOP（含反射核验片段）/ 决策记录 / 观察点"。
+### 7.1 ✅ NetId 一律统一 + 伤害增量广播（2026-10-12 已全 8 步落地）
+> 原执行交接文档 `plans/联机_NetId统一_伤害通道_执行计划.md` **已执行完并归档**（索引 `plans/archive/INDEX-plans-20261013.md`，过程见 `2026-10-12.md`）——下面留的是**设计口径**，供后续新增同步照抄。
 - **号空间统一、号段分离**（保留 `int`，`FindActor` 只查 `Actors`）：玩家/盟友 = `sid` 段；**场景摆放 + 任务实体 = 派生键**
   `FNV1a(Actor.Id + 量化位置 + 同Id同位置序号)`（两端各算、零消息；`type` 是 `Other`/`Enemy` 都不影响取号）；**运行时生成 = 房主分配**（4051）。
   判据一句话：**"两端能不能算出同一个出生坐标？"** 能 ⇒ 派生；不能 ⇒ 房主分配。
@@ -255,7 +254,7 @@
   已同步改）；`EnemyController._OnDamaged` 从 `damageSource` 取 `Actor.NetId` 带上；`SendEnemyHit/SendEnemyDamaged` 加可选参数；
   `ApplyRemoteDamage` 来源改**三级解析**（攻击者号 → 上报者盟友实例 → NoSource）。⚠ **破坏性协议变更，双端必须一起换包**。
   ~~⚠ `HitPartIndex` 仍未做~~ ⇒ ✅ 发送端已落地（见上 §"④ HitPartIndex"）。
-- ✅ **已落地（2026-10-12）「直接来源 / 起源」拆分**（详见 `plans/伤害_直接来源与起源拆分_执行计划.md` + 当日 daily）：
+- ✅ **已落地（2026-10-12）「直接来源 / 起源」拆分**（执行计划已归档 `plans/archive/INDEX-plans-20261013.md`，过程见当日 daily）：
   `DamagePacket` 的 `DamageSource` **改名 `DamageOrigin`**（语义不变：所有减伤/友伤/归属读它）+ 新增 `DamageCaused`；
   生产者收口在 `ProjectileBase.BuildHitData`（`soure = Owner` 起源 / `caused = WeaponBase.GetComponentInParent<Actor>() ?? Owner` 直接来源），
   地雷/空投舱显式 `caused = gameObject`。**消费口径**：显示/AI（`DetectionModule`/受击改目标/倒地播报/`OnHit`/`OnDamaged`）走 **caused**；

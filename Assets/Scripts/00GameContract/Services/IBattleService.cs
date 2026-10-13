@@ -19,13 +19,13 @@ namespace FPSGame.GameContract
     /// <para>⚠ 2026-10-01 四轮瘦身：
     /// ① 删 <c>EnqueueInit</c>/<c>CreatUnit</c>/<c>IsTeamWiped</c>/<c>ReinforcementCount</c> —— **下层消费点 = 0**
     ///   （真实调用方 <c>10_Effect/CreatOOPart</c>、<c>CreateSupple</c>、<c>CreateBuilding</c> 走静态
-    ///   <c>BattleManager.EnqueueInit</c>，<c>CreatEnemy</c>、<c>04UI/DeathUI</c> 走 <c>BattleManager.Instance</c>，
+    ///   <c>BattleManager.EnqueueInit</c>，<c>CreatEnemy</c>、<c>10UI/DeathUI</c> 走 <c>BattleManager.Instance</c>，
     ///   都没走契约 ⇒ 删后静态方法/属性本身仍在）；
     /// ② 删 <c>HaveBooster</c>(7) / <c>IsStartBattle</c>(2) / <c>BattleRandom</c>(7) —— 属**纯读值** ⇒ 按「数据自持」
     ///   改读 <c>FPSGame.Data.BattleState</c>（<c>HealthPlayer</c>/<c>HealthShield</c> 在 <c>Awake</c> 里读强化，
     ///   注入根本来不及，数据自持天然免疫；<c>BattleManager</c> 的方法/字段本身保留）；
     /// ③ 删 <c>EndGame</c>(2) / <c>SubmitOOPart</c>(1) / <c>RevealAllMissions</c>(1) / <c>AddBattleDataItem</c>(5)
-    ///   / <c>Authorize</c>(12) —— 都是**无返回值的命令** ⇒ 按「事件下沉」改走 <c>FPSGame.Gameplay.BattleEventSub</c>
+    ///   / <c>Authorize</c>(12) —— 都是**无返回值的命令** ⇒ 按「事件下沉」改走 <c>FPSGame.Gameplay.BattleEventBus</c>
     ///   （发布者都在玩法层、订阅者 <c>BattleManager</c> 在 09_Managers ⇒ 总线放 min 层 = 06_Gameplay；
     ///   订阅方 Awake 订阅 / OnDestroy 退订，重复实例不得订阅）；
     /// ④ 删 <c>FindUnits</c>(14) —— 查询设施 <c>UnitQueryGrid</c> **本就在 05_UnitCore**（数据节点 <c>UnitQueryGridNode</c>

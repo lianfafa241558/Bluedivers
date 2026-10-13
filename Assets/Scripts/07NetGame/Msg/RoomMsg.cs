@@ -36,7 +36,12 @@ public struct HostRoomOptions
     /// ⚠ 这里用 <c>int</c> 而非 <c>MissionEnum</c>：本结构体在 <c>02_Net</c>，看不见 <c>01_GameContract</c> 的枚举。</summary>
     public int TaskMain;
 
-    /// <summary>常用默认值：4 人、无密码、难度与任务类型未知。</summary>
+    /// <summary>本局**地图内任务下标**（<c>TaskManager.TaskCfgs[mapIndex, taskIndex]</c> 的第二维；-1 = 未知）。
+    /// <para>▍与 <see cref="TaskMain"/> 的区别：主任务枚举只说"哪一类任务"，下标才是"这一张地图上的第几个任务"。
+    /// 任务表是各端按时间窗口**本地随机生成**的 ⇒ 只有下标才能保证两端指向同一份 <c>TaskCfg</c>。</para></summary>
+    public int TaskIndex;
+
+    /// <summary>常用默认值：4 人、无密码、难度与任务未知。</summary>
     public static HostRoomOptions Default(string roomName, string mapName)
     {
         return new HostRoomOptions
@@ -48,6 +53,7 @@ public struct HostRoomOptions
             Difficulty = -1,
             HostName = "",
             TaskMain = -1,
+            TaskIndex = -1,
         };
     }
 }
@@ -304,7 +310,7 @@ public class PlayerLeftMsg
 /// <summary>
 /// 角色喊话（<c>SpeechTypeEnum</c>）：成员 -> 房主（<c>SpeechNtf</c>）/ 房主 -> 全体（<c>SpeechSync</c>）。
 ///
-/// <para>▍为什么要同步：喊话是纯本机表现（<c>PlayerSpeechManager</c> 直接 <c>GlobalEventSub.ActorSpeech</c>），
+/// <para>▍为什么要同步：喊话是纯本机表现（<c>PlayerSpeechManager</c> 直接 <c>GlobalEventBus.ActorSpeech</c>），
 /// 而它同时决定"字幕 + 语音"，别人听不见就成了各说各话（2026-10-07 用户实测"角色的喊话没有同步"）。
 /// 这里只同步**类型**：具体哪条由接收端用**喊话者那个角色的** <c>RoleData_SO.SpeechGroup(type).Get(位置)</c> 取
 /// （各端配置一致 ⇒ 取到同一条）。</para>

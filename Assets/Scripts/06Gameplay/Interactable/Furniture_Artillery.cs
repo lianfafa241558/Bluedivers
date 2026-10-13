@@ -16,7 +16,7 @@ namespace FPSGame.Gameplay
 /// 每次成功交互放置一个，进度 +1；仅当进度小于上限时才可交互。
 /// 交互时视为玩家放下该物体：禁用物体上的家具组件、关闭落地重力并放置到指定点位。
 /// 配合 KeyScreen 的 Artillery（炮弹架）阶段使用，放置时通过 base.Operate() 触发
-/// GlobalEventSub.OnFurnitureOperate 事件推进阶段进度。
+/// GlobalEventBus.OnFurnitureOperate 事件推进阶段进度。
 /// </summary>
 [AddComponentMenu("交互/火炮")]
 public class Furniture_Artillery : Furniture_Attached

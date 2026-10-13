@@ -1039,7 +1039,7 @@ namespace FPSGame.Gameplay
             // 支援武器没有改装（进战斗后捡起），不套用角色存档的武器升级配置
             if (weaponInstance.WeaponTypeEnum != WeaponTypeEnum.Support)
             {
-                var arch = ArchivesData_SO.Current.GetRoleCfg(m_PlayerCharacterController.Id);//数据自持：玩法层不再直连 01Manager（ArchiveLoader）
+                var arch = ArchivesData_SO.Current.GetRoleCfg(m_PlayerCharacterController.Id);//数据自持：玩法层不再直连 09Manager（ArchiveLoader）
                 var lenghts = weaponInstance.UpgradeCount();
                 var archWeaponData = ArchivesData_SO.Current.weaponUpgradeDic.TryGet(arch.ID + "_" + weaponInstance.WeaponName, new(arch.ID + "_" + weaponInstance.WeaponName, lenghts.Length));
                 weaponInstance.ApplyUpgrade(archWeaponData.selectIndex, archWeaponData.selectModuleIndex);

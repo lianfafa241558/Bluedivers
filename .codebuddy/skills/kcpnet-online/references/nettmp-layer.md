@@ -85,7 +85,7 @@ Bridge（舰桥选任务）--房主 ConfirmTask 广播 TaskConfirmNtf--> Ready�
 ```
 ⚠ "开局"不是某一条消息：**配置**由 `TaskConfirmNtf` 定（含种子），**加载**由 `TransitionNtf` 触发。
 
-### 5.2 命令号全表（`07NetGame/CmdId.cs`，2026-10-09）
+### 5.2 命令号全表（`07NetGame/CmdId.cs`，2026-10-13）
 
 | 命令号 | 常量 | 方向 / 用途 |
 | --- | --- | --- |
@@ -99,7 +99,7 @@ Bridge（舰桥选任务）--房主 ConfirmTask 广播 TaskConfirmNtf--> Ready�
 | 4017–4020 | `PlayerVitalNtf/Sync`、`PlayerAmmoNtf/Sync` | 盟友血盾倒地 / 弹药系数 |
 | 4021 / 4022 | `SceneActorReq / Ntf` | 场景单位（NPC）快照：成员请求、房主应答 |
 | 4023 | `WaveStartSync` | 房主 → 全体：开波（时机 + 参数，成员按同一 `waveIndex` 复刻） |
-| 4024 / 4025 / 4026 | `EnemyMoveSync` / `EnemyHitNtf` / `EnemyDiedSync` | 敌人移动意图 / 成员上报命中 / 房主广播死亡 |
+| 4024 / 4025 / 4026 | `EnemyMoveSync` / `EnemyHitNtf` / `EnemyDiedSync` | 敌人移动意图 / 成员上报命中 / 房主广播死亡。⚠ **4026 已停发**（2026-10-12 并入 4040 的 `DamageMsg.IsDeath`），常量只为与历史日志对号 |
 | 4027 / 4028 | `AirdropCallNtf / Sync` | 局内呼叫战备 |
 | 4029 | `PlayerLeftNtf` | 房主 → 全体：某成员离开。⚠ 与 `PlayerListSync` 分开：战斗期名单**冻结**（重排会让下标漂移），但"有人走了"必须传出去 ⇒ 只带 sid、不重排 |
 | 4030 / 4031 | `SpeechNtf / Sync` | 角色喊话 |
@@ -111,9 +111,12 @@ Bridge（舰桥选任务）--房主 ConfirmTask 广播 TaskConfirmNtf--> Ready�
 | 4043 | `SceneDestructibleNtf` | 双向：场景可破坏物（油桶这类）被打掉。键 = `FNV1a(Actor.Id + 位置0.1m)`（同 `SyncId` 口径）；**只传"死了"不传伤害**；房主侧有账本、新人入房补发 |
 | 4044 / 4045 | `PlayerLoadoutNtf / Sync` | 改装（档位 / 模组 / 载具）上报与广播 |
 | 4046 | `KeyScreenStageNtf` | 双向：**按键终端(KeyScreen)阶段推进**（键 = 终端家具 `SyncId`）。⚠ **驱动端**上报（操作者那台 / 无人阶段房主）、其余端只应用（见 `KeyScreen.IsStageDriver`） |
-| 4047 | `PatrolSpawnNtf` | 房主 → 全体：**巡逻队生成**（生成点 + 逐单位目标点）。构成靠"同落点派生流"，成员端 `CreatPatrolRemote` 复刻 |
+| 4047 | `PatrolSpawnNtf` | ⚠ **已停发**（2026-10-12 并入 4052 的 `Kind = Patrol`） |
 | 4048 | `OOPartSubmitNtf` | 双向：容器类家具的一次提交（`SyncId` + 个数 + 主类型）⇒ 远端在盟友的**幽灵背包**(`FriendOOPartInventory`)上真跑 `BeginPress/StepPress` |
 | 4049 | `KeyScreenInputNtf` | 双向：玩家对终端的**按键**（`SyncId` + `InputState` + 类型 0 单次/1 按住/2 松开）⇒ 非驱动端把输入换成远端按键、跑同一套阶段逻辑 |
+| 4050 | `PlayerReviveNtf` | 双向：**把倒地的玩家扶起来**（值 = 被救者 sid，房主 = 0）。⚠ 不能蹭家具交互 4036：盟友实例出生点与本人差 0.2m(Y) ⇒ `SyncId` 必然对不上、消息会被丢，故按 sid 直指 |
+| 4051 | `EnemySpawnNtf` | ⚠ **已停发**（2026-10-12 并入 4052 的 `Kind = Unit`） |
+| 4052 | `HostSpawnNtf` | 房主 → 全体：**房主生成族**（原 4047 巡逻队 + 4051 运行时生成合并）。`Kind = Patrol`（生成点 + 逐单位目标点，构成由落点派生）/ `Unit`（来源键 + 槽位，成员让本端同一份生成器复刻并覆盖号，见 `INetSpawner`） |
 | 5001 / 5002 | `PlayerTransformUp` / `TransformBatchSync` | 位姿：成员上行 / 房主聚合广播 |
 
 ### 5.3 DTO 约定
