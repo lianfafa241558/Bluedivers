@@ -53,6 +53,7 @@
 | `audit_markers.py` | **标志物审计**（标志串 + 期望次数跨文件计数，输出"缺失项"）；**大批改动收尾必跑**，须 `缺失项=0` |
 | `offline_compile.py <asm>...` | ⭐ **离线编译验证**（Unity 自带 Roslyn 按 csproj，不碰 Unity）；须按依赖顺序传参 |
 | `dll_mtime.py` | 判"是否已编译"（dll mtime vs 源文件 mtime） |
+| `log_ctx.py <log> <pattern> [before] [after] [--all\|--range]` | ⭐ **日志取上下文**（流式、能吃几百 MB）：`Editor.log` 里某条日志的**前后原文**；`--range <file> <起> <止>` 按行号直接打印。⚠ 客户端日志 = `%LOCALAPPDATA%\Unity\Editor\Editor.log`，**里面并入了打包端（`<i>WindowsPlayer "机器名"</i>` 前缀）那台的行** ⇒ 一份文件能对两端时间线；但每行日志带 10 行栈 ⇒ 别用大 before/after |
 | `asmdef_refs.py` | asmdef 的 GUID references → 程序集名 |
 | `bom_vs_head.py` | 对比工作区 vs git HEAD 的 BOM，`--fix` 只补"本次误删的" |
 | `ns_move.py <moves.json> [--no-self]` | 通用「命名空间搬迁引擎」（改 ns + 同步 using + 修 `using static`） |

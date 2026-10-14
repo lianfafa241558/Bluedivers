@@ -411,13 +411,33 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
                     //直接判接地，否则会间歇性误判悬空导致走路滑步；
                     //只有表面明显低于脚底时才验证吸附：吸附位移被挡住(悬在坎沿上方、被棱角顶住，
                     //脚下并无真实支撑)时不能判定接地，否则会以"接地"状态悬浮：重力被跳过不掉落、还能无限起跳
+                    //
+                    // ★ 吸附分两档（2026-10-14，修"载具/玩家快到地时有快速吸附"）：
+                    //   **空中不吸附**。探测距离已放宽到 `skinWidth + GroundCheckDistance`（机甲 0.2m），
+                    //   而"提前看到地面"若照旧一次性 `Move(down * distance)`，角色/载具就会在离地十几厘米处
+                    //   被瞬移吸到地面 —— 低速下落时肉眼可见（用户 2026-10-14 反馈"快到地有个快速的吸附，违和"）。
+                    //   现在空中只"探测"不移动，落地交给重力 + CC 自身碰撞（CC 本来就会停在蒙皮间隙、不会穿地）；
+                    //   接地态仍按原样吸附（走路贴地跟随：台阶/起伏不失控、不误判悬空），所以走路手感不变。
                     bool snapGrounded = true;
                     if (groundHit.distance > Controller.skinWidth)
                     {
+                        float snapDistance = lastState ? groundHit.distance : 0f;   // 空中 = 不吸
                         Vector3 preSnapPos = transform.position;
-                        Move(Vector3.down * groundHit.distance);
-                        bool needVerify = groundHit.distance > 0.05f + Controller.skinWidth + 0.02f;
-                        snapGrounded = !needVerify || (preSnapPos.y - transform.position.y) >= groundHit.distance - 0.02f;
+                        if (snapDistance > 0f) Move(Vector3.down * snapDistance);
+                        float movedDown = preSnapPos.y - transform.position.y;
+
+                        // "表面就在脚底"的判据：
+                        //   接地态 = 原口径（0.05 起点偏移 + 蒙皮 + 余量；CC 贴合时这个距离本身就会抖）；
+                        //   空中   = 收紧到"真的贴住"（间隙 ≤ 蒙皮 + 0.02）。因为空中已经不吸附了，若沿用宽口径
+                        //           会把"离地十几厘米"判成落地，而 `GroundMove` **不加竖直重力** ⇒ 角色会悬着飘。
+                        float gapToGround = Mathf.Max(0f, groundHit.distance - 0.05f);
+                        bool touching = lastState
+                            ? (groundHit.distance - movedDown) <= 0.05f + Controller.skinWidth + 0.02f
+                            : gapToGround <= Controller.skinWidth + 0.02f;
+
+                        bool needVerify = snapDistance > 0.05f + Controller.skinWidth + 0.02f;
+                        bool gotSupport = !needVerify || movedDown >= snapDistance - 0.02f;
+                        snapGrounded = touching && gotSupport;
                     }
 
                     if (snapGrounded)

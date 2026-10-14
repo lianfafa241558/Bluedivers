@@ -267,14 +267,16 @@ namespace FPSGame.Gameplay
                 if (!m_IgnoredColliders.Contains(collider)) m_IgnoredColliders.Add(collider);
                 return;
             }
-            // 没有碰撞体说明是落地结算
-            if (!collider.IsValid())
-            {
-                Stop();
-                return;
-            }
-            // 撞到地面才停止，撞到单位/残骸直接穿透继续下落
-            if (LayerDefinition.GroundLayers.Contains(1 << collider.gameObject.layer))
+            // ★ 只有"已经到落地高度"才算落地 ⇒ 停止下落；否则一律穿透继续落（真正收口在 Move() 到达 m_LandingHeight 那一次）。
+            //   ⚠ 原来这两支都是**无脑 `Stop()`**：
+            //     ① `!collider.IsValid()`：撞到的东西在这句之前被销毁（典型 = 被这一发的爆炸炸掉的残骸/小件），
+            //        `collider` 成了假 null ⇒ 被当成"落地结算"；
+            //     ② 撞到在 `GroundLayers` 里的**悬空**物（载具/货箱，或只是球扫掠半径擦到一点的凸起）。
+            //   两者都不看高度 ⇒ 舱会**停在半空**：`FixedUpdate` 的 `if (m_IsStop) return;` 从此早退，
+            //   `Move()` 再也跑不到 ⇒ `Land()` 永不执行 ⇒ `OnHit`(PodHit) 永不触发 ⇒ 内容物（炮台/补给）**永远不生成**。
+            //   2026-10-14 实测（客机"部署鞠式反坦克炮"没出炮台、主机正常）：舱停在 y=23.553 而 `m_LandingHeight=20.606`
+            //   （离地 2.95m），`m_IsStop=true` 却 `m_Velocity=(0,-181,0)` —— `Land()` 会把它摆到 20.6，所以这次 Stop() 只可能来自这里。
+            if (Root.position.y <= m_LandingHeight + 0.5f)
             {
                 Stop();
             }
@@ -313,6 +315,9 @@ namespace FPSGame.Gameplay
             m_IsStop = true;
             if (fire) fire.SetActive(false);
         }
+
+        /// <summary>是否已停止下落（= 落地结算完成）。信标据此决定"要不要给自己续命"（见 <c>VFXAirdropEffect.UpdatePod</c>）。</summary>
+        public bool HasLanded => m_IsStop;
 
         private void OnDrawGizmosSelected()
         {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Attributes;
@@ -752,13 +752,13 @@ namespace FPSGame.MapUtils
                 //   · 打包端：数组改不了，本图数量又常常 > MainMap 的 32 ⇒ 不夹就会让 `SetTreeInstances`
                 //     为越界的每条逐条报 "Tree removed: invalid prototype N"（Console 被刷爆）。
                 ClampTreeRangesToAsset(terrainData, ref stoneRange, ref treeRange);
+                NetSyncLog.LoadLog("地形", $"地形树原型已按地图数据重建：石块 {stoneCount} 个（区间 {stoneRange}），树 {treeCount} 个（区间 {treeRange}）");
 
-                Debug.Log($"[原型] 地形树原型已按地图数据重建：石块 {stoneCount} 个（区间 {stoneRange}），"
-                    + $"树 {treeCount} 个（区间 {treeRange}）");
             }
             else
             {
-                Debug.LogWarning("[原型] 地图数据未配置 stonePrototypes/treePrototypes，本图不会生成石块与树");
+                NetSyncLog.LoadLog("地形", $"地图数据未配置 stonePrototypes/treePrototypes，本图不会生成石块与树");
+
             }
 
             // null = 调用方没提供（如编辑器里 [ContextMenu] 手跑、或地图数据没有 mapCfg）→ 完全不动细节；
@@ -786,24 +786,23 @@ namespace FPSGame.MapUtils
                 //   资产的所有细节层整层重写**（不撒草就提交全零）⇒ 不需要这里的"裁层"能力。
                 //   （这里只写注释、不写代码：`#else` 分支两个工具都编不到，能不写就不写。）
 #endif
-                Debug.Log($"[原型] 细节（草）原型已按地图数据重建：共 {detailCount} 个（统一 VertexLit + GPU 实例化）");
+                NetSyncLog.LoadLog("地形", $"细节（草）原型已按地图数据重建：共 {detailCount} 个（统一 VertexLit + GPU 实例化）");
+
                 LogDetailPrototypes(protos);
-                if (materialsWithoutInstancing.Count > 0)
-                {
-                    Debug.LogWarning("[原型] 下列细节材质未勾选 Enable GPU Instancing，实例化不会生效"
-                        + "（Unity 会退回非实例化渲染）：" + string.Join("、", materialsWithoutInstancing));
-                }
+
             }
             else if (detailProvided)
             {
                 // 地图明确给了一个空数组 = 本图不长草：把上一张图留下的草全部清掉（原型数组本身不动，
                 // 与树的"空 = 不改动资产原型"约定一致），否则换图后旧草会继续显示在原地。
-                Debug.LogWarning("[原型] 地图数据未配置 detailPrototypes（空数组），本图不会生成草");
+                NetSyncLog.LoadLog("地形", $"地图数据未配置 detailPrototypes（空数组），本图不会生成草");
+
                 ClearDetailLayers(terrainData, 0, terrainData.detailPrototypes?.Length ?? 0);
             }
             else
             {
-                Debug.Log("[原型] 本次未提供 detailPrototypes（null），沿用地形资产里的细节原型与草数据");
+                NetSyncLog.LoadLog("地形", $"本次未提供 detailPrototypes（null），沿用地形资产里的细节原型与草数据");
+
             }
 
             if (stoneCount + treeCount > 0 || detailCount > 0)
@@ -873,7 +872,7 @@ namespace FPSGame.MapUtils
             _detailsMultiplier = Mathf.Max(0f, detailsMultiplier);
             if (terrain == null)
             {
-                Debug.LogWarning("未指定Terrain对象");
+                Debug.LogError("未指定Terrain对象");
                 yield break;
             }
             _terrainType = terrainType;
@@ -902,8 +901,8 @@ namespace FPSGame.MapUtils
             // 石块/树的原型索引区间由数组长度推导（不再写死在预设里）
             ApplyMapPrototypes(stonePrototypes, treePrototypes, detailPrototypes,
                 out Vector2Int rockRange, out Vector2Int treeRange);
-
-            Debug.Log($"使用地形预设: {terrainType} | 噪声层数={preset.octaves}"
+            NetSyncLog.LoadLog("地形", 
+                $"使用地形预设: {terrainType} | 噪声层数={preset.octaves}"
                 + $" | 石块概率={preset.rockSpawn.probability}(原型{rockRange})"
                 + $" | 树概率={preset.treeSpawn.probability}(原型{treeRange})"
                 + $" | 覆盖石数量={(_overridePreset && _rockCoverCount >= 0 ? _rockCoverCount : preset.rockCover.count)}"
@@ -922,17 +921,17 @@ namespace FPSGame.MapUtils
 
             // 生成基础地形（fBm 分形噪声）
             yield return GenerateBaseTerrain(preset);
-            Debug.Log($"生成基础地形时间: {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("地形", $"生成基础地形时间: {sw.ElapsedMilliseconds} ms");
             sw.Restart();
 
             // 地形后处理（根据类型执行不同策略）
             yield return ApplyTerrainPostProcess(preset, terrainType);
-            Debug.Log($"后处理时间: {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("地形", $"后处理时间: {sw.ElapsedMilliseconds} ms");
             sw.Restart();
 
             // 材质
             yield return ApplyTextures();
-            Debug.Log($"生成材质时间: {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("地形", $"生成材质时间: {sw.ElapsedMilliseconds} ms");
             sw.Restart();
 
             // 应用高度图，分块提交，避免单帧卡顿
@@ -1002,7 +1001,7 @@ namespace FPSGame.MapUtils
                     Debug.LogError("NavMesh 构建失败：navMeshData 为空（后续刷怪点采样会失败）");
                 }
             }
-            Debug.Log($"完成总时间: {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("地形", $"完成总时间: {sw.ElapsedMilliseconds} ms");
         }
 
 
@@ -1579,13 +1578,13 @@ namespace FPSGame.MapUtils
             }
             if (rate <= 0f)
             {
-                Debug.Log($"[植被] {label}概率为 0，跳过生成");
+                NetSyncLog.LoadLog("地形", $"[植被] {label}概率为 0，跳过生成");
                 yield break;
             }
             // 区间为空（y < x）= 该类没有原型可用（地图数据里这一组是空的），直接跳过
             if (prototypeRange.y < prototypeRange.x)
             {
-                Debug.Log($"[植被] {label}没有可用原型（原型区间 {prototypeRange} 为空），跳过生成");
+                NetSyncLog.LoadLog("地形", $"[植被] {label}没有可用原型（原型区间 {prototypeRange} 为空），跳过生成");
                 yield break;
             }
 
@@ -1638,7 +1637,7 @@ namespace FPSGame.MapUtils
             }
 
             float area = terrain.terrainData.size.x * terrain.terrainData.size.z;
-            Debug.Log($"[植被] {label} 生成 {trees.Count - before} 处（原型 {protoMin}~{protoMax}，每格概率 {rate}，"
+            NetSyncLog.LoadLog("地形", $"[植被] {label} 生成 {trees.Count - before} 处（原型 {protoMin}~{protoMax}，每格概率 {rate}，"
                 + $"约每 {Mathf.RoundToInt(1f / rate)}㎡ 一处，地图 {area:F0}㎡）");
         }
 
@@ -1667,7 +1666,7 @@ namespace FPSGame.MapUtils
 
             if (!spawn)
             {
-                Debug.Log($"[细节] 本图不生成草（原型已配置={_detailConfigured}，密度={preset.detailDensity}，"
+                NetSyncLog.LoadLog("地形", $"[细节] 本图不生成草（原型已配置={_detailConfigured}，密度={preset.detailDensity}，"
                     + $"地图倍率={detailsMultiplier}），已把 {protoCount} 个细节层重置为空");
             }
             else
@@ -1856,7 +1855,7 @@ namespace FPSGame.MapUtils
             for (int layer = startLayer; layer < end; layer++)
                 data.SetDetailLayer(0, 0, layer, empty);
 
-            Debug.Log($"[细节] 已清空 {end - startLayer} 个不再使用的细节层（层 {startLayer}~{end - 1}），"
+            NetSyncLog.LoadLog("地形", $"[细节] 已清空 {end - startLayer} 个不再使用的细节层（层 {startLayer}~{end - 1}），"
                 + "避免上一张图的草残留到新地图");
         }
 
@@ -1897,7 +1896,7 @@ namespace FPSGame.MapUtils
                     + $" {protos[i].renderMode}/instancing={protos[i].useInstancing}"
                     + $"/网格={protos[i].usePrototypeMesh}");
             }
-            Debug.Log(sb.ToString());
+            NetSyncLog.LoadLog("地形", sb.ToString());
         }
         #endregion
 
@@ -1950,7 +1949,7 @@ namespace FPSGame.MapUtils
             spacingScale = Mathf.Max(0.01f, spacingScale);
             if (targetCount <= 0)
             {
-                Debug.Log("[地形覆盖] 数量为 0，跳过放置");
+                NetSyncLog.LoadLog("地形", "[地形覆盖] 数量为 0，跳过放置");
                 yield break;
             }
 
@@ -2026,7 +2025,7 @@ namespace FPSGame.MapUtils
                 }
             }
 
-            Debug.Log($"[地形覆盖] 放置 {placed}/{targetCount} 处（尝试上限 {maxAttempts}，互斥系数 {spacingScale:F2}，"
+            NetSyncLog.LoadLog("地形", $"[地形覆盖] 放置 {placed}/{targetCount} 处（尝试上限 {maxAttempts}，互斥系数 {spacingScale:F2}，"
                 + $"层 {LayerMask.LayerToName(layer)}，占地圆倾角 {cfg.minSlope}~{cfg.maxSlope}°（已排除峰顶），"
                 + $"高度 {cfg.minHeight}~{cfg.maxHeight}（归一化，约 {cfg.minHeight * mapSize.y:F0}~{cfg.maxHeight * mapSize.y:F0}m），"
                 + $"地图 {mapSize.x:F0}×{mapSize.z:F0}）");
@@ -2339,7 +2338,7 @@ namespace FPSGame.MapUtils
         [ContextMenu("重置地形")]
         public void ResetTerrain()
         {
-            Debug.Log("重置地形");
+            NetSyncLog.LoadLog("地形", "重置地形");
             if (terrain != null)
             {
                 TerrainData terrainData = terrain.terrainData;

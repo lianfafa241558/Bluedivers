@@ -16,15 +16,18 @@ namespace FPSGame.Utils
         /// <summary>总开关（关掉时判断只在调用点 ⇒ 开销 = 一次静态字段读取）。</summary>
         public static bool Enabled;
 
+        /// <summary>游戏加载过程</summary>
+        public static bool Load = false;
+
         /// <summary>子弹/弹道：表现弹的生成、终点、命中、消散。</summary>
-        public static bool Bullet = true;
+        public static bool Bullet = false;
 
         /// <summary>AI/寻路：敌人与场景 NPC 的决策、下发、落地、驱动开关。</summary>
         public static bool Ai = true;
 
         /// <summary>同步时序：NetId 分配、离场收尾、HUD 行数等。</summary>
         public static bool Sync = true;
-
+        public static void LoadLog(string tag, string msg) { if (!Enabled || !Load) return; Debug.Log($"[加载/{tag}] {msg}"); }
         public static void BulletLog(string tag, string msg) { if (!Enabled || !Bullet) return; Debug.Log($"[子弹/{tag}] {msg}"); }
         public static void AiLog(string tag, string msg) { if (!Enabled || !Ai) return; Debug.Log($"[AI/{tag}] {msg}"); }
         public static void SyncLog(string tag, string msg) { if (!Enabled || !Sync) return; Debug.Log($"[同步/{tag}] {msg}"); }

@@ -143,9 +143,10 @@ namespace FPSGame.Managers
             MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
             MissionCont.Init(MissionInitMode.FindFromScene);
             MissionCont.transform.SetParent(transform);
-            Debug.Log($"开始任务");
+            NetSyncLog.LoadLog("初始化",$"开始任务");
             yield return MissionCont.WaitForInitialization();
-            Debug.Log($"任务耗时: {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("初始化", $"任务耗时: {sw.ElapsedMilliseconds} ms");
+
             sw.Restart();
 
             ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
@@ -165,9 +166,8 @@ namespace FPSGame.Managers
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
             WeatherCont = WeatherSystem.Create(Weather, transform);
-            Debug.Log($"[BattleManager] 本局天气: {Weather}（权威种子 {TaskState.Seed}）");
+            NetSyncLog.LoadLog("初始化", $"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
 
-                Debug.Log("完成主要内容初始?");
             yield return null;
 
             //ResManager.Instance.SetLoadSceneExtraProgress(1);
@@ -178,7 +178,7 @@ namespace FPSGame.Managers
             yield return WaitAllPlayersLoaded();   // ★ 联机：等所有端都加载完战斗场景再一起开打
             IsStartBattle = true;
             BattleState.IsStartBattle = true;//数据自持同步点（见 BattleState.cs）
-            Debug.Log($"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("初始化", $"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
 
 
         }
@@ -192,7 +192,8 @@ namespace FPSGame.Managers
             ApplyTeamEnhance();
 
             yield return InitTerrain();
-            Debug.Log($"地形耗时: {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("初始化", $"地形耗时: {sw.ElapsedMilliseconds} ms");
+
             sw.Restart();
 
 
@@ -202,9 +203,9 @@ namespace FPSGame.Managers
             MissionCont = new GameObject("MissionController").AddComponent<MissionController>();
             MissionCont.Init(MissionInitMode.GenerateFromData);
             MissionCont.transform.SetParent(transform);
-            Debug.Log($"开始任务");
+            NetSyncLog.LoadLog("初始化", $"开始任务");
             yield return MissionCont.WaitForInitialization();
-            Debug.Log($"任务耗时: {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("初始化", $"任务耗时: {sw.ElapsedMilliseconds} ms");
             sw.Restart();
 
             ADCont = new GameObject("AirdropController").AddComponent<AirdropController>();
@@ -224,9 +225,8 @@ namespace FPSGame.Managers
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
             WeatherCont = WeatherSystem.Create(Weather, transform);
-            Debug.Log($"[BattleManager] 本局天气: {Weather}（权威种子 {TaskState.Seed}）");
+            NetSyncLog.LoadLog("初始化", $"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
 
-                Debug.Log("完成主要内容初始?");
             yield return null;
 
             //ResManager.Instance.SetLoadSceneExtraProgress(1);
@@ -237,7 +237,7 @@ namespace FPSGame.Managers
             yield return WaitAllPlayersLoaded();   // ★ 联机：等所有端都加载完战斗场景再一起开打
             IsStartBattle = true;
             BattleState.IsStartBattle = true;//数据自持同步点（见 BattleState.cs）
-            Debug.Log($"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
+            NetSyncLog.LoadLog("初始化", $"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
 
 
         }
@@ -297,7 +297,7 @@ namespace FPSGame.Managers
                 //   ⚠ 碰撞体与 Terrain 同挂在那一个 "Terrain" 物体上（BattleScene 里全场景仅此一个）。
                 var terrainCollider = terrain.GetComponent<TerrainCollider>();
                 if (terrainCollider != null) terrainCollider.terrainData = cfg.mapCfg.terrainAsset;
-                Debug.Log($"[地形] 已切换到本图地形资产：{cfg.mapCfg.terrainAsset.name}（地图数据 {cfg.mapCfg.name}）");
+                NetSyncLog.LoadLog("地形", $"已切换到本图地形资产：{cfg.mapCfg.terrainAsset.name}（地图数据 {cfg.mapCfg.name}）");
             }
 
             var terrainData = terrain.terrainData;
@@ -431,7 +431,9 @@ namespace FPSGame.Managers
             {
                 var action = _initQueue.Dequeue();
                 try { action?.Invoke(); }
-                catch (System.Exception e) { Debug.LogError($"[BattleManager] 初始化队列执行异常: {e}"); }
+                catch (System.Exception e) { 
+                    Debug.LogError($"[BattleManager] 初始化队列执行异常: {e}"); 
+                }
             }
         }
 

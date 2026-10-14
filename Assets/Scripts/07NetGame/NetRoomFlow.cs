@@ -115,9 +115,10 @@ namespace FPSGame.Net
 
         /// <summary>载具开火表现（双向；**一个号两个方向**，走法同 <see cref="OnVehicleMount"/>）。
         /// <para>参数：载具 <c>Actor.NetId</c> / 载具武器下标 / 射击方向（世界）/ 准心**实指落点**（世界）/
-        /// 伤害档位（开枪那位的）/ 发射点下标（<c>&lt;0</c> = 齐射）。</para>
+        /// 伤害档位（开枪那位的）/ 发射点下标（<c>&lt;0</c> = 齐射）/ **弹匣剩余** / **后备弹剩余**
+        /// （后两个 <c>&lt;0</c> = 未带/无限 ⇒ 收端不动；见 <c>VehicleShootMsg.Magazine</c>）。</para>
         /// <para>⚠ 发起方按"**这辆车是不是我开的**"丢掉自己那条（本机已经真放过一发）—— 键是载具号，不是 sid。</para></summary>
-        public static event Action<int, int, Vector3, Vector3, int, int> OnVehicleShoot;
+        public static event Action<int, int, Vector3, Vector3, int, int, int, int> OnVehicleShoot;
 
         /// <summary>某成员离开（房主下发，**战斗期也会来**）。参数：离开者 sid。
         /// <para>各端据此销毁对应盟友实例 / 收起 HUD 那行 —— 名单本身**不重排**（战斗期冻结，见 <see cref="PlayerLeftMsg"/>）。</para></summary>
@@ -817,9 +818,11 @@ namespace FPSGame.Net
         /// <c>NetVehicleBridge._selfDriven</c>）⇒ 够用来丢自己那条，不必再加一个会分叉的身份字段。</para>
         /// <para>⚠ 本端**不派发自己那条**：驾驶者本机已经真放过一发（枪口焰/弹道都是本机的），这只是"告诉别人"。
         /// 而"房主转发成员那条"由**桥**做（本号只有一个注册者 = 本类）：桥收到成员那条时先调本方法广播、再本地应用
-        /// —— 与 4053 / 4036 完全同款，见 <c>NetVehicleBridge.OnVehicleShootMsg</c>。</para></summary>
+        /// —— 与 4053 / 4036 完全同款，见 <c>NetVehicleBridge.OnVehicleShootMsg</c>。</para>
+        /// <para>▍<paramref name="magazine"/> / <paramref name="ammo"/> = 开火后该武器的弹匣/后备剩余
+        /// （<c>&lt;0</c> = 未带/无限）：载具武器每端各一份实例、弹量本来会分叉，这里让**驾驶者那台当权威**顺手推给其余端。</para></summary>
         public void SendVehicleShoot(int netId, int weaponIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hit,
-            int damageIndex, int muzzleIndex)
+            int damageIndex, int muzzleIndex, int magazine = -1, int ammo = -1)
         {
             if (netId == 0) return;
 
@@ -831,6 +834,8 @@ namespace FPSGame.Net
                 HitX = hit.x, HitY = hit.y, HitZ = hit.z,
                 DamageIndex = damageIndex,
                 MuzzleIndex = muzzleIndex,
+                Magazine = magazine,
+                Ammo = ammo,
             });
 
             if (IsHost)
@@ -918,7 +923,7 @@ namespace FPSGame.Net
         {
             if (m == null || m.NetId == 0) return;
             OnVehicleShoot?.Invoke(m.NetId, m.WeaponIndex, new Vector3(m.DirX, m.DirY, m.DirZ),
-                new Vector3(m.HitX, m.HitY, m.HitZ), m.DamageIndex, m.MuzzleIndex);
+                new Vector3(m.HitX, m.HitY, m.HitZ), m.DamageIndex, m.MuzzleIndex, m.Magazine, m.Ammo);
         }
 
         private void HandlePlayerLeftNtf(PlayerLeftMsg m)

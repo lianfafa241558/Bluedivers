@@ -84,6 +84,13 @@ namespace FPSGame.Managers
         private bool _firstPoseSent;
         private bool _warnedNoPrefab;
 
+        /// <summary>盟友实例自愈对账的间隔（秒）与倒计时（见 <see cref="ReconcileFriends"/>）。</summary>
+        private const float ReconcileInterval = 0.5f;
+        private float _reconcileLeft;
+
+        /// <summary>已就"实例丢失⇒重建"告警过的 sid（重建失败时不刷屏，见 <see cref="ReconcileFriends"/>）。</summary>
+        private readonly HashSet<uint> _healWarned = new HashSet<uint>();
+
         // ==================== 生命周期 ====================
 
         public void Init()
@@ -116,6 +123,7 @@ namespace FPSGame.Managers
             NetHostSvc.VehicleNetIdAllocator = null;   // 反注入：本桥不在场时别让 07 用一个已失效的委托
             _pendingVehicleBeacons.Clear();
             _loadouts.Clear();
+            _healWarned.Clear();
             NetRoomFlow.OnPlayerList -= HandleRoster;
             NetTransformFlow.OnPose -= HandlePoses;
             NetRoomFlow.OnWeaponSwitch -= HandleWeaponSwitch;
@@ -723,6 +731,7 @@ namespace FPSGame.Managers
         {
             _lastInfos = infos;
             _lastProfiles = profiles;
+            _healWarned.Clear();   // 新名单 ⇒ 允许再对"这些人"各告警一次
             if (infos == null || infos.Length == 0) return;
 
             uint self = NetRoomFlow.Instance != null ? NetRoomFlow.Instance.SelfSid : 0u;
@@ -758,6 +767,50 @@ namespace FPSGame.Managers
             // 名单一变就对自己的"当前槽位"做一次对账：新人一到就能拿到所有人正在拿什么
             //（否则对面只能按 FriendWeaponView 的兜底显示主武器）
             ReportCurrentWeaponSlot();
+        }
+
+        /// <summary>【自愈对账】名单里还在场上的 sid 若没有活实例 ⇒ 按名单重建（每 <see cref="ReconcileInterval"/> 秒一次）。
+        /// <para>▍为什么：实例会被**外部原因**销毁 —— 实测最典型的是"房主开外骨骼时他被挂进载具，载具被打爆 ⇒
+        /// 作为子物体被连带销毁"，而本桥只在"名单同步 / 换场景"重建、战斗期名单是**冻结**的
+        /// ⇒ 客机上房主**永久消失**（2026-10-14 实测的"房主看得见客机、客机看不见房主"）。</para>
+        /// <para>⚠ 只在"还在房里 + 名单缓存还在"时重建：退房 / 房主掉线后按旧名单重建 = 往场上摆幽灵队友。</para>
+        /// </summary>
+        private void ReconcileFriends()
+        {
+            _reconcileLeft -= Time.unscaledDeltaTime;
+            if (_reconcileLeft > 0f) return;
+            _reconcileLeft = ReconcileInterval;
+
+            var infos = _lastInfos;
+            if (infos == null || infos.Length == 0) return;
+
+            var flow = NetRoomFlow.Instance;
+            if (flow == null || !flow.InRoom) return;
+
+            for (int i = 0; i < infos.Length; ++i)
+            {
+                var info = infos[i];
+                if (info == null || info.Sid == flow.SelfSid) continue;
+                // ⚠ `exist != null` 走的是 Unity 的假 null 重载 ⇒ 指向"已销毁实例"的条目也会去重建
+                if (_friends.TryGetValue(info.Sid, out var exist) && exist != null)
+                {
+                    _healWarned.Remove(info.Sid);   // 人回来了 ⇒ 允许下次再告警
+                    continue;
+                }
+
+                // ⚠ 告警每个 sid 只打一次：重建若因配置缺失（预制体/模型找不到）而失败，这里每 0.5s 一次就是刷屏
+                if (_healWarned.Add(info.Sid))
+                {
+                    var p = _lastProfiles != null && i < _lastProfiles.Length ? _lastProfiles[i] : null;
+                    FPSGame.Utils.NetSyncLog.Warn("盟友自愈",
+                        $"sid={info.Sid}（{DisplayName(info, p)}）还在名单里、本端实例却没了 ⇒ 重建" +
+                        "（多半是被销毁的载具连带带走 ⇒ 见 NetVehicleBridge 的骑手抢救那一段）");
+                }
+
+                var profile = _lastProfiles != null && i < _lastProfiles.Length ? _lastProfiles[i] : null;
+                EnsureFriend(info, profile, i + 1);
+                NetVehicleBridge.RebindRide(info.Sid);   // 车还在 ⇒ 重新进舱；车没了 ⇒ 清掉脏绑定让新实例吃位姿
+            }
         }
 
         private void EnsureFriend(PlayerInfo info, PlayerProfile profile, int playerOrdinal)
@@ -859,7 +912,16 @@ namespace FPSGame.Managers
                 if (kv.Value == null) continue;
                 if (kv.Value.GetComponent<Actor>() == actor) { found = kv.Key; has = true; break; }
             }
-            if (has) _friends.Remove(found);   // 不能在遍历中改字典 ⇒ 先记 key 再删
+            if (!has) return;
+            _friends.Remove(found);   // 不能在遍历中改字典 ⇒ 先记 key 再删
+
+            // ★ 能走到这里 = 字典里还有、实例却被**别人**销毁了（本桥自己的清退都是"先摘字典、再销毁"
+            //   ⇒ 那时这个循环根本匹配不上）⇒ 这是"意外丢失"，必须自愈：
+            //   把对账提前到下一帧（见 ReconcileFriends），并留一条 Warn —— 否则它静默得很（只有 UI 会跟着动），
+            //   "客机上房主不见了"就只能靠肉眼发现。
+            FPSGame.Utils.NetSyncLog.Warn("盟友自愈",
+                $"sid={found} 的盟友实例被外部销毁（{actor.name}）⇒ 下一帧按名单重建");
+            _reconcileLeft = 0f;
         }
 
         private void RemoveFriend(uint sid)
@@ -1073,6 +1135,8 @@ namespace FPSGame.Managers
 
         private void Update()
         {
+            ReconcileFriends();   // 意外丢失的盟友实例 ⇒ 自愈（必须放在下面"不在房就早退"之前）
+
             var flow = NetTransformFlow.Instance;
             if (flow == null) return;
 

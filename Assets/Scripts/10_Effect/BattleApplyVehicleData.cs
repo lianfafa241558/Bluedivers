@@ -294,7 +294,23 @@ public class BattleApplyVehicleData : MonoBehaviour
 
         // ⚠ 只有配置**真的变了**才重建武器：武器模型是"销毁 + 重建"（实测渲染器数 14→18），
         //   纯粹重贴外观时没必要，而且旧 renderer 会留在 mpb 的列表里变悬空。
-        if (rebuildWeapons)
+        //
+        // ★【2026-10-15】配置里**一把武器都没有** ⇒ 按"这辆车不进改装体系"处理：**保留预制体预置的武器**。
+        //   ⚠ 原来无条件 `ClearWeapons()` 再按配置重建：配置空 ⇒ 清完一把都不加 ⇒ 载具变成"没有武器"。
+        //   后果是一连串的（实测：空投的 `Turret_Manual_AT` 上机后全哑、而机甲完全正常）——
+        //   `VehicleWeaponsManager.HaveWeapon()==false` ⇒ ① 左右键的射击/瞄准分支（`else if (HaveWeapon())`）
+        //   整段进不去 ② `OnSetOwner` 里走 `OnStateChange(false)` ⇒ 载具 UI 与准星根本不出现。
+        //   ⚠ 炮台/运输机/补给仓这类（`Vehicle_Turret` 的 `weaponRights/Lefts` 本来就是空 **且** `weaponPointR/L`
+        //   没配——`Instantiate` 传 null 父级会挂到场景根去）武器就是**预制体预置**的，绝不能用"按持有者改装"那套去清。
+        bool cfgHasWeapon = data.weaponRights.Length > 0 || data.weaponLefts.Length > 0;
+        if (rebuildWeapons && !cfgHasWeapon)
+        {
+            NetSyncLog.SyncLog("载具/外观",
+                $"{name} {data.vehicleName} 的改装配置里没有武器 ⇒ 跳过武器重建，保留预制体预置武器" +
+                $"（现有武器={(_manager != null && _manager.HaveWeapon())}）");
+        }
+
+        if (rebuildWeapons && cfgHasWeapon)
         {
             _manager?.ClearWeapons();
 

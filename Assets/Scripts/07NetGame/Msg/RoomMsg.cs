@@ -338,6 +338,16 @@ public class VehicleShootMsg
     /// <summary>第几个发射点（<c>LastMuzzleIndex</c>；<c>-1</c> = 齐射全部发射点）。
     /// 多管武器轮流开火，收端没有那份计数 ⇒ 不发就都从 0 号管出。</summary>
     [Key(9)] public int MuzzleIndex;
+
+    /// <summary>开火**之后**该武器的弹匣剩余（驾驶者那台的权威值；<c>&lt;0</c> = 未带/无限弹匣 ⇒ 收端不动）。
+    /// <para>▍为什么要它：载具武器是**每端各一份实例**（<c>BattleApplyVehicleData</c> 按持有者配置重建），
+    /// 弹量天然分叉 —— 驾驶者那台打了 10 发，另一端的副本还是满的（实测：玩家 a 打完下车、玩家 b 上车看到满弹）。
+    /// 现在的口径 = **驾驶者那台才是权威**，每次开火顺手把弹量推给其余端（见
+    /// <c>VehicleWeaponsManager.TryGetAmmo / ApplyRemoteAmmo</c>）。</para></summary>
+    [Key(10)] public int Magazine;
+
+    /// <summary>开火之后该武器的**后备弹**剩余（同上；<c>&lt;0</c> = 未带/无限后备 ⇒ 收端不动）。</summary>
+    [Key(11)] public int Ammo;
 }
 
 /// <summary>

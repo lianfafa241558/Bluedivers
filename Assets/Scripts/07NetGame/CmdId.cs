@@ -169,7 +169,10 @@ namespace FPSGame.Net
         /// （读相机 / 关 CC / 改 <c>ActorState</c>）⇒ 盟友实例上必 NRE；且那些"本机玩家专属开关"本来就不该在远端执行。
         /// 故载具**从 4036 摘出**（见 <c>NetFurnitureBridge</c>），远端改走桥的 <c>ApplyRemoteMount</c>（只挂挂点 + 停位姿）。</para>
         /// <para>▍**一个号两个方向**（与 4036 / 4037 / 4050 同款）：成员上报 → 房主转发全体 + 本地应用；
-        /// 房主自己广播给全体。⚠ 同一个号只能有一个注册者 ⇒ 注册在 <c>NetRoomFlow</c>，桥只订阅事件。</para></summary>
+        /// 房主自己广播给全体。⚠ 同一个号只能有一个注册者 ⇒ 注册在 <c>NetRoomFlow</c>，桥只订阅事件。</para>
+        /// <para>▍【一车一人 · 2026-10-15】同一条还兼"占用裁决"：房主按**先到先得**拒绝第二个上机的人，
+        /// 并把占用者重播回去（发起者那台会自己下车）—— 否则两端各坐一个（实测"两人同车"）。
+        /// 见 <c>NetVehicleBridge._drivers</c> 与 <c>Furniture_Vehicle.CanOperate</c> 的 <c>_remoteOccupied</c>。</para></summary>
         public const int VehicleMountNtf = 4053;
 
         /// <summary>双向：**载具武器开火表现**（键 = 载具 <c>Actor.NetId</c>；**只做表现**）。
@@ -181,7 +184,10 @@ namespace FPSGame.Net
         /// 且键也不同（那条键 = sid，这条键 = 载具号）。</para>
         /// <para>▍**一个号两个方向**（同 4053 / 4036 走法）：成员开火 → 上报房主；房主转发全体 + 自己本地应用；
         /// 房主自己开火直接广播。⚠ 发起方按"**这辆车是不是我开的**"丢掉自己那条（本机已经真放过一发）；
-        /// 同一个号只能有一个注册者 ⇒ 注册在 <c>NetRoomFlow</c>，桥只订阅事件。</para></summary>
+        /// 同一个号只能有一个注册者 ⇒ 注册在 <c>NetRoomFlow</c>，桥只订阅事件。</para>
+        /// <para>▍【弹量随发 · 2026-10-15】载荷末尾还带"这一发打完之后的弹匣/后备弹"
+        /// （<c>VehicleShootMsg.Magazine/Ammo</c>）：载具武器两端各一份实例、弹量本来会分叉
+        /// （实测 a 打完下车、b 上车看到满弹），口径改为"**驾驶者那台是权威**"，每次开火顺手推给其余端。</para></summary>
         public const int VehicleShootNtf = 4054;
 
         // ===== 舰桥准备（战备/强化/资料；对应原 BridgeSys 的三条本地回环）=====

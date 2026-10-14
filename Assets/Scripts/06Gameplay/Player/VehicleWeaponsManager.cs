@@ -382,6 +382,80 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
         m_WeaponSlots = new WeaponController[0];
     }
 
+    /// <summary>【联机】读某槽位武器**当前弹量**（<paramref name="magazine"/> = 弹匣、<paramref name="ammo"/> = 后备）；
+    /// 该槽位没武器 ⇒ false；某一项为无限弹（<c>FinalValue &lt; 0</c>）⇒ 该项返回 <c>-1</c>（收端就不动它）。
+    ///
+    /// <para>▍为什么要它：载具武器是**每端各一份实例**（<c>BattleApplyVehicleData</c> 按持有者配置重建），
+    /// 弹量天然会分叉 —— 驾驶者那台打了 10 发，另一端的副本还是满的（实测：玩家 a 打完下车、玩家 b 上车看到满弹）。
+    /// 口径 = **驾驶者那台才是权威**，每次开火随 4054 把弹量推给其余端（见 <c>NetVehicleBridge</c>）。</para>
+    /// </summary>
+    public bool TryGetAmmo(int index, out int magazine, out int ammo)
+    {
+        magazine = -1;
+        ammo = -1;
+
+        var w = GetWeaponAtSlotIndex(index) as WeaponReloadController;
+        if (w == null) return false;
+
+        if (!w.InfiniteMagazine) magazine = w.Magazine.CurrValue.RawInt;
+        if (!w.InfiniteAmmo) ammo = w.Ammo.CurrValue.RawInt;
+        return true;
+    }
+
+    /// <summary>【联机】某武器"**这一发打完之后**"的弹量（折算口径与 <c>WeaponReloadController.UseMagazine</c> 一致）。
+    ///
+    /// <para>▍为什么不能直接用 <see cref="TryGetAmmo"/>：开火上报挂的是 <c>OnShoot</c>，它是在
+    /// <c>HandleShoot()</c> 里抛的，而 <c>UseMagazine(ShootCost)</c> 在它**之后**才执行 ⇒ 回调里读到的还是
+    /// "扣之前"的值，直接上报会**永远差一发**（本机打空下车、别人上车却看到还剩 1 发）。</para>
+    /// </summary>
+    public bool TryGetAmmoAfterShot(int index, out int magazine, out int ammo)
+    {
+        magazine = -1;
+        ammo = -1;
+
+        var w = GetWeaponAtSlotIndex(index) as WeaponReloadController;
+        if (w == null) return false;
+
+        if (w.InfiniteMagazine)
+        {
+            if (!w.InfiniteAmmo) ammo = w.Ammo.CurrValue.RawInt;
+            return true;
+        }
+
+        // 与 WeaponReloadController.UseMagazine 同款：弹匣不够的部分从后备弹补
+        int cost = w.AmmoPerShot;
+        int mag = w.Magazine.CurrValue.RawInt;
+        int spare = w.Ammo.CurrValue.RawInt;
+
+        if (cost > mag)
+        {
+            spare -= cost - mag;
+            mag = 0;
+            if (spare < 0) spare = 0;
+        }
+        else
+        {
+            mag -= cost;
+        }
+
+        magazine = mag;
+        if (!w.InfiniteAmmo) ammo = spare;
+        return true;
+    }
+
+    /// <summary>【联机】把驾驶者那台下来的**权威弹量**写进本端这把武器（见 <see cref="TryGetAmmo"/>）。
+    /// <para>▍<c>&lt;0</c> = 该项未带/无限 ⇒ 不动；<c>GameCurrentAttribute</c> 的 setter 自带上下限约束。</para>
+    /// <para>⚠ 本端**没有**驾驶者时 UI 不刷（<see cref="Update"/> 早退），所以这里不必手动刷 UI：
+    /// 等本地玩家真上车时，UI 读的就是这份被同步过来的值。</para></summary>
+    public void ApplyRemoteAmmo(int index, int magazine, int ammo)
+    {
+        var w = GetWeaponAtSlotIndex(index) as WeaponReloadController;
+        if (w == null) return;
+
+        if (magazine >= 0 && !w.InfiniteMagazine) w.Magazine.CurrValue = magazine;
+        if (ammo >= 0 && !w.InfiniteAmmo) w.Ammo.CurrValue = ammo;
+    }
+
     /// <summary>某把武器在槽位表里的下标（联机上报要用它；取不到 ⇒ <c>-1</c>）。
     /// <para>⚠ 必须按**引用**比：这些武器是从预制体实例化出来的子物体，靠名字/类型都可能撞。</para></summary>
     public int IndexOfWeapon(WeaponBaseController weapon)

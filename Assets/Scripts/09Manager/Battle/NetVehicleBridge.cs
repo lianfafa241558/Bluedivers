@@ -38,6 +38,19 @@ namespace FPSGame.Managers
         /// <summary>远端驾驶者 sid → 本端那份骑手实例 + 它的载具座位（下车/清理时要用座位还原父级）。</summary>
         static readonly Dictionary<uint, RideInfo> _remoteRides = new Dictionary<uint, RideInfo>();
 
+        /// <summary>【一车一人】每辆载具**当前是谁在开**（载具 <c>NetId</c> → 驾驶者 sid；房主 = 0）。
+        ///
+        /// <para>▍为什么要它：本机自己开的那台**不在** <see cref="_remoteRides"/> 里（那是"远端骑手"表），
+        /// 所以原来两端各判各的 ⇒ "a 上了之后 b 也能上，同一台机甲里坐了两个人"（2026-10-15 实测）。</para>
+        ///
+        /// <para>▍与 <see cref="_selfDriven"/> 的分工：后者是"**我**开过哪些车"的留痕（只有本机驾驶者那台有），
+        /// 本表是**全端都维护**的当前占用（本机 / 远端都在里面），用来判"这辆有人了吗"。</para>
+        ///
+        /// <para>▍裁决口径：**房主是唯一裁决者，先到先得，成员永远让**（成员没有全局视野，自己判必然分叉）。
+        /// 请求者要上而占用者在案 ⇒ 房主**拒绝**它（不应用），并把"占用者在上机"重播回去 ⇒
+        /// 发起者那台收到后会**先把自己放出来**再挂占用者（见 <see cref="OnVehicleMountMsg"/>）。</para></summary>
+        static readonly Dictionary<int, uint> _drivers = new Dictionary<int, uint>();
+
         private sealed class RideInfo
         {
             public GameObject Rider;
@@ -90,6 +103,7 @@ namespace FPSGame.Managers
             installed = true;
 
             BattleEventBus.OnVehicleOwnerChanged += OnLocalOwnerChanged;   // 本机（驾驶者那台）的上下机 ⇒ 上报
+            UnitEventBus.OnUnitDeath += OnUnitDeath;                       // 载具死亡（含本端副本被远端判死）⇒ 先摘骑手
             NetRoomFlow.OnVehicleMount += OnVehicleMountMsg;               // 收到"某人上/下机" ⇒ 转发 + 应用
             NetRoomFlow.OnVehicleShoot += OnVehicleShootMsg;               // 收到"某台载具开火" ⇒ 转发 + 放表现弹
             NetRoomFlow.OnPlayerLeft += OnPlayerLeft;                      // 驾驶者离场 ⇒ 摘掉他骑的那辆
@@ -120,20 +134,42 @@ namespace FPSGame.Managers
                 return;
             }
 
+            bool mounted = owner != null;
+            uint sid = flow.IsHost ? 0u : flow.SelfSid;
+
             if (owner != null)
             {
                 if (ActorsManager.Player == null || owner != ActorsManager.Player.gameObject) return;  // 不是本机玩家在开
+
+                // ★【一车一人 · 兜底】(2026-10-15) 这辆已经被**别人**占着（消息比我的动作先到）⇒ 我**让**：
+                //   把自己从他车里放出来（本地下车），**不上报**（我没真开成；报了远端会把占用者一起摘掉）。
+                //   ▍挡在入口的那条是 Furniture_Vehicle.CanOperate（_remoteOccupied，提示都会收起来），
+                //     这里只是"消息在路上时仍挤进来了"的兜底 —— 那时占用者已经在案，我先让必然收敛。
+                if (_drivers.TryGetValue(netId, out uint occupier) && occupier != sid)
+                {
+                    FPSGame.Utils.NetSyncLog.Warn("载具/上机·发",
+                        $"netId={netId} 已被 sid={occupier} 占着 ⇒ 本机让车（不进舱）");
+                    if (FindVehicle(netId, out Furniture_Vehicle blockedSeat) != null) blockedSeat.ForceLocalExit();
+                    return;
+                }
+
                 _selfDriven.Add(netId);
+                _drivers[netId] = sid;
                 EvictRideOfVehicle(netId);   // 本机自己开上了这辆 ⇒ 把远端那份骑手摘掉（连它的运动栈一起还原）
             }
             else if (!_selfDriven.Remove(netId))
             {
                 // 我没开过这辆 ⇒ 只是"载具被打爆"这类连带 SetOwener(null)（每台机器都会走）⇒ 不报
+                // ★ 但要先把挂在它下面的远端骑手摘出来（见 RescueRiders：骑手是子物体，会被连带销毁）
+                RescueRiders(netId, "连带 SetOwener(null)");
                 return;
             }
+            else
+            {
+                // 我开过 ⇒ 这一次是我下机：占用表跟着清（判据带上 sid，别把"别人换我"的情况误清）
+                if (_drivers.TryGetValue(netId, out uint cur) && cur == sid) _drivers.Remove(netId);
+            }
 
-            bool mounted = owner != null;
-            uint sid = flow.IsHost ? 0u : flow.SelfSid;
             FPSGame.Utils.NetSyncLog.SyncLog("载具/上机·发",
                 $"netId={netId} sid={sid} mounted={mounted}（{(mounted ? owner.name : "下机/被打爆")}）");
             flow.SendVehicleMount(netId, sid, mounted);
@@ -204,11 +240,18 @@ namespace FPSGame.Managers
 
             UnityEngine.Vector3 aim = LocalDrivenAimPoint();
 
+            // ★【弹量随发】(2026-10-15) 载具武器每端各一份实例，弹量本来会分叉（实测：a 打完下车、
+            //   b 上车看到满弹）⇒ 让**驾驶者那台当权威**，每次开火顺手把"这一发打完之后的弹量"推给其余端。
+            //   ⚠ 必须是"扣完之后"的值：OnShoot 是在 HandleShoot() 里抛的，UseMagazine 还在它后面。
+            _localDrivenWeapons.TryGetAmmoAfterShot(weaponIndex, out int magLeft, out int ammoLeft);
+
             FPSGame.Utils.NetSyncLog.BulletLog("载具/开火·发",
                 $"netId={_localDrivenNetId} 武器={weapon.name} 下标={weaponIndex} 档位={weapon.UseDamageIndex} " +
-                $"发射点={weapon.LastMuzzleIndex} 方向={dir:F2} 落点={(aim.sqrMagnitude > 0.0001f ? aim.ToString("F2") : "<无>")}");
+                $"发射点={weapon.LastMuzzleIndex} 方向={dir:F2} 落点={(aim.sqrMagnitude > 0.0001f ? aim.ToString("F2") : "<无>")} " +
+                $"弹匣余={magLeft} 备弹余={ammoLeft}");
 
-            flow.SendVehicleShoot(_localDrivenNetId, weaponIndex, dir, aim, weapon.UseDamageIndex, weapon.LastMuzzleIndex);
+            flow.SendVehicleShoot(_localDrivenNetId, weaponIndex, dir, aim, weapon.UseDamageIndex,
+                weapon.LastMuzzleIndex, magLeft, ammoLeft);
         }
 
         /// <summary>驾驶者准心实指那一点（相机中心射线；取不到相机 ⇒ 零向量 = 未知，收端退回"只用方向"）。</summary>
@@ -229,30 +272,74 @@ namespace FPSGame.Managers
         // ==================== 网络 -> 本机 ====================
 
         /// <summary>收到"某人上/下机"。走法同 4036：**房主先转发全体、再本地应用**；发起方按 sid 丢掉自己那条。
-        /// <para>⚠ 顺序不能反：<c>SendVehicleMount</c> 的房主分支只 <c>SendToAll</c>（**不自派发**）⇒ 不会递归回到这里。</para></summary>
+        /// <para>⚠ 顺序不能反：<c>SendVehicleMount</c> 的房主分支只 <c>SendToAll</c>（**不自派发**）⇒ 不会递归回到这里。</para>
+        /// <para>▍【一车一人 · 2026-10-15】**房主是唯一裁决者，先到先得，成员永远让**（见 <see cref="_drivers"/>）：
+        /// ① 请求者要上、而这辆已有**别人**在案 ⇒ 房主**不应用**它，并把"占用者在上机"重播回去
+        /// （发起者那台收到后会先把自己放出来，再挂占用者 —— 下面那条成员分支）；
+        /// ② **非占用者**报的下机（典型 = 被顶掉那位在本地退出时的回声）⇒ 只清本端那条绑定，
+        /// 不转发、不动占用 —— 否则一次回声就把占用清了，第三个人又能上。</para></summary>
         static void OnVehicleMountMsg(int netId, uint sid, bool mounted)
         {
             var flow = NetRoomFlow.Instance;
             if (flow == null) return;
 
+            if (sid == flow.SelfSid) return;   // 自己那条（成员绕回来 / 房主本地那条）：本机已经真跑过一次 SetOwener
+
+            bool rejected = false;
+
             if (flow.IsHost)
             {
-                flow.SendVehicleMount(netId, sid, mounted);   // 成员上报 ⇒ 房主广播全体（含发起者，他自己会丢）
+                if (_drivers.TryGetValue(netId, out uint occupier) && occupier != sid)
+                {
+                    rejected = true;
+
+                    if (mounted)
+                    {
+                        FPSGame.Utils.NetSyncLog.SyncLog("载具/上机·收",
+                            $"netId={netId} 已被 sid={occupier} 开着 ⇒ 拒绝 sid={sid} 上机（先到先得），并重播占用者");
+                        flow.SendVehicleMount(netId, occupier, true);   // 重播"谁在开" ⇒ 发起者那台会自己下车
+                    }
+                    else
+                    {
+                        FPSGame.Utils.NetSyncLog.SyncLog("载具/上机·收",
+                            $"netId={netId} sid={sid} 不是占用者({occupier}) ⇒ 只清本端绑定（不转发、不动占用）");
+                        ApplyUnmount(sid);
+                    }
+                }
+                else
+                {
+                    flow.SendVehicleMount(netId, sid, mounted);   // 成员上报 ⇒ 房主广播全体（含发起者，他自己会丢）
+                }
             }
-            else if (sid == flow.SelfSid)
+            else if (mounted && _selfDriven.Contains(netId))
             {
-                return;   // 自己发的那条绕回来了：本机已经真跑过一次 SetOwener
+                // ★【成员让车】房主把"这辆归别人"发回来了，而**本机自己正开着它**（我抢在前面上了）⇒
+                //   先把我自己从车里放出来（走唯一收口；它回出来的那条 4053 会被房主按"非占用者"忽略掉），
+                //   再把占用者挂上去 —— 这样两端最终是同一份状态，而不是各开各的。
+                FPSGame.Utils.NetSyncLog.SyncLog("载具/上机·收",
+                    $"netId={netId} 房主裁决归 sid={sid} ⇒ 本机让车（先下车再挂他）");
+                if (FindVehicle(netId, out Furniture_Vehicle mySeat) != null) mySeat.ForceLocalExit();
             }
 
-            if (mounted) ApplyMount(netId, sid);
+            if (rejected) return;
+
+            if (mounted)
+            {
+                // 重放（房主的"占用者重播" / 同一条重复到）⇒ 本端已经是他的座就别重挂：
+                // ApplyMount 内部会先 ApplyUnmount 再挂，重复应用会闪一下 + 抖一帧运动栈。
+                if (_remoteRides.TryGetValue(sid, out RideInfo exist) && exist != null && exist.NetId == netId) return;
+                ApplyMount(netId, sid);
+            }
             else ApplyUnmount(sid);
         }
 
         /// <summary>收到"某台载具开了一次火"。走法同 4053：**房主先转发全体、再本地应用**；发起方丢自己那条。
         /// <para>⚠ 丢自己那条**按"这辆车是不是我开的"**判（键是载具号 ⇒ 没有 sid 可用）：
-        /// 我开的那台本机已经真放过一发，再放一遍就是双份枪口焰。</para></summary>
+        /// 我开的那台本机已经真放过一发，再放一遍就是双份枪口焰。</para>
+        /// <para>▍<paramref name="magazine"/> / <paramref name="ammo"/> = 开枪者那台**扣完之后**的弹量
+        /// （<c>&lt;0</c> = 未带/无限 ⇒ 收端不动），见 <see cref="ApplyVehicleShoot"/>。</para></summary>
         static void OnVehicleShootMsg(int netId, int weaponIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hit,
-            int damageIndex, int muzzleIndex)
+            int damageIndex, int muzzleIndex, int magazine, int ammo)
         {
             var flow = NetRoomFlow.Instance;
             if (flow == null || netId == 0) return;
@@ -263,10 +350,10 @@ namespace FPSGame.Managers
             {
                 // 成员上报 ⇒ 房主广播全体（含发起者，他自己会按上一条丢）
                 // ⚠ SendVehicleShoot 的房主分支只 SendToAll、**不自派发** ⇒ 不会递归回到这里；房主自己要应用 → 落到下面
-                flow.SendVehicleShoot(netId, weaponIndex, dir, hit, damageIndex, muzzleIndex);
+                flow.SendVehicleShoot(netId, weaponIndex, dir, hit, damageIndex, muzzleIndex, magazine, ammo);
             }
 
-            ApplyVehicleShoot(netId, weaponIndex, dir, hit, damageIndex, muzzleIndex);
+            ApplyVehicleShoot(netId, weaponIndex, dir, hit, damageIndex, muzzleIndex, magazine, ammo);
         }
 
         /// <summary>在本端那台载具的对应武器上放"只表现"的一发（枪口焰 + 弹道 + 命中特效，不结算伤害）。
@@ -275,7 +362,7 @@ namespace FPSGame.Managers
         /// <para>▍武器的 <c>Damages</c> 来自预制体、<c>LogicBehaviour.Awake</c> 已跑过 <c>LogicInit</c>
         /// ⇒ 即使本端没人驾驶（<c>VehicleWeaponsManager.enabled == false</c>），表现弹也能放出来。</para></summary>
         static void ApplyVehicleShoot(int netId, int weaponIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hit,
-            int damageIndex, int muzzleIndex)
+            int damageIndex, int muzzleIndex, int magazine, int ammo)
         {
             var vehicle = FindVehicle(netId, out _);
             if (vehicle == null)
@@ -303,9 +390,15 @@ namespace FPSGame.Managers
             var muzzle = weapon.GetMuzzle(0);
             weapon.SpawnVisualSalvo(muzzle, dir, hit, muzzleIndex);
 
+            // ★【弹量随发】(2026-10-15) 把开枪者那台的权威弹量写进**本端这一份**武器实例：
+            //   两端各有一份实例（按持有者配置重建），不写就永远停在"满弹"——实测 a 打完 10 发下车、
+            //   b 上车看到的还是满弹（"载具的子弹没有真扣除"）。
+            if (wm != null) wm.ApplyRemoteAmmo(weaponIndex, magazine, ammo);
+
             FPSGame.Utils.NetSyncLog.BulletLog("载具/开火·收",
                 $"netId={netId} 武器={weapon.name} 下标={weaponIndex} 档位={weapon.UseDamageIndex} 发射点={muzzleIndex} " +
-                $"方向={dir:F2} 落点={(hit.sqrMagnitude > 0.0001f ? hit.ToString("F2") : "<无>")}");
+                $"方向={dir:F2} 落点={(hit.sqrMagnitude > 0.0001f ? hit.ToString("F2") : "<无>")} " +
+                $"弹匣余={magazine} 备弹余={ammo}");
         }
 
         /// <summary>应用"某人上了某辆载具"：把本端那个实体挂到载具挂点上，并停掉它的位姿/动画。</summary>
@@ -320,6 +413,12 @@ namespace FPSGame.Managers
                 DumpVehicles();
                 return;
             }
+
+            // ★【一车一人】占用在案 + 对**本地入口**关闸（Furniture_Vehicle.CanOperate 会因为 _remoteOccupied
+            //   变 false ⇒ 本机玩家连"按 F 进舱"的提示都看不到）。刻意放在"解析骑手实例"**之前**：
+            //   就算他的实例还没建出来（名单没到），这台车也确实归他，本端不该让别人挤进来。
+            _drivers[netId] = sid;
+            seat.SetRemoteOccupied(true);
 
             if (!TryResolveRider(sid, out GameObject rider))
             {
@@ -381,6 +480,10 @@ namespace FPSGame.Managers
             _remoteRides.Remove(sid);
             if (info == null) return;
 
+            // ★【一车一人】占用表与本端入口闸门一起还回去（判据带上 sid：换人时别把**新占用者**清掉）
+            if (info.NetId != 0 && _drivers.TryGetValue(info.NetId, out uint cur) && cur == sid) _drivers.Remove(info.NetId);
+            if (info.Seat != null) info.Seat.SetRemoteOccupied(false);
+
             // ⚠ 运动栈要**先**还 —— 它不依赖骑手还在不在（骑手可能已被销毁）
             SetRemoteLocomotion(info, true);
 
@@ -430,6 +533,20 @@ namespace FPSGame.Managers
                 break;
             }
             if (has) ApplyUnmount(found);
+        }
+
+        /// <summary>【盟友实例被意外重建后】把他的载具绑定接到新实例上：车还在 ⇒ 重新进舱；车没了 ⇒ 只清脏绑定。
+        /// <para>▍为什么需要：旧绑定留着的话，<see cref="TryDriveVehiclePose"/> 会把位姿继续喂给**载具根**
+        /// （新实例没人喂位姿 ⇒ 表现 = 车在动、人钉在原地）；而载具已销毁时那条绑定是脏的，必须清掉让新实例吃位姿。</para>
+        /// </summary>
+        public static void RebindRide(uint sid)
+        {
+            if (!_remoteRides.TryGetValue(sid, out RideInfo info) || info == null) return;
+
+            int netId = info.NetId;
+            bool vehicleAlive = info.Root != null && info.Seat != null;
+            ApplyUnmount(sid);                    // 旧实例多半已销毁 ⇒ 内部走"只剩表要清"那条（安全）
+            if (vehicleAlive) ApplyMount(netId, sid);
         }
 
         // ==================== 位姿推导（P2；零新消息） ====================
@@ -542,6 +659,85 @@ namespace FPSGame.Managers
             FPSGame.Utils.NetSyncLog.Warn("载具/键表", $"本端载具共 {n} 辆（名字:NetId）：{sb}");
         }
 
+        // ==================== 骑手抢救（载具要被销毁时） ====================
+
+        /// <summary>
+        /// 【载具将死】把挂在这辆车下的**远端骑手**先摘出来（<c>SetParent(null)</c> + 还运动栈 + 恢复吃位姿）。
+        ///
+        /// <para>▍为什么必须有：远端骑手是 <see cref="Furniture_Vehicle.ApplyRemoteMount"/> 挂到
+        /// <c>relatedTrans2</c>（载具根）下的**子物体**，而载具 prefab 的 <c>Health</c> 勾了 `AutoDestroy`
+        /// （<c>Health.HandleDeath</c> 末句 = <c>Destroy(gameObject)</c>）⇒ **骑手被连带销毁**；
+        /// 而 <c>Actor.OnDestroy</c> 只会让 <c>NetFriendBridge</c> 把他的实例从字典里摘掉，重建时机
+        /// （名单同步 / 换场景）在战斗期**都不会来** ⇒ 客机上房主**永久消失**
+        /// （2026-10-14 实测："房主看得见客机、客机看不见房主"的单方向断联）。</para>
+        ///
+        /// <para>▍时机安全：死亡链是"先 <c>OnDie?.Invoke</c>（本方法在其内）**再** <c>Destroy()</c>"，
+        /// 而 <c>Destroy</c> 是帧末延迟执行 ⇒ 摘骑手必然早于真正的销毁。</para>
+        /// </summary>
+        static void RescueRiders(int netId, string why)
+        {
+            if (netId == 0 || _remoteRides.Count == 0) return;
+
+            uint found = 0u;
+            bool has = false;
+            foreach (var kv in _remoteRides)
+            {
+                if (kv.Value == null || kv.Value.NetId != netId) continue;
+                found = kv.Key;
+                has = true;
+                break;
+            }
+            if (!has) return;   // 车上没有远端骑手（本地自己开的 / 空车）⇒ 无事可做
+
+            FPSGame.Utils.NetSyncLog.SyncLog("载具/上机·收",
+                $"载具 netId={netId} 即将销毁（{why}）⇒ 先摘下骑手 sid={found}" +
+                "（他是载具的子物体，不摘就会跟着一起没 ⇒ 客机上房主彻底消失）");
+            ApplyUnmount(found);
+        }
+
+        /// <summary>载具**死亡** ⇒ 抢救骑手。两端都会走：房主那条是权威死亡，本端副本那条来自远端判死
+        /// （<c>EnemyNetBridge.ApplyRemoteDeath → IHealth.Kill</c>）。⚠ 远端副本在本端**从来没有 owner**
+        /// ⇒ <c>VehicleController.OnDie</c> 根本没订阅过 ⇒ 只能靠这条事件拿到时机。</summary>
+        static void OnUnitDeath(Actor actor)
+        {
+            if (actor == null) return;
+            RescueRiders(actor.NetId, "单位死亡");
+            EvictRiderOfActor(actor);
+        }
+
+        /// <summary>【骑手自己死了 ⇒ 也要把他摘出来】(2026-10-15)。
+        ///
+        /// <para>▍驾驶者那台：死亡收口在 <c>VehicleController.OnDriverDie</c> / <c>Furniture_Vehicle.OnRiderDie</c>
+        /// （唯一收口 = <c>SetOwener(null)</c>，回包就是 4053 <c>mounted=false</c>）。</para>
+        ///
+        /// <para>▍**远端**：盟友实例上没有任何人会走那条路（他的 Health / 输入都在**他自己的**机器上）⇒
+        /// 尸体一直挂在机甲里、机甲还照着他的网络位姿被"推导"着跑（实测：玩家死在机甲上没被移出载具）。
+        /// 这里只清**本端那条绑定**：人已经死了，运动栈/父级该还原；占用表跟着清（车不能被尸体钉住）。</para>
+        ///
+        /// <para>▍本机玩家死亡不走这里（他没在 <see cref="_remoteRides"/> 表里）：那次由
+        /// <c>VehicleController</c> 的死亡收口负责，并且**会**上报 4053。</para>
+        /// </summary>
+        static void EvictRiderOfActor(Actor actor)
+        {
+            if (_remoteRides.Count == 0) return;
+
+            var go = actor.gameObject;
+            uint found = 0u;
+            bool has = false;
+            foreach (var kv in _remoteRides)
+            {
+                if (kv.Value == null || kv.Value.Rider != go) continue;
+                found = kv.Key;
+                has = true;
+                break;
+            }
+            if (!has) return;
+
+            FPSGame.Utils.NetSyncLog.SyncLog("载具/上机·收",
+                $"骑手 sid={found}（{go.name}）已死亡 ⇒ 从载具里摘出来（远端不会走本地的死亡收口）");
+            ApplyUnmount(found);
+        }
+
         // ==================== 边缘 / 清理 ====================
 
         static void OnPlayerLeft(uint sid)
@@ -567,12 +763,17 @@ namespace FPSGame.Managers
 
         static void ClearRides()
         {
-            if (_remoteRides.Count == 0) return;
+            if (_remoteRides.Count == 0)
+            {
+                _drivers.Clear();   // 占用表也要清（本机开的那台 / 已失联的占用者）
+                return;
+            }
 
             // 逐个摘（遍历时不能改字典）
             var sids = new List<uint>(_remoteRides.Keys);
             for (int i = 0; i < sids.Count; ++i) ApplyUnmount(sids[i]);
             _remoteRides.Clear();
+            _drivers.Clear();
         }
     }
 }

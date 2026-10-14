@@ -323,6 +323,11 @@ namespace FPSGame.Gameplay
                 //Debug.LogWarning("范围" + "内的目标数量"+ list.Count);
                 foreach (Damageable item in list)//每一个伤害组件
                 {
+                    // ⚠ item 可能是**已销毁**的幽灵条目（UnityEngine.Object 的 ToString 会打印成 "null"，
+                    //   打包端实测就是 `目标null没有碰撞箱`）：单位被销毁了、但它还留在查询结果里
+                    //   ⇒ 静默跳过；原来那条 LogError 只会刷屏并掩盖真正的问题（谁没注销）。
+                    if (item == null) continue;
+
                     Collider exolosionCollider = item.ClosestCollider(point);
                     if (!exolosionCollider)
                     {

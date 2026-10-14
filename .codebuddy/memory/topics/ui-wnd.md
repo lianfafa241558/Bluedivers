@@ -18,6 +18,11 @@
 - ⚠ 表头与数据行逐列对齐 ⇒ **共用同一组列宽 + 同一套 HLG 参数**（`childControlWidth=true`、`childForceExpandWidth=false`，每列挂 `LayoutElement.preferredWidth`），改一处必须同步另一处
 - 列表结构：`Scroll(ScrollRect)` → `Viewport`(`Image`+`Mask(showMaskGraphic=false)`) → `Content`(`VerticalLayoutGroup`+`ContentSizeFitter(VerticalFit=PreferredSize)`) → 首子物体放 **inactive 行模板**（VLG 忽略 inactive，不占位）
 - 非交互图元（文本/格子/装饰）一律 `raycastTarget=false`；交互靠行/按钮自身的 `Button`
+- ⚠⚠ **跨根 Canvas 同排序 ⇒ 射线被"另一个画布"抢走（点不动但不报错）**：两个根 Canvas 若同为 `ScreenSpaceCamera`+同相机+同 `sortingOrder`，
+  `EventSystem.RaycastComparer`（`EventSystem.cs:201-256`）会比到 `index`（= `GraphicRaycaster.cs:276` 的 `resultAppendList.Count`，
+  即 raycaster 注册顺序）⇒ **先注册的画布恒排前**，其全屏图元吃掉落点（`depth` 只对**同** rootRaycaster 才参与比较）。
+  实测（2026-10-15）：菜单 `Canvas`(FrontWnd 全屏 RawImage) vs `CanvasRoot/WndUI` 同为排序 0 ⇒ WndUI 上所有按钮/输入框都点不动。
+  ⇒ 每个根画布必须给**显式且互不相同**的 `sortingOrder`（它跨 raycaster 会被比，且同时决定渲染序）
 - ⚠ **别用 MCP 截图判"UI 有没有画出来"**：新建 additive 场景里的 `ScreenSpaceOverlay` Canvas 头 1~2 次截图是空的 ⇒ 先用反射读 `rect`/`color` 取证
 - ⚠ **`Invalid AABB inAABB`（+ `Canvas.SendWillRenderCanvases`）** = 某 UI 元素 AABB 含 NaN/±Inf（原生日志、**不带对象名**）⇒ 根因是"世界→屏幕/地图"算出非法坐标/尺寸后写进 RectTransform。已加兜底：`Tool.IsFinite(float/Vector2/Vector3)`（`00Tools/Tool_Geometry.cs`）+ `WndRootTool.SetSizeDelta` 丢弃非有限写入 + `SubtitleBase/SubtitleMark.Follow` 非有限就跳过 + `MiniMapWnd.Zoom/MapSizeValid`（除零夹成 1）。⚠ **同款写法的其余位置未加**：`SubtitleWnd`(152/171)、`HitFlashWnd`(249)、`SightLockToTarget`(70)。
 

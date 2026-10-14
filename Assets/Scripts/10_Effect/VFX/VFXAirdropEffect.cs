@@ -63,6 +63,9 @@ namespace FPSGame.Effect
         private LimitedLife m_Lift;
         private GameObject m_origin;
 
+        /// <summary>本次正在下落的空投舱（Pod 系专用）：它没落地之前信标不许过期（见 <see cref="UpdatePod"/>）。</summary>
+        private AirdropPod _fallPod;
+
         /// <summary>本次呼叫者的会话 sid（0 = 房主；-1 = 还没落定，两个入口各自补上）。</summary>
         private int _callerSid = -1;
 
@@ -272,6 +275,7 @@ namespace FPSGame.Effect
         {
 
             m_creatObject = null;
+            showTime = 0f;   // ⚠ 信标是池化复用的 ⇒ 自走计时必须复位（运输机卸载的"按时间兜底"要用它）
             if (m_SkipDeployWait) ApplySkipDeployWait();
             SetDisplay();
             switch (data.cfg.deliveryType)
@@ -364,6 +368,7 @@ namespace FPSGame.Effect
             m_PodFallScale = 1f;
             _callerSid = -1;   // 同上：呼叫者也只对本次呼叫有效（信标是池化复用的）
             _vehicleNetId = -1;   // 同上：载具号也只对本次呼叫有效
+            _fallPod = null;      // 同上：下落的舱也只对本次呼叫有效
 
             if (!m_creatObject.IsValid()) return;
 
@@ -404,6 +409,11 @@ namespace FPSGame.Effect
         }
         void UpdatePod()
         {
+            // ★ 舱没落地前**信标不许过期**：内容物（炮台/补给）是 PodHit 生成的，而 PodHit 的订阅挂在**信标**上
+            //   （信标一被回收就 OnDisable → `pro.OnHit -= PodHit`）⇒ 只要信标比舱先没，内容物就**永远不生成**
+            //   （2026-10-14 实测：客机上"部署反鞠式反坦克炮"的炮台没出来，主机正常）。故按"舱还在落"给自己续命。
+            if (_fallPod != null && !_fallPod.HasLanded && m_Lift != null) m_Lift.ResetLift(1f);
+
             if (data.State== AirdropState.Arrive && !m_creatObject.IsValid())
             {
             
@@ -440,6 +450,7 @@ namespace FPSGame.Effect
                         pro.SetFallSpeedScale(m_PodFallScale);
                         pro.Launch(m_origin);
                         pro.OnHit += PodHit;
+                        _fallPod = pro;   // 供 UpdatePod 判断"舱还没落地 ⇒ 信标续命"
                     }
 
                     var list = m_creatObject.GetComponentsInChildren<Animator>();
@@ -680,9 +691,17 @@ namespace FPSGame.Effect
         void UpdateMedivac()
         {
             // 俯冲 = arriveTime - 2 秒，到达后停滞 2 秒，总计 arriveTime 秒后进入 Sustain 状态，此时卸载
-            if (data.State == AirdropState.Sustain && m_creatObject.IsValid() && m_creatObject.transform.parent != null)
+            // ⚠⚠ 判据**不能只信 `data.State`**：本机自己叫的那发，`data` 就是**战备槽位那份共享对象**
+            //   （`SetOrigin` 直接赋值，见那里的注释），同一战备**连续呼叫**时它会被第二发重置回 Arrive
+            //   ⇒ 这一发永远等不到 Sustain ⇒ 机甲一直挂在运输机下、随运输机回池一起消失
+            //   （2026-10-14 实测："客机上呼叫的第一台机甲没落下来"，而远端重放那份是**独立副本**、落地正常
+            //   ⇒ 两端机甲数不一致：房主 3 台 / 客机 2 台）。
+            //   故按**本信标自己的时间**兜底：showTime ≥ arriveTime 正是上面注释写的那个卸载时刻。
+            bool stateUp = data.State == AirdropState.Sustain;
+            bool timeUp = showTime >= data.arriveTime;
+            if ((stateUp || timeUp) && m_creatObject.IsValid() && m_creatObject.transform.parent != null)
             {
-                Debug.Log("卸载");
+                Debug.Log(stateUp ? "卸载" : "卸载(按本信标时间兜底：共享的战备数据已被后续呼叫重置)");
                 m_creatObject.transform.parent = null;
                 m_creatObject.GetComponent<CharacterController>().enabled = true;
                 if (m_creatObject.TryGetComponent(out BaseSelfController bsc)) bsc.enabled = true;
@@ -697,6 +716,16 @@ namespace FPSGame.Effect
         void EndMedivac()
         {
             transform.ForEach(item => item.gameObject.SetActive(true));
+
+            // ★ 兜底：信标结束时**机甲还挂在运输机下**（正常早在 arriveTime 就卸下了）⇒ 就地卸下，
+            //   绝不让它随运输机回池一起消失（那就是"机甲没落下来"）。
+            if (m_creatObject.IsValid() && m_creatObject.transform.parent != null)
+            {
+                Debug.LogWarning("[VFXAirdropEffect] 运输机系：信标结束时机甲仍未脱离运输机 ⇒ 就地卸下（正常不该发生，判据见 UpdateMedivac）");
+                m_creatObject.transform.parent = null;
+                if (m_creatObject.TryGetComponent(out CharacterController cc)) cc.enabled = true;
+                if (m_creatObject.TryGetComponent(out BaseSelfController bsc)) bsc.enabled = true;
+            }
         }
 
         /// <summary>【诊断 + 修复】把本次生成的载具外观**强制重贴一次**，并把"重贴前"的现场打出来。

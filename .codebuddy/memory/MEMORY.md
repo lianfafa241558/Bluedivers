@@ -17,7 +17,7 @@
 
 ## 热区 2 · 环境
 - Unity **2022.3.62f3** / URP 14.0.12 / C#9 / netstandard2.0；单机 PvE + 局域网联机；随机源 `BattleRandom` + `SeedUtil.Derive`
-- 副本 `D:\Pro\Bluedivers`、`D:\Project\RTSClient`；**MCP 实例 hash 随路径变** ⇒ 开局读 `mcpforunity://instances` 实时值（**2026-10-14 实测 = `Bluedivers@3d9f2357` : 6400**；旧的 `4a3e6a7b` 已过期）
+- 副本 `D:\Pro\Bluedivers`、`D:\Project\RTSClient`；**MCP 实例 hash 不稳**（2026-10-14 同机两次会话分别报 `Bluedivers@3d9f2357` 与 `Bluedivers@4a3e6a7b`，端口恒 6400）⇒ 开局读 `mcpforunity://instances` 实时值、别背 hash；**只有 1 个实例时 server 自动选中**（多实例才必须 `set_active_instance`）
 - ⚠ `%LOCALAPPDATA%\Unity\Editor\Editor.log` 会被**另一个 Unity 工程**覆盖（本机末尾常是 RTSClient 的日志）⇒ 排查 Bluedivers 编译不能读它
 - `Lib/PEMaths.dll`：PEInt/PEVector3 = 米标量（`RawInt==RawFloat`），换算后不可再运算
 - 规范 `.codebuddy/rules/UnityCSharp编码规范.md`；skills `bluedivers-unity` / `data-editor` / `unity-mcp` / `kcpnet-online`

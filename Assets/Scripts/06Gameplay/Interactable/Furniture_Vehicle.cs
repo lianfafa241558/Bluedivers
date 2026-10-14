@@ -23,6 +23,18 @@ public class Furniture_Vehicle : Furniture_Attached
     /// <summary>驾驶者**自己**的生命组件（上车时订阅 ⇒ 驾驶者死亡也要强制下车）。存成字段才能可靠退订。</summary>
     private IHealth _riderHealth;
 
+    /// <summary>【联机】这辆车现在**被远端骑手占着** ⇒ 本机玩家**不能**上（2026-10-15）。
+    ///
+    /// <para>▍为什么必须有它：本类的 <see cref="CanOperate"/> 继承自
+    /// <see cref="Furniture_Attached.CanOperate"/>，它只看**本端**的 <c>inOperate</c>；而远端骑手是 09 的桥
+    /// 用 <see cref="ApplyRemoteMount"/> 挂上去的（**刻意不置** <c>inOperate</c>，见它的注释）⇒
+    /// 两端各自都以为自己能上 ⇒ 实测"玩家 a 上了之后玩家 b 也能上，同一台机甲里坐了两个人"。
+    /// 由 09 的桥在 <c>ApplyMount/ApplyUnmount</c> 里推过来（06 看不见 09）。</para>
+    ///
+    /// <para>⚠ 只标记**远端**骑手：本机玩家自己在开时<u>不</u>置位 —— 否则 <c>CanOperate</c> 变 false，
+    /// 交互提示（"退出驾驶"）会被 <c>OperationWnd</c> 收掉。</para></summary>
+    private bool _remoteOccupied;
+
     public override void Operate()
     {
         if (isDead)
@@ -67,13 +79,12 @@ public class Furniture_Vehicle : Furniture_Attached
     /// </summary>
     private void OnRiderDie(GameObject caused, GameObject origin)
     {
-        if (_riderHealth != null)
-        {
-            _riderHealth.OnDie -= OnRiderDie;
-            _riderHealth = null;
-        }
+        // ⚠ 这条订阅**不是唯一保险**：共享 OnDie 列表里任何一个订阅者抛异常，排在后面的就都不执行
+        //   ⇒ VehicleController 那侧另有一条"轮询驾驶者血量"的兜底（见它的 LateUpdate）。
+        //   这里负责**本地交互状态**（inOperate / owner）：不清的话死后按 F 会把尸体搬走。
+        UnhookRiderHealth();
 
-        inOperate = false;   // 本地交互状态：不然 Update→InOperateUpdate 还会跑（死后按 F 会把尸体搬走）
+        inOperate = false;
         owner = null;
         controller?.SetOwener(null);
     }
@@ -120,6 +131,29 @@ public class Furniture_Vehicle : Furniture_Attached
         }
     }
 
+    /// <summary>【联机 · 桥调用】标记"这辆车有**远端**骑手"（见 <see cref="_remoteOccupied"/>）。
+    /// <para>▍设置点只有两个：<c>NetVehicleBridge.ApplyMount</c>（收到"某人上机"并真把他挂上来了）与
+    /// <c>ApplyUnmount</c>（下机 / 被顶 / 死亡 / 离场 / 换场景）。</para></summary>
+    public void SetRemoteOccupied(bool occupied) => _remoteOccupied = occupied;
+
+    /// <summary>【联机 · 桥调用】本机玩家被"抢车 / 被别人顶掉"时**强制下车**（等价于替他按一次 F）。
+    ///
+    /// <para>▍为什么必须走 <see cref="Operate"/>：它是上下机的**唯一收口** —— 里面才有
+    /// <c>controller.SetOwener(null)</c> 与它抛的 <c>BattleEventBus.VehicleOwnerChanged</c>
+    /// （= 4053 上报的唯一来源）。在这儿自己散着清几个字段，远端那边会留一个"人还在车里"的幽灵。</para>
+    ///
+    /// <para>▍⚠ 只在"他**真的**在车里"（<c>inOperate</c>）时才动：<see cref="Operate"/> 第一句是
+    /// "把 owner 搬到入场点 <c>transform.TransformPoint(0,0,1)</c>"（那是**上车**动作）⇒ 对一个站在旁边的人
+    /// 调它 = 把人凭空搬走。</para>
+    /// </summary>
+    public void ForceLocalExit()
+    {
+        if (!inOperate || owner == null) return;
+
+        FPSGame.Utils.NetSyncLog.SyncLog("载具/上机·收", $"{name} 强制本机下车（{owner.name}）");
+        Operate();
+    }
+
     protected override void InOperateUpdate()
     {
         var delay = Time.time - lastOperatetime;
@@ -157,11 +191,7 @@ public class Furniture_Vehicle : Furniture_Attached
         isDead = true;
 
         // 车没了 ⇒ 驾驶者的死亡订阅也退掉（否则会挂在"已下车的驾驶者"身上，下次上车再挂一次）
-        if (_riderHealth != null)
-        {
-            _riderHealth.OnDie -= OnRiderDie;
-            _riderHealth = null;
-        }
+        UnhookRiderHealth();
     }
 
     protected override void OnDisable()
@@ -171,11 +201,29 @@ public class Furniture_Vehicle : Furniture_Attached
         {
             actor.OnDeath -= OnActorDeath;
         }
+
+        // ★【必须退订驾驶者的 OnDie】(2026-10-15)
+        //   订阅挂在**驾驶者**（本机玩家 / 盟友实例）那份 Health 上，而它是**共享**的（同一份列表里还挂着
+        //   Actor / PlayerController / 玩家窗 / HUD 等一圈）。原来这里不退 ⇒ 探针实测打出"目标已销毁、
+        //   方法还挂在表里"（`Furniture_Vehicle.OnRiderDie@<noObj>`）—— 那不只是泄漏：它在列表里排**前面**，
+        //   一旦抛异常，后面排着的 `VehicleController.OnDriverDie` 就**整段不执行**
+        //   （表现 = 驾驶者死了没被移出载具、还能接着控制和开火）。
+        UnhookRiderHealth();
+    }
+
+    /// <summary>退掉驾驶者生命的死亡订阅（**幂等**：没订阅过 / 已退过都安全）。</summary>
+    private void UnhookRiderHealth()
+    {
+        if (_riderHealth != null) _riderHealth.OnDie -= OnRiderDie;
+        _riderHealth = null;
     }
 
     public override bool CanOperate(GameObject unit)
     {
-        return !isDead && base.CanOperate(unit);
+        // 【联机 · 一车一人】(2026-10-15) 远端骑手正在开这辆 ⇒ 本机玩家**不能**上。
+        // 交互提示（OperationWnd / SubtitleWnd）都用 CanOperate 判定 ⇒ 提示会一起收起来；
+        // Furniture_Attached.Handle 也过这道 ⇒ 绕过 UI 也上不去。没有它，两端各坐一个（实测"两人同车"）。
+        return !isDead && !_remoteOccupied && base.CanOperate(unit);
     }
 
 

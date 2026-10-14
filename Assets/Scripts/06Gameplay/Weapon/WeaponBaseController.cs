@@ -280,6 +280,12 @@ namespace FPSGame.Weapon {
         [SerializeField]
         protected int ShootCost = 1;
 
+        /// <summary>每次射击消耗的弹药量（<see cref="ShootCost"/> 的**只读出口**）。
+        /// <para>▍用途：联机上报"开火后的弹量"要拿它折算 —— <c>OnShoot</c> 是在 <see cref="HandleShoot"/> 里抛的，
+        /// 而 <c>UseMagazine(ShootCost)</c> 在它**之后**才执行 ⇒ 事件回调里读到的还是"扣之前"的值
+        /// （见 <c>VehicleWeaponsManager.TryGetAmmoAfterShot</c>）。</para></summary>
+        public int AmmoPerShot => ShootCost;
+
         public override void LogicInit()
         {
             if (!UseManyMuzzle && !WeaponMuzzle)
