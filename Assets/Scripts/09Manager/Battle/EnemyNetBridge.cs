@@ -91,6 +91,7 @@ namespace FPSGame.Managers
             EnemyController.RemoteDrivenMovement = false;
             // 房主没了 ⇒ tick 伤害也没人广播了 ⇒ 本端重新变成 tick 权威（否则怪再也不流血/不掉异常血）
             FPSGame.Data.BattleState.IsTickDamageAuthority = true;
+            FPSGame.Data.BattleState.IsVehicleDamageAuthority = true;   // 载具同理：房主没了 ⇒ 本端重新权威（否则载具不再掉血）
             _pendingMoves.Clear();
             FPSGame.Utils.NetSyncLog.Warn("房主断开", "已恢复本端自主移动决策 + tick 伤害权威（本局不再与房主一致，属预期）");
         }

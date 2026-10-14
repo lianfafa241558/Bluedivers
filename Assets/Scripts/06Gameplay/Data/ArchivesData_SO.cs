@@ -417,9 +417,41 @@ public static class VehicleCustomState
     /// <summary>写入某玩家的载具配置（sid = 0 = 房主自己）。传 null/空表 = 清掉该 sid。</summary>
     public static void Set(uint sid, Dictionary<string, ArchivesData_SO.ArchVehicleData> map)
     {
-        if (map == null || map.Count == 0) { BySid.Remove(sid); return; }
+        if (map == null || map.Count == 0)
+        {
+            // ⚠ 这条**会**把一个本来有表的 sid 清掉（发送方没有载具改装时 DTO 就是 null）⇒ 必须留痕，别静默
+            if (BySid.Remove(sid))
+                FPSGame.Utils.NetSyncLog.SyncLog("载具/外观", $"sid={sid} 的载具配置被**清空**（对端那条没带载具改装）");
+            return;
+        }
+
         BySid[sid] = map;
+        FPSGame.Utils.NetSyncLog.SyncLog("载具/外观", $"sid={sid} 载具配置写入：{DumpMap(map)}");
     }
+
+    /// <summary>诊断用：把一份 sid 配置摊成 <c>车名:皮肤</c> 列表（只看前 4 项，够判"是谁的配置"）。</summary>
+    private static string DumpMap(Dictionary<string, ArchivesData_SO.ArchVehicleData> map)
+    {
+        if (map == null) return "<null>";
+        var sb = new System.Text.StringBuilder();
+        int n = 0;
+        foreach (var kv in map)
+        {
+            if (n >= 8) { sb.Append($",…(共{map.Count}项)"); break; }
+            if (n > 0) sb.Append(", ");
+            sb.Append(kv.Key).Append(':').Append(kv.Value != null ? kv.Value.skinIndex.ToString() : "null");
+            ++n;
+        }
+        return sb.Length > 0 ? sb.ToString() : "<空>";
+    }
+
+    /// <summary>该 sid 有没有**同步来的**配置表（true = 他这份配置已经到过了）。
+    /// <para>▍给渲染侧判"该不该回退本机存档"：**有表却查不到这辆车 ⇒ 不许回退**
+    /// （否则就是"用我的配置冒充别人的"，与 <see cref="TryGet"/> 的口径一致）。</para></summary>
+    public static bool HasSid(uint sid) => BySid.TryGetValue(sid, out var m) && m != null && m.Count > 0;
+
+    /// <summary>诊断用：某 sid 当前同步到的载具配置（没有表 ⇒ <c>&lt;无表&gt;</c>）。</summary>
+    public static string DumpSid(uint sid) => BySid.TryGetValue(sid, out var m) ? DumpMap(m) : "<无表>";
 
     /// <summary>关房/退房时清空（否则下一房会带出上一房的配置）。</summary>
     public static void Clear()
@@ -452,8 +484,15 @@ public static class VehicleCustomState
     /// 这样舰桥里改完立刻生效，不用等自己那条同步绕房主一圈回来。</para>
     /// </summary>
     public static bool TryGet(uint sid, string vehicleName, out ArchivesData_SO.ArchVehicleData data)
+        => TryGet(sid, vehicleName, out data, out _);
+
+    /// <summary>同上，另外告诉调用方**数据是从哪来的**（<paramref name="isLocalArchive"/> = 走的是本机存档的兜底）。
+    /// <para>▍为什么要这个出口：渲染侧要判"该不该接受这次兜底" —— 该 sid **有同步表却查不到这辆车**时
+    /// 绝不能用本机存档冒充（见本方法里的 <c>return false</c>），而"他这份配置还没到"时兜一下是有意的。</para></summary>
+    public static bool TryGet(uint sid, string vehicleName, out ArchivesData_SO.ArchVehicleData data, out bool isLocalArchive)
     {
         data = null;
+        isLocalArchive = false;
         if (string.IsNullOrEmpty(vehicleName)) return false;
 
         Dictionary<string, ArchivesData_SO.ArchVehicleData> remote;
@@ -465,6 +504,7 @@ public static class VehicleCustomState
 
         var arch = ArchivesData_SO.Current;
         if (arch == null) return false;
+        isLocalArchive = true;
         return arch.VehicleCustomDic.TryGet(vehicleName, out data) && data != null;
     }
 }

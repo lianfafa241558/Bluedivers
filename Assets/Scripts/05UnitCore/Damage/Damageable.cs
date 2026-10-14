@@ -26,6 +26,16 @@ namespace FPSGame.Game
         private const float ExplosionImmunityThreshold = 0.95f;
         /// <summary>穿甲等级不足时，每差 1 级减伤比例</summary>
         private const float ArmorPenaltyPerLevel = 0.33f;
+
+        /// <summary>【联机 · 可注入】"这笔伤害该不该在**本端落地**（真的扣血 / 致死）"。
+        /// <para>▍为什么需要这么个注入点：载具血量必须**收敛到房主**（两端各自模拟子弹 ⇒ 同一发被扣 N 份），
+        /// 但"哪个单位是载具 / 本端是不是权威 / 这笔是不是远端刚下发的 / 来源是玩家还是 AI"这些知识
+        /// <c>05_UnitCore</c> 一个都看不见（<c>VehicleController</c> 在 06、联机角色在 07/09）
+        /// ⇒ 这里只留一个谓词，判定由 09 的桥注入（同 <c>NetHostSvc.VehicleNetIdAllocator</c> 的思路）。</para>
+        /// <para>返回 <c>false</c> = **不落地**：不扣血 / 不致死 / 也**不派发</c> <c>UnitDamaged</c>（⇒ 不会上报）。
+        /// 受击的**视觉**表现由子弹自身的命中特效承担，不依赖这里。</para>
+        /// <para><c>null</c>（单机 / 未接入）⇒ 一律落地 = 改动前行为。</para></summary>
+        public static System.Func<Damageable, DamagePacket, bool> LocalDamageGate;
         /// <summary>穿甲不足时伤害最低比例</summary>
         private const float ArmorMinFactor = 0.1f;
 
@@ -249,6 +259,10 @@ namespace FPSGame.Game
         public void InflictDamage(DamagePacket packet) {
             if (!Health.IsValidMono()) return;
             if (!packet.DamageGroups.IsValid()|| packet.DamageGroups.Count==0) return;
+
+            // ★ 联机（2026-10-14）：这一笔"该不该在本端落地"由 09 注入的谓词决定
+            //   （载具血量收敛到房主；非权威端 AI 来源的载具伤害在这里就被挡掉）。null ⇒ 一律落地。
+            if (LocalDamageGate != null && !LocalDamageGate(this, packet)) return;
 
             PEInt damage = packet.Damage;
             // ⚠ 减伤/友伤/归属三件事一律读 **起源**（与拆分前的 `DamageSource` 逐字等价 ⇒ 数值零变化）；

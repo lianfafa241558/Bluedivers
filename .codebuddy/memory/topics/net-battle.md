@@ -44,12 +44,14 @@
 | 4041 | LoadCompleteNtf | 成员→房主 | 本机加载完 |
 | 4042 | BattleStartSync | 房主→全体 | 全体加载完 ⇒ 一起开打 |
 | 4043 | SceneDestructibleNtf | 双向 | 键 = `FNV1a(Actor.Id + 位置0.1m)`；**只传"死了"** |
-| 4044/4045 | PlayerLoadout Ntf/Sync | | 改装（档位/模组/载具） |
+| 4044/4045 | PlayerLoadout Ntf/Sync | | 改装（档位/模组/载具）。⚠ 应用的**第一步**是 `FriendWeaponView.Setup`（`Instantiate` 后立刻 `ApplyUpgrade`）⇒ 若那把枪的 `LogicInit/InitAttribute` 没跑完，`WeaponCfg[type]` 返回 null、`AttrInfo` 构造当场 NRE、**整条 4045 处理被打断**（既有缺陷，2026-10-14 已加兜底+留痕：见 daily） |
 | **4046** | KeyScreenStageNtf | 双向 | 终端家具 `SyncId`；**驱动端**上报、其余端只应用 |
 | **4047** | PatrolSpawnNtf | 房主→全体 | 生成点 + 逐单位目标点（构成靠"同落点派生流"） |
 | **4048** | OOPartSubmitNtf | 双向 | 容器家具 `SyncId` + count/type ⇒ 远端在幽灵背包上重放 |
 | **4049** | KeyScreenInputNtf | 双向 | 终端 `SyncId` + `key/kind` |
 | **4050** | PlayerReviveNtf | 双向 | **键 = sid**（房主 = 0）⇒ 被救者本机 `ReviveSelf()`。⚠ 不能蹭 4036：`Furniture_PlayerDown` 的 SyncId 含位置量化，盟友出生点比本人少 0.2m(Y)（`NextSpawnPos` 没带 `RawStartPoint` 的抬升）⇒ 键必然对不上；桥 `NetPlayerStateBridge`（09，`RuntimeInitializeOnLoadMethod` 自举）。⚠ 背包武器开火**复用 4015/4016**，槽位用虚拟值 7（`NetPlayerStateBridge.BagSlotIndex`） |
+| **4053** | VehicleMountNtf | 双向 | **载具上下机**：键 = 载具 `Actor.NetId`（房主随 4028 分配，`ActorsManager.VehicleNetIdBase=0x3000_0000`）；值 = 驾驶者 sid + `Mounted`。**一个号双向**（同 4036 做法：房主转发 + 本地应用，桥内按角色分流）。⚠ 载具**从 4036 摘出**（见 §7.3） |
+| **4054** | VehicleShootNtf | 双向 | **载具开火表现（只表现，不结算）**：键 = 载具号；值 = 武器下标 + 方向 + 准心落点 + 档位 + 发射点下标。**一个号双向**（同 4053）。上报钩子 = `VehicleWeaponsManager.OnWeaponShoot`（跟着武器生灭走，因为武器会被 `ClearWeapons+AddWeapon` 整批重建；`WeaponBaseController.OnShoot` 每次射击一次）；应用 = `WeaponBaseController.SpawnVisualSalvo`（**只表现**：摘 `FpsHelper.Hit`，保留弹道+命中特效）+ 收端按**开枪者档位**设 `UseDamageIndex`。⚠ 不复用 4015/4016（那是 `PlayerWeaponsManager` 槽位语义，背包已借 7）；丢自己那条按"**这辆车是不是我开的**"（键是载具号，没有 sid） |
 | 5001/5002 | PlayerTransformUp / TransformBatchSync | 成员↔房主 | 位姿 20Hz 上行 / 15Hz 批量下行 |
 
 ## 3. 种子与初始化确定性（`SeedUtil` / `TaskState.Seed`）
@@ -266,3 +268,100 @@
   `ApplyRemoteDamage(..., causedNetId)` 两个来源**各自**解析（`ResolveNetEmitter`），`AttackerNetId` 语义仍是**起源**；
   `UnitEventBus.UnitDamaged` 加第 5 参 `origin`（唯一订阅方 `NetDestructibleBridge` 两个号都要）。
   ⚠ **破坏性协议变更：双端必须同版本一起换包**（旧端 `Skip()` 掉 Key(8) ⇒ 退化成"显示成开枪者"）。
+
+### 7.3 🚗 载具（2026-10-14 P0/P1 落地 · 计划 `plans/联机_载具系统同步_执行计划.md`）
+- **事实更正（计划行号是错的）**：`ADSO_O_Exosuit.deliveryType = 3` = **Medivac 运输机**
+  （`AirdropDeliveryEnum`：Pod0/Bomb1/Jet2/Medivac3）⇒ 机甲在 `VFXAirdropEffect.StartMedivac` 生成；
+  `Furniture_Vehicle` 挂在 **Exosuit 的子物体**上（`relatedTrans` = 座位、`relatedTrans2` = 载具根）。`Turret_Manual_AT` 也用它。
+- **P0 号一致**：4027/4028 追加 `[Key(6)] int VehicleNetId`（只许追加）；房主分配，号段
+  `ActorsManager.VehicleNetIdBase = 0x3000_0000`；⚠ **07 看不见 05** ⇒ `NetHostSvc.VehicleNetIdAllocator` 由 09 的桥**委托注入**。
+  `VFXAirdropEffect.SpawnCreatObject` 把 **5 处** `Instantiate(creatObect)`（373/455/515/551/595）统一收口：
+  `ActorsManager.Replicating` 包住（**不领自增号**）→ 生成后盖章根 `SpecUnit Actor`；`_vehicleNetId` 三态（-1 不托管 / 0 待房主定号 / >0 已定）。
+  成员自己那发先 0，收到 4028 按 FIFO（`NetFriendBridge._pendingVehicleBeacons`）补号。
+- **P1 上下机**：**4053 单号双向**（同 4036 走法）。⚠ **载具必须从 4036 摘出** —— 4036 的远端重放会走
+  `Furniture_Vehicle.Operate()` ⇒ `VehicleController.SetOwener(盟友实例)`，而那条路硬要 `PlayerController` ⇒ **NRE**。
+  远端改走 `Furniture_Vehicle.ApplyRemoteMount`（挂点 + 摘父级，**刻意不置 `inOperate`**）+ `FriendController.SetVehicleRide`
+  （停 `NetTransformView` 免得被位姿拽回地面 + 压停移动动画 免得在舱里狂奔）。上报点 = `SetOwener` 抛
+  `BattleEventBus.OnVehicleOwnerChanged`（06 看不见 09）；桥 = `09Manager/Battle/NetVehicleBridge`（自举常驻）。
+  ⚠ **远端挂点必须落"座位终点"而不是"入场点"（2026-10-14 修）**：本地 `Furniture_Vehicle.Operate()` 先把驾驶者放到
+  入场点 `transform.TransformPoint(0,0,1)`，随后 `InOperateUpdate()` 在 1 秒内 Slerp/Lerp 贴到 `relatedTrans.position/rotation`
+  ⇒ 远端 `ApplyRemoteMount` 应**直接落 `relatedTrans`**（Exosuit 实测：座位点相对载具根 `(0,2.638,-0.030)` vs
+  入场点 `(0,3.430,-1.045)`，**差 1.287 米**；错了就是"客机上骑手站在机甲顶上偏后"）。
+  ⚠ `relatedTrans`/`relatedTrans2` 都在**骨骼**层级下（FV 挂在 `bone_Pelvis/Back`）⇒ 挂点坐标随动画动，
+  远端只在"上车那一刻采样一次并烘焙到载具根下"（本地同）。**自检口径**：`载具/上机·收` 的 `局部偏移=` 应≈`(0,2.64,-0.03)`。
+  ⚠ **驾驶者本人死亡也必须下车（2026-10-14 修）**：原来 `VehicleController` 只订阅**车自己**的 `Health.OnDie`
+  ⇒ 人被打死时 `_owner` 还非空、死人还能接着开。修 = 上车时**额外**订阅驾驶者的 `IHealth.OnDie`，仍走唯一收口
+  `SetOwener(null)`（于是 4053 自动上报"下机"，**不需要新消息**）；但**不能**直接复用那套还原 ——
+  它会把 `ActorState` 刷回 `Normal`（把倒地的人拽出死亡态）、重开武器相机（死亡镜头上叠武器画面）⇒
+  用"只在状态是 `Hide` 时还原 `ActorState`" + `_ownerDead` 守卫解决。同时 `Furniture_Vehicle` 侧也要清
+  `inOperate/owner`（否则死后按 F 会走 `Operate()` 把人搬到"入场点"）。
+  ⭐ **交互总闸（2026-10-14）**：`PlayerOperationController.CanInteract()` —— `IsDead` 或
+  `ActorState ∈ {Dead, Hide}` 时**一帧都不给交互**（早退还要清 `target/Press/音频/InOperation/ForceAim/第三人称距离`）。
+  ⚠ 这条**不能**写进 `PlayerInputHandler.CanProcessInput`：倒地呼叫（跳键）也走它，会被一起掐掉。
+  全工程只有 `PlayerOperationController` 消费玩家的 `GetOperate*`（载具/炮位的 `TryExit` 用它们**自己**的
+  InputHandler）⇒ 一处即总闸。⚠ `EmplacementController`（炮位）与 `VehicleController` 同病：**都没接驾驶者死亡**。
+
+- ⭐ **炮位 = 载具的同一套结构（2026-10-14 落地）**：`Turret_Manual_AT.prefab`（空投手动炮台）与 Exosuit 同型 ——
+  根 = `Actor(**SpecUnit**)` + `EmplacementController` + `VehicleWeaponsManager`，`Furniture_Vehicle` 在 `Back`，
+  `relatedTrans=Point` / `relatedTrans2=`根 ⇒ **上下机复用 4053、开火复用 4054**，只要：
+  ① `EmplacementController.SetOwener` 末尾抛 **`BattleEventBus.VehicleOwnerChanged`**（原来漏了 ⇒ 炮位完全不上报）；
+  ② 桥从"只认机甲"放宽：`FindVehicle`/`RideInfo.Vehicle` 用共同基类 **`BaseSelfController`**；
+  ③ 炮台是 `BaseSelfController`（**只转不移动**）⇒ `RideInfo.FixedPos = true`，P2 推导位**只推 yaw、位置原样**
+  （拿驾驶者位姿推位置会把炮台抖起来）。
+  ⚠ 4036 不冲突：`NetFurnitureBridge.OnLocalOperate` 早按 `furn is Furniture_Vehicle` 摘出（炮台共用同一组件）。
+  ⚠ 新增可驾驶物（`IDrivable`）的**检查清单**：① 在 `SetOwener` 收口里抛 `VehicleOwnerChanged`；
+  ② 桥的 `FindVehicle`/`RideInfo` 能否认它（共同基类）；③ 它是"移动"还是"只转"（`FixedPos`）；
+  ④ 驾驶者死亡要下车（订阅 `IHealth.OnDie` → `SetOwener(null)` + 死亡守卫：`ActorState` 只在 `Hide` 时还原、
+     别开武器相机）；⑤ 它有 `VehicleWeaponsManager` 才有 4054。
+- **P2 位姿（零新消息，2026-10-14 落地）**：载具位姿 = 驾驶者位姿 ⊗ **座位在载具根下的局部偏移⁻¹**
+  （`NetVehicleBridge.TryDriveVehiclePose`，由 `NetFriendBridge.HandlePoses` 每条先问，true 就不写盟友实例）。
+  载具根取 **`vehicle.transform`（Actor/VehicleController 所在物体）**，不取 `relatedTrans2`（Exosuit 上二者相同，
+  但炮台未必）；上车头 0.35s 插值贴合。
+  ⭐ **远端必须冻结 `VehicleController`**（它 `Update` 里跑 `GroundCheck` + 重力 `Move`，会和推导位打架 ⇒ 抖动/下沉）；
+  下车或被本机抢开时还原（`EvictRideOfVehicle`）。
+  ⚠ **三处实测修正（2026-10-14 用户双端验收后）**：
+  ① **绝不能直写 `transform`**：20Hz 直写 = "每个包跳一下"（用户原话"高频短距离位移"）⇒ 载具根挂 **`NetTransformView`**
+  接收推导位做缓冲插值（下车**必须关掉**，否则它把载具钉在最后一帧位姿上、与回来的运动栈打架）；
+  ② 由此**只推 yaw**：座位（`relatedTrans`）常带俯仰/翻滚（Exosuit 的 `Point` 是 180° 绕斜轴）⇒
+  `RideInfo` 存 `SeatYawOffset`（**不是**整份四元数，整份反解会把机甲拧歪，本地载具根恒 yaw-only）；
+  ③ 冻结运动栈会**连带掐掉走路动画**（动画就挂在 `BaseSelfMoveableController.LateUpdate` 里读 `CharacterVelocity`）
+  ⇒ 载具根另挂 `NetVehicleRemoteMotion`（按每帧位移差分驱动 `IsMove`/`Speed`，口径与本地逐字一致）。
+
+- **"房主强关"客机怎么发现（2026-10-14 修）**：⭐ **只信 `NetSvc.IsConnected` 是不够的** ——
+  它等于 KCP 库 `clientSession.IsConnected()`，而房主进程被**强杀**时 **UDP 没有 FIN**，库不一定会（及时）翻成断开
+  ⇒ 客机侧 `NetRoomFlow.DetectHostLost` 永不触发 ⇒ **房主的盟友模型 + `PlayerWnd` 队友行会一直挂着**
+  （两个症状同时出现 = `OnHostLost` 没触发，别再分别去查模型/UI）。
+  修法 = **心跳静默看门狗**（`NetClient.IsHostSilent`：发 Ping 时记 deadline、收到任何 Pong 清掉，默认 5s/心跳 2s）
+  ⇒ `DetectHostLost` 判"活着"改成 `IsConnected && !IsHostSilent`，且静默时先 `svc.Disconnect()` 再走清理。
+  ⚠ 队友 HUD 行的数据源 = **`ActorsManager.Players`**（`PlayerWnd.UpdatePlayerStates` 每帧遍历 ⇒ 实例一销毁就自愈），
+  但 **`TeamManager.players`**（战备/结算界面按它排行 + `IdToIndex`）**不会自己收缩** ⇒
+  `TeamNetBridge` 也必须订阅 `OnHostLost` 收敛成"仅本机"（否则回舰桥会看到幽灵行）。
+
+- **载具外观（皮肤/武器）的联机口径与"会被盖掉"的坑（2026-10-14 实测）**：
+  外观由 `BattleApplyVehicleData` 按**归属 sid**（`VFXAirdropEffect.StampCaller` 用 `CallerSid` 打标）
+  查 `VehicleCustomState.TryGet(sid, vehicleName)`；⚠ `TryGet` 明确"该 sid 有同步表却缺这辆车 ⇒ **不回退**"，
+  所以**任何地方都不许再兜一层本机存档**（否则就是"用我的配置冒充别人的"，实战表现 = 两端皮肤都变成本机那个）。
+  ⭐ **皮肤写在 `MaterialPropertyBlock` 上（`MpbController`，`SetPropertyBlock` 整块替换语义）**
+  ⇒ 会被别的表现系统整块盖掉：受击闪白/溶解（`FxControllerBase` 的 `RendererSlot`，按材质下标写块）
+  与**诞生材质**（`EnemyControllerFX`：`BirthDuration` 内把 `sharedMaterials` 换成 `BirthMaterial`，
+  到点 `RestoreMat()` 整块写回）。空投 Medivac 的"落地卸载"（`UpdateMedivac`）正好落在诞生材质还原的时间点附近
+  ⇒ 实测"天上挂运输机时皮肤是对的、落地后变回默认"。**对策 = 表现切换点强制重贴**
+  （`BattleApplyVehicleData.ForceApply`，空投落地那刻由 `VFXAirdropEffect` 调；`Apply()` 有"无变化跳过"，救不回来）。
+  排查这类问题时用 `BattleApplyVehicleData.LogAppearance(tag)` 打"渲染器上真正生效的材质 + MPB 里的 `_BaseMap`"。
+  ⭐ **修法（2026-10-14 定死）**：皮肤必须写进**与受击/溶解同一个共享槽位块** ——
+  `FxControllerBase.GetSharedSlotBlock(r,index)` 拿到块 → 写 `_BaseMap`/`_BlendingMap`/`_BlendingScale` →
+  `MarkSlotDirty`。理由：`SetPropertyBlock(block)`（渲染器级）与 `SetPropertyBlock(block,index)`（按下标）
+  是**两套存储**，`RendererSlot.Flush()` 用按下标那份 ⇒ 一挨打就把渲染器级那份**永久顶掉**
+  （实测：空投落地摔一下触发闪白，机甲皮肤从此变回默认）。⚠ 槽位表在 `FxControllerBase.Start` 才建，
+  而载具 `Awake` 就贴外观 ⇒ 必须在 `Update` 里低频补盖（`_slotStampRetry`）。
+  ⚠ 判"皮肤不对"前先分清是**配置查错**（应用日志里的 `皮肤=N` 与舰桥设置不符）还是**被盖掉**
+  （应用日志对、但探针的 `逐下标[idxX=无(受击槽)]`）；探针只列**本体**渲染器（粒子/拖尾要跳过，
+  否则日志会被 `VFX_HitSparks` 占满）。
+- **P3 血量/死亡（房主权威，2026-10-14 落地）**：**没有新消息**（复用 4025/4040）。
+  ⭐ 关键查证：`EnemyNetBridge` 的应用路径按 `NetId` 在 `Actors` **全表找、不按类型过滤** ⇒ 载具天然吃得下 4040 与死亡；
+  缺的只有 ① 上行（载具无 `EnemyController`）② 权威门。口径 = **AI 来源的载具伤害只有房主落地并广播；
+  玩家侧来源（Player/Friend；部署物算 AI）照样落地 + 上报**；门插在 `Damageable.LocalDamageGate`（09 注入的委托，
+  05 看不见 06/07/09）——返回 false ⇒ 不扣血/不死/**也不派发 `UnitDamaged`**（⇒ 自动不上报）。
+  权威位 `BattleState.IsVehicleDamageAuthority`（**与 `IsTickDamageAuthority` 分两位**）；
+  桥 = `09Manager/Battle/NetVehicleDamageBridge`（`WaveManager` Install/Uninstall）；上报要带**原始成分 + 部位下标**。
+- **未作**：P4 开火表现（**4054**）。

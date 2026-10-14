@@ -78,6 +78,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnLoadoutSync += HandleLoadoutSync;
             NetRoomFlow.OnJoinResult += HandleJoinResult;
             NetRoomFlow.OnPlayerLeft += HandlePlayerLeft;
+            NetRoomFlow.OnHostLost += HandleHostLost;   // 房主强关/崩溃 ⇒ 队伍表收敛为"只剩自己"（见方法注释）
             GlobalEventBus.OnGameStateChange += HandleGameStateChange;
         }
 
@@ -91,6 +92,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnLoadoutSync -= HandleLoadoutSync;
             NetRoomFlow.OnJoinResult -= HandleJoinResult;
             NetRoomFlow.OnPlayerLeft -= HandlePlayerLeft;
+            NetRoomFlow.OnHostLost -= HandleHostLost;
             GlobalEventBus.OnGameStateChange -= HandleGameStateChange;
             _lastReady.Clear();
             _lastRoster.Clear();
@@ -113,6 +115,39 @@ namespace FPSGame.Managers
             if (flow != null && flow.IsHost) return;   // 房主的资料由 Ready 那条路推（见 HandleGameStateChange）
             SendSelfProfile();
             SendSelfLoadout();   // ★ 入房时把**本机配置**（武器改装 + 载具改装）也报一次
+        }
+
+        /// <summary>
+        /// 房主掉了（强关 / 崩溃 / 断网）⇒ 队伍表**收敛为只剩自己**。
+        ///
+        /// <para>▍为什么必须做：战斗里那几行队友 HUD 是 <c>PlayerWnd</c> 每帧遍历
+        /// <c>ActorsManager.Players</c> 渲染的 ⇒ <c>NetFriendBridge.HandleHostLost</c> 把盟友实例销毁掉，
+        /// 行就自己没了；但**队伍表**（<see cref="TeamManager"/>.<c>players</c>，舰桥战备 / 结算界面按它排行、
+        /// <c>IdToIndex</c> 也按它换算）不会自己收缩 —— 不清就会在之后回舰桥时看到"早就不在的人"那一行
+        /// （2026-10-14 实测：房主强关后客机 UI 里房主那行一直在）。</para>
+        ///
+        /// <para>▍口径与 <c>NetFriendBridge.HandleHostLost</c> 对齐：客机之间没有直连 ⇒ 房主一走，
+        /// 别人的数据也永远停在最后一帧，"留着只会骗人"；收敛成单机后本地这一局照常能玩。</para>
+        /// </summary>
+        private void HandleHostLost()
+        {
+            var team = TeamManager.Instance;
+            if (team == null) return;
+
+            int before = team.players.Count;
+            if (before <= 1) return;   // 本来就只剩自己（单机/还没入房）⇒ 不用动
+
+            var solo = new List<PlayerData>(1);
+            if (team.Self != null) solo.Add(team.Self);
+            team.ReplacePlayers(solo);   // ★ 先落表（Reindex 会把 index 归位），再通知 UI
+
+            // 与名单一起作废的三张表：不然回大厅/换场景时会拿旧名单把这些人**重新建出来**（幽灵复活）
+            _lastReady.Clear();
+            _lastRoster.Clear();
+            _announcedJoin.Clear();
+
+            BridgeSys.Instance?.ReceiveRosterChanged();   // 舰桥战备界面：多出来的那几行要消失
+            FPSGame.Utils.NetSyncLog.SyncLog("房主离场", $"队伍表收敛为仅本机（原 {before} 人）");
         }
 
         // ==================== 名单同步（网络 → TeamManager） ====================
@@ -653,7 +688,13 @@ namespace FPSGame.Managers
 
             RefreshSelfWeaponConfig(team.Self);
             SyncLocalSid();
-            flow.SendLoadout(ToLoadout(team.Self));
+            var msg = ToLoadout(team.Self);
+            // 数据说话：本机上报的这一条**带了哪些载具改装**（排查"两端外观不一致"时，先看这一端有没有把数据带出去）
+            FPSGame.Utils.NetSyncLog.SyncLog("载具/外观",
+                $"本机上报配置：sid={(flow.IsHost ? 0u : flow.SelfSid)} 载具 {msg?.Vehicles?.Length ?? 0} 项" +
+                (msg != null && msg.Vehicles != null && msg.Vehicles.Length > 0
+                    ? $"（{msg.Vehicles[0].VehicleName}:皮肤{msg.Vehicles[0].SkinIndex} …）" : ""));
+            flow.SendLoadout(msg);
         }
 
         /// <summary>按存档重算"自己那份"武器选择 / 改装 / 模组（窗口改完存档后调，保持 Self 与存档一致）。</summary>

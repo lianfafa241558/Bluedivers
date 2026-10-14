@@ -182,6 +182,15 @@ using FPSGame.Gameplay;
         /// 由 09 的落地桥（<c>SceneUnitMoveSink</c>，挂对应场景）转发上网络、并把房主下发的目标点应用回本端 NPC。</para></summary>
         public static event Action<string, Vector3, bool> OnSceneUnitMove;
         public static void SceneUnitMove(string id, Vector3 destination, bool stop = false) => OnSceneUnitMove?.Invoke(id, destination, stop);
+
+        /// <summary>【联机】载具/炮台**驾驶员变更**（载具 GameObject / 驾驶员 GameObject；<c>null</c> = 变回无人）。
+        /// <para>▍为什么要有它：上下机唯一收口 = <c>IDrivable.SetOwener</c> 的两个实现 ——
+        /// <c>VehicleController.SetOwener</c>（进入 / 退出 / <c>OnDie</c> 都走它）与
+        /// <c>EmplacementController.SetOwener</c>（炮台，同款），而它们在 06（看不见 09）
+        /// ⇒ 抛事件给 <c>NetVehicleBridge</c> 去上报 4053（与 <see cref="OnEnemyHit"/> 那批同口径）。
+        /// ⚠ 新加"可驾驶物"实现 <c>IDrivable</c> 时**必须**在这两个收口里抛本事件，否则它上机完全不同步。</para></summary>
+        public static event Action<GameObject, GameObject> OnVehicleOwnerChanged;
+        public static void VehicleOwnerChanged(GameObject vehicle, GameObject owner) => OnVehicleOwnerChanged?.Invoke(vehicle, owner);
         #endregion
     }
 

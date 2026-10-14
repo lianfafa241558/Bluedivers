@@ -17,7 +17,8 @@
 
 ## 热区 2 · 环境
 - Unity **2022.3.62f3** / URP 14.0.12 / C#9 / netstandard2.0；单机 PvE + 局域网联机；随机源 `BattleRandom` + `SeedUtil.Derive`
-- 副本 `D:\Pro\Bluedivers`、`D:\Project\RTSClient`；**MCP 实例 hash 随路径变** ⇒ 开局读 `mcpforunity://instances` 实时值（2026-10-11 实测 = `Bluedivers@4a3e6a7b`:6400）
+- 副本 `D:\Pro\Bluedivers`、`D:\Project\RTSClient`；**MCP 实例 hash 随路径变** ⇒ 开局读 `mcpforunity://instances` 实时值（**2026-10-14 实测 = `Bluedivers@3d9f2357` : 6400**；旧的 `4a3e6a7b` 已过期）
+- ⚠ `%LOCALAPPDATA%\Unity\Editor\Editor.log` 会被**另一个 Unity 工程**覆盖（本机末尾常是 RTSClient 的日志）⇒ 排查 Bluedivers 编译不能读它
 - `Lib/PEMaths.dll`：PEInt/PEVector3 = 米标量（`RawInt==RawFloat`），换算后不可再运算
 - 规范 `.codebuddy/rules/UnityCSharp编码规范.md`；skills `bluedivers-unity` / `data-editor` / `unity-mcp` / `kcpnet-online`
 
@@ -25,6 +26,13 @@
 - ⭐ 首选**离线编译** `python -X utf8 .codebuddy/plans/offline_compile.py <asm>...`（~0.5s、不触发域重载）；⚠ 它编不到"刚新建、Unity 还没重生成 csproj"的文件
 - 必须经 Unity 时 **三证齐** = dll mtime 前进 + Console 0 error（先清空）+ `is_compiling:false`；⚠ 别信 `external_changes_dirty`，也**别只信 Console 的 0 error**（有「假空转」与「假缺失 meta」两种假象）⇒ 关键改动**用反射核验成员是否存在**
 - 改已存在文件只对**单个文件** `ImportAsset(path, ForceUpdate)`；新建 `.cs` 先 `refresh_unity`
+- ⚠ **编辑器失焦时重编会被卡住**（2026-10-14 实测：`refresh_unity` / `AssetDatabase.Refresh(ForceUpdate)` / 逐文件 `ImportAsset` / `RequestScriptCompilation(CleanBuildCache)` / `Assets/Refresh` 菜单全试过，只让 `isCompiling` 翻真又落假，dll 与 Bee `artifacts` 都不动）⇒ 解药 = 让用户聚焦 Unity 或 Ctrl+R；判据仍是 **dll mtime + 反射**
+- ⚠ MCP `read_console` 偶发**连 `types=["all"]` 都返回 0 条**（不可信，别只靠它判 "0 error"）
+- 常用脚本：`plans/recent_files.py`（列最近改动文件 ⇒ 判"到底编没编"）、`plans/tail_lines.py`（PowerShell 无 tail）
+- ⚠ **`offline_compile.py` 的依赖解析优先用 `Temp/offline_compile/<asm>.dll`**（本次自产的旧 dll）⇒
+  只编"最上层那一个"时，会被**上一次留下的陈旧依赖**骗出假错（实测 2026-10-14：编 06_Gameplay 报
+  `FpsHelper_Hit.cs: TargetCfg 未包含 All`，而契约层源码里明明有 —— 坏的是 `Temp/offline_compile/01_GameContract.dll`）。
+  解药：报错涉及别的程序集的类型时，**把那条依赖链一起编**（如 `01_GameContract 05_UnitCore 06_Gameplay`）。
 
 ## 路由表（按触发词读对应文件）
 | 触发词 | 去哪 |

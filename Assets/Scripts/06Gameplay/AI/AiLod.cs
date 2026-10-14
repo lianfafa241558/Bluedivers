@@ -18,6 +18,10 @@ namespace FPSGame.AI
     /// <para>▍不降的层：远端意图落地（<c>SyncedNavMover</c>）、伤害与生死（统一通道）、状态与技能 tick（牵扯血量结算）、
     /// 炮台锁头 <c>LateUpdate</c>、动画与 FX。</para>
     ///
+    /// <para>▍⚠ 载具（机甲 / 可驾驶炮台）的伤害落点**已钉在房主**：非权威端"AI 来源"的载具伤害被
+    /// <c>Damageable.LocalDamageGate</c> 在伤害入口直接挡掉（口径见 <c>BattleState.IsVehicleDamageAuthority</c>）
+    /// ⇒ 它与本 LOD 无耦合。改 LOD 范围时别绕开那道门（要让远处载具"少挨打"是另一回事，得先改权威口径）。</para>
+    ///
     /// <para>⚠ 降频只是"少跑几次"、**不补 deltaTime** ⇒ 帧内用 <c>Time.deltaTime</c> 累加的东西（转向 / 计时器）在远处会变慢；
     /// 这正是把范围限死在"非交战 + 敌人 + 成员端"的原因。</para>
     /// </summary>

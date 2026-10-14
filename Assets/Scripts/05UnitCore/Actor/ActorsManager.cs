@@ -116,6 +116,21 @@ namespace FPSGame.Game
         /// <summary>【联机】分配下一个"房主分配"号（唯一调用点 = <c>WaveManager.CreatUnit</c> 的统一入口）。</summary>
         public static int NextHostSpawnNetId() => HostSpawnNetIdBase + (++_hostSpawnNetIdSeq);
 
+        /// <summary>【联机】**空投载具段**起点：战备呼叫出来的载具（机甲/炮台/运输机这类可交互大件）的号。
+        /// <para>▍为什么既不能用自增段也不能用派生键：载具**两端各生成一份、且生成时机不同**
+        /// （呼叫方立刻生成、其余端收到 4028 才生成）⇒ 自增号必然错位；它的落点又是**各端各自打地面射线**求的
+        /// （地形被炸过后差几厘米）⇒ 派生键也会分叉。只能"**房主随 4028 分配 + 两端显式覆盖**"。</para>
+        /// <para>⚠ 与既有段互不相交（<see cref="HostSpawnNetIdBase"/> / <see cref="DerivedNetIdBase"/> / 敌人自增 / SpecUnit 自增）：
+        /// <c>EnemyNetBridge.FindActor</c> 统一按号查 ⇒ 号段相交就会"一个号指两个单位"。</para></summary>
+        public const int VehicleNetIdBase = 0x3000_0000;
+
+        /// <summary>本局"空投载具段"的序号（每局在 <see cref="Awake"/> 归零）。</summary>
+        private static int _vehicleNetIdSeq;
+
+        /// <summary>【联机】分配下一个载具号（调用点：房主自己的呼叫 + 房主转发成员呼叫时补号）。
+        /// <para>⚠ 只有房主该调它；成员端**不看**这个计数器（否则与房主分配的号撞车）。</para></summary>
+        public static int NextVehicleNetId() => VehicleNetIdBase + (++_vehicleNetIdSeq);
+
         /// <summary>【联机】"接下来创建的单位一律取**房主分配**号"（运行时生成的房主侧；Instantiate 前开、finally 关）。</summary>
         public static bool ForceHostSpawnNetId;
 
@@ -252,6 +267,7 @@ namespace FPSGame.Game
             _enemyNetIdSeq = 0;   // 本局的敌人编号从头开始（分配点会先判 Instance，保证不会有人在归零之前分号）
             _specUnitNetIdSeq = 0;   // 特殊单位同理（独立号段，见 SpecNetIdBase）
             _hostSpawnNetIdSeq = 0;  // 房主分配段同理（独立号段，见 HostSpawnNetIdBase）
+            _vehicleNetIdSeq = 0;    // 空投载具段同理（独立号段，见 VehicleNetIdBase）
             base.Awake();
             UnitEventBus.OnPlayerCreate += RegisterPlayer;
             UnitEventBus.OnFriendCreate += RegisterFriend;

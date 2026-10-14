@@ -73,6 +73,11 @@ namespace FPSGame.Managers
             var host = furn as Component;
             if (host != null && host.GetComponent<FriendController>() != null) return;
 
+            // ★ 载具（Furniture_Vehicle）：走**它自己的 4053**（NetVehicleBridge）。
+            //   本条重放会调 Furniture_Vehicle.Operate() ⇒ controller.SetOwener(远端实例)，而那条路硬要
+            //   PlayerController（盟友实例只有 FriendController）⇒ NRE；且"本机玩家专属开关"也不该在远端执行。
+            if (furn is Furniture_Vehicle) return;
+
             var f = furn as Furniture_Attached;
             if (f == null || f.SyncId == 0)
             {

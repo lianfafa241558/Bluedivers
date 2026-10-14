@@ -356,6 +356,7 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
         m_WeaponSlots = newArray;
         weapon.Owner = _owner;
         OnIconChange?.Invoke(newArray.Length == 1,icon);
+        HookWeaponShoot(weapon, true);   // ★ 联机：新武器也要进"开火上报"的订阅（重建后旧的已被销毁）
 
     }
     public bool HaveWeapon()
@@ -381,6 +382,41 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
         m_WeaponSlots = new WeaponController[0];
     }
 
+    /// <summary>某把武器在槽位表里的下标（联机上报要用它；取不到 ⇒ <c>-1</c>）。
+    /// <para>⚠ 必须按**引用**比：这些武器是从预制体实例化出来的子物体，靠名字/类型都可能撞。</para></summary>
+    public int IndexOfWeapon(WeaponBaseController weapon)
+    {
+        if (weapon == null) return -1;
+        for (int i = 0; i < m_WeaponSlots.Length; ++i)
+        {
+            if (ReferenceEquals(m_WeaponSlots[i], weapon)) return i;
+        }
+        return -1;
+    }
+
+    /// <summary>【联机 · 载具开火表现】本载具**任意槽位武器开了一次火**
+    /// （每"次"射击一次；多弹丸/齐射也只一次，见 <c>WeaponBaseController.OnShoot</c>）。
+    ///
+    /// <para>▍为什么挂在这里、而不是让 09 的桥逐个订阅武器：武器会被 <see cref="ClearWeapons"/> +
+    /// <c>AddWeapon</c> **整批重建**（按驾驶者配置重装，见 <c>BattleApplyVehicleData</c>）⇒ 订阅点必须跟着
+    /// **武器生命周期**走，而只有本类知道它们何时生灭。桥因此只需订阅本事件一次。</para>
+    ///
+    /// <para>▍参数 = 开火的那把武器（桥用它取槽位下标 / 枪口 / 射击方向 / 伤害档位 / 发射点下标）。</para>
+    /// </summary>
+    public event UnityAction<WeaponBaseController> OnWeaponShoot;
+
+    /// <summary>订阅 / 退订某把武器的开火（<b>幂等</b>：先 <c>-=</c> 再 <c>+=</c> ——
+    /// <c>AddWeapon</c> 与 <c>Start</c> 里的 <c>SetWeaponStateInternal</c> 可能都对同一把调）。</summary>
+    void HookWeaponShoot(WeaponController weapon, bool on)
+    {
+        if (weapon == null) return;
+
+        weapon.OnShoot -= RelayWeaponShoot;
+        if (on) weapon.OnShoot += RelayWeaponShoot;
+    }
+
+    void RelayWeaponShoot(WeaponBaseController weapon) => OnWeaponShoot?.Invoke(weapon);
+
     #endregion
 
     #region 事件
@@ -397,6 +433,8 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
             weapon.OnWantShootChange -= OnWantShootChange;
         }
 
+        // ★ 联机：开火表现的订阅点必须跟着**武器生灭**走（武器会被 ClearWeapons + AddWeapon 整批重建）
+        HookWeaponShoot(weapon, state);
     }
 
     private void OnWantShootChange(WeaponBaseController weapon, bool state)

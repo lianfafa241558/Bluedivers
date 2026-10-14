@@ -479,6 +479,9 @@ namespace FPSGame.UI
         private void SelectAirdrop(Transform button)
         {
             if (SelfReady) return;      // 同 ToggleBooster：面板可能是"就绪之前"展开的，落点上再挡一次
+            // ⚠ 槽位 <0 时**这不是一次选择**：Cancel()/首次显示会把 selectAirdropIndex 置 -1，
+            //   而收起动画期间列表按钮仍可点到 ⇒ 放过去就会把 -1 当槽位发出去（另一端收到即报"战备-1"）。
+            if (selectAirdropIndex < 0 || selectAirdropIndex > 3) return;
             SendPlayerSelectAemament(teamManager.Self.index, ResSvc.airdropDic[buttons[button]].ID, selectAirdropIndex);
         }
 
@@ -716,7 +719,10 @@ namespace FPSGame.UI
                 Debug.LogError("收到玩家选择战备的回调错误，玩家"+ playerIndex);
                 return;
             }
-            if (index < 0 || index >=4)
+            // -1 = "当前没有槽位"（面板收起后的空点），是合法空态而非错误 ⇒ 静默忽略；
+            // 真正异常的是越界（每行只有 0-3 四个战备格，见类头注释）。
+            if (index < 0) return;
+            if (index >= 4)
             {
                 Debug.LogError("收到玩家选择战备的回调错误，战备" + index);
                 return;

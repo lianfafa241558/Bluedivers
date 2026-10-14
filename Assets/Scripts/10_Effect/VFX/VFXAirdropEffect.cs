@@ -77,6 +77,53 @@ namespace FPSGame.Effect
         /// <summary>契约实现：远端复现时由 <c>BattleManager.ReleaseAirdrop</c> 带上呼叫者 sid（0 = 房主）。</summary>
         public void SetCallerSid(uint sid) => _callerSid = (int)sid;
 
+        /// <summary>本次呼叫生成的**载具号**（会盖到生成物的根 <c>SpecUnit</c> Actor 上）。
+        /// <para>▍三种取值：<c>-1</c> = 不托管（单机 / 旧版房主 ⇒ 完全保持原来的自增号行为）；
+        /// <c>0</c> = 待房主定号（成员自己叫的那发）；<c>&gt;0</c> = 已定号。理由见 <c>ActorsManager.VehicleNetIdBase</c>。
+        /// 信标是池化复用的 ⇒ 回收时复位。</para></summary>
+        private int _vehicleNetId = -1;
+
+        /// <summary>契约实现：标记本次载具号（见 <see cref="FPSGame.GameContract.IAirdropEffect.SetVehicleNetId"/>）。
+        /// <para>⚠ 可能在生成**之后**才被调用：成员的 4028 比它本机的生成晚到 ⇒ 这里必须能"补盖章"。</para></summary>
+        public void SetVehicleNetId(int netId)
+        {
+            _vehicleNetId = netId;
+            bool spawned = m_creatObject != null;
+            if (spawned && netId > 0) StampVehicleNetId(m_creatObject, netId);
+            NetSyncLog.SyncLog("载具/号", $"信标接到载具号 netId={netId}（已有生成物={spawned}）");
+        }
+
+        /// <summary>把载具号盖到生成物子树的**单位**上（生成物不是单位、或不是 <c>SpecUnit</c> 就什么都不做）。</summary>
+        private static void StampVehicleNetId(Transform root, int netId)
+        {
+            var actor = root.GetComponent<Actor>();
+            if (actor == null) actor = root.GetComponentInChildren<Actor>(true);
+            // 只管载具（SpecUnit）：别的类型有自己的号口径（玩家/盟友 = sid；场景实体 = 派生键）
+            if (actor == null || actor.Type != UnitTypeEnum.SpecUnit) return;
+            actor.NetId = netId;
+        }
+
+        /// <summary>把 <c>data.cfg.creatObect</c> 的生成**全收口**在这里。
+        /// <para>▍为什么：本次呼叫托管了载具号时，生成期间必须让 <c>Actor.Awake</c> **一个号都不发**
+        /// （<see cref="ActorsManager.Replicating"/>）—— 否则两端各领一个自增号、号必然不同；生成后显式盖章。
+        /// 不托管（<c>_vehicleNetId &lt; 0</c>）时走**完全一样**的旧路径 ⇒ 单机/旧版房主不受影响。</para>
+        /// </summary>
+        private Transform SpawnCreatObject(GameObject prefab, Vector3 pos, Quaternion rot, Transform parent = null)
+        {
+            if (_vehicleNetId < 0) return Make(prefab, pos, rot, parent);
+
+            ActorsManager.Replicating = true;
+            Transform t;
+            try { t = Make(prefab, pos, rot, parent); }
+            finally { ActorsManager.Replicating = false; }   // ⚠ 必须 finally：Instantiate 里抛异常也不能把全局门卡住
+
+            if (t != null && _vehicleNetId > 0) StampVehicleNetId(t, _vehicleNetId);
+            return t;
+        }
+
+        private static Transform Make(GameObject prefab, Vector3 pos, Quaternion rot, Transform parent) =>
+            (parent == null ? Instantiate(prefab, pos, rot) : Instantiate(prefab, pos, rot, parent)).transform;
+
         /// <summary>
         /// 按"呼叫者 sid"解析出**本端的那个单位**：本机 sid ⇒ 本机玩家；别人的 sid ⇒ 本端那份盟友实例（0 = 房主）。
         ///
@@ -316,6 +363,7 @@ namespace FPSGame.Effect
             m_SkipDeployWait = false;
             m_PodFallScale = 1f;
             _callerSid = -1;   // 同上：呼叫者也只对本次呼叫有效（信标是池化复用的）
+            _vehicleNetId = -1;   // 同上：载具号也只对本次呼叫有效
 
             if (!m_creatObject.IsValid()) return;
 
@@ -370,7 +418,7 @@ namespace FPSGame.Effect
                     //直接使用自定义物??
                     else
                     {
-                        m_creatObject = Instantiate(data.cfg.creatObect, transform.position + Vector3.up * data.cfg.arriveHeight, transform.rotation).transform;
+                        m_creatObject = SpawnCreatObject(data.cfg.creatObect, transform.position + Vector3.up * data.cfg.arriveHeight, transform.rotation);
                         DontDestroyOnLoad(this);
                         if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
                         {
@@ -452,7 +500,7 @@ namespace FPSGame.Effect
                 }
                 //Debug.LogError("创建位置" + transform.position);
                 //创建实际物体
-                var go = m_creatObject=Instantiate(data.cfg.creatObect, transform.position + 0.2f * Vector3.up, transform.rotation).transform;
+                var go = m_creatObject = SpawnCreatObject(data.cfg.creatObect, transform.position + 0.2f * Vector3.up, transform.rotation);
                 if (go.TryGetComponentInChildren(out WeaponBaseController weapon))
                 {
                     weapon.Origin = m_origin;
@@ -512,7 +560,7 @@ namespace FPSGame.Effect
             {
                 if (data.State == AirdropState.Sustain)
                 {
-                    m_creatObject = Instantiate(data.cfg.creatObect,transform.position, transform.rotation).transform;
+                    m_creatObject = SpawnCreatObject(data.cfg.creatObect, transform.position, transform.rotation);
                     if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
                     {
                         weapon.Origin = m_origin;
@@ -548,7 +596,7 @@ namespace FPSGame.Effect
             }
             //Debug.LogError("创建位置"+ transform.position);
             var go= VFXManager.Creat(eagle, transform.position, rotation, null).transform;
-            m_creatObject = Instantiate(data.cfg.creatObect, go.TransformPoint(0,-5,-2), rotation,go).transform;
+            m_creatObject = SpawnCreatObject(data.cfg.creatObect, go.TransformPoint(0,-5,-2), rotation, go);
             if (m_creatObject.TryGetComponentInChildren(out WeaponBaseController weapon))
             {
                 weapon.Origin = m_origin;
@@ -592,7 +640,7 @@ namespace FPSGame.Effect
             if (data.cfg.creatObect.GetComponent<IActor>().IsValidMono())
             {
                 var comp = data.cfg.creatObect.GetComponent<CharacterController>();
-                m_creatObject = Instantiate(data.cfg.creatObect, go.TransformPoint(0, -2.5f + comp.center.y - comp.height, 1.5f), rotation, go).transform;
+                m_creatObject = SpawnCreatObject(data.cfg.creatObect, go.TransformPoint(0, -2.5f + comp.center.y - comp.height, 1.5f), rotation, go);
                 m_creatObject.GetComponent<CharacterController>().enabled = false;
                 if (m_creatObject.TryGetComponent(out BaseSelfController bsc)) bsc.enabled = false;
 
@@ -605,6 +653,7 @@ namespace FPSGame.Effect
             }
 
             StampCaller(go, m_creatObject);   // ★ 归属：这次呼叫者（NeoNimbus_Vehicle 本体带 BattleApplyVehicleData）
+            LogVehicleAppearance("空投生成后（天上）");   // 诊断：记录"天上是对的"那一刻的现场，好在落地后对照
 
             // 根据 arriveTime 调整运输机俯冲时长：俯冲阶段 = arriveTime - 2 秒
             const float diveArriveOffset = 2f;
@@ -637,12 +686,48 @@ namespace FPSGame.Effect
                 m_creatObject.transform.parent = null;
                 m_creatObject.GetComponent<CharacterController>().enabled = true;
                 if (m_creatObject.TryGetComponent(out BaseSelfController bsc)) bsc.enabled = true;
+
+                // ★ 落地 = **表现切换点**：诞生材质还原（EnemyControllerFX.RestoreMat，按 BirthDuration 计时）
+                //   与受击/溶解的属性块回写都在这一刻附近，而它们都会把载具皮肤（MaterialPropertyBlock）整块盖掉。
+                //   ⇒ 先取证（重贴前的现场），再强制重贴一次；0.5s 后再看一次（若又掉了 ⇒ 有人在**持续**盖）。
+                ReapplyVehicleAppearance("落地·重贴前");
+                Invoke(nameof(AfterLandAppearanceCheck), 0.5f);
             }
         }
         void EndMedivac()
         {
             transform.ForEach(item => item.gameObject.SetActive(true));
         }
+
+        /// <summary>【诊断 + 修复】把本次生成的载具外观**强制重贴一次**，并把"重贴前"的现场打出来。
+        /// <para>▍为什么落地要重贴：皮肤写在 <c>MaterialPropertyBlock</c> 上，而受击闪白/溶解
+        /// （<c>FxControllerBase</c> 的槽位，按材质下标整块替换）与诞生材质还原
+        /// （<c>EnemyControllerFX.RestoreMat</c>，整块写回 <c>sharedMaterials</c>）都不看别人写了什么
+        /// ⇒ "天上对、落地变回默认皮肤"就是它们盖掉的。见 <c>BattleApplyVehicleData.ForceApply</c>。</para></summary>
+        private void ReapplyVehicleAppearance(string tag)
+        {
+            if (!m_creatObject.IsValid()) return;
+
+            var targets = m_creatObject.GetComponentsInChildren<BattleApplyVehicleData>(true);
+            for (int i = 0; i < targets.Length; ++i)
+            {
+                targets[i].LogAppearance(tag);
+                targets[i].ForceApply();
+                targets[i].LogAppearance(tag + "·重贴后");
+            }
+        }
+
+        /// <summary>只取证不重贴（生成时 / 落地 0.5s 后各来一次，好和"重贴后"对照）。</summary>
+        private void LogVehicleAppearance(string tag)
+        {
+            if (!m_creatObject.IsValid()) return;
+
+            var targets = m_creatObject.GetComponentsInChildren<BattleApplyVehicleData>(true);
+            for (int i = 0; i < targets.Length; ++i) targets[i].LogAppearance(tag);
+        }
+
+        /// <summary>落地 0.5s 后再看一眼：若皮肤**又**掉了 ⇒ 有系统在持续盖（要往 Fx 的槽位集成去收，而不是再重贴一次）。</summary>
+        private void AfterLandAppearanceCheck() => LogVehicleAppearance("落地后0.5s");
 
         #endregion
 

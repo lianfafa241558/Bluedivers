@@ -51,6 +51,17 @@ namespace FPSGame.Data
         /// <param name="isPlayerLike">是不是玩家 / 盟友（他们的血本机权威，任何角色下都要本地算）。</param>
         public static bool ShouldApplyTickDamage(bool isPlayerLike) => IsTickDamageAuthority || isPlayerLike;
 
+        /// <summary>【联机】本端是不是 **载具伤害的权威端**（房主 / 单机）。
+        /// <para>▍为什么必须单独钉（2026-10-14）：载具（机甲 / 可驾驶炮台）两端的**子弹是各自模拟的**，
+        /// 敌人 AI 的子弹也两端各打一遍 ⇒ 各扣一次必然分叉（同一发被扣 N 份）。而载具又不像敌人那样有
+        /// "成员上报 ⇒ 房主结算"的完整通道（它没有 <c>EnemyController</c>）⇒ 口径钉成：
+        /// **AI 来源的载具伤害只有房主那台落地并广播**；**玩家侧来源的照样落地 + 上报**（那笔房主算不出来）。</para>
+        /// <para>⚠ 与 <see cref="IsTickDamageAuthority"/> 刻意**分两位**：tick 的判据是"状态推导"、落点在
+        /// <c>Damageable.Tick</c>；载具的判据是"子弹模拟"、落点在注入的 <c>Damageable.LocalDamageGate</c>；
+        /// 合成一位会让两套例外互相牵连。</para>
+        /// <para>写入方 = <c>WaveManager.Awake</c>（按角色）与 <c>EnemyNetBridge.OnHostLost</c>（房主没了 ⇒ 自己重新权威）。</para></summary>
+        public static bool IsVehicleDamageAuthority { get; internal set; } = true;
+
         /// <summary>
         /// 确定性战斗随机源（未就绪时 = 固定种子 0 的中性实例）。
         ///
@@ -70,6 +81,7 @@ namespace FPSGame.Data
             IsStartBattle = false;
             BattleRandom = NullRandom;
             IsTickDamageAuthority = true;   // 未就绪 = 中性（单机）⇒ 本端自己算 tick
+            IsVehicleDamageAuthority = true;   // 同理：未就绪 = 中性（单机）⇒ 载具伤害本端自己算
         }
     }
 }

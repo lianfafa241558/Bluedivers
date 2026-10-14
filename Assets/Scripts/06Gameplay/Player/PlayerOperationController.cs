@@ -41,8 +41,50 @@ public class PlayerOperationController : MonoBehaviour
         FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange -= OnWindowStateChange;
     }
 
+    /// <summary>
+    /// 玩家当前能不能与世界交互。
+    ///
+    /// <para>▍为什么必须拦：倒地/死亡时相机已经切到 <c>PlayerDownCamera</c>，但本组件照旧用屏幕中心射线
+    /// 找交互物、照旧把 E 交给 <c>IFurniture.Handle()</c> ⇒ **死人能开箱 / 上炮位 / 上车**（2026-10-14 实测）。</para>
+    ///
+    /// <para>▍为什么"被载具接管"（<c>ActorState.Hide</c>）也拦：那一刻移动/视角/上下机都由**载具那套输入**
+    /// 负责（<c>Furniture_Vehicle</c> → <c>VehicleController.TryExit</c>，用的是载具自己的 InputHandler）
+    /// ⇒ 这里再放行只会让驾驶员顺带把旁边的箱子也开了。</para>
+    ///
+    /// <para>⚠ 刻意**不**把这条写进 <c>PlayerInputHandler.CanProcessInput</c>：倒地时的"呼叫"（跳键）
+    /// 也走它，一起掐掉就没法求救了。</para>
+    /// </summary>
+    private bool CanInteract()
+    {
+        if (m_PlayerController == null) return true;
+
+        // ① 倒地 / 死亡（PlayerController.IsDead 由 Health.OnDie 置位，OnRevive 清）
+        if (m_PlayerController.IsDead) return false;
+
+        // ② 被载具接管（上车时 VehicleController.SetOwener 把状态设成 Hide）
+        var actor = m_PlayerController.Actor;
+        if (actor == null) return true;
+        var st = actor.ActorState;
+        return st != ActorState.Dead && st != ActorState.Hide;
+    }
+
     void Update()
     {
+        // ★【交互总闸】**非正常状态一律不能交互**（并在这一帧把进行中的交互/相机状态收干净）。
+        //   「能按 E」这件事只该有这一个入口 —— 各家具自己再判一遍身份很容易漏（漏了就是"死人开箱"）。
+        if (!CanInteract())
+        {
+            CancelSteppedPress();
+            if (target != null && !target.HaveFlag(FurnitureFlag.KeepPress)) target.Press = 0;
+            if (aud) { aud.Stop(); aud = null; }
+            target = null;
+            // ⚠ 必须清 InOperation：它为 true 时 CanProcessInput 会把后续输入挡掉 0.5s（**含倒地呼叫的跳键**）
+            m_InputHandler.InOperation = false;
+            m_PlayerController.WeaponsManager.ForceAim = false;
+            m_PlayerController.ThirdPersonDistanceScale = 1f;   // 交互时会拉近，退出时要还原
+            return;
+        }
+
         if (m_PlayerController.IsThirdPerson)
         {
             // 第三人称：检测角色前方近距离的交互物，取距离最近的可交互物

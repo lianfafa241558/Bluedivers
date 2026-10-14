@@ -28,6 +28,16 @@ namespace FPSGame.GameContract
         void SetCallerSid(uint sid);
 
         /// <summary>
+        /// 【联机】标记本次空投生成的**载具号**（<c>Actor.NetId</c>）；必须在 <see cref="TmpAirdrop"/> 之前调用。
+        /// <para>▍传值语义：<c>&gt; 0</c> = 房主已定号（远端复现 / 房主自己的呼叫）；<c>0</c> = 待房主定号
+        /// （成员自己叫的那发 —— 先不领自增号，等 4028 回来由 <c>NetFriendBridge</c> 覆盖）；
+        /// **不调用** = 不托管（单机 / 旧版房主 ⇒ 保持原来的自增号行为）。</para>
+        /// <para>▍为什么要它：载具两端各生成一份、时机不同，落点还会差几厘米 ⇒ 号必须显式给（理由同
+        /// <see cref="SetCallerSid"/>，见 <c>ActorsManager.VehicleNetIdBase</c>）。</para>
+        /// </summary>
+        void SetVehicleNetId(int netId);
+
+        /// <summary>
         /// 开始一次空投流程。<paramref name="airdropId"/> 由实现方解析成配置
         /// （原实现是 <c>ResSvc.Instance.GetAirdrop(id)</c>）；
         /// <paramref name="action"/> 在空投舱生成后回调（可为 null）。

@@ -2,6 +2,7 @@
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.Game;
+using FPSGame.GameContract;
 using FPSGame.Gameplay;
 using FPSGame.Net;
 using FPSGame.Utils;
@@ -88,6 +89,8 @@ namespace FPSGame.Managers
         public void Init()
         {
             Instance = this;
+            // ★ 载具号分配钩子：07（NetHostSvc）看不见 05（ActorsManager）⇒ 由这里把"号空间的唯一来源"注入进去
+            NetHostSvc.VehicleNetIdAllocator = ActorsManager.NextVehicleNetId;
             NetRoomFlow.OnPlayerList += HandleRoster;
             NetTransformFlow.OnPose += HandlePoses;
             NetRoomFlow.OnWeaponSwitch += HandleWeaponSwitch;   // 局内切枪（盟友换槽）
@@ -110,6 +113,8 @@ namespace FPSGame.Managers
         public void UnInit()
         {
             if (ReferenceEquals(Instance, this)) Instance = null;
+            NetHostSvc.VehicleNetIdAllocator = null;   // 反注入：本桥不在场时别让 07 用一个已失效的委托
+            _pendingVehicleBeacons.Clear();
             _loadouts.Clear();
             NetRoomFlow.OnPlayerList -= HandleRoster;
             NetTransformFlow.OnPose -= HandlePoses;
@@ -332,6 +337,12 @@ namespace FPSGame.Managers
 
         // ==================== 呼叫战备（局内释放） ====================
 
+        /// <summary>【成员】本机自己叫的那发"待定号"信标（FIFO）—— 只记成员那份，房主当场就定了号。
+        /// <para>▍为什么需要：成员发 4027 时还不知道房主会给什么号（号随 4028 回来），而本机那份载具**已经生成**
+        /// （运输机/空投舱是"立刻投送"的）⇒ 得记住"哪几个信标等着补号"。KCP 可靠有序 ⇒ 自派发回来的 4028
+        /// 与本地呼叫顺序一致，按 FIFO 出队就能对上（本机呼叫有 CD，通常队列里最多一个）。</para></summary>
+        private readonly Queue<GameObject> _pendingVehicleBeacons = new Queue<GameObject>();
+
         /// <summary>
         /// 本机**释放了一次战备** → 上报（远端各自在同一个点上复现）。
         ///
@@ -345,9 +356,32 @@ namespace FPSGame.Managers
             var self = ActorsManager.Player;
             if (owner == null || self == null || self.gameObject == null || owner != self.gameObject) return;
 
+            // 单机 / 不在房：一个号都不领（否则会把本机的自增号段推歪，而且没人需要这个号）
+            var flow = NetRoomFlow.Instance;
+            if (flow == null || !flow.InRoom) return;
+
+            // ★ 载具号（本机这一发）：房主 = 当场分配（它就是权威，号随 4028 一起出去）；
+            //   成员 = 0（待定号），等房主 4028 回来按 FIFO 覆盖（见 HandleAirdropCall 的 IsSelf 分支）。
+            int vehicleNetId = flow.IsHost ? ActorsManager.NextVehicleNetId() : 0;
+            var fx = target != null ? target.GetComponent<IAirdropEffect>() : null;
+            if (fx != null)
+            {
+                // ⚠ 必须在生成之前落定：信标本体就是"生成物"的宿主（见 VFXAirdropEffect.SpawnCreatObject）
+                fx.SetVehicleNetId(vehicleNetId);
+                if (!flow.IsHost) _pendingVehicleBeacons.Enqueue(target);
+            }
+            else if (target != null)
+            {
+                // ⚠ 静默退化会让"载具号两端对不上"变得完全无从下手 ⇒ 必须留 Warn
+                FPSGame.Utils.NetSyncLog.Warn("载具/号", "本机呼叫的信标上没有 IAirdropEffect ⇒ 载具号无法托管（两端可能对不上）");
+            }
+
+            FPSGame.Utils.NetSyncLog.SyncLog("载具/号",
+                $"本机呼叫战备 id={data.cfg.ID} ⇒ 本机载具号={(vehicleNetId > 0 ? vehicleNetId.ToString() : "待房主定号")}");
+
             // ★ 信标朝向也要发：轰炸类战备的炮位/弹道是按信标 rotation 摆的（见 AirdropCallMsg.Yaw）
             float yaw = target != null ? target.transform.eulerAngles.y : (owner.transform != null ? owner.transform.eulerAngles.y : 0f);
-            NetRoomFlow.Instance?.SendAirdropCall(data.cfg.ID, point, yaw);
+            flow.SendAirdropCall(data.cfg.ID, point, yaw, vehicleNetId);
         }
 
         /// <summary>
@@ -387,6 +421,7 @@ namespace FPSGame.Managers
         {
             int count = _friends.Count;
             ClearFriends();
+            _pendingVehicleBeacons.Clear();   // 房主没了 ⇒ "待定号"再也不会被补上，条目直接丢
             _lastInfos = null;
             _lastProfiles = null;
             _loadouts.Clear();   // 配置跟人走：人都不在了，留着只会在下一次"恰巧同 sid"时串味
@@ -427,10 +462,17 @@ namespace FPSGame.Managers
             GlobalEventBus.ActorSpeech(fc.gameObject, group.Get(fc.transform.position));
         }
 
-        /// <summary>盟友呼叫战备（房主权威转发；自己发的那条按 sid 丢掉 —— 我本地已经真放过一次）。</summary>
-        private void HandleAirdropCall(uint sid, int airdropId, UnityEngine.Vector3 point, float yaw)
+        /// <summary>盟友呼叫战备（房主权威转发；自己发的那条按 sid 丢掉 —— 我本地已经真放过一次）。
+        /// <para>⚠ 成员自己那条**不能白丢**：要拿它把本机那份载具的"待定号"补成房主定的号
+        /// （载具两端各生成一份、时机不同 ⇒ 号只能房主定，见 <c>ActorsManager.VehicleNetIdBase</c>）。</para>
+        /// </summary>
+        private void HandleAirdropCall(uint sid, int airdropId, UnityEngine.Vector3 point, float yaw, int vehicleNetId)
         {
-            if (IsSelf(sid)) return;
+            if (IsSelf(sid))
+            {
+                ApplySelfVehicleNetId(vehicleNetId);
+                return;
+            }
 
             var bm = BattleManager.Instance;
             if (bm == null || airdropId <= 0) return;
@@ -439,11 +481,42 @@ namespace FPSGame.Managers
             //   （不带 yaw 时远端那份炮击方向与发起方不同 ⇒ "时间对了位置不对"）
             // ★ callerSid：这次空投是**他**叫的 ⇒ 生成的载具（外骨骼/炮台）在他的机器上按**他的**载具改装渲染，
             //   我这边也照同一份配置渲染（见 BattleApplyVehicleData 的归属口径）
-            bm.ReleaseAirdrop(point, yaw, airdropId, null, sid);    // owner = null ⇒ 不计"呼叫战备次数"、不回声
+            // ★ vehicleNetId：载具号由房主随本条分配 ⇒ 各端（含发起方自己）用同一个号（见 ActorsManager.VehicleNetIdBase）
+            bm.ReleaseAirdrop(point, yaw, airdropId, null, sid, vehicleNetId);   // owner = null ⇒ 不计"呼叫战备次数"、不回声
 
             // ★ 团队冷却（teamCool）：他叫的这一发若勾了团队冷却，本机玩家那份同名战备也进 CD
             //   （各端只持有自己那份 useAd ⇒ 只能各端冷各端的；他那一发自己走 Arrive→Sustain→Cool，见 ApplyTeamCool）
             bm.ADCont?.ApplyTeamCool(airdropId);
+        }
+
+        /// <summary>【成员】把自己那份载具的号从"待定"补成房主定的号（按 FIFO 对上本机呼叫顺序）。</summary>
+        private void ApplySelfVehicleNetId(int vehicleNetId)
+        {
+            if (vehicleNetId <= 0) return;   // 房主没给号（旧版房主）⇒ 保持原样，别把本机的号洗成 0
+
+            GameObject beacon = null;
+            while (_pendingVehicleBeacons.Count > 0)
+            {
+                beacon = _pendingVehicleBeacons.Dequeue();
+                if (beacon != null) break;   // 信标被提前回收的条目直接跳过
+                beacon = null;
+            }
+
+            if (beacon == null)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("载具/号", $"收到本机那发的载具号 {vehicleNetId}，但本地没有待补号的信标（信标被提前回收？）");
+                return;
+            }
+
+            var fx = beacon.GetComponent<IAirdropEffect>();
+            if (fx == null)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("载具/号", $"待补号的信标上没有 IAirdropEffect ⇒ 号 {vehicleNetId} 盖不上");
+                return;
+            }
+
+            fx.SetVehicleNetId(vehicleNetId);
+            FPSGame.Utils.NetSyncLog.SyncLog("载具/号", $"本机那发载具已按房主号覆盖 netId={vehicleNetId}");
         }
 
         private static bool IsSelf(uint sid) =>
@@ -621,6 +694,8 @@ namespace FPSGame.Managers
         {
             // ⚠ 这里**不再** FindObjectOfType 找武器管理器：玩家实例创建时会走 UnitEventSub.OnPlayerCreate
             //   （HandleLocalPlayerCreated 直接从玩家身上取组件），时机比"延迟几秒猜"确定。
+
+            _pendingVehicleBeacons.Clear();   // 换场景 ⇒ 旧信标（连同它上面的"待定号"）都会没，条目直接丢
 
             // 场景单位（NPC/特殊单位）各自随机游荡、没有连续同步 ⇒ 新场景就绪后向房主拉一次快照对齐。
             // ⚠ 不需要延迟重试：场景里摆好的单位在 **Awake 里就注册进了注册表**（`Actor.Awake` 里
@@ -1045,9 +1120,15 @@ namespace FPSGame.Managers
                 var it = batch.Items[i];
                 if (it == null || it.Sid == self) continue;
 
+                var pos = new Vector3(it.X, it.Y, it.Z);
+
+                // ★ P2 · 载具位姿由**驾驶者位姿推导**（零新消息）：摆**载具根**，骑手是它的子 ⇒
+                //   这一条不能被写进盟友实例（否则两套位姿互相打架）；它那份 NetTransformView 上车时已关闭。
+                if (NetVehicleBridge.TryDriveVehiclePose(it.Sid, pos, it.Yaw, it.Teleport)) continue;
+
                 if (_friends.TryGetValue(it.Sid, out var fc) && fc != null)
                 {
-                    fc.ApplyPose(new Vector3(it.X, it.Y, it.Z), it.Yaw, it.Pitch, it.Teleport);
+                    fc.ApplyPose(pos, it.Yaw, it.Pitch, it.Teleport);
                 }
             }
         }

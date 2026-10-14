@@ -36,6 +36,29 @@ namespace FPSGame.AI
             dirty = true;
         }
 
+        /// <summary>
+        /// 本槽位的**共享块**（惰性创建）—— 供"长期外观"写入者（如载具皮肤的 <c>BattleApplyVehicleData</c>）使用。
+        ///
+        /// <para>▍为什么长期外观也必须写进这里：<c>Renderer.SetPropertyBlock(block)</c>（不按下标）与
+        /// <c>SetPropertyBlock(block, index)</c> 是**两套**存储；本槽位一旦被受击闪白/溶解按下标 Flush，
+        /// 别人写在渲染器级（下标 -1）的属性就被**永久顶掉**（本类注释开头说的就是这个坑，
+        /// 2026-10-14 实测后果：机甲空投落地摔一下触发闪白，皮肤从此变回默认）。</para>
+        ///
+        /// <para>▍用法（外部写入者）：写完后**必须**调 <see cref="MarkDirty"/>（或让本类的
+        /// <c>Flush</c> 在下一次刷新时带上它）。</para>
+        /// </summary>
+        public MaterialPropertyBlock Block
+        {
+            get
+            {
+                if (!mpb.IsValid()) mpb = new MaterialPropertyBlock();
+                return mpb;
+            }
+        }
+
+        /// <summary>标记"本槽位有写入，需要回写"（下帧由 <c>Flush</c> 生效）。</summary>
+        public void MarkDirty() => dirty = true;
+
         /// <summary>把累积的属性块写回渲染器（本帧无写入或渲染器已销毁则跳过）</summary>
         public void Flush()
         {

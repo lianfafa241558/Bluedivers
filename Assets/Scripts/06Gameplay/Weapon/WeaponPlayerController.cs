@@ -92,6 +92,12 @@ namespace FPSGame.Weapon
         {
             base.InitAttribute();
 
+            // ⚠ 伤害配置为空的武器（如角色**装备槽**的 *Armor：Damages.Count == 0）原来直接 Damages[0]
+            //   ⇒ **IndexOutOfRangeException** 把整条 LogicInit 链打断：后面 `WeaponReloadController.LogicInit`
+            //   的 Magazine/Ammo/ReloadTime 也建不出来 ⇒ 之后 `ApplyUpgrade` 里 `cfg[type]` 取到 null 再炸一次
+            //   （联机 4045 载入配置时实测）。配置错误上面 `WeaponBaseController.LogicInit` 已报过，这里静默早退。
+            if (Damages == null || Damages.Count == 0) return;
+
             var _cfg = cfg;
             var damages = Damages[0];
 

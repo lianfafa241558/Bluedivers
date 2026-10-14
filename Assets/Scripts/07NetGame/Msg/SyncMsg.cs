@@ -191,5 +191,24 @@ namespace FPSGame.Net
         [Key(3)] public int Kind;
     }
 
+    /// <summary>载具上下机（双向，2026-10-14）。
+    /// <para>▍键 = 载具 <c>Actor.NetId</c>（房主随 4028 分配、两端一致；见 <c>ActorsManager.VehicleNetIdBase</c>）——
+    /// 载具两端各生成一份、生成时机不同，落点还会差几厘米，所以号只能由房主随空投消息给。</para>
+    /// <para>▍为什么不能蹭家具那条 4036：它的远端重放会走 <c>Furniture_Vehicle.Operate()</c> ⇒
+    /// <c>VehicleController.SetOwener(远端实例)</c>，而那条路硬要 <c>PlayerController</c>（盟友实例只有
+    /// <c>FriendController</c>）⇒ NRE。载具已从 4036 摘出（见 <c>NetFurnitureBridge</c>）。</para>
+    /// <para>▍走法同 4036（一个号双向）：成员上报 → 房主转发全体 + 本地应用；房主自己广播。
+    /// ⚠ 发起方按 <see cref="Sid"/> 丢掉自己那条（本机已经真跑过一次 <c>SetOwener</c>）。</para></summary>
+    [MessagePackObject]
+    public class VehicleMountMsg
+    {
+        /// <summary>载具的 <c>Actor.NetId</c>（0 = 未知 ⇒ 接收端丢弃）。</summary>
+        [Key(0)] public int NetId;
+        /// <summary>驾驶者会话号（房主 = 0）⇒ 接收端据此解析"本端那个实体"（本机玩家 / 盟友实例）。</summary>
+        [Key(1)] public uint Sid;
+        /// <summary>true = 上机（该 sid 正在开这辆）；false = 下机 / 被打爆 / 驾驶者离场。</summary>
+        [Key(2)] public bool Mounted;
+    }
+
 }
 

@@ -291,6 +291,53 @@ public class AirdropCallMsg
     /// 远端复现时把它当作 <c>BattleManager.ReleaseAirdrop(point, angle, id)</c> 的 angle 用。</para>
     /// </summary>
     [Key(5)] public float Yaw;
+    /// <summary>【联机 · 载具身份】本次呼叫生成物的 <c>Actor.NetId</c>（房主分配；0 = 未分配 ⇒ 该端不托管号）。
+    /// <para>▍为什么要它：载具（机甲/炮台/运输机）两端**各生成一份、且生成时机不同**（呼叫方立刻生成、
+    /// 其余端收到本条才生成），而落点又是各端各自打地面射线求的（会差几厘米）⇒ 号只能"房主随本条分配、
+    /// 两端显式覆盖"（见 <c>ActorsManager.VehicleNetIdBase</c>）。</para>
+    /// <para>⚠ **只许追加在末尾**：旧端会 <c>Skip</c> 掉它拿默认值 0 ⇒ 退化成"各端自增号"（= 改动前的行为），
+    /// 于是新旧端可混联；若插到中间就会串字段。</para>
+    /// </summary>
+    [Key(6)] public int VehicleNetId;
+}
+
+/// <summary>
+/// 载具武器开火（**只做表现**：枪口闪光 + 弹道 + 命中特效；伤害由驾驶者那台本机结算）。
+///
+/// <para>▍形态照 <c>PlayerShoot</c>，只把两个"键"换掉：**sid → 载具 <c>Actor.NetId</c>**、
+/// **玩家槽位 → 载具武器下标**（<c>VehicleWeaponsManager.m_WeaponSlots</c> 的下标）。</para>
+///
+/// <para>▍为什么方向 + 目标点都要带（同 <c>PlayerShoot</c> 的理由）：收端的表现弹是**本地模拟**的
+/// （<c>WeaponBaseController.SpawnVisualSalvo</c>），只给方向时它沿本地枪口飞、落点取决于本端地形；
+/// 带上目标点后收端把方向改成"枪口 → 目标点"⇒ 弹道穿过同一个点。⚠ 需要**实时瞄准**的制导类车辆弹
+/// 一律由收端本地重算（<c>FpsHelper.TryGetAimPoint</c>），本条不负责每帧更新。</para>
+/// </summary>
+[MessagePackObject]
+public class VehicleShootMsg
+{
+    /// <summary>载具 <c>Actor.NetId</c>（房主随 4028 分配 ⇒ 两端一致；0 = 无效，收端丢弃）。</summary>
+    [Key(0)] public int NetId;
+
+    /// <summary>载具武器下标（<c>VehicleWeaponsManager.GetWeaponAtSlotIndex</c> 的口径：两端按**同一个持有者配置**重建，顺序一致）。</summary>
+    [Key(1)] public int WeaponIndex;
+
+    // ⚠ 开火瞬间的射击方向（世界空间、已归一化）。零向量 = 旧版发送端 / 取不到 ⇒ 收端退回"枪口朝向 + 散布"。
+    [Key(2)] public float DirX;
+    [Key(3)] public float DirY;
+    [Key(4)] public float DirZ;
+
+    // ⚠ 驾驶者准心**实指的那一点**（世界空间）。零向量 = 未知 ⇒ 收端只用方向（见类注释）。
+    [Key(5)] public float HitX;
+    [Key(6)] public float HitY;
+    [Key(7)] public float HitZ;
+
+    /// <summary>开火那把武器的**伤害档位**（<c>WeaponBaseController.UseDamageIndex</c>）。
+    /// 收端必须按**开枪者**的档位摆命中特效/表现弹（同 <c>PlayerShoot.DamageIndex</c> 的理由）。</summary>
+    [Key(8)] public int DamageIndex;
+
+    /// <summary>第几个发射点（<c>LastMuzzleIndex</c>；<c>-1</c> = 齐射全部发射点）。
+    /// 多管武器轮流开火，收端没有那份计数 ⇒ 不发就都从 0 号管出。</summary>
+    [Key(9)] public int MuzzleIndex;
 }
 
 /// <summary>

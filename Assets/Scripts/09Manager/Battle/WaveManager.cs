@@ -131,6 +131,9 @@ namespace FPSGame.Managers
             // ★ tick 伤害（破甲流血 / 异常状态跳伤）**只由房主（或单机）本地结算并广播**：
             //   两端各算各的、各报各的 ⇒ 同一段 tick 会被叠加 N 份（见 BattleState.IsTickDamageAuthority）。
             FPSGame.Data.BattleState.IsTickDamageAuthority = flow == null || flow.IsHost || flow.SelfSid == 0u;
+            // ★ 载具（机甲/可驾驶炮台）的伤害**同样收敛到房主**：两端各自模拟子弹 ⇒ 各扣一次必分叉。
+            //   口径见 BattleState.IsVehicleDamageAuthority（AI 来源只有房主落地；玩家侧来源落地 + 上报）。
+            FPSGame.Data.BattleState.IsVehicleDamageAuthority = flow == null || flow.IsHost || flow.SelfSid == 0u;
             FPSGame.AI.EnemyRandom.Clear();   // NetId 是本局重新分配的 ⇒ 上一局的随机流要丢
             EnemyNetBridge.Install();
             NetDestructibleBridge.Install();  // 场景可破坏物（油桶这类）被打掉 ⇒ 远端也炸（2026-10-10）
@@ -140,6 +143,7 @@ namespace FPSGame.Managers
             NetActionBridge.Install();        // 标记点位 / 呼叫凯伊
             NetKeyScreenBridge.Install();     // 按键终端阶段推进（驱动端上报 / 其余端只应用）
             NetHostSpawnBridge.Install();     // 房主生成族（巡逻队 + 巢穴/召唤师/刷怪器/环绕装甲）：房主唯一生成 + 4052 复刻
+            NetVehicleDamageBridge.Install(); // 载具伤害（上行 + 权威门；下行复用 EnemyNetBridge）（2026-10-14）
         }
 
         private void OnDestroy()
@@ -154,6 +158,7 @@ namespace FPSGame.Managers
             NetActionBridge.Uninstall();
             NetKeyScreenBridge.Uninstall();
             NetHostSpawnBridge.Uninstall();
+            NetVehicleDamageBridge.Uninstall();
         }
 
 

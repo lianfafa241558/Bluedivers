@@ -49,6 +49,9 @@ public class BridgeSys : FPSGame.Core.Singleton<BridgeSys>
     /// <summary> 发送玩家选择战备的消息（联机走网络，上位机权威转发后回到 Receive*）</summary>
     public void SendPlayerSelectArmament(int playerIndex, int id, int index)
     {
+        // 接缝兜底：槽位必须 0-3。UI 空点（selectAirdropIndex==-1）会传到这，
+        // 放过去联机时会被广播给全房 ⇒ 每端都打一条"战备-1"错误。
+        if (index < 0 || index > 3) return;
         if (InOnlineRoom)
         {
             NetRoomFlow.Instance.SendArmament(playerIndex, id, index);

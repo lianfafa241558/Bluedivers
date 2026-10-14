@@ -374,6 +374,16 @@ namespace FPSGame.Weapon
                 //Debug.LogError($"创建属性info{type} {name}");
                 typeEnum = type;
                 attr = weapon.cfg[type];
+                if (attr == null)
+                {
+                    // ⚠ 兜底（2026-10-14）：缺项时原实现把 null 直接交给下面的 `ChangeValue = Value` ⇒ 当场 NRE，
+                    //   把整条"应用配置"链打断（联机 4045 载入配置时实测：`showAttr` 里有这个属性、`cfg` 里没有）。
+                    //   这里按 0 建一条 + 留痕（**带武器名与 cfg 现有键**）—— 这类"能显示在属性表里、却取不到属性对象"
+                    //   的场合，只靠异常栈完全看不出是哪把枪缺了哪个属性。
+                    attr = weapon.cfg.Add(type, 0);
+                    Debug.LogWarning($"[武器属性] {weapon.WeaponName}({weapon.name}) 的 cfg 缺少 {type}（showAttr 里有）" +
+                                     $" ⇒ 已按 0 兜底。cfg 键数={weapon.cfg.KeyCount} 键表=[{weapon.cfg.DumpKeys()}]");
+                }
                 tag = WeaponAttributeFactory.GetTag(type);
                 this.name = name;
                 ChangeValue = Value;
@@ -390,9 +400,11 @@ namespace FPSGame.Weapon
             }
 
             public float ChangeValue { get; private set; }
-            public float Value => attr.FinalValue.RawFloat;
+            /// <summary>当前值。⚠ 判空：<c>attr</c> 由 <c>cfg</c> 取，缺项时构造里已兜底建一条，但直接 new/反序列化的
+            /// <see cref="AttrInfo"/> 仍可能为 null（原来这里裸解引用 ⇒ 一条脏数据就能把整条应用配置链打断）。</summary>
+            public float Value => attr != null ? attr.FinalValue.RawFloat : 0f;
 
-            public float PrimeValue => attr.PrimeValue.RawFloat;
+            public float PrimeValue => attr != null ? attr.PrimeValue.RawFloat : 0f;
 
             public bool HasFlag(AttrTag tag) => this.tag.HasFlag(tag);
   

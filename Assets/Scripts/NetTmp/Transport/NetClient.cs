@@ -29,18 +29,36 @@ namespace FPSGame.Net
         public float RttMs { get; private set; } = -1f;
 
         private readonly float _heartbeatInterval;
+        private readonly float _hostSilentSeconds;
         private float _heartbeatLeft;
         private uint _pingId;
         private uint _lastPingId;
         private long _lastPingSentMs;
 
+        /// <summary>"心跳发出去、还在等应答"的截止时刻（<c>Time.unscaledTime</c>）；<c>0</c> = 不在等。
+        /// <para>▍为什么要有它：房主进程被**强杀**（关窗口/杀进程/拔网线）时 **UDP 没有 FIN**，
+        /// KCP 库里那条会话不一定会（及时）翻成断开 ⇒ 客机唯一的判据 <c>IsConnected</c> 一直是 true
+        /// ⇒ <c>NetRoomFlow.DetectHostLost</c> 永不触发 ⇒ 房主的盟友实例（模型）与 <c>PlayerWnd</c>
+        /// 的队友行会**永远挂在客机屏幕上**（2026-10-14 实测）。</para>
+        /// <para>▍判据：连着呢，但从"发出 Ping"起这么久没等到**任何**应答 ⇒ 认定房主已消失。</para></summary>
+        private float _pongDeadline;
+
         /// <param name="heartbeatInterval">心跳间隔（秒）；&lt;=0 关闭心跳</param>
-        public NetClient(float heartbeatInterval)
+        /// <param name="hostSilentSeconds">心跳静默判定阈值（秒）；&lt;=0 关闭该看门狗。
+        /// 应显著大于 <paramref name="heartbeatInterval"/>（默认 2s 心跳 + 5s 阈值 = 容忍连续丢 2 个应答）。</param>
+        public NetClient(float heartbeatInterval, float hostSilentSeconds = 5f)
         {
             _heartbeatInterval = heartbeatInterval;
+            _hostSilentSeconds = hostSilentSeconds;
             // 心跳应答：不注册的话 Dispatch 会报"未注册消息:1002"
             MessageCenter.Register<PingRspMsg>(NetCmdId.PingRsp, OnPingRsp);
         }
+
+        /// <summary>【看门狗】连着呢，但已经超过阈值没收到房主的任何应答 ⇒ 判定"房主已消失"。
+        /// <para>▍消费方：<c>NetRoomFlow.DetectHostLost</c>（把它当"没连着"处理 ⇒ 走 <c>OnHostLost</c> 收尾）。
+        /// 这是"强关房主"能被客机发现的关键 —— 光靠 <see cref="IsConnected"/> 不够（见 <see cref="_pongDeadline"/>）。</para></summary>
+        public bool IsHostSilent =>
+            _hostSilentSeconds > 0f && IsConnected && _pongDeadline > 0f && Time.unscaledTime > _pongDeadline;
 
         /// <summary>
         /// 【回连房主】局域网房间广播找到房间后，用房间信息发起 KCP 回连。
@@ -134,12 +152,20 @@ namespace FPSGame.Net
                 Id = _lastPingId,
                 SendTime = _lastPingSentMs,
             }));
+
+            // ★ 发出去了就开始倒计时（收到任何应答会把它清掉）⇒ 房主被强杀时靠它发现
+            _pongDeadline = Time.unscaledTime + _hostSilentSeconds;
         }
 
         /// <summary>【房主的 Pong】算一次 RTT（<see cref="PingRspMsg"/> 只带回 Id，不回显发送时刻 ⇒ 靠本地记的发送时刻相减）。</summary>
         private void OnPingRsp(PingRspMsg rsp)
         {
-            if (rsp == null || rsp.Id != _lastPingId) return;   // 过期/错配的应答直接忽略
+            if (rsp == null) return;
+
+            // ★ 收到**任何**应答都证明房主还活着 ⇒ 先把看门狗撤掉（放在 Id 校验之前：过期应答也算"活着"的证据）
+            _pongDeadline = 0f;
+
+            if (rsp.Id != _lastPingId) return;   // 过期/错配的应答不参与 RTT 计算
 
             long nowMs = System.DateTime.UtcNow.Ticks / System.TimeSpan.TicksPerMillisecond;
             RttMs = Mathf.Max(0f, nowMs - _lastPingSentMs);

@@ -54,9 +54,11 @@ namespace FPSGame.Net
         /// <para>⚠ 2026-10-12 已并入 <c>EnemyDamagedSync</c>(4040) 的 <c>DamageMsg.IsDeath</c>（死亡就是"被打到 0 血"的特例）
         /// ⇒ 不再注册、不再外发。常量保留只为不与历史日志/抓包对不上号。</para></summary>
         public const int EnemyDiedSync = 4026;
-        /// <summary>成员 -> 房主：呼叫了一次战备（战备 id + 落点）</summary>
+        /// <summary>成员 -> 房主：呼叫了一次战备（战备 id + 落点）。⚠ 2026-10-14 起**多带一个"载具号"字段**
+        /// （<c>AirdropCallMsg.VehicleNetId</c>，追加在 <c>[Key(6)]</c>）：成员这条先发 0，由房主转发时补号。</summary>
         public const int AirdropCallNtf = 4027;
-        /// <summary>房主 -> 全体：战备呼叫同步（含房主自己；发起方按 Sid 丢掉自己那条）</summary>
+        /// <summary>房主 -> 全体：战备呼叫同步（含房主自己；发起方按 Sid 丢掉自己那条）。
+        /// ⚠ 2026-10-14 起 <c>VehicleNetId</c> 由房主填：载具两端各生成一份、时机不同 ⇒ 号只能随本条分配。</summary>
         public const int AirdropCallSync = 4028;
         /// <summary>房主 -> 全体：某成员离开。⚠ 与 <c>PlayerListSync</c> 分开：战斗期名单是**冻结**的
         /// （重排会让 players 下标漂移），但"有人走了"这件事必须传出去 ⇒ 用这条**只带 sid、不重排**的消息。</summary>
@@ -160,6 +162,27 @@ namespace FPSGame.Net
         /// <para>▍与 <c>WaveStartSync</c>(4023) / <c>SceneActorNtf</c>(4022) 的分工：波次是**逐 Tick 投放**、场景单位是**加载期摆好**，
         /// 频率档与本条不同 ⇒ 不合并（它们各自的路由已被验证，见 <c>WaveManager</c> 的整批复刻与 <c>SceneActorSync</c>）。</para></summary>
         public const int HostSpawnNtf = 4052;
+
+        /// <summary>双向：**载具上下机**（键 = 载具 <c>Actor.NetId</c>；值 = 驾驶者 sid + 是否上机）。
+        /// <para>▍为什么不蹭家具那条 4036：它的远端重放会走 <c>Furniture_Vehicle.Operate()</c> ⇒
+        /// <c>VehicleController.SetOwener(远端实例)</c>，而那条路硬要 <c>PlayerController</c>
+        /// （读相机 / 关 CC / 改 <c>ActorState</c>）⇒ 盟友实例上必 NRE；且那些"本机玩家专属开关"本来就不该在远端执行。
+        /// 故载具**从 4036 摘出**（见 <c>NetFurnitureBridge</c>），远端改走桥的 <c>ApplyRemoteMount</c>（只挂挂点 + 停位姿）。</para>
+        /// <para>▍**一个号两个方向**（与 4036 / 4037 / 4050 同款）：成员上报 → 房主转发全体 + 本地应用；
+        /// 房主自己广播给全体。⚠ 同一个号只能有一个注册者 ⇒ 注册在 <c>NetRoomFlow</c>，桥只订阅事件。</para></summary>
+        public const int VehicleMountNtf = 4053;
+
+        /// <summary>双向：**载具武器开火表现**（键 = 载具 <c>Actor.NetId</c>；**只做表现**）。
+        /// <para>▍只同步"看得见的东西"（枪口闪 + 弹道 + 命中特效）：伤害由**驾驶者那台**本机结算
+        /// （与玩家开火同口径，见 4015/4016），本条不重放伤害 —— 收端走 <c>SpawnVisualSalvo</c> 的"只表现"路
+        /// （它会把 <c>FpsHelper.Hit</c> 摘掉，见 <c>WeaponBaseController</c>）。</para>
+        /// <para>▍为什么不复用 4015/4016：那套的"槽位"是 <c>PlayerWeaponsManager</c> 的语义
+        /// （背包已经借了虚拟槽位 7）⇒ 载具武器（<c>VehicleWeaponsManager.m_WeaponSlots</c>）再塞一个虚拟值会把语义搅浑；
+        /// 且键也不同（那条键 = sid，这条键 = 载具号）。</para>
+        /// <para>▍**一个号两个方向**（同 4053 / 4036 走法）：成员开火 → 上报房主；房主转发全体 + 自己本地应用；
+        /// 房主自己开火直接广播。⚠ 发起方按"**这辆车是不是我开的**"丢掉自己那条（本机已经真放过一发）；
+        /// 同一个号只能有一个注册者 ⇒ 注册在 <c>NetRoomFlow</c>，桥只订阅事件。</para></summary>
+        public const int VehicleShootNtf = 4054;
 
         // ===== 舰桥准备（战备/强化/资料；对应原 BridgeSys 的三条本地回环）=====
         /// <summary>成员 -> 房主：本机玩家资料（角色/等级/武器/战备/强化）</summary>

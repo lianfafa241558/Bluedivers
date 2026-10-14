@@ -33,6 +33,31 @@ namespace FPSGame.Weapon
             }
         }
 
+        /// <summary>【诊断】当前已建出的属性键数（0 = 连 <see cref="_fakeAttrs"/> 都还没 <see cref="Init"/>）。
+        /// <para>▍为什么要它：<c>cfg[type]</c> 缺项返回 null，会让调用方当场 NRE；此时"到底建出了几个属性"
+        /// 是判"<c>InitAttribute</c> 有没有跑"的最直接证据（见 <c>AttrInfo</c> 的兜底日志）。</para></summary>
+        public int KeyCount
+        {
+            get
+            {
+                if (attrs == null) Init();
+                return attrs.Count;
+            }
+        }
+
+        /// <summary>【诊断】当前已建出的属性键表（缺项排查时随日志一起打）。</summary>
+        public string DumpKeys()
+        {
+            if (attrs == null) Init();
+            var sb = new System.Text.StringBuilder();
+            foreach (var kv in attrs)
+            {
+                if (sb.Length > 0) sb.Append(',');
+                sb.Append(kv.Key);
+            }
+            return sb.ToString();
+        }
+
         public void SetPara(WeaponAttrType type, float value)
         {
 

@@ -106,6 +106,46 @@ namespace FPSGame.AI
             }
         }
 
+        /// <summary>
+        /// 【外部长期外观接入】取"某渲染器 + 某材质下标"的**共享槽位块**（没有则 null）。
+        ///
+        /// <para>▍为什么要有它：载具皮肤（<c>_BaseMap</c>/<c>_BlendingMap</c>）是**长期**属性，而这个类里
+        /// 的受击闪白/溶解是**瞬时**属性，两者若各写各的块，瞬时那方按下标 Flush 时会把长期那方整块顶掉
+        /// （表现 = 载具挨一下打就永久变回默认皮肤）。按本类的设计口径（同槽位只允许一个块、由所有命中该槽位的
+        /// 写入者共用），长期外观必须写进**同一个块**。见 <see cref="RendererSlot.Block"/>。</para>
+        ///
+        /// <para>▍⚠ 返回 null 是正常情况：<see cref="InitFx"/> 只对"材质 == 生效材质(<c>fxMaterial</c> / 条目材质)"
+        /// 的槽位建块 ⇒ 该渲染器根本不会被闪白碰（调用方自己写渲染器级的块即可），
+        /// 也**可能**只是本类的 <c>Start</c> 还没跑到（槽位表是那时建的）⇒ 调用方应稍后重试。</para>
+        /// </summary>
+        /// <returns>该槽位的共享块；null = 这个 (渲染器,下标) 不在槽位表里。</returns>
+        public MaterialPropertyBlock GetSharedSlotBlock(Renderer renderer, int materialIndex)
+        {
+            var slot = FindSlot(renderer, materialIndex);
+            return slot != null ? slot.Block : null;
+        }
+
+        /// <summary>该 (渲染器, 材质下标) 有没有共享槽位（= 它会不会被受击/溶解的 Flush **按整块替换**）。
+        /// <para>▍诊断 / 自检用：长期外观（载具皮肤）必须写进"有共享槽位"的那些下标，否则一挨打就被顶掉。</para></summary>
+        public bool HasSharedSlot(Renderer renderer, int materialIndex) => FindSlot(renderer, materialIndex) != null;
+
+        /// <summary>把某个共享槽位块标记为"需要回写"（外部写入者写完属性后调用；下帧 Flush 生效）。</summary>
+        public void MarkSlotDirty(Renderer renderer, int materialIndex)
+        {
+            var slot = FindSlot(renderer, materialIndex);
+            if (slot != null) slot.MarkDirty();
+        }
+
+        private RendererSlot FindSlot(Renderer renderer, int materialIndex)
+        {
+            if (renderer == null) return null;
+            for (int i = 0; i < slots.Count; ++i)
+            {
+                if (slots[i].Renderer == renderer && slots[i].MaterialIndex == materialIndex) return slots[i];
+            }
+            return null;
+        }
+
         /// <summary>状态复位钩子（InitFx 最开始调用）</summary>
         protected virtual void OnFxInitBegin() { }
 

@@ -608,14 +608,19 @@ namespace FPSGame.Managers
         /// <para>▍为什么要它：这次生成的载具（外骨骼/炮台/运输机）按**呼叫者的载具改装**渲染
         /// —— 远端复现那条路是这里建的、信标没有 owner ⇒ 只能由调用方把 sid 显式带下来
         /// （见 <c>NetFriendBridge.HandleAirdropCall</c>；本机玩家自己叫的走 <c>SetOwner</c> 那条路，不走这里）。</para>
+        /// <param name="vehicleNetId">本次载具的 <c>Actor.NetId</c>（房主随 4028 分配）。
+        /// <para>▍为什么要有：载具两端各生成一份、时机不同 ⇒ 自增号必错位（见 <c>ActorsManager.VehicleNetIdBase</c>）。
+        /// <c>&lt;= 0</c> = 不托管（单机 / 旧版房主）⇒ 保持原来的自增号行为。默认值保证老调用点不受影响。</para></param>
         /// </summary>
-        public void ReleaseAirdrop(Vector3 point, float angle, int id, System.Action<GameObject> action, uint callerSid)
+        public void ReleaseAirdrop(Vector3 point, float angle, int id, System.Action<GameObject> action, uint callerSid, int vehicleNetId = 0)
         {
             var beacon = VFXManager.Creat(ResSvc.Instance.LoadObject<GameObject>("Prefabs/Airdrop/VFX_AirdropPoint"), point, Quaternion.Euler(0,angle, 0), null);
             // 走契约取组件（原 `GetComponent<VFXAirdropEffect>()` ⇒ 管理器反向依赖 Effect 层，
             // 且要传 `AirdropData_SO`；现在只传 id，配置解析交给实现方。见 FPSGame.GameContract.IAirdropEffect）
             var fx = beacon.GetComponent<FPSGame.GameContract.IAirdropEffect>();
             fx?.SetCallerSid(callerSid);
+            // ★ 载具号：只在"真有号"时才托管（0 / 负数 = 不托管 ⇒ 保持自增号，兼容单机与旧版房主）
+            if (vehicleNetId > 0) fx?.SetVehicleNetId(vehicleNetId);
             fx?.TmpAirdrop(point, id, action);
         }
 

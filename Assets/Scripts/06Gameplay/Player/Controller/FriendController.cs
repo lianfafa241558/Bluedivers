@@ -79,6 +79,11 @@ namespace FPSGame.Gameplay
         private bool _lastDead;
         private Vector3 _lastPos;
 
+        /// <summary>是否被载具接管（坐在别人的机甲里）。见 <see cref="SetVehicleRide"/>。</summary>
+        private bool _riding;
+        /// <summary>"骑行中已把动画压成静止"标记（避免每帧重复 SetParam）。</summary>
+        private bool _rideAnimIdle;
+
         // 动画参数：与本地玩家**同一套**（玩家在 PlayerController 里用的是硬编码 "Speed"/"IsMove"/"IsDeath"）。
         // ⚠ 不能用 Constants.k_AnimMoveSpeedParameter（= "MoveSpeed"）：学生模型控制器
         //   （Noa/Aris/Nagisa.controller）里只有 Speed / IsMove / IsReady / IsDeath
@@ -275,6 +280,35 @@ namespace FPSGame.Gameplay
         /// <summary>兼容旧调用（不带俯仰）。</summary>
         public void ApplyPose(Vector3 pos, float yaw, bool teleport) => ApplyPose(pos, yaw, 0f, teleport);
 
+        /// <summary>【桥调用】载具接管：<c>true</c> = 该盟友实例**已被挂到载具挂点上**（联机 4053）。
+        /// <para>▍为什么必须告诉本类（而不是桥自己关组件）：本类每帧都在用"位移"驱动动画，而挂上载具后
+        /// 位移是**载具的**（世界空间算）⇒ 不挡就是"队友在舱里原地狂奔"。位姿那边同理：不停写
+        /// <c>NetTransformView</c> 会每帧把骑手拽回地面。</para>
+        /// <para>▍下机时清缓冲：否则那一帧会按"很久以前的旧位姿"插值滑一大段（下一包会直接吸附）。</para>
+        /// </summary>
+        public void SetVehicleRide(bool riding)
+        {
+            _riding = riding;
+            _rideAnimIdle = false;
+
+            if (_view == null) _view = GetComponent<NetTransformView>();
+            if (_view == null) return;
+
+            if (riding)
+            {
+                _view.ResetPose();
+                _view.enabled = false;   // 停止"网络位姿 → transform"
+            }
+            else
+            {
+                _view.ResetPose();
+                _view.enabled = true;
+            }
+        }
+
+        /// <summary>是否被载具接管（驾驶中）。</summary>
+        public bool IsVehicleRide => _riding;
+
         /// <summary>
         /// 【远端瞄准源】本盟友**当前**的准心射线（世界空间 <paramref name="origin"/> + <paramref name="dir"/>）。
         ///
@@ -306,6 +340,22 @@ namespace FPSGame.Gameplay
             // ⚠ 吸附（首次出现 / 传送）会让 transform 一跳 ⇒ 那一帧的"位移速度"是假的，先丢掉再算动画速度，
             //   否则动画会瞬间飙到最快。（职责拆开前是 ApplyPose 里同步回写 _lastPos，现在改用这个标记。）
             if (_view != null && _view.ConsumeSnap()) _lastPos = transform.position;
+
+            // 被载具接管：transform 是**载具的**（位移相对世界算）⇒ 拿它驱动奔跑动画会变成"在舱里原地狂奔"。
+            // 只把动画压成静止，位姿/武器俯仰仍照常（俯仰是停止更新的最后值，无所谓）。
+            if (_riding)
+            {
+                _lastPos = transform.position;
+                if (_anim != null && !_rideAnimIdle)
+                {
+                    _rideAnimIdle = true;
+                    _anim.SetBool(AnimIsMove, false);
+                    _anim.SetFloat(AnimSpeed, 1f);
+                }
+                if (_weapons != null && _view != null) _weapons.SetAimPitch(_view.RenderedPitch);
+                return;
+            }
+            _rideAnimIdle = false;
 
             // ⚠ 顺序保证：NetTransformView 标了 [DefaultExecutionOrder(-50)]，一定先写完 transform
             float dt = Mathf.Max(Time.deltaTime, 0.0001f);

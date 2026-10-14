@@ -38,6 +38,12 @@ public class NetHostSvc : MonoBehaviour
     /// <summary>单例实例（房主端全局唯一）</summary>
     public static NetHostSvc Instance;
 
+    /// <summary>【载具号分配钩子】由 09 侧的桥（<c>NetFriendBridge</c>）注入，实现 = <c>ActorsManager.NextVehicleNetId()</c>。
+    /// <para>▍为什么用委托而不是直接调：<c>ActorsManager</c> 在 <c>05_UnitCore</c>，而本类在 <c>07_NetGame</c>
+    /// （<c>references</c> 只有 <c>02_Net</c>）⇒ 07 看不见游戏层；号空间的唯一来源仍留在 <c>ActorsManager</c>。</para>
+    /// <para>为 null（未注入 / 单机）⇒ 补 0 = 不托管，各端沿用自增号（= 改动前的行为）。</para></summary>
+    public static System.Func<int> VehicleNetIdAllocator;
+
     /// <summary>【传输层】房主侧连接管理（纯类，见 02_Net）：socket / 会话表 / 广播 / 会话事件 / 心跳应答。</summary>
     private NetServer _server;
 
@@ -769,12 +775,18 @@ public class NetHostSvc : MonoBehaviour
         uint sid = CurrentSid;
         if (sid == 0 || ntf == null || ntf.AirdropId <= 0) return;
 
+        // ★ 载具号由房主给：载具两端各生成一份、时机不同（呼叫方立刻生成、其余端收到本条才生成），
+        //   落点又是各端各自打地面射线求的（会差几厘米）⇒ 号只能在这里分配（见 ActorsManager.VehicleNetIdBase）。
+        //   分配器未注入（单机 / 07 看不见 05）⇒ 0 = 不托管，两端沿用自增号。
+        int vehicleNetId = VehicleNetIdAllocator != null ? VehicleNetIdAllocator() : 0;
+
         RelayToAll(CmdId.AirdropCallSync, new AirdropCallMsg
         {
             Sid = sid,                  // 权威标识：各端据此丢掉"自己发的那条"
             AirdropId = ntf.AirdropId,
             X = ntf.X, Y = ntf.Y, Z = ntf.Z,
             Yaw = ntf.Yaw,              // 信标朝向（轰炸的炮位方向靠它，别漏）
+            VehicleNetId = vehicleNetId,
         });
     }
 

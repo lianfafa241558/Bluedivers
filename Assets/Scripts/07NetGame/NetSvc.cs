@@ -22,11 +22,22 @@ namespace FPSGame.Net
         [Tooltip("成员定时发 Ping 给房主（房主回 Pong）：既保活（库内 15s 收不到数据会判掉线），也让房主能快速发现强退。<=0 关闭")]
         [SerializeField] private float heartbeatInterval = 2f;
 
+        /// <summary>【看门狗】连着呢，但这么久没收到房主的**任何应答** ⇒ 判"房主已消失"（秒）。
+        /// <para>▍为什么必须有：房主进程被**强杀**时 UDP 没有 FIN，库的会话不一定会（及时）翻成断开
+        /// ⇒ 光靠 <see cref="IsConnected"/> 会让客机永远发现不了（实测：模型与 HUD 队友行一直挂着）。</para>
+        /// <para>应显著大于心跳间隔（默认 2s 心跳 + 5s 阈值 = 容忍连续丢 2 个应答）；<c>&lt;=0</c> 关闭。</para></summary>
+        [InspectorName("心跳静默判定(秒)")]
+        [Tooltip("连着呢但这么久没收到房主任何应答 ⇒ 判房主已消失（强关/杀进程/拔网线时 UDP 没有 FIN）。应 > 心跳间隔；<=0 关闭")]
+        [SerializeField] private float hostSilentSeconds = 5f;
+
         /// <summary>传输层成员连接（由本类创建并每帧泵）。</summary>
         private NetClient _client;
 
         /// <summary>是否已建立 KCP 连接（供业务层判断能否发送消息）</summary>
         public bool IsConnected => _client != null && _client.IsConnected;
+
+        /// <summary>【看门狗】"连着但房主不再应答" ⇒ 调用方应把它当"没连着"处理（见 <c>NetRoomFlow.DetectHostLost</c>）。</summary>
+        public bool IsHostSilent => _client != null && _client.IsHostSilent;
 
         /// <summary>最近一次往返延迟（毫秒）；还没测到 = -1。</summary>
         public float RttMs => _client != null ? _client.RttMs : -1f;
@@ -35,7 +46,7 @@ namespace FPSGame.Net
         {
             Instance = this;
             // 局域网 P2P 模式：默认不自动连固定服务器，等成员"搜到房间"时才建立连接。
-            _client = new NetClient(heartbeatInterval);
+            _client = new NetClient(heartbeatInterval, hostSilentSeconds);
         }
 
         /// <summary>

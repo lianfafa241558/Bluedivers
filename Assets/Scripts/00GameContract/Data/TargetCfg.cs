@@ -9,6 +9,7 @@ namespace FPSGame.GameContract
         public ActorState actorState = ActorState.Normal;//可以是多类目
         //public float selectRange=-1;
 
+        public static TargetCfg All = new() { targetType = UnitTypeEnum.All };
         public static TargetCfg EnemyAI = new() {targetType = UnitTypeEnum.All & ~UnitTypeEnum.Other };
         public static TargetCfg Enemy = new() { targetType = UnitTypeEnum.Enemy };
     }

@@ -453,7 +453,7 @@ namespace FPSGame.Gameplay
             // 查询走 05_UnitCore 的入口（未接管时返回空列表 ⇒ 下面的 Count==0 提前 return，等价原 IsPresent 守卫）
             List<IActor> unitList = FPSGame.Game.UnitQuery.FindUnits(
                 new PECircle((PEVector2)hitData.pos, outer),
-                TargetCfg.EnemyAI,
+                TargetCfg.All,
                 unit => VaildTarget(unit)
                      && unit != hitData.exclude
                      && (hitData.filter == null || hitData.filter(unit)));

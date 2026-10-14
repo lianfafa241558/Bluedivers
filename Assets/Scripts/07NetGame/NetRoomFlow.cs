@@ -104,8 +104,20 @@ namespace FPSGame.Net
         public static event Action<string, Vector3, bool> OnSceneUnitMove;
 
         /// <summary>战备呼叫同步（房主权威转发后触发，**房主自己不发**）。
-        /// 参数：发起者 sid / 战备 id / 落点 / 信标朝向（Y 轴角度）。⚠ 发起方要靠 sid 丢掉自己那条（本地已经放过一次）。</summary>
-        public static event Action<uint, int, Vector3, float> OnAirdropCall;
+        /// 参数：发起者 sid / 战备 id / 落点 / 信标朝向（Y 轴角度）/ **载具号**（房主分配；0 = 未分配）。
+        /// ⚠ 发起方要靠 sid 丢掉自己那条（本地已经放过一次），但**要拿载具号补盖自己那台的号**（见 <c>NetFriendBridge</c>）。</summary>
+        public static event Action<uint, int, Vector3, float, int> OnAirdropCall;
+
+        /// <summary>载具上下机（双向；**一个号两个方向**，走法同 <c>FurnitureOperateNtf</c>(4036)）。
+        /// <para>参数：载具 <c>Actor.NetId</c> / 驾驶者 sid（房主 = 0）/ 是否上机。
+        /// ⚠ 发起方要按 sid 丢掉自己那条 —— 驾驶者本机已经真跑过一次 <c>SetOwener</c>。</para></summary>
+        public static event Action<int, uint, bool> OnVehicleMount;
+
+        /// <summary>载具开火表现（双向；**一个号两个方向**，走法同 <see cref="OnVehicleMount"/>）。
+        /// <para>参数：载具 <c>Actor.NetId</c> / 载具武器下标 / 射击方向（世界）/ 准心**实指落点**（世界）/
+        /// 伤害档位（开枪那位的）/ 发射点下标（<c>&lt;0</c> = 齐射）。</para>
+        /// <para>⚠ 发起方按"**这辆车是不是我开的**"丢掉自己那条（本机已经真放过一发）—— 键是载具号，不是 sid。</para></summary>
+        public static event Action<int, int, Vector3, Vector3, int, int> OnVehicleShoot;
 
         /// <summary>某成员离开（房主下发，**战斗期也会来**）。参数：离开者 sid。
         /// <para>各端据此销毁对应盟友实例 / 收起 HUD 那行 —— 名单本身**不重排**（战斗期冻结，见 <see cref="PlayerLeftMsg"/>）。</para></summary>
@@ -275,6 +287,10 @@ namespace FPSGame.Net
             MessageCenter.Register<HostSpawnMsg>(CmdId.HostSpawnNtf, HandleHostSpawnNtf);
             MessageCenter.Register<OOPartSubmitMsg>(CmdId.OOPartSubmitNtf, HandleOOPartSubmitNtf);
             MessageCenter.Register<KeyScreenInputMsg>(CmdId.KeyScreenInputNtf, HandleKeyScreenInputNtf);
+            // 载具上下机（双向一条；⚠ 一个号只能一个注册者 ⇒ 注册在这里，桥只订阅 OnVehicleMount 事件）
+            MessageCenter.Register<VehicleMountMsg>(CmdId.VehicleMountNtf, HandleVehicleMountNtf);
+            // 载具开火表现（同款：双向一条，注册在这里，桥只订阅 OnVehicleShoot 事件）
+            MessageCenter.Register<VehicleShootMsg>(CmdId.VehicleShootNtf, HandleVehicleShootNtf);
         }
 
         private void OnDestroy()
@@ -316,6 +332,8 @@ namespace FPSGame.Net
             // ⚠ CmdId.PatrolSpawnNtf(4047) / EnemySpawnNtf(4051) 已并入 HostSpawnNtf(4052) ⇒ 不再注册/外发
             MessageCenter.Unregister(CmdId.OOPartSubmitNtf);
             MessageCenter.Unregister(CmdId.KeyScreenInputNtf);
+            MessageCenter.Unregister(CmdId.VehicleMountNtf);
+            MessageCenter.Unregister(CmdId.VehicleShootNtf);
             if (ReferenceEquals(Instance, this)) Instance = null;
         }
 
@@ -350,11 +368,21 @@ namespace FPSGame.Net
 
             if (IsHost) { _wasInRoom = true; return; }      // 房主自己没有"房主掉了"这回事
 
-            if (svc.IsConnected) { _wasInRoom = CurrentRoom != null; return; }
+            // ⚠ 判"还连着"必须**同时**要求"房主还在应答"：房主进程被强杀时 UDP 没有 FIN，
+            //   KCP 库的会话不一定会（及时）翻成断开 ⇒ 只信 IsConnected 会让客机永远发现不了
+            //   （实测：房主的盟友模型 + PlayerWnd 的队友行一直挂在客机上）。
+            bool alive = svc.IsConnected && !svc.IsHostSilent;
+            if (alive) { _wasInRoom = CurrentRoom != null; return; }
             if (!_wasInRoom) return;                        // 本来就没连着（没入过房 / 已主动退房）
 
+            bool silent = svc.IsConnected && svc.IsHostSilent;
             _wasInRoom = false;
-            Debug.LogWarning("[NetRoomFlow] ⚠ 与房主断开（房主退出/崩溃/断网）⇒ 本端退出房间，改为本端自主");
+            // 心跳静默（连接还在但已无应答）⇒ 先把传输层收掉：否则后面每条 Send 都会报"尚未连接"，
+            // 而且 InRoom 会一直是 true（它只判 IsConnected）。
+            if (svc.IsConnected) svc.Disconnect();
+            Debug.LogWarning(silent
+                ? "[NetRoomFlow] ⚠ 房主心跳静默超时（房主被强关/杀进程/拔网线）⇒ 本端退出房间，改为本端自主"
+                : "[NetRoomFlow] ⚠ 与房主断开（房主退出/崩溃/断网）⇒ 本端退出房间，改为本端自主");
             CurrentRoom = null;
             SelfSid = 0u;
             SelfHostIndex = -1;
@@ -747,19 +775,71 @@ namespace FPSGame.Net
         /// <param name="airdropId">战备 id（<c>AirdropData_SO.ID</c>）</param>
         /// <param name="point">落点（世界空间，地面点）</param>
         /// <param name="yaw">信标朝向（Y 轴角度）—— 轰炸类战备的炮位/弹道按它摆，必须一起同步（见 <see cref="AirdropCallMsg.Yaw"/>）</param>
-        public void SendAirdropCall(int airdropId, UnityEngine.Vector3 point, float yaw = 0f)
+        public void SendAirdropCall(int airdropId, UnityEngine.Vector3 point, float yaw = 0f, int vehicleNetId = 0)
         {
             if (airdropId <= 0) return;
 
             if (IsHost)
             {
+                // ★ 房主自己的呼叫：号由调用方（桥）分好带下来（本类在 07，看不见 ActorsManager）
                 NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.AirdropCallSync,
-                    new AirdropCallMsg { Sid = 0, AirdropId = airdropId, X = point.x, Y = point.y, Z = point.z, Yaw = yaw }));
+                    new AirdropCallMsg { Sid = 0, AirdropId = airdropId, X = point.x, Y = point.y, Z = point.z, Yaw = yaw, VehicleNetId = vehicleNetId }));
                 return;
             }
             if (!CanSendToHost) return;
+            // ★ 成员这条先发 0：号由房主在转发时补（成员自己那份的号随后由房主的 4028 覆盖）
             NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.AirdropCallNtf,
-                new AirdropCallMsg { Sid = SelfSid, AirdropId = airdropId, X = point.x, Y = point.y, Z = point.z, Yaw = yaw }));
+                new AirdropCallMsg { Sid = SelfSid, AirdropId = airdropId, X = point.x, Y = point.y, Z = point.z, Yaw = yaw, VehicleNetId = 0 }));
+        }
+
+        /// <summary>【上行】载具上下机（分流同 <see cref="SendAirdropCall"/>：房主广播、成员上报房主）。
+        /// <para>⚠ 本端**不派发自己那条**：驾驶者本机已经真跑过一次 <c>SetOwener</c>，这只是"告诉别人"。
+        /// 而"房主转发成员那条"由**桥**做（本号只有一个注册者 = 本类）：桥收到成员那条时先调本方法广播、
+        /// 再本地应用 —— 与 4036 家具那条完全同款，见 <c>NetVehicleBridge.OnVehicleMountMsg</c>。</para></summary>
+        public void SendVehicleMount(int netId, uint sid, bool mounted)
+        {
+            if (netId == 0) return;
+
+            var msg = MessageCenter.Pack(CmdId.VehicleMountNtf,
+                new VehicleMountMsg { NetId = netId, Sid = sid, Mounted = mounted });
+
+            if (IsHost)
+            {
+                NetHostSvc.Instance?.SendToAll(msg);   // 房主：只广播（自己那条由桥本地处理，别自派发 ⇒ 会重复应用）
+                return;
+            }
+            if (!CanSendToHost) return;
+            NetSvc.Instance.SendMsg(msg);
+        }
+
+        /// <summary>【上行】载具开火表现（分流同 <see cref="SendVehicleMount"/>：房主广播、成员上报房主）。
+        /// <para>▍为什么**不**带 sid：键就是载具号，而"这辆车是不是我开的"两端各自知道（见
+        /// <c>NetVehicleBridge._selfDriven</c>）⇒ 够用来丢自己那条，不必再加一个会分叉的身份字段。</para>
+        /// <para>⚠ 本端**不派发自己那条**：驾驶者本机已经真放过一发（枪口焰/弹道都是本机的），这只是"告诉别人"。
+        /// 而"房主转发成员那条"由**桥**做（本号只有一个注册者 = 本类）：桥收到成员那条时先调本方法广播、再本地应用
+        /// —— 与 4053 / 4036 完全同款，见 <c>NetVehicleBridge.OnVehicleShootMsg</c>。</para></summary>
+        public void SendVehicleShoot(int netId, int weaponIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hit,
+            int damageIndex, int muzzleIndex)
+        {
+            if (netId == 0) return;
+
+            var msg = MessageCenter.Pack(CmdId.VehicleShootNtf, new VehicleShootMsg
+            {
+                NetId = netId,
+                WeaponIndex = weaponIndex,
+                DirX = dir.x, DirY = dir.y, DirZ = dir.z,
+                HitX = hit.x, HitY = hit.y, HitZ = hit.z,
+                DamageIndex = damageIndex,
+                MuzzleIndex = muzzleIndex,
+            });
+
+            if (IsHost)
+            {
+                NetHostSvc.Instance?.SendToAll(msg);   // 房主：只广播（自己开的那发本机已经真放过 ⇒ 别再自派发）
+                return;
+            }
+            if (!CanSendToHost) return;
+            NetSvc.Instance.SendMsg(msg);
         }
 
         /// <summary>
@@ -826,7 +906,19 @@ namespace FPSGame.Net
 
         private void HandleAirdropCallSync(AirdropCallMsg m)
         {
-            if (m != null) OnAirdropCall?.Invoke(m.Sid, m.AirdropId, new Vector3(m.X, m.Y, m.Z), m.Yaw);
+            if (m != null) OnAirdropCall?.Invoke(m.Sid, m.AirdropId, new Vector3(m.X, m.Y, m.Z), m.Yaw, m.VehicleNetId);
+        }
+
+        private void HandleVehicleMountNtf(VehicleMountMsg m)
+        {
+            if (m != null && m.NetId != 0) OnVehicleMount?.Invoke(m.NetId, m.Sid, m.Mounted);
+        }
+
+        private void HandleVehicleShootNtf(VehicleShootMsg m)
+        {
+            if (m == null || m.NetId == 0) return;
+            OnVehicleShoot?.Invoke(m.NetId, m.WeaponIndex, new Vector3(m.DirX, m.DirY, m.DirZ),
+                new Vector3(m.HitX, m.HitY, m.HitZ), m.DamageIndex, m.MuzzleIndex);
         }
 
         private void HandlePlayerLeftNtf(PlayerLeftMsg m)
