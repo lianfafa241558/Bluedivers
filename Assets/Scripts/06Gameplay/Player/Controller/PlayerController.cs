@@ -171,7 +171,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         Health.OnRevive += OnRevive;
         WeaponsManager.OnShoot += WeapomRecoil;
         m_sprintTime = -SprintCool;
-        if (FPSGame.Data.FlowState.GameState == GameStateEnum.Bridge) Actor.AddTag(ActorFlag.Invincible);
+        if (FPSGame.Data.FlowState.GameState == GameStateEnum.Bridge) Actor.AddFlag(ActorFlag.Invincible);
 
         // 根据存档中的"默认操作视角"设置初始化视角（0=第一人称，1=第三人称）
         // 走「数据自持」：ArchivesData_SO.Current 由 ArchiveLoader.Init() 写入，玩法层直接读数据自身
@@ -553,8 +553,8 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         Actor.ActorState = ActorState.Normal;
         m_Anim.SetBool("IsDeath",false);
         //喘息之时现在免费送
-        Actor.AddTag(ActorFlag.Invincible);
-        FPSGame.Core.TimerHost.CreateTimer(() => Actor.RemoveTag(ActorFlag.Invincible), 4);
+        Actor.AddFlag(ActorFlag.Invincible);
+        FPSGame.Core.TimerHost.CreateTimer(() => Actor.RemoveFlag(ActorFlag.Invincible), 4);
 
         // 恢复死亡前的视角状态
         if (_wasThirdPersonBeforeDeath)

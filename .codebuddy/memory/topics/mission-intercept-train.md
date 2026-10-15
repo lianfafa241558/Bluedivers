@@ -1,12 +1,17 @@
 # 拦截火车任务（MissionInterceptTrain）· 全貌与口径
 
-> 代码：`Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain{,_Rail,_Train}.cs` + `RailTrack.cs` + `TrainUnit.cs`（程序集 `06_Gameplay`）；2026-10-15 建立。
+> 代码：`Assets/Scripts/06Gameplay/Mission/Main/` 下 `MissionInterceptTrain{,_Rail,_Train,_Turret,_Guard}.cs` + `RailPathPlanner.cs` + `RailMetrics.cs` + `RailTrack.cs` + `TrainUnit.cs`（程序集 `06_Gameplay`）；2026-10-15 建立、**2026-10-16 拆文件**（原来 3 个 partial 共 ~1550 行）。
 > 联机口径单独一份 → `net-battle.md §7.2x`（走 4052 的那部分）。
 
-## 1. 三个 partial 的分工
-- **主文件**：任务/时刻表/生命周期。⚠ `InitMission` 阶段（第一个 yield 之前）就把"规划 + 铁轨走廊登记"做完 ⇒ 之后创建的其它任务点/兴趣点**反过来躲开铁轨**（事后硬绕实测绕不出去）。
-- **`_Rail`**：起终点选点 → A* 规划 → 走廊登记/清物 → 路基统一成型 → 逐节铺轨。
-- **`_Train`**：按时刻表发车（车头 + 车厢 + 附加炮塔 + 卫队）、"到站逃走 / 被打掉"两种收尾、进度与失败判定、`INetSpawner` 生成器实现。
+## 1. 文件分工（2026-10-16 拆分后）
+- **主文件 `MissionInterceptTrain.cs`**（~112 行）：任务字段 / 生命周期（`InitMission`→`BuildRailOnce`、`StartMission`、`Uninit`）/ 发车时刻表。⚠ `InitMission` 阶段（第一个 yield 之前）就把"规划 + 铁轨走廊登记"做完 ⇒ 之后创建的其它任务点/兴趣点**反过来躲开铁轨**（事后硬绕实测绕不出去）。
+- **`_Rail.cs`**（~310 行，只剩流程编排）：量 prefab 尺寸 → 选起终点 → 规划 → 走廊登记/清物 → 路基统一成型 → 逐节铺轨。算法与量尺已外置（见下面两行）。
+- **`_Train.cs`**（~255 行）：按时刻表发车（车头 + 车厢）、"到站逃走 / 被打掉"两种收尾、进度/失败判定、开战节拍。
+  - 节拍：`BeginTrainService` 里 `TickTime = 3s`；**发车 + 卫队引导都在 `Tick()` 里**（引导在发车之后，见 §4），`Update()` 只留按帧的 `FlushPendingTurrets()`。
+- **`_Turret.cs`**（~323 行）：附加炮塔的配置字段 / 概率计划表 / `CreatUnit` + 4052 / 槽位复刻与挂起补挂（原 `_Train` 的「附加炮塔」region，见 §3）。
+- **`_Guard.cs`**（~92 行）：卫队生成（房主 `CreatPatrol`）、Tick 引导、静默移除；配置字段 `guardSpawnBack` 也在这（**必须自带 `[Foldout("火车卫队")]`** —— `EditorOverride` 是按"上一个带 Foldout 的字段"归组的，见 `plans/tooling.md`）。
+- **`RailPathPlanner.cs`**（~465 行，`internal sealed class`，纯算法不碰 MonoBehaviour）：边缘选点 + 栅格 A* + 拉直 + Chaikin + 坡度采样，参数全由构造注入（`stepLength/planExpand/slopeWeight/avoidMargin/minAngleSeparation/minChordRatio/random` ⇒ 类内是 `_` 前缀字段，XML `<see cref>` 已同步改）。
+- **`RailMetrics.cs`**（~82 行，`internal struct`）：`RailMetrics.Measure(prefab)` 能量出长轴/短轴/轴向/YawOffset/PivotToBottom（⚠ 绝不能 Instantiate 探针，见 §4）。
 - `RailTrack`（折线 + 弧长表 + 设计路基纵坡）被**铺轨与行驶共用** ⇒ 火车必然跑在铺出来的那条线上；`TrainUnit` 挂车头、按弧长摆车厢。
 
 ## 2. 定的口径（别推翻）
@@ -26,6 +31,9 @@
 - 收尾：`RemoveTurrets`（有 `I_AIController` 就 `Kill(true)` 静默）→ 再销毁车厢。
 
 ## 4. 踩过的坑（都实测过）
+- ⚠⚠ **火车卫队引导必须"先发车、后引导"，且在同一帧内**：`EnemyMobile.Start` 按 `PatrolPos != default` 决定进 Patrol 还是 Idle，而 **Idle 的 `IdleBehavior` 根本不查 `PatrolPos`** ⇒ 新卫队若晚一帧以上才拿到巡逻点，就**永久站桩**（并且被 Idle 超时自毁逻辑盯上）。所以 `RefreshAllGuards()` 放在 `Tick()` 里 `DepartTrain()`（→ `SpawnGuards`）**之后**。
+  也**不能**图省事在 `SpawnGuards` 里设 `PatrolPos = spawnPos`：那是哨兵语义，`UpdatePathDestination` 一到点即 true ⇒ `PatrolBehavior` 当场自毁（落点自带 5m 抖动只能偶尔救回来）。
+  节拍 3s（原 0.5s 在 `Update` 里刷）：火车 8m/s，每跳目标点挪 24m ⇒ `SetNavDestination` 的 `<1m` 去重救不了、必然重排路径，降频就是省 `PathRequestManager`。
 - ⚠ `Terrain` 上**没有** `GetSteepness`，要用 `TerrainData.GetSteepness(u,v)`（吃归一化坐标、返回**弧度**）。
 - ⚠ 轨道预制体长轴在 **local X**（子 Cube `localScale (24,6,6)`）⇒ 只 `LookRotation`（对齐 +Z）会每节转 90°、看着断断续续，必须带 `YawOffset`。
 - ⚠ 预制体根上可能残留**建模世界坐标**（`TrainEngineCar` 根上就是 `(272,29.36,302.42)`）⇒ 一律 `Instantiate(prefab, pos, rot, parent)`，**别用两参版**（会把物体甩到几百米外）。
@@ -37,6 +45,7 @@
 
 ## 5. Inspector 分组（可调项都在注释里写了"为什么"）
 轨道 / 轨道规划 / 路基 / 地表处理 / 任务 / 列车 / 列车生成 / 附加炮塔 / 火车卫队。
+（2026-10-16：`卫队落点后移(米)` 从「列车生成」挪进「火车卫队」；原「卫队跟随刷新(秒)」**已删** —— 刷新节拍由 `TickTime` 决定。字段名都没变，prefab 值不受影响。）
 
 ## 6. 日志（排查先看这几条，走 `NetSyncLog`）
 `[拦截火车] 轨道 N 规划：路点/总长/走廊登记/起终` · `路基整平：动土 N 像素 / 最大高差 X m` · `发车 #N：轨道/车厢/附加炮塔/卫队` · `附加炮塔计划：N 门（班×节，单节概率%）` · 同步 `生成/发·单位`、`生成/收·单位`。
@@ -45,3 +54,5 @@
 - 场景里 `trainCarPrefab` / `trainEnginePrefab` 未拖 ⇒ 目前恒走 `Resources` 兜底路径（编译期会报 `CS0649` 警告，不是错）。
 - 附加炮塔概率表默认空 ⇒ 不发炮塔（会打一条日志说明）。
 - 铁轨走廊登记半径 `corridorRegisterRadius`、`planExpand` 等值未做过压力实测，大规模地图上按日志里的"走廊登记 N 处"再调。
+- ⚠ 调试遗留：`_Turret.cs` 里两处 `Debug.LogError("给…加浮空标签")`（正常路径打红字、每门炮塔一条）—— 浮空验证完该删。
+- 拆分脚本留档：`.codebuddy/plans/split_intercept_train.py`（行号锚点式拆分，改过这 5 个文件后**不要再重跑**；源文件备份在 `Temp/split_backup/`）。

@@ -26,7 +26,8 @@
 - 规范 `.codebuddy/rules/UnityCSharp编码规范.md`；skills `bluedivers-unity` / `data-editor` / `unity-mcp` / `kcpnet-online`
 
 ## 热区 3 · 编译验证（细则 → `topics/tooling.md`）
-- ⭐ 首选**离线编译** `python -X utf8 .codebuddy/plans/offline_compile.py <asm>...`（~0.5s、不触发域重载）；⚠ 它编不到"刚新建、Unity 还没重生成 csproj"的文件
+- ⭐ 首选**离线编译** `python -X utf8 .codebuddy/plans/offline_compile.py <asm>...`（~0.5s、不触发域重载）；⚠ 它编不到"刚新建、Unity 还没重生成 csproj"的文件 ⇒ 用 `plans/tmp_compile_newfile.py <asm> <新.cs>...`（临时 csproj 注入、用完自清理）
+- ⚠ `audit_markers.py` 的清单停在 BattleEventSub→BattleEventBus 改名 / `Services/BattleHub.cs`→`BattleHub.cs` 换路径之前（实测 14 MISS 全是这类，不是真丢内容）；要看真丢没丢，用"旧文件每行是否存在于新文件集合"的逐行覆盖检查
 - 必须经 Unity 时 **三证齐** = dll mtime 前进 + Console 0 error（先清空）+ `is_compiling:false`；⚠ 别信 `external_changes_dirty`，也**别只信 Console 的 0 error**（有「假空转」与「假缺失 meta」两种假象）⇒ 关键改动**用反射核验成员是否存在**
 - 改已存在文件只对**单个文件** `ImportAsset(path, ForceUpdate)`；新建 `.cs` 先 `refresh_unity`
 - ⚠ **编辑器失焦时重编会被卡住**（2026-10-14 实测：`refresh_unity` / `AssetDatabase.Refresh(ForceUpdate)` / 逐文件 `ImportAsset` / `RequestScriptCompilation(CleanBuildCache)` / `Assets/Refresh` 菜单全试过，只让 `isCompiling` 翻真又落假，dll 与 Bee `artifacts` 都不动）⇒ 解药 = 让用户聚焦 Unity 或 Ctrl+R；判据仍是 **dll mtime + 反射**

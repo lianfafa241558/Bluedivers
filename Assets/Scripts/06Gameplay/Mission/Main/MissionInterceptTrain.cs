@@ -74,7 +74,13 @@ namespace FPSGame.Mission
         {
             BuildRailOnce();      // 兜底：InitMission 没走到（如场景模式异常）也不会漏铺
             BeginTrainService();  // 开战才开始发车（见 MissionInterceptTrain_Train）
+            Invoke(nameof(StartNotice),5);
         }
+
+        private void StartNotice() {
+            CreatNotice("Yuuka", "TrainStart");
+        }
+
 
         private void BuildRailOnce()
         {

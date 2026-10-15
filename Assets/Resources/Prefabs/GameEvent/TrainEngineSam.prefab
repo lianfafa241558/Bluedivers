@@ -71,8 +71,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0
-  armorLevel: 0
+  explosionResistance: 40
+  armorLevel: 3
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -91,7 +91,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHealth: 3000
+  MaxHealth: 10000
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 7398647985613245839}
@@ -112,7 +112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81b4c4e7c5d6cd34bb04cb46517b4e23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowName: "\u706B\u8F66\u5934"
+  ShowName: "\u51EF\u6492\u5217\u8F66"
   Id: TrainEngineSam
   Portrait: {fileID: 0}
   ExtraPortrait: {fileID: 0}
@@ -121,10 +121,10 @@ MonoBehaviour:
   IsFixed: 0
   flag: 4
   type: 4
-  team: 1
+  team: 2
   threat: 1
   aimPoint: {fileID: 0}
-  UseHpBar: 1
+  UseHpBar: 0
   HpHeight: 1
   shape: 0
   rangeLength: 8.63694

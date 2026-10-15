@@ -162,16 +162,6 @@ namespace FPSGame.Game
             return !(left == right);
         }
 
-        public void AddTag(ActorFlag tagToAdd)
-        {
-            flag |= tagToAdd;
-        }
-
-        public void RemoveTag(ActorFlag tagToRemove)
-        {
-            flag &= ~tagToRemove;
-        }
-
         #endregion
 
         #region 属性
@@ -316,7 +306,7 @@ namespace FPSGame.Game
 
         private IEnumerator WaitSetPos()
         {
-
+            yield return null;
             while (!IsMainStage())
             {
                 yield return null;
