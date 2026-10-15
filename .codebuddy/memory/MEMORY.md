@@ -10,10 +10,13 @@
 - 口径：先结论+证据(文件:行)再列选项；诊断序 = 谁调它 → prefab 数值 → 逻辑（能反射就别只读代码）
 - ⚠ 外部编辑器缓冲区会**静默覆盖工作区文件**（`BattleManager.cs` 丢 11 项：编译能过、功能全坏）⇒ 大批改动收尾跑 `audit_markers.py`，须 `缺失项 = 0`
 - ⚠ 编辑手段默认序：单点/小改动**优先 `replace_in_file`**；批量（多文件/多锚点）、编码敏感（BOM / 混合行尾 / 乱码）、需"锚点唯一 + 命中数断言"时才写字节级 Python 脚本（脚本留档、能重跑）
+- ⚠ 补 BOM 用 `plans/add_bom.py`；**严禁** `open(p,'w').write(open(p).read())`（先截断后读 ⇒ 清空文件，2026-10-15 一次清了两个 .cs）。**空 .cs 编译也是 0 错误（假通过）**⇒ 改完 .cs 必跑 `plans/check_sources.py` 核行数，别只看编译结果
 - ⚠ 注释口径：AI 写的多段式长篇 doc 注释会被用户精简掉 ⇒ 默认写 **1~3 行**、只讲"为什么 + 陷阱 + 别怎么写"；长文档/权衡放 `memory/topics/*.md`
 - ⚠ **Play 模式规矩（2026-10-09 修订）**：用户进 Play **就是为了让我读运行中的真实数据** ⇒ 先取数据、**数据到手就可以导入/编译**；只有"这局数据还要继续取"时才先不动编辑器
 - 调试要用数据说话 ⇒ 同步/子弹/AI 的日志走 `FPSGame.Utils.NetSyncLog`（`00Tools/NetSyncLog.cs`，**默认两端都开**，`-nonetsynclog` / `NETSYNC_LOG` 可静默）
 - ⭐ 伤害来源两个口径：`DamageOrigin`（**统计**）/ `DamageCaused`（**显示·AI**）—— 新增伤害路径必须先选对，细则 → `topics/gameplay.md §伤害管线`
+- ⭐ "别占的地方"= 两套圆，**绝不能混存**：`TerrainUtils.AreaCircles`（地形覆盖物，会被 `RockCoverDestructor` 整体重建）/ `ReservedCircles`（任务点、轨道走廊等：生产者 `AddReservedCircle`、消费方避让）。06_Gameplay 不能反向引用 09_Managers ⇒ 跨层避让一律走 `ReservedCircles`（2026-10-15）
+- ⭐ 美化某 SO 的 Inspector = 写**专属 `[CustomEditor]`**（照 `AirdropData_SOEditor`：色条 + SectionTitle + 自绘块），**禁止**把改动挂进全局 fallback `EditorOverride`（会波及所有 SO，2026-10-15 被用户叫停）；特性 Drawer 挂数组字段只逐元素生效，数组级自绘只能由 Editor 显式分支驱动。公共件下沉在基类 `Assets/Editor/Drawer/DataSOEditorBase.cs`（`EnsureStyles`/`SectionTitle`/`ColorBar`/`TagLabel`/`BeginBlockHeader`/`RowLabel`/`DrawTintedIcon`/`LabelOf`/`DrawField`/`RefreshAssetCache<T>`/`ShowSoPicker<T>`/`ApplyDirty`），新写 SO 检视器一律继承它
 
 ## 热区 2 · 环境
 - Unity **2022.3.62f3** / URP 14.0.12 / C#9 / netstandard2.0；单机 PvE + 局域网联机；随机源 `BattleRandom` + `SeedUtil.Derive`
@@ -42,6 +45,7 @@
 | 家具身份 / Identity / 家具 Id / BaseObject / Furniture_Base 已删 | `topics/furniture-identity.md` |
 | 战斗 / AI / 伤害 / 波次 / 寻路 / 相机 / 武器 / 池化 VFX / 单位存活 | `topics/gameplay.md` |
 | 家具 / 手持交互 / 任务系统 / 逻辑帧时序 / 存档设置 / 地形渲染 | `topics/gameplay-world.md` |
+| 拦截火车 / 轨道生成 / 路基整平 / 附加炮塔 | `topics/mission-intercept-train.md` |
 | 联机总览 / 传输 / KCPNet 库 / 心跳 / 幽灵会话 / NetSyncLog / 诊断 | `topics/net.md` |
 | 房间 / 开房流程 / 阶段模型 / 名单队伍 / 会话生命周期 / 房主掉线 | `topics/net-flow.md` |
 | 战斗同步 / 种子确定性 / 消息号表 / NetId / 未同步清单 | `topics/net-battle.md` |

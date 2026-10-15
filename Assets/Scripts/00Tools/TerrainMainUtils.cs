@@ -62,6 +62,8 @@ public static partial class TerrainUtils
             main = value;
             // 换地形 = 上一局的地表占地圆作废（新地形生成时会重新注入）
             areaCircles.Clear();
+            // 同款生命周期：上一局登记的"已占圆"（任务点/兴趣点/轨道走廊）也一并作废
+            ClearReservedCircles();
             if (value)
             {
                 data = value.terrainData;
@@ -801,7 +803,7 @@ public static partial class TerrainUtils
     /// <param name="x">查询点的x坐标</param>
     /// <param name="y">查询点的y坐标</param>
     /// <returns>坡度角度 ?-90度）</returns>
-    private static float GetSteepness(int x, int y)
+    public static float GetSteepness(int x, int y)
     {
         // 边界校验：边缘点无法计算法向量，直接返回0
         if (x <= 0 || x >= heightmapRes - 1 || y <= 0 || y >= heightmapRes - 1)

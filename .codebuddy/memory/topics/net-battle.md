@@ -407,3 +407,20 @@
     ② `VehicleController.LateUpdate` 加**轮询兜底** `_ownerHealth.GetHpCurrent() <= 0 ⇒ 走同一收口 SetOwener(null)`
     （⚠ 判 `IHealth` 存活要先 `as UnityEngine.Object`，接口引用不吃 Unity 假 null）。
     另：**远端骑手死亡**本机无人收口（他自己的 Health 在他那台）⇒ 桥加 `EvictRiderOfActor`（`OnUnitDeath` 里摘人 + 清占用）。
+
+
+### 7.2x ⭐ 生成器第 4 例 = 任务（车厢附加炮塔，2026-10-15）
+> 全貌（轨道 / 路基 / 列车 / 炮塔）→ `topics/mission-intercept-train.md`；这里只留**联机口径**。
+- `MissionInterceptTrain : MissionBase, INetSpawner`；`InitMission` / `Uninit` 成对 `SpawnerRegistry.Register/Unregister`
+  （⚠ 不能放 `Start`：复刻可能在 `Instantiate` 内就发生）。
+- 槽位 `slot = 班次 × maxCarCount + 车厢序号`（两端算式一致）；**槽位不带 prefab** ⇒ 这一节挂哪门从两端各持一份的**开局计划表**读
+  （计划表在第一个 yield 之前用同一条 `BattleRandom` 算好 ⇒ 抽签一致；发车只查表、不再动随机流）。
+- ⚠ **`SpawnSourceKey` 不能照抄 `NetSpawnKey.Of(gameObject)`**：任务根是 `MissionController` 的子物体（transform 位置全一样）、
+  名字又只差 "(Clone)" ⇒ 多个任务互相撞键、复刻到别的任务里。任务类改用
+  `ActorsManager.DerivedNetId(类名 + "#" + MissionBase.netOrder, transform.position)`（`netOrder` = 任务跨端稳定键）。
+- ⚠ **`CreatUnit` 固定把单位挂 `ActorsManager` 下**（"生成者死了不能把单位一起带走"）⇒ 要挂到移动挂点 / 载具**必须自己 re-parent**
+  （`SetParent(mount,false)` + 局部零位；成员侧 `Instantiate(prefab, mount.position, mount.rotation, mount)` 天然同款局部值）。
+- ⚠ **新形态：复刻早于"载体"出现**。两端各自 Tick 驱动建车厢，房主 4052 可能比成员建车早 1~2 帧 ⇒ `ReplaySpawn` 找不到车厢时
+  **不能直接失败**（会掉在轨道上不跟车）：记 `pendingTurrets`、`Update` 里重试、10s 超时丢弃 + `Warn`；
+  复刻位置/朝向取**本端挂点**，别用消息里的 pos（含 RTT 期间车厢前进的位移）。
+- ⚠ 这条通道的 prefab 必须**有 `Actor` 且 `UnitTypeEnum != Player/Friend`**（这两类不取号 ⇒ `ReportUnit` 只告警不上报 ⇒ 成员端静默缺失）。

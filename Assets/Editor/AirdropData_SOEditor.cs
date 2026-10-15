@@ -20,7 +20,7 @@ namespace FPSGame.EditorExt
 ///  5) 保留字段中文名([InspectorName]) 与 [Compare] 条件显隐。
 /// </summary>
 [CustomEditor(typeof(AirdropData_SO))]
-public class AirdropData_SOEditor : Editor
+public class AirdropData_SOEditor : DataSOEditorBase
 {
     private AirdropData_SO So => (AirdropData_SO)target;
 
@@ -33,19 +33,9 @@ public class AirdropData_SOEditor : Editor
     private static Dictionary<int, AirdropData_SO> s_byId = new Dictionary<int, AirdropData_SO>();
     private static double s_lastReload;
 
-    // 样式缓存
-    private static Texture2D s_whiteTex;
-    private static GUIStyle s_boldStyle;
-    private static GUIStyle s_warnBoxStyle;
-    private static GUIStyle s_redTextStyle;
-    private static GUIStyle s_greyMiniStyle;
-    private static GUIStyle s_sectionStyle;
+    // 样式缓存（通用样式见基类 DataSOEditorBase）
     private static GUIStyle s_opterPopupStyle;      // 方向下拉框正常态
     private static GUIStyle s_opterPopupRedStyle;   // 方向下拉框冲突标红态
-    private static readonly Dictionary<Color, GUIStyle> s_tagCache = new Dictionary<Color, GUIStyle>();
-
-    // 保存去重
-    private static bool s_saveScheduled;
 
     public override void OnInspectorGUI()
     {
@@ -153,26 +143,12 @@ public class AirdropData_SOEditor : Editor
     //  绘制辅助
     // =====================================================
 
-    private void DrawScriptHeader()
-    {
-        var scriptProp = serializedObject.FindProperty("m_Script");
-        if (scriptProp != null)
-        {
-            using (new EditorGUI.DisabledScope(true))
-                EditorGUILayout.PropertyField(scriptProp, true);
-        }
-        EditorGUILayout.Space(2);
-    }
-
     /// <summary>顶部色条 + 类型/投送/操作摘要</summary>
     private void DrawHero(AirdropData_SO so)
     {
         Color accent = so.Color;
 
-        Rect bar = EditorGUILayout.GetControlRect(false, 3f);
-        bar.width = Mathf.Max(bar.width - 1, 10f);
-        EditorGUI.DrawRect(bar, accent);
-        GUILayout.Space(6);
+        ColorBar(accent);
 
         EditorGUILayout.BeginHorizontal();
         {
@@ -297,33 +273,27 @@ public class AirdropData_SOEditor : Editor
         int size = prop.arraySize;
 
         // Header：标签 + 计数 + 添加按钮
-        EditorGUILayout.BeginHorizontal();
+        BeginBlockHeader("附属战备", size, EditorGUIUtility.labelWidth - 8);
+        if (size > 0)
         {
-            GUILayout.Label("附属战备", EditorStyles.boldLabel, GUILayout.Width(EditorGUIUtility.labelWidth - 8));
-            GUILayout.Label($"{size} 项", s_greyMiniStyle);
-
-            GUILayout.FlexibleSpace();
-            if (size > 0)
-            {
-                if (GUILayout.Button("清空", EditorStyles.miniButton, GUILayout.Width(44)))
-                    prop.ClearArray();
-            }
-            if (GUILayout.Button("＋ 添加战备", EditorStyles.miniButton, GUILayout.Width(88)))
-            {
-                OpenAirdropPicker(picked =>
-                {
-                    // 已存在则不重复添加
-                    for (int i = 0; i < prop.arraySize; i++)
-                    {
-                        if (prop.GetArrayElementAtIndex(i).intValue == picked.ID)
-                            return;
-                    }
-                    prop.arraySize = prop.arraySize + 1;
-                    prop.GetArrayElementAtIndex(prop.arraySize - 1).intValue = picked.ID;
-                });
-            }
+            if (GUILayout.Button("清空", EditorStyles.miniButton, GUILayout.Width(44)))
+                prop.ClearArray();
         }
-        EditorGUILayout.EndHorizontal();
+        if (GUILayout.Button("＋ 添加战备", EditorStyles.miniButton, GUILayout.Width(88)))
+        {
+            OpenAirdropPicker(picked =>
+            {
+                // 已存在则不重复添加
+                for (int i = 0; i < prop.arraySize; i++)
+                {
+                    if (prop.GetArrayElementAtIndex(i).intValue == picked.ID)
+                        return;
+                }
+                prop.arraySize = prop.arraySize + 1;
+                prop.GetArrayElementAtIndex(prop.arraySize - 1).intValue = picked.ID;
+            });
+        }
+        EndBlockHeader();
 
         if (size == 0)
         {
@@ -360,9 +330,8 @@ public class AirdropData_SOEditor : Editor
                             text += "（自身）";
                     }
 
-                    var labelStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft };
-                    labelStyle.normal.textColor = textColor;
-                    GUILayout.Label(new GUIContent(text, refSO == null ? "该 ID 未找到对应战备" : $"{refSO.TypeName}\n点击右侧按钮可替换"), labelStyle);
+                    RowLabel(text, textColor,
+                        refSO == null ? "该 ID 未找到对应战备" : $"{refSO.TypeName}\n点击右侧按钮可替换");
 
                     GUILayout.FlexibleSpace();
 
@@ -442,15 +411,9 @@ public class AirdropData_SOEditor : Editor
     private static void DrawSoIcon(Rect rect, AirdropData_SO so)
     {
         if (so == null)
-        {
-            GUI.DrawTexture(rect, s_whiteTex, ScaleMode.ScaleToFit, true, 0, Color.red, 0, 0);
-            return;
-        }
-
-        if (so.icon != null)
-            GUI.DrawTexture(rect, so.icon.texture, ScaleMode.ScaleToFit, true, 0, so.IconColor, 0, 0);
+            DrawTintedIcon(rect, null, Color.red);
         else
-            GUI.DrawTexture(rect, s_whiteTex, ScaleMode.ScaleToFit, true, 0, so.Color, 0, 0);
+            DrawTintedIcon(rect, so.icon, so.icon != null ? so.IconColor : so.Color);
     }
 
     /// <summary>弹出全部战备选择器（排除当前 SO）</summary>
@@ -458,10 +421,8 @@ public class AirdropData_SOEditor : Editor
     {
         EnsureAllLoaded();
         var list = s_allSO.Where(o => o != So).ToList();
-        Rect anchor = GUILayoutUtility.GetLastRect();
 
-        var popup = new SOPickerPopup<AirdropData_SO>(
-            list,
+        ShowSoPicker(list, GUILayoutUtility.GetLastRect(),
             picked =>
             {
                 if (picked == null) return;
@@ -473,22 +434,20 @@ public class AirdropData_SOEditor : Editor
             o => string.IsNullOrEmpty(o.showName) ? o.name : o.showName,
             o => $"ID:{o.ID} · {o.TypeName}",
             o => o.Color);
-
-        PopupWindow.Show(anchor, popup);
     }
 
     // =====================================================
     //  普通字段绘制（中文化 + Compare 条件显隐）
     // =====================================================
 
-    private void DrawField(string name)
+    protected override void DrawField(string fieldName, bool children = true)
     {
-        var p = serializedObject.FindProperty(name);
+        var p = serializedObject.FindProperty(fieldName);
         if (p == null) return;
 
         if (!ShouldShow(p)) return;
 
-        string fieldLabel = LabelOf(name);
+        string fieldLabel = LabelOf(fieldName);
 
         // [Singleline] 元素（如 List<SKVP<OOPartEnum,int>> cost）复用全局内联绘制：
         // 专属 [CustomEditor] 会顶掉兜底 EditorOverride，这里若用裸 PropertyField，
@@ -502,7 +461,7 @@ public class AirdropData_SOEditor : Editor
             return;
         }
 
-        EditorGUILayout.PropertyField(p, new GUIContent(fieldLabel), true);
+        EditorGUILayout.PropertyField(p, new GUIContent(fieldLabel), children);
     }
 
     private void DrawIdField(string name, bool conflict)
@@ -572,90 +531,12 @@ public class AirdropData_SOEditor : Editor
     //  静态资源与样式
     // =====================================================
 
-    private void ApplyDirty()
-    {
-        if (serializedObject.hasModifiedProperties)
-        {
-            serializedObject.ApplyModifiedProperties();
-            EditorUtility.SetDirty(target);
-            ScheduleSave();
-        }
-    }
-
-    private static void ScheduleSave()
-    {
-        if (s_saveScheduled) return;
-        s_saveScheduled = true;
-        EditorApplication.delayCall += () =>
-        {
-            s_saveScheduled = false;
-            AssetDatabase.SaveAssets();
-        };
-    }
-
     private static void EnsureAllLoaded()
-    {
-        double now = EditorApplication.timeSinceStartup;
-        if (s_allSO != null && now - s_lastReload < 1.0) return;
-        s_lastReload = now;
-
-        var list = new List<AirdropData_SO>();
-        var byId = new Dictionary<int, AirdropData_SO>();
-        foreach (string guid in AssetDatabase.FindAssets("t:AirdropData_SO"))
-        {
-            var so = AssetDatabase.LoadAssetAtPath<AirdropData_SO>(AssetDatabase.GUIDToAssetPath(guid));
-            if (so == null) continue;
-            list.Add(so);
-            if (!byId.ContainsKey(so.ID))
-                byId[so.ID] = so;
-        }
-        s_allSO = list;
-        s_byId = byId;
-    }
+        => RefreshAssetCache("t:AirdropData_SO", ref s_lastReload, ref s_allSO, ref s_byId, o => o.ID);
 
     private static void EnsureStatic()
     {
-        if (s_whiteTex == null)
-        {
-            s_whiteTex = new Texture2D(1, 1);
-            s_whiteTex.SetPixel(0, 0, Color.white);
-            s_whiteTex.Apply();
-        }
-
-        if (s_boldStyle == null)
-            s_boldStyle = new GUIStyle(EditorStyles.boldLabel);
-
-        if (s_greyMiniStyle == null)
-            s_greyMiniStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                normal = { textColor = EditorGUIUtility.isProSkin ? new Color(0.6f, 0.6f, 0.6f) : new Color(0.45f, 0.45f, 0.45f) },
-                wordWrap = true,
-            };
-
-        if (s_sectionStyle == null)
-            s_sectionStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 12 };
-
-        if (s_redTextStyle == null)
-            s_redTextStyle = new GUIStyle(EditorStyles.label)
-            {
-                fontStyle = FontStyle.Bold,
-                richText = true,
-                normal = { textColor = new Color(1f, 0.4f, 0.4f) },
-                wordWrap = true,
-            };
-
-        if (s_warnBoxStyle == null)
-        {
-            var bg = new Texture2D(1, 1);
-            bg.SetPixel(0, 0, new Color(0.5f, 0.05f, 0.05f, 0.32f));
-            bg.Apply();
-            s_warnBoxStyle = new GUIStyle
-            {
-                padding = new RectOffset(8, 8, 6, 6),
-                margin = new RectOffset(0, 0, 4, 4),
-                normal = { background = bg },
-            };
-        }
+        EnsureStyles(); // 共享样式在基类
 
         if (s_opterPopupStyle == null)
         {
@@ -670,32 +551,9 @@ public class AirdropData_SOEditor : Editor
         }
     }
 
-    private void TagLabel(string text, Color bgColor)
+    protected override string LabelOf(string fieldName)
     {
-        if (string.IsNullOrEmpty(text)) return;
-        if (!s_tagCache.TryGetValue(bgColor, out GUIStyle style))
-        {
-            var bg = new Texture2D(1, 1);
-            bg.SetPixel(0, 0, bgColor);
-            bg.Apply();
-            style = new GUIStyle(EditorStyles.miniLabel)
-            {
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                padding = new RectOffset(8, 8, 2, 2),
-                normal = { background = bg, textColor = ContrastColor(bgColor) },
-            };
-            s_tagCache[bgColor] = style;
-        }
-        GUILayout.Label(text, style);
-    }
-
-    private static Color ContrastColor(Color c)
-        => (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) > 0.55f ? Color.black : Color.white;
-
-    private static string LabelOf(string name)
-    {
-        switch (name)
+        switch (fieldName)
         {
             case "isHide": return "在战备配置界面隐藏";
             case "ID": return "ID";
@@ -729,15 +587,5 @@ public class AirdropData_SOEditor : Editor
         }
     }
 
-    /// <summary>小节标题（彩色左条 + 标题 + 细分隔线）</summary>
-    private void SectionTitle(string title, Color accent)
-    {
-        var lineRect = EditorGUILayout.GetControlRect(false, 22f);
-        EditorGUI.DrawRect(new Rect(lineRect.x, lineRect.y + 4, 3, 14), accent);
-        GUI.Label(new Rect(lineRect.x + 9, lineRect.y + 2, lineRect.width - 12, 18), title, s_sectionStyle);
-        EditorGUI.DrawRect(new Rect(lineRect.x, lineRect.yMax + 1, lineRect.width, 1),
-            EditorGUIUtility.isProSkin ? new Color(0.5f, 0.5f, 0.5f, 0.25f) : new Color(0, 0, 0, 0.12f));
-        EditorGUILayout.Space(2);
-    }
 }
 }

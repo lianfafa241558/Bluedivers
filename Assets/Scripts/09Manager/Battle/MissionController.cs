@@ -105,6 +105,8 @@ public enum MissionInitMode
                 EntityRoot = new GameObject("EntityRoot").transform;
                 waitMissions = GetTask();
                 missionCreatPoints = new();
+                // 本局的"已占圆"从零开始登记（任务点由 GenerateNewMissionPoint 登记，见 TerrainUtils.ReservedCircles）
+                TerrainUtils.ClearReservedCircles();
 
                 NetSyncLog.LoadLog("任务", "开始生成任务");
                 yield return InitAllMission();
@@ -417,6 +419,9 @@ public enum MissionInitMode
             }
 
             missionCreatPoints.Add((bestPoint, newRange));
+            // 同步登记到共享"已占圆"：本类自己的列表只够自己避让，别的生产者（如铁轨路径规划）需要一份
+            // 不反向依赖 09_Managers 就能读到的薄数据（与 TerrainUtils.AreaCircles 同款）
+            TerrainUtils.AddReservedCircle(bestPoint, newRange);
             return new Vector3(bestPoint.x, TerrainUtils.WSToHeight(bestPoint), bestPoint.y);
         }
 
@@ -453,6 +458,25 @@ public enum MissionInitMode
                 float dx = Mathf.Abs(candidatePos.x - circle.Center.x);
                 float dy = Mathf.Abs(candidatePos.y - circle.Center.y);
                 if (dx > circleSumRadius || dy > circleSumRadius)
+                {
+                    continue;
+                }
+
+                if (Vector2.Distance(candidatePos, circle.Center) < circleSumRadius)
+                {
+                    return true;
+                }
+            }
+
+            // ③ 共享"已占圆"（TerrainUtils.ReservedCircles）：本类自己登记过的那份，也有别的生产者
+            //   （如铁轨走廊）登记的 ⇒ 同一套"圆心距 < 半径和 + 5"
+            IReadOnlyList<TerrainUtils.AreaCircle> reserved = TerrainUtils.ReservedCircles;
+            for (int i = 0; i < reserved.Count; i++)
+            {
+                TerrainUtils.AreaCircle circle = reserved[i];
+                float circleSumRadius = newRange + circle.Radius + 5f;
+                if (Mathf.Abs(candidatePos.x - circle.Center.x) > circleSumRadius
+                    || Mathf.Abs(candidatePos.y - circle.Center.y) > circleSumRadius)
                 {
                     continue;
                 }

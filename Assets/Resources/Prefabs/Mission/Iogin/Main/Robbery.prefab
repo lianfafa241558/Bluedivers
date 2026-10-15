@@ -1,0 +1,134 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5877342823092023798
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5877342823092023793}
+  - component: {fileID: -4248121354876746705}
+  m_Layer: 0
+  m_Name: Robbery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5877342823092023793
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5877342823092023798}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-4248121354876746705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5877342823092023798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65f820c3dd2f64040b526574119d317f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  missionTag: 12305
+  missionType: 0
+  priority: 0
+  prefabs: []
+  prefabVarients: {fileID: 0}
+  title: 
+  tip: 
+  MaxProgress: 0
+  NowProgress: 0
+  AirdropRange: 0
+  mapEntitySize: {x: 20, y: 20}
+  parent: {fileID: 0}
+  data:
+    cfg: {fileID: 0}
+    targetCount: 0
+    reward: 0
+    complete: 0
+  root:
+    RequiredAD: 
+    activeTask: 0
+    main:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    evacuate:
+      cfg: {fileID: 0}
+      targetCount: 0
+      reward: 0
+      complete: 0
+    extras: []
+    subs: []
+  color: {r: 0, g: 0, b: 0, a: 0}
+  icon: {fileID: 0}
+  pos: {x: 0, y: 0, z: 0}
+  entitySize: 0
+  _sceneMissionData: {fileID: 0}
+  subTask: []
+  percentage: 0
+  InAirdropRange: 0
+  entity: {fileID: 0}
+  end: 0
+  completed: 0
+  destroyTarget: 4
+  escapeLimit: 2
+  firstDepartureDelay: 20
+  departureInterval: 180
+  departureCount: 8
+  trainEnginePrefab: {fileID: 843471801939785455, guid: 118658281521e9c48b169a89fa5b6749,
+    type: 3}
+  trainCarPrefab: {fileID: 8686378076433492579, guid: d63e4e9081c4c6d4d88344467f56f637,
+    type: 3}
+  firstCarCount: 5
+  maxCarCount: 9
+  trainSpeed: 8
+  guardSquadsPerDeparture: 2
+  guardSquadLimit: 6
+  trackCount: 3
+  railPrefab: {fileID: 4753779458894477454, guid: 34d5d1c2782b7b44e8e9e137149fed25,
+    type: 3}
+  minAngleSeparation: 120
+  minChordRatio: 0.5
+  edgeInset: 5
+  stepLength: 24
+  planExpand: 200
+  avoidMargin: 15
+  slopeWeight: 2
+  maxVertexTurnDeg: 8
+  smoothPasses: 3
+  bedStep: 8
+  bedSmoothLength: 60
+  flattenThreshold: 1.2
+  flattenBlend: 6
+  clearTarget: -1
+  clearStep: 8
+  clearMargin: 1.5
+  clearCanopy: 5
+  registerCorridor: 1
+  corridorRegisterRadius: 12
+  carSpacingFactor: 0.92
+  guardRefreshInterval: 0.5
+  guardSpawnBack: 25
+  additionalTurrets:
+  - Key: 50
+    Value: {fileID: 1938549503531534515, guid: 8fd11c40b860de64db0ab091cbb72a8f, type: 3}
+  - Key: 50
+    Value: {fileID: 4382435438422974075, guid: d7498174f79200143990bb72c665c3f2, type: 3}
+  turretMountName: Additional

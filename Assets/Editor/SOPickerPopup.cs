@@ -71,8 +71,13 @@ public class SOPickerPopup<T> : PopupWindowContent where T : UnityEngine.Object
 
     public override void OnGUI(Rect rect)
     {
-        // 搜索栏
-        _search = EditorGUI.TextField(new Rect(4, 4, rect.width - 8, 20), _search, EditorStyles.toolbarSearchField);
+        // 搜索栏 + 右侧关闭按钮（关闭视为取消）
+        float searchW = rect.width - 8 - 20;
+        _search = EditorGUI.TextField(new Rect(4, 4, searchW, 20), _search, EditorStyles.toolbarSearchField);
+        if (GUI.Button(new Rect(4 + searchW, 4, 20, 20), "✕", EditorStyles.miniButton))
+        {
+            editorWindow.Close();
+        }
 
         float footerH = _confirmMode ? FooterHeight : 0f;
         var listRect = new Rect(4, 26, rect.width - 8, rect.height - 30 - footerH);
