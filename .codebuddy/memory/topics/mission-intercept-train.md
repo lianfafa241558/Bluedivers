@@ -56,3 +56,30 @@
 - 铁轨走廊登记半径 `corridorRegisterRadius`、`planExpand` 等值未做过压力实测，大规模地图上按日志里的"走廊登记 N 处"再调。
 - ⚠ 调试遗留：`_Turret.cs` 里两处 `Debug.LogError("给…加浮空标签")`（正常路径打红字、每门炮塔一条）—— 浮空验证完该删。
 - 拆分脚本留档：`.codebuddy/plans/split_intercept_train.py`（行号锚点式拆分，改过这 5 个文件后**不要再重跑**；源文件备份在 `Temp/split_backup/`）。
+
+## 8. 卫队护航（2026-10-16 实测口径，最终版）
+### 8.1 用 `HomePoint`，不用 `PatrolPos`
+- `PatrolPos` = "到达即自毁"（`EnemyMobile.PatrolBehavior → UpdatePathDestination()` 命中 `PathReachingRadius`=2m ⇒ `Kill(true)`）
+  ⇒ 追移动目标必踩；`HomePoint` = "到达即待命"（`EnemyController` 注释原话），`MissionOilRefining.CreatRepairPatrol` 就是这套。
+- ⚠ `PatrolPos` 必须保持 `default`：出生那一帧 `EnemyMobile.Start` 按它选状态（有值 ⇒ Patrol；否则 Idle + HomePoint）。
+- ⚠ `HomePoint` 只在 `EnterIdle` 读一次、`IdleBehavior` 不重发 ⇒ **必须自己推目的地**：每 Tick
+  `controller.SetNavDestination(护航位)`。顺带覆盖 `Return`（战斗后 AI 会下"回出生点 `m_OriginPos`"；
+  取证：`ReturnBehavior()` 只有 `UpdateAutoRotate()`，不会抢回目的地）。
+- ⚠ Idle 的另一个自毁：`!IsFixed && 超过 IdleMaxDuration(120s) && 最近玩家 > 80m ⇒ Kill(true)` ⇒ 给卫队
+  `IActor.IsFixed = true`（该字段"只对 EnemyMobile 有效"，全工程仅此处读 ⇒ 无副作用）。
+### 8.2 生成与联机
+- 生成：`manager.CreatPatrol(spawn)` → 每只 `GuideGuard()`（`IActor.IsFixed = true` + `HomePoint`）
+  → **同帧** `RefreshAllGuards()`（出生那帧 `Start` 就要读到护航位）。
+- 联机：房主权威，必须 `BattleEventBus.ReportPatrolSpawn(spawn, target, home: true)`（4052）。
+  ⚠ 不报 ⇒ **成员端没有这支卫队**（`CreatPatrol` 在成员端被闸成空表）；报 `home:true` 才能让成员端
+  `ReplayPatrol` 写成 `HomePoint`（报 `PatrolPos` 的话成员侧会走 Patrol 然后自毁）。
+- 成员端的移动目的地靠房主广播：`EnemyController.SetNavDestination` 内部就是
+  `BattleEventBus.EnemyMove → NetRoomFlow.SendEnemyMove` 那一处 ⇒ 成员端**不要**自己推（会被 `RemoteDrivenMovement` 门掉 + 刷日志）。
+### 8.3 编队与速度
+- 护航位 = 车头 + 前向×`guardLead`(24 = `trainSpeed`×`TickTime`，为了跑动连贯不顿挫) + 右向×`guardLateral`(10)×±1
+  + 同侧沿轨道错开 `guardLineSpacing`(8m)×(index>>1) ⇒ 10 只时左右各 5 槽；平衡站位 ≈ **车头侧前 ~9m、两侧 ±10m**。
+- 速度**按帧**兜（目标点走 Tick，避免打爆 `PathRequestManager`）：> 1.5×`guardHoldDistance`(15) ⇒ `1.35×` 追；
+  附近 ⇒ `1.0×` 等速跟住；< 0.6× ⇒ `0.9×` 主动落回（别往车厢里钻）。
+  ⚠ `AddModifier(Extra, want − FinalValue)` 必须"补差"（Extra 累加）—— AI 在 Patrol/Beware/Return 切换时会自己增删修饰（实测 2~3 m/s）。
+- 取数手法：`execute_code` 反射 dump `liveTrains → TrainRuntime.Guards` + 每只的
+  `HomePoint/PatrolPos/m_lastDestination/aiState/NavMeshAgent(speed,velocity,hasPath,remainingDistance,isOnNavMesh)`。

@@ -104,8 +104,10 @@ namespace FPSGame.AI
             InitReturnBag();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            // ⚠ 必须回调 base：从前写成 private 遮住了基类对控制器事件的退订
+            base.OnDestroy();
             BattleEventBus.OnCallKai -= OnCall;
             BattleEventBus.OnEvacuate -= OnEvacuate;
 

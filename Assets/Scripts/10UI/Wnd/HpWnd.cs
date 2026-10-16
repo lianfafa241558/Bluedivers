@@ -12,134 +12,137 @@ namespace FPSGame.UI
 {
 using static FPSGame.WndTools.WndRootTool;
 
-/// <summary>
-/// 敌人血条的创建与管理窗口。
-/// </summary>
-[AddComponentMenu("UI/窗口/血条管理")]
-public class HpWnd : Window
-{
-    /// <summary>敌人距离玩家超过该距离时，受击不再显示血条</summary>
-    private const float HpBarMaxDistance = 50f;
-
-    [SerializeField]
-    HpItemBase SoilderPrefab, BossPrefab;
-
-    Dictionary<GameObject, HpItemBase> dic=new();
-    AutoObjectPool<GameObject, HpItemBase> pool;
-
-
-    protected override void FirstShowWnd()
+    /// <summary>
+    /// 敌人血条的创建与管理窗口。
+    /// </summary>
+    [AddComponentMenu("UI/窗口/血条管理")]
+    public class HpWnd : Window
     {
+        /// <summary>敌人距离玩家超过该距离时，受击不再显示血条</summary>
+        private const float HpBarMaxDistance = 70f;
+
+        [SerializeField]
+        HpItemBase SoilderPrefab, BossPrefab;
+
+        Dictionary<GameObject, HpItemBase> dic=new();
+        AutoObjectPool<GameObject, HpItemBase> pool;
 
 
-        pool = new(
-            (item) =>//更新
+        protected override void FirstShowWnd()
+        {
+
+
+            pool = new(
+                (item) =>//更新
+                {
+                    if (!item.CanRecycle())
+                    {
+                        item.Tick();
+                        return true;
+                    }
+                    else
+                    {
+                        item.End();
+                        return false;
+                    }
+                },
+                () =>//添加
+                {
+                    var item = Instantiate(SoilderPrefab, transform);
+                    SetActive(item,false);
+                    return item;
+                },
+                (item) =>//释放
+                {
+                    SetActive(item,false);
+                },
+            5);
+
+        }
+
+        protected override void ShowWnd()
+        {
+
+            UnitEventBus.OnEnemyCreate += OnEnemyCreate;
+            UnitEventBus.OnEnemyDead += OnEnemyDead;
+            UnitEventBus.OnUnitHit += OnUnitHit;
+        }
+
+        protected override void HideWnd()
+        {
+            UnitEventBus.OnEnemyCreate -= OnEnemyCreate;
+            UnitEventBus.OnEnemyDead -= OnEnemyDead;
+            UnitEventBus.OnUnitHit -= OnUnitHit;
+        }
+        private void Update()
+        {
+            pool.Update();
+            foreach (var item in dic.Values)
             {
                 if (!item.CanRecycle())
                 {
                     item.Tick();
-                    return true;
                 }
-                else
-                {
-                    item.End();
-                    return false;
-                }
-            },
-            () =>//添加
-            {
-                var item = Instantiate(SoilderPrefab, transform);
-                SetActive(item,false);
-                return item;
-            },
-            (item) =>//释放
-            {
-                SetActive(item,false);
-            },
-        5);
-
-    }
-
-    protected override void ShowWnd()
-    {
-
-        UnitEventBus.OnEnemyCreate += OnEnemyCreate;
-        UnitEventBus.OnEnemyDead += OnEnemyDead;
-        UnitEventBus.OnUnitHit += OnUnitHit;
-    }
-
-    protected override void HideWnd()
-    {
-        UnitEventBus.OnEnemyCreate -= OnEnemyCreate;
-        UnitEventBus.OnEnemyDead -= OnEnemyDead;
-        UnitEventBus.OnUnitHit -= OnUnitHit;
-    }
-    private void Update()
-    {
-        pool.Update();
-        foreach (var item in dic.Values)
-        {
-            if (!item.CanRecycle())
-            {
-                item.Tick();
             }
         }
-    }
 
 
 
-    private void OnEnemyCreate(Actor go)
-    {
-        //var enemy = go.GetComponent<EnemyController>();
-        if (go.HasFlag( ActorFlag.Boss))
+        private void OnEnemyCreate(Actor go)
         {
-            var prefab = Instantiate(BossPrefab, transform.GetChild(0));
-            dic.Add(go.gameObject, prefab);
-            prefab.Set(go.gameObject);
+            //var enemy = go.GetComponent<EnemyController>();
+            if (go.HasFlag( ActorFlag.Boss))
+            {
+                var prefab = Instantiate(BossPrefab, transform.GetChild(0));
+                dic.Add(go.gameObject, prefab);
+                prefab.Set(go.gameObject);
+            }
         }
-    }
 
-    private void OnEnemyDead(Actor go)
-    {
-        //var enemy = go.GetComponent<EnemyController>();
-        if (go.HasFlag(ActorFlag.Boss) && dic.TryGetValue(go.gameObject, out var item))
+        private void OnEnemyDead(Actor go)
         {
-            item.End();
-            Tool.Destroy(item.gameObject,1);
-            dic.Remove(go.gameObject);
+            //var enemy = go.GetComponent<EnemyController>();
+            if (go.HasFlag(ActorFlag.Boss) && dic.TryGetValue(go.gameObject, out var item))
+            {
+                item.End();
+                Tool.Destroy(item.gameObject,1);
+                dic.Remove(go.gameObject);
+            }
         }
-    }
 
-    private void OnUnitHit(GameObject victim ,GameObject attacker)
-    {
-        victim.TryGetComponent(out Actor actor);
+        private void OnUnitHit(GameObject victim ,GameObject attacker)
+        {
+            victim.TryGetComponent(out Actor victimActor);
+            attacker.TryGetComponent(out Actor attackerActor);
+            //距离玩家超过 70m 的敌人受击时不响应血条
+            if (IsEnemyTooFar(victimActor, attackerActor)) return;
 
-        //距离玩家超过 50m 的敌人受击时不响应血条
-        if (IsEnemyTooFar(actor)) return;
-
-        if (pool.TryFind(victim, out var item))
-        {
-            item.Refresh();
-        }
-        else if(actor!=null&&actor.UseHpBar)
-        {
-            pool.Get(victim).Set(victim);
-        }
-        else if (dic.TryGetValue(victim,out var value))
-        {
-            value.Refresh();
-        }
+            if (pool.TryFind(victim, out var item))
+            {
+                item.Refresh();
+            }
+            else if(victimActor!=null&&victimActor.UseHpBar)
+            {
+                pool.Get(victim).Set(victim);
+            }
+            else if (dic.TryGetValue(victim,out var value))
+            {
+                value.Refresh();
+            }
         
-    }
+        }
 
-    /// <summary>受击单位是否为距离玩家超过 <see cref="HpBarMaxDistance"/> 的敌人</summary>
-    private static bool IsEnemyTooFar(Actor actor)
-    {
-        if (actor == null || actor.Type != UnitTypeEnum.Enemy) return false;
-        var player = ActorsManager.Player;
-        if (player == null || !player.IsValidMono()) return false;
-        return Vector3.Distance(player.Pos, actor.Pos) > HpBarMaxDistance;
-    }
+        /// <summary>受击单位是否为距离玩家超过 <see cref="HpBarMaxDistance"/>
+        /// 如果伤害来源是玩家，那么不管距离多远都显示血条
+        /// true则视为超过</summary>
+        private static bool IsEnemyTooFar(Actor victimActor, Actor attackerActor)
+        {
+            if (victimActor == null|| attackerActor==null) return true;
+            var player = ActorsManager.Player;
+            if (player == null || !player.IsValidMono()) return true;
+            if (player as Actor == attackerActor) return false;
+            return Vector3.Distance(player.Pos, victimActor.Pos) > HpBarMaxDistance;
+        }
 
-}
+    }
 }

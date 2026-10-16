@@ -17,7 +17,7 @@ using static FPSGame.WndTools.WndRootTool;
 [AddComponentMenu("UI/HUD/Boss 血条")]
 public class HpItemBoss : HpItemBase
 {
-    private const float ShowDistance = 50f;
+    private const float ShowDistance = 70f;
     private const float HideDelay = 15f;
 
     [SerializeField]
@@ -46,7 +46,7 @@ public class HpItemBoss : HpItemBase
         _isInvincibleShown = false;
 
         _hideTimer = HideDelay;
-        // 一开始就在 50m 内则直接播放 Entry 显示，否则初始隐藏
+        // 一开始就在 70m 内则直接播放 Entry 显示，否则初始隐藏
         if (IsPlayerNear())
         {
             _visible = false;

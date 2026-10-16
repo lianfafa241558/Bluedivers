@@ -203,7 +203,7 @@ namespace FPSGame.Mission
             {
                 actor.NetId = netId;
                 actor.AddFlag(ActorFlag.AllowFloating);
-                Debug.LogError("给"+actor+"加浮空标签",actor);
+                //Debug.LogError("给"+actor+"加浮空标签",actor);
             }
             turret.name = TurretName(departure, carIndex);
             RegisterTurret(car, turret);
@@ -254,7 +254,7 @@ namespace FPSGame.Mission
             else
             {
                 actor.AddFlag(ActorFlag.AllowFloating);
-                Debug.LogError("给" + actor + "加浮空标签", actor);
+                //Debug.LogError("给" + actor + "加浮空标签", actor);
             }
             return turret;
         }

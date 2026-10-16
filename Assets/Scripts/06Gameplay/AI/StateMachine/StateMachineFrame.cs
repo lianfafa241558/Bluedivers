@@ -64,7 +64,7 @@ namespace FPSGame.AI
         {
             m_actor = GetComponent<IActor>();
             Init();
-            DetectionModule.SetActor(m_actor as Actor);
+            // 归属(Actor)不再注入：DetectionModule.Start 会从父级自取
             //skipSameState=false：与改造前一致，AiState=default 会重放 default 状态的 onExit/onEnter
             _machine = new StateMachineCore<StateEnum>(InitState(), skipSameState: false);
             m_TimeStartedDetection = Mathf.NegativeInfinity;

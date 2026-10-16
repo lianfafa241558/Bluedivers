@@ -143,7 +143,7 @@ namespace FPSGame.AI
 
             DetectionModule = GetComponentInChildren<DetectionModule>();
             if (DetectionModule.IsValid()) {
-                DetectionModule.SetActor((Actor)m_Actor);
+                // 归属(Actor)由 DetectionModule.Start 自取，这里只做事件接线
                 DetectionModule.onDetectedTarget += _OnDetectedTarget;
                 DetectionModule.onLostTarget += _OnLostTarget;
                 OnAttack += DetectionModule.OnAttack;
@@ -439,6 +439,13 @@ namespace FPSGame.AI
             return m_groupScratch;
         }
 
+        private void OnDestroy()
+        {
+            if (!DetectionModule.IsValid()) return;
+            DetectionModule.onDetectedTarget -= _OnDetectedTarget;
+            DetectionModule.onLostTarget -= _OnLostTarget;
+        }
+
         protected override void _OnDie(GameObject caused, GameObject origin)
         {
             base._OnDie(caused, origin);
@@ -505,17 +512,6 @@ namespace FPSGame.AI
                 weapons[i].Owner = gameObject;
                 weapons[i].IgnoredColliders = m_SelfColliders;
             }
-        }
-
-        /// <summary>
-        /// 没有侦测组件的控制器什么都不做
-        /// </summary>
-        /// <param name="point">警惕点(要去查看的噪声点)</param>
-        /// <param name="noise">该噪声的响度(半径/米)：比当前警惕点更轻时不覆盖</param>
-        /// <param name="spread">是否把同一噪声扩散给附近队友</param>
-        public override void Beware(PEVector3 point, PEInt noise, bool spread)
-        {
-            DetectionModule.Beware(point, noise, spread);
         }
 
 

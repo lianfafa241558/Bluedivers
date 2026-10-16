@@ -28,7 +28,17 @@ public class VFXManager : Singleton<VFXManager> , I_GlobaManager, IVfxSink
     T IVfxSink.Creat<T>(T template, Vector3 pos, Quaternion rotation)
     {
         if (template is ProjectileBase pb) return Creat(pb, pos, rotation) as T;
-        Debug.LogError("IVfxSink.Creat<T> 只支持 ProjectileBase 模板：" + template);
+
+        // ⚠ 空模板和"类型不支持"要分开报：以前两条都打"只支持 ProjectileBase 模板：{null}"（模板为空时后半截是空的），
+        //   实际最常见的错因是**调用方漏配子弹预制体**，这样报一句就能直接定位到预制体，不必再追栈。
+        if (ReferenceEquals(template, null))
+        {
+            Debug.LogError($"IVfxSink.Creat<{typeof(T).Name}> 收到空模板 ⇒ 调用方没配抛射物预制体（BulletPrefab），本次返回 null");
+        }
+        else
+        {
+            Debug.LogError($"IVfxSink.Creat<{typeof(T).Name}> 只支持 ProjectileBase 模板，实际传入 {template.GetType().Name}：{template}", template);
+        }
         return null;
     }
 

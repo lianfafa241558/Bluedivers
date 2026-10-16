@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PEMaths;
 
 using UnityEngine;
 
@@ -39,6 +40,8 @@ namespace FPSGame.AI
         private bool _bewareLooking;
         /// <summary>朝警惕方向看的结束时间</summary>
         private float _bewareLookEndTime;
+        /// <summary>正在看的方向(**本地持有**)：模块的 BewarePoint 会被别人消费/覆盖，本类不能每帧去读它</summary>
+        private Vector3 _bewareLookPoint;
 
         [ContextMenu("重置")]
         private void ResetQu()
@@ -58,6 +61,16 @@ namespace FPSGame.AI
             AiState = AIState.Idle;
             m_EnemyController = m_Controller as EnemyController;
             //m_EnemyController.OnDie += OnDie;
+            // 示警直接听侦测模块的事件(不再每帧轮询 module.BewarePoint)
+            var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
+            if (module != null) module.onBeware += OnBeware;
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
+            if (module != null) module.onBeware -= OnBeware;
         }
 
         protected override Dictionary<AIState, AiStateHook> InitState()
@@ -100,43 +113,44 @@ namespace FPSGame.AI
         }
 
         /// <summary>
-        /// 警惕查看：逻辑层噪声(UnitEventSub.OnNoise)把枪声/弹着点写进 BewarePoint 后，炮塔朝该方向看 BewareLookDuration 秒。
-        /// 超时就把警惕点消费掉并恢复自动巡逻（炮台不会走过去，所以只能"看向"目标方向）。
+        /// 示警(检测模块的 onBeware：自己听见枪声/弹着点，或被队友扩散到警告)：
+        /// 太远的点无视(超过"听力/视野取较大者"，转过去也没意义)，否则朝该方向看 BewareLookDuration 秒。
+        /// </summary>
+        private void OnBeware(PEVector3 point, PEInt noise)
+        {
+            if (BewareLookDuration <= 0f) return;
+
+            var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
+            if (module == null) return;
+
+            Vector3 p = point.RawVector3;
+            if (Vector3.Distance(transform.position, p) > Mathf.Max(module.HearingRange, module.DetectionRange)) return;
+
+            _bewareLookPoint = p;
+            _bewareLooking = true;
+            _bewareLookEndTime = Time.time + BewareLookDuration;
+        }
+
+        /// <summary>
+        /// 警惕查看：朝 <see cref="_bewareLookPoint"/> 看，超时就把警惕点消费掉并恢复自动巡逻
+        /// （炮台不会走过去，所以只能"看向"目标方向）。
         /// </summary>
         /// <returns>true=本帧正在警惕查看（调用方不要再自动巡逻转动）</returns>
         private bool UpdateBewareLook()
         {
-            var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
-            if (module == null || BewareLookDuration <= 0f || !module.BewarePoint.HasValue)
-            {
-                _bewareLooking = false;
-                return false;
-            }
+            if (!_bewareLooking) return false;
 
-            // 太远的点无视：超过"听力/视野取较大者"就不看（也不消费，交给后续判定）
-            var bewarePoint = module.BewarePoint.Value;
-            float senseRange = Mathf.Max(module.HearingRange, module.DetectionRange);
-            if (Vector3.Distance(transform.position, bewarePoint.RawVector3) > senseRange)
-            {
-                _bewareLooking = false;
-                return false;
-            }
-
-            if (!_bewareLooking)
-            {
-                _bewareLooking = true;
-                _bewareLookEndTime = Time.time + BewareLookDuration;
-            }
             // 到点：消费掉警惕点，否则恢复巡逻后会被同一个点反复拉回来
             if (Time.time > _bewareLookEndTime)
             {
                 _bewareLooking = false;
-                module.ClearBeware();
+                var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
+                if (module != null) module.ClearBeware();
                 return false;
             }
 
             // 只取水平方向：不要把炮管压到地面上的落点上
-            Vector3 lookAt = bewarePoint.RawVector3;
+            Vector3 lookAt = _bewareLookPoint;
             lookAt.y = transform.position.y;
             CalculationAimTargrt(lookAt);
             return true;
@@ -179,7 +193,9 @@ namespace FPSGame.AI
                 SwitchState(AIState.Attack);
             }
             m_TimeStartedDetection = Time.time;
-
+            // 交战中不再响应警告(既不转头看别的动静，也不再向外扩散)
+            var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
+            if (module != null) module.RespondWarning = false;
         }
 
         protected override void OnLostTarget()
@@ -187,6 +203,9 @@ namespace FPSGame.AI
             if (AiState != AIState.Death)
             {
                 SwitchState(AIState.Idle);
+                // 目标丢了 ⇒ 重新响应警告
+                var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
+                if (module != null) module.RespondWarning = true;
                 // 回到 Idle 时重新开始计时：否则警惕查看会沿用上一轮已过期的结束时间，刚开打就被判定"看完了"
                 _bewareLooking = false;
                 m_TimeLostDetection = Time.time;

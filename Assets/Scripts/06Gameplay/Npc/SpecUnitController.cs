@@ -43,6 +43,7 @@ namespace FPSGame.Gameplay
 
             if (DetectionModule.IsValid())
             {
+                // 归属(Actor)由 DetectionModule.Start 自取(原来这里漏了注入)
                 DetectionModule.onDetectedTarget += _OnDetectedTarget;
                 DetectionModule.onLostTarget += _OnLostTarget;
                 OnAttack += DetectionModule.OnAttack;
@@ -54,6 +55,14 @@ namespace FPSGame.Gameplay
             }
 
         }
+
+        private void OnDestroy()
+        {
+            if (!DetectionModule.IsValid()) return;
+            DetectionModule.onDetectedTarget -= _OnDetectedTarget;
+            DetectionModule.onLostTarget -= _OnLostTarget;
+        }
+
         public override void InitAttribute()
         {
             if (!FpsHelper.HaveNavMeshAgent(NavMeshAgent))

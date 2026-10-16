@@ -225,8 +225,6 @@ namespace FPSGame.AI
         /// <summary>
         /// 受击表现：闪变 + 命中点特效（音效按 LoginFrame 节流）+ 受击动画触发器。
         /// </summary>
-        /// <param name="collider">被命中的碰撞体；为空时表现位置用 fallbackPos</param>
-        /// <param name="fallbackPos">没有碰撞体时的表现位置（通常传单位中心或自身位置）</param>
         protected void PlayHitFx(Vector3 pos,Vector3 normal)
         {
             TriggerRS(OccasionTypeEnum.Hit);
@@ -238,7 +236,7 @@ namespace FPSGame.AI
             {
                 m_lastDamageTime = Time.time;
             }
-            TriggerFX(OccasionTypeEnum.Hit, pos, Quaternion.LookRotation(normal), default, ignoreAudio);
+            TriggerFX(OccasionTypeEnum.Hit, pos, Quaternion.LookRotation(normal), transform, ignoreAudio);
             SetTrigger(Constants.k_AnimOnDamagedParameter, true);
         }
 

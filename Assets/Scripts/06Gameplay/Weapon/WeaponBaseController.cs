@@ -111,6 +111,9 @@ namespace FPSGame.Weapon {
         public int UseDamageIndex = 0;
         public DamageData CurrentDamgeData => Damages[UseDamageIndex];
 
+        /// <summary>"伤害配置漏配子弹预制体"是否已报过错（见 <see cref="WarnBulletPrefabMissing"/>）</summary>
+        private bool _noBulletPrefabWarned;
+
         #endregion
 
         #region 特效
@@ -593,6 +596,11 @@ namespace FPSGame.Weapon {
                 }
                 var bullet = FPSGame.Core.VfxPool.Creat(CurrentDamgeData.BulletPrefab, shotPos, Quaternion.LookRotation(shotDirection));
 
+                // ★ 必须在"往外传"之前截住 null：伤害配置漏配 BulletPrefab 时 VfxPool 返回 null，
+                //   再往下走 OnBulletShoot(null) 会让订阅方(GetChargeBullet/GetLaserBullet)直接 NRE，
+                //   异常穿出 LogicTick ⇒ 整个逻辑帧剩下的单位都不再 tick（不是单纯少一发子弹）
+                if (bullet == null) { WarnBulletPrefabMissing(); continue; }
+
                 OnBulletShoot?.Invoke(bullet);
                 bullet.Shoot(this, UseDamageIndex, muzzle);
 
@@ -601,6 +609,15 @@ namespace FPSGame.Weapon {
             }
 
             ShootFlash(muzzle);
+        }
+
+        /// <summary>子弹预制体漏配只报一次：连发武器每发都报会把 Console 刷爆（首条已足以定位是哪个预制体的哪一档伤害）。</summary>
+        private void WarnBulletPrefabMissing()
+        {
+            if (_noBulletPrefabWarned) return;
+            _noBulletPrefabWarned = true;
+            Debug.LogError($"{name} 的 DamageData 没配子弹预制体：Damages[{UseDamageIndex}].BulletPrefab 为空 ⇒ " +
+                           $"本次开火不产生子弹（后续也不再生效），请在该武器预制体上补上 BulletPrefab", this);
         }
 
         protected void ShootFlash(Transform point)

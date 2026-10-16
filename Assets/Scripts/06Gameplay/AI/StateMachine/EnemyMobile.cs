@@ -245,8 +245,10 @@ namespace FPSGame.AI
             InitHitStunListener();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            // ⚠ 必须回调 base：这里从前写成 private 遮住了基类的退订(控制器 4 个事件永远不退)
+            base.OnDestroy();
             OnDestroyAboState();
             UninitHitStunListener();
         }
@@ -809,8 +811,10 @@ namespace FPSGame.AI
 
         protected override void OnDetectedTarget()
         {
-            // 不管什么状态，发现目标都清空警惕点
-            m_EnemyController.DetectionModule.ClearBeware();
+            // 不管什么状态，发现目标都清空警惕点 + 关掉"响应警告"(交战中以目标为准，别被示警带偏、也别重复喊话)
+            var module = m_EnemyController.DetectionModule;
+            module.ClearBeware();
+            module.RespondWarning = false;
             if (AiState == AIState.Idle || AiState == AIState.Patrol || AiState == AIState.Beware || AiState == AIState.Return)
             {
                 SwitchState(AIState.Follow);
@@ -827,6 +831,9 @@ namespace FPSGame.AI
 
         protected override void OnLostTarget()
         {
+            // 目标丢了 ⇒ 重新响应警告(注意：异常态清目标不走这里，那条由 SetTargetActor(null) 兜)
+            m_EnemyController.DetectionModule.RespondWarning = true;
+
             if (AiState == AIState.Follow || AiState == AIState.Attack)
             {
                 // 丢失目标时，优先前往目标最后已知位置搜索；没有则退回警惕点（枪声/示警点）。

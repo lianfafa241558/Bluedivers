@@ -125,12 +125,11 @@ MonoBehaviour:
       Value: 0
     - Key: 4
       Value: 4
-  ProjectilePrefab: {fileID: 8835491154407723254, guid: 1c1f8f22e6c13174faef359317b71b2e,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 8835491154407723254, guid: 1c1f8f22e6c13174faef359317b71b2e,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -139,6 +138,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 5
     DamageDirect: 5
     DamageGroupDirect:
@@ -180,6 +180,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 60
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 8300000, guid: e1c484380a8b7f94e9fac7ed1c57d479,
@@ -191,6 +193,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -217,7 +220,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41366879d8f71944e972e06d02602c5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DetectionModule: {fileID: 8015846442712032811}
+  DetectionModule: {fileID: 0}
   turrets:
   - type: 0
     chassis: {fileID: 247664344600642448}
@@ -581,12 +584,11 @@ MonoBehaviour:
       Value: 0
     - Key: 4
       Value: 4
-  ProjectilePrefab: {fileID: 8835491154407723254, guid: 1c1f8f22e6c13174faef359317b71b2e,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 8835491154407723254, guid: 1c1f8f22e6c13174faef359317b71b2e,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 100
     Gravity: 0
     InheritWeaponSpeed: 0
@@ -595,6 +597,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 5
     DamageDirect: 5
     DamageGroupDirect:
@@ -636,6 +639,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 60
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 8300000, guid: e1c484380a8b7f94e9fac7ed1c57d479,
@@ -647,6 +652,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -673,7 +679,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41366879d8f71944e972e06d02602c5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DetectionModule: {fileID: 8015846442712032811}
+  DetectionModule: {fileID: 0}
   turrets:
   - type: 0
     chassis: {fileID: 2678621060284437772}
@@ -1037,67 +1043,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8605206725609021331}
   m_LocalEulerAnglesHint: {x: 88.524315, y: 179.63261, z: -179.63261}
---- !u!1 &3939071140946551275
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2285448576233587741}
-  - component: {fileID: 8015846442712032811}
-  m_Layer: 0
-  m_Name: DetectionModule
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2285448576233587741
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3939071140946551275}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6732036643703354633}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8015846442712032811
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3939071140946551275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 927ff0b4cb9a5dd4fb83c45166cffc50, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  EyePoint: {fileID: 2285448576233587741}
-  DetectionRange: 70
-  HearingRange: 0
-  AttackRange: 65
-  AlertRange: 0
-  KnownTargetTimeout: 0.5
-  MinSwitchTargetTime: 4
-  Target:
-    pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
-  IsSeeingTarget: 0
-  obstacle: {fileID: 0}
-  TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
-  show: 0
-  ShowTargetState: 0
 --- !u!1 &4058167189367655344
 GameObject:
   m_ObjectHideFlags: 0
@@ -1221,7 +1166,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 2285448576233587741}
   - {fileID: 247664344600642448}
   - {fileID: 2678621060284437772}
   m_Father: {fileID: 9149757264118020594}
@@ -1851,6 +1795,7 @@ MonoBehaviour:
   LiftTime: 30
   PreRelease: 1
   allowSeeRelease: 0
+  EndDelay: 0
   allowRelease: 0
   useDebug: 0
   OnEnd:

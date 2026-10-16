@@ -59,7 +59,9 @@ namespace FPSGame.AI
             m_Controller.OnDie += OnDie;
         }
 
-        private void OnDestroy()
+        /// <summary>⚠ 必须是 <c>protected virtual</c>：子类若声明 private OnDestroy 会**遮住**这里，
+        /// 那 4 条控制器订阅就永远退不掉(EnemyMobile / SpecUnitKei 就是这种写法，改子类时记得调 base)。</summary>
+        protected virtual void OnDestroy()
         {
             if (m_Controller == null) return;
             m_Controller.OnDetectedTarget -= OnDetectedTarget;

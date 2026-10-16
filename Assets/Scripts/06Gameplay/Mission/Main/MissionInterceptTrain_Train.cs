@@ -88,9 +88,9 @@ namespace FPSGame.Mission
             {
                 DepartTrain();
             }
-            // ⚠ 卫队引导必须在"发车"之后、同一帧内跑：新下线的卫队这一刻才拿得到 PatrolPos。
-            //   晚一个 Tick（3 秒）就会被 EnemyMobile.Start 判成"无巡逻点"进 Idle，而 Idle 不会因为后来补上
-            //   PatrolPos 自动醒（IdleBehavior 不查它）⇒ 这支卫队会原地站到被打死。
+            // ⚠ 卫队引导必须在"发车"之后、同一帧内跑：出生那一帧 `EnemyMobile.Start` 就要按 PatrolPos/HomePoint
+            //   定状态（有 PatrolPos ⇒ Patrol；否则 Idle + HomePoint），而 Idle 只在"进入"那一刻读一次 HomePoint
+            //   ⇒ 迟一个 Tick 这支卫队会原地站着不动（见 RefreshGuards / GuideGuard）。
             RefreshAllGuards();
             return true;
         }
@@ -99,9 +99,12 @@ namespace FPSGame.Mission
         {
             base.Update();   // ⚠ 必须先跑基类：Tick 节拍在基类 Update 里发
             // 按帧只剩"等着车厢出现"的炮塔复刻要补：它可能在本端还没建车时就到了，那时活车列表还是空的
-            // ⚠ 卫队引导**不在这里**（走 Tick，见 Tick()/RefreshAllGuards）：目标点每 3 秒挪 24 米，
+            // ⚠ 卫队**目标点**不在这里（走 Tick，见 Tick()/RefreshAllGuards）：目标点每 3 秒挪 24 米，
             //   按帧重发等于给每只卫队不停排寻路请求（正是 PathRequestManager 被打爆的那种场景）
             if (pendingTurrets.Count > 0) FlushPendingTurrets();
+            // 卫队**速度**必须按帧兜（不碰寻路）：AI 在 Patrol/Beware/Return 切换时会自己改速度修饰，
+            // 只在 Tick 补会留下最长 3 秒的龟速窗口 ⇒ 又被火车甩开（见 RefreshGuardSpeeds）
+            if (liveTrains.Count > 0) RefreshGuardSpeeds();
         }
 
         #region 发车

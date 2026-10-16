@@ -19,6 +19,13 @@
   - 距离一律"水平距离 − 目标 `HalfRange`"再比阈值；速度类状态（Patrol/Beware/Return）用 `ModifierType.Extra` 差量修饰：进入 `(目标速度 − FinalValue)`、退出取反移除
   - **Beware 的"以看代到"**：结束三条 —— 见敌→Follow／到达 `BewareReachRadius` 或 `CanObserveBeware()` 观察位／超 `BewareTimeout` 兜底。`CanObserveBeware` = 水平距离进 `SearchObserveDistance`(追敌 4m) 或 `BewareObserveDistance`(听声 10m) **且** `DetectionModule.HasLineOfSight(落点 + 1.5m)` 无遮挡 **且** 连续满足 `ObserveSettleTime`(0.4s) 防抖
   - ⚠ 视线查询必须用 `DetectionModule.HasLineOfSight`（无副作用）；**别用 `CanLook`**（protected，且命中烟幕层会改写 `TimeLastSeenTarget` 污染目标锁定）。警惕点多为地面弹着点，射线要打到"落点上方 1.5m"否则被地面自身挡住
+- ⭐ **`DetectionModule` = 归属自取 + 示警事件化**（2026-10-16 落地）：
+  ① `Start` 自取 `m_Actor = GetComponentInParent<Actor>(true)`（**必须 includeInactive**；`SetActor` 保留但不该再用），`Tick` 开头 `!m_Actor.IsValidMono() → return true` 兜底；`EnemyController`/`StateMachineFrame` 的注入调用已删。⚠ 扫 prefab 资产时别信不带 includeInactive 的结果（资产不在场景 ⇒ `activeInHierarchy` 恒假 ⇒ 会全判失败）。
+  ② 扩散一律 **模块→模块**（同 `OnDamaged` 口径）：`Beware(spread)` 找同队 `DetectionModule` 直呼（跳过自己、接受方 spread=false）；**两条扩散各限流 `SpreadInterval=2s`**（听声的门 `noise<m_BewareNoise` 放等响度过、受击完全没有门 ⇒ 不限流就是每声/每发一次范围查询；受击限流期内**仍单独补一次** `OnDamagedDiffuse`，否则挨打的人自己都不还击）；**`I_AIController.Beware` 那套转发已无人调用**（基类空实现、只有 `EnemyController` 覆写 ⇒ `SimpleTurret`/`GuardDog` 会静默丢）。
+  ②b `RespondWarning`（Inspector「响应警告」，默认 true）= `Beware` 的**总闸**：交战中 `EnemyMobile`/`EnemyTurret` 在 `OnDetectedTarget` 置 false、`OnLostTarget` 置 true。⚠ **`SetTargetActor(null)` 里也必须恢复 true** —— 异常态(Freeze/Vertigo/Terror/中毒/Hacker)清目标是直接调的、不走 `OnLostTarget`，只挂回调会让那只单位**永久失聪**。受击警告(`OnDamaged`)与视觉(`Tick`)不受它影响。
+  ③ 听觉扩散已开：`OnNoise` → `Beware(..., spread:true)`，只扩一层、半径 = 本单位 `AlertRange`（83 个模块里 57 个 AlertRange>0，取值 8~70）。
+  ④ 示警事件只剩 **`DetectionModule.onBeware(PEVector3,PEInt)`**；`I_AIController.OnBeware` 那层转发已删（没人消费、换控制器家族就断）。订阅者：`EnemyTurret`（转头看改事件驱动，看哪/看多久自己持 `_bewareLookPoint`）；`EnemyMobile` 仍**轮询** `BewarePoint` —— 它的判据(范围/冷却/异常态冻结)全在逐帧迁移表里，事件回调会绕过这些守卫，别改。
+  ⑤ ⚠ `AIInputBaseController.OnDestroy` 已改 `protected virtual`：子类从前写 `private void OnDestroy()` 会**遮住**基类 4 条控制器退订（`EnemyMobile`/`SpecUnitKei` 已修）；`GuardDog` 同名遮住 `StateMachineFrame.OnDestroy`（含 `Uninit()`）**尚未动**，改那族时注意。
 
 ## 伤害管线（DamagePacket + 护甲/穿甲结算）
 - 统一入口 `FpsHelper.Hit(...)` → **`IDamageable.InflictDamage(DamagePacket)`**（签名只吃**一个纯逻辑 DTO**）。契约 `00GameContract/Data/DamagePacket.cs` + `Entities/IDamageable.cs`；实现 `05UnitCore/Damage/{Damageable,TransferDamageable}.cs`
@@ -68,3 +75,14 @@
 - ⚠ Unity 不能序列化接口字段 ⇒ 存 `GameObject` + 运行时 `GetComponent`；**判 MonoBehaviour 是否被使用只能搜 `.cs.meta` 的 guid**（类名搜索无效）；删脚本 `.cs` 与 `.meta` 成对
 - 表现层 FX 三分：`FxControllerBase`/`EnemyControllerFX`/`HitDeathFX`；敌人特效 MPB 所有权在渲染槽位帧末 Flush
 - ⚠ **单位注册表不变量**：`ActorsManager` 的 `Players/Actors/Enemys/SpecUnits` 里**绝不留已销毁对象**。**死亡 ≠ 移除**（只是倒地：`BattleManager.IsTeamWiped` 统计全队阵亡、`HealBag`/`Furniture_PlayerDown` 救援都要靠 `Players` 里的倒地者）；**只有对象被销毁才摘** ⇒ 统一走 **`ActorsManager.Despawn(actor)`**（先 `Unregister` 再 `Tool.Destroy`，顺序固定），`Actor.OnDestroy` 也调 `Unregister` 兜底。⚠ 命名别用 `Kill`（`Actor.Kill()` 是"致死"）。⚠ 接口引用判空必须用 `IsValidMono()`，**不能用 `== null`/`?.`/`??`**。漏摘后果实测：12 处遍历方集体 `MissingReferenceException`
+## 武器 · 子弹与伤害配置（`DamageData` 迁移遗漏）
+- ⚠ **`Damages[UseDamageIndex].BulletPrefab` 为空 = 这发子弹不存在**：`VfxPool.Creat<T>` 返回 null（VFXManager 打"空模板"错），
+  旧代码会把 null 交给 `OnBulletShoot`（`GetChargeBullet`/`GetLaserBullet`）⇒ NRE。⚠ 异常穿出 `LogicFrameHost.TickOnce` 的 for ⇒
+  **该帧后面所有单位不 tick + 每帧刷异常栈**，不是"少一发子弹"那么简单。现已由 `ShootFromMuzzle` 拦 null（每武器只报一次错）兜底。
+- ⚠ 空 `Damages`（列表本身为空）更早就会炸：`CurrentDamgeData => Damages[i]` 直接 ArgumentOutOfRange，`CurrentSpeed/CurrentGravity` 同源。
+- 已知漏配（`plans/audit_weapon_bulletprefab.py` 可重跑全量）：`Airdrop/Healdrone_HaloBomb`（ShootType=Charge，
+  原值 `Projectiles/Airdrop/Pro_Empty.prefab`）、`BattleBase/HealdroneBase`（原 `Projectiles/Weapon/Pro_Normal_Blue.prefab`）、
+  `Enemy/Robot/Royal/Droid_RL` 第二个武器组件（`Damages: []`）、旧武器 `Weapon_Shotgun/Blaster/Launcher`（`Damages: []`）。
+- 根因是 2026-09-11 把**武器级** `ProjectilePrefab` 迁进 `DamageData.BulletPrefab` 时漏迁（值丢），
+  2026-10-02 代码里武器级字段又整体注释掉 ⇒ 连兜底都没了。查这类"字段搬家"必须比对迁移前那一版的 prefab YAML。
+

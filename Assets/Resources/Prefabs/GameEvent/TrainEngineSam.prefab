@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4758796328245800463}
   - component: {fileID: 1377783437798237733}
   - component: {fileID: 6009548493331323489}
+  - component: {fileID: -2493584628153487656}
   m_Layer: 6
   m_Name: TrainEngineSam
   m_TagString: Untagged
@@ -35,6 +36,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4161050223092339113}
+  - {fileID: 4228111902503708654}
+  - {fileID: 4350709560996304417}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &809592301688834945
@@ -56,7 +59,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.506707, y: 8.181007, z: 17.27388}
+  m_Size: {x: 6, y: 7, z: 15}
   m_Center: {x: 0, y: 5.08683, z: 0}
 --- !u!114 &7398647985613245839
 MonoBehaviour:
@@ -93,7 +96,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 10000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 9
+    Value: 9
+  - Key: 11
+    Value: 9
+  - Key: 8
+    Value: 9
   MainPart: {fileID: 7398647985613245839}
   demolishValue: -1
   AutoDestroy: 0
@@ -114,8 +123,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowName: "\u51EF\u6492\u5217\u8F66"
   Id: TrainEngineSam
-  Portrait: {fileID: 0}
-  ExtraPortrait: {fileID: 0}
+  Portrait: {fileID: 21300000, guid: cad77b98c41b7534294edd62aa165103, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: cad77b98c41b7534294edd62aa165103, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
   IsFixed: 0
@@ -123,12 +132,12 @@ MonoBehaviour:
   type: 4
   team: 2
   threat: 1
-  aimPoint: {fileID: 0}
+  aimPoint: {fileID: 4228111902503708654}
   UseHpBar: 0
   HpHeight: 1
   shape: 0
-  rangeLength: 8.63694
-  halfHeight: 4.0905037
+  rangeLength: 6
+  halfHeight: 6
 --- !u!114 &6009548493331323489
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -144,6 +153,127 @@ MonoBehaviour:
   legs: []
   invincibleArmor: []
   deathArmor: []
+--- !u!114 &-2493584628153487656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843471801939785455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92309be4ecd64b94d8b4d364e5af0f63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 0}
+  fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
+  fxEvent: {fileID: 11400000, guid: dc65f4d8b2d398c409d766e93f18d227, type: 2}
+  fxMaterial: {fileID: 0}
+  events: []
+  _healthGo: {fileID: 843471801939785455}
+--- !u!1 &3988634456709436615
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4228111902503708654}
+  m_Layer: 6
+  m_Name: AimPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4228111902503708654
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3988634456709436615}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 6, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7568158249508773626}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7740497946064128870
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4350709560996304417}
+  - component: {fileID: 5000377435843676985}
+  m_Layer: 6
+  m_Name: TrampleEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4350709560996304417
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7740497946064128870}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 3.19, z: 9.01}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7568158249508773626}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5000377435843676985
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7740497946064128870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c69a45b89f10794fbf15f5387f4d029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamageAnchor: {fileID: 4350709560996304417}
+  TickInterval: 0.5
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 5
+    ExplosionInnerRange: 2
+    ExplosionRange: 3.1
+    DestructeRadius: 0
+    ShockwaveRadius: 2.2
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    SoundRadius: 20
+    ImpactSoundRadius: 8
+    NoSource: 0
+    ExplosionAP: 3
+    demolishValue: 20
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+  KnockbackForce: 12
+  KnockbackUpScale: 1
 --- !u!1001 &4482696110817146434
 PrefabInstance:
   m_ObjectHideFlags: 0

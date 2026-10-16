@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 959765122118730006}
   - component: {fileID: 2242352978916789878}
   - component: {fileID: 8288879136362183931}
+  - component: {fileID: 4121677652589368158}
   m_Layer: 6
   m_Name: TrainEngineCar
   m_TagString: Untagged
@@ -54,7 +55,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.506707, y: 7.2787766, z: 14.090121}
+  m_Size: {x: 6, y: 7, z: 13}
   m_Center: {x: 0, y: 4.6357155, z: 0}
 --- !u!114 &8288879136362183931
 MonoBehaviour:
@@ -71,6 +72,23 @@ MonoBehaviour:
   isWeakness: 0
   armorLevel: 0
   source: {fileID: 0}
+--- !u!114 &4121677652589368158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8686378076433492579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u51EF\u6492\u5217\u8F66"
+  Id: TrainEngineCar
+  Portrait: {fileID: 21300000, guid: cad77b98c41b7534294edd62aa165103, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: cad77b98c41b7534294edd62aa165103, type: 3}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &8967244113830051093
 GameObject:
   m_ObjectHideFlags: 0

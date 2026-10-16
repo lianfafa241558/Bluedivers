@@ -18,6 +18,10 @@ namespace FPSGame.AI
 {
     public class DetectionModule : TickBehaviour
     {
+        /// <summary>向外扩散警告的最小间隔(秒)：交火中同一只单位会**反复满足**扩散条件 —— 听声那条的门 `noise &lt; m_BewareNoise`
+        /// 放等响度过、受击那条则完全没有门 ⇒ 不限流就变成"每声/每发一次范围查询"(每次都要 new List)。
+        /// 听声与受击**各算各的**窗口(互不吞掉对方)。</summary>
+        private const float SpreadInterval = 2f;
 
         [SerializeField]
         [InspectorName("单位眼睛的点")]
@@ -37,6 +41,14 @@ namespace FPSGame.AI
 
         [InspectorName("受击不还击")]
         public bool Lazy;
+
+        /// <summary>是否响应警告：关掉后 <see cref="Beware"/> 整个入口失效(不听示警、也不向外扩散)。
+        /// <para>由控制器按"当前是否交战"设置：发现目标 → false、丢失目标 → true
+        /// (见 <c>EnemyMobile</c>/<c>EnemyTurret</c> 的 OnDetectedTarget/OnLostTarget)⇒ 交战中一切以目标为准，
+        /// 不被队友的示警带偏，也不重复喊话。</para>
+        /// <para>⚠ 只关"噪声/示警"这条路；受击警告(<see cref="OnDamaged"/>)与视觉(<see cref="Tick"/>)不受影响。</para></summary>
+        [InspectorName("响应警告")]
+        public bool RespondWarning = true;
 
         /// <summary>丢失目标时间</summary>
         [InspectorName("丢失目标时间")]
@@ -60,6 +72,10 @@ namespace FPSGame.AI
 
         public UnityAction onDetectedTarget;
         public UnityAction onLostTarget;
+
+        /// <summary>被示警(自己听见噪声，或被队友扩散到警告)：需要反应的一方**直接订阅这里**(如炮台转向查看)。
+        /// <para>⚠ 不再经控制器转发(原先的 `I_AIController.OnBeware` 已删)：控制器家族换一个就断链，而模块人人都有。</para></summary>
+        public UnityAction<PEVector3, PEInt> onBeware;
 
 
         [SerializeField]
@@ -112,6 +128,9 @@ namespace FPSGame.AI
                 return;
             }*/
             base.Start();
+            // 归属自取：Actor 在单位根上、本模块挂在子节点(从前靠控制器 SetActor 注入，漏注入就会空引用)。
+            // ⚠ 必须 includeInactive：本模块挂的子节点可能在 prefab 里是关着的，那样向上找会断在半路。
+            if (!m_Actor.IsValidMono()) m_Actor = GetComponentInParent<Actor>(true);
             CorePoint = GetCorePoint();
             //不知道为什么=无效，只能老老实实if
             //if (!SearchPoint) SearchPoint = transform;
@@ -127,15 +146,13 @@ namespace FPSGame.AI
         [DisplayField]
         public float show;
 
-        public void SetActor(Actor actor)
-        {
-            m_Actor = actor;
-        }
 
 
         public override bool Tick()
         {
             if(!FPSGame.GameContract.BattleHub.Current.IsPresent) return true;
+            // 没归属(自取失败)就没法判敌我 ⇒ 直接歇着，别让下面解引用 m_Actor 刷空引用
+            if (!m_Actor.IsValidMono()) return true;
             // ★ 成员端 AI LOD（见 AiLod）：远处的**敌人**不必每秒重扫一遍（FindUnits + 视线判定是最贵的一步）；
             //   有目标 / 非敌人 / 房主 / 单机 ⇒ 照常扫。⚠ 必须 return true：返回 false 会被 TickBehaviour 摘出 ticks 列表。
             if (!AiLod.ShouldTick(m_Actor, Target.Actor != null)) return true;
@@ -162,6 +179,11 @@ namespace FPSGame.AI
                 else
                 {
                     targetColliders = null;
+                    // 目标清空 ⇒ 没在交战 ⇒ 恢复响应警告。
+                    // ⚠ 必须放在这里，不能只靠控制器的 OnLostTarget：清目标的路径不止那一条 ——
+                    //   异常态(Freeze/Vertigo/Terror/中毒/Hacker)是直接 SetTargetActor(null)、不走 OnLostTarget，
+                    //   只挂回调会让那只单位**永久失聪**。
+                    RespondWarning = true;
                 }
                 
             }
@@ -382,7 +404,7 @@ namespace FPSGame.AI
                 var actor = damageSource.GetComponent<Actor>();
                 // ⚠ 地雷 / 空投舱这类**直接来源**自身没有 Actor（原来这里会空引用）⇒ 判不出同队就照常往下走，
                 //   后面的 OnDamagedDiffuse 自己会用 IsValidMono 跳过"不是单位"的来源。
-                if (actor != null && actor.Team == m_Actor.Team) return;
+                if (actor != null && m_Actor.IsValidMono() && actor.Team == m_Actor.Team) return;
                 //damageSource = actor.AimPoint.gameObject;
             }
             //无源伤害
@@ -390,15 +412,25 @@ namespace FPSGame.AI
             {
                 return;
             }
-            //警告
-            if (AlertRange > 0)
+            //警告(没归属时找不了同队，退化成只自己反应)
+            if (AlertRange > 0 && m_Actor.IsValidMono())
             {
-                var list = FPSGame.Game.UnitQuery.FindUnits(new PECircle(m_Actor.LogicPos, (PEInt)AlertRange), new(){},(unit)=>unit.Team == m_Actor.Team)
-                    .Select(item => item.transform.GetComponentInChildren<DetectionModule>())
-                    .ToList().ToVaild();
-                foreach (var target in list)
+                // 扩散限流(连发武器每发都会走到这里)：限流期内**不扩散，但自己照常反应** ——
+                // 原来的实现把"自己"也包在名单里，直接 continue 会让挨打的人自己都不还击
+                if (Time.time > m_LastDamageSpreadTime)
                 {
-                    target.OnDamagedDiffuse(damageSource);
+                    m_LastDamageSpreadTime = Time.time + SpreadInterval;
+                    var list = FPSGame.Game.UnitQuery.FindUnits(new PECircle(m_Actor.LogicPos, (PEInt)AlertRange), new(){},(unit)=>unit.Team == m_Actor.Team)
+                        .Select(item => item.transform.GetComponentInChildren<DetectionModule>())
+                        .ToList().ToVaild();
+                    foreach (var target in list)
+                    {
+                        target.OnDamagedDiffuse(damageSource);
+                    }
+                }
+                else
+                {
+                    OnDamagedDiffuse(damageSource);
                 }
             }
             else{
@@ -413,6 +445,12 @@ namespace FPSGame.AI
         /// <summary>当前警惕点的响度(噪声半径/米)：只有更响的噪声才能覆盖它</summary>
         private PEInt m_BewareNoise;
 
+        /// <summary>上次"听声扩散"的时间(限流，见 <see cref="SpreadInterval"/>)</summary>
+        private float m_LastBewareSpreadTime = Mathf.NegativeInfinity;
+
+        /// <summary>上次"受击扩散"的时间(限流，与听声各算各的)</summary>
+        private float m_LastDamageSpreadTime = Mathf.NegativeInfinity;
+
         /// <summary>搜索指令点：丢失目标后要去查看的目标最后已知位置(优先于听觉噪声点，由 AI 消费后清空)</summary>
         public PEVector3? SearchPoint { get; set; }
 
@@ -425,18 +463,26 @@ namespace FPSGame.AI
         /// <param name="spread">是否把同一噪声扩散给附近队友</param>
         public virtual void Beware(PEVector3 point, PEInt noise, bool spread)
         {
+            // 交战中关掉响应：连"被队友扩散进来的"也一起挡掉(所以门必须在入口，而不是在调用方)
+            if (!RespondWarning) return;
             if (BewarePoint.HasValue && noise < m_BewareNoise) return;
 
             BewarePoint = point;
             m_BewareNoise = noise;
+            onBeware?.Invoke(point, noise);
 
-            if (spread && AlertRange > 0)
+            // 扩散给附近队友：**模块→模块**直连(= 受击警告 OnDamaged 同口径)。
+            // ⚠ 不再绕 I_AIController.Beware：那条只有 EnemyController 覆写、别的控制器(SimpleTurret/GuardDog)会静默丢；
+            //   接受方 spread=false ⇒ 只扩一层；它自己那份 onBeware 照常发，谁订阅谁反应。
+            if (spread && AlertRange > 0 && m_Actor.IsValidMono() && Time.time > m_LastBewareSpreadTime)
             {
+                m_LastBewareSpreadTime = Time.time + SpreadInterval;
                 var list = FPSGame.Game.UnitQuery.FindUnits(new PECircle(m_Actor.LogicPos, (PEInt)AlertRange), new() { }, (unit) => unit.Team == m_Actor.Team)
-                    .Select(item => item.transform.GetComponent<I_AIController>())
+                    .Select(item => item.transform.GetComponentInChildren<DetectionModule>())
                     .ToList().ToVaild();
                 foreach (var item in list)
                 {
+                    if (item == this) continue;      // 查询含己身，自己上面已示警过(否则 onBeware 会发两次)
                     item.Beware(point, noise, false);//不反复扩散
                 }
             }
@@ -523,10 +569,12 @@ namespace FPSGame.AI
                 // 限流 1s/单位：一枪能惊动几十只，不限流会刷屏（2026-10-10 用户口径）。
                 FPSGame.Utils.NetSyncLog.AiLog("噪声·听见",
                     $"{m_Actor.Id}(netId={m_Actor.NetId}) 声源@{noise.pos.RawVector3:F2} 半径={noise.radius} " +
-                    $"本机@{m_Actor.Logic3Pos.RawVector3:F2} 水平距离={Vector3.Distance(noise.pos.RawVector3, m_Actor.Logic3Pos.RawVector3):F1} 听力={HearingRange}",
+                    $"本机@{m_Actor.Logic3Pos.RawVector3:F2} 水平距离={Vector3.Distance(noise.pos.RawVector3, m_Actor.Logic3Pos.RawVector3):F1} 听力={HearingRange} 响应警告={RespondWarning}",
                     m_Actor.NetId != 0 ? m_Actor.NetId : m_Actor.GetInstanceID(), 1f);
 
-                Beware(noise.pos, noise.radius, false);
+                // ★ 听觉扩散：听见的这只把"哪响了"再传给附近的同队(扩散半径 = 本单位的警告距离 AlertRange)。
+                //   接受方 spread=false ⇒ 只扩一层，不会链式炸开；AlertRange<=0 的单位不扩。
+                Beware(noise.pos, noise.radius, true);
             }
         }
 
