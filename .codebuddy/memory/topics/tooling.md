@@ -1,7 +1,8 @@
-# 主题 · 编辑器扩展 / plans 脚本 / MCP 与编译验证
+# 主题 · 编辑器扩展 / MCP 与编译验证
 
 > 由 `MEMORY.md` 路由表按触发词加载。预算 ≤ 8000 字符。
-> ⚠ 原文（含行尾/BOM 普查逐项数据、Play 域重载事故细节、脚本全文说明）已下沉：`archive/topics-snapshot-20261011/tooling.md`。
+> 2026-10-18 拆出：`.codebuddy/plans/` 脚本清单 → `plans-scripts.md`。
+> ⚠ 原文（行尾/BOM 普查逐项数据、Play 域重载事故细节、脚本全文说明）已下沉：`archive/topics-snapshot-20261011/tooling.md`。
 
 ## 编辑器扩展
 - 需读 `propertyPath` 才用 `PropertyDrawer`；⚠ 专属 `[CustomPropertyDrawer]` 手列字段 ⇒ **新增字段不会自动出现**（行高硬编码）
@@ -9,16 +10,20 @@
 - `[Foldout]`/`[DisplayField]`（`FPSGame.Attribute`）**只对字段有效**（属性无效）；`[AddComponentMenu]` 写在类级 `///` 之后
 - `EditorWindow` 的私有字段域重载后能恢复；数据编辑器（`Tools/数据编辑器`）见 skill `data-editor`
 - ⚠ 运行时脚本**不得** `using UnityEditor`（除 `#if UNITY_EDITOR` 守卫内）；asmdef 下的 `Editor/` 无特权 ⇒ `topics/architecture.md`
+- ⭐ **美化某 SO 的 Inspector = 写专属 `[CustomEditor]`**（照 `AirdropData_SOEditor`：色条 + SectionTitle + 自绘块），**禁止**挂进全局 fallback `EditorOverride`（会波及所有 SO，2026-10-15 被叫停）；特性 Drawer 挂数组字段只逐元素生效，数组级自绘只能由 Editor 显式分支驱动。
+  公共件下沉在基类 `Assets/Editor/Drawer/DataSOEditorBase.cs`（`EnsureStyles`/`SectionTitle`/`ColorBar`/`TagLabel`/`BeginBlockHeader`/`RowLabel`/`DrawTintedIcon`/`LabelOf`/`DrawField`/`RefreshAssetCache<T>`/`ShowSoPicker<T>`/`ApplyDirty`），新写 SO 检视器一律继承它。
 
 ## 判据可信度
 - ⚠ 文本搜索**会假阳性**（块注释 `/* */` 里的代码、异常字节漏检）⇒ 结论性判据必须"剥注释脚本 + 反射/Console"交叉复核
 - ⚠ `svc_usage.py` **会漏报**（只抓 `== null`/类名写法）；权威消费点清单**以 ripgrep 为准**
 - ⚠ linter 结果滞后于外部编辑；关键删除必须 grep 交叉核对
+- ⚠ `audit_markers.py` 的清单停在 `BattleEventSub→BattleEventBus` 改名 / `Services/BattleHub.cs`→`BattleHub.cs` 换路径之前（实测 14 MISS 全是这类，不是真丢内容）⇒ 要判真丢没丢，用"旧文件每行是否存在于新文件集合"的逐行覆盖检查。
 
 ## MCP 操作细则
 - ⚠⚠ Play 中触发编译/刷新 = **域重载** ⇒ 场景 MonoBehaviour 的**非序列化字段会被归零**（2026-10-07 疑似事故：`Actor.range` 全 null 而 `isInitialized` 为 true）⇒ **刷新前后都先读 `editor/state`，确认 `is_playing == false` 再动**。
 - ⭐ **Play 模式规矩（2026-10-09 用户修订，取代旧的"绝对禁止"）**：用户进 Play **就是为了让我读运行中真实数据** ⇒ 先取数据、**数据到手就可以导入/编译**；只有"这局数据还要继续取"时才先不动编辑器。
 - 开工先 `set_active_instance`（用 `mcpforunity://instances` 的**实时** ID）；写操作前确认 `projectRoot`。
+  ⚠ **实例 hash 不稳**（2026-10-14 同机两次会话分别报 `Bluedivers@3d9f2357` 与 `Bluedivers@4a3e6a7b`，端口恒 6400）⇒ 别背 hash；**只有 1 个实例时 server 自动选中**（多实例才必须 `set_active_instance`）。
 - 新建 `.cs` 先 `refresh_unity(force, assets)`；改已存在文件只对**单个文件** `ImportAsset(path, ForceUpdate)`。
 - ⚠ 反射写完字段**下一句就 `GetValue` 判"生效没"会误判**（`RequestScriptCompilation` 异步）⇒ 隔一次工具调用再读；判据用**签名/成员是否存在**，不要只看 mtime。
 - ⚠ `execute_code` 报 `No result found` 但**可能已执行** ⇒ 先查实际效果再决定重试；`refresh_unity(wait_for_ready:true)` 必报该错，用 `false`。超 30s 预算的调用（`execute_code`/长导入/`run_tests`）失败后**不要盲目重试**。
@@ -42,27 +47,12 @@
 - ⚠ **「假缺失」= `.cs.meta` 被写成等长全 `\x00`**（`git status` 干净、`read_file` 判 binary、肉眼无异常）⇒ Unity 导不出 guid ⇒ 该 `.cs` **不进编译** ⇒ 报 `CS0103: 名称"X"不存在`，而文件明明在磁盘上。判据 = `manage_asset get_info` 返回 `guid:""`/`assetType:"Unknown"`。修法 = 按同目录正常 meta 逐字节重写 + 换新 GUID（MonoBehaviour 要先查引用）。
   ⇒ 口径：**`CS0103` 但源文件确实存在 ⇒ 先查 meta/导入状态，别改代码**。
 - ⚠ `editor/state` 的 `external_changes_dirty` **不可信**；`refresh` 之后不能立刻读 Console；`isCompiling=True` 时读 dll mtime 太早。
+- ⚠ **新建 `.cs` 编不到 ⇒ 用临时 csproj 注入**：`plans/tmp_compile_newfile.py <asm> <新.cs>...`（用完自清理）；离线编译只认 Unity 已生成的 csproj。
+- ⚠ **编辑器失焦时重编会被卡住**（2026-10-14 实测：`refresh_unity` / `AssetDatabase.Refresh(ForceUpdate)` / 逐文件 `ImportAsset` / `RequestScriptCompilation(CleanBuildCache)` / `Assets/Refresh` 菜单全试过，只让 `isCompiling` 翻真又落假，dll 与 Bee `artifacts` 都不动）⇒ 解药 = 让用户聚焦 Unity 或 Ctrl+R；判据仍是 **dll mtime + 反射**。
+- ⚠ `offline_compile.py` 的依赖解析**优先**用 `Temp/offline_compile/<asm>.dll`（本次自产的旧 dll）⇒ 只编"最上层那一个"会被上一次留下的陈旧依赖骗出假错（实测 2026-10-14 编 06_Gameplay 报 `FpsHelper_Hit.cs: TargetCfg 未包含 All`，坏的是 `Temp/offline_compile/01_GameContract.dll`）。解药：报错涉及别的程序集的类型时，把那条依赖链一起编（`01_GameContract 05_UnitCore 06_Gameplay`）。
+- ⚠ MCP `read_console` 偶发**连 `types=["all"]` 都返回 0 条**（不可信，别只靠它判"0 error"）⇒ 关键改动必须用反射核验成员是否存在。
+- 常用小工具：`plans/recent_files.py`（列最近改动文件 ⇒ 判"到底编没编"）、`plans/tail_lines.py`（PowerShell 无 tail）、`plans/check_sources.py`（核 `.cs` 行数，防"空文件也 0 error 假通过"）。
 
 ## 构建 / 启动画面
 - 打 Windows 包输出到 `D:\Pro\Verion\BlueDivers`（StandaloneWindows64 + IL2CPP）；`BlueDivers_Data/RuntimeInitializeOnLoads.json` 是「`RuntimeInitializeOnLoadMethod` 回调有没有进包」的**权威证据**（`loadTypes`：0=AfterSceneLoad, 1=BeforeSceneLoad, 2=AfterAssembliesLoaded, 3=BeforeSplashScreen）。
 - ⛔ `00Tools/SkipUnityLogo.cs` **注定无效**：本机 `HasProLicense()==False`（Personal）下 Unity 徽标由**原生播放器**强制绘制，`SplashScreen.Stop()` 被当 no-op；回调**已确认进包** ⇒ 与写法/`#if`/asmdef/IL2CPP 裁剪**都无关**，别再折腾。要真去掉只能升 Pro 或换 Unity 6。
-
-## `.codebuddy/plans/` 脚本清单（常用）
-| 脚本 | 用途 |
-|---|---|
-| `audit_markers.py` | **标志物审计**（标志串 + 期望次数跨文件计数，输出"缺失项"）；**大批改动收尾必跑**，须 `缺失项=0` |
-| `offline_compile.py <asm>...` | ⭐ **离线编译验证**（Unity 自带 Roslyn 按 csproj，不碰 Unity）；须按依赖顺序传参 |
-| `dll_mtime.py` | 判"是否已编译"（dll mtime vs 源文件 mtime） |
-| `log_ctx.py <log> <pattern> [before] [after] [--all\|--range]` | ⭐ **日志取上下文**（流式、能吃几百 MB）：`Editor.log` 里某条日志的**前后原文**；`--range <file> <起> <止>` 按行号直接打印。⚠ 客户端日志 = `%LOCALAPPDATA%\Unity\Editor\Editor.log`，**里面并入了打包端（`<i>WindowsPlayer "机器名"</i>` 前缀）那台的行** ⇒ 一份文件能对两端时间线；但每行日志带 10 行栈 ⇒ 别用大 before/after |
-| `asmdef_refs.py` | asmdef 的 GUID references → 程序集名 |
-| `bom_vs_head.py` | 对比工作区 vs git HEAD 的 BOM，`--fix` 只补"本次误删的" |
-| `ns_move.py <moves.json> [--no-self]` | 通用「命名空间搬迁引擎」（改 ns + 同步 using + 修 `using static`） |
-| `add_usings.py <pairs.json>` / `fix_missing_using.py` | 补 `using`（字节级保 BOM） |
-| `find_dangling_guids.py` / `fix_guid_dangling.py` / `scan_missing_scripts.py` / `find_missing_script_refs.py [--under <路径>]` / `dep_closure_missing.py <根> [--max N]` / `missing_component_locate.py <资产> [guid]` | 悬空引用 / Missing Script / 缺组件的定位与修复（后两者做**依赖闭包 + 父链回溯** —— `Resources.LoadAll` 的报错常来自依赖链深处，不在目标文件夹里） |
-| `sr_ns_audit.py` / `sr_ns_repair.py --apply` | 改 ns 对 `[SerializeReference]` 的审计与修复 |
-| `tidy_contract_enums.py` | 枚举目录规范化 + 与 HEAD 逐枚举比对「成员名序列」（`语义差异项` 必须为 0） |
-| `memory_gate.py` / `memory_archive_legacy.py --cut <日期> [--delete]` / `memory_orphan_scan.py` | 记忆分层体检 / 旧 daily 归档（先出索引再删正文）/ 删前"知识漏搬"体检 |
-| `svc_usage.py` / `battle_usage.py` / `contract_use.py` | 服务/契约消费点统计（⚠ `svc_usage.py` **会漏报**，权威以 ripgrep 为准） |
-| `p2_ns_plan.py` / `env_probe.py` / `find_unity.py` / `prefab_tree.py` / `rooms_hierarchy.py` | 目录↔命名空间对齐计划 / 探测离线编译工具链 / 定位 Unity 安装 / prefab 层级树 |
-
-（其余 `apply_*.py`、`note_*.py`、`p*_*.py` 都是**一次性**替换/记录脚本，用完即历史；`keyscreen_stage_sync.py` / `net_sync_b1*.py` / `net_sync_b2.py` 是 2026-10-11 的联机同步批次脚本，可重跑（dry-run + `--apply`、行尾自适应、锚点唯一断言）。）

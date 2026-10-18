@@ -1,7 +1,7 @@
 # 主题 · 联机（KCPNet）· 总览 / 传输 / 库 / 诊断
 
 > 由 `MEMORY.md` 路由表按触发词加载。预算 ≤ 8000 字符。
-> 同伴：`net-flow.md`（房间与开局流程 / 名单队伍 / 会话生命周期 / 房主掉线）、`net-battle.md`（战斗同步 / 种子确定性 / 消息号表）。
+> 同伴：`net-flow.md`（房间与开局流程 / 名单队伍 / 会话生命周期 / 房主掉线）、`net-battle.md`（战斗同步总览 / 种子确定性）；战斗同步的子篇 = `net-battle-msg.md`（消息号表）、`net-netid.md`（NetId/生成入口）、`net-spawn.md`（生成器复刻）、`net-damage.md`（伤害通道）、`net-vehicle.md`+`net-vehicle-remote.md`（载具）。
 > ⚠ **完整历史（57k，含每条实测数据与 IL 反证）已下沉**：`archive/topics-snapshot-20261011/net.md` —— 翻旧结论去那里搜。
 
 ## 1. 组成 / 形态 / 端口

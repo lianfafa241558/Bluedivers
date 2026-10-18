@@ -12,7 +12,7 @@ namespace FPSGame.Mission
 {
     /// <summary>
     /// 拦截火车 · 列车本体（partial）：按时刻表发车、沿轨道行驶、"到站逃走"与"被打掉"两种收尾、
-    /// 进度 / 失败判定与开战节拍（<c>TickTime</c> = 3 秒）。附加炮塔见 <c>MissionInterceptTrain_Turret</c>、
+    /// 进度 / 失败判定与开战节拍（<c>TickTime</c> = 1 秒，供提示里的发车倒计时走字）。附加炮塔见 <c>MissionInterceptTrain_Turret</c>、
     /// 卫队见 <c>MissionInterceptTrain_Guard</c>。
     /// <para>⚠ 生成口径分两类：① **车头 + 车厢**（都没有 <c>Actor</c>）两端各自 Instantiate，靠"名字/顺序一致"对齐；
     /// ② **附加炮塔是有 <c>Actor</c> 的单位** ⇒ 必须走 <c>CreatUnit</c>（房主唯一生成 + 4052）——
@@ -20,9 +20,8 @@ namespace FPSGame.Mission
     /// </summary>
     public partial class MissionInterceptTrain
     {
-        [Foldout("列车生成", true)]
-        [InspectorName("车厢间距系数")]
-        [SerializeField] private float carSpacingFactor = 0.92f;
+        /// <summary>车厢间距系数（0.92 = 相邻车厢留一点缝；固定值，不进 Inspector）</summary>
+        private const float CarSpacingFactor = 0.92f;
 
         /// <summary>一趟列车（车头 + 车厢 + 它自己的卫队）</summary>
         private class TrainRuntime
@@ -41,6 +40,16 @@ namespace FPSGame.Mission
 
         private readonly List<TrainRuntime> liveTrains = new();
 
+        /// <summary>在跑的列车数（小地图画"跟着车走的任务图标"用；到站/被打掉会立刻减一）</summary>
+        public int LiveTrainCount => liveTrains.Count;
+
+        /// <summary>
+        /// 取第 <paramref name="index"/> 列在跑的车（越界给 null）。
+        /// <para>车头的 <see cref="TrainUnit.Position"/> 就是当前世界 XZ —— 小地图每帧拿它摆图标。</para>
+        /// </summary>
+        public TrainUnit GetLiveTrain(int index)
+            => index >= 0 && index < liveTrains.Count ? liveTrains[index].Unit : null;
+
         /// <summary>已发车班次（0 基）</summary>
         private int departedCount;
         /// <summary>已逃走的火车数</summary>
@@ -52,10 +61,12 @@ namespace FPSGame.Mission
         /// <summary>开战：接管列车服务（由主文件的 StartMission 调用）</summary>
         private void BeginTrainService()
         {
-            // 3 秒粒度足够：发车、卫队引导都按 3 秒一跳，列车行驶本身在 TrainUnit.Update 里是逐帧的
-            TickTime = 3f;
+            // 1 秒粒度：提示里的"下一列火车"要按秒走字。
+            // ⚠ 卫队护航位**不再**跟着这个节拍刷新（见 GuardRefreshInterval）：目标点 1 秒挪一次会让卫队冲到点就停（顿挫）
+            TickTime = 1f;
             MaxProgress = Mathf.Max(1, destroyTarget);
             serviceTime = 0f;
+            guardRefreshTimer = 0f;
             serviceStopped = false;
             RefreshTrainTip();
             NetSyncLog.LoadLog("任务", $"[拦截火车] 开战：计划 {departureTracks?.Length ?? 0} 班车 / 需摧毁 {MaxProgress} / 允许逃走 {escapeLimit}");
@@ -83,15 +94,25 @@ namespace FPSGame.Mission
             if (end || serviceStopped) return true;
 
             serviceTime += TickTime;
+            bool departed = false;
             if (departureTracks != null && departedCount < departureTracks.Length
                 && serviceTime >= firstDepartureDelay + departureInterval * departedCount)
             {
                 DepartTrain();
+                departed = true;
             }
             // ⚠ 卫队引导必须在"发车"之后、同一帧内跑：出生那一帧 `EnemyMobile.Start` 就要按 PatrolPos/HomePoint
             //   定状态（有 PatrolPos ⇒ Patrol；否则 Idle + HomePoint），而 Idle 只在"进入"那一刻读一次 HomePoint
             //   ⇒ 迟一个 Tick 这支卫队会原地站着不动（见 RefreshGuards / GuideGuard）。
-            RefreshAllGuards();
+            // ⚠ 但"挪护航位"仍按 GuardRefreshInterval（≈ 前导距离 / 车速）走，不跟 1 秒的 Tick ⇒ 目标点每秒挪一次
+            //   会让卫队冲到点就停（顿挫），也会把 PathRequestManager 的请求量翻三倍。
+            guardRefreshTimer += TickTime;
+            if (departed || guardRefreshTimer >= GuardRefreshInterval)
+            {
+                guardRefreshTimer = 0f;
+                RefreshAllGuards();
+            }
+            RefreshTrainTip();   // 提示里的"下一列火车"倒计时按秒走字
             return true;
         }
 
@@ -99,7 +120,7 @@ namespace FPSGame.Mission
         {
             base.Update();   // ⚠ 必须先跑基类：Tick 节拍在基类 Update 里发
             // 按帧只剩"等着车厢出现"的炮塔复刻要补：它可能在本端还没建车时就到了，那时活车列表还是空的
-            // ⚠ 卫队**目标点**不在这里（走 Tick，见 Tick()/RefreshAllGuards）：目标点每 3 秒挪 24 米，
+            // ⚠ 卫队**目标点**不在这里（走 Tick，见 Tick()/RefreshAllGuards）：目标点每 GuardRefreshInterval（≈3 秒）挪 24 米，
             //   按帧重发等于给每只卫队不停排寻路请求（正是 PathRequestManager 被打爆的那种场景）
             if (pendingTurrets.Count > 0) FlushPendingTurrets();
             // 卫队**速度**必须按帧兜（不碰寻路）：AI 在 Patrol/Beware/Return 切换时会自己改速度修饰，
@@ -124,7 +145,12 @@ namespace FPSGame.Mission
                 Debug.LogWarning($"拦截火车：时刻表第 {departedCount} 班指向的轨道不存在，跳过", this);
                 return;
             }
-            // Inspector 没拖也能跑：预制体就在 Resources 里，兜底按路径取
+            // 两个预制体都在 Robbery.prefab 上配好了（口径：不做 Resources 兜底；缺了就早报错，别猜路径）
+            if (trainEnginePrefab == null)
+            {
+                Debug.LogError("拦截火车：没有配「车头预制体」⇒ 不发车", this);
+                return;
+            }
             GameObject enginePrefab = trainEnginePrefab;
             GameObject carPrefab = trainCarPrefab;
 
@@ -139,6 +165,11 @@ namespace FPSGame.Mission
             engine.name = "TrainEngine_" + departedCount;
             TrainRuntime runtime = new() { Engine = engine };
             Damageable engineDamageable = engine.GetComponent<Damageable>();
+            if (engineDamageable == null)
+            {
+                // 车头是这一列唯一的血量持有者 ⇒ 没有它，车厢伤害无处可转（别猜其它取法，直接报错）
+                Debug.LogError("拦截火车：车头预制体上没有 Damageable ⇒ 车厢伤害无法转发", this);
+            }
 
             List<Transform> carTransforms = new();
             List<float> carOffsets = new();
@@ -150,14 +181,17 @@ namespace FPSGame.Mission
                 GameObject car = Instantiate(carPrefab, spawnPos,
                     heading * Quaternion.Euler(0f, carMetrics.YawOffset, 0f), transform);
                 car.name = CarName(scheduleIndex, i);
-                // 共享血量：车厢上打的伤害整包转给车头的 Damageable（source 是 public 字段，运行时指定即可）
-                if (engineDamageable != null && car.TryGetComponent(out TransferDamageable transfer)) transfer.source = engineDamageable;
+                // 共享血量：车厢上打的伤害整包转给车头的 Damageable（车厢自己**没有 Health**，不转发就是"打不掉血"）
+                if (engineDamageable != null && car.TryGetComponent(out Damageable carDamageable))
+                {
+                    carDamageable.SetRelay(engineDamageable);
+                }
                 runtime.Cars.Add(car);
                 // 附加炮塔：查计划表这一节该挂哪门（-1 = 不挂）⇒ 走 CreatUnit（房主生成 + 4052 复刻）
                 GameObject turret = SpawnTurret(scheduleIndex, i, car);
                 if (turret != null) runtime.Turrets.Add(turret);
                 carTransforms.Add(car.transform);
-                carOffsets.Add(halfEngine + halfCar + carMetrics.Length * carSpacingFactor * i);
+                carOffsets.Add(halfEngine + halfCar + carMetrics.Length * CarSpacingFactor * i);
                 carHeights.Add(-carMetrics.PivotToBottom);
             }
 
@@ -173,6 +207,7 @@ namespace FPSGame.Mission
                 runtime.Health.OnDie += runtime.DieHandler;
             }
             liveTrains.Add(runtime);
+            RefreshTrackArrows(track);   // 这条轨道上的方向箭头点亮（MPB 改 _EmittIntensity，不动共享材质）
 
             SpawnGuards(runtime, squads);
             RefreshTrainTip();
@@ -236,7 +271,10 @@ namespace FPSGame.Mission
         /// </summary>
         private void DetachTrain(TrainRuntime runtime, bool killEngine)
         {
+            // 箭头按"这条轨道上还有没有活着的火车"重算 ⇒ 先把轨道记下来（下面会把 Unit 停掉 / 销毁车头）
+            RailTrack track = runtime.Unit != null ? runtime.Unit.Track : null;
             liveTrains.Remove(runtime);
+            RefreshTrackArrows(track);
             if (runtime.Health != null && runtime.DieHandler != null) runtime.Health.OnDie -= runtime.DieHandler;
             if (runtime.Unit != null)
             {
@@ -257,9 +295,17 @@ namespace FPSGame.Mission
             }
         }
 
+        /// <summary>HUD 提示：下一列火车倒计时（mm:ss）+ 摧毁进度（按 Tick 每秒刷，1 秒的粒度只为这个倒计时）。</summary>
         private void RefreshTrainTip()
         {
-            UpdateTip($"摧毁火车 {NowProgress}/{MaxProgress}，已逃走 {escapedTrains}/{escapeLimit}");
+            int total = departureTracks != null ? departureTracks.Length : 0;
+            if (departedCount >= total)
+            {
+                UpdateTip($"摧毁列车 {NowProgress}/{MaxProgress}（已无后续列车）");
+                return;
+            }
+            float nextIn = firstDepartureDelay + departureInterval * departedCount - serviceTime;
+            UpdateTip($"下一列火车时间 {Tool.FloatToTime(Mathf.Max(0f, nextIn))}，摧毁列车 {NowProgress}/{MaxProgress}");
         }
 
         #endregion

@@ -59,6 +59,14 @@ public class HpItemBoss : HpItemBase
         }
     }
 
+    /// <summary>受击刷新：命中即显示，并把隐藏计时重置回满（之后由 Tick 里远离时递减到超时才隐藏）</summary>
+    public override void Refresh()
+    {
+        base.Refresh();
+        Show();
+        _hideTimer = HideDelay;
+    }
+
     /// <summary>按当前 PartController.invincibleArmor 重建护甲 UI 与事件订阅（增/减/清空降级均可同步）</summary>
     private void RebuildArmor()
     {

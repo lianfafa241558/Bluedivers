@@ -331,6 +331,7 @@ namespace FPSGame.Weapon {
                 audios.clip = ContinuousShootLoopSfx;
                 audios.outputAudioMixerGroup = AudioSvc.GetMixGroup(AudioGroups.Weapon);
                 audios.rolloffMode = AudioRolloffMode.Linear;
+                audios.spatialBlend = 1;
                 audios.minDistance = 3;
                 audios.maxDistance = SFXRange;
                 audios.loop = true;
@@ -484,7 +485,11 @@ namespace FPSGame.Weapon {
             {
                 Debug.LogError("在没有连续射击时尝试shot音效");
             }
-            if (sfx.IsValid()) m_ContinuousShootAudioSource.PlayOneShot(sfx);
+            if (sfx.IsValid())
+            {
+                m_ContinuousShootAudioSource.clip = sfx;
+                m_ContinuousShootAudioSource.Play();
+            }
         }
 
         /// <summary>更新持续射击的音效</summary>

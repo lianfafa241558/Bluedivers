@@ -22,8 +22,9 @@ namespace FPSGame.Mission
         [Foldout("附加炮塔", true)]
         [InspectorName("附加炮塔(概率, 预制体)")]
         [SerializeField] private List<SKVP<int, GameObject>> additionalTurrets = new();
-        [InspectorName("炮塔挂点(车厢子物体名)")]
-        [SerializeField] private string turretMountName = "Additional";
+
+        /// <summary>车厢上的炮塔挂点（车厢子物体名；固定值，不进 Inspector）</summary>
+        private const string TurretMountName = "Additional";
 
         /// <summary>
         /// 附加炮塔计划：[班次][车厢序号] ⇒ <see cref="additionalTurrets"/> 里的下标，-1 = 不挂。
@@ -293,14 +294,14 @@ namespace FPSGame.Mission
             turret.transform.localRotation = Quaternion.identity;
         }
 
-        /// <summary>找车厢上的炮塔挂点（默认 <see cref="turretMountName"/> = Additional）；找不到告警并跳过本节</summary>
+        /// <summary>找车厢上的炮塔挂点（默认 <see cref="TurretMountName"/> = Additional）；找不到告警并跳过本节</summary>
         private Transform FindTurretMount(GameObject car)
         {
-            if (string.IsNullOrEmpty(turretMountName)) return car.transform;
-            Transform mount = car.transform.Find(turretMountName);
+            if (string.IsNullOrEmpty(TurretMountName)) return car.transform;
+            Transform mount = car.transform.Find(TurretMountName);
             if (mount == null)
             {
-                Debug.LogWarning($"拦截火车：车厢 {car.name} 里找不到炮塔挂点 \"{turretMountName}\" ⇒ 本节不挂炮塔", car);
+                Debug.LogWarning($"拦截火车：车厢 {car.name} 里找不到炮塔挂点 \"{TurretMountName}\" ⇒ 本节不挂炮塔", car);
             }
             return mount;
         }

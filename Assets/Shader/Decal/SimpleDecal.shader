@@ -29,7 +29,11 @@ Shader "Decal/SimpleDecal"
         [Enum(UnityEngine.Rendering.CullMode)]_Cull("_Cull", Float) = 1 //1 = Front
         //[Enum(UnityEngine.Rendering.CompareFunction)]_ZTest("_ZTest", Float) = 4 //4 = LEqual
 
-        //[Toggle(_UseFog)] _UseFog("Use Unity Fog", Float) = 1
+        [Header(Fog Light)]
+        // 一个开关同时控制"乘主光颜色 + 混 Unity 雾"（对齐 Texture2 的 _UseLight / _MY_FOG_ENABLE）。
+        // 这里刻意用普通 float 而不是 shader 关键字：本属性是后加的，老材质里没有它 ⇒ 落到默认值 1，
+        // 保持改动前"总混雾"的表现；关掉 = 自发光贴花（范围指示圈等），夜里不被主光压暗。
+        [Toggle] _DecalFogLight("_DecalFogLight(应用雾与灯光)", Float) = 1
 
     }
 
@@ -76,6 +80,8 @@ Shader "Decal/SimpleDecal"
             #pragma target 3.0
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            // GetMainLight()（_DecalFogLight 打开时乘主光颜色）
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             #pragma shader_feature_local _UseMaskMap
 
@@ -105,6 +111,7 @@ Shader "Decal/SimpleDecal"
                 half4 _Color;
                 half4 _EmittierColor;
                 half4 _AlphaRemap;
+                half _DecalFogLight;
             CBUFFER_END
 
             v2f vert(appdata input)
@@ -200,23 +207,35 @@ Shader "Decal/SimpleDecal"
 
                 col.a = saturate(col.a);
 
-                // unity的雾气效果：雾因子必须按【真实被贴表面】的深度算，不能用 cube 顶点算（原因见 vert）。
-                // sceneDepthVS 是从 _CameraDepthTexture 重建出来的场景表面视空间深度，也就是贴花覆盖的那个
-                // 像素的真实距离——和背景/地形算出来的雾完全一致，且省掉一次矩阵乘法。
-                // 换算方式对齐 URP 官方片元雾（ShaderVariablesFunctions.hlsl 的 InitializeInputDataFog）：
-                // 视空间深度以相机处为 0，重映射到近平面（减去 _ProjectionParams.y）。
-                // 未开启雾关键字时 ComputeFogFactorZ0ToFar 返回 0、MixFog 原样返回，无需额外判断
-                float fogFactor = ComputeFogFactorZ0ToFar(max(sceneDepthVS - _ProjectionParams.y, 0.0));
+                // 主光 + 雾由一个开关控制（_DecalFogLight），对齐 Texture2 的 _UseLight / _MY_FOG_ENABLE。
+                // 关掉时原样输出：范围指示圈这类自发光贴花不该被夜色压暗。
+                // 用普通 float 判断而非 shader 关键字 —— 老材质没有该属性，走默认值 1，表现与改动前一致。
+                if (_DecalFogLight > 0.5)
+                {
+                    // 只乘主光颜色、不算阴影/距离衰减，和 Texture2 的 _UseLight 保持一致。
+                    Light mainLight = GetMainLight();
+                    half3 lightColor = mainLight.color;
+                    // 场景无方向光(或强度为0)时 _MainLightColor 为黑，乘黑会让加法型贴花彻底消失 → 退化为不乘光
+                    col.rgb *= lerp(lightColor, half3(1, 1, 1), dot(lightColor, half3(1, 1, 1)) < 0.001);
+
+                    // unity的雾气效果：雾因子必须按【真实被贴表面】的深度算，不能用 cube 顶点算（原因见 vert）。
+                    // sceneDepthVS 是从 _CameraDepthTexture 重建出来的场景表面视空间深度，也就是贴花覆盖的那个
+                    // 像素的真实距离——和背景/地形算出来的雾完全一致，且省掉一次矩阵乘法。
+                    // 换算方式对齐 URP 官方片元雾（ShaderVariablesFunctions.hlsl 的 InitializeInputDataFog）：
+                    // 视空间深度以相机处为 0，重映射到近平面（减去 _ProjectionParams.y）。
+                    // 未开启雾关键字时 ComputeFogFactorZ0ToFar 返回 0、MixFog 原样返回，无需额外判断
+                    float fogFactor = ComputeFogFactorZ0ToFar(max(sceneDepthVS - _ProjectionParams.y, 0.0));
 #if _DecalAdditiveFog
-                // 加法式混合（例：PylonPower 的 _DecalSrcBlend=SrcAlpha / _DecalDstBlend=DstAlpha）
-                // 下背景被 dst*dstAlpha 原样保留，而 MixFog 会把雾色混进输出 —— 等于在整块足迹上
-                // 【额外多加一份雾色】：贴图全黑的地方本来什么都不加，开雾后却变成一整块雾色方块
-                // （PylonPower 的贴图 pylon_alpha1_orange 四角纯黑但 alpha 恒为 1，正好整块方形都中招）。
-                // 加法层对雾只能衰减：MixFog(c,f) - MixFog(0,f) 恒等于 c * 无雾强度，任何雾模式都成立。
-                col.rgb = MixFog(col.rgb, fogFactor) - MixFog(half3(0, 0, 0), fogFactor);
+                    // 加法式混合（例：PylonPower 的 _DecalSrcBlend=SrcAlpha / _DecalDstBlend=DstAlpha）
+                    // 下背景被 dst*dstAlpha 原样保留，而 MixFog 会把雾色混进输出 —— 等于在整块足迹上
+                    // 【额外多加一份雾色】：贴图全黑的地方本来什么都不加，开雾后却变成一整块雾色方块
+                    // （PylonPower 的贴图 pylon_alpha1_orange 四角纯黑但 alpha 恒为 1，正好整块方形都中招）。
+                    // 加法层对雾只能衰减：MixFog(c,f) - MixFog(0,f) 恒等于 c * 无雾强度，任何雾模式都成立。
+                    col.rgb = MixFog(col.rgb, fogFactor) - MixFog(half3(0, 0, 0), fogFactor);
 #else
-                col.rgb = MixFog(col.rgb, fogFactor);
+                    col.rgb = MixFog(col.rgb, fogFactor);
 #endif
+                }
 
                 // 预乘 Alpha：确保透明区域完全不影响背景（保留背景雾效）
                 col.rgb *= col.a;

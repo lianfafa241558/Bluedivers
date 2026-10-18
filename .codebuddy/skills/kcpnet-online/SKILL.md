@@ -5,6 +5,8 @@ description: Bluedivers 项目的 KCPNet 联机网络层（预编译库 Assets/P
 
 # KCPNet 联机层（Bluedivers）
 
+> ⚠ **2026-10-18 瘦身**：实现细节与长尾坑移入 `references/`（**不随 skill 注入**），本文件只留判据/口径/工作流。
+
 ## Overview
 
 Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方向重构**：旧的"`NetTmp` 单目录 / 无 asmdef / 未挂载到场景"那套说法**全部作废**）：
@@ -36,83 +38,37 @@ Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方
   → MessageCenter.Dispatch(msg)           // 查 CmdId 表 → NetMsgCodec 反序列化 → 调注册回调
 ```
 
-## 当前部署状态（**2026-10-09 更新**：已挂载、已接入主流程、分层重构完成）
+## 现状（2026-10-09）与两条安装点硬约束
 
-| 项 | 状态 | 证据 |
-| --- | --- | --- |
-| `KCPNet.dll` / `Kcp.dll` 放置 | ✅ `Assets/Plugins/KCPNet/`，PluginImporter 为 Any Platform（`platformData` 中 `Any.enabled: 1`） | `Assets/Plugins/KCPNet/*.meta` |
-| **MessagePack 依赖闭包** | ✅ 已补齐（6 个 DLL，见下节），此前缺失导致全工程编译失败 | 装前：Console 大量 `CS0246 未能找到类型或命名空间名“MessagePackObject”`；装后：`read_console(types=["error"])` 返回 **0 条** |
-| 程序集是否加载成功 | ✅ Unity 运行时加载 `Kcp 2.0.0.0`、`KCPNet 1.0.0.0`、`MessagePack 3.1.8.0`、`MessagePack.Annotations 3.1.8.0`；并实测 `LoginReqMsg` 序列化往返成功（14 字节） | `execute_code` 打印 `AppDomain.CurrentDomain.GetAssemblies()` |
-| 适配层编译 | ✅ 引用 `KCPNet` + `MessagePack` 的是 **`02_Net.dll`**（`NetTmp`）—— ⚠ 2026-10-09 起网络代码**不再落在 `Assembly-CSharp`**，别再只看它 | 字节扫描 `Library/ScriptAssemblies/*.dll`（`install_deps.py --check` 已改成扫 02_Net / 07_NetGame / Assembly-CSharp 三个） |
-| 挂载到场景 | ✅ **挂在 `GameRoot.prefab` 的子物体 `NetRoot` 下**：`NetSvc`/`NetHostSvc`/`NetRoomFlow`/`NetTransformFlow`/`TeamNetBridge`/`NetFriendBridge` 六个组件（2026-10-07 收拢，根节点从 13 个组件降到 7 个） | MCP 回读 prefab 层级 + 反射确认 |
-| 被既有游戏逻辑引用 | ✅ 已接进主流程：大厅房间列表（`ServerListPanel`）、舰桥选任务/战备（`SelectMapWnd`/`BridgeSys`/`ArmamentWnd`）、开局（`TaskConfirmNtf`）、战斗（波次/敌人/位姿/命中/伤害）、盟友实体与 HUD | `09Manager/Global/{TeamNetBridge,NetFriendBridge}.cs`、`09Manager/Battle/EnemyNetBridge.cs` |
-
-结论（2026-10-09）：**编译、加载、挂载、接入主流程都已通**；剩下的活是"把还没同步的玩法补齐"（见 `.codebuddy/plans/联机_未同步清单与同步方案.md`）。
-
-⚠ 两条**安装点**硬约束（改挂载方式前务必先看）：
-1. `GameRootBase.Awake/OnDestroy` 收集 `I_GlobaManager` **只扫「根物体 + 直接子物体」两级、不递归** ⇒ 常驻管理器挂**一级子物体**安全，挂更深会被**静默漏掉** Init/UnInit。
-2. `NetManager` 名字带 Net，但它**与网络无关**（50Hz 逻辑帧宿主，已改名 `LogicFrameHost`，26 个 `LogicBehaviour` 靠它跑）⇒ 别把它和网络组件一起挪。
-
-任何"KCP 相关改造"开始前，先用 `read_console` 确认当前状态。
+- **编译 / 加载 / 挂载 / 接入主流程都已通**：DLL 在 `Assets/Plugins/KCPNet/`（Any Platform）、MessagePack 依赖闭包已补齐、
+  运行时加载 `Kcp 2.0.0.0` / `KCPNet 1.0.0.0` / `MessagePack 3.1.8.0`，适配层落 **`02_Net.dll`**（2026-10-09 起**不再在 `Assembly-CSharp`**）。
+  各条证据（Console / 反射 / 字节扫描）→ `references/deployment.md`。
+- **挂载**：`GameRoot.prefab` 的子物体 `NetRoot` 下 6 个组件（`NetSvc` / `NetHostSvc` / `NetRoomFlow` / `NetTransformFlow` / `TeamNetBridge` / `NetFriendBridge`）。
+- ⚠⚠ **两条安装点硬约束**：① `GameRootBase.Awake/OnDestroy` 收集 `I_GlobaManager` **只扫根 + 一级子物体、不递归** ⇒ 挂更深会被**静默漏掉** Init/UnInit；
+  ② `NetManager`（现 `LogicFrameHost`）**与网络无关**（50Hz 逻辑帧宿主，26 个 `LogicBehaviour` 靠它跑）⇒ 别把它和网络组件一起挪。
+- 任何 KCP 改造前先 `read_console` 确认当前状态；剩下的是"把还没同步的玩法补齐"。
 
 ## 部署清单（从零到可编译）
 
-1. **放库**：`KCPNet.dll` + `Kcp.dll`（+ 可选 `KCPNet.pdb`、`log4net.config`，非必需）放同一目录，路径用 `Assets/Plugins/KCPNet/`。两个 DLL 保持默认 `Any Platform`，不要设 `defineConstraints`，也不要放进 `Editor/` 目录。
-2. **补依赖闭包**（一次性命令，Python；默认目标就是下面这张表的完整 6 个）：
+1. **放库**：`KCPNet.dll` + `Kcp.dll` 放 `Assets/Plugins/KCPNet/`（默认 Any Platform，不设 `defineConstraints`、不放 `Editor/`）。
+2. **补依赖闭包**：`python .../scripts/install_deps.py`（`--check` 只读自检）。⚠ 只装 **6 个**（MessagePack / Annotations / Bcl.AsyncInterfaces /
+  NET.StringTools / Collections.Immutable / CompilerServices.Unsafe），**不要**再放 `System.Memory`/`System.Buffers` 等 Unity 自带 BCL（会"同名重复"）。
+  逐 DLL 版本、为什么需要、Nupkg 取哪个 target → `references/deployment.md`。
+3. **刷新**：`refresh_unity(mode=force, scope=all, compile=request)` → `read_console` 看 `CS0246` 残留。
+4. **验证四连**（缺一不可，只看 Console 会漏"程序集加载失败"）：① `read_console(types=["error"])` = 0；② 反射 `GetAssemblies()` 见 `KCPNet`/`MessagePack`；
+  ③ 真实序列化往返；④ 报 `Assembly '…' will not be loaded` ⇒ 去 `Editor.log` 看紧随其后的 `Unable to resolve reference 'X'`。
+5. **挂载**：只有**新建**常驻管理器才动 prefab，且只能挂**根或一级子物体**。
+6. **AOT（IL2CPP）已修好，别再重走**：MessagePack 的 `DynamicObjectResolver`（`Reflection.Emit`）在打包版必抛 `PlatformNotSupportedException`，
+  **编辑器（Mono）完全看不出来** ⇒ 适配层已改走 `NetMsgCodec`（`MessagePackWriter/Reader`，array 格式按 `[Key]` 升序）⇒ 新增消息仍只需"CmdId + `[MessagePackObject]` + `[Key(n)]`"。
+  ⚠ 红线：保留 `Assets/link.xml`（否则打包后反序列化全是默认值）、新类型要在 `WriteValue/ReadValue` 补分支、别引 `GeneratedMessagePackResolver`（`internal`）。原理与备选路 → `references/deployment.md`。
 
-   ```bash
-   python "d:\Pro\Bluedivers\.codebuddy\skills\kcpnet-online\scripts\install_deps.py"           # 装全部 6 个
-   python "d:\Pro\Bluedivers\.codebuddy\skills\kcpnet-online\scripts\install_deps.py" --check   # 只读自检：装没装 / 还缺什么
-   ```
+## 库 API 速查（完整签名 / 依赖矩阵 → `references/kcpnet-api.md`）
 
-   `--check` 会依次报告：6 个 DLL 是否存在 + 每个 `*.dll.meta` 的 Any Platform 标志、是否误放了 Unity 自带的同名程序集、`02_Net.dll` / `07_NetGame.dll` / `Assembly-CSharp.dll` 是否已引用 `KCPNet`/`MessagePack`、以及 **Editor.log 里最近一次域重载**的未解析引用（历史失败会被识别为历史，不会误报）。
-
-   最终落地在 `Assets/Plugins/KCPNet/` 的 6 个 DLL 及其必要性：
-
-   | DLL | 版本 | 为什么需要 |
-   | --- | --- | --- |
-   | `MessagePack.dll` | 3.1.8.0（取 `lib/netstandard2.0/`） | 适配层所有 DTO 的序列化 |
-   | `MessagePack.Annotations.dll` | 3.1.8.0 | `[MessagePackObject]`/`[Key]` |
-   | `Microsoft.Bcl.AsyncInterfaces.dll` | 8.0.0 | `MessagePack.dll` 的 AssemblyRef |
-   | `Microsoft.NET.StringTools.dll` | 17.11.4（程序集版本 1.0.0.0） | 同上 |
-   | `System.Collections.Immutable.dll` | 8.0.0 | 同上 |
-   | `System.Runtime.CompilerServices.Unsafe.dll` | 6.0.0 | 同上 |
-
-   ⚠ **不要**再放 `System.Memory.dll` / `System.Buffers.dll`：Unity 自带 `System.Memory 4.0.99.0`，实测能正确满足 `KCPNet.dll`(需要 4.0.1.2) / `Kcp.dll`(需要 4.0.1.0) 的引用；自己塞一份极易触发“同名程序集重复”。
-   同理，`MessagePack.dll` 还引用 `System.Numerics.Vectors` / `System.Reflection.Emit*` / `System.Threading.Tasks.Extensions`，这些都由 Unity 的 profile 提供，**不必**手工补。
-
-   放置位置：与 KCPNet 同目录。**不要**给 `Plugins/` 加 `.asmdef`，保持预编译插件默认行为。
-3. **刷新**：新增 DLL 属于 Assets 变更。用 Unity MCP 先 `refresh_unity(mode=force, scope=all, compile=request)`，再 `read_console` 看是否有 `CS0246` 残留。
-4. **验证四连**（缺一不可，只看 Console 会漏掉“程序集加载失败”）：
-   1. `read_console(types=["error"])` → 0 条；
-   2. 程序集真的加载了：`execute_code` 打印 `AppDomain.CurrentDomain.GetAssemblies()` 里能看到 `KCPNet`/`MessagePack`；
-   3. 做一次真实序列化往返（`execute_code` 里 `MessagePackSerializer.Serialize/Deserialize<LoginReqMsg>`）；
-   4. 若仍报 `Assembly '...' will not be loaded due to errors`，**去 `%LOCALAPPDATA%\Unity\Editor\Editor.log` 看紧接着的那几行 `Unable to resolve reference 'X'`**（Console 面板只显示标题行，原因在里面）。
-5. **挂载**：不需要你手动挂 —— 已在 `GameRoot.prefab` 的子物体 `NetRoot` 下（6 个组件，见"当前部署状态"）。只有**新建**常驻管理器时才需要动 prefab，且必须挂**根或一级子物体**。
-6. **AOT（IL2CPP）—— 这个坑已经踩过并修好了（2026-10-06），别再重走**：`ProjectSettings` 的 Standalone `scriptingBackend` 是 **IL2CPP(1)**，而 MessagePack 默认走 `DynamicObjectResolver`（`System.Reflection.Emit`，IL2CPP 不支持）。症状：**打包版一发消息就抛**
-   `PlatformNotSupportedException: Operation is not supported on this platform` at `AssemblyBuilder.DefineDynamicAssembly` ← `DynamicObjectResolver.FormatterCache<T>..cctor`；
-   **编辑器（Mono）完全看不出来**。修法 = 适配层不再用 `MessagePackSerializer`，改用 **`NetTmp/Services/NetMsgCodec.cs`**（只用 `MessagePackWriter/Reader` 写读标准 MessagePack 字节，成员枚举 + 字段读写自己用反射做；`[MessagePackObject]` 类型写 **array 格式**、按 `[Key]` 升序）。⇒ **新增消息仍然只需"CmdId 常量 + `[MessagePackObject]` + `[Key(n)]` 两步**，不必写 formatter。三条注意事项：
-   ① 反射用法对 IL2CPP 托管裁剪**不可见** ⇒ 必须保留 `Assets/link.xml`（`preserve="all"` 保全 `02_Net` 与 `MessagePack.Annotations`），否则打包后"反序列化出来全是默认值"；
-   ② 字段类型只支持 `NetMsgCodec.WriteValue/ReadValue` 里列出的那些（string/int/uint/long/float/bool/short/byte/double/enum/数组/嵌套 DTO），新类型要在那两处补分支（会在编辑器里当场抛 `NotSupportedException`，不静默写坏）；
-   ③ **不要**试图引用 `MessagePack.GeneratedMessagePackResolver`（KCPNet.dll 自带的那份是 `internal`，外部引用报 `CS0122`）；KCPNet 自己显式传 options（DLL 里能搜到 `MessagePackSerializerOptions`）⇒ 库侧本来就安全。
-   备选路（本次没走，因为要多装工具链）：MessagePack 3.1.8 的 nupkg **不含 analyzer/源生成器**，想用 mpc/源生成器预生成 resolver 得自己装 .NET SDK；或者把 Standalone 切 Mono（能立刻绕过，但放弃 IL2CPP）。
-
-## 库 API 速查（仅列常用，完整签名见 `references/kcpnet-api.md`）
-
-| 类型 | 关键成员 | 说明 |
-| --- | --- | --- |
-| `KCPNet<T,K>` | `ctor(bool isUnityEnvironment = true)`、`StartAsClient(ip,port)`、`StartAsServer(ip,port)`、`Task<ConnectResult> ConnectServer(int interval, int maxintervalSum = 5000)`、`SendToAll(K)`、`TryGetSession(uint, out T)`、`GetSessions()`、`CloseClient()` / `CloseServer()`、事件 `OnSessionConnected/OnSessionDisconnected/OnServerRestartDetected(Action<uint>)`、字段 `clientSession`、**`ClientId`**（持久会话标识，库 2026-10-09 版新增 ⇒ 见踩坑清单"两行 clientId"） | `T`=会话类型，`K`=消息类型（本项目为 `NetMessage`） |
-| `KCPSession<T>` | 抽象属性 `Serializer`；虚方法 `OnConnected()` / `OnDisConnected()` / `OnReciveMsg(T)` / `OnUpdate(DateTime)`；`SendMsg(T)` / `SendMsg(byte[])`、`IsConnected()`、`GetSessionID()`、`InitSession(...)`、`CloseSession()`；属性 `AesKey`、`TimeoutMs`、`EnableTimeoutCheck`、`SetTimeout(long)`、`HeartbeatIntervalMs` | 必须继承并 override `Serializer` + 至少 `OnReciveMsg`。⚠ **库基类自己每 3s 双向发"心跳裸字节"**（带魔数、**不进 `MessageCenter`**），超时看 `_lastRecvTimeUtcTicks`（15s，任意 UDP 包都刷）⇒ **它替代不了应用层 `PingReq/Rsp`**（1001/1002 是 `RttMs` 的唯一来源，且判"谁是玩家"的那只时钟口径不同） |
-| `IKCPMsgSerializer` | `byte[] Serialize(KCPMsg)`、`KCPMsg Deserialize(byte[])` | 信封级序列化器，项目直接用库里的 `NetMessageSerializer.Instance` |
-| `KCPMsg` / `NetMessage` | `NetMessage : KCPMsg`，字段 `int CmdId`、`byte[] Data` | 项目自己的“信封”，`Data` 是 DTO 的 MessagePack 字节 |
-| `NetConfig` | 常量 `HostGamePort = 17666`、`LanBroadcastPort = 29800`、`LanSelfBroadcastPort = 29801`、`HeartbeatIntervalMs = 3000`、`DefaultTimeoutMs = 15000` | 端口/心跳唯一来源，别在业务里硬编码。⚠ 它在**库内部**（工程里没有 .cs）⇒ 只能逐会话设 `TimeoutMs` 等属性，常量改不了 |
-| `LanDiscoveryConfig` | 静态 `BroadcastPort=29800`、`ListenPort=29800`、`BroadcastAddress=255.255.255.255`、`AnnounceIntervalMs=2000`、`DiscoveryTimeoutMs=1500`、`RoomExpireMs=6000`、`BroadcastTtl=1`、`Magic="KCPLAN:"`、`AnnounceType/DiscType`；`Setup(...)` 全部参数可选 | 改广播参数的唯一入口（`Setup` 注入，不改库） |
-| `LanRoomInfo` | 字段 `RoomName/HostIp/HostPort/PlayerCount/MaxPlayers/MapName/PasswordProtected/Version/PlayerNames[]` + **`int Difficulty(-1)` / `int TaskMain(-1)` / `bool InGame` / `int Source`**（共 **13** 个）、`ToJson()/FromJson()` | 房间模型，广播包与 UI 都用它。⚠ 2026-10-08 换代后**难度/任务/是否开局/来源已是真字段**，别再串字符串；`FromJson` **忽略未知 key、缺 key 给默认值** ⇒ 新旧房主可混联 |
-| `LanBroadcaster` | `ctor(LanRoomInfo)`、属性 `RoomInfoProvider : Func<LanRoomInfo>`、`Start()/Stop()` | 房主侧周期性 ANNOUNCE + 应答 DISCOVER |
-| `LanDiscoverer` | `ctor(int listenPort = -1)`、属性 `VersionFilter`、`AutoExpire`、`StartListening()`、`Task Scan()`、`List<LanRoomInfo> GetRooms()`、`Stop()`、`PurgeExpired()` | 成员侧发现器；`Scan()` 是异步的，不能立刻取结果 |
-| `KCPTool` | `Log/ColorLog/WarnLog/ErrLog`、`Compress/DeCompress`、静态委托 `LogFunc/ColorLogFunc/...` | 库日志出口，`KCPLogColor` 有 None/Red/Green/Blue/Cyan/Magenta/Yellow |
-| `KCPNet.Util.*` | `ClientSecurity.GenerateAesKey()/EncryptAesKeyWithRsa()`、`ServerSecurity.*`、`EncryptionHelper.Encrypt/Decrypt` | 握手 RSA→AES 加密，库内部使用，项目当前未显式配置 |
-| `KCPNet.Config.*` | `RegionConfig`（ServerIP/Redis/DataBase/MaxPlayers…）、`ServerRegionConfig.Current` | 专用服务器/分区模式的配置，**本项目 P2P 房主模式未使用** |
+- **端口与心跳的唯一来源 `NetConfig`**（⚠ 它在**库内部**，工程里没有 .cs ⇒ 常量改不了，只能逐会话设 `TimeoutMs`）：
+  `HostGamePort=17666`、`LanBroadcastPort=29800`、`LanSelfBroadcastPort=29801`、`HeartbeatIntervalMs=3000`、`DefaultTimeoutMs=15000`。
+- **`KCPSession<T>` 的心跳坑**：库基类自己每 3s 发「心跳裸字节」（带魔数、**不进 `MessageCenter`**，超时 15s）⇒ **替代不了应用层 `PingReq/Rsp`**
+  （1001/1002 才是 `RttMs` 唯一来源）。`KCPNet<T,K>` 的 ctor 是 `KCPNet(bool isUnityEnvironment = true)`（可选参数，别误判成要传参）。
+- 其余签名（`KCPNet<T,K>` 成员、`LanDiscoveryConfig`/`LanRoomInfo`/`LanBroadcaster`/`LanDiscoverer`、信封与日志出口）→ `references/kcpnet-api.md`。
 
 ## 适配层结构与职责（2026-10-09 分层后）
 
@@ -170,31 +126,20 @@ Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方
 
 ### D. 升级/替换库 DLL 后核对 API
 
-库无源码，换版本后**必须重新核对签名**，不要凭记忆改代码。两条路，按场景选：
+库无源码 ⇒ **换版本必须重新核对签名，不要凭记忆改代码**：
 
-1. **Unity 在跑 → 用 Unity MCP 原生反射（首选，权威且零额外依赖）**：
+1. **Unity 在跑 → 用 Unity MCP 反射（首选）**：`unity_reflect(action="search"|"get_type"|"get_member", …)`
+   / `execute_code` 读 `NetConfig` 常量。
+2. **Unity 没跑 → `scripts/inspect_dll.py --refs-only`**（打依赖矩阵，缺包就靠它）/ 不带参数打 `TypeDef` 清单（签名与默认值不在静态解析范围内）。
 
-   ```
-   unity_reflect(action="search", query="Lan", scope="project")          # 找类型
-   unity_reflect(action="get_type", class_name="KCPNet.KCPNet`2")        # 成员摘要
-   unity_reflect(action="get_member", class_name="KCPNet.KCPNet`2", member_name="ConnectServer")
-   execute_code(code="return typeof(KCPNet.NetConfig).GetField(\"HostGamePort\").GetRawConstantValue();")
-   ```
-
-2. **Unity 没跑 / 只想看依赖矩阵 → Python 静态解析（不加载程序集，缺依赖也能用）**：
-
-   ```bash
-   python "d:\Pro\Bluedivers\.codebuddy\skills\kcpnet-online\scripts\inspect_dll.py" --refs-only
-   python "d:\Pro\Bluedivers\.codebuddy\skills\kcpnet-online\scripts\inspect_dll.py"   # + 类型清单
-   ```
-
-   `--refs-only` 打印每个 DLL 的 `AssemblyRef`（依赖矩阵，判断“还缺哪个包”就靠它）；不带参数再打印 `TypeDef` 清单。签名/可选参数默认值不在静态解析范围内，用上面的 MCP 路径取。
-
-升级后要重点确认的三件事：① `KCPNet.dll` 是否仍只引用 `MessagePack 3.1.8`（版本变了就要换 DLL）；② `NetConfig` / `LanDiscoveryConfig` 的静态默认值有没有变；③ `KCPNet<T,K>` 的构造与 `ConnectServer` 签名——适配层（`02_Net`）里 `new KCPNet<...>()` 之所以合法，是因为库的 ctor 是 `KCPNet(bool isUnityEnvironment = true)`，**可选参数**，别误判成应该传参。
+升级后重点确认三件：① `KCPNet.dll` 是否仍只引用 `MessagePack 3.1.8`（版本变了就得换 DLL）；② `NetConfig`/`LanDiscoveryConfig` 的静态默认值；
+③ `KCPNet<T,K>` 的 ctor 与 `ConnectServer` 签名。命令与本轮实测记录 → `references/deployment.md`。
 
 ### E. 同步一条新东西（决策树，2026-10-11 补）
 
 听到"XX 两端不一致"时按这五问走，**别上来就加消息**：
+
+> ⚠ **2026-10-12 起实现已换代（五问判据不变，但别照旧代码抄）**：号空间统一 + 三档取号（战斗前派生号 / 战斗后敌人自增号 / 房主生成段 `0x2000_0000`），房主唯一创建统一走 **4052 `HostSpawnNtf` + `INetSpawner`/`SpawnerRegistry`/`WaveManager.CreatUnit`**（`4051`/`4047` 已停发、常量保留）。实现细节 → `memory/topics/net-netid.md`・`net-spawn.md`・`net-damage.md`・`net-vehicle*.md`。
 
 **① 键用哪个？** 跨端稳定 = "创建时确定 + 两端一致"；⚠ 一律在 `Awake`/生成时算一次并缓存 —— 会位移的实体不能每次现算。
 
@@ -204,7 +149,7 @@ Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方
 | 任务 | `MissionBase.netOrder` | 创建序赋值；场景模式按 0.1m 位置排序（`MissionController.AssignNetOrdersByPosition`） |
 | 场景单位（NPC） | `Actor.Id` | 同名多实例会撞 ⇒ 成组刷的单位改用 NetId |
 | 成组新生成的单位（波次 / 巡逻队） | **生成点**（+ 逐单位目标点） | 构成靠"按落点派生流"⇒ 同落点同构成，不必传 |
-| 波次 / 敌人 | `Actor.NetId`（`Actor.Awake` 按 `type==Enemy` 分配、每局归零） | 0 = 非同步；⚠ 分配点必须在 `Awake`（放 `WaitSetPos` 会晚一帧） |
+| 波次 / 敌人 | `Actor.NetId`（`Actor.Awake` 取号、每局归零） | 0 = 非同步；⚠ 分配点必须在 `Awake`（放 `WaitSetPos` 会晚一帧）；⚠ 2026-10-12 起已改**三档判据**（战斗前派生号 / 战斗后自增 / 房主生成段），见 `net-netid.md` |
 | ⛔ **不能当键** | `Actor.IndexID`（进程内自增、跨局不清零）、`Furniture_NumberID`（各端自增）、`Resources.LoadAll` 下标 | 两端必然不同 |
 
 **② 谁权威？**
@@ -237,45 +182,36 @@ Bluedivers 的联机能力由**四层**构成（⚠ **2026-10-09 已按依赖方
 - **两端对照法**：同一条消息在两端各留一条 `·发` / `·收`（带"键 + 值 + 发起 sid"）⇒ 一眼分清"键不一致 / 本端没生成 / 根本没收到"。
 
 ## 踩坑清单
+> 长尾细节（MessagePack 版本写法 / `Assembly 'X' will not be loaded` 连锁 / API 兼容级别 Std2.0 / BCL 重复 / `dll.meta` 的 `Editor: enabled: 0` /
+> 改已有 DLL 后重导入 / 反复重握手 / 未入房会话循环重连 / `memberIdleTimeout` 8s 比库 15s 更严 / 后进房补发配置 / `Dispatch` 异常要打全 / PowerShell 三个坑）
+> → `references/pitfalls.md`（**只有真踩到再去读**）。下面留的是每次改联机代码都要过的判据。
+
+
 
 - **会话钩子 / 连接回调都可能不在主线程**（2026-10-06 踩过）：`OnReciveMsg`、`OnConnected`、`OnDisConnected`，以及 `host.OnSessionConnected/OnSessionDisconnected` 这类 KCP `UpdateAsync` 续体，**全都在网络 / ThreadPool 线程**上跑 ⇒ 绝不能在里面碰 Unity API（`Debug.Log` 之外）或游戏状态（`_players` 之类的表也别改，有数据竞争）。`NetHostSvc.OnMemberLeft` 原来就是直接 `BroadcastPlayerList()` → 09 侧桥 `ResSvc.LoadRes` ⇒ `UnityException: Load can only be called from the main thread`；更阴的是它抛在**广播名单中途**，导致该清退的盟友留在场上变幽灵。
   现行模式：会话级事件只入 `Queue<SessionEvent> _sessionEvents`（`lock (pkgque_lock)`），由 `Update()` 开头的 `ProcessSessionEvents()` 在**主线程**按到达顺序处理（出队后在**锁外**处理，别占着锁做网络发送）。**新增任何会话级回调都照这个模式。**
   `MessageCenter.Dispatch` 里 `try/catch` 是为了兜住单个消息的处理异常，别删。
 - **房主端会话必须带 sid**：`HostSession.OnReciveMsg` 丢的是 `NetInbox.Enqueue(msg, GetSessionID())`，漏了 sid 就无法定向回复/维护成员表。
 - **消息未注册就报错**：`Dispatch` 查不到命令号会 `Debug.LogError($"未注册消息:{msg.CmdId}")`，看到它先查 `Register` 是否在 `Awake` 里漏调用、或 `Unregister` 是否提前执行。
-- **MessagePack 版本写法**：`MessageCenter.Dispatch` 用的是非泛型 `MessagePackSerializer.Deserialize(Type, ReadOnlyMemory<byte>)`，参数顺序 `Type` 在前，`byte[]` 隐式转 `ReadOnlyMemory<byte>`，**不需要 `ref`**（3.1.8 的正确写法）。
-- **开房 `SocketException`**：UDP 端口关闭后不会立即释放，刚 `StopHost()` 就 `StartHost()` 会抛。`NetHostSvc` 已 catch 转成清晰报错；**开房入口自己要加"关房后 N 秒内不许再开"的冷却**（原 Demo 的 `HostRestartCooldown`=2s 做法，Demo 已删），别用重试死循环。
-- **搜不到房间的排查顺序**：① 两台机器同一局域网；② 房主那台 Windows 防火墙首次弹窗必须勾“专用网络→允许”（最常见原因）；③ 顺序是先房主开房再成员搜房；④ 同机测试成员换 29801；⑤ 版本过滤 `VersionFilter` / `AutoExpire` 是否把房间滤掉。
+- **开房 `SocketException`**：UDP 端口关后**不会立即释放**，刚 `StopHost()` 就 `StartHost()` 必抛 ⇒ 开房入口要加"关房后 N 秒内不许再开"的冷却（~2s），别用重试死循环。`NetHostSvc` 已 catch 成清晰报错。
+- **搜不到房间**：按 `memory/topics/net-connect.md` 的顺序查（防火墙入站放行 → 客户端隔离 → 虚拟网卡 → 同机换 29801 → 版本门槛）；**别去查 `HostIp` 的值**（它由库按收包 source IP 填）。
 - **`Scan()` 异步**：扫描后有 `DiscoveryTimeoutMs`(=1500ms) 量级的等待，Demo 用 `Invoke(nameof(PrintRooms), 1.5f)` 延后取结果；生产代码应轮询 `GetRooms()` 或按完成回调取，别在 `Scan()` 下一行就取列表。
 - **排除自己开的房**：`NetHostSvc` 用时间戳生成 `_hostSelfName` 写进 `RoomInfo.PlayerNames[0]`，成员侧拿它过滤自己广播出来的房间（同机多实例也不会互相误判）。
-- **`*.dll.meta` 里 `Editor: enabled: 0` 是无害的**：那是 Unity “Any Platform 托管插件”的标准写法（`Any.enabled: 1` 才是关键），不代表编辑器不能用。
-- **`Assembly 'X' will not be loaded due to errors:` 怎么查**：Console 只给标题，真原因（`Unable to resolve reference 'Y'`）在 `%LOCALAPPDATA%\Unity\Editor\Editor.log` 里紧跟其后几行。这类错误会**连锁**：`MessagePack.dll` 加载失败 ⇒ 引用它的 `KCPNet.dll` 失败 ⇒ 引用 KCPNet 的 `Assembly-CSharp.dll` 失败（伴随 `Assembly-CSharp-Editor.dll` 失败）。修好最底层那一个即可全通。
-- **API 兼容级别是 .NET Standard 2.0（不是 2.1）**：`PlayerSettings.GetApiCompatibilityLevel(Standalone) == NET_Standard_2_0`（`ProjectSettings.asset` 里 `apiCompatibilityLevel: 6`），所以必须取 NuGet 的 `lib/netstandard2.0/` 资产；`lib/netstandard2.1/`（MessagePack 也有，依赖更少）在 Std2.0 profile 下不可用。改 API 级别属于全局变更，别顺手改。
-- **别重复提供 Unity 自带的 BCL**：Unity 自带 `System.Memory 4.0.99.0`，能满足对 `4.0.1.2/4.0.1.0` 的引用；同理 `System.Buffers`/`System.Numerics.Vectors`/`System.Reflection.Emit*`/`System.Threading.Tasks.Extensions` 都不用补。多塞会触发“同名预编译程序集重复”。
 - **网络代码要放进对的程序集**（2026-10-09 分层后）：`02_Net`（`NetTmp`）`references=[]` ⇒ 只放传输/编解码，**不能引用任何游戏层类型**；业务消息/DTO 放 `07_NetGame`（只引用 `02_Net`）⇒ **字段只能用基础类型**（要传枚举就传 `int`，例：`TaskCfgDto`）；需要碰 `SO`/枚举/`GameObject` 的转换放 `09_Managers` 的桥里（`TeamNetBridge`/`NetFriendBridge`/`EnemyNetBridge`）。
   预编译插件（无 asmdef 的 DLL）默认被**所有** asmdef 自动引用，通常不必显式写；只有给 asmdef 勾了 `overrideReferences` 才需要手动加。
-- **改已有 DLL 文件后**：Unity 可能不重新导入，用 `AssetDatabase.ImportAsset(path, ForceUpdate)` 或 `refresh_unity`；**新建** `.cs` 必须先 `refresh_unity(mode=force, scope=assets)`。
-- **「同一条 socket 被库反复重握手」**（2026-10-09）：房主 Console 看起来像"一直有人进进出出"、sid 一串，其实只有一个客机。查法：`HostSession.PeerAddress`（反射读库私有 `m_remotePoint`）看对端是不是同一个；`HostSession` 已给 `OnConnected/OnDisConnected` **限流**（前 3 次 + 之后每 10s，带累计次数）。
-- **「未入房会话循环重连」**：库按"**收不到数据**判掉线"（~15s），而"连上 → 入房"之间只有心跳一条报文 ⇒ 房主对**未入房**会话必须也回 Pong（`OnPingReq` 不要先判 `_players` 里有没有），否则它被自己的库判死并重连。
 - **退房/踢人要"立刻关会话 + 清四张表"**：`_players` / `_profiles` / `_poses` / `_lastSeen`。⚠ `_poses` 不清 ⇒ 该 sid 的**幽灵位姿会继续跟着每批快照下发**。踢人路径还要防"提示两遍"：`EvictIdleMembers` 先本地清再 `CloseSession`，库又会回调 `OnSessionDisconnected` ⇒ 用 `HashSet<uint> _selfClosed` + `CloseSessionOf(sid)`（先登记再关）去重，`StopHost` 清集合。
-- **`memberIdleTimeout` 默认 8s，比库自己的 15s 更严** ⇒ 客户端一卡帧（尤其中途加载战斗场景）就超时被踢；而战斗期 `_joinClosed`/`_rosterFrozen` 会**拒绝重连** ⇒ 表现是"没关游戏却掉线且回不来"。要动就三选一：抬高超时、转场期间不踢、支持重连复用身份。
 - **跨端的"下标"都不可信**：任务表 `TaskCfgs` 的行下标来自 `Resources.LoadAll` 枚举顺序（编辑器 ↔ 打包版可不同）⇒ 生成端按 `mapId` 排序（`TaskManager.OrderedMaps/MapIndex`）**且**本局配置随 `TaskConfirmNtf.Cfg`（`TaskCfgDto`）**下发内容**，成员侧 `SetTask(..., remoteCfg)` 以内容为准、不查本地表；端到端指纹因此从"硬校验"降级为**诊断告警**（否则跨窗口/后进房的玩家会被永久拒之门外）。
-- **那条"后进房的人也能拿到本局配置"靠的是补发**：`NetHostSvc._lastTaskConfirm` 缓存**整条**广播，`OnJoinRoomReq` 里给新人补发（在 `JoinRoomRsp` 之后，KCP 可靠有序）⇒ 消息必须**自足**（种子 + 配置内容），别设计成"让成员自己查表"。
-- **`Dispatch` 的异常要打全**：`Debug.LogError($"消息 {cmdId} 处理失败:{e}")` —— 只打 `e.Message` 会把"哪个处理器、哪一行"全丢掉（打包版实测过）。
 - **应用远端消息会"派发本地事件"（回环）**（2026-10-11）：`ApplyRemoteOperate` 跑的还是本地 `Operate()` ⇒ 会触发本端桥订阅的 `FurnitureOperate` / `UnitEventBus` 等 ⇒ 不挡就是无限回环。⚠ 门要**跨桥共享**：终端阶段的应用会走到 `furn.Operate()`（`NetFurnitureBridge` 的订阅点），各持一个私有 bool 挡不住 ⇒ 统一 `NetApplyGuard`（计数式）。
 - **`SendToAll` 按定义不含房主自己**：凡"房主广播的状态"，都要**再 `MessageCenter.Dispatch(msg)` 自派发一次**（名单、开局、巡逻队、可破坏物都踩过）。
 - **成员端不得本地生成单位**：`Actor.Awake` 会吃 `NetId` 号段 ⇒ 与房主下发的单位撞号（错杀 / 错移）。生成类一律"成员闸门 + 房主广播生成事件 + 按同一生成点复刻"（见 §E ②）。
 - **别拿"本机视角"做共享选择**：`最近玩家` / `本机玩家位置` 这类输入两端必然不同（撤离点选择踩过）⇒ 由**触发者 / 房主**定（见 §E ②）。
 - **随机同步要纯函数**：`SeedUtil.Derive(seed, 细分键)`（`SeedStream` 枚举）；⚠ 一条 `System.Random(seed)` 流在"重试 / 两端调用次数不同"时**必然错位**（谜题、炼油都踩过）。
-- **"改了内容却没编上"的两种假象**（2026-10-11）：① **假空转** = dll mtime 不动 / Console **也 0 error** / `refresh_unity` 照样返成功 —— 三个"通过"全是假象，**判据改反射**（`GetType`/`GetMethod` 是否为 null），解药 `CompilationPipeline.RequestScriptCompilation(CleanBuildCache)`（⚠ `external_changes_dirty:true` 时先 `AssetDatabase.Refresh(ForceUpdate)`）；② **假缺失** = `.cs.meta` 被写成等长全 `\x00` ⇒ Unity 导不出 guid ⇒ 该 `.cs` 不进编译、报 `CS0103 名称"X"不存在` 而文件明明在 ⇒ 先查 `manage_asset get_info` 的 `guid`，**别改代码**。
+- **"改了却没编上"的两种假象**（假空转 / 假缺失 meta）：判据与解药见 `memory/topics/tooling.md §编译验证`；**决定性判据永远是反射**（`GetType`/`GetMethod` 是否为 null），别只看 Console 的 0 error。
 - **改完一批联机代码，收尾做三件**：`offline_compile.py` 编一遍 → 让 Unity 编一次并**反射核验新成员** → 双端开 `NetSyncLog` 对照 `·发`/`·收`。
 
 ## 工具约定（本项目）
 
 - **脚本一律用 Python**（本机已装 Python 3.12 + pip，`dnfile` 已装），不要再写 `.ps1`：小工具/批量文件操作/校验脚本都走 Python，本 skill 的 `scripts/` 就是范例。
-- 不得不用 PowerShell 时注意两个坑：① 命令里的 `$var` 会被吞掉，复杂逻辑先写文件再 `-File` 执行；② `.ps1` 里出现中文会被 PowerShell 5.1 按 ANSI 解码，可能吐出引号字符导致“缺少字符串终止符”——脚本保持纯 ASCII。
-- ⚠ 本机 PowerShell 另有 **Safe delete bulk-guard**：`Remove-Item -Recurse` 会被拦（报 `Safe delete could not verify this bulk deletion. Nothing was deleted.`）⇒ **删文件/目录别用 `Remove-Item -Recurse`**，走工具（`delete_file`）或 `del` 单个文件。
-- ⚠ PowerShell 的 `Select-String -Path "**/*.cs"` **不支持递归通配**，会静默给出"0 命中"的**假阴性** ⇒ 递归扫描一律用 `Get-ChildItem -Recurse -Filter *.cs | Select-String …`（或直接用本 skill 的 Python 脚本）。
 - 「看/改 Unity 里的真实状态」优先 Unity MCP（`read_console` / `unity_reflect` / `execute_code`），它比任何外部反射脚本都权威。
 - ⚠ `execute_code` 默认用 **CodeDom（返回里 `"compiler":"codedom"`）= C# 6** ⇒ 探针代码**别用**本地函数、`is T x` 模式匹配等 C# 7+ 语法；写错只会报含糊的 `Unexpected symbol '('`。要 C# 7+ 得传 `compiler: "roslyn"`（依赖 Microsoft.CodeAnalysis）。
 - **程序集/脚本编译的"到底编没编"判据（比 `refresh_unity` 的返回值可靠）**：比较 `.cs` 与 `Library/ScriptAssemblies/<asm>.dll` 的 **mtime**，以及 `EditorApplication.isCompiling`；`refresh_unity` 常**报成功却没编译**（`external_changes_dirty:false`、`is_focused:false`），此时用

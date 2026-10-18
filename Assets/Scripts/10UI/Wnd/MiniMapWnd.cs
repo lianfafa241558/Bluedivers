@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using FPSGame.Attributes;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.Mission;
@@ -41,6 +42,16 @@ public class MiniMapWnd : Window
     
     [Space(16)]
     [SerializeField]
+    [InspectorName("显示铁轨路线")]
+    bool DrawRailRoutes = true;
+    [SerializeField]
+    [InspectorName("铁轨路线颜色")]
+    Color RailColor = new(1f, 1f, 1f, 0.5f);   // 白 50%（想要更低调就直接压成灰）
+    [SerializeField]
+    [InspectorName("铁轨路线宽度(像素)")]
+    float RailWidth = 3f;
+
+    [SerializeField]
     RectTransform PlayerRoot;
     [SerializeField]
     RectTransform EnemyRoot, OtherRoot, MissionPointRoot;
@@ -52,6 +63,21 @@ public class MiniMapWnd : Window
     int EnemyCount;
 
     Dictionary<IEntity, RectTransform> ActorPoint;
+
+    /// <summary>
+    /// 火车任务点图标（按"在跑的列车"动态创建/回收）。
+    /// <para>▍为什么不能走 <see cref="ActorPoint"/>：拦截火车任务**没有 MissionView（entity）**，
+    /// <see cref="MissionPointCreat"/> 拿不到实体就直接 return 了；而列车是任务运行时自己 Instantiate 的，
+    /// 唯一能问"车现在在哪"的地方是 <c>MissionInterceptTrain.GetLiveTrain()</c> ⇒ 单独一张表按帧跟位置。</para>
+    /// </summary>
+    readonly List<RectTransform> TrainPoints = new();
+
+    /// <summary>铁轨路线线（首次显示时建，之后一直复用）</summary>
+    MiniMapRailGraphic railGraphic;
+    /// <summary>世界 XZ → 小地图锚点坐标（交给线渲染器做投影回调）</summary>
+    Func<Vector2, Vector2> projectToMap;
+    /// <summary>重建路线时复用的临时表（<c>SetRoutes</c> 会深拷贝，这里可以放心复用）</summary>
+    readonly List<List<Vector2>> railRoutes = new();
 
     float time;
     [SerializeField]
@@ -114,6 +140,15 @@ public class MiniMapWnd : Window
         center = new(Vector2.one * (TaskManager.Instance.nowTask.MapSize) / 2, 8, 0.1f, Vector2.Lerp, Vector2.Distance);
         //Debug.LogError("中心"+center.Target);
 
+        // 铁轨路线：轨道在任务 InitMission 阶段就规划好了（铺轨协程第一个 yield 之前）⇒ 这里一定读得到
+        // （真出问题时可以把这个开关关掉：整条功能不建对象、不进画线代码）
+        if (DrawRailRoutes)
+        {
+            projectToMap = WorldPosToMapPos;
+            CreateRailGraphic();
+            RefreshRailRoutes();
+        }
+
         InputManager.BindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
 
         //此时玩家已经诞生
@@ -158,6 +193,10 @@ public class MiniMapWnd : Window
         //Debug.LogError("注册事件");
         WndManager.OnWindowStateChange += OnWindowStateChange;
         UnitEventBus.OnPlayerDead += OnPlayerDown;
+
+        // 每次打开都重投一次路线：隐藏期间轨道可能才铺完（条数会变），网格也可能没赶上上一帧的尺寸
+        RefreshRailRoutesIfChanged();
+        if (railGraphic != null) railGraphic.SetVerticesDirty();
     }
 
     protected override void HideWnd()
@@ -198,7 +237,13 @@ public class MiniMapWnd : Window
             for (int i=0; i < EnemyCount; ++i){
                 EnemyPoint[i].Point.anchoredPosition = WorldPosToMapPos(EnemyPoint[i].Pos);
             }
+
+            // 铁轨是折线网格：地图平移/缩放的每一帧都要重新投影（静止后这个分支不再进入，也就不会重画）
+            if (railGraphic != null) railGraphic.SetVerticesDirty();
         }
+
+        // 火车图标跟列车实际位置走（车在动 ⇒ 必须每帧，不能放进上面的"地图插值"分支）
+        RefreshTrainPoints();
 
 
 
@@ -218,6 +263,7 @@ public class MiniMapWnd : Window
         {
             time -= 2;
             RefreshEnemy();
+            RefreshRailRoutesIfChanged();
         }
         var value = Input.GetAxis("Mouse ScrollWheel");
         if (value != 0)
@@ -301,6 +347,117 @@ public class MiniMapWnd : Window
         SetActive(re,false);
         return re;
     }
+
+    #region 火车图标
+
+    /// <summary>
+    /// 每帧把"在跑的列车"映射成小地图图标：车没了就隐藏，多列同时在跑就多摆几个。
+    /// <para>数据源是 <see cref="MissionInterceptTrain.GetLiveTrain"/>（车头 <see cref="TrainUnit.Position"/> = 当前世界 XZ）。</para>
+    /// </summary>
+    private void RefreshTrainPoints()
+    {
+        MissionInterceptTrain train = MissionInterceptTrain.Active;
+        int count = train != null ? train.LiveTrainCount : 0;
+        for (int i = 0; i < count; i++)
+        {
+            TrainUnit unit = train.GetLiveTrain(i);
+            if (unit == null) continue;                 // 刚销毁/到站的那一帧
+            while (TrainPoints.Count <= i) AddTrainPoint(train);
+            RectTransform point = TrainPoints[i];
+            point.anchoredPosition = WorldPosToMapPos(unit.Position);
+            if (!point.gameObject.activeSelf) SetActive(point, true);
+        }
+        // 多出来的图标全部收掉（上一班车开走了）
+        for (int i = count; i < TrainPoints.Count; i++)
+        {
+            if (TrainPoints[i].gameObject.activeSelf) SetActive(TrainPoints[i], false);
+        }
+    }
+
+    /// <summary>造一个"任务点样式"的火车图标（复用 <see cref="MissionPointPrefab"/>：关掉区域圈与外框，只留图标体）</summary>
+    private void AddTrainPoint(MissionInterceptTrain train)
+    {
+        RectTransform point = (RectTransform)Instantiate(MissionPointPrefab, MissionPointRoot).transform;
+        point.gameObject.name = "Train_" + TrainPoints.Count;
+        SetActive(point.GetChild(0), false);        // 0 = 区域圈（列车没有 AreaRange）
+        SetActive(point.GetChild(1), true);         // 1 = 图标体
+        SetActive(point.GetChild(1, 0), false);     // 1,0 = 外框（任务才有的装饰）
+        // 图标为空时 Image 不生成几何（= 不可见）⇒ 这里留一条日志，别让人对着"没有图标"猜
+        if (train.icon == null) Debug.LogWarning("拦截火车：任务没有配图标 ⇒ 小地图上的火车图标不会显示", train);
+        SetSprite(point.GetChild(1, 1), train.icon);
+        SetColor(point.GetChild(1, 1), MainColor);
+        TrainPoints.Add(point);
+    }
+
+    #endregion
+
+    #region 铁轨路线
+
+    /// <summary>
+    /// 运行时建一条"铁轨路线线"（完全由代码驱动，场景/预制体不用配任何东西）。
+    /// <para>挂在 <see cref="MissionPointRoot"/> 下（同尺寸、同样铺满）：那里正好在底图之上、任务点图标之下；
+    /// 小地图根节点上的 <c>Mask</c> 会顺带把出界的部分挡掉。</para>
+    /// </summary>
+    private void CreateRailGraphic()
+    {
+        if (railGraphic != null) return;
+
+        // ⚠ 必须显式带 CanvasRenderer：`[RequireComponent]` 只在编辑器 Add Component 菜单生效，
+        //   **运行时 AddComponent 不会自动补** ⇒ 少了它，Graphic 的网格提交不上去（Hierarchy 里就是个空物体）。
+        GameObject go = new("RailRoutes", typeof(RectTransform), typeof(CanvasRenderer));
+        go.layer = gameObject.layer;
+        RectTransform rect = (RectTransform)go.transform;
+        rect.SetParent(MissionPointRoot, false);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.localScale = Vector3.one;
+        rect.SetSiblingIndex(0);
+
+        railGraphic = go.AddComponent<MiniMapRailGraphic>();
+        railGraphic.raycastTarget = false;
+        railGraphic.color = RailColor;
+        railGraphic.Width = RailWidth;
+    }
+
+    /// <summary>
+    /// 把当前这局的铁轨折线交给 <see cref="railGraphic"/>。
+    /// <para>⚠ 轨道点阵的 XZ 就是世界坐标（<c>WSToTS</c> 只改高度），所以直接喂 <c>x/z</c> 即可。</para>
+    /// <para>任务结束后 <see cref="MissionInterceptTrain.Active"/> 为空 ⇒ 什么都不做：已铺的轨道留作场景遗迹，
+    /// 小地图上的线也跟着留着。</para>
+    /// </summary>
+    private void RefreshRailRoutes()
+    {
+        if (railGraphic == null) return;
+        MissionInterceptTrain train = MissionInterceptTrain.Active;
+        if (train == null) return;
+
+        railRoutes.Clear();
+        IReadOnlyList<RailTrack> tracks = train.Tracks;
+        for (int i = 0; i < tracks.Count; i++)
+        {
+            List<Vector3> points = tracks[i].Points;
+            if (points == null || points.Count < 2) continue;
+            List<Vector2> route = new(points.Count);
+            for (int j = 0; j < points.Count; j++) route.Add(new Vector2(points[j].x, points[j].z));
+            railRoutes.Add(route);
+        }
+        railGraphic.SetRoutes(railRoutes, projectToMap);
+    }
+
+    /// <summary>轨道条数变了才重建（轨道是开局一次性规划完的，正常只重建一次）</summary>
+    private void RefreshRailRoutesIfChanged()
+    {
+        if (railGraphic == null) return;
+        MissionInterceptTrain train = MissionInterceptTrain.Active;
+        if (train == null) return;                       // 任务已结束：保留现有路线
+        if (train.Tracks.Count == railGraphic.RouteCount) return;
+        RefreshRailRoutes();
+    }
+
+    #endregion
 
     private Vector2 WorldPosToMapPos(Vector2 vector) {
         //Debug.LogError("原位置"+vector);

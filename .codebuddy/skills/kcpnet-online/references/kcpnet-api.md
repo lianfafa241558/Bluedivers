@@ -346,3 +346,20 @@ public static class EncryptionHelper
 
 - 握手流程由库内部驱动：服务器 `GetPublicKey()` → 客户端 `GenerateAesKey()` + `EncryptAesKeyWithRsa()` → 服务器 `DecryptAesKey()` + `StoreSessionKey()` → 之后会话用 `AesKey` + `EncryptionHelper` 加解密。
 - 项目当前**没有**任何安全配置调用，属于"库自带但未显式启用/未自定义"的能力；若要替换日志输出（例如接到项目自己的日志系统），改 `KCPTool.LogFunc/ColorLogFunc` 等静态委托即可，`NetHostSvc` 里已经在用 `KCPTool.ColorLog`。
+
+---
+
+## 原 SKILL.md「库 API 速查」全文（2026-10-18 搬入）
+
+## 库 API 速查（完整签名 / 依赖矩阵 → `references/kcpnet-api.md`）
+
+- **端口与心跳的唯一来源 `NetConfig`**（⚠ 它在**库内部**，工程里没有 .cs ⇒ 常量改不了，只能逐会话设 `TimeoutMs`）：
+  `HostGamePort=17666`、`LanBroadcastPort=29800`、`LanSelfBroadcastPort=29801`、`HeartbeatIntervalMs=3000`、`DefaultTimeoutMs=15000`。
+- **`KCPNet<T,K>`**（`T`=会话类型、`K`=消息类型，本项目 `K` = `NetMessage`）：`StartAsClient/StartAsServer`、`ConnectServer`、`SendToAll`、
+  `TryGetSession`、`GetSessions`、`CloseClient/CloseServer`、三个会话事件、`ClientId`（持久会话标识）。⚠ ctor 是 `KCPNet(bool isUnityEnvironment = true)`
+  （**可选参数**，别误判成"应该传参"，`02_Net` 里 `new KCPNet<...>()` 是对的）。完整签名 → `references/kcpnet-api.md`。
+- **`KCPSession<T>`**：必须 override `Serializer` + 至少 `OnReciveMsg`。⚠ 库基类**自己每 3s 双向发"心跳裸字节"**（带魔数、**不进 `MessageCenter`**），
+  超时看 `_lastRecvTimeUtcTicks`（15s、任意 UDP 包都刷）⇒ **它替代不了应用层 `PingReq/Rsp`**（1001/1002 是 `RttMs` 唯一来源，"谁是玩家"的时钟口径也不同）。
+- **发现层**：`LanDiscoveryConfig.Setup(...)` 是改广播参数的唯一入口（参数全可选）；`LanRoomInfo` 是房间模型（13 字段含真字段 `Difficulty/TaskMain/InGame/Source`，
+  `FromJson` **忽略未知 key、缺 key 给默认值** ⇒ 新旧房主可混联）；`LanDiscoverer.Scan()` 是**异步**的。
+- **信封**：`NetMessage : KCPMsg`（`int CmdId` + `byte[] Data`）+ `NetMessageSerializer.Instance`；`KCPTool.*Log` 是库日志出口。

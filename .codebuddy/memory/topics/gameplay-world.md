@@ -1,6 +1,6 @@
 # 主题 · 家具 / 任务 / 事件 / 逻辑帧 / 存档 / 地形
 
-> 由 `gameplay.md` 拆出（2026-10-11）。预算 ≤ 8000 字符。同伴：`gameplay.md`（战斗/AI/伤害/寻路/玩家/表现）。
+> 由 `gameplay.md` 拆出（2026-10-11）。预算 ≤ 8000 字符。同伴：`gameplay.md`（战斗/AI/伤害/组件存活）、`gameplay-player.md`（玩家/相机/武器/战备/寻路）。
 > ⚠ 原文已下沉：`archive/topics-snapshot-20261011/gameplay.md`。
 
 ## 家具 / 手持 / 交互
@@ -48,3 +48,18 @@
 - ⭐ **主地形 = 一图一份 `TerrainData`**：`MapData_SO.terrainAsset` 持有，`BattleManager.InitTerrain` 在**读 terrainData / 设 size / SetTextures 之前**换上（留空 = 沿用 BattleScene 里那份 `MainMap`）。⚠ 打包端 `treePrototypes`/`detailPrototypes` 的 setter 是 **Editor-only**（只刷"only implemented in editor"、什么都不改）⇒ 原型**只能烘在资产里**；生成入口 `Tools/地形/生成每图 TerrainData（方案A）`（`Assets/Editor/TerrainDataBaker.cs`，**改了原型数组后打包前必跑**）+ `Tools/地形/体检`
 - ⚠⚠ **`TerrainCollider` 自带独立一份 `terrainData` 引用、不跟随 `Terrain` 组件** ⇒ 换地形时必须同时 `terrain.GetComponent<TerrainCollider>().terrainData = ...`，否则"看着是新地形、脚下踩空/悬空"（2026-10-11 修）
 - ⚠ 地形资产硬约束：`detailResolution`/`detailResolutionPerPatch` 是**只读属性**（脚本改不了，运行时也没人赋值）⇒ 专属资产**必须由"复制 MainMap"得来**，`new TerrainData()` 会让草分辨率变默认值而变糙；能缩的只有运行时**每次都会重设**的 `heightmapResolution`(→33)/`alphamapResolution`(→16)（`BattleManager` + `ApplyAlphamapsInChunks` 整张重写混合图），再加上**把细节（草）层全部清零**（`ClearAllDetailLayers`，草每局现场生成）⇒ 单份 13MB → 1.17MB → **约 49KB**（7 份合计 ~344KB）。⚠ 烘焙顺序必须**先清树实例、再换 `treePrototypes`**（反了会逐条报 `Tree removed: invalid prototype N`）。⚠ `terrainLayers` 不能省：`SetTextures` 只改已有层的 diffuse/tile、**从不建层**
+
+> 以下由 `net-battle.md` §7.2d 并入（2026-10-18）：一个 float 被 5 处按 5 种语义复用；
+> 结论是**有意不同步**（结果早已由 4036/4046/4049 过网）。联机口径见 `net-battle.md` / `net-damage.md`。
+
+### 7.2d `Furniture_Attached.ExtFloatParameter` 为什么不同步（2026-10-12 查证）
+- 定义：`Furniture_Attached.cs:89`（`[InspectorName("外部浮点数参数")]`）—— **一个 float 被 5 处按 5 种语义复用**。
+- 全仓**只有两处写**（其余全是读 ⇒ 那些是 prefab 上配的常量）：`KeyScreenControl.cs:401/407`（旋钮 `+= 10*deltaTime` 累加）、
+  `Furniture_General.cs:139-143`（`SignaTower`：把累加值当"本帧转角"，`relatedTrans.Rotate(...)` 后 `= 0`）。
+- 五处用法：① `Furniture_Artillery.cs:80` 放置上限 / `:144` 炮弹下标·伤害档位（读）；② `OOPart.cs:27` 采集数量（读）；
+  ③ `Furniture_General.cs:149` `Animator.Play` 的**层号**（读）；④ KeyScreen 旋钮累加量（写）；⑤ SignaTower 转角（写+清零）。
+- 结论：**不同步是对的**。①②③ 是 prefab 常量（两端同一个资产 ⇒ 天生一致）；④⑤ 是"每帧累加、读后清零"的**瞬态输入积分** ——
+  同步它得每帧发消息，且丢一帧/频率不同就永远对不上角度。而**结果**早就在网上了：终端按键 4049（远端把键盘换成远端按键、跑同一套
+  `DirectionUpdate` ⇒ 累加量自然算出同一份）、家具交互 4036（`SyncId` + `Operate()` 重放）、任务阶段 4046。
+- 真正的坏味道不是"没同步"，而是**一个字段混 5 种语义**（角度/个数/animator 层号/上限）⇒ 将来要拆就按类型拆成具名字段
+  （`ShellLimit`/`ShellIndex`/`CollectCount`/`AnimatorLayer`/`RotationDelta`）。

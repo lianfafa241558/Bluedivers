@@ -72,6 +72,20 @@ namespace FPSGame.Game
         public IHealth Health { get; private set; }
         private Actor Actor { get; set; }
 
+        /// <summary>
+        /// 伤害转发目标：本肢体<b>不自己扣血</b>，把整包伤害交给 <see cref="relay"/> 的 <see cref="Damageable"/> 结算。
+        /// <para>▍用在哪（2026-10-18）：火车车厢 —— 一列车只有车头是 Actor/Health，车厢只是"能被打中的壳"。
+        /// 车厢预制体上带的是 <see cref="Damageable"/> 但<b>没有任何 Health</b> ⇒ <see cref="InflictDamage"/>
+        /// 会在第一行 return，表现就是"打车厢不掉血、只有车头有效"。</para>
+        /// <para>⚠ 别改成"给车厢各加一个 Actor + Health"：那要额外做 NetId 分配、伤害与死亡同步、
+        /// 击杀/雷达/小地图登记，而它们本来就该共享一管血。转发 = 一列车一份权威血量，两端自然一致。</para>
+        /// <para>⚠ 非序列化：运行时由生成方指定（同 <c>TransferDamageable.source</c>）。</para>
+        /// </summary>
+        [System.NonSerialized] public Damageable relay;
+
+        /// <summary>指定伤害转发目标（见 <see cref="relay"/>）</summary>
+        public void SetRelay(Damageable target) => relay = target;
+
 
 
         /// <summary>护甲破坏(计算流血)</summary>
@@ -79,7 +93,7 @@ namespace FPSGame.Game
 
         bool IDamageable.IsWeakness => isWeakness;
 
-        GameObject IDamageable.ActorGo => Actor.gameObject;
+        GameObject IDamageable.ActorGo => relay != null ? ((IDamageable)relay).ActorGo : Actor.gameObject;
 
         public IDamageable Source => this;
 
@@ -257,6 +271,12 @@ namespace FPSGame.Game
         /// <para>▍来源有**两个**：<c>DamageOrigin</c>（起源 = 统计口径，本方法所有减伤/友伤判定都用它）
         /// 与 <c>DamageCaused</c>（直接来源 = 显示/AI 口径，原样透传给 <c>Health</c>）。见 <c>DamagePacket</c>。</para></param>
         public void InflictDamage(DamagePacket packet) {
+            // 转发肢体（车厢这类"共用车头血量"的壳）：整包交给主体去算，本组件不参与减伤/护甲/死亡
+            if (relay != null)
+            {
+                relay.InflictDamage(packet);
+                return;
+            }
             if (!Health.IsValidMono()) return;
             if (!packet.DamageGroups.IsValid()|| packet.DamageGroups.Count==0) return;
 
@@ -432,6 +452,8 @@ namespace FPSGame.Game
         /// <returns>是否继续 tick</returns>
         public override bool Tick()
         {
+            // 转发肢体没有自己的 Health（血在主体上）⇒ 流血/护甲 tick 一律不跑
+            if (!Health.IsValidMono()) return true;
             // ★ 联机（2026-10-12）：tick 伤害**只由房主（或单机）本地结算并广播** —— 若成员端也结算，
             //   它还会把这一拍上报给房主（`EnemyController._OnDamaged`）⇒ 同一段流血被叠加 N 份。
             //   玩家/盟友例外（他们的血本机权威）。见 BattleState.IsTickDamageAuthority。

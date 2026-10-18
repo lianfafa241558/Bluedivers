@@ -39,19 +39,13 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 | 字段 | 含义 | 谁读 |
 |---|---|---|
 | `DamageOrigin` | **起源**：谁该记这笔账（武器持有者 / 召唤物·战备的呼叫者） | 数值与统计 —— 减伤·友伤·全队强化、护甲破坏、命中次数、击杀归属、`Actor.OnDie → UnitKill` |
-| `DamageCaused` | **直接来源**：屏幕上该显示谁（玩家本人的枪 / **炮台本身** / 地雷 / 补给舱） | 显示与 AI —— 受击方向与闪变、倒地播报、`DetectionModule` 阵营过滤与受击改目标 |
+| `DamageCaused` | **直接来源**：屏幕上该显示谁（玩家的枪 / **炮台本身** / 地雷 / 补给舱） | 显示与 AI —— 受击方向与闪变、倒地播报、`DetectionModule` 阵营过滤与受击改目标 |
 
-- 生产者**一处收口**在 `ProjectileBase.BuildHitData`：`soure = Owner`（起源）、
-  `caused = WeaponBase.GetComponentInParent<Actor>()?.gameObject ?? Owner`（炮台武器挂在炮台根下 ⇒ 直接来源自然是炮台）；
-  无 `Actor` 的物件（地雷 `DeployableMine` / 空投舱 `AirdropPod`）在各自构造点显式 `caused = gameObject`。
-- `DamageCaused == null` ⇒ `Health.TakeDamage` 内部回落成 `DamageOrigin` ⇒ **新增构造点可以只填 origin**（等价于拆分前行为）；
-  但"要显示成物件自己"就必须显式填 `caused`。
-- 事件签名：`Health.OnDie(caused, origin)`、`Health.OnDamaged(value, caused, origin, collider, noSource)`；
-  `IHealth.TakeDamage(..., demolishValue, damageCaused = null)`（第 3 参仍是 origin）。
-  ⚠ `OnDamaged` 有 5 个参数，**超出 `UnityAction` 上限**（只有 ≤4 个泛型版本）⇒ 该事件必须用 `System.Action<...>`。
-- ⚠ `caused` 可能是**没有 `Actor` 的物件** ⇒ 每处 `caused.GetComponent<Actor>()` 都要判空；
-  参考口径（`EnemyController._OnDamaged`）：取不到可用单位身份就**回落 origin** 做阵营判定。
-- 联机：`DamageMsg.CausedNetId`（`AttackerNetId` 仍是**起源**，语义未变），接收端两个来源各自解析。详见 `memory/topics/net-battle.md`。
+- 生产者**一处收口**在 `ProjectileBase.BuildHitData`；`DamageCaused == null` ⇒ 内部回落成 `DamageOrigin`（新增构造点可只填 origin）；
+  要"显示成物件自己"（地雷/空投舱）就显式 `caused = gameObject`。
+- ⚠ 事件签名：`Health.OnDie(caused, origin)`、`Health.OnDamaged(value, caused, origin, collider, noSource)` —— **5 参超出 `UnityAction` 上限**（它最多 4 个泛型）⇒ 必须用 `System.Action<...>`。
+- ⚠ `caused` 可能**没有 `Actor`** ⇒ 每处 `caused.GetComponent<Actor>()` 都要判空（口径：取不到就回落 origin 做阵营判定）。
+- 逐点清单（哪个调用点读哪个）+ 联机 `DamageMsg.CausedNetId` → `memory/topics/gameplay.md §伤害管线`、`net-damage.md`。
 
 ### 数字前缀模块划分
 
@@ -75,38 +69,16 @@ description: Bluedivers Unity 项目专用开发指南。该 skill 在处理 Blu
 
 ### 程序集定义（asmdef）
 
-> **完整诊断数据、目标分层表、6 个解耦手法与 Phase 0~7 执行清单见 `references/assembly-plan.md`（2026-09-30 实测重写）。**
+> **判据留本节，名单不留**：当前真实 asmdef 名单（**27 个**，2026-10-18 实测）用 `python .codebuddy/plans/list_asmdefs.py` 现取；
+> 类型归属/命名空间/目录约定 → `memory/topics/architecture.md`；目标分层表 + 6 个解耦手法 + Phase 0~7 执行清单 → `references/assembly-plan.md`。
+> ⚠ 本文件历史版本的"16 个 asmdef / 464 cs / 仍在 `Assembly-CSharp` 295 cs"是 2026-09-30 快照，**已作废**。
 
-现状（2026-09-30 实测）：`Assets/Scripts` 下 **464 个 cs**（**asmdef 内 169 / `Assembly-CSharp` 295**），自有 asmdef **16 个**（+`MackySoft` 3）：
-
-| 已有 asmdef | 覆盖目录 | 依赖 |
-|---|---|---|
-| `00_Attribute` | `00Attribute/` | — |
-| `00_Core` | `00Core/`（含 `Interfaces`/`Timer`） | 00_Attribute |
-| `01_GameContract` | `00GameContract/`（**跨层契约唯一归属地**：`I_Actor/I_Health/I_Damageable/IEquippable/IFurniture/FurnitureFlag/IStepPress/ISubmittableHandItem/IVehicleUIController/TargetCfg/IDamageData` + 跨层枚举 `OOPartEnum/MissionEnum/SizeType/WeatherType/TerrainType`） | 00_Core, 00_Attribute |
-| `00_Utils` | `00Tools/Test/`（⚠ **`00Tools/` 根目录没有 asmdef**） | 00_Core, 01_GameContract, 00_Attribute, Unity.AI.Navigation |
-| `FpsGame.MapUtils` | `08Map/` | 00_Attribute, 00_Utils, 00_Core, Unity.AI.Navigation |
-| `DayNightSystem` | `DayNightSystem/` | 00_Attribute, Fog, URP Core |
-| `05_EffectComp` | `Effect/EffectComp/` | 01_GameContract, 00_Utils, 00_Core, MackySoft |
-| `04_UI` | `04UI/Assembly/` | 00_Core, 00_Utils, 00_WndTools, TMP |
-| `00_WndTools` | `04UI/WndTool/` | 00_Core, 00_Utils, TMP |
-| `NavMeshComponents` | `Plugins/NavMeshComponents/` | — |
-| `02_Rendering`（**2026-09-30 新增**） | `Rendering/`（含 `Snow/`，原 `Feature/Snow` 已并入） | `00_Utils`(`TerrainUtils`), `DayNightSystem`(`WeatherAtmosphereController`), URP/Core RP |
-| `04_Data`（**2026-09-30 新增**） | `02Data/`（14 个纯数据 SO + `Variant/`） | `00_Attribute`, `00_Core`, `01_GameContract`, `00_Utils` |
-| `03_Audio`（**2026-09-30 新增**） | `03Audio/` | `00_Core`, `00_Utils` |
-| `02_Net`（**2026-09-30 新增**） | `NetTmp/`（12 cs，对外**零引用**，依赖插件 `KCPNet.dll`） | — |
-| `05_UnitCore`（**2026-09-30 新增**） | `05UnitCore/`（19 cs：`Actor`/`UnitQueryGrid`/`UnitEventSub`/`ActorsManager`/`Health*`/`Damageable`/`Shield*`/`TransferDamageable`/`AutoDeath`/`MinMaxParameters`/`GameConstants`） | `00_Attribute`, `00_Core`, `01_GameContract`, `00_Utils`, `03_Audio`, `04_Data` |
-| `EditorTools` | `Assets/Editor/Tool/` | **`references: []`**（看不到 UGUI/项目类型） |
-
-**仍在 `Assembly-CSharp`（295 cs / `Assets/Scripts` 464）**：`02Game/Game`(58)、`02Game/AI`(44)、`02Game/Gameplay`(22)、`02Game/05Interactable`(22)、`04UI/UI`(20)、`02Game/03Player`(16)、`01Manager/Battle`(16)、`01Manager/Global`(13)、`00Tools/` 根(9：`FpsHelper*`6/`LogicBehaviour`/`SingletonNet`/`TechnicalDebt`)、`Plugins/DynamicBone`(4)、`02Game/06Npc`(4)、`Effect/` 根+`VFX`、`04UI/` 根…
-已切出：`02_Rendering`（`Rendering/`+`Snow/`）、`04_Data`（`02Data/`）、`03_Audio`（`03Audio/`）、`02_Net`（`NetTmp/`）、`05_UnitCore`（`05UnitCore/`，19 cs）—— 均 2026-09-30。
-
-⚠⚠ **铁律（双向）**：`autoReferenced:true` 只保证"`Assembly-CSharp` 看得见 asmdef"；**反向是硬墙 —— asmdef 永远看不到 `Assembly-CSharp` 的类型**。⇒ 新程序集要用到的每一样东西，必须**已经**在某个 asmdef / 插件 dll 里（`05_UnitCore` 就是被 `00Tools/` 根的 `IsValid` 扩展卡住的）。**扫依赖有两个盲区**：扩展方法（调用点不出现类名）、`internal` 成员。
-
-⚠ **不要只加 asmdef**：`01Manager ↔ 02Game`（含 `02Data`/`04UI`/`Effect`）是一个 342 文件的强连通分量，必须先按下表消回边，顺序不能颠倒。
-⚠ **P5（玩法层）实测结论**：玩法层**不能逐个切**（`08↔07` 25/3、`07↔06Weapon` 13/3、`07↔06AI` 7/1 双向互引）⇒ **合并成一个 `06_Gameplay`（~160 cs，含 `FpsHelper*`/`LogicBehaviour`）**；前提是 ① `00Tools` 根的 manager 引用清零（✅ P5-0 已完成）② 管理器契约扩容 + 两条事件总线搬进玩法层。详见 `references/assembly-plan.md` §Phase 5，重跑 `python .codebuddy/plans/p5_recon.py`。
-
-新增脚本前先查 `references/assembly-plan.md` §3 的目标分层表，确认目标程序集与允许的引用；**新 asmdef 一律 `autoReferenced:false` + 显式 `references`**（现有 11 个是 `true`，属历史遗留，不要再扩散）。
+- ⚠⚠ **铁律（双向）**：`autoReferenced:true` 只保证"`Assembly-CSharp` 看得见 asmdef"；**反向是硬墙 —— asmdef 永远看不到 `Assembly-CSharp` 的类型**。
+  ⇒ 新程序集要用到的每一样东西，必须**已经**在某个 asmdef / 插件 dll 里。**扫依赖的两个盲区**：扩展方法（调用点不出现类名）、`internal` 成员。
+- ⚠ **不要只加一个 asmdef 就完事**：`01Manager`/`09_Managers ↔ 02Game/06_Gameplay`（含 `02Data`/`04UI`/`Effect`）是一个几百文件的强连通分量
+  ⇒ 必须先在 `references/assembly-plan.md` 里按顺序消回边；玩法层**不能逐个切**（07↔06 双向互引）⇒ 合并成一个 `06_Gameplay`。
+- **新 asmdef 一律 `autoReferenced:false` + 显式 `references`**（历史遗留的 `true` 不要再扩散）；新增脚本前先确认目标程序集与允许的引用方向（编号大的可引用编号小的，反之禁止）。
+- ⚠ 改 asmdef 会**触发全量重编译**（用户前台即时重编）⇒ 动手前先告知用户。
 
 ## 命名约定速查
 
@@ -190,7 +162,7 @@ python -X utf8 .codebuddy/plans/offline_compile.py 06_Gameplay 10_UI 09_Managers
 > 分层：传输/编解码 `02_Net`（`Assets/Scripts/NetTmp/`）→ 游戏协议 `07_NetGame`（`Assets/Scripts/07NetGame/`）→ 消费方 `09_Managers` / `10_UI`。
 > ⚠ **Photon PUN 已彻底移除**：`00Tools/SingletonNet.cs`、`01Manager/Global/NetManager.cs` 已删除，全工程只剩注释里的历史提及（`LogicFrameHost` / `BridgeSys`）。
 
-### 要点（详见 `kcpnet-online` skill、`memory/topics/net.md`・`net-flow.md`・`net-battle.md`）
+### 要点（详见 `kcpnet-online` skill + `memory/topics/net.md`・`net-flow.md`；战斗同步总览 `net-battle.md`，子篇 `net-battle-msg.md`・`net-netid.md`・`net-spawn.md`・`net-damage.md`・`net-vehicle*.md`）
 - **业务层收发一律走 `NetRoomFlow` 的 `Send*` / `On*`**，别直接找 `NetSvc`/`NetHostSvc`；能发起回连的只有 `NetRoomFlow.Join`（UI）与 `LanRoomDemo`（演示类，场景里没有引用）。
 - **传输层回调跑在 ThreadPool 线程** ⇒ 回调里绝不能碰 Unity API/游戏状态：只入队（`NetInbox`），主线程 `Update` 里分发。
 - **房主权威**：成员上报 → 房主结算/转发 → 全体应用；**每条同步都要有回环门**（远端应用后本地触发的事件不能再被上行桥看到而重发）。
@@ -211,8 +183,8 @@ python -X utf8 .codebuddy/plans/offline_compile.py 06_Gameplay 10_UI 09_Managers
 ## 已知问题与避坑
 
 - ~~运行时误引 UnityEditor~~：已于 2026-08-07 修复（`EnemyMobile.cs`、`RoleData_SO.cs`、`SoundGroup_SO.cs`、`TaskManager.cs` 添加 `#if UNITY_EDITOR` 守卫）。
-- **SingletonNet 的 RPC 封装有误**：`RPC(nameof(action), ...)` 中 `nameof(action)` 取到的是局部参数名 `"action"` 而非委托目标方法名（第 63 行才用 `action.Method.Name`），说明该 RPC 封装未真正跑通。
-- **确定性随机源未统一收口**：`BattleRandom`（`BattleManager`）与 `WaveManager` 各自的 `System.Random` 并存。将来做联机时需统一收口到单一确定性随机源。
+- ~~SingletonNet 的 RPC 封装有误~~：Photon 已彻底移除、`00Tools/SingletonNet.cs` 已删 ⇒ 该问题随类消失。
+- **确定性随机源已收口**（2026-10 现状，勿再当欠账）：`BattleRandom` + `SeedUtil.Derive(seed, purpose)`（`00Tools/SeedUtil.cs`）；战斗路径禁用 `UnityEngine.Random`/`RandomUtils`（后者只喂大厅随机）。⚠ "会重试/次数不定"的场合要用 `Derive` 纯函数而非一条流，细则 → `memory/topics/net-battle.md §2`。
 - **接口命名不统一**：历史代码中少量接口使用标准 `I_` 前缀，新接口必须使用 `I` 前缀。
 - **字段暴露方式不统一**：存量 `public` 字段较多，新代码优先 `[SerializeField] private`，存量逐步迁移。
 - **枚举后缀不统一**：部分枚举带 `Enum` 后缀（`GameStateEnum`），新代码加后缀。

@@ -131,8 +131,22 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     /// <summary>上次落地时间</summary>
     [SerializeField]
     private float m_LastTimeLand = 0;
+
+    /// <summary>本次腾空期间的最大下坠速度(正数)</summary>
+    /// <para>落地伤害必须用它，而不是 <see cref="OnLand"/> 当帧读到的 <see cref="CharacterVelocity"/>：
+    /// 落地后竖直速度要经 GroundMove 的 Lerp 好几帧才归零，只要接地判定抖一帧（台阶棱角、坡沿，
+    /// 或 GroundCheck 末尾那条 Controller.isGrounded 兜底与胶囊探测口径不一致），下一帧就会拿同一个
+    /// 残留速度**再结算一次**落地伤害 ⇒ 反复掉血直到摔死。</para>
+    PEInt m_FallPeakSpeed;
+
+    /// <summary>上次结算坠落伤害的时间</summary>
+    float m_LastFallDamageTime = -999f;
+
     /// <summary>在跳跃进过一段时间后才开始检测是否落地</summary>
     const float k_JumpGroundingPreventionTime = 0.2f;
+
+    /// <summary>坠落伤害冷却：接地判定抖动时 `!lastState` 边沿会反复为真，冷却期内不重复扣血</summary>
+    const float k_FallDamageCooldown = 0.5f;
     // ⚠ 原 `k_GroundCheckDistanceInAir = 0.07f`（空中把探测距离压小）已于 2026-10-14 删除：
     //   它是"站在地上却被判空中 ⇒ 走不动"的成因之一（见 GroundCheck 里的说明）。
     /// <summary>地面法线</summary>
@@ -514,16 +528,19 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     /// <summary>落地</summary>
     void OnLand()
     {
-       
+        // 取本次腾空的最大下坠速度并清空：一次下坠只结算一次伤害
+        PEInt fallSpeed = m_FallPeakSpeed;
+        m_FallPeakSpeed = (PEInt)0;
+
         //落地伤害
-        //float fallSpeed = -Mathf.Min(CharacterVelocity.y, m_LatestImpactSpeed.y);
-        PEInt fallSpeed = -CharacterVelocity.y;//下坠的时候速度本身就是负数
-        PEInt fallSpeedRatio = (fallSpeed - MinSpeedForFallDamage) /
-                                (MaxSpeedForFallDamage - MinSpeedForFallDamage);
-        if (RecievesFallDamage && fallSpeedRatio > 0)
+        if (RecievesFallDamage && Time.time >= m_LastFallDamageTime + k_FallDamageCooldown &&
+            fallSpeed > (PEInt)MinSpeedForFallDamage)
         {
+            PEInt fallSpeedRatio = (fallSpeed - MinSpeedForFallDamage) /
+                                    (MaxSpeedForFallDamage - MinSpeedForFallDamage);
             PEInt dmgFromFall = PEMath.Lerp(FallDamageAtMinSpeed, FallDamageAtMaxSpeed, fallSpeedRatio);
             Health.TakeDamage(new() { new(DamageTypeEnum.Real, new(dmgFromFall.RawInt)) }, true, null, null, default,false);
+            m_LastFallDamageTime = Time.time;
 
             // 落地伤害
             if (Time.time >= m_LastTimeLand + k_JumpGroundingPreventionTime) AudioSource.PlayOneShot(FallDamageSfx);
@@ -712,6 +729,9 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         //添加重力
         ApplyGravity();
 
+        //记录本次腾空的最大下坠速度（落地结算用，见 m_FallPeakSpeed 的说明）
+        PEInt fallSpeed = -CharacterVelocity.y;
+        if (fallSpeed > m_FallPeakSpeed) m_FallPeakSpeed = fallSpeed;
     }
 
     #region 被压住自动脱困（动态物重叠玩家的兜底）

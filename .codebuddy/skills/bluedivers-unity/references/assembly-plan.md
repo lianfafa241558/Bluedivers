@@ -865,3 +865,44 @@ EditorTools / Editor.Drawer / Editor.DataEditor
 1. **架构守卫脚本**：把 `.codebuddy/plans/AsmDepScan.ps1` 当 CI / 提交前检查（`02Game/* -> 01Manager/*` 这类边超阈值就报警）。asmdef 管不到"同集内的跨命名空间越界"，脚本能。
 2. **命名空间纪律**：`FPSGame.AI` / `FPSGame.Player` / `FPSGame.Weapon` / `FpsGame.Mission` 各守其位，配合上面的脚本，等价于"软 asmdef"，成本几乎为零。
 3. **只在"依赖方向确定 + 被多方依赖"处切 asmdef**（底座 / 契约 / 数据 / 内核 / 表现 / 编辑器 / 第三方），**其余用文件夹 + 命名空间**。
+
+---
+
+# 附录：SKILL.md 原「程序集定义」节（2026-09-30 快照，**已作废**，2026-10-18 搬出）
+
+> 当时 16 个 asmdef / 464 cs；今天实测 27 个（见 plans/list_asmdefs.py）。仅作历史对照，**别照抄类型归属**。
+
+### 程序集定义（asmdef）
+
+> **完整诊断数据、目标分层表、6 个解耦手法与 Phase 0~7 执行清单见 `references/assembly-plan.md`（2026-09-30 实测重写）。**
+
+现状（2026-09-30 实测）：`Assets/Scripts` 下 **464 个 cs**（**asmdef 内 169 / `Assembly-CSharp` 295**），自有 asmdef **16 个**（+`MackySoft` 3）：
+
+| 已有 asmdef | 覆盖目录 | 依赖 |
+|---|---|---|
+| `00_Attribute` | `00Attribute/` | — |
+| `00_Core` | `00Core/`（含 `Interfaces`/`Timer`） | 00_Attribute |
+| `01_GameContract` | `00GameContract/`（**跨层契约唯一归属地**：`I_Actor/I_Health/I_Damageable/IEquippable/IFurniture/FurnitureFlag/IStepPress/ISubmittableHandItem/IVehicleUIController/TargetCfg/IDamageData` + 跨层枚举 `OOPartEnum/MissionEnum/SizeType/WeatherType/TerrainType`） | 00_Core, 00_Attribute |
+| `00_Utils` | `00Tools/Test/`（⚠ **`00Tools/` 根目录没有 asmdef**） | 00_Core, 01_GameContract, 00_Attribute, Unity.AI.Navigation |
+| `FpsGame.MapUtils` | `08Map/` | 00_Attribute, 00_Utils, 00_Core, Unity.AI.Navigation |
+| `DayNightSystem` | `DayNightSystem/` | 00_Attribute, Fog, URP Core |
+| `05_EffectComp` | `Effect/EffectComp/` | 01_GameContract, 00_Utils, 00_Core, MackySoft |
+| `04_UI` | `04UI/Assembly/` | 00_Core, 00_Utils, 00_WndTools, TMP |
+| `00_WndTools` | `04UI/WndTool/` | 00_Core, 00_Utils, TMP |
+| `NavMeshComponents` | `Plugins/NavMeshComponents/` | — |
+| `02_Rendering`（**2026-09-30 新增**） | `Rendering/`（含 `Snow/`，原 `Feature/Snow` 已并入） | `00_Utils`(`TerrainUtils`), `DayNightSystem`(`WeatherAtmosphereController`), URP/Core RP |
+| `04_Data`（**2026-09-30 新增**） | `02Data/`（14 个纯数据 SO + `Variant/`） | `00_Attribute`, `00_Core`, `01_GameContract`, `00_Utils` |
+| `03_Audio`（**2026-09-30 新增**） | `03Audio/` | `00_Core`, `00_Utils` |
+| `02_Net`（**2026-09-30 新增**） | `NetTmp/`（12 cs，对外**零引用**，依赖插件 `KCPNet.dll`） | — |
+| `05_UnitCore`（**2026-09-30 新增**） | `05UnitCore/`（19 cs：`Actor`/`UnitQueryGrid`/`UnitEventSub`/`ActorsManager`/`Health*`/`Damageable`/`Shield*`/`TransferDamageable`/`AutoDeath`/`MinMaxParameters`/`GameConstants`） | `00_Attribute`, `00_Core`, `01_GameContract`, `00_Utils`, `03_Audio`, `04_Data` |
+| `EditorTools` | `Assets/Editor/Tool/` | **`references: []`**（看不到 UGUI/项目类型） |
+
+**仍在 `Assembly-CSharp`（295 cs / `Assets/Scripts` 464）**：`02Game/Game`(58)、`02Game/AI`(44)、`02Game/Gameplay`(22)、`02Game/05Interactable`(22)、`04UI/UI`(20)、`02Game/03Player`(16)、`01Manager/Battle`(16)、`01Manager/Global`(13)、`00Tools/` 根(9：`FpsHelper*`6/`LogicBehaviour`/`SingletonNet`/`TechnicalDebt`)、`Plugins/DynamicBone`(4)、`02Game/06Npc`(4)、`Effect/` 根+`VFX`、`04UI/` 根…
+已切出：`02_Rendering`（`Rendering/`+`Snow/`）、`04_Data`（`02Data/`）、`03_Audio`（`03Audio/`）、`02_Net`（`NetTmp/`）、`05_UnitCore`（`05UnitCore/`，19 cs）—— 均 2026-09-30。
+
+⚠⚠ **铁律（双向）**：`autoReferenced:true` 只保证"`Assembly-CSharp` 看得见 asmdef"；**反向是硬墙 —— asmdef 永远看不到 `Assembly-CSharp` 的类型**。⇒ 新程序集要用到的每一样东西，必须**已经**在某个 asmdef / 插件 dll 里（`05_UnitCore` 就是被 `00Tools/` 根的 `IsValid` 扩展卡住的）。**扫依赖有两个盲区**：扩展方法（调用点不出现类名）、`internal` 成员。
+
+⚠ **不要只加 asmdef**：`01Manager ↔ 02Game`（含 `02Data`/`04UI`/`Effect`）是一个 342 文件的强连通分量，必须先按下表消回边，顺序不能颠倒。
+⚠ **P5（玩法层）实测结论**：玩法层**不能逐个切**（`08↔07` 25/3、`07↔06Weapon` 13/3、`07↔06AI` 7/1 双向互引）⇒ **合并成一个 `06_Gameplay`（~160 cs，含 `FpsHelper*`/`LogicBehaviour`）**；前提是 ① `00Tools` 根的 manager 引用清零（✅ P5-0 已完成）② 管理器契约扩容 + 两条事件总线搬进玩法层。详见 `references/assembly-plan.md` §Phase 5，重跑 `python .codebuddy/plans/p5_recon.py`。
+
+新增脚本前先查 `references/assembly-plan.md` §3 的目标分层表，确认目标程序集与允许的引用；**新 asmdef 一律 `autoReferenced:false` + 显式 `references`**（现有 11 个是 `true`，属历史遗留，不要再扩散）。

@@ -89,7 +89,7 @@ MonoBehaviour:
   completed: 0
   destroyTarget: 4
   escapeLimit: 2
-  firstDepartureDelay: 20
+  firstDepartureDelay: 60
   departureInterval: 180
   departureCount: 8
   trainEnginePrefab: {fileID: 843471801939785455, guid: 118658281521e9c48b169a89fa5b6749,
@@ -98,36 +98,19 @@ MonoBehaviour:
     type: 3}
   firstCarCount: 5
   maxCarCount: 9
-  trainSpeed: 4
+  trainSpeed: 3
   guardSquadsPerDeparture: 2
   guardSquadLimit: 6
+  trainArrowPrefab: {fileID: 6016595260609477246, guid: 224cece715e4da945b2295199b1d831e,
+    type: 3}
   guardSpawnBack: 25
+  guardLead: 24
   trackCount: 3
   railPrefab: {fileID: 4753779458894477454, guid: 34d5d1c2782b7b44e8e9e137149fed25,
     type: 3}
-  minAngleSeparation: 120
-  minChordRatio: 0.5
   edgeInset: 5
-  stepLength: 24
-  planExpand: 200
-  avoidMargin: 15
-  slopeWeight: 2
-  maxVertexTurnDeg: 8
-  smoothPasses: 3
-  bedStep: 8
-  bedSmoothLength: 60
-  flattenThreshold: 1.2
-  flattenBlend: 6
-  clearTarget: -1
-  clearStep: 8
-  clearMargin: 1.5
-  clearCanopy: 5
-  registerCorridor: 1
-  corridorRegisterRadius: 12
-  carSpacingFactor: 0.92
   additionalTurrets:
   - Key: 50
     Value: {fileID: 1938549503531534515, guid: 8fd11c40b860de64db0ab091cbb72a8f, type: 3}
   - Key: 50
     Value: {fileID: 4382435438422974075, guid: d7498174f79200143990bb72c665c3f2, type: 3}
-  turretMountName: Additional

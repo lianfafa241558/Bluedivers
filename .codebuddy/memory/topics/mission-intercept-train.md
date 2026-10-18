@@ -1,7 +1,7 @@
 # 拦截火车任务（MissionInterceptTrain）· 全貌与口径
 
 > 代码：`Assets/Scripts/06Gameplay/Mission/Main/` 下 `MissionInterceptTrain{,_Rail,_Train,_Turret,_Guard}.cs` + `RailPathPlanner.cs` + `RailMetrics.cs` + `RailTrack.cs` + `TrainUnit.cs`（程序集 `06_Gameplay`）；2026-10-15 建立、**2026-10-16 拆文件**（原来 3 个 partial 共 ~1550 行）。
-> 联机口径单独一份 → `net-battle.md §7.2x`（走 4052 的那部分）。
+> 联机口径单独一份 → `net-spawn.md §7.2x`（走 4052 的那部分）。
 
 ## 1. 文件分工（2026-10-16 拆分后）
 - **主文件 `MissionInterceptTrain.cs`**（~112 行）：任务字段 / 生命周期（`InitMission`→`BuildRailOnce`、`StartMission`、`Uninit`）/ 发车时刻表。⚠ `InitMission` 阶段（第一个 yield 之前）就把"规划 + 铁轨走廊登记"做完 ⇒ 之后创建的其它任务点/兴趣点**反过来躲开铁轨**（事后硬绕实测绕不出去）。
@@ -23,7 +23,7 @@
 - **联机**：车头 + 车厢（都没有 `Actor`）两端各自 Instantiate、靠**同名**对齐；**附加炮塔有 `Actor` ⇒ 必须走 `CreatUnit` + 4052 复刻**；卫队走房主 `CreatPatrol`。
 
 ## 3. 附加炮塔
-- 配置：`List<SKVP<int,GameObject>> additionalTurrets`（**Key 之和 = 单节车厢挂载概率 %**，命中后按各自 Key 占比抽预制体；总和 > 100 = 必挂、Key 退化成权重）+ `turretMountName`（默认 `Additional`）。
+- 配置：`List<SKVP<int,GameObject>> additionalTurrets`（**Key 之和 = 单节车厢挂载概率 %**，命中后按各自 Key 占比抽预制体；总和 > 100 = 必挂、Key 退化成权重）+ 挂点名常量 `TurretMountName = "Additional"`（2026-10-18 从字段收成常量）。
 - 挂点：`Resources/Prefabs/GameEvent/TrainEngineCar.prefab` 的 `Additional` 空子物体（局部 y = 8）；挂点缺失 = 告警 + 本节不挂（两端一致）。
 - 计划表 `turretPlan[班次][车厢] = 条目下标 / −1`，开局算一次；发车只查表、不再动随机流。
 - 槽位 `slot = 班次 × maxCarCount + 车厢序号`；车厢按名字 `TrainCar_{班次+1}_{车厢+1}` 找回。
@@ -41,11 +41,20 @@
   修法：像素用"到线段的**最近点投影参数 t**"定位（不用段的局部坐标系），**每个像素只由最近的那一段成型一次**（`bestDistance[]` 胜出 + 弧长 target），软门用**原始高度**判断要不要动土。
 - ⚠ 路基太"花"的三个旋钮：`bedSmoothLength`↑ ⇒ 纵坡更直（挖填更多）；`flattenThreshold`↑ ⇒ 小起伏**完全不动土**（消掉"半切"波纹）；`flattenBlend`↑ ⇒ 护坡更缓。
 - ⚠ 清物理不要用 `ClearInRectXZ`（**只支持轴对齐矩形**，斜轨会多清一大片）；沿弦向盖圆 `ClearInRadius`（半径 = 轨道半宽 + 余量）拼出胶囊走廊，铺完 `TerrainClearer.Flush()` 一次兑现。
-- ⚠ `clearTarget = All` 会连**巨型悬崖**（`RockCoverDestructor`）一起销毁 ⇒ 默认只 `VegetationAndDetail`。
+- ⚠ 清物目标带 `Cover` 会连**巨型悬崖**（`RockCoverDestructor`）一起销毁 ⇒ 只给 `VegetationAndDetail`。
+  （2026-10-18 落地成常量 `_Rail.cs` 的 `ClearTarget`。⚠ 纠正了一个坑：`Robbery.prefab` 里这一项存的是 **-1**（所有位都置上 = 连 Cover 一起清），常量按项目口径取 7。）
 
-## 5. Inspector 分组（可调项都在注释里写了"为什么"）
-轨道 / 轨道规划 / 路基 / 地表处理 / 任务 / 列车 / 列车生成 / 附加炮塔 / 火车卫队。
-（2026-10-16：`卫队落点后移(米)` 从「列车生成」挪进「火车卫队」；原「卫队跟随刷新(秒)」**已删** —— 刷新节拍由 `TickTime` 决定。字段名都没变，prefab 值不受影响。）
+## 5. Inspector 字段（2026-10-18 从 42 收到 **18**，同日加箭头后又变 **19**）
+判据：`Robbery.prefab` 逐字段比对代码默认值 ⇒ **只有 5 个偏离**（`departureCount` 8 / `trainSpeed` 3 / `edgeInset` 5 / `smoothPasses` 3 / `clearTarget` -1），其余"写完没再动过" ⇒ 24 个收成 `const`（**取值一律照 prefab 现值 ⇒ 行为不变**）。
+5 个分组（顺序 = 声明顺序）：
+- **任务**：`destroyTarget` / `escapeLimit` / `firstDepartureDelay` / `departureInterval` / `departureCount`
+- **列车**：`trainEnginePrefab` / `trainCarPrefab` / `firstCarCount` / `maxCarCount` / `trainSpeed`
+- **火车卫队**：`guardSquadsPerDeparture` / `guardSquadLimit`（主文件）+ `guardSpawnBack` / `guardLead`（`_Guard.cs`）
+  ⚠ 跨文件搬字段必须自带 `[Foldout("火车卫队", true)]`（`EditorOverride` 按"上一个带 Foldout 的字段"归组）
+- **轨道**：`trackCount` / `railPrefab` / `edgeInset` / `trainArrowPrefab`（在 `_Arrow.cs`，靠同名 Foldout 并进本组）
+- **附加炮塔**：`additionalTurrets`
+常量集中在各文件类顶部 `#region 调参常量`（`_Rail.cs` 18 个、`_Guard.cs` 4 个、`_Turret.cs` 1 个、`_Train.cs` 1 个；常量名用帕斯卡，尾注释保留原中文名）。**要再调就改常量**（改回 `[SerializeField]` 字段即可回到 Inspector）。
+2026-10-16 的历史变化：`卫队落点后移(米)` 从「列车生成」挪进「火车卫队」；`卫队跟随刷新(秒)` 已删（节拍由 `TickTime` 决定）。
 
 ## 6. 日志（排查先看这几条，走 `NetSyncLog`）
 `[拦截火车] 轨道 N 规划：路点/总长/走廊登记/起终` · `路基整平：动土 N 像素 / 最大高差 X m` · `发车 #N：轨道/车厢/附加炮塔/卫队` · `附加炮塔计划：N 门（班×节，单节概率%）` · 同步 `生成/发·单位`、`生成/收·单位`。
@@ -53,11 +62,13 @@
 ## 7. 遗留 / 待拍板
 - 场景里 `trainCarPrefab` / `trainEnginePrefab` 未拖 ⇒ 目前恒走 `Resources` 兜底路径（编译期会报 `CS0649` 警告，不是错）。
 - 附加炮塔概率表默认空 ⇒ 不发炮塔（会打一条日志说明）。
-- 铁轨走廊登记半径 `corridorRegisterRadius`、`planExpand` 等值未做过压力实测，大规模地图上按日志里的"走廊登记 N 处"再调。
+- 铁轨走廊登记半径 `CorridorRegisterRadius`、`PlanExpand` 等值未做过压力实测，大规模地图上按日志里的"走廊登记 N 处"再调 —— 2026-10-18 起它们是 `_Rail.cs` 顶部的常量（不在 Inspector 里了）。
+- `guardLead`（24，字段）与 `trainSpeed`（3，字段）不再匹配注释里的"建议 = 火车速度×TickTime"（=9）—— 是刻意保持 24m 前导还是想跟着速度走，待定。
 - ⚠ 调试遗留：`_Turret.cs` 里两处 `Debug.LogError("给…加浮空标签")`（正常路径打红字、每门炮塔一条）—— 浮空验证完该删。
 - 拆分脚本留档：`.codebuddy/plans/split_intercept_train.py`（行号锚点式拆分，改过这 5 个文件后**不要再重跑**；源文件备份在 `Temp/split_backup/`）。
 
 ## 8. 卫队护航（2026-10-16 实测口径，最终版）
+
 ### 8.1 用 `HomePoint`，不用 `PatrolPos`
 - `PatrolPos` = "到达即自毁"（`EnemyMobile.PatrolBehavior → UpdatePathDestination()` 命中 `PathReachingRadius`=2m ⇒ `Kill(true)`）
   ⇒ 追移动目标必踩；`HomePoint` = "到达即待命"（`EnemyController` 注释原话），`MissionOilRefining.CreatRepairPatrol` 就是这套。
@@ -67,6 +78,7 @@
   取证：`ReturnBehavior()` 只有 `UpdateAutoRotate()`，不会抢回目的地）。
 - ⚠ Idle 的另一个自毁：`!IsFixed && 超过 IdleMaxDuration(120s) && 最近玩家 > 80m ⇒ Kill(true)` ⇒ 给卫队
   `IActor.IsFixed = true`（该字段"只对 EnemyMobile 有效"，全工程仅此处读 ⇒ 无副作用）。
+
 ### 8.2 生成与联机
 - 生成：`manager.CreatPatrol(spawn)` → 每只 `GuideGuard()`（`IActor.IsFixed = true` + `HomePoint`）
   → **同帧** `RefreshAllGuards()`（出生那帧 `Start` 就要读到护航位）。
@@ -75,6 +87,7 @@
   `ReplayPatrol` 写成 `HomePoint`（报 `PatrolPos` 的话成员侧会走 Patrol 然后自毁）。
 - 成员端的移动目的地靠房主广播：`EnemyController.SetNavDestination` 内部就是
   `BattleEventBus.EnemyMove → NetRoomFlow.SendEnemyMove` 那一处 ⇒ 成员端**不要**自己推（会被 `RemoteDrivenMovement` 门掉 + 刷日志）。
+
 ### 8.3 编队与速度
 - 护航位 = 车头 + 前向×`guardLead`(24 = `trainSpeed`×`TickTime`，为了跑动连贯不顿挫) + 右向×`guardLateral`(10)×±1
   + 同侧沿轨道错开 `guardLineSpacing`(8m)×(index>>1) ⇒ 10 只时左右各 5 槽；平衡站位 ≈ **车头侧前 ~9m、两侧 ±10m**。
@@ -83,3 +96,25 @@
   ⚠ `AddModifier(Extra, want − FinalValue)` 必须"补差"（Extra 累加）—— AI 在 Patrol/Beware/Return 切换时会自己增删修饰（实测 2~3 m/s）。
 - 取数手法：`execute_code` 反射 dump `liveTrains → TrainRuntime.Guards` + 每只的
   `HomePoint/PatrolPos/m_lastDestination/aiState/NavMeshAgent(speed,velocity,hasPath,remainingDistance,isOnNavMesh)`。
+
+## 9. 轨道方向箭头（2026-10-18，`MissionInterceptTrain_Arrow.cs`）
+
+- 生成：铺轨循环里 `k > 0` 的每个**节接缝**放一个（`FinishTrack` 调 `SpawnTrackArrow`），落点/朝向沿用该节：
+  `rot = LookRotation(forward) * Euler(0, YawOffset, 0)`（forward 已含纵坡俯仰）、
+  `pos = (接缝XZ, bed0 − cos(grade) − PivotToBottom) + rot * Vector3.up * ArrowLift(0.5m)`
+  —— **抬升走箭头自身法线（局部 +Y）**而不是世界 Y（斜轨上法线是斜的）；`k = 0` 的轨道起点不放（那里是车头出生点）。
+- 预制体：字段 `trainArrowPrefab`，空则 `Resources.Load("Prefabs/GameEvent/TrainArrow")`；都没有就整局跳过（装饰物不该拦任务）。
+- 实测（Unity 内反射，2026-10-18）：`TrainArrow.prefab` **单网格、bounds 居中 (0,0,0)、size 3.0×0.3×3.9（长轴 Z ⇒ YawOffset=0）**、
+  材质 `TrainArrow_ncl` shader = `Custom/EmittBlend`、`HasProperty("_EmittIntensity")=true`；
+  ⚠ 根上残留建模坐标 `(0,0.64,-12)` + 手工斜置 `(356,1.4,345)` ⇒ 必须用**带 parent 的 Instantiate**（会一并覆盖掉）。
+- 点亮：发车 `DepartTrain` → `RefreshTrackArrows(track)`；收尾 `DetachTrain` 摘掉后再刷一次。
+  **不是"谁结束就关"**：按"这条轨道上还有没有活着的火车"重算（`runtime.Unit.Track == track`），同轨两列车不会互相误关。
+- 写法：`MaterialPropertyBlock` 写 `_EmittIntensity`（1 亮 / 0 灭），**先 `GetPropertyBlock` 再 `SetFloat`**（别清掉别人的块属性）；
+  铺完一条轨道 `SealTrackArrows` 先置 0（材质资产里强度是亮的）。
+- ⚠⚠ **`MaterialPropertyBlock` 不能写成字段初始化器 `= new()`**：Unity 原生对象在 MonoBehaviour 构造期创建会抛
+  `UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer)`
+  —— 2026-10-18 实测踩到（Console 里两条红字），改成懒创建。
+- 缓存：`Dictionary<RailTrack, TrackArrowSet>`（key 用**实例**，因为 `departureTracks` 存的是 `tracks` 的列表下标、
+  而 `RailTrack.Index` 在"某条轨道规划失败"时会错位）+ `TrackArrowSet{ Objects, Renderers }`（渲染器只 GetComponents 一次）。
+- 疑似笔误（未动）：铺轨那行 `y = (bed0+bed1)*0.5 − Mathf.Cos(grade)` ⇒ 实际是 `bed − 1m`，
+  1m 这个常量更像 "该用 `railMetrics.PivotToBottom`" 的占位；箭头沿用了同一高度。

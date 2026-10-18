@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using FPSGame.Attributes;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -50,6 +51,16 @@ namespace FPSGame.Mission
         /// <summary>发车时刻表：第 n 趟走哪条轨道（InitMission 阶段用 BattleRandom 定好 ⇒ 两端一致）</summary>
         private int[] departureTracks;
 
+        /// <summary>
+        /// 本局的拦截火车任务（只给"外部消费者"读，目前是 <c>MiniMapWnd</c> 画铁轨路线）。
+        /// <para>⚠ 必须提供这么个入口：轨道数据在本任务内部（<c>tracks</c>），而小地图是另一个程序集、
+        /// 也不该去 TaskManager 里翻具体任务类型 ⇒ 任务自己发布、UI 只读。</para>
+        /// </summary>
+        public static MissionInterceptTrain Active { get; private set; }
+
+        /// <summary>已规划出的轨道（<b>第一阶段</b>就填好，铺轨还没跑完也能读到；只读，别改）。</summary>
+        public IReadOnlyList<RailTrack> Tracks => tracks;
+
         /// <summary>铺轨协程是否已经起过（<see cref="InitMission"/> 与 <see cref="StartMission"/> 两处各起一次，防重）</summary>
         private bool _buildStarted;
 
@@ -67,6 +78,7 @@ namespace FPSGame.Mission
             // 附加炮塔是"有 Actor 的运行时生成单位"⇒ 本任务要挂进生成器登记表（成对注销见 Uninit）：
             // 成员端凭 4052 带回来的来源键（本任务 SpawnSourceKey）找回本端这一份，再由它复刻炮塔
             SpawnerRegistry.Register(this);
+            Active = this;
             BuildRailOnce();
         }
 
@@ -74,7 +86,7 @@ namespace FPSGame.Mission
         {
             BuildRailOnce();      // 兜底：InitMission 没走到（如场景模式异常）也不会漏铺
             BeginTrainService();  // 开战才开始发车（见 MissionInterceptTrain_Train）
-            Invoke(nameof(StartNotice),5);
+            Invoke(nameof(StartNotice),20);
         }
 
         private void StartNotice() {
@@ -93,6 +105,7 @@ namespace FPSGame.Mission
         {
             base.Uninit();
             SpawnerRegistry.Unregister(this);   // 与 InitMission 的登记成对（别把废对象留在登记表里）
+            if (Active == this) Active = null;  // 小地图只为"活的"任务重建路线；已铺的轨道本身留作场景遗迹
             StopTrainService();   // 还在跑的火车/卫队一起收掉（见 MissionInterceptTrain_Train）
             // 已铺出的轨道当场景遗迹留下，不随任务销毁；只停掉没跑完的协程
             StopAllCoroutines();
