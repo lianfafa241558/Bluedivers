@@ -53,7 +53,20 @@ namespace FPSGame.Game
         /// 而且还数着玩家、盟友幽灵、道具等两端创建时机不同的东西 ⇒ 必然错位（工程里早有同类结论，
         /// 见 <c>NetFriendBridge</c> 的快照注释）。玩家/盟友的身份用 <c>sid</c> 就够，这里只服务于"世界实体"。</para>
         /// </summary>
-        public int NetId { get; set; }
+        private int _netId;
+        public int NetId
+        {
+            get => _netId;
+            set
+            {
+                if (_netId == value) return;
+                // 复刻（4051）是"先 Awake 后覆盖号"⇒ 账本必须挂在 setter 上，否则探针看不到这类单位，
+                // 会把"消息迟到"误判成"本端从未有过这个号"。
+                if (_netId != 0) NetIdProbe.Died(_netId, Id);
+                _netId = value;
+                if (value != 0) NetIdProbe.Born(value, Id);
+            }
+        }
 
         public ActorState ActorState { 
             get => actorState;
@@ -419,6 +432,7 @@ namespace FPSGame.Game
             //     那条路刻意**不移除** Player/Friend（倒地待救 / 全队阵亡统计要靠它们）。
             //   放最前面：后面的清理可能抛异常/早退，而注销注册表必须无条件完成。
             ActorsManager.Unregister(this);
+            NetIdProbe.Died(NetId, Id);   // 记账：之后到达的伤害/死亡消息据此判定为"迟到"
 
             // 盟友离场的事件通知：销毁之后谁也读不出它是谁（name/Type 还能读，但引用已经废了）
             // ⇒ 必须**在这里、趁引用还有效**发出去，让为它建的 UI/桥做收尾。

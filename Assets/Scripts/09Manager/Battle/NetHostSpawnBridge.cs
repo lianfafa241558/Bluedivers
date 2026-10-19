@@ -206,13 +206,21 @@ namespace FPSGame.Managers
             if (go == null)
             {
                 var comp = spawner as Component;
+                var gen = comp != null ? comp.name : "<无>";
+                // ★ 挂起 ≠ 失败：生成器在"前置对象还没建出来"时会先记账再返回 null（例：火车炮塔等车厢建出来）
+                if (spawner.HasPending)
+                {
+                    FPSGame.Utils.NetSyncLog.SyncLog("生成/收·单位",
+                        $"来源键={m.SourceKey} 槽位={m.Slot} 号={m.NetId} prefabId={m.PrefabId} ⇒ 已挂起，等前置对象（生成器={gen}）");
+                    return;
+                }
                 FPSGame.Utils.NetSyncLog.Warn("生成/收·单位",
-                    $"来源键={m.SourceKey} 槽位={m.Slot} 复刻失败（生成器={(comp != null ? comp.name : "<无>")}）");
+                    $"来源键={m.SourceKey} 槽位={m.Slot} 号={m.NetId} prefabId={m.PrefabId} 复刻失败（生成器={gen}）");
                 return;
             }
 
             FPSGame.Utils.NetSyncLog.SyncLog("生成/收·单位",
-                $"来源键={m.SourceKey} 槽位={m.Slot} 号={m.NetId} 单位={go.name} 位置={pos:F1} 目标={target:F1}");
+                $"来源键={m.SourceKey} 槽位={m.Slot} 号={m.NetId} prefabId={m.PrefabId} 单位={go.name} 位置={pos:F1} 目标={target:F1}");
         }
 
         #endregion

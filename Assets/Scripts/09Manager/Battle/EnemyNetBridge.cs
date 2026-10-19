@@ -33,12 +33,31 @@ namespace FPSGame.Managers
         /// <summary>遍历暂存表时的临时键列表（避免边遍历边删除）。</summary>
         static readonly List<int> _flushScratch = new List<int>();
 
+        /// <summary>"伤害消息比副本先到"时暂存的这一发（见 <see cref="FlushPendingDamage"/>）。</summary>
+        struct PendingDamage
+        {
+            public uint Sid;
+            public int NetId;
+            public int Damage;
+            public int AttackerNetId;
+            public float[] Groups;
+            public int Part;
+            public int CausedNetId;
+            public float Deadline;
+        }
+
+        /// <summary>暂存伤害：副本一出现就补落；超过 <see cref="PendingDamageTtl"/> 仍未出现则丢弃并给探针结论。</summary>
+        static readonly List<PendingDamage> _pendingDamages = new List<PendingDamage>();
+        const int MaxPendingDamage = 64;
+        const float PendingDamageTtl = 3f;
+
         public static void Install()
         {
             if (installed) return;
             installed = true;
             _pendingMoves.Clear();
             _pendingTime.Clear();
+            _pendingDamages.Clear();
 
             BattleEventBus.OnEnemyMove += OnLocalMove;
 
@@ -63,6 +82,7 @@ namespace FPSGame.Managers
             installed = false;
             _pendingMoves.Clear();
             _pendingTime.Clear();
+            _pendingDamages.Clear();
 
             BattleEventBus.OnEnemyMove -= OnLocalMove;
             BattleEventBus.OnEnemyHit -= OnLocalHit;
@@ -228,6 +248,7 @@ namespace FPSGame.Managers
 
             // ⚠ 同一个创建事件也可能是**别的** netId 的补发时机（NetId 写上的早晚不定）⇒ 顺带全清一遍
             FlushPendingMoves();
+            FlushPendingDamage();
         }
 
         /// <summary>房主侧处理成员上报的"打中 / 打死"（统一的 <c>DamageMsg</c>）。
@@ -236,6 +257,8 @@ namespace FPSGame.Managers
         {
             if (m == null) return;
 
+            FlushPendingDamage();   // 消息密集 ⇒ 每来一条顺手补落上一次"副本晚到"的伤害
+
             // "只报死了"的那种（Damage = 0 + IsDeath，原 4026 的语义）⇒ 本地照样跑死亡链
             if (m.Damage <= 0)
             {
@@ -243,7 +266,7 @@ namespace FPSGame.Managers
                 return;
             }
 
-            ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId);
+            ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId, true);
 
             // ★ 结算完**再转发给除来源外的其他成员**：原来应用完就结束了（`ApplyingRemoteDamage` 把回传也挡了）
             //   ⇒ 成员 A 打出的伤害**从不到达成员 B**：B 那边这只怪的血一动不动，直到死亡消息才突然消失
@@ -256,7 +279,9 @@ namespace FPSGame.Managers
         {
             if (m == null) return;
 
-            if (m.Damage > 0) ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId);
+            FlushPendingDamage();
+
+            if (m.Damage > 0) ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId, true);
             if (m.IsDeath) ApplyRemoteDeath(m);
         }
 
@@ -272,20 +297,44 @@ namespace FPSGame.Managers
         ///
         /// <para>⚠ 解析不到开枪者（盟友实例还没建出来 / 已离开）⇒ 退回静默结算：宁可不表现，也别报错。</para>
         /// </summary>
-        static void ApplyRemoteDamage(uint attackerSid, int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0, int causedNetId = 0)
+        static void ApplyRemoteDamage(uint attackerSid, int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0, int causedNetId = 0, bool allowRetry = false)
         {
-            var actor = FindActor(netId);
-            if (actor == null || damage <= 0)
+            if (damage <= 0)
             {
-                // 数据说话：远端报了命中，却在本端找不到对应副本（或伤害<=0）⇒ **静默丢弃**，对方那边是白打的
-                FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"找不到 netId={netId} 的本端副本（或伤害={damage}<=0）⇒ 这一发被静默丢弃");
+                FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={netId} 伤害={damage}<=0 ⇒ 丢弃（上游本不该发）| " + NetIdProbe.Explain(netId, 0, "伤害"));
+                return;
+            }
+
+            var actor = FindActor(netId);
+            if (actor == null)
+            {
+                var probe = NetIdProbe.Explain(netId, 0, "伤害");
+                // 正常损耗（目标已阵亡 / 已销毁）⇒ 挂起重试没意义，降为 Info（否则 Console 长期被尸体消息刷屏）
+                if (NetIdProbe.IsNormalMiss(netId))
+                {
+                    FPSGame.Utils.NetSyncLog.AiLog("远端伤害·打尸体", $"netId={netId} 目标已不在，丢弃 | {probe}", netId, 1f);
+                    return;
+                }
+                // 副本比伤害消息晚到（开波 / 复刻顺序）⇒ 先挂起，单位一出现立刻补落（原来直接丢，那一发就白打了）
+                if (allowRetry && _pendingDamages.Count < MaxPendingDamage)
+                {
+                    _pendingDamages.Add(new PendingDamage
+                    {
+                        Sid = attackerSid, NetId = netId, Damage = damage,
+                        AttackerNetId = attackerNetId, Groups = groups, Part = part,
+                        CausedNetId = causedNetId, Deadline = Time.unscaledTime + PendingDamageTtl,
+                    });
+                    FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={netId} 暂未找到本端副本 ⇒ 挂起重试（{_pendingDamages.Count}/{MaxPendingDamage}）| {probe}");
+                    return;
+                }
+                FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"找不到 netId={netId} 的本端副本 ⇒ 这一发被丢弃 | {probe}");
                 return;
             }
 
             var dmg = ResolveDamageable(actor, part);
             if (dmg == null)
             {
-                FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={netId} 的副本找不到任何 IDamageable ⇒ 这一发被静默丢弃（本端该怪={actor.Id}）");
+                FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={netId} 的副本找不到任何 IDamageable ⇒ 这一发被丢弃（本端该怪={actor.Id}）| " + NetIdProbe.Explain(netId, 0, "伤害"));
                 return;
             }
 
@@ -451,6 +500,33 @@ namespace FPSGame.Managers
             return _friendBridge != null && _friendBridge.TryGetFriendObject(sid, out GameObject go) ? go : null;
         }
 
+        /// <summary>补落"副本晚到"的伤害：由创建事件 / 下一条伤害消息驱动（不额外起 Tick，战斗中消息足够密）。</summary>
+        static void FlushPendingDamage()
+        {
+            if (_pendingDamages.Count == 0) return;
+
+            float now = Time.unscaledTime;
+            for (int i = _pendingDamages.Count - 1; i >= 0; --i)
+            {
+                var p = _pendingDamages[i];
+                if (FindActor(p.NetId) == null)
+                {
+                    if (now < p.Deadline) continue;
+                    _pendingDamages.RemoveAt(i);
+                    var probe = NetIdProbe.Explain(p.NetId, 0, "伤害");
+                    if (NetIdProbe.IsNormalMiss(p.NetId))
+                        FPSGame.Utils.NetSyncLog.AiLog("远端伤害·打尸体", $"netId={p.NetId} 挂起 {PendingDamageTtl:F0}s 后确认目标已不在，丢弃 | {probe}", p.NetId, 1f);
+                    else
+                        FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={p.NetId} 挂起 {PendingDamageTtl:F0}s 仍未出现 ⇒ 最终丢弃 | {probe}");
+                    continue;
+                }
+                _pendingDamages.RemoveAt(i);
+                NetIdProbe.CountRetried();
+                FPSGame.Utils.NetSyncLog.AiLog("远端伤害·补落", $"netId={p.NetId} 伤害={p.Damage} 副本已出现 ⇒ 补落", p.NetId, 1f);
+                ApplyRemoteDamage(p.Sid, p.NetId, p.Damage, p.AttackerNetId, p.Groups, p.Part, p.CausedNetId);
+            }
+        }
+
         /// <summary>【远端说"它死了"】在本端干掉那份副本（<c>DamageMsg.IsDeath</c>；原 4026 / 4043 的语义）。
         /// <para>▍寻址：<c>NetId</c> 优先；为 0 时退回无号可破坏物的兜底键（<c>Key</c> = FNV(Id+位置0.1m)）。</para>
         /// <para>⚠ 与"这一发打到 0"不同：这里只保证死（血量不是权威，可能还是满的）。</para></summary>
@@ -460,7 +536,11 @@ namespace FPSGame.Managers
             if (actor == null)
             {
                 if (m.NetId == 0 && m.Key != 0) return;   // 无号可破坏物：本端没有这件（已销毁/不在同一场景）⇒ 正常，静默
-                FPSGame.Utils.NetSyncLog.Warn("远端死亡落地", $"找不到 netId={m.NetId} key={m.Key} 的本端副本 ⇒ 这条死亡消息被丢弃");
+                var probe = NetIdProbe.Explain(m.NetId, m.Key, "死亡");
+                if (NetIdProbe.IsNormalMiss(m.NetId))
+                    FPSGame.Utils.NetSyncLog.AiLog("远端死亡·打尸体", $"netId={m.NetId} 目标已不在，丢弃 | {probe}", m.NetId, 1f);
+                else
+                    FPSGame.Utils.NetSyncLog.Warn("远端死亡落地", $"找不到 netId={m.NetId} key={m.Key} 的本端副本 ⇒ 这条死亡消息被丢弃 | {probe}");
                 return;
             }
 

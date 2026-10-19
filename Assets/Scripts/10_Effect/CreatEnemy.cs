@@ -110,6 +110,9 @@ public class CreatEnemy : MonoBehaviour, INetSpawner
     /// <summary>生成者身份键（房主上报、成员据此找回本端这一份）。</summary>
     public int SpawnSourceKey => NetSpawnKey.Of(gameObject);
 
+    /// <summary>复刻即建即得，没有"等前置对象"的挂起状态。</summary>
+    public bool HasPending => false;
+
     /// <summary>登记为"生成器"（⚠ 必须在 OnEnable：复刻出来的单位在 Instantiate 内只跑过 Awake/OnEnable）。</summary>
     private void OnEnable() => SpawnerRegistry.Register(this);
 

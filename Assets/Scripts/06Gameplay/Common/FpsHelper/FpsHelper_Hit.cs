@@ -384,7 +384,9 @@ namespace FPSGame.Gameplay
                             PEVector3 vector = (PEVector3)(item.CenterPos - point).normalized * (1 - PEMath.Clamp(distance / shockwave,0,1)) * 10;
                             //vector.y *= 2;
                             physical.ApplyImpulse(vector);
-                            Debug.LogWarning("对物体" + item.gameObject + "施加力" + vector);
+                            // 零力（爆炸边缘外）不打印：原来每次爆炸每个单位都刷一条 Warning，纯噪音
+                            if (vector.x.RawInt != 0 || vector.y.RawInt != 0 || vector.z.RawInt != 0)
+                                Debug.Log("对物体" + item.gameObject + "施加力" + vector);
                         }
                     }
                 }

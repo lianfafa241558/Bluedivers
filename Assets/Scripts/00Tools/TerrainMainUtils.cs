@@ -71,7 +71,7 @@ public static partial class TerrainUtils
                 heightmapRes = value.terrainData.heightmapResolution - 1;
                 alphamapRes = value.terrainData.alphamapResolution;
                 terrainHeight = (int)value.terrainData.size.y;
-                Debug.LogWarning("设置main地形", value);
+                Debug.Log("设置main地形", value);
             }
         }
     }

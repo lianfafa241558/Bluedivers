@@ -213,11 +213,13 @@ namespace FPSGame.Game
                     //不移除（见上面注释：倒地待救，救援系统还要在 Players 里找它）
                     break;
                 case UnitTypeEnum.Enemy:
+                    NetIdProbe.Dead(actor.NetId, actor.Id);   // 只是倒地：对象还在场，之后到达的伤害属"打尸体"
                     Enemys.Remove(actor);
                     Actors.Remove(actor);
                     break;
                 case UnitTypeEnum.SpecUnit:
                 case UnitTypeEnum.Other:
+                    NetIdProbe.Dead(actor.NetId, actor.Id);
                     SpecUnits.Remove(actor);
                     Actors.Remove(actor);
                     break;
@@ -268,6 +270,7 @@ namespace FPSGame.Game
             _specUnitNetIdSeq = 0;   // 特殊单位同理（独立号段，见 SpecNetIdBase）
             _hostSpawnNetIdSeq = 0;  // 房主分配段同理（独立号段，见 HostSpawnNetIdBase）
             _vehicleNetIdSeq = 0;    // 空投载具段同理（独立号段，见 VehicleNetIdBase）
+            NetIdProbe.Reset();      // 探针账本每局清零（否则上一局的惨案会把这一局误判成"消息迟到"）
             base.Awake();
             UnitEventBus.OnPlayerCreate += RegisterPlayer;
             UnitEventBus.OnFriendCreate += RegisterFriend;

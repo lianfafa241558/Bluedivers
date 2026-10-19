@@ -304,7 +304,9 @@ namespace FPSGame.UI
             var animator = showModle.GetComponent<Animator>();
             animators[i] = animator;
             var bo = animator != null ? animator.GetComponent<BaseObject>() : null;   // 预制体上没挂 Animator/BaseObject 也不许崩
-            SetText(item.GetChild(3, 0, 0), bo != null ? bo.ShowName : "");
+            // 名牌显示该玩家的**用户名称**（联机资料里的昵称），没有才回落角色名
+            string userName = data.name;
+            SetText(item.GetChild(3, 0, 0), string.IsNullOrEmpty(userName) ? (bo != null ? bo.ShowName : "") : userName);
             SetText(item.GetChild(3, 0, 1), data.roleLevel);
             SetSprite(item.GetChild(3, 1, 1), bo != null ? bo.Portrait : null);
         }

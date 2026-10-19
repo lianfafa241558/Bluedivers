@@ -48,6 +48,9 @@ namespace FPSGame.AI
         /// <summary>生成者身份键（房主上报、成员据此找回本端这一份）。</summary>
         public int SpawnSourceKey => NetSpawnKey.Of(gameObject);
 
+        /// <summary>复刻即建即得，没有"等前置对象"的挂起状态。</summary>
+        public bool HasPending => false;
+
         /// <summary>【成员】按房主下发的槽位/号复刻一只。⚠ 覆盖 <c>NetId</c> 必须早于设目标点（同帧就要用号）。</summary>
         public GameObject ReplaySpawn(int slot, int netId, Vector3 pos, Quaternion rot, Vector3 target, string prefabId)
         {

@@ -22,5 +22,9 @@ namespace FPSGame.GameContract
         /// 其余可忽略）；<paramref name="target"/> 全 0 = 无首帧目标点。</para></summary>
         /// <returns>复刻出来的单位；失败返回 null。</returns>
         GameObject ReplaySpawn(int slot, int netId, Vector3 pos, Quaternion rot, Vector3 target, string prefabId);
+
+        /// <summary>上一次 <see cref="ReplaySpawn"/> 返回 null 是否只是"**已挂起、等前置对象**"（例：火车炮塔等车厢建出来），
+        /// 而不是真失败 —— 桥接层据此区分日志级别（挂起不告警，真失败才告警）。</summary>
+        bool HasPending { get; }
     }
 }

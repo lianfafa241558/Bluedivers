@@ -84,7 +84,9 @@ public class BridgeWnd : Window
     }
     private void OnSwitchRole(PlayerController player)
     {
-        SetText(selfName, player.PlayerName);
+        // 名牌显示**用户名称**（存档昵称），没有才回落角色名
+        string userName = SelfUserName;
+        SetText(selfName, string.IsNullOrEmpty(userName) ? player.PlayerName : userName);
         SetSprite(selfIcon, player.Portrait);
 
         ArchivesData_SO.Current.GetRoleLevel(player.Id,out int level,out float expScale);
@@ -101,7 +103,9 @@ public class BridgeWnd : Window
 
     private void SwitchRolePreview(IEntity player)
     {
-        SetText(selfName, player.ShowName);
+        // 名牌显示**用户名称**（存档昵称），没有才回落角色名
+        string userName = SelfUserName;
+        SetText(selfName, string.IsNullOrEmpty(userName) ? player.ShowName : userName);
         SetSprite(selfIcon, player.Portrait);
         SetColor(selfFrame, player.Color);
         ArchivesData_SO.Current.GetRoleLevel(player.Id, out int level, out float expScale);

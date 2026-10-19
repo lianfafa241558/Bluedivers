@@ -9,6 +9,7 @@ namespace FPSGame.UI
 using FPSGame.Gameplay;
 using static FPSGame.WndTools.WndRootTool;
 using FPSGame.Managers;
+using FPSGame.GameData;
 
 
 /// <summary>
@@ -110,6 +111,18 @@ public abstract class Window : MonoBehaviour
         set => GameRoot.TimeScale = value;
     }
     public bool State => gameObject.activeSelf;
+
+    /// <summary>本机玩家的**用户名称**（= 存档昵称 <c>ArchivesDataBase_SO.playerName</c>，开房/入房上报的就是它）。
+    /// <para>⚠ 与角色名（<c>IEntity.ShowName</c>）口径不同：角色名答"演谁"，这个名字答"谁"。
+    /// 老存档没起名时为空串，调用方按需回落角色名。</para></summary>
+    protected static string SelfUserName
+    {
+        get
+        {
+            var arch = ArchivesData_SO.Current;
+            return arch != null ? arch.playerName : string.Empty;
+        }
+    }
 
 
     /// <summary>窗口第一次打开时</summary>

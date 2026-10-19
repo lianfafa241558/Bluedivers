@@ -36,20 +36,38 @@ namespace FPSGame.Core
         /// </summary>
         public const float FullDayDuration = 1800f;
 
+        // Console 报 `Parameter 'Hash 1234567' does not exist.` 时，拿这个十进制值到下面反查是哪个参数：
+        // 例 1080829965 = Attack（2026-10-20 实测；Unity 的 StringToHash 是固定算法，值不会随版本变）。
+        // ⚠ 单位是**十进制有符号**，Console 里可能显示正数、也可能显示负数，两边对照时注意符号。
+
+        /// <summary>Animator 参数 <c>Reset</c>（hash = -1856204727）</summary>
         public static int k_AnimResetParameter { get; } = Animator.StringToHash("Reset");
+        /// <summary>Animator 参数 <c>Chatget</c>（hash = 1314759673）</summary>
         public static int k_AnimChatgetParameter { get; } = Animator.StringToHash("Chatget");
+        /// <summary>Animator 参数 <c>ChatgetSpeed</c>（hash = -561804707）</summary>
         public static int k_AnimChatgetSpeedParameter { get; } = Animator.StringToHash("ChatgetSpeed");
+        /// <summary>Animator 参数 <c>MoveSpeed</c>（hash = 526065662）</summary>
         public static int k_AnimMoveSpeedParameter { get; } = Animator.StringToHash("MoveSpeed");
+        /// <summary>Animator 参数 <c>Attack</c>（hash = 1080829965）</summary>
         public static int k_AnimAttackParameter { get; } = Animator.StringToHash("Attack");
+        /// <summary>Animator 参数 <c>SpecialAttack1</c>（hash = -938659887）</summary>
         public static int k_AnimSpecialAttack1Parameter { get; } = Animator.StringToHash("SpecialAttack1");
+        /// <summary>Animator 参数 <c>SpecialAttack2</c>（hash = 1359249003）</summary>
         public static int k_AnimSpecialAttack2Parameter { get; } = Animator.StringToHash("SpecialAttack2");
+        /// <summary>Animator 参数 <c>SpecialAttack3</c>（hash = 637751037）</summary>
         public static int k_AnimSpecialAttack3Parameter { get; } = Animator.StringToHash("SpecialAttack3");
+        /// <summary>Animator 参数 <c>Alerted</c>（hash = -1854995305）</summary>
         public static int k_AnimAlertedParameter { get; } = Animator.StringToHash("Alerted");
+        /// <summary>Animator 参数 <c>OnDamaged</c>（hash = -1403378696）</summary>
         public static int k_AnimOnDamagedParameter { get; } = Animator.StringToHash("OnDamaged");
+        /// <summary>Animator 参数 <c>OnDeath</c>（hash = -42616333）</summary>
         public static int k_AnimOnDeathParameter { get; } = Animator.StringToHash("OnDeath");
+        /// <summary>Animator 参数 <c>OnReload</c>（hash = 1522553424）</summary>
         public static int k_AnimOnReloadParameter { get; } = Animator.StringToHash("OnReload");
+        /// <summary>Animator 参数 <c>IsActive</c>（hash = 1929417870）</summary>
         public static int k_AnimIsActiveParameter { get; } = Animator.StringToHash("IsActive");
 
+        /// <summary>Animator 参数 <c>Entry</c>（hash = -354373004）</summary>
         public static int k_AnimEntry { get; } = Animator.StringToHash("Entry");
 
         /// <summary>

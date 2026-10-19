@@ -87,10 +87,9 @@ namespace FPSGame.Core
             {
                 val = Add();
             }
-            else
-            {
-                _Pop?.Invoke(val);
-            }
+            // 新建对象也要走 _Pop：工厂里普遍已 SetActive(false)（如音频池），漏掉这步会让新对象
+            // 以 inactive 状态被使用 —— 表现是 AudioSource 报 "Can not play a disabled audio source"。
+            _Pop?.Invoke(val);
             useObjects.Add(val);
             return val;
         }

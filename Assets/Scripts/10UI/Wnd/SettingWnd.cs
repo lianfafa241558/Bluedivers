@@ -713,7 +713,9 @@ public partial class SettingWnd : Window
         }
 
         if (player == null) return;   // 下面全是玩家档案数据（名称/头像/等级/经验）
-        SetText(selfName, player.ShowName);
+        // 名牌显示**用户名称**（存档昵称），没有才回落角色名
+        string userName = SelfUserName;
+        SetText(selfName, string.IsNullOrEmpty(userName) ? player.ShowName : userName);
         SetSprite(selfIcon, player.Portrait);
         ArchivesData_SO.Current.GetRoleLevel(player.Id, out int level, out float expScale);
         SetColor(selfFrame, player.Color);

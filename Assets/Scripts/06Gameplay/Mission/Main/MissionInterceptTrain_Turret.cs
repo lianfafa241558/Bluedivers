@@ -117,6 +117,9 @@ namespace FPSGame.Mission
         public int SpawnSourceKey =>
             ActorsManager.DerivedNetId(nameof(MissionInterceptTrain) + "#" + netOrder, transform.position);
 
+        /// <summary>有炮塔正在等车厢建出来（<see cref="ReplaySpawn"/> 这时返回 null，但**不是失败**）。</summary>
+        public bool HasPending => pendingTurrets.Count > 0;
+
         /// <summary>
         /// 【成员】按房主下发的槽位复刻一节车厢的附加炮塔（由 <c>NetHostSpawnBridge</c> 在
         /// <c>ActorsManager.Replicating = true</c> 期间调用）。

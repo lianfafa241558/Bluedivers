@@ -118,7 +118,9 @@ using static FPSGame.WndTools.WndRootTool;
                 ChangeWeapon(m_ActiveWeapon);
             }
 
-            SetText(playerName, m_Controller.PlayerName);
+            // 名牌显示**用户名称**（存档昵称），老存档没起名才回落角色名
+            string userName = SelfUserName;
+            SetText(playerName, string.IsNullOrEmpty(userName) ? m_Controller.PlayerName : userName);
             SetSprite(portrait, m_Controller.Portrait);
             SetColor(frame, m_Controller.Color); 
             bool isNormal = GameState == GameStateEnum.Game;
@@ -231,9 +233,9 @@ using static FPSGame.WndTools.WndRootTool;
 
         void Update()
         {
-    #if UNITY_EDITOR
+    //#if UNITY_EDITOR
             UpdateDebug();
-    #endif
+    //#endif
             if (!initPlayer && ActorsManager.Player!=null&& ActorsManager.Player.transform != null) TryPlayer();
             if(!initPlayer) return;
 
@@ -417,7 +419,7 @@ using static FPSGame.WndTools.WndRootTool;
             }
 
         }
-    #if UNITY_EDITOR
+    //#if UNITY_EDITOR
         float m_AccumulatedDeltaTime = 0f;
         int m_AccumulatedFrameCount = 0;
 
@@ -434,7 +436,7 @@ using static FPSGame.WndTools.WndRootTool;
                 m_AccumulatedFrameCount = 0;
             }
         }
-    #endif
+    //#endif
 
         #region 武器
         void UpdateWeapon()

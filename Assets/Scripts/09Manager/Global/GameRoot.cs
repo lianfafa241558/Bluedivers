@@ -40,7 +40,7 @@ public partial class GameRoot : GameRootBase<GameRoot>
             {
                 Instance.gameState = value;
                 FPSGame.Data.FlowState.GameState = value;//数据自持（2026-10-01 取代 ServiceLocator.Flow 的状态查询）
-                Debug.LogWarning("游戏状态被设置为" + value);
+                Debug.Log("游戏状态被设置为" + value);
                 GlobalEventBus.SceneChange(oldState, value);
             }
         }

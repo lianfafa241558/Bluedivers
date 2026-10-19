@@ -143,6 +143,9 @@ namespace FPSGame.AI
         /// 有号用号、无号退回"身份 + 0.1m 量化位置"哈希，见 <c>NetSpawnKey.Of</c>）。</summary>
         public int SpawnSourceKey => NetSpawnKey.Of(gameObject);
 
+        /// <summary>复刻即建即得，没有"等前置对象"的挂起状态。</summary>
+        public bool HasPending => false;
+
         /// <summary>成员侧复刻房主下发的装甲：<paramref name="slot"/> = 装甲表下标 ⇒ 两端同一把 prefab、同一数量。</summary>
         public GameObject ReplaySpawn(int slot, int netId, Vector3 pos, Quaternion rot, Vector3 target, string prefabId)
         {

@@ -121,7 +121,11 @@ using static FPSGame.WndTools.WndRootTool;
             }
 
             victim.TryGetComponent(out Actor victimActor);
-            attacker.TryGetComponent(out Actor attackerActor);
+            // ⚠ attacker 可能为 null：持续伤害（燃烧/流血 tick）没有"直接来源"，Health 会原样发 null ⇒
+            //    直接 TryGetComponent 会 NRE（每 tick 抛一次）。null 时 attackerActor 保持 null，
+            //    IsEnemyTooFar 会按"视为超距"处理，与原有 attackerActor==null 分支一致。
+            Actor attackerActor = null;
+            if (attacker) attacker.TryGetComponent(out attackerActor);
             //距离玩家超过 70m 的敌人受击时不响应血条
             if (IsEnemyTooFar(victimActor, attackerActor)) return;
 
