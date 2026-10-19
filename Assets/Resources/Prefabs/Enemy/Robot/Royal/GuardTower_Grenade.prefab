@@ -244,7 +244,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: -1
-    MinRange: -1
+    MinRange: 3
     NoSource: 0
     SoundRadius: 20
     ImpactSoundRadius: 8
@@ -292,6 +292,7 @@ MonoBehaviour:
   UnparentMuzzleFlash: 0
   SFXRange: 200
   FireNoiseRadius: 50
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 0d44f0cb2e91f5f4ca09aded9a1bd9ab, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -300,6 +301,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -617,6 +619,7 @@ MonoBehaviour:
   AttackRange: 100
   AlertRange: 10
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 4
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -792,6 +795,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 4904602674125601417}
   demolishValue: 30
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -808,11 +812,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 8171120208265369768}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: e1aefeeba4149664e85945aa5ce3df69, type: 2}
   fxMaterial: {fileID: 2100000, guid: 179affbb2eb16fb4dab62137c139c695, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!1 &8171120208191508779
 GameObject:

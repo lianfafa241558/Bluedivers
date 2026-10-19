@@ -239,7 +239,7 @@ namespace FPSGame.Game {
                         }
                     }
                     if (damageAffected) Tool.DrawLabel(pos + RandomUtils.RandomVector3XZ(), "" + Tool.Round(finaldamgage.RawFloat), 3, dmgColor);
-                    Debug.LogWarning(damageCaused+"对" + m_Actor.ShowName + "造成"+ item.Key+ "伤害" + finaldamgage + "血量" + CurrentHealth, gameObject);
+                    NetSyncLog.DamageLog("伤害",damageCaused+"对" + m_Actor.ShowName + "造成"+ item.Key+ "伤害" + finaldamgage + "血量" + CurrentHealth, gameObject);
                 }
 #endif
 

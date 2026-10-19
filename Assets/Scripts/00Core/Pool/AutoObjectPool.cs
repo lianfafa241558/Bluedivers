@@ -180,14 +180,14 @@ namespace FPSGame.Core
         public void Remove()
         {
             T val = freeObjects.Pop();
-            Debug.Log("对象池移除了" + val);
+            //Debug.Log("对象池移除了" + val);
             if (val is GameObject obj)
             {
                 UnityEngine.Object.Destroy(obj);
             }
             else if (val is Component component)
             {
-                Debug.Log("对象池移除了" + val);
+                //Debug.Log("对象池移除了" + val);
                 UnityEngine.Object.Destroy(component.gameObject);
             }
         }

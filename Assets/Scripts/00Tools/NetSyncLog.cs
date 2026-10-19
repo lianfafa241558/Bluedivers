@@ -19,18 +19,31 @@ namespace FPSGame.Utils
         /// <summary>游戏加载过程</summary>
         public static bool Load = false;
 
+        /// <summary>游戏加载过程</summary>
+        public static bool Damage = false;
+
+        /// <summary>游戏加载过程</summary>
+        public static bool Pool = false;
+
+
         /// <summary>子弹/弹道：表现弹的生成、终点、命中、消散。</summary>
         public static bool Bullet = false;
 
         /// <summary>AI/寻路：敌人与场景 NPC 的决策、下发、落地、驱动开关。</summary>
-        public static bool Ai = true;
+        public static bool Ai = false;
 
         /// <summary>同步时序：NetId 分配、离场收尾、HUD 行数等。</summary>
-        public static bool Sync = true;
-        public static void LoadLog(string tag, string msg) { if (!Enabled || !Load) return; Debug.Log($"[加载/{tag}] {msg}"); }
-        public static void BulletLog(string tag, string msg) { if (!Enabled || !Bullet) return; Debug.Log($"[子弹/{tag}] {msg}"); }
-        public static void AiLog(string tag, string msg) { if (!Enabled || !Ai) return; Debug.Log($"[AI/{tag}] {msg}"); }
-        public static void SyncLog(string tag, string msg) { if (!Enabled || !Sync) return; Debug.Log($"[同步/{tag}] {msg}"); }
+        public static bool Sync = false;
+
+
+        // ⚠ context 必须传 UnityEngine.Object（Component/GameObject/资产）；传 null 等价于不带 context。
+        // 作用：Console 里点这条日志会在 Hierarchy/Project 里 Ping 到该物体，排查"是哪只怪的日志"极省时间。
+        public static void DamageLog(string tag, string msg, Object context = null) { if (!Enabled || !Load) return; Debug.Log($"[伤害/{tag}] {msg}", context); }
+        public static void PoolLog(string tag, string msg, Object context = null) { if (!Enabled || !Bullet) return; Debug.Log($"[特效池/{tag}] {msg}", context); }
+        public static void LoadLog(string tag, string msg, Object context = null) { if (!Enabled || !Load) return; Debug.Log($"[加载/{tag}] {msg}", context); }
+        public static void BulletLog(string tag, string msg, Object context = null) { if (!Enabled || !Bullet) return; Debug.Log($"[子弹/{tag}] {msg}", context); }
+        public static void AiLog(string tag, string msg, Object context = null) { if (!Enabled || !Ai) return; Debug.Log($"[AI/{tag}] {msg}", context); }
+        public static void SyncLog(string tag, string msg, Object context = null) { if (!Enabled || !Sync) return; Debug.Log($"[同步/{tag}] {msg}", context); }
 
         /// <summary>
         /// **限流版** <see cref="AiLog"/>：同一个 <paramref name="key"/> 每 <paramref name="interval"/> 秒最多一条。
@@ -40,7 +53,7 @@ namespace FPSGame.Utils
         /// ⇒ 用普通 <c>AiLog</c> 就是**一只怪一行/帧**，客机 Console 直接被刷屏（2026-10-10 用户实测）。</para>
         /// </summary>
         /// <param name="key">限流键：用单位标识（如 <c>Actor.NetId</c>）；不同单位互不影响。</param>
-        public static void AiLog(string tag, string msg, int key, float interval = 5f)
+        public static void AiLog(string tag, string msg, int key, float interval = 5f, Object context = null)
         {
             if (!Enabled || !Ai) return;
 
@@ -48,14 +61,14 @@ namespace FPSGame.Utils
             float last;
             if (_aiThrottle.TryGetValue(key, out last) && now - last < interval) return;
             _aiThrottle[key] = now;
-            Debug.Log($"[AI/{tag}] {msg}");
+            Debug.Log($"[AI/{tag}] {msg}", context);
         }
 
         /// <summary>限流表（键 = 单位标识；一局内单位数量有限，不必手动清理）。</summary>
         private static readonly Dictionary<int, float> _aiThrottle = new Dictionary<int, float>();
 
         /// <summary>丢消息 / 找不到对象 / 决策作废这类"不正常"，用 Warning 便于在 Console 里筛。</summary>
-        public static void Warn(string tag, string msg) { if (!Enabled) return; Debug.LogWarning($"[异常/{tag}] {msg}"); }
+        public static void Warn(string tag, string msg, Object context = null) { if (!Enabled) return; Debug.LogWarning($"[异常/{tag}] {msg}", context); }
 
         /// <summary>启动时定默认值：**编辑器默认关、打包端默认开**（与类注释一致）。
         /// <para>▍为什么打包端要给"开"：它没有 <c>execute_code</c>，日志只能落 <c>Player.log</c> 再回读；
