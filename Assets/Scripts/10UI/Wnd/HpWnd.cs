@@ -27,6 +27,9 @@ using static FPSGame.WndTools.WndRootTool;
         Dictionary<GameObject, HpItemBase> dic=new();
         AutoObjectPool<GameObject, HpItemBase> pool;
 
+        /// <summary>Update 里"要摘掉的 Boss 条"的暂存（不能边遍历 dic 边改它）。</summary>
+        readonly List<GameObject> _scrap = new();
+
 
         protected override void FirstShowWnd()
         {
@@ -77,12 +80,32 @@ using static FPSGame.WndTools.WndRootTool;
         private void Update()
         {
             pool.Update();
-            foreach (var item in dic.Values)
+
+            // 字典里的 Boss 条按"单位还在不在"收尾（口径同池里的小兵条 CanRecycle）。
+            // ⚠ 不能只靠 OnEnemyDead：单位被**外部移除**时不一定会再走那条事件 ——
+            //    实测火车到站逃走时是 actor.RemoveFlag(Boss) 后再 Kill（见 MissionInterceptTrain.DetachTrain），
+            //    以及载具被连带销毁这类，血条会永远停在屏幕上（2026-10-20）。
+            if (dic.Count > 0)
             {
-                if (!item.CanRecycle())
+                _scrap.Clear();
+                foreach (var kv in dic)
                 {
+                    var item = kv.Value;
+                    if (item == null)
+                    {
+                        _scrap.Add(kv.Key);      // 条自己被销毁了 ⇒ 只摘键
+                        continue;
+                    }
+                    if (item.CanRecycle())
+                    {
+                        item.End();
+                        Tool.Destroy(item.gameObject, 1);
+                        _scrap.Add(kv.Key);
+                        continue;
+                    }
                     item.Tick();
                 }
+                for (int i = 0; i < _scrap.Count; ++i) dic.Remove(_scrap[i]);
             }
         }
 
@@ -101,8 +124,10 @@ using static FPSGame.WndTools.WndRootTool;
 
         private void OnEnemyDead(Actor go)
         {
-            //var enemy = go.GetComponent<EnemyController>();
-            if (go.HasFlag(ActorFlag.Boss) && dic.TryGetValue(go.gameObject, out var item))
+            // ⚠ 别再用 go.HasFlag(ActorFlag.Boss) 当门槛：拦截火车到站逃走会先 actor.RemoveFlag(Boss) 再 Kill
+            //   （车头还得算"逃走"而不是"被摧毁"）⇒ 那时再判旗标就会漏收尾，血条永远不消失（2026-10-20 实测）。
+            //   dic 里有的就是"给它建过 Boss 条"的那一只，与旗标无关。
+            if (dic.TryGetValue(go.gameObject, out var item))
             {
                 item.End();
                 Tool.Destroy(item.gameObject,1);

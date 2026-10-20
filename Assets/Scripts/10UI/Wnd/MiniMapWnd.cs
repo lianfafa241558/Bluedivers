@@ -623,7 +623,9 @@ public class MiniMapWnd : Window
         IMissionPoint entity = mission.entity;
         if (entity == null)
         {
-            Debug.LogWarning("警告任务"+mission.name+"没有实体");
+            // 没配实体预制体的是"容器任务"（如 Robbery 根任务）⇒ 没有实体属正常，别当警告刷屏；
+            // 只有"配了却没能建出来"才值得报（那才是真缺陷）。
+            if (mission.HasEntityPrefab) Debug.LogWarning("任务" + mission.name + "配了实体预制体，但 entity 为空", mission);
             return;
         }
         //Debug.LogError("任务" + mission.title+"实体"+ entity, entity.gameObject);

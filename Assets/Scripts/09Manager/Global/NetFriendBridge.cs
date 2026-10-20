@@ -59,6 +59,12 @@ namespace FPSGame.Managers
         /// 而配置是**独立一条消息**、到达时机与名单不同步 ⇒ 得自己按 sid 缓存、两边到齐才装。</para></summary>
         private readonly Dictionary<uint, PlayerLoadoutMsg> _loadouts = new Dictionary<uint, PlayerLoadoutMsg>();
 
+        /// <summary>sid → 他**当前拿的武器槽**（最近一次上报的值；空手 = 槽 6）。
+        /// <para>▍为什么必须缓存：槽位只在"切枪"时上报一次，而盟友实例会被**外部销毁后重建**
+        /// （实测 `盟友自愈` 就会重建，见 <see cref="HandleFriendLeave"/>）、武器也会因资料晚到**重装**（<c>Setup</c> 里先 Clear）
+        /// ⇒ 不缓存就只能吃 <c>FriendWeaponView</c> 的兜底"默认拿主手"：**他空手，别人却看到他举着主武器；一切枪又对上了**。</para></summary>
+        private readonly Dictionary<uint, int> _weaponSlots = new Dictionary<uint, int>();
+
         /// <summary>【联机】按 sid 取盟友实例的 GameObject（<c>0</c> = 房主）。找不到给 null。
         /// <para>家具交互重放要用它把"操作者"指到远端的那个单位上（见 <c>NetFurnitureBridge</c>）。</para></summary>
         public bool TryGetFriendObject(uint sid, out GameObject go)
@@ -123,6 +129,7 @@ namespace FPSGame.Managers
             NetHostSvc.VehicleNetIdAllocator = null;   // 反注入：本桥不在场时别让 07 用一个已失效的委托
             _pendingVehicleBeacons.Clear();
             _loadouts.Clear();
+            _weaponSlots.Clear();
             _healWarned.Clear();
             NetRoomFlow.OnPlayerList -= HandleRoster;
             NetTransformFlow.OnPose -= HandlePoses;
@@ -308,6 +315,7 @@ namespace FPSGame.Managers
         private void HandleWeaponSwitch(uint sid, int slotIndex)
         {
             if (IsSelf(sid)) return;
+            _weaponSlots[sid] = slotIndex;   // 先记账：实例可能还没建 / 刚被重建，重建后由 AttachRoleWeapons 补落
             if (_friends.TryGetValue(sid, out var fc) && fc != null) fc.SetActiveWeaponSlot(slotIndex);
         }
 
@@ -433,6 +441,7 @@ namespace FPSGame.Managers
             _lastInfos = null;
             _lastProfiles = null;
             _loadouts.Clear();   // 配置跟人走：人都不在了，留着只会在下一次"恰巧同 sid"时串味
+            _weaponSlots.Clear();   // 同上：槽位也是"跟人走"的状态
             FPSGame.Utils.NetSyncLog.SyncLog("房主离场", $"与房主断开 ⇒ 已清空 {count} 个盟友实例，本端回到单机");
         }
 
@@ -668,6 +677,10 @@ namespace FPSGame.Managers
                 : profile.Upgrades;
 
             fc.SetWeapons(list, upgrades, loadout?.Modules);
+
+            // 装配会把显示槽重置回"默认主手"（朋友实例重建 / 资料晚到重装都会走这里）
+            // ⇒ 立刻把**他实际在拿的那一槽**补落回去；空手（槽 6）没有武器实例，落槽即可。
+            if (_weaponSlots.TryGetValue(fc.NetSid, out int slot)) fc.SetActiveWeaponSlot(slot);
         }
 
         /// <summary>
@@ -1136,6 +1149,11 @@ namespace FPSGame.Managers
         private void Update()
         {
             ReconcileFriends();   // 意外丢失的盟友实例 ⇒ 自愈（必须放在下面"不在房就早退"之前）
+
+            // 【诊断】派生号映射落盘（两端各一份 netid_map_<角色>.log，用来对照"派生号两端算出的值不同"）：
+            //   放在"不在房就早退"之前 ⇒ 单机也能出文件；角色只用来区分文件名（同机双端 persistentDataPath 相同）。
+            var room = NetRoomFlow.Instance;
+            NetIdProbe.TickAutoDump(room == null ? "solo" : room.IsHost ? "host" : "member");
 
             var flow = NetTransformFlow.Instance;
             if (flow == null) return;

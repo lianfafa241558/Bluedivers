@@ -181,7 +181,10 @@ namespace FPSGame.Game
                 ++ordinal;
             }
 
-            return DerivedNetIdBase | (int)(Fnv1a($"{id}|{qx}|{qy}|{qz}|{ordinal}") & 0x3FFF_FFFFu);
+            int netId = DerivedNetIdBase | (int)(Fnv1a($"{id}|{qx}|{qy}|{qz}|{ordinal}") & 0x3FFF_FFFFu);
+            // 诊断：把**输入**也记下来（两端号不一致时要能分清是 Id / 坐标 / 序号 哪一项分叉，见 NetIdProbe.DumpMap）
+            NetIdProbe.RecordDerived(id, qx, qy, qz, ordinal, netId);
+            return netId;
         }
 
         /// <summary>FNV-1a 32 位（零分配、跨端稳定；与 <c>Furniture_Attached.SyncId</c> / 任务指纹同族做法）。</summary>

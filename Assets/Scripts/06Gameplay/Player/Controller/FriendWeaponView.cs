@@ -96,6 +96,8 @@ namespace FPSGame.Gameplay
             }
 
             // 有武器就默认拿主手（与玩家 EquipGroundWeapon 的"自动切换"一致）
+            // ⚠ 这只是**本端兜底**：盟友真实在拿哪一槽由桥在装配后补落（见 NetFriendBridge.AttachRoleWeapons），
+            //   否则"实例被销毁重建 / 资料晚到导致重装武器"时会一直显示主手（我空手、别人看我举着枪）。
             if (_active < 0) SetActiveSlot(FindFirstSlot());
 
             ApplyAimHold(GetSlot(_active));   // ⚠ 显式再摆一次：SetActiveSlot 在同槽位时会早退，装配首帧可能没走到

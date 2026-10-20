@@ -98,6 +98,23 @@ def compile_one(name):
         if os.path.exists(r_):
             lines.append('-r:"%s"' % r_)
             nref += 1
+
+    # 包程序集（UnityEngine.UI / Unity.TextMeshPro / Unity.Burst / URP…）：Unity 的 csproj 里
+    # ProjectReference 常常是**空的或过期的**（生成时机早于包装好）⇒ 直接按 ScriptAssemblies 全量补，
+    # 只排除"正在编的这个"（引用自己的旧副本会造成类型重复）。
+    sa_dir = os.path.join(ROOT, 'Library', 'ScriptAssemblies')
+    if os.path.isdir(sa_dir):
+        for f in os.listdir(sa_dir):
+            if not f.endswith('.dll'):
+                continue
+            if asm and f[:-4] == asm:
+                continue
+            p = os.path.join(sa_dir, f)
+            if os.path.normcase(os.path.abspath(p)) in {os.path.normcase(os.path.abspath(r_)) for r_ in refs}:
+                continue
+            lines.append('-r:"%s"' % p)
+            nref += 1
+
     sa_dirs = [OUTDIR, os.path.join(ROOT, 'Library', 'ScriptAssemblies')]
     nproj = 0
     for nm in projrefs:
@@ -113,6 +130,19 @@ def compile_one(name):
             nproj += 1
         else:
             print('   ! 缺兄弟程序集 dll:', nm)
+    # 插件 DLL（Assets/Plugins 下的预编译程序集）：Unity 编译时自动加，但**不写进 .csproj**
+    # ⇒ 这里自己补，否则 PEMaths / KCPNet 这类会成片报 CS0246（2026-10-20 实测）。
+    seen = {os.path.normcase(os.path.abspath(r_)) for r_ in refs}
+    for dp, _dn, fn in os.walk(os.path.join(ROOT, 'Assets', 'Plugins')):
+        for f in fn:
+            if not f.endswith('.dll'):
+                continue
+            p = os.path.join(dp, f)
+            if os.path.normcase(os.path.abspath(p)) in seen:
+                continue
+            lines.append('-r:"%s"' % p)
+            nref += 1
+
     lines += ['"%s"' % p for p in src_paths]
     open(rsp, 'w', encoding='utf-8').write('\n'.join(lines))
 

@@ -29,6 +29,15 @@ public enum MissionInitMode
         BattleManager manager;
         System.Random random => manager.BattleRandom;
 
+        /// <summary>兴趣点 / 场景点的**落点与朝向**随机源（两端必须一致）。
+        /// <para>▍为什么不能用 <see cref="random"/>（全局战斗流）：那条流被各系统共同推进，两端走到的步数不同
+        /// ⇒ 据点落点分叉 ⇒ 据点里带 <c>Actor</c> 的嵌套道具世界坐标不同 ⇒ **派生号（含出生坐标）全对不上**
+        /// （2026-10-20 用 netid_map 双端对照实测：Container / OilDrum / fuel / post / wire / Spore / LightA|B /
+        /// rollerShutter 共 260+ 实例两端坐标不同，命中它们的伤害/死亡消息因此落地失败）。
+        /// 口径同 <see cref="SeedStream.PropSpawn"/>：单机（<c>TaskState.Seed == 0</c>）回落到原流，行为不变。</para></summary>
+        System.Random PointRandom(SeedStream stream)
+            => SeedUtil.NewStream(FPSGame.Data.TaskState.Seed, stream) ?? random;
+
         SelectTaskData root;
 
         [SerializeField]
@@ -170,7 +179,8 @@ public enum MissionInitMode
             // 而注入对象要在 Init 里就可用了。2026-10-01 取代 ServiceLocator.Res 槽（见 IResConsumer）。
             if (go is IResConsumer resConsumer) resConsumer.Inject(ResSvc.Instance);
             var size = RandomUtils.Range(random, go.mapEntitySize.x, go.mapEntitySize.y);
-            go.Init(root, task, task.cfg.sprite, GenerateNewMissionPoint(size), size, EntityRoot);
+            // 任务点仍用全局战斗流（它的顺序在两端一致，实测任务实体 Id/位置都对得上）
+            go.Init(root, task, task.cfg.sprite, GenerateNewMissionPoint(size, random), size, EntityRoot);
             while (!go.IsInitialized) yield return null;
             // 联机稳定键：按创建顺序（本模式的顺序由本局配置 + 稳定排序决定 ⇒ 两端一致）
             go.netOrder = missions.Count;
@@ -300,15 +310,17 @@ public enum MissionInitMode
         /// </summary>
         IEnumerator InitInterestPoint()
         {
-            int count = random.Range(6,2*(int)Mathf.Sqrt(root.CameraSize));
+            // 落点/朝向一律走**本用途的派生流**（见 PointRandom 的注释），不用全局战斗流
+            var rnd = PointRandom(SeedStream.InterestPoint);
+            int count = rnd.Range(6,2*(int)Mathf.Sqrt(root.CameraSize));
             //Debug.LogWarning("兴趣点数"+count);
             int totleWeight = root.mapCfg.interestPoints.Sum(item=>item.Value);
             //GameObject[] objects= new GameObject[count];
             for (int i =0;i< count;++i)
             {
-                var pos = GenerateNewMissionPoint(8);
+                var pos = GenerateNewMissionPoint(8, rnd);
                 if (pos == default) { Debug.LogWarning("兴趣点数量" + i); break; }
-                Instantiate(root.mapCfg.interestPoints.WeightTake(totleWeight, random), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), EntityRoot);
+                Instantiate(root.mapCfg.interestPoints.WeightTake(totleWeight, rnd), pos, Quaternion.Euler(0, RandomUtils.Range(rnd, 0, 360), 0), EntityRoot);
                 yield return null;
             }
         }
@@ -317,22 +329,23 @@ public enum MissionInitMode
         /// </summary>
         IEnumerator InitScenePoint()
         {
-            int count = random.Range(20, 3*(int)Mathf.Sqrt(root.CameraSize));
+            var rnd = PointRandom(SeedStream.ScenePoint);
+            int count = rnd.Range(20, 3*(int)Mathf.Sqrt(root.CameraSize));
             //Debug.LogWarning("兴趣点数"+count);
             int totleWeight = root.mapCfg.scenePoints.Sum(item => item.Value);
             //GameObject[] objects= new GameObject[count];
             for (int i = 0; i < count; ++i)
             {
-                var pos = GenerateNewMissionPoint(6);
+                var pos = GenerateNewMissionPoint(6, rnd);
                 if (pos == default) { Debug.LogWarning("场景点数量" + i); break; }
-                Instantiate(root.mapCfg.scenePoints.WeightTake(totleWeight, random), pos, Quaternion.Euler(0, RandomUtils.Range(0, 360), 0), EntityRoot);
+                Instantiate(root.mapCfg.scenePoints.WeightTake(totleWeight, rnd), pos, Quaternion.Euler(0, RandomUtils.Range(rnd, 0, 360), 0), EntityRoot);
                 yield return null;
             }
         }
         /// <summary>
         /// 生成新的任务点
         /// </summary>
-        Vector3 GenerateNewMissionPoint(int newRange)
+        Vector3 GenerateNewMissionPoint(int newRange, System.Random rnd)
         {
             // 地表占地圆（巨型悬崖等）每次现读一遍：它们可能已被 ModifyTerrain 清除，
             // 只读一次就长期用的话会一直躲着已经不存在的石头
@@ -362,8 +375,8 @@ public enum MissionInitMode
 
             for (int attemptCount=0; attemptCount < 100 && candidates.Count < candidateCount; ++attemptCount)
             {
-                float gridX = Mathf.Clamp(RandomUtils.Range(random, 0, gridCount) +0.5f + RandomUtils.Range(random, -0.3f, 0.3f),0.5f, gridCount-0.5f) * gridSize;
-                float gridY = Mathf.Clamp(RandomUtils.Range(random, 0, gridCount) +0.5f + RandomUtils.Range(random, -0.3f, 0.3f), 0.5f, gridCount - 0.5f) * gridSize;
+                float gridX = Mathf.Clamp(RandomUtils.Range(rnd, 0, gridCount) +0.5f + RandomUtils.Range(rnd, -0.3f, 0.3f),0.5f, gridCount-0.5f) * gridSize;
+                float gridY = Mathf.Clamp(RandomUtils.Range(rnd, 0, gridCount) +0.5f + RandomUtils.Range(rnd, -0.3f, 0.3f), 0.5f, gridCount - 0.5f) * gridSize;
                 var candidatePos = statrPoint+ new Vector2(gridX, gridY);
 
                 if (Vector2.Distance(candidatePos, center)+ newRange <= Mathf.Max( mapRadius - 5, newRange) //没超出地图范围

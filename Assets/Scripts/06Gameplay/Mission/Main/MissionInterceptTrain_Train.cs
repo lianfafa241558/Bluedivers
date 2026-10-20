@@ -289,6 +289,8 @@ namespace FPSGame.Mission
             runtime.Cars.Clear();
             if (runtime.Engine != null)
             {
+                // ⚠ 先摘 Boss 旗标再 Kill 是为了"到站逃走"不计成"击杀 Boss"；但 Killer 之后的 OnEnemyDead
+                //   还会被 HpWnd 用来收掉 Boss 血条 —— 所以那边**只看 dic 里有没有**，不看这个旗标。
                 if (runtime.Engine.TryGetComponent(out Actor actor)) actor.RemoveFlag(ActorFlag.Boss);
                 if (killEngine && runtime.Health != null) runtime.Health.Kill();
                 Destroy(runtime.Engine);
@@ -301,11 +303,11 @@ namespace FPSGame.Mission
             int total = departureTracks != null ? departureTracks.Length : 0;
             if (departedCount >= total)
             {
-                UpdateTip($"摧毁列车 {NowProgress}/{MaxProgress}（已无后续列车）");
+                UpdateTip("");
                 return;
             }
             float nextIn = firstDepartureDelay + departureInterval * departedCount - serviceTime;
-            UpdateTip($"下一列火车时间 {Tool.FloatToTime(Mathf.Max(0f, nextIn))}，摧毁列车 {NowProgress}/{MaxProgress}");
+            UpdateTip($"下一列火车时间 {Tool.FloatToTime(Mathf.Max(0f, nextIn))}");
         }
 
         #endregion

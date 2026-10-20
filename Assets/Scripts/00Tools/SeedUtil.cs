@@ -44,6 +44,13 @@ namespace FPSGame.Utils
         PropSpawn = 15,
         /// <summary>**敌人死亡掉落数量**（<c>DieLoot</c>）—— 按单位 NetId 细分 ⇒ 两端掉落数量一致（零消息）。</summary>
         DieLoot = 16,
+        /// <summary>**兴趣点（据点/营地）的落点与朝向**（<c>MissionController.InitInterestPoint</c>）。
+        /// <para>▍必须独立：原来吃全局 <c>BattleRandom</c>，两端游标不同 ⇒ 据点落点分叉 ⇒ 据点里那些带
+        /// <c>Actor</c> 的嵌套道具（wire / LightA / 油桶 / 燃料桶…）世界坐标不同 ⇒ **派生号（含出生坐标）全对不上**
+        /// （2026-10-20 用 netid_map 双端对照实测：10 类道具 260+ 个实例两端坐标分叉）。</para></summary>
+        InterestPoint = 17,
+        /// <summary>**场景点（装饰点）的落点与朝向**（<c>MissionController.InitScenePoint</c>）—— 同上。</summary>
+        ScenePoint = 18,
     }
 
     /// <summary>

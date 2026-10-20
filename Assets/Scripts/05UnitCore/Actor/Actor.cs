@@ -64,7 +64,13 @@ namespace FPSGame.Game
                 // 会把"消息迟到"误判成"本端从未有过这个号"。
                 if (_netId != 0) NetIdProbe.Died(_netId, Id);
                 _netId = value;
-                if (value != 0) NetIdProbe.Born(value, Id);
+                if (value != 0)
+                {
+                    NetIdProbe.Born(value, Id);
+                    // 号 → 身份 映射（两端对照用）。挂在 setter 上 ⇒ 自增 / 特殊 / 4052 覆盖**全都**经过这里；
+                    // 派生段在 ActorsManager.DerivedNetId 里已带"同 Id 同坐标序号"记过，RecordMap 内部会跳过它。
+                    NetIdProbe.RecordMap(value, Id, transform.position);
+                }
             }
         }
 

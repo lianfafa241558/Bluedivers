@@ -1,0 +1,60 @@
+总行数=6349
+
+=== 异常行 1 处 ===
+--- line 5951 ---
+NullReferenceException: Object reference not set to an instance of an object.
+  at FPSGame.Core.AudioManagerBase`1+<>c__DisplayClass10_1[T].<PlaySound>b__2 (UnityEngine.AudioSource item) [0x00000] in <00000000000000000000000000000000>:0 
+  at System.Collections.Generic.List`1[T].Find (System.Predicate`1[T] match) [0x00000] in <00000000000000000000000000000000>:0 
+  at FPSGame.Core.AudioManagerBase`1[T].PlaySound (FPSGame.Core.AudioPlayInfo info) [0x00000] in <00000000000000000000000000000000>:0 
+  at FPSGame.AI.FxControllerBase.TriggerFX (FPSGame.AI.OccasionTypeEnum type, UnityEngine.Vector3 pos, UnityEngine.Quaternion roat, UnityEngine.Transform parent, System.Boolean ignoreAudio) [0x00000] in <00000000000000000000000000000000>:0 
+  at FPSGame.AI.FxControllerBase.PlayDieFx (UnityEngine.Vector3 pos) [0x00000] in <00000000000000000000000000000000>:0 
+  at FPSGame.AI.HealthFX.OnDie (UnityEngine.GameObject caused, UnityEngine.GameObject origin) [0x00000] in <00000000000000000000000000000000>:0 
+  at FPSGame.Game.Health.HandleDeath (UnityEngine.GameObject caused, UnityEngine.GameObject origin) [0x00000] in <00000000000000000000000000000000>:0 
+  at FPSGame.Mission.MissionInterceptTrain.DetachTrain (FPSGame.Mission.MissionInterceptTrain+TrainRuntime runtime, System.Boolean killEngine) [0x00000] in <00000000000000000000000000000000>:0 
+  at FPSGame.Mission.MissionInterceptTrain.Uninit () [0x00000] in <00000000000000000000000000000000>:0 
+
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+PlayerConnection::CleanupMemory Statistics:
+[ALLOC_TEMP_TLS] TLS Allocator
+  StackAllocators : 
+    [ALLOC_TEMP_MAIN]
+
+=== 盟友/武器槽相关 4 行（前 60） ===
+[NetFriendBridge] 创建盟友实例 sid=577655860 名=用户3072901
+[异常/盟友自愈] sid=577655860 的盟友实例被外部销毁（Friend_577655860）⇒ 下一帧按名单重建
+[NetFriendBridge] 创建盟友实例 sid=577655860 名=用户3072901
+[异常/盟友自愈] sid=577655860 的盟友实例被外部销毁（Friend_577655860）⇒ 下一帧按名单重建
+
+=== 警告 46 行（前 30） ===
+警告任务Robbery(Clone)没有实体
+CreatUnit: tier 'Alert' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Alert' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Alert' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Alert' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Alert' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier
+CreatUnit: tier 'Special1' 在当前模板配置中不存在，降级到默认 tier

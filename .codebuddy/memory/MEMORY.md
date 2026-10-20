@@ -18,7 +18,7 @@
 - ⭐ 伤害来源两口径：`DamageOrigin`（统计）/ `DamageCaused`（显示·AI）—— 新伤害路径先选对，细则 → `topics/gameplay.md`
 - ⭐ "别占的地方"= 两套圆**绝不能混存**：`TerrainUtils.AreaCircles`（地形覆盖物，会被 `RockCoverDestructor` 重建）/ `ReservedCircles`（任务点/走廊）；跨层避让一律走后者（06 不能引用 09）
 - ⭐ 美化 SO Inspector = 专属 `[CustomEditor]`（继承 `Editor/Drawer/DataSOEditorBase.cs`），**禁用**全局 fallback `EditorOverride`；细则 → `topics/tooling.md`
-- ⭐ **少写兜底**（2026-10-18 用户口径）：**已用 MCP 配好的引用直接用**，禁 `Resources.Load`/`Find` 二级取路径；缺前置条件就一条日志 + return，不写降级链。判据 → `rules/UnityCSharp编码规范.md §6.3`
+- ⭐ **少写兜底**（2026-10-18 用户口径）：**已用 MCP 配好的引用直接用**，禁 `Resources.Load`/`Find` 二级取路径；缺前置条件就一条日志 + return，不写降级链。判据 → `rules/UnityCSharp编码规范.md §5`（原 §6.3，2026-10-20 精简后改号）
 
 ## 热区 2 · 环境
 - Unity **2022.3.62f3** / URP 14.0.12 / C#9 / netstandard2.0；单机 PvE + 局域网联机；随机源 `BattleRandom` + `SeedUtil.Derive`
@@ -55,6 +55,7 @@
 | 编辑器 / Drawer / MCP / 编译验证 | `topics/tooling.md` |
 | plans 脚本清单 | `topics/plans-scripts.md` |
 | UI 预制体 / 面板布局 / 素材选图 | `topics/ui-wnd.md` |
+| 人设 / 语气 / 诺亚设定 | `rules/人设.md`（行为约束）+ `topics/persona.md`（背景库） |
 | 技术债 / 待改架构 | `Assets/Scripts/00Tools/TechnicalDebt.cs` |
 | 哪天做过什么 / 已下沉原文 | `archive/`（INDEX-legacy / topics-snapshot） |
 

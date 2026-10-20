@@ -171,7 +171,7 @@ namespace FPSGame.Managers
             var enemy = Find(netId);
             if (enemy != null)
             {
-                FPSGame.Utils.NetSyncLog.AiLog("敌人移动·收", $"netId={netId} 目标={destination:F2} 副本=已找到 ⇒ 应用", netId, 2f);
+                //FPSGame.Utils.NetSyncLog.AiLog("敌人移动·收", $"netId={netId} 目标={destination:F2} 副本=已找到 ⇒ 应用", netId, 2f);
                 enemy.ApplyRemoteDestination(destination);
                 return;
             }
@@ -180,8 +180,8 @@ namespace FPSGame.Managers
             // ⚠ 不能直接丢：房主只在"目标变化"时发（<1m 去重），丢了就没有第二条 ⇒ 那只怪会一直原地不动。
             if (netId != 0)
             {
-                if (!_pendingMoves.ContainsKey(netId))   // 同一个 netId 反复暂存时只打一次（否则又是一只怪一行）
-                    FPSGame.Utils.NetSyncLog.Warn("敌人移动·收", $"netId={netId} 目标={destination:F2} 本端还没有这份副本 ⇒ 暂存（等副本建出来补发）");
+                //if (!_pendingMoves.ContainsKey(netId))   // 同一个 netId 反复暂存时只打一次（否则又是一只怪一行）
+                //    FPSGame.Utils.NetSyncLog.Warn("敌人移动·收", $"netId={netId} 目标={destination:F2} 本端还没有这份副本 ⇒ 暂存（等副本建出来补发）");
                 _pendingMoves[netId] = destination;
                 _pendingTime[netId] = Time.unscaledTime;
             }
@@ -224,8 +224,22 @@ namespace FPSGame.Managers
                 {
                     _pendingMoves.Remove(id);
                     _pendingTime.Remove(id);
+
+                    // ★ 目标**已经阵亡 / 已销毁** ⇒ 属正常损耗（口径同"远端伤害落地"那条），降为 Info：
+                    //   "房主发了移动、成员这边 0.2s 前刚好死了" 是必然的时序竞态，用 Warn 报会被当成缺陷
+                    //   （2026-10-20 实测 netId=7：两端映射里都是 robot01、同坐标，probe 账本显示它 0.2s 前已销毁 ⇒ 号本身没错）。
+                    if (NetIdProbe.IsNormalMiss(id))
+                    {
+                        FPSGame.Utils.NetSyncLog.AiLog("敌人移动·打尸体",
+                            $"netId={id} 暂存超时 {PendingTtl:0.#}s，但该号已阵亡/销毁 ⇒ 丢弃（正常）| " +
+                            NetIdProbe.Explain(id, 0, "移动"),
+                            id, 2f);
+                        continue;
+                    }
+
                     FPSGame.Utils.NetSyncLog.Warn("敌人移动·放弃",
-                        $"netId={id} 暂存超时 {PendingTtl:0.#}s 仍没有本端副本 ⇒ 丢弃（该单位在本端不会动：房主端可能开了本端没复刻的波次）");
+                        $"netId={id} 暂存超时 {PendingTtl:0.#}s 仍没有本端副本 ⇒ 丢弃（该单位在本端不会动）| " +
+                        NetIdProbe.Explain(id, 0, "移动"));
                 }
             }
             _flushScratch.Clear();
@@ -325,6 +339,9 @@ namespace FPSGame.Managers
                         CausedNetId = causedNetId, Deadline = Time.unscaledTime + PendingDamageTtl,
                     });
                     FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={netId} 暂未找到本端副本 ⇒ 挂起重试（{_pendingDamages.Count}/{MaxPendingDamage}）| {probe}");
+                    // 【诊断】出事这一刻把本端派生号映射刷到盘上（限流 5s）⇒ 与对端那份直接 diff（见 plans/netid_map_diff.py）
+                    var room = FPSGame.Net.NetRoomFlow.Instance;
+                    NetIdProbe.DumpMapOnMiss(room == null ? "solo" : room.IsHost ? "host" : "member");
                     return;
                 }
                 FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"找不到 netId={netId} 的本端副本 ⇒ 这一发被丢弃 | {probe}");

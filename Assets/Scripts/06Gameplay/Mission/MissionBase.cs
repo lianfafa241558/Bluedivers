@@ -120,6 +120,11 @@ namespace FPSGame.Mission
         /// <summary>已使用战备</summary>
         private bool allowUseAirdrop;
 
+        /// <summary>配了实体预制体（<c>prefabs</c> 非空）⇒ 正常情况下 <see cref="entity"/> 一定会被建出来。
+        /// <para>没配的是"容器任务"（如 <c>Robbery</c> 根任务：实体只是它下面的子任务/玩法）⇒ 没有实体属正常，
+        /// 消费方（小地图等）别把它当缺陷告警。</para></summary>
+        public bool HasEntityPrefab => prefabs != null && prefabs.Count > 0;
+
         //[HideInInspector]
         public MissionView entity;
         public bool end;

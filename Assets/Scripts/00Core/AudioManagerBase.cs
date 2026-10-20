@@ -119,6 +119,12 @@ namespace FPSGame.Core
                 return null;
             }
             if (sourcePool==null) return null;
+            // ⚠ 管理器已被销毁 / 应用正在退出（`Uninit` 收尾、切场景卸载阶段）时**不要再建音源**：
+            //   那时 `new GameObject() + AddComponent<AudioSource>()` 会失败 ⇒ 池的 Add 回调拿到 null ⇒ `aud.xxx` NRE。
+            //   而 PlaySound 常被 `Health.OnDie` 的多播链间接调用 —— 一抛异常就把后面的 `Actor.OnDie`
+            //   （置 Dead / 发 `UnitEventBus.EnemyDead` / AutoDestroy）整段掐断，血条与击杀统计跟着漏
+            //   （2026-10-20 实测：任务收尾 Kill 车头 → 这里 NRE；上一轮只补了池谓词的判空，漏了这条 Add 路径）。
+            if (Instance == null || !Instance) return null;
             var cilp = info.cilp ??(!string.IsNullOrEmpty(info.path)? Instance.PathToCilp("SFX/" + info.path, info.cache):null);
             if (!cilp)
             {
@@ -126,7 +132,11 @@ namespace FPSGame.Core
                 return null;
             }
             //禁止重复
-            if (info.nonStackable && sourcePool.Contains(item=>item.isPlaying&&item.clip.name==cilp.name)) return null;
+            // ⚠ 谓词里必须先判 item/clip 有效：池的 useObjects 里可能残留**已销毁**的 AudioSource
+            //   （场景卸载 / 音频管理器重建的那几帧），Unity 假 null 后在谓词里访问 clip/transform 会抛异常。
+            //   而 PlaySound 经常被 `Health.OnDie` 这类**多播委托**间接调用 —— 一个订阅者抛异常会**掐断后面所有订阅者**
+            //   （2026-10-20 实测：任务收尾 Kill 车头 ⇒ 这里 NRE ⇒ Actor.OnDie 没跑 ⇒ EnemyDead 没发 ⇒ Boss 血条不消失）。
+            if (info.nonStackable && sourcePool.Contains(item => item && item.isPlaying && item.clip && item.clip.name == cilp.name)) return null;
             if (info.space==0)
             {
                 var source = ShotGroup[info.group];
@@ -153,7 +163,8 @@ namespace FPSGame.Core
                 }
                 var camPos = cam ? cam.transform.position : Vector3.zero;
                 var distance = Mathf.Sqrt(Vector3.Distance(info.vector, camPos));//100m可以偏差10格
-                var tmpSource = sourcePool.Find(item => Vector3.Distance(item.transform.position,info.vector)<Mathf.Max(2, distance) && group == item.outputAudioMixerGroup);
+                // 同上方注释：item 可能是已销毁的音源，先判有效再读 transform（这条正是那条 NullReference 的落点）
+                var tmpSource = sourcePool.Find(item => item && Vector3.Distance(item.transform.position,info.vector)<Mathf.Max(2, distance) && group == item.outputAudioMixerGroup);
                 if (tmpSource)
                 {
                     tmpSource.PlayOneShot(cilp);
