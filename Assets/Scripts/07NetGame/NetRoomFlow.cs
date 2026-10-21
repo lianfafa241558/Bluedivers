@@ -120,6 +120,10 @@ namespace FPSGame.Net
         /// <para>⚠ 发起方按"**这辆车是不是我开的**"丢掉自己那条（本机已经真放过一发）—— 键是载具号，不是 sid。</para></summary>
         public static event Action<int, int, Vector3, Vector3, int, int, int, int> OnVehicleShoot;
 
+        /// <summary>背包护盾被打（双向一条；本事件**只在本机就是护盾归属者**时触发，见 <see cref="HandleShieldDamageNtf"/>）。
+        /// <para>参数：整条 DTO（<c>Sid</c> = 归属者，必然等于本机自己的 sid 或 0=房主）。</para></summary>
+        public static event Action<ShieldDamageMsg> OnShieldDamaged;
+
         /// <summary>某成员离开（房主下发，**战斗期也会来**）。参数：离开者 sid。
         /// <para>各端据此销毁对应盟友实例 / 收起 HUD 那行 —— 名单本身**不重排**（战斗期冻结，见 <see cref="PlayerLeftMsg"/>）。</para></summary>
         public static event Action<uint> OnPlayerLeft;
@@ -292,6 +296,8 @@ namespace FPSGame.Net
             MessageCenter.Register<VehicleMountMsg>(CmdId.VehicleMountNtf, HandleVehicleMountNtf);
             // 载具开火表现（同款：双向一条，注册在这里，桥只订阅 OnVehicleShoot 事件）
             MessageCenter.Register<VehicleShootMsg>(CmdId.VehicleShootNtf, HandleVehicleShootNtf);
+            // 背包护盾伤害（同款：双向一条，注册在这里，桥只订阅 OnShieldDamaged 事件）
+            MessageCenter.Register<ShieldDamageMsg>(CmdId.ShieldDamageNtf, HandleShieldDamageNtf);
         }
 
         private void OnDestroy()
@@ -334,6 +340,7 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.OOPartSubmitNtf);
             MessageCenter.Unregister(CmdId.KeyScreenInputNtf);
             MessageCenter.Unregister(CmdId.VehicleMountNtf);
+            MessageCenter.Unregister(CmdId.ShieldDamageNtf);
             MessageCenter.Unregister(CmdId.VehicleShootNtf);
             if (ReferenceEquals(Instance, this)) Instance = null;
         }
@@ -847,6 +854,25 @@ namespace FPSGame.Net
             NetSvc.Instance.SendMsg(msg);
         }
 
+        /// <summary>【上行】背包护盾被打（分流同 <see cref="SendVehicleMount"/>：房主广播、成员上报房主）。
+        /// <para>⚠ 本端**不派发自己那条**：归属者本机已经真扣过血（那边才是权威），这里只是"告诉归属者该扣多少"。
+        /// 房主转发成员那条由**桥**做（本号只有一个注册者 = 本类），见 <c>NetShieldBagBridge</c>。</para></summary>
+        public void SendShieldDamage(uint targetSid, float damage, Vector3 point)
+        {
+            if (damage <= 0f) return;
+
+            var msg = MessageCenter.Pack(CmdId.ShieldDamageNtf,
+                new ShieldDamageMsg { Sid = targetSid, Damage = damage, X = point.x, Y = point.y, Z = point.z });
+
+            if (IsHost)
+            {
+                NetHostSvc.Instance?.SendToAll(msg);   // 房主：只广播（目标端按 Sid 认领）
+                return;
+            }
+            if (!CanSendToHost) return;
+            NetSvc.Instance.SendMsg(msg);
+        }
+
         /// <summary>
         /// 【上行】角色喊话（术语：<c>SpeechTypeEnum</c> 的 int）。分流规则同 <see cref="SendAirdropCall"/>：
         /// **本端不派发自己那条**（本地已经喊过了，这只是"告诉别人"）。
@@ -924,6 +950,26 @@ namespace FPSGame.Net
             if (m == null || m.NetId == 0) return;
             OnVehicleShoot?.Invoke(m.NetId, m.WeaponIndex, new Vector3(m.DirX, m.DirY, m.DirZ),
                 new Vector3(m.HitX, m.HitY, m.HitZ), m.DamageIndex, m.MuzzleIndex, m.Magazine, m.Ammo);
+        }
+
+        /// <summary>背包护盾被打（双向一条）：房主收到成员上报 ⇒ 转发全体；**只有归属者本机**收到事件。
+        /// <para>⚠ 房主自己那条（<c>Sid == 0</c>）不再广播 —— 别人的机器上没有房主本人那份护盾，发过去没人认领。</para></summary>
+        private void HandleShieldDamageNtf(ShieldDamageMsg m)
+        {
+            if (m == null || m.Damage <= 0f) return;
+
+            if (IsHost)
+            {
+                if (m.Sid == 0u)
+                {
+                    OnShieldDamaged?.Invoke(m);   // 打在房主自己的护盾上 ⇒ 房主本地落地
+                    return;
+                }
+                NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.ShieldDamageNtf, m));   // 成员的护盾 ⇒ 广播，目标端认领
+                return;
+            }
+            if (m.Sid != SelfSid) return;
+            OnShieldDamaged?.Invoke(m);
         }
 
         private void HandlePlayerLeftNtf(PlayerLeftMsg m)

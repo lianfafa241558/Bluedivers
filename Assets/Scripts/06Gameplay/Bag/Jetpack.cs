@@ -57,6 +57,10 @@ namespace FPSGame.Gameplay
         {
             base.Update();//恢复充电总是执行
 
+            // 远端实例（盟友）没有 PlayerController / 输入 ⇒ 这套"按住跳跃喷气"没有驱动源；
+            // 不挡就是 OnInstall 之后每帧 NRE（2026-10-21 客机实测：房主的背包被远端重放装上后报在 [0x00000]）。
+            if (!IsLocalDriver) return;
+
             //开启条件
             //1.天上
             //2.按住空格(跳跃键)

@@ -40,6 +40,9 @@ public class VehicleUI : MonoBehaviour
 
     IVehicleUIController controller;
 
+    /// <summary>绑定对象是背包时的引用（背包预制体里自带一份本 HUD，见下面的显隐门）。载具则为 null。</summary>
+    private BagBase _bag;
+
     /// <summary>
     /// 载具UI是否应该显示（由载具状态驱动）
     /// </summary>
@@ -55,6 +58,7 @@ public class VehicleUI : MonoBehaviour
 
         controller = contGo.GetComponent<IVehicleUIController>();
         if (controller == null) return;
+        _bag = controller as BagBase;
         controller.SetWeaponState += SetWeaponState;
         controller.OnFillChange += FillChange;
         controller.OnColorChange += ColorChange;
@@ -118,6 +122,10 @@ public class VehicleUI : MonoBehaviour
     }
     void StateChange(bool state)
     {
+        // 背包自带的这块 HUD 是**本人 HUD**（屏幕空间叠加画布就挂在背包身上）。联机时同一件背包会被
+        // 远端重放装到盟友实例上 ⇒ 不挡就是"队友挨打、我的屏幕上亮一条"（2026-10-21 实测）。载具（_bag == null）不受影响。
+        if (_bag != null && !_bag.IsLocalDriver) state = false;
+
         _shouldShow = state;
         anim.SetBool(Constants.k_AnimIsActiveParameter, state);
 

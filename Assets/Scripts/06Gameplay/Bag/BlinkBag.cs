@@ -33,7 +33,8 @@ public class BlinkBag : BagBase
     {
         base.Update();//恢复充电总是执行
 
-        if (!Owner.IsValidMono()) return;
+        // 远端实例（盟友）没有 m_InputHandler ⇒ 与喷气背包同一个坑，必须挡（见 BagBase.IsLocalDriver）
+        if (!Owner.IsValidMono() || !IsLocalDriver) return;
 
         //按下使用背包键(UseBag)即闪现，未被跳跃占用时
         if (m_InputHandler.GetUseBagDown() && CurrentFillRatio > cost && !m_InputHandler.useJump)

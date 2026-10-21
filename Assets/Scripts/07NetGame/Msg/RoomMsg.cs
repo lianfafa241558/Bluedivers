@@ -765,4 +765,29 @@ public class PlayerLoadoutMsg
     /// <summary>载具改装（按 vehicleName 键控；null/空 = 没同步过 ⇒ 消费方退回本机存档）。</summary>
     [Key(3)] public VehicleCustomDto[] Vehicles;
 }
+
+/// <summary>
+/// **背包护盾被打**（<c>ShieldBag</c> 的罩子）：把"开枪那台已经算好的最终扣减量"送到**护盾归属者**那台落地。
+///
+/// <para>▍为什么不能走 4025/4040：护盾罩子（<c>Sphere</c>）没有 <c>Actor</c>、没有 <c>NetId</c>，
+/// 统一伤害通道按号寻址，认不到它；而它又确实是独立可破坏单位（自带 <c>Damageable</c> + <c>HealthShield</c>）。</para>
+///
+/// <para>▍只带三样：归属者 sid（谁认领）、最终扣减量（<c>UnitEventBus.OnUnitDamaged</c> 的那个值，接收端
+/// <c>Resolved = true</c> 直接用，别再算护甲）、落点（受击特效位置）。不带护盾键 —— 每个玩家同时只装一件背包
+/// （<c>BagBase.NeedUninstall</c> 对任何 <c>Id</c> 含 "Bag" 的都返回 true）⇒ 归属者的"本人那件"唯一。</para>
+/// </summary>
+[MessagePackObject]
+public class ShieldDamageMsg
+{
+    /// <summary>护盾归属者 sid（房主 = 0）。收端**只在自己是它时**应用。</summary>
+    [Key(0)] public uint Sid;
+
+    /// <summary>最终扣减量（已乘完护甲/抗性，见 <c>UnitEventBus.OnUnitDamaged</c>）。</summary>
+    [Key(1)] public float Damage;
+
+    // 受击落点（世界空间）：归装者那台用它摆受击粒子/法线，零向量 = 未知 ⇒ 用护盾中心。
+    [Key(2)] public float X;
+    [Key(3)] public float Y;
+    [Key(4)] public float Z;
+}
 }

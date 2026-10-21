@@ -35,6 +35,12 @@ namespace FPSGame.Gameplay
         private EquippableFlagEnum flag;
 
         public IActor Owner { get; private set; }
+
+        /// <summary>是否"本机玩家"在驱动这件装备：只有本机玩家带 PlayerController + PlayerInputHandler。
+        /// <para>⚠ 联机盟友实例（FriendController）两者都为 null ⇒ 读输入 / 读重力的逻辑（喷气、闪现）
+        /// 与本人 HUD 都必须先看这个标记，否则就是"远端重放装上来 ⇒ 每帧 NRE / 别人的 HUD 亮在我屏幕上"。</para></summary>
+        public bool IsLocalDriver { get; private set; }
+
         string IEquippable.ID => GetComponent<IFurniture>().Id;
 
         public event Action<IEquippable> OnEquipDestroy;
@@ -74,6 +80,7 @@ namespace FPSGame.Gameplay
             Owner = actor;
             m_PlayerCharacterController = Owner.gameObject.GetComponent<PlayerController>();
             m_InputHandler = Owner.gameObject.GetComponent<PlayerInputHandler>();
+            IsLocalDriver = m_PlayerCharacterController != null && m_InputHandler != null;
             // 挂到承载组件的背部点位；没有就退到"模型根"；两者都没有（联机盟友实例）时**保持原父级** ——
             // 绝不能再像原来那样直接取 .ModleRoot（PlayerController 为 null ⇒ 整条远端重放链炸掉）。
             var mountPoint = Owner.gameObject.GetComponent<PlayerMountPoint>();
@@ -93,6 +100,7 @@ namespace FPSGame.Gameplay
         public virtual void OnUninstall()
         {
             Owner = null;
+            IsLocalDriver = false;
             m_PlayerCharacterController = null;
             m_InputHandler = null;
             transform.parent = null;

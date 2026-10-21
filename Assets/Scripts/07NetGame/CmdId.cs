@@ -190,6 +190,15 @@ namespace FPSGame.Net
         /// （实测 a 打完下车、b 上车看到满弹），口径改为"**驾驶者那台是权威**"，每次开火顺手推给其余端。</para></summary>
         public const int VehicleShootNtf = 4054;
 
+        /// <summary>双向：**背包护盾（<c>ShieldBag</c> 的罩子）被打**（值 = 归属者 sid + 最终扣减量 + 落点）。
+        /// <para>▍为什么必须单开一条：护盾罩子是**独立可破坏单位**（<c>Sphere</c> 上有 <c>Damageable</c> + <c>HealthShield</c>），
+        /// 但它没有 <c>Actor</c> / <c>NetId</c> ⇒ 统一伤害通道（4025/4040）根本不认它；而子弹只在**开枪那台**上模拟
+        /// （玩家血量各自机器权威，见 <c>topics/net-battle.md</c>）⇒ 不打这条，被装到别人身上后被我们打到的护盾
+        /// 会在**开枪那台**的副本上掉血、归属者那台纹丝不动（2026-10-21 实测：房主打客机，掉的/亮的是房主那份）。</para>
+        /// <para>▍走向（一个号两个方向，同 4053/4054）：成员上报 → 房主转发全体；房主直接广播。
+        /// 各端按 <c>Sid</c> 认领：**只有归属者本机应用**（它才是权威，破盾/重塑/HUD 都挂在它本机的链上）。</para></summary>
+        public const int ShieldDamageNtf = 4055;
+
         // ===== 舰桥准备（战备/强化/资料；对应原 BridgeSys 的三条本地回环）=====
         /// <summary>成员 -> 房主：本机玩家资料（角色/等级/武器/战备/强化）</summary>
         public const int PlayerProfileNtf = 4007;

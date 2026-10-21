@@ -96,7 +96,10 @@ namespace FPSGame.Game
         const float MapDumpInterval = 60f;
         static float _nextMapDump = -1f;
 
-        /// <summary>总开关（关掉后连账都不记）。</summary>
+        /// <summary>**写盘开关**：关掉后不再写 <c>netid_map_*.log</c> / <c>netid_probe_*.log</c>、不再出详细明细。
+        /// <para>⚠ 它**不影响账本与日志分级**（`Born`/`Dead`/`Died` 照常记账、`IsNormalMiss` 照常可判）：
+        /// 2026-10-21 踩过 —— 把这里改成 false 之后账本全空 ⇒ `IsNormalMiss` 恒 false ⇒ 所有"打尸体 / 消息迟到"
+        /// 都被升级成 `Warn`，Console 看起来像"突然多了几十条异常"（实际是正常损耗）。</para></summary>
         public static bool Enabled = false;
 
         public static int MissDamage;
@@ -109,7 +112,7 @@ namespace FPSGame.Game
         /// <summary>号被赋给某个单位（含 4051 复刻后覆盖）。同号仍被另一个 Id 占用 ⇒ 直接告警"两端号串了"。</summary>
         public static void Born(int netId, string id)
         {
-            if (!Enabled || netId == 0) return;
+            if (netId == 0) return;   // ⚠ 不看 Enabled：账本是"日志分级"的依据，见 Enabled 的注释
 
             if (_ledger.TryGetValue(netId, out var e))
             {
@@ -131,7 +134,7 @@ namespace FPSGame.Game
         /// <summary>号随单位作废（<c>Actor.OnDestroy</c> / 运行时换号时调用）。</summary>
         public static void Died(int netId, string id)
         {
-            if (!Enabled || netId == 0) return;
+            if (netId == 0) return;
 
             if (!_ledger.TryGetValue(netId, out var e))
             {
@@ -147,7 +150,7 @@ namespace FPSGame.Game
         /// 之后到达的伤害/死亡消息是"打尸体"，落地失败属正常，不该当缺陷报。</summary>
         public static void Dead(int netId, string id)
         {
-            if (!Enabled || netId == 0) return;
+            if (netId == 0) return;
 
             if (!_ledger.TryGetValue(netId, out var e))
             {
@@ -162,7 +165,7 @@ namespace FPSGame.Game
         /// <summary>这次的落地失败是否属于"正常损耗"（目标已阵亡或已销毁）——是则别用 Warning 刷屏。</summary>
         public static bool IsNormalMiss(int netId)
         {
-            if (!Enabled || !_ledger.TryGetValue(netId, out var e)) return false;
+            if (!_ledger.TryGetValue(netId, out var e)) return false;   // ⚠ 不看 Enabled（分级要用）
             return e.DiedAt >= 0f || e.DeadAt >= 0f;
         }
 
@@ -171,7 +174,7 @@ namespace FPSGame.Game
         /// <summary>对端消息落地失败时调用：累计计数 + 自动比对，返回可直接拼进日志的结论。</summary>
         public static string Explain(int netId, int key, string kind)
         {
-            if (!Enabled) return string.Empty;
+            // ⚠ 不能因 Enabled=false 就返回空串：调用方（EnemyNetBridge）用它拼"打尸体 / 真没建"的日志结论
             if (kind == "伤害") MissDamage++;
             else if (kind == "移动") MissMove++;
             else MissDeath++;
@@ -206,7 +209,7 @@ namespace FPSGame.Game
                 _sb.Append(" | 账本: 本端从未登记过该号 ⇒ ").Append(Diag(netId));
             }
 
-            if (_detailed.Add(netId))
+            if (Enabled && _detailed.Add(netId))   // 关掉开关就只给结论、不落盘
             {
                 _sb.Append(" | 本端快照: ").Append(Snapshot());
                 ToFile(kind + " " + _sb.ToString());

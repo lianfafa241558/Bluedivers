@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FPSGame.Core;
 using FPSGame.GameContract;
 using PEMaths;
 using FPSGame.Game;
@@ -88,6 +89,38 @@ public class ShieldBag : BagBase
     public void RestoreShield(PEInt _)
     {
         RefreshShieldUI();
+    }
+
+    /// <summary>
+    /// 【联机·归属者本机】把开枪那台算好的最终扣减量落到本机这份罩子上（见 <c>NetShieldBagBridge</c>）。
+    /// <para>⚠ 必须走 <c>Damageable.InflictDamage</c> 而不是直接改 <c>Health</c>：破盾标记 / 受击事件 /
+    /// 重塑计时 / 本组件的 UI 全挂在同一条链上，直改字段它们全都不会响。</para>
+    /// </summary>
+    public void ApplyRemoteDamage(float damage, Vector3 point)
+    {
+        if (damage <= 0f) return;
+        if (_health == null) return;
+
+        // IHealth 的实现都是 MonoBehaviour（HealthShield 在罩子 Sphere 上，同物体上就是它的 Damageable）
+        var shield = _health as Component;
+        var damageable = shield != null ? shield.GetComponent<Damageable>() : null;
+        if (damageable == null)
+        {
+            Debug.LogWarning(gameObject + "：护盾罩子上没有 Damageable ⇒ 远端伤害落不下来。", gameObject);
+            return;
+        }
+
+        damageable.InflictDamage(new DamagePacket
+        {
+            Damage = (PEInt)damage,
+            // 中性成分（Gun×1）+ Resolved：总额就是开枪那台的最终值，本端不再算一遍护甲/抗性（口径同 EnemyNetBridge）
+            DamageGroups = new List<SKVP<DamageTypeEnum, float>> { new SKVP<DamageTypeEnum, float>(default, 1f) },
+            NoSource = true,                    // 不传来源：本端没有开枪者那份实例，按无源结算（受击表现仍会播）
+            Pos = point,
+            // ⚠ 不传受击体：远端那条链没有真实命中点，传了罩子的话 HitNormal 会算出 (pos - 中心) = 零向量
+            //   ⇒ 受击特效朝向异常；留空由 Health 兜底成 Vector3.up。
+            Resolved = true,
+        });
     }
 
     /// <summary>把当前护盾值推到 UI</summary>

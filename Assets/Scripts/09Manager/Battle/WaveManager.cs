@@ -518,21 +518,51 @@ namespace FPSGame.Managers
             return go;
         }
 
-        /// <summary>【成员】按 (tier, prefabId) 在同一张 tier 表里取回房主抽中的那把 prefab（取不到就退回该 tier 第一把）。</summary>
+        /// <summary>【成员】按 (tier, prefabId) 取回房主抽中的那把 prefab。
+        /// <para>① 正常路径：tier 在表里 ⇒ 按 prefabId 找，找不到退回该 tier 第一把。</para>
+        /// <para>② **tier 不在表里 ⇒ 按 prefabId 全表找**（见下）。</para>
+        /// </summary>
         public GameObject FindTierPrefab(UnitTier tier, string prefabId)
         {
-            if (!TierItemWeight.TryGetValue(tier, out var list) || list.Count == 0) return null;
+            if (TierItemWeight.TryGetValue(tier, out var list) && list.Count > 0)
+            {
+                if (!string.IsNullOrEmpty(prefabId))
+                {
+                    for (int i = 0; i < list.Count; ++i)
+                    {
+                        var unit = list[i].Value.unit;
+                        if (unit == null) continue;
+                        var entity = unit.GetComponent<IEntity>();
+                        if (entity != null && entity.Id == prefabId) return unit;
+                    }
+                }
+                return list[0].Value.unit;
+            }
+
+            // ② 本端这张表里没有该 tier ⇒ 只能靠 4052 里的 **prefabId** 还原。
+            //    ▍为什么会有这种消息：房主侧 `TakeTierUnit` 在"tier 不在模板里"时会**降级**抽别的 tier 的单位
+            //      （只打一条 `CreatUnit: tier 'xxx' 不存在，降级到默认 tier`），但 4052 里的 `slot` 仍是 `(int)tier`
+            //      ⇒ 不按 prefabId 兜底就必然复刻失败：成员端少一只怪，之后它的移动/伤害/死亡消息全部"找不到副本"
+            //      （2026-10-21 实测：`tier 'Small'` 缺失 ⇒ `复刻失败（生成器=CreatSmall）` + 一串 `远端死亡落地 找不到 netId`）。
             if (!string.IsNullOrEmpty(prefabId))
             {
-                for (int i = 0; i < list.Count; ++i)
+                foreach (var kv in TierItemWeight)
                 {
-                    var unit = list[i].Value.unit;
-                    if (unit == null) continue;
-                    var entity = unit.GetComponent<IEntity>();
-                    if (entity != null && entity.Id == prefabId) return unit;
+                    var l = kv.Value;
+                    if (l == null) continue;
+                    for (int i = 0; i < l.Count; ++i)
+                    {
+                        var unit = l[i].Value.unit;
+                        if (unit == null) continue;
+                        var entity = unit.GetComponent<IEntity>();
+                        if (entity != null && entity.Id == prefabId) return unit;
+                    }
                 }
             }
-            return list[0].Value.unit;
+
+            Debug.LogWarning($"[WaveManager] 复刻取不到 prefab：tier={tier}（slot={(int)tier}）prefabId={prefabId}" +
+                             " ⇒ 本端这张表里既没有该 tier，也没有同 Id 的 prefab");
+            return null;
         }
 
         /// <summary>【联机】所有"运行时生成"的**唯一入口**（巢穴 / 召唤师 / 刷怪器）：房主（或单机）创建，成员直接返回 null
