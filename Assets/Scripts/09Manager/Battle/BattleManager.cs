@@ -166,7 +166,7 @@ namespace FPSGame.Managers
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
             WeatherCont = WeatherSystem.Create(Weather, transform);
-            NetSyncLog.LoadLog("初始化", $"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
+            Debug.LogError($"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
 
             yield return null;
 
@@ -225,7 +225,7 @@ namespace FPSGame.Managers
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
             WeatherCont = WeatherSystem.Create(Weather, transform);
-            NetSyncLog.LoadLog("初始化", $"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
+            Debug.LogError($"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
 
             yield return null;
 

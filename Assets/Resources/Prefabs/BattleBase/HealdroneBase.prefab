@@ -179,6 +179,7 @@ MonoBehaviour:
   AttackRange: 48
   AlertRange: 0
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 1
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -421,7 +422,8 @@ MonoBehaviour:
       Value: 2
   BulletFlag: 0
   Damages:
-  - BulletPrefab: {fileID: 0}
+  - BulletPrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
+      type: 3}
     LandingPrefab: {fileID: 0}
     Speed: 145
     Gravity: 10
@@ -475,6 +477,7 @@ MonoBehaviour:
   UnparentMuzzleFlash: 0
   SFXRange: 50
   FireNoiseRadius: 50
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 1862bb40e3ffecc45a49d24648c354ea, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -483,6 +486,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -945,6 +949,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3704b6bfebbc2374da4a9b194065d456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 5fd17dbdd75469740a06d85ed7f56f7f, type: 3}
@@ -956,6 +961,11 @@ MonoBehaviour:
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0

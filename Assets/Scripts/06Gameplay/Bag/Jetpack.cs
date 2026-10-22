@@ -53,6 +53,15 @@ namespace FPSGame.Gameplay
             AudioSource = GetComponent<AudioSource>();
         }
 
+        private void Start()
+        {
+            for (int i = 0; i < JetpackVfx.Length; i++)
+            {
+                var emissionModulesVfx = JetpackVfx[i].emission;
+                emissionModulesVfx.enabled = false;
+            }
+        }
+
         protected override void Update()
         {
             base.Update();//恢复充电总是执行

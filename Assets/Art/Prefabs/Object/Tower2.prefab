@@ -210,13 +210,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 200
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 5
+    Value: 9
+  - Key: 6
+    Value: 9
+  - Key: 8
+    Value: 9
+  - Key: 9
+    Value: 9
+  - Key: 10
+    Value: 9
+  - Key: 11
+    Value: 9
   MainPart: {fileID: 937600081937386553}
   demolishValue: 20
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 0
 --- !u!114 &7513204239390419146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -259,10 +271,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: ce141dd09fdf43b4a9b1f5d3a81e8ca5, type: 2}
   fxMaterial: {fileID: 2100000, guid: 2604d154b04e5714a9ae56d838ab0085, type: 2}
+  events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!114 &2119703255958381472
 MonoBehaviour:

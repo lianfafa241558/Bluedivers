@@ -274,7 +274,11 @@ public class SubtitleWnd : Window
                 break;
             case UnitTypeEnum.Friend:
                 Subtitles.Add(Instantiate(MarkPrefab).Creat(item.Value, null, transform, alwaysShow));
-                Subtitles.Add(Instantiate(RolePrefab).Creat(item.Value, item.Value.gameObject, transform, alwaysShow));
+                // ⚠ owner 必须是**观察者（本机玩家）**，不能传盟友本人：RolePrefab 是 SubtitleSpecUnit，
+                //   它在 Creat 里按 tarActor != owner 决定 SetActive、GetDistance 又拿 owner 当基准
+                //   ⇒ 传自己等于 tarActor==owner：节点被关掉 + 距离恒≈0（alpha 恒 0），
+                //   表现就是"远端喊话能听见语音、看不到字"（语音在事件回调里照播，与节点开关无关）。
+                Subtitles.Add(Instantiate(RolePrefab).Creat(ActorsManager.Player, item.Value.gameObject, transform, alwaysShow));
                 break;
             case UnitTypeEnum.SpecUnit:
                 //Debug.LogError($"创建特殊单位玩家{ActorsManager.Player}，目标{item.Value}");

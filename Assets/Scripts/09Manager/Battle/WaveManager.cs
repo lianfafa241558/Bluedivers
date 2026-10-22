@@ -139,7 +139,8 @@ namespace FPSGame.Managers
             NetDestructibleBridge.Install();  // 场景可破坏物（油桶这类）被打掉 ⇒ 远端也炸（2026-10-10）
             NetGameFlowBridge.Install();      // 局内世界状态（本局结束 / 撤离）
             NetMissionBridge.Install();       // 任务状态 / 进度（房主权威）
-            NetFurnitureBridge.Install();     // 家具交互（共享世界物件，一处收口）
+            // 家具交互桥（4036）已改成**常驻**（NetFurnitureBridge.Bootstrap）：舰桥里也有 NPC 对话/门，
+            // 原来只在这里装 ⇒ 舰桥阶段没有任何家具同步通道（2026-10-22 用户报"和 NPC 对话不同步"）。
             NetActionBridge.Install();        // 标记点位 / 呼叫凯伊
             NetKeyScreenBridge.Install();     // 按键终端阶段推进（驱动端上报 / 其余端只应用）
             NetHostSpawnBridge.Install();     // 房主生成族（巡逻队 + 巢穴/召唤师/刷怪器/环绕装甲）：房主唯一生成 + 4052 复刻
@@ -154,7 +155,8 @@ namespace FPSGame.Managers
             NetDestructibleBridge.Uninstall();
             NetGameFlowBridge.Uninstall();
             NetMissionBridge.Uninstall();
-            NetFurnitureBridge.Uninstall();
+            // ⚠ 别在这里 Uninstall 家具桥：它是常驻的（见 NetFurnitureBridge.Bootstrap），
+            //   在这里摘掉会让"打完一局回舰桥"之后 NPC 对话/门又不同步了。
             NetActionBridge.Uninstall();
             NetKeyScreenBridge.Uninstall();
             NetHostSpawnBridge.Uninstall();

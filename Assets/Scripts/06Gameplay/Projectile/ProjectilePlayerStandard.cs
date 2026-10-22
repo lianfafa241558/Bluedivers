@@ -29,6 +29,10 @@ namespace FPSGame.Gameplay
             //Collider[] ownerColliders = Owner.GetComponentsInChildren<Collider>();
             //if (ownerColliders.IsValid()) m_IgnoredColliders.AddRange(ownerColliders);
 
+            // ⚠ 这颗是"玩家子弹"，但会被 AI 炮塔复用（GuardDog 的炮塔配的就是它）：那种情况没有
+            //   "第一人称准心→枪口"这层修正 ⇒ 直接跳过。Owner 为空时连取组件都不做（否则就是 NRE）。
+            if (!Owner) return;
+
             //处理玩家射击的情况（使投射物不穿过墙壁，并记住屏幕轨迹的中心点
             PlayerWeaponsManager playerWeaponsManager = Owner.GetComponent<PlayerWeaponsManager>();
             if (playerWeaponsManager)

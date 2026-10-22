@@ -152,7 +152,7 @@ public class NetHostSvc : MonoBehaviour
     /// </summary>
     [InspectorName("成员空闲超时(秒)")]
     [Tooltip("超过这么久收不到该成员的任何消息（含心跳）就踢出房间；<=0 关闭该机制")]
-    [SerializeField] private float memberIdleTimeout = 8f;
+    [SerializeField] private float memberIdleTimeout = 0f;
 
     /// <summary>踢人时的暂存表（避免遍历 <see cref="_players"/> 时修改它，也避免每帧产生垃圾）</summary>
     private readonly List<uint> _idleBuffer = new List<uint>();

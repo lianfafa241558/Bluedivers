@@ -102,9 +102,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 5
+    Value: 9
+  - Key: 6
+    Value: 9
+  - Key: 8
+    Value: 9
+  - Key: 9
+    Value: 9
+  - Key: 10
+    Value: 9
+  - Key: 11
+    Value: 9
   MainPart: {fileID: 2862974566727447522}
   demolishValue: 40
+  AutoDestroy: 1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -124,7 +137,6 @@ MonoBehaviour:
     Value: 10
   - Key: 11
     Value: 100
-  AutoDestroy: 1
 --- !u!114 &2862974566727447522
 MonoBehaviour:
   m_ObjectHideFlags: 0

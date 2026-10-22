@@ -97,6 +97,11 @@ namespace FPSGame.AI
         public void Init(Transform root)
         {
             this.root = root;
+            // ⚠ 武器归属默认给"炮塔所在实体的根"：Owner 是**属性**、不参与序列化，没人赋值就恒为 null ⇒
+            //   ProjectileBase.Owner 为 null ⇒ ProjectilePlayerStandard._OnShoot 取 PlayerWeaponsManager 时 NRE
+            //   （GuardDog 的炮塔用了玩家子弹 prefab，2026-10-22 实测），伤害的 origin/caused 也会是空。
+            //   显式指定过的（EnemyController 给 weapons[i].Owner 赋值）不覆盖。
+            if (weapon && weapon.Owner == null && root) weapon.Owner = root.gameObject;
             // 缺底盘则无意义，直接跳过
             if (!chassis)
             {

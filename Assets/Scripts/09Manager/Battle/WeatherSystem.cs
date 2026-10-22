@@ -33,6 +33,8 @@ public class WeatherSystem : MonoBehaviour
     private WeatherEffect _effect;
 
     // 风暴计时与状态
+    /// <summary>当前相位起点（墙钟）。<c>&lt; 0</c> = 还没定锚（开打那一刻才定，见 TickStorm）。</summary>
+    private float _stormOrigin = -1f;
     private float _stormTimer;
     private bool _stormActive;
 
@@ -92,6 +94,10 @@ public class WeatherSystem : MonoBehaviour
     private void Update()
     {
         if (_effect == null || !_effect.UseStormCycle) return;
+        // ⚠ 开打前不计时：相位要锚在"全体加载完成、一起开打"（4042 → IsStartBattle）那一刻，
+        //   各端加载快慢差几秒，按创建时刻起算必然错相（见 TickStorm）。
+        var battle = BattleManager.Instance;
+        if (battle == null || !battle.IsStartBattle) return;
         TickStorm();
     }
 
@@ -109,22 +115,29 @@ public class WeatherSystem : MonoBehaviour
         _effect.transform.position = cam.Pos;
     }
 
-    /// <summary>周期风暴计时：平静 CalmDuration 秒后进入风暴，持续 StormDuration 秒后回到平静</summary>
+    /// <summary>周期风暴计时：平静 CalmDuration 秒后进入风暴，持续 StormDuration 秒后回到平静。
+    /// <para>▍相位用**墙钟差**而不是 `_stormTimer += Time.deltaTime`：天气控制器是各端在初始化协程里各自创建的，
+    /// 两端创建时刻差（加载快慢）就是相位差 ⇒ 暴雪/沙尘暴会"一边在风暴、一边还平静"（看起来天气不同步）。
+    /// 锚点取开打那一刻（两端由 4042 在同一瞬间置位）⇒ 无消息、纯静态对齐。</para></summary>
     private void TickStorm()
     {
-        _stormTimer += Time.deltaTime;
-        if (!_stormActive && _stormTimer >= _effect.CalmDuration)
+        if (_stormOrigin < 0f)
         {
-            _stormActive = true;
+            _stormOrigin = Time.time;
             _stormTimer = 0f;
-            StartStorm();
+            return;
         }
-        else if (_stormActive && _stormTimer >= _effect.StormDuration)
-        {
-            _stormActive = false;
-            _stormTimer = 0f;
-            EndStorm();
-        }
+
+        _stormTimer = Time.time - _stormOrigin;
+
+        float phase = _stormActive ? _effect.StormDuration : _effect.CalmDuration;
+        if (_stormTimer < phase) return;
+
+        // 基准前移到本段起点（保留溢出量：卡顿后不会丢相位，也不会连跳两段）
+        _stormOrigin += phase;
+        _stormActive = !_stormActive;
+        if (_stormActive) StartStorm();
+        else EndStorm();
     }
 
     /// <summary>风暴开始：通知具体天气组件（基类切换状态物体，子类叠加差异行为）</summary>

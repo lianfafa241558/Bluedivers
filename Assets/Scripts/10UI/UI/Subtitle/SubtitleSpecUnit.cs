@@ -63,18 +63,23 @@ public class SubtitleSpecUnit : SubtitleBase
 
 
 
-        if (lastSpeechTime >0&& Time.time> lastSpeechTime+ showTime)
+        bool speaking = lastSpeechTime > 0;
+        if (speaking && Time.time > lastSpeechTime + showTime)
         {
+            speaking = false;
             lastSpeechTime = -1;
             SetText(desc,"");
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)desc.parent);
+            if (!targetState) SetAlpha(transform, 0);   // 开关关着时，说话期间的"强制可见"要在这里收回
         }
-        if (targetState&&TargetEnabled&&completeTrans&& !noFade)
+        // ⚠ 喊话期间压过"显示物体标记"开关、也不走近距离避让：能听见就必须看得见
+        //   （与 SubTitleShout / SubtitleNPC 同口径；否则开关一关、或贴着队友说话，字全是 0 透明度）
+        if (speaking || (targetState&&TargetEnabled&&completeTrans&& !noFade))
         {
             var dis = GetDistance();
             show = Mathf.Clamp01((dis - 60) / 40f);
             float scale = 1 - Mathf.Clamp01((dis - 60) / 40f);
-            if (dis<7) scale = Mathf.Clamp01((dis-3) / 4f);
+            if (!speaking && dis<7) scale = Mathf.Clamp01((dis-3) / 4f);
             SetAlpha(transform,Mathf.Lerp(GetAlpha(transform), scale, Time.deltaTime*2));
         }
     }

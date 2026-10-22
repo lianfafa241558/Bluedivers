@@ -1,4 +1,4 @@
-using FPSGame.GameContract;
+﻿using FPSGame.GameContract;
 using UnityEngine;
 
 namespace FPSGame.GameData
@@ -7,8 +7,7 @@ namespace FPSGame.GameData
 [CreateAssetMenu(fileName = "new Data", menuName = "Data/主线任务配置")]
 public class MissionMainData_SO : MissionData_SO
 {
-    [InspectorName("任务类型名称")]
-    public new string name;
+
     [InspectorName("任务颜色")]
     public Color color;
     [InspectorName("任务地图大小")]

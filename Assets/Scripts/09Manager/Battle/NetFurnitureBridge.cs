@@ -32,6 +32,17 @@ namespace FPSGame.Managers
         // ⚠ 回环门用的是**跨桥共享**的 NetApplyGuard（不是本类私有字段）：应用终端阶段时也会走到
         //   furn.Operate() ⇒ 会派发本类订阅的 FurnitureOperate ⇒ 各持一道门挡不住那条回环。
 
+        /// <summary>常驻安装（**不是**每局一份）。
+        /// <para>⚠ 原来只在 <c>WaveManager</c> 里 Install/Uninstall ⇒ 舰桥（<c>Utnapishitim</c> 场景）里
+        /// 这条桥根本没挂：而舰桥才有 <c>Furniture_NPCChat</c> / <c>Furniture_Door</c> / <c>Furniture_General</c>
+        /// ⇒ "和 NPC 对话，队友那边毫无反应"（2026-10-22 用户报）。桥本身无每局状态（<c>_friendBridge</c> 惰性解析）
+        /// ⇒ 全程常驻、随场景切换自然续用。</para></summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Bootstrap()
+        {
+            Install();
+        }
+
         public static void Install()
         {
             if (installed) return;
