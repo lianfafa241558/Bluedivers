@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Attributes;
 
 using UnityEngine;
@@ -12,7 +12,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 工厂型敌人的状态机
     /// </summary>
-    [AddComponentMenu("AI/巢穴建造")]
+    [AddComponentMenu("单位/_状态机/巢穴")]
     public class EnemyNestBuild : AIInputBaseController<EnemyNestBuild.AIState>, INetSpawner
     {
         public enum AIState

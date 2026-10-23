@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.GameContract;
 using FPSGame.Gameplay;
@@ -9,7 +9,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 巡逻犬的巡逻与攻击行为。
     /// </summary>
-    [AddComponentMenu("AI/巡逻犬")]
+    [AddComponentMenu("单位/_状态机/巡逻犬")]
     internal class GuardDog : StateMachineFrame<GuardDog.AIState>, IEquippable
     {
 

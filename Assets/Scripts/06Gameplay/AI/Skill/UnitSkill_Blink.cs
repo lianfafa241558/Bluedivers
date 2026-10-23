@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 
@@ -10,7 +10,7 @@ using FPSGame.Audio;
 
 namespace FPSGame.AI
 {
-    [AddComponentMenu("技能/闪现", 30)]
+    [AddComponentMenu("单位/_技能/闪现", 30)]
     public class UnitSkill_Blink : UnitSkill_Base
     {
         public AudioClip cilp;

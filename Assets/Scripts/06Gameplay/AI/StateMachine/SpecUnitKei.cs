@@ -17,7 +17,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 特殊单位 Kei 的行为状态机。
     /// </summary>
-    [AddComponentMenu("AI/Kei 单位")]
+    [AddComponentMenu("单位/_状态机/Kei状态机")]
     public class SpecUnitKei : AIInputUnitController<SpecUnitKei.AIState>
     {
         public enum AIState

@@ -23,7 +23,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 敌人 AI 主控制器，负责属性初始化与行为驱动。
     /// </summary>
-    [AddComponentMenu("AI/敌人控制器")]
+    [AddComponentMenu("单位/_控制器/敌人控制器")]
     public partial class EnemyController : AIController
     {
         /// <summary>同一目标点的请求失败后的最小重发间隔(秒)：坏目标不要每帧重算路径</summary>

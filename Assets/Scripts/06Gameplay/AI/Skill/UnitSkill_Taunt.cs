@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -13,7 +13,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 嘲讽：搜索范围内的敌人，强制将其目标设置为自己
     /// </summary>
-    [AddComponentMenu("技能/嘲讽", 30)]
+    [AddComponentMenu("单位/_技能/嘲讽", 30)]
     public class UnitSkill_Taunt : UnitSkill_Base
     {
         [SerializeField]

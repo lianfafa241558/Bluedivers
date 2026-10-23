@@ -196,6 +196,15 @@ namespace FPSGame.Effect
                 //Debug.LogError("point"+point+"击中点"+hit.point);
                 transform.position = point = hit.point;
             }
+            // 信号干扰：落点被覆盖 ⇒ 这一发**整发作废**（不扣次数、不生成任何东西，槽位退回就绪）
+            // ⚠ 必须挡在 BattleEventBus.Airdrop 之前：那个事件一抛，data 就进 Arrive 且联机呼叫已经发出去了
+            if (SignalJammer.IsBlocked(point))
+            {
+                NetSyncLog.SyncLog("战备/信号干扰", $"落点 {point} 处于干扰范围 ⇒ 取消 {data.cfg.showName}");
+                BattleEventBus.CancelAirdrop(origin, data);
+                RecycleSelf();
+                return;
+            }
             // ⚠ 朝向必须在**抛事件之前**定好：`NetFriendBridge.HandleLocalAirdrop` 正是在这个事件里读信标的
             //   eulerAngles 当"释放朝向"发出去的；原来这两句写在事件之后 ⇒ 过网的是特效创建时的旋转
             //   （identity / 命中面法线），远端那份信标朝向与释放者无关（2026-10-10 用户实测"方向不对"）。
@@ -258,6 +267,14 @@ namespace FPSGame.Effect
             if (Physics.Raycast(point + Vector3.up * 100, Vector3.down, out var hit, 150, LayerDefinition.GroundLayers))
             {
                 transform.position = point = hit.point;
+            }
+            // 信号干扰：远端复现 / 任务脚本的落点被覆盖 ⇒ 不生成任何东西
+            // （本机自己叫的那发已在 SetOrigin 拦下；这里只兜"两端判据不一致"的极端情况）
+            if (SignalJammer.IsBlocked(point))
+            {
+                NetSyncLog.SyncLog("战备/信号干扰", $"复现落点 {point} 处于干扰范围 ⇒ 取消 {this.data.cfg.showName}");
+                RecycleSelf();
+                return;
             }
             BattleEventBus.Airdrop(null, gameObject, point, this.data);
 

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace FPSGame.AI
@@ -7,7 +7,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 简易炮台的瞄准与开火逻辑。
     /// </summary>
-    [AddComponentMenu("AI/简易炮台")]
+    [AddComponentMenu("单位/_状态机/简易炮台")]
     internal class SimpleTurret : StateMachineFrame<SimpleTurret.AIState>
     {
         internal enum AIState

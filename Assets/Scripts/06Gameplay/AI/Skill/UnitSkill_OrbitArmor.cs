@@ -13,7 +13,7 @@ namespace FPSGame.AI
     /// 并将生成单位的 Health 主体注册到主单位 PartController 的无敌装甲列表。
     /// 技能无固定持续时间：无敌期间主单位速度归零，全部装甲被摧毁后技能结束恢复速度。
     /// </summary>
-    [AddComponentMenu("技能/环绕装甲", 30)]
+    [AddComponentMenu("单位/_技能/环绕装甲", 30)]
     public class UnitSkill_OrbitArmor : UnitSkill_Base, INetSpawner
     {
         [InspectorName("装甲单位")]

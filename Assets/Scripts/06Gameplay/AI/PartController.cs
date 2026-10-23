@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.GameContract;
 using PEMaths;
@@ -17,7 +17,7 @@ namespace FPSGame.AI
 /// <summary>
 /// 可破坏部件（如护盾发射器）的控制器。
 /// </summary>
-[AddComponentMenu("AI/部件控制器")]
+[AddComponentMenu("单位/部件控制器")]
 public class PartController : MonoBehaviour
 {
     /// <summary>腿部(影响速度)装甲</summary>

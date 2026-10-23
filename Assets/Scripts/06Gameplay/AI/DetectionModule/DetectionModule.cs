@@ -16,6 +16,7 @@ using FPSGame.Weapon;
 
 namespace FPSGame.AI
 {
+    [AddComponentMenu("单位/_侦测器/普通侦测器")]
     public class DetectionModule : TickBehaviour
     {
         /// <summary>向外扩散警告的最小间隔(秒)：交火中同一只单位会**反复满足**扩散条件 —— 听声那条的门 `noise &lt; m_BewareNoise`

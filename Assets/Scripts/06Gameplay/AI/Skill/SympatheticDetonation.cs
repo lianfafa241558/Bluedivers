@@ -11,7 +11,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 死亡殉爆以及自爆
     /// </summary>
-    [AddComponentMenu("技能/殉爆和自爆", 30)]
+    [AddComponentMenu("单位/_技能/殉爆和自爆", 30)]
     public class SympatheticDetonation : MonoBehaviour
     {
         [InspectorName("殉爆延时")]

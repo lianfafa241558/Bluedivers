@@ -36,6 +36,9 @@ public class AirdropWnd : Window
     List<DirectionEnum> opterlist;
     float time;
 
+    /// <summary>本帧玩家是否被信号干扰（见 <c>SignalJammer</c>）：干扰期间所有战备位一律显示"受到干扰"。</summary>
+    bool jammed;
+
 
     public void Init()
     {
@@ -220,6 +223,13 @@ public class AirdropWnd : Window
         var ad = controller.useAd[index];
         if (!ad.IsVisible) return; // 不显示的跳过
 
+        if (jammed)
+        {
+            airdropList[index].GetComponent<CanvasGroup>().alpha = 0.25f;
+            SetText(airdropList[index].transform.GetChild(2), "受到干扰");
+            return;
+        }
+
         if (!ad.IsCurrentlyAvailable(ActorsManager.Player))
         {
             airdropList[index].GetComponent<CanvasGroup>().alpha = 0.25f;
@@ -248,6 +258,7 @@ public class AirdropWnd : Window
 
     void UpdateShow()
     {
+        bool jamTextUsed = false; // 同屏只亮一条"受到干扰"，其余渐出（画面上有多条并排的短提示）
         for (int i = 0; i < controller.useAd.Count; ++i)
         {
             var item = controller.useAd[i];
@@ -255,6 +266,22 @@ public class AirdropWnd : Window
 
             SetSizeDelta(showList[i].GetChild(0, 1), 0, 32 * item.TimeScale);
             SetText(airdropList[i].GetChild(0, 2, 0), item.count);
+
+            if (jammed)
+            {
+                // 干扰期间冷却/次数都不作数 ⇒ 只报干扰
+                if (!jamTextUsed)
+                {
+                    jamTextUsed = true;
+                    if (showList[i].alpha < 1) showList[i].alpha = Mathf.Lerp(showList[i].alpha, 1.1f, Time.deltaTime * 3);
+                    SetText(showList[i].transform.GetChild(2), "受到干扰");
+                }
+                else if (showList[i].alpha > 0)
+                {
+                    showList[i].alpha = Mathf.Lerp(showList[i].alpha, -0.1f, Time.deltaTime * 3);
+                }
+                continue;
+            }
 
             if (!item.IsCurrentlyAvailable(ActorsManager.Player))
             {
@@ -319,6 +346,15 @@ public class AirdropWnd : Window
 
             SetSizeDelta(airdropList[i].GetChild(0, 1), 0, 32 * item.TimeScale);
 
+            // 干扰优先于其它状态：冷却/就绪都不许读，统一虚化 + 报"受到干扰"
+            if (jammed)
+            {
+                airdropList[i].GetComponent<CanvasGroup>().alpha = 0.25f;
+                SetAlpha(airdropList[i].GetChild(1), 0.35f);
+                SetText(airdropList[i].transform.GetChild(2), "受到干扰");
+                continue;
+            }
+
             if (!item.IsCurrentlyAvailable(ActorsManager.Player))
             {
                 SetText(airdropList[i].transform.GetChild(2), "不可用");
@@ -371,6 +407,9 @@ public class AirdropWnd : Window
     {
         //if(controller!= BattleManager.Instance.ADCont)ResetAirdrop(BattleManager.Instance.ADCont);
         if (!controller) return;
+
+        // 干扰范围跟着人走 ⇒ 每帧问一次，下面两条绘制分支共用（每项各查一次纯属浪费）
+        jammed = controller.IsJammed;
 
         if ((time += Time.deltaTime) > 1)
         {

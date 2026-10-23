@@ -10,7 +10,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 只提供队伍与属性的无行为 AI 控制器。
     /// </summary>
-    [AddComponentMenu("AI/通用单位控制器")]
+    [AddComponentMenu("单位/_控制器/通用单位控制器")]
     [RequireComponent(typeof(Actor))]
     public partial class OtherController : AIController
     {

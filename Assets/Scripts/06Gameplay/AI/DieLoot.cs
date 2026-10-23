@@ -5,7 +5,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 单位死亡后掉落配置好的物品。
     /// </summary>
-    [AddComponentMenu("AI/死亡掉落")]
+    [AddComponentMenu("单位/死亡掉落")]
     public class DieLoot : MonoBehaviour
     {
         [InspectorName("此敌人死亡时可以掉落的物体")]

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using PEMaths;
 
 using UnityEngine;
@@ -9,7 +9,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 炮台类单位的瞄准与开火状态机。
     /// </summary>
-    [AddComponentMenu("AI/炮台状态机")]
+    [AddComponentMenu("单位/_状态机/炮台状态机")]
     public class EnemyTurret : AIInputUnitController<EnemyTurret.AIState>
     {
         protected EnemyController m_EnemyController;

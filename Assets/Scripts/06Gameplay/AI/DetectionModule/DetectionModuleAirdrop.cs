@@ -13,7 +13,7 @@ namespace FPSGame.AI
     /// 不做强制锁定，攻击超时（AirdropAttackTimeout）后自动清除点位目标停止攻击，
     /// 期间/之后仍可被常规侦测的敌人目标覆盖。
     /// </summary>
-    [AddComponentMenu("AI/空投专属感知")]
+    [AddComponentMenu("单位/_侦测器/火炮侦测器")]
     public class DetectionModuleAirdrop : DetectionModule
     {
         //[InspectorName("响应空投")]

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using UnityEngine;
 using FPSGame.Audio;
@@ -9,7 +9,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 召唤师
     /// </summary>
-    [AddComponentMenu("技能/召唤师", 30)]
+    [AddComponentMenu("单位/_技能/召唤师", 30)]
     public class UnitSkill_Summoner : UnitSkill_Base, INetSpawner
     {
         public AudioClip cilp;

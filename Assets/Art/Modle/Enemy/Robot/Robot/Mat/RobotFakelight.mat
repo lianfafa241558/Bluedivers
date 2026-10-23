@@ -39,8 +39,8 @@ Material:
     m_TexEnvs:
     - _AlphaTex:
         m_Texture: {fileID: 2800000, guid: 0e61195c1dd562d45bcce2aab093d0b5, type: 3}
-        m_Scale: {x: 1, y: 0.9}
-        m_Offset: {x: 0, y: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0.5}
     - _BaseMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -66,15 +66,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 594c5af864ea664478b022c11f3520e2, type: 3}
-        m_Scale: {x: 0.5, y: 0.5}
-        m_Offset: {x: 0, y: 0}
+        m_Texture: {fileID: 2800000, guid: 0c9d4396226e7ab4489163db9627056e, type: 3}
+        m_Scale: {x: 1, y: 0.5}
+        m_Offset: {x: 0, y: 0.5}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Noise:
-        m_Texture: {fileID: 2800000, guid: 463d09e68f7221540abac9fc266bd7be, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6f75e657da50ff742bd853f5498ea57a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -115,6 +115,7 @@ Material:
     - _DstBlend: 10
     - _EmissionScale: 1
     - _EnvironmentReflections: 1
+    - _FogScale: 1
     - _FresnelDecay: 8.9
     - _FresnelScale: 0.95
     - _GlossMapScale: 0
@@ -134,7 +135,7 @@ Material:
     - _UseFresnel: 1
     - _WorkflowMode: 1
     - _ZWrite: 1
-    - _distortFactor: 0.1
+    - _distortFactor: 0.05
     - _distortFactorTime: 1
     m_Colors:
     - _BaseColor: {r: 4, g: 2.101961, b: 0.9254902, a: 1}

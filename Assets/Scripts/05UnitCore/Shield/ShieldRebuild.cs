@@ -11,7 +11,7 @@ namespace FPSGame.Game
     /// t=0 击毁 → t=<see cref="_hideDelay"/> 收起护盾物体（给破碎/死亡动画留时间）
     /// → t=max(<see cref="_rebuildDelay"/>, <see cref="_hideDelay"/>) 复活单位 + 展开护盾。</para>
     /// </summary>
-    [AddComponentMenu("技能/护盾重塑", 30)]
+    [AddComponentMenu("单位/_技能/护盾重塑", 30)]
     public class ShieldRebuild : MonoBehaviour
     {
         /// <summary>默认重塑延时（秒）</summary>

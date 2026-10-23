@@ -18,7 +18,7 @@ namespace FPSGame.Gameplay
     /// <summary>
     /// 特殊单位（Kei 等）的 AI 控制器。
     /// </summary>
-    [AddComponentMenu("AI/特殊单位控制器")]
+    [AddComponentMenu("单位/_控制器/特殊单位控制器")]
     public class SpecUnitController : AIController
     {
 

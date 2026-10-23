@@ -11,7 +11,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 炮台专用的目标感知模块。
     /// </summary>
-    [AddComponentMenu("AI/炮台感知模块")]
+    [AddComponentMenu("单位/_侦测器/炮台侦测器")]
     public class DetectionModuleTurret : DetectionModule
     {
         [InspectorName("响应玩家标记")]

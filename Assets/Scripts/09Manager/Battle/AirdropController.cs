@@ -9,6 +9,7 @@ using FPSGame.Audio;
 using FPSGame.Data;
 using FPSGame.Utils;
 using FPSGame.GameData;
+using FPSGame.AI;
 
 namespace FPSGame.Managers
 {
@@ -48,6 +49,9 @@ namespace FPSGame.Managers
         public List<AirdropData> useAd;
 
         IActor Player => ActorsManager.Player;
+
+        /// <summary>玩家此刻是否处在信号干扰范围（见 <see cref="SignalJammer"/>）：干扰期间任何战备都叫不出，UI 据此显示"受到干扰"。</summary>
+        public bool IsJammed => SignalJammer.IsBlocked(Player);
 
         private Dictionary<int,AirdropData_SO> adDic=> ResSvc.airdropDic;
 
@@ -190,6 +194,15 @@ namespace FPSGame.Managers
 
         private void Input(DirectionEnum dir)
         {
+            // 干扰中：输入一律吃掉并给一声"无效"反馈。⚠ 必须挡在这里，不能只靠 UI 虚化
+            //   （键盘输入不看 UI，只虚化会出现"看着灰的还能叫出信标"）
+            if (IsJammed)
+            {
+                inputDir.Clear();
+                AudioSvc.PlaySound(new("AirDrop/superbeacon_throw"));
+                return;
+            }
+
             inputDir.Add(dir);
             //如果和当前战备全部不符合就清空
             bool keep = false;
