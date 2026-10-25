@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
@@ -39,6 +39,10 @@ public class SelectMapWnd : Window
     private float nowtime;
     /// <summary>进行中的快速匹配协程（重复点「加入」时先停掉上一条）。</summary>
     private Coroutine _matchRoutine;
+#if UNITY_EDITOR
+    /// <summary>【仅编辑器】「可选任务」图标行，首次显示任务详情时生成（见 <see cref="RefreshExtraTaskIcons"/>）。</summary>
+    private RectTransform _extraIconRow;
+#endif
 
     [Foldout("基础",true)]
     [SerializeField]
@@ -90,24 +94,17 @@ public class SelectMapWnd : Window
 
         SelectTaskDiff = 3;
 
+        // 任务表跨时间窗口就整张重建（TaskManager.Update → CreatAllTask）⇒ 窗口开着时就地重画内外两层；
+        // 否则内层点地图才刷、外层停在开窗那一刻，一层新一层旧（见 RefreshTaskBoard）。
+        taskManager.OnTaskTableRefreshed -= OnTaskTableRefreshed;   // 窗口会被反复唤醒，先减后加防重复订阅
+        taskManager.OnTaskTableRefreshed += OnTaskTableRefreshed;
+
         for (int i = 0; i < mapRoot.childCount; ++i)
         {
             int a = i;
 
-            var info = taskManager.MapData[mapRoot.GetChild(a).name].mapItemInfos;
-           
-            if (info.Length>0) {
-                SetActive(mapRoot.GetChild(a, 1, 3), true);
-                SetActive(mapRoot.GetChild(a, 1, 4), false);
-                for (int u = 0; u < taskManager.TaskCount; ++u) taskManager.TaskCfgs[a,u].enable &= u<info.Length;
-            }
-            else
-            {
-                SetActive(mapRoot.GetChild(a,1,3),false);
-                SetActive(mapRoot.GetChild(a, 1, 4), true);
-                SetButtonInteractable(mapRoot.GetChild(a, 1),false);
-            }
-
+            // 图标行 / 空标记 / 按钮可交互性统一交给 RefreshMapRoot 按当前任务表算
+            //（原来只在首开时算一次，还顺手改写了 TaskCfgs 的 enable ⇒ 换表后内外对不上）
             SetCilck(mapRoot.GetChild(a, 1), () => {
                 wndManager.PlaySound(new("UI/UI_Bubble"));
                 SelectMap(mapRoot.GetChild(a).RectTransform(), a);
@@ -131,7 +128,7 @@ public class SelectMapWnd : Window
             });
             
             SetButtonEnter(mapInfoLayout.GetChild(a), (data) => {
-                if(taskManager.TaskCfgs[SelectMapIndex,a].enable && a != SelectTaskIndex) ShowAreaInfoWnd(a, SelectTaskIndex > -1);
+                if(taskManager.TaskCfgs[SelectTaskRow,a].enable && a != SelectTaskIndex) ShowAreaInfoWnd(a, SelectTaskIndex > -1);
             });
 
             SetButtonExit(mapInfoLayout.GetChild(a), (data) => {
@@ -139,7 +136,7 @@ public class SelectMapWnd : Window
                 {
                     if (a != SelectTaskIndex)ShowAreaInfoWnd(SelectTaskIndex,true);
                 }
-                else if (taskManager.TaskCfgs[SelectMapIndex, a].enable && a != SelectTaskIndex) HideAreaInfoWnd();
+                else if (taskManager.TaskCfgs[SelectTaskRow, a].enable && a != SelectTaskIndex) HideAreaInfoWnd();
             });
         }
 
@@ -233,7 +230,7 @@ public class SelectMapWnd : Window
         InputManager.AddListenerCancel(Cancel);
         if (serverPanel) serverPanel.Close();
         SetText(areaInfoDiff, ((DifficultyEnum)SelectTaskDiff).ToString());
-        RefreshDisplay();
+        RefreshTaskBoard();
 
         //GlobalEventManager.OnFakeBg(mapRoot.parent);
     }
@@ -246,6 +243,20 @@ public class SelectMapWnd : Window
         //   <c>LanBroadcaster</c> 也要同一个端口 ⇒ 监听不能留到窗口之外（否则开房直接 SocketException）。
         if (serverPanel) serverPanel.Close();
         //GlobalEventManager.OnFakeBg(null);
+    }
+
+    /// <summary>任务表重建（30 分钟一个窗口）：窗口开着就当场重画内外两层；收着就等下次 <see cref="ShowWnd"/>。</summary>
+    private void OnTaskTableRefreshed()
+    {
+        if (!State) return;
+        RefreshTaskBoard();
+    }
+
+    public override void OnDestroy()
+    {
+        // 与 FirstShowWnd 里的订阅成对（窗口没首开过 ⇒ taskManager 还是 null）
+        if (taskManager) taskManager.OnTaskTableRefreshed -= OnTaskTableRefreshed;
+        base.OnDestroy();
     }
 
     private void Update()
@@ -330,7 +341,7 @@ public class SelectMapWnd : Window
     private IEnumerator MatchRoutine()
     {
         string mapName = mapRoot.childCount > SelectMapIndex ? mapRoot.GetChild(SelectMapIndex).name : string.Empty;
-        int taskMain = (int)taskManager.TaskCfgs[SelectMapIndex, SelectTaskIndex].main;
+        int taskMain = (int)taskManager.TaskCfgs[SelectTaskRow, SelectTaskIndex].main;
 
         var panel = serverPanel;
         if (panel) panel.EnsureDiscovery();   // 面板没打开过 ⇒ 先让发现器在听广播
@@ -502,36 +513,90 @@ public class SelectMapWnd : Window
         return true;
     }
 
-    /// <summary>
-    /// 显示每个地图有什么任务
+    /// <summary>mapRoot 子物体下标 → <c>TaskCfgs</c> 行下标。
+    /// <para>▍两套下标不是一回事：行 = <c>OrderedMaps()</c>（按 mapId 排序）。预制体目前恰好同序，
+    /// 但地图增删就会错位（静默）⇒ 一律走 <see cref="TaskManager.MapIndex"/>，别再拿子物体下标硬算。</para>
     /// </summary>
-    private void RefreshDisplay()
+    private int TaskRow(int mapChildIndex) => taskManager.MapIndex(mapRoot.GetChild(mapChildIndex).name);
+
+    /// <summary>当前选中地图对应的任务表行（-1 = 取不到）。</summary>
+    private int SelectTaskRow => TaskRow(SelectMapIndex);
+
+    /// <summary>
+    /// 一次画全「外层地图列表的小任务图标」+「内层地图上的任务标记」。
+    /// <para>▍为什么必须一起画：两层原来各有各的触发点（外层只在 <see cref="ShowWnd"/>、内层只在
+    /// <see cref="SelectMap"/>）⇒ 任务表重建后一层新一层旧，看起来就是"刷新时内外任务对不上"。</para>
+    /// </summary>
+    private void RefreshTaskBoard()
+    {
+        RefreshMapRoot();
+        RefreshAreaRoot();
+    }
+
+    /// <summary>重画外层：每张地图卡片上的任务图标行；一个可接任务都没有时换成"空"标记。</summary>
+    private void RefreshMapRoot()
     {
         for (int i = 0; i < mapRoot.childCount; ++i)
         {
-            if (GetActive(mapRoot.GetChild(i, 1, 3)))
+            var icons = mapRoot.GetChild(i, 1, 3);
+            int row = TaskRow(i);
+            // ⚠ 上限取 min(TaskCount, mapItemInfos.Length)：CreatAllTask 只生成这一段，
+            //   越界的格子留着上一张表的旧值（以前靠"只算一次"的 enable 掩码兜，换表就失效）
+            int capacity = row < 0 ? 0
+                : Mathf.Min(taskManager.TaskCount, taskManager.MapData[mapRoot.GetChild(i).name].mapItemInfos.Length);
+
+            // 先全关：这张表比上一张少几个图标时，不清掉就会残留成"旧任务"
+            for (int u = 0; u < icons.childCount; ++u) SetActive(icons.GetChild(u), false);
+
+            int shown = 0;
+            for (int u = 0; u < capacity; ++u)
             {
-                int nowIndex = 0;
-                for (int u = 0; u < taskManager.TaskCount; ++u)
-                {
-                    var info = taskManager.TaskCfgs[i, u];
-                    if (info.enable)
-                    {
-                        var item = mapRoot.GetChild(i, 1, 3, nowIndex);
-                        SetActive(item, true);
-                        SetColor(item, info.Color);
-                        SetColor(item.GetChild(0), info.Color);
-                        SetSprite(item.GetChild(0), info.Sprite);
-                        ++nowIndex;
-                        if (nowIndex == 5) break;
-                    }
-                }
-                if (nowIndex == 0)
-                {
-                    SetActive(mapRoot.GetChild(i, 1, 3), false);
-                    SetActive(mapRoot.GetChild(i, 1, 4), true);
-                }
+                if (shown >= 5 || shown >= icons.childCount) break;
+                var cfg = taskManager.TaskCfgs[row, u];
+                if (!cfg.enable) continue;
+
+                var item = icons.GetChild(shown++);
+                SetActive(item, true);
+                SetColor(item, cfg.Color);
+                SetColor(item.GetChild(0), cfg.Color);
+                SetSprite(item.GetChild(0), cfg.Sprite);
             }
+
+            SetActive(icons, shown > 0);
+            SetActive(mapRoot.GetChild(i, 1, 4), shown == 0);
+            SetButtonInteractable(mapRoot.GetChild(i, 1), capacity > 0);
+        }
+    }
+
+    /// <summary>重画内层：当前地图上的任务标记（位置 / 名字 / 任务图标 / 可用状态）。</summary>
+    private void RefreshAreaRoot()
+    {
+        if (mapState == MapWndState.Map) return;   // 内层没开（外层地图列表在显示）
+
+        var data = taskManager.MapData[mapRoot.GetChild(SelectMapIndex).name];
+        var info = data.mapItemInfos;
+        int row = SelectTaskRow;
+        SelectMapTaskCount = info.Length;
+        product = data.product;
+        bool visible = mapState != MapWndState.Switch;   // 缩放过渡中先别点亮，等 FinalSwitch
+
+        for (int i = 0; i < areaRoot.GetChild(1).childCount; ++i)
+        {
+            var marker = areaRoot.GetChild(1, i);
+            // 先全关：上一张表的标记更多时，多出来的会残留成"旧任务"
+            SetActive(marker, false);
+            if (i >= info.Length || row < 0 || i >= taskManager.TaskCount) continue;
+
+            var cfg = taskManager.TaskCfgs[row, i];
+            marker.RectTransform().anchoredPosition = info[i].pos;
+            SetText(areaRoot.GetChild(1, i, 2), info[i].name);
+            SetButtonInteractable(marker, cfg.enable);
+            SetActive(areaRoot.GetChild(1, i, 3), cfg.enable);
+            SetSprite(areaRoot.GetChild(1, i, 3, 0), cfg.Sprite);
+            SetColor(areaRoot.GetChild(1, i, 3), cfg.Color);
+            SetColor(areaRoot.GetChild(1, i, 3, 0), cfg.Color);
+            SetActive(areaRoot.GetChild(1, i, 4), !cfg.enable);
+            SetActive(marker, visible);
         }
     }
 
@@ -564,31 +629,9 @@ public class SelectMapWnd : Window
         nowtime = _SwitchTime;
         primeRootSize = trans.sizeDelta * trans.lossyScale;
         primeRootPos = trans.anchoredPosition;
-        var data= taskManager.MapData[trans.name];
-        var info = data.mapItemInfos;
         SelectMapIndex = index;
-        SelectMapTaskCount = info.Length;
-        product = data.product;
-
-        for (int i = 0; i < areaRoot.GetChild(1).childCount; ++i)
-        {
-            SetActive(areaRoot.GetChild(1, i), false);
-            if (i < info.Length)
-            {
-                var item = taskManager.TaskCfgs[SelectMapIndex, i];
-
-                areaRoot.GetChild(1, i).RectTransform().anchoredPosition = info[i].pos;
-                SetText(areaRoot.GetChild(1, i, 2),info[i].name);
-                SetButtonInteractable(areaRoot.GetChild(1, i), item.enable);
-                SetActive(areaRoot.GetChild(1, i, 3), item.enable);
-                SetSprite(areaRoot.GetChild(1, i, 3,0), item.Sprite);
-                SetColor(areaRoot.GetChild(1, i, 3), item.Color);
-                SetColor(areaRoot.GetChild(1, i, 3, 0), item.Color);
-
-                SetActive(areaRoot.GetChild(1, i, 4), !item.enable);
-            }
-
-        }
+        // ⚠ 此刻 mapState 已是 Switch ⇒ 只摆位置、不点亮标记（FinalSwitch 才亮）
+        RefreshAreaRoot();
     }
 
     private void FinalSwitch()
@@ -659,11 +702,14 @@ public class SelectMapWnd : Window
     private void ShowAreaInfoWnd(int index, bool immediately = false)
     {
         //Debug.LogWarning("鼠标进入任务");
-        var info = taskManager.TaskCfgs[SelectMapIndex, index];
+        var info = taskManager.TaskCfgs[SelectTaskRow, index];
         SetText(areaInfoType, info.TaskType);
         SetText(areaInfoName, info.name);
         SetText(areaInfoMainTarget, info.TaskDesc);
         SetText(areaInfoExtraTarget,"可选任务* " + info.extra.Length);
+#if UNITY_EDITOR
+        RefreshExtraTaskIcons(info);
+#endif
 
         AccountReward(index,false);
 
@@ -680,6 +726,80 @@ public class SelectMapWnd : Window
 
         areaInfoRoot.GetComponent<Animator>().Play("Entry", 0, immediately ? 1 : 1- normScale);
     }
+
+#if UNITY_EDITOR
+    /// <summary>
+    /// 【仅编辑器】把本任务的「可选任务」种类用图标排在「可选任务* N」文字右侧。
+    /// <para>▍为什么只在编辑器：#if UNITY_EDITOR ⇒ 打包后这段连同字段一起不存在，
+    /// 不会因为预制体里没配引用而在真机刷空引用；它是给策划核对任务表（谁来当可选任务）用的。</para>
+    /// <para>▍为什么运行时生成而不是改预制体：可选任务数量随地图大小在 2~5 浮动，
+    /// 生成一份再复用比在预制体里预埋 5 个图标（还要各自配引用）省事，也不污染正式 UI。</para>
+    /// </summary>
+    private void RefreshExtraTaskIcons(in TaskCfg info)
+    {
+        if (info.extra == null) return;
+        var target = areaInfoExtraTarget.RectTransform();
+
+        if (_extraIconRow == null)
+        {
+            // 挂在文字同一个父物体下：共用「左下角原点」的锚，图标和文字才不会在 Expand 动画里错位
+            var go = new GameObject("ExtraTaskIcons", typeof(RectTransform), typeof(UnityEngine.UI.HorizontalLayoutGroup));
+            go.layer = target.gameObject.layer;
+            _extraIconRow = (RectTransform)go.transform;
+            _extraIconRow.SetParent(target.parent, false);
+            _extraIconRow.anchorMin = _extraIconRow.anchorMax = target.anchorMin;
+            _extraIconRow.pivot = new(0f, target.pivot.y);
+            _extraIconRow.sizeDelta = new(0f, target.sizeDelta.y);
+
+            var layout = go.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+            layout.spacing = 6f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+        }
+
+        int count = Mathf.Max(info.extra.Length, _extraIconRow.childCount);
+        for (int i = 0; i < count; ++i)
+        {
+            if (i >= _extraIconRow.childCount)
+            {
+                var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+                iconGo.layer = target.gameObject.layer;
+                var iconRt = (RectTransform)iconGo.transform;
+                iconRt.SetParent(_extraIconRow, false);
+                iconRt.sizeDelta = new(24f, 24f);
+                var img = iconGo.GetComponent<UnityEngine.UI.Image>();
+                img.raycastTarget = false;
+                img.preserveAspect = true;
+            }
+
+            var icon = _extraIconRow.GetChild(i);
+            if (i >= info.extra.Length || MissionData_SO.Catalog == null
+                || !MissionData_SO.Catalog.TryGetValue(info.extra[i], out var cfg))
+            {
+                SetActive(icon, false);
+                continue;
+            }
+
+            SetActive(icon, true);
+            SetSprite(icon, cfg.sprite);
+            SetColor(icon, Color.white);   // 支线任务 SO 没有 color 字段（只有 MissionMainData_SO 才有）
+        }
+
+        // 贴在文字右侧：文字宽度按 TMP 排版结果取，写死偏移会在「可选任务* 2」和「* 5」之间忽宽忽窄
+        float textWidth = 0f;
+        if (target.TryGetComponent(out TMPro.TMP_Text tmp))
+        {
+            tmp.ForceMeshUpdate();
+            textWidth = Mathf.Min(tmp.preferredWidth, 200f);
+        }
+        _extraIconRow.anchoredPosition = new(target.anchoredPosition.x + textWidth + 8f, target.anchoredPosition.y + 1f);
+        _extraIconRow.sizeDelta = new(info.extra.Length * 30f, _extraIconRow.sizeDelta.y);
+    }
+#endif
+
     /// <summary>
     /// 鼠标移出任务
     /// </summary>
@@ -753,7 +873,7 @@ public class SelectMapWnd : Window
         {
             float diffScale = taskManager.DiffScale((DifficultyEnum)SelectTaskDiff);
             float extraScale = taskManager.ExtraDiffScale((DifficultyEnum)SelectTaskDiff);
-            var info = taskManager.TaskCfgs[SelectMapIndex, index];
+            var info = taskManager.TaskCfgs[SelectTaskRow, index];
 
             for (int i = 0; i < 4; ++i)
             {
@@ -765,7 +885,7 @@ public class SelectMapWnd : Window
         }
         else
         {
-            var info = taskManager.TaskCfgs[SelectMapIndex, index];
+            var info = taskManager.TaskCfgs[SelectTaskRow, index];
             SetText(areaInfoMainReward, info.MainReward);
             SetText(areaInfoExtraReward,info.ExtraReward);
         }

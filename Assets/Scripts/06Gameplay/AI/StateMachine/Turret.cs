@@ -74,7 +74,7 @@ namespace FPSGame.AI
         /// <summary>炮管手动偏移</summary>
         [SerializeField]
         [InspectorName("炮管手动偏移")]
-        public Quaternion barrelSetOffset = Quaternion.identity;
+        public Quaternion barrelSetOffset = new Quaternion(0,0,0,1);
 
         /// <summary>炮管目标旋转</summary>
         protected Quaternion barrelRotation { get; set; }
@@ -97,6 +97,14 @@ namespace FPSGame.AI
         public void Init(Transform root)
         {
             this.root = root;
+            // 引擎坑：default(Quaternion) 是 (0,0,0,0) 而非 identity —— 字段后加/改名/旧资产迁移都会留全零。
+            // 它会让 Look() 的 tarBarrelRotation 变成零四元数，RotateTowards 从此永远追不上目标（integrated 炮台转向全靠 barrel 分支，等于彻底失效）。
+            // 全零是唯一非法值（w=0 而 xyz 非零是合法的 180°），判定无歧义；但仍报 warning，免得掩盖"策划以为填的值生效了"。
+            if (barrelSetOffset.x == 0f && barrelSetOffset.y == 0f && barrelSetOffset.z == 0f && barrelSetOffset.w == 0f)
+            {
+                barrelSetOffset = Quaternion.identity;
+                Debug.LogWarning($"[Turret Init] 炮管手动偏移是全零四元数(非法)，已按 identity 处理: {root.name}", root);
+            }
             // ⚠ 武器归属默认给"炮塔所在实体的根"：Owner 是**属性**、不参与序列化，没人赋值就恒为 null ⇒
             //   ProjectileBase.Owner 为 null ⇒ ProjectilePlayerStandard._OnShoot 取 PlayerWeaponsManager 时 NRE
             //   （GuardDog 的炮塔用了玩家子弹 prefab，2026-10-22 实测），伤害的 origin/caused 也会是空。
@@ -116,7 +124,7 @@ namespace FPSGame.AI
             if (HaveBarrel)
             {
                 if (!firePoint)
-                    Debug.LogError($"[Turret Init] 绑定武器缺少发射点位: {weapon}", weapon);
+                    Debug.LogError($"[Turret Init] 绑定武器缺少发射点位: {weapon} {root}", root);
                 else
                     barrelOffset = Quaternion.Inverse(firePoint.rotation) * barrel.rotation;
             }

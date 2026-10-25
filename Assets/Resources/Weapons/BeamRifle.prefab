@@ -124,6 +124,7 @@ MonoBehaviour:
   UnparentMuzzleFlash: 0
   SFXRange: 50
   FireNoiseRadius: 50
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 8300000, guid: dff37a303c908e846b3137a637cbbf7a,
@@ -135,6 +136,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -173,7 +175,7 @@ MonoBehaviour:
     type: 2
     addTag: 0
     removeTag: 0
-  showAttr: 1400000002000000010000000d0000000e0000000f000000
+  showAttr: 1400000002000000010000000d0000000e0000000f00000019000000
   m_UniqueAttr: []
   Upgrade:
   - Key: 2

@@ -34,9 +34,9 @@ public static class UnitEventBus
     public static event Action<Actor, Actor> OnUnitKill;
     public static void UnitKill(Actor attacker, Actor victim) => OnUnitKill?.Invoke(attacker, victim);
 
-    /// <summary>单位被击中（受击者，**直接来源**）</summary>
-    public static event Action<GameObject, GameObject> OnUnitHit;
-    public static void UnitHit(GameObject victim, GameObject caused) => OnUnitHit?.Invoke(victim, caused);
+    /// <summary>单位被击中（受击者，**直接来源**,是否跳弹）</summary>
+    public static event Action<GameObject, GameObject, bool> OnUnitHit;
+    public static void UnitHit(GameObject victim, GameObject caused,bool ricochet) => OnUnitHit?.Invoke(victim, caused,ricochet);
 
     /// <summary>单位**实际掉血**（受击者 / 真实扣减量 / **直接来源** / 受击体 / **起源**）。
     /// <para>▍与 <see cref="OnUnitHit"/> 的分工：那条是给血条表现的（没有伤害量）；这条供**联机伤害通道**用，

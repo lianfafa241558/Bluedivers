@@ -179,7 +179,9 @@ namespace FPSGame.Game
             // 标记为异常状态 tick 伤害，HandleDamage 据此跳过 AddAboGauge（不更新 Current/LastGainTime）
             _isAboTickDamage = true;
             // 无源 tick：caused = origin = entry.Source（都为空 ⇒ NoSource 分支，行为同改动前）
-            TakeDamage(_AboDmgBuffer, entry.Source == null, entry.Source, null, transform.position, stateData.damageTriggeredResponse, false, -1, entry.Source);
+            var tickArgs = DamageSettleArgs.Of(_AboDmgBuffer, entry.Source == null, entry.Source, null, transform.position);
+            tickArgs.Response = stateData.damageTriggeredResponse;
+            TakeDamage(in tickArgs);
             _isAboTickDamage = false;
         }
 

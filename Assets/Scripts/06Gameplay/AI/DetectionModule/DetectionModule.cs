@@ -584,7 +584,7 @@ namespace FPSGame.AI
         //直接算好，查表
         //15度一表
         public static float[] angleScale = new float[] {
-            1,1,1,1,0.7f,0.57f,0.51f,0.49f,0.5f,0.5f,0.5f,0.5f,0.5f,
+            1,1,1,1,0.509f,0.357f,0.29f,0.26f,0.25f,0.25f,0.25f,0.25f,0.25f,
         };
          
         public static float FastAngleScale(float angle)
@@ -594,7 +594,7 @@ namespace FPSGame.AI
             else if (angle < 0) angle *= -1;
             return angleScale[Mathf.FloorToInt(angle / 15)];
         }
-        /*
+        
         [ContextMenu("计算偏移")]
         private void Test()
         {
@@ -602,7 +602,7 @@ namespace FPSGame.AI
             {
                 Debug.Log(i+"度"+DetectionAngleScale(i));
             }
-        }*/
+        }
 
 
         /// <summary>
@@ -622,14 +622,14 @@ namespace FPSGame.AI
             else if (angle <= 120f)
             {
             // 45-90度 计算视觉上的直线连接
-            // 我们需要找到一条直线连接(45°,1)和(90°,0.2)
+            // 我们需要找到一条直线连接(45°,1)和(120°,0.25)
 
                 // 将角度转换为弧度
                 float angleRad = angle * Mathf.Deg2Rad;
 
                 // 两个端点的笛卡尔坐标
                 Vector2 p1 = new Vector2(0.71f,0.71f);
-                Vector2 p2 = new Vector2(-0.25f,0.435f);
+                Vector2 p2 = new Vector2(-0.125f, 0.2165f);
 
                 // 直线方程参数
                 float A = p2.y - p1.y;//y差值

@@ -165,16 +165,18 @@ MonoBehaviour:
       Value: 1
   BulletFlag: 0
   Damages:
-  - BulletPrefab: {fileID: 0}
+  - BulletPrefab: {fileID: 8924682559891268397, guid: da21eb0b5bc192148a93a51da76b33c8,
+      type: 3}
     LandingPrefab: {fileID: 0}
     Speed: 1
     Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 0.1
-    MaxRange: 1
+    MaxRange: 5
     MinRange: -1
     NoSource: 1
-    SoundRadius: 20
+    SoundRadius: 100
+    ImpactSoundRadius: 60
     DamageExplosion: 1000
     DamageDirect: 0
     DamageGroupDirect:
@@ -183,10 +185,10 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     WeaknessBonus: 0
-    ExplosionInnerRange: 10
-    ExplosionRange: 20
+    ExplosionInnerRange: 14
+    ExplosionRange: 22
     DestructeRadius: 12
-    ShockwaveRadius: 20
+    ShockwaveRadius: 30
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -204,7 +206,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 10
     ExplosionAPChargeScale: 1
-    demolishValue: 0
+    demolishValue: 70
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -217,7 +219,9 @@ MonoBehaviour:
   MuzzleFlashPrefab: {fileID: 0}
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
-  SFXRange: 80
+  SFXRange: 120
+  FireNoiseRadius: 0
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: b1b223bdf0531c946825b724fae6c90f, type: 3}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 8300000, guid: 4a1e9fe93a5bc89408a1cc01f70ef718,
@@ -227,6 +231,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -312,8 +317,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2949943331448375281, guid: 2f7f2b02984600145bdbad132e552728,
         type: 3}
-      propertyPath: AttackRange
+      propertyPath: Lazy
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949943331448375281, guid: 2f7f2b02984600145bdbad132e552728,
+        type: 3}
+      propertyPath: AttackRange
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2949943331448375281, guid: 2f7f2b02984600145bdbad132e552728,
         type: 3}
@@ -476,7 +486,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 0}
   demolishValue: -1
+  AutoDestroy: 1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 1

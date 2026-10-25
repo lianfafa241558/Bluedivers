@@ -32,6 +32,37 @@ Transform:
   - {fileID: 7539310864684199099}
   m_Father: {fileID: 2579522400310637794}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3458480370101834643
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6173535103706428085}
+  m_Layer: 0
+  m_Name: RHand
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6173535103706428085
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3458480370101834643}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.56875026, y: -0.5961524, z: -0.5143077, w: -0.23793505}
+  m_LocalPosition: {x: 0.084, y: -0.015, z: -0.068}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2579522400310637794}
+  m_LocalEulerAnglesHint: {x: -62.112, y: -139.892, z: -112.1}
 --- !u!1 &3465389526216929475
 GameObject:
   m_ObjectHideFlags: 0
@@ -65,6 +96,8 @@ Transform:
   m_Children:
   - {fileID: 2833561980505259966}
   - {fileID: 2525232091975297804}
+  - {fileID: 8187788159271542696}
+  - {fileID: 6173535103706428085}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &5485807869640780740
@@ -117,21 +150,21 @@ MonoBehaviour:
       Value: 1
     - Key: 12
       Value: 10
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: 0d4439bc619f18b4c93aa155b6509e5b,
-    type: 3}
   BulletFlag: 0
   Damages:
-  - BulletPrefab: {fileID: 8924682559891268397, guid: 0d4439bc619f18b4c93aa155b6509e5b,
+  - BulletPrefab: {fileID: 3038279916589379443, guid: 38f72091d52a4ee438f7c7818d622b69,
       type: 3}
-    Speed: 15
-    Gravity: 10
+    LandingPrefab: {fileID: 0}
+    Speed: 16
+    Gravity: 9
     InheritWeaponSpeed: 0
-    MaxLifeTime: 5
+    MaxLifeTime: 4
     MaxRange: -1
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
-    DamageExplosion: 0
+    ImpactSoundRadius: 8
+    DamageExplosion: 30
     DamageDirect: 0
     DamageGroupDirect:
     - Key: 0
@@ -139,27 +172,26 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     WeaknessBonus: 0
-    ExplosionInnerRange: 0
-    ExplosionRange: 0
+    ExplosionInnerRange: 1.5
+    ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
     DamageGroupExplosion:
-    - Key: 1
+    - Key: 6
       Value: 1
-    - Key: 2
-      Value: 1
-    UseCollisionDirection: 1
-    ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 0}
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0.2
+    ImpactVfx: {fileID: 2115654139197423946, guid: 105bc80c6fcfc7747ba943769bb27c3a,
+      type: 3}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
     DirectAP: 0
     DirectAPChargeScale: 1
-    ExplosionAP: 0
+    ExplosionAP: 5
     ExplosionAPChargeScale: 1
-    demolishValue: 0
+    demolishValue: 30
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -173,6 +205,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 53d2238f4c4b2aa4f8e559c7af9e0126, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -181,6 +215,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -200,8 +235,8 @@ MonoBehaviour:
   WeaponIcon: {fileID: 21300000, guid: f772f00d8111842409d6d83abc47841f, type: 3}
   Sight: {fileID: 4066082357213353509, guid: 682987df4a63fd641bcafdf118cf811e, type: 3}
   ScopeGo: {fileID: 0}
-  LHand: {fileID: 0}
-  RHand: {fileID: 0}
+  LHand: {fileID: 8187788159271542696}
+  RHand: {fileID: 6173535103706428085}
   ShowRoot: {fileID: 7518348714703087125}
   RecoilForce: 1
   AimingHideCrosshair: 1
@@ -209,8 +244,12 @@ MonoBehaviour:
   AimOffset: {x: 0, y: 0, z: 0}
   playerAngle: 0
   _showAttrInfo: 
-  desc: "\u82B1\u5B50\u7231\u7528(?)\u7684\u6295\u63B7\u7269\u3002\n\u51FB\u4E2D\u540E\u4F1A\u7834\u88C2\u5F00\uFF0C\u5236\u9020\u51FA\u6C34\u6F6D\u964D\u4F4E\u4EFB\u4F55\u5728\u5176\u4E2D\u7684\u4EBA\u7684\u79FB\u52A8\u901F\u5EA6\u3002"
-  m_RenameAttr: []
+  desc: "\u82B1\u5B50\u7231\u7528(?)\u7684\u6295\u63B7\u7269\u3002\n\u51FB\u4E2D\u540E\u4F1A\u7834\u88C2\u5F00\uFF0C\u51BB\u7ED3\u9644\u8FD1\u7684\u654C\u4EBA"
+  m_RenameAttr:
+  - name: "\u50A8\u5907\u6570\u91CF"
+    type: 0
+    addTag: 0
+    removeTag: 0
   showAttr: 00000000
   m_UniqueAttr: []
   Upgrade:
@@ -224,6 +263,37 @@ MonoBehaviour:
     - {fileID: 11400000, guid: da4248263e1724e4b8ab1e78e053196d, type: 2}
   Modules: []
   ActiveModule: {fileID: 0}
+--- !u!1 &5385050062332251298
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8187788159271542696}
+  m_Layer: 0
+  m_Name: Lhand
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8187788159271542696
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5385050062332251298}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.2951194, y: 0.6605769, z: -0.59589964, w: 0.34849167}
+  m_LocalPosition: {x: -0.185, y: -0.094, z: 0.119}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2579522400310637794}
+  m_LocalEulerAnglesHint: {x: 83.201, y: 113.347, z: -12.407}
 --- !u!1 &7518348714703087125
 GameObject:
   m_ObjectHideFlags: 0

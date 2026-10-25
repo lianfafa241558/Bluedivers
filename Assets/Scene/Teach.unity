@@ -672,6 +672,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a6d49d944997434694420b63c9fa7ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -683,22 +684,16 @@ MonoBehaviour:
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
-  ShowName: 
-  Id: 
-  Portrait: {fileID: 0}
-  ExtraPortrait: {fileID: 0}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
   _moveSpeed: 5
   _rotateSpeed: 360
   _arriveDistance: 0.2
@@ -1703,7 +1698,11 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 398343380}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2479968516969550027, guid: 2aa3c5ccff676c946aec2b043d44f588,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 84846232}
   m_SourcePrefab: {fileID: 100100000, guid: 2aa3c5ccff676c946aec2b043d44f588, type: 3}
 --- !u!4 &84846229 stripped
 Transform:
@@ -1717,12 +1716,40 @@ MonoBehaviour:
     type: 3}
   m_PrefabInstance: {fileID: 84846228}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 84846231}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 80a1764301bb944469e18e45baed981a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &84846231 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2479968516969550027, guid: 2aa3c5ccff676c946aec2b043d44f588,
+    type: 3}
+  m_PrefabInstance: {fileID: 84846228}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &84846232
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 84846231}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 927927517511564352, guid: 27b510d78af3c1745acf5e603908590e, type: 3}
 --- !u!1001 &85026202
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6544,7 +6571,7 @@ PrefabInstance:
     - target: {fileID: 5900522125226825036, guid: 3682f6466a532cd42ae159edd5504926,
         type: 3}
       propertyPath: flag
-      value: 0
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 5900522125226825037, guid: 3682f6466a532cd42ae159edd5504926,
         type: 3}
@@ -6554,7 +6581,7 @@ PrefabInstance:
     - target: {fileID: 5900522125226825037, guid: 3682f6466a532cd42ae159edd5504926,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.129
       objectReference: {fileID: 0}
     - target: {fileID: 5900522125226825037, guid: 3682f6466a532cd42ae159edd5504926,
         type: 3}
@@ -6594,6 +6621,11 @@ PrefabInstance:
     - target: {fileID: 5900522125226825037, guid: 3682f6466a532cd42ae159edd5504926,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6367574369457867348, guid: 3682f6466a532cd42ae159edd5504926,
+        type: 3}
+      propertyPath: DamageData.DestructeRadius
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -8054,6 +8086,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 0}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -15680,6 +15713,9 @@ MonoBehaviour:
     type: 3}
   InterestPointPrefab: {fileID: 2767320301268785195, guid: d9c1c07866ccd904a993aab487d002c2,
     type: 3}
+  DrawRailRoutes: 1
+  RailColor: {r: 1, g: 1, b: 1, a: 0.5}
+  RailWidth: 3
   PlayerRoot: {fileID: 1766226158}
   EnemyRoot: {fileID: 1620873642}
   OtherRoot: {fileID: 945674053}
@@ -22441,10 +22477,10 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 1253395055}
   demolishValue: -1
+  AutoDestroy: 1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 1
 --- !u!114 &1253395057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25895,7 +25931,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8831a7765b749ef4ea21b3312ec06c1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  useAirdrops: 090000000a00000064000000c80000009700000004010000
+  useAirdrops: 090000000a00000064000000c800000097000000dd000000
   enemy: 5
   sizeType: 3
 --- !u!1 &1555668799
@@ -30123,6 +30159,7 @@ MonoBehaviour:
   AttackRange: 0
   AlertRange: 0
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 1
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -33190,10 +33227,10 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 2127456066}
   demolishValue: -1
+  AutoDestroy: 1
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 1
 --- !u!1 &2128420336
 GameObject:
   m_ObjectHideFlags: 0

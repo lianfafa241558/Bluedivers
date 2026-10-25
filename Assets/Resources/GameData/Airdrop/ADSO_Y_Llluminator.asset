@@ -17,13 +17,19 @@ MonoBehaviour:
   showName: "\u8F68\u9053\u7167\u660E\u5F39"
   desc: "\u8F68\u9053\u7167\u660E\u5F39\uFF0C\u7167\u4EAE\u5927\u8303\u56F4\u533A\u57DF\uFF0C\u4EC5\u9650\u591C\u95F4\u4EFB\u52A1\u4F7F\u7528"
   icon: {fileID: 21300000, guid: caba305664dfb26429bde18d9062feb1, type: 3}
+  cost:
+  - Key: 0
+    Value: 1000
   opter: 03000000030000000300000002000000
   type: 4
   deliveryType: 1
-  cool: 60
+  labels: 0
+  cool: 30
   arriveTime: 3
   arriveHeight: 50
   arriveCount: 0
+  subAirdrop: 
+  coolGroup: 
   showRange: {x: 0, y: 0}
   sustainTime: 1
   creatObect: {fileID: 2488172934623984547, guid: e306310129b0c6e448ffa9701c41f0d5,
@@ -33,4 +39,8 @@ MonoBehaviour:
   useWarning: 0
   permanentPod: 0
   authorize: 1
+  unAuthorizeVisible: 0
   isDirect: 0
+  deathEnable: 0
+  ignoreJammer: 0
+  teamCool: 1

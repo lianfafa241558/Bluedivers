@@ -208,5 +208,13 @@ namespace FPSGame.Game
                 CreatNotice("Kotama", "NestClear",null,0,5);
             }
         }
+
+        /// <summary>
+        /// 仅供keyscreen调用来改变提示
+        /// </summary>
+        public void SetMissionTip(string tip)
+        {
+            mission.UpdateTip(tip);
+        }
     }
 }

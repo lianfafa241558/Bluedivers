@@ -97,6 +97,13 @@ namespace FPSGame.Weapon
             {
                 m_Parameter.Clear();
             }
+            // 穿甲等级：**是否显示由武器 prefab 的 showAttr 决定**（这里不强制加）。
+            // 只补 cfg 初值——预览实例可能没跑过 InitAttribute，不补就会显示 0。
+            if (Damages.IsValid() && Damages.Count > 0)
+            {
+                if (!cfg[WeaponAttrType.DirectAP]) cfg.Add(WeaponAttrType.DirectAP, Damages[0].GetAttr(WeaponAttrType.DirectAP));
+                if (!cfg[WeaponAttrType.ExplosionAP]) cfg.Add(WeaponAttrType.ExplosionAP, Damages[0].GetAttr(WeaponAttrType.ExplosionAP));
+            }
             for (var i = 0; i < showAttr.Count; ++i)
             {
                 var item = showAttr[i];
@@ -394,7 +401,10 @@ namespace FPSGame.Weapon
                 //Debug.LogError($"创建自定义属性info{name}");
                 typeEnum = WeaponAttrType.Special;
                 attr = new GameAttribute(new(value),flag, ModifierType.All);
-                tag = flag| AttrTag.DefaultHide;
+                // ⚠ 别在这里强加 DefaultHide：它的判据是"Value == PrimeValue"，而专有属性的 PrimeValue
+                //   就是构造时那个 value（升级不改它时永不变）⇒ 恒成立 ⇒ 恒隐藏。
+                //   Strafe 的"齐射轮数 / 每轮射击"就是这样一条都显示不出来。真要默认隐藏由策划在 tag 里勾。
+                tag = flag;
                 this.name = name;
                 ChangeValue = value;
             }
@@ -433,6 +443,14 @@ namespace FPSGame.Weapon
 
             public override string ToString()
             {
+                // 穿甲等级：值 + 档位（0~1 轻穿 / 2~3 中穿 / 4 重穿 / 5+ 反坦克）。
+                // ⚠ 直接返回：下面的差异高亮与 padding 是给等宽数字列的，档位后缀长度不固定，补空格反而错位。
+                if (HasFlag(AttrTag.APGrade))
+                {
+                    int ap = Mathf.RoundToInt(ChangeValue);   // 与下面一致：基础数值显示的是**预览值**，不是当前实际值
+                    return "(" + WeaponAttributeFactory.GetAPGradeName(ap) + ")" + ap;
+                }
+
                 string re = "";
                 var cv = ChangeValue;
                 var fv = Value;

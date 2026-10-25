@@ -194,6 +194,8 @@ public class GameEndWnd : Window
             {
                 ArchivesData_SO.Current.GainRoleExp(self.roleName, exp, out int newLevel, out var _);
                 self.roleLevel = newLevel;
+                // 4. 身上装备的武器吃同样的经验（升级曲线同角色，见 WeaponUpgradeData.GainExp）
+                ArchivesData_SO.Current.GainWeaponExp(self.roleName, exp);
             }
         }
 

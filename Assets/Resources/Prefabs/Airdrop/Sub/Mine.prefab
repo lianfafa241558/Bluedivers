@@ -77,6 +77,7 @@ MonoBehaviour:
   LiftTime: 360
   PreRelease: 1
   allowSeeRelease: 0
+  EndDelay: 0
   allowRelease: 0
   useDebug: 0
   OnEnd:
@@ -121,6 +122,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 3884080132440999546}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -140,7 +142,6 @@ MonoBehaviour:
     Value: 10
   - Key: 11
     Value: 100
-  AutoDestroy: 0
 --- !u!114 &2810349685958166275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,6 +209,13 @@ MonoBehaviour:
   TriggerRange: 0.5
   VerticalRange: 0
   intelligent: 0
+  ExplosionDelay: 0
+  OnTriggered:
+    m_PersistentCalls:
+      m_Calls: []
+  OnExploded:
+    m_PersistentCalls:
+      m_Calls: []
   DamageData:
     DamageExplosion: 20
     ExplosionInnerRange: 2
@@ -220,8 +228,9 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     SoundRadius: 60
+    ImpactSoundRadius: 8
     NoSource: 0
-    ExplosionAP: 2
+    ExplosionAP: 3
     demolishValue: 20
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1

@@ -198,7 +198,8 @@ namespace FPSGame.Effect
             }
             // 信号干扰：落点被覆盖 ⇒ 这一发**整发作废**（不扣次数、不生成任何东西，槽位退回就绪）
             // ⚠ 必须挡在 BattleEventBus.Airdrop 之前：那个事件一抛，data 就进 Arrive 且联机呼叫已经发出去了
-            if (SignalJammer.IsBlocked(point))
+            // ⚠ 勾了"忽略干扰"的战备不受这条限制（否则站在干扰区里叫出来的信标照样在脚下被作废）
+            if (!data.cfg.ignoreJammer && SignalJammer.IsBlocked(point))
             {
                 NetSyncLog.SyncLog("战备/信号干扰", $"落点 {point} 处于干扰范围 ⇒ 取消 {data.cfg.showName}");
                 BattleEventBus.CancelAirdrop(origin, data);
@@ -270,7 +271,7 @@ namespace FPSGame.Effect
             }
             // 信号干扰：远端复现 / 任务脚本的落点被覆盖 ⇒ 不生成任何东西
             // （本机自己叫的那发已在 SetOrigin 拦下；这里只兜"两端判据不一致"的极端情况）
-            if (SignalJammer.IsBlocked(point))
+            if (!this.data.cfg.ignoreJammer && SignalJammer.IsBlocked(point))
             {
                 NetSyncLog.SyncLog("战备/信号干扰", $"复现落点 {point} 处于干扰范围 ⇒ 取消 {this.data.cfg.showName}");
                 RecycleSelf();

@@ -339,15 +339,26 @@ namespace FPSGame.Gameplay
                     //伤害数字/受击反馈的落点：碰撞体表面朝向爆心的最近点
                     //用爆心 point 会让大范围爆炸的所有伤害堆在同一处；用 bounds.center 则巨型单位（如整片护盾）会把数字显示在球心，看不出实际命中位置
                     Vector3 hitPoint = GetExplosionHitPoint(exolosionCollider, point);
+                    // 【诊断·临时】记下实际参与衰减计算的距离与遮挡结论，供"某单位完全吃不到爆炸"排查
+                    float hitDistance = -1f;
+                    bool blocked = false;
                     if (centerDisance <= damageInnerRadius)
                     {
                         value = damageData.GetExplosionDamage(charg, 0) * damageScale;
+                        hitDistance = 0f;
                     }
-                    else if(item.ExplosionBlocking(point, out var hitCollider))
+                    else
                     {
-                        float distance = Vector3.Distance(hitCollider.ClosestPointOnBounds(point), point);
-                        value = damageData.GetExplosionDamage(charg, (PEInt)distance) * damageScale;
+                        blocked = !item.ExplosionBlocking(point, out var hitCollider);
+                        if (!blocked)
+                        {
+                            hitDistance = Vector3.Distance(hitCollider.ClosestPointOnBounds(point), point);
+                            value = damageData.GetExplosionDamage(charg, (PEInt)hitDistance) * damageScale;
+                        }
                     }
+                    // 【诊断·临时】每个伤害体一行：中心距/命中距/内外半径/最终伤害值
+                    var ownerGo = ((IDamageable)item).ActorGo;
+
                     if (value > 0)
                     {
                         //Debug.LogWarning("对" + item.gameObject.name + "造成爆炸伤害" + value +"穿甲等级"+ damageData.GetExplosionAP(charg), item.gameObject);

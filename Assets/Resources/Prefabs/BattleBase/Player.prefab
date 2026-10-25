@@ -99,7 +99,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.01
-  far clip plane: 300
+  far clip plane: 600
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -395,8 +395,8 @@ MonoBehaviour:
   GroundDrag: 2
   AirDrag: 1
   ShakeSpeed: 0.025
-  JumpForce: 9
-  AllowJumpCount: 2
+  JumpForce: 8
+  AllowJumpCount: 1
   FootstepSfxFrequency: 0.3
   FootstepSfx: {fileID: 8300000, guid: 386a43840a356d843bf58454704487b8, type: 3}
   JumpSfx: {fileID: 8300000, guid: 13b59a14d34add64d84a623867546ff1, type: 3}
@@ -462,6 +462,7 @@ MonoBehaviour:
   MaxRecoilDistance: 0.2
   RecoilRestitutionSharpness: 10
   AimingAnimationSpeed: 14
+  ThirdPersonAimAtViewCenter: 1
   DefaultFov: 60
   WeaponFovMultiplier: 1
   WeaponSwitchDelay: 0.2
@@ -656,6 +657,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 6472837815971613716}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -686,7 +688,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: b6fc843a6aa2626478dde440f9365756, type: 3}
   - {fileID: 8300000, guid: d50ac343b89226e4eadf988744b386a1, type: 3}
   - {fileID: 8300000, guid: 70e5fc20996e4e54493f5b9350dc58d7, type: 3}
-  showShield: 0
 --- !u!114 &1465940967207981465
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -699,6 +700,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63713c26566ac6c4ab07d055be869295, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 3
   audioPress: {fileID: 8300000, guid: 23f5b0610a1ee914f9a4b1071bc082b5, type: 3}
   audioOper: {fileID: 8300000, guid: 93ad50821722b5246a515b8ee803d561, type: 3}
@@ -710,6 +712,11 @@ MonoBehaviour:
   desc: "\u6276\u8D77\u540C\u5B66"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -134,8 +134,8 @@ public class AirdropData_SOEditor : DataSOEditorBase
         DrawField("unAuthorizeVisible");
         DrawField("isDirect");
         DrawField("deathEnable");
+        DrawField("ignoreJammer");
         DrawField("teamCool");
-
         ApplyDirty();
     }
 
@@ -582,6 +582,7 @@ public class AirdropData_SOEditor : DataSOEditorBase
             case "unAuthorizeVisible": return "未授权时可见";
             case "isDirect": return "直接释放";
             case "deathEnable": return "死亡时可用";
+            case "ignoreJammer": return "忽略干扰";
             case "teamCool": return "团队冷却";
             default: return ObjectNames.NicifyVariableName(name);
         }

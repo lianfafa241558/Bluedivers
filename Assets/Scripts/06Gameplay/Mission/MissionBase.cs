@@ -460,7 +460,7 @@ namespace FPSGame.Mission
             return true;
         }
 
-        protected void UpdateTip(string tip)
+        public void UpdateTip(string tip)
         {
             if (this.tip == tip) return;
             this.tip = tip;

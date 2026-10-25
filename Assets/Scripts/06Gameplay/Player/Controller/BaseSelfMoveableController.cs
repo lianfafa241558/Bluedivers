@@ -539,7 +539,9 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
             PEInt fallSpeedRatio = (fallSpeed - MinSpeedForFallDamage) /
                                     (MaxSpeedForFallDamage - MinSpeedForFallDamage);
             PEInt dmgFromFall = PEMath.Lerp(FallDamageAtMinSpeed, FallDamageAtMaxSpeed, fallSpeedRatio);
-            Health.TakeDamage(new() { new(DamageTypeEnum.Real, new(dmgFromFall.RawInt)) }, true, null, null, default,false);
+            var fallArgs = DamageSettleArgs.Of(new() { new(DamageTypeEnum.Real, new(dmgFromFall.RawInt)) }, true, null, null, default);
+            fallArgs.Response = false;   // 摔伤不派发受击响应（与改动前一致）
+            Health.TakeDamage(in fallArgs);
             m_LastFallDamageTime = Time.time;
 
             // 落地伤害

@@ -68,7 +68,7 @@ def parse(path):
     return srcs, refs, defs, lang, unsafe, asm, nowarn, projrefs
 
 
-def compile_one(name):
+def compile_one(name, extra_srcs=()):
     proj = os.path.join(ROOT, name + '.csproj')
     if not os.path.exists(proj):
         print('!! 找不到 csproj:', proj)
@@ -81,6 +81,12 @@ def compile_one(name):
             src_paths.append(p)
         else:
             missing += 1
+    # 新建的 .cs 在 Unity 刷新资产前不会出现在 csproj 里 ⇒ 用 --add:<文件> 手动补
+    known = {os.path.normcase(os.path.abspath(p)) for p in src_paths}
+    for p in extra_srcs:
+        ap = os.path.abspath(p)
+        if os.path.exists(ap) and os.path.normcase(ap) not in known:
+            src_paths.append(ap)
     nw = ','.join(x for x in re.split(r'[;, ]+', nowarn) if x.isdigit())
     os.makedirs(OUTDIR, exist_ok=True)
     out = os.path.join(OUTDIR, (asm or name) + '.dll')
@@ -95,6 +101,11 @@ def compile_one(name):
         lines.append('-define:' + d)
     nref = 0
     for r_ in refs:
+        # 兄弟程序集本轮刚编过 ⇒ 用 Temp/offline_compile 的新 dll 顶掉 ScriptAssemblies 的旧副本，
+        # 否则会出现"接口成员未实现 / 类型不匹配"这种假错误（2026-10-25 实测）。
+        fresh = os.path.join(OUTDIR, os.path.basename(r_))
+        if os.path.exists(fresh) and (not os.path.exists(r_) or os.path.getmtime(fresh) >= os.path.getmtime(r_)):
+            r_ = fresh
         if os.path.exists(r_):
             lines.append('-r:"%s"' % r_)
             nref += 1
@@ -165,8 +176,16 @@ def compile_one(name):
 
 
 if __name__ == '__main__':
-    names = sys.argv[1:] or ['06_Gameplay']
+    # 用法：python offline_compile.py 06_Gameplay [更多程序集] [--add:<目标程序集>:Assets/.../新文件.cs]
+    # ⚠ --add 必须指明归属程序集：无条件加给每个程序集会让类型出现两份（假错误 CS0535/CS1503）。
+    argv = sys.argv[1:]
+    extra_map = {}
+    for a in argv:
+        if a.startswith('--add:'):
+            asm, _, path = a[len('--add:'):].partition(':')
+            extra_map.setdefault(asm, []).append(path)
+    names = [a for a in argv if not a.startswith('--add:')] or ['06_Gameplay']
     total = 0
     for n in names:
-        total += compile_one(n)
+        total += compile_one(n, extra_map.get(n, ()))
     print('总错误数:', total)

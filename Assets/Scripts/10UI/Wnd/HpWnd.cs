@@ -135,7 +135,7 @@ using static FPSGame.WndTools.WndRootTool;
             }
         }
 
-        private void OnUnitHit(GameObject victim ,GameObject attacker)
+        private void OnUnitHit(GameObject victim ,GameObject attacker,bool _)
         {
             // Boss 走固定的 HUD 条：任何命中都刷新显示并重置隐藏计时，不受 70m 距离限制
             // （放在最前也避免 Boss 的 UseHpBar 为 true 时在 pool 里再生成一条士兵血条）

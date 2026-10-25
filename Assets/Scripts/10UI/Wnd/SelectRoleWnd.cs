@@ -35,6 +35,12 @@ public class SelectRoleWnd : Window
         weaponParameterRoot, weaponDescRoot,weaponDescText,
         showDescButton, showParameterButton;
     [SerializeField]
+    [InspectorName("武器等级文本(武器名下方)")]
+    private Transform weaponLevel;
+    [SerializeField]
+    [InspectorName("武器等级经验条(Filled Image)")]
+    private Transform weaponLevelFill;
+    [SerializeField]
     private Sprite buyIcon, unbuyIcon;
     [SerializeField]
     private Color buyColor, unbuyColor, selectColor, unSelectColor,unLevelColor;
@@ -459,6 +465,7 @@ public class SelectRoleWnd : Window
         var lenghts= weaponInst.UpgradeCount();
         var levels = weaponInst.UpgradeLevel();
         archWeaponData = ArchivesData_SO.Current.weaponUpgradeDic.TryGet(arch.ID+"_"+ weaponInst.WeaponName, new(arch.ID + "_" + weaponInst.WeaponName, lenghts.Length));
+        RefreshWeaponLevel();
         var totleLenght = IEnumerableUtils.Sum(lenghts);
 
 
@@ -473,7 +480,7 @@ public class SelectRoleWnd : Window
                 {
                     SetSprite(weaponUpgradeItemLayout.GetChild(y, x, 0), showWeapon.GetUpgrade(y, x).icon);
                     int state = 0;
-                    if (arch.Level < levels[y]) state = 3;
+                    if (archWeaponData.Level < levels[y]) state = 3;
                     else if (archWeaponData.selectIndex[y] == x) state = 0;
                     else if (archWeaponData.GetBuy(y, x)) state = 1;
                     else state = 2;
@@ -496,8 +503,8 @@ public class SelectRoleWnd : Window
             if (showSelect)
             {
                 SetUpgradeSelectButton(archWeaponData.selectIndex, y, archWeaponData.selectIndex[y], false);
-                SetActive(weaponUpgradeSelectLayout.GetChild(y, 2), arch.Level < levels[y]);
-                SetActive(weaponUpgradeSelectLayout.GetChild(y, 1), arch.Level >= levels[y]);
+                SetActive(weaponUpgradeSelectLayout.GetChild(y, 2), archWeaponData.Level < levels[y]);
+                SetActive(weaponUpgradeSelectLayout.GetChild(y, 1), archWeaponData.Level >= levels[y]);
                 SetText(weaponUpgradeSelectLayout.GetChild(y, 2, 0), levels[y]);
             }
             
@@ -521,6 +528,15 @@ public class SelectRoleWnd : Window
         SwitchModule();
 
 
+    }
+
+    /// <summary>刷新武器等级文本与经验进度条（只给条，不显示具体经验值）。</summary>
+    private void RefreshWeaponLevel()
+    {
+        // 旧版窗口 prefab 没这两个节点时静默跳过，别让整页武器预览 NRE
+        if (!weaponLevel || !weaponLevelFill) return;
+        SetText(weaponLevel, "Lv." + archWeaponData.Level);
+        SetFill(weaponLevelFill, archWeaponData.ExpScale);
     }
 
 
@@ -608,7 +624,7 @@ public class SelectRoleWnd : Window
     /// </summary>
     private void SelectUpgrade(int y, int x)
     {
-        if (arch.Level < showWeapon.UpgradeLevel(y))
+        if (archWeaponData.Level < showWeapon.UpgradeLevel(y))
         {
             wndManager.PlaySound(new("UI/UI_Reward2", volume:0.1f));
             return;
@@ -696,7 +712,7 @@ public class SelectRoleWnd : Window
             if (x != -1) SetUpgradeItemButton(y, x, 1);//将原来选择的位置重置
             else
             {
-                SetColor(weaponUpgradeSelectLayout.GetChild(y), arch.Level < showWeapon.UpgradeLevel(y)?unLevelColor:Color.black);
+                SetColor(weaponUpgradeSelectLayout.GetChild(y), archWeaponData.Level < showWeapon.UpgradeLevel(y)?unLevelColor:Color.black);
             }
         }
         else //X有效且不相同

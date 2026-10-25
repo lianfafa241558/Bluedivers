@@ -112,6 +112,10 @@ namespace FPSGame.Managers
 
         public TaskCfg[,] TaskCfgs;
 
+        /// <summary>整张任务表重建完成（跨时间窗口，见 <see cref="CreatAllTask"/>）。
+        /// <para>▍选图界面订阅它：外层图标与内层标记必须**同时**重画，否则换表后两边各显示各的。</para></summary>
+        public event System.Action OnTaskTableRefreshed;
+
         public SelectTaskData nowTask { get;private set; }
 
 
@@ -265,14 +269,16 @@ namespace FPSGame.Managers
             var values = OrderedMaps();   // ⚠ 必须排序：见 OrderedMaps 的注释（否则两端行下标对不上）
             for (int i = 0; i < AreaCount; ++i)
             {
-                var enemyType = values[i].enemyVarietyType;
-                var camp = Camps[enemyType];
-                var mainTypes = camp.mainTypes;
-                var extraTypes = camp.extraTypes;
-                var nestTypes = camp.nestTypes;
+   
                 if (values[i].mapItemInfos.Length == 0) continue;
                 for (int u = 0; u < Mathf.Min(TaskCount, values[i].mapItemInfos.Length); ++u)
                 {
+                    var enemyType = values[i].mapItemInfos[u].enemyVarietyType;
+                    var camp = Camps[enemyType];
+                    var mainTypes = camp.mainTypes;
+                    var extraTypes = camp.extraTypes;
+                    var nestTypes = camp.nestTypes;
+
                     var mainType = mainTypes.RandomTake(TaskRandom);
                     var missionCfg = (MissionMainData_SO)Missions[mainType];
 
@@ -299,6 +305,8 @@ namespace FPSGame.Managers
                     };
                 }
             }
+            OnTaskTableRefreshed?.Invoke();   // 表换完了：UI 侧要把「外层图标 + 内层标记」一起重画
+
             MissionEnum[] CreatExtra(MissionEnum[] arr,int count)
             {
                 MissionEnum[] re = new MissionEnum[count];

@@ -232,6 +232,8 @@ namespace FPSGame.Weapon
                 Attr.ChargeHeatScale => ChargeHeatScale,
                 Attr.WeaknessBonus => WeaknessBonus,
                 Attr.LifeTime => MaxLifeTime,
+                Attr.DirectAP => DirectAP,
+                Attr.ExplosionAP => ExplosionAP,
                 // 伤害类型系数
                 Attr.DamageTypeGun => DamageGroupDirect.GetValue(DamageTypeEnum.Gun),
                 Attr.DamageTypeExplosion => DamageGroupDirect.GetValue(DamageTypeEnum.Explosion),
@@ -286,6 +288,8 @@ namespace FPSGame.Weapon
 
         public void SetWeaknessBonus(PEInt value) => WeaknessBonus = value.RawFloat;
         public void SetLifeTime(PEInt value) => MaxLifeTime = value.RawFloat;
+        public void SetDirectAP(PEInt value) => DirectAP = value.RawInt;
+        public void SetExplosionAP(PEInt value) => ExplosionAP = value.RawInt;
 
         // 伤害类型系数
         public void SetDamageTypeGun(PEInt value) => DamageGroupDirect.SetValue(DamageTypeEnum.Gun, value.RawFloat);

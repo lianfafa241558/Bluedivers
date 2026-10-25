@@ -36,8 +36,11 @@ public class AirdropWnd : Window
     List<DirectionEnum> opterlist;
     float time;
 
-    /// <summary>本帧玩家是否被信号干扰（见 <c>SignalJammer</c>）：干扰期间所有战备位一律显示"受到干扰"。</summary>
+    /// <summary>本帧玩家是否被信号干扰（见 <c>SignalJammer</c>）：干扰期间战备位显示"受到干扰"。</summary>
     bool jammed;
+
+    /// <summary>该战备本帧是否被干扰：勾了"忽略干扰"的战备不受影响（输入侧见 AirdropController.Input）。</summary>
+    bool JammerBlocked(AirdropData item) => jammed && !item.cfg.ignoreJammer;
 
 
     public void Init()
@@ -223,7 +226,7 @@ public class AirdropWnd : Window
         var ad = controller.useAd[index];
         if (!ad.IsVisible) return; // 不显示的跳过
 
-        if (jammed)
+        if (JammerBlocked(ad))
         {
             airdropList[index].GetComponent<CanvasGroup>().alpha = 0.25f;
             SetText(airdropList[index].transform.GetChild(2), "受到干扰");
@@ -267,7 +270,10 @@ public class AirdropWnd : Window
             SetSizeDelta(showList[i].GetChild(0, 1), 0, 32 * item.TimeScale);
             SetText(airdropList[i].GetChild(0, 2, 0), item.count);
 
-            if (jammed)
+            // 干扰遮罩 = AirdropShowItem/Image 下的第 3 个子物体 Jammer（勾了"忽略干扰"的战备不盖）
+            SetActive(showList[i].GetChild(0, 2), JammerBlocked(item));
+
+            if (JammerBlocked(item))
             {
                 // 干扰期间冷却/次数都不作数 ⇒ 只报干扰
                 if (!jamTextUsed)
@@ -346,8 +352,11 @@ public class AirdropWnd : Window
 
             SetSizeDelta(airdropList[i].GetChild(0, 1), 0, 32 * item.TimeScale);
 
-            // 干扰优先于其它状态：冷却/就绪都不许读，统一虚化 + 报"受到干扰"
-            if (jammed)
+            // 干扰遮罩 = AirdropItem/Image 下的第 4 个子物体 Jammer（前三个是 Icon/Cool/TextFrame）
+            SetActive(airdropList[i].GetChild(0, 3), JammerBlocked(item));
+
+            // 干扰优先于其它状态：冷却/就绪都不许读，统一虚化 + 报"受到干扰"（忽略干扰的战备照常读）
+            if (JammerBlocked(item))
             {
                 airdropList[i].GetComponent<CanvasGroup>().alpha = 0.25f;
                 SetAlpha(airdropList[i].GetChild(1), 0.35f);

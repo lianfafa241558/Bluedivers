@@ -186,6 +186,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 9158815011078974228}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 00e5fe07bc71adf4db5c9477f4bd3a66,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8740626047236269311}
   m_SourcePrefab: {fileID: 100100000, guid: 00e5fe07bc71adf4db5c9477f4bd3a66, type: 3}
 --- !u!4 &4791923854146141000 stripped
 Transform:
@@ -271,7 +275,7 @@ MonoBehaviour:
   HpHeight: 2
   shape: 0
   rangeLength: 0
-  damageables: []
+  halfHeight: 0
 --- !u!114 &1331484001479467211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -285,8 +289,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  showArmorLists: []
-  AllArmor: 0
+  explosionResistance: 0
+  armorLevel: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -307,7 +311,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
+  showArmorLists: []
   MainPart: {fileID: 1331484001479467211}
+  demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
@@ -327,7 +334,6 @@ MonoBehaviour:
     Value: 10
   - Key: 11
     Value: 100
-  AutoDestroy: 0
 --- !u!114 &9158815011078974228
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -344,3 +350,22 @@ MonoBehaviour:
   BirthDuration: 0
   birthTime: 0
   IsRemove: 0
+--- !u!114 &-8740626047236269311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5317491084562637298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 531719c9934cdc647bacfd252c11ff06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 0}
+  fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
+  fxEvent: {fileID: 11400000, guid: dc65f4d8b2d398c409d766e93f18d227, type: 2}
+  fxMaterial: {fileID: 2100000, guid: ed94de0f42e6efc498a077ef5327cb05, type: 2}
+  events: []
+  BirthMaterial: {fileID: 0}
+  UseAttack: 0

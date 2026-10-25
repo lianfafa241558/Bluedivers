@@ -39,10 +39,13 @@ public class ArchivesData_SO : ArchivesDataBase_SO
     public string lastSelectRole;
 
 
-    #endregion
+        #endregion
 
 
     #region 角色信息
+
+    private const int ExpMeet=1000;
+
     [Space]
     [InspectorName("角色信息")]
     public DisplayDic<string, ArchRoleData> roleDataDic = new(true,(id) => {
@@ -62,10 +65,10 @@ public class ArchivesData_SO : ArchivesDataBase_SO
     });
     public void SetRoleLevel(string ID, int level, int exp)
     {
-        if (exp >= 1000)
+        if (exp >= ExpMeet)
         {
-            level += exp / 1000;
-            exp %= 1000;
+            level += exp / ExpMeet;
+            exp %= ExpMeet;
         }
 
        var data= roleDataDic[ID];
@@ -78,7 +81,7 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         var data = roleDataDic[ID];
 
         level = data.Level;
-        expScale = data.Exp/1000f;
+        expScale = data.Exp/ ExpMeet;
     }
 
     public ArchRoleData GetRoleCfg(string ID) {
@@ -93,14 +96,14 @@ public class ArchivesData_SO : ArchivesDataBase_SO
     {
         var data= roleDataDic[ID];
         data.Exp += gainValue;
-        if (data.Exp / 1000 > 0)
+        if (data.Exp / ExpMeet > 0)
         {
-            data.Level += data.Exp / 1000;
-            data.Exp %= 1000;
+            data.Level += data.Exp / ExpMeet;
+            data.Exp %= ExpMeet;
         }
 
         level = data.Level;
-        expScale = data.Exp/1000f;
+        expScale = data.Exp/ ExpMeet;
 
         GlobalEventBus.OnGainExp?.Invoke(ID, level, expScale);
     }
@@ -153,6 +156,28 @@ public class ArchivesData_SO : ArchivesDataBase_SO
             re[i] = weaponUpgradeDic.TryGet(ID + "_" + weapon.WeaponName, new(ID + "_" + weapon.WeaponName, weapon.UpgradeCount().Length)).selectModuleIndex;
         }
         return re;
+    }
+
+    /// <summary>给角色**身上装备的所有武器**加经验（与角色同一条曲线：<see cref="ExpMeet"/> 满一级）。</summary>
+    /// <param name="ID">角色 ID</param>
+    /// <param name="gainValue">本次经验（与角色结算得到的量相同）</param>
+    public void GainWeaponExp(string ID, int gainValue)
+    {
+        if (gainValue <= 0) return;
+        var role = roleDataDic[ID];
+        var data = Resources.Load<RoleData_SO>("GameData/Role/RD_" + ID);
+        if (data == null) return;   // 角色资源缺失是配置问题，武器经验静默不加（结算界面不该因此中断）
+        for (int i = 0; i < 6; ++i)
+        {
+            var type = (WeaponTypeEnum)i;
+            var list = data.weapons[type];
+            if (list == null || list.Count == 0) continue;
+            var weapon = list[role.weaponSelect[type] % list.Count];
+            if (weapon == null) continue;
+            int lenght = weapon.UpgradeCount().Length;
+            if (lenght == 0) continue;   // Armor 之类没有改装树，加了也没地方用
+            weaponUpgradeDic.TryGet(ID + "_" + weapon.WeaponName, new(ID + "_" + weapon.WeaponName, lenght)).GainExp(gainValue);
+        }
     }
     #endregion
 
@@ -291,6 +316,40 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         [SerializeField]
         private int[] buyModuleIndex;
 
+        /// <summary>武器等级（1 起）。升级所需经验与角色相同：<see cref="ExpMeet"/>。</summary>
+        /// <remarks>⚠ 老存档没有这个字段 ⇒ 反序列化得 <c>0</c>（JsonUtility 不走构造函数，字段初始值也不生效），
+        /// 所以等级<b>只能经 <see cref="Level"/> 读</b>（自动钳到 ≥1）。</remarks>
+        [SerializeField]
+        private int level = 1;
+        /// <summary>当前等级内已累计的经验</summary>
+        public int exp;
+
+        /// <summary>武器等级（读接口对老存档做兼容：<c>level&lt;=0</c> 一律当 1 级）</summary>
+        public int Level
+        {
+            get => level <= 0 ? 1 : level;
+            set => level = value;
+        }
+
+        /// <summary>当前等级的经验进度（0~1），给 UI 进度条用</summary>
+        public float ExpScale => (float)exp / ExpMeet;
+
+        /// <summary>加经验并结算升级。返回是否升级。</summary>
+        public bool GainExp(int gainValue)
+        {
+            int lv = Level;          // 走钳制，别拿裸 level（老存档是 0）
+            int e = exp + gainValue;
+            if (e < ExpMeet)
+            {
+                exp = e;
+                return false;
+            }
+            lv += e / ExpMeet;
+            exp = e % ExpMeet;
+            level = lv;
+            return true;
+        }
+
         public WeaponUpgradeData(string id, int lenght)
         {
             ID = id;
@@ -301,6 +360,8 @@ public class ArchivesData_SO : ArchivesDataBase_SO
                 selectIndex[i] = -1;
                 buyIndex[i] = 0;
             }
+            level = 1;
+            exp = 0;
         }
         public bool GetBuy(int y, int x)
         {

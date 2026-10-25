@@ -5,7 +5,7 @@ using FPSGame.Core.Interface;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 using PEMaths;
-
+using FPSGame.Data;
 using UnityEngine;
 using UnityEngine.Events;
 using FPSGame.Utils;
@@ -25,7 +25,9 @@ namespace FPSGame.Game
         /// <summary>爆炸抗性达到此值视为完全免疫（跳过爆炸遮挡判定）</summary>
         private const float ExplosionImmunityThreshold = 0.95f;
         /// <summary>穿甲等级不足时，每差 1 级减伤比例</summary>
-        private const float ArmorPenaltyPerLevel = 0.33f;
+        private const float ArmorPenaltyPerLevel = 0.4f;
+        /// <summary>跳弹阈值：穿甲等级比部位护甲高出这么多级 ⇒ 视为"过穿"（只做表现，不改数值）</summary>
+        private const int RicochetArmorGap = 2;
 
         /// <summary>【联机 · 可注入】"这笔伤害该不该在**本端落地**（真的扣血 / 致死）"。
         /// <para>▍为什么需要这么个注入点：载具血量必须**收敛到房主**（两端各自模拟子弹 ⇒ 同一发被扣 N 份），
@@ -36,8 +38,6 @@ namespace FPSGame.Game
         /// 受击的**视觉**表现由子弹自身的命中特效承担，不依赖这里。</para>
         /// <para><c>null</c>（单机 / 未接入）⇒ 一律落地 = 改动前行为。</para></summary>
         public static System.Func<Damageable, DamagePacket, bool> LocalDamageGate;
-        /// <summary>穿甲不足时伤害最低比例</summary>
-        private const float ArmorMinFactor = 0.1f;
 
 
         [SerializeField]
@@ -172,24 +172,7 @@ namespace FPSGame.Game
             remainArmor = armorValue * scale;
             maxArmor = remainArmor;
             showArmor = remainArmor.RawFloat;
-            List <Collider> list = GetComponents<Collider>().ToList();
-            foreach (var item in LineArmor)
-            {
-                item.source = this;
-                list.AddRange(item.GetComponents<Collider>());
-            }
-            m_colliders = list.ToArray();
-            //在层次结构中查找处于同一级别或更高级别的组件
-            Health = GetComponent<HealthEnemy>();
-            if (!Health.IsValidMono())
-            {
-                Health = GetComponentInParent<IHealth>();
-            }
-            Actor = GetComponent<Actor>();
-            if (!Actor)
-            {
-                Actor = GetComponentInParent<Actor>();
-            }
+            
             // 记录护甲破坏效果的初始状态，用于护盾恢复
             foreach (var item in armorBreakEffect)
             {
@@ -199,7 +182,28 @@ namespace FPSGame.Game
                     item.originLocalScale = item.go.transform.localScale;
                 }
             }
+
+            List<Collider> list = GetComponents<Collider>().ToList();
+            foreach (var item in LineArmor)
+            {
+                item.source = this;
+                list.AddRange(item.GetComponents<Collider>());
+            }
+            m_colliders = list.ToArray();
+            //在awake中会因为接口和具体类型注册顺序不一样导致失败，要么用具体类型，要么放start
+            Health = GetComponent<IHealth>();
+            if (!Health.IsValidMono())
+            {
+                Health = GetComponentInParent<IHealth>();
+            }
+            Actor = GetComponent<Actor>();
+            if (!Actor)
+            {
+                Actor = GetComponentInParent<Actor>();
+            }
         }
+
+
 
         /// <summary>获取距指定位置最近的碰撞体（含关联护甲的碰撞体）</summary>
         /// <param name="pos">参考位置（通常为伤害来源点）</param>
@@ -277,8 +281,17 @@ namespace FPSGame.Game
                 relay.InflictDamage(packet);
                 return;
             }
-            if (!Health.IsValidMono()) return;
-            if (!packet.DamageGroups.IsValid()|| packet.DamageGroups.Count==0) return;
+            if (!Health.IsValidMono())
+            {
+                // 前置条件不成立就一条日志 + return：原来静默丢弃，表现是"打上去了但不掉血"
+                //Debug.LogWarning($"[伤害丢弃] {name} 没有绑定 Health（Damageable.Health 为空）", this);
+                return;
+            }
+            if (!packet.DamageGroups.IsValid()|| packet.DamageGroups.Count==0)
+            {
+                //Debug.LogWarning($"[伤害丢弃] {name} 的伤害包没有成分(DamageGroups 为空) 值={packet.Damage.RawFloat:F2}", this);
+                return;
+            }
 
             // ★ 联机（2026-10-14）：这一笔"该不该在本端落地"由 09 注入的谓词决定
             //   （载具血量收敛到房主；非权威端 AI 来源的载具伤害在这里就被挡掉）。null ⇒ 一律落地。
@@ -332,7 +345,7 @@ namespace FPSGame.Game
                 //Debug.LogWarning("爆炸抗性" + hitExplosionResistance, gameObject);
 
                 //穿甲等级
-                PEInt armorFactor = PEMath.Clamp(1 - (armorLevel - packet.AP) * (PEInt)ArmorPenaltyPerLevel, new(0.1f), 1);
+                PEInt armorFactor = PEMath.Clamp(1 - (armorLevel - packet.AP) * (PEInt)ArmorPenaltyPerLevel, 0, 1);
                 //Debug.LogWarning("穿甲系数" + armorFactor.RawFloat+"护甲等级"+armorLevel+"穿甲等级"+packet.AP, gameObject);
                 damage *= hitExplosionResistance* armorFactor;
             }
@@ -359,17 +372,21 @@ namespace FPSGame.Game
                 }
             }
             
-            // ★ 把这一发的**原始成分**（类型 + 系数）挂在 Health 上，供联机上报（见 Health.LastRawGroups）：
-            //   接收端要拿它补"护甲破坏 / 异常状态积蓄"——只带总伤害时那两条分支整段被跳过。
-            //   ⚠ try/finally 包住 TakeDamage：OnDamaged 是在它内部同步触发的，出来后必须清掉（别让流血/tick 复用上一发的成分）。
-            Health.LastRawGroups = packet.DamageGroups;
-            try
-            {
-                Health.TakeDamage(finalDamageGroups, packet.NoSource, damageOrigin, packet.damageAffected, packet.Pos,true,isWeakness, packet.DemolishValue, damageCaused);
-            }
-            finally { Health.LastRawGroups = null; }
+            // 原始成分随包交给 Health 自行挂/清（见 Health.TakeDamage 的事件段）：这里不再写别人的状态
+            var settle = DamageSettleArgs.Of(finalDamageGroups, packet.NoSource, damageOrigin, packet.damageAffected, packet.Pos);
+            settle.Caused = damageCaused;
+            settle.IsWeakness = isWeakness;
+            settle.DemolishValue = packet.DemolishValue;
+            settle.RawGroups = packet.DamageGroups;
+            settle.Ricochet = IsRicochet(packet);
+            Health.TakeDamage(in settle);
             
         }
+
+        /// <summary>跳弹判定（只给准星提示用，**不参与伤害数值**）：直击 + 穿甲比本部位护甲高 <see cref="RicochetArmorGap"/> 级以上。</summary>
+        /// <remarks>⚠ 联机镜像包（<c>Resolved</c>）不重算：远端没带 AP，按 0 算会把满伤误判成跳弹。</remarks>
+        private bool IsRicochet(in DamagePacket packet)
+            => packet.isDirect && !packet.Resolved &&  armorLevel - packet.AP >= RicochetArmorGap;
 
         /// <summary>是否为玩家阵营单位（玩家/盟友）</summary>
         private static bool IsFriendlyUnit(Actor actor)
@@ -460,7 +477,9 @@ namespace FPSGame.Game
             if (armorValue > 0 && remainArmor <= 0 && FPSGame.Data.BattleState.ShouldApplyTickDamage(IsPlayerLike))
             {
                 // 流血：无源（NoSource=true），来源两头都用"最后打破护甲的那个人"（与改动前同口径）
-                Health.TakeDamage(new() {new( DamageTypeEnum.Real,BleedValue)}, true, ArmorBreaker, m_colliders[0], m_colliders[0].bounds.center,true,false,-1,ArmorBreaker);
+                var settle = DamageSettleArgs.Of(new() { new(DamageTypeEnum.Real, BleedValue) },
+                    true, ArmorBreaker, m_colliders[0], m_colliders[0].bounds.center);
+                Health.TakeDamage(in settle);
             }
             return true;
         }

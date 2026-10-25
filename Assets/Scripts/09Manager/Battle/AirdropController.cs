@@ -50,8 +50,12 @@ namespace FPSGame.Managers
 
         IActor Player => ActorsManager.Player;
 
-        /// <summary>玩家此刻是否处在信号干扰范围（见 <see cref="SignalJammer"/>）：干扰期间任何战备都叫不出，UI 据此显示"受到干扰"。</summary>
+        /// <summary>玩家此刻是否处在信号干扰范围（见 <see cref="SignalJammer"/>）：干扰期间战备都叫不出，UI 据此显示"受到干扰"。</summary>
         public bool IsJammed => SignalJammer.IsBlocked(Player);
+
+        /// <summary>该战备此刻是否被干扰：干扰区内且没勾 <see cref="AirdropData_SO.ignoreJammer"/>。
+        /// 输入与 UI 共用这一条判据，别再各写一遍（漏一处就会出现"UI 灰的却叫得出来"）。</summary>
+        public bool IsJammerBlocked(AirdropData item) => IsJammed && !item.cfg.ignoreJammer;
 
         private Dictionary<int,AirdropData_SO> adDic=> ResSvc.airdropDic;
 
@@ -194,14 +198,9 @@ namespace FPSGame.Managers
 
         private void Input(DirectionEnum dir)
         {
-            // 干扰中：输入一律吃掉并给一声"无效"反馈。⚠ 必须挡在这里，不能只靠 UI 虚化
-            //   （键盘输入不看 UI，只虚化会出现"看着灰的还能叫出信标"）
-            if (IsJammed)
-            {
-                inputDir.Clear();
-                AudioSvc.PlaySound(new("AirDrop/superbeacon_throw"));
-                return;
-            }
+            // 干扰中：只有勾了"忽略干扰"的战备还能叫，其余输入一律吃掉并给一声"无效"反馈。
+            // ⚠ 必须挡在匹配里，不能只靠 UI 虚化（键盘输入不看 UI，只虚化会出现"看着灰的还能叫出信标"）
+            bool jammed = IsJammed;
 
             inputDir.Add(dir);
             //如果和当前战备全部不符合就清空
@@ -209,6 +208,7 @@ namespace FPSGame.Managers
             foreach (var item in useAd) 
             {
                 if (!item.IsCurrentlyAvailable(Player)) continue;//当前不可用的战备跳过
+                if (jammed && !item.cfg.ignoreJammer) continue;//干扰中只放行"忽略干扰"的战备
                 bool state = item.State==AirdropState.Ready && item.cfg.opter.Compare(inputDir);
                 keep |= state;
                 if(state && inputDir.Count == item.cfg.opter.Length)

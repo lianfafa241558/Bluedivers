@@ -212,6 +212,8 @@ Shader "LX/Texture2"
             #endif
             half4 col = tex2D(_MainTex, i.uv);
 
+            // 小于 threshold 置 0，大于等于 threshold 保持原值
+            //col *= step(0.01, col); 
             col*= (UNITY_ACCESS_INSTANCED_PROP(Props, _BaseColor)+UNITY_ACCESS_INSTANCED_PROP(Props, _HitColor))*i.color; 
 
         #if _UseAlphaClipping

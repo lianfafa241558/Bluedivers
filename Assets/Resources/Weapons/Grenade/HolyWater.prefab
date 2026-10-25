@@ -63,6 +63,68 @@ Transform:
   m_Children: []
   m_Father: {fileID: 865411121390596817}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6218906098506209143
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 404215716823583567}
+  m_Layer: 0
+  m_Name: RHand
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &404215716823583567
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6218906098506209143}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.56875026, y: -0.5961524, z: -0.5143077, w: -0.23793505}
+  m_LocalPosition: {x: 0.084, y: -0.015, z: -0.068}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 865411121390596817}
+  m_LocalEulerAnglesHint: {x: -62.112, y: -139.892, z: -112.1}
+--- !u!1 &6467667686283775270
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6196253973992710480}
+  m_Layer: 0
+  m_Name: Lhand
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6196253973992710480
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6467667686283775270}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.2951194, y: 0.6605769, z: -0.59589964, w: 0.34849167}
+  m_LocalPosition: {x: -0.185, y: -0.094, z: 0.119}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 865411121390596817}
+  m_LocalEulerAnglesHint: {x: 83.201, y: 113.347, z: -12.407}
 --- !u!1 &6850334054902329769
 GameObject:
   m_ObjectHideFlags: 0
@@ -96,6 +158,8 @@ Transform:
   m_Children:
   - {fileID: 7291594083123882550}
   - {fileID: 7814688944437620373}
+  - {fileID: 6196253973992710480}
+  - {fileID: 404215716823583567}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &8724838456336507836
@@ -148,20 +212,20 @@ MonoBehaviour:
       Value: 1
     - Key: 12
       Value: 10
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: 0d4439bc619f18b4c93aa155b6509e5b,
-    type: 3}
   BulletFlag: 0
   Damages:
-  - BulletPrefab: {fileID: 8924682559891268397, guid: 0d4439bc619f18b4c93aa155b6509e5b,
+  - BulletPrefab: {fileID: 940303731622735519, guid: bbe4550feb5412f4cae1c7be8012f0fa,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 15
-    Gravity: 10
+    Gravity: 8
     InheritWeaponSpeed: 0
-    MaxLifeTime: 5
+    MaxLifeTime: 6
     MaxRange: -1
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 0
     DamageGroupDirect:
@@ -171,17 +235,14 @@ MonoBehaviour:
       Value: 1
     WeaknessBonus: 0
     ExplosionInnerRange: 0
-    ExplosionRange: 0
+    ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
-    UseCollisionDirection: 1
+    DamageGroupExplosion: []
+    UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 0}
+    ImpactVfx: {fileID: 3648642699431954410, guid: d55290d50cc06a64583bf610a05d1b04,
+      type: 3}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
@@ -190,7 +251,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
-    demolishValue: 0
+    demolishValue: 30
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -204,6 +265,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 53d2238f4c4b2aa4f8e559c7af9e0126, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -212,6 +275,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -231,8 +295,8 @@ MonoBehaviour:
   WeaponIcon: {fileID: 21300000, guid: a7179c47bbeef1d40a8f7a0e904f9ba0, type: 3}
   Sight: {fileID: 4066082357213353509, guid: 682987df4a63fd641bcafdf118cf811e, type: 3}
   ScopeGo: {fileID: 0}
-  LHand: {fileID: 0}
-  RHand: {fileID: 0}
+  LHand: {fileID: 6196253973992710480}
+  RHand: {fileID: 404215716823583567}
   ShowRoot: {fileID: 1005927673039346027}
   RecoilForce: 1
   AimingHideCrosshair: 1
@@ -241,12 +305,16 @@ MonoBehaviour:
   playerAngle: 0
   _showAttrInfo: 
   desc: "\u5C0F\u6625\u7231\u7528\u7684\u5723\u6C34\u624B\u69B4\u5F39\u3002\n\u6295\u63B7\u540E\u7206\u88C2\uFF0C\u53EF\u4EE5\u6CBB\u7597\u53CB\u519B\uFF0C\u4E5F\u53EF\u4EE5\u4F24\u5BB3\u654C\u4EBA\uFF0C\u4F46\u662F\u8FD9\u662F\u600E\u4E48\u505A\u5230\u7684\uFF1F"
-  m_RenameAttr: []
-  showAttr: 000000001500000016000000
+  m_RenameAttr:
+  - name: "\u50A8\u5907\u6570\u91CF"
+    type: 0
+    addTag: 0
+    removeTag: 0
+  showAttr: 0000000016000000
   m_UniqueAttr:
   - name: "\u6CBB\u7597\u53CB\u519B"
-    value: 0
-    tag: 0
+    value: 1
+    tag: 32
   Upgrade:
   - Key: 8
     Value:

@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1167628199937690464
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 563159834958362239}
+  m_Layer: 0
+  m_Name: Lhand
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &563159834958362239
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1167628199937690464}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.2951194, y: 0.6605769, z: -0.59589964, w: 0.34849167}
+  m_LocalPosition: {x: -0.185, y: -0.094, z: 0.119}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2177731905946312173}
+  m_LocalEulerAnglesHint: {x: 83.201, y: 113.347, z: -12.407}
 --- !u!1 &1737602690521690578
 GameObject:
   m_ObjectHideFlags: 0
@@ -33,6 +64,8 @@ Transform:
   m_Children:
   - {fileID: 9062468467788106025}
   - {fileID: 3758841949521435172}
+  - {fileID: 563159834958362239}
+  - {fileID: 2321957633454148700}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &6027881521045352185
@@ -85,20 +118,20 @@ MonoBehaviour:
       Value: 1
     - Key: 12
       Value: 10
-  ProjectilePrefab: {fileID: 8924682559891268397, guid: 0d4439bc619f18b4c93aa155b6509e5b,
-    type: 3}
   BulletFlag: 0
   Damages:
-  - BulletPrefab: {fileID: 8924682559891268397, guid: 0d4439bc619f18b4c93aa155b6509e5b,
+  - BulletPrefab: {fileID: 6423721024983676720, guid: ee2cc9d46a8419f4b8bdfe5319ebe822,
       type: 3}
-    Speed: 15
-    Gravity: 10
+    LandingPrefab: {fileID: 0}
+    Speed: 16
+    Gravity: 8
     InheritWeaponSpeed: 0
     MaxLifeTime: 5
     MaxRange: -1
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 0
     DamageGroupDirect:
@@ -111,23 +144,20 @@ MonoBehaviour:
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
-    DamageGroupExplosion:
-    - Key: 1
-      Value: 1
-    - Key: 2
-      Value: 1
+    DamageGroupExplosion: []
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0
-    ImpactVfx: {fileID: 0}
+    ImpactVfx: {fileID: 6455218235468021478, guid: 7cba881f036a8844caf281274cbc643d,
+      type: 3}
     ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 7
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
-    demolishValue: 0
+    demolishValue: 40
     UseCharge: 0
     ChargeDamageScale: 0
     ChargeAOERangeScale: 0
@@ -141,6 +171,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 53d2238f4c4b2aa4f8e559c7af9e0126, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -149,6 +181,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -168,9 +201,9 @@ MonoBehaviour:
   WeaponIcon: {fileID: 21300000, guid: fcd40ba88a1ea82478c814ffb010f18c, type: 3}
   Sight: {fileID: 4066082357213353509, guid: 682987df4a63fd641bcafdf118cf811e, type: 3}
   ScopeGo: {fileID: 0}
-  LHand: {fileID: 0}
-  RHand: {fileID: 0}
-  ShowRoot: {fileID: 0}
+  LHand: {fileID: 563159834958362239}
+  RHand: {fileID: 2321957633454148700}
+  ShowRoot: {fileID: 3473478241216373623}
   RecoilForce: 1
   AimingHideCrosshair: 1
   AimZoomRatio: 1
@@ -178,15 +211,19 @@ MonoBehaviour:
   playerAngle: 0
   _showAttrInfo: 
   desc: "\u6CC9\u5948\u7231\u7528\u7684\u6295\u63B7\u7269\u3002\n\u53EF\u4EE5\u9644\u7740\u5728\u76EE\u6807\u4E0A\u5E76\u5728\u4E00\u6BB5\u65F6\u95F4\u540E\u7206\u70B8\u3002"
-  m_RenameAttr: []
-  showAttr: 00000000140000001500000016000000
+  m_RenameAttr:
+  - name: "\u50A8\u5907\u6570\u91CF"
+    type: 0
+    addTag: 0
+    removeTag: 0
+  showAttr: 0000000014000000150000001600000019000000
   m_UniqueAttr:
   - name: "\u5EF6\u8FDF\u7206\u70B8"
     value: 8
-    tag: 0
+    tag: 32
   - name: "\u7C98\u6027"
-    value: 0
-    tag: 0
+    value: 1
+    tag: 32
   Upgrade:
   - Key: 8
     Value:
@@ -261,6 +298,37 @@ Transform:
   - {fileID: 8331158288001524240}
   m_Father: {fileID: 2177731905946312173}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7749942822464970037
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2321957633454148700}
+  m_Layer: 0
+  m_Name: RHand
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2321957633454148700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7749942822464970037}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.56875026, y: -0.5961524, z: -0.5143077, w: -0.23793505}
+  m_LocalPosition: {x: 0.084, y: -0.015, z: -0.068}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2177731905946312173}
+  m_LocalEulerAnglesHint: {x: -62.112, y: -139.892, z: -112.1}
 --- !u!1001 &8364452450779563515
 PrefabInstance:
   m_ObjectHideFlags: 0

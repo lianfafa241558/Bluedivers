@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using FPSGame.Core.Interface;
 using FPSGame.GameContract;
 
 using FPSGame.Game;
@@ -26,7 +27,23 @@ namespace FPSGame.AI
         protected float m_TimeStartedDetection { get; set; }
         /// <summary>丢失目标的时间</summary>
         protected float m_TimeLostDetection { get; set; }
+
+        /// <summary>目标中心点：只用于瞄准/朝向，**别拿它算距离**（见 <see cref="DetectionTargetSurfaceDis"/>）</summary>
         protected Vector3 DetectionTargetPos => DetectionModule.Target.Pos;
+
+        /// <summary>
+        /// 我方到目标<b>表面</b>的距离（中心距 − 目标半径）。
+        /// <para>⚠ 距离门一律用这个：射程小于目标半径时按中心点算会**永远**判"够不着"
+        /// （GuardDog 停不下来一直往前挤、炮台贴身也永不开火）。</para>
+        /// </summary>
+        /// <param name="horizontalOnly">地面单位判停/追击传 true（忽略高度差，与 EnemyMobile 的通用约定一致）</param>
+        protected float DetectionTargetSurfaceDis(Vector3 from, bool horizontalOnly = false)
+        {
+            Vector3 delta = DetectionTargetPos - from;
+            if (horizontalOnly) delta.y = 0f;
+            var actor = DetectionModule.Target.Actor;
+            return delta.magnitude - (actor.IsValidMono() ? actor.HalfRange : 0f);
+        }
 
      
         [SerializeField]

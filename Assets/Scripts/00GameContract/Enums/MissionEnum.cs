@@ -117,15 +117,15 @@ namespace FPSGame.GameContract
         /// <summary>直升机制造厂</summary>
         [InspectorName("次要/直升机制造厂")] HelicopterFactory,
         /// <summary>干扰塔/机器人</summary>
-        [InspectorName("次要/干扰塔/机器人")] JammingTowerRoBot,
+        [InspectorName("次要/机器人干扰塔")] JammingTowerRoBot,
         /// <summary>占位符（保留取值，勿删）</summary>
-        [InspectorName("次要/占位符")] Placeholder7,
+        [InspectorName("次要/侦测塔")] DetectorTower,
         /// <summary>占位符（保留取值，勿删）</summary>
         [InspectorName("次要/占位符")] Placeholder8,
         /// <summary>占位符（保留取值，勿删）</summary>
         [InspectorName("次要/占位符")] Placeholder9,
         /// <summary>干扰塔/色彩</summary>
-        [InspectorName("次要/干扰塔/色彩")] JammingTowerColour,
+        [InspectorName("次要/色彩干扰塔")] JammingTowerColour,
         /// <summary>占位符（保留取值，勿删）</summary>
         [InspectorName("次要/占位符")] Placeholder10,
         /// <summary>占位符（保留取值，勿删）</summary>

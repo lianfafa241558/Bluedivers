@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Attributes;
 using PEMaths;
@@ -142,16 +142,16 @@ public partial class PlayerWnd
                     m_WarningActive = false;
                 }
             }
-            //受击方向
-            for (int i = 0; i < m_hitGroup.Length; ++i)
+          
+        }
+         //受击方向
+        for (int i = 0; i < m_hitGroup.Length; ++i)
+        {
+            if (m_hitGroup[i].image.fillAmount > 0.01f)
             {
-                if (m_hitGroup[i].image.fillAmount > 0.01f)
-                {
-                    Follow(m_hitGroup[i]);
-                }
+                Follow(m_hitGroup[i]);
             }
         }
-        
     }
 
 

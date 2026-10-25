@@ -40,6 +40,8 @@ namespace FPSGame.Weapon
             { WeaponAttrType.DirectDamage, (false, default, ModifierType.All) },
             { WeaponAttrType.ExplosionDamage, (false, default, ModifierType.All) },
             { WeaponAttrType.ExplosionRange, (false, default, ModifierType.All) },
+            { WeaponAttrType.DirectAP, (false, AttrTag.APGrade, ModifierType.All) },
+            { WeaponAttrType.ExplosionAP, (false, AttrTag.APGrade, ModifierType.All) },
             { WeaponAttrType.BulletSpeed, (false, AttrTag.ScaleFromPrime | AttrTag.OneHide, ModifierType.Factor) },
             //{ WeaponAttrType.MaxDistance, (false, default, ModifierType.All) },
 
@@ -99,6 +101,15 @@ namespace FPSGame.Weapon
             { WeaponAttrType.ExplosionTypeHacker, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
 
         };
+        /// <summary>穿甲等级档位名：0~1 轻穿 / 2~3 中穿 / 4 重穿 / 5+ 反坦克。</summary>
+        public static string GetAPGradeName(int ap)
+        {
+            if (ap <= 1) return "轻穿";
+            if (ap <= 3) return "中穿";
+            if (ap == 4) return "重穿";
+            return "反坦克";
+        }
+
         public static AttrTag GetTag(WeaponAttrType type)
         {
             if (attributeConfigs.TryGetValue(type ,out var item))
@@ -175,6 +186,9 @@ namespace FPSGame.Weapon
         /// <summary> 相对于原始值百分比显示</summary>
         [InspectorName("相对于原始值百分比")]
         ScaleFromPrime = 1 << 7,
+        /// <summary> 穿甲等级：值显示为 "1(轻穿)" 形式，档位见 WeaponAttributeFactory.GetAPGradeName</summary>
+        [InspectorName("穿甲等级")]
+        APGrade = 1 << 8,
 
         /// <summary> (Final)必须整数</summary>
         OnlyInt = 1 << 10,
@@ -261,6 +275,12 @@ namespace FPSGame.Weapon
         /// <summary>投射物速度</summary>
         [InspectorName("通用/投射物速度")]
         BulletSpeed = 23,
+        /// <summary>直击穿甲等级（取值来自第 0 个子弹数据；升级项可直接改）</summary>
+        [InspectorName("伤害/穿甲等级")]
+        DirectAP = 25,
+        /// <summary>爆炸穿甲等级（同上；纯爆炸弹在 prefab 里勾这一条，名称可用 m_RenameAttr 改成"穿甲等级"）</summary>
+        [InspectorName("伤害/爆炸穿甲等级")]
+        ExplosionAP = 26,
 
         // / <summary>最大射程</summary>
         //[InspectorName("最大射程")]

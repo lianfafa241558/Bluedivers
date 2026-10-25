@@ -59,6 +59,9 @@ namespace FPSGame.Gameplay
             m_NextTickTime = Time.time + TickInterval;
             if (!DamageData.IsValid()) return;
             if (!DamageAnchor.gameObject.activeInHierarchy) return;
+            // 挂在**子弹身上**的持续效果（如喷雾）：它不经 PlayImpactFx 创建 ⇒ 没人调 SetOrigin，
+            // 起源会一直是 null（友伤/击杀归属全丢）。这里退一步从子弹的 Owner 取。
+            if (Origin == null && TryGetComponent(out ProjectileBase projectile)) Origin = projectile.Owner;
             ApplyEffect();
         }
 

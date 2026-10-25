@@ -129,7 +129,7 @@ namespace FPSGame.Game {
         /// `Damageable.ArmorDestruction`（护甲破坏/流血）与 `Health.HandleDamage → AddAboGauge`（异常状态积蓄）
         /// 两条分支会被**整段跳过** ⇒ 主机把怪冻住、成员那边它照常跑。</para>
         /// <para>⚠ 直接调 <c>TakeDamage</c> 的路径（流血 / 异常状态 tick）拿到的是 null ⇒ 上报退回中性成分。</para></summary>
-        public List<SKVP<DamageTypeEnum, float>> LastRawGroups { get; set; }
+        public List<SKVP<DamageTypeEnum, float>> LastRawGroups { get; private set; }
 
         /// <summary>整体伤害抗性缓存字典（由 showArmorLists 构建，避免每帧遍历列表）</summary>
         private readonly Dictionary<DamageTypeEnum, float> _armorResistance = new();
@@ -194,14 +194,23 @@ namespace FPSGame.Game {
             }
         }
 
-        /// <summary>受到伤害</summary>
-        /// <param name="damageOrigin">**起源**（统计口径：击杀归属 / 命中次数）</param>
-        /// <param name="damageCaused">**直接来源**（显示 / AI 口径）；null ⇒ 回落 <paramref name="damageOrigin"/></param>
-        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageOrigin,Collider damageAffected,Vector3 pos,bool response=true,bool isWeakness=false,int demolishValue=-1,GameObject damageCaused=null) {
+        /// <summary>受到伤害（参数语义见 <see cref="DamageSettleArgs"/>）</summary>
+        public void TakeDamage(in DamageSettleArgs args) {
             if (m_IsDead || (m_Actor != null && m_Actor.HasFlag(ActorFlag.Invincible)))
                 return;
 
-            // 回落：直接来源缺省时用起源 ⇒ 下游消费点（表现/AI）不必到处判空
+            // 解到局部：下面 80 行引用密集，且 in 参数的字段不可写（caused 要回落赋值）
+            List<SKVP<DamageTypeEnum, PEInt>> damageGroups = args.Groups;
+            GameObject damageOrigin = args.Origin;
+            Collider damageAffected = args.Affected;
+            Vector3 pos = args.Pos;
+            bool noSource = args.NoSource, response = args.Response, isWeakness = args.IsWeakness;
+            bool ricochet = args.Ricochet;
+            int demolishValue = args.DemolishValue;
+
+            // 回落：直接来源缺省时用起源 ⇒ 下游消费点（表现/AI）不必到处判空。
+            // ⚠ 必须用 == 判断，别改 ?? ：已销毁对象是 Unity fake-null，?? 不会回落。
+            GameObject damageCaused = args.Caused;
             if (damageCaused == null) damageCaused = damageOrigin;
 
             // 拆毁秒杀：自身拆毁值 -1 视为无法被拆毁；否则伤害拆毁值大于自身拆毁值则直接击杀，无视护盾，但受上面无敌标记保护
@@ -270,14 +279,24 @@ namespace FPSGame.Game {
             PEInt trueDamageAmount = healthBefore - CurrentHealth + shieldBefore - CurrentShield;
             if (trueDamageAmount > 0) {
                 m_LastHitTime = Time.time;
-                OnDamaged?.Invoke(trueDamageAmount, damageCaused, damageOrigin, damageAffected, noSource);
-                if(response)OnHit?.Invoke(damageCaused,pos, HitNormal(pos, damageAffected),isWeakness);
-                if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
-                //这个是控制hpui的，所以总是响应
-                UnitEventBus.UnitHit(gameObject, damageCaused);
-                // ★ 联机伤害通道的上行点：**实际扣减量**（见 UnitEventBus.OnUnitDamaged 的注释）
-                UnitEventBus.UnitDamaged(gameObject, trueDamageAmount, damageCaused, damageAffected, damageOrigin);
+                // 原始成分只在这段事件期间有效：联机上报的订阅方是在回调里**同步**读的（敌人 / 载具两条通道）。
+                // ⚠ 用 prev 保存而不是置 null：OnDamaged 回调里可能重入再打一次（击杀触发爆炸之类）。
+                var prevRaw = LastRawGroups;
+                LastRawGroups = args.RawGroups;
+                try
+                {
+                    OnDamaged?.Invoke(trueDamageAmount, damageCaused, damageOrigin, damageAffected, noSource);
+                    if(response)OnHit?.Invoke(damageCaused,pos, HitNormal(pos, damageAffected),isWeakness);
+                    if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
+
+                    // ★ 联机伤害通道的上行点：**实际扣减量**（见 UnitEventBus.OnUnitDamaged 的注释）
+                    UnitEventBus.UnitDamaged(gameObject, trueDamageAmount, damageCaused, damageAffected, damageOrigin);
+                }
+                finally { LastRawGroups = prevRaw; }
             }
+            //这个是控制hpui的，所以总是响应；跳弹只做准星提示（订阅方自己按"开枪者是不是我"过滤）
+            //Debug.LogError("目标"+ gameObject+" "+ ricochet,gameObject);
+            UnitEventBus.UnitHit(gameObject, damageCaused, ricochet);
             showHealth = CurrentHealth.RawInt;
             //Debug.LogError("击杀者" + damageCaused + "起源" + damageOrigin);
             HandleDeath(damageCaused, damageOrigin);

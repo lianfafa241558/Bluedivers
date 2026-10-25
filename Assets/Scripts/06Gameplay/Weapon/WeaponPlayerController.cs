@@ -118,6 +118,9 @@ namespace FPSGame.Weapon
 
             Set(Attr.BulletSpeed, damages.SetSpeed);
             Set(Attr.LifeTime, damages.SetLifeTime);
+            // 穿甲等级：直击 / 爆炸两条独立属性，升级项可直接修改并写回子弹数据
+            Set(Attr.DirectAP, damages.SetDirectAP);
+            Set(Attr.ExplosionAP, damages.SetExplosionAP);
             Set(Attr.ChargeDamageScale, damages.SetChargeDamageScale);
             Set(Attr.ChargeExplosionRangeScale, damages.SetChargeExplosionRangeScale);
             Set(Attr.ChargeHeatScale, damages.SetChargeHeatScale);
@@ -167,6 +170,8 @@ namespace FPSGame.Weapon
 
             _cfg[Attr.BulletSpeed].OnFinalValueChange -= damages.SetSpeed;
             _cfg[Attr.LifeTime].OnFinalValueChange -= damages.SetLifeTime;
+            _cfg[Attr.DirectAP].OnFinalValueChange -= damages.SetDirectAP;
+            _cfg[Attr.ExplosionAP].OnFinalValueChange -= damages.SetExplosionAP;
             _cfg[Attr.ChargeDamageScale].OnFinalValueChange -= damages.SetChargeDamageScale;
             _cfg[Attr.ChargeExplosionRangeScale].OnFinalValueChange -= damages.SetChargeExplosionRangeScale;
             _cfg[Attr.ChargeHeatScale].OnFinalValueChange -= damages.SetChargeHeatScale;

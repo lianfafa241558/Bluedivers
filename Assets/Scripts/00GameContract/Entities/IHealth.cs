@@ -14,10 +14,11 @@ namespace FPSGame.GameContract
         /// <remarks>⚠ 用 <see cref="Action{T1,T2,T3,T4,T5}"/> 而非 UnityAction：后者最多只支持 4 个泛型参数。</remarks>
         public event Action<PEInt, GameObject, GameObject, Collider, bool> OnDamaged;
 
-        /// <summary>**本次伤害的原始成分**（类型 + 系数），结算期间有效（实现见 <c>Health.LastRawGroups</c>）。
+        /// <summary>**本次伤害的原始成分**（类型 + 系数），只在 <c>TakeDamage</c> 派发事件的**同步回调期间**有效
+        /// （由 <see cref="DamageSettleArgs.RawGroups"/> 挂载，调用返回后自动还原）。
         /// <para>▍用途：联机上报 —— 接收端要拿它补"护甲破坏 / 异常状态积蓄"（只带总伤害时那两条分支会被整段跳过）。</para>
-        /// <para>⚠ 直接调 <c>TakeDamage</c> 的路径（流血 / 异常状态 tick）为 null ⇒ 上报退回中性成分。</para></summary>
-        List<SKVP<DamageTypeEnum, float>> LastRawGroups { get; set; }
+        /// <para>⚠ 只读：外部不许写；直接调 <c>TakeDamage</c> 的路径（流血 / 异常状态 tick）为 null ⇒ 上报退回中性成分。</para></summary>
+        List<SKVP<DamageTypeEnum, float>> LastRawGroups { get; }
         /// <summary>被击中时 第 1 参 = **直接来源**（显示口径），受击点</summary>
         public event UnityAction<GameObject, Vector3, Vector3, bool> OnHit;
 
@@ -51,8 +52,9 @@ namespace FPSGame.GameContract
         /// <summary>恢复护盾</summary>
         public void RestoreShield(float healAmount);
 
-        /// <summary>结算伤害。<paramref name="damageOrigin"/> = 起源（统计），<paramref name="damageCaused"/> = 直接来源（显示/AI，null 回落 origin）。</summary>
-        public void TakeDamage(List<SKVP<DamageTypeEnum, PEInt>> damageGroups, bool noSource, GameObject damageOrigin, Collider damageAffected, Vector3 pos, bool response = true, bool isWeakness = false, int demolishValue = -1, GameObject damageCaused = null);
+        /// <summary>结算伤害。参数语义见 <see cref="DamageSettleArgs"/>（Origin = 起源/统计，Caused = 直接来源/显示·AI）。</summary>
+        /// <remarks>⚠ 用 <see cref="DamageSettleArgs.Of"/> 构造，别裸 <c>default</c>（Response 会变成 false）。</remarks>
+        public void TakeDamage(in DamageSettleArgs args);
 
 
         /// <summary>取当前积蓄值不为 0 的异常状态（**只给逻辑值**；图标/颜色由表现层查 <c>AboStateData_SO</c> 自解）。</summary>
