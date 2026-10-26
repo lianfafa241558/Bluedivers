@@ -238,6 +238,12 @@ namespace FPSGame.Mission
             {
                 this.icon = entity.Portrait;
                 this.pos = entity.Pos;
+                // ⚠ 场景任务走本方法时**没有任何地方给 entitySize 赋值**（拿半径的那个重载 Init 只给"生成式任务"用）
+                //   ⇒ 一直是 0：`UnitQuery.FindUnits(pos, 0)` 退化成"只查任务点那一个像素"（MissionDestroyActor 因此
+                //   只捞到正好压在点位上的 HaloBomb）、巢穴刷怪半径退化成 1m、`MissionView.areaRange`=0（小地图没有区域圈）。
+                //   半径口径就用 Inspector 上的 mapEntitySize.x：作者对需要区域的任务写成 (20,20)，不需要的写 (0,0)。
+                //   ⚠ 必须在 entity.Init 之前设：MissionView.Init 会拿它算 areaRange。
+                this.entitySize = mapEntitySize.x;
                 this.title = entity.Title;
                 entity.Init(this, data.cfg.RequiredAD.Select(item => item.ID).ToArray());
             }

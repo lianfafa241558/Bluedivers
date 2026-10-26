@@ -136,6 +136,7 @@ namespace FPSGame.Managers
             ApplyTeamEnhance();
             TerrainUtils.Main = mapRoot.terrain;
             mapRoot.Init(false);
+            EnsureQueryGrid();   // ⚠ 必须早于任务实体创建（见 EnsureQueryGrid 注释）
         
             ACCont = new GameObject("ActorsManager").AddComponent<ActorsManager>();
             ACCont.transform.SetParent(transform);
@@ -276,6 +277,7 @@ namespace FPSGame.Managers
         {
             Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
             mapRoot = transMapRoot.GetComponent<MapRoot>();
+            EnsureQueryGrid();   // 越早越好：地形生成期间就可能实例化任务实体（见 EnsureQueryGrid 注释）
 
             //var terrain = TerrainUtils.Main = mapRoot.terrain;
             var terrain = mapRoot.terrain;
@@ -388,11 +390,22 @@ namespace FPSGame.Managers
 
         private void Start()
         {
+            EnsureQueryGrid();
+        }
+
+        /// <summary>建单位查询网格并接管 <see cref="UnitQuery.Sink"/>（幂等，谁先到谁建）。
+        /// <para>⚠ 必须早于**任何 Actor 实例化**：任务实体的 <c>Actor.Awake</c> 立刻发 <c>UnitPosChange</c>，
+        /// 而 <see cref="OnUnitPosChange"/> 直接解引用 <c>unitQueryGrid</c>。原先只在 <c>Start()</c> 里建，
+        /// 但 <c>Start()</c> 晚于"创建那一帧的协程首段"，而 InitSpecial 的首段就把任务建完了
+        /// ⇒ 从舰桥/前线进新手教程时这里空引用，**整条 InitSpecial 协程被打断**：
+        /// 战备/波次/GameState 全没初始化，玩家也永远停在"舰上无敌"（2026-10-26 实测）。</para></summary>
+        private void EnsureQueryGrid()
+        {
+            if (unitQueryGrid != null) return;
             var pos = mapRoot.rect;
             unitQueryGrid = new(new((PEVector2)pos.center, pos.size.x / 2, pos.size.z / 2), 30);
             // 查询入口接管：网格建好后对外可用（见 05_UnitCore/UnitQuery.cs）
             UnitQuery.Sink = this;
-
         }
 
         private void OnDestroy()
@@ -660,6 +673,12 @@ namespace FPSGame.Managers
                 }
                 else
                 {
+                    // ⚠ 必须在**旧场景里**先退出 Transition：船的 GameStateController 绑了
+                    //   `state:8 退出 → Animator.SetTrigger("EndLoad")`，而 EndLoad.anim 第 2 秒的动画事件是
+                    //   TransSceneController.Destroy()（那个组件就挂在 `MapRoot/Utnapishitim` 船本体上）。
+                    //   教程（IsNormal=false）是**直接从战斗回大厅**：带着 Transition 把船加载出来，
+                    //   随后的 Bridge 赋值就成了"船内退出 Transition" ⇒ 转场收尾把整条船删掉（2026-10-26 实测）。
+                    GameRoot.GameState = GameStateEnum.Load;
                     ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
                         GameRoot.GameState = GameStateEnum.Bridge;
                         WndManager.WindowState = WindowStateEnum.Game;

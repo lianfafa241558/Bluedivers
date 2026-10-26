@@ -63,3 +63,9 @@
   `DirectionUpdate` ⇒ 累加量自然算出同一份）、家具交互 4036（`SyncId` + `Operate()` 重放）、任务阶段 4046。
 - 真正的坏味道不是"没同步"，而是**一个字段混 5 种语义**（角度/个数/animator 层号/上限）⇒ 将来要拆就按类型拆成具名字段
   （`ShellLimit`/`ShellIndex`/`CollectCount`/`AnimatorLayer`/`RotationDelta`）。
+
+## 任务半径 `MissionBase.entitySize`（2026-10-26 修）
+- 口径：**生成式任务**由 `MissionController.CreatMission` 传 `RandomUtils.Range(random, mapEntitySize.x, mapEntitySize.y)`；**场景任务**走 `InitFromSceneData`，原来根本没赋值 ⇒ 恒 0。
+- 0 半径的四个后果：`MissionDestroyActor.FindUnit` 的 `PECircle(pos,0)` 退化成点（只捞任务点上的那个物件）、`MissionView.areaRange=0`（小地图无区域圈）、`WaveBase.TrySampleNestPoint` 退化成 1m 刷怪半径、`MissionBase.Tick` 因 `entitySize<=0` 不做战备范围授权。
+- 修法：`InitFromSceneData` 里 `entitySize = mapEntitySize.x`（**必须在 `entity.Init` 前**）。场景任务里只有需要区域的那几个把 `mapEntitySize` 写成 (20,20)，其余 (0,0) ⇒ 该字段就是作者表达半径的地方。
+- ⚠ `MissionDestroyActor.actorNames` 比的是 **`Actor.Id`**，不是物体名：路障 `Wall3` 的 Id=`Wall`，巢穴外围挡墙（RobotWall/WallLenght）全是 `wire`。

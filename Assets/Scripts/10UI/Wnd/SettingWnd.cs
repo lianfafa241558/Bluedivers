@@ -10,846 +10,868 @@ using FPSGame.Gameplay;
 
 namespace FPSGame.UI
 {
-using FPSGame.GameContract;
-using FPSGame.Net;
-using static GameData.ArchivesData_SO;
-using static FPSGame.WndTools.WndRootTool;
-using FPSGame.Data;
-using FPSGame.Managers;
-using FPSGame.GameData;
+    using FPSGame.GameContract;
+    using FPSGame.Net;
+    using static GameData.ArchivesData_SO;
+    using static FPSGame.WndTools.WndRootTool;
+    using FPSGame.Data;
+    using FPSGame.Managers;
+    using FPSGame.GameData;
 
-    /// <summary>
-    /// 设置窗口（含快捷键分部）。
-    /// </summary>
-    [AddComponentMenu("UI/窗口/设置")]
-public partial class SettingWnd : Window
-{
-    public Image BG;
-    public Transform expandRoot, layoutRoot;
-    public RectTransform nowSelect;
-
-    [Foldout("状态", true)]
-    public Transform stateActiveRoot,stateHideRoot,mapName,mapImage,mapIcon,
-        taskName,taskDiff,taskType,taskTypeIcon,
-        taskMainDesc, taskExtraDesc, taskMainReward, taskExtraReward, tastExtraDiffRoot,
-        selfIcon,selfName,selfLevel,selfExp, selfFrame;
-
-    [Foldout("状态", true)]
-    [InspectorName("空玩家位根（stateWnd/PlayerStateSelf/FriendRoot）")]
-    [SerializeField]
-    private Transform emptySlotRoot;
-
-    [Foldout("右上按钮", true)]
-    public Transform freeCamera, rebirth,returnShop, exitGame,teach;
-
-    [Foldout("右上按钮", true)]
-    [InspectorName("与小队终止任务（联机·房主）")]
-    [Tooltip("只在\"联机 + 房主\"时显示，同时隐藏\"中止任务\"。⚠ 预制体里没接上（留空）就不换，房主仍用\"中止任务\"。")]
-    [SerializeField]
-    private Transform abortSquad;
-
-    [Foldout("设置",true)]
-    public GameObject tempTitle, tempDrop, tempToggle, tempSilder;
-    public Transform settingRoot,updateTitle, updateTime, updateDesc, updateCount, updateLeft, updateRight;
-    public Transform secondaryLayoutRoot;
-    public RectTransform nowsecondarySelect;
-
-    private List<UpdateData_SO> m_UpdateDataArr;
-    private int nowUpdateIndex=0;
-    private int nowExpandIndex=1;
-    private int _secondaryIndex = 0;
-    private List<string> _secondaryTitles = new();
-    private List<List<KVP<string, ArchSettingData>>> _secondaryGroups = new();
-    //[SerializeField]
-    //private MyVolumeFeature feature;
-    WindowStateEnum oldStste;
-    bool haveSettingChagne;
-
-    [SerializeField]
-    private Camera uiCamera;
-
-    [SerializeField]
-    private GameObject showModle;
-
-    private GameObject lookPoint;
-
-    private float justClosed;
-    private bool selfChangeState;
-
-    public void Init()
+        /// <summary>
+        /// 设置窗口（含快捷键分部）。
+        /// </summary>
+        [AddComponentMenu("UI/窗口/设置")]
+    public partial class SettingWnd : Window
     {
-        //先尝试移除绑定,如果没有那就什么都不发生
-        UnInit();
-        //这玩意一般是那种需要关了也能触发的需求才用的 update改用就行
-        InputManager.BindDown(WindowStateEnum.All, InputState.Esc, OnEsc);
-        //Debug.LogError("绑定");
-        //此时还没初始化
-    }
+        public Image BG;
+        public Transform expandRoot, layoutRoot;
+        public RectTransform nowSelect;
 
-    public override void OnDestroy()
-    {
-        base.OnDestroy();
-        UnInit();
-    }
-    public void UnInit()
-    {
-        InputManager.UnBindDown(WindowStateEnum.All, InputState.Esc, OnEsc);
-    }
+        [Foldout("状态", true)]
+        public Transform stateActiveRoot,stateHideRoot,mapName,mapImage,mapIcon,
+            taskName,taskDiff,taskType,taskTypeIcon,
+            taskMainDesc, taskExtraDesc, taskMainReward, taskExtraReward, tastExtraDiffRoot,
+            selfIcon,selfName,selfLevel,selfExp, selfFrame;
 
+        [Foldout("状态", true)]
+        [InspectorName("空玩家位根（stateWnd/PlayerStateSelf/FriendRoot）")]
+        [SerializeField]
+        private Transform emptySlotRoot;
 
-    protected override void FirstShowWnd()
-    {
-        m_UpdateDataArr = resManager.LoadObjects<UpdateData_SO>("GameData/Update");
-        SetUpdate(false);
-        BuildSettingGroups();
-        BuildKeyCodeDict();
+        [Foldout("右上按钮", true)]
+        public Transform freeCamera, rebirth,returnShop, exitGame,teach;
 
-        // 首次打开时隐藏次级菜单和选中高亮
-        SetActive(secondaryLayoutRoot, false);
-        if (nowsecondarySelect != null)
+        [Foldout("右上按钮", true)]
+        [InspectorName("与小队终止任务（联机·房主）")]
+        [Tooltip("只在\"联机 + 房主\"时显示，同时隐藏\"中止任务\"。⚠ 预制体里没接上（留空）就不换，房主仍用\"中止任务\"。")]
+        [SerializeField]
+        private Transform abortSquad;
+
+        [SerializeField]
+        private Transform rename;
+
+        [Foldout("设置",true)]
+        public GameObject tempTitle, tempDrop, tempToggle, tempSilder;
+        public Transform settingRoot,updateTitle, updateTime, updateDesc, updateCount, updateLeft, updateRight;
+        public Transform secondaryLayoutRoot;
+        public RectTransform nowsecondarySelect;
+
+        private List<UpdateData_SO> m_UpdateDataArr;
+        private int nowUpdateIndex=0;
+        private int nowExpandIndex=1;
+        private int _secondaryIndex = 0;
+        private List<string> _secondaryTitles = new();
+        private List<List<KVP<string, ArchSettingData>>> _secondaryGroups = new();
+        //[SerializeField]
+        //private MyVolumeFeature feature;
+        WindowStateEnum oldStste;
+        bool haveSettingChagne;
+
+        [SerializeField]
+        private Camera uiCamera;
+
+        [SerializeField]
+        private GameObject showModle;
+
+        private GameObject lookPoint;
+
+        private float justClosed;
+        private bool selfChangeState;
+
+        public void Init()
         {
-            nowsecondarySelect.gameObject.SetActive(false);
+            //先尝试移除绑定,如果没有那就什么都不发生
+            UnInit();
+            //这玩意一般是那种需要关了也能触发的需求才用的 update改用就行
+            InputManager.BindDown(WindowStateEnum.All, InputState.Esc, OnEsc);
+            //Debug.LogError("绑定");
+            //此时还没初始化
         }
 
-        // 首次默认显示第一个分组
-        if (_secondaryGroups.Count > 0)
+        public override void OnDestroy()
         {
-            RefreshSettingContentByTitle(_secondaryTitles[0]);
+            base.OnDestroy();
+            UnInit();
+        }
+        public void UnInit()
+        {
+            InputManager.UnBindDown(WindowStateEnum.All, InputState.Esc, OnEsc);
         }
 
 
-        SetCilck(layoutRoot.GetChild(0), () => SwitchNextExpand(false));
-        SetCilck(layoutRoot.GetChild(layoutRoot.childCount-1), () => SwitchNextExpand(true));
-
-        // 次级layout的Z/C按钮点击（使用 Find 获取引用，避免 siblingIndex 变化后引用错乱）
-        if (secondaryLayoutRoot != null && secondaryLayoutRoot.childCount >= 3)
+        protected override void FirstShowWnd()
         {
-            var zBtn = secondaryLayoutRoot.GetChild(0);
-            var cBtn = secondaryLayoutRoot.GetChild(secondaryLayoutRoot.childCount - 1);
-            // 先清除可能已有的 Inspector 绑定
-            ClearButton(zBtn);
-            ClearButton(cBtn);
-            SetCilck(zBtn, () => SwitchSecondaryIndex(false));
-            SetCilck(cBtn, () => SwitchSecondaryIndex(true));
-        }
+            m_UpdateDataArr = resManager.LoadObjects<UpdateData_SO>("GameData/Update");
+            SetUpdate(false);
+            BuildSettingGroups();
+            BuildKeyCodeDict();
 
-        SetCilck(freeCamera, EnterFreeCamera);
-        SetCilck(returnShop, TryReturnShop);
-        if (abortSquad != null) SetCilck(abortSquad, TryAbortSquad);
-        SetCilck(rebirth, TryRebirth);
-        SetCilck(exitGame, TryExitGame);
-        SetCilck(teach, TryTeach);
-        BindEmptyRoomSlots();
+            // 首次打开时隐藏次级菜单和选中高亮
+            SetActive(secondaryLayoutRoot, false);
+            if (nowsecondarySelect != null)
+            {
+                nowsecondarySelect.gameObject.SetActive(false);
+            }
+
+            // 首次默认显示第一个分组
+            if (_secondaryGroups.Count > 0)
+            {
+                RefreshSettingContentByTitle(_secondaryTitles[0]);
+            }
+
+
+            SetCilck(layoutRoot.GetChild(0), () => SwitchNextExpand(false));
+            SetCilck(layoutRoot.GetChild(layoutRoot.childCount-1), () => SwitchNextExpand(true));
+
+            // 次级layout的Z/C按钮点击（使用 Find 获取引用，避免 siblingIndex 变化后引用错乱）
+            if (secondaryLayoutRoot != null && secondaryLayoutRoot.childCount >= 3)
+            {
+                var zBtn = secondaryLayoutRoot.GetChild(0);
+                var cBtn = secondaryLayoutRoot.GetChild(secondaryLayoutRoot.childCount - 1);
+                // 先清除可能已有的 Inspector 绑定
+                ClearButton(zBtn);
+                ClearButton(cBtn);
+                SetCilck(zBtn, () => SwitchSecondaryIndex(false));
+                SetCilck(cBtn, () => SwitchSecondaryIndex(true));
+            }
+
+            SetCilck(freeCamera, EnterFreeCamera);
+            SetCilck(returnShop, TryReturnShop);
+            if (abortSquad != null) SetCilck(abortSquad, TryAbortSquad);
+            SetCilck(rebirth, TryRebirth);
+            SetCilck(exitGame, TryExitGame);
+            SetCilck(teach, TryTeach);
+            SetCilck(rename, TryRename);
+            BindEmptyRoomSlots();
 
         
 
 
-        WndManager.OnWindowStateSet += OnWindowStateChange;
+            WndManager.OnWindowStateSet += OnWindowStateChange;
 
-        lookPoint = new GameObject("LookPoint");
-        lookPoint.transform.parent = transform;
-        lookPoint.transform.position = uiCamera.ScreenToWorldPoint(Input.mousePosition);
-    }
-
-    /// <summary>本次打开是否动过时间流速。**必须记着**：恢复时不能重算条件 ——
-    /// "打开时房里只有我、关窗时房里变多人"会让重算判成"不用恢复" ⇒ 时间永远停在 0.01（2026-10-07 用户实测）。</summary>
-    private bool _slowedTime;
-
-    /// <summary>本机是不是"单机战斗"（只有我一个真人、且不在联机房间里）。
-    /// 联机时**绝不动**时间流速：两端时间基准一旦不同步，表现就是"对面像快进/慢放"。
-    /// ⚠ <c>BridgeSys</c> 只在舰桥场景 ⇒ 战斗中它回答不了，靠"真人玩家数"兜底。</summary>
-    private bool IsStandaloneBattle =>
-        GameState == GameStateEnum.Game
-        && teamManager != null && teamManager.IsSingle
-        && (BridgeSys.Instance == null || !BridgeSys.InOnlineRoom);
-
-    /// <summary>本机是不是"联机房间的房主"（开着房）。判据同 <c>SelectMapWnd.IsHosting</c>：
-    /// <c>NetHostSvc.RoomInfo != null</c>（由 <c>NetRoomFlow.IsHost</c> 暴露）。</summary>
-    private static bool IsOnlineHost
-    {
-        get
-        {
-            var flow = NetRoomFlow.Instance;
-            return flow != null && flow.IsHost;
-        }
-    }
-
-    /// <summary>本机在不在联机房间里（房主，或已入房的成员）。
-    /// <para>⚠ 房主掉了/已主动退房后 <c>InRoom</c> 就是 false ⇒ 消费方自然退回单机口径。</para></summary>
-    private static bool IsInRoom => NetRoomFlow.Instance != null && NetRoomFlow.Instance.InRoom;
-
-    /// <summary>本机是不是"别人房里的成员"（有房主、且连接还在）。</summary>
-    private static bool IsOnlineMember => IsInRoom && !IsOnlineHost;
-
-    protected override void ShowWnd()
-    {
-        selfChangeState = true;
-        oldStste = WindowState!= WindowStateEnum.FreeCamera? WindowState : WindowStateEnum.Game;
-        WindowState = WindowStateEnum.UI;
-        selfChangeState = false;
-
-        //wndManager.WndUI.gameObject.SetActive(false);
-        //feature.SetActive(true);
-        // ⚠ 只有单机战斗才降速（联机时降速会与别人时间基准打架，而且退出后必须还回来）
-        if (IsStandaloneBattle)
-        {
-            TimeScale = 0.01f;
-            _slowedTime = true;
-        }
-        // 创建临时Texture2D（⚠ 抓不到就保留上一张背景：Camera.main 可能为 null，见 CameraCaptureToSprite）
-        var bgSprite = FpsHelper.CameraCaptureToSprite(Camera.main);
-        if (bgSprite != null) BG.sprite = bgSprite;
-        BG.material.SetFloat("_TimeScale", TimeScale);
-        //GlobalEventManager.OnFakeBg(BG.transform);
-        haveSettingChagne = false;
-        // ★ 联机（2026-10-11 用户口径）：房主把"中止任务"换成"与小队终止任务"（他要中止就得带上全队，见 TryAbortSquad）。
-        //   ⚠ 新按钮没在预制体里接上（abortSquad 空）就不换 ⇒ 绝不会出现"房主两个按钮都没有"。
-        bool squadHost = GameState == GameStateEnum.Game && abortSquad != null && IsOnlineHost;
-        SetActive(returnShop, GameState == GameStateEnum.Game && !squadHost);
-        if (abortSquad != null) SetActive(abortSquad, squadHost);
-        SetActive(rebirth, GameState == GameStateEnum.Bridge);
-        SetActive(freeCamera, teamManager.IsSingle);
-        // ★ 新手教程（2026-10-11 用户口径）：**已联机**（开了房 / 在别人房里）或**战斗中**都不显示 ——
-        //   教程关是单人流程，联机时点它会把房间和队友晾在半路。
-        SetActive(teach, GameState != GameStateEnum.Game && !IsInRoom);
-
-        SetStateRoot();
-        InputManager.AddListenerCancel(Cancel);
-    }
-    protected override void HideWnd()
-    {
-        WindowState = oldStste;
-        //wndManager.WndUI.gameObject.SetActive(true);
-        //feature.SetActive(false);
-        if (_slowedTime)
-        {
-            TimeScale = 1;      // 动了就一定要还原（别重算条件，见 _slowedTime 的说明）
-            _slowedTime = false;
-        }
-        BG.material.SetFloat("_TimeScale", TimeScale);
-        //GlobalEventManager.OnFakeBg(null);
-        if (haveSettingChagne)
-        {
-            ArchivesData_SO.Current.Save();
-        }
-        if (_haveInputChanged)
-        {
-            (InputManager.Instance as InputManager).Save();
-        }
-        Tool.Destroy(showModle);
-
-    }
-
-    void Update()
-    {
-        if (IsKeyCodeModuleActive)
-        {
-            HandleKeyCodeInput();
-        }
-        else
-        {
-            if (Input.GetKeyDown(KeyCode.A))
-            {
-                SwitchNextExpand(false);
-            }
-            else if (Input.GetKeyDown(KeyCode.D))
-            {
-                SwitchNextExpand(true);
-            }
-            if (Input.GetKeyDown(KeyCode.Z))
-            {
-                SwitchSecondaryIndex(false);
-            }
-            else if (Input.GetKeyDown(KeyCode.C))
-            {
-                SwitchSecondaryIndex(true);
-            }
-        }
-        if (lookPoint)
-        {
+            lookPoint = new GameObject("LookPoint");
+            lookPoint.transform.parent = transform;
             lookPoint.transform.position = uiCamera.ScreenToWorldPoint(Input.mousePosition);
         }
-    }
 
+        /// <summary>本次打开是否动过时间流速。**必须记着**：恢复时不能重算条件 ——
+        /// "打开时房里只有我、关窗时房里变多人"会让重算判成"不用恢复" ⇒ 时间永远停在 0.01（2026-10-07 用户实测）。</summary>
+        private bool _slowedTime;
 
+        /// <summary>本机是不是"单机战斗"（只有我一个真人、且不在联机房间里）。
+        /// 联机时**绝不动**时间流速：两端时间基准一旦不同步，表现就是"对面像快进/慢放"。
+        /// ⚠ <c>BridgeSys</c> 只在舰桥场景 ⇒ 战斗中它回答不了，靠"真人玩家数"兜底。</summary>
+        private bool IsStandaloneBattle =>
+            GameState == GameStateEnum.Game
+            && teamManager != null && teamManager.IsSingle
+            && (BridgeSys.Instance == null || !BridgeSys.InOnlineRoom);
 
-
-    private void OnWindowStateChange(WindowStateEnum oldState, WindowStateEnum state)
-    {
-        if (selfChangeState) return;//是自己干的就不管
-        //selfChangeState = true;//表面在打开设置界面期间有人改变了界面状??
-        oldStste = state;
-    }
-
-    private void OnEsc()
-    {
-        //Debug.LogError("当前状态"+ GameRoot.GameState +"目标 "+ (GameStateEnum.Front | GameStateEnum.Transition | GameStateEnum.Load | GameStateEnum.GameEnd));
-        if(justClosed<Time.time&&(GameState & (GameStateEnum.Front| GameStateEnum.Transition| GameStateEnum.Load| GameStateEnum.GameEnd)) == 0)
+        /// <summary>本机是不是"联机房间的房主"（开着房）。判据同 <c>SelectMapWnd.IsHosting</c>：
+        /// <c>NetHostSvc.RoomInfo != null</c>（由 <c>NetRoomFlow.IsHost</c> 暴露）。</summary>
+        private static bool IsOnlineHost
         {
-            if (InputManager.CancelEmpty() && !State) SetWndState(true);
+            get
+            {
+                var flow = NetRoomFlow.Instance;
+                return flow != null && flow.IsHost;
+            }
         }
-    }
 
-    private void SwitchNextExpand(bool isAdd)
-    {
-        SwitchExpand(expandRoot.GetChild(Tool.PositiveRemainder(nowExpandIndex + (isAdd ? 1 : -1), expandRoot.childCount)).gameObject);
-    }
-    public void SwitchExpand(GameObject go)
-    {
-        if (go.activeSelf) return;
-        nowExpandIndex = go.transform.GetSiblingIndex();
-        var select = (RectTransform)layoutRoot.GetChild(nowExpandIndex + 1);
-        nowSelect.position = select.position;
-        nowSelect.sizeDelta = select.sizeDelta;
-        expandRoot.ForEach(item =>SetActive(item,false));
-        SetActive(go, true);
-        wndManager.PlaySound(new("UI/UI_Notice"));
+        /// <summary>本机在不在联机房间里（房主，或已入房的成员）。
+        /// <para>⚠ 房主掉了/已主动退房后 <c>InRoom</c> 就是 false ⇒ 消费方自然退回单机口径。</para></summary>
+        private static bool IsInRoom => NetRoomFlow.Instance != null && NetRoomFlow.Instance.InRoom;
 
-        // 切换到非设置子界面时隐藏次级layout
-        RefreshSecondaryLayoutVisibility();
-    }
+        /// <summary>本机是不是"别人房里的成员"（有房主、且连接还在）。</summary>
+        private static bool IsOnlineMember => IsInRoom && !IsOnlineHost;
+
+        protected override void ShowWnd()
+        {
+            selfChangeState = true;
+            oldStste = WindowState!= WindowStateEnum.FreeCamera? WindowState : WindowStateEnum.Game;
+            WindowState = WindowStateEnum.UI;
+            selfChangeState = false;
+
+            //wndManager.WndUI.gameObject.SetActive(false);
+            //feature.SetActive(true);
+            // ⚠ 只有单机战斗才降速（联机时降速会与别人时间基准打架，而且退出后必须还回来）
+            if (IsStandaloneBattle)
+            {
+                TimeScale = 0.01f;
+                _slowedTime = true;
+            }
+            // 创建临时Texture2D（⚠ 抓不到就保留上一张背景：Camera.main 可能为 null，见 CameraCaptureToSprite）
+            var bgSprite = FpsHelper.CameraCaptureToSprite(Camera.main);
+            if (bgSprite != null) BG.sprite = bgSprite;
+            BG.material.SetFloat("_TimeScale", TimeScale);
+            //GlobalEventManager.OnFakeBg(BG.transform);
+            haveSettingChagne = false;
+            // ★ 联机（2026-10-11 用户口径）：房主把"中止任务"换成"与小队终止任务"（他要中止就得带上全队，见 TryAbortSquad）。
+            //   ⚠ 新按钮没在预制体里接上（abortSquad 空）就不换 ⇒ 绝不会出现"房主两个按钮都没有"。
+            bool squadHost = GameState == GameStateEnum.Game && abortSquad != null && IsOnlineHost;
+            SetActive(returnShop, GameState == GameStateEnum.Game && !squadHost);
+            if (abortSquad != null) SetActive(abortSquad, squadHost);
+            SetActive(rebirth, GameState == GameStateEnum.Bridge);
+            SetActive(freeCamera, teamManager.IsSingle);
+            // ★ 新手教程（2026-10-11 用户口径）：**已联机**（开了房 / 在别人房里）或**战斗中**都不显示 ——
+            //   教程关是单人流程，联机时点它会把房间和队友晾在半路。
+            SetActive(teach, GameState != GameStateEnum.Game && !IsInRoom);
+
+            SetStateRoot();
+            InputManager.AddListenerCancel(Cancel);
+        }
+        protected override void HideWnd()
+        {
+            WindowState = oldStste;
+            //wndManager.WndUI.gameObject.SetActive(true);
+            //feature.SetActive(false);
+            if (_slowedTime)
+            {
+                TimeScale = 1;      // 动了就一定要还原（别重算条件，见 _slowedTime 的说明）
+                _slowedTime = false;
+            }
+            BG.material.SetFloat("_TimeScale", TimeScale);
+            //GlobalEventManager.OnFakeBg(null);
+            if (haveSettingChagne)
+            {
+                ArchivesData_SO.Current.Save();
+            }
+            if (_haveInputChanged)
+            {
+                (InputManager.Instance as InputManager).Save();
+            }
+            Tool.Destroy(showModle);
+
+        }
+
+        void Update()
+        {
+            if (IsKeyCodeModuleActive)
+            {
+                HandleKeyCodeInput();
+            }
+            else
+            {
+                if (Input.GetKeyDown(KeyCode.A))
+                {
+                    SwitchNextExpand(false);
+                }
+                else if (Input.GetKeyDown(KeyCode.D))
+                {
+                    SwitchNextExpand(true);
+                }
+                if (Input.GetKeyDown(KeyCode.Z))
+                {
+                    SwitchSecondaryIndex(false);
+                }
+                else if (Input.GetKeyDown(KeyCode.C))
+                {
+                    SwitchSecondaryIndex(true);
+                }
+            }
+            if (lookPoint)
+            {
+                lookPoint.transform.position = uiCamera.ScreenToWorldPoint(Input.mousePosition);
+            }
+        }
 
 
-    public void SetUpdate(bool add)
-    {
-        nowUpdateIndex = Tool.PositiveRemainder(nowUpdateIndex + (add ? 1 : -1),m_UpdateDataArr.Count);
-        SetText(updateTitle, m_UpdateDataArr[nowUpdateIndex].title);
-        SetText(updateDesc, m_UpdateDataArr[nowUpdateIndex].desc);
-        SetText(updateTime, m_UpdateDataArr[nowUpdateIndex].time);
-        SetText(updateCount, "" + (nowUpdateIndex+1) + "/" + m_UpdateDataArr.Count + "");
+
+
+        private void OnWindowStateChange(WindowStateEnum oldState, WindowStateEnum state)
+        {
+            if (selfChangeState) return;//是自己干的就不管
+            //selfChangeState = true;//表面在打开设置界面期间有人改变了界面状??
+            oldStste = state;
+        }
+
+        private void OnEsc()
+        {
+            //Debug.LogError("当前状态"+ GameRoot.GameState +"目标 "+ (GameStateEnum.Front | GameStateEnum.Transition | GameStateEnum.Load | GameStateEnum.GameEnd));
+            if(justClosed<Time.time&&(GameState & (GameStateEnum.Front| GameStateEnum.Transition| GameStateEnum.Load| GameStateEnum.GameEnd)) == 0)
+            {
+                if (InputManager.CancelEmpty() && !State) SetWndState(true);
+            }
+        }
+
+        private void SwitchNextExpand(bool isAdd)
+        {
+            SwitchExpand(expandRoot.GetChild(Tool.PositiveRemainder(nowExpandIndex + (isAdd ? 1 : -1), expandRoot.childCount)).gameObject);
+        }
+        public void SwitchExpand(GameObject go)
+        {
+            if (go.activeSelf) return;
+            nowExpandIndex = go.transform.GetSiblingIndex();
+            var select = (RectTransform)layoutRoot.GetChild(nowExpandIndex + 1);
+            nowSelect.position = select.position;
+            nowSelect.sizeDelta = select.sizeDelta;
+            expandRoot.ForEach(item =>SetActive(item,false));
+            SetActive(go, true);
+            wndManager.PlaySound(new("UI/UI_Notice"));
+
+            // 切换到非设置子界面时隐藏次级layout
+            RefreshSecondaryLayoutVisibility();
+        }
+
+
+        public void SetUpdate(bool add)
+        {
+            nowUpdateIndex = Tool.PositiveRemainder(nowUpdateIndex + (add ? 1 : -1),m_UpdateDataArr.Count);
+            SetText(updateTitle, m_UpdateDataArr[nowUpdateIndex].title);
+            SetText(updateDesc, m_UpdateDataArr[nowUpdateIndex].desc);
+            SetText(updateTime, m_UpdateDataArr[nowUpdateIndex].time);
+            SetText(updateCount, "" + (nowUpdateIndex+1) + "/" + m_UpdateDataArr.Count + "");
         
-    }
+        }
 
-    /// <summary>
-    /// 根据settingDic的titile分组。出现某个title后，后续项都属于该title，直到下一个title出现
-    /// </summary>
-    private void BuildSettingGroups()
-    {
-        _secondaryTitles.Clear();
-        _secondaryGroups.Clear();
-
-        string currentTitle = "其他";
-        List<KVP<string, ArchSettingData>> currentGroup = null;
-
-        ArchivesData_SO.Current.settingDic.ForEach((key, data) =>
+        /// <summary>
+        /// 根据settingDic的titile分组。出现某个title后，后续项都属于该title，直到下一个title出现
+        /// </summary>
+        private void BuildSettingGroups()
         {
-            // 有非空title → 开启新分组
-            if (!string.IsNullOrEmpty(data.titile))
+            _secondaryTitles.Clear();
+            _secondaryGroups.Clear();
+
+            string currentTitle = "其他";
+            List<KVP<string, ArchSettingData>> currentGroup = null;
+
+            ArchivesData_SO.Current.settingDic.ForEach((key, data) =>
             {
-                currentTitle = data.titile;
-                currentGroup = new List<KVP<string, ArchSettingData>>();
-                _secondaryTitles.Add(currentTitle);
-                _secondaryGroups.Add(currentGroup);
-            }
+                // 有非空title → 开启新分组
+                if (!string.IsNullOrEmpty(data.titile))
+                {
+                    currentTitle = data.titile;
+                    currentGroup = new List<KVP<string, ArchSettingData>>();
+                    _secondaryTitles.Add(currentTitle);
+                    _secondaryGroups.Add(currentGroup);
+                }
 
-            // 第一个分组还没建立时（第一条数据没有title），创建默认分组
-            if (currentGroup == null)
-            {
-                currentGroup = new List<KVP<string, ArchSettingData>>();
-                _secondaryTitles.Add(currentTitle);
-                _secondaryGroups.Add(currentGroup);
-            }
+                // 第一个分组还没建立时（第一条数据没有title），创建默认分组
+                if (currentGroup == null)
+                {
+                    currentGroup = new List<KVP<string, ArchSettingData>>();
+                    _secondaryTitles.Add(currentTitle);
+                    _secondaryGroups.Add(currentGroup);
+                }
 
-            currentGroup.Add(new KVP<string, ArchSettingData>(key, data));
-        });
-    }
-
-    /// <summary>
-    /// 刷新次级layout的显示状态
-    /// </summary>
-    private void RefreshSecondaryLayoutVisibility()
-    {
-        if (secondaryLayoutRoot == null) return;
-
-        // 判断当前选中的是否是设置子界面（settingRoot 所在的 expandRoot 子项）
-        bool isSettingTab = false;
-        if (expandRoot != null && expandRoot.childCount > nowExpandIndex)
-        {
-            var currentExpand = expandRoot.GetChild(nowExpandIndex);
-            isSettingTab = settingRoot != null && settingRoot.IsChildOf(currentExpand);
-        }
-
-        SetActive(secondaryLayoutRoot, isSettingTab);
-        if (nowsecondarySelect != null)
-        {
-            nowsecondarySelect.gameObject.SetActive(isSettingTab);
-        }
-
-        if (isSettingTab)
-        {
-            InitSecondaryLayoutItems();
-            RefreshSecondaryContent();
-            // 显示时重置到第一项，会同步高亮位置
-            RefreshSettingContentByTitle(_secondaryTitles[0]);
-        }
-    }
-
-    /// <summary>
-    /// 初始化次级layout的子项（index 0=Z按钮, index 1=模板, 最后一项=C按钮）
-    /// </summary>
-    private void InitSecondaryLayoutItems()
-    {
-        if (secondaryLayoutRoot == null || secondaryLayoutRoot.childCount < 3) return;
-
-        var template = secondaryLayoutRoot.GetChild(1);
-        var neededCount = _secondaryTitles.Count;
-        // 除去首尾按钮，当前内容项数量
-        var currentContentCount = secondaryLayoutRoot.childCount - 2;
-
-        // 补足缺少的项（插入到C按钮之前）
-        while (currentContentCount < neededCount)
-        {
-            var newItem = Instantiate(template.gameObject, secondaryLayoutRoot);
-            newItem.transform.SetSiblingIndex(secondaryLayoutRoot.childCount - 2);
-            currentContentCount++;
-        }
-
-        // 隐藏多余的项，首尾按钮始终显示
-        for (int i = 0; i < secondaryLayoutRoot.childCount; ++i)
-        {
-            bool isButton = i == 0 || i == secondaryLayoutRoot.childCount - 1;
-            bool isContent = i > 0 && i < secondaryLayoutRoot.childCount - 1;
-            if (isButton)
-            {
-                SetActive(secondaryLayoutRoot.GetChild(i), true);
-            }
-            else if (isContent)
-            {
-                var contentIndex = i - 1;
-                SetActive(secondaryLayoutRoot.GetChild(i), contentIndex < neededCount);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 刷新次级layout每个内容项的名称和点击事件（第0个子物体是text），跳过首尾按钮，并同步选中高亮到当前项
-    /// </summary>
-    private void RefreshSecondaryContent()
-    {
-        if (secondaryLayoutRoot == null || secondaryLayoutRoot.childCount < 3) return;
-
-        var lastIndex = secondaryLayoutRoot.childCount - 1;
-        for (int i = 0; i < _secondaryTitles.Count; ++i)
-        {
-            var contentIndex = i + 1; // 跳过 index 0 的 Z 按钮
-            if (contentIndex >= lastIndex) break;
-            var item = secondaryLayoutRoot.GetChild(contentIndex);
-            SetText(item.GetChild(0), _secondaryTitles[i]);
-
-            // 绑定内容项按钮点击（按钮在 item 本体上）
-            ClearButton(item);
-            var titleIndex = i; // 闭包捕获
-            SetCilck(item, () => RefreshSettingContentByTitle(_secondaryTitles[titleIndex]));
-        }
-
-        // 同步 nowsecondarySelect 位置到当前选中项
-        if (nowsecondarySelect != null && _secondaryIndex >= 0 && _secondaryIndex < _secondaryTitles.Count)
-        {
-            var selectTarget = (RectTransform)secondaryLayoutRoot.GetChild(_secondaryIndex + 1);
-            nowsecondarySelect.position = selectTarget.position;
-            nowsecondarySelect.sizeDelta = selectTarget.sizeDelta;
-        }
-    }
-
-    /// <summary>
-    /// 切换次级tab
-    /// </summary>
-    private void SwitchSecondaryIndex(bool isAdd)
-    {
-        if (_secondaryTitles.Count == 0) return;
-        _secondaryIndex = Tool.PositiveRemainder(_secondaryIndex + (isAdd ? 1 : -1), _secondaryTitles.Count);
-        RefreshSettingContentByTitle(_secondaryTitles[_secondaryIndex]);
-        wndManager.PlaySound(new("UI/UI_Notice"));
-    }
-
-    /// <summary>
-    /// 根据次级tab的title显示对应的设置项内容
-    /// </summary>
-    public void RefreshSettingContentByTitle(string title)
-    {
-        if (_secondaryGroups.Count == 0 || secondaryLayoutRoot == null) return;
-
-        var index = _secondaryTitles.IndexOf(title);
-        if (index < 0) return;
-
-        _secondaryIndex = index;
-
-        // 移动次级选中高亮到对应内容项（跳过 index 0 的 Z 按钮）
-        if (nowsecondarySelect != null && secondaryLayoutRoot.childCount > index + 1)
-        {
-            var selectTarget = (RectTransform)secondaryLayoutRoot.GetChild(index + 1);
-            nowsecondarySelect.position = selectTarget.position;
-            nowsecondarySelect.sizeDelta = selectTarget.sizeDelta;
-        }
-
-        // 清除settingRoot旧内容
-        settingRoot.ForEach(child => Destroy(child.gameObject));
-
-        // 重新创建对应分组的设置项
-        var group = _secondaryGroups[index];
-        foreach (var kvp in group)
-        {
-            CreatItem(kvp.Key, kvp.Value);
-        }
-    }
-
-
-    private void CreatItem(string name,ArchSettingData data)
-    {
-        if(!string.IsNullOrEmpty(data.titile))SetText(Instantiate(tempTitle, settingRoot).transform,data.titile);
-        Transform tran;
-        switch (data.type)
-        {
-            case SettingBtnType.Dropdown:
-                tran = Instantiate(tempDrop, settingRoot).transform;
-                var left = tran.GetChild(1,1).GetComponent<Button>();
-                var right = tran.GetChild(1,0).GetComponent<Button>();
-                var textD = tran.GetChild(1);
-                SetText(textD, data.showTexts[data.value.RawInt]);
-                left.onClick.AddListener(() => {
-                    
-                    Debug.Log("点击" + (data.value.RawInt - 1)+"  "+ data.showTexts.Length);
-                    data.value = Tool.PositiveRemainder(data.value.RawInt - 1, data.showTexts.Length);
-                    SetText(textD, data.showTexts[data.value.RawInt]);
-                    haveSettingChagne = true;
-                    GlobalEventBus.SettingCange(name, data.value.RawInt);
-                    wndManager.PlaySound(new("UI/UI_Bubble"));
-                });
-                right.onClick.AddListener(() => {
-                    
-                    Debug.Log("点击 " + (data.value.RawInt + 1) + "  " + data.showTexts.Length);
-                    data.value = Tool.PositiveRemainder(data.value.RawInt + 1, data.showTexts.Length);
-                    SetText(textD, data.showTexts[data.value.RawInt]);
-                    haveSettingChagne = true;
-                    GlobalEventBus.SettingCange(name, data.value.RawInt);
-                    wndManager.PlaySound(new("UI/UI_Bubble"));
-                });
-                break;
-            case SettingBtnType.Toggle:
-                tran = Instantiate(tempToggle, settingRoot).transform;
-                var toggle = tran.GetChild(1).GetComponent<Toggle>();
-                toggle.isOn = data.value.RawInt > 0;
-                toggle.onValueChanged.AddListener((bool value) => {
-
-                    data.value = value?1:0;
-                    haveSettingChagne = true;
-                    GlobalEventBus.SettingCange(name, data.value.RawInt);
-                    wndManager.PlaySound(new("UI/UI_Bubble"));
-                });
-                break;
-            case SettingBtnType.Slider:
-                tran = Instantiate(tempSilder, settingRoot).transform;
-                var slider = tran.GetChild(1,0).GetComponent<Slider>();
-                slider.minValue = data.sliderRange.x;
-                slider.maxValue  = data.sliderRange.y;
-                slider.wholeNumbers = true;
-                slider.value = data.value.RawInt;
-                var textS = tran.GetChild(1,1);
-                SetText(textS,data.value.RawInt + data.sliderSuffix) ;
-                slider.onValueChanged.AddListener((float value) => {
-                    data.value = value;
-                    haveSettingChagne = true;
-                    SetText(textS, (int)value + data.sliderSuffix);
-                    GlobalEventBus.SettingCange(name, data.value.RawInt);
-                    //AudioManager.PlaySound(new("UI/UI_Bubble"));
-                });
-                break;
-            default:
-                return;
-        }
-        SetText(tran.GetChild(0), name);
-    }
-
-    private void HideTask()
-    {
-        SetActive(stateActiveRoot,false);
-        SetActive(stateHideRoot, true);
-    }
-
-    private void DisplayTask()
-    {
-        var cfg = taskManager.nowTask;
-        var info = cfg.taskCfg;
-        float diffScale = taskManager.FinalDiffScale();
-
-        SetActive(stateActiveRoot, true);
-        SetActive(stateHideRoot, false);
-        SetText(mapName, taskManager.MapId);
-        SetSprite(mapIcon, cfg.mapCfg.Icon);
-        SetSprite(mapImage, cfg.mapCfg.Map);
-
-        SetText(taskType, cfg.MainCfg.name);
-        SetText(taskName, info.name);
-
-        SetText(taskMainDesc, cfg.MainCfg.desc);
-        SetText(taskExtraDesc, "额外目标");
-        SetText(taskMainReward, (int)(info.MainReward * diffScale));
-        SetText(taskExtraReward, (int)(info.ExtraReward * diffScale));
-        SetColor(taskTypeIcon, info.Color);
-        SetSprite(taskTypeIcon, info.Sprite);
-
-        SetText(taskDiff, cfg.difficulty.ToString());
-
-        for (int i = 0; i < tastExtraDiffRoot.childCount; ++i)
-        {
-            SetActive(tastExtraDiffRoot.GetChild(i), cfg.ExtraDifficulty[i] > 0);
-            SetText(tastExtraDiffRoot.GetChild(i, 0), Tool.IntToRoman(cfg.ExtraDifficulty[i]));
-        }
-
-    }
-    /// <summary>
-    /// 把 <c>ExpandRoot/stateWnd/PlayerStateSelf/FriendRoot</c> 下每个玩家位的**空位**节点绑成"创建房间"入口。
-    ///
-    /// <para>▍节点命名（2026-10-09 在预制体里**规范化过**，与 <c>BridgeWnd</c> 那份同构）：
-    /// <c>Occupied/{Icon/{BG, portrait}, frame, name}</c> = 有玩家（默认 inactive）；
-    /// <c>Empty/{frame, Shadow/name}</c> = 空位（默认 active，显示"空位"）。
-    /// 空位那张六边形框 <c>Empty/frame</c> 原本没有 Button ⇒ 这里就地补一个
-    /// （同 <c>ServerListPanel.SetItemClick</c> 的做法），并把 raycast 目标指到它上面。</para>
-    ///
-    /// <para>⚠ 规范化**之前**"头像 / 六边形边框 / 空位框"都叫 <c>Image</c> ⇒ 只能靠下标区分；
-    /// 这里按名取并保留**下标兜底**，兼容被回退到改名前的老资产。</para>
-    /// </summary>
-    private void BindEmptyRoomSlots()
-    {
-        if (emptySlotRoot == null) return;
-
-        for (int i = 0; i < emptySlotRoot.childCount; ++i)
-        {
-            var slot = emptySlotRoot.GetChild(i);
-            if (slot.childCount < 2) continue;                 // 子0 = 有人、子1 = 空位
-
-            var empty = slot.Find("Empty");
-            if (empty == null) empty = slot.GetChild(1);       // 兜底：改名前的老资产
-
-            var click = empty.Find("frame");
-            if (click == null) click = empty.childCount > 0 ? empty.GetChild(0) : empty;
-            var graphic = click.GetComponent<Image>();
-            var btn = click.TryGetOrAddComponent<Button>();
-            btn.transition = Selectable.Transition.None;
-            if (graphic != null)
-            {
-                graphic.raycastTarget = true;
-                btn.targetGraphic = graphic;
-            }
-            btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() =>
-            {
-                wndManager.PlaySound(new("UI/UI_Bubble"));
-                CreateRoomFromEmptySlot();
+                currentGroup.Add(new KVP<string, ArchSettingData>(key, data));
             });
         }
-    }
 
-    /// <summary>
-    /// 空玩家位 → 以**当前这局的地图与难度**开房并局域网广播（等于地图界面 <c>pubilc</c> 那个入口）。
-    /// 这里不走 <c>SelectMapWnd</c>：设置窗口是常驻窗口，战场里也要能用，而选图窗口不一定在场景里。
-    /// </summary>
-    private void CreateRoomFromEmptySlot()
-    {
-        var flow = NetRoomFlow.Instance;
-        if (flow == null)
+        /// <summary>
+        /// 刷新次级layout的显示状态
+        /// </summary>
+        private void RefreshSecondaryLayoutVisibility()
         {
-            ShowTip("联机不可用", "网络服务未初始化：GameRoot 下缺少 NetSvc / NetHostSvc / NetRoomFlow。");
-            return;
-        }
+            if (secondaryLayoutRoot == null) return;
 
-        var archive = ArchivesData_SO.Current;
-        string hostName = archive == null || string.IsNullOrEmpty(archive.playerName) ? "玩家" : archive.playerName;
-
-        var options = new HostRoomOptions
-        {
-            RoomName = hostName + "的房间",
-            MapName = taskManager.MapId,
-            MaxPlayers = 4,
-            Password = string.Empty,
-            Difficulty = taskManager.nowTask.activeTask ? (int)taskManager.nowTask.difficulty : -1,
-            HostName = hostName,
-            TaskMain = taskManager.NowTaskMain,
-            TaskIndex = -1,   // ⚠ 结构体默认值是 0（不是 -1）⇒ 不显式写会被当成"第 0 个任务"
-        };
-
-        if (!flow.Host(options, out string reason))
-        {
-            ShowTip("开房失败", reason);
-            return;
-        }
-
-        ShowTip("房间已创建", "已在局域网广播：" + (string.IsNullOrEmpty(options.MapName) ? "未指定地图" : options.MapName));
-    }
-
-    private void ShowTip(string title, string desc)
-    {
-        var tip = WndHub.Tip;
-        if (tip != null) tip.Creat(new() { title = title, desc = desc });
-        else Debug.LogWarning("[SettingWnd] " + title + "：" + desc);
-    }
-
-    public void SetStateRoot()
-    {
-        var player = ActorsManager.Player;
-        if (taskManager.nowTask.activeTask)
-        {
-            DisplayTask();
-        }
-        else
-        {
-            HideTask();
-        }
-        // ⚠ 两个都可能为 null：没有玩家实体的场合（大厅 / 实体已销毁），或模型路径取不到。
-        //   漏判的表现就是 ESC 打开设置窗直接抛 NullReferenceException（2026-10-07 实测）。
-        showModle = player != null ? resManager.CreatPrefab("Prefabs/StudentModle/" + player.Id, false) : null;
-        if (showModle != null)
-        {
-            showModle.transform.position = transform.TransformPoint(new(600, -650, 600));
-            showModle.transform.eulerAngles = new(0, -170, 0);
-            showModle.transform.localScale = new(550, 550, 550);
-            showModle.SetChildLayer(gameObject.layer, 3);
-            var comp = showModle.GetComponent<RootMotion.FinalIK.LookAtController>();
-            if (comp != null && comp.ik != null && comp.ik.solver != null)
+            // 判断当前选中的是否是设置子界面（settingRoot 所在的 expandRoot 子项）
+            bool isSettingTab = false;
+            if (expandRoot != null && expandRoot.childCount > nowExpandIndex)
             {
-                comp.ik.solver.bodyWeight = 0;
-                comp.target = lookPoint.transform;
+                var currentExpand = expandRoot.GetChild(nowExpandIndex);
+                isSettingTab = settingRoot != null && settingRoot.IsChildOf(currentExpand);
+            }
+
+            SetActive(secondaryLayoutRoot, isSettingTab);
+            if (nowsecondarySelect != null)
+            {
+                nowsecondarySelect.gameObject.SetActive(isSettingTab);
+            }
+
+            if (isSettingTab)
+            {
+                InitSecondaryLayoutItems();
+                RefreshSecondaryContent();
+                // 显示时重置到第一项，会同步高亮位置
+                RefreshSettingContentByTitle(_secondaryTitles[0]);
             }
         }
 
-        if (player == null) return;   // 下面全是玩家档案数据（名称/头像/等级/经验）
-        // 名牌显示**用户名称**（存档昵称），没有才回落角色名
-        string userName = SelfUserName;
-        SetText(selfName, string.IsNullOrEmpty(userName) ? player.ShowName : userName);
-        SetSprite(selfIcon, player.Portrait);
-        ArchivesData_SO.Current.GetRoleLevel(player.Id, out int level, out float expScale);
-        SetColor(selfFrame, player.Color);
-        SetText(selfLevel, level);
-        SetFill(selfExp, expScale);
-        Color.RGBToHSV(player.Color, out var h, out var s, out var v);
-        SetColor(selfExp, Color.HSVToRGB(h, s * 0.5f, v));
-    }
-    /// <summary>返回舰船（右上"中止任务"按钮）。两副面孔（2026-10-11 用户口径）：
-    /// <list type="bullet">
-    ///   <item><b>单机</b>（含房主掉了之后）：就是原来的"中止任务" —— 本机结算回大厅；</item>
-    ///   <item><b>联机成员</b>（在别人房里）：**不能替全队决定**，所以这一下只做两件事 ——
-    ///         退出联机（<c>NetRoomFlow.Leave</c>：通知房主"我走了" + 断开）+ 本机走同一条 EndGame 回大厅。</item>
-    /// </list>
-    /// <para>⚠ 房主走不到这里：他在战斗里这一格显示的是"与小队终止任务"（见 <see cref="TryAbortSquad"/>）。</para></summary>
-    void TryReturnShop()
-    {
-        //不需要判定状态，已经隐藏??
-        bool online = IsOnlineMember;   // 点确认那一刻再读也来得及（下面的闭包里用的是这个快照）
+        /// <summary>
+        /// 初始化次级layout的子项（index 0=Z按钮, index 1=模板, 最后一项=C按钮）
+        /// </summary>
+        private void InitSecondaryLayoutItems()
+        {
+            if (secondaryLayoutRoot == null || secondaryLayoutRoot.childCount < 3) return;
 
-        WndHub.Tip.Creat(new() {
-            title = online ? "退出联机" : "中止任务",
-            desc = online ? "\n确定要退出联机并返回大厅吗?" : "\n确定要中止任务吗?",
-            optA_Click = () =>
+            var template = secondaryLayoutRoot.GetChild(1);
+            var neededCount = _secondaryTitles.Count;
+            // 除去首尾按钮，当前内容项数量
+            var currentContentCount = secondaryLayoutRoot.childCount - 2;
+
+            // 补足缺少的项（插入到C按钮之前）
+            while (currentContentCount < neededCount)
             {
-                SetWndState(false);
-                wndManager.ClearNotice();
-                // 先退联机再回大厅：房主那一端要收到"我走了"（4003），战斗期他才好把盟友模型/HUD 行收掉
-                if (online) NetRoomFlow.Instance?.Leave();
-                BattleManager.Instance.EndGame(1, GameResult.Interrupt);
-            },
-            optA_Text = "确认",
-            optB_Text = "取消"
-        });
+                var newItem = Instantiate(template.gameObject, secondaryLayoutRoot);
+                newItem.transform.SetSiblingIndex(secondaryLayoutRoot.childCount - 2);
+                currentContentCount++;
+            }
 
-    }
-
-    /// <summary>与小队终止任务（联机 · 房主的"中止任务"）：本地效果与单机那条完全相同，区别只在**广播**。
-    /// <para>▍为什么走 <c>BattleEventBus.EndGame</c> 而不是 <c>BattleManager.Instance.EndGame</c>：
-    /// <c>NetGameFlowBridge</c> 订阅的是这个事件 —— 房主一触发就 <c>SendGameOver</c>(4033) 广播给全队，
-    /// 各端跑同一条 EndGame ⇒ 大家一起进中止（2026-10-11 用户口径）。
-    /// 直接调 <c>BattleManager</c> 只结束本机，别人继续打。</para></summary>
-    void TryAbortSquad()
-    {
-        WndHub.Tip.Creat(new() {
-            title = "与小队终止任务",
-            desc = "\n确定要终止任务吗?（小队全员都会一起中止）",
-            optA_Click = () =>
+            // 隐藏多余的项，首尾按钮始终显示
+            for (int i = 0; i < secondaryLayoutRoot.childCount; ++i)
             {
-                SetWndState(false);
-                wndManager.ClearNotice();
-                BattleEventBus.EndGame(1, GameResult.Interrupt);
-            },
-            optA_Text = "确认",
-            optB_Text = "取消"
-        });
-    }
+                bool isButton = i == 0 || i == secondaryLayoutRoot.childCount - 1;
+                bool isContent = i > 0 && i < secondaryLayoutRoot.childCount - 1;
+                if (isButton)
+                {
+                    SetActive(secondaryLayoutRoot.GetChild(i), true);
+                }
+                else if (isContent)
+                {
+                    var contentIndex = i - 1;
+                    SetActive(secondaryLayoutRoot.GetChild(i), contentIndex < neededCount);
+                }
+            }
+        }
 
-    /// <summary>(在舰船上)新手教程</summary>
-    void TryTeach()
-    {
-        SetWndState(false);
-        ResSvc.Instance.AsyncLoadScene("Teach", () => {
-            BattleManager.Creat(false);
-        });
-    }
-
-    /// <summary>(在舰船上)重置</summary>
-    void TryRebirth()
-    {
-        //不需要判定状态，已经隐藏??
-        //其实按理说应该是传送回房间的，但是现在没做
-        ActorsManager.Player.transform.GetComponent<CharacterController>().enabled = false;
-        ActorsManager.Player.Pos = TransformUtils.SceenFind("ShowStudentPoint").transform.position;
-        ActorsManager.Player.transform.GetComponent<CharacterController>().enabled = true;
-        SetWndState(false);
-    }
-
-    void EnterFreeCamera()
-    {
-        WindowState = WindowStateEnum.FreeCamera;
-        SetWndState(false);
-    }
-    /// <summary>退出游戏</summary>
-    void TryExitGame()
-    {
-        WndHub.Tip.Creat(new() {
-            title = "退出游戏",
-            desc = "\n确定要退出游戏吗?",
-            optA_Click = () => {
-                GameRoot.ExitGame();
-            },
-            optA_Text = "确认",
-            optB_Text = "取消"
-        });
-    }
-
-    private bool Cancel()
-    {
-        if (!State) return false;
-
-        // HandleKeyCodeInput 已在本帧处理了选择框/改键的取消，不再重复关闭窗口
-        if (_escHandledThisFrame)
+        /// <summary>
+        /// 刷新次级layout每个内容项的名称和点击事件（第0个子物体是text），跳过首尾按钮，并同步选中高亮到当前项
+        /// </summary>
+        private void RefreshSecondaryContent()
         {
+            if (secondaryLayoutRoot == null || secondaryLayoutRoot.childCount < 3) return;
+
+            var lastIndex = secondaryLayoutRoot.childCount - 1;
+            for (int i = 0; i < _secondaryTitles.Count; ++i)
+            {
+                var contentIndex = i + 1; // 跳过 index 0 的 Z 按钮
+                if (contentIndex >= lastIndex) break;
+                var item = secondaryLayoutRoot.GetChild(contentIndex);
+                SetText(item.GetChild(0), _secondaryTitles[i]);
+
+                // 绑定内容项按钮点击（按钮在 item 本体上）
+                ClearButton(item);
+                var titleIndex = i; // 闭包捕获
+                SetCilck(item, () => RefreshSettingContentByTitle(_secondaryTitles[titleIndex]));
+            }
+
+            // 同步 nowsecondarySelect 位置到当前选中项
+            if (nowsecondarySelect != null && _secondaryIndex >= 0 && _secondaryIndex < _secondaryTitles.Count)
+            {
+                var selectTarget = (RectTransform)secondaryLayoutRoot.GetChild(_secondaryIndex + 1);
+                nowsecondarySelect.position = selectTarget.position;
+                nowsecondarySelect.sizeDelta = selectTarget.sizeDelta;
+            }
+        }
+
+        /// <summary>
+        /// 切换次级tab
+        /// </summary>
+        private void SwitchSecondaryIndex(bool isAdd)
+        {
+            if (_secondaryTitles.Count == 0) return;
+            _secondaryIndex = Tool.PositiveRemainder(_secondaryIndex + (isAdd ? 1 : -1), _secondaryTitles.Count);
+            RefreshSettingContentByTitle(_secondaryTitles[_secondaryIndex]);
+            wndManager.PlaySound(new("UI/UI_Notice"));
+        }
+
+        /// <summary>
+        /// 根据次级tab的title显示对应的设置项内容
+        /// </summary>
+        public void RefreshSettingContentByTitle(string title)
+        {
+            if (_secondaryGroups.Count == 0 || secondaryLayoutRoot == null) return;
+
+            var index = _secondaryTitles.IndexOf(title);
+            if (index < 0) return;
+
+            _secondaryIndex = index;
+
+            // 移动次级选中高亮到对应内容项（跳过 index 0 的 Z 按钮）
+            if (nowsecondarySelect != null && secondaryLayoutRoot.childCount > index + 1)
+            {
+                var selectTarget = (RectTransform)secondaryLayoutRoot.GetChild(index + 1);
+                nowsecondarySelect.position = selectTarget.position;
+                nowsecondarySelect.sizeDelta = selectTarget.sizeDelta;
+            }
+
+            // 清除settingRoot旧内容
+            settingRoot.ForEach(child => Destroy(child.gameObject));
+
+            // 重新创建对应分组的设置项
+            var group = _secondaryGroups[index];
+            foreach (var kvp in group)
+            {
+                CreatItem(kvp.Key, kvp.Value);
+            }
+        }
+
+
+        private void CreatItem(string name,ArchSettingData data)
+        {
+            if(!string.IsNullOrEmpty(data.titile))SetText(Instantiate(tempTitle, settingRoot).transform,data.titile);
+            Transform tran;
+            switch (data.type)
+            {
+                case SettingBtnType.Dropdown:
+                    tran = Instantiate(tempDrop, settingRoot).transform;
+                    var left = tran.GetChild(1,1).GetComponent<Button>();
+                    var right = tran.GetChild(1,0).GetComponent<Button>();
+                    var textD = tran.GetChild(1);
+                    SetText(textD, data.showTexts[data.value.RawInt]);
+                    left.onClick.AddListener(() => {
+                    
+                        Debug.Log("点击" + (data.value.RawInt - 1)+"  "+ data.showTexts.Length);
+                        data.value = Tool.PositiveRemainder(data.value.RawInt - 1, data.showTexts.Length);
+                        SetText(textD, data.showTexts[data.value.RawInt]);
+                        haveSettingChagne = true;
+                        GlobalEventBus.SettingCange(name, data.value.RawInt);
+                        wndManager.PlaySound(new("UI/UI_Bubble"));
+                    });
+                    right.onClick.AddListener(() => {
+                    
+                        Debug.Log("点击 " + (data.value.RawInt + 1) + "  " + data.showTexts.Length);
+                        data.value = Tool.PositiveRemainder(data.value.RawInt + 1, data.showTexts.Length);
+                        SetText(textD, data.showTexts[data.value.RawInt]);
+                        haveSettingChagne = true;
+                        GlobalEventBus.SettingCange(name, data.value.RawInt);
+                        wndManager.PlaySound(new("UI/UI_Bubble"));
+                    });
+                    break;
+                case SettingBtnType.Toggle:
+                    tran = Instantiate(tempToggle, settingRoot).transform;
+                    var toggle = tran.GetChild(1).GetComponent<Toggle>();
+                    toggle.isOn = data.value.RawInt > 0;
+                    toggle.onValueChanged.AddListener((bool value) => {
+
+                        data.value = value?1:0;
+                        haveSettingChagne = true;
+                        GlobalEventBus.SettingCange(name, data.value.RawInt);
+                        wndManager.PlaySound(new("UI/UI_Bubble"));
+                    });
+                    break;
+                case SettingBtnType.Slider:
+                    tran = Instantiate(tempSilder, settingRoot).transform;
+                    var slider = tran.GetChild(1,0).GetComponent<Slider>();
+                    slider.minValue = data.sliderRange.x;
+                    slider.maxValue  = data.sliderRange.y;
+                    slider.wholeNumbers = true;
+                    slider.value = data.value.RawInt;
+                    var textS = tran.GetChild(1,1);
+                    SetText(textS,data.value.RawInt + data.sliderSuffix) ;
+                    slider.onValueChanged.AddListener((float value) => {
+                        data.value = value;
+                        haveSettingChagne = true;
+                        SetText(textS, (int)value + data.sliderSuffix);
+                        GlobalEventBus.SettingCange(name, data.value.RawInt);
+                        //AudioManager.PlaySound(new("UI/UI_Bubble"));
+                    });
+                    break;
+                default:
+                    return;
+            }
+            SetText(tran.GetChild(0), name);
+        }
+
+        private void HideTask()
+        {
+            SetActive(stateActiveRoot,false);
+            SetActive(stateHideRoot, true);
+        }
+
+        private void DisplayTask()
+        {
+            var cfg = taskManager.nowTask;
+            var info = cfg.taskCfg;
+            float diffScale = taskManager.FinalDiffScale();
+
+            SetActive(stateActiveRoot, true);
+            SetActive(stateHideRoot, false);
+            SetText(mapName, taskManager.MapId);
+            SetSprite(mapIcon, cfg.mapCfg.Icon);
+            SetSprite(mapImage, cfg.mapCfg.Map);
+
+            SetText(taskType, cfg.MainCfg.name);
+            SetText(taskName, info.name);
+
+            SetText(taskMainDesc, cfg.MainCfg.desc);
+            SetText(taskExtraDesc, "额外目标");
+            SetText(taskMainReward, (int)(info.MainReward * diffScale));
+            SetText(taskExtraReward, (int)(info.ExtraReward * diffScale));
+            SetColor(taskTypeIcon, info.Color);
+            SetSprite(taskTypeIcon, info.Sprite);
+
+            SetText(taskDiff, cfg.difficulty.ToString());
+
+            for (int i = 0; i < tastExtraDiffRoot.childCount; ++i)
+            {
+                SetActive(tastExtraDiffRoot.GetChild(i), cfg.ExtraDifficulty[i] > 0);
+                SetText(tastExtraDiffRoot.GetChild(i, 0), Tool.IntToRoman(cfg.ExtraDifficulty[i]));
+            }
+
+        }
+        /// <summary>
+        /// 把 <c>ExpandRoot/stateWnd/PlayerStateSelf/FriendRoot</c> 下每个玩家位的**空位**节点绑成"创建房间"入口。
+        ///
+        /// <para>▍节点命名（2026-10-09 在预制体里**规范化过**，与 <c>BridgeWnd</c> 那份同构）：
+        /// <c>Occupied/{Icon/{BG, portrait}, frame, name}</c> = 有玩家（默认 inactive）；
+        /// <c>Empty/{frame, Shadow/name}</c> = 空位（默认 active，显示"空位"）。
+        /// 空位那张六边形框 <c>Empty/frame</c> 原本没有 Button ⇒ 这里就地补一个
+        /// （同 <c>ServerListPanel.SetItemClick</c> 的做法），并把 raycast 目标指到它上面。</para>
+        ///
+        /// <para>⚠ 规范化**之前**"头像 / 六边形边框 / 空位框"都叫 <c>Image</c> ⇒ 只能靠下标区分；
+        /// 这里按名取并保留**下标兜底**，兼容被回退到改名前的老资产。</para>
+        /// </summary>
+        private void BindEmptyRoomSlots()
+        {
+            if (emptySlotRoot == null) return;
+
+            for (int i = 0; i < emptySlotRoot.childCount; ++i)
+            {
+                var slot = emptySlotRoot.GetChild(i);
+                if (slot.childCount < 2) continue;                 // 子0 = 有人、子1 = 空位
+
+                var empty = slot.Find("Empty");
+                if (empty == null) empty = slot.GetChild(1);       // 兜底：改名前的老资产
+
+                var click = empty.Find("frame");
+                if (click == null) click = empty.childCount > 0 ? empty.GetChild(0) : empty;
+                var graphic = click.GetComponent<Image>();
+                var btn = click.TryGetOrAddComponent<Button>();
+                btn.transition = Selectable.Transition.None;
+                if (graphic != null)
+                {
+                    graphic.raycastTarget = true;
+                    btn.targetGraphic = graphic;
+                }
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(() =>
+                {
+                    wndManager.PlaySound(new("UI/UI_Bubble"));
+                    CreateRoomFromEmptySlot();
+                });
+            }
+        }
+
+        /// <summary>
+        /// 空玩家位 → 以**当前这局的地图与难度**开房并局域网广播（等于地图界面 <c>pubilc</c> 那个入口）。
+        /// 这里不走 <c>SelectMapWnd</c>：设置窗口是常驻窗口，战场里也要能用，而选图窗口不一定在场景里。
+        /// </summary>
+        private void CreateRoomFromEmptySlot()
+        {
+            var flow = NetRoomFlow.Instance;
+            if (flow == null)
+            {
+                ShowTip("联机不可用", "网络服务未初始化：GameRoot 下缺少 NetSvc / NetHostSvc / NetRoomFlow。");
+                return;
+            }
+
+            var archive = ArchivesData_SO.Current;
+            string hostName = archive == null || string.IsNullOrEmpty(archive.playerName) ? "玩家" : archive.playerName;
+
+            var options = new HostRoomOptions
+            {
+                RoomName = hostName + "的房间",
+                MapName = taskManager.MapId,
+                MaxPlayers = 4,
+                Password = string.Empty,
+                Difficulty = taskManager.nowTask.activeTask ? (int)taskManager.nowTask.difficulty : -1,
+                HostName = hostName,
+                TaskMain = taskManager.NowTaskMain,
+                TaskIndex = -1,   // ⚠ 结构体默认值是 0（不是 -1）⇒ 不显式写会被当成"第 0 个任务"
+            };
+
+            if (!flow.Host(options, out string reason))
+            {
+                ShowTip("开房失败", reason);
+                return;
+            }
+
+            ShowTip("房间已创建", "已在局域网广播：" + (string.IsNullOrEmpty(options.MapName) ? "未指定地图" : options.MapName));
+        }
+
+        private void ShowTip(string title, string desc)
+        {
+            var tip = WndHub.Tip;
+            if (tip != null) tip.Creat(new() { title = title, desc = desc });
+            else Debug.LogWarning("[SettingWnd] " + title + "：" + desc);
+        }
+
+        public void SetStateRoot()
+        {
+            var player = ActorsManager.Player;
+            if (taskManager.nowTask.activeTask)
+            {
+                DisplayTask();
+            }
+            else
+            {
+                HideTask();
+            }
+            // ⚠ 两个都可能为 null：没有玩家实体的场合（大厅 / 实体已销毁），或模型路径取不到。
+            //   漏判的表现就是 ESC 打开设置窗直接抛 NullReferenceException（2026-10-07 实测）。
+            showModle = player != null ? resManager.CreatPrefab("Prefabs/StudentModle/" + player.Id, false) : null;
+            if (showModle != null)
+            {
+                showModle.transform.position = transform.TransformPoint(new(600, -650, 600));
+                showModle.transform.eulerAngles = new(0, -170, 0);
+                showModle.transform.localScale = new(550, 550, 550);
+                showModle.SetChildLayer(gameObject.layer, 3);
+                var comp = showModle.GetComponent<RootMotion.FinalIK.LookAtController>();
+                if (comp != null && comp.ik != null && comp.ik.solver != null)
+                {
+                    comp.ik.solver.bodyWeight = 0;
+                    comp.target = lookPoint.transform;
+                }
+            }
+
+            if (player == null) return;   // 下面全是玩家档案数据（名称/头像/等级/经验）
+            // 名牌显示**用户名称**（存档昵称），没有才回落角色名
+            string userName = SelfUserName;
+            SetText(selfName, string.IsNullOrEmpty(userName) ? player.ShowName : userName);
+            SetSprite(selfIcon, player.Portrait);
+            ArchivesData_SO.Current.GetRoleLevel(player.Id, out int level, out float expScale);
+            SetColor(selfFrame, player.Color);
+            SetText(selfLevel, level);
+            SetFill(selfExp, expScale);
+            Color.RGBToHSV(player.Color, out var h, out var s, out var v);
+            SetColor(selfExp, Color.HSVToRGB(h, s * 0.5f, v));
+        }
+        /// <summary>返回舰船（右上"中止任务"按钮）。两副面孔（2026-10-11 用户口径）：
+        /// <list type="bullet">
+        ///   <item><b>单机</b>（含房主掉了之后）：就是原来的"中止任务" —— 本机结算回大厅；</item>
+        ///   <item><b>联机成员</b>（在别人房里）：**不能替全队决定**，所以这一下只做两件事 ——
+        ///         退出联机（<c>NetRoomFlow.Leave</c>：通知房主"我走了" + 断开）+ 本机走同一条 EndGame 回大厅。</item>
+        /// </list>
+        /// <para>⚠ 房主走不到这里：他在战斗里这一格显示的是"与小队终止任务"（见 <see cref="TryAbortSquad"/>）。</para></summary>
+        void TryReturnShop()
+        {
+            //不需要判定状态，已经隐藏??
+            bool online = IsOnlineMember;   // 点确认那一刻再读也来得及（下面的闭包里用的是这个快照）
+
+            WndHub.Tip.Creat(new() {
+                title = online ? "退出联机" : "中止任务",
+                desc = online ? "\n确定要退出联机并返回大厅吗?" : "\n确定要中止任务吗?",
+                optA_Click = () =>
+                {
+                    SetWndState(false);
+                    wndManager.ClearNotice();
+                    // 先退联机再回大厅：房主那一端要收到"我走了"（4003），战斗期他才好把盟友模型/HUD 行收掉
+                    if (online) NetRoomFlow.Instance?.Leave();
+                    BattleManager.Instance.EndGame(1, GameResult.Interrupt);
+                },
+                optA_Text = "确认",
+                optB_Text = "取消"
+            });
+
+        }
+
+        /// <summary>与小队终止任务（联机 · 房主的"中止任务"）：本地效果与单机那条完全相同，区别只在**广播**。
+        /// <para>▍为什么走 <c>BattleEventBus.EndGame</c> 而不是 <c>BattleManager.Instance.EndGame</c>：
+        /// <c>NetGameFlowBridge</c> 订阅的是这个事件 —— 房主一触发就 <c>SendGameOver</c>(4033) 广播给全队，
+        /// 各端跑同一条 EndGame ⇒ 大家一起进中止（2026-10-11 用户口径）。
+        /// 直接调 <c>BattleManager</c> 只结束本机，别人继续打。</para></summary>
+        void TryAbortSquad()
+        {
+            WndHub.Tip.Creat(new() {
+                title = "与小队终止任务",
+                desc = "\n确定要终止任务吗?（小队全员都会一起中止）",
+                optA_Click = () =>
+                {
+                    SetWndState(false);
+                    wndManager.ClearNotice();
+                    BattleEventBus.EndGame(1, GameResult.Interrupt);
+                },
+                optA_Text = "确认",
+                optB_Text = "取消"
+            });
+        }
+
+        /// <summary>(在舰船上)新手教程</summary>
+        void TryTeach()
+        {
+            SetWndState(false);
+            GameRoot.GameState = GameStateEnum.Load;
+            ResSvc.Instance.AsyncLoadScene("Teach", () => {
+            
+                BattleManager.Creat(false);
+            });
+        }
+
+        /// <summary>(在舰船上)重置</summary>
+        void TryRebirth()
+        {
+            //不需要判定状态，已经隐藏??
+            //其实按理说应该是传送回房间的，但是现在没做
+            ActorsManager.Player.transform.GetComponent<CharacterController>().enabled = false;
+            ActorsManager.Player.Pos = TransformUtils.SceenFind("ShowStudentPoint").transform.position;
+            ActorsManager.Player.transform.GetComponent<CharacterController>().enabled = true;
+            SetWndState(false);
+        }
+
+        void TryRename()
+        {
+            var archive = ArchivesData_SO.Current;
+            WndHub.Password.Creat(new PasswordWndInfo {
+                title = "",
+                desc = "老师，我们该怎么称呼您？",
+                placeholder = "输入玩家名",
+                presetText = archive.playerName,
+                maxLength = 12,
+                mustInput = true,
+                onConfirm = name => {
+                    SetSelfUserName(name);   // 写档 + 广播（BridgeWnd / PlayerWnd 的名牌靠这条刷新）
+                    SetText(selfName, name); // 本窗口没订阅那条事件，自己这块名牌就地刷
+                },
+            });
+        }
+        void EnterFreeCamera()
+        {
+            WindowState = WindowStateEnum.FreeCamera;
+            SetWndState(false);
+        }
+        /// <summary>退出游戏</summary>
+        void TryExitGame()
+        {
+            WndHub.Tip.Creat(new() {
+                title = "退出游戏",
+                desc = "\n确定要退出游戏吗?",
+                optA_Click = () => {
+                    GameRoot.ExitGame();
+                },
+                optA_Text = "确认",
+                optB_Text = "取消"
+            });
+        }
+
+        private bool Cancel()
+        {
+            if (!State) return false;
+
+            // HandleKeyCodeInput 已在本帧处理了选择框/改键的取消，不再重复关闭窗口
+            if (_escHandledThisFrame)
+            {
+                return true;
+            }
+
+            // 如果选择框或改键模式激活，先取消它们（兜底）
+            if (_rebindSelectionRoot != null && _rebindSelectionRoot.activeSelf)
+            {
+                HideSelection();
+                return true;
+            }
+            if (_rebindState == RebindState.WaitingForKey)
+            {
+                ResetRebindState();
+                return true;
+            }
+
+            wndManager.PlaySound(new("UI/UI_Button_Back"));
+            SetWndState(false);
+            justClosed = Time.time;
+            //鼠标按esc不锁是unity编辑器的特殊情况，无视就行（编译没这个问题）
             return true;
         }
 
-        // 如果选择框或改键模式激活，先取消它们（兜底）
-        if (_rebindSelectionRoot != null && _rebindSelectionRoot.activeSelf)
+
+        // 这个方法会被按钮的OnClick事件调用
+        public void _OpenURL(string url)
         {
-            HideSelection();
-            return true;
-        }
-        if (_rebindState == RebindState.WaitingForKey)
-        {
-            ResetRebindState();
-            return true;
+            Application.OpenURL(url);
         }
 
-        wndManager.PlaySound(new("UI/UI_Button_Back"));
-        SetWndState(false);
-        justClosed = Time.time;
-        //鼠标按esc不锁是unity编辑器的特殊情况，无视就行（编译没这个问题）
-        return true;
+
     }
-
-
-    // 这个方法会被按钮的OnClick事件调用
-    public void _OpenURL(string url)
-    {
-        Application.OpenURL(url);
-    }
-
-
-}
 
 }

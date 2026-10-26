@@ -124,6 +124,17 @@ public abstract class Window : MonoBehaviour
         }
     }
 
+    /// <summary>改本机玩家昵称：写档 + 存盘 + 广播 —— UI 侧改名的**唯一入口**。
+    /// <para>⚠ 直接写 <c>ArchivesData_SO.Current.playerName</c> 不会通知任何界面（名牌还是旧名），
+    /// 而 00Core 的存档类引用不到 <see cref="GlobalEventBus"/> ⇒ "写档"和"广播"必须在这一起做。</para></summary>
+    protected static void SetSelfUserName(string name)
+    {
+        var arch = ArchivesData_SO.Current;
+        arch.playerName = name;
+        arch.Save();
+        GlobalEventBus.PlayerNameChange(name);
+    }
+
 
     /// <summary>窗口第一次打开时</summary>
     protected abstract void FirstShowWnd();

@@ -33,17 +33,23 @@ namespace FPSGame.Mission
       
         private void FindUnit()
         {
-            var list = FPSGame.Game.UnitQuery.FindUnits(new PECircle((PEVector2)((PEVector3)pos), (PEInt)entitySize), new());
+            var list = UnitQuery.FindUnits(new PECircle((PEVector2)((PEVector3)pos), (PEInt)entitySize), new());
             var actors = list.Where(item => actorNames.Contains(item.Id)).ToArray();
+            showarr = list.Select(item => item.gameObject).ToList();
             NowProgress = 0;
             MaxProgress = actors.Length;
+            if (MaxProgress == 0)
+            {
+                Debug.LogWarning($"[任务] {name} 摧毁区域内没有匹配到单位：半径={entitySize} 名单=[{string.Join(",", actorNames)}] " +
+                    $"圈内({list.Count})=[{string.Join(",", list.Select(item => item.Id).Distinct())}]", this);
+            }
             foreach (var item in actors)
             {
                 item.OnDeath += OnActorDeath;
             }
         }
-
-
+        [SerializeField]
+        private List<GameObject> showarr;
         void OnActorDeath()
         {
             //这里就不做取消绑定了，因为不知道是谁死了，只能计

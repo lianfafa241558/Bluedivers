@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using FPSGame.Core;
+using FPSGame.Core.Interface;
 using FPSGame.Attributes;
 using FPSGame.GameContract;
 
@@ -128,17 +129,21 @@ public class SubtitleWnd : Window
         int useIndex = 0;
         show.Clear();
 
-        if (ActorsManager.Player == null) return;
+        // ⚠ Player 是 IActor（接口引用）：`Player == null` 判不出"已销毁"。
+        //   舰船→新手教程这类单场景加载会先销毁玩家、后注册新玩家，中间这几帧若放行就是
+        //   MissingReferenceException（读已销毁 Actor 的 transform）。
+        if (!ActorsManager.Player.IsValidMono()) return;
+        var player = ActorsManager.Player;
 
         // 第三人称时提前获取最近目标，避免 ConcernPrefab 与 ThirdPersonConcernPrefab 重叠
-        var playerOp = m_IsThirdPerson ? ActorsManager.Player.transform.GetComponent<PlayerOperationController>() : null;
+        var playerOp = m_IsThirdPerson ? player.transform.GetComponent<PlayerOperationController>() : null;
         IFurniture thirdPersonTarget = playerOp ? playerOp.target : null;
 
         // 显示交互提示（第一/第三人称共用 Concerns）
         {
             foreach (var item in Furniture_Attached.list.Values)
             {
-                if (!item.CanOperate(ActorsManager.Player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
+                if (!item.CanOperate(player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
                 float dis = Vector3.Distance(item.CenterPos, pos);
                 if (dis < 20 && item != WndHub.Operation.furn && !item.InOperate && item != thirdPersonTarget)
                 {

@@ -119,8 +119,7 @@ using static FPSGame.WndTools.WndRootTool;
             }
 
             // 名牌显示**用户名称**（存档昵称），老存档没起名才回落角色名
-            string userName = SelfUserName;
-            SetText(playerName, string.IsNullOrEmpty(userName) ? m_Controller.PlayerName : userName);
+            OnPlayerNameChange(SelfUserName);
             SetSprite(portrait, m_Controller.Portrait);
             SetColor(frame, m_Controller.Color); 
             bool isNormal = GameState == GameStateEnum.Game;
@@ -141,10 +140,18 @@ using static FPSGame.WndTools.WndRootTool;
             m_Health.OnHealed += OnHealed;
             UnitEventBus.OnBulletHit += BulletHit;
             UnitEventBus.OnUnitKill += UnitKill;
+            GlobalEventBus.OnPlayerNameChange += OnPlayerNameChange;
             // ⚠ Game 状态**只播一次**，而 TryPlayer 常常晚于它（玩家/窗口就绪都在切换之后）
             // ⇒ 已开打就直接定起点；只挂订阅等一个可能已经播过的事件，起点会永远是 0（时间从 Time.time 起算）。
             if (isNormal) m_TaskStartTime = Time.time + 5;
             else GlobalEventBus.OnGameStateChange += OnGameStart;
+        }
+
+        /// <summary>改名后刷新名牌：昵称优先、空则角色名（口径只在这一次赋值里出现）。</summary>
+        private void OnPlayerNameChange(string name)
+        {
+            if (!m_Controller) return;
+            SetText(playerName, string.IsNullOrEmpty(name) ? m_Controller.PlayerName : name);
         }
 
         private void OnGameStart(GameStateEnum _, GameStateEnum newState)
@@ -212,9 +219,18 @@ using static FPSGame.WndTools.WndRootTool;
 
         protected override void HideWnd()
         {
+            UnbindPlayer();
+        }
+
+        /// <summary>解绑当前绑定玩家的全部事件。
+        /// <para>⚠ 单独抽出来是为了让 <see cref="Update"/> 在"玩家对象被销毁但窗口没关"时也能跑一遍，
+        /// 否则重新绑定时 <c>UnitEventBus</c> 上的处理器会叠两份（换场景：舰船→新手教程）。</para></summary>
+        private void UnbindPlayer()
+        {
             initPlayer = false;
             UnitEventBus.OnBulletHit -= BulletHit;
             UnitEventBus.OnUnitKill -= UnitKill;
+            GlobalEventBus.OnPlayerNameChange -= OnPlayerNameChange;
             GlobalEventBus.OnGameStateChange -= OnGameStart;   // 与 TryPlayer 的订阅成对（没订阅过时 -= 无副作用）
             if (m_WeaponsManager)
             {
@@ -236,7 +252,11 @@ using static FPSGame.WndTools.WndRootTool;
     //#if UNITY_EDITOR
             UpdateDebug();
     //#endif
-            if (!initPlayer && ActorsManager.Player!=null&& ActorsManager.Player.transform != null) TryPlayer();
+            // ⚠ m_Controller 是 UnityEngine.Object：换场景把玩家销毁后它就变成"假 null"，而 initPlayer 还停在 true
+            //   ⇒ 每帧在已销毁的 PlayerController 上读 transform → MissingReferenceException（舰船→新手教程实测）。
+            //   所以"控制器没了"必须当成"需要重新绑定"，并且先跑一遍解绑（避免事件重复订阅）。
+            if (initPlayer && !m_Controller) UnbindPlayer();
+            if (!initPlayer && ActorsManager.Player.IsValidMono()) TryPlayer();
             if(!initPlayer) return;
 
 

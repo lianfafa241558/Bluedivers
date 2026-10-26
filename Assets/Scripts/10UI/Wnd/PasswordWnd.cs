@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -78,6 +78,8 @@ namespace FPSGame.UI
 
         protected override void HideWnd()
         {
+            // 关窗把 Cancel 监听摘掉：残留的监听会被输入层弹栈"顺带消费"，把别的窗口那一次 ESC 吃掉
+            InputManager.RemoveListenerCancel(CancelListener);
         }
 
         private void LoadNext()
@@ -95,6 +97,9 @@ namespace FPSGame.UI
             SetText(desc, _now.desc);
             SetText(optA.transform.GetChild(0), string.IsNullOrEmpty(_now.optA_Text) ? "确定" : _now.optA_Text);
             SetText(optB.transform.GetChild(0), string.IsNullOrEmpty(_now.optB_Text) ? "取消" : _now.optB_Text);
+
+            // 必填请求不给退路：藏掉「取消」按钮，右键 / ESC 也在 CancelListener 里挡掉
+            if (optB != null) SetActive(optB, !_now.mustInput);
 
             if (input != null)
             {
@@ -142,10 +147,20 @@ namespace FPSGame.UI
             cb?.Invoke();
         }
 
-        /// <summary>ESC 监听：消费掉这次 ESC（返回 true），否则窗口层级会继续退。</summary>
+        /// <summary>ESC / 右键 监听：消费掉这次取消输入（返回 true），否则窗口层级会继续退。</summary>
+        /// <remarks>⚠ 输入层的 Cancel 是「右键 + ESC」两个键共用（<c>InputManagerBase.Update</c>）：
+        /// 右键一律不关窗（输入窗点错一下就消失很坑）；<see cref="PasswordWndInfo.mustInput"/> 的请求连 ESC 也不认。
+        /// ⚠ 监听器被输入层弹栈取出后不会自动挂回 ⇒ 吞掉的场合必须自己重新挂。</remarks>
         private bool CancelListener()
         {
             if (!State) return false;
+
+            if (Input.GetMouseButtonDown(1) || (_now != null && _now.mustInput))
+            {
+                InputManager.AddListenerCancel(CancelListener);
+                return true;
+            }
+
             Cancel();
             return true;
         }
@@ -167,6 +182,8 @@ namespace FPSGame.UI
         public int maxLength = 16;
         /// <summary>是否按密码显示（<c>***</c>）。</summary>
         public bool isPassword;
+        /// <summary>必填：true ⇒ 必须输入后确定，不显示「取消」按钮，右键 / ESC 也关不掉。</summary>
+        public bool mustInput;
         /// <summary>两个按钮的文案（留空 = 确定 / 取消）。</summary>
         public string optA_Text, optB_Text;
         /// <summary>空输入时的提示文案（留空 = "内容不能为空"）。</summary>

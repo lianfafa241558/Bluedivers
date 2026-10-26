@@ -56,3 +56,14 @@
 ## 构建 / 启动画面
 - 打 Windows 包输出到 `D:\Pro\Verion\BlueDivers`（StandaloneWindows64 + IL2CPP）；`BlueDivers_Data/RuntimeInitializeOnLoads.json` 是「`RuntimeInitializeOnLoadMethod` 回调有没有进包」的**权威证据**（`loadTypes`：0=AfterSceneLoad, 1=BeforeSceneLoad, 2=AfterAssembliesLoaded, 3=BeforeSplashScreen）。
 - ⛔ `00Tools/SkipUnityLogo.cs` **注定无效**：本机 `HasProLicense()==False`（Personal）下 Unity 徽标由**原生播放器**强制绘制，`SplashScreen.Stop()` 被当 no-op；回调**已确认进包** ⇒ 与写法/`#if`/asmdef/IL2CPP 裁剪**都无关**，别再折腾。要真去掉只能升 Pro 或换 Unity 6。
+
+## AI 协作成本口径（2026-10-18 用户问过两次；原在 `MEMORY.md` 热区，2026-10-26 下沉）
+
+- 事实：**每轮都重发全历史** ⇒ 会话累计 ≈ 上下文 × 轮数（实测 3.8M ≈ 20+ 轮 × ~150k）。
+- 五条杠杆（按收益排）：
+  1. **换任务开新窗口** —— 判据已沉 topics，续接只要几千 token；
+  2. **工具输出收敛** —— 大文件用 `offset/limit` 读片段、命令/脚本只打摘要行、**不重复整篇读同一文件**、不重复拉 tool description（带整段 server config）；
+  3. **少往返** —— 一次写对 + 并行工具 + 只验证一次（别"改→编→错→改→编"）；
+  4. **常驻注入瘦身** —— rules/skills 精简、MCP 只激活要用的 tool group；
+  5. **多文件探索丢给 `code-explorer` subagent** —— 结果不进主上下文。
+- 输出侧（回复长度 / 注释长度）是**小头**，别本末倒置。

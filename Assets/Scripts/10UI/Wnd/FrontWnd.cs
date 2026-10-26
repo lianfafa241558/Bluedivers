@@ -83,54 +83,19 @@ public class FrontWnd : Window
         //PlayAnim("Exit");
         if (IsLoad) return;
         IsLoad = true;
-        if (ArchivesData_SO.Current.isNew
-#if UNITY_EDITOR
-            ||Input.GetKey(KeyCode.U)
-#endif
-        )
-        {
-            // 首次进入（新建存档）：先让玩家起名，再进新手教学
-            AskPlayerName();
-        }
-        else
-        {
-            ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
-                GameState = GameStateEnum.Bridge;
-                WindowState = WindowStateEnum.Game;
-            });
-        }
 
-    }
-
-    /// <summary>
-    /// 首次进入时用可复用的 <see cref="PasswordWnd"/> 收玩家名，写进存档再进教学关。
-    /// ⚠ 输入窗没加载（场景缺 PasswordWnd）时**不能卡住流程**，直接按原名进教学。
-    /// </summary>
-    private void AskPlayerName()
-    {
-        var wnd = WndHub.Password;
-        if (wnd == null)
+        // 新档先进新手教学：教程阶段不管名字（系统默认名即可），
+        // 起名统一由 BridgeWnd 在大厅里做 ⇒ 不管从哪条路进大厅都会问
+        if (ArchivesData_SO.Current.isNew)
         {
-            Debug.LogWarning("[FrontWnd] 场景里没有 PasswordWnd，跳过起名直接进教学关");
             EnterTeach();
             return;
         }
 
-        wnd.Creat(new PasswordWndInfo
+        ResSvc.Instance.AsyncLoadScene("Utnapishitim", () =>
         {
-            title = "起个名字",
-            desc = "以后就用这个名字联机（随时可在设置里改）",
-            placeholder = "输入玩家名",
-            presetText = ArchivesData_SO.Current.playerName,
-            maxLength = 12,
-            onConfirm = name =>
-            {
-                var archive = ArchivesData_SO.Current;
-                archive.playerName = name;
-                archive.Save();
-                EnterTeach();
-            },
-            onCancel = EnterTeach,
+            GameState = GameStateEnum.Bridge;
+            WindowState = WindowStateEnum.Game;
         });
     }
 

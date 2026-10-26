@@ -326,7 +326,11 @@ namespace FPSGame.Game
         private IEnumerator WaitSetPos()
         {
             yield return null;
-            while (!IsMainStage())
+            // ⚠ 除了"主流程"，还必须等**注册表就位**：场景里的 Actor 在场景激活那一帧就已经 Awake，
+            //   而 ActorsManager 是 BattleManager.Creat 时才 new 出来的（晚一两帧）。从舰桥进新手教程时
+            //   GameState 本来就是 Bridge ⇒ 只判 IsMainStage 会把创建事件发给一排**还没人订阅**的静态事件，
+            //   结果是玩家与引导 NPC 都没注册：字幕框不出现、语音也没人播（2026-10-26 实测）。
+            while (!IsMainStage() || ActorsManager.Instance == null)
             {
                 yield return null;
             }

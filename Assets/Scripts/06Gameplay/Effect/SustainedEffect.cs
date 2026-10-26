@@ -11,7 +11,7 @@ namespace FPSGame.Gameplay
     /// 一个持续的效果，例如地面的火焰、毒气等。它会在一定时间内持续对进入范围的对象造成影响。
     /// 持续时间由另一个组件控制，例如LimitedLife组件。这个类主要用于处理持续效果的逻辑，例如检测进入范围的对象并应用效果。
     /// </summary>
-    [AddComponentMenu("持续效果/基础")]
+    [AddComponentMenu("持续效果/基础持续效果")]
     public class SustainedEffect : MonoBehaviour, IVfxEffect
     {
         const QueryTriggerInteraction k_TriggerInteraction = QueryTriggerInteraction.Collide;

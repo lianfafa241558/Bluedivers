@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5562236647405478821}
   - component: {fileID: 8924492267938482431}
   - component: {fileID: 6902098988878153305}
+  - component: {fileID: 6939292290188872427}
   m_Layer: 6
   m_Name: Sphere
   m_TagString: Untagged
@@ -188,6 +189,24 @@ MonoBehaviour:
   ShieldFull: {fileID: 0}
   ShieldBreak: {fileID: 0}
   ShieldDamage: []
+--- !u!114 &6939292290188872427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 207114199184333362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92309be4ecd64b94d8b4d364e5af0f63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Animator: {fileID: 0}
+  fxData: {fileID: 11400000, guid: eafb0f1a817f8d44fb01152b5a0690dd, type: 2}
+  fxEvent: {fileID: 11400000, guid: dd7cef45915f0f943bd5c7edd65286d5, type: 2}
+  fxMaterial: {fileID: 2100000, guid: efe935f38a12f6a4284537d08aea0f5b, type: 2}
+  events: []
+  _healthGo: {fileID: 207114199184333362}
 --- !u!1 &2317934351446893801
 GameObject:
   m_ObjectHideFlags: 0
@@ -5032,7 +5051,6 @@ GameObject:
   - component: {fileID: 2720708868680693032}
   - component: {fileID: 3178527037366814488}
   - component: {fileID: 177813543088722171}
-  - component: {fileID: 8275219929734514498}
   - component: {fileID: 4251269344127117186}
   m_Layer: 6
   m_Name: ShieldBag
@@ -5189,6 +5207,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3704b6bfebbc2374da4a9b194065d456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 5fd17dbdd75469740a06d85ed7f56f7f, type: 3}
@@ -5200,16 +5219,17 @@ MonoBehaviour:
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
   ContGo: []
-  showName: "\u62A4\u76FE\u5145\u80FD\u5668"
-  id: ShieldBag
-  Portrait: {fileID: 21300000, guid: 6fb469b857bdf4841a04dc24de95f97f, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 6fb469b857bdf4841a04dc24de95f97f, type: 3}
 --- !u!114 &3178527037366814488
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5251,24 +5271,6 @@ MonoBehaviour:
   emitter: {fileID: 0}
   _hideDelay: 0
   _rebuildDelay: 10
---- !u!114 &8275219929734514498
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2382642831774620610}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92309be4ecd64b94d8b4d364e5af0f63, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Animator: {fileID: 0}
-  fxData: {fileID: 11400000, guid: eafb0f1a817f8d44fb01152b5a0690dd, type: 2}
-  fxEvent: {fileID: 11400000, guid: dd7cef45915f0f943bd5c7edd65286d5, type: 2}
-  fxMaterial: {fileID: 0}
-  events: []
-  _healthGo: {fileID: 207114199184333362}
 --- !u!114 &4251269344127117186
 MonoBehaviour:
   m_ObjectHideFlags: 0

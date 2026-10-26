@@ -242,6 +242,11 @@ namespace FPSGame.Game
             Enemys.RemoveAll(x => ReferenceEquals(x, actor));
             SpecUnits.RemoveAll(x => ReferenceEquals(x, actor));
             Players.RemoveAll(x => ReferenceEquals(x, actor));
+
+            // ⚠ Player 是 IActor（接口引用）⇒ 它上面的 `== null` 走**引用比较**，判不出"已销毁"。
+            //   不清就留一个僵尸：换场景（舰船→新手教程）销毁玩家后、新玩家注册前，
+            //   所有 `ActorsManager.Player.transform` 都会抛 MissingReferenceException（2026-10-26 实测）。
+            if (ReferenceEquals(Player, actor)) Player = null;
         }
 
         /// <summary>
@@ -253,13 +258,10 @@ namespace FPSGame.Game
         public static void Despawn(IActor actor)
         {
             if (actor == null) return;
-
-            Unregister(actor);                  // ① 先摘表
-
-            // ② 再销毁。⚠ 接口引用不能用 `?.` / `??`：绕过 Unity 的假 null 重载，会把已销毁对象判成有效
-            var comp = actor as Component;
-            if (comp == null) return;           // 已销毁 / 不是组件 ⇒ 表已摘干净，收工
-            Tool.Destroy(comp.gameObject);
+            Unregister(actor);
+            //var comp = actor as Component;
+            //if (comp == null) return;
+            //Tool.Destroy(comp.gameObject);
         }
 
         public override void Awake()
@@ -269,6 +271,7 @@ namespace FPSGame.Game
             Players = new();
             SpecUnits = new();
             OnActorCreat = new();
+            Player = null;            // 接口引用不吃 Unity 假 null（见 Unregister 的注释）⇒ 每局必须显式清
             _enemyNetIdSeq = 0;   // 本局的敌人编号从头开始（分配点会先判 Instance，保证不会有人在归零之前分号）
             _specUnitNetIdSeq = 0;   // 特殊单位同理（独立号段，见 SpecNetIdBase）
             _hostSpawnNetIdSeq = 0;  // 房主分配段同理（独立号段，见 HostSpawnNetIdBase）

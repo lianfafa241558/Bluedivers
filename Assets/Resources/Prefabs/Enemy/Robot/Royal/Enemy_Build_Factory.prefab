@@ -311,8 +311,8 @@ MonoBehaviour:
   UseHpBar: 1
   HpHeight: 1
   shape: 0
-  rangeLength: 1
-  halfHeight: 1.75
+  rangeLength: 3
+  halfHeight: 3
 --- !u!195 &8822482883838708908
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -382,6 +382,7 @@ MonoBehaviour:
     Value: 10
   MainPart: {fileID: 5529930566279991862}
   demolishValue: 30
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -439,11 +440,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: f3a88f6c74eb0ff41a419d2e8933659a, type: 2}
   fxMaterial: {fileID: 2100000, guid: cc017163238a70b41b9bf6bf1b6dedd4, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!1 &7205964680151303498
 GameObject:
@@ -688,6 +689,7 @@ MonoBehaviour:
   AttackRange: 35
   AlertRange: 10
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 4
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity

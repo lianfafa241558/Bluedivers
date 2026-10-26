@@ -8,6 +8,9 @@ namespace FPSGame.Core
 {
     public abstract class ArchivesDataBase_SO : ScriptableObject
     {
+        /// <summary>系统默认名前缀（<see cref="NewPlayerLogon"/> 生成「用户」+UID）。</summary>
+        public const string DefaultNamePrefix = "用户";
+
         public static string teststring;
 
 
@@ -113,6 +116,16 @@ namespace FPSGame.Core
 
 
         protected abstract void InLoad();
+
+
+        /// <summary>
+        /// 名字是否还是系统默认（空 / 「用户」+UID）——只有这种才需要让玩家自定义。
+        /// ⚠ 口径绑在 <see cref="NewPlayerLogon"/> 上：默认名生成规则改了这里要同步。
+        /// </summary>
+        public bool IsDefaultPlayerName()
+        {
+            return string.IsNullOrEmpty(playerName) || playerName == DefaultNamePrefix + UID;
+        }
 
 
         public void NewPlayerLogon()

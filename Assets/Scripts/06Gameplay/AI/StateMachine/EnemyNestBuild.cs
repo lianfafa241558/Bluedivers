@@ -99,7 +99,7 @@ namespace FPSGame.AI
             BattleHub.Current.CreatUnit(item.Key, creatPoint.position + creatPoint.forward, creatPoint.rotation,
                 this, creatData.IndexOf(item), target);
 
-            AudioSvc.PlaySound(new(creatCilp, transform.position, 40, FPSGame.Core.AudioGroups.Enemy));
+            if(creatCilp) AudioSvc.PlaySound(new(creatCilp, transform.position, 40, FPSGame.Core.AudioGroups.Enemy));
         }
 
         protected override void UpdateCurrentAiState()

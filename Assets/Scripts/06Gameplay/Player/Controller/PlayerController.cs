@@ -159,9 +159,22 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
 
     private void OnDestroy()
     {
-       
+        GlobalEventBus.OnGameStateChange -= OnBridgeInvincibleOff;   // 没订阅过时 -= 无副作用
         if (!WeaponsManager) return;
         WeaponsManager.OnAim -= OnAim;
+    }
+
+    /// <summary>离开舰桥（战斗 / 新手教程）立刻撤掉"舰上无敌"。
+    /// <para>▍为什么必须撤：<c>FpsHelper.VaildTarget</c> 把带 <see cref="ActorFlag.Invincible"/> 的单位当
+    /// **不可选目标** ⇒ 所有 AI / 侦测器（<c>DetectionModule.CheckNewTarget</c> 的过滤）永远锁不到玩家。
+    /// 从舰桥进教程时玩家是在 <c>GameState==Bridge</c> 那一刻实例化的，旗标只加不撤 ——
+    /// 表现就是"贴到 Mission3/Room2 的侦测器脸上也不理我"（2026-10-26 实测）。
+    /// 大厅正常开局 GameState 不是 Bridge，本来就不加，所以这条只补"从舰桥出发"这条路。</para></summary>
+    private void OnBridgeInvincibleOff(GameStateEnum _, GameStateEnum newState)
+    {
+        if (newState == GameStateEnum.Bridge) return;
+        GlobalEventBus.OnGameStateChange -= OnBridgeInvincibleOff;
+        Actor.RemoveFlag(ActorFlag.Invincible);
     }
 
     protected override void Start()
@@ -171,7 +184,12 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         Health.OnRevive += OnRevive;
         WeaponsManager.OnShoot += WeapomRecoil;
         m_sprintTime = -SprintCool;
-        if (FPSGame.Data.FlowState.GameState == GameStateEnum.Bridge) Actor.AddFlag(ActorFlag.Invincible);
+        if (FPSGame.Data.FlowState.GameState == GameStateEnum.Bridge)
+        {
+            Actor.AddFlag(ActorFlag.Invincible);
+            // 舰上无敌只在"还在舰桥"时成立 ⇒ 离开舰桥立刻撤（见 OnBridgeInvincibleOff）
+            GlobalEventBus.OnGameStateChange += OnBridgeInvincibleOff;
+        }
 
         // 根据存档中的"默认操作视角"设置初始化视角（0=第一人称，1=第三人称）
         // 走「数据自持」：ArchivesData_SO.Current 由 ArchiveLoader.Init() 写入，玩法层直接读数据自身

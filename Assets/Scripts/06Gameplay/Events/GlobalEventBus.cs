@@ -118,6 +118,13 @@ namespace FPSGame.Gameplay
 
         #region 玩家相关
 
+        /// <summary>本机玩家的昵称（存档 <c>playerName</c>）改了：参数 = 新名字。
+        /// <para>▍发布点只有一处 —— UI 的改名入口（设置窗 / 起名窗），统一走 <c>Window.SetSelfUserName</c>。
+        /// ⚠ 不能放在 00Core 的存档类里广播：那边引用不到本类（依赖方向），所以"写档"和"广播"由 UI 那个 helper 一起做。</para>
+        /// <para>▍订阅者 = 显示昵称的窗口（`BridgeWnd.selfName` / `PlayerWnd.playerName`），收到就按"昵称优先、空则角色名"重画。</para></summary>
+        public static event Action<string> OnPlayerNameChange;
+        public static void PlayerNameChange(string name) => OnPlayerNameChange?.Invoke(name);
+
         /// <summary>
         /// 标记点位
         /// </summary>
