@@ -250,7 +250,9 @@ namespace FPSGame.Gameplay
                 sfxRange = DamageData.IsValid() ? DamageData.SoundRadius : 0,
                 weapon = null,//纯自部署，无武器来源
                 useDiffScale = false,
-                IgnoreSelf =true
+                IgnoreSelf =true,
+                // ★ 空投舱也是"每端各自 Instantiate、各自砸一次"：非权威端只对玩家/盟友落地（同 SustainedEffect）
+                localEffectDamage = true,
             };
 
         /// <summary>

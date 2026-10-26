@@ -74,6 +74,14 @@ namespace FPSGame.Game
             }
         }
 
+        /// <summary>【联机】本端**本地生成、两端各一份**的部署/支援单位（空投炮台、治疗无人机、火箭包…）：
+        /// 它的血量权威归房主 —— 非权威端不本地结算 AI 来源的伤害，只应用房主下发的血与死亡。
+        /// <para>▍为什么需要：这类单位两端各自 <c>Instantiate</c>、各自跑 AI、各自挨一份子弹 ⇒ 各扣一次必然分叉，
+        /// 且成员端还会把这一扣上报给房主 ⇒ 变成 2 倍。与载具是同一个门
+        /// （<c>NetVehicleDamageBridge.Gate</c>，口径 = <c>BattleState.IsVehicleDamageAuthority</c>）。</para>
+        /// <para>⚠ 运行期标记、不参与序列化：由 <c>VFXAirdropEffect.SpawnCreatObject</c> 在生成时置位。</para></summary>
+        public bool HostAuthorityUnit { get; set; }
+
         public ActorState ActorState { 
             get => actorState;
             set{

@@ -107,6 +107,8 @@ namespace FPSGame.Gameplay
                     DemolishValue = 0,
                     isDirect = true,
                     damageAffected = null,
+                    // ★ 反伤由"被打者本端"触发，两端都会算一遍 ⇒ 走同一道房主权威门（玩家/盟友目标例外）
+                    LocalEffect = true,
                 };
                 //反甲
                 damageable.InflictDamage(thornPacket);
@@ -300,6 +302,8 @@ namespace FPSGame.Gameplay
                     DemolishValue = damageData.GetDemolishValue(0),
                     isDirect = true,
                     damageAffected = collider,
+                    // 透传"这只伤害物是各端本地生成的" ⇒ 门在 Damageable.InflictDamage（直击也要过它）
+                    LocalEffect = hitData.localEffectDamage,
                 };
                 //直击
                 comp.InflictDamage(directPacket);
@@ -378,6 +382,8 @@ namespace FPSGame.Gameplay
                             DemolishValue = damageData.GetDemolishValue(centerDisance),
                             isDirect = false,
                             damageAffected = exolosionCollider,
+                            // 透传"各端本地生成"标记，门在 Damageable.InflictDamage
+                            LocalEffect = hitData.localEffectDamage,
                         };
                        
                         //爆炸
@@ -503,6 +509,8 @@ namespace FPSGame.Gameplay
                     DemolishValue = hitData.data.GetDemolishValue(distance),
                     isDirect = true,//直击包：绕开爆炸抗性/爆炸遮挡，即"非爆炸伤害"
                     damageAffected = collider,
+                    // 透传"各端本地生成"标记（踩踏等），门在 Damageable.InflictDamage
+                    LocalEffect = hitData.localEffectDamage,
                 });
             }
 
@@ -530,6 +538,9 @@ namespace FPSGame.Gameplay
             public PEInt knockbackRadius;
             /// <summary>击退竖直倍率(1=保持原方向)</summary>
             public PEInt knockbackUpScale;
+            /// <summary>本端**本地生成**的效果伤害（踩踏等）：非权威端只对玩家/盟友落地，
+            /// 口径与 <see cref="ProjectileHitData.localEffectDamage"/> 完全一致。</summary>
+            public bool localEffectDamage;
         }
     }
 }

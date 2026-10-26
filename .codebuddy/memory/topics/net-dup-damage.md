@@ -38,25 +38,61 @@
 - `SustainedEffect` 同理：tick 绕过 `OnHit` 直接调 `FpsHelper.Hit`，只有 `IsVisualBullet` 分流（碰撞事件那条），**没有权威门**
 - 空投/战备这块的口径是"各端各自重放一遍、只保证种子一致"，**只统一了表现，没统一结算**
 
-## 待拍板的修法
+## 已实施：方案 B（2026-10-26）
 
-### A. 权威端开火（最小改动）
-`WeaponTemporaryController` 加 `[SerializeField] bool OnlyAuthorityTick`，`LogicTick` 里 `if (OnlyAuthorityTick && !BattleState.IsTickDamageAuthority) return;`
-- 复用现成权威门（`04Data/BattleState.cs:48`；写入方 `WaveManager.Awake`，房主掉线由 `EnemyNetBridge.OnHostLost` 自动恢复）
-- 代价：成员端看不到弹幕/爆炸（装置模型与音效还在）
+- `WeaponBaseController` 新增 `protected virtual bool IsShotVisualOnly => false`；`ShootFromMuzzle` 开头分支：为真则逐颗 `SpawnVisualBullet(muzzle, GetShotDirectionWithinSpread(muzzle))` + `ShootFlash` 后 return（跳过真弹与 `SpawnLandingMarker`）。音效 / `OnShoot` / `EmitFireNoise` / 热量仍留在 `HandleShoot` ⇒ 成员端"看得见打得响、不扣血"。
+- `WeaponTemporaryController` 覆写 `=> !FPSGame.Data.BattleState.IsTickDamageAuthority`（房主/单机真开火，伤害由它结算后广播；房主掉线 `EnemyNetBridge.OnHostLost` 置回 true ⇒ 剩余端自动接管）。
+- 覆盖 **23 个预制体**（20 个 Temp + 3 个 MineLauncher 继承即生效），**未改任何 prefab、无新增序列化字段**。
+- ⚠ 刻意不在基类统一判定：玩家自己的枪在成员端必须真开火（4025 上报），一律门掉会永远打不出伤害。
+- 验证：`offline_compile.py 06_Gameplay` 0 error；两个文件 BOM OK。
 
-### B. 非权威端打"表现弹"（推荐）
-给 `WeaponBaseController` 加"仅表现"开关，`HandleShoot` 走现成的 `SpawnVisualBullet`（只摘伤害、保留 `PlayImpactFxRemote`）
-- 挂载点集中在 `VFXAirdropEffect` 已有的 5 处 `weapon.Origin/RandomSeed` 赋值旁（:453/:535/:595/:631/:697）⇒ 一处判定覆盖所有 Bomb/Jet/Medivac 装置
-- 表现与伤害都保住，但要动武器核心路径
+### 其他备选（已否）
+- **A** 权威端才 tick（`LogicTick` 直接 return）：改动更小，但成员端连弹幕都没有。已否。
+- **C** 装置改 4052 生成同步的真实体：只有以后需要"装置能被摧毁/被击毁"时才值得。
 
-### C. 走 4052 生成同步（最重）
-装置变真实体、房主生成成员复刻。只有以后需要"装置能被摧毁/被击毁"时才值得。
+## B 之后仍会重复结算的 ImpactVfx（2026-10-26 扫描）
 
-## 验证手段
+扫 23 个装置引用的 26 条 `ImpactVfx`（脚本 `.codebuddy/plans/scan_impactvfx.py`），**5 条自带伤害**：
 
-- 两端开 `NetSyncLog`，看「命中上报·发」/「伤害下发·发」是否**成对出现两遍**（`EnemyNetBridge.OnLocalHit/OnLocalDamaged`）
-- 或临时在 `WeaponTemporaryController.LogicTick` 打一条带本端身份的日志，观察两端是否都在开火
+| 装置 | ImpactVfx | 自带 |
+|---|---|---|
+| `MineLauncher` | `Airdrop/Sub/Mine.prefab` | `DeployableMine` |
+| `MineLauncher_Fire` / `_Gas` | 同上（`Mine_Fire`/`Mine_Gas` 是 `Mine.prefab` 的 **variant**） | `DeployableMine` |
+| `Eagle Gas` / `Track_Gas` / `MineLauncher_Gas` | `VFX/Smoke/Vfx_GasSmoke_*` | `SustainedEffect` |
+| `Eagle_Cluster` | `Sub/Eagle Cluster_Explode` | `WeaponTemporaryController`（**已被本次开关覆盖**） |
+
+- 地雷链：MineLauncher 打 `Mine_Projectile`（`ProjectileStandard`，不是 `ProjectileGrenade`）→ 命中 `PlayImpactFx` 生成 ImpactVfx=真地雷（`DeployableMine`+`Actor`+`HealthOther`+`LimitedLife`）→ `SetOrigin` 部署 → 2s 后 `TryHit` 引爆 → `DoExplosion` 本地 `FpsHelper.Hit`。表现弹**照样**生成这颗真地雷 ⇒ 伤害仍两端各一份。
+- ✅ **已修（2026-10-26，逐目标门，不是整段门）**：`ProjectileHitData` 加 `bool localEffectDamage`；`SustainedEffect.ApplyEffect` 与 `DeployableMine.DoExplosion` 把它置 true；落点在 `FpsHelper.Hit` 爆炸循环：
+  `if (hitData.localEffectDamage && !BattleState.ShouldApplyTickDamage(item.IsPlayerLike)) continue;`（`Damageable.IsPlayerLike` 由 private 改 public，判据只此一处）。
+  ⇒ 表现（触发/预警/回池/命中特效/音效）两端照跑，**只有伤害**被分流：非权威端只对玩家/盟友落地，其余目标等房主广播。
+- ✅ **2026-10-27 收口：门只剩一处**。三层链路：
+  ① 事件级 `ProjectileHitData.localEffectDamage` / `KineticAreaHitData.localEffectDamage`（生产者：`SustainedEffect` / `DeployableMine` / `AirdropPod` / `TrampleEffect`）；
+  ② 包级 `DamagePacket.LocalEffect`（`FpsHelper` 4 处构造点透传：直击 / 爆炸 / 范围动能 / 荆棘反伤）；
+  ③ 门 = `Damageable.InflictDamage` 的 `if (packet.LocalEffect && !BattleState.ShouldApplyTickDamage(IsPlayerLike)) return;`（放在 `LocalDamageGate` 之后）。
+  收益：**直击分支以前根本没有门**（`AirdropPod` 砸中单位的直击伤害一直两端各算），现在自动覆盖；以后新增伤害管线只要构造 packet 就必然过门。
+- ✅ **荆棘反伤改房主权威**：`TryThornArmorReflect` 的 `thornPacket` 标 `LocalEffect = true` ⇒ 敌人近战反伤只由房主落地并广播；打到自己玩家/盟友时本机照常算（`IsPlayerLike` 例外）。
+- ⚠ **为什么不能整段门掉（关键）**：盟友实例在别人机器上**没有 `Damageable`**（`RoomMsg.cs:420` 自述）⇒ 房主替成员玩家扣不了血；若成员端整段跳过，自己的玩家站在火里/踩地雷会**完全不掉血**。所以门必须逐目标、且玩家例外。
+- ✅ **同坑第二条管线也补了（2026-10-27）**：`TrampleEffect` 不走 `Hit`，走 `FpsHelper.HitAreaKinetic` ⇒ 给 `KineticAreaHitData` 加同样的 `localEffectDamage`，`HitAreaKinetic` 的逐单位循环里做同一道判断。挂载点：`Exosuit`（机甲）/ `Vox_Enemy` / `Dec_Bane_Boss` / `Dec_Colossus` / `Dec_Ultralisk` / `TrainEngineSam`。
+- ✅ **击杀归属/统计修了（2026-10-27）**：`WeaponBaseController.Origin` 原来是自动属性、**全仓只写不读**（`VFXAirdropEffect` 5 处写呼叫者，真正参与归属的却是 `Owner`）⇒ 空投装置起源恒等于"没有 NetId 的装置自身"。现在 `Origin` 的 setter 顺手同步给 `Owner`（仅当 Owner 未设 / 等于自身时），玩家武器与炮塔那种已显式赋 Owner 的不受影响。
+
+## 空投支援单位（14 个 `WeaponEnemyController`，2026-10-27）
+
+- 与 14 个战备 SO 一一对应（全是 `creatObect`、走 `VFXAirdropEffect` 本地 `Instantiate`），但**分三类**：
+  ① **9 个敌人型炮台**（`Turret_*` + `LampTower`）：`Actor`+`HealthEnemy`+`Damageable`+`EnemyController`+`EnemyTurret`+`DetectionModuleTurret`；
+  ② **4 个 `Healdrone_*`**：基类 = `GuardDog`(IEquippable)+`Furniture_Equip`+`Actor`+`DetectionModuleTurret` —— **无 EnemyController/Damageable/Health**，是跟随持有者的无人机；
+  ③ **`RocketBag`**：`BaseObject`+`WeaponBag`+`Furniture_Equip` —— 背包武器，靠装备系统上路。
+- 开火无门：`EnemyTurret.AttackBehavior` → `EnemyController.TryAtack` → `HandleShootInputs`，两端都打真弹（`RemoteDrivenMovement` **只管移动**）。
+- ✅ **打人**：`WeaponBaseController.LocalEffectDamage`（运行期属性），由 `VFXAirdropEffect.SpawnCreatObject → MarkGeneratedUnit` 给生成物上所有 `WeaponEnemyController` 打标 → `ProjectileBase.BuildHitData` 透传 ⇒ 非权威端只对玩家/盟友落地。只认 `WeaponEnemyController`：载具武器是玩家在开，不能标。
+- ✅ **号**：`StampVehicleNetId` → `StampCreatUnitNetId`，去掉"仅 SpecUnit"过滤 ⇒ 空投件也能拿到 4028 里房主分配的那个号（**零协议变更**）。
+- ⚠ 只盖章会**引入新的 2 倍**（号一致后，两端各自挨的敌方子弹 + 成员那笔 4025 都会落地）⇒ 同时给"挨打"加门：`Actor.HostAuthorityUnit` 由生成时置位，`NetVehicleDamageBridge.IsAuthorityGatedActor`（载具 || 该标记）⇒ 非权威端只吃 4040 下发。
+- ⚠ 无人机/背包没有 `Damageable`，`HostAuthorityUnit` 对它们 no-op；但**装备归属本来就同步**（4036 → `ApplyRemoteOperate(盟友实例)` → `InstallEquip` → `GuardDog.OnInstall`）。2026-10-27 实测：无告警、位置一致 ⇒ 不用另开位姿通道。
+- ⚠ 残：炮台**自转**（`Turret.Look/AutoRotate`）两端各算，纯表现；无人机状态机节奏亦然。
+
+## 状态与验证（2026-10-27）
+
+- ✅ 已完成：装置（23）/ 本地生成效果（毒烟·火焰·地雷·空投舱）/ 范围动能 / 荆棘反伤 / 支援单位打人 + 挨打 / 无人机装备归属（已实测）。
+- ⏳ **差一次数值实测**：2 人局叫 `ADSO_G_Gatling` 或 `ADSO_R_120MM`，确认敌人掉血不再是双倍、炮台不再刷 `这只怪没有 NetId`、打爆后成员那份跟着消失。
+- 手段：两端开 `NetSyncLog`，看「命中上报·发」/「伤害下发·发」是否**成对两遍**（`EnemyNetBridge.OnLocalHit/OnLocalDamaged`）；单位号看「载具/号」日志。
 
 ## 相关
 

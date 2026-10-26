@@ -41,13 +41,7 @@
 - ⚠ `DisplayDic` 索引器兜底会**把占位条目写进字典**，之后 `Synchronize` 认为"键已存在"拒绝补齐 ⇒ 已加 `[NonSerialized] _placeholderKeys`（占位可被真实值覆盖、setter/`Add` 清标记）；**插入行为保留**，因为 `VehicleWnd` 靠"索引器返回同一引用"就地改载具改装项
 - 存档落点是 `Application.dataPath/../`（编辑器再 `/../`）⇒ **编辑器与打包读的是两个不同文件**："编辑器好、打包坏"先比两个 json 的 `settingDic` 键集合
 
-## 地形 / 渲染
-- NavMesh 在 `MapRoot`；跨层只传 `GameObject[]`/基础类型
-- ToonLit 5 pass 共用 `ToonLit_Shared.hlsl`；`GetFinalBaseColor` = albedo 唯一入口；未进 CBUFFER = 死属性；溶解 `clip(step(dissolve,v)-dissolve+_EdgeWidth)`
-- 天气 `WeatherSystem.RollWeather` 的随机源**必须按权威种子派生独立流**（`SeedStream.Weather=14`）：原来抽全局 `BattleRandom`，它在开局被任务点/兴趣点生成推进到不同位置 ⇒ 联机"一边晴一边雨"；单机（`TaskState.Seed==0`）仍沿用全局流
-- ⭐ **主地形 = 一图一份 `TerrainData`**：`MapData_SO.terrainAsset` 持有，`BattleManager.InitTerrain` 在**读 terrainData / 设 size / SetTextures 之前**换上（留空 = 沿用 BattleScene 里那份 `MainMap`）。⚠ 打包端 `treePrototypes`/`detailPrototypes` 的 setter 是 **Editor-only**（只刷"only implemented in editor"、什么都不改）⇒ 原型**只能烘在资产里**；生成入口 `Tools/地形/生成每图 TerrainData（方案A）`（`Assets/Editor/TerrainDataBaker.cs`，**改了原型数组后打包前必跑**）+ `Tools/地形/体检`
-- ⚠⚠ **`TerrainCollider` 自带独立一份 `terrainData` 引用、不跟随 `Terrain` 组件** ⇒ 换地形时必须同时 `terrain.GetComponent<TerrainCollider>().terrainData = ...`，否则"看着是新地形、脚下踩空/悬空"（2026-10-11 修）
-- ⚠ 地形资产硬约束：`detailResolution`/`detailResolutionPerPatch` 是**只读属性**（脚本改不了，运行时也没人赋值）⇒ 专属资产**必须由"复制 MainMap"得来**，`new TerrainData()` 会让草分辨率变默认值而变糙；能缩的只有运行时**每次都会重设**的 `heightmapResolution`(→33)/`alphamapResolution`(→16)（`BattleManager` + `ApplyAlphamapsInChunks` 整张重写混合图），再加上**把细节（草）层全部清零**（`ClearAllDetailLayers`，草每局现场生成）⇒ 单份 13MB → 1.17MB → **约 49KB**（7 份合计 ~344KB）。⚠ 烘焙顺序必须**先清树实例、再换 `treePrototypes`**（反了会逐条报 `Tree removed: invalid prototype N`）。⚠ `terrainLayers` 不能省：`SetTextures` 只改已有层的 diffuse/tile、**从不建层**
+> 地形 / 渲染 / TerrainData / ToonLit / 天气 → `terrain-render.md`（2026-10-27 拆出）
 
 > 以下由 `net-battle.md` §7.2d 并入（2026-10-18）：一个 float 被 5 处按 5 种语义复用；
 > 结论是**有意不同步**（结果早已由 4036/4046/4049 过网）。联机口径见 `net-battle.md` / `net-damage.md`。

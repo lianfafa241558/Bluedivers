@@ -225,15 +225,30 @@ namespace FPSGame.Weapon {
         }
         #endregion
 
-        /// <summary>
-        /// 武器来源:一般为对应单位
-        /// </summary>
-        public GameObject Origin { get; set; }
+        private GameObject _origin;
+        private GameObject _owner;
+
+        /// <summary>武器来源（**起源**）：一般为对应单位；空投/装置类的"呼叫者"也写在这里
+        /// （<c>VFXAirdropEffect</c> 生成后回填 <c>weapon.Origin = 呼叫者</c>）。
+        /// <para>⚠ 它原本是个自动属性、全仓**只写不读** —— 真正参与伤害归属的是 <see cref="Owner"/>
+        /// ⇒ 空投把呼叫者写进来后起源仍是装置自身，而装置没有 NetId ⇒ 击杀归属/统计两端都解析不到
+        /// （见 <c>topics/net-dup-damage.md</c>）。</para>
+        /// <para>现在 setter 顺手同步给 <see cref="Owner"/>，**仅当 Owner 还是"未设 / 本武器自身"**时
+        /// —— 玩家武器、炮塔这些已经显式赋过 Owner 的不受影响。</para></summary>
+        public GameObject Origin
+        {
+            get => _origin;
+            set
+            {
+                _origin = value;
+                if (value.IsValid() && (!_owner.IsValid() || _owner == gameObject)) _owner = value;
+            }
+        }
 
         /// <summary>
         /// 武器所有者:一般为对应单位，轰炸类武器重定向至自己
         /// </summary>
-        public GameObject Owner{ get; set; }
+        public GameObject Owner{ get => _owner; set => _owner = value; }
 
         public virtual PEInt WeaponChargeScale_D => 1;
 
@@ -522,6 +537,21 @@ namespace FPSGame.Weapon {
 
         #region 射击
 
+        /// <summary>本次开火是否**只生成"表现弹"**（飞得出来、命中有反馈，但不结算任何伤害）。
+        /// <para>▍默认 false = 本机真开火。需要覆写的是"**各端本地生成、自己按 tick 开火**"的装置
+        /// （<c>WeaponTemporaryController</c>）：非权威端必须只打表现弹，否则 N 个端 = N 倍伤害
+        /// （见 <c>BattleState.IsTickDamageAuthority</c>、<c>topics/net-dup-damage.md</c>）。</para>
+        /// <para>⚠ 别在基类统一判定：玩家自己的枪在成员端也**必须**真开火（伤害靠 4025 上报、房主结算），
+        /// 一律门掉会让他永远打不出伤害。</para></summary>
+        protected virtual bool IsShotVisualOnly => false;
+
+        /// <summary>本武器打出的伤害属于"**各端本地生成**的东西造成的"（支援炮台 / 治疗无人机 / 火箭包这类
+        /// 空投支援单位：每个端各自 Instantiate、各自 AI 开火）。
+        /// <para>▍置位方：<c>VFXAirdropEffect.SpawnCreatObject</c>（生成后按端身份打标，不在 prefab 里配）。</para>
+        /// <para>▍消费方：<c>ProjectileBase.BuildHitData</c> → <c>ProjectileHitData.localEffectDamage</c>
+        /// → <c>DamagePacket.LocalEffect</c> ⇒ 非权威端只对玩家/盟友落地（见 topics/net-dup-damage.md）。</para>
+        /// <para>⚠ 玩家驾驶的载具武器不能标：那是玩家自己开的枪，伤害必须在本机落地。</para></summary>
+        public bool LocalEffectDamage { get; set; }
 
         /// <summary>
         /// 进行射击
@@ -586,6 +616,22 @@ namespace FPSGame.Weapon {
         /// </summary>
         void ShootFromMuzzle(Transform muzzle, int bulletsPerShotFinal)
         {
+            // 非权威端只打表现弹（见 IsShotVisualOnly）。枪口闪光/音效/噪声/热量仍由 HandleShoot 照常走，
+            // 只是把"真弹"换成"表现弹"；落点预示（SpawnLandingMarker）是本机给玩家看的预测，这里不生成。
+            if (IsShotVisualOnly)
+            {
+                for (int i = 0; i < bulletsPerShotFinal; ++i)
+                {
+                    var visualBullet = SpawnVisualBullet(muzzle, GetShotDirectionWithinSpread(muzzle));
+                    // 激光/蓄力/锁定这类武器靠 OnBulletShoot 配置弹体（GetLaserBullet 还会登记给 EndLaser 回收）
+                    // ⇒ 表现弹也要发一次，否则装置在非权威端只剩一颗普通子弹（如 Dec_ColossusTower）。
+                    // ⚠ 顺序与真弹路径略有差别：SpawnVisualBullet 内部已经 Shoot 过，这里只补配置。
+                    if (visualBullet != null) OnBulletShoot?.Invoke(visualBullet);
+                }
+                ShootFlash(muzzle);
+                return;
+            }
+
             // 生成所有方向随机的子弹
             for (int i = 0; i < bulletsPerShotFinal; ++i)
             {

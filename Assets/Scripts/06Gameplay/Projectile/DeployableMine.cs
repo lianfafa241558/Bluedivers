@@ -241,6 +241,8 @@ namespace FPSGame.Gameplay
                 weapon = null,//纯自部署，无武器来源
                 useDiffScale = false,
                 IgnoreSelf = false,
+                // ★ 地雷也是"每端各自生成、各自触发"的：非权威端只对玩家/盟友落地，否则两端各爆一次
+                localEffectDamage = true,
             });
             // 先派发再回池：监听者还能拿到仍然存活的物体
             OnExploded?.Invoke();

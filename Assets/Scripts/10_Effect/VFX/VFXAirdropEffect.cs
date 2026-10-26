@@ -80,29 +80,36 @@ namespace FPSGame.Effect
         /// <summary>契约实现：远端复现时由 <c>BattleManager.ReleaseAirdrop</c> 带上呼叫者 sid（0 = 房主）。</summary>
         public void SetCallerSid(uint sid) => _callerSid = (int)sid;
 
-        /// <summary>本次呼叫生成的**载具号**（会盖到生成物的根 <c>SpecUnit</c> Actor 上）。
+        /// <summary>本次呼叫生成的**单位号**（盖到生成物子树的那个 Actor 上：载具 / 支援炮台 / 无人机…）。
         /// <para>▍三种取值：<c>-1</c> = 不托管（单机 / 旧版房主 ⇒ 完全保持原来的自增号行为）；
         /// <c>0</c> = 待房主定号（成员自己叫的那发）；<c>&gt;0</c> = 已定号。理由见 <c>ActorsManager.VehicleNetIdBase</c>。
         /// 信标是池化复用的 ⇒ 回收时复位。</para></summary>
         private int _vehicleNetId = -1;
 
-        /// <summary>契约实现：标记本次载具号（见 <see cref="FPSGame.GameContract.IAirdropEffect.SetVehicleNetId"/>）。
+        /// <summary>契约实现：标记本次空投生成的**单位号**（见 <see cref="FPSGame.GameContract.IAirdropEffect.SetVehicleNetId"/>）。
+        /// <para>▍覆盖范围：载具（<c>SpecUnit</c>）+ 支援单位（炮台/无人机/火箭包，<c>Enemy</c> 类型）——
+        /// 它们的共同点是"每端各自 Instantiate"，没有房主定的号就必然分叉。</para>
         /// <para>⚠ 可能在生成**之后**才被调用：成员的 4028 比它本机的生成晚到 ⇒ 这里必须能"补盖章"。</para></summary>
         public void SetVehicleNetId(int netId)
         {
             _vehicleNetId = netId;
             bool spawned = m_creatObject != null;
-            if (spawned && netId > 0) StampVehicleNetId(m_creatObject, netId);
+            if (spawned && netId > 0) StampCreatUnitNetId(m_creatObject, netId);
             NetSyncLog.SyncLog("载具/号", $"信标接到载具号 netId={netId}（已有生成物={spawned}）");
         }
 
-        /// <summary>把载具号盖到生成物子树的**单位**上（生成物不是单位、或不是 <c>SpecUnit</c> 就什么都不做）。</summary>
-        private static void StampVehicleNetId(Transform root, int netId)
+        /// <summary>把号盖到这次空投生成的那个**单位**上（找不到 Actor ⇒ 不是单位，什么都不做）。
+        /// <para>▍为什么不再只认 <c>SpecUnit</c>（2026-10-27）：支援单位（炮台 / 治疗无人机 / 火箭包）是
+        /// <c>Enemy</c> 类型、同样"每端各自 Instantiate" ⇒ 不盖章就会两端**各领自增号**、必然分叉，
+        /// 表现为"炮台挨打/被打死只有一端生效"（对方的伤害消息按号寻址，查不到就丢）。
+        /// 号本身早就由 4028 送到每一端了（见 <see cref="SetVehicleNetId"/>）。</para>
+        /// <para>⚠ 只在 <see cref="SpawnCreatObject"/> 里用：对象刚由这次空投创建 ⇒ 盖谁都是对的，
+        /// 不会误盖到别的敌人（这也是"怎么区分支援单位和普通敌人"的答案：不用区分，按生成时机认）。</para></summary>
+        private static void StampCreatUnitNetId(Transform root, int netId)
         {
             var actor = root.GetComponent<Actor>();
             if (actor == null) actor = root.GetComponentInChildren<Actor>(true);
-            // 只管载具（SpecUnit）：别的类型有自己的号口径（玩家/盟友 = sid；场景实体 = 派生键）
-            if (actor == null || actor.Type != UnitTypeEnum.SpecUnit) return;
+            if (actor == null) return;   // 不是单位（炸弹/炮击装置等）⇒ 没有号可盖
             actor.NetId = netId;
         }
 
@@ -113,15 +120,41 @@ namespace FPSGame.Effect
         /// </summary>
         private Transform SpawnCreatObject(GameObject prefab, Vector3 pos, Quaternion rot, Transform parent = null)
         {
-            if (_vehicleNetId < 0) return Make(prefab, pos, rot, parent);
-
-            ActorsManager.Replicating = true;
             Transform t;
-            try { t = Make(prefab, pos, rot, parent); }
-            finally { ActorsManager.Replicating = false; }   // ⚠ 必须 finally：Instantiate 里抛异常也不能把全局门卡住
+            if (_vehicleNetId < 0)
+            {
+                t = Make(prefab, pos, rot, parent);
+            }
+            else
+            {
+                ActorsManager.Replicating = true;
+                try { t = Make(prefab, pos, rot, parent); }
+                finally { ActorsManager.Replicating = false; }   // ⚠ 必须 finally：Instantiate 里抛异常也不能把全局门卡住
 
-            if (t != null && _vehicleNetId > 0) StampVehicleNetId(t, _vehicleNetId);
+                if (t != null && _vehicleNetId > 0) StampCreatUnitNetId(t, _vehicleNetId);
+            }
+
+            MarkGeneratedUnit(t);
             return t;
+        }
+
+        /// <summary>给这次空投生成的**单位**打上联机标记（炸弹/炮击装置没有 Actor，天然什么都不做）。
+        /// <para>▍两个方向都要管：这东西两端各 <c>Instantiate</c> 一份、各自跑 AI ⇒
+        /// ① **挨打**：各端都会挨自己那份子弹 + 成员还会上报 ⇒ 2 倍。标 <see cref="Actor.HostAuthorityUnit"/>
+        /// 让非权威端只吃房主下发的血（门在 <c>NetVehicleDamageBridge.Gate</c>，与载具同一道）；
+        /// ② **打人**：AI 两端都会开火 ⇒ 标 <see cref="WeaponBaseController.LocalEffectDamage"/>
+        /// 让非权威端的伤害只落玩家/盟友（门在 <c>Damageable.InflictDamage</c>）。</para>
+        /// <para>⚠ 只标 <c>WeaponEnemyController</c>：载具（机甲/炮位）的武器是**玩家在开**，标了会让驾驶者打不出伤害。</para></summary>
+        private static void MarkGeneratedUnit(Transform root)
+        {
+            if (root == null) return;
+
+            var actor = root.GetComponent<Actor>();
+            if (actor == null) actor = root.GetComponentInChildren<Actor>(true);
+            if (actor != null) actor.HostAuthorityUnit = true;
+
+            var weapons = root.GetComponentsInChildren<WeaponEnemyController>(true);
+            for (int i = 0; i < weapons.Length; ++i) weapons[i].LocalEffectDamage = true;
         }
 
         private static Transform Make(GameObject prefab, Vector3 pos, Quaternion rot, Transform parent) =>

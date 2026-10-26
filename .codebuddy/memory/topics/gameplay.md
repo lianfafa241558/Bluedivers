@@ -1,7 +1,7 @@
 # 主题 · 战斗 / AI / 伤害管线 / 组件存活
 
 > 由 `MEMORY.md` 路由表按触发词加载。预算 ≤ 8000 字符。
-> 2026-10-18 拆出：玩家/相机/武器子弹/战备/寻路 → `gameplay-player.md`；家具任务时序地形 → `gameplay-world.md`。
+> 2026-10-18 拆出：玩家/相机/武器子弹/战备/寻路 → `gameplay-player.md`；家具/任务/逻辑帧/存档 → `gameplay-world.md`；地形/渲染 → `terrain-render.md`（2026-10-27 再拆）。
 > ⚠ 原文（含每条实测细节与行号）已下沉：`archive/topics-snapshot-20261011/gameplay.md`。
 
 ## 战斗 / AI

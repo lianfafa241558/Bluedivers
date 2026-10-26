@@ -1,4 +1,4 @@
-using FPSGame.AI;
+﻿using FPSGame.AI;
 using FPSGame.Core;
 using FPSGame.Game;
 using FPSGame.GameContract;
@@ -11,6 +11,9 @@ namespace FPSGame.Managers
 {
     /// <summary>
     /// 联机 · **载具伤害**桥（09）：一处收口"机甲 / 可驾驶炮台这类载具"的掉血与生死。
+    /// <para>▍2026-10-27 扩到**空投支援单位**（炮台 / 治疗无人机 / 火箭包）：它们的处境完全一样
+    /// ——两端各 Instantiate 一份、各自挨子弹、成员还会把这一扣上报 ⇒ 2 倍。判据见
+    /// <see cref="Actor.HostAuthorityUnit"/>，与载具共用同一道门。</para>
     ///
     /// <para>▍键 = 载具 <c>Actor.NetId</c>（房主随 4028 分配、两端一致，见 <c>ActorsManager.VehicleNetIdBase</c>）；
     /// 通道 = 既有统一伤害（成员 4025 上报 / 房主 4040 下发，死亡靠同一类的 <c>IsDeath</c>）。</para>
@@ -56,8 +59,9 @@ namespace FPSGame.Managers
         /// <summary>见 <c>Damageable.LocalDamageGate</c>。</summary>
         static bool Gate(Damageable d, DamagePacket p)
         {
-            // 只管载具：别的单位（敌人 / 玩家 / 盟友 / 可破坏物）走各自既有通道，一律放行
-            if (!IsVehicle(d)) return true;
+            // 只管"两端各生成一份"的单位（载具 + 空投支援单位）：别的单位（敌人 / 玩家 / 盟友 / 可破坏物）
+            // 走各自既有通道，一律放行
+            if (!IsAuthorityGated(d)) return true;
 
             // 房主 / 单机：本地就是权威 ⇒ 照常落地（随后会在 OnLocalDamaged 里广播出去）
             if (FPSGame.Data.BattleState.IsVehicleDamageAuthority) return true;
@@ -70,15 +74,18 @@ namespace FPSGame.Managers
             return IsPlayerSide(p.DamageOrigin) || IsPlayerSide(p.DamageCaused);
         }
 
-        static bool IsVehicle(Damageable d)
+        static bool IsAuthorityGated(Damageable d)
         {
             if (d == null) return false;
-            var actor = d.GetComponentInParent<Actor>();
-            return IsVehicleActor(actor);
+            return IsAuthorityGatedActor(d.GetComponentInParent<Actor>());
         }
 
-        static bool IsVehicleActor(Actor actor)
-            => actor != null && actor.GetComponent<VehicleController>() != null;
+        /// <summary>这个单位该不该"只认房主那份伤害"。
+        /// <para>▍两类：① 载具（<c>VehicleController</c>）；② 空投出来的支援单位（炮台/无人机/火箭包，
+        /// <see cref="Actor.HostAuthorityUnit"/>）。共同点 = **两端各 Instantiate 一份、各自跑 AI、各自挨一份子弹**
+        /// ⇒ 各扣一次必然分叉，成员端还会上报一次 ⇒ 2 倍。</para></summary>
+        static bool IsAuthorityGatedActor(Actor actor)
+            => actor != null && (actor.HostAuthorityUnit || actor.GetComponent<VehicleController>() != null);
 
         /// <summary>这个 GameObject 是不是"玩家侧"（玩家 / 盟友）。
         /// <para>⚠ 部署物（哨戒炮 / 地雷这类 <c>SpecUnit</c>）刻意**不算**：它们两端各有一份、也各自开火
@@ -103,7 +110,7 @@ namespace FPSGame.Managers
             if (EnemyController.ApplyingRemoteDamage) return;   // 本端正在应用远端伤害 ⇒ 挡回环（否则两端互相转发）
             if (victim == null) return;
             if (!victim.TryGetComponent(out Actor actor)) return;
-            if (!IsVehicleActor(actor)) return;
+            if (!IsAuthorityGatedActor(actor)) return;
 
             int netId = actor.NetId;
             if (netId == 0)

@@ -297,6 +297,12 @@ namespace FPSGame.Game
             //   （载具血量收敛到房主；非权威端 AI 来源的载具伤害在这里就被挡掉）。null ⇒ 一律落地。
             if (LocalDamageGate != null && !LocalDamageGate(this, packet)) return;
 
+            // ★ 各端**本地生成**的效果伤害（毒烟/火焰 tick、地雷自爆、空投舱砸击、踩踏动能、荆棘反伤）：
+            //   非权威端只让玩家/盟友落地，其余目标等房主结算后的伤害广播 —— 否则 N 个端 = N 倍。
+            //   放在这里而不是 FpsHelper 的循环里：直击 / 爆炸 / 范围动能 / 以后新增的任何管线都要经过本方法。
+            //   ⚠ 玩家不能一起门掉：盟友实例在别人机器上没有 Damageable，房主替他们扣不了血。
+            if (packet.LocalEffect && !FPSGame.Data.BattleState.ShouldApplyTickDamage(IsPlayerLike)) return;
+
             PEInt damage = packet.Damage;
             // ⚠ 减伤/友伤/归属三件事一律读 **起源**（与拆分前的 `DamageSource` 逐字等价 ⇒ 数值零变化）；
             //   **直接来源**只往下传给 Health 供显示/AI 用。见 DamagePacket 的字段注释。
@@ -461,8 +467,11 @@ namespace FPSGame.Game
 
 
 
-        /// <summary>本单位是不是玩家 / 盟友（他们的血量**本机权威** ⇒ tick 伤害任何角色下都要本地算）。</summary>
-        private bool IsPlayerLike
+        /// <summary>本单位是不是玩家 / 盟友（他们的血量**本机权威** ⇒ tick 伤害任何角色下都要本地算）。
+        /// <para>▍公开给伤害管线用：`InflictDamage` 的 `DamagePacket.LocalEffect` 门要逐目标判断
+        /// （各端本地生成的效果伤害在非权威端只对玩家/盟友落地）。判据只此一处，</para>
+        /// <para>别在 `FpsHelper` 或别的地方再抄一份 Actor.Type 判断。</para></summary>
+        public bool IsPlayerLike
             => Actor != null && (Actor.Type == UnitTypeEnum.Player || Actor.Type == UnitTypeEnum.Friend);
 
         /// <summary>每帧tick：护甲已破坏时按流血速度对自身施加真实伤害（流血效果）</summary>

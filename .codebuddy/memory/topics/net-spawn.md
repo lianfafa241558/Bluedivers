@@ -20,7 +20,7 @@
   齐了之后：装甲掉血/死亡两端一致 ⇒ `OnAllInvincibleArmorDestroyed` 两端同时触发 ⇒ 无敌状态自然一致。
 
 ### 7.2x ⭐ 生成器第 4 例 = 任务（车厢附加炮塔，2026-10-15）
-> 全貌（轨道 / 路基 / 列车 / 炮塔）→ `topics/mission-intercept-train.md`；这里只留**联机口径**。
+> 全貌（轨道 / 路基 / 列车 / 炮塔）→ `topics/mission-intercept-train.md`；卫队护航 / 轨道箭头 → `mission-intercept-extras.md`；这里只留**联机口径**。
 - `MissionInterceptTrain : MissionBase, INetSpawner`；`InitMission` / `Uninit` 成对 `SpawnerRegistry.Register/Unregister`
   （⚠ 不能放 `Start`：复刻可能在 `Instantiate` 内就发生）。
 - 槽位 `slot = 班次 × maxCarCount + 车厢序号`（两端算式一致）；**槽位不带 prefab** ⇒ 这一节挂哪门从两端各持一份的**开局计划表**读

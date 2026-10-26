@@ -53,6 +53,8 @@ namespace FPSGame.Gameplay
                 knockbackForce = (PEInt)KnockbackForce,
                 knockbackRadius = DamageData.GetShockwaveRadius(1),
                 knockbackUpScale = (PEInt)KnockbackUpScale,
+                // ★ 踩踏也是"每端各自 tick、各自结算"的：非权威端只对玩家/盟友落地，否则两端各踩一次
+                localEffectDamage = true,
             });
         }
 

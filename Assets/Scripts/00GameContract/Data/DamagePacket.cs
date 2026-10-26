@@ -44,5 +44,13 @@ namespace FPSGame.GameContract
         /// 按上报值原样扣。</para>
         /// </summary>
         public bool Resolved;
+
+        /// <summary>本端**本地生成**的效果伤害（毒烟/火焰 tick、地雷自爆、空投舱砸击、踩踏动能、荆棘反伤）。
+        /// <para>▍为什么要标：这些东西**每个端各自生成一份、各自结算**，两端都落地 = N 倍伤害
+        /// （见 <c>topics/net-dup-damage.md</c>）。</para>
+        /// <para>▍口径：**非权威端只对玩家/盟友落地**（他们的血本机权威；且盟友实例在别人机器上没有
+        /// <c>Damageable</c>，房主替他们扣不了血），其余目标等房主结算后的伤害广播。
+        /// 门只有一处：<c>Damageable.InflictDamage</c>。</para></summary>
+        public bool LocalEffect;
     }
 }

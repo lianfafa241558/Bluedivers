@@ -133,6 +133,8 @@ namespace FPSGame.Weapon
                 sfxRange = SFXRange,
                 weapon = WeaponBase,
                 useDiffScale = BulletFlag.HasFlag(BulletFlag.EnemyIntensify),
+                // 支援单位（各端各自生成的炮台/无人机）的子弹：伤害要走"非权威端只落玩家/盟友"那道门
+                localEffectDamage = WeaponBase != null && WeaponBase.LocalEffectDamage,
             };
         }
 
@@ -166,5 +168,14 @@ namespace FPSGame.Weapon
         public bool useDiffScale;
         /// <summary>不会自伤</summary>
         public bool IgnoreSelf;
+
+        /// <summary>本端**本地生成**的效果伤害（毒烟/火焰的 <c>SustainedEffect</c> per-tick、地雷自爆）。
+        /// <para>▍为什么要标：这类东西**每个端各自生成一份、各自结算**，两端都落地 = N 倍伤害
+        /// （见 <c>topics/net-dup-damage.md</c>）。</para>
+        /// <para>▍口径：**非权威端只对玩家/盟友落地**（他们的血本机权威；且盟友实例在别人机器上
+        /// 没有 <c>Damageable</c>，房主替他们扣不了血），其余目标等房主结算后的伤害广播。</para>
+        /// <para>▍落点：本字段只是"事件级"标记，<c>FpsHelper</c> 会透传成 <c>DamagePacket.LocalEffect</c>，
+        /// **门只有一处** = <c>Damageable.InflictDamage</c>。</para></summary>
+        public bool localEffectDamage;
     }
 }

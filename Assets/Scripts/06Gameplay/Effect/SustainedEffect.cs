@@ -84,6 +84,8 @@ namespace FPSGame.Gameplay
                 weapon = null,
                 useDiffScale = UseDiffScale,
                 IgnoreSelf = false,
+                // ★ 本端本地生成的持续效果：非权威端只对玩家/盟友落地，否则毒烟/火焰每跳两端各结算一次
+                localEffectDamage = true,
             });
         }
 

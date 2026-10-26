@@ -15,6 +15,14 @@ namespace FPSGame.Weapon
     public class WeaponTemporaryController : WeaponController, IVfxEffect
     {
 
+        /// <summary>非权威端只打表现弹。
+        /// <para>▍为什么：本类会被**每个端各自本地生成**（空投 <c>creatObect</c> / 命中特效 <c>ImpactVfx</c>），
+        /// 两端都开真弹 ⇒ 伤害按端数翻倍（见 <c>topics/net-dup-damage.md</c>）。
+        /// 权威端（房主 / 单机）照旧真开火，伤害由它结算后广播。</para>
+        /// <para>⚠ 门用 <c>IsTickDamageAuthority</c> 是现成的"房主/单机"口径；房主掉线后
+        /// <c>EnemyNetBridge.OnHostLost</c> 会把它置回 true ⇒ 剩余端自动接管真开火。</para></summary>
+        protected override bool IsShotVisualOnly => !FPSGame.Data.BattleState.IsTickDamageAuthority;
+
         protected virtual void OnEnable()
         {
             if(m_Initialized)
