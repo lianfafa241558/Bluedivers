@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Game;
 using FPSGame.Gameplay;
@@ -8,15 +8,15 @@ using UnityEngine;
 namespace FPSGame.Managers
 {
     /// <summary>
-    /// 联机 · **载具**桥（09）：上下机（4053）—— 全工程唯一同时看得见"载具/盟友实例"与网络层的地方。
+    /// 联机 · **载具**桥（09）：上下机（原 4053，2026-10-27 并入 **4036** 的 NetId 分支）—— 全工程唯一同时看得见载具/盟友实例与网络层的地方。
     ///
     /// <para>▍键 = 载具 <c>Actor.NetId</c>（房主随 4028 分配、两端一致，见 <c>ActorsManager.VehicleNetIdBase</c>）；
     /// 值 = 驾驶者 sid（房主 = 0）⇒ 各端按 sid 解析"本端那个实体"（本机玩家 / 盟友实例）。</para>
     ///
-    /// <para>▍⚠ 为什么不能蹭家具那条 4036：它的远端重放会走 <c>Furniture_Vehicle.Operate()</c> ⇒
-    /// <c>VehicleController.SetOwener(远端实例)</c>，而那条路硬要 <c>PlayerController</c>（读相机 / 关 CC /
-    /// 改 <c>ActorState</c>）⇒ 盟友实例上必 NRE。载具因此**从 4036 摘出**（见 <c>NetFurnitureBridge</c>），
-    /// 远端一律走 <see cref="Furniture_Vehicle.ApplyRemoteMount"/>（只做"挂到挂点 + 停位姿/停动画"）。</para>
+    /// <para>▍ ⚠ 远端**不能**走家具重放：4036 的 <c>ApplyRemoteOperate</c> 会调 <c>Furniture_Vehicle.Operate()</c>
+    /// ⇒ <c>VehicleController.SetOwener(远端实例)</c>，而其中一批开关（<c>ActorState.Hide</c> / 相机 / 本机输入）
+    /// 本质是"本机玩家专属"。故 4036 只当**传输**（NetId 分支），应用一律走
+    /// <see cref="Furniture_Vehicle.ApplyRemoteMount"/>（只做"挂到挂点 + 停位姿/停动画"）。</para>
     ///
     /// <para>▍自举：<c>[RuntimeInitializeOnLoadMethod]</c>（与 <c>NetPlayerStateBridge</c> / <c>SceneUnitMoveSink</c>
     /// 同款）⇒ 不需要宿主，也不需要任何 Install/Uninstall 调用点。</para>

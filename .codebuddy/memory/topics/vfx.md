@@ -60,3 +60,32 @@ EditorSceneManager.CloseScene(scene, true);
 
 - `Assets/Resources/VFX/Hit/Grenade/VFX_ThermiteBurst.prefab`：**点火 + 持续 4 秒上喷火花**，9 个物体（根计时 + Ignite / IgniteRays / Sparks / Streaks / Pops / Core / ShockRing / Smoke），根计时 5.4s，向上（局部 +Y）喷射。未接任何武器（用的时候挂 `ImpactVfx` 或 `VfxPool.Creat`）。
 - 文件名沿用 `ThermiteBurst`（改名属手动操作）；要更贴切可手动改成 `VFX_ThermiteSpray` 之类。
+
+## 7 2026-10-27：AI 爆炸/烟雾/毒雾/地面火 一批 13 个（MCP 程序化生成）
+
+产物：`Assets/Resources/VFX/Hit/AI/` —— `VFX_Explosion_S/M/L/XL/Nuke`、`VFX_Smoke_Puff/Column/Ground`、`VFX_Poison_Mist/Cloud/Spurt`、`VFX_GroundFire(_L)`；材质在 `Assets/Art/VFX/EffectMat/`（Poison_Glow / Poison_Dot / Toxiс_Flames / Nuke_Core）。
+
+### 7.1 材质必须"复制现成材质"，不能 `new Material(Shader.Find(..))`
+- `LX/SimpleFogAdditive`、`LX/Texture2`、`WFX/*` 这类工程自研 shader 的 **blend 靠材质属性**（`_SrcBlend/_DstBlend/_UseFog`）；`new Material` 只拿 shader 默认值 ⇒ 渲成**不透明黑方块**（additive 层尤其明显：贴图黑底整块遮住场景）。
+- 正解：`m.shader = src.shader; m.CopyPropertiesFromMaterial(src);` 再只改 `_BaseColor`/`_TintColor`。GUID 不变 ⇒ prefab 引用不丢。
+- `WFX/Multiply Soft Tint` 在**暗背景**下必然是黑块（乘法混合），别拿它做烟的主层。
+
+### 7.2 图集贴图不开 TSA = 一排小火团
+- `Flame02_AB`（Flame02 2048）是**多帧图集**，直接 Billboard 会渲成"横向一排火"。
+- 地面火用 `WFX_FlameBig Texttres`（flame4.dds，**2×2** TSA + WholeSheet，`cycleCount=2`）已验证；`Vfx_GroundFlame4` 就是这么用的。
+
+### 7.3 烟材质 `WFX_M_ExplosiveSmoke` 的贴图很薄
+- 单粒子视觉密度低：要成"烟柱/烟团"需 **rate ≥ 18 / size ≥ 2 / alpha 峰值 ≥ 0.5**；只有 3~4 个粒子 + alpha 0.3 时几乎看不见（深色背景下比背景还暗）。
+- 毒雾**不要 tint 材质**：改用原版 `WFX_M_ExplosiveSmoke` + **粒子 `startColor` 染色**（vertex color 乘上去），混合行为完全可控。发光层用绿 `_BaseColor` 的 `LX/SimpleFogAdditive` 副本。
+
+### 7.4 根计时必须"自动化地对齐尾巴"
+- 手写 `rootLife` 极易短于 `子层 duration + startLifetime`，被 `VFXManager` 提前判死 ⇒ 尾巴（烟/焦痕）被截断。
+- 收尾脚本：遍历子 PS 取 `max(duration + startLifetime.constantMax) + 0.15`，回写根 PS 的 `startLifetime`（本次 11/13 个 prefab 都需要抬，最大 +1.55s）。
+
+### 7.5 `velocityOverLifetime` 的 x/y/z/radial 必须同 mode
+- 否则每次 Simulate/更新都刷 `Particle Velocity curves must all be in the same mode`。批量归一：`v.x = new MinMaxCurve(x.constantMin, x.constantMax)` 四路同上。
+
+### 7.6 MCP `execute_code`（CodeDom / C#6）的三个硬约束
+- 不能链式改 struct 返回值：`p.main.startSize = ..` 报 "Cannot modify a value type return value" ⇒ 先 `var m = p.main;`。
+- lambda 参数名不能与外层局部变量同名（含 `root`/`bg`/`m`），否则 "would give a different meaning"。
+- 变量不能在相邻块重复 `var` 同名；不能 `out var`；`Object` 与 `UnityEngine.Object` 有歧义 ⇒ 写全名。

@@ -211,7 +211,7 @@ namespace FPSGame.Managers
             CreatAllTask(_lastBucket);
             if (GameRoot.Instance.IsLocal)
             {
-                SetTask("Millennium", 0, DifficultyEnum.Insane, new int[4], 2);
+                SetTaskByIndex("Millennium", 0, DifficultyEnum.Insane, new int[4], 2);
 
             }
 
@@ -341,7 +341,7 @@ namespace FPSGame.Managers
 
         /// <summary>
         /// <c>TaskCfgs</c> 行下标 ↔ <c>mapId</c> 的**唯一权威换算**（与 <see cref="OrderedMaps"/> 同序）。
-        /// <para>▍凡是"由 mapId 反查行下标"的地方都必须走它（`SetTask` / `TaskFingerprint`），
+        /// <para>▍凡是"由 mapId 反查行下标"的地方都必须走它（`SetTaskByIndex`），
         /// 否则会出现"生成用一套顺序、查表用另一套"，正是上面那种静默错位。</para>
         /// </summary>
         public int MapIndex(string mapId)
@@ -446,47 +446,14 @@ namespace FPSGame.Managers
         }
 
         /// <summary>
-        /// 计算"某个任务配置"的**指纹**（联机开局校验用：两端同一 (地图, 任务下标) 必须得到同一个指纹）。
-        ///
-        /// <para>▍为什么需要它：任务表 <c>TaskCfgs</c> 是**各端本地按时间窗口生成**的，
-        /// 跨窗口时同一个 <c>TaskIndex</c> 可能指向完全不同的任务（任务类型 / 额外任务 / 巢穴数…），
-        /// 而这是**静默**的 —— 指纹让不一致变成明确报错。</para>
-        ///
-        /// <para>▍⚠ 只用整数混合、**不掺任务名**：<c>string.GetHashCode()</c> 在 .NET Core / .NET 5+ 是
-        /// 随机化的（跨进程不同），掺字符串会让指纹失去意义。</para>
+        /// 【唯一构建入口】按**任务内容**建本局任务（联机/单机都走它，"内容从哪来"由调用方决定）。
+        /// <para>▍为什么以内容为准：任务表 <c>TaskCfgs</c> 是各端本地按时间窗口生成的，同一个下标跨窗口会指向
+        /// 另一个任务；联机时房主直接下发内容（<c>TaskConfirmNtf.Cfg</c>），成员不再查表。</para>
         /// </summary>
-        /// <returns>0 = 无法计算（地图/下标非法）；调用方应把 0 视为"不校验"</returns>
-        public int TaskFingerprint(string mapId, int taskIndex)
-        {
-            if (MapData == null || string.IsNullOrEmpty(mapId) || !MapData.ContainsKey(mapId)) return 0;
-            if (TaskCfgs == null || taskIndex < 0 || taskIndex >= TaskCount) return 0;
-
-            int mapIndex = MapIndex(mapId);   // ⚠ 与 CreatAllTask / SetTask 同序
-            if (mapIndex < 0 || mapIndex >= AreaCount) return 0;
-
-            // ⚠ TaskCfg 是 struct ⇒ 不可能是 null，直接算
-            return Fingerprint(TaskCfgs[mapIndex, taskIndex]);
-        }
-
-        private static int Fingerprint(TaskCfg c)
-        {
-            int h = 17;
-            h = Mix(h, (int)c.main);
-            h = Mix(h, c.enable ? 1 : 0);
-            h = Mix(h, c.seed);
-            h = Mix(h, (int)(c.scale * 1000f));
-            if (c.extra != null) for (int i = 0; i < c.extra.Length; ++i) h = Mix(h, (int)c.extra[i]);
-            if (c.nestCount != null) for (int i = 0; i < c.nestCount.Length; ++i) h = Mix(h, c.nestCount[i]);
-            return h;
-        }
-
-        /// <summary>FNV-1a 风格的整数混合（确定性：与 .NET 版本、进程无关）。</summary>
-        private static int Mix(int h, int v) => unchecked((h ^ v) * 16777619);
-
-        /// <param name="seed">本局**权威随机种子**（房主决定；0 = 未指定 ⇒ 回落到该任务自己的 <c>taskCfg.seed</c>）。
-        /// ⚠ 带默认值是为了不打乱既有调用点（含 <see cref="Init"/> 的单机自测路径）。</param>
-        public void SetTask(string mapId,int taskIndex,DifficultyEnum difficulty,int[] extraDiff,int playMode,int seed = 0,
-            TaskCfgDto remoteCfg = null)
+        /// <param name="cfg">本局任务配置（已确定的那一份；<c>TaskCfg</c> 只有 9 个字段，内容即全部）</param>
+        /// <param name="mapId">地图名（要加载的场景 + 雾色/天空/产品表都取自它）</param>
+        /// <param name="seed">本局**权威随机种子**（房主决定；0 = 未指定 ⇒ 回落到该任务自己的 <c>cfg.seed</c>）。</param>
+        public void SetTask(TaskCfg cfg, string mapId, DifficultyEnum difficulty, int[] extraDiff, int playMode, int seed = 0)
         {
             if (MapData == null || string.IsNullOrEmpty(mapId) || !MapData.ContainsKey(mapId))
             {
@@ -496,27 +463,7 @@ namespace FPSGame.Managers
 
             var mapData = MapData[mapId];
             var task = nowTask;
-
-            // ★ 本局任务配置的来源（2026-10-06 联机）：
-            //   · 房主**下发了内容** ⇒ 以内容为准、**不查本地表**。本局配置由此"冻结"：
-            //     后进者 / 跨窗口的玩家即使本地表里已经没有这个任务，也照样复现（用户 2026-10-06 口径）。
-            //   · 否则（单机 / 旧版房主）⇒ 按本地表下标取（老路径，行为不变）。
-            if (remoteCfg != null && remoteCfg.Main >= 0)
-            {
-                task.taskCfg = FromDto(remoteCfg);
-            }
-            else
-            {
-                int mapIndex = MapIndex(mapId);   // ⚠ 必须与 CreatAllTask 同序（见 OrderedMaps 注释）
-                if (mapIndex < 0 || mapIndex >= AreaCount || TaskCfgs == null
-                    || taskIndex < 0 || taskIndex >= TaskCount)
-                {
-                    Debug.LogError($"[TaskManager] SetTask 失败：任务下标越界（地图 {mapId} 下标 {taskIndex}，" +
-                                   $"mapIndex={mapIndex}）");
-                    return;
-                }
-                task.taskCfg = TaskCfgs[mapIndex, taskIndex];
-            }
+            task.taskCfg = cfg;   // ★ 内容即全部（TaskCfg 只有 9 个字段）⇒ 之后所有派生都从这里出发
 
             // 本局权威种子：优先用调用方给的（联机由房主随开局广播下发）；未指定则回落到该任务自己的种子。
             // ⚠ 归一到非 0：TaskCfg.seed 由 TaskRandom.Range(0,114514) 生成、理论可为 0，
@@ -580,6 +527,31 @@ namespace FPSGame.Managers
             //倒计时读数走数据自持（2026-10-01 取代 nowTask.Countdown）
             WndManager.Instance.CreatCountDown(()=> TaskState.Countdown,CountDownTypeEnum.Blue,16);
             SyncTaskState();//发布给下层（数据自持）：难度 / 系数 / 敌人种类 / 收集表
+        }
+
+        /// <summary>
+        /// 【单机 / 房主本地 UI】按**本地任务表的下标**取一份配置，再转调 <see cref="SetTask"/>。
+        /// <para>▍只有本机自己选的这一路还认下标（`SelectMapWnd` / `Init` 自测）；联机下行一律走
+        /// <see cref="SetTask"/> + 房主下发的内容，不查本地表。</para>
+        /// </summary>
+        public void SetTaskByIndex(string mapId, int taskIndex, DifficultyEnum difficulty, int[] extraDiff, int playMode, int seed = 0)
+        {
+            if (MapData == null || string.IsNullOrEmpty(mapId) || !MapData.ContainsKey(mapId))
+            {
+                Debug.LogError($"[TaskManager] SetTaskByIndex 失败：本地没有地图 {mapId}");
+                return;
+            }
+
+            int mapIndex = MapIndex(mapId);   // ⚠ 必须与 CreatAllTask 同序（见 OrderedMaps 注释）
+            if (mapIndex < 0 || mapIndex >= AreaCount || TaskCfgs == null
+                || taskIndex < 0 || taskIndex >= TaskCount)
+            {
+                Debug.LogError($"[TaskManager] SetTaskByIndex 失败：任务下标越界（地图 {mapId} 下标 {taskIndex}，" +
+                               $"mapIndex={mapIndex}）");
+                return;
+            }
+
+            SetTask(TaskCfgs[mapIndex, taskIndex], mapId, difficulty, extraDiff, playMode, seed);
         }
 
         /// <summary>

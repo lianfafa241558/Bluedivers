@@ -9,11 +9,9 @@ namespace FPSGame.Net
 [MessagePackObject]
 public class PingReqMsg
 {
-    [Key(0)]
-    public uint Id;
+    [Key(0)] public uint Id;
 
-    [Key(1)]
-    public long SendTime;
+    [Key(1)] public long SendTime;
 }
 
 /// <summary>
@@ -22,10 +20,8 @@ public class PingReqMsg
 [MessagePackObject]
 public class PingRspMsg
 {
-    [Key(0)]
-    public uint Id;
+    [Key(0)] public uint Id;
 
-    [Key(1)]
-    public long ServerTime;
+    [Key(1)] public long ServerTime;
 }
 }

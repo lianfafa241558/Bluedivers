@@ -1085,15 +1085,20 @@ namespace FPSGame.UI
         }
 
         /// <summary>
-        /// 行主标题 = **任务类型的名称**（= 主任务 <c>MissionMainData_SO.name</c>，如「歼灭」/「护送」）。
+        /// 行主标题 = 任务名。
         ///
-        /// <para>▍广播里只带**枚举**（<c>LanRoomInfo.TaskMain</c>）⇒ 名字用本地任务配置反查
-        /// （<see cref="RoomTaskMission"/>，两端任务资产一致）。</para>
+        /// <para>▍优先用房主自报的**实例级任务名**（<c>RoomMeta.TaskName</c>，如「深渊回响」）。</para>
         ///
-        /// <para>▍查不到（旧版房主没带枚举 / 还没选任务 / 两端资产不一致）时退**地图名**（真实信息），别留空。</para>
+        /// <para>▍没有就退回本地反查的**类型名**（<see cref="RoomTaskMission"/>，如「歼灭」/「护送」）——
+        /// 广播里还有主任务枚举 <c>LanRoomInfo.TaskMain</c>，两端任务资产一致就能反查到。</para>
+        ///
+        /// <para>▍都没（还没选任务 / 两端资产不一致）时退**地图名**（真实信息），别留空。</para>
         /// </summary>
         private static string RoomTaskType(LanRoomInfo room, MapData_SO data)
         {
+            string named = RoomMeta.TaskName(room);
+            if (named != null) return named;
+
             var mission = RoomTaskMission(room);
             if (mission != null && !string.IsNullOrEmpty(mission.name)) return mission.name;
 

@@ -1,55 +1,115 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FPSGame.Data;
+using FPSGame.GameData;
 using UnityEditor;
 using UnityEngine;
-using FPSGame.Data;
 
 namespace FPSGame.EditorExt
 {
 
-public sealed class BoosterTabModule : DataTabModule<Booster_SO>
-{
-    public BoosterTabModule(DataEditorWindow host) : base(host) { }
-
-    public override TabType TabType => TabType.Booster; 
-    public override string DisplayName => "全队强化";
-
-    protected override string RootPath => "Assets/Resources/GameData/Booster";
-    protected override string TypeName => "t:Booster_SO";
-    protected override Comparison<Booster_SO> SortComparison => (a, b) => a.ID.CompareTo(b.ID);
-
-    protected override string GetEmptyMessage() => "请从左侧列表中选择一个全队强化数据";
-    protected override string GetSelectedTitle() => HasSelection ? $"{Selected.showName}[{Selected.ID}]" : "";
-
-    protected override void DrawRightPanelExtra()
+    public sealed class BoosterTabModule : DataTabModule<Booster_SO>
     {
-        GUILayout.Label(AssetDatabase.GetAssetPath(Selected), new GUIStyle(GUI.skin.label) { fontSize = 9, normal = { textColor = Color.gray } });
-    }
+        public BoosterTabModule(DataEditorWindow host) : base(host) { }
 
-    protected override List<Booster_SO> FilterItems(List<Booster_SO> items)
-        => string.IsNullOrEmpty(SearchFilter)
-            ? items
-            : items.Where(i => i.showName.Contains(SearchFilter) || i.name.Contains(SearchFilter)).ToList();
+        public override TabType TabType => TabType.Booster; 
+        public override string DisplayName => "全队强化";
 
-    protected override void DrawListItemContent(Booster_SO data, bool isSelected)
-    {
-        EditorGUILayout.BeginHorizontal(GUI.skin.box);
+        protected override string RootPath => "Assets/Resources/GameData/Booster";
+        protected override string TypeName => "t:Booster_SO";
+        protected override Comparison<Booster_SO> SortComparison => (a, b) => a.ID.CompareTo(b.ID);
 
-        var iconRect = EditorGUILayout.GetControlRect(GUILayout.Width(40), GUILayout.Height(40));
-        if (data.icon != null)
-            GUI.DrawTexture(iconRect, data.icon.texture, ScaleMode.ScaleToFit);
-        else
-            GUI.Box(iconRect, "");
+        protected override string GetEmptyMessage() => "请从左侧列表中选择一个全队强化数据";
+        protected override string GetSelectedTitle() => HasSelection ? $"{Selected.showName}[{Selected.ID}]" : "";
 
-        EditorGUILayout.BeginVertical();
+        protected override void DrawRightPanelExtra()
         {
-            GUILayout.Label($"{data.showName}[{data.ID}]", EditorStyles.boldLabel);
-            string typeStr = DataEditorWindow.GetInspectorName(data.type);
-            GUILayout.Label(typeStr, new GUIStyle(GUI.skin.label) { fontSize = 10, fontStyle = FontStyle.Bold });
+            GUILayout.Label(AssetDatabase.GetAssetPath(Selected), new GUIStyle(GUI.skin.label) { fontSize = 9, normal = { textColor = Color.gray } });
         }
-        EditorGUILayout.EndVertical();
-        EditorGUILayout.EndHorizontal();
+
+        protected override List<Booster_SO> FilterItems(List<Booster_SO> items)
+            => string.IsNullOrEmpty(SearchFilter)
+                ? items
+                : items.Where(i => i.showName.Contains(SearchFilter) || i.name.Contains(SearchFilter)).ToList();
+
+        protected override void DrawListItemContent(Booster_SO data, bool isSelected)
+        {
+            EditorGUILayout.BeginHorizontal(GUI.skin.box);
+
+            var iconRect = EditorGUILayout.GetControlRect(GUILayout.Width(40), GUILayout.Height(40));
+            if (data.icon != null)
+            {
+                Texture2D maskTex = GetOrCreateMaskTexture(data.icon.texture, Color.yellow);
+                if (maskTex != null)
+                    GUI.DrawTexture(iconRect, maskTex, ScaleMode.ScaleToFit);
+                else
+                    GUI.DrawTexture(iconRect, data.icon.texture, ScaleMode.ScaleToFit);
+            }
+            else
+                GUI.Box(iconRect, "");
+
+            EditorGUILayout.BeginVertical();
+            {
+                GUILayout.Label($"{data.showName}[{data.ID}]", EditorStyles.boldLabel);
+                string typeStr = DataEditorWindow.GetInspectorName(data.type);
+                GUILayout.Label(typeStr, new GUIStyle(GUI.skin.label) { fontSize = 10, fontStyle = FontStyle.Bold });
+            }
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private static readonly Dictionary<(int, Color), Texture2D> _maskCache = new Dictionary<(int, Color), Texture2D>();
+
+        private static Texture2D GetOrCreateMaskTexture(Texture2D icon, Color color)
+        {
+            if (icon == null)
+            {
+                return null;
+            }
+
+            var key = (icon.GetInstanceID(), color);
+            if (_maskCache.TryGetValue(key, out Texture2D cached))
+            {
+                return cached;
+            }
+
+            // 通过 RenderTexture 读取像素
+            RenderTexture rt = RenderTexture.GetTemporary(icon.width, icon.height, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Linear);
+            Graphics.Blit(icon, rt);
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = rt;
+
+            Texture2D readable = new Texture2D(icon.width, icon.height, TextureFormat.RGBA32, false);
+            readable.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            readable.Apply();
+
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(rt);
+
+            // 应用遮罩规则：R * color + G * white +B* black
+            Color[] pixels = readable.GetPixels();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color c = pixels[i];
+                if (c.a < 0.01f)
+                {
+                    pixels[i] = new Color(0f, 0f, 0f, 0f);
+                }
+                else
+                {
+                    pixels[i] = color * c.r + Color.white * c.g;
+                }
+            }
+
+            Texture2D result = new Texture2D(icon.width, icon.height, TextureFormat.RGBA32, false);
+            result.SetPixels(pixels);
+            result.Apply();
+
+            //DestroyImmediate(readable);
+            _maskCache[key] = result;
+            return result;
+        }
+
     }
-}
 }

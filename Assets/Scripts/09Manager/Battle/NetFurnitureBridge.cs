@@ -1,4 +1,4 @@
-using FPSGame.Gameplay;
+﻿using FPSGame.Gameplay;
 using FPSGame.Net;
 using UnityEngine;
 
@@ -84,9 +84,9 @@ namespace FPSGame.Managers
             var host = furn as Component;
             if (host != null && host.GetComponent<FriendController>() != null) return;
 
-            // ★ 载具（Furniture_Vehicle）：走**它自己的 4053**（NetVehicleBridge）。
-            //   本条重放会调 Furniture_Vehicle.Operate() ⇒ controller.SetOwener(远端实例)，而那条路硬要
-            //   PlayerController（盟友实例只有 FriendController）⇒ NRE；且"本机玩家专属开关"也不该在远端执行。
+            // ★ 载具（Furniture_Vehicle）：走 4036 的 **NetId 分支**（NetRoomFlow 解码时已分流，远端应用仍归
+            //   NetVehicleBridge.ApplyRemoteMount，**不重放** Operate()）。这里的家具事件必须继续摘掉：
+            //   载具的触发点是 VehicleOwnerChanged（含被打爆 / 驾驶者死亡），换到这里会漏 + 一次上车双报。
             if (furn is Furniture_Vehicle) return;
 
             var f = furn as Furniture_Attached;

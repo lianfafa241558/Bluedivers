@@ -54,7 +54,7 @@ public class BridgeSys : FPSGame.Core.Singleton<BridgeSys>
         if (index < 0 || index > 3) return;
         if (InOnlineRoom)
         {
-            NetRoomFlow.Instance.SendArmament(playerIndex, id, index);
+            NetRoomFlow.Instance.SendSetup(index, id);   // ⚠ playerIndex 不上网：各端下标不一致，接收端按 Sid 映射
             return;
         }
         // 单机：老行为（RPC 被注释掉时的本地回环）
@@ -74,7 +74,8 @@ public class BridgeSys : FPSGame.Core.Singleton<BridgeSys>
     {
         if (InOnlineRoom)
         {
-            NetRoomFlow.Instance.SendBooster(playerIndex, id);
+            // 全队强化 = 同一排的第 5 格（槽位 4，见 PlayerSetupMsg.BoosterSlot）
+            NetRoomFlow.Instance.SendSetup(PlayerSetupMsg.BoosterSlot, id);
             return;
         }
         ReceivePlayerSelectTeamEnhance(playerIndex, id);

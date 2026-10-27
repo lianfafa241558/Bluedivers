@@ -77,10 +77,12 @@ namespace FPSGame.Net
             return room != null && !string.IsNullOrEmpty(room.RoomId) ? room.RoomId : null;
         }
 
-        /// <summary>本局**地图内任务下标**（库新增的 <c>LanRoomInfo.TaskIndex</c>；-1 = 未知 / 老房主）。</summary>
-        public static int TaskIndex(LanRoomInfo room)
+        /// <summary>本局**任务名**（库的 <c>LanRoomInfo.TaskName</c>，房主开房/确认任务时写入；空 = 还没选任务）。
+        /// <para>▍与 <see cref="TaskEnum"/> 分工：枚举 → 图标/颜色（**类型**级，如「歼灭」）；
+        /// 这里 → 标题（**实例**级，如「深渊回响」）。空时调用方退回按枚举反查类型名。</para></summary>
+        public static string TaskName(LanRoomInfo room)
         {
-            return room != null ? room.TaskIndex : -1;
+            return room != null && !string.IsNullOrEmpty(room.TaskName) ? room.TaskName : null;
         }
 
         // ==================== 版本门槛 ====================

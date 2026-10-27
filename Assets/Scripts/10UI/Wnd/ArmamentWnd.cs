@@ -684,7 +684,7 @@ namespace FPSGame.UI
         public void ReceivePlayerSelectTeamEnhance(int playerIndex, int id)
         {
             // 窗口还没第一次显示（buttons/armamentRoot 都是 FirstShowWnd 才建的）⇒ 只记账不动 UI。
-            // 数据落点已上移到常驻的 TeamNetBridge.HandleBoosterSync，窗口显示时按表重建，不会丢。
+            // 数据落点已上移到常驻的 TeamNetBridge.HandleSetupSync（强化 = 槽位 4），窗口显示时按表重建，不会丢。
             if (buttons == null || armamentRoot == null) return;
             if (playerIndex < 0 || playerIndex >= teamManager.players.Count)
             {

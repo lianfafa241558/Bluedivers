@@ -13,8 +13,11 @@
   `VFXAirdropEffect.SpawnCreatObject` 把 **5 处** `Instantiate(creatObect)`（373/455/515/551/595）统一收口：
   `ActorsManager.Replicating` 包住（**不领自增号**）→ 生成后盖章根 `SpecUnit Actor`；`_vehicleNetId` 三态（-1 不托管 / 0 待房主定号 / >0 已定）。
   成员自己那发先 0，收到 4028 按 FIFO（`NetFriendBridge._pendingVehicleBeacons`）补号。
-- **P1 上下机**：**4053 单号双向**（同 4036 走法）。⚠ **载具必须从 4036 摘出** —— 4036 的远端重放会走
-  `Furniture_Vehicle.Operate()` ⇒ `VehicleController.SetOwener(盟友实例)`，而那条路硬要 `PlayerController` ⇒ **NRE**。
+- **P1 上下机**：**4053 已并入 4036（2026-10-27）** —— `FurnitureOperateMsg` 追加 `NetId`/`VehicleSid`/`Mounted`，
+  `NetId != 0` 即上下机；`NetRoomFlow.HandleFurnitureOperateNtf` 解码时就分流到 `OnVehicleMount`（转发与「一车一人」裁决
+  仍归 `NetVehicleBridge`；若写在桥的转发之后，被拒那条也会被广播出去）。⚠ **载具不能用 SyncId 当键**：两端运行时各自
+  生成、落点差几厘米 ⇒ `FNV1a(Id+位置量化)` 必不同，只能用车号。4036 只当**传输**，远端**不重放** `Operate()`
+  （里面 `ActorState.Hide` / 相机 / 本机输入都是「本机玩家专属」）；
   远端改走 `Furniture_Vehicle.ApplyRemoteMount`（挂点 + 摘父级，**刻意不置 `inOperate`**）+ `FriendController.SetVehicleRide`
   （停 `NetTransformView` 免得被位姿拽回地面 + 压停移动动画 免得在舱里狂奔）。上报点 = `SetOwener` 抛
   `BattleEventBus.OnVehicleOwnerChanged`（06 看不见 09）；桥 = `09Manager/Battle/NetVehicleBridge`（自举常驻）。

@@ -668,8 +668,8 @@ namespace FPSGame.UI
                 Password = string.Empty,
                 Difficulty = taskManager.nowTask.activeTask ? (int)taskManager.nowTask.difficulty : -1,
                 HostName = hostName,
-                TaskMain = taskManager.NowTaskMain,
-                TaskIndex = -1,   // ⚠ 结构体默认值是 0（不是 -1）⇒ 不显式写会被当成"第 0 个任务"
+                // ★ 任务只认内容：本机已经 SetTask 过就直接给这一份（null = 还没任务，列表退回按枚举反查）
+                TaskCfg = taskManager.nowTask.activeTask ? TaskManager.ToDto(taskManager.nowTask.taskCfg) : null,
             };
 
             if (!flow.Host(options, out string reason))

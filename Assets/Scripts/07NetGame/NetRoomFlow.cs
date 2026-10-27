@@ -42,17 +42,15 @@ namespace FPSGame.Net
         public static event Action OnHostLost;
 
         /// <summary>房主广播的玩家列表 + 详细资料（入房成功、有人进出、准备/资料变化时都会来）。
-        /// ⚠ <c>profiles</c> 可能为 null（旧版本房主不带资料）⇒ 消费方要判空。</summary>
+        /// <c>profiles</c> 与 <c>infos</c> **同序同长**（房主保证）⇒ 消费方直接按下标取，不必判空。</summary>
         public static event Action<PlayerInfo[], PlayerProfile[]> OnPlayerList;
 
-        /// <summary>战备选择同步（房主权威转发后触发，**房主自己也会收到**）。
-        /// 参数：sid（权威标识）/ 房主视角下标 / 战备 id / 槽位。⚠ 本地下标要用 sid 去映射。</summary>
-        public static event Action<uint, int, int, int> OnArmamentSync;
+        /// <summary>舰桥准备项同步（战备 / 全队强化共用一条；房主权威转发后触发，**房主自己也会收到**）。
+        /// 参数：sid（权威标识）/ 槽位（0-3 战备，4 = 强化见 <c>PlayerSetupMsg.BoosterSlot</c>）/ id。
+        /// ⚠ 本地下标要用 sid 去映射。</summary>
+        public static event Action<uint, int, int> OnSetupSync;
 
-        /// <summary>全队强化同步（同上，房主自己也收）。参数：sid / 房主视角下标 / 强化 id。</summary>
-        public static event Action<uint, int, int> OnBoosterSync;
-
-        /// <summary>玩家配置（改装）同步：武器改装档位/模组 + 载具改装。
+        /// <summary>玩家配置同步：武器选择 + 改装档位/模组 + 载具改装。
         /// <para>▍入房时每个玩家各来一次，之后**改配置**（SelectRoleWnd / VehicleWnd 关窗）再来一次；
         /// 新人入房时房主会**补发全量**（含已在房间里的其他玩家），所以订阅方按 <c>Sid</c> 覆盖即可。</para></summary>
         public static event Action<PlayerLoadoutMsg> OnLoadoutSync;
@@ -108,7 +106,7 @@ namespace FPSGame.Net
         /// ⚠ 发起方要靠 sid 丢掉自己那条（本地已经放过一次），但**要拿载具号补盖自己那台的号**（见 <c>NetFriendBridge</c>）。</summary>
         public static event Action<uint, int, Vector3, float, int> OnAirdropCall;
 
-        /// <summary>载具上下机（双向；**一个号两个方向**，走法同 <c>FurnitureOperateNtf</c>(4036)）。
+        /// <summary>载具上下机（双向；**已并入 <c>FurnitureOperateNtf</c>(4036) 的 NetId 分支**，一个号两个方向）。
         /// <para>参数：载具 <c>Actor.NetId</c> / 驾驶者 sid（房主 = 0）/ 是否上机。
         /// ⚠ 发起方要按 sid 丢掉自己那条 —— 驾驶者本机已经真跑过一次 <c>SetOwener</c>。</para></summary>
         public static event Action<int, uint, bool> OnVehicleMount;
@@ -250,9 +248,8 @@ namespace FPSGame.Net
             MessageCenter.Register<PlayerListSync>(CmdId.PlayerListSync, HandlePlayerListSync);
             MessageCenter.Register<TaskConfirmNtf>(CmdId.TaskConfirm, HandleTaskConfirmNtf);
             MessageCenter.Register<TransitionNtf>(CmdId.Transition, HandleTransitionNtf);
-            // 舰桥准备：房主转发出来的两条（成员收广播、房主收本地自派发，走同一条路）
-            MessageCenter.Register<PlayerArmamentSync>(CmdId.PlayerArmamentSync, HandleArmamentSync);
-            MessageCenter.Register<PlayerBoosterSync>(CmdId.PlayerBoosterSync, HandleBoosterSync);
+            // 舰桥准备项（战备 + 全队强化共用一条）：房主转发出来的（成员收广播、房主收本地自派发，走同一条路）
+            MessageCenter.Register<PlayerSetupMsg>(CmdId.PlayerSetupSync, HandleSetupSync);
             // 玩家配置（改装）同步：房主 -> 全体（房主自己那条也是本地自派发）
             MessageCenter.Register<PlayerLoadoutMsg>(CmdId.PlayerLoadoutSync, HandleLoadoutSync);
             // 局内表现同步（切枪 / 开火 / 生命状态）
@@ -292,8 +289,7 @@ namespace FPSGame.Net
             MessageCenter.Register<HostSpawnMsg>(CmdId.HostSpawnNtf, HandleHostSpawnNtf);
             MessageCenter.Register<OOPartSubmitMsg>(CmdId.OOPartSubmitNtf, HandleOOPartSubmitNtf);
             MessageCenter.Register<KeyScreenInputMsg>(CmdId.KeyScreenInputNtf, HandleKeyScreenInputNtf);
-            // 载具上下机（双向一条；⚠ 一个号只能一个注册者 ⇒ 注册在这里，桥只订阅 OnVehicleMount 事件）
-            MessageCenter.Register<VehicleMountMsg>(CmdId.VehicleMountNtf, HandleVehicleMountNtf);
+            // ⚠ 载具上下机已并入 4036（见 HandleFurnitureOperateNtf 的 NetId 分支）⇒ 这里不再单独注册
             // 载具开火表现（同款：双向一条，注册在这里，桥只订阅 OnVehicleShoot 事件）
             MessageCenter.Register<VehicleShootMsg>(CmdId.VehicleShootNtf, HandleVehicleShootNtf);
             // 背包护盾伤害（同款：双向一条，注册在这里，桥只订阅 OnShieldDamaged 事件）
@@ -306,8 +302,7 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.PlayerListSync);
             MessageCenter.Unregister(CmdId.TaskConfirm);
             MessageCenter.Unregister(CmdId.Transition);
-            MessageCenter.Unregister(CmdId.PlayerArmamentSync);
-            MessageCenter.Unregister(CmdId.PlayerBoosterSync);
+            MessageCenter.Unregister(CmdId.PlayerSetupSync);
             MessageCenter.Unregister(CmdId.PlayerLoadoutSync);
             MessageCenter.Unregister(CmdId.PlayerWeaponSwitchSync);
             MessageCenter.Unregister(CmdId.PlayerShootSync);
@@ -339,7 +334,6 @@ namespace FPSGame.Net
             // ⚠ CmdId.PatrolSpawnNtf(4047) / EnemySpawnNtf(4051) 已并入 HostSpawnNtf(4052) ⇒ 不再注册/外发
             MessageCenter.Unregister(CmdId.OOPartSubmitNtf);
             MessageCenter.Unregister(CmdId.KeyScreenInputNtf);
-            MessageCenter.Unregister(CmdId.VehicleMountNtf);
             MessageCenter.Unregister(CmdId.ShieldDamageNtf);
             MessageCenter.Unregister(CmdId.VehicleShootNtf);
             if (ReferenceEquals(Instance, this)) Instance = null;
@@ -564,54 +558,22 @@ namespace FPSGame.Net
         }
 
         /// <summary>
-        /// 【上行】选择战备：房主自己立即本地处理 + 广播，成员发给房主（房主校验索引后再转发）。
+        /// 【上行】舰桥准备项（战备槽 0-3 / 全队强化槽 4，见 <c>PlayerSetupMsg.BoosterSlot</c>）：
+        /// 房主自己立即本地处理 + 广播，成员发给房主（房主校验 sid 后再转发）。
         /// </summary>
-        public void SendArmament(int playerIndex, int airdropId, int slotIndex)
+        public void SendSetup(int slotIndex, int id)
         {
             if (IsHost)
             {
                 // 房主自己：sid = 0（房主的权威标识），本地先应用再广播
-                OnArmamentSync?.Invoke(0, playerIndex, airdropId, slotIndex);
-                NetHostSvc.Instance.SendToAll(MessageCenter.Pack(CmdId.PlayerArmamentSync, new PlayerArmamentSync
-                {
-                    PlayerIndex = playerIndex,
-                    AirdropId = airdropId,
-                    SlotIndex = slotIndex,
-                    Sid = 0,
-                }));
+                OnSetupSync?.Invoke(0, slotIndex, id);
+                NetHostSvc.Instance.SendToAll(MessageCenter.Pack(CmdId.PlayerSetupSync,
+                    new PlayerSetupMsg { Sid = 0, SlotIndex = slotIndex, Id = id }));
                 return;
             }
             if (!CanSendToHost) return;
-            NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.PlayerArmamentNtf, new PlayerArmamentNtf
-            {
-                PlayerIndex = playerIndex,
-                AirdropId = airdropId,
-                SlotIndex = slotIndex,
-                Sid = SelfSid,
-            }));
-        }
-
-        /// <summary>【上行】选择全队强化（分流规则同 <see cref="SendArmament"/>）。</summary>
-        public void SendBooster(int playerIndex, int boosterId)
-        {
-            if (IsHost)
-            {
-                OnBoosterSync?.Invoke(0, playerIndex, boosterId);
-                NetHostSvc.Instance.SendToAll(MessageCenter.Pack(CmdId.PlayerBoosterSync, new PlayerBoosterSync
-                {
-                    PlayerIndex = playerIndex,
-                    BoosterId = boosterId,
-                    Sid = 0,
-                }));
-                return;
-            }
-            if (!CanSendToHost) return;
-            NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.PlayerBoosterNtf, new PlayerBoosterNtf
-            {
-                PlayerIndex = playerIndex,
-                BoosterId = boosterId,
-                Sid = SelfSid,
-            }));
+            NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.PlayerSetupNtf,
+                new PlayerSetupMsg { Sid = SelfSid, SlotIndex = slotIndex, Id = id }));
         }
 
         /// <summary>
@@ -720,12 +682,12 @@ namespace FPSGame.Net
             SelfHostIndex = -1;
         }
 
-        private void HandleArmamentSync(PlayerArmamentSync s)
+        private void HandleSetupSync(PlayerSetupMsg m)
         {
-            if (s != null) OnArmamentSync?.Invoke(s.Sid, s.PlayerIndex, s.AirdropId, s.SlotIndex);
+            if (m != null) OnSetupSync?.Invoke(m.Sid, m.SlotIndex, m.Id);
         }
 
-        /// <summary>【上行】局内切枪（分流规则同 <see cref="SendArmament"/>）。</summary>
+        /// <summary>【上行】局内切枪（分流规则同 <see cref="SendSetup"/>）。</summary>
         public void SendWeaponSwitch(int slotIndex)
         {
             if (IsHost)
@@ -740,7 +702,7 @@ namespace FPSGame.Net
                 new PlayerWeaponSwitch { Sid = SelfSid, SlotIndex = slotIndex }));
         }
 
-        /// <summary>【上行】开火表现（分流规则同 <see cref="SendArmament"/>）。</summary>
+        /// <summary>【上行】开火表现（分流规则同 <see cref="SendSetup"/>）。</summary>
         /// <param name="dir">开火瞬间的射击方向（世界空间）；传零向量 = 接收端用枪口朝向</param>
         /// <param name="hitPoint">**目标点**（开枪者准心实指那一点，世界空间）；零向量 = 未知。
         /// <para>▍为什么要有它：接收端的"表现弹"是本地模拟的，只给方向时落点由本端地形与枪口偏移决定
@@ -777,7 +739,7 @@ namespace FPSGame.Net
         }
 
         /// <summary>
-        /// 【上行】呼叫了一次战备（战备 id + 落点）。分流规则与 <see cref="SendArmament"/> 略有不同：
+        /// 【上行】呼叫了一次战备（战备 id + 落点）。分流规则与 <see cref="SendSetup"/> 略有不同：
         /// **本端不派发自己那条**（房主/成员都已经在本地真放过一次了，这只是"告诉别人"的消息）。
         /// </summary>
         /// <param name="airdropId">战备 id（<c>AirdropData_SO.ID</c>）</param>
@@ -802,14 +764,16 @@ namespace FPSGame.Net
 
         /// <summary>【上行】载具上下机（分流同 <see cref="SendAirdropCall"/>：房主广播、成员上报房主）。
         /// <para>⚠ 本端**不派发自己那条**：驾驶者本机已经真跑过一次 <c>SetOwener</c>，这只是"告诉别人"。
-        /// 而"房主转发成员那条"由**桥**做（本号只有一个注册者 = 本类）：桥收到成员那条时先调本方法广播、
-        /// 再本地应用 —— 与 4036 家具那条完全同款，见 <c>NetVehicleBridge.OnVehicleMountMsg</c>。</para></summary>
+        /// 而"房主转发成员那条"由**桥**做：桥收到成员那条时先调本方法广播、再本地应用
+        /// —— 这条就是 4036（<c>FurnitureOperateMsg.NetId != 0</c>），见 <c>NetVehicleBridge.OnVehicleMountMsg</c>。</para></summary>
         public void SendVehicleMount(int netId, uint sid, bool mounted)
         {
             if (netId == 0) return;
 
-            var msg = MessageCenter.Pack(CmdId.VehicleMountNtf,
-                new VehicleMountMsg { NetId = netId, Sid = sid, Mounted = mounted });
+            // 已并入 4036：NetId != 0 即"这条是上下机"，键 = 载具 Actor.NetId
+            // （载具两端生成落点差几厘米 ⇒ SyncId 必然对不上，只能用车号）
+            var msg = MessageCenter.Pack(CmdId.FurnitureOperateNtf,
+                new FurnitureOperateMsg { NetId = netId, VehicleSid = sid, Mounted = mounted });
 
             if (IsHost)
             {
@@ -940,11 +904,6 @@ namespace FPSGame.Net
             if (m != null) OnAirdropCall?.Invoke(m.Sid, m.AirdropId, new Vector3(m.X, m.Y, m.Z), m.Yaw, m.VehicleNetId);
         }
 
-        private void HandleVehicleMountNtf(VehicleMountMsg m)
-        {
-            if (m != null && m.NetId != 0) OnVehicleMount?.Invoke(m.NetId, m.Sid, m.Mounted);
-        }
-
         private void HandleVehicleShootNtf(VehicleShootMsg m)
         {
             if (m == null || m.NetId == 0) return;
@@ -982,7 +941,7 @@ namespace FPSGame.Net
             if (m != null) OnSpeech?.Invoke(m.Sid, m.Speech);
         }
 
-        /// <summary>【上行】生命状态（分流规则同 <see cref="SendArmament"/>）。</summary>
+        /// <summary>【上行】生命状态（分流规则同 <see cref="SendSetup"/>）。</summary>
         public void SendVital(float hp, float hpMax, float shield, float shieldMax, bool down)
         {
             var v = new PlayerVital
@@ -1032,7 +991,7 @@ namespace FPSGame.Net
             if (m != null) OnPlayerRevive?.Invoke(m.Sid);
         }
 
-        /// <summary>【上行】弹药系数（分流规则同 <see cref="SendArmament"/>）。</summary>
+        /// <summary>【上行】弹药系数（分流规则同 <see cref="SendSetup"/>）。</summary>
         public void SendAmmo(float ratio)
         {
             var a = new PlayerAmmo { Ratio = ratio };
@@ -1204,7 +1163,17 @@ namespace FPSGame.Net
 
         private void HandleFurnitureOperateNtf(FurnitureOperateMsg m)
         {
-            if (m != null) OnFurnitureOperate?.Invoke(m);
+            if (m == null) return;
+
+            // ⚠ 载具上下机（原 4053）也走这个号：NetId != 0 ⇒ 键是载具 Actor.NetId，SyncId/State 不参与。
+            //   必须在这里就分流给 OnVehicleMount（转发与否由桥按**一车一人**裁决），绝不能流进家具重放。
+            if (m.NetId != 0)
+            {
+                OnVehicleMount?.Invoke(m.NetId, m.VehicleSid, m.Mounted);
+                return;
+            }
+
+            OnFurnitureOperate?.Invoke(m);
         }
 
         /// <summary>终端阶段推进：驱动端上报 / 房主转发全体（走向由 09 侧的 NetKeyScreenBridge 决定）。</summary>
@@ -1322,11 +1291,6 @@ namespace FPSGame.Net
             if (m != null) OnWaveCenter?.Invoke(m);
         }
 
-        private void HandleBoosterSync(PlayerBoosterSync s)
-        {
-            if (s != null) OnBoosterSync?.Invoke(s.Sid, s.PlayerIndex, s.BoosterId);
-        }
-
         private void HandleLoadoutSync(PlayerLoadoutMsg m)
         {
             if (m != null) OnLoadoutSync?.Invoke(m);
@@ -1339,7 +1303,7 @@ namespace FPSGame.Net
             _battleStarted = false;   // ★ 新一局：加载闸门复位 —— 要重新等"全体加载完成"，不能用上一局的位
 
             // 成员侧「确认本局配置」由 09_Managers 的 TeamNetBridge.HandleTaskConfirm 承接：
-            //   幂等（MatchId）→ 校验（地图/任务下标 + 任务指纹）→ SetSeed + SetTask(…, ntf.Seed)
+            //   幂等（MatchId）→ 校验（Cfg 合法 + 本地有这张地图）→ SetSeed + SetTask(FromDto(Cfg), …, ntf.Seed)
             //   ⇒ 落配置并进 Ready。⚠ **不加载场景**（那由随后的 TransitionNtf / 本机 ArmamentWnd 那条链驱动）。
             // 本类只负责"把事件抛出去"：02_Net 看不见 TaskManager/TeamManager（references 为空）。
             OnTaskConfirm?.Invoke(ntf);

@@ -11,21 +11,31 @@ namespace FPSGame.Net
     /// </summary>
     public static class CmdId
     {
-        // ===== 房间模块（房主权威 / 局域网联机）=====
-        /// <summary>成员 -> 房主：请求加入房间</summary>
+
+        #region 房间模块
+
+        /// <summary>请求加入房间</summary>
         public const int JoinRoomReq = 4001;
-        /// <summary>房主 -> 成员：加入结果（成功/失败+原因）</summary>
+        /// <summary>响应加入结果（成功/失败+原因）</summary>
         public const int JoinRoomRsp = 4002;
-        /// <summary>成员 -> 房主：离开房间</summary>
+        /// <summary>通知离开房间</summary>
         public const int LeaveRoomNtf = 4003;
-        /// <summary>房主 -> 全体：成员列表同步（加入/离开/变更时）</summary>
+
+
+        /// <summary>广播成员列表同步（加入/离开/变更时）</summary>
         public const int PlayerListSync = 4004;
+
+
         /// <summary>成员 -> 房主：准备状态切换</summary>
         public const int ReadyState = 4005;
-        /// <summary>房主 -> 全体：本局配置确认（Bridge 选完任务 ⇒ 双方进 Ready；仍在舰桥）</summary>
+        /// <summary>广播本局任务配置（Bridge 选完任务 ⇒ 双方进 Ready）</summary>
         public const int TaskConfirm = 4006;
-        /// <summary>房主 -> 全体：进入 Transition（Armament 结束，同时开始加载战斗场景）</summary>
+        /// <summary>广播 进入 Transition（Armament 结束，同时开始加载战斗场景）</summary>
         public const int Transition = 4012;
+
+        #endregion
+
+        #region 表现同步
 
         // ===== 局内表现同步（切枪 / 开火；只做表现，不结算伤害）=====
         /// <summary>成员 -> 房主：切枪（武器槽位）</summary>
@@ -163,17 +173,7 @@ namespace FPSGame.Net
         /// 频率档与本条不同 ⇒ 不合并（它们各自的路由已被验证，见 <c>WaveManager</c> 的整批复刻与 <c>SceneActorSync</c>）。</para></summary>
         public const int HostSpawnNtf = 4052;
 
-        /// <summary>双向：**载具上下机**（键 = 载具 <c>Actor.NetId</c>；值 = 驾驶者 sid + 是否上机）。
-        /// <para>▍为什么不蹭家具那条 4036：它的远端重放会走 <c>Furniture_Vehicle.Operate()</c> ⇒
-        /// <c>VehicleController.SetOwener(远端实例)</c>，而那条路硬要 <c>PlayerController</c>
-        /// （读相机 / 关 CC / 改 <c>ActorState</c>）⇒ 盟友实例上必 NRE；且那些"本机玩家专属开关"本来就不该在远端执行。
-        /// 故载具**从 4036 摘出**（见 <c>NetFurnitureBridge</c>），远端改走桥的 <c>ApplyRemoteMount</c>（只挂挂点 + 停位姿）。</para>
-        /// <para>▍**一个号两个方向**（与 4036 / 4037 / 4050 同款）：成员上报 → 房主转发全体 + 本地应用；
-        /// 房主自己广播给全体。⚠ 同一个号只能有一个注册者 ⇒ 注册在 <c>NetRoomFlow</c>，桥只订阅事件。</para>
-        /// <para>▍【一车一人 · 2026-10-15】同一条还兼"占用裁决"：房主按**先到先得**拒绝第二个上机的人，
-        /// 并把占用者重播回去（发起者那台会自己下车）—— 否则两端各坐一个（实测"两人同车"）。
-        /// 见 <c>NetVehicleBridge._drivers</c> 与 <c>Furniture_Vehicle.CanOperate</c> 的 <c>_remoteOccupied</c>。</para></summary>
-        public const int VehicleMountNtf = 4053;
+
 
         /// <summary>双向：**载具武器开火表现**（键 = 载具 <c>Actor.NetId</c>；**只做表现**）。
         /// <para>▍只同步"看得见的东西"（枪口闪 + 弹道 + 命中特效）：伤害由**驾驶者那台**本机结算
@@ -199,29 +199,41 @@ namespace FPSGame.Net
         /// 各端按 <c>Sid</c> 认领：**只有归属者本机应用**（它才是权威，破盾/重塑/HUD 都挂在它本机的链上）。</para></summary>
         public const int ShieldDamageNtf = 4055;
 
+        #endregion 
+
+        #region 战斗·关键物体位姿同步
+
+        /// <summary>本机向房主提交位姿</summary>
+        public const int PlayerTransformUp = 5001;
+        /// <summary>房主广播位姿批次</summary>
+        public const int TransformBatchSync = 5002;
+
+        #endregion
+
+        #region 玩家配置同步
+
+
         // ===== 舰桥准备（战备/强化/资料；对应原 BridgeSys 的三条本地回环）=====
         /// <summary>成员 -> 房主：本机玩家资料（角色/等级/武器/战备/强化）</summary>
-        public const int PlayerProfileNtf = 4007;
-        /// <summary>成员 -> 房主：选择战备</summary>
-        public const int PlayerArmamentNtf = 4008;
-        /// <summary>房主 -> 全体：战备选择（房主自己也走这条）</summary>
-        public const int PlayerArmamentSync = 4009;
-        /// <summary>成员 -> 房主：选择全队强化</summary>
-        public const int PlayerBoosterNtf = 4010;
-        /// <summary>房主 -> 全体：全队强化（房主自己也走这条）</summary>
-        public const int PlayerBoosterSync = 4011;
-        /// <summary>成员 -> 房主：本机**配置**（武器改装：档位 + 模组；载具改装）。
-        /// <para>▍与 <c>PlayerProfileNtf</c> 分开：资料那条走"名单广播"（高频、跟着准备状态一起发），
-        /// 而本配置**只在入房与真正改动时**各发一次（改档位/模组/载具才有意义）。</para></summary>
-        public const int PlayerLoadoutNtf = 4044;
-        /// <summary>房主 -> 全体：玩家配置（含房主自己）。⚠ 新人入房时房主**补发全量**（见 NetHostSvc.BroadcastLoadouts）。</summary>
-        public const int PlayerLoadoutSync = 4045;
+        public const int PlayerProfileNtf = 6001;
 
-        // ===== 战斗·关键物体位姿同步（5000 段；房主权威"聚合 + 广播"）=====
-        /// <summary>成员 -> 房主：本机权威实体的位姿（当前：本机玩家）</summary>
-        public const int PlayerTransformUp = 5001;
-        /// <summary>房主 -> 全体：聚合后的位姿批次（含房主自己；房主本地也自派发一次）</summary>
-        public const int TransformBatchSync = 5002;
+        /// <summary>成员 -> 房主：舰桥准备项变更（战备槽 0-3 / 全队强化槽 4，见 <c>PlayerSetupMsg.BoosterSlot</c>）。
+        /// <para>▍战备与强化共用一条：<c>ArmamentWnd</c> 里强化本来就是同一排的第 5 格
+        /// （<c>GetChild(playerIndex, 5, 4)</c>，战备是 0-3）⇒ 协议按同一个槽位口径走，省一套 DTO / 命令号 / handler。</para></summary>
+        public const int PlayerSetupNtf = 6002;
+        /// <summary>房主 -> 全体：舰桥准备项（房主权威转发，含房主自己）</summary>
+        public const int PlayerSetupSync = 6003;
+
+        /// <summary>成员 -> 房主：本机**配置**（武器选择 + 改装档位/模组 + 载具改装）。
+        /// <para>▍与 <c>PlayerProfileNtf</c> 分开：资料那条走"名单广播"（高频、跟着准备状态一起发），
+        /// 而本配置**只在入房与真正改动时**各发一次（换武器/改档位/改模组/改载具才有意义）。</para>
+        /// <para>▍⚠ **武器选择也在这里**：它和改装是同一个窗口、同一个触发点（SelectRoleWnd 关窗 ⇒ SendSelfLoadout），
+        /// 放资料条会漏同步 —— 关窗时资料压根不重发。</para></summary>
+        public const int PlayerLoadoutNtf = 6006;
+        /// <summary>房主 -> 全体：玩家配置（含房主自己）。⚠ 新人入房时房主**补发全量**（见 NetHostSvc.BroadcastLoadouts）。</summary>
+        public const int PlayerLoadoutSync = 6007;
+
+        #endregion
     }
 
 }

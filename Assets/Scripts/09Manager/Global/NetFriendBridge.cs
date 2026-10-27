@@ -637,9 +637,9 @@ namespace FPSGame.Managers
 
         /// <summary>
         /// 【桥调用】按角色配置给盟友装配武器槽。
-        /// <para>▍数据通路：<c>PlayerProfile.Weapons</c>（按 <c>WeaponTypeEnum</c> 索引的 int[]，与本地
-        /// <c>ArchivesData_SO.GetWeaponSelect</c> 同形）+ <c>RoleData_SO.GetWeapon(type, index)</c> 取预制体；
-        /// 改装用 <c>PlayerProfile.Upgrades</c>（入房时随资料一起上报的那份）。</para>
+        /// <para>▍数据通路：角色来自 <c>PlayerProfile.RoleName</c>（名单），**武器选择 / 改装 / 模组**全部来自
+        /// 缓存里那份 <c>PlayerLoadoutMsg</c>（到达时机与名单不同步）。<c>Weapons</c> 与 <c>RoleData_SO.GetWeapon</c>
+        /// 配对取预制体。</para>
         /// </summary>
         private void AttachRoleWeapons(FriendController fc, PlayerProfile profile)
         {
@@ -655,6 +655,12 @@ namespace FPSGame.Managers
                 return;
             }
 
+            // 武器选择 / 改装 / 模组全在配置那条（CmdId.PlayerLoadoutNtf/Sync）：没到就**不装配**
+            // （Setup 会先 Clear ⇒ 空手），等 RefreshLoadout 再来一次。别再读 profile.Weapons：
+            // 关窗换枪不会重发资料 ⇒ 那份永远是旧枪。
+            _loadouts.TryGetValue(fc.NetSid, out var loadout);
+            if (loadout == null || loadout.Weapons == null || loadout.Weapons.Length == 0) return;
+
             var list = new List<FPSGame.Weapon.WeaponPlayerController>();
             var types = new[]
             {
@@ -665,18 +671,12 @@ namespace FPSGame.Managers
             for (int i = 0; i < types.Length; i++)
             {
                 int t = (int)types[i];
-                if (profile.Weapons == null || t >= profile.Weapons.Length) continue;
-                var prefab = roleCfg.GetWeapon(types[i], profile.Weapons[t]);
+                if (t >= loadout.Weapons.Length) continue;
+                var prefab = roleCfg.GetWeapon(types[i], loadout.Weapons[t]);
                 if (prefab != null) list.Add(prefab);
             }
 
-            // ★ 改装优先用**配置消息**（它带模组）；PlayerProfile 只作为"配置还没到"时的旧版兜底
-            _loadouts.TryGetValue(fc != null ? fc.NetSid : 0u, out var loadout);
-            int[][] upgrades = loadout != null && loadout.Upgrades != null && loadout.Upgrades.Length > 0
-                ? loadout.Upgrades
-                : profile.Upgrades;
-
-            fc.SetWeapons(list, upgrades, loadout?.Modules);
+            fc.SetWeapons(list, loadout.Upgrades, loadout.Modules);
 
             // 装配会把显示槽重置回"默认主手"（朋友实例重建 / 资料晚到重装都会走这里）
             // ⇒ 立刻把**他实际在拿的那一槽**补落回去；空手（槽 6）没有武器实例，落槽即可。
@@ -702,7 +702,7 @@ namespace FPSGame.Managers
         private PlayerProfile FindProfile(uint sid)
         {
             if (_lastInfos == null || _lastProfiles == null) return null;
-            for (int i = 0; i < _lastInfos.Length && i < _lastProfiles.Length; ++i)
+            for (int i = 0; i < _lastInfos.Length; ++i)
             {
                 if (_lastInfos[i] != null && _lastInfos[i].Sid == sid) return _lastProfiles[i];
             }
@@ -742,10 +742,19 @@ namespace FPSGame.Managers
 
         private void HandleRoster(PlayerInfo[] infos, PlayerProfile[] profiles)
         {
+            _healWarned.Clear();   // 新名单 ⇒ 允许再对"这些人"各告警一次
+
+            // 名单与资料**同序同长**（房主保证）；长度不对就整份丢掉、缓存也清掉，
+            // 别留半份给后面按下标取（ReconcileFriends / FindProfile 都直接取）。
+            if (infos == null || infos.Length == 0 || profiles == null || profiles.Length != infos.Length)
+            {
+                _lastInfos = null;
+                _lastProfiles = null;
+                return;
+            }
+
             _lastInfos = infos;
             _lastProfiles = profiles;
-            _healWarned.Clear();   // 新名单 ⇒ 允许再对"这些人"各告警一次
-            if (infos == null || infos.Length == 0) return;
 
             uint self = NetRoomFlow.Instance != null ? NetRoomFlow.Instance.SelfSid : 0u;
 
@@ -765,7 +774,7 @@ namespace FPSGame.Managers
                 var info = infos[i];
                 if (info == null || info.Sid == self) continue;   // 自己不需要盟友实例
 
-                var profile = profiles != null && i < profiles.Length ? profiles[i] : null;
+                var profile = profiles[i];
                 EnsureFriend(info, profile, i + 1);   // 序号从 1 起（房主 = 1）⇒ 出生点按序号沿 -Z 排开
             }
 
@@ -795,7 +804,9 @@ namespace FPSGame.Managers
             _reconcileLeft = ReconcileInterval;
 
             var infos = _lastInfos;
-            if (infos == null || infos.Length == 0) return;
+            var profiles = _lastProfiles;
+            // 名单与资料同序同长（见 HandleRoster 的守卫）⇒ 这里直接按下标取
+            if (infos == null || infos.Length == 0 || profiles == null || profiles.Length != infos.Length) return;
 
             var flow = NetRoomFlow.Instance;
             if (flow == null || !flow.InRoom) return;
@@ -814,13 +825,13 @@ namespace FPSGame.Managers
                 // ⚠ 告警每个 sid 只打一次：重建若因配置缺失（预制体/模型找不到）而失败，这里每 0.5s 一次就是刷屏
                 if (_healWarned.Add(info.Sid))
                 {
-                    var p = _lastProfiles != null && i < _lastProfiles.Length ? _lastProfiles[i] : null;
+                    var p = profiles[i];
                     FPSGame.Utils.NetSyncLog.Warn("盟友自愈",
                         $"sid={info.Sid}（{DisplayName(info, p)}）还在名单里、本端实例却没了 ⇒ 重建" +
                         "（多半是被销毁的载具连带带走 ⇒ 见 NetVehicleBridge 的骑手抢救那一段）");
                 }
 
-                var profile = _lastProfiles != null && i < _lastProfiles.Length ? _lastProfiles[i] : null;
+                var profile = profiles[i];
                 EnsureFriend(info, profile, i + 1);
                 NetVehicleBridge.RebindRide(info.Sid);   // 车还在 ⇒ 重新进舱；车没了 ⇒ 清掉脏绑定让新实例吃位姿
             }

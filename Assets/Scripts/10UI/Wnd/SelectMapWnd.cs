@@ -380,11 +380,22 @@ public class SelectMapWnd : Window
 
         // 没有同任务的房 ⇒ **直接自己公开一个**（2026-10-10 用户口径：不再弹"没找到房间"的提示）。
         // 静默建服（不弹"房间已创建"、不掀服务器列表），配置面板照常展开。
-        // ⚠ 建服时就把**当前选中的任务枚举**写进广播（CreateRoom 的 taskMain 形参）：不写的话房间广播里
+        // ⚠ 建服时就把**当前选中的任务内容**写进广播（CreateRoom 内部取 SelectedTaskCfg）：不写的话房间广播里
         //   还是上一局的任务，别人按同任务搜房就搜不到这一间（要等按「准备」时 ConfirmTask 才刷新）。
         SelectPlayMode = 1;
-        if (!IsHosting()) CreateRoom(true, taskMain, SelectTaskIndex);   // ⚠ 已经在开房就别重开：同端口会 SocketException
+        if (!IsHosting()) CreateRoom(true);   // ⚠ 已经在开房就别重开：同端口会 SocketException
         ExpandCfg();
+    }
+
+    /// <summary>当前**选中**的任务内容（未选 / 下标非法 ⇒ null）。
+    /// <para>▍开房时给房间广播一份，列表立刻能显示任务名；**不读** <c>TaskManager.NowTaskMain</c>
+    /// —— 那是上一局的值（建服发生在选完任务之前）。</para></summary>
+    private TaskCfgDto SelectedTaskCfg()
+    {
+        var cfgs = taskManager != null ? taskManager.TaskCfgs : null;
+        if (cfgs == null || SelectTaskRow < 0 || SelectTaskIndex < 0) return null;
+        if (SelectTaskRow >= cfgs.GetLength(0) || SelectTaskIndex >= cfgs.GetLength(1)) return null;
+        return TaskManager.ToDto(cfgs[SelectTaskRow, SelectTaskIndex]);
     }
 
     /// <summary>
@@ -395,12 +406,11 @@ public class SelectMapWnd : Window
     /// <param name="silent">
     /// true = 静默建服：成功不弹提示、不打开「服务器列表」。失败**仍然**弹提示（失败不该静默）。
     /// </param>
-    /// <param name="taskMain">本房**主任务类型枚举值**（<c>MissionEnum</c> 的 int；&lt;0 = 用 <c>TaskManager.NowTaskMain</c>）。
-    /// <para>▍快速匹配要传它：建服发生在"选完任务"之前，<c>NowTaskMain</c> 还是**上一局**的值
-    /// ⇒ 广播出去的任务对不上，别人按同任务搜房就搜不到这一间。</para></param>
-    /// <param name="taskIndex">本局**地图内任务下标**（<c>SelectTaskIndex</c>；-1 = 未知）。
-    /// 随广播下发，供接收端定位"与房主同一份"的 <c>TaskCfg</c>。</param>
-    public void CreateRoom(bool silent = false, int taskMain = -1, int taskIndex = -1)
+    /// <param name="cfg">本房任务内容（null = 用当前选中的那一份 <see cref="SelectedTaskCfg"/>）。
+    /// <para>▍为什么直接给**内容**而不是"主任务枚举 + 下标"：列表要的图标/颜色/标题都能从内容里取，
+    /// 而下标在"任务表各端本地按时间窗口生成"的前提下不可靠。⚠ 此刻本局可能还没 `SetTask`
+    /// （公开房是先建服）⇒ 真正的权威时刻仍是 <see cref="ConfirmTask"/> 里的 <c>host.ConfirmTask</c>。</para></param>
+    public void CreateRoom(bool silent = false, TaskCfgDto cfg = null)
     {
         var flow = NetRoomFlow.Instance;
         if (flow == null)
@@ -424,11 +434,9 @@ public class SelectMapWnd : Window
             Password = string.Empty,
             Difficulty = SelectTaskDiff,
             HostName = hostName,
-            // ⚠ 此刻本局任务**还没 SetTask**（「公开房」是先建服再确认任务）⇒ 这里拿到的可能是上一局的值；
-            //   真正的权威时刻是下面的 ConfirmTask，它会就地刷新广播里的主任务枚举。
-            //   （快速匹配那条路会显式传 taskMain，避开这个"上一局的值"的坑。）
-            TaskMain = taskMain >= 0 ? taskMain : taskManager.NowTaskMain,
-            TaskIndex = taskIndex,
+            // ⚠ 此刻本局任务**还没 SetTask**（「公开房」是先建服再确认任务）⇒ 内容取自"当前选中的那一项"，
+            //   不必读 NowTaskMain（那是**上一局**的值）。真正的权威时刻仍是 ConfirmTask。
+            TaskCfg = cfg ?? SelectedTaskCfg(),
         };
 
         if (!flow.Host(options, out string reason))
@@ -916,7 +924,7 @@ public class SelectMapWnd : Window
         //     判断"我是不是房主"的，房间还不存在就轮不到广播本局配置（成员也就拿不到配置）。
         if (SelectPlayMode == 1 && !IsHosting())
         {
-            CreateRoom(true, -1, SelectTaskIndex);   // 任务枚举/下标随后由 host.ConfirmTask 就地刷新（那才是权威时刻）
+            CreateRoom(true);   // 任务内容随后由 host.ConfirmTask 就地刷新（那才是权威时刻）
             if (!IsHosting()) return;
         }
 
@@ -924,9 +932,9 @@ public class SelectMapWnd : Window
         string mapId = mapRoot.GetChild(SelectMapIndex).name;
 
         // 种子传 0 ⇒ SetTask 内部回落到该任务自己的 taskCfg.seed（可复现），并发布到 TaskState.Seed
-        taskManager.SetTask(mapId, SelectTaskIndex,(DifficultyEnum)SelectTaskDiff, SelectTaskExtraDiff,SelectPlayMode);
+        taskManager.SetTaskByIndex(mapId, SelectTaskIndex,(DifficultyEnum)SelectTaskDiff, SelectTaskExtraDiff,SelectPlayMode);
 
-        // 房主：把这一局的配置广播给成员（地图 / 难度 / 任务下标 / 额外难度 / 种子 / 模式 / 任务指纹）
+        // 房主：把这一局的配置广播给成员（地图 / 难度 / 额外难度 / 种子 / 模式 / **任务内容**）
         // ⚠ 种子必须与本次 SetTask 用的是同一个 ⇒ 从 TaskState.Seed 读回来（唯一来源，避免两处各算一次）
         // ⚠ 成员侧由 TeamNetBridge.HandleTaskConfirm 承接：**只落配置**（SetSeed + SetTask ⇒ 进 Ready，仍在舰桥）。
         //    真正的"加载战斗场景"由 Transition 那条链驱动（房主广播 TransitionNtf → 成员 GameState=Transition
@@ -935,14 +943,12 @@ public class SelectMapWnd : Window
         if (host != null && host.RoomInfo != null)
         {
             int seed = FPSGame.Data.TaskState.Seed;
-            int fingerprint = taskManager.TaskFingerprint(mapId, SelectTaskIndex);
-            // ★ 连**配置内容**一起下发（不能只发下标）：任务表是各端本地按时间窗口生成的，
-            //   跨窗口 / 刚刷过表时同一个下标会指向另一个任务。带上内容后：
-            //   ① 后进者（Ready/Armament 期间入房）即使本地表里已经没有这个任务，也能按内容复现；
-            //   ② 两端表不同也不再是致命错误（指纹降级为诊断告警，见 TeamNetBridge.HandleTaskConfirm）。
-            // ★ 末尾带上主任务枚举：房间可能建在选任务之前（公开房流程）⇒ 由这里刷新广播里的任务类型
-            host.ConfirmTask(mapId, SelectTaskIndex, SelectTaskExtraDiff, seed, SelectPlayMode, fingerprint,
-                TaskManager.ToDto(taskManager.nowTask.taskCfg), taskManager.NowTaskMain);
+            // ★ **只发配置内容**（TaskCfg 就 9 个字段，内容即全部）：任务表是各端本地按时间窗口生成的，
+            //   跨窗口 / 刚刷过表时同一个下标会指向另一个任务 ⇒ 成员一律按内容复现、不查本地表。
+            //   后进者（Ready/Armament 期间入房）由 _lastTaskConfirm 补发同一份内容。
+            // ★ 房间广播里的 TaskMain / TaskName 也由它从内容里刷新（建服可能早于选任务）
+            host.ConfirmTask(mapId, SelectTaskExtraDiff, seed, SelectPlayMode,
+                TaskManager.ToDto(taskManager.nowTask.taskCfg));
         }
     }
 

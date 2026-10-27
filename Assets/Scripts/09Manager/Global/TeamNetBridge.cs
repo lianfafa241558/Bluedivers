@@ -73,8 +73,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnPlayerList += HandlePlayerList;
             NetRoomFlow.OnTaskConfirm += HandleTaskConfirm;
             NetRoomFlow.OnTransition += HandleTransition;
-            NetRoomFlow.OnArmamentSync += HandleArmamentSync;
-            NetRoomFlow.OnBoosterSync += HandleBoosterSync;
+            NetRoomFlow.OnSetupSync += HandleSetupSync;
             NetRoomFlow.OnLoadoutSync += HandleLoadoutSync;
             NetRoomFlow.OnJoinResult += HandleJoinResult;
             NetRoomFlow.OnPlayerLeft += HandlePlayerLeft;
@@ -87,8 +86,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnPlayerList -= HandlePlayerList;
             NetRoomFlow.OnTaskConfirm -= HandleTaskConfirm;
             NetRoomFlow.OnTransition -= HandleTransition;
-            NetRoomFlow.OnArmamentSync -= HandleArmamentSync;
-            NetRoomFlow.OnBoosterSync -= HandleBoosterSync;
+            NetRoomFlow.OnSetupSync -= HandleSetupSync;
             NetRoomFlow.OnLoadoutSync -= HandleLoadoutSync;
             NetRoomFlow.OnJoinResult -= HandleJoinResult;
             NetRoomFlow.OnPlayerLeft -= HandlePlayerLeft;
@@ -162,6 +160,14 @@ namespace FPSGame.Managers
             var team = TeamManager.Instance;
             if (team == null || infos == null || infos.Length == 0) return;
 
+            // 资料与名单**同序同长**（房主保证，见 NetHostSvc.BuildProfileArray）⇒ 长度不对就是有东西塌了，
+            // 报一次并丢弃本次名单（不猜、也不做"没资料就先建人"的半份降级）。
+            if (profiles == null || profiles.Length != infos.Length)
+            {
+                Debug.LogError($"[TeamNetBridge] 名单与资料长度不一致（{infos.Length} vs {profiles?.Length ?? 0}）⇒ 丢弃本次名单");
+                return;
+            }
+
             // ★ 开局后名册冻结：**只更新资料字段，不重建列表**。
             //   战斗中"掉线/退房"同样会触发房主广播名单（不挑场合），而重建会重排 players 下标 ——
             //   但 ArmamentWnd 的 armamentRoot.GetChild(i) ↔ players[i]、
@@ -186,7 +192,7 @@ namespace FPSGame.Managers
 
                 if (IsSelfEntry(info)) continue;   // 自己已经加过
 
-                var profile = profiles != null && i < profiles.Length ? profiles[i] : null;
+                var profile = profiles[i];
                 int id = IdOfSid(info.Sid);
 
                 var data = team.players.Find(item => item != null && item.id == id);
@@ -223,7 +229,7 @@ namespace FPSGame.Managers
                 int localIndex = LocalIndexOf(team, info.Sid);   // 认得"两端各自的自己"（自己不在表里时靠 sid 认）
                 if (localIndex < 0) continue;
 
-                var profile = profiles != null && i < profiles.Length ? profiles[i] : null;
+                var profile = profiles[i];
                 NotifyReadyChanged(team.players[localIndex], info, profile);
             }
 
@@ -246,7 +252,7 @@ namespace FPSGame.Managers
                 var data = team.players.Find(item => item != null && item.id == IdOfSid(info.Sid));
                 if (data == null) continue;   // 局内不新增玩家
 
-                var profile = profiles != null && i < profiles.Length ? profiles[i] : null;
+                var profile = profiles[i];
                 ApplyInfo(data, info, profile);
                 NotifyReadyChanged(data, info, profile);
             }
@@ -369,7 +375,7 @@ namespace FPSGame.Managers
 
             if (!string.IsNullOrEmpty(info.PlayerName)) data.name = info.PlayerName;
 
-            if (profile == null) return;   // 只有名单（旧版本房主 / 成员还没上报资料）⇒ 保留已有角色信息
+            if (profile == null) return;   // 对端还没这人的资料（正常入房流程不会出现）⇒ 保留已有角色信息
 
             if (!string.IsNullOrEmpty(profile.Name)) data.name = profile.Name;
             // ⚠ 角色名空 = 占位资料：不能覆盖，否则 ArmamentWnd/GameEndWnd 会拿空串去 CreatPrefab
@@ -378,8 +384,7 @@ namespace FPSGame.Managers
                 data.roleName = profile.RoleName;
                 data.roleLevel = profile.RoleLevel;
                 data.roleExp = profile.RoleExp;
-                if (profile.Weapons != null && profile.Weapons.Length > 0) data.weapons = profile.Weapons;
-                if (profile.Upgrades != null && profile.Upgrades.Length > 0) data.Upgrades = profile.Upgrades;
+                // 武器选择 / 改装都**不在这条**：唯一写入点是配置那条的 HandleLoadoutSync（资料只带角色/战备/强化）
             }
             if (profile.Airdrop != null && profile.Airdrop.Length == 4) data.airdrop = profile.Airdrop;
             data.boosterId = profile.BoosterId;
@@ -414,11 +419,10 @@ namespace FPSGame.Managers
         /// <list type="number">
         ///   <item><b>幂等</b>：同一 <c>MatchId</c> 只处理一次（KCP 重传 / 房主重复点按钮）；
         ///         新成员入房时房主会**补发**同一条 <c>TaskConfirmNtf</c> ⇒ 也靠这个幂等键挡住重复；</item>
-        ///   <item><b>校验</b>：地图必须本地存在；任务内容**以房主下发的 <c>Cfg</c> 为准**
-        ///         （跨窗口时本地表的下标不可靠）；<c>TaskFingerprint</c> 仅作诊断告警，
-        ///         只在房主没下发内容（旧版）时才恢复"不一致就中止"的硬校验；</item>
+        ///   <item><b>校验</b>：<c>Cfg</c> 必须带（<c>Main &gt;= 0</c>），且地图必须本地存在
+        ///         —— 任务**内容**完全以房主下发的为准，不查本地任务表的下标；</item>
         ///   <item><b>种子与配置</b>：<c>TeamManager.SetSeed</c>（喂 <c>RandomUtils</c> 静态流）
-        ///         + <c>SetTask(…, ntf.Seed)</c>（喂 <c>TaskState.Seed</c> → <c>BattleRandom</c> / 地形流 / 谜题流）；
+        ///         + <c>SetTask(FromDto(Cfg), …, ntf.Seed)</c>（喂 <c>TaskState.Seed</c> → <c>BattleRandom</c> / 地形流 / 谜题流）；
         ///         ⚠ <c>SetTask</c> 末尾会把 <c>GameState</c> 推到 <c>Ready</c>，与房主一致；
         ///         至此**双方都还在舰桥**，名单也还没冻结（Ready/Armament 期间仍可进人）。</item>
         /// </list>
@@ -440,45 +444,18 @@ namespace FPSGame.Managers
             if (ntf.MatchId != 0 && ntf.MatchId == _handledMatchId) return;
             _handledMatchId = ntf.MatchId;
 
-            // ★ 本局配置**以内容为准**（2026-10-06）：房主随消息下发了"选中项 TaskCfg"的内容 ⇒
-            //   成员**不再依赖本地任务表的下标**。那张表是各端本地按时间窗口生成的
-            //   （跨窗口 / 刚刷过表时同一个 TaskIndex 可能指向另一个任务 —— 这正是之前
-            //   "任务表不同步，已中止开局"的成因）。⇒ 只要本地有这张**地图**（加载场景要用），
-            //   任务内容就完全复现；"即使这个任务在任务表上已经不存在了"也照样能打
-            //   （见 TaskManager.SetTask 的 remoteCfg 分支）。
-            bool hasCfg = ntf.Cfg != null && ntf.Cfg.Main >= 0;
-
-            // ② 配置校验：地图必须本地存在；任务**下标**只在"没下发内容"时才要求合法
-            bool badConfig = task.MapData == null
-                             || string.IsNullOrEmpty(ntf.MapName)
-                             || !task.MapData.ContainsKey(ntf.MapName)
-                             || (!hasCfg && (ntf.TaskIndex < 0 || ntf.TaskIndex >= task.TaskCount));
-            if (badConfig)
+            // ★ 本局任务**以内容为准**：房主随消息下发选中项 TaskCfg 的**全部字段**（TaskCfg 就 9 个），
+            //   成员不查本地任务表 —— 那张表是各端本地按时间窗口生成的，同一个下标跨窗口会指向另一个任务。
+            //   ⇒ 校验只剩两项：内容合法 + 本地有这张**地图**（加载场景要用）。
+            if (ntf.Cfg == null || ntf.Cfg.Main < 0)
             {
-                Debug.LogError($"[TeamNetBridge] 收到开局广播但配置对不上：地图={ntf.MapName} 任务={ntf.TaskIndex}");
+                Debug.LogError($"[TeamNetBridge] 收到开局广播但没带任务内容（地图 {ntf.MapName}）⇒ 丢弃本次配置");
                 return;
             }
-
-            // ②b 任务表指纹 —— ⚠ 已从"硬校验"**降级为诊断告警**：
-            //   下发内容后，两端表不同**不影响本局**（成员按内容复现），所以不能再中止开局，
-            //   否则后进者 / 跨窗口的玩家会被永久拒之门外。
-            //   仅当房主**没**下发内容（旧版房主）时，才保留原来的硬校验。
-            if (ntf.TaskFingerprint != 0)
+            if (task.MapData == null || string.IsNullOrEmpty(ntf.MapName) || !task.MapData.ContainsKey(ntf.MapName))
             {
-                int localFingerprint = task.TaskFingerprint(ntf.MapName, ntf.TaskIndex);
-                if (localFingerprint != ntf.TaskFingerprint)
-                {
-                    if (!hasCfg)
-                    {
-                        Debug.LogError($"[TeamNetBridge] 任务表不同步，已中止开局！本机指纹 {localFingerprint} ≠ " +
-                                       $"房主 {ntf.TaskFingerprint}（地图 {ntf.MapName} 任务 {ntf.TaskIndex}）" +
-                                       " ⇒ 请重启游戏后重新入房");
-                        return;
-                    }
-                    Debug.LogWarning($"[TeamNetBridge] ⚠ 本地任务表与房主不同（本机 {localFingerprint} ≠ " +
-                                     $"房主 {ntf.TaskFingerprint}，地图 {ntf.MapName} 任务 {ntf.TaskIndex}），" +
-                                     "已按房主下发的配置**内容**复现本局（不影响联机）");
-                }
+                Debug.LogError($"[TeamNetBridge] 收到开局广播但本地没有这张地图：{ntf.MapName} ⇒ 丢弃本次配置");
+                return;
             }
 
             // ③ ⚠ **先收界面、再 SetTask**（与房主的顺序一致，别调换）：`SetTask` 会把 `GameState` 推到
@@ -490,8 +467,8 @@ namespace FPSGame.Managers
             // ③b 种子 + 本局配置（两条随机流共用同一个整数种子）
             team.SetSeed(ntf.Seed);
             int difficulty = Mathf.Clamp(ntf.Difficulty, 0, Tool.EnumLenght<DifficultyEnum>() - 1);
-            task.SetTask(ntf.MapName, ntf.TaskIndex, (DifficultyEnum)difficulty,
-                ntf.ExtraDiff ?? new int[4], ntf.PlayMode, ntf.Seed, ntf.Cfg);   // ★ 内容优先（见 ② / SetTask）
+            task.SetTask(TaskManager.FromDto(ntf.Cfg), ntf.MapName, (DifficultyEnum)difficulty,
+                ntf.ExtraDiff ?? new int[4], ntf.PlayMode, ntf.Seed);   // ★ 内容即全部（见 ② / SetTask）
 
             // ③c ★ 房主**可能已经进到 Armament**（后进房的人）：SetTask 只会把本机推到 Ready
             //     ⇒ 按房主随消息带下来的阶段补一步，否则新人在"等人"、其他人已经在"配战备"（2026-10-10 用户报）。
@@ -507,7 +484,7 @@ namespace FPSGame.Managers
             //   → 各自大厅既有的 GameStateController(state:8) → TransSceneController.StartLoad()。
             //   （旧实现是"收到配置就加载" ⇒ 成员在 Ready 阶段就跳进战场、房主还留在舰桥，见 2026-10-06 的修正）
             Debug.Log($"[TeamNetBridge] 已确认本局配置：局号{ntf.MatchId} {ntf.MapName} 难度{difficulty} " +
-                      $"任务{ntf.TaskIndex} 种子{ntf.Seed} —— 仍在舰桥 Ready，等所有人就位/准备");
+                      $"任务「{ntf.Cfg.Name}」 种子{ntf.Seed} —— 仍在舰桥 Ready，等所有人就位/准备");
         }
 
         // ==================== 阶段：Transition（进战斗） ====================
@@ -589,7 +566,7 @@ namespace FPSGame.Managers
 
         // ==================== 上行（战备 / 强化 → 权威转发 → 本地 UI） ====================
 
-        private void HandleArmamentSync(uint sid, int networkIndex, int airdropId, int slotIndex)
+        private void HandleSetupSync(uint sid, int slotIndex, int id)
         {
             var team = TeamManager.Instance;
             if (team == null) return;
@@ -597,47 +574,37 @@ namespace FPSGame.Managers
             int localIndex = LocalIndexOf(team, sid);
             if (localIndex < 0)
             {
-                Debug.LogWarning($"[TeamNetBridge] 收到战备同步但找不到玩家 sid={sid}（忽略）");
+                Debug.LogWarning($"[TeamNetBridge] 收到准备项同步但找不到玩家 sid={sid}（槽 {slotIndex}，忽略）");
                 return;
             }
 
-            // ★ 先落数据、再叫 UI：桥是常驻的，而战备界面（BridgeSys/ArmamentWnd）只在舰桥场景
+            bool booster = slotIndex == PlayerSetupMsg.BoosterSlot;
+
+            // ★ 先落数据、再叫 UI：桥是常驻的，而舰桥界面（BridgeSys/ArmamentWnd）只在舰桥场景
             //   ⇒ 数据落点必须在这里，否则"不在舰桥时收到的同步"会被静默丢掉
-            //   （战斗中 BattleManager/空投都读 players[i].airdrop）。
+            //   （战斗中 BattleManager/空投都读 players[i].airdrop / boosterId）。
+            // 落点仍是两处：0-3 → airdrop[slot]，4 → boosterId（存储没合并，见 PlayerSetupMsg 注释）。
             var data = team.players[localIndex];
-            if (data != null && slotIndex >= 0)
+            if (data != null)
             {
-                if (data.airdrop == null || data.airdrop.Length != 4) data.airdrop = new int[4];
-                if (slotIndex < data.airdrop.Length) data.airdrop[slotIndex] = airdropId;
+                if (booster) data.boosterId = id;
+                else if (slotIndex >= 0)
+                {
+                    if (data.airdrop == null || data.airdrop.Length != 4) data.airdrop = new int[4];
+                    if (slotIndex < data.airdrop.Length) data.airdrop[slotIndex] = id;
+                }
             }
 
             // 界面刷新（不在舰桥时 Instance 为 null，静默跳过——数据已经落好了）
-            BridgeSys.Instance?.ReceivePlayerSelectArmament(localIndex, airdropId, slotIndex);
+            if (booster) BridgeSys.Instance?.ReceivePlayerSelectTeamEnhance(localIndex, id);
+            else BridgeSys.Instance?.ReceivePlayerSelectArmament(localIndex, id, slotIndex);
 
             // 自己改的 ⇒ 让**权威资料**跟着更新（后进者 / 结算读的是它）。
             // ⚠ 但**不再重发整份资料**：那会触发一次**全量 PlayerListSync 广播**（点 4 个槽 = 4 轮名单广播，
             //   2026-10-10 用户实测"选一次战备就提交一次"）。成员那份由房主在转发这条消息时就地更新
-            //   （见 NetHostSvc.OnPlayerArmamentNtf）⇒ 这里只需补**房主自己**那份。
+            //   （见 NetHostSvc.OnPlayerSetupNtf）⇒ 这里只需补**房主自己**那份。
             if (IsMySid(sid) && NetRoomFlow.Instance != null && NetRoomFlow.Instance.IsHost)
-                NetHostSvc.Instance?.SetLocalArmament(airdropId, slotIndex);
-        }
-
-        private void HandleBoosterSync(uint sid, int networkIndex, int boosterId)
-        {
-            var team = TeamManager.Instance;
-            if (team == null) return;
-
-            int localIndex = LocalIndexOf(team, sid);
-            if (localIndex < 0) return;
-
-            var data = team.players[localIndex];
-            if (data != null) data.boosterId = boosterId;   // ★ 同 HandleArmamentSync：数据落点归桥
-
-            BridgeSys.Instance?.ReceivePlayerSelectTeamEnhance(localIndex, boosterId);
-
-            // 同 HandleArmamentSync：只补房主自己那份资料，**不重发整份资料**
-            if (IsMySid(sid) && NetRoomFlow.Instance != null && NetRoomFlow.Instance.IsHost)
-                NetHostSvc.Instance?.SetLocalBooster(boosterId);
+                NetHostSvc.Instance?.SetLocalSetup(slotIndex, id);
         }
 
         // ==================== 对外的小工具（BridgeRoleManager 等改完本地资料后调用） ====================
@@ -664,8 +631,6 @@ namespace FPSGame.Managers
                 RoleName = data.roleName,
                 RoleLevel = data.roleLevel,
                 RoleExp = data.roleExp,
-                Weapons = data.weapons,
-                Upgrades = data.Upgrades,
                 Airdrop = data.airdrop,
                 BoosterId = data.boosterId,
             };
@@ -715,6 +680,7 @@ namespace FPSGame.Managers
             if (data == null) return null;
             return new PlayerLoadoutMsg
             {
+                Weapons = data.weapons,
                 Upgrades = data.Upgrades,
                 Modules = data.weaponModules,
                 Vehicles = BuildVehicleDtos(),
@@ -787,6 +753,11 @@ namespace FPSGame.Managers
             // ★ 配置到了 ⇒ 立刻让场景里已存在的载具按新配置重刷（进战斗场景后配置才到、或中途改配置都靠它）
             VehicleCustomState.RefreshAll();
 
+            // 先在桥里按 sid 缓存（盟友已在场就顺手重装武器）。
+            // ⚠ 必须放在下面 localIndex 早退**之前**：配置只有这一条、没有补发，
+            //   若"配置早于名单到达"被判成未知 sid 直接丢掉，那把武器就永远没有改装/模组。
+            if (!IsMySid(m.Sid)) NetFriendBridge.Instance?.RefreshLoadout(m.Sid, m);
+
             var team = TeamManager.Instance;
             if (team == null) return;
 
@@ -796,12 +767,10 @@ namespace FPSGame.Managers
             var data = team.players[localIndex];
             if (data != null)
             {
+                if (m.Weapons != null && m.Weapons.Length > 0) data.weapons = m.Weapons;
                 if (m.Upgrades != null && m.Upgrades.Length > 0) data.Upgrades = m.Upgrades;
                 if (m.Modules != null && m.Modules.Length > 0) data.weaponModules = m.Modules;
             }
-
-            // 改装变了 ⇒ 让盟友实体按新配置重装武器（角色没变时 AttachRoleWeapons 不会自己触发）
-            if (!IsMySid(m.Sid)) NetFriendBridge.Instance?.RefreshLoadout(m.Sid, m);
         }
 
         /// <summary>sid → 本地 <c>PlayerData.id</c>（房主 0 ⇒ <see cref="HostDataId"/>；成员 ⇒ -(sid+1)）。</summary>

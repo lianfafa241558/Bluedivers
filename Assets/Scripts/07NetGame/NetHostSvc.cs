@@ -91,9 +91,10 @@ public class NetHostSvc : MonoBehaviour
     /// <summary>本机作为房主时的自标识名称（运行时时间戳生成，用于成员端排除"自己开的房"）</summary>
     private string _hostSelfName = null;
 
-    /// <summary>本房**地图内任务下标**（<c>TaskManager.TaskCfgs[map, task]</c> 的第二维；-1 = 未知/还没选任务）。
-    /// 随广播下发（<c>LanRoomInfo.TaskIndex</c>），让接收端能定位"与房主同一份"的 <c>TaskCfg</c>。</summary>
-    private int _taskIndex = -1;
+    /// <summary>本房**任务名**（= 选中 <c>TaskCfg.name</c>，如「深渊回响」；null = 还没选任务）。
+    /// <para>▍随广播下发（<c>LanRoomInfo.TaskName</c>）：列表直接显示它，不必按主任务枚举反查
+    /// —— 枚举只能给出"歼灭 / 护送"这类**类型名**，给不出这一局的具体任务名。</para></summary>
+    private string _taskName = null;
 
     /// <summary>本房的**稳定身份**（开房时生成一次，<see cref="StopHost"/> 清空）。
     /// <para>⚠ 与 <see cref="_hostSelfName"/>（时间戳合成名）分工不同：RoomId 是 GUID，
@@ -224,14 +225,13 @@ public class NetHostSvc : MonoBehaviour
         MessageCenter.Register<ReadyState>(CmdId.ReadyState, OnReadyState);
         // 舰桥准备（战备/强化/资料）：成员上行到房主，房主校验后转发（见 RelayToAll）
         MessageCenter.Register<PlayerProfileNtf>(CmdId.PlayerProfileNtf, OnPlayerProfileNtf);
-        MessageCenter.Register<PlayerArmamentNtf>(CmdId.PlayerArmamentNtf, OnPlayerArmamentNtf);
+        MessageCenter.Register<PlayerSetupMsg>(CmdId.PlayerSetupNtf, OnPlayerSetupNtf);
         // 玩家配置（武器改装档位/模组 + 载具改装）：成员上行 → 房主落表后全量广播（含补发给新人）
         MessageCenter.Register<PlayerLoadoutMsg>(CmdId.PlayerLoadoutNtf, OnPlayerLoadoutNtf);
         // 局内战备呼叫：成员上行 → 房主转发给全体（房主自己那条不走这里，见 NetRoomFlow.SendAirdropCall）
         MessageCenter.Register<AirdropCallMsg>(CmdId.AirdropCallNtf, OnAirdropCallNtf);
         // 角色喊话：成员上行 → 房主转发给全体
         MessageCenter.Register<PlayerSpeechMsg>(CmdId.SpeechNtf, OnSpeechNtf);
-        MessageCenter.Register<PlayerBoosterNtf>(CmdId.PlayerBoosterNtf, OnPlayerBoosterNtf);
         // 局内表现同步（切枪 / 开火）：成员上行 → 房主转发给全体
         MessageCenter.Register<PlayerWeaponSwitch>(CmdId.PlayerWeaponSwitchNtf, OnPlayerWeaponSwitchNtf);
         MessageCenter.Register<PlayerShoot>(CmdId.PlayerShootNtf, OnPlayerShootNtf);
@@ -270,7 +270,10 @@ public class NetHostSvc : MonoBehaviour
         MaxPlayers = Mathf.Max(1, options.MaxPlayers);
         _roomPassword = options.Password ?? "";
         _difficulty = options.Difficulty;
-        _taskMain = options.TaskMain;
+        // ★ 任务只认内容（options.TaskCfg）：确认任务之前可能没有（公开房是先建服）⇒ 保持未知，
+        //   真正的权威时刻是 ConfirmTask —— 它会就地刷新广播里的 TaskMain / TaskName。
+        _taskMain = options.TaskCfg != null ? options.TaskCfg.Main : -1;
+        _taskName = options.TaskCfg != null ? options.TaskCfg.Name : null;
         _hostName = string.IsNullOrEmpty(options.HostName) ? "房主" : options.HostName;
         _started = false;
         _rosterFrozen = false;        // 新房间：名单未冻结、入房闸门打开
@@ -315,7 +318,7 @@ public class NetHostSvc : MonoBehaviour
             MapName = options.MapName,
             Difficulty = _difficulty,
             TaskMain = _taskMain,
-            TaskIndex = _taskIndex,
+            TaskName = _taskName,
             InGame = false,
             // 当前唯一的房间来源就是局域网广播（服务器列表尚未实现）⇒ 恒定 0
             Source = (int)RoomMeta.SourceEnum.LanBroadcast,
@@ -358,7 +361,7 @@ public class NetHostSvc : MonoBehaviour
         _difficulty = -1;
         _taskMain = -1;
         _started = false;
-        _taskIndex = -1;
+        _taskName = null;
         _roomId = null;
         _rosterFrozen = false;
         _joinClosed = false;
@@ -721,48 +724,25 @@ public class NetHostSvc : MonoBehaviour
         }
     }
 
-    /// <summary>成员选择战备 → 以房主权威的索引转发给全体（房主本地也走一遍）。</summary>
-    private void OnPlayerArmamentNtf(PlayerArmamentNtf ntf)
+    /// <summary>成员的舰桥准备项（战备槽 0-3 / 全队强化槽 4）→ 以房主权威转发给全体（房主本地也走一遍）。</summary>
+    private void OnPlayerSetupNtf(PlayerSetupMsg msg)
     {
         uint sid = CurrentSid;
-        if (sid == 0 || ntf == null) return;
+        if (sid == 0 || msg == null) return;
+        if (!_players.ContainsKey(sid)) return;   // 还没入房就上报 → 忽略
 
-        int index = IndexOfSession(sid);
-        if (index < 0) return;
-
-        RelayToAll(CmdId.PlayerArmamentSync, new PlayerArmamentSync
+        RelayToAll(CmdId.PlayerSetupSync, new PlayerSetupMsg
         {
-            PlayerIndex = index,
-            AirdropId = ntf.AirdropId,
-            SlotIndex = ntf.SlotIndex,
             Sid = sid,               // 权威标识：各端按它映射自己的本地下标
+            SlotIndex = msg.SlotIndex,
+            Id = msg.Id,
         });
 
-        // ★ 顺手把**房主存的那份资料**里对应的战备槽也更新：这样成员侧就不必为"改一个战备"再重发整份资料
+        // ★ 顺手把**房主存的那份资料**里对应的槽也更新：这样成员侧就不必为"改一个战备/强化"再重发整份资料
         //   （重发会触发一次**全量 PlayerListSync 广播** ⇒ 点几个槽就刷几轮名单，2026-10-10 用户实测）。
         //   后进者 / 结算读的就是这份 <c>_profiles</c>（见 BroadcastPlayerList / BuildProfileArray）。
         PlayerProfile prof;
-        if (_profiles.TryGetValue(sid, out prof)) ApplyArmament(prof, ntf.AirdropId, ntf.SlotIndex);
-    }
-
-    /// <summary>成员选择全队强化 → 转发给全体（并顺手更新房主存的那份资料，见 <see cref="OnPlayerArmamentNtf"/> 的说明）。</summary>
-    private void OnPlayerBoosterNtf(PlayerBoosterNtf ntf)
-    {
-        uint sid = CurrentSid;
-        if (sid == 0 || ntf == null) return;
-
-        int index = IndexOfSession(sid);
-        if (index < 0) return;
-
-        RelayToAll(CmdId.PlayerBoosterSync, new PlayerBoosterSync
-        {
-            PlayerIndex = index,
-            BoosterId = ntf.BoosterId,
-            Sid = sid,
-        });
-
-        PlayerProfile prof;
-        if (_profiles.TryGetValue(sid, out prof) && prof != null) prof.BoosterId = ntf.BoosterId;
+        if (_profiles.TryGetValue(sid, out prof)) ApplySetup(prof, msg.SlotIndex, msg.Id);
     }
 
     /// <summary>成员呼叫战备 → 转发给全体。
@@ -868,24 +848,25 @@ public class NetHostSvc : MonoBehaviour
     /// 同时把配置存进 <c>_lastTaskConfirm</c>，供新人入房时补发。</para>
     /// </summary>
     /// <param name="mapName">地图名（空 = 用本房记录的地图，会自动剥掉 "#难度" 后缀）</param>
-    /// <param name="taskIndex">任务下标（-1 = 未指定）</param>
     /// <param name="extraDiff">额外难度（null = 全 0）</param>
     /// <param name="seed">随机种子（同局一致；0 = 由成员各自随机）</param>
     /// <param name="playMode">0=加入 1=公开 2=单人</param>
-    /// <param name="taskFingerprint">房主"选中项 TaskCfg"的指纹（0 = 不校验；见 TaskManager.TaskFingerprint）</param>
-    /// <param name="cfg">★**选中项 TaskCfg 的内容**（null = 不带 ⇒ 成员只能按本地表下标取，跨窗口会错位）。
+    /// <param name="cfg">★**选中项 TaskCfg 的内容**（必须有；<c>null</c> / <c>Main&lt;0</c> ⇒ 拒绝广播并报错）。
     /// <para>▍由 09 侧的 <c>TaskManager.ToDto</c> 转换而来（02_Net 看不见 <c>TaskCfg</c>/<c>MissionEnum</c>）。
-    /// 带上它之后，本局配置就"以内容为准"：后进者即使本地任务表里已经没有这个任务，也能照打
-    /// —— 这正是 <see cref="_lastTaskConfirm"/> 补发机制要保证的语义。</para></param>
-    /// <param name="taskMain">★ 本局**主任务类型枚举值**（<c>MissionEnum</c> 的 int；-1 = 不带；取 <c>TaskManager.NowTaskMain</c>）。
-    /// <para>▍为什么要在这里收：房间**可能建得比选任务早** —— 「公开房」流程是按下准备时才建服
-    /// （<c>SelectMapWnd.ConfirmTask</c> 里先 <c>CreateRoom</c> 再 <c>SetTask</c>），建服那一刻本房任务还是
-    /// 空的/上一局的。确认任务才是权威时刻 ⇒ 在这里就地把广播里的主任务枚举刷新，房间列表一个广播周期内就跟着变。
-    /// ⚠ 用 <c>int</c> 而非 <c>MissionEnum</c> 是因为 02_Net 看不见该枚举。</para></param>
-    public void ConfirmTask(string mapName = "", int taskIndex = -1, int[] extraDiff = null,
-        int seed = 0, int playMode = 2, int taskFingerprint = 0, TaskCfgDto cfg = null,
-        int taskMain = -1)
+    /// 它是本局任务的**唯一权威来源**：后进者即使本地任务表里已经没有这个任务，也能按内容照打
+    /// —— 这正是 <see cref="_lastTaskConfirm"/> 补发机制要保证的语义。
+    /// 房间广播里的 <c>TaskMain</c> / <c>TaskName</c> 也从它刷新（建服早于选任务时，这一刻才是权威时刻）。</para></param>
+    public void ConfirmTask(string mapName = "", int[] extraDiff = null,
+        int seed = 0, int playMode = 2, TaskCfgDto cfg = null)
     {
+        // 任务内容是本局唯一权威来源（成员不查本地表）⇒ 没有内容就别广播，免得全员收到一条废配置
+        if (cfg == null || cfg.Main < 0)
+        {
+            Debug.LogError("[NetHostSvc] ConfirmTask 没拿到任务内容（cfg 空 / Main<0）⇒ 拒绝广播，" +
+                           "调用方应传 TaskManager.ToDto(nowTask.taskCfg)");
+            return;
+        }
+
         _rosterFrozen = false;   // 新一局放行名单（上一局进 Transition 时冻结过）
         _joinClosed = false;     // 同时重开入房（正常流程里没人关过闸，这里只是兜底）
         _started = false;
@@ -896,37 +877,29 @@ public class NetHostSvc : MonoBehaviour
         {
             MapName = string.IsNullOrEmpty(mapName) ? RoomMeta.MapName(RoomInfo) : mapName,
             Difficulty = _difficulty,
-            TaskIndex = taskIndex,
             ExtraDiff = extraDiff ?? new int[4],
             Seed = seed,
             PlayMode = playMode,
-            TaskFingerprint = taskFingerprint,
             Cfg = cfg,
             MatchId = ++_matchId,
             Phase = _roomPhase,   // ★ 房主当前阶段（Ready/Armament）⇒ 后进房的人能立刻跟到同一阶段
         };
         _lastTaskConfirm = ntf;   // 供 Ready/Armament 期间入房的新人补发（**含配置内容** ⇒ 后进者按内容复现）
 
-        // ★ 任务已定 ⇒ 刷新广播里的主任务枚举（房间列表据此精确取任务图标/颜色）。RoomInfo 是**同一个对象**、
-        //   广播每次读它现取（GetBroadcastInfo）⇒ 这里改完，下一次广播就带上了。
-        //   （公开房流程建服早于选任务，所以这一步不是可选项 —— 见方法参数说明。）
-        if (taskMain >= 0)
+        // ★ 任务已定 ⇒ 用**内容**刷新广播里的三个展示字段（建服早于选任务，此刻才是权威时刻）：
+        //   Main → 列表图标/颜色（类型级）、Name → 列表标题（实例级）。RoomInfo 是**同一个对象**、
+        //   广播每次读它现取（GetBroadcastInfo）⇒ 改完即生效。
+        _taskMain = cfg.Main;
+        _taskName = cfg.Name;
+        if (RoomInfo != null)
         {
-            _taskMain = taskMain;
-            if (RoomInfo != null) RoomInfo.TaskMain = _taskMain;
-        }
-
-        // ★ 任务下标同一个道理（建服早于选任务 ⇒ 这里才是权威时刻）
-        if (taskIndex >= 0)
-        {
-            _taskIndex = taskIndex;
-            if (RoomInfo != null) RoomInfo.TaskIndex = _taskIndex;
+            RoomInfo.TaskMain = _taskMain;
+            RoomInfo.TaskName = _taskName;
         }
 
         SendToAll(MessageCenter.Pack(CmdId.TaskConfirm, ntf));
         Debug.Log($"[NetHostSvc] 已广播本局配置（局号 {ntf.MatchId}，地图 {ntf.MapName}，难度 {ntf.Difficulty}，" +
-                  $"任务 {ntf.TaskIndex}，种子 {ntf.Seed}，指纹 {ntf.TaskFingerprint}，" +
-                  $"配置内容 {(cfg != null && cfg.Main >= 0 ? "已带" : "无")}）——仍在舰桥 Ready，名单未冻结");
+                  $"任务「{cfg.Name}」主任务{cfg.Main} 种子 {ntf.Seed}）—— 仍在舰桥 Ready，名单未冻结");
     }
 
     /// <summary>
@@ -1200,32 +1173,29 @@ public class NetHostSvc : MonoBehaviour
     // ==================== 房主本地：只改一个字段（不重发整份资料） ====================
 
     /// <summary>
-    /// 【房主本地】把"我改了某个战备槽"写进 <c>HostProfile</c>（成员端后进房 / 结算读它）。
+    /// 【房主本地】把"我改了某个准备项（战备槽 0-3 / 全队强化槽 4）"写进 <c>HostProfile</c>
+    /// （成员端后进房 / 结算读它）。
     ///
     /// <para>▍为什么不重发整份资料（<c>SetLocalProfile</c>）：那会触发一次**全量 PlayerListSync 广播** ——
     /// 点 4 个战备槽就是 4 轮名单广播（2026-10-10 用户实测"选一次战备就提交一次"）。
     /// 成员端同理：改战备/强化时房主会在转发那条消息时就地更新 <c>_profiles</c>，成员不必重发资料。</para>
     ///
-    /// <para>▍不需要额外广播：战备本身已经由 <c>PlayerArmamentSync</c> 播过；这里只影响
+    /// <para>▍不需要额外广播：选择本身已经由 <c>PlayerSetupSync</c> 播过；这里只影响
     /// "后进房的人拿到的房主资料"与结算读的那份，而它们在下次 <c>BroadcastPlayerList</c>（有人入房等）时自然带上。</para>
     /// </summary>
-    public void SetLocalArmament(int airdropId, int slotIndex)
+    public void SetLocalSetup(int slotIndex, int id)
     {
-        ApplyArmament(HostProfile, airdropId, slotIndex);
+        ApplySetup(HostProfile, slotIndex, id);
     }
 
-    /// <summary>【房主本地】同上，改的是全队强化。</summary>
-    public void SetLocalBooster(int boosterId)
-    {
-        if (HostProfile != null) HostProfile.BoosterId = boosterId;
-    }
-
-    /// <summary>把一个战备选择写进某份资料（槽位越界 / 资料未初始化时**不动**，不造半份假资料）。</summary>
-    private static void ApplyArmament(PlayerProfile profile, int airdropId, int slotIndex)
+    /// <summary>把一个准备项写进某份资料（槽位越界 / 资料未初始化时**不动**，不造半份假资料）。
+    /// <para>▍落点仍是两处：0-3 写 <c>Airdrop[slot]</c>，4 写 <c>BoosterId</c>（见 <see cref="PlayerSetupMsg.BoosterSlot"/>）。</para></summary>
+    private static void ApplySetup(PlayerProfile profile, int slotIndex, int id)
     {
         if (profile == null || slotIndex < 0) return;
+        if (slotIndex == PlayerSetupMsg.BoosterSlot) { profile.BoosterId = id; return; }
         if (profile.Airdrop == null || profile.Airdrop.Length != 4) profile.Airdrop = new int[4];
-        if (slotIndex < profile.Airdrop.Length) profile.Airdrop[slotIndex] = airdropId;
+        if (slotIndex < profile.Airdrop.Length) profile.Airdrop[slotIndex] = id;
     }
 
     /// <summary>
@@ -1306,8 +1276,7 @@ public class NetHostSvc : MonoBehaviour
         MessageCenter.Unregister(CmdId.LeaveRoomNtf);
         MessageCenter.Unregister(CmdId.ReadyState);
         MessageCenter.Unregister(CmdId.PlayerProfileNtf);
-        MessageCenter.Unregister(CmdId.PlayerArmamentNtf);
-        MessageCenter.Unregister(CmdId.PlayerBoosterNtf);
+        MessageCenter.Unregister(CmdId.PlayerSetupNtf);
         MessageCenter.Unregister(CmdId.PlayerWeaponSwitchNtf);
         MessageCenter.Unregister(CmdId.PlayerShootNtf);
         MessageCenter.Unregister(CmdId.PlayerVitalNtf);

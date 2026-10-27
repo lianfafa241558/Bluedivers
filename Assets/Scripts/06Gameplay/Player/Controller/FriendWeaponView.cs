@@ -63,7 +63,7 @@ namespace FPSGame.Gameplay
 
         /// <summary>
         /// 【桥调用】按角色武器预制体清单装配槽位（预制体为 null 的项跳过），并应用改装。
-        /// <para>▍改装来源 = 网络资料里的 <c>PlayerProfile.Upgrades</c>（按 <see cref="WeaponTypeEnum"/> 索引，
+        /// <para>▍改装来源 = <c>PlayerLoadoutMsg.Upgrades</c>（4044/4045；按 <see cref="WeaponTypeEnum"/> 索引，
         /// 与本地玩家 <c>ArchivesData_SO.GetWeaponUpgrade</c> 同形）⇒ 各端看到盟友的枪与本人一致。</para>
         /// </summary>
         /// <param name="prefabs">角色携带的武器预制体（可含 null）</param>
