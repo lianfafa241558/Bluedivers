@@ -36,6 +36,7 @@
 | UI 开窗 / Wnd 槽 / 新增窗口 SOP | `topics/wnd-slot.md` |
 | 家具身份 / Identity / BaseObject | `topics/furniture-identity.md` |
 | 战斗 / AI / 伤害管线 / 组件存活 | `topics/gameplay.md` |
+| 武器升级 / 模组 / WUD_ 通用池复用（禁复制） | `skills/weapon-upgrade/SKILL.md` §4.1 |
 | 玩家 / 相机 / 武器子弹 / 战备 / 寻路 | `topics/gameplay-player.md` |
 | 家具交互 / 任务 / 逻辑帧 / 存档 / 地形 | `gameplay-world.md` · `terrain-render.md` |
 | 拦截火车 / 轨道 / 路基 / 炮塔 / 卫队 | `mission-intercept-*.md` |

@@ -1,4 +1,5 @@
-
+﻿
+using System.Collections.Generic;
 using UnityEngine;
 using FPSGame.Core;
 using FPSGame.Utils;
@@ -32,6 +33,16 @@ public class PropertyManager : Singleton<PropertyManager>
     public GameObject GetPrefab(OOPartEnum property) => propertys[property].prefab;
     public int GetCount(OOPartEnum property) => user[property];
     public int SetCount(OOPartEnum property,int value) => user[property]+= value;
+
+    /// <summary>按价目表扣资源。⚠ 不校验余额：调用方必须在弹确认框前判"够不够"（TipWnd 的 costs 已按 need/have 着色并隐藏买不起的按钮）。</summary>
+    public void Pay(IList<SKVP<OOPartEnum, int>> costs)
+    {
+        if (costs == null) return;
+        for (int i = 0; i < costs.Count; ++i)
+        {
+            SetCount(costs[i].Key, -costs[i].Value);
+        }
+    }
 
     public GameObject CreatOOPart()
     {

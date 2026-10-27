@@ -1,22 +1,33 @@
-"""按 guid 反查脚本文件名。
-
-用法：python -X utf8 .codebuddy/plans/guid_lookup.py <guid> [guid ...]
-"""
+# -*- coding: utf-8 -*-
+"""按 guid 反查资产路径：python guid_lookup.py <guid> [<guid> ...]"""
+import glob
+import io
 import os
 import re
 import sys
 
-ROOT = r"e:\Bluedivers\Assets"
-wanted = {g.lower() for g in sys.argv[1:]}
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+want = set(sys.argv[1:])
 found = {}
-for dirpath, _, files in os.walk(ROOT):
-    for fn in files:
-        if not fn.endswith(".meta"):
-            continue
-        with open(os.path.join(dirpath, fn), "r", encoding="utf-8", errors="replace") as f:
-            m = re.search(r"guid:\s*([0-9a-f]{32})", f.read())
-        if m and m.group(1) in wanted:
-            found[m.group(1)] = os.path.join(dirpath, fn)[:-5]
+
+for p in glob.glob(os.path.join(ROOT, "Assets/**/*.meta"), recursive=True):
+    with io.open(p, encoding="utf-8", errors="ignore") as f:
+        head = f.read(200)
+    m = re.search(r"^guid: ([0-9a-f]{32})", head, re.M)
+    if m and m.group(1) in want:
+        found[m.group(1)] = os.path.relpath(p[:-5], ROOT).replace("\\", "/")
 
 for g in sys.argv[1:]:
-    print(f"{g} -> {found.get(g.lower(), '(未找到)')}")
+    print("%s -> %s" % (g, found.get(g, "<无主：断链>")))
+
+for g, p in found.items():
+    with io.open(os.path.join(ROOT, p), encoding="utf-8", errors="ignore") as f:
+        s = f.read()
+    nm = re.search(r"^  name: \"(.+)\"$", s, re.M)
+    print("   ", p, "|", nm.group(1) if nm else "?")

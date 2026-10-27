@@ -1,26 +1,27 @@
 ﻿using System.Collections.Generic;
-using FPSGame.Core;
 using FPSGame.Attributes;
-
+using FPSGame.Core;
 using FPSGame.Game;
+using FPSGame.Gameplay;
+using FPSGame.Utils;
 using UnityEngine;
 using UnityEngine.UI;
-using FPSGame.Utils;
-using FPSGame.Gameplay;
 
 namespace FPSGame.UI
 {
-    using FPSGame.GameContract;
-    using FPSGame.Net;
-    using static GameData.ArchivesData_SO;
-    using static FPSGame.WndTools.WndRootTool;
+    using System.Data;
+    using FPSGame.Audio;
     using FPSGame.Data;
-    using FPSGame.Managers;
+    using FPSGame.GameContract;
     using FPSGame.GameData;
+    using FPSGame.Managers;
+    using FPSGame.Net;
+    using static FPSGame.WndTools.WndRootTool;
+    using static GameData.ArchivesData_SO;
 
-        /// <summary>
-        /// 设置窗口（含快捷键分部）。
-        /// </summary>
+    /// <summary>
+    /// 设置窗口（含快捷键分部）。
+    /// </summary>
         [AddComponentMenu("UI/窗口/设置")]
     public partial class SettingWnd : Window
     {
@@ -802,6 +803,8 @@ namespace FPSGame.UI
 
         void TryRename()
         {
+            ResSvc.Instance.GetVoice("Yuuka", "Rename", out var data, out var sourceName, out var portrait);
+            AudioSvc.PlaySound(data.Get());
             var archive = ArchivesData_SO.Current;
             WndHub.Password.Creat(new PasswordWndInfo {
                 title = "",

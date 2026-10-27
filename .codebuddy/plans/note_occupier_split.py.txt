@@ -1,0 +1,12 @@
+
+## 拆分：地图势力占领度从存档独立成 `OccupierState` + 独立 json（2026-10-27）
+
+- **根因口径**：`ArchivesData_SO.occupierDic` 是**世界状态**却存在**每人一份**的存档里 ⇒ 联机时必然"各看各的"。拆出去以后房主一份 JSON 下发全端即可。
+- 新文件 `06Gameplay/Data/OccupierState.cs`（程序集 `06_Gameplay`）：`OccupierEntry{name,value}` / `OccupierMapData{mapId,occupiers}` / `OccupierStateData{maps}` + 静态门面 `OccupierState`（`Get` / `Set` / `Load` / `Save` / `ToJson` / `ApplyJson`）。**同一份 JSON 既当磁盘格式又当网络载荷**，不另建 DTO（避免"加字段只改一半"）。
+- 存储：`ArchivesDataBase_SO.DeletePath() + "OccupierState.json"`（与 `KivotosCraftArc.json` 同目录，实测 `D:/Pro/Bluedivers/Assets/..//../OccupierState.json` = `D:/Pro/OccupierState.json`）；首次启动用模板 `Resources/GameData/Occupier_Default.json` 初始化并立刻落盘（模板只是初值，之后以磁盘为准）。
+- 调用点：`SelectMapWnd.ShowAreaWnd` 的 `arch.occupierDic[trans.name]` → `OccupierState.Get(trans.name)`（返回共享空表，缺图不建占位条目 —— DisplayDic 索引器的占位坑不再适用）。
+- 数据搬迁：12 张图的势力初值从 `Archive_Default.asset` 原样搬到模板 json（与 `KivotosCraftArc.json` 逐条核对一致：Abydos 99/1、Gehanna 4 项、Trinity 色采/贝阿特利切/圣三一 等）。`Archive_Default.asset` 里那 83 行 `occupierDic` 段已用 `plans/strip_occupier_from_asset.py` 字节级删除（下一步 Unity 保存时也不会再写回）。
+- `TechnicalDebt.cs` P2「解放度系统」描述同步改写：现在**有数据能读**，缺的是增长逻辑。
+- 验证：`offline_compile.py 06_Gameplay 10_UI` 0 error；Unity `refresh_unity` 后 csproj 收录新文件（源 215）、`06_Gameplay.dll` 里能查到 `OccupierState`/`OccupierEntry`、Console 0 error；`execute_code` 实跑 `Get("Abydos")` = 2 条、maps=12、未知图 = 0 条，`D:/Pro/OccupierState.json` 已生成（12 图、1160 字符）。
+- ⚠ MCP 实例 hash 变了：`Bluedivers@3d9f2357` → **`Bluedivers@4a3e6a7b`**（端口仍 6400）。规则文件里那个 ID 已过期，按 `mcpforunity://instances` 实时值为准。
+- ⚠ 老存档 `KivotosCraftArc.json` 里还留着 `occupierDic` 段：字段已从类里删除 ⇒ JsonUtility 忽略它，下次 `Save()` 自动消失；当前值与模板一致，**没有进度丢失**。

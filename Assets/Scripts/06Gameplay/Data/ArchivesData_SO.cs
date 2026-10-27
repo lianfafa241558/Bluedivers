@@ -110,14 +110,8 @@ public class ArchivesData_SO : ArchivesDataBase_SO
 
     #endregion
 
-    #region 地图势力信息
-    [Space]
-    [InspectorName("势力信息")]
-    public DisplayDic<string, List<ArchOccupierData>> occupierDic = new();
-
-
-
-    #endregion
+    // 地图势力占领度已拆到独立的世界状态 OccupierState（自己的 json 文件 + 联机整份收发）
+    // ⇒ 不放在存档里：存档是每人一份的私有数据，占领度是一局共享的。
 
     #region 武器改装
     [Space]
@@ -295,13 +289,6 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         public int Exp;
 
         public DisplayDic<WeaponTypeEnum, int> weaponSelect;
-    }
-
-    [System.Serializable]
-    public class ArchOccupierData
-    {
-        public string name;
-        public int value;
     }
 
     [System.Serializable]

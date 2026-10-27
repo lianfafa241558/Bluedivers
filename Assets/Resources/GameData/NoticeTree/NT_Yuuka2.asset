@@ -159,6 +159,34 @@ MonoBehaviour:
   priority: 101
   group: 8
   flags: 0
+--- !u!114 &-5208517834575222357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Yuuka_Rename
+  m_EditorClassIdentifier: 
+  groupName: Rename
+  clips:
+  - audioClip: {fileID: 8300000, guid: 4c825bbb34c798a4d9c38ea88ae1a8cd, type: 3}
+    subtitle: "\u8001\u5E08\uFF0C\u8BF7\u95EE\u600E\u4E48\u79F0\u547C\uFF1F"
+  - audioClip: {fileID: 8300000, guid: ff1007f82a201674abfef8439163fd17, type: 3}
+    subtitle: "\u8001\u5E08\uFF0C\u521D\u6B21\u89C1\u9762\uFF0C\u600E\u4E48\u79F0\u547C\u4F60\uFF1F"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 8
+  flags: 0
 --- !u!114 &-3632780759653151285
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -282,6 +310,7 @@ MonoBehaviour:
   - {fileID: 8312249231007703161}
   - {fileID: -3632780759653151285}
   - {fileID: -8466106794347335363}
+  - {fileID: -5208517834575222357}
 --- !u!114 &2485493942135106216
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 150ca7a623f31424aad6112aba22d37e, type: 3}
-  m_Name: WUD_Ammo
+  m_Name: WUD_Magazine
   m_EditorClassIdentifier: 
-  name: "\u5927\u5BB9\u91CF\u5F39\u5323"
-  type: "\u5F39\u5323\u5BB9\u91CF"
-  icon: {fileID: 21300000, guid: 15a65607270a27e40b5cd107c8423098, type: 3}
-  desc: "\u8981\u8BF4\u5F39\u5939\u3001\u5F39\u5323\u3001\u5F39\u9F13\u3001 \u71C3\u6599\u7BB1\u7684\u5171\u540C\u4F18\u70B9...
-    \u4F60\u603B\u80FD\u627E\u5230 \u6BD4\u5B83\u4EEC\u5927\u4E00\u70B9\u70B9\u7684\u578B\u53F7\u3002"
-  cost: []
+  name: "\u6269\u5bb9\u5f39\u5323"
+  type: "\u5f39\u5323\u5bb9\u91cf"
+  icon: {fileID: 21300000, guid: 09b2164270d5192469590d258cf8ff79, type: 3}
+  desc: "\u5f39\u5323\u91cc\u591a\u585e\u4e86\u4e24\u53d1\u3002\u522b\u95ee\u585e\u4e0d\u585e\u5f97\u8fdb\u53bb\uff0c\u5de5\u7a0b\u90e8\u8bf4\u80fd\uff0c\u90a3\u5c31\u662f\u80fd\u3002"
+  cost:
+  - Key: 0
+    Value: 1000
   modifys:
   - name: 
     type: 1
     modifier: 1
-    value: 8
+    value: 2

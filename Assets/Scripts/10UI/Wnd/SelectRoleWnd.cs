@@ -643,6 +643,8 @@ public class SelectRoleWnd : Window
                 desc = upgrade.desc+"\n\n要购买这项升级吗?",
                 optA_Click = () =>
                 {
+                    // 与战备购买同口径：确认即扣（TipWnd 已按"够不够"决定按钮是否可点）
+                    propertyManager.Pay(upgrade.cost);
                     archWeaponData.SetBuy(y, x);
                     SetBuyCountLayout(-1, archWeaponData.BuyCount);
                     if (archWeaponData.selectIndex[y] == -1)

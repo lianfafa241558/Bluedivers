@@ -53,9 +53,10 @@
 
         /*
          * [P2] 解放度系统半成品
-         * 现状：occupierDic（DisplayDic<string, List<ArchOccupierData>>）无势力模板初始化，
-         *       每个地图的势力列表为空，SelectMapWnd 只能显示进度条但无数据来源与增长逻辑。
-         * 方案：待设计（是否按地图配置势力、解放度数值规则、胜利/失败是否增长等），当前不阻塞。
+         * 现状：势力占领度已从存档拆到 OccupierState（独立 OccupierState.json + 联机整份收发），
+         *       初始值来自 Resources/GameData/Occupier_Default.json；但**只有读，没有增长逻辑**
+         *       （打赢/打输、完成什么任务各涨多少，尚未设计），SelectMapWnd 显示的永远是初始值。
+         * 方案：待设计（数值规则 + 由谁结算 + 归属哪一端权威），当前不阻塞。
          */
 
         #endregion

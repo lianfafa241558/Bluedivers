@@ -667,7 +667,7 @@ public class SelectMapWnd : Window
         SetText(descDesc, data.AreaDesc);
         SetSprite(descBg, data.AreaBackground);
 
-        var occ=arch.occupierDic[trans.name];
+        var occ = OccupierState.Get(trans.name);
         for(int i = 0; i < 4; ++i)
         {
             bool show = i < data.product.Length;

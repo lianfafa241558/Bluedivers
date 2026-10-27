@@ -1,0 +1,491 @@
+{
+  "name": "Logic",
+  "guidSalt": "Bluedivers.LogicWeapon",
+  "prefab": "Assets/Resources/Weapons/Logic.prefab",
+  "wudDir": "Assets/Resources/GameData/WeaponUpgrade/Logic",
+  "wmdDir": "Assets/Resources/GameData/WeaponModule/Logic",
+  "icons": {
+    "DMG": "1b3193f68ca866943bada632271653b6",
+    "AMMO": "09b2164270d5192469590d258cf8ff79",
+    "RATE": "da2ddc2b67324234daa8bdf435957132",
+    "RELOAD": "2075b11602ab1ca41916cf8f34ac13b1",
+    "ACC": "d31f7dc298d350a4395888c6839bf608",
+    "MOD": "bf5a0efa56a6f0042ae292051e63027b"
+  },
+  "cfgAdd": [
+    {
+      "attr": "MoveSpeedToShoot",
+      "value": 1.0
+    },
+    {
+      "attr": "DirectDestruction",
+      "value": 1.0
+    },
+    {
+      "attr": "WeaknessBonus",
+      "value": 0.0
+    }
+  ],
+  "showAttr": [
+    "DirectDamage",
+    "ShootInterval",
+    "Magazine",
+    "Ammo",
+    "DirectAP",
+    "WeaknessBonus",
+    "DirectDestruction",
+    "MoveSpeedToShoot",
+    "BulletsSpreadAngle",
+    "ReloadTime"
+  ],
+  "tiers": [
+    {
+      "key": 2,
+      "items": [
+        {
+          "asset": "GyroStabilisation",
+          "name": "陀螺稳定",
+          "category": "散布",
+          "icon": "ACC",
+          "desc": "陀螺稳定组件让枪口不再跟着你的手一起抖。中距离终于能打中你想打的地方了。",
+          "cost": 1000,
+          "modifys": [
+            {
+              "attr": "BulletsSpreadAngle",
+              "modifier": "Factor",
+              "value": -0.3
+            }
+          ]
+        },
+        {
+          "asset": "SuperchargedFeed",
+          "name": "增压供弹",
+          "category": "射速",
+          "icon": "RATE",
+          "desc": "供弹机构调到了安全上限。射得更快，弹匣也空得更快。工程师签了字，那就没问题。",
+          "cost": 1000,
+          "modifys": [
+            {
+              "attr": "ShootInterval",
+              "modifier": "Factor",
+              "value": -0.12
+            }
+          ]
+        },
+        {
+          "asset": "QuickfireEjector",
+          "name": "快速抛壳",
+          "category": "装弹",
+          "icon": "RELOAD",
+          "desc": "经验、训练，再加上一些见不得光的私下改动，装填快了一大截。",
+          "cost": 1000,
+          "modifys": [
+            {
+              "attr": "ReloadTime",
+              "modifier": "Base",
+              "value": -0.8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": 4,
+      "items": [
+        {
+          "asset": "IncreasedCaliberRounds",
+          "name": "大口径弹药",
+          "category": "伤害",
+          "icon": "DMG",
+          "desc": "口径加大，弹头更重。后坐力会提醒你这一点。",
+          "cost": 1500,
+          "modifys": [
+            {
+              "attr": "DirectDamage",
+              "modifier": "Base",
+              "value": 3
+            }
+          ]
+        },
+        {
+          "asset": "ExpandedAmmoBags",
+          "name": "扩容弹袋",
+          "category": "总弹药量",
+          "icon": "AMMO",
+          "desc": "口袋不够就再缝几个。总备弹量上去了，优香检查装备时会当没看见。",
+          "cost": 1500,
+          "modifys": [
+            {
+              "attr": "Ammo",
+              "modifier": "Factor",
+              "value": 0.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": 8,
+      "items": [
+        {
+          "asset": "FloatingBarrel",
+          "name": "浮动枪管",
+          "category": "散布",
+          "icon": "ACC",
+          "desc": "枪管改成浮动式，连射时不再被机匣带着乱晃。手感更稳，拆装更麻烦——工程部不在乎后者。",
+          "cost": 2000,
+          "modifys": [
+            {
+              "attr": "BulletsSpreadAngle",
+              "modifier": "Factor",
+              "value": -0.4
+            }
+          ]
+        },
+        {
+          "asset": "TacticalStride",
+          "name": "战术步伐",
+          "category": "机动",
+          "icon": "ACC",
+          "desc": "持枪姿态调整过，开火时脚步不再被拖住，还能快上三成。冲锋的人终于不用在原地挨打。",
+          "cost": 2000,
+          "modifys": [
+            {
+              "attr": "MoveSpeedToShoot",
+              "modifier": "Base",
+              "value": 0.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": 12,
+      "items": [
+        {
+          "asset": "HollowPointBullets",
+          "name": "空尖弹",
+          "category": "弱点",
+          "icon": "DMG",
+          "desc": "弹头命中瞬间展开，专门招呼敌人的软肋。打中要害的收益再多两成。",
+          "cost": 2500,
+          "modifys": [
+            {
+              "attr": "WeaknessBonus",
+              "modifier": "Extra",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "asset": "HardenedRounds",
+          "name": "硬化弹头",
+          "category": "穿甲",
+          "icon": "DMG",
+          "desc": "钨芯弹头。写字楼那边管这叫「合规性穿甲」，因为它终于能穿过那些本该穿过去的东西。",
+          "cost": 2500,
+          "modifys": [
+            {
+              "attr": "DirectAP",
+              "modifier": "Base",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": 16,
+      "items": [
+        {
+          "asset": "ImprovedGasSystem",
+          "name": "改良导气",
+          "category": "射速",
+          "icon": "RATE",
+          "desc": "导气系统整体重做，射速再上一档。耐久测试报告？工程部说通过了。",
+          "cost": 3000,
+          "modifys": [
+            {
+              "attr": "ShootInterval",
+              "modifier": "Factor",
+              "value": -0.18
+            }
+          ]
+        },
+        {
+          "asset": "OverpressureCore",
+          "name": "超压弹芯",
+          "category": "伤害",
+          "icon": "DMG",
+          "desc": "装药加到验收标准的上限，每一发都更疼。工程部说枪还能撑住，那就继续打。",
+          "cost": 3000,
+          "modifys": [
+            {
+              "attr": "DirectDamage",
+              "modifier": "Factor",
+              "value": 0.25
+            }
+          ]
+        },
+        {
+          "asset": "PenetratorCore",
+          "name": "破甲弹芯",
+          "category": "护甲破坏",
+          "icon": "DMG",
+          "desc": "硬芯穿甲弹，专治各种高硬度装甲。对面那层壳从此只是个建议。",
+          "cost": 3000,
+          "modifys": [
+            {
+              "attr": "DirectDestruction",
+              "modifier": "Base",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "asset": "CompactAmmo",
+      "name": "紧凑弹药",
+      "quality": "Clean",
+      "icon": "AMMO",
+      "desc": [
+        {
+          "good": true,
+          "text": "弹匣容量 +5"
+        },
+        {
+          "good": true,
+          "text": "散布 -15%"
+        }
+      ],
+      "modifys": [
+        {
+          "attr": "Magazine",
+          "modifier": "Base",
+          "value": 5
+        },
+        {
+          "attr": "BulletsSpreadAngle",
+          "modifier": "Factor",
+          "value": -0.15
+        }
+      ]
+    },
+    {
+      "asset": "GasRerouting",
+      "name": "导气重排",
+      "quality": "Balanced",
+      "icon": "RATE",
+      "desc": [
+        {
+          "good": true,
+          "text": "射速提升"
+        },
+        {
+          "good": false,
+          "text": "弹匣容量 -4"
+        }
+      ],
+      "modifys": [
+        {
+          "attr": "ShootInterval",
+          "modifier": "Factor",
+          "value": -0.15
+        },
+        {
+          "attr": "Magazine",
+          "modifier": "Base",
+          "value": -4
+        }
+      ]
+    },
+    {
+      "asset": "OverclockedFiring",
+      "name": "超频击发机构",
+      "quality": "Balanced",
+      "icon": "RATE",
+      "desc": [
+        {
+          "good": true,
+          "text": "射速大幅提升"
+        },
+        {
+          "good": false,
+          "text": "散布 3°→6°"
+        }
+      ],
+      "modifys": [
+        {
+          "attr": "ShootInterval",
+          "modifier": "Factor",
+          "value": -0.25
+        },
+        {
+          "attr": "BulletsSpreadAngle",
+          "modifier": "Base",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "asset": "AIStabilityEngine",
+      "name": "AI 稳定引擎",
+      "quality": "Balanced",
+      "icon": "ACC",
+      "desc": [
+        {
+          "good": true,
+          "text": "散布 -60%"
+        },
+        {
+          "good": true,
+          "text": "弱点伤害 +35%"
+        },
+        {
+          "good": false,
+          "text": "直击伤害 -10%"
+        },
+        {
+          "good": false,
+          "text": "射速 -23%"
+        }
+      ],
+      "modifys": [
+        {
+          "attr": "BulletsSpreadAngle",
+          "modifier": "Factor",
+          "value": -0.6
+        },
+        {
+          "attr": "WeaknessBonus",
+          "modifier": "Extra",
+          "value": 0.35
+        },
+        {
+          "attr": "DirectDamage",
+          "modifier": "Factor",
+          "value": -0.1
+        },
+        {
+          "attr": "ShootInterval",
+          "modifier": "Factor",
+          "value": 0.3
+        }
+      ]
+    },
+    {
+      "asset": "JumboRounds",
+      "name": "大号弹壳",
+      "quality": "Unstable",
+      "icon": "DMG",
+      "desc": [
+        {
+          "good": true,
+          "text": "直击伤害 +4"
+        },
+        {
+          "good": false,
+          "text": "弹匣容量 -8"
+        },
+        {
+          "good": false,
+          "text": "装填时间 +0.5s"
+        }
+      ],
+      "modifys": [
+        {
+          "attr": "DirectDamage",
+          "modifier": "Base",
+          "value": 4
+        },
+        {
+          "attr": "Magazine",
+          "modifier": "Base",
+          "value": -8
+        },
+        {
+          "attr": "ReloadTime",
+          "modifier": "Base",
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "asset": "HeavyStance",
+      "name": "重装架势",
+      "quality": "Unstable",
+      "icon": "DMG",
+      "desc": [
+        {
+          "good": true,
+          "text": "护甲破坏 ×2"
+        },
+        {
+          "good": true,
+          "text": "散布 -1.0°"
+        },
+        {
+          "good": false,
+          "text": "射击时移速 100%→60%"
+        }
+      ],
+      "modifys": [
+        {
+          "attr": "DirectDestruction",
+          "modifier": "Base",
+          "value": 1
+        },
+        {
+          "attr": "BulletsSpreadAngle",
+          "modifier": "Base",
+          "value": -1
+        },
+        {
+          "attr": "MoveSpeedToShoot",
+          "modifier": "Base",
+          "value": -0.4
+        }
+      ]
+    },
+    {
+      "asset": "DoubleTap",
+      "name": "双击枪机",
+      "quality": "Unstable",
+      "icon": "RATE",
+      "desc": [
+        {
+          "good": true,
+          "text": "射速大幅提升"
+        },
+        {
+          "good": false,
+          "text": "弹匣容量 -14"
+        },
+        {
+          "good": false,
+          "text": "装填时间 +0.6s"
+        }
+      ],
+      "modifys": [
+        {
+          "attr": "ShootInterval",
+          "modifier": "Factor",
+          "value": -0.35
+        },
+        {
+          "attr": "Magazine",
+          "modifier": "Base",
+          "value": -14
+        },
+        {
+          "attr": "ReloadTime",
+          "modifier": "Base",
+          "value": 0.6
+        }
+      ]
+    }
+  ]
+}

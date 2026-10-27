@@ -1,13 +1,14 @@
 ﻿using System.Collections;
-using FPSGame.Core.Interface;
 using FPSGame.Attributes;
+using FPSGame.Audio;
+using FPSGame.Core.Interface;
 using FPSGame.Game;
-using UnityEngine;
-using FPSGame.Utils;
-using FPSGame.Gameplay;
-using static FPSGame.WndTools.WndRootTool;
-using FPSGame.Managers;
 using FPSGame.GameData;
+using FPSGame.Gameplay;
+using FPSGame.Managers;
+using FPSGame.Utils;
+using UnityEngine;
+using static FPSGame.WndTools.WndRootTool;
 namespace FPSGame.UI
 {
 
@@ -110,7 +111,8 @@ namespace FPSGame.UI
             // ⚠ 舰桥里玩家是活着的（WASD/鼠标都受 UIState.WindowState 门控）⇒ 输入期间必须切到 UI，
             //   否则打字会带着角色走；关窗再切回 Game（同 SelectMapWnd / SettingWnd 的写法）
             WindowState = FPSGame.Core.WindowStateEnum.UI;
-
+            ResSvc.Instance.GetVoice("Yuuka", "Rename", out var data, out var sourceName, out var portrait);
+            AudioSvc.PlaySound(data.Get());
             wnd.Creat(new PasswordWndInfo
             {
                 title = "",

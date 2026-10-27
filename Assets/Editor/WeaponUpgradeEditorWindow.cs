@@ -156,8 +156,13 @@ namespace FPSGame.Game.Editor
             var searchRect = new Rect(rect.x + 4, rect.y + 4, rect.width - 8, 20);
             _searchFilter = EditorGUI.TextField(searchRect, _searchFilter, EditorStyles.toolbarSearchField);
 
+            // 左下角定位按钮占位，列表高度要扣掉它，否则最后几行会被按钮压住
+            const float locateBtnHeight = 24f;
+            const float locateBtnGap = 4f;
+
             // 列表
-            var listRect = new Rect(rect.x + 4, searchRect.yMax + 4, rect.width - 8, rect.height - 28);
+            var listRect = new Rect(rect.x + 4, searchRect.yMax + 4, rect.width - 8,
+                rect.height - 28 - locateBtnHeight - locateBtnGap);
 
             var filtered = string.IsNullOrWhiteSpace(_searchFilter)
                 ? _weaponEntries
@@ -210,6 +215,28 @@ namespace FPSGame.Game.Editor
             }
 
             GUI.EndScrollView();
+
+            // 左下角：把当前选中的武器 prefab 同步选中到 Project 窗口
+            var locateRect = new Rect(rect.x + 4, rect.yMax - locateBtnHeight - 4, rect.width - 8, locateBtnHeight);
+            var hasSelection = _selectedWeaponIndex >= 0 && _selectedWeaponIndex < _weaponEntries.Count;
+            using (new EditorGUI.DisabledScope(!hasSelection))
+            {
+                if (GUI.Button(locateRect, "定位选中武器 (Project)"))
+                {
+                    SelectAssetInProject(hasSelection ? _weaponEntries[_selectedWeaponIndex].Prefab : null);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 在 Project 窗口中选中并高亮资产。只在用户显式点击时调用 ——
+        /// 若挂进 OnGUI 每帧执行，Project 窗口的选中项会被编辑器窗口一直抢走。
+        /// </summary>
+        private static void SelectAssetInProject(UnityEngine.Object asset)
+        {
+            if (asset == null) return;
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
         }
 
         private void SelectWeapon(int index)
@@ -828,6 +855,8 @@ namespace FPSGame.Game.Editor
                 _selectedUpgradeIndex = optIdx;
                 _selectedModuleIndex = -1;
                 _selectedSOPath = so != null ? AssetDatabase.GetAssetPath(so) : "";
+                // 卡片点击即把对应 SO 同步选中到 Project 窗口，省掉手动去目录里翻
+                SelectAssetInProject(so);
                 ResetFocus();
                 Event.current.Use();
                 Repaint();
@@ -1051,6 +1080,8 @@ namespace FPSGame.Game.Editor
                         _selectedLevelIndex = -1;
                         _selectedUpgradeIndex = -1;
                         _selectedSOPath = so != null ? AssetDatabase.GetAssetPath(so) : "";
+                        // 卡片点击即把对应 SO 同步选中到 Project 窗口
+                        SelectAssetInProject(so);
                         ResetFocus();
                     }
                     Event.current.Use();
@@ -1155,7 +1186,7 @@ namespace FPSGame.Game.Editor
             {
                 menu.AddItem(new GUIContent("在 Project 中定位"), false, () =>
                 {
-                    EditorGUIUtility.PingObject(so);
+                    SelectAssetInProject(so);
                 });
                 menu.AddItem(new GUIContent("在 Inspector 中查看"), false, () =>
                 {
@@ -1401,7 +1432,44 @@ namespace FPSGame.Game.Editor
                 so => { AddUpgradeSOToLevel(levelIdx, so); },
                 so => so.icon,
                 so => so.name,
-                so => so.type));
+                so => so.type,
+                getExtra: GetEffectSummary,
+                getExtraColor: GetEffectColor));
+        }
+
+        /// <summary>
+        /// 把 modifys 压成一行数值摘要：Base/Extra 直出，Factor 转百分比（0.3 ⇒ +30%）。
+        /// 只显示数值不显示属性名 —— 选择器一行放不下，属性名在下方 SO 详情里能看到。
+        /// </summary>
+        private static string GetEffectSummary(WeaponUpgradeData_SO so)
+        {
+            if (so == null || so.modifys == null || so.modifys.Count == 0) return "";
+
+            var parts = new List<string>(so.modifys.Count);
+            for (var i = 0; i < so.modifys.Count; i++)
+            {
+                if (i >= 3)
+                {
+                    parts.Add("…");
+                    break;
+                }
+
+                var item = so.modifys[i];
+                // ModifierType 是 [Flags]，All 也含 Factor ⇒ 用位与判断而不是相等
+                var isFactor = (item.modifier & ModifierType.Factor) != 0;
+                var value = isFactor ? item.value * 100f : item.value;
+                var sign = value >= 0f ? "+" : "";
+                parts.Add($"{sign}{value:0.##}{(isFactor ? "%" : "")}");
+            }
+
+            return string.Join("  ", parts);
+        }
+
+        /// <summary>减益（负值）用暖色，增益用绿色，和右侧卡片配色保持一致</summary>
+        private static Color GetEffectColor(WeaponUpgradeData_SO so)
+        {
+            var negative = so != null && so.modifys != null && so.modifys.Any(m => m.value < 0f);
+            return negative ? new Color(0.95f, 0.68f, 0.42f) : new Color(0.6f, 0.9f, 0.6f);
         }
 
         private void ShowModulePicker()

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
@@ -444,13 +444,7 @@ public class AirdropConfigWnd : Window
             optB_Text = "取消",
             optA_Click = () =>
             {
-                if (data.cost != null)
-                {
-                    for (int i = 0; i < data.cost.Count; ++i)
-                    {
-                        propertyManager.SetCount(data.cost[i].Key, -data.cost[i].Value);
-                    }
-                }
+                propertyManager.Pay(data.cost);
                 _arch.BuyAirdrop(data.ID);
                 _arch.Save();
 

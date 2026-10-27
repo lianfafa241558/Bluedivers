@@ -25,6 +25,8 @@ public class SOPickerPopup<T> : PopupWindowContent where T : UnityEngine.Object
     private readonly Func<T, Color> _getTypeColor;                   // 可选：类型文字颜色
     private readonly Func<T, (string path, Color color)> _getFrame;  // 可选：图标边框
     private readonly bool _confirmMode;                              // true=需确定/取消确认
+    private readonly Func<T, string> _getExtra;                      // 可选：紧跟类型后的数值摘要（如 "+3 / +30%"）
+    private readonly Func<T, Color> _getExtraColor;                  // 可选：数值摘要颜色
 
     private string _search = "";
     private Vector2 _scroll;
@@ -40,7 +42,9 @@ public class SOPickerPopup<T> : PopupWindowContent where T : UnityEngine.Object
         Func<T, string> getType = null,
         Func<T, Color> getTypeColor = null,
         Func<T, (string path, Color color)> getFrame = null,
-        bool confirmMode = false)
+        bool confirmMode = false,
+        Func<T, string> getExtra = null,
+        Func<T, Color> getExtraColor = null)
     {
         _items = items;
         _onPicked = onPicked;
@@ -50,6 +54,8 @@ public class SOPickerPopup<T> : PopupWindowContent where T : UnityEngine.Object
         _getTypeColor = getTypeColor;
         _getFrame = getFrame;
         _confirmMode = confirmMode;
+        _getExtra = getExtra;
+        _getExtraColor = getExtraColor;
         _selected = items.Count > 0 ? items[0] : null;
     }
 
@@ -145,7 +151,23 @@ public class SOPickerPopup<T> : PopupWindowContent where T : UnityEngine.Object
                 var typeStyle = new GUIStyle(EditorStyles.miniLabel);
                 var typeColor = _getTypeColor?.Invoke(item);
                 typeStyle.normal.textColor = typeColor.HasValue ? typeColor.Value : Color.white;
-                GUI.Label(typeRect, _getType(item), typeStyle);
+                var typeText = _getType(item);
+                GUI.Label(typeRect, typeText, typeStyle);
+
+                // 类型后面紧跟数值摘要（宽度按实际文字宽度接，超出部分裁掉）
+                var extraText = _getExtra?.Invoke(item);
+                if (!string.IsNullOrEmpty(extraText))
+                {
+                    var extraStyle = new GUIStyle(EditorStyles.miniBoldLabel);
+                    var extraColor = _getExtraColor?.Invoke(item);
+                    extraStyle.normal.textColor = extraColor.HasValue
+                        ? extraColor.Value
+                        : new Color(0.6f, 0.9f, 0.6f);
+                    var typeWidth = Mathf.Min(typeStyle.CalcSize(new GUIContent(typeText)).x, typeRect.width * 0.6f);
+                    var extraRect = new Rect(typeRect.x + typeWidth + 8, typeRect.y,
+                        Mathf.Max(0f, typeRect.width - typeWidth - 8), typeRect.height);
+                    GUI.Label(extraRect, extraText, extraStyle);
+                }
             }
             else
             {

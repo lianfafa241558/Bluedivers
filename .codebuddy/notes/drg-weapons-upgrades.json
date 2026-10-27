@@ -1,0 +1,730 @@
+{
+  "$schema_note": "mods 每项为 [tier, name, effect]；tier 取值 1-5，同层只能选 1 个。overclocks 每项为 [name, type, effect]，type = clean|balanced|unstable|null（null 表示 wiki 页面未标注分级）。",
+  "source": {
+    "site": "deeprockgalactic.wiki.gg",
+    "hubPage": "https://deeprockgalactic.wiki.gg/wiki/Equipment",
+    "note": "Equipment 页仅导航，数据取自 24 个武器条目页；多数页面标注 Potentially Out of Date，数值以实机为准",
+    "fetchedAt": "2026-10-27",
+    "weaponCount": 24,
+    "modCountRange": [12, 14],
+    "overclockCountRange": [5, 8]
+  },
+  "weapons": [
+    {
+      "class": "Driller",
+      "weapon": "CRSPR Flamethrower",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "High Capacity Tanks", "弹匣 +25"],
+        [1, "High Pressure Ejector", "射程 +5m"],
+        [2, "Unfiltered Fuel", "伤害 +4"],
+        [2, "Triple Filtered Fuel", "热量 +10（仅直伤）"],
+        [2, "Sticky Flame Duration", "粘火持续 +3s"],
+        [3, "Oversized Valves", "流量 +1.8（耗油更快、伤害更高）"],
+        [3, "Sticky Flame Slowdown", "粘火减速 x0.9→x0.5（-55% 移速）"],
+        [3, "More Fuel", "最大燃料 +75"],
+        [4, "It Burns!", "恐惧 +20%（每份燃料判定一次）"],
+        [4, "Sticky Flame Duration", "粘火持续 +3s"],
+        [4, "More Fuel", "最大燃料 +75"],
+        [5, "Heat Radiance", "开火时 4m 热辐射：80 火/秒 + 热量，满伤 3m、最低 25%"],
+        [5, "Targets Explode", "直伤击杀 50% 概率爆炸：55 火 + 热量，满伤 0.5m / 总 3m、最低 25%、友伤 0%"]
+      ],
+      "overclocks": [
+        ["Lighter Tanks", null, "最大燃料 +75（纯增益）"],
+        ["Sticky Additive", null, "伤害 +1、粘火 +1s"],
+        ["Compact Feed Valves", null, "弹匣 +25、燃料 +75；射程 -2m、装填 +0.2s"],
+        ["Fuel Stream Diffuser", null, "射程 +5m；流量 -1.2"],
+        ["Face Melter", null, "伤害 +4、流量 +1.8；射程 -3m、弹匣 -15"],
+        ["Sticky Fuel", null, "粘火 DPS +10、粘火 +6s；弹匣 -25、燃料 -75"],
+        ["Scorching Tide", "unstable", "蓄力发射 8 发水平散射火焰弹（每发 25 燃料，蓄力移速 75%）：弹丸 45 爆 + 15 火 + 45 热，范围 15 火 + 90 热 r1m，穿透并留粘火；不触发 Targets Explode"]
+      ]
+    },
+    {
+      "class": "Driller",
+      "weapon": "Cryo Cannon",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Larger Pressure Chamber", "压力下降 x0.33"],
+        [1, "Faster Turbine Spinup", "充能 -0.4s"],
+        [1, "Stronger Cooling Unit", "冷冻力 +1"],
+        [2, "Larger Reserve Tank", "燃料 +75"],
+        [2, "Overclocked Ejection Turbine", "射程 +5m"],
+        [2, "Bypassed Integrity Check", "再增压延迟 -1s"],
+        [3, "Improved Pump", "压力回复 x1.75"],
+        [3, "Increased Flow Volume", "流量 +1.6"],
+        [4, "Hard Mixture", "伤害 +3"],
+        [4, "Supercooling Mixture", "冷冻力 +1"],
+        [4, "Larger Reserve Tank", "燃料 +150"],
+        [5, "Fragile", "冻结目标有几率碎裂：几率 = 100 - 剩余HP%，伤害 = 剩余有效HP（本体伤害后判定）"],
+        [5, "Cold Radiance", "预热完成后 4m 寒气：每秒 60 冷值"]
+      ],
+      "overclocks": [
+        ["Improved Thermal Efficiency", null, "燃料 +25；压力下降 x0.75"],
+        ["Tuned Cooler", null, "冷冻力 +1、流量 +0.8；充能 +0.2s、压力回复 x0.5"],
+        ["Flow Rate Expansion", null, "压力回复 x2.7、流量 +0.8；压力下降 x2.25"],
+        ["Ice Spear", "balanced", "冰矛：蓄力 1s，350 动 + 150 爆，100% 眩晕 3s，需燃料≥51，之后 3s 不能开火；再增压 +1s"],
+        ["Crystal Nucleation", "balanced", "地形落点生成冰晶：4 冷 + 12 穿刺/0.5s、减速 30%、寿命约 19s；弹药 x0.8"],
+        ["Ice Storm", "unstable", "伤害 x2、对冻结 +100% 动能；冷冻力 -3、燃料 -75、压力下降 x1.5"],
+        ["Snowball", "unstable", "范围冰冻抛射物 200 冷（满伤 2m / 总 4m、最低 50%），残留寒气 6s；燃料 -100、再增压 +1s"]
+      ]
+    },
+    {
+      "class": "Driller",
+      "weapon": "Corrosive Sludge Pump",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "High Capacity Tanks", "弹匣 +20"],
+        [1, "Better Air Pressurizer", "弹速 +40%"],
+        [1, "Air Sensitive Compound", "泥坑尺寸 x1.1"],
+        [2, "Dyse Nozzle", "蓄力溅射伤害 +24"],
+        [2, "Atomizer Nozzle", "蓄力碎片 +4"],
+        [2, "Potent Goo Mix", "普通射击伤害 +8"],
+        [3, "Supersaturation", "腐蚀持续 +2s、泥坑寿命 +6s"],
+        [3, "More Goo Canisters", "最大弹药 +40"],
+        [4, "Spillback Extension", "蓄力消耗 -1"],
+        [4, "Improved Spooling Mechanism", "蓄力时间 -60%"],
+        [5, "Protein Disruption Mix", "减速强化：腐蚀 x0.75、泥坑 x0.5"],
+        [5, "Fluoroantimonic Acid", "腐蚀 +2/跳；泥坑额外 1 点/跳第二层 DoT"]
+      ],
+      "overclocks": [
+        ["Hydrogen Ion Additive", "balanced", "直击腐蚀 +0.5、直击减速 x0.85（不影响泥坑）"],
+        ["AG Mixture", "balanced", "弹速 +30%、重力 x0.25"],
+        ["Volatile Impact Mixture", "balanced", "普通/蓄力范围 x2；腐蚀 DoT x0.5、泥坑 x0.75"],
+        ["Disperser Compound", "balanced", "碎片 +6、碎片范围 +4；蓄力范围 -24"],
+        ["Combustive Goo Mix", "balanced", "腐蚀/泥坑遇火爆炸（敌人 50 无类型 + 50 热 r2.5m；泥坑 50 爆 + 50 热 r2m）；蓄力消耗 +2"],
+        ["Goo Bomber Special", "unstable", "蓄力弹沿途投放碎片；碎片 +4、碎片数 x1.5、泥坑 x1.33；撞击不再分裂"],
+        ["Sludge Blast", "unstable", "蓄力改霰弹瞬发；弹速 +100%、蓄力范围 x0.5、弹药 -40、装填 +0.6s"]
+      ]
+    },
+    {
+      "class": "Driller",
+      "weapon": "Subata 120",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Improved Alignment", "基础散布 x0（首发精准）"],
+        [1, "High Capacity Magazine", "弹匣 +4"],
+        [2, "Expanded Ammo Bags", "最大弹药 +48"],
+        [2, "Increased Caliber Rounds", "伤害 +3"],
+        [3, "Recoil Compensator", "后坐力 x0.5、每发散布 -33%"],
+        [3, "2-Round Burst", "改 2 连发；射速 -4；第二发对护甲 +350%"],
+        [3, "Quickfire Ejector", "装填 -0.6s"],
+        [4, "Hollow-Point Bullets", "弱点伤害 +75%"],
+        [4, "High Velocity Rounds", "伤害 +3"],
+        [4, "Expanded Ammo Bags", "最大弹药 +48"],
+        [5, "Volatile Bullets", "对燃烧目标 +50% 火焰（附等量热量）"],
+        [5, "Blowthrough Rounds", "穿透 +1"],
+        [5, "Neuro-Corrosive Toxic Catalyst", "对中毒/腐蚀目标施加腐蚀 DoT（1.6/0.5s、5s、≤30 层）+ 毒死爆炸 60+20N 无类型、r=0.5+√N"]
+      ],
+      "overclocks": [
+        ["Chain Hit", null, "弱点命中 75% 跳弹至 10m 内最近敌人"],
+        ["Homebrew Powder", null, "伤害 x0.8~x1.4 随机"],
+        ["Oversized Magazine", null, "弹匣 +10；装填 +0.5s"],
+        ["Automatic Fire", null, "全自动、射速 +2；散布 x2、后坐力 x3.5"],
+        ["Explosive Reload", null, "装填时每颗命中弹爆炸 42 内部伤害（无 AoE）；最大弹药 x0.5、弹匣 x0.49"],
+        ["Tranquilizer Rounds", null, "眩晕 +50%（6s）+ 50% 概率减速 x0.5 4s；弹匣 -4、射速 x0.75"]
+      ]
+    },
+    {
+      "class": "Driller",
+      "weapon": "Experimental Plasma Charger",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Increased Particle Density", "普通射击伤害 +5"],
+        [1, "Larger Battery", "电池 +24"],
+        [1, "Higher Charged Plasma Energy", "蓄力直伤 +15、蓄力范围 +15"],
+        [2, "Heat Shield", "维持蓄力发热 x0.4"],
+        [2, "Overcharged Plasma Accelerator", "普通弹速 x1.25"],
+        [3, "Improved Charge Efficiency", "蓄力弹药 -2"],
+        [3, "Crystal Capacitors", "蓄力速度 x2.5"],
+        [3, "Tweaked Radiator", "冷却 +0.2"],
+        [4, "Expanded Plasma Splash", "蓄力半径 +1m"],
+        [4, "High Density Battery", "电池 +24"],
+        [4, "Reactive Shockwave", "蓄力直伤 +15、蓄力范围 +15"],
+        [5, "Burning Nightmare", "按伤害比例加热目标；蓄力弹穿透所有敌人但不再爆炸、半径 x0.3"],
+        [5, "Thin Containment Field", "发热 x0.8；蓄力弹被伤害弹丸击爆 → 内爆 240 火、r3m、友伤 x0.5、可挖地形"],
+        [5, "Plasma Splash", "普通直伤 -10、范围 +10（10 火，满伤 1m / 总 1.5m、最低 50%，可穿重甲）"]
+      ],
+      "overclocks": [
+        ["Energy Rerouting", null, "电池 +16、蓄力速度 x1.5"],
+        ["Magnetic Cooling Unit", null, "冷却 +0.1、维持蓄力发热 x0.7"],
+        ["Heat Pipe", null, "蓄力弹药 -2、蓄力 x1.3；蓄力发热 x2、维持蓄力发热 x2"],
+        ["Heavy Hitter", null, "伤害 x1.6；电池 -32、普通射击发热 x1.5"],
+        ["Overcharger", null, "蓄力伤害 x1.5、范围 x1.5、半径 x1.2；蓄力弹药 +2、冷却 -0.1"],
+        ["Persistent Plasma", null, "蓄力爆炸处留等离子场：8 火/跳（0.2~0.25s）、r3m、7s、减速 x0.8；蓄力直伤与范围 -15"]
+      ]
+    },
+    {
+      "class": "Driller",
+      "weapon": "Colette Wave Cooker",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Convex Lens", "伤害 +2"],
+        [1, "Magnetron Tube", "弹匣 +100"],
+        [1, "Concave Lens", "射击宽度 x3"],
+        [2, "Heat Sink", "热量 -0.2"],
+        [2, "Larger Power Supply", "射速 +2"],
+        [2, "Thermoelectric Cooler", "冷却 +50%、过热时长 -0.5s"],
+        [3, "Densification Ray", "命中减速 x0.5 持续 1s（可影响玩家，不自我叠加）"],
+        [3, "Temperature Amplifier", "命中燃烧/冰冻目标时扩散温度球：热 50%/冷 75% 伤害值，满伤 1.5m / 总 2m、最低 25%"],
+        [4, "Wide Lens Add-on", "切换：宽度 x1.25，但 +1.1 热/秒（OC 修正后应用）"],
+        [4, "Power Supply Overdrive", "切换：射速 +2.5，宽度 x0.1，+0.4 热/秒"],
+        [5, "Contagion Transmitter", "对中毒/腐蚀 +30%；10% 概率扩散神经毒素（12 毒/跳、0.75~1.25s、10s）"],
+        [5, "Boiler Ray", "击杀 50% 概率爆炸 100 爆（满伤 1.5m / 总 2.5m、最低 25%、友伤 0%）"],
+        [5, "Exothermic Reactor", "对燃烧/冰冻目标每次命中 25% 概率温度清零 → 200 崩解，并向周围扩散冷/热"]
+      ],
+      "overclocks": [
+        ["Liquid Cooling System", null, "热量 -0.1、冷却 +17%、过热时长 -0.2s"],
+        ["Super Focus Lens", null, "4m 内目标伤害 x1.5"],
+        ["Diffusion Ray", null, "每敌人穿透 +3、命中减速 x0.8 1s；伤害 -1"],
+        ["Mega Power Supply", null, "弹匣 +100、射速 +3；冷却 -50%、过热 +1s"],
+        ["Blistering Necrosis", null, "10% 概率生成水疱（50 HP、弱点 x1.5、击破 80 毒 r0.1m）；发热 x1.25、冷却 x0.75"],
+        ["Gamma Contamination", null, "25% 概率辐射（5 辐射/跳 + r2m 辐射场 3/跳，7s）；伤害 -1、弹匣 -50、宽度 -50"]
+      ]
+    },
+    {
+      "class": "Engineer",
+      "weapon": "\"Warthog\" Auto 210",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Supercharged Feed Mechanism", "射速 +1"],
+        [1, "Overstuffed Magazine", "弹匣 +2"],
+        [2, "Expanded Ammo Bags", "最大弹药 +42"],
+        [2, "Loaded Shells", "弹丸 +2"],
+        [2, "Choke", "基础散布 x0.5"],
+        [3, "Recoil Dampener", "后坐力 x0.4"],
+        [3, "Quickfire Ejector", "装填 -0.5s"],
+        [3, "High Capacity Magazine", "弹匣 +2"],
+        [4, "Tungsten Coated Buckshot", "破甲 +400%"],
+        [4, "Bigger Pellets", "伤害 +1"],
+        [5, "Turret Whip", "射击哨戒炮使其发射 160 爆炸弹（耗炮台 5 弹药、CD 3s）"],
+        [5, "Miner Adjustments", "射速 +0.5、获得全自动射击"]
+      ],
+      "overclocks": [
+        ["Stunner", null, "眩晕作用于所有部位；对已眩晕敌人 +30% 动能伤害"],
+        ["Light-Weight Magazines", null, "最大弹药 +18、装填 -0.4s"],
+        ["Magnetic Pellet Alignment", null, "基础散布 x0.5、弱点 +30%；射速 x0.75"],
+        ["Cycle Overload", null, "伤害 +1、射速 +2；装填 +0.5s、基础散布 x1.5"],
+        ["Mini Shells", null, "最大弹药 +78、弹匣 +6、后坐力 x0.5；伤害 -2、眩晕几率 -10%、眩晕时长 x0"],
+        ["Pump Action", null, "伤害 +5、弹丸 +2、附加穿透；弹药 x0.67、弹匣 x0.8、射速 x0.45"]
+      ]
+    },
+    {
+      "class": "Engineer",
+      "weapon": "\"Stubby\" Voltaic SMG",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Increased Caliber Rounds", "伤害 +3"],
+        [1, "Upgraded Capacitors", "电击几率 +25%"],
+        [1, "Expanded Ammo Bags", "最大弹药 +120"],
+        [2, "High Capacity Magazine", "弹匣 +10"],
+        [2, "Recoil Dampener", "后坐力 x0.7"],
+        [2, "Improved Gas System", "射速 +3"],
+        [3, "High Velocity Rounds", "伤害 +3"],
+        [3, "Expanded Ammo Bags", "最大弹药 +120"],
+        [4, "Hollow-Point Bullets", "弱点伤害 +25%"],
+        [4, "Conductive Bullets", "对触电目标 +25%（电伤本身不吃）"],
+        [4, "Hardened Rounds", "破甲 +250%"],
+        [5, "Magazine Capacity Tweak", "弹匣 +20"],
+        [5, "Electric Arc", "触电命中 25% 概率触发 r2.75m 范围电弧（100% 附加电击）"],
+        [5, "Improved Accuracy", "基础散布 x0.6"]
+      ],
+      "overclocks": [
+        ["Super-Slim Rounds", null, "弹匣 +5、基础散布 x0.8"],
+        ["Well Oiled Machine", null, "射速 +2、装填 -0.2s"],
+        ["EM Refire Booster", null, "电伤 +2、射速 +4；基础散布 x1.5"],
+        ["Light-Weight Rounds", null, "最大弹药 +180；伤害 -1、射速 -2"],
+        ["Hyperalloy Assembly", null, "散布降低、水平后坐 x0.2、弱点 +30%；垂直后坐增加、弹匣 -10"],
+        ["Micro-Conductor Add-On", "unstable", "命中为炮台/平台充能（炮台电击 6 电/0.2s、r2m、减速 x0.2，持续 20s；15m 内 2 座成电弧）；弹药 -120、射速 -2"],
+        ["Turret EM Discharge", "unstable", "命中炮台引发电爆 60 电 r5m（CD 1.5s、恐惧 50%）；弹匣 -5、伤害 -2"]
+      ]
+    },
+    {
+      "class": "Engineer",
+      "weapon": "LOK-1 Smart Rifle",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Increased Caliber Rounds", "伤害 +6"],
+        [1, "Expanded Ammo Bags", "最大备弹 +72"],
+        [2, "Macro Lens", "锁定范围 x2（紧凑锁定场）"],
+        [2, "CCD Array Add-On", "丢失锁定阈值 x1.5、获取阈值 +1.3°"],
+        [2, "Zoom Lens", "锁定距离 +10m"],
+        [3, "Electro-Chemical Rounds", "对燃烧/触电目标 +20%（可叠加；燃烧另附等量热量）"],
+        [3, "Smяt Targeting Software™", "优先锁定低血量目标、不多锁（不省弹药）"],
+        [3, "Super Blowthrough Rounds", "穿透 +3"],
+        [4, "Shutter Speed Sensor", "锁定时间 x0.85"],
+        [4, "Aperture Extension", "最大锁定目标 +6"],
+        [5, "Electric Generator Mod", "≥3 锁命中使目标触电：3 电/0.25s、3s、移速 x0.2"],
+        [5, "Unstable Lock Mechanism", "满锁时整轮爆发子弹 +20%"],
+        [5, "Fear Frequency", "爆发后恐惧波：r 2.4m + 0.15m/发，恐惧 15% + 15%/发"]
+      ],
+      "overclocks": [
+        ["Eraser", "clean", "弹匣 +12、最大锁定目标 x1.33"],
+        ["Armor Break Module", "clean", "满锁定时对护甲额外伤害"],
+        ["Explosive Chemical Rounds", "balanced", "≥3 锁末发爆炸 50 爆 + 50% 恐惧（满伤 2m / 总 4m）；伤害 -5、备弹 -36"],
+        ["Neuro-Lasso", "balanced", "被锁目标每层减速 11%（最多 16 层，实际约 -69%）；锁定最长 8s"],
+        ["Seeker Rounds", "balanced", "锁定射击必中、可绕护甲/地形/生物；丢失阈值 x1.33、爆发射速 -47%、装填 +0.5s"],
+        ["Executioner", "unstable", "满锁弱点 +50%、锁定时间 x0.5；备弹 -12、弹匣 -12、最大锁定 x0.66"],
+        ["Smяt Trigger OS™", "unstable", "自动开火、锁定时间 x0.05、最大锁定 x0.2（每次爆发约 2 发）"]
+      ]
+    },
+    {
+      "class": "Engineer",
+      "weapon": "Deepcore 40mm PGL",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Fragmentary Shell", "伤害半径 +1m"],
+        [1, "Extra Ammo", "最大弹药 +2"],
+        [1, "HE Compound", "范围伤害 +20"],
+        [2, "Expanded Ammo Bags", "最大弹药 +2"],
+        [2, "Larger Payload", "范围伤害 +20"],
+        [3, "Incendiary Compound", "50% 伤害转热量（破甲 -50%）"],
+        [3, "Pressure Wave", "破甲 +500%"],
+        [3, "High Velocity Grenades", "弹丸速度 +180%"],
+        [4, "Homebrew Explosive", "范围伤害 x0.8~x1.4 随机（平均更高）"],
+        [4, "Nails + Tape", "伤害半径 +1m"],
+        [4, "Concussive Blast", "眩晕几率 +100%"],
+        [5, "Proximity Trigger", "2m 近炸引信、范围 x1.1（0.2s 待发、3s 自爆）"],
+        [5, "Spiky Grenade", "直接命中 +60 动能"],
+        [5, "Disabled Inertia Inhibitor", "继承玩家速度（高速移动射得更远）"]
+      ],
+      "overclocks": [
+        ["Clean Sweep", "clean", "范围伤害 +10、半径 +0.5m"],
+        ["Pack Rat", "clean", "最大弹药 +2"],
+        ["Compact Rounds", "balanced", "最大弹药 +5；范围 -10、半径 -0.5m"],
+        ["RJ250 Compound", "balanced", "最大弹药 x1.7、装填 -0.6s；范围 -35；爆炸可弹飞矮人（火箭跳）"],
+        ["Fat Boy", "unstable", "范围 x4、半径 +1m；弹药 x0.3、弹速 x0.7；留 8m 辐射场 15s（25 辐射/0.75~1.25s）"],
+        ["Hyper Propellant", "unstable", "直伤 +385、弹速 +350%；半径 x0.3、弹药 -2；全部伤害转崩解"]
+      ]
+    },
+    {
+      "class": "Engineer",
+      "weapon": "Breach Cutter",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Prolonged Power Generation", "弹体持续时间 +1.5s"],
+        [1, "High Capacity Magazine", "弹匣 +3"],
+        [2, "Expanded Ammo Bags", "最大弹药 +6"],
+        [2, "Condensed Plasma", "光束 DPS +175"],
+        [2, "Loosened Node Cohesion", "光束宽度 +1.5m"],
+        [3, "Quick Deploy", "等离子展开延迟 -0.2s"],
+        [3, "Improved Case Ejector", "装填 -0.6s"],
+        [4, "Armor Breaking", "破甲 +200%"],
+        [4, "Disruptive Frequency Tuning", "眩晕几率 +100%、时长 +3s"],
+        [5, "Explosive Goodbye", "光束结束/手动引爆时爆炸 + 短暂残留等离子场"],
+        [5, "Plasma Trail", "飞行途中留下伤害轨迹"],
+        [5, "Triple Split Line", "分裂为 3 条平行光束"]
+      ],
+      "overclocks": [
+        ["Light-Weight Cases", null, "最大弹药 +3、装填 -0.2s"],
+        ["Roll Control", null, "持续 +0.5s；按住可操控弹体转向（绕 X 轴 1200°/s）"],
+        ["Stronger Plasma Current", null, "光束 DPS +50、持续 +0.5s"],
+        ["Return to Sender", null, "松扳机使光束返回枪口；最大弹药 -6"],
+        ["High Voltage Crossover", null, "命中 100% 触电、减速 80%、4 电/0.25s、5s；弹匣 x0.6"],
+        ["Spinning Death", "unstable", "持续 x2.5、宽度 +1.5m；DPS x0.24、弹药 x0.65、弹匣 x0.3；弹速 0.5m/s 高速自旋"],
+        ["Inferno", "unstable", "DPS -175、破甲 x0.25；伤害转火焰并延长燃烧（实测约 140% 面板值）"]
+      ]
+    },
+    {
+      "class": "Engineer",
+      "weapon": "Shard Diffractor",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Impact Splash", "范围伤害 +2"],
+        [1, "Increased Energy Density", "直接伤害 +2"],
+        [1, "Larger Battery", "总容量 +100"],
+        [2, "Soft Tissue Disruption", "弱点伤害 +33%"],
+        [2, "Particle Spattering", "效果半径 +0.8m"],
+        [3, "Aluminum Foil DIY", "充能容量 +50"],
+        [3, "Open Structure Battery", "充能时间 -0.8s"],
+        [4, "High-Intensity Heating", "直接目标加热 +75%"],
+        [4, "Nitrogen Vaporizer", "破甲 +400%"],
+        [5, "Hydrogen Rupturing", "对触电目标 +33%"],
+        [5, "Bio-Mass Converter", "击杀返还 3 点充能（CD 0.25s）"],
+        [5, "Dazzler Module", "命中减速 +80%（移速 x0.2、1s）"]
+      ],
+      "overclocks": [
+        ["Efficiency Tweaks", null, "总容量 +50、充能容量 +25"],
+        ["Automated Beam Controller", null, "容量 +100、放电速率 +4、充能 -0.2s、充能容量 x0.8；持续射击至耗尽"],
+        ["Feedback Loop", null, "持续开火每秒 +1 范围 +0.3m 半径（无上限，停火重置）；总容量 -100"],
+        ["Volatile Impact Reactor", null, "命中地形留岩浆（5 火 + 5 热/0.1~0.15s、7s、减速 30%）；半径 x0.5、充能容量 x0.5"],
+        ["Plastcrete Catalyst", null, "接触平台材料时范围与半径 +50%；接触 1s 爆炸 150 爆 + 150 崩解 r5m；容量 -50、充能 +0.8s"],
+        ["Overdrive Booster", null, "开火中按装填进入 Overdrive：伤害 x2.5、耗弹 +1、不能移动、蓄满 +1.5s"]
+      ]
+    },
+    {
+      "class": "Gunner",
+      "weapon": "\"Lead Storm\" Powered Minigun",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Magnetic Refrigeration", "冷却 +1.5、冷却延迟 -0.15"],
+        [1, "Improved Motor", "射速 +2"],
+        [1, "Improved Platform Stability", "基础散布 x0.25"],
+        [2, "Oversized Drum", "最大弹药 +300"],
+        [2, "High Velocity Rounds", "伤害 +2"],
+        [3, "Hardened Rounds", "破甲 +200%"],
+        [3, "Improved Stun", "眩晕时长 +2s、几率 +20%"],
+        [3, "Blowthrough Rounds", "最大穿透 +1"],
+        [4, "Variable Chamber Pressure", "最大稳定化伤害 +15%"],
+        [4, "Lighter Barrel Assembly", "起转时间 -0.4s"],
+        [4, "Magnetic Bearings", "停转 +1s、最大精度持续 +0.75s"],
+        [5, "Aggressive Venting", "过热爆发（1000% 恐惧、6 火 + 60 热、满伤 6m / 总 10m）、过热时长 -5s"],
+        [5, "Cold As The Grave", "每击杀 -0.6 热量"],
+        [5, "Hot Bullets", "热量红区时 50% 伤害转热量（点燃）"]
+      ],
+      "overclocks": [
+        ["A Little More Oomph!", null, "伤害 +1、起转 -0.2s"],
+        ["Thinned Drum Walls", null, "最大弹药 +300、冷却 +0.5"],
+        ["Burning Hell", null, "枪口前 5m 燃烧区（5 火 + 20 热/0.25s）；热量生成 +50%"],
+        ["Compact Feed Mechanism", null, "最大弹药 +800；射速 -2"],
+        ["Exhaust Vectoring", null, "伤害 +2；基础散布 x2.5"],
+        ["Rotary Overdrive", null, "12 次冷却剂（每次 -25% 热量并解除过热）、射速 +3；发热 +75%"],
+        ["Bullet Hell", "unstable", "75% 跳弹至 6m 内敌人（只跳一次）；伤害 -3、基础散布 x6"],
+        ["Lead Storm", null, "伤害 +4；使用时移速 x0、眩晕几率 x0.25、眩晕时长 x0.5"]
+      ]
+    },
+    {
+      "class": "Gunner",
+      "weapon": "\"Thunderhead\" Heavy Autocannon",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Increased Caliber Rounds", "伤害 +3"],
+        [1, "High Capacity Magazine", "弹匣 x2"],
+        [1, "Expanded Ammo Bags", "最大备弹 +220"],
+        [2, "Tighter Barrel Alignment", "基础散布 x0.7"],
+        [2, "Improved Gas System", "最高射速 +2、起始射速 +0.3"],
+        [2, "Lighter Barrel Assembly", "射速成长 +50%、起始射速 +0.6"],
+        [3, "Supercharged Feed Mechanism", "最高射速 +2、起始射速 +0.3"],
+        [3, "Loaded Rounds", "范围伤害 +2"],
+        [3, "High Velocity Rounds", "伤害 +4"],
+        [4, "Hardened Rounds", "破甲 +400%"],
+        [4, "Shrapnel Rounds", "效果半径 +0.6m"],
+        [5, "Feedback Loop", "满射速时 +10% 伤害"],
+        [5, "Suppressive Fire", "弹着点 1m 内 50% 概率恐惧"],
+        [5, "Damage Resistance At Full RoF", "满射速时 +50% 伤害抗性"]
+      ],
+      "overclocks": [
+        ["Composite Drums", null, "最大备弹 +110、装填 -0.5s"],
+        ["Splintering Shells", null, "范围 +1、半径 +0.3m"],
+        ["Carpet Bomber", null, "范围 x1.35、半径 x1.45；伤害 -7"],
+        ["Combat Mobility", null, "持枪移速 +35%、散布 x0.7、射速成长 x1.5、起始射速 +0.9；弹匣 x0.5"],
+        ["Big Bertha", null, "伤害 +12、散布 x0.7；弹匣 x0.5、备弹 -110、最高射速 -1.5"],
+        ["Neurotoxin Payload", "unstable", "50% 概率中毒（12 毒/0.75~1.25s、10s、移速 x0.7）；半径 x1.25、范围 -6、备弹 -110"],
+        ["Mortar Rounds", "unstable", "改抛物线炮弹（可自伤/友伤）；范围 x7、半径 x1.25、伤害 -14、弹匣与备弹 x0.318、最高射速 x0.5"]
+      ]
+    },
+    {
+      "class": "Gunner",
+      "weapon": "\"Hurricane\" Guided Rocket System",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Missile Belt", "最大弹药 +72"],
+        [1, "Pressurized Gas Cylinders", "直击伤害 +4"],
+        [1, "Increased Blast Radius", "效果半径 +0.8m"],
+        [2, "Bigger Jet Engine", "最大弹速 +7.5m/s、转向速率 +225%"],
+        [2, "Anti-Tank Missiles", "破甲 +100%"],
+        [3, "Nano Missiles", "弹匣 +36"],
+        [3, "Improved Feed Mechanism", "射速 +1"],
+        [4, "Shrapnel Load", "弱点 +50%"],
+        [4, "Zip Fuel", "范围伤害 +4"],
+        [5, "Napalm-Infused Rounds", "33% 伤害转热量（点燃）"],
+        [5, "Uncontrolled Decompression", "25% 眩晕几率、时长 +3s（直击与范围独立判定）"],
+        [5, "Nitroglycerin Compound", "导弹滞空每 0.75s +1 范围，最多 10 层"]
+      ],
+      "overclocks": [
+        ["Overtuned Feed Mechanism", null, "最大弹速 x1.2、射速 +1"],
+        ["Fragmentation Missiles", null, "范围 +2、半径 +0.5m"],
+        ["Plasma Burster Missiles", null, "穿透多段爆裂；转向 x1.3；直伤/范围/半径 x0.5、弹速 x0.75、弹药 -108"],
+        ["Minelayer System", null, "失去制导、落地成雷（15s、范围 x2.75、半径 x1.5、触发 2m）；弹药 -36"],
+        ["Rocket Barrage", null, "射速 x3、弹药 +216、散布 x0.5、无制导；直伤 -8、范围 -9"],
+        ["Jet Fuel Homebrew", null, "直伤 x2.5、弹速 x1.5；范围 x0.5、半径 -0.5m、弹匣 x0.75、弹药 -72"],
+        ["Salvo Module", null, "蓄力齐射最多 9 发无制导导弹（伤害加成 0.625+0.375×装填数）"],
+        ["Cluster Charges", null, "可分裂 7 个子弹药（18 伤 r1.4m）；直伤/范围 x2、弹匣 x0.44、弹药 x0.44、射速 -1、弹速 x0.5"]
+      ]
+    },
+    {
+      "class": "Gunner",
+      "weapon": "\"Bulldog\" Heavy Revolver",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Quickfire Ejector", "装填 -0.7s"],
+        [1, "Perfect Weight Balance", "基础散布 x0.3"],
+        [2, "Increased Caliber Rounds", "伤害 +10"],
+        [2, "Floating Barrel", "后坐力 x0.75、每发散布 -80%"],
+        [2, "Expanded Ammo Bags", "最大弹药 +12"],
+        [3, "Super Blowthrough Rounds", "最大穿透 +3"],
+        [3, "Explosive Rounds", "范围伤害 +30；直接伤害 x0.5"],
+        [3, "Hollow-Point Bullets", "弱点伤害 +35%"],
+        [4, "Expanded Ammo Bags", "最大弹药 +12"],
+        [4, "High Velocity Rounds", "伤害 +10"],
+        [5, "Dead-Eye", "移动时无瞄准精度惩罚"],
+        [5, "Neurotoxin Coating", "50% 概率中毒（12 毒/0.75~1.25s、10s、移速 x0.7）"]
+      ],
+      "overclocks": [
+        ["Chain Hit", null, "弱点命中 75% 跳弹至 5m 内敌人"],
+        ["Homebrew Powder", null, "伤害 x0.75~x2 随机"],
+        ["Volatile Bullets", null, "对燃烧目标 +300%；基础伤害 -10"],
+        ["Six Shooter", null, "弹匣 +2、弹药 +6、射速 +2；装填 +0.5s、基础散布 x1.5"],
+        ["Elephant Rounds", null, "伤害 x2、散布 x0.5；弹药 -12、弹匣 -1、装填 +0.5s、后坐力 x2.5、每发散布 +71%"],
+        ["Magic Bullets", null, "命中地形 100% 跳弹至 5m 内敌人；弹药 +8、伤害 -20"]
+      ]
+    },
+    {
+      "class": "Gunner",
+      "weapon": "BRT7 Burst Fire Gun",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "High Velocity Rounds", "伤害 +3"],
+        [1, "Floating Barrel", "基础散布 x0.7、每发散布 x0.6"],
+        [1, "Blowthrough Rounds", "最大穿透 +1"],
+        [2, "Recoil Dampener", "后坐力 x0.5"],
+        [2, "Quickfire Ejector", "装填 -0.7s"],
+        [2, "Disabled Safety", "射速 +2"],
+        [3, "High Capacity Magazine", "弹匣 +12"],
+        [3, "Increased Caliber Rounds", "伤害 +3"],
+        [4, "Hardened Rounds", "破甲 +200%"],
+        [4, "Expanded Ammo Bags", "最大备弹 +72"],
+        [4, "Hollow-Point Bullets", "弱点伤害 +40%"],
+        [5, "Burst Stun", "连发眩晕时长 +4s（全中触发）"],
+        [5, "Longer Burst", "连发数 +3（连发间隔 +0.02s）"]
+      ],
+      "overclocks": [
+        ["Composite Casings", "balanced", "最大备弹 +36、射速 +1"],
+        ["Full Chamber Seal", "balanced", "伤害 +1、装填 -0.2s"],
+        ["Compact Mags", "balanced", "最大备弹 +84；射速 -1、装填 +0.4s"],
+        ["Experimental Rounds", "balanced", "伤害 +9；备弹 -30、弹匣 -6"],
+        ["Micro Flechettes", "balanced", "最大备弹 x2、弹匣 +30、后坐 x0.5、每发散布 x0.5；伤害 -11"],
+        ["Lead Spray", "balanced", "伤害 x1.5；基础散布 x4"],
+        ["Electro Minelets", "unstable", "子弹落地成雷（1.1m 触发、1.5m 内 100% 电击 3 电/0.25s、6s、减速 80%、寿命 5s）；伤害 -2、弹匣 -12"]
+      ]
+    },
+    {
+      "class": "Gunner",
+      "weapon": "ArmsKore Coil Gun",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Extra Coil", "伤害 +40"],
+        [1, "Larger Battery", "总弹药 +280"],
+        [1, "Resonance Tuning", "轨迹持续时间 +2s"],
+        [2, "Overcharger", "满蓄力后每 0.25s +12 动能，最多 +100（过热清零）"],
+        [2, "Controlled Magnetic Flow", "可 25/50/75/100% 蓄力开火，伤害与耗弹按比例缩放"],
+        [2, "Optimized Magnetic Circuit", "蓄力速度 +1.8"],
+        [3, "Concussive Shockwave", "轨迹半径 +1.5、眩晕几率 +50%、时长 +3"],
+        [3, "Fear Trajectory", "轨迹半径 +5、恐惧 +250%"],
+        [4, "Defence Enhancement", "按住开火时 50% 伤害抗性"],
+        [4, "Shockwave", "每次射击附加前方冲击波 20 伤（3m x 1.5m）"],
+        [5, "Necro-Thermal Catalyst", "对燃烧目标 +30%（火+热）；击杀燃烧目标 80 火爆炸 r6m"],
+        [5, "Dilated Injector System", "轨迹半径 +1m"],
+        [5, "Electric Trail", "轨迹附加电击轨迹（伤害 + 减速）"]
+      ],
+      "overclocks": [
+        ["Re-atomizer", null, "穿透时把首个命中目标的温度/状态传给后方敌人"],
+        ["Ultra-Magnetic Coils", null, "轨迹半径 +0.5m、持续 +1s"],
+        ["Backfeeding Module", null, "最大弹药 +320；轨迹持续 -3s"],
+        ["The Mole", null, "每穿一段地形 +150 动能（可无限叠加，穿透力约 255%）；蓄力 x0.8"],
+        ["Hellfire", null, "满蓄力轨迹成高温火源（约 68.6 热/秒）；弹药 -200、蓄力 x0.7、轨迹 -2s"],
+        ["Triple-Tech Chambers", null, "可追加 2 次残余射击（耗能减半、伤害 75%、不穿地形）；装填 +0.5、蓄力 x0.7"]
+      ]
+    },
+    {
+      "class": "Scout",
+      "weapon": "Deepcore GK2",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Gyro Stabilisation", "首发散布 x0、最大散布 x0.5、冲刺散布 x0.5"],
+        [1, "Supercharged Feed Mechanism", "射速 +1"],
+        [1, "Quickfire Ejector", "装填时间 x0.73"],
+        [2, "Increased Caliber Rounds", "伤害 +3"],
+        [2, "Expanded Ammo Bags", "最大备弹 +120"],
+        [3, "Floating Barrel", "后坐力 x0.5、最大散布 -0.65"],
+        [3, "High Capacity Magazine", "弹匣 +10"],
+        [4, "Hollow-Point Bullets", "弱点伤害 +20%"],
+        [4, "Hardened Rounds", "破甲 +500%"],
+        [5, "Battle Frenzy", "击杀后 2.5s 移速 +50% 且射击不累积散布"],
+        [5, "Improved Gas System", "射速 +2"],
+        [5, "Stun", "弱点命中眩晕几率 +35%"]
+      ],
+      "overclocks": [
+        ["Compact Ammo", null, "弹匣 +5、后坐力 x0.7"],
+        ["Gas Rerouting", null, "射速 +1、装填时间 x0.84"],
+        ["Homebrew Powder", null, "伤害 x0.8~x1.4 随机"],
+        ["Overclocked Firing Mechanism", null, "射速 +3、后坐力 x2"],
+        ["Bullets of Mercy", null, "对异常状态目标 +50%；弹匣 x0.6"],
+        ["Burst Fire", null, "3 发点射、伤害 +2、弱点眩晕 +10%、弹匣 x1.115、射速 x0.3"],
+        ["AI Stability Engine", null, "后坐力 x0、散布恢复 x9、弱点 +50%；伤害 -1、射速 -2"],
+        ["Electrifying Reload", null, "装填时 100% 使被击中目标触电（4.5 电/0.2s、6s、减速 80%）；备弹 -60、弹匣 -10"]
+      ]
+    },
+    {
+      "class": "Scout",
+      "weapon": "M1000 Classic",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "Expanded Ammo Bags", "最大弹药 +40"],
+        [1, "Increased Caliber Rounds", "伤害 +10"],
+        [2, "Fast-Charging Coils", "聚焦速度 +25%"],
+        [2, "Better Weight Balance", "后坐力 x0.5、每发散布 -30%、最大散布 x0.8"],
+        [2, "Hardened Rounds", "破甲 +220%"],
+        [3, "Killer Focus", "聚焦射击伤害加成 +25%"],
+        [3, "Extended Clip", "弹匣 +6"],
+        [4, "Super Blowthrough Rounds", "最大穿透 +3"],
+        [4, "Hollow-Point Bullets", "弱点伤害 +20%"],
+        [5, "Hitting Where it Hurts", "聚焦眩晕几率 +100%（3s）"],
+        [5, "Precision Terror", "聚焦击杀造成范围恐惧"],
+        [5, "Killing Machine", "击杀后 1s 内装填 -0.75s"]
+      ],
+      "overclocks": [
+        ["Hoverclock", "clean", "聚焦时空中减速下落 80%（可刷新）"],
+        ["Minimal Clips", "clean", "弹匣 x1.25、装填 -0.2s"],
+        ["Active Stability System", "balanced", "聚焦移速 +70%、聚焦速度 +20%；装填 +0.5s"],
+        ["Hipster", "balanced", "最大弹药 x1.913、射速 +2、每发散布 -30%、后坐力 x0.5；伤害 -17"],
+        ["Electrocuting Focus Shots", "unstable", "聚焦 100% 触电（4.5 电/0.2s、6s、减速 80%）；聚焦伤害加成 -25%"],
+        ["Supercooling Chamber", "unstable", "聚焦伤害加成 +150%、聚焦弱点 x3；弹药 x0.685、弹匣 x0.73、聚焦速度 x0.6、聚焦时不能移动"],
+        ["Marked for Death", "unstable", "聚焦使目标受伤 +55% 8s、聚焦速度 +20%；聚焦耗弹 +1、弹匣 -2、聚焦直伤 x0.01"]
+      ]
+    },
+    {
+      "class": "Scout",
+      "weapon": "DRAK-25 Plasma Carbine",
+      "slot": "primary",
+      "levels": "T2=4, T3=8, T4=12, T5=16",
+      "mods": [
+        [1, "High-Volume Plasma Field", "射速 +4"],
+        [1, "Improved Thermals", "每发热量 -25%"],
+        [1, "Stronger Particle Accelerator", "弹速 x2"],
+        [2, "Larger Battery", "电池 +200"],
+        [2, "Increased Particle Density", "伤害 +2"],
+        [3, "Custom Coil Alignment", "散布 -70%"],
+        [3, "Gen 2 Cooling System", "冷却 +50%、冷却延迟 -0.1"],
+        [3, "Hot Feet", "过热期间移速 x1.5（结束后再持续约 2s）"],
+        [4, "Overcharged PCF", "15% 触电（4.5 电/0.2s、6s、减速 80%）"],
+        [4, "Plasma Splash", "直伤 -5、溅射 +5（50% 崩解 / 50% 火焰，满伤 0.5m / 总 1m）"],
+        [4, "Destructive Resonance AMP", "破甲 +200%"],
+        [5, "Manual Heat Dump", "热量 >50% 时按装填强制过热（时长 = 过热时长 x0.65 x 热量比）"],
+        [5, "Thermal Feedback Loop", "热量 >50% 时射速 +5"]
+      ],
+      "overclocks": [
+        ["Aggressive Venting", "clean", "过热火焰 AoE（6 火 + 60 热、500 恐惧、r5m，按热量比例）；过热时长 x0.8"],
+        ["Thermal Liquid Coolant", "clean", "冷却 x1.25、每发热量 x0.85"],
+        ["Impact Deflection", "balanced", "弹射 1 次；射速 -2"],
+        ["Conductive Thermals", "balanced", "命中叠增益（火/冰/电抗性 -5% 可叠、温度属性 x0.95 ≤30 层）；伤害 -3、每发热量 +37%"],
+        ["Rewiring Mod", "balanced", "过热回收弹药；过热时长 x1.3、电池 x0.7"],
+        ["Overtuned Particle Accelerator", "unstable", "直伤 +8；电池 x0.8、每发热量 x1.5、散布增大"],
+        ["Shield Battery Booster", "unstable", "满盾时伤害 +5.5、弹速 x2、射速 +1、电池 +100、护盾再生 -5s；冷却 x0.5、每发热量 x1.5、过热清空护盾"],
+        ["Thermal Exhaust Feedback", "unstable", "热量 >50% 后每 10% 热量为直击 +3 火 +3 热（最多 +12/+12）；过热 +0.8s、每发热量 x1.2"]
+      ]
+    },
+    {
+      "class": "Scout",
+      "weapon": "\"Jury-Rigged\" Boomstick",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Expanded Ammo Bags", "最大弹药 +8"],
+        [1, "Double-Sized Buckshot", "伤害 +3"],
+        [2, "Double Trigger", "射速 +7.5"],
+        [2, "Quickfire Ejector", "装填 -0.7s"],
+        [3, "Improved Stun", "眩晕时长 +3.5s、几率 +20%"],
+        [3, "Expanded Ammo Bags", "最大弹药 +12"],
+        [3, "High Capacity Shells", "弹丸 +3"],
+        [4, "Super Blowthrough Rounds", "最大穿透 +3"],
+        [4, "Tungsten Coated Buckshot", "破甲 +300%"],
+        [4, "Improved Blast Wave", "前置冲击波伤害 x2"],
+        [5, "Auto Reload", "收枪超过 5s 自动装填"],
+        [5, "Fear The Boomstick", "开火时 5m 内 50% 恐惧"],
+        [5, "White Phosphorous Shells", "50% 弹丸伤害转火焰 + 热量"]
+      ],
+      "overclocks": [
+        ["Compact Shells", null, "最大弹药 +6、装填 -0.2s"],
+        ["Special Powder", null, "离地开火获得 13m/s 反向推进（可跳约 16m）"],
+        ["Stuffed Shells", null, "伤害 +1、弹丸 +1"],
+        ["Shaped Shells", null, "基础散布 -50%；最大弹药 -4"],
+        ["Jumbo Shells", null, "伤害 +8；最大弹药 -10、装填 +0.5s"],
+        ["Double Barrel", null, "前置冲击波 x5.5、弹丸 x2；弹匣 x0.5、弹药 x0.5、后坐力 x2、基础散布 x1.5"]
+      ]
+    },
+    {
+      "class": "Scout",
+      "weapon": "Zhukov NUK17",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Expanded Ammo Bags", "最大弹药 +100"],
+        [1, "High Velocity Rounds", "伤害 +1"],
+        [2, "High Capacity Magazine", "弹匣 +10"],
+        [2, "Supercharged Feed Mechanism", "综合射速 +4"],
+        [2, "Quickfire Ejector", "装填 -0.6s"],
+        [3, "Increased Caliber Rounds", "伤害 +1"],
+        [3, "Better Weight Balance", "基础散布 x0.4"],
+        [4, "Blowthrough Rounds", "最大穿透 +1"],
+        [4, "Hollow-Point Bullets", "弱点伤害 +30%"],
+        [4, "Expanded Ammo Bags", "最大弹药 +100"],
+        [5, "Conductive Bullets", "对触电目标 +33%"],
+        [5, "Get In, Get Out", "打空弹匣后 2.5s 移速 +50%（不与 Dash 叠加）"]
+      ],
+      "overclocks": [
+        ["Minimal Magazines", "balanced", "综合射速 +1、装填 -0.4s"],
+        ["Custom Casings", "balanced", "综合弹匣 +30；综合射速 -2"],
+        ["Cryo Minelets", "unstable", "子弹化冰雷（10 冷冻、r1.5m、1.1m 触发、寿命 4s）；伤害 -1、弹匣 -10"],
+        ["Embedded Detonators", "unstable", "装填时每颗命中弹 38 内部伤害（无 AoE）；伤害 -6、弹匣 -20、弹药 -400"],
+        ["Gas Recycling", "unstable", "伤害 +6、破甲 +250%、弱点倍率归零、基础散布 x1.5、持枪移速 x0.5"]
+      ]
+    },
+    {
+      "class": "Scout",
+      "weapon": "Nishanka Boltshark X-80",
+      "slot": "secondary",
+      "levels": "T2=6, T3=10, T4=14, T5=18",
+      "mods": [
+        [1, "Special Bolt: Pheromone Dart", "解锁信息素箭，特殊弹药 +9"],
+        [1, "Special Bolt: Chemical Explosion", "解锁化学爆炸箭，特殊弹药 +9"],
+        [1, "Special Bolt: Taser", "解锁电击箭，特殊弹药 +12"],
+        [2, "Broadhead Bolts", "伤害 +25、径向伤害 +15"],
+        [2, "Increased Quiver Capacity", "最大弹药 +7"],
+        [2, "Expanded Special Quiver", "特殊弹药 +4（信息素）、+4（化学爆炸）、+5（电击）"],
+        [3, "Stabilizing Arm Brace", "装填 -0.4s"],
+        [3, "Reinforced String", "弹速 +50%"],
+        [4, "Battle Frenzy", "击杀后短时间移速提升"],
+        [4, "Radio Transmitter Module", "准星悬停可回收箭矢时远程召回"],
+        [5, "Potent Special Bolts", "特殊效果时长 +2.5s（信息素）、+3.5s（化学爆炸）、+3s（电击）"],
+        [5, "Magnetic Shafts", "对触电目标 +25%"],
+        [5, "Banshee Module", "恐惧 +50%（持续脉冲，可回收复用）"]
+      ],
+      "overclocks": [
+        ["Quick Fire", null, "装填 -0.2s、弹速 x2"],
+        ["The Specialist", null, "特殊弹药 x1.25、特殊效果时长 x1.3"],
+        ["Cryo Bolt", null, "弩箭使敌人冻结（可叠）；弩箭不可回收、直伤 -50"],
+        ["Fire Bolt", null, "弩箭使敌人点燃（可叠）；弩箭不可回收、直伤 -50"],
+        ["Bodkin Points", null, "普通弩箭可弹射至附近敌人（最多 2 次）；直伤 -75、装填 x1.5"],
+        ["Trifork Volley", null, "普通弹变 3 发齐射、弹药容量 +20%、不可回收；每发 -15%、装填 x1.5"]
+      ]
+    }
+  ],
+  "designPatterns": [
+    "5 层 x 每层 1 选 1，层内 2~3 选项，Mod 总数 12~14；配装组合数 = Π(层选项数)，普遍 48~162 种",
+    "T1 手感/容量、T2 伤害/弹药、T3 机制型（穿透/眩晕/换弹/特殊模式）、T4 专用乘区（弱点/破甲/减速）、T5 签名质变效果",
+    "OC 三级：Clean 纯增益 / Balanced 增益+代价 / Unstable 改变武器行为；5~8 个，与 Mod 单挂互斥",
+    "数值只有两种表达：加法 +N（Base）与乘法 xN（Factor）；大量用 50% 伤害转类型做跨系统联动",
+    "状态（触电/燃烧/冰冻/中毒/腐蚀/恐惧/眩晕）被当作跨武器条件乘区反复引用，形成跨枪组合",
+    "强项必带代价：-弹药 / -弹匣 / +装填 / +散布 / -移速，极端时直接禁用机制（弱点倍率 x0、持械移速 x0）"
+  ]
+}

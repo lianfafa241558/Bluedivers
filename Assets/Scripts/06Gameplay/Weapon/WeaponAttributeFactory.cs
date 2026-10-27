@@ -70,7 +70,7 @@ namespace FPSGame.Weapon
             // 伤害组成属性
             { WeaponAttrType.DirectDestruction, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.ExplosionDestruction, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
-            { WeaponAttrType.WeaknessBonus, (false, AttrTag.Percentage | AttrTag.DefaultHide, ModifierType.Extra) },
+            { WeaponAttrType.WeaknessBonus, (false, AttrTag.Percentage | AttrTag.DefaultHide, ModifierType.All) },
 
             // 伤害类型系数（直击伤害组）
             { WeaponAttrType.DamageTypeGun, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
@@ -225,7 +225,7 @@ namespace FPSGame.Weapon
         [InspectorName("通用/生命周期")]
         LifeTime = 5,
 
-        /// <summary>弹丸数量</summary>
+        /// <summary>弹丸数量(霰弹枪使用)_</summary>
         [InspectorName("通用/弹丸数量")]
         BulletsPerShot = 6,
         /// <summary>子弹散布角度</summary>
