@@ -87,7 +87,7 @@ namespace FPSGame.EditorExt
             RenderTexture.active = previous;
             RenderTexture.ReleaseTemporary(rt);
 
-            // 应用遮罩规则：R * color + G * white +B* black
+            // 应用遮罩规则：R * color + G * white +B* black 
             Color[] pixels = readable.GetPixels();
             for (int i = 0; i < pixels.Length; i++)
             {

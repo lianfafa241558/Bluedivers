@@ -30,6 +30,13 @@ namespace FPSGame.Gameplay
         public MapData_SO mapCfg { get; set; }
         public CampData_SO campData { get; set; }
 
+        /// <summary>本局地图 id（= <c>TaskManager.MapData</c> 的键，已去掉 <c>MD_</c> 前缀）。</summary>
+        public string mapId { get; set; }
+
+        /// <summary>本局任务点在 <c>MapData_SO.mapItemInfos</c> 里的下标。
+        /// <para>-1 = 未知（场景模式 / 旧存档路径）⇒ 结算时不给势力加控制度。</para></summary>
+        public int mapPoint { get; set; } = -1;
+
         public Dictionary<OOPartEnum, int> collectProperty = new();
         public List<Dictionary<string, int>> BattleData = new();
         /// <summary>任务所需战备</summary>

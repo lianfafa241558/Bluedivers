@@ -58,6 +58,12 @@ namespace FPSGame.Weapon
         [Range(0f, 2f)]
         public float RecoilForce = 1;
 
+        /// <summary>后坐力手感参数（每把玩家武器一份）：相机冲量/回正节奏 + 武器模型回弹 + 连射散布膨胀 + 屏震。
+        /// <para>▍为什么只在玩家武器上：后坐力是"玩家手感"，AI/炮塔武器放它没有意义；
+        /// 载具驾驶的炮塔另有一份（<see cref="VehicleWeaponsManager.RecoilProfile"/>）。</para></summary>
+        [InspectorName("后坐力参数")]
+        public WeaponRecoilProfile RecoilProfile = new();
+
         [InspectorName("瞄准时隐藏准星")]
         public bool AimingHideCrosshair = true;
 
@@ -76,7 +82,17 @@ namespace FPSGame.Weapon
         public float ReloadSpeedScale { get; private set; } = 1;//属于一项升级，暂时没用
 
 
-        public float GetRecoil()=> RecoilForce*(m_InAiming?Mathf.Max(AimZoomRatio*0.5f,0.1f):1);
+        /// <summary>后坐力倍率(属性，1=原值)：只吃改装加成，0 = 完全无后坐力</summary>
+        public float RecoilScale => AttrFinal(Attr.Recoil, 1).RawFloat;
+
+        /// <summary>后坐力最终值(基础 × 改装倍率)：**武器回弹与镜头抬头共用这一口径**。
+        /// 瞄准减弱不在这里做 —— 那是 <see cref="WeaponRecoilProfile.AdsScale"/> 的职责（同一份参数只写一处）。</summary>
+        public float RecoilForceFinal => RecoilForce * RecoilScale;
+
+        // ---- 连射散布膨胀的参数来自本枪的 RecoilProfile（基类默认全关，只有这里覆写）----
+        protected override float SpreadBloomPerShot => RecoilProfile.SpreadBloomPerShot;
+        protected override float SpreadBloomMax => RecoilProfile.SpreadBloomMax;
+        protected override float SpreadBloomDecay => RecoilProfile.SpreadBloomDecay;
 
 
         public override void LogicInit()
@@ -91,6 +107,10 @@ namespace FPSGame.Weapon
         protected override void InitAttribute()
         {
             base.InitAttribute();
+
+            // 后坐力倍率：与伤害配置无关，基础值恒为 1(不改行为)；
+            // ⚠ 必须放在下面那个早退之前，装备槽的空伤害武器也有后坐力
+            if (!cfg[Attr.Recoil]) cfg.Add(Attr.Recoil, 1);
 
             // ⚠ 伤害配置为空的武器（如角色**装备槽**的 *Armor：Damages.Count == 0）原来直接 Damages[0]
             //   ⇒ **IndexOutOfRangeException** 把整条 LogicInit 链打断：后面 `WeaponReloadController.LogicInit`
@@ -245,7 +265,8 @@ namespace FPSGame.Weapon
             {
                 Vector3 baseDirection = (ThirdPersonAimTarget - shootTransform.position).normalized;
 
-                var bsa = AttrFinal(WeaponAttrType.BulletsSpreadAngle);
+                // 三点一线也要吃连射膨胀，否则"准心即命中"会把 bloom 白算
+                var bsa = CurrentSpreadAngle;
                 if (bsa == 0) return baseDirection;
                 PEInt chargeSpreadScale = CurrentDamgeData.GetSpread(WeaponChargeScale_D);
                 PEInt spreadAngleRatio = bsa / 180 * (PEInt)(m_InAiming ? 0.3f : 1) * chargeSpreadScale;

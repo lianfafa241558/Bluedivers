@@ -157,14 +157,17 @@ public partial class PlayerController
                 PlayerCamera.transform.SetParent(null, true);
             }
 
-            float clampedV = Mathf.Clamp(m_CameraVerticalAngle, -_thirdPersonUpperLimit, _thirdPersonLowerLimit);
+            // 后坐力/屏震偏移叠加在限位之后：限位只约束"鼠标能抬多高"，不该把偏移切掉
+            float clampedV = Mathf.Clamp(m_CameraVerticalAngle, -_thirdPersonUpperLimit, _thirdPersonLowerLimit)
+                + RecoilPitch + ShakePitch;
 
             Transform aimPoint = _thirdPersonAimCameraPoint ?? _thirdPersonCameraPoint;
             float xOffset = aimPoint.localPosition.x;
             float height = aimPoint.localPosition.y;
             float distance = Mathf.Abs(aimPoint.localPosition.z) * _thirdPersonDistanceScale;
 
-            Quaternion rotation = Quaternion.Euler(clampedV, _cameraYaw, 0);
+            // ⚠ 偏移只加在相机上，_cameraYaw 本身不变 ⇒ 后坐力/屏震不会把移动方向也带偏
+            Quaternion rotation = Quaternion.Euler(clampedV, _cameraYaw + RecoilYaw + ShakeYaw, CameraRoll);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
             Vector3 desiredPosition = CenterPos + offset;
 
@@ -196,14 +199,15 @@ public partial class PlayerController
             float angularSpeed = GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * _thirdPersonRotationSensitivity;
             _cameraYaw += InputHandler.GetLookInputsHorizontal() * angularSpeed * Time.deltaTime;
 
-            float clampedVertical = Mathf.Clamp(m_CameraVerticalAngle, -_thirdPersonUpperLimit, _thirdPersonLowerLimit);
+            float clampedVertical = Mathf.Clamp(m_CameraVerticalAngle, -_thirdPersonUpperLimit, _thirdPersonLowerLimit)
+                + RecoilPitch + ShakePitch;
 
             // 相机位置：基于 _thirdPersonCameraPoint 的偏移
             float xOffset = _thirdPersonCameraPoint.localPosition.x;
             float height = _thirdPersonCameraPoint.localPosition.y;
             float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z) * _thirdPersonDistanceScale;
 
-            Quaternion rotation = Quaternion.Euler(clampedVertical, _cameraYaw, 0);
+            Quaternion rotation = Quaternion.Euler(clampedVertical, _cameraYaw + RecoilYaw + ShakeYaw, CameraRoll);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
 
             Vector3 desiredPosition = CenterPos + offset;

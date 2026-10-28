@@ -104,6 +104,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 5
     DamageGroupDirect:
@@ -143,6 +144,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 47d77ada00d3b5d4689505b7f66778bd, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -151,6 +154,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -375,6 +379,7 @@ MonoBehaviour:
   AttackRange: 15
   AlertRange: 50
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -461,6 +466,7 @@ MonoBehaviour:
     MinRange: 2
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 7
     DamageDirect: 2
     DamageGroupDirect:
@@ -504,6 +510,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: a00f91e4a49038d459216f92c302858c, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -512,6 +520,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -784,6 +793,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 1478053612840412110}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -835,6 +845,11 @@ MonoBehaviour:
   PathReachingRadius: 1
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &6731495466205310906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -848,11 +863,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 8864105188570628845}
-  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: 7369000b62de34b489c0f4454f88255e, type: 2}
   fxMaterial: {fileID: 2100000, guid: 14fce7cbcc8540e458db10c38350d070, type: 2}
   events: []
+  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
 --- !u!114 &6731495466205310900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -906,6 +921,12 @@ MonoBehaviour:
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
+  BewareTimeout: 20
+  BewareObserveDistance: 10
+  SearchObserveDistance: 4
+  ObserveSettleTime: 0.4
+  BewareCooldown: 10
+  BewareCooldownRadius: 10
   IdleMaxDuration: 120
 --- !u!195 &6731495466205310901
 NavMeshAgent:
@@ -2456,6 +2477,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 8758041376956919421}
@@ -2516,6 +2538,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 90
   LineArmor:
   - {fileID: 7198725040718444843}
@@ -2613,6 +2636,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 70
   LineArmor:
   - {fileID: 1322073786529135222}
@@ -2665,9 +2689,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
+  isWeakness: 1
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 1
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -2676,7 +2701,7 @@ MonoBehaviour:
     scale: 0
     originActive: 0
     originLocalScale: {x: 0, y: 0, z: 0}
-  BleedValue: 50
+  BleedValue: 100
   isMain: 0
   showArmor: 0
 --- !u!1 &1074737263779850303 stripped
@@ -2805,6 +2830,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 70
   LineArmor:
   - {fileID: 7085621635824225683}
@@ -2965,6 +2991,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 100
   LineArmor: []
   armorBreakEffect:
@@ -3018,6 +3045,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 70
   LineArmor:
   - {fileID: 8477769561650769273}
@@ -3169,6 +3197,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 5549107878628929267}
@@ -3218,6 +3247,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 70
   LineArmor:
   - {fileID: 3533603623595228897}
@@ -3273,6 +3303,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -3445,6 +3476,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 80
   LineArmor: []
   armorBreakEffect:
@@ -3642,6 +3674,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 90
   LineArmor:
   - {fileID: 3975263505995788144}

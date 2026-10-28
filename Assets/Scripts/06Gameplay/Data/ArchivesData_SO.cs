@@ -110,8 +110,74 @@ public class ArchivesData_SO : ArchivesDataBase_SO
 
     #endregion
 
-    // 地图势力占领度已拆到独立的世界状态 OccupierState（自己的 json 文件 + 联机整份收发）
-    // ⇒ 不放在存档里：存档是每人一份的私有数据，占领度是一局共享的。
+    // 地图势力占领度的**基础值**不在这里：那是设计期资产 OccupierData_SO（每张图每个任务点一份）。
+    // 存档只放"玩家打出来的增量"（见下面的 occupierProgress）：基准值改资产、增量存个人档，
+    // 两者在 OccupierState.Get 里合成显示值。
+
+    #region 势力控制度增量
+
+    [Space]
+    [InspectorName("势力控制度增量")]
+    public List<ArchOccupierProgress> occupierProgress = new List<ArchOccupierProgress>();
+
+    /// <summary>某任务点上某势力累计涨了多少个百分点（无记录 ⇒ 0）。</summary>
+    public float GetOccupierGain(string mapId, int pointIndex, string faction)
+    {
+        var item = FindOccupierProgress(mapId, pointIndex, faction);
+        return item != null ? item.gain : 0f;
+    }
+
+    /// <summary>某任务点上**所有势力**累计涨的总和（= 其余势力要等分让出的总量）。</summary>
+    public float GetOccupierTotalGain(string mapId, int pointIndex)
+    {
+        if (string.IsNullOrEmpty(mapId)) return 0f;
+        float sum = 0f;
+        for (int i = 0; i < occupierProgress.Count; ++i)
+        {
+            var item = occupierProgress[i];
+            if (item != null && item.mapId == mapId && item.pointIndex == pointIndex) sum += item.gain;
+        }
+        return sum;
+    }
+
+    /// <summary>累加某任务点某势力的控制度增量。⚠ 不落盘，调用方（结算）统一 <see cref="Save"/>。</summary>
+    public void AddOccupierGain(string mapId, int pointIndex, string faction, float gain)
+    {
+        if (string.IsNullOrEmpty(mapId) || pointIndex < 0 || string.IsNullOrEmpty(faction) || gain == 0f) return;
+        var item = FindOccupierProgress(mapId, pointIndex, faction);
+        if (item == null)
+        {
+            item = new ArchOccupierProgress { mapId = mapId, pointIndex = pointIndex, faction = faction };
+            occupierProgress.Add(item);
+        }
+        item.gain += gain;
+    }
+
+    private ArchOccupierProgress FindOccupierProgress(string mapId, int pointIndex, string faction)
+    {
+        if (string.IsNullOrEmpty(mapId) || string.IsNullOrEmpty(faction)) return null;
+        return occupierProgress.Find(p => p != null && p.mapId == mapId && p.pointIndex == pointIndex
+                                          && p.Faction == faction);
+    }
+
+    /// <summary>一个任务点上某个势力的控制度增量。<c>pointIndex</c> = <c>MapData_SO.mapItemInfos</c> 下标。</summary>
+    [System.Serializable]
+    public class ArchOccupierProgress
+    {
+        public string mapId;
+        public int pointIndex;
+
+        /// <summary>吃这份增量的势力名（友方势力，或兜底的「超级夏莱」）。</summary>
+        public string faction;
+
+        /// <summary>累计加成（百分点，可带小数）—— 该点其余势力按等分让出同样的总量。</summary>
+        public float gain;
+
+        /// <summary>势力名（早期没有 faction 字段的记录一律按「超级夏莱」算，别让老档读成空）。</summary>
+        public string Faction => string.IsNullOrEmpty(faction) ? FPSGame.Data.OccupierData_SO.SuperFactionName : faction;
+    }
+
+    #endregion
 
     #region 武器改装
     [Space]

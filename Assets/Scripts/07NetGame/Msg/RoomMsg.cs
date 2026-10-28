@@ -211,6 +211,7 @@ namespace FPSGame.Net
         [Key(5)] public TaskCfgDto Cfg;        // ★ 选中项 TaskCfg 的**内容**（必须有；null / Main<0 = 房主侧 bug，成员直接拒收）
         [Key(6)] public int MatchId;           // 本局局号（房主每次"确认本局配置"时自增）⇒ 幂等 + 后续战斗消息的局标识
         [Key(7)] public int Phase;             // ★ 房主**当前所在阶段**（`GameStateEnum` 的位值：4 = Ready、128 = Armament；0 = 未提供）
+        [Key(8)] public int MapPoint = -1;     // 本局任务点在 MapData_SO.mapItemInfos 的下标（结算加势力控制度用；-1 = 未知）
     }
 
     /// <summary>

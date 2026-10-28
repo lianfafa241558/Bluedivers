@@ -12,6 +12,9 @@
 /UserSettings/
 .vs/
 *.user
+# Python 字节码：.codebuddy 下的工具脚本会生成，不入库
+__pycache__/
+*.pyc
 *.csproj
 *.sln
 *.pidb

@@ -1,0 +1,275 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbadcc225b954572a108c2b2f2272d56, type: 3}
+  m_Name: OccupierData
+  m_EditorClassIdentifier: 
+  factions:
+  - name: "\u51EF\u6492\u96C6\u56E2"
+    icon: {fileID: 21300000, guid: 66b0d2f8f19b0954680b372697eab0b8, type: 3}
+    isFriendly: 0
+  - name: "\u963F\u62DC\u591A\u65AF\u5BF9\u7B56\u59D4\u5458\u4F1A"
+    icon: {fileID: 21300000, guid: b42771086ec54074f85ce698885ead87, type: 3}
+    isFriendly: 1
+  - name: "\u8054\u90A6\u5B66\u751F\u4F1A"
+    icon: {fileID: 21300000, guid: d67bd695e38eed740a2554e512f4e6a9, type: 3}
+    isFriendly: 0
+  - name: "\u5730\u4E0B\u9ED1\u5E02"
+    icon: {fileID: 21300000, guid: b8070403812e62744b08dbd851811b01, type: 3}
+    isFriendly: 0
+  - name: "\u6DF7\u4E71\u52BF\u529B"
+    icon: {fileID: 21300000, guid: 4b7e7a933cdef1e4e857db37744ad3db, type: 3}
+    isFriendly: 0
+  - name: "\u683C\u9ED1\u90A3\u590D\u6821\u59D4\u5458\u4F1A"
+    icon: {fileID: 21300000, guid: 36f7f64a6c0c406438da5398507da4f4, type: 3}
+    isFriendly: 1
+  - name: "\u9634\u9633\u90E8"
+    icon: {fileID: 21300000, guid: 0d1aa0cf740dbac40894d26d020b41b9, type: 3}
+    isFriendly: 0
+  - name: "\u5341\u5B57\u795E\u660E"
+    icon: {fileID: 21300000, guid: db98d366425374145a850959cd37c0ee, type: 3}
+    isFriendly: 0
+  - name: "\u7EA2\u51AC\u5DE5\u52A1\u90E8"
+    icon: {fileID: 21300000, guid: a3d776daf127dce41bfb7c0c04e89fb8, type: 3}
+    isFriendly: 1
+  - name: "\u7384\u9F99\u95E8"
+    icon: {fileID: 21300000, guid: 80ca9643ed9570f408bf7c9b9bd9dd41, type: 3}
+    isFriendly: 1
+  - name: "\u7384\u6B66\u5546\u4F1A"
+    icon: {fileID: 21300000, guid: 80ca9643ed9570f408bf7c9b9bd9dd41, type: 3}
+    isFriendly: 1
+  - name: "SRT\u7279\u6B8A\u5B66\u9662"
+    icon: {fileID: 21300000, guid: 9cf74a5f345852e4c860c21ecf34092e, type: 3}
+    isFriendly: 1
+  - name: "'\u8272\u5F69'"
+    icon: {fileID: 21300000, guid: 5903460501c32c344969ccfd195cc858, type: 3}
+    isFriendly: 0
+  - name: "\u8D1D\u963F\u7279\u5229\u5207"
+    icon: {fileID: 21300000, guid: bef55cd8dfa0257468eef8003166208c, type: 3}
+    isFriendly: 0
+  - name: "\u5723\u4E09\u4E00\u6D41\u4EA1\u8336\u4F1A"
+    icon: {fileID: 21300000, guid: e12668b48a5215c42bfe3f750db35397, type: 3}
+    isFriendly: 1
+  - name: "\u8D85\u7EA7\u590F\u83B1"
+    icon: {fileID: 21300000, guid: 792706a6bd88d8a439942bb090ccf0e7, type: 3}
+    isFriendly: 1
+  - name: "\u65E0\u540D\u4F17\u795E"
+    icon: {fileID: 21300000, guid: d475c7536ea3fd34593ce1a4d267f670, type: 3}
+    isFriendly: 0
+  maps:
+  - mapId: Abydos
+    points:
+    - pointName: "\u51EF\u6492PMC\u9A7B\u624E\u5730"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+    - pointName: "\u897F\u90E8\u9057\u8FF9\u533A\u57DF"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+      - name: "\u963F\u62DC\u591A\u65AF\u5BF9\u7B56\u59D4\u5458\u4F1A"
+        value: 0
+    - pointName: "\u4E1C\u90E8\u9057\u8FF9\u533A\u57DF"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 80
+      - name: "\u963F\u62DC\u591A\u65AF\u5BF9\u7B56\u59D4\u5458\u4F1A"
+        value: 20
+    - pointName: "\u963F\u62DC\u591A\u65AF\u4E3B\u6821\u533A"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+    - pointName: "\u963F\u62DC\u591A\u65AF\u95F9\u5E02\u533A"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+    - pointName: "\u51EF\u6492\u9999\u6599\u5F00\u91C7\u533A"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+  - mapId: Federal
+    points:
+    - pointName: "S.c.h.a.l.e\u5927\u697C"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 51
+      - name: "\u8054\u90A6\u5B66\u751F\u4F1A"
+        value: 49
+    - pointName: "D.U.\u4E2D\u592E\u673A\u573A"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 51
+      - name: "\u8054\u90A6\u5B66\u751F\u4F1A"
+        value: 49
+    - pointName: "\u8054\u90A6\u5B66\u751F\u4F1A\u672C\u90E8"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 51
+      - name: "\u8054\u90A6\u5B66\u751F\u4F1A"
+        value: 49
+    - pointName: "D.U.\u6E2F\u5F0F\u8336\u9910\u5385"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 51
+      - name: "\u8054\u90A6\u5B66\u751F\u4F1A"
+        value: 49
+  - mapId: Gehanna
+    points:
+    - pointName: "\u5730\u4E0B\u9ED1\u5E02"
+      occupiers:
+      - name: "\u5730\u4E0B\u9ED1\u5E02"
+        value: 40
+      - name: "\u683C\u9ED1\u90A3\u590D\u6821\u59D4\u5458\u4F1A"
+        value: 20
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 40
+    - pointName: "\u98CE\u7EAA\u59D4\u5458\u4F1A\u9057\u5740"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 80
+      - name: "\u683C\u9ED1\u90A3\u590D\u6821\u59D4\u5458\u4F1A"
+        value: 20
+    - pointName: "\u5E0C\u8BFA\u59C6\u706B\u5C71"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+    - pointName: "\u683C\u8D6B\u5A1C\u7B2C1\u673A\u573A"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 100
+    - pointName: "\u65E0\u6CD5\u5730\u5E26"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 60
+      - name: "\u5730\u4E0B\u9ED1\u5E02"
+        value: 20
+      - name: "\u683C\u9ED1\u90A3\u590D\u6821\u59D4\u5458\u4F1A"
+        value: 20
+  - mapId: Highlander
+    points: []
+  - mapId: HyakkiYako
+    points: []
+  - mapId: Kronos
+    points: []
+  - mapId: Millennium
+    points:
+    - pointName: "\u5343\u79A7\u5854"
+      occupiers:
+      - name: "\u5341\u5B57\u795E\u660E"
+        value: 100
+    - pointName: "\u6625\u53F6\u539F"
+      occupiers:
+      - name: "\u5341\u5B57\u795E\u660E"
+        value: 100
+    - pointName: "\u5343\u5E74\u6570\u636E\u4E2D\u5FC3"
+      occupiers:
+      - name: "\u5341\u5B57\u795E\u660E"
+        value: 100
+    - pointName: "\u5343\u5E74\u901A\u4FE1\u5854\u53F0"
+      occupiers:
+      - name: "\u5341\u5B57\u795E\u660E"
+        value: 100
+    - pointName: "\u5E9F\u5F03\u9057\u8FF9"
+      occupiers:
+      - name: "\u5341\u5B57\u795E\u660E"
+        value: 100
+    - pointName: "\u57C3\u91CC\u90FD"
+      occupiers:
+      - name: "\u5341\u5B57\u795E\u660E"
+        value: 100
+  - mapId: PassionAndTempest
+    points:
+    - pointName: "\u5C3C\u83AB\u753B\u5ECA"
+      occupiers:
+      - name: "\u65E0\u540D\u4F17\u795E"
+        value: 100
+    - pointName: "\u963F\u4F69\u51EF\u83B1\u949F\u697C"
+      occupiers:
+      - name: "\u65E0\u540D\u4F17\u795E"
+        value: 100
+    - pointName: "\u987F\u609F\u5E7F\u573A"
+      occupiers:
+      - name: "\u65E0\u540D\u4F17\u795E"
+        value: 100
+    - pointName: "\u72C2\u730E\u4E3B\u697C"
+      occupiers:
+      - name: "\u65E0\u540D\u4F17\u795E"
+        value: 100
+    - pointName: "\u827A\u672F\u8D44\u8BAF\u9986"
+      occupiers:
+      - name: "\u65E0\u540D\u4F17\u795E"
+        value: 100
+    - pointName: "\u7B2C3\u5BBF\u820D\u697C"
+      occupiers:
+      - name: "\u65E0\u540D\u4F17\u795E"
+        value: 100
+  - mapId: RedWinter
+    points:
+    - pointName: "\u7EA2\u51AC\u4E8B\u52A1\u5C40"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 50
+      - name: "\u7EA2\u51AC\u5DE5\u52A1\u90E8"
+        value: 50
+    - pointName: "227\u7279\u522B\u73ED"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 50
+      - name: "\u7EA2\u51AC\u5DE5\u52A1\u90E8"
+        value: 50
+    - pointName: "\u51EF\u6492PMC\u9A7B\u624E\u5730"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 50
+      - name: "\u7EA2\u51AC\u5DE5\u52A1\u90E8"
+        value: 50
+    - pointName: "\u6D77\u8C5A\u5E02\u573A"
+      occupiers:
+      - name: "\u51EF\u6492\u96C6\u56E2"
+        value: 50
+      - name: "\u7EA2\u51AC\u5DE5\u52A1\u90E8"
+        value: 50
+    - pointName: "\u51B0\u6D77"
+      occupiers:
+      - name: "\u65E0\u540D\u4F17\u795E"
+        value: 100
+  - mapId: Shanhaijin
+    points: []
+  - mapId: Trinity
+    points:
+    - pointName: "\u8865\u4E60\u90E8\u65E7\u5740"
+      occupiers:
+      - name: "'\u8272\u5F69'"
+        value: 95
+      - name: "\u5723\u4E09\u4E00\u6D41\u4EA1\u8336\u4F1A"
+        value: 5
+    - pointName: "\u65B9\u5F62\u5E7F\u573A\u533A"
+      occupiers:
+      - name: "'\u8272\u5F69'"
+        value: 100
+    - pointName: "\u5723\u5802\u9057\u8FF9"
+      occupiers:
+      - name: "'\u8272\u5F69'"
+        value: 100
+    - pointName: "\u55B7\u6CC9\u516C\u56ED"
+      occupiers:
+      - name: "'\u8272\u5F69'"
+        value: 100
+    - pointName: "\u5730\u4E0B\u5893\u7A74"
+      occupiers:
+      - name: "\u8D1D\u963F\u7279\u5229\u5207"
+        value: 100
+    - pointName: "\u793C\u62DC\u5802"
+      occupiers:
+      - name: "\u8D1D\u963F\u7279\u5229\u5207"
+        value: 100
+  - mapId: Valkyrie
+    points: []

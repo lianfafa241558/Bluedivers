@@ -97,8 +97,8 @@ namespace FPSGame.Managers
         private string[] codeA, codeB;
         private List<string> residualCodeA, residualCodeB;
 
-        [SerializeField]
-        private DisplayDic<string, Sprite> OccupierIcon;
+        // 势力图标已搬到 OccupierData_SO 的名册（名字 + 图标同一处）⇒ 本类的 OccupierIcon 字典与
+        // GetOccupierIcon 一并删除，别在这里再开第二条取图标的路径（名册见 OccupierState.GetIcon）。
 
         public string MapId => nowTask.mapCfg.AreaName;
 
@@ -453,7 +453,9 @@ namespace FPSGame.Managers
         /// <param name="cfg">本局任务配置（已确定的那一份；<c>TaskCfg</c> 只有 9 个字段，内容即全部）</param>
         /// <param name="mapId">地图名（要加载的场景 + 雾色/天空/产品表都取自它）</param>
         /// <param name="seed">本局**权威随机种子**（房主决定；0 = 未指定 ⇒ 回落到该任务自己的 <c>cfg.seed</c>）。</param>
-        public void SetTask(TaskCfg cfg, string mapId, DifficultyEnum difficulty, int[] extraDiff, int playMode, int seed = 0)
+        /// <param name="mapPoint">本局任务点在 <c>MapData_SO.mapItemInfos</c> 里的下标（结算时给势力加控制度用；
+        /// -1 = 未知。联机由房主随 <c>TaskConfirmNtf.MapPoint</c> 下发，成员不查本地表）。</param>
+        public void SetTask(TaskCfg cfg, string mapId, DifficultyEnum difficulty, int[] extraDiff, int playMode, int seed = 0, int mapPoint = -1)
         {
             if (MapData == null || string.IsNullOrEmpty(mapId) || !MapData.ContainsKey(mapId))
             {
@@ -464,6 +466,10 @@ namespace FPSGame.Managers
             var mapData = MapData[mapId];
             var task = nowTask;
             task.taskCfg = cfg;   // ★ 内容即全部（TaskCfg 只有 9 个字段）⇒ 之后所有派生都从这里出发
+            // 结算要用"本局打的是哪张图的哪个任务点"（势力控制度增量按点记）——下标不在 TaskCfg 里，
+            // 只能由调用方给：单机/房主取自本地表下标，成员取房主下发的 ntf.MapPoint
+            task.mapId = mapId;
+            task.mapPoint = mapPoint;
 
             // 本局权威种子：优先用调用方给的（联机由房主随开局广播下发）；未指定则回落到该任务自己的种子。
             // ⚠ 归一到非 0：TaskCfg.seed 由 TaskRandom.Range(0,114514) 生成、理论可为 0，
@@ -551,7 +557,7 @@ namespace FPSGame.Managers
                 return;
             }
 
-            SetTask(TaskCfgs[mapIndex, taskIndex], mapId, difficulty, extraDiff, playMode, seed);
+            SetTask(TaskCfgs[mapIndex, taskIndex], mapId, difficulty, extraDiff, playMode, seed, taskIndex);
         }
 
         /// <summary>
@@ -643,10 +649,7 @@ namespace FPSGame.Managers
         }
         */
 
-        public Sprite GetOccupierIcon(string name)
-        {
-            return OccupierIcon[name];
-        }
+        // 势力图标：见 OccupierState.GetIcon（读 OccupierData_SO 的名册），本类不再持有字典
 
 
 

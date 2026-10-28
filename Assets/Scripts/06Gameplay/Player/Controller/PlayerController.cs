@@ -380,7 +380,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
             float xOffset = _thirdPersonCameraPoint.localPosition.x;
             float height = _thirdPersonCameraPoint.localPosition.y;
             float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z) * _thirdPersonDistanceScale;
-            Quaternion rotation = Quaternion.Euler(m_CameraVerticalAngle, _cameraYaw, 0);
+            Quaternion rotation = Quaternion.Euler(CameraPitch + ShakePitch, _cameraYaw + RecoilYaw + ShakeYaw, CameraRoll);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
             PlayerCamera.transform.position = CenterPos + offset;
             PlayerCamera.transform.rotation = rotation;
@@ -396,7 +396,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
             if (_wasThirdPersonLastFrame && PlayerCamera)
             {
                 PlayerCamera.transform.position = transform.TransformPoint(CameraBasePoint);
-                PlayerCamera.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0, 0);
+                PlayerCamera.transform.localEulerAngles = new Vector3(CameraPitch + ShakePitch, RecoilYaw + ShakeYaw, CameraRoll);
             }
             base.LateUpdate();
         }
@@ -434,12 +434,14 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
             // 使枪口跟随视野中心上下摆动（是否在未瞄准时同步由 WeaponsManager.ThirdPersonAimAtViewCenter 控制）
             if (WeaponsManager.IsAiming || WeaponsManager.ThirdPersonAimAtViewCenter)
             {
-                WeaponsManager.FirstPersonSocket.transform.rotation = Quaternion.Euler(m_CameraVerticalAngle, transform.eulerAngles.y, 0);
+                // 武器挂点**不含屏震**：屏震是纯表现，混进来会让弹道跟着抖
+                WeaponsManager.FirstPersonSocket.transform.rotation = Quaternion.Euler(CameraPitch, transform.eulerAngles.y + RecoilYaw, 0);
             }
         }
         else
         {
-            WeaponsManager.FirstPersonSocket.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0, 0);
+            // 同上：挂点只吃后坐，不吃屏震
+            WeaponsManager.FirstPersonSocket.transform.localEulerAngles = new Vector3(CameraPitch, RecoilYaw, 0);
         }
         _wasThirdPersonLastFrame = IsThirdPerson;
 
@@ -483,10 +485,20 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     }
 
    
-    //武器后坐力
-    public void WeapomRecoil(WeaponController weapon) {
-        var power = (weapon as WeaponPlayerController).GetRecoil() * 1.5f;
-        VerticalNewRecoil += power;
+    /// <summary>武器后坐力：参数取**开火这把枪**的 profile，偏移由 <see cref="BaseSelfController"/> 的状态机维护。
+    /// <para>▍与老实现的差别：不再把"抬头量"直接写进视角角，而是作为独立偏移叠加（回正不会吃掉玩家压枪）。
+    /// ADS 减弱由 profile 的 <see cref="FPSGame.Weapon.WeaponRecoilProfile.AdsScale"/> 负责。</para></summary>
+    public void WeapomRecoil(WeaponController weapon)
+    {
+        var wpc = weapon as WeaponPlayerController;
+        if (!wpc) return;
+
+        RecoilProfile = wpc.RecoilProfile;
+        float strength = wpc.RecoilForceFinal;
+        AddRecoil(strength, WeaponsManager && WeaponsManager.IsAiming);
+
+        // 开火屏震：profile 里配 0 就是关（比调后坐力更"闷"的一档反馈）
+        if (wpc.RecoilProfile.ShakePerShot > 0f) AddCameraShake(wpc.RecoilProfile.ShakePerShot * strength);
     }
 
     /// <summary>

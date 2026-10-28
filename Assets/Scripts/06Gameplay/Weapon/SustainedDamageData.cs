@@ -31,9 +31,13 @@ namespace FPSGame.Weapon
         [SerializeField]
         private float DestructeRadius = 0;
 
-        /// <summary>冲击波半径</summary>
+        /// <summary>冲击波半径(只管作用范围)</summary>
         [SerializeField]
         private float ShockwaveRadius = 0;
+
+        /// <summary>冲击波力度(只管推力：Δv = 力度×距离衰减 / 目标重量)</summary>
+        [SerializeField]
+        private float ShockwaveForce = 10;
 
         /// <summary>伤害成分</summary>
         public List<SKVP<DamageTypeEnum, float>> DamageGroupExplosion = new() { new(DamageTypeEnum.Explosion, 1), new(DamageTypeEnum.Destruction, 1) };
@@ -105,6 +109,8 @@ namespace FPSGame.Weapon
         public PEInt GetDestructeRadius(PEInt chargeScale) => (PEInt)DestructeRadius;
         /// <summary>冲击波半径</summary>
         public PEInt GetShockwaveRadius(PEInt chargeScale) => (PEInt)ShockwaveRadius;
+        /// <summary>冲击波力度(与半径解耦，只管推力大小)</summary>
+        public PEInt GetShockwaveForce(PEInt chargeScale) => (PEInt)ShockwaveForce;
         /// <summary>音量(表现层音效距离)</summary>
         public PEInt GetSoundRadius(PEInt chargeScale) => (PEInt)SoundRadius;
         /// <summary>命中点的逻辑噪声半径</summary>

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using FPSGame.Core;
 using PEMaths;
 
 using UnityEngine;
@@ -35,6 +32,9 @@ namespace FPSGame.Weapon
             { WeaponAttrType.CoolSpeed, (false, default, ModifierType.All) },
             { WeaponAttrType.OverheatDuration, (false, AttrTag.FlipPlus, ModifierType.All) },
             { WeaponAttrType.LifeTime, (false, AttrTag.FlipPlus, ModifierType.All) },
+            // 噪声/后坐力：倍率型(1=原值)，基础值由 InitAttribute 注入，只吃改装加成
+            { WeaponAttrType.NoiseScale, (false, AttrTag.Percentage | AttrTag.FlipPlus | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.Recoil, (false, AttrTag.Percentage | AttrTag.FlipPlus | AttrTag.OneHide, ModifierType.All) },
 
             //伤害属性
             { WeaponAttrType.DirectDamage, (false, default, ModifierType.All) },
@@ -70,7 +70,9 @@ namespace FPSGame.Weapon
             // 伤害组成属性
             { WeaponAttrType.DirectDestruction, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.ExplosionDestruction, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
-            { WeaponAttrType.WeaknessBonus, (false, AttrTag.Percentage | AttrTag.DefaultHide, ModifierType.All) },
+            // ⚠ 必须同时有 OneHide：没有它 Percentage 会按"相对原始值"显示 ⇒ 0.2 的弱点加成加 1 会显示成 +499.5%
+            // （1.2/0.2）。OneHide 走"×100 绝对值"分支，显示 20% → 120%、增量 +100；隐藏仍由 DefaultHide 决定。
+            { WeaponAttrType.WeaknessBonus, (false, AttrTag.Percentage | AttrTag.OneHide | AttrTag.DefaultHide, ModifierType.All) },
 
             // 伤害类型系数（直击伤害组）
             { WeaponAttrType.DamageTypeGun, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
@@ -260,6 +262,14 @@ namespace FPSGame.Weapon
         /// <summary>过热时间</summary>
         [InspectorName("热量/过热时间")]
         OverheatDuration = 16,
+
+        //---------手感/隐蔽属性（倍率型，1=原值）----------
+        /// <summary>噪声倍率：同时缩放"开火噪声"与"命中噪声"的逻辑半径(AI 听觉)</summary>
+        [InspectorName("通用/噪声倍率")]
+        NoiseScale = 17,
+        /// <summary>后坐力倍率：缩放镜头后坐力与武器回弹</summary>
+        [InspectorName("通用/后坐力")]
+        Recoil = 18,
 
 
         //---------伤害属性----------

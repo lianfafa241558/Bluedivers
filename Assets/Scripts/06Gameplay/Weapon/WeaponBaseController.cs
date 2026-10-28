@@ -97,6 +97,23 @@ namespace FPSGame.Weapon {
         #endregion
         [Foldout("武器参数", true)]
         public WeaponCfg cfg = new();
+
+        /// <summary>连射散布膨胀(度)：每"次"射击加上去，停火按 <see cref="SpreadBloomDecay"/> 回落</summary>
+        private float _spreadBloom;
+
+        /// <summary>当前实际散布角(度) = 属性散布 + 连射膨胀（首发不带膨胀，见 HandleShoot 的累加时机）</summary>
+        public PEInt CurrentSpreadAngle => AttrFinal(Attr.BulletsSpreadAngle) + (PEInt)_spreadBloom;
+
+        // ---- 连射散布膨胀的参数：**默认全关**，只有玩家武器覆写成读 RecoilProfile ----
+        // ⚠ 刻意用虚属性而不是序列化字段：这是"玩家手感"，不该让每把敌人/炮塔武器都平白多 3 个字段。
+        /// <summary>每"次"射击的散布膨胀(度)：0 = 不变散</summary>
+        protected virtual float SpreadBloomPerShot => 0f;
+
+        /// <summary>散布膨胀上限(度)</summary>
+        protected virtual float SpreadBloomMax => 0f;
+
+        /// <summary>散布回落速度(度/秒)</summary>
+        protected virtual float SpreadBloomDecay => 8f;
         #region 子弹参数
 
         [Foldout("子弹参数", true)]
@@ -138,6 +155,13 @@ namespace FPSGame.Weapon {
         [Tooltip("AI 听觉用的开火噪声半径(米)：每次射击从枪口发出一条噪声，越大越响；<=0 表示不产生开火噪声。表现层音效播放距离用上面的音效范围 SFXRange")]
         public int FireNoiseRadius = 20;
 
+        /// <summary>噪声倍率(属性，1=原值)：开火噪声与命中噪声共用的半径倍率（消音/加噪改装）</summary>
+        public PEInt NoiseScale => AttrFinal(Attr.NoiseScale, 1);
+
+        /// <summary>本次开火的**实际**噪声半径(米) = <see cref="FireNoiseRadius"/> × <see cref="NoiseScale"/>；
+        /// ≤0 表示不产生噪声</summary>
+        public PEInt FireNoiseRadiusFinal => (PEInt)FireNoiseRadius * NoiseScale;
+
         /// <summary>最近一次开火用的是**第几个发射点**（<c>Muzzles</c> 下标；<c>-1</c> = 齐射）。
         /// <para>▍用途：随开火消息上报，让接收端的弹道从**同一个枪管**出（多管枪轮流开火，接收端没有那份计数）。</para></summary>
         public int LastMuzzleIndex;
@@ -146,23 +170,25 @@ namespace FPSGame.Weapon {
         /// 【逻辑噪声】从枪口发一条"开火噪声"（AI 听觉用）。**单一事实来源**，两条路都调它：
         /// ① 本机真开火（<c>HandleShoot</c>，<c>remote=false</c>）；
         /// ② **远端复刻**（<c>remote=true</c>）：收到别人开火的**表现**时，用**本地这份武器实例**
-        /// （枪口 + 本实例的 <see cref="FireNoiseRadius"/>）再验算一遍 ⇒ 两端对"同一枪"的怪反应一致。
+        /// （枪口 + 本实例的 <see cref="FireNoiseRadiusFinal"/>）再验算一遍 ⇒ 两端对"同一枪"的怪反应一致。
         /// ⚠ 刻意**不新增网络字段**：方向/落点本来就在同步，枪口与噪声半径取本地实例的即可（最多差一个位姿周期）。
         /// </summary>
         public void EmitFireNoise(bool remote)
         {
-            if (!FPSGame.GameContract.BattleHub.Current.IsPresent || FireNoiseRadius <= 0) return;
+            // 半径先过噪声倍率(改装)，倍率 0 或基础值 0 都等于"没有噪声"
+            PEInt radius = FireNoiseRadiusFinal;
+            if (!FPSGame.GameContract.BattleHub.Current.IsPresent || radius <= 0) return;
 
             var muzzle = GetMuzzle(0);
             FPSGame.Utils.NetSyncLog.AiLog(remote ? "噪声·发(枪声·远端复刻)" : "噪声·发(枪声)",
-                $"{(Owner != null ? Owner.name : name)} @{(muzzle ? muzzle.position : transform.position):F2} 半径={FireNoiseRadius}",
+                $"{(Owner != null ? Owner.name : name)} @{(muzzle ? muzzle.position : transform.position):F2} 半径={radius}",
                 Owner != null ? Owner.GetInstanceID() : GetInstanceID(), 0.5f);
 
             UnitEventBus.Noise(new NoiseData
             {
                 source = Owner,
                 pos = (PEVector3)(muzzle ? muzzle.position : transform.position),
-                radius = (PEInt)FireNoiseRadius,
+                radius = radius,
             });
         }
 
@@ -209,6 +235,19 @@ namespace FPSGame.Weapon {
 
         /// <summary>过热持续时间计时器</summary>
         private float _overheatTimer;
+
+        /// <summary>热量满值：<see cref="_currentHeat"/> 与过热判定都用它</summary>
+        public const float MaxHeat = 100f;
+
+        /// <summary>当前热量比例 [0,1]（0 = 冷，1 = 满热）。表现层（枪身过热变色 / HUD 热量条）读它</summary>
+        public float HeatRatio => Mathf.Clamp01(_currentHeat / MaxHeat);
+
+        /// <summary>是否配了热量系统（`HeatPerShot > 0`）。
+        /// ⚠ 热量武器的节奏由热量决定，`Magazine` 只是能量池 ⇒ 别拿弹匣比例当热量显示。</summary>
+        public bool HasHeatSystem => AttrFinal(Attr.HeatPerShot).RawFloat > 0f;
+
+        /// <summary>正在散热（热量回落中）：过热阶段线性回落也算；散热延迟还没走完时为 false</summary>
+        public bool IsCoolingDown => _currentHeat > 0f && (IsOverheated || _coolTimer <= 0f);
 
         #endregion
 
@@ -363,6 +402,10 @@ namespace FPSGame.Weapon {
         {
             //初始化
             cfg.Init();
+
+            // 噪声倍率与伤害配置无关，基础值恒为 1(不改行为)；只吃改装加成。
+            // ⚠ 必须在 InitAttribute 里建出来：ApplyUpgrade 走 cfg[type] 取不到会 NRE
+            if (!cfg[Attr.NoiseScale]) cfg.Add(Attr.NoiseScale, 1);
         }
 
         protected virtual void UnInitAttribute()
@@ -381,6 +424,10 @@ namespace FPSGame.Weapon {
             //计算武器移动速度
             MuzzleWorldVelocity = (WeaponRoot.transform.position - m_LastMuzzlePosition) / TickTime.RawFloat;
             m_LastMuzzlePosition = WeaponRoot.transform.position;
+
+            // 连射散布膨胀回落：走逻辑帧，与弹道同一条时间轴（放 Update 会被子类 override 漏掉）
+            if (_spreadBloom > 0f)
+                _spreadBloom = Mathf.MoveTowards(_spreadBloom, 0f, SpreadBloomDecay * TickTime.RawFloat);
 
         }
 
@@ -595,6 +642,10 @@ namespace FPSGame.Weapon {
             //表现层音效距离走上面的 SFXRange，两者互不影响
             EmitFireNoise(false);
 
+            // 连射散布膨胀：**发射之后**才累加 ⇒ 首发永远是最准的（先加会让第一发就散）
+            if (SpreadBloomPerShot > 0f)
+                _spreadBloom = Mathf.Min(_spreadBloom + SpreadBloomPerShot, SpreadBloomMax);
+
             // 热量系统：每次射击增加热量，蓄力武器受蓄力热量倍率影响
             var heatPerShot = AttrFinal(Attr.HeatPerShot).RawFloat;
             if (heatPerShot > 0f)
@@ -602,9 +653,9 @@ namespace FPSGame.Weapon {
                 var chargeHeatScale = PEMath.Lerp(1, AttrFinal(Attr.ChargeHeatScale, 1), WeaponChargeScale_D);
                 _currentHeat += heatPerShot * chargeHeatScale.RawFloat;
                 _coolTimer = AttrFinal(Attr.CoolDelay).RawFloat;
-                if (_currentHeat >= 100f)
+                if (_currentHeat >= MaxHeat)
                 {
-                    _currentHeat = 100f;
+                    _currentHeat = MaxHeat;
                     IsOverheated = true;
                     _overheatTimer = AttrFinal(Attr.OverheatDuration).RawFloat;
                 }
@@ -822,7 +873,7 @@ namespace FPSGame.Weapon {
         /// <returns></returns>
         public virtual Vector3 GetShotDirectionWithinSpread(Transform shootTransform)
         {
-            var bsa = AttrFinal(Attr.BulletsSpreadAngle);
+            var bsa = CurrentSpreadAngle;
             if (bsa == 0) return shootTransform.forward;
             PEInt spreadAngleRatio = bsa / 180;
             //从方向向球面随机方向移动spreadAngleRatio;
@@ -868,7 +919,7 @@ namespace FPSGame.Weapon {
                     var totalDuration = AttrFinal(Attr.OverheatDuration).RawFloat;
                     if (totalDuration > 0f)
                     {
-                        _currentHeat = 100f * (_overheatTimer / totalDuration);
+                        _currentHeat = MaxHeat * (_overheatTimer / totalDuration);
                     }
                 }
             }

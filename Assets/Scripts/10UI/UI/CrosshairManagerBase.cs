@@ -10,6 +10,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using FPSGame.Utils;
 using FPSGame.Weapon;
+using PEMaths;
 
 namespace FPSGame.UI
 {
@@ -29,6 +30,13 @@ public abstract class CrosshairManagerBase : MonoBehaviour
 
     [SerializeField]
     protected Animator m_RicochetGo;
+
+    /// <summary>准星的原始 localScale（按 Animator 实例缓存）：同一个准星会被多把武器复用，
+    /// 不缓存就会在每次切武器时把已放大的尺寸再乘一次。</summary>
+    private readonly Dictionary<Animator, Vector3> m_SightBaseScale = new();
+
+    /// <summary>当前订阅散布属性的那个属性对象</summary>
+    private GameAttribute m_SpreadAttr;
 
     protected virtual void Start()
     {
@@ -51,6 +59,7 @@ public abstract class CrosshairManagerBase : MonoBehaviour
             m_Weapons.OnCharget -= Chatget;
             m_Weapons.OnLock -= Chatget;
             m_Weapons.OnLockUpdate -= LockUpdate;
+            UnbindSpreadAttr();
         }
         //Debug.LogError("新武器+ m_Weapons, m_Weapons);
         //设置新的
@@ -62,10 +71,57 @@ public abstract class CrosshairManagerBase : MonoBehaviour
         weapon.OnLock += Chatget;
         weapon.OnLockUpdate += LockUpdate;
         SetAnimGo();
+        BindSpreadAttr(weapon);
+        ApplySightScale();
         OnSwitchWeapon?.Invoke();
     }
 
     protected abstract void SetAnimGo();
+
+    /// <summary>
+    /// 用「子弹散布角」的 最终值/原始值 等比缩放当前准星（原始 5 → 最终 10 ⇒ 两倍大）。
+    /// 由切武器与散布属性变化（升级/装模组）触发，不放在 Update 里。
+    /// </summary>
+    protected void ApplySightScale()
+    {
+        if (!m_ActiveSightGo) return;
+        if (!m_SightBaseScale.TryGetValue(m_ActiveSightGo, out var baseScale))
+        {
+            baseScale = m_ActiveSightGo.transform.localScale;
+            m_SightBaseScale.Add(m_ActiveSightGo, baseScale);
+        }
+        m_ActiveSightGo.transform.localScale = baseScale * GetSpreadScale();
+    }
+
+    /// <summary>散布倍率。⚠ 原始值/最终值为 0 时比值无意义（最终值 0 会把准星缩成看不见），一律按 1 处理。</summary>
+    private float GetSpreadScale()
+    {
+        if (!m_SpreadAttr) return 1f;
+        float prime = m_SpreadAttr.PrimeValue.RawFloat;
+        float final = m_SpreadAttr.FinalValue.RawFloat;
+        if (prime <= 0f || final <= 0f) return 1f;
+        return final / prime;
+    }
+
+    private void BindSpreadAttr(WeaponPlayerController weapon)
+    {
+        UnbindSpreadAttr();
+        if (!weapon.IsValid()) return;
+        var attr = weapon.cfg[WeaponAttrType.BulletsSpreadAngle];
+        if (!attr) return;
+        m_SpreadAttr = attr;
+        m_SpreadAttr.OnFinalValueChange += OnSpreadAttrChanged;
+    }
+
+    private void UnbindSpreadAttr()
+    {
+        if (!m_SpreadAttr) return;
+        m_SpreadAttr.OnFinalValueChange -= OnSpreadAttrChanged;
+        m_SpreadAttr = null;
+    }
+
+    /// <summary>属性值变了（升级/模组写回）时同步准星尺寸</summary>
+    private void OnSpreadAttrChanged(PEInt value) => ApplySightScale();
 
 
     /// <summary>击中目标回调</summary>

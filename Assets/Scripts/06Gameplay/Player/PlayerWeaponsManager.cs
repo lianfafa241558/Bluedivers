@@ -195,6 +195,12 @@ namespace FPSGame.Gameplay
         Vector3 m_WeaponBobLocalPosition;//武器摆动坐标
         Vector3 m_WeaponRecoilLocalPosition;//武器后坐力坐标
         Vector3 m_AccumulatedRecoil;
+        /// <summary>武器模型的后坐旋转(欧拉角, 度)：上跳 + 随机侧翻，弹簧回零</summary>
+        Vector3 m_WeaponRecoilLocalRotation;
+        /// <summary>当前武器的模型回位刚度（开火时从 profile 抄一份，回弹期间还要用）</summary>
+        float m_RecoilSpring = 14f;
+        /// <summary>武器插座的初始局部旋转（LateUpdate 只叠加后坐旋转，不覆盖基础姿态）</summary>
+        Quaternion m_BaseSocketLocalRotation = Quaternion.identity;
         float m_TimeStartedWeaponSwitch;
 
 
@@ -211,6 +217,8 @@ namespace FPSGame.Gameplay
             m_InputHandler = GetComponent<PlayerInputHandler>();
             m_PlayerCharacterController = GetComponent<PlayerController>();
             m_EquipController = GetComponent<EquipController>();
+            // 武器插座的 localRotation 全仓只有这里写（武器自己置 identity、瞄准只改 localPosition）
+            if (WeaponParentSocket) m_BaseSocketLocalRotation = WeaponParentSocket.localRotation;
             //m_WeaponSwitchState = WeaponSwitchState.Down;
             OnSwitchedToWeapon += OnWeaponSwitched;
             OnAim += OnAiming;
@@ -351,7 +359,10 @@ namespace FPSGame.Gameplay
             //1.不在瞄准
             //2.手上没有武器或者武器没有在蓄力（去掉）
             //3.武器切换状态为UP或者Down
-            if (!IsAiming &&
+            //⚠ 双持时 IsAiming 被 Update 强制为 true（口径如此，非玩家主动开镜），
+            //若不豁免会锁死全部切换输入：双持后按 1/2/4/滚轮均无响应
+            bool dualWieldBlocked = IsAiming && GetActiveSecWeapon() == null;
+            if (!dualWieldBlocked &&
                 (m_WeaponSwitchState == WeaponSwitchState.Up || m_WeaponSwitchState == WeaponSwitchState.Down))
             {
                 if (m_PlayerCharacterController.enabled)//进载具了就不能切
@@ -478,6 +489,8 @@ namespace FPSGame.Gameplay
         
             //根据所有组合动画影响设置最终武器插座位置
             WeaponParentSocket.localPosition = Vector3.Lerp(WeaponParentSocket.localPosition, m_WeaponMainLocalPosition + m_WeaponBobLocalPosition + m_WeaponRecoilLocalPosition,Time.deltaTime* BobSharpness);
+            // 后坐旋转叠在初始姿态上：枪口上跳 + 随机侧翻（相机后坐是另一套，见 BaseSelfController）
+            WeaponParentSocket.localRotation = m_BaseSocketLocalRotation * Quaternion.Euler(m_WeaponRecoilLocalRotation);
         }
 
         /// <summary>
@@ -602,19 +615,24 @@ namespace FPSGame.Gameplay
         //更新武器后坐力动画
         void UpdateWeaponRecoil()
         {
-            //如果累积反冲距离当前位置更远，则使当前位置朝反冲目标移动
+            float dt = Time.deltaTime;
+
+            // 帧率无关的收敛系数：原来直接拿 (刚度*dt) 当插值系数，帧率一抖手感就变
             if (m_WeaponRecoilLocalPosition.z >= m_AccumulatedRecoil.z * 0.99f)
             {
                 m_WeaponRecoilLocalPosition = Vector3.Lerp(m_WeaponRecoilLocalPosition, m_AccumulatedRecoil,
-                    RecoilSharpness * Time.deltaTime);
+                    1f - Mathf.Exp(-RecoilSharpness * dt));
             }
-            // otherwise, move recoil position to make it recover towards its resting pose
             else
             {
                 m_WeaponRecoilLocalPosition = Vector3.Lerp(m_WeaponRecoilLocalPosition, Vector3.zero,
-                    RecoilRestitutionSharpness * Time.deltaTime);
+                    1f - Mathf.Exp(-RecoilRestitutionSharpness * dt));
                 m_AccumulatedRecoil = m_WeaponRecoilLocalPosition;
             }
+
+            // 旋转回位：刚度取当前武器 profile 的 WeaponSpring（开火时抄进 m_RecoilSpring）
+            m_WeaponRecoilLocalRotation = Vector3.Lerp(m_WeaponRecoilLocalRotation, Vector3.zero,
+                1f - Mathf.Exp(-m_RecoilSpring * dt));
         }
 
         /// <summary>
@@ -1229,6 +1247,11 @@ namespace FPSGame.Gameplay
                 //Debug.LogWarning("切换到新武器"+newWeapon);
                 SetWeaponState(newWeapon, true);
 
+                // 后坐偏移/模型回弹归零：两把枪的 profile 完全不同，带着上一把的残余进新枪会"接手"错手感
+                m_WeaponRecoilLocalRotation = Vector3.zero;
+                m_AccumulatedRecoil = m_WeaponRecoilLocalPosition = Vector3.zero;
+                if (m_PlayerCharacterController) m_PlayerCharacterController.ResetRecoil();
+
                 if (isSec)
                 {
                     // 副武器（左手武器）：只设置左手 IK，不覆盖主武器的右手 IK
@@ -1353,8 +1376,18 @@ namespace FPSGame.Gameplay
 
             if (wpc != null)
             {
-                m_AccumulatedRecoil += Vector3.back * wpc.RecoilForce;
+                var profile = wpc.RecoilProfile;
+                float strength = wpc.RecoilForceFinal;
+
+                m_AccumulatedRecoil += Vector3.back * (profile.WeaponKickBack * strength);
                 m_AccumulatedRecoil = Vector3.ClampMagnitude(m_AccumulatedRecoil, MaxRecoilDistance);
+
+                // 模型旋转后坐：枪口上跳(-X) + 随机侧翻(Z)，纯本地表现，不影响弹道
+                m_WeaponRecoilLocalRotation += new Vector3(
+                    -profile.WeaponKickPitch * strength,
+                    UnityEngine.Random.Range(-profile.WeaponKickRoll, profile.WeaponKickRoll) * 0.5f * strength,
+                    UnityEngine.Random.Range(-profile.WeaponKickRoll, profile.WeaponKickRoll) * strength);
+                m_RecoilSpring = profile.WeaponSpring;
             }
         }
         #endregion

@@ -51,17 +51,15 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
 
     [Foldout("后坐力", true)]
     [InspectorName("后坐力")]
+    [Tooltip("载具侧总强度倍率：上跳/水平/模型回弹都按它等比缩放")]
     [Range(0f, 2f)]
     public float RecoilForce = 1;
 
-    [InspectorName("这将影响后坐力移动武器的速度，值越大，速度越快")]
-    public float RecoilSharpness = 50f;
-
-    [InspectorName("后坐力可以影响武器的最大距离")]
-    public float MaxRecoilDistance = 0.5f;
-
-    [InspectorName("反冲结束后，武器返回原始位置的速度有多快")]
-    public float RecoilRestitutionSharpness = 10f;
+    /// <summary>载具的后坐力手感参数（**载具自己一份**，不读武器上的）。
+    /// <para>▍为什么不复用武器的：炮塔挂的是 <c>WeaponEnemyController</c>（AI/遥控通用），
+    /// 后坐力是"玩家手感"，不该出现在敌人武器数据里；载具本来也是一个整体体感。</para></summary>
+    [InspectorName("后坐力参数")]
+    public WeaponRecoilProfile RecoilProfile = new();
 
     [Foldout("其他", true)]
     [InspectorName("播放瞄准动画的速度")]
@@ -109,8 +107,8 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
 
 
     Vector3 m_WeaponBobLocalPosition;//武器摆动坐标
-    Vector3 m_WeaponRecoilLocalPosition;//武器后坐力坐标
-    Vector3 m_AccumulatedRecoil;
+    /// <summary>载具自己的相机控制器：后坐力/屏震都走它（与玩家共用同一套状态机）</summary>
+    BaseSelfController m_Self;
 
     //Vector3 m_WeaponMainLocalPosition;//武器偏移
    
@@ -122,6 +120,7 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
         m_InputHandler = GetComponent<PlayerInputHandler>();
         m_AIController = GetComponent<I_AIController>();
         m_Controller = GetComponent<IDrivable>();
+        m_Self = GetComponent<BaseSelfController>();
         m_Controller.OnSetOwner += OnSetOwner;
 
         enabled = false;
@@ -225,11 +224,13 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
             }
         }
 
-        // 后坐力
-        if (hasFired>0)
+        // 后坐力：相机层（上跳/回正/屏震）走 BaseSelfController 的状态机，与玩家完全同一套；
+        // 参数用**载具自己那份** RecoilProfile，强度 = 载具的 RecoilForce
+        if (hasFired > 0 && m_Self)
         {
-            m_AccumulatedRecoil += Vector3.back * RecoilForce * hasFired;
-            m_AccumulatedRecoil = Vector3.ClampMagnitude(m_AccumulatedRecoil, MaxRecoilDistance);
+            m_Self.RecoilProfile = RecoilProfile;
+            m_Self.AddRecoil(RecoilForce, IsAiming);
+            if (RecoilProfile.ShakePerShot > 0f) m_Self.AddCameraShake(RecoilProfile.ShakePerShot * RecoilForce);
         }
         if (HaveWeapon())
         {
@@ -258,54 +259,6 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
 
     }
 
-
-    #region 手臂/身体位置
-    /*
-    void LateUpdate()
-    {
-        //UpdateWeaponAiming();
-        UpdateWeaponRecoil();
-    }
-    
-    void UpdateWeaponAiming()
-    {
-        WeaponController activeWeapon = GetActiveWeapon();
-        if (IsAiming && activeWeapon)
-        {
-            m_WeaponMainLocalPosition = Vector3.Lerp(m_WeaponMainLocalPosition,
-                AimingWeaponPosition.localPosition,
-                AimingAnimationSpeed * Time.deltaTime);
-            SetFov(Mathf.Lerp(m_Controller.PlayerCamera.fieldOfView,
-                AimZoomRatio * DefaultFov, AimingAnimationSpeed * Time.deltaTime));
-        }
-        else
-        {
-            m_WeaponMainLocalPosition = Vector3.Lerp(m_WeaponMainLocalPosition,
-                DefaultWeaponPosition.localPosition, AimingAnimationSpeed * Time.deltaTime);
-            SetFov(Mathf.Lerp(m_Controller.PlayerCamera.fieldOfView, DefaultFov,
-                AimingAnimationSpeed * Time.deltaTime));
-        }
-    }
-    
-    //更新武器后坐力动画
-    void UpdateWeaponRecoil()
-    {
-        //如果累积反冲距离当前位置更远，则使当前位置朝反冲目标移动
-        if (m_WeaponRecoilLocalPosition.z >= m_AccumulatedRecoil.z * 0.99f)
-        {
-            m_WeaponRecoilLocalPosition = Vector3.Lerp(m_WeaponRecoilLocalPosition, m_AccumulatedRecoil,
-                RecoilSharpness * Time.deltaTime);
-        }
-        // otherwise, move recoil position to make it recover towards its resting pose
-        else
-        {
-            m_WeaponRecoilLocalPosition = Vector3.Lerp(m_WeaponRecoilLocalPosition, Vector3.zero,
-                RecoilRestitutionSharpness * Time.deltaTime);
-            m_AccumulatedRecoil = m_WeaponRecoilLocalPosition;
-        }
-    }
-    */
-    #endregion
 
     #region 武器相关
 

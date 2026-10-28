@@ -310,7 +310,9 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
 
         if (PlayerCamera)
         {
-            PlayerCamera.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0, 0);
+            // 相机 = 视角 + 后坐 + 屏震（屏震只在这里加；武器挂点不加，否则子弹会跟着抖）
+            PlayerCamera.transform.localEulerAngles =
+                new Vector3(CameraPitch + ShakePitch, RecoilYaw + ShakeYaw, CameraRoll);
         }
 
         if (targetVelocity.Magnitude.RawFloat > 0.5f)

@@ -137,6 +137,7 @@ MonoBehaviour:
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -150,7 +151,7 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 0
+    DirectAP: 3
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
@@ -203,6 +204,26 @@ MonoBehaviour:
   RHand: {fileID: 4520439595881373472}
   ShowRoot: {fileID: 728606087599654685}
   RecoilForce: 2
+  RecoilProfile:
+    PitchKick: 2.2
+    YawKick: 0.25
+    YawStep: 0.1
+    YawRandom: 0.3
+    KickSharpness: 45
+    RecoveryDelay: 0.08
+    RecoverySpeed: 15
+    YawRecoveryRatio: 0.7
+    MaxPitch: 8
+    MaxYaw: 4
+    AdsScale: 0.6
+    WeaponKickBack: 0.06
+    WeaponKickPitch: 3.5
+    WeaponKickRoll: 1.5
+    WeaponSpring: 16
+    SpreadBloomPerShot: 0
+    SpreadBloomMax: 2
+    SpreadBloomDecay: 8
+    ShakePerShot: 0.15
   AimingHideCrosshair: 1
   AimZoomRatio: 0.4
   AimOffset: {x: 0, y: 0.075, z: 0}

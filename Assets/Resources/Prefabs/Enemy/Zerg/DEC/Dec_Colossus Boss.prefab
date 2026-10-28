@@ -351,6 +351,7 @@ MonoBehaviour:
   UnparentMuzzleFlash: 0
   SFXRange: 60
   FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 8300000, guid: 211fab2280a13b3499bd19875ad54c9a,
@@ -361,6 +362,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -545,6 +547,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 1000
   LineArmor: []
   armorBreakEffect: []
@@ -1535,7 +1538,12 @@ PrefabInstance:
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       propertyPath: MaxHealth
-      value: 5000
+      value: 40000
+      objectReference: {fileID: 0}
+    - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
+        type: 3}
+      propertyPath: showHealth
+      value: 40000
       objectReference: {fileID: 0}
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -1917,6 +1925,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.9
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect:
@@ -1974,6 +1983,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 8360213434925449639}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -1983,7 +1993,6 @@ MonoBehaviour:
   ShieldFull: {fileID: 0}
   ShieldBreak: {fileID: 0}
   ShieldDamage: []
-  showShield: 0
 --- !u!114 &6005182953978837531
 MonoBehaviour:
   m_ObjectHideFlags: 0

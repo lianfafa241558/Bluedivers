@@ -15,6 +15,8 @@ MOD_NAMES = {"Base": 1, "Factor": 2, "Extra": 4, "All": 7}
 
 FACTORY_REL = "Assets/Scripts/06Gameplay/Weapon/WeaponAttributeFactory.cs"
 CONTROLLER_REL = "Assets/Scripts/06Gameplay/Weapon/WeaponPlayerController.cs"
+# 基类也往 cfg 里注入常量基础值(噪声倍率)；漏了这个文件 ⇒ 白名单误判"没有基础值"
+BASE_CONTROLLER_REL = "Assets/Scripts/06Gameplay/Weapon/WeaponBaseController.cs"
 
 
 class Info:
@@ -100,15 +102,22 @@ def _parse_configs(src, enum_num):
 
 
 def _parse_auto_fill(src):
-    """InitAttribute 里 Set(Attr.Xxx, ...) 的属性 ⇒ base 来自 Damages，不写 cfg 也有值。"""
-    return set(re.findall(r"Set\(Attr\.(\w+)\s*,", src))
+    """InitAttribute 里**自带真实基础值**的属性（不写进 cfg._fakeAttrs 也有值）：
+
+    * `Set(Attr.Xxx, ...)` —— base 从 `Damages` 取
+    * `cfg.Add(Attr.Xxx, 1)` —— 常量注入（噪声倍率 / 后坐力这类与伤害配置无关的倍率）
+    """
+    return (set(re.findall(r"Set\(Attr\.(\w+)\s*,", src))
+            | set(re.findall(r"cfg\.Add\(Attr\.(\w+)\s*,", src)))
 
 
 def load(root):
     with open(os.path.join(root, FACTORY_REL), encoding="utf-8") as f:
         factory_src = f.read()
-    with open(os.path.join(root, CONTROLLER_REL), encoding="utf-8") as f:
-        controller_src = f.read()
+    controller_src = ""
+    for rel in (CONTROLLER_REL, BASE_CONTROLLER_REL):
+        with open(os.path.join(root, rel), encoding="utf-8") as f:
+            controller_src += f.read()
     enum_num = _parse_enum(factory_src)
     configs = _parse_configs(factory_src, enum_num)
     return Info(enum_num, configs, _parse_auto_fill(controller_src))

@@ -332,6 +332,7 @@ MonoBehaviour:
     MinRange: 4
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 0
     DamageGroupDirect:
@@ -373,6 +374,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 1
   SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 0}
@@ -382,6 +385,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -772,7 +776,12 @@ PrefabInstance:
     - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
         type: 3}
       propertyPath: MaxHealth
-      value: 10000
+      value: 40000
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: showHealth
+      value: 40000
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

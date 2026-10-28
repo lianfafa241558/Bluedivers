@@ -50,6 +50,7 @@ MonoBehaviour:
   AttackRange: 100
   AlertRange: 50
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -165,6 +166,11 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 1096760493508377609, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: useHealthInsteadOfArmor
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1120098809201984326, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
         type: 3}
       propertyPath: m_Layer
@@ -209,6 +215,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Layer
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1820563571353143358, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: useHealthInsteadOfArmor
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1822476919356514822, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
         type: 3}
@@ -255,6 +266,36 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 2468862530085130933, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: BleedValue
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 2468862530085130933, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: armorValue
+      value: 3000
+      objectReference: {fileID: 0}
+    - target: {fileID: 2468862530085130933, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: useHealthInsteadOfArmor
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2468862530085130933, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: armorBreakEffect.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2468862530085130933, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: armorBreakEffect.Array.data[0].go
+      value: 
+      objectReference: {fileID: 8547681939588383047}
+    - target: {fileID: 2468862530085130933, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: armorBreakEffect.Array.data[0].state
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2475710287235682168, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
         type: 3}
       propertyPath: m_Layer
@@ -294,6 +335,11 @@ PrefabInstance:
         type: 3}
       propertyPath: UseHpBar
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854113583894635828, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: useHealthInsteadOfArmor
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2870766023540338570, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
         type: 3}
@@ -550,6 +596,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Layer
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6430303601377005612, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+        type: 3}
+      propertyPath: useHealthInsteadOfArmor
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6734785378091616133, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
         type: 3}
@@ -1582,6 +1633,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1925424471e3fe949a952edf108dc17b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &8547681939588383047 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1088956445235619342, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 8756043799451674441}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8694380560691960067 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 84181357626867274, guid: 69f60d47b5ab83e4e86488b11ee1a7e4,

@@ -18,7 +18,10 @@ namespace FPSGame.Gameplay
         PEInt GetEffectRadiusScale(PEInt distance, PEInt chargeScale);
 
         PEInt GetDestructeRadius(PEInt chargeScale);
+        /// <summary>冲击波半径：只决定推力作用范围</summary>
         PEInt GetShockwaveRadius(PEInt chargeScale);
+        /// <summary>冲击波力度：只决定推力大小，与半径无关</summary>
+        PEInt GetShockwaveForce(PEInt chargeScale);
         PEInt GetSoundRadius(PEInt chargeScale);
         /// <summary>逻辑层：命中点(AI 听觉用)的噪声半径(米)。表现层音效播放距离用 SoundRadius</summary>
         PEInt GetImpactSoundRadius(PEInt chargeScale);

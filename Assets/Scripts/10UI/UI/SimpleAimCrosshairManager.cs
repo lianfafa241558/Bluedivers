@@ -35,7 +35,11 @@ public class SimpleAimCrosshairManager : CrosshairManagerBase
     private void OnEnable()
     {
         if (!m_Weapons) SwitchWeapon(GetComponentInParent<WeaponPlayerController>(), false);
-        else SetAnimGo();
+        else
+        {
+            SetAnimGo();
+            ApplySightScale();
+        }
     }
 
     protected override void SetAnimGo()

@@ -188,18 +188,19 @@ MonoBehaviour:
   HearingRange: 20
   AttackRange: 15
   AlertRange: 50
+  Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &3577463980131566663
 GameObject:
   m_ObjectHideFlags: 0
@@ -538,6 +539,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 4
     DamageDirect: 0
     DamageGroupDirect:
@@ -578,6 +580,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 1
   SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
   ContinuousShootStartSfx: {fileID: 0}
@@ -587,6 +591,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -999,6 +1004,7 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 4782955672776048055}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -1050,6 +1056,11 @@ MonoBehaviour:
   PathReachingRadius: 1
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &579562280907152891
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1063,10 +1074,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 6591572111162670825}
-  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: e4e274d794aee1a48941eecd122a52f9, type: 2}
   fxMaterial: {fileID: 2100000, guid: a5404b5558f78d841bbd3450f1e6ca4a, type: 2}
+  events: []
+  BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
 --- !u!114 &214383806843130632
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1105,6 +1117,12 @@ MonoBehaviour:
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
+  BewareTimeout: 20
+  BewareObserveDistance: 10
+  SearchObserveDistance: 4
+  ObserveSettleTime: 0.4
+  BewareCooldown: 10
+  BewareCooldownRadius: 10
   IdleMaxDuration: 120
 --- !u!195 &7820146443735053807
 NavMeshAgent:
@@ -3579,6 +3597,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 150
   LineArmor:
   - {fileID: 2894464610256575581}
@@ -3636,6 +3655,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 150
   LineArmor:
   - {fileID: 7508501207925251303}
@@ -3699,6 +3719,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 100
   LineArmor:
   - {fileID: 3085531840998514021}
@@ -3878,9 +3899,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
+  isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 1
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -3889,7 +3911,7 @@ MonoBehaviour:
     scale: 0
     originActive: 0
     originLocalScale: {x: 0, y: 0, z: 0}
-  BleedValue: 50
+  BleedValue: 100
   isMain: 0
   showArmor: 0
 --- !u!1 &6704439365461724612 stripped
@@ -3955,6 +3977,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 5832997876581394934}
@@ -4145,6 +4168,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 100
   LineArmor:
   - {fileID: 8781071549759883367}

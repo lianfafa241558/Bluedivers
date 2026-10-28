@@ -399,6 +399,7 @@ MonoBehaviour:
   UnparentMuzzleFlash: 0
   SFXRange: 20
   FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 71c74369d77d2b84fb81ce2ed79197e2, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -407,6 +408,7 @@ MonoBehaviour:
   _currentHeat: 0
   wantsToShoot: 0
   ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -478,6 +480,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -587,6 +590,7 @@ MonoBehaviour:
   AttackRange: 1.5
   AlertRange: 50
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -1483,6 +1487,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1535,9 +1540,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
+  isWeakness: 1
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 1
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1593,6 +1599,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 50
   LineArmor: []
   armorBreakEffect:
@@ -1671,6 +1678,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 30
   LineArmor: []
   armorBreakEffect:
@@ -1724,6 +1732,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1777,6 +1786,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -1827,6 +1837,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1880,6 +1891,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1935,6 +1947,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -1994,6 +2007,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 40
   LineArmor: []
   armorBreakEffect:
@@ -2095,6 +2109,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 50
   LineArmor: []
   armorBreakEffect:

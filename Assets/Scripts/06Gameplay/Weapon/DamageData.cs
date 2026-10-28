@@ -78,9 +78,15 @@ namespace FPSGame.Weapon
         private float DestructeRadius = 0;
 
         
-        /// <summary>冲击波半径</summary>
+        /// <summary>冲击波半径(只管作用范围)</summary>
         [SerializeField]
+        [InspectorName("冲击波半径")]
         private float ShockwaveRadius = 0;
+
+        /// <summary>冲击波力度(只管推力：Δv = 力度×距离衰减 / 目标重量)</summary>
+        [SerializeField]
+        [InspectorName("冲击波力度")]
+        private float ShockwaveForce = 10;
 
         /// <summary>伤害成分</summary>
         public List<SKVP<DamageTypeEnum, float>> DamageGroupExplosion = new() { new(DamageTypeEnum.Explosion, 1), new(DamageTypeEnum.Destruction, 1) };
@@ -183,8 +189,10 @@ namespace FPSGame.Weapon
         public PEInt GetDamageOuterRadius(PEInt ChargeScale) => _HandleValue(ExplosionRange, ChargeAOERangeScale, ChargeScale);
         /// <summary>地形破坏半径</summary>
         public PEInt GetDestructeRadius(PEInt ChargeScale) => _HandleValue(DestructeRadius, ChargeAOERangeScale, ChargeScale);
-        /// <summary>冲击波半径</summary>
+        /// <summary>冲击波半径(随蓄力按溅射倍率缩放)</summary>
         public PEInt GetShockwaveRadius(PEInt ChargeScale) => _HandleValue(ShockwaveRadius, ChargeAOERangeScale, ChargeScale);
+        /// <summary>冲击波力度(不随蓄力缩放：力度与半径已解耦，各自独立调)</summary>
+        public PEInt GetShockwaveForce(PEInt ChargeScale) => (PEInt)ShockwaveForce;
         public PEInt GetWeaknessBonus() => (PEInt)WeaknessBonus;
 
         /// <summary>直击穿甲等级（随蓄力缩放，charge=0 为 DirectAP，charge=1 为 DirectAP×DirectAPChargeScale）</summary>

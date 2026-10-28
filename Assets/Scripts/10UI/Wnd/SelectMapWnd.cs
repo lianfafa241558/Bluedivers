@@ -81,6 +81,8 @@ public class SelectMapWnd : Window
     private int SelectTaskDiff, SelectTaskIndex=-1;
     private int[] SelectTaskExtraDiff=new int[4];
     private OOPartEnum[] product;
+    /// <summary>左侧说明卡片当前是否开着（进图后逐个地区悬停会反复重建它，靠它决定要不要播入场动画）。</summary>
+    private bool _descShown;
     private int SelectPlayMode = 2;
     private ArchivesData_SO arch => ArchivesData_SO.Current;
     public void Init()
@@ -128,15 +130,26 @@ public class SelectMapWnd : Window
             });
             
             SetButtonEnter(mapInfoLayout.GetChild(a), (data) => {
-                if(taskManager.TaskCfgs[SelectTaskRow,a].enable && a != SelectTaskIndex) ShowAreaInfoWnd(a, SelectTaskIndex > -1);
+                if (taskManager.TaskCfgs[SelectTaskRow, a].enable && a != SelectTaskIndex)
+                {
+                    // 进图后悬停地区：左栏也跟着弹，显示的是**这个任务点**自己的势力（不是整图平均）
+                    ShowAreaWnd(mapRoot.GetChild(SelectMapIndex), a);
+                    ShowAreaInfoWnd(a, SelectTaskIndex > -1);
+                }
             });
 
             SetButtonExit(mapInfoLayout.GetChild(a), (data) => {
                 if (SelectTaskIndex > -1)
                 {
+                    // 左栏退回已选中的任务点：鼠标离开标记后不该停在"刚划过的那块地"上
+                    ShowAreaWnd(mapRoot.GetChild(SelectMapIndex), SelectTaskIndex);
                     if (a != SelectTaskIndex)ShowAreaInfoWnd(SelectTaskIndex,true);
                 }
-                else if (taskManager.TaskCfgs[SelectTaskRow, a].enable && a != SelectTaskIndex) HideAreaInfoWnd();
+                else if (taskManager.TaskCfgs[SelectTaskRow, a].enable && a != SelectTaskIndex)
+                {
+                    HideAreaWnd();
+                    HideAreaInfoWnd();
+                }
             });
         }
 
@@ -658,16 +671,22 @@ public class SelectMapWnd : Window
         }
     }
     /// <summary>
-    /// 移入地图
+    /// 左侧说明卡片（地图 / 地区共用一套控件）。
+    /// <para>▍<paramref name="pointIndex"/> = -1 ⇒ **地图级**（外层列表悬停）：势力取整图平均；
+    /// ≥0 ⇒ **任务点级**（进图后悬停地区）：取该任务点自己的势力。</para>
     /// </summary>
-    private void ShowAreaWnd(Transform trans)
+    private void ShowAreaWnd(Transform trans, int pointIndex = -1)
     {
         var data = taskManager.MapData[trans.name];
-        SetText(descName, GetText(trans.GetChild(1, 2)));
-        SetText(descDesc, data.AreaDesc);
+
+        bool byPoint = pointIndex >= 0 && pointIndex < data.mapItemInfos.Length;
+        SetText(descName, byPoint ? data.mapItemInfos[pointIndex].name : GetText(trans.GetChild(1, 2)));
+        SetText(descDesc, byPoint
+            ? taskManager.TaskCfgs[taskManager.MapIndex(trans.name), pointIndex].TaskDesc
+            : data.AreaDesc);
         SetSprite(descBg, data.AreaBackground);
 
-        var occ = OccupierState.Get(trans.name);
+        var occ = byPoint ? OccupierState.Get(trans.name, pointIndex) : OccupierState.Average(trans.name);
         for(int i = 0; i < 4; ++i)
         {
             bool show = i < data.product.Length;
@@ -683,7 +702,7 @@ public class SelectMapWnd : Window
             if (i < occ.Count)
             {
                 SetActive(descOccupierRoot.GetChild(i), true);
-                SetSprite(descOccupierRoot.GetChild(i, 0), taskManager.GetOccupierIcon(occ[i].name));
+                SetSprite(descOccupierRoot.GetChild(i, 0), OccupierState.GetIcon(occ[i].name));
                 SetText(descOccupierRoot.GetChild(i, 1), occ[i].name);
                 SetFill(descOccupierRoot.GetChild(i, 2, 0), occ[i].value / 100f);
                 SetText(descOccupierRoot.GetChild(i, 2, 1), occ[i].value.ToString("F2") + "%");
@@ -694,13 +713,16 @@ public class SelectMapWnd : Window
             }
         }
         UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(descName.parent.RectTransform());
-        infoRoot.Play("Entry",0,0);
+        // 进图后每划过一个地区都会重建这张卡 ⇒ 只有"从关到开"才播入场，否则每次悬停都从头闪一下
+        if (!_descShown) infoRoot.Play("Entry",0,0);
+        _descShown = true;
     }
     /// <summary>
     /// 移出地图
     /// </summary>
     private void HideAreaWnd()
     {
+        _descShown = false;
         infoRoot.Play("Exit", 0, 0);
     }
 
@@ -948,7 +970,7 @@ public class SelectMapWnd : Window
             //   后进者（Ready/Armament 期间入房）由 _lastTaskConfirm 补发同一份内容。
             // ★ 房间广播里的 TaskMain / TaskName 也由它从内容里刷新（建服可能早于选任务）
             host.ConfirmTask(mapId, SelectTaskExtraDiff, seed, SelectPlayMode,
-                TaskManager.ToDto(taskManager.nowTask.taskCfg));
+                TaskManager.ToDto(taskManager.nowTask.taskCfg), SelectTaskIndex);   // 任务点下标随配置下发（结算给势力加控制度）
         }
     }
 

@@ -54,6 +54,14 @@ namespace FPSGame.Game
         [InspectorName("护甲等级")]
         private int armorLevel;
 
+        /// <summary>本部位用**血量**而非护甲：<c>Destruction</c> 成分不再走 <see cref="ArmorDestruction"/>（不扣护甲、不破甲销毁），
+        /// 只吃动能 / 爆炸这些进 Health 的成分。
+        /// <para>⚠ 只改这一处分支：护甲等级、爆炸抗性、护甲值、流血等一律照旧。</para></summary>
+        [Compare("armorValue",0,CompareOperate.Greater)]
+        [SerializeField]
+        [InspectorName("使用血量而非护甲")]
+        private bool useHealthInsteadOfArmor;
+
         
         [InspectorName("基础护甲值")]
         public int armorValue;
@@ -140,8 +148,8 @@ namespace FPSGame.Game
             // 难度缩放走「数据自持」（2026-10-01 取代 ServiceLocator.Task 槽）：TaskManager 发布、单位内核直读。
             // ⚠ 本处在 Awake 执行、注入来不及；而 TaskState 未就绪时读到的就是中性值（系数 0 / Normal）
             //   ⇒ 原来的 `taskSvc != null ? ... : 0` 判空实为死代码，一并清掉。
-            PEInt scale = 1 + (FPSGame.Data.TaskState.ExtraDifficulty[3] * (PEInt)0.1f);
-            switch (FPSGame.Data.TaskState.Difficulty)
+            PEInt scale = 1 + (TaskState.ExtraDifficulty[3] * (PEInt)0.1f);
+            switch (TaskState.Difficulty)
             {
                 case DifficultyEnum.Normal:
                     scale *= (PEInt)0.5f;
@@ -403,6 +411,9 @@ namespace FPSGame.Game
         /// <param name="source">伤害来源物体</param>
         private void ArmorDestruction(PEInt value, GameObject source)
         {
+            // 血量部位：不吃护甲破坏 ⇒ 破甲成分在这里丢掉，它只靠走 Health 的动能/爆炸成分掉血。
+            // ⚠ 这是本开关**唯一**的分支点，别再去 Tick/RestoreArmor/Awake 里加特判。
+            if (useHealthInsteadOfArmor) return;
             if (remainArmor > 0)
             {
                 remainArmor -= value;

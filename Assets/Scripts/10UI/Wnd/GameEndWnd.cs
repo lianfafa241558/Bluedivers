@@ -199,6 +199,20 @@ public class GameEndWnd : Window
             }
         }
 
+        // 4. 势力控制度：本局任务点涨 1% + 难度每级 0.3%，其余势力等分让出。
+        //    涨给谁 = 本点里的**友方势力**（名册勾了「友方」的那个），一个都没有才涨给「超级夏莱」。
+        //    ⚠ 只算胜利（打输不该"打下地盘"）；mapId/mapPoint 缺失（场景模式等）时没有可下账的据点 ⇒ 跳过。
+        //    ⚠ 联机时每人各记自己存档里的一份（用户口径），不做同步。
+        if (task.result == GameResult.Victory && !string.IsNullOrEmpty(task.mapId) && task.mapPoint >= 0)
+        {
+            float gain = OccupierState.GainFor(task.difficulty);
+            float applied = OccupierState.AddControl(task.mapId, task.mapPoint, gain);
+            if (applied > 0f)
+                Debug.Log($"[势力] {task.mapId} 第 {task.mapPoint} 个任务点：" +
+                          $"{OccupierState.BeneficiaryOf(task.mapId, task.mapPoint)} +{applied:F2}%" +
+                          $"（难度 {task.difficulty}，本次满额 {gain:F2}%）");
+        }
+
         ArchivesData_SO.Current.Save();
     }
 

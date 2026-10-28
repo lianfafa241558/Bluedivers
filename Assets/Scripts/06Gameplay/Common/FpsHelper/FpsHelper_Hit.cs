@@ -163,6 +163,10 @@ namespace FPSGame.Gameplay
                 PEInt outer = data.GetDamageOuterRadius(hitData.chargeScale);
                 if (outer > noise) noise = outer;
             }
+            // 噪声倍率(改装)：开火噪声在 WeaponBaseController 那边缩放，命中噪声在这里统一乘，
+            // 两处共用同一个属性 ⇒ 消音器不会只安静开火、落地却还是巨响。
+            // weapon 为空(地雷/持续效果等自带伤害源)按原值，不受武器改装影响
+            if (hitData.weapon) noise *= hitData.weapon.NoiseScale;
             return noise;
         }
 
@@ -272,6 +276,7 @@ namespace FPSGame.Gameplay
             PEInt damageOuterRadius = damageData.GetDamageOuterRadius(charg);
             PEInt damageInnerRadius = damageData.GetDamageInnerRadius(charg);
             PEInt shockwave = damageData.GetShockwaveRadius(charg);
+            PEInt shockwaveForce = damageData.GetShockwaveForce(charg);
             PEInt destructe = damageData.GetDestructeRadius(charg);
             PEInt soundRadius = damageData.GetSoundRadius(charg);
 
@@ -398,7 +403,7 @@ namespace FPSGame.Gameplay
                         if (item.transform.TryGetComponent(out IPhysical physical))
                         {
                             var distance = PEVector3.Distance((PEVector3)item.CenterPos, (PEVector3)point);
-                            PEVector3 vector = (PEVector3)(item.CenterPos - point).normalized * (1 - PEMath.Clamp(distance / shockwave,0,1)) * 10;
+                            PEVector3 vector = (PEVector3)(item.CenterPos - point).normalized * (1 - PEMath.Clamp(distance / shockwave,0,1)) * shockwaveForce;
                             //vector.y *= 2;
                             physical.ApplyImpulse(vector);
                             // 零力（爆炸边缘外）不打印：原来每次爆炸每个单位都刷一条 Warning，纯噪音
@@ -408,6 +413,12 @@ namespace FPSGame.Gameplay
                     }
                 }
 
+
+                //屏震：冲击波是"以世界点为源"的事件 ⇒ 附近所有相机（玩家/载具/炮台）一起抖。
+                //半径放到冲击波的 1.6 倍：站在推力边缘外一点也该感到脚下发麻；强度由力度换算(10 力度 ≈ 0.5)
+                if (shockwave > 0)
+                    BaseSelfController.BroadcastCameraShake(point, shockwave.RawFloat * 1.6f,
+                        Mathf.Clamp01(shockwaveForce.RawFloat * 0.05f));
 
                 //地形破坏
                 if (destructe > 0)

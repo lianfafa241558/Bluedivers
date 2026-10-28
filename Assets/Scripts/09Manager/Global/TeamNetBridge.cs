@@ -468,7 +468,8 @@ namespace FPSGame.Managers
             team.SetSeed(ntf.Seed);
             int difficulty = Mathf.Clamp(ntf.Difficulty, 0, Tool.EnumLenght<DifficultyEnum>() - 1);
             task.SetTask(TaskManager.FromDto(ntf.Cfg), ntf.MapName, (DifficultyEnum)difficulty,
-                ntf.ExtraDiff ?? new int[4], ntf.PlayMode, ntf.Seed);   // ★ 内容即全部（见 ② / SetTask）
+                ntf.ExtraDiff ?? new int[4], ntf.PlayMode, ntf.Seed, ntf.MapPoint);   // ★ 内容即全部（见 ② / SetTask）
+            // ⚠ 任务点下标只能由房主给（成员本地任务表跨窗口会指到别的任务）⇒ 结算加势力控制度两边落在同一个点
 
             // ③c ★ 房主**可能已经进到 Armament**（后进房的人）：SetTask 只会把本机推到 Ready
             //     ⇒ 按房主随消息带下来的阶段补一步，否则新人在"等人"、其他人已经在"配战备"（2026-10-10 用户报）。

@@ -642,6 +642,7 @@ MonoBehaviour:
   AttackRange: 30
   AlertRange: 50
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 8
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -1578,6 +1579,26 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 2292651915109995757, guid: 9542d03c86edb4847ac36dcad01efbd4,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2292651915109995757, guid: 9542d03c86edb4847ac36dcad01efbd4,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2292651915109995757, guid: 9542d03c86edb4847ac36dcad01efbd4,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2292651915109995757, guid: 9542d03c86edb4847ac36dcad01efbd4,
+        type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2657782446801506208, guid: 9542d03c86edb4847ac36dcad01efbd4,
         type: 3}
       propertyPath: m_Layer
@@ -1983,6 +2004,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 500
   LineArmor:
   - {fileID: 7998219384284097249}
@@ -2060,6 +2082,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 3
+  useHealthInsteadOfArmor: 0
   armorValue: 500
   LineArmor: []
   armorBreakEffect:
@@ -2152,6 +2175,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 500
   LineArmor:
   - {fileID: 1289697705993005763}
@@ -2229,6 +2253,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 3
+  useHealthInsteadOfArmor: 0
   armorValue: 500
   LineArmor: []
   armorBreakEffect:
@@ -2288,10 +2313,16 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
-  armorValue: 0
+  useHealthInsteadOfArmor: 1
+  armorValue: 400
   LineArmor: []
-  armorBreakEffect: []
-  BleedValue: 0
+  armorBreakEffect:
+  - go: {fileID: 1152420300920717473}
+    state: 1
+    scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
+  BleedValue: 1000
   isMain: 0
   showArmor: 0
 --- !u!1 &1238461756540412536 stripped
@@ -2540,6 +2571,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 1000
   LineArmor: []
   armorBreakEffect:
@@ -2817,6 +2849,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 500
   LineArmor:
   - {fileID: 8664866542729372565}
@@ -2960,6 +2993,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 1000
   LineArmor: []
   armorBreakEffect:
@@ -3256,6 +3290,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 500
   LineArmor:
   - {fileID: 4135292367289056462}
@@ -3453,6 +3488,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 2857413120175141766}

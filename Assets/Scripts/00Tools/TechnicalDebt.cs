@@ -53,10 +53,10 @@
 
         /*
          * [P2] 解放度系统半成品
-         * 现状：势力占领度已从存档拆到 OccupierState（独立 OccupierState.json + 联机整份收发），
-         *       初始值来自 Resources/GameData/Occupier_Default.json；但**只有读，没有增长逻辑**
-         *       （打赢/打输、完成什么任务各涨多少，尚未设计），SelectMapWnd 显示的永远是初始值。
-         * 方案：待设计（数值规则 + 由谁结算 + 归属哪一端权威），当前不阻塞。
+         * 现状：势力占领度是设计期资产 Resources/GameData/OccupierData（OccupierData_SO，逐任务点一份），
+         *       由 OccupierState 只读转发；但**只有读，没有增长逻辑**
+         *       （打赢/打输、完成什么任务各涨多少，尚未设计），SelectMapWnd 显示的永远是配置值。
+         * 方案：待设计（数值规则 + 由谁结算 + 归属哪一端权威）；真做增长时另立运行期状态盖在 SO 上，别改资产。
          */
 
         #endregion

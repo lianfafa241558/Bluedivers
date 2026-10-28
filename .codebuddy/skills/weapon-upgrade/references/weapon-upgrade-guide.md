@@ -49,6 +49,10 @@
 | 14 | `CoolDelay` | 热量/散热延迟 | ✘ | `FlipPlus` | All |
 | 15 | `CoolSpeed` | 热量/散热速度 | ✘ | default | All |
 | 16 | `OverheatDuration` | 热量/过热时间 | ✘ | `FlipPlus` | All |
+| 17 | `NoiseScale` | 通用/噪声倍率 | ✘ | `Percentage｜FlipPlus｜OneHide` | All |
+| 18 | `Recoil` | 通用/后坐力 | ✘ | `Percentage｜FlipPlus｜OneHide` | All |
+
+⚠ 17/18 的基础值恒为 1（`WeaponBaseController.InitAttribute` 里 `cfg.Add(Attr.NoiseScale, 1)`、`WeaponPlayerController.InitAttribute` 里 `cfg.Add(Attr.Recoil, 1)`）⇒ 只吃改装加成；用 `Base` 改它们的意义是"改基线"，通常用 `Factor`。
 
 ⚠ 值 3 `Catapult` 在 `attributeConfigs` 里**没有条目** ⇒ `WeaponAttributeFactory.Create` 会 `Debug.LogError("找不到对应的配置")` 并返回 `default`（null），随后 `AttrInfo` 里 `attr == null`。要使用它必须先补表。
 
@@ -94,7 +98,7 @@
 |---|---|---|---|
 | 100 | `DirectDestruction` | 直击/护甲破坏 | All（tag `Percentage｜OneHide`） |
 | 101 | `ExplosionDestruction` | 爆炸/护甲破坏 | All（同上） |
-| 102 | `WeaknessBonus` | 伤害/弱点加成 | **Extra**（tag `Percentage｜DefaultHide`） |
+| 102 | `WeaknessBonus` | 伤害/弱点加成 | **Extra**（tag `Percentage｜OneHide｜DefaultHide`） |
 
 伤害类型系数（直击组 200 起、爆炸组 220 起，**两组一一对应、间隔 20**），全部 `Percentage｜OneHide` + `All`：
 

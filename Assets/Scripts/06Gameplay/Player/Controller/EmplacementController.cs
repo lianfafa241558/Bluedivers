@@ -157,7 +157,7 @@ public class EmplacementController : BaseSelfController, IDrivable
             target, Time.deltaTime*5);
         }
         
-        PlayerCamera.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0, 0);
+        PlayerCamera.transform.localEulerAngles = new Vector3(CameraPitch + ShakePitch, RecoilYaw + ShakeYaw, CameraRoll);
 
 
 

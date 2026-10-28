@@ -857,7 +857,7 @@ public class NetHostSvc : MonoBehaviour
     /// —— 这正是 <see cref="_lastTaskConfirm"/> 补发机制要保证的语义。
     /// 房间广播里的 <c>TaskMain</c> / <c>TaskName</c> 也从它刷新（建服早于选任务时，这一刻才是权威时刻）。</para></param>
     public void ConfirmTask(string mapName = "", int[] extraDiff = null,
-        int seed = 0, int playMode = 2, TaskCfgDto cfg = null)
+        int seed = 0, int playMode = 2, TaskCfgDto cfg = null, int mapPoint = -1)
     {
         // 任务内容是本局唯一权威来源（成员不查本地表）⇒ 没有内容就别广播，免得全员收到一条废配置
         if (cfg == null || cfg.Main < 0)
@@ -881,6 +881,7 @@ public class NetHostSvc : MonoBehaviour
             Seed = seed,
             PlayMode = playMode,
             Cfg = cfg,
+            MapPoint = mapPoint,   // ★ 本局打的是哪个任务点（结算给势力加控制度用；成员不查本地表）
             MatchId = ++_matchId,
             Phase = _roomPhase,   // ★ 房主当前阶段（Ready/Armament）⇒ 后进房的人能立刻跟到同一阶段
         };
