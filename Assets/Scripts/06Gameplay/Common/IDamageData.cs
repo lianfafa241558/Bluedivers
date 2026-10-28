@@ -31,6 +31,9 @@ namespace FPSGame.Gameplay
         public int GetDemolishValue(PEInt distance);
         List<SKVP<DamageTypeEnum, float>> DamageGroupDirect { get; }
         List<SKVP<DamageTypeEnum, float>> DamageGroupExplosion { get; }
+
+        /// <summary>易伤成分：目标身上挂着对应异常状态(积蓄槽满)时，整笔伤害 × 该系数；没挂则 ×1</summary>
+        List<SKVP<DamageTypeEnum, float>> AboVulnerabilityGroup { get; }
           
         bool NoSource { get; }
         GameObject ImpactVfx { get; }

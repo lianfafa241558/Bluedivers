@@ -406,6 +406,10 @@ namespace FPSGame.Weapon {
             // 噪声倍率与伤害配置无关，基础值恒为 1(不改行为)；只吃改装加成。
             // ⚠ 必须在 InitAttribute 里建出来：ApplyUpgrade 走 cfg[type] 取不到会 NRE
             if (!cfg[Attr.NoiseScale]) cfg.Add(Attr.NoiseScale, 1);
+
+            // 弹射次数：0 = 不弹射，同样与伤害配置无关（消费点是子弹那边读 AttrFinal）。
+            // 建出来的原因同噪声：改装项在外层按 cfg[type] 取，缺项会走"按 0 兜底 + 告警"那条路
+            if (!cfg[Attr.Catapult]) cfg.Add(Attr.Catapult, 0);
         }
 
         protected virtual void UnInitAttribute()

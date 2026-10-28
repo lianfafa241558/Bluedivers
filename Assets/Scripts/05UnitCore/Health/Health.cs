@@ -321,12 +321,8 @@ namespace FPSGame.Game {
             if (isAboTick) {
                 return type == DamageTypeEnum.Destruction ? 0 : value;
             }
-            // Freeze 满槽：受到的 Gun/Explosion/Real 伤害变为 3 倍
-            if (IsAboStateFull(DamageTypeEnum.Freeze)
-                && (type == DamageTypeEnum.Gun || type == DamageTypeEnum.Explosion || type == DamageTypeEnum.Real))
-            {
-                value *= 3;
-            }
+            // 异常状态易伤（原"冰冻满槽 ⇒ 动能/爆炸/真实 ×3"硬编码）已改为数据驱动：
+            // 倍率由武器伤害配置的"易伤成分"给出，统一在 Damageable.InflictDamage 里乘（那边看得到 packet）。
             switch (type) {
                 case DamageTypeEnum.Destruction:
                     return 0;//护甲破坏不计入伤害量

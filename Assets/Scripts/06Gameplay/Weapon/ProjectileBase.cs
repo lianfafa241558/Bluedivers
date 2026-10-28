@@ -1,9 +1,11 @@
-﻿using PEMaths;
+﻿using System.Collections.Generic;
+using PEMaths;
 
 using UnityEngine;
 using UnityEngine.Events;
 using FPSGame.Utils;
 using FPSGame.Game;
+using FPSGame.GameContract;
 using FPSGame.Gameplay;
 
 namespace FPSGame.Weapon
@@ -107,6 +109,121 @@ namespace FPSGame.Weapon
             //Debug.Log("释放" + gameObject, gameObject);
             FPSGame.Core.VfxPool.Release(this);
         }
+
+        #region 弹射
+
+        [Header("弹射")]
+        [InspectorName("弹射索敌半径")]
+        [Tooltip("命中单位后，以命中点为圆心在此半径内找最近的另一个目标继续飞；0 = 关闭弹射。\n次数由武器属性「通用/弹射次数」给，本字段只决定弹射时能搜多远")]
+        public float CatapultRadius = 20f;
+
+        /// <summary>剩余弹射次数：开火时从武器属性「通用/弹射次数」读，每弹一次 -1</summary>
+        protected int m_CatapultLeft;
+
+        /// <summary>弹射次数（本次开火读到的总数，供 <see cref="RefreshCatapult"/> 复位）</summary>
+        protected int m_CatapultTotal;
+
+        /// <summary>弹射过（已被甩到别的目标上）。弹种可据此关掉"拉回准心"之类的默认行为。</summary>
+        protected bool HasCatapulted => m_Catapulted;
+        private bool m_Catapulted;
+
+        /// <summary>已命中过的单位根对象。两个用途：弹射索敌要排除它们；穿透单位靠它避免重复打同一个。
+        /// <para>⚠ 跟 <c>m_CatapultLeft</c> 一样在 <see cref="InitCatapult"/> 里重置（池化复用必须清空）。</para></summary>
+        protected List<GameObject> m_hasHits;
+
+        /// <summary>开火时调用一次：读弹射次数 + 清空已命中表。</summary>
+        protected void InitCatapult()
+        {
+            m_CatapultTotal = WeaponBase ? WeaponBase.AttrFinal(WeaponAttrType.Catapult).RawInt : 0;
+            m_Catapulted = false;
+            RefreshCatapult();
+        }
+
+        /// <summary>
+        /// 把"剩余次数 / 已命中表"恢复到本段起点。
+        /// <para>▍持续型弹种（光束）每个伤害节拍都要调一次：一次连击就把整条光束的次数用光的话，
+        /// 之后按住扳机再也不导电了。</para>
+        /// </summary>
+        protected void RefreshCatapult()
+        {
+            m_CatapultLeft = m_CatapultTotal;
+            if (m_hasHits == null) m_hasHits = new List<GameObject>();
+            else m_hasHits.Clear();
+        }
+
+        /// <summary>
+        /// 命中一个单位后尝试弹射：还有次数、且附近存在"最近的另一个"目标时返回 true
+        /// （已扣次数、记录命中、并调过一次 <see cref="ResetLife"/>）。
+        /// <para>▍这里只负责"选谁"：弹道型自己去改速度（<c>ProjectileStandard</c>），
+        /// 光束型则拿它当链状闪电的下一跳（<c>ProjectileLaser</c>）。</para>
+        /// </summary>
+        /// <param name="hitPos">命中点（索敌圆心）</param>
+        /// <param name="collider">命中的碰撞体（判断是不是可伤害单位）</param>
+        /// <param name="target">要弹射过去的目标</param>
+        protected bool TryCatapult(Vector3 hitPos, Collider collider, out IActor target)
+        {
+            target = null;
+            if (m_CatapultLeft <= 0 || CatapultRadius <= 0f || !collider) return false;
+
+            // 只对"可伤害单位"弹：打地形也弹 = 子弹永不消散，还会在墙角来回跳
+            var damageable = collider.GetComponent<IDamageable>();
+            if (!damageable.IsValid()) return false;
+
+            if (m_hasHits == null) m_hasHits = new List<GameObject>();
+            var hitActor = damageable.ActorGo;
+            if (hitActor && !m_hasHits.Contains(hitActor)) m_hasHits.Add(hitActor);
+
+            target = FindCatapultTarget(hitPos);
+            if (target == null) return false;
+
+            --m_CatapultLeft;
+            m_Catapulted = true;
+            ResetLife();
+            NetSyncLog.BulletLog("弹射", $"{GetType().Name} 命中={collider.name} 弹射点={hitPos:F2} " +
+                $"→ {target.ShowName} 剩余次数={m_CatapultLeft}");
+            return true;
+        }
+
+        /// <summary>在命中点附近找最近的"另一个"目标（排除同队 / 已命中 / 不可伤害 / 无敌）。</summary>
+        private IActor FindCatapultTarget(Vector3 center)
+        {
+            int team = ShooterTeam();
+            List<IActor> units = UnitQuery.FindUnits(
+                new PECircle((PEVector2)center, (PEInt)CatapultRadius),
+                TargetCfg.All,
+                item => FpsHelper.VaildTarget(item)
+                     && item.Team != team
+                     && !m_hasHits.Contains(item.gameObject));
+
+            IActor best = null;
+            float bestSqr = float.MaxValue;
+            for (int i = 0, l = units.Count; i < l; ++i)
+            {
+                float sqr = (units[i].CenterPos - center).sqrMagnitude;
+                if (sqr < bestSqr) { bestSqr = sqr; best = units[i]; }
+            }
+            return best;
+        }
+
+        /// <summary>射击方所属队伍（弹射索敌排除友军）；解析不到按 0（= 玩家阵营）。</summary>
+        private int ShooterTeam()
+        {
+            if (WeaponBase)
+            {
+                var actor = WeaponBase.GetComponentInParent<Actor>();
+                if (actor) return actor.Team;
+            }
+            return Owner && Owner.TryGetComponent(out IActor ownerActor) ? ownerActor.Team : 0;
+        }
+
+        /// <summary>
+        /// 重置本发的"生命"。默认什么都不做，由有存活计时 / 弹道锚点的弹种覆写。
+        /// <para>▍为什么要它：弹射是"重开一段"，沿用上一段的计时会让快到期的子弹弹出去当场消散；
+        /// 反过来，没有存活计时的弹种（光束）也有自己的"这一段"要重摆。</para>
+        /// </summary>
+        protected virtual void ResetLife() { }
+
+        #endregion
 
         /// <summary>
         /// 构造命中数据包：统一填充本子弹的通用数据（伤害、充能、归属、音效范围、难度修正）。

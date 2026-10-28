@@ -54,6 +54,18 @@ public class SelectRoleWnd : Window
     [SerializeField]
     private Transform moduleRoot, moduleFrame, moduleIocn, moduleTitle, moduleName, moduleType, moduleLayout, moduleOpterLayout;
 
+    [Foldout("配置模组", true)]
+    [SerializeField]
+    [InspectorName("模组说明气泡")]
+    [Tooltip("悬停模组列表项时弹出的独立小气泡（内容只有 WeaponModuleData_SO.describe）。\n" +
+             "自己 anchor 顶部对齐 + pivot(0.5,0)，尺寸在 prefab 上调")]
+    private Transform moduleTip;
+
+    [Foldout("配置模组", true)]
+    [SerializeField]
+    [InspectorName("模组气泡文字")]
+    private Transform moduleTipDesc;
+
 
     private RoleData_SO data;
     private ArchivesData_SO.ArchRoleData arch;
@@ -598,26 +610,48 @@ public class SelectRoleWnd : Window
     }
 
     /// <summary>
-    /// 更新提示框位置，适配不同分辨率（anchor 顶部对齐，pivot (0.5,0)）
+    /// 更新升级提示框位置（它的顶边离鼠标 50；底边 = 50 + 自身高度，见 <see cref="PlaceTipAboveMouse"/>）。
     /// </summary>
     private void UpdateTipPosition()
     {
-        if (_tipRect == null)
+        if (_tipRect == null) _tipRect = tipRoot as RectTransform;
+        if (!_tipRect) return;
+        PlaceTipAboveMouse(_tipRect, false, 50f + _tipRect.rect.height);
+    }
+
+    /// <summary>
+    /// 把提示框摆到鼠标上方：<paramref name="gap"/> = **鼠标到提示框底边**的距离（两个提示框的 pivot 都是 (0.5,0)）。
+    /// <para>▍用 <c>localPosition</c> 而不是 <c>anchoredPosition</c>：前者就是"pivot 落在父级哪个点"，
+    /// 与父级的 pivot / anchor / 尺寸全都无关，只需一次屏幕→父级的坐标转换。</para>
+    /// <para>⚠ 踩过的坑：<c>WeaponRoot/Right</c> 的 pivot 是 **(1,0.5)**、尺寸由 LayoutElement 撑开，
+    /// 早前按 <c>anchoredPosition</c> + "父级高度一半" 去算 ⇒ 气泡整体偏到鼠标**左下**（用户实测 2026-10-29）。</para>
+    /// <para>▍<paramref name="followX"/>：水平也跟着鼠标（模组小气泡用）；升级提示保持"x 不动"的老行为
+    /// —— 它是整条面板宽的横条，跟着鼠标走反而会左右抖。</para>
+    /// </summary>
+    private void PlaceTipAboveMouse(RectTransform tip, bool followX = false, float gap = 20f)
+    {
+        if (!tip) return;
+        var parentRect = tip.parent as RectTransform;
+        if (!parentRect) return;
+        if (!_canvas) _canvas = tip.GetComponentInParent<Canvas>();
+
+        // 鼠标 → 父级 pivot 局部坐标（原点在父级 pivot；与父级 pivot 在哪无关）
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                parentRect, Input.mousePosition, _canvas ? _canvas.worldCamera : null, out var mouse))
+            return;
+
+        float x = tip.localPosition.x;
+        if (followX)
         {
-            _tipRect = tipRoot as RectTransform;
-            _canvas = _tipRect.GetComponentInParent<Canvas>();
+            // 别让气泡左右跑出面板；面板比气泡还窄时（minX>maxX）不夹，否则反而被顶回面板里
+            Rect pr = parentRect.rect;
+            float half = tip.rect.width * 0.5f;
+            float minX = pr.xMin + half, maxX = pr.xMax - half;
+            x = minX <= maxX ? Mathf.Clamp(mouse.x, minX, maxX) : mouse.x;
         }
 
-        var parentRect = _tipRect.parent as RectTransform;
-
-        // 将屏幕坐标转为父级本地坐标（原点在父级 pivot，默认中心）
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            parentRect, Input.mousePosition, _canvas.worldCamera, out var pos);
-
-        // 父级本地坐标 → anchoredPosition：anchor 在顶部，0=顶部，负值向下
-        // pivot (0.5,0) 在底部，减去自身高度让 tip 底部在鼠标上方 50
-        _tipRect.anchoredPosition = new(_tipRect.anchoredPosition.x,
-            pos.y - parentRect.rect.height * 0.5f - _tipRect.rect.height - 50);
+        // pivot(0.5,0) = 底边中点 ⇒ 直接把 pivot 放到"鼠标 + gap"，气泡就整体浮在鼠标上方
+        tip.localPosition = new Vector3(x, mouse.y + gap, 0f);
     }
     /// <summary>
     /// 点击升级
@@ -832,6 +866,8 @@ public class SelectRoleWnd : Window
         {
             var a = i;
             var root = moduleOpterLayout.GetChild(i);
+            // 一个检测器同时给"进/留/出"三条回调：Enter 预览 + 弹提示、In 让提示跟着鼠标、Exit 还原 + 收提示
+            var detector = root.TryGetOrAddComponent<ButtonEnterDetector>();
             SetCilck(root, () => {
                 //点击当前已选中的模组：卸载，切回第0个空模组
                 if (a + 1 == nowSelectModule)
@@ -841,30 +877,61 @@ public class SelectRoleWnd : Window
                 showWeapon.SetModule(nowSelectModule);
                 SetModuleToTrans(showWeapon.Modules[nowSelectModule], moduleFrame, true);
                 SetActive(moduleOpterLayout, false);
+                HideModuleTip();
 
                 SetParameter();
                 archWeaponData.selectModuleIndex = nowSelectModule;
                 meetSave = true;
             });
 
-            SetButtonEnter(root, (e) => {
-                SetModuleToTrans(showWeapon.Modules[a + 1], moduleFrame, true);
+            detector.Enter = (e) => {
+                var module = showWeapon.Modules[a + 1];
+                SetModuleToTrans(module, moduleFrame, true);
                 //悬停在已选中的模组上：预览卸载(切到空模组)；否则预览换成鼠标模组
-                var newMods = (a + 1 == nowSelectModule) ? showWeapon.Modules[0].modifys : showWeapon.Modules[a + 1].modifys;
+                var newMods = (a + 1 == nowSelectModule) ? showWeapon.Modules[0].modifys : module.modifys;
                 showWeapon.TryUpgrade(showWeapon.ActiveModule.modifys, newMods);
                 SetParameter();
 
-            });
+                ShowModuleTip(module);
+            };
 
-            SetButtonExit(root, (e) => {
+            detector.In = (e) => MoveModuleTip();
+
+            detector.Exit = (e) => {
                 SetModuleToTrans(showWeapon.ActiveModule, moduleFrame, true);
                 showWeapon.TryUpgrade(showWeapon.Modules[a + 1].modifys, showWeapon.Modules[a + 1].modifys);
                 SetParameter();
-            });
+
+                HideModuleTip();
+            };
 
         }
 
     }
+
+    /// <summary>
+    /// 悬停在模组列表项上：弹**独立的说明气泡**（<c>moduleTip</c>，内容只有
+    /// <see cref="WeaponModuleData_SO.describe"/>），位置跟着鼠标（水平也跟）。
+    /// <para>▍为什么不再复用升级提示框：那个框是"名字+类型+说明+图标"的横条，模组只需要一句自由说明，
+    /// 塞进去得清掉三个空槽，而且它的 x 是固定贴面板中线的，小气泡要跟着鼠标才好读。</para>
+    /// </summary>
+    private void ShowModuleTip(WeaponModuleData_SO module)
+    {
+        if (module == null || !moduleTip || !moduleTipDesc) return;
+        SetActive(moduleTip, true);
+        SetText(moduleTipDesc, module.describe);
+        // 定位放最后：气泡高度变了要按新高度算（现在固定，但别依赖这点）
+        MoveModuleTip();
+    }
+
+    /// <summary>收起模组气泡（和 <see cref="HideTip"/> 分开：这条不碰 <c>showWeapon</c> 的属性预览）。</summary>
+    private void HideModuleTip()
+    {
+        if (moduleTip) SetActive(moduleTip, false);
+    }
+
+    /// <summary>气泡跟随鼠标（水平方向也跟，见 <see cref="PlaceTipAboveMouse"/>）。</summary>
+    private void MoveModuleTip() => PlaceTipAboveMouse(moduleTip as RectTransform, true);
 
     void SwitchModule()
     {

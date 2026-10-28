@@ -59,5 +59,8 @@ namespace FPSGame.GameContract
 
         /// <summary>取当前积蓄值不为 0 的异常状态（**只给逻辑值**；图标/颜色由表现层查 <c>AboStateData_SO</c> 自解）。</summary>
         public void GetActiveAboStates(List<AboStateGauge> results);
+
+        /// <summary>指定异常状态的积蓄槽是否已满（= 目标身上确实挂着这个异常状态）。<c>Damageable</c> 判易伤用。</summary>
+        public bool IsAboStateFull(DamageTypeEnum type);
     }
 }

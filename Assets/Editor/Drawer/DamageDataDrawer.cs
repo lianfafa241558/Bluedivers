@@ -52,6 +52,7 @@ public class DamageDataDrawer : PropertyDrawer
             y = DrawSection_Motion(position, property, y);
             y = DrawSection_DirectDamage(position, property, y);
             y = DrawSection_ExplosionDamage(position, property, y);
+            y = DrawSection_AboVulnerability(position, property, y);
             y = DrawSection_Collision(position, property, y);
 
             EditorGUI.indentLevel--;
@@ -69,6 +70,7 @@ public class DamageDataDrawer : PropertyDrawer
         height += GetSectionHeight_Motion(property);
         height += GetSectionHeight_DirectDamage(property);
         height += GetSectionHeight_ExplosionDamage(property);
+        height += GetSectionHeight_AboVulnerability(property);
         height += GetSectionHeight_Collision(property);
         return height;
     }
@@ -262,6 +264,33 @@ public class DamageDataDrawer : PropertyDrawer
         if (ev > 0)
             h += GetSinglelineListHeight(property, "DamageGroupExplosion");
 
+        h += Padding;
+        return h;
+    }
+
+    #endregion
+
+    #region 易伤
+
+    /// <summary>
+    /// 易伤成分：目标身上挂着对应异常状态(积蓄槽满)时，整笔伤害 × 该系数；没挂则 ×1。
+    /// 它对直击与爆炸都生效，不属于任何一侧 ⇒ 单列一区。
+    /// </summary>
+    protected float DrawSection_AboVulnerability(Rect position, SerializedProperty property, float y)
+    {
+        DrawSectionHeader(position, "易伤", ref y);
+
+        EditorGUI.indentLevel++;
+        y = DrawSinglelineList(property, "AboVulnerabilityGroup", "易伤成分(异常状态 ⇒ 伤害倍率)", position, y);
+        EditorGUI.indentLevel--;
+        y += Padding;
+        return y;
+    }
+
+    protected float GetSectionHeight_AboVulnerability(SerializedProperty property)
+    {
+        float h = SectionHeaderHeight;
+        h += GetSinglelineListHeight(property, "AboVulnerabilityGroup");
         h += Padding;
         return h;
     }
@@ -599,6 +628,7 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
 
             y = DrawSection_General(position, property, y);
             y = DrawSection_Explosion(position, property, y);
+            y = DrawSection_AboVulnerability(position, property, y);
             y = DrawSection_Collision(position, property, y);
 
             EditorGUI.indentLevel--;
@@ -615,6 +645,7 @@ public class SustainedDamageDataDrawer : DamageDataDrawer
         float height = HeaderHeight + Padding;
         height += GetSectionHeight_General(property);
         height += GetSectionHeight_Explosion(property);
+        height += GetSectionHeight_AboVulnerability(property);
         height += GetSectionHeight_Collision(property);
         return height;
     }

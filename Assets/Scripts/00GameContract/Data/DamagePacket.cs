@@ -14,6 +14,9 @@ namespace FPSGame.GameContract
         public PEInt Damage;
         /// <summary>伤害成分（类型+系数）</summary>
         public List<SKVP<DamageTypeEnum, float>> DamageGroups;
+        /// <summary>易伤成分：目标挂着对应异常状态(积蓄槽满)时整笔伤害 × 该系数，没挂则 ×1。
+        /// <para>null / 空 ⇒ 恒 ×1（远端镜像包不带它：那边的伤害已在开枪端算完，见 <see cref="Resolved"/>）。</para></summary>
+        public List<SKVP<DamageTypeEnum, float>> AboVulnerabilityGroup;
         /// <summary>弱点加成</summary>
         public PEInt WeaknessBonus;
         /// <summary>穿甲等级（对所有伤害类型统一有效）</summary>

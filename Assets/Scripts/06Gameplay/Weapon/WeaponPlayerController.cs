@@ -159,6 +159,16 @@ namespace FPSGame.Weapon
             Set(Attr.DamageTypeRadiation, damages.SetDamageTypeRadiation);
             Set(Attr.DamageTypeHacker, damages.SetDamageTypeHacker);
 
+            // 易伤系数（目标挂着对应异常状态时的伤害倍率）
+            Set(Attr.VulnerabilityToxicity, damages.SetVulnerabilityToxicity);
+            Set(Attr.VulnerabilityBurn, damages.SetVulnerabilityBurn);
+            Set(Attr.VulnerabilityFreeze, damages.SetVulnerabilityFreeze);
+            Set(Attr.VulnerabilityElectric, damages.SetVulnerabilityElectric);
+            Set(Attr.VulnerabilityVertigo, damages.SetVulnerabilityVertigo);
+            Set(Attr.VulnerabilityTerror, damages.SetVulnerabilityTerror);
+            Set(Attr.VulnerabilityRadiation, damages.SetVulnerabilityRadiation);
+            Set(Attr.VulnerabilityHacker, damages.SetVulnerabilityHacker);
+
             // 伤害类型系数（爆炸伤害组）
             Set(Attr.ExplosionTypeGun, damages.SetExplosionTypeGun);
             Set(Attr.ExplosionTypeExplosion, damages.SetExplosionTypeExplosion);
@@ -209,6 +219,16 @@ namespace FPSGame.Weapon
             _cfg[Attr.DamageTypeTerror].OnFinalValueChange -= damages.SetDamageTypeTerror;
             _cfg[Attr.DamageTypeRadiation].OnFinalValueChange -= damages.SetDamageTypeRadiation;
             _cfg[Attr.DamageTypeHacker].OnFinalValueChange -= damages.SetDamageTypeHacker;
+
+            // 易伤系数
+            _cfg[Attr.VulnerabilityToxicity].OnFinalValueChange -= damages.SetVulnerabilityToxicity;
+            _cfg[Attr.VulnerabilityBurn].OnFinalValueChange -= damages.SetVulnerabilityBurn;
+            _cfg[Attr.VulnerabilityFreeze].OnFinalValueChange -= damages.SetVulnerabilityFreeze;
+            _cfg[Attr.VulnerabilityElectric].OnFinalValueChange -= damages.SetVulnerabilityElectric;
+            _cfg[Attr.VulnerabilityVertigo].OnFinalValueChange -= damages.SetVulnerabilityVertigo;
+            _cfg[Attr.VulnerabilityTerror].OnFinalValueChange -= damages.SetVulnerabilityTerror;
+            _cfg[Attr.VulnerabilityRadiation].OnFinalValueChange -= damages.SetVulnerabilityRadiation;
+            _cfg[Attr.VulnerabilityHacker].OnFinalValueChange -= damages.SetVulnerabilityHacker;
 
             // 伤害类型系数（爆炸伤害组）
             _cfg[Attr.ExplosionTypeGun].OnFinalValueChange -= damages.SetExplosionTypeGun;

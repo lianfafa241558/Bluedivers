@@ -444,11 +444,14 @@ namespace FPSGame.Weapon
             public override string ToString()
             {
                 // 穿甲等级：值 + 档位（0~1 轻穿 / 2~3 中穿 / 4 重穿 / 5+ 反坦克）。
-                // ⚠ 直接返回：下面的差异高亮与 padding 是给等宽数字列的，档位后缀长度不固定，补空格反而错位。
+                // ⚠ 变化值必须照常带上：早期这里直接 return，升级项改了 AP 也只剩一个静止数字，看着像"没生效"。
+                // ⚠ 档位串同样走 15 宽 padding，否则本行 "+N" 会紧贴档位、和其它行的加成列对不齐。
                 if (HasFlag(AttrTag.APGrade))
                 {
                     int ap = Mathf.RoundToInt(ChangeValue);   // 与下面一致：基础数值显示的是**预览值**，不是当前实际值
-                    return "(" + WeaponAttributeFactory.GetAPGradeName(ap) + ")" + ap;
+                    var apBase = "(" + WeaponAttributeFactory.GetAPGradeName(ap) + ")" + ap;
+                    var apPad = Mathf.Max(0, 15 - Tool.TextLength(apBase, 2, 1, 0.5f, 2));
+                    return BuildDiffHtml(ap - Mathf.RoundToInt(Value)) + apBase.PadLeft(apPad);
                 }
 
                 string re = "";
@@ -483,26 +486,30 @@ namespace FPSGame.Weapon
                     }
                 }
 
-                var diff = Tool.Round(cv - fv);
-                if (diff != 0)
-                {
-                    Color Positive = new(0.2f, 1, 0.2f), Negative = new(1, 0.2f, 0.2f);
-                    if (HasFlag(AttrTag.FlipPlus))
-                    {
-                        Color tmp = Negative;
-                        Negative = Positive;
-                        Positive = tmp;
-                    }
-                    re = string.Format("<color=#{1}>{0}{2}</color>",
-                        diff > 0 ? "+" : "", 
-                        ColorUtility.ToHtmlStringRGB(diff > 0 ? Positive : Negative),
-                        diff + (HasFlag(AttrTag.ScaleFromPrime) ? "%" : HasFlag(AttrTag.Percentage) ? "%" : ""));
-                }
-                var baseString = (Tool.Round(cv).ToString() + (HasFlag(AttrTag.ScaleFromPrime) ? "%" : HasFlag(AttrTag.Percentage) ? "%" : ""));
+                var percentSuffix = HasFlag(AttrTag.ScaleFromPrime) || HasFlag(AttrTag.Percentage) ? "%" : "";
+                re = BuildDiffHtml(Tool.Round(cv - fv), percentSuffix);
+                var baseString = Tool.Round(cv).ToString() + percentSuffix;
                 var padWidth = Mathf.Max(0, 15 - Tool.TextLength(baseString, 2, 1, 0.5f, 2));
                 re += baseString.PadLeft(padWidth);
                
                 return re;
+            }
+
+            /// <summary>变化值的高亮片段（diff 为 0 时返回空串）。正负配色受 <see cref="AttrTag.FlipPlus"/> 反转。</summary>
+            private string BuildDiffHtml(float diff, string suffix = "")
+            {
+                if (diff == 0) return "";
+                Color Positive = new(0.2f, 1, 0.2f), Negative = new(1, 0.2f, 0.2f);
+                if (HasFlag(AttrTag.FlipPlus))
+                {
+                    Color tmp = Negative;
+                    Negative = Positive;
+                    Positive = tmp;
+                }
+                return string.Format("<color=#{1}>{0}{2}</color>",
+                    diff > 0 ? "+" : "",
+                    ColorUtility.ToHtmlStringRGB(diff > 0 ? Positive : Negative),
+                    diff + suffix);
             }
 
             public void Modify(ModifierType type,float value)

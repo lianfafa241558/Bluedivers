@@ -42,6 +42,10 @@ namespace FPSGame.Weapon
         /// <summary>伤害成分</summary>
         public List<SKVP<DamageTypeEnum, float>> DamageGroupExplosion = new() { new(DamageTypeEnum.Explosion, 1), new(DamageTypeEnum.Destruction, 1) };
 
+        /// <summary>易伤成分：目标挂着对应异常状态(积蓄槽满)时，整笔伤害 × 该系数(填 3 = 3 倍)，没挂则 ×1。</summary>
+        /// <para>⚠ <c>Health.HandleDamage</c> 已内置"冰冻满槽 ⇒ 动能/爆炸/真实 ×3"，这里再填 Freeze 会乘两次。</para>
+        public List<SKVP<DamageTypeEnum, float>> AboVulnerabilityGroup = new();
+
         /// <summary>发出的声音影响范围(表现层：音效播放距离)</summary>
         public int SoundRadius = 20;
 
@@ -126,6 +130,7 @@ namespace FPSGame.Weapon
 
         #region 接口映射(显式实现以保留字段的Unity序列化)
         List<SKVP<DamageTypeEnum, float>> IDamageData.DamageGroupExplosion => DamageGroupExplosion;
+        List<SKVP<DamageTypeEnum, float>> IDamageData.AboVulnerabilityGroup => AboVulnerabilityGroup;
         bool IDamageData.NoSource => NoSource;
         GameObject IDamageData.ImpactVfx => ImpactVfx;
         float IDamageData.ImpactVfxSpawnOffset => ImpactVfxSpawnOffset;

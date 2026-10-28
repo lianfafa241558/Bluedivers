@@ -346,6 +346,18 @@ namespace FPSGame.Game
             {
                 damage *= (1+ packet.WeaknessBonus);
             }
+            // 易伤成分：目标身上挂着对应异常状态(积蓄槽满)就乘该系数，没挂则 ×1。
+            // ⚠ 远端镜像包(Resolved)不带这张表 ⇒ 恒 ×1，不会把开枪端已算过的值再乘一遍。
+            if (packet.AboVulnerabilityGroup != null)
+            {
+                for (int i = 0, l = packet.AboVulnerabilityGroup.Count; i < l; ++i)
+                {
+                    SKVP<DamageTypeEnum, float> item = packet.AboVulnerabilityGroup[i];
+                    // 非正值视为没配：新增行的默认值是 0，直接乘会把整笔伤害清零
+                    if (item == null || item.Value <= 0f) continue;
+                    if (Health.IsAboStateFull(item.Key)) damage *= (PEInt)item.Value;
+                }
+            }
             //Debug.LogWarning("友军减伤" + damage,gameObject);
 
 

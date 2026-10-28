@@ -18,6 +18,9 @@ namespace FPSGame.Weapon
             { WeaponAttrType.Ammo, (true, AttrTag.LimitCurr | AttrTag.OnlyInt, ModifierType.All) },
             { WeaponAttrType.Magazine, (true, AttrTag.LimitCurr | AttrTag.OnlyInt, ModifierType.All) },
             { WeaponAttrType.ShootInterval, (true, AttrTag.Reciprocal, ModifierType.All) },
+            // 弹射次数：纯整数计数，0 = 不弹射。不加 DefaultHide —— 那条判据是"值==原始值"，会把
+            // prefab 里写死的基础次数一并隐藏（本例没进 showAttr 的武器本来就不会显示）
+            { WeaponAttrType.Catapult, (false, AttrTag.OnlyInt, ModifierType.All) },
             { WeaponAttrType.StartCool, (false, default, ModifierType.All) },
             
             { WeaponAttrType.BulletsPerShot, (false, default, ModifierType.All) },
@@ -87,6 +90,16 @@ namespace FPSGame.Weapon
             { WeaponAttrType.DamageTypeTerror, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.DamageTypeRadiation, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.DamageTypeHacker, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+
+            // 易伤系数（目标挂着对应异常状态时的伤害倍率；基础值取伤害配置的"易伤成分"，没配 = 0 = 无易伤）
+            { WeaponAttrType.VulnerabilityToxicity, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.VulnerabilityBurn, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.VulnerabilityFreeze, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.VulnerabilityElectric, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.VulnerabilityVertigo, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.VulnerabilityTerror, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.VulnerabilityRadiation, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.VulnerabilityHacker, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
 
             // 伤害类型系数（爆炸伤害组）
             { WeaponAttrType.ExplosionTypeGun, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
@@ -217,7 +230,8 @@ namespace FPSGame.Weapon
         /// <summary>射击间隔</summary>
         [InspectorName("通用/射击间隔")]
         ShootInterval = 2,
-        /// <summary>弹射次数</summary>
+        /// <summary>弹射次数：子弹命中**单位**后改朝最近的另一个目标继续飞，每弹一次 -1
+        /// （消费点 <c>ProjectileStandard.TryCatapult</c>，索敌半径见子弹 prefab 的"弹射索敌半径"）</summary>
         [InspectorName("通用/弹射次数")]
         Catapult = 3,
         /// <summary>初始冷却</summary>
@@ -430,6 +444,32 @@ namespace FPSGame.Weapon
         /// <summary>伤害类型-骇入系数(爆炸)</summary>
         [InspectorName("爆炸/范围骇入伤害")]
         ExplosionTypeHacker = 231,
+
+        //---------易伤系数（目标挂着对应异常状态时的伤害倍率）----------
+        /// <summary>易伤-毒：目标毒素积蓄槽满时，本武器造成的伤害倍率(3 = 3 倍)</summary>
+        [InspectorName("易伤/毒")]
+        VulnerabilityToxicity = 240,
+        /// <summary>易伤-燃烧：目标燃烧积蓄槽满时，本武器造成的伤害倍率</summary>
+        [InspectorName("易伤/燃烧")]
+        VulnerabilityBurn = 241,
+        /// <summary>易伤-冰冻：目标冰冻积蓄槽满时，本武器造成的伤害倍率</summary>
+        [InspectorName("易伤/冰冻")]
+        VulnerabilityFreeze = 242,
+        /// <summary>易伤-电击：目标电击积蓄槽满时，本武器造成的伤害倍率</summary>
+        [InspectorName("易伤/电击")]
+        VulnerabilityElectric = 243,
+        /// <summary>易伤-眩晕：目标眩晕积蓄槽满时，本武器造成的伤害倍率</summary>
+        [InspectorName("易伤/眩晕")]
+        VulnerabilityVertigo = 244,
+        /// <summary>易伤-恐惧：目标恐惧积蓄槽满时，本武器造成的伤害倍率</summary>
+        [InspectorName("易伤/恐惧")]
+        VulnerabilityTerror = 245,
+        /// <summary>易伤-辐射：目标辐射积蓄槽满时，本武器造成的伤害倍率</summary>
+        [InspectorName("易伤/辐射")]
+        VulnerabilityRadiation = 246,
+        /// <summary>易伤-骇入：目标骇入积蓄槽满时，本武器造成的伤害倍率</summary>
+        [InspectorName("易伤/骇入")]
+        VulnerabilityHacker = 247,
 
         /// <summary>特殊机制</summary>
         [InspectorName("特殊机制")]

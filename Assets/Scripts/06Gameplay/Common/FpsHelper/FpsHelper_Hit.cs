@@ -297,6 +297,7 @@ namespace FPSGame.Gameplay
                 {
                     Damage = damageData.GetDirectDamage(charg) * damageScale,
                     DamageGroups = damageData.DamageGroupDirect,
+                    AboVulnerabilityGroup = damageData.AboVulnerabilityGroup,
                     WeaknessBonus = damageData.GetWeaknessBonus(),
                     AP = damageData.GetDirectAP(charg),
                     NoSource = damageData.NoSource || !soure,
@@ -376,6 +377,7 @@ namespace FPSGame.Gameplay
                         {
                             Damage = value,
                             DamageGroups = damageData.DamageGroupExplosion,
+                            AboVulnerabilityGroup = damageData.AboVulnerabilityGroup,
                             WeaknessBonus = damageData.GetWeaknessBonus(),
                             AP = damageData.GetExplosionAP(charg),
                             NoSource = damageData.NoSource || !soure,
@@ -511,6 +513,7 @@ namespace FPSGame.Gameplay
                 {
                     Damage = value,
                     DamageGroups = groups,
+                    AboVulnerabilityGroup = hitData.data.AboVulnerabilityGroup,
                     WeaknessBonus = hitData.data.GetWeaknessBonus(),
                     AP = hitData.data.GetExplosionAP(1),
                     NoSource = noSource,

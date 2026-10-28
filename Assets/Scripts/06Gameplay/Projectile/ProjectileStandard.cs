@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using FPSGame.GameContract;
+using PEMaths;
 
 using FPSGame.Game;
 using UnityEngine;
@@ -33,7 +34,6 @@ namespace FPSGame.Gameplay
         public float LiftTime = 1.5f;
 
 
-
         public static Color RadiusColor = Color.cyan * 0.2f;
 
         protected float m_ShootTime;
@@ -47,7 +47,15 @@ namespace FPSGame.Gameplay
 
         private List<GameObject> m_Trails=new();
 
-        protected List<GameObject> m_hasHits;
+        /// <summary>射程(<see cref="MaxRange"/>)的计算起点：弹射后重置为弹射点。
+        /// <para>⚠ 必须重置：射程是"起点到当前位置"的直线距离，弹回头时不清零会让总路程瞬间超限 ⇒ 子弹当场消散。</para></summary>
+        protected Vector3 m_RangeOrigin;
+
+        /// <summary>本段生命时长（秒），弹射后重起一段也用它</summary>
+        private float m_LifeTime;
+
+        /// <summary>生命引信协程句柄：弹射时要停掉旧的、重起一段（见 <see cref="ResetLife"/>）</summary>
+        private Coroutine m_LifeRoutine;
 
         protected virtual void OnEnable()
         {
@@ -58,9 +66,10 @@ namespace FPSGame.Gameplay
         protected virtual void _OnShoot()
         {
             //这里可以有武器，但是update里面得脱离
-            m_hasHits = new();
+            InitCatapult();          // 弹射次数（没配 = 0 = 老行为）+ 清空已命中表
             m_isStop = false;
             m_ShootTime = Time.time;
+            m_RangeOrigin = InitialPosition;
             m_LastRootPosition = Root.position;
             m_Velocity = transform.forward * WeaponBase.CurrentSpeed;
             //m_IgnoredColliders = new List<Collider>();
@@ -97,7 +106,10 @@ namespace FPSGame.Gameplay
             Collider[] weaponColliders = Owner.GetComponentsInChildren<Collider>();
             if (weaponColliders.IsValid()) m_IgnoredColliders.AddRange(weaponColliders);
             */
-            if (WeaponBase.CurrentLife > 0) StartCoroutine(DelayedRelese(WeaponBase.CurrentLife));
+            // 生命引信：时长记下来，弹射时要按同一时长重起一段（见 ResetLife）
+            m_LifeTime = WeaponBase.CurrentLife;
+            m_LifeRoutine = null;    // 池化复用：上一段的句柄已失效
+            StartLife();
             m_lastTime = Time.time;
         }
 
@@ -119,13 +131,14 @@ namespace FPSGame.Gameplay
                 return;
             }
 
-            var dis = Vector3.Distance(InitialPosition, transform.position);
+            // 射程按"本段起点"算：弹射后 m_RangeOrigin 会被重置成弹射点（见 TryCatapult）
+            var dis = Vector3.Distance(m_RangeOrigin, transform.position);
             //超出范围
             if (MaxRange > 0 && dis > MaxRange)
             {
                 m_isStop = true;
                 // 数据说话：这一条就是"子弹从目标身上飞过去"的直接证据（有终点约束时不该走到这里）
-                FPSGame.Utils.NetSyncLog.BulletLog("超射程消散", $"起点={InitialPosition:F2} 位置={transform.position:F2} 飞了={dis:F1}m/上限{MaxRange:F1}m " +
+                FPSGame.Utils.NetSyncLog.BulletLog("超射程消散", $"起点={m_RangeOrigin:F2} 位置={transform.position:F2} 飞了={dis:F1}m/上限{MaxRange:F1}m " +
                     (HasVisualEndPoint ? $"终点={VisualEndPoint:F2} 到终点还差={Vector3.Distance(transform.position, VisualEndPoint):F1}m ←不该发生" : "终点=<无>"));
                 //GlobalEventManager.BulletHit(Owner,transform.position);
                 Debug.Log("落空"+gameObject.name,gameObject);
@@ -139,7 +152,8 @@ namespace FPSGame.Gameplay
             // 首帧 dis 在 Move 前计算为 0，若用严格 > 会跳过发射点到第一帧末的整段路径，
             // 导致高速子弹(单帧>1m)第一帧就钻入地形，之后 SphereCast 起点在碰撞体内部永不命中。
             // 用 >= 保证发射瞬间即参与检测(m_LastRootPosition=发射点，扫掠段覆盖首段)。
-            if (dis >= MinRange) { TryHit(); }
+            // ⚠ 安全引信(MinRange)必须从**发射点**算：弹射后子弹离弹射点很近，用 m_RangeOrigin 会把它锁死"不检测"。
+            if ((InitialPosition - transform.position).sqrMagnitude >= MinRange * MinRange) { TryHit(); }
             m_lastTime = Time.time;
             m_LastRootPosition = Root.position;
         }
@@ -316,6 +330,16 @@ namespace FPSGame.Gameplay
                 TryStop();
                 return;
             }
+
+            // 弹射：命中**单位**且还有次数 ⇒ 改朝最近的另一个目标继续飞，本发不结束
+            // ⚠ 这里只改"往哪飞"：OnHit 的订阅顺序是 HitFX 先、FpsHelper.Hit（伤害）后
+            //   （见 OnEnable 与 ProjectileBase.Shoot）⇒ 本次命中的伤害早已封装好，改位姿不影响结算。
+            if (TryCatapult(hitdata.pos, hitdata.collider, out var catapultTarget))
+            {
+                Redirect(hitdata.pos, catapultTarget.CenterPos);
+                return;
+            }
+
             bool damageable = hitdata.collider.GetComponent<IDamageable>().IsValid();
             //可以伤害说明是单位
             //Debug.LogError("是单位?"+ damageable+"有穿透单位标记"+ BulletFlag.HasFlag(BulletFlag.PenetrateUnits)+"有穿透地形标记"+ BulletFlag.HasFlag(BulletFlag.PenetrateTerrain));
@@ -341,6 +365,26 @@ namespace FPSGame.Gameplay
             StopTrail();
         }
 
+        /// <summary>把子弹挪到弹射点并改朝新目标飞（"选谁弹"在 <see cref="ProjectileBase.TryCatapult"/>）。</summary>
+        private void Redirect(Vector3 from, Vector3 toPos)
+        {
+            Vector3 dir = toPos - from;
+            dir = dir.sqrMagnitude > 0.0001f ? dir.normalized : transform.forward;
+
+            // ⚠ 必须先转向再摆位置：Root/Tip 是子物体，转过之后 Root 相对父级的偏移也变了
+            //   （先摆位置会让弹体停在弹射点旁边几厘米到几十厘米处）
+            transform.forward = dir;
+            Vector3 rootOffset = Root.position - transform.position;
+            // 沿新方向让开一点：下一帧 SphereCast 的起点还在刚命中的碰撞体里 ⇒ 会从内部起扫（漏检/自撞）
+            transform.position = from + dir * (Radius + 0.05f) - rootOffset;
+
+            // 速度直接换向：保留重力累加会让弹射变成抛物线，近距离目标直接打偏
+            m_Velocity = dir * (WeaponBase ? WeaponBase.CurrentSpeed : m_Velocity.magnitude);
+            m_ShootTime = Time.time;          // 重新给"刚起飞 1m 内不判碰撞"的宽限，防止立刻自撞刚打中的单位
+            m_RangeOrigin = transform.position;
+            m_LastRootPosition = Root.position;
+        }
+
 
         void StopTrail()
         {
@@ -364,6 +408,22 @@ namespace FPSGame.Gameplay
         }
 
  
+        /// <summary>按 <see cref="m_LifeTime"/> 重新起一次引信（旧的那一段先停掉）。</summary>
+        private void StartLife()
+        {
+            if (m_LifeRoutine != null)
+            {
+                StopCoroutine(m_LifeRoutine);
+                m_LifeRoutine = null;
+            }
+            if (m_LifeTime > 0f) m_LifeRoutine = StartCoroutine(DelayedRelese(m_LifeTime));
+        }
+
+        /// <summary>弹射后重起生命：不重起的话，"快到期时才弹出去"的那一段会被剩几毫秒的寿命直接吃掉
+        /// （到点就在弹射点就地结算并回收，看起来像"弹射没生效"）。</summary>
+        protected override void ResetLife() => StartLife();
+
+
         protected virtual System.Collections.IEnumerator DelayedRelese(float time)
         {
             yield return new WaitForSeconds(time);

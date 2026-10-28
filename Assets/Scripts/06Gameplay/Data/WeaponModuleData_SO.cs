@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using FPSGame.Attributes;
 using UnityEngine;
@@ -14,6 +14,8 @@ namespace FPSGame.GameData
     public class WeaponModuleData_SO : ScriptableObject
     {
         public new string name;
+        [TextArea(3,5)]
+        public string describe;
         [InspectorName("模组类型")]
         public ModuleType type;
         [SpritePreview(3,3)]

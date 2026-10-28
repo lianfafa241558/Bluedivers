@@ -91,6 +91,10 @@ namespace FPSGame.Weapon
         /// <summary>伤害成分</summary>
         public List<SKVP<DamageTypeEnum, float>> DamageGroupExplosion = new() { new(DamageTypeEnum.Explosion, 1), new(DamageTypeEnum.Destruction, 1) };
 
+        /// <summary>易伤成分：目标挂着对应异常状态(积蓄槽满)时，整笔伤害 × 该系数(填 3 = 3 倍)，没挂则 ×1。</summary>
+        /// <para>⚠ <c>Health.HandleDamage</c> 已内置"冰冻满槽 ⇒ 动能/爆炸/真实 ×3"，这里再填 Freeze 会乘两次。</para>
+        public List<SKVP<DamageTypeEnum, float>> AboVulnerabilityGroup = new() { new(DamageTypeEnum.Freeze, 3)};
+
 
         //[Header("碰撞")]
         /// <summary>特效使用碰撞点的朝向</summary>
@@ -268,6 +272,15 @@ namespace FPSGame.Weapon
                 Attr.ExplosionTypeTerror => DamageGroupExplosion.GetValue(DamageTypeEnum.Terror),
                 Attr.ExplosionTypeRadiation => DamageGroupExplosion.GetValue(DamageTypeEnum.Radiation),
                 Attr.ExplosionTypeHacker => DamageGroupExplosion.GetValue(DamageTypeEnum.Hacker),
+                // 易伤系数（没配 = 0 = 无易伤，乘法那边按 <=0 跳过）
+                Attr.VulnerabilityToxicity => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Toxicity),
+                Attr.VulnerabilityBurn => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Burn),
+                Attr.VulnerabilityFreeze => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Freeze),
+                Attr.VulnerabilityElectric => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Electric),
+                Attr.VulnerabilityVertigo => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Vertigo),
+                Attr.VulnerabilityTerror => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Terror),
+                Attr.VulnerabilityRadiation => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Radiation),
+                Attr.VulnerabilityHacker => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Hacker),
                 _ => 0,
             };
         }
@@ -313,6 +326,16 @@ namespace FPSGame.Weapon
         public void SetDamageTypeRadiation(PEInt value) => DamageGroupDirect.SetValue(DamageTypeEnum.Radiation, value.RawFloat);
         public void SetDamageTypeHacker(PEInt value) => DamageGroupDirect.SetValue(DamageTypeEnum.Hacker, value.RawFloat);
 
+        // 易伤系数：0/负 = 没配（Damageable 跳过），≥1 = 目标挂着该异常状态时的伤害倍率
+        public void SetVulnerabilityToxicity(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Toxicity, value.RawFloat);
+        public void SetVulnerabilityBurn(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Burn, value.RawFloat);
+        public void SetVulnerabilityFreeze(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Freeze, value.RawFloat);
+        public void SetVulnerabilityElectric(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Electric, value.RawFloat);
+        public void SetVulnerabilityVertigo(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Vertigo, value.RawFloat);
+        public void SetVulnerabilityTerror(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Terror, value.RawFloat);
+        public void SetVulnerabilityRadiation(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Radiation, value.RawFloat);
+        public void SetVulnerabilityHacker(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Hacker, value.RawFloat);
+
         // 伤害类型系数（爆炸伤害组）
         public void SetExplosionTypeGun(PEInt value) => DamageGroupExplosion.SetValue(DamageTypeEnum.Gun, value.RawFloat);
         public void SetExplosionTypeExplosion(PEInt value) => DamageGroupExplosion.SetValue(DamageTypeEnum.Explosion, value.RawFloat);
@@ -332,6 +355,7 @@ namespace FPSGame.Weapon
         #region 接口映射(显式实现以保留字段的Unity序列化)
         List<SKVP<DamageTypeEnum, float>> IDamageData.DamageGroupDirect => DamageGroupDirect;
         List<SKVP<DamageTypeEnum, float>> IDamageData.DamageGroupExplosion => DamageGroupExplosion;
+        List<SKVP<DamageTypeEnum, float>> IDamageData.AboVulnerabilityGroup => AboVulnerabilityGroup;
         bool IDamageData.NoSource => NoSource;
         GameObject IDamageData.ImpactVfx => ImpactVfx;
         float IDamageData.ImpactVfxSpawnOffset => ImpactVfxSpawnOffset;

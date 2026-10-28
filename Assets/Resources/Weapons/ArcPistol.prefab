@@ -157,6 +157,10 @@ MonoBehaviour:
       Value: 0
     - Key: 17
       Value: 1
+    - Key: 241
+      Value: 1
+    - Key: 3
+      Value: 0
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
@@ -187,6 +191,9 @@ MonoBehaviour:
     DamageGroupExplosion:
     - Key: 1
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
@@ -229,7 +236,7 @@ MonoBehaviour:
   showInReload: 0
   showReloadTime: 0
   showCool: 0
-  ShootType: 1
+  ShootType: 0
   WeaponFlag: 2
   AutomaticReleaseOnCharged: 0
   Lockshape: 0
@@ -279,7 +286,15 @@ MonoBehaviour:
     type: 2
     addTag: 0
     removeTag: 0
-  showAttr: 1400000002000000010000000d0000000e0000000f000000100000001900000007000000660000001200000011000000
+  - name: "\u5BF9\u71C3\u70E7\u654C\u4EBA\u4F24\u5BB3"
+    type: 241
+    addTag: 0
+    removeTag: 0
+  - name: "\u5F39\u5C04\u6B21\u6570"
+    type: 3
+    addTag: 8
+    removeTag: 0
+  showAttr: 1400000002000000010000000d0000000e0000000f00000010000000190000000700000066000000120000001100000003000000
   m_UniqueAttr: []
   Upgrade:
   - Key: 2
@@ -299,9 +314,9 @@ MonoBehaviour:
     - {fileID: 11400000, guid: cf3a1206223e0c4be9ad9bf6f19eddd6, type: 2}
   - Key: 14
     Value:
-    - {fileID: 11400000, guid: 536b59f8be24f30d75ee164b2daef6b7, type: 2}
     - {fileID: 11400000, guid: 02dbc072bbc16d341beb7a3f1dd38485, type: 2}
     - {fileID: 11400000, guid: 265c92ee826f7cec569bd45eb933d55d, type: 2}
+    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
   - Key: 18
     Value:
     - {fileID: 11400000, guid: 6069b9460e32cde382f61c76bb6f892c, type: 2}
