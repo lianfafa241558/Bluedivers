@@ -12,19 +12,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 150ca7a623f31424aad6112aba22d37e, type: 3}
   m_Name: WUD_OverpressureLoad
   m_EditorClassIdentifier: 
-  name: "\u8d85\u538b\u88c5\u836f"
-  type: "\u4f24\u5bb3"
-  icon: {fileID: 21300000, guid: c01ee1f9f5e5aeb41b9508f38a67cdeb, type: 3}
-  desc: "\u88c5\u836f\u538b\u8fc7\u4e86\u9a8c\u6536\u6807\u51c6\uff0c\u6bcf\u4e00\u53d1\u90fd\u66f4\u72e0\uff0c\u6273\u673a\u4e5f\u8ddf\u5f97\u66f4\u987a\u3002\u5b89\u5168\u88d5\u5ea6\u90a3\u4e1c\u897f\u662f\u5199\u7ed9\u62a5\u544a\u770b\u7684\u3002"
+  name: "\u4E8C\u8F6E\u7206\u53D1"
+  type: "\u4F24\u5BB3"
+  icon: {fileID: 21300000, guid: c01953264813b2f40aeaa3a4fc07fdef, type: 3}
+  desc: "\u81EA\u5B9A\u4E49\u5C04\u51FB\u673A\u5236\u5141\u8BB8\u4F60\u5C04\u51FB\u4E09\u53D1\u3002\u4E3A\u4E86\u9632\u6B62\u67AA\u5728\u624B\u4E2D\u7206\u70B8\uFF0C\u53D1\u5C04\u4E0B\u4E00\u8F6E\u53D1\u5C04\u524D\u4F1A\u6709\u5EF6\u8FDF\u3002"
   cost:
   - Key: 0
     Value: 3000
   modifys:
   - name: 
-    type: 20
-    modifier: 2
-    value: 0.3
+    type: 6
+    modifier: 4
+    value: 2
   - name: 
     type: 2
     modifier: 2
-    value: -0.1
+    value: 2
+  - name: 
+    type: 19
+    modifier: 4
+    value: 2
+  - name: "\u4E09\u8FDE\u53D1"
+    type: 27
+    modifier: 4
+    value: 0.06
+  - name: "\u4E09\u8FDE\u53D1"
+    type: 999
+    modifier: 4
+    value: 1

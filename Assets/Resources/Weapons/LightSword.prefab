@@ -160,9 +160,13 @@ MonoBehaviour:
     ExplosionRange: 1.3
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 5
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
@@ -202,7 +206,6 @@ MonoBehaviour:
     type: 3}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -227,6 +230,26 @@ MonoBehaviour:
   RHand: {fileID: 513206210486529228}
   ShowRoot: {fileID: 9120731855190911192}
   RecoilForce: 0.01
+  RecoilProfile:
+    PitchKick: 1.5
+    YawKick: 0.4
+    YawStep: 0.12
+    YawRandom: 0.35
+    KickSharpness: 40
+    RecoveryDelay: 0.1
+    RecoverySpeed: 12
+    YawRecoveryRatio: 0.7
+    MaxPitch: 12
+    MaxYaw: 6
+    AdsScale: 0.7
+    WeaponKickBack: 0.05
+    WeaponKickPitch: 2.5
+    WeaponKickRoll: 1.2
+    WeaponSpring: 14
+    SpreadBloomPerShot: 0
+    SpreadBloomMax: 4
+    SpreadBloomDecay: 8
+    ShakePerShot: 0
   AimingHideCrosshair: 0
   AimZoomRatio: 0.7
   AimOffset: {x: 0, y: 0.075, z: 0}
@@ -252,9 +275,9 @@ MonoBehaviour:
     removeTag: 0
   showAttr: 1400000015000000160000000200000001000000000000000c00000019000000
   m_UniqueAttr:
-  - name: "\u65E0\u89C6\u62A4\u7532"
+  - name: "\u5F3A\u5236\u8FDE\u5C04"
     value: 0
-    tag: 0
+    tag: 32
   Upgrade:
   - Key: 2
     Value:
@@ -279,9 +302,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
   - {fileID: 11400000, guid: bf45066281c172e44ac8362305631285, type: 2}
   - {fileID: 11400000, guid: d9b4f66c81c53342cff5ac24577f388b, type: 2}
-  - {fileID: 11400000, guid: a190a4b50782b932c9239c3f452c844b, type: 2}
   - {fileID: 11400000, guid: 3c76607a9fb358a894d2d5bf8297e895, type: 2}
-  - {fileID: 11400000, guid: a2341a4a3510bdface5520b20cec5a7c, type: 2}
   - {fileID: 11400000, guid: 794d9b72c7d346cf8223b03148427a20, type: 2}
   ActiveModule: {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
 --- !u!95 &433052892956228990

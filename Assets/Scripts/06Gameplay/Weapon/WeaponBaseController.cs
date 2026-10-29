@@ -333,15 +333,44 @@ namespace FPSGame.Weapon {
         protected Transform[] Muzzles;
         private int shootCount=0;
 
-        /// <summary>每次射击消耗的弹药量(开启齐射时自动按发射点位数量调整)</summary>
-        [SerializeField]
-        protected int ShootCost = 1;
+        // ---- 连射（弹丸数量>1 且连射间隔>0 时生效）----
+        /// <summary>还剩几轮连射要打（0 = 没有进行中的连射）。一轮 = 每个发射点各一发</summary>
+        private int _burstRoundsLeft;
+        /// <summary>距下一轮连射的剩余时间(秒)</summary>
+        private float _burstTimer;
+        /// <summary>连射用的发射点；齐射武器为 null（每轮遍历 <see cref="WeaponManyMuzzles"/>）</summary>
+        private Transform _burstMuzzle;
+
+        // ---- 远端复刻的连发排队（只生成表现弹，不结算伤害）----
+        /// <summary>远端复刻还剩几轮没放；齐射武器每轮 = 每个发射点各一颗</summary>
+        private int _visualBurstLeft;
+        /// <summary>距下一轮远端复刻的剩余时间(秒)</summary>
+        private float _visualBurstTimer;
+        /// <summary>远端复刻用的发射点；齐射武器为 null</summary>
+        private Transform _visualBurstMuzzle;
+        /// <summary>远端复刻的终点约束（开枪者准心实指的点，后续各轮沿用）</summary>
+        private Vector3 _visualBurstEndPoint;
+
+        /// <summary>每次射击消耗的弹药量：基础值来自属性 <see cref="Attr.ShootCost"/>（齐射武器 = 发射点位数量），
+        /// 因此**改装给的修正能走上来**。
+        /// <para>⚠ 别再改回序列化字段：字段是死值，`modifys` 里的加减项加不到它身上（原来的写法就是这个问题）。</para>
+        /// <para>⚠ 下限夹 1：`OnlyInt` 是**向下取整**，1 再吃一个 ×0.5 就变 0 —— 而 0 消耗在 `UseMagazine`
+        /// 里等于永久无限弹（负值更糟：反向加弹）。真要无限弹请把"弹匣容量"配成负数
+        /// （<see cref="InfiniteMagazine"/> 的判据就是这个）。</para></summary>
+        public virtual int ShootCost => Mathf.Max(1, AttrFinal(Attr.ShootCost, 1).RawInt);
 
         /// <summary>每次射击消耗的弹药量（<see cref="ShootCost"/> 的**只读出口**）。
         /// <para>▍用途：联机上报"开火后的弹量"要拿它折算 —— <c>OnShoot</c> 是在 <see cref="HandleShoot"/> 里抛的，
         /// 而 <c>UseMagazine(ShootCost)</c> 在它**之后**才执行 ⇒ 事件回调里读到的还是"扣之前"的值
         /// （见 <c>VehicleWeaponsManager.TryGetAmmoAfterShot</c>）。</para></summary>
         public int AmmoPerShot => ShootCost;
+
+        /// <summary>连射间隔(秒)：0 = 一次打出全部弹丸（霰弹枪）；>0 且弹丸数量 >1 时每隔这么久打一发。
+        /// <para>▍弹丸数(3) + 间隔(0.08) ⇒ 三连发；弹丸数(8) + 间隔(0) ⇒ 霰弹枪（老行为）。</para></summary>
+        public float BurstInterval => AttrFinal(Attr.BurstInterval).RawFloat;
+
+        /// <summary>是否还有连射没打完（HUD / 调试可读）</summary>
+        public bool InBurst => _burstRoundsLeft > 0;
 
         public override void LogicInit()
         {
@@ -365,12 +394,8 @@ namespace FPSGame.Weapon {
             if (WeaponMuzzle2.IsValid()) list.Add(WeaponMuzzle2);
             Muzzles = list.ToArray();
 
-            // 齐射:开火时所有点位一起开火,并按点位数量自动调整一次消耗的弹药量
-            if (UseManyMuzzle)
-            {
-                ShootCost = WeaponManyMuzzles.Count;
-            }
-            else if (WeaponManyMuzzles.Count > 0)
+            // 齐射:开火时所有点位一起开火，一次消耗的弹药量在 InitAttribute 里按点位数量建初值
+            if (!UseManyMuzzle && WeaponManyMuzzles.Count > 0)
             {
                 Muzzles = WeaponManyMuzzles.ToArray();
             }
@@ -404,12 +429,13 @@ namespace FPSGame.Weapon {
             cfg.Init();
 
             // 噪声倍率与伤害配置无关，基础值恒为 1(不改行为)；只吃改装加成。
-            // ⚠ 必须在 InitAttribute 里建出来：ApplyUpgrade 走 cfg[type] 取不到会 NRE
             if (!cfg[Attr.NoiseScale]) cfg.Add(Attr.NoiseScale, 1);
-
             // 弹射次数：0 = 不弹射，同样与伤害配置无关（消费点是子弹那边读 AttrFinal）。
-            // 建出来的原因同噪声：改装项在外层按 cfg[type] 取，缺项会走"按 0 兜底 + 告警"那条路
             if (!cfg[Attr.Catapult]) cfg.Add(Attr.Catapult, 0);
+            // 射击消耗：齐射武器一次消耗 = 发射点位数量，其余为 1。
+            if (!cfg[Attr.ShootCost]) cfg.Add(Attr.ShootCost, UseManyMuzzle ? Mathf.Max(1, WeaponManyMuzzles.Count) : 1);
+            // 连射间隔：0 = 一次性全部打出（霰弹枪，老行为），只有配了正值才进连发
+            if (!cfg[Attr.BurstInterval]) cfg.Add(Attr.BurstInterval, 0);
         }
 
         protected virtual void UnInitAttribute()
@@ -432,6 +458,11 @@ namespace FPSGame.Weapon {
             // 连射散布膨胀回落：走逻辑帧，与弹道同一条时间轴（放 Update 会被子类 override 漏掉）
             if (_spreadBloom > 0f)
                 _spreadBloom = Mathf.MoveTowards(_spreadBloom, 0f, SpreadBloomDecay * TickTime.RawFloat);
+
+            // 连射：补打上一轮扣扳机没打完的弹丸（弹丸数>1 且连射间隔>0 才有事可做）
+            UpdateBurst();
+            // 远端开火的连发排队（纯表现），与本地连射同一条时间轴
+            UpdateVisualBurst();
 
         }
 
@@ -516,6 +547,9 @@ namespace FPSGame.Weapon {
         ///
         /// <para>⚠ 只有**首颗**吃开枪端传来的 <paramref name="direction"/>/<paramref name="endPoint"/>（那是他准心实指的点）；
         /// 其余各颗用本端散布自由飞 —— 否则多弹丸会全部挤在同一点，看起来反而更假。</para>
+        ///
+        /// <para>▍连发（<see cref="BurstInterval"/> &gt;0）时**只放第一轮**，其余轮次进 <c>_visualBurstLeft</c>
+        /// 由 <see cref="UpdateVisualBurst"/> 按同一间隔补放 —— 否则三连发在别人屏幕上还是"一枪三弹齐出"。</para>
         /// </summary>
         /// <param name="muzzleIndex">开枪者用的是第几个发射点（<c>&gt;=0</c> = 该枪管；<c>&lt;0</c> = 齐射所有多发射点）。
         /// ⚠ 多管枪轮流开火，本端那把武器**从不本机开火** ⇒ 自己的计数永远是 0，必须靠消息里的下标。</param>
@@ -523,13 +557,22 @@ namespace FPSGame.Weapon {
             int muzzleIndex = 0)
         {
             int count = Mathf.Clamp(AttrFinal(Attr.BulletsPerShot, 1).RawInt, 1, 64);
+            // 连发：只放第一轮，其余按间隔排队（弹丸数 3 + 间隔 0.08 ⇒ 三连发）
+            float interval = BurstInterval;
+            bool isBurst = count > 1 && interval > 0f;
+            int firstRound = isBurst ? 1 : count;
 
             if (muzzleIndex < 0 && UseManyMuzzle && WeaponManyMuzzles != null && WeaponManyMuzzles.Count > 0)
             {
                 for (int u = 0; u < WeaponManyMuzzles.Count; ++u)
-                    for (int i = 0; i < count; ++i)
+                    for (int i = 0; i < firstRound; ++i)
                         SpawnVisualBullet(WeaponManyMuzzles[u], (u == 0 && i == 0) ? direction : default,
                             (u == 0 && i == 0) ? endPoint : default);
+
+                _visualBurstMuzzle = null;
+                _visualBurstEndPoint = endPoint;
+                _visualBurstLeft = isBurst ? count - 1 : 0;
+                _visualBurstTimer = interval;
                 return;
             }
 
@@ -537,8 +580,13 @@ namespace FPSGame.Weapon {
             Transform pipe = muzzle;
             if (Muzzles != null && muzzleIndex >= 0 && muzzleIndex < Muzzles.Length) pipe = Muzzles[muzzleIndex];
 
-            for (int i = 0; i < count; ++i)
+            for (int i = 0; i < firstRound; ++i)
                 SpawnVisualBullet(pipe, i == 0 ? direction : default, i == 0 ? endPoint : default);
+
+            _visualBurstMuzzle = pipe;
+            _visualBurstEndPoint = endPoint;
+            _visualBurstLeft = isBurst ? count - 1 : 0;
+            _visualBurstTimer = interval;
         }
         /// <summary>
         /// 发射音效，需要有连续射击
@@ -563,24 +611,22 @@ namespace FPSGame.Weapon {
         {
             if (UseContinuousShootSound)
             {
-                //showAudioState = m_ContinuousShootAudioSource.isPlaying;
                 //敌人都是按着左键不撒手的
-                if (WantsToShoot/* && Get(Attr.Magazine, AttrValueEnum.Curr) >= 1*/)
+                if (WantsToShoot)
                 {
                     if (!m_ContinuousShootAudioSource.isPlaying)
                     {
                         ShotSFX(ContinuousShootStartSfx);
-                        //if (m_ContinuousShootEndSource.IsValid() && m_ContinuousShootEndSource.clip == ContinuousShootEndSfx) m_ContinuousShootEndSource.Stop();
-                        //m_ContinuousShootStartSource =PlaySFX(ContinuousShootStartSfx);
                         m_ContinuousShootAudioSource.Play();
                     }
                 }
                 else if (m_ContinuousShootAudioSource.isPlaying)
                 {
-                    ShotSFX(ContinuousShootEndSfx);
-                    //if (m_ContinuousShootStartSource.IsValid() && m_ContinuousShootStartSource.clip == ContinuousShootStartSfx) m_ContinuousShootStartSource.Stop();
-                    //m_ContinuousShootEndSource =PlaySFX(ContinuousShootEndSfx);
+                    // ⚠ 收尾音必须**独立播**：原来 `ShotSFX(End)` 是"换 clip + Play"打在这条循环源上，
+                    //   紧跟着又 Stop() ⇒ 收尾音活不过一帧，等于没有；换成同一条循环源还要等它播完才能复用，会卡住下一次开火。
+                    //   走 PlaySFX 的一次性空间音（与 ShootSfx 同一条路），循环源立刻停，互不干扰。
                     m_ContinuousShootAudioSource.Stop();
+                    PlaySFX(ContinuousShootEndSfx);
                 }
             }
         }
@@ -619,13 +665,21 @@ namespace FPSGame.Weapon {
             //发射数量，如果以后做了蓄力会更多弹丸数量再说
             int bulletsPerShotFinal = AttrFinal(Attr.BulletsPerShot,1).RawInt;
 
+            // 连射：弹丸数 >1 且连射间隔 >0 ⇒ 本次只打第一轮，剩下的按间隔在 LogicTick 里逐轮打。
+            // 弹丸数<=1 或间隔=0 时保持"一次性全部打出"（霰弹枪 / 老行为）。
+            // ⚠ 弹药在 TryShoot 里一次性扣整轮(ShootCost)，连射中途不再结算弹药。
+            float burstInterval = BurstInterval;
+            bool isBurst = bulletsPerShotFinal > 1 && burstInterval > 0f;
+            int firstRoundCount = isBurst ? 1 : bulletsPerShotFinal;
+
             if (UseManyMuzzle)
             {
                 LastMuzzleIndex = -1;   // 齐射：所有发射点一起开
+                _burstMuzzle = null;    // 连射的后续轮次遍历 WeaponManyMuzzles
                 // 齐射:所有发射点位一起开火
                 for (int u = 0; u < WeaponManyMuzzles.Count; ++u)
                 {
-                    ShootFromMuzzle(WeaponManyMuzzles[u], bulletsPerShotFinal);
+                    ShootFromMuzzle(WeaponManyMuzzles[u], firstRoundCount);
                 }
             }
             else
@@ -633,8 +687,14 @@ namespace FPSGame.Weapon {
                 // 交替射击
                 LastMuzzleIndex = shootCount % Muzzles.Length;   // ★ 先记下标再自增（接收端按它选枪管）
                 Transform muzzle = WeaponMuzzle = Muzzles[shootCount++ % Muzzles.Length];
-                ShootFromMuzzle(muzzle, bulletsPerShotFinal);
+                ShootFromMuzzle(muzzle, firstRoundCount);
+                _burstMuzzle = muzzle;
             }
+
+            // 连射状态每次扣扳机都整份重写：新的扣扳机会接管上一段没打完的连射（正常被 ShootInterval 卡着不会重叠），
+            // 配表在连射途中被改掉（换模组）时也会在这里收尾。
+            _burstRoundsLeft = isBurst ? bulletsPerShotFinal - 1 : 0;
+            _burstTimer = burstInterval;
 
             if (!UseContinuousShootSound)
             {
@@ -646,24 +706,87 @@ namespace FPSGame.Weapon {
             //表现层音效距离走上面的 SFXRange，两者互不影响
             EmitFireNoise(false);
 
+            // 一发一份的代价（连射膨胀 / 热量）：**连发时每轮各算一次**，见 UpdateBurst
+            ApplyPerShotCost();
+        }
+
+        /// <summary>一"发"的代价：连射散布膨胀 + 热量。
+        /// <para>▍触发点两处：<see cref="HandleShoot"/>（首轮 / 霰弹枪的一次性全打）与
+        /// <see cref="UpdateBurst"/>（连发后续每轮）。⚠ 别再放回 HandleShoot 里当"每次扣扳机一份"——
+        /// 三连发的热量/散布就只有一发了。</para></summary>
+        private void ApplyPerShotCost()
+        {
             // 连射散布膨胀：**发射之后**才累加 ⇒ 首发永远是最准的（先加会让第一发就散）
             if (SpreadBloomPerShot > 0f)
                 _spreadBloom = Mathf.Min(_spreadBloom + SpreadBloomPerShot, SpreadBloomMax);
 
-            // 热量系统：每次射击增加热量，蓄力武器受蓄力热量倍率影响
+            // 热量系统：每发增加热量，蓄力武器受蓄力热量倍率影响
             var heatPerShot = AttrFinal(Attr.HeatPerShot).RawFloat;
-            if (heatPerShot > 0f)
+            if (heatPerShot <= 0f) return;
+            var chargeHeatScale = PEMath.Lerp(1, AttrFinal(Attr.ChargeHeatScale, 1), WeaponChargeScale_D);
+            _currentHeat += heatPerShot * chargeHeatScale.RawFloat;
+            _coolTimer = AttrFinal(Attr.CoolDelay).RawFloat;
+            if (_currentHeat >= MaxHeat)
             {
-                var chargeHeatScale = PEMath.Lerp(1, AttrFinal(Attr.ChargeHeatScale, 1), WeaponChargeScale_D);
-                _currentHeat += heatPerShot * chargeHeatScale.RawFloat;
-                _coolTimer = AttrFinal(Attr.CoolDelay).RawFloat;
-                if (_currentHeat >= MaxHeat)
-                {
-                    _currentHeat = MaxHeat;
-                    IsOverheated = true;
-                    _overheatTimer = AttrFinal(Attr.OverheatDuration).RawFloat;
-                }
+                _currentHeat = MaxHeat;
+                IsOverheated = true;
+                _overheatTimer = AttrFinal(Attr.OverheatDuration).RawFloat;
             }
+        }
+
+        /// <summary>连射推进：每逻辑帧扣一次时间，到点打一轮（每个发射点各一发）。
+        /// <para>⚠ 走逻辑帧而不是协程：武器被收起/销毁时 <see cref="OnDisable"/> 直接取消，
+        /// 不会出现"换掉枪之后又在下一把枪上补打两发"。</para>
+        /// <para>⚠ 粒度就是 1 个逻辑帧（20ms）：间隔配得比帧长还小会退化成"每帧一发"。</para></summary>
+        private void UpdateBurst()
+        {
+            if (_burstRoundsLeft <= 0) return;
+            // ⚠ 过热**不**中断已扣过弹药的连射：弹药在 TryShoot 已经一次性扣掉，把剩下的吞掉等于"付了钱不发货"；
+            //   过热只挡住下一次扣扳机（HandleShoot 开头那条）
+            _burstTimer -= TickTime.RawFloat;
+            if (_burstTimer > 0f) return;
+
+            if (_burstMuzzle != null) ShootFromMuzzle(_burstMuzzle, 1);
+            else for (int u = 0; u < WeaponManyMuzzles.Count; ++u) ShootFromMuzzle(WeaponManyMuzzles[u], 1);
+
+            // 首轮的枪声由 HandleShoot 播，后续每轮各补一枪；噪声仍按"一次扣扳机一条"算，不重复
+            if (!UseContinuousShootSound) PlaySFX(ShootSfx);
+            ApplyPerShotCost();
+
+            if (--_burstRoundsLeft > 0) _burstTimer = BurstInterval;
+        }
+
+        /// <summary>远端复刻的连发排队：首颗即时、其余按同一 <see cref="BurstInterval"/> 补发（纯表现）。
+        /// <para>▍为什么不走网络：弹丸数/间隔都在**本地这份武器实例**上（改装配置同源）⇒ 可本地验算，不必上网。</para></summary>
+        private void UpdateVisualBurst()
+        {
+            if (_visualBurstLeft <= 0) return;
+            _visualBurstTimer -= TickTime.RawFloat;
+            if (_visualBurstTimer > 0f) return;
+
+            if (_visualBurstMuzzle != null) SpawnVisualBullet(_visualBurstMuzzle, default, _visualBurstEndPoint);
+            else for (int u = 0; u < WeaponManyMuzzles.Count; ++u) SpawnVisualBullet(WeaponManyMuzzles[u], default, _visualBurstEndPoint);
+
+            if (--_visualBurstLeft > 0) _visualBurstTimer = BurstInterval;
+        }
+
+        /// <summary>取消进行中的连射（换枪、收起、销毁时调用；本机真弹与远端表现弹一起掐）</summary>
+        protected void CancelBurst()
+        {
+            _burstRoundsLeft = 0;
+            _burstTimer = 0f;
+            _burstMuzzle = null;
+
+            _visualBurstLeft = 0;
+            _visualBurstTimer = 0f;
+            _visualBurstMuzzle = null;
+            _visualBurstEndPoint = default;
+        }
+
+        /// <summary>收起/销毁即取消连射，避免把上一把枪没打完的弹丸补到下一把枪上</summary>
+        protected virtual void OnDisable()
+        {
+            CancelBurst();
         }
 
         /// <summary>

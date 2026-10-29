@@ -12,17 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 744367736a7aee740922335e2157ba81, type: 3}
   m_Name: WMD_AutoBeamController
   m_EditorClassIdentifier: 
-  name: "\u81ea\u52a8\u5149\u675f\u63a7\u5236\u5668"
-  describe: "\u88c5\u4e86\u4e00\u5957\u4f1a\u81ea\u52a8\u8c03\u8282\u653e\u7535\u8282\u594f\u7684\u63a7\u5236\u5668\u3002\u7701\u5fc3\uff0c\u4ee3\u4ef7\u662f\u5bf9\u7535\u5bb9\u7684\u8981\u6c42\u66f4\u9ad8\u3002"
+  name: "\u81EA\u52A8\u5149\u675F\u63A7\u5236\u5668"
+  describe: "\u53D6\u6D88\u624B\u52A8\u63A7\u5236\u5E76\u81EA\u52A8\u5316\u5C04\u51FB\u7A0B\u5E8F\u63D0\u9AD8\u4E86\u64CD\u4F5C\u901F\u5EA6\uFF0C\u5E76\u53EF\u663E\u8457\u6269\u5C55\u603B\u7535\u6C60\u5BB9\u91CF\u3002\u4F46\u4E3A\u4E86\u9632\u6B62\u8FC7\u70ED\uFF0C\u5FC5\u987B\u964D\u4F4E\u5145\u7535\u5BB9\u91CF\u3002"
   type: 2
-  icon: {fileID: 21300000, guid: 589a9beb3d7609044b30506b277e51cb, type: 3}
+  icon: {fileID: 21300000, guid: 0d3d4a009103f154c9360807f2e99cfd, type: 3}
   desc:
   - Key: 1
-    Value: "\u7535\u6c60\u603b\u5bb9\u91cf\u5927\u5e45\u63d0\u5347"
+    Value: "\u7535\u6C60\u603B\u5BB9\u91CF\u5927\u5E45\u63D0\u5347"
   - Key: 1
-    Value: "\u653e\u7535\u901f\u5ea6\u63d0\u5347"
+    Value: "\u653E\u7535\u901F\u5EA6\u63D0\u5347"
   - Key: 0
-    Value: "\u7535\u5bb9\u5bb9\u91cf\u51cf\u5c11"
+    Value: "\u7535\u5BB9\u5BB9\u91CF\u51CF\u5C11"
+  - Key: 0
+    Value: "\u5149\u675F\u6301\u7EED\u5C04\u51FB\u76F4\u5230\u5145\u80FD\u5BB9\u91CF\u8017\u5C3D"
   modifys:
   - name: 
     type: 0
@@ -33,6 +35,10 @@ MonoBehaviour:
     modifier: 2
     value: -0.15
   - name: 
-    type: 1
-    modifier: 2
+    type: 40
+    modifier: 4
     value: -0.2
+  - name: "\u5F3A\u5236\u8FDE\u5C04"
+    type: 999
+    modifier: 4
+    value: 1

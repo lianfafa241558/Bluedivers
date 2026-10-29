@@ -312,16 +312,20 @@ MonoBehaviour:
     ExplosionRange: 8
     DestructeRadius: 4
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 2115654139197423946, guid: c017b2553037218409ad516f7ecc5241,
       type: 3}
-    ImpactSfx: {fileID: 8300000, guid: b13931fe065221545b32328f67eb76db, type: 3}
+    ImpactSfx: {fileID: 8300000, guid: e4dca3145debf6f46b33e99756dc6f82, type: 3}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 1
@@ -345,8 +349,8 @@ MonoBehaviour:
   SFXRange: 100
   FireNoiseRadius: 20
   LastMuzzleIndex: 0
-  ShootSfx: {fileID: 8300000, guid: f0b629fe049f0c94a8fd1365ff509733, type: 3}
-  UseContinuousShootSound: 1
+  ShootSfx: {fileID: 8300000, guid: ebce539b5871ac44298daf7bf24d49c5, type: 3}
+  UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
   ContinuousShootLoopSfx: {fileID: 0}
   ContinuousShootEndSfx: {fileID: 0}

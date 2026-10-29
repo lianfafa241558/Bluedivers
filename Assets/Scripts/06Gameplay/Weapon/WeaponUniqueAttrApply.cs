@@ -30,6 +30,9 @@ namespace FPSGame.Weapon
             ["全自动模式"] = (Weapon weapon, Info attr) => {
                 weapon.ShootType = attr.Value>0? WeaponShootType.Automatic: WeaponShootType.Manual;
             },
+            ["强制连射"] = (Weapon weapon, Info attr) => {
+                weapon.WeaponFlag = attr.Value > 0 ? weapon.WeaponFlag |WeaponFlag.ForceShoot: weapon.WeaponFlag & ~WeaponFlag.ForceShoot;
+            },
         };
 
 

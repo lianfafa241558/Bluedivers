@@ -35,7 +35,7 @@ namespace FPSGame.Game
             // name 字段（仅 type==Special 时显示，改为下拉框）
             if (isSpecial)
             {
-                var nameLabel = new GUIContent(GetShortLabel(property, "name"));
+                var nameLabel = new GUIContent(GetShortLabel("name"));
                 Rect nameRect = new Rect(x, position.y, fieldWidth, position.height);
                 DrawNameDropdown(nameRect, nameProp, property, nameLabel);
                 x += fieldWidth;
@@ -43,20 +43,20 @@ namespace FPSGame.Game
 
             // type 字段
             Rect typeRect = new Rect(x, position.y, fieldWidth, position.height);
-            var typeLabel = new GUIContent(GetShortLabel(property, "type"));
+            var typeLabel = new GUIContent(GetShortLabel("type"));
             EditorGUIUtility.labelWidth = CalcLabelWidth(typeLabel);
             EditorGUI.PropertyField(typeRect, typeProp, typeLabel);
             x += fieldWidth;
 
             // modifier 字段（根据 type 过滤）
             Rect modRect = new Rect(x, position.y, fieldWidth, position.height);
-            var modLabel = new GUIContent(GetShortLabel(property, "modifier"));
+            var modLabel = new GUIContent(GetShortLabel("modifier"));
             DrawFilteredModifier(modRect, modifierProp, typeProp, modLabel);
             x += fieldWidth;
 
             // value 字段
             Rect valRect = new Rect(x, position.y, position.xMax - x, position.height);
-            var valLabel = new GUIContent(GetShortLabel(property, "value"));
+            var valLabel = new GUIContent(GetShortLabel("value"));
             EditorGUIUtility.labelWidth = CalcLabelWidth(valLabel);
             EditorGUI.PropertyField(valRect, valueProp, valLabel);
 
@@ -139,26 +139,22 @@ namespace FPSGame.Game
             }
         }
 
-        private static string GetShortLabel(SerializedProperty property, string childName)
+        /// <summary>
+        /// 子字段中文名。property 是列表元素（名字是 "data"），拿它去 targetObject 上找同名字段必然落空，
+        /// 标签就会退化成 "Type"/"Value" ⇒ 直接按元素类型 ModifyAttrData 取 InspectorName。
+        /// </summary>
+        private static string GetShortLabel(string childName)
         {
-            var targetType = property.serializedObject.targetObject.GetType();
-            var field = targetType.GetField(property.name,
+            var childField = typeof(ModifyAttrData).GetField(childName,
                 System.Reflection.BindingFlags.Instance |
                 System.Reflection.BindingFlags.Public |
                 System.Reflection.BindingFlags.NonPublic);
-            if (field != null)
+            if (childField != null)
             {
-                var childField = field.FieldType.GetField(childName,
-                    System.Reflection.BindingFlags.Instance |
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic);
-                if (childField != null)
-                {
-                    // ⚠ 必须全限定 System.Attribute：本文件在 FPSGame.Game 命名空间内，
-                    //   裸写 Attribute 会被解析为外层命名空间的 FPSGame.Attribute（同名子命名空间遮蔽）
-                    var attr = System.Attribute.GetCustomAttribute(childField, typeof(InspectorNameAttribute)) as InspectorNameAttribute;
-                    if (attr != null) return attr.displayName;
-                }
+                // ⚠ 必须全限定 System.Attribute：本文件在 FPSGame.Game 命名空间内，
+                //   裸写 Attribute 会被解析为外层命名空间的 FPSGame.Attribute（同名子命名空间遮蔽）
+                var attr = System.Attribute.GetCustomAttribute(childField, typeof(InspectorNameAttribute)) as InspectorNameAttribute;
+                if (attr != null) return attr.displayName;
             }
             return ObjectNames.NicifyVariableName(childName);
         }
@@ -179,56 +175,19 @@ namespace FPSGame.Game
 
         /// <summary>
         /// 将 name 字段绘制为下拉框，选项来自武器的 m_UniqueAttr
-        /// ModifyAttrData 存在于 WeaponUpgradeData_SO / WeaponModuleData_SO 中，
-        /// 需要向上查找到武器的 WeaponPlayerController 组件上的 m_UniqueAttr
+        /// （ModifyAttrData 同时被 WeaponUpgradeData_SO / WeaponModuleData_SO 使用）
         /// </summary>
         private static void DrawNameDropdown(Rect position, SerializedProperty nameProp,
             SerializedProperty property, GUIContent label)
         {
-            var so = property.serializedObject;
-            var targetObj = so.targetObject;
+            var targetObj = property.serializedObject.targetObject;
             if (targetObj == null)
             {
                 EditorGUI.PropertyField(position, nameProp, label);
                 return;
             }
 
-            // 收集名称列表
-            var names = new List<string> { "" };
-
-            // 通过 Selection 或遍历 Resources 查找引用此 SO 的 WeaponPlayerController
-            // 简单方案：遍历当前 Selection 的武器，找到包含此 SO 的武器
-            var weaponSO = FindWeaponSerializedObject(so, targetObj);
-            if (weaponSO != null)
-            {
-                var uniqueAttrProp = weaponSO.FindProperty("m_UniqueAttr");
-                if (uniqueAttrProp != null)
-                {
-                    for (var i = 0; i < uniqueAttrProp.arraySize; i++)
-                    {
-                        var elem = uniqueAttrProp.GetArrayElementAtIndex(i);
-                        var n = elem.FindPropertyRelative("name");
-                        if (n != null && !string.IsNullOrEmpty(n.stringValue))
-                            names.Add(n.stringValue);
-                    }
-                }
-            }
-
-            // 如果没找到，也尝试从 targetObj 本身读取（模块 SO 可能有）
-            if (names.Count == 1)
-            {
-                var uniqueAttrProp = so.FindProperty("m_UniqueAttr");
-                if (uniqueAttrProp != null)
-                {
-                    for (var i = 0; i < uniqueAttrProp.arraySize; i++)
-                    {
-                        var elem = uniqueAttrProp.GetArrayElementAtIndex(i);
-                        var n = elem.FindPropertyRelative("name");
-                        if (n != null && !string.IsNullOrEmpty(n.stringValue))
-                            names.Add(n.stringValue);
-                    }
-                }
-            }
+            var names = GetUniqueAttrNames(targetObj);
 
             var currentName = nameProp.stringValue;
             var currentIndex = names.IndexOf(currentName);
@@ -245,61 +204,134 @@ namespace FPSGame.Game
         }
 
         /// <summary>
-        /// 从选中的武器预设中查找引用此 SO 的 WeaponPlayerController
+        /// 候选名优先取「引用本 SO 的那把武器」的 m_UniqueAttr；找不到引用武器（新建模组还没挂进 Modules）
+        /// 就退回全部武器的并集 —— 否则下拉只剩一个空项，看着像"专有属性白加了"。
         /// </summary>
-        private static SerializedObject FindWeaponSerializedObject(SerializedObject so, UnityEngine.Object targetObj)
+        private static List<string> GetUniqueAttrNames(UnityEngine.Object target)
         {
-            var instanceId = targetObj.GetInstanceID();
-            if (_soToWeaponCache.TryGetValue(instanceId, out var cached))
-                return cached;
+            EnsureCacheHook();
 
-            var prefabs = Resources.LoadAll<GameObject>("Weapons");
-            foreach (var prefab in prefabs)
+            var id = target.GetInstanceID();
+            if (_nameCache.TryGetValue(id, out var cached) && cached.Version == _cacheVersion && cached.Names != null)
+                return cached.Names;
+
+            var names = new List<string> { "" };
+            var seen = new HashSet<string>();
+
+            var owner = FindReferencingWeapon(target);
+            if (owner != null)
             {
-                var controller = prefab.GetComponent<WeaponPlayerController>();
-                if (controller == null) continue;
-
-                var cso = new SerializedObject(controller);
-
-                // 检查 Modules
-                var modulesProp = cso.FindProperty("Modules");
-                if (modulesProp != null)
+                AppendUniqueNames(owner, names, seen);
+            }
+            else
+            {
+                foreach (var path in GetAllWeaponPrefabPaths())
                 {
-                    for (var i = 0; i < modulesProp.arraySize; i++)
-                    {
-                        if (modulesProp.GetArrayElementAtIndex(i).objectReferenceValue == targetObj)
-                        {
-                            _soToWeaponCache[instanceId] = cso;
-                            return cso;
-                        }
-                    }
+                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    if (prefab == null) continue;
+                    foreach (var controller in prefab.GetComponentsInChildren<WeaponPlayerController>(true))
+                        AppendUniqueNames(controller, names, seen);
                 }
+            }
 
-                // 检查 Upgrade
-                var upgradeProp = cso.FindProperty("Upgrade");
-                if (upgradeProp != null)
+            _nameCache[id] = new CachedNames { Version = _cacheVersion, Names = names };
+            return names;
+        }
+
+        private static void AppendUniqueNames(WeaponPlayerController controller, List<string> names, HashSet<string> seen)
+        {
+            if (controller == null) return;
+
+            var uniqueAttrProp = new SerializedObject(controller).FindProperty("m_UniqueAttr");
+            if (uniqueAttrProp == null) return;
+
+            for (var i = 0; i < uniqueAttrProp.arraySize; i++)
+            {
+                var n = uniqueAttrProp.GetArrayElementAtIndex(i).FindPropertyRelative("name");
+                if (n != null && !string.IsNullOrEmpty(n.stringValue) && seen.Add(n.stringValue))
+                    names.Add(n.stringValue);
+            }
+        }
+
+        /// <summary>
+        /// 找出把 target 挂在 Modules / Upgrade 里的武器（返回组件而不是 SerializedObject，
+        /// 旧实现把"没找到"也缓存成 null，之后即使挂上了引用也永远查不到）。
+        /// </summary>
+        private static WeaponPlayerController FindReferencingWeapon(UnityEngine.Object target)
+        {
+            foreach (var path in GetAllWeaponPrefabPaths())
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null) continue;
+
+                // 组件不一定挂根节点，用递归取全部
+                foreach (var controller in prefab.GetComponentsInChildren<WeaponPlayerController>(true))
                 {
-                    for (var i = 0; i < upgradeProp.arraySize; i++)
+                    var cso = new SerializedObject(controller);
+                    if (ContainsRef(cso.FindProperty("Modules"), target))
+                        return controller;
+
+                    var upgradeProp = cso.FindProperty("Upgrade");
+                    for (var i = 0; upgradeProp != null && i < upgradeProp.arraySize; i++)
                     {
-                        var levelElem = upgradeProp.GetArrayElementAtIndex(i);
-                        var valueProp = levelElem.FindPropertyRelative("Value");
-                        if (valueProp == null) continue;
-                        for (var j = 0; j < valueProp.arraySize; j++)
-                        {
-                            if (valueProp.GetArrayElementAtIndex(j).objectReferenceValue == targetObj)
-                            {
-                                _soToWeaponCache[instanceId] = cso;
-                                return cso;
-                            }
-                        }
+                        var valueProp = upgradeProp.GetArrayElementAtIndex(i).FindPropertyRelative("Value");
+                        if (ContainsRef(valueProp, target))
+                            return controller;
                     }
                 }
             }
 
-            _soToWeaponCache[instanceId] = null;
             return null;
         }
 
-        private static readonly Dictionary<int, SerializedObject> _soToWeaponCache = new();
+        private static bool ContainsRef(SerializedProperty arrayProp, UnityEngine.Object target)
+        {
+            if (arrayProp == null) return false;
+            for (var i = 0; i < arrayProp.arraySize; i++)
+                if (arrayProp.GetArrayElementAtIndex(i).objectReferenceValue == target) return true;
+            return false;
+        }
+
+        private static List<string> GetAllWeaponPrefabPaths()
+        {
+            if (_weaponPrefabPaths != null) return _weaponPrefabPaths;
+
+            _weaponPrefabPaths = new List<string>();
+            foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { WeaponPrefabRoot }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!string.IsNullOrEmpty(path)) _weaponPrefabPaths.Add(path);
+            }
+            return _weaponPrefabPaths;
+        }
+
+        /// <summary>
+        /// 资产/引用一变就作废缓存：不然在 prefab 里新加专有属性、或把模组挂进 Modules 之后，
+        /// 已经打开过的 SO 依然拿旧结果，必须手动重编译才刷新。
+        /// </summary>
+        private static void EnsureCacheHook()
+        {
+            if (_cacheHooked) return;
+            _cacheHooked = true;
+            EditorApplication.projectChanged += () =>
+            {
+                _cacheVersion++;
+                _nameCache.Clear();
+                _weaponPrefabPaths = null;
+            };
+        }
+
+        private const string WeaponPrefabRoot = "Assets/Resources/Weapons";
+
+        private struct CachedNames
+        {
+            public int Version;
+            public List<string> Names;
+        }
+
+        private static readonly Dictionary<int, CachedNames> _nameCache = new();
+        private static List<string> _weaponPrefabPaths;
+        private static int _cacheVersion;
+        private static bool _cacheHooked;
     }
 }

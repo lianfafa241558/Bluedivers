@@ -17,14 +17,15 @@ namespace FPSGame.Weapon
             // 通用属性
             { WeaponAttrType.Ammo, (true, AttrTag.LimitCurr | AttrTag.OnlyInt, ModifierType.All) },
             { WeaponAttrType.Magazine, (true, AttrTag.LimitCurr | AttrTag.OnlyInt, ModifierType.All) },
+            // 射击消耗：只吃改装加成，基础值由 InitAttribute 注入（齐射武器 = 发射点位数量）
+            { WeaponAttrType.ShootCost, (false, AttrTag.OnlyInt|AttrTag.IsHide, ModifierType.All) },
+            { WeaponAttrType.BurstInterval, (false, AttrTag.IsHide, ModifierType.All) },
             { WeaponAttrType.ShootInterval, (true, AttrTag.Reciprocal, ModifierType.All) },
-            // 弹射次数：纯整数计数，0 = 不弹射。不加 DefaultHide —— 那条判据是"值==原始值"，会把
-            // prefab 里写死的基础次数一并隐藏（本例没进 showAttr 的武器本来就不会显示）
-            { WeaponAttrType.Catapult, (false, AttrTag.OnlyInt, ModifierType.All) },
+            { WeaponAttrType.Catapult, (false, AttrTag.OnlyInt|AttrTag.DefaultHide, ModifierType.All) },
             { WeaponAttrType.StartCool, (false, default, ModifierType.All) },
             
             { WeaponAttrType.BulletsPerShot, (false, default, ModifierType.All) },
-            { WeaponAttrType.BulletsSpreadAngle, (false, AttrTag.FlipPlus, ModifierType.All) },
+            { WeaponAttrType.BulletsSpreadAngle, (false, AttrTag.FlipPlus|AttrTag.DefaultHide, ModifierType.All) },
             { WeaponAttrType.BulletsOffect, (false, AttrTag.FlipPlus, ModifierType.All) },
             { WeaponAttrType.MoveSpeedToShoot, (false,AttrTag.Percentage|AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.ReloadTime, (true, AttrTag.FlipPlus, ModifierType.All) },
@@ -262,6 +263,15 @@ namespace FPSGame.Weapon
         /// <summary>自动装弹速度</summary>
         [InspectorName("通用/自动装弹速度")]
         AutoReloadSpeed = 12,
+        /// <summary>射击消耗：每次射击扣掉的弹匣弹药量（齐射武器默认 = 发射点位数量）。
+        /// <para>⚠ 编号刻意取 19 而不是插到 2/3 中间 —— <c>WeaponCfg._fakeAttrs</c> 按枚举数值序列化，重排会把存量配错的。</para></summary>
+        [InspectorName("通用/射击消耗")]
+        ShootCost = 19,
+        /// <summary>连射间隔(秒)：0 = 一次打出全部弹丸（霰弹枪）；
+        /// >0 且弹丸数量 >1 时改为每隔这么久打一发，直到打完（弹丸数 = 3 ⇒ 三连发）。
+        /// <para>⚠ 同样取空号 27，理由同 <see cref="ShootCost"/>。</para></summary>
+        [InspectorName("通用/连射间隔")]
+        BurstInterval = 27,
 
         //---------散热属性----------
         /// <summary>射击热量</summary>

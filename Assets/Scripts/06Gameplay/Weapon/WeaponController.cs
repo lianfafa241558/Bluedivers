@@ -238,6 +238,13 @@ namespace FPSGame.Weapon
         /// <summary>当前蓄力比例(离散值)(0-1但按阶段取值)</summary></summary>
         public override PEInt WeaponChargeScale_D=> new(AttrFinal(Attr.ChargeHigheststage) == default ? 1 : (ChargeDuration?.StageScale.RawFloat??1));
 
+        /// <summary>射击消耗：蓄力武器改用**最低段蓄力**的弹药量当门槛（真正的扣除在 <see cref="TryReleaseCharge"/> 里按段数插值）。
+        /// <para>⚠ 原来是在 <see cref="TryBeginCharge"/> 里直接给 ShootCost 字段赋值 —— 那样它只认 ChargeAmmoOnLowest，
+        /// 而"射击消耗"属性在蓄力枪上就永远读不到（现在两者各归其位）。</para></summary>
+        public override int ShootCost => ShootType == WeaponShootType.Charge
+            ? AttrFinal(Attr.ChargeAmmoOnLowest).RawInt
+            : base.ShootCost;
+
         #endregion
         #region 生命周期
 
@@ -400,8 +407,7 @@ namespace FPSGame.Weapon
         /// </summary>
         bool TryBeginCharge()
         {
-            
-            ShootCost = AttrFinal(Attr.ChargeAmmoOnLowest).RawInt;//重置为最低消耗
+            // 消耗门槛由 ShootCost 属性按 ShootType 自己给（蓄力 = ChargeAmmoOnLowest），这里不再改值
             if (!InCharging && CanShoot && AllowShoot)
             {
                 InCharging = true;
@@ -414,8 +420,9 @@ namespace FPSGame.Weapon
             }
             else
             {
-                //蓄力失败
-                if(UseContinuousShootSound)ShotSFX(ContinuousShootEndSfx);
+                // 蓄力失败：收尾音同样走一次性音（别用 ShotSFX —— 那是循环源，loop=true，
+                // 换上去的 End clip 会一直循环下去，直到下一次开火才被顶掉）
+                if (UseContinuousShootSound) PlaySFX(ContinuousShootEndSfx);
                 return false;
             }
         }
@@ -748,6 +755,9 @@ namespace FPSGame.Weapon
                 if (anim&&gameObject.activeInHierarchy) anim.Play("Idle");
                 IsReloading = false;
                 WantsToShoot = false;
+                // 连射：收起武器就取消没打完的弹丸（ShowWeapon 只关 WeaponRoot，不触发 OnDisable，
+                // 不在这里掐掉的话换枪后会在隐藏的枪口继续出弹）
+                CancelBurst();
                 //PlaySFX(ContinuousShootEndSfx);
                 if (m_Initialized)
                 {
@@ -802,6 +812,11 @@ namespace FPSGame.Weapon
                 }
             }
 
+            // "还按着扳机"的口径：强制连射的武器松手后**仍在开火**（inputUp 已被上面吃掉，后面的帧 inputHeld 恒 false），
+            // 而 Laser/Lock 的实际消耗在 LogicTick 的 UpdateLaser/UpdateLock 里继续跑。
+            // ⚠ 若各分支还拿裸 inputHeld 算 WantsToShoot，连续射击音效会在松手那一帧被掐掉（枪却还在响/还在扣子弹）。
+            bool holdFire = inputHeld || HasFlag(WeaponFlag.ForceShoot);
+
             switch (ShootType)
             {
                 case WeaponShootType.Manual:
@@ -825,7 +840,7 @@ namespace FPSGame.Weapon
                     return InShoots && TryShoot();
 
                 case WeaponShootType.Charge:
-                    WantsToShoot = inputHeld && InCharging;
+                    WantsToShoot = holdFire && InCharging;
 
                     //鼠标抬起或者满蓄自动发射
                     if (inputUp)
@@ -842,7 +857,7 @@ namespace FPSGame.Weapon
                     return false;
 
                 case WeaponShootType.Laser:
-                    WantsToShoot = inputHeld && InLasering;
+                    WantsToShoot = holdFire && InLasering;
 
                     if (inputUp) EndLaser();//鼠标抬起
                     else if (inputHeld) return TryUpdateLaser();
@@ -850,7 +865,7 @@ namespace FPSGame.Weapon
                     return false;
 
                 case WeaponShootType.Lock:
-                    WantsToShoot = inputHeld && InLock;
+                    WantsToShoot = holdFire && InLock;
 
                     if (inputUp) return TryReleaseLock();
                     else if (inputHeld) return TryUpdateBeginLock();

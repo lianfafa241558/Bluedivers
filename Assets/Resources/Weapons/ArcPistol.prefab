@@ -161,6 +161,12 @@ MonoBehaviour:
       Value: 1
     - Key: 3
       Value: 0
+    - Key: 27
+      Value: 0
+    - Key: 6
+      Value: 1
+    - Key: 19
+      Value: 1
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
@@ -230,7 +236,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -294,8 +299,18 @@ MonoBehaviour:
     type: 3
     addTag: 8
     removeTag: 0
+  - name: "\u5F39\u4E38\u6570\u91CF"
+    type: 6
+    addTag: 64
+    removeTag: 0
   showAttr: 1400000002000000010000000d0000000e0000000f00000010000000190000000700000066000000120000001100000003000000
-  m_UniqueAttr: []
+  m_UniqueAttr:
+  - name: "\u81F4\u547D\u8FDE\u5C04"
+    value: 0
+    tag: 32
+  - name: "\u5F3A\u5236\u8FDE\u5C04"
+    value: 0
+    tag: 64
   Upgrade:
   - Key: 2
     Value:
@@ -325,7 +340,6 @@ MonoBehaviour:
   Modules:
   - {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
   - {fileID: 11400000, guid: b6caec1d1ede5254c35493e768c74b1e, type: 2}
-  - {fileID: 11400000, guid: a9fa579a6064ed9ccc1b061de0288b19, type: 2}
   - {fileID: 11400000, guid: cb83c38dffb047afa20037372360053e, type: 2}
   - {fileID: 11400000, guid: 01d65acf9f55747bcfe175ce7f18a0cf, type: 2}
   - {fileID: 11400000, guid: aef2717793ac155708a98cc5a1099a21, type: 2}

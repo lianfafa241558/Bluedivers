@@ -175,7 +175,7 @@ namespace FPSGame.Weapon
                     //这里是可能存在不在字典的情况的，原展示属性里面没有，但是模组加上
                     if (!m_Parameter.TryGetValue(GetModifyDataName(item),out var para))
                     {
-                        para = new(this, item.type, GetModifyDataName(item));
+                        para = NewAttr(item.type, GetModifyDataName(item));
                         m_Parameter.Add(GetModifyDataName(item), para);
                         //Debug.Log($"新建了基础属性{item.type} {GetModifyDataName(item)}");
                     }
@@ -205,6 +205,8 @@ namespace FPSGame.Weapon
                 {
                     continue;
                 }
+                // ⚠ 必须排在 TextOnly 之前：仅文本分支会直接塞进 textOnly 列表，走不到下面的 IsHide()。
+                if (re.HasFlag(AttrTag.IsHide)) continue;
                 if (re.HasFlag(AttrTag.TextOnly))
                 {
                     if (re.ChangeValue > 0)
@@ -276,7 +278,19 @@ namespace FPSGame.Weapon
 
         private AttrInfo NewAttr(WeaponAttrType type,string name)
         {
-            return new(this, type, name);
+            var info = new AttrInfo(this, type, name);
+            ApplyRenameTag(info, type);
+            return info;
+        }
+
+        /// <summary>把 m_RenameAttr 里该类型的 addTag/removeTag 叠加到 info 上。
+        /// ⚠ 原来只有 GetAttrName 消费了 name 字段，这两个标旗全仓无人读取 ⇒ 策划勾了 IsHide 也照样显示。</summary>
+        private void ApplyRenameTag(AttrInfo info, WeaponAttrType type)
+        {
+            if (info == null || m_RenameAttr == null) return;
+            if (!m_RenameAttr.TryGet(item => item.type == type, out var re)) return;
+            info.tag |= re.addTag;
+            info.tag &= ~re.removeTag;
         }
 
         public void TryUpgrade(List<ModifyAttrData> oldModify, List<ModifyAttrData> newModify)
@@ -289,7 +303,7 @@ namespace FPSGame.Weapon
             {
                 if (!m_Parameter.TryGetValue(GetModifyDataName(item), out var para))
                 {
-                    para = new(this, item.type, GetModifyDataName(item));
+                    para = NewAttr(item.type, GetModifyDataName(item));
                     para.AddFlag(AttrTag.DefaultHide);
                     m_Parameter.Add(GetModifyDataName(item), para);
                 }
