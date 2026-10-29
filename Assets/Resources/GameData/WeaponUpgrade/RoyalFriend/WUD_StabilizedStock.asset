@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 150ca7a623f31424aad6112aba22d37e, type: 3}
+  m_Name: WUD_StabilizedStock
+  m_EditorClassIdentifier: 
+  name: "\u7a33\u5b9a\u67aa\u6258"
+  type: "\u6563\u5e03"
+  icon: {fileID: 21300000, guid: fea1eaa19c9a8ba4eba678fcf7750a47, type: 3}
+  desc: "\u67aa\u6258\u91cc\u704c\u4e86\u914d\u91cd\uff0c\u8fde\u6253\u65f6\u67aa\u8eab\u66f4\u542c\u8bdd\uff0c\u5f39\u7740\u70b9\u4e5f\u6536\u5f97\u62e2\u3002\u62ce\u8d77\u6765\u662f\u771f\u7684\u6c89\u3002"
+  cost:
+  - Key: 0
+    Value: 2000
+  modifys:
+  - name: 
+    type: 7
+    modifier: 2
+    value: -0.3
+  - name: 
+    type: 18
+    modifier: 2
+    value: -0.2
