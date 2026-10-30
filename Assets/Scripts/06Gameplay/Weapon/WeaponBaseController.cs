@@ -249,6 +249,38 @@ namespace FPSGame.Weapon {
         /// <summary>正在散热（热量回落中）：过热阶段线性回落也算；散热延迟还没走完时为 false</summary>
         public bool IsCoolingDown => _currentHeat > 0f && (IsOverheated || _coolTimer <= 0f);
 
+        /// <summary>热量是否在 <see cref="ApplyPerShotCost"/> 里按"发"结算。**激光是唯一例外**：
+        /// 一整段光束只走一次 <see cref="HandleShoot"/>，按发结算的话持续 3 秒的输出只热一下
+        /// ⇒ 它改由 <c>UpdateLaser</c> 每个伤害节拍调 <see cref="AddHeatPerShot"/>。</summary>
+        protected virtual bool HeatSettledPerShot => true;
+
+        /// <summary>累加热量，并重新计时"散热延迟"、满 100 判定过热（唯一写热量的入口）</summary>
+        protected void AddHeat(float amount)
+        {
+            if (amount <= 0f) return;
+            _currentHeat += amount;
+            _coolTimer = AttrFinal(Attr.CoolDelay).RawFloat;
+            if (_currentHeat >= MaxHeat)
+            {
+                _currentHeat = MaxHeat;
+                IsOverheated = true;
+                _overheatTimer = AttrFinal(Attr.OverheatDuration).RawFloat;
+            }
+        }
+
+        /// <summary>按"一发"加热（蓄力武器受蓄力热量倍率影响）。两个调用点：
+        /// 普通武器在 <see cref="ApplyPerShotCost"/>；激光在 <c>UpdateLaser</c> 里**每个伤害节拍一次**
+        /// （激光的"一发" = 一次伤害结算，见 <c>ProjectileLaser.ShootSpeed</c> 读的就是射击间隔）。
+        /// <para>⚠ 激光那边别挪到"每逻辑帧"调：UpdateLaser 被 AllowShoot 卡着本来就只每个节拍进一次，
+        /// 改成每帧调再按帧比折算会把热量重复打折（实测 32 热/秒会变成 4.6 热/秒）。</para></summary>
+        protected void AddHeatPerShot()
+        {
+            var heatPerShot = AttrFinal(Attr.HeatPerShot).RawFloat;
+            if (heatPerShot <= 0f) return;
+            var chargeHeatScale = PEMath.Lerp(1, AttrFinal(Attr.ChargeHeatScale, 1), WeaponChargeScale_D);
+            AddHeat(heatPerShot * chargeHeatScale.RawFloat);
+        }
+
         #endregion
 
         #region 获取属性
@@ -720,18 +752,9 @@ namespace FPSGame.Weapon {
             if (SpreadBloomPerShot > 0f)
                 _spreadBloom = Mathf.Min(_spreadBloom + SpreadBloomPerShot, SpreadBloomMax);
 
-            // 热量系统：每发增加热量，蓄力武器受蓄力热量倍率影响
-            var heatPerShot = AttrFinal(Attr.HeatPerShot).RawFloat;
-            if (heatPerShot <= 0f) return;
-            var chargeHeatScale = PEMath.Lerp(1, AttrFinal(Attr.ChargeHeatScale, 1), WeaponChargeScale_D);
-            _currentHeat += heatPerShot * chargeHeatScale.RawFloat;
-            _coolTimer = AttrFinal(Attr.CoolDelay).RawFloat;
-            if (_currentHeat >= MaxHeat)
-            {
-                _currentHeat = MaxHeat;
-                IsOverheated = true;
-                _overheatTimer = AttrFinal(Attr.OverheatDuration).RawFloat;
-            }
+            // 热量系统：普通武器每发一份。激光不是"发"（一整段光束只走一次 HandleShoot）
+            // ⇒ 它的热量由 UpdateLaser 每个伤害节拍调 AddHeatPerShot 结算。
+            if (HeatSettledPerShot) AddHeatPerShot();
         }
 
         /// <summary>连射推进：每逻辑帧扣一次时间，到点打一轮（每个发射点各一发）。

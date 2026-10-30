@@ -16,27 +16,31 @@ namespace FPSGame.Weapon
     public class WeaponUIComponent : MonoBehaviour
     {
 
-        [Header("显示总弹药")]
+        [InspectorName("显示总弹药(文本)")]
         [SerializeField]
         List<Text> T_AllAmmos;
-        [Header("显示当前弹药")]
+        [InspectorName("显示当前弹药(文本)")]
         [SerializeField]
         List<Text> T_NowAmmos;
-        [Header("显示后备弹药")]
+        [InspectorName("显示后备弹药(文本)")]
         [SerializeField]
         List<Text> T_SpareAmmos;
-        [Header("显示总剩余弹药百分比")]
+        [InspectorName("显示总剩余弹药百分比(图片)")]
         [SerializeField]
         List<Image> I_RemainTotalAmmos;
-        [Header("显示弹匣剩余弹药百分比")]
+        [InspectorName("显示弹匣剩余弹药百分比(图片)")]
         [SerializeField]
         List<Image> I_RemainAmmos;
-        [Header("显示蓄力百分比")]
+        [InspectorName("显示蓄力百分比(图片)")]
         [SerializeField]
         List<Image> I_ChargeRatio;
-        [Header("显示冷却百分比")]
+        [InspectorName("显示冷却百分比(图片)")]
         [SerializeField]
         List<Image> I_CoolRatio;
+
+        [InspectorName("显示冷却百分比(文本)")]
+        [SerializeField]
+        List<Text> T_CoolRatio;
 
         [Header("冷却条配色")]
         [InspectorName("冷热条按热量染色")]
@@ -89,34 +93,53 @@ namespace FPSGame.Weapon
         /// </summary>
         void UpdateCoolRatio()
         {
-            if (I_CoolRatio.Count == 0) return;
 
-            float heat;   // 0 = 冷 / 可开火，1 = 满热 / 必须等
-            if (m_weapon.HasHeatSystem)
+            if (T_CoolRatio.Count > 0)
             {
-                heat = m_weapon.HeatRatio;
+               
+                float heat;   // 0 = 冷 / 可开火，1 = 满热 / 必须等
+                if (m_weapon.HasHeatSystem)
+                {
+                    heat = m_weapon.HeatRatio;
+                }
+                else
+                {
+                    if (!m_weapon.ShootInterval) return;   // 还没 LogicInit（预览实例）
+                    heat = 1f - m_weapon.ShootInterval.ScaleValue.RawFloat;
+                }
+                T_CoolRatio.ForEach(item => item.text = ""+(int)(100*heat));
+
             }
-            else
+            if (I_CoolRatio.Count > 0)
             {
-                if (!m_weapon.ShootInterval) return;   // 还没 LogicInit（预览实例）
-                heat = 1f - m_weapon.ShootInterval.ScaleValue.RawFloat;
-            }
 
-            // 反转只动填充方向，取色永远按热量 ⇒ 红不红跟这个开关无关
-            float fill = ReverseCoolRatioFill ? heat : 1f - heat;
+                float heat;   // 0 = 冷 / 可开火，1 = 满热 / 必须等
+                if (m_weapon.HasHeatSystem)
+                {
+                    heat = m_weapon.HeatRatio;
+                }
+                else
+                {
+                    if (!m_weapon.ShootInterval) return;   // 还没 LogicInit（预览实例）
+                    heat = 1f - m_weapon.ShootInterval.ScaleValue.RawFloat;
+                }
 
-            if (Mathf.Abs(fill - _lastCoolRatio) < 0.001f) return;
-            _lastCoolRatio = fill;
+                // 反转只动填充方向，取色永远按热量 ⇒ 红不红跟这个开关无关
+                float fill = ReverseCoolRatioFill ? heat : 1f - heat;
 
-            // ⚠ Gradient 是类，Unity 会给"没序列化的字段"补一个白色默认值 ⇒ 只能用显式开关，不能靠 null 判断
-            bool tinted = TintCoolRatio && CoolRatioGradient != null;
-            Color tint = tinted ? CoolRatioGradient.Evaluate(heat) : default;
-            for (int i = 0; i < I_CoolRatio.Count; i++)
-            {
-                var image = I_CoolRatio[i];
-                if (!image) continue;   // 列表里留空槽是常见的（只填部分 HUD）
-                image.fillAmount = fill;
-                if (tinted) image.color = tint;
+                if (Mathf.Abs(fill - _lastCoolRatio) < 0.001f) return;
+                _lastCoolRatio = fill;
+
+                // ⚠ Gradient 是类，Unity 会给"没序列化的字段"补一个白色默认值 ⇒ 只能用显式开关，不能靠 null 判断
+                bool tinted = TintCoolRatio && CoolRatioGradient != null;
+                Color tint = tinted ? CoolRatioGradient.Evaluate(heat) : default;
+                for (int i = 0; i < I_CoolRatio.Count; i++)
+                {
+                    var image = I_CoolRatio[i];
+                    if (!image) continue;   // 列表里留空槽是常见的（只填部分 HUD）
+                    image.fillAmount = fill;
+                    if (tinted) image.color = tint;
+                }
             }
         }
 

@@ -499,12 +499,16 @@ namespace FPSGame.Weapon
 
         #region 激光武器
 
+        /// <summary>激光没有扣扳机的"发"（一整段只 HandleShoot 一次）⇒ 热量不在这里结算，
+        /// 改由 <see cref="UpdateLaser"/> 每个伤害节拍调 <c>AddHeatPerShot</c>。</summary>
+        protected override bool HeatSettledPerShot => ShootType != WeaponShootType.Laser;
+
         /// <summary>
         /// 尝试开始发射激光
         /// </summary>
         bool TryBeginLaser()
         {
-            if (AllowShoot && CanShoot)
+            if (AllowShoot && CanShoot && !IsOverheated)
             {
                 SetBool(Constants.k_AnimIsActiveParameter,true);
                 if(AttrFinal(Attr.LaserWaitTime)!=0) ShootInterval.CurrValue = -AttrFinal(Attr.LaserWaitTime);
@@ -517,7 +521,7 @@ namespace FPSGame.Weapon
         {
             if (!InLasering)
             { 
-                if (AllowShoot && CanShoot)
+                if (AllowShoot && CanShoot && !IsOverheated)
                 {
                     //Debug.LogError("激光创建自杀");
                     m_LastProjectiles.Clear();//开启新一轮激光，重置记录
@@ -531,10 +535,21 @@ namespace FPSGame.Weapon
         }
         void UpdateLaser()
         {
-            if (InLasering && CanShoot &&AllowShoot)
+            if (!InLasering) return;
+
+            // 过热即断束：HandleShoot 开头那条只在"起手"判一次，持续输出里热量满了一样照打（热量形同虚设）
+            if (IsOverheated)
+            {
+                EndLaser();
+                return;
+            }
+
+            if (CanShoot && AllowShoot)
             {
                 ResetInterval();
                 UseMagazine(ShootCost);
+                // 热量：一个伤害节拍一份 HeatPerShot（本方法被 AllowShoot 卡着，正好每个节拍进一次）
+                AddHeatPerShot();
                 // 无限弹匣(Magazine<0)时 CurrValue 为负,不能据此判定耗尽;只有有限弹匣打空才结束激光
                 if (!InfiniteMagazine && Magazine.CurrValue <= 0)
                 {
