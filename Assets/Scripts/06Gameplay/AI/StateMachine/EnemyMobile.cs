@@ -55,7 +55,7 @@ namespace FPSGame.AI
     ///
     /// <para>▍每帧驱动（UpdateCurrentAiState）守卫链，命中即 return</para>
     /// <para>出生未完成(BirthComplete) → Death → 弱点僵直计时清除 → IsMoveLocked（Freeze/Vertigo 强制 StopNav）
-    /// → Hacker 锁同队 → IsForcedAttack（Toxicity 乱走 + 无脑开火）→ Terror 逃离 → 查表执行当前状态行为。</para>
+    /// → IsForcedAttack（Toxicity 乱走 + 无脑开火）→ Terror 逃离 → 查表执行当前状态行为。</para>
     ///
     /// <para>▍感知回调</para>
     /// <list type="bullet">
@@ -72,7 +72,9 @@ namespace FPSGame.AI
     ///
     /// <para>▍异常状态（AboState，由 Health.OnAboStateFullChanged 派发，实现见 partial 文件）</para>
     /// <para>Electric：速度 Factor -0.3。Freeze/Vertigo：禁移动禁攻击并清目标与警惕点。Terror：清目标后朝远离伤害源
-    /// 方向逃 20m。Toxicity：清目标后每 1.5s 在 5m 半径内随机换点乱走并持续开火。Hacker：每帧锁定 20m 内的同队单位。
+    /// 方向逃 20m。Toxicity：清目标后每 1.5s 在 5m 半径内随机换点乱走并持续开火。
+    /// Hacker：**真倒戈** —— 把 <c>Actor.Team</c> 改成攻击者的队伍（槽永久满），改完由
+    /// <c>DetectionModule.CheckNewTarget</c> 自动把原队友当敌人；解除/销毁时还原。
     /// 门闩 IsMoveLocked / IsAttackLocked / IsForcedAttack / IsHacked 在守卫链与 Attack 行为中生效。</para>
     ///
     /// <para>▍通用约定</para>
@@ -773,9 +775,6 @@ namespace FPSGame.AI
                 m_EnemyController.StopNav();
                 return;
             }
-
-            // Hacker：每帧尝试锁定同队伍单位
-            UpdateHackerTarget();
 
             // Toxicity：乱走+持续攻击
             if (IsForcedAttack)

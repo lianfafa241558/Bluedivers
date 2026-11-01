@@ -20,6 +20,8 @@ namespace FPSGame.Weapon
             // 射击消耗：只吃改装加成，基础值由 InitAttribute 注入（齐射武器 = 发射点位数量）
             { WeaponAttrType.ShootCost, (false, AttrTag.OnlyInt|AttrTag.IsHide, ModifierType.All) },
             { WeaponAttrType.BurstInterval, (false, AttrTag.IsHide, ModifierType.All) },
+
+            { WeaponAttrType.DamageIndex, (false, AttrTag.OnlyInt | AttrTag.IsHide, ModifierType.Extra) },
             { WeaponAttrType.ShootInterval, (true, AttrTag.Reciprocal, ModifierType.All) },
             { WeaponAttrType.Catapult, (false, AttrTag.OnlyInt|AttrTag.DefaultHide, ModifierType.All) },
             { WeaponAttrType.StartCool, (false, default, ModifierType.All) },
@@ -272,6 +274,11 @@ namespace FPSGame.Weapon
         /// <para>⚠ 同样取空号 27，理由同 <see cref="ShootCost"/>。</para></summary>
         [InspectorName("通用/连射间隔")]
         BurstInterval = 27,
+        /// <summary>使用第几条伤害配置（<c>WeaponBaseController.Damages</c> 的下标，0 = 第一条）。
+        /// 只给武器模组换弹药/弹种用；越界由 <c>WeaponPlayerController.OnDamageIndexChanged</c> 夹回合法范围。
+        /// <para>⚠ 同样取空号 28，理由同 <see cref="ShootCost"/>。</para></summary>
+        [InspectorName("通用/子弹配置序号")]
+        DamageIndex = 28,
 
         //---------散热属性----------
         /// <summary>射击热量</summary>
@@ -493,10 +500,12 @@ namespace FPSGame.Weapon
         protected AttrTag tag;
         protected ModifierType allowModifier;
 
-        /// <summary>原始值，不能被修改</summary>
-        private readonly PEInt primeValue;
+        /// <summary>原始值：只有 <see cref="Rebase"/>（换伤害配置）会改它，其余走 base/factor/extra</summary>
+        private PEInt primeValue;
         /// <summary>基础值，可以被加成修改</summary>
         private PEInt baseValue;
+        /// <summary>ΣBase 增量：单独记一份，换基线（<see cref="Rebase"/>）时不能把升级加成丢掉</summary>
+        private PEInt baseSum;
         /// <summary>倍数值，可以被加成修改</summary>
         private PEInt factorValue;
         /// <summary>额外值，可以被加成修改</summary>
@@ -542,6 +551,7 @@ namespace FPSGame.Weapon
             {
                 case ModifierType.Base:
                     baseValue += value;
+                    baseSum += value;
                     break;
                 case ModifierType.Factor:
                     factorValue += value;
@@ -559,6 +569,17 @@ namespace FPSGame.Weapon
             //var oldValue = FinalValue;
             var re = baseValue * factorValue + extraValue;
             FinalValue = re;
+        }
+
+        /// <summary>换基线（切换 DamageData 时用）：原始值换成新配置的值，Factor/Extra/ΣBase 全部保留。
+        /// <para>⚠ 别用"重建属性"代替：重建会丢掉改装加成，还会让既有订阅者全部断线。</para>
+        /// <para>prime 一起换：<see cref="AttrTag.ScaleFromPrime"/> / <see cref="AttrTag.DefaultHide"/>
+        /// 都拿 prime 当基准，留着旧配置的值会显示成"相对另一条配置"的百分比。</para></summary>
+        public void Rebase(PEInt newPrimeValue)
+        {
+            primeValue = newPrimeValue;
+            baseValue = newPrimeValue + baseSum;
+            Recalculate();
         }
 
 

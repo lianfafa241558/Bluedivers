@@ -6,6 +6,7 @@
 - 写脚本用 Python 3.12 放 `.codebuddy/plans/`；**改文件名/移动由用户手动做**；不动无关 using；`const`/`static` 放类顶部
 - 口径：先结论+证据(文件:行)再列选项；诊断序 = 谁调它 → prefab 数值 → 逻辑（能反射就别只读代码）
 - ⚠ 外部编辑器会**静默覆盖**工作区文件（编译还全过）⇒ 大批改动收尾跑 `audit_markers.py` + 逐行回查；单点优先 `replace_in_file`，批量/编码敏感才写字节级脚本
+- ⚠ **MCP 存 prefab 会按内存旧值回写**（`LoadPrefabContents`+`SaveAsPrefabAsset` 抹掉没碰的字段，已实测清空 `ImpactVfx`/`UseCollisionDirection`）⇒ 存完必 `git diff` 逐行核对，单引用改动优先直接改 YAML → `2026-11-02.md`
 - ⚠ BOM 用 `add_bom.py`；**严禁** `open(p,'w').write(open(p).read())`（先截断后读 ⇒ 清空）；**空 .cs 也 0 error** ⇒ 改完跑 `check_sources.py`
 - ⚠ 注释口径：默认 **1~3 行**（为什么 + 陷阱）；长文档放 `topics/*.md`
 - ⚠ **token 口径**：每轮重发全历史 ⇒ 五杠杆（换窗口 / 输出收敛 / 少往返 / 注入瘦身 / 探索丢 subagent）→ `topics/tooling.md`

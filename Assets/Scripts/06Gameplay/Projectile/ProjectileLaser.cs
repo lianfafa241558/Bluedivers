@@ -21,6 +21,9 @@ namespace FPSGame.Gameplay
         [Header("通用")]
         [InspectorName("碰撞半径")]
         public float Radius = 0.01f;
+        [InspectorName("使用武器作用范围作为半径")]
+        public bool useExplosionRange = false;
+
 
         [Header("特效")]
         [InspectorName("创建终点物体")]
@@ -41,6 +44,14 @@ namespace FPSGame.Gameplay
         protected LineRenderer m_line;
         protected List<Transform> m_EndObject;
         protected Vector3 m_lastPos;
+
+        private float finalRaudis;
+
+        /// <summary>光束采样的命中缓冲（每帧复用；Update 里不能分配）</summary>
+        private readonly RaycastHit[] m_BeamHits = new RaycastHit[16];
+        /// <summary>本节拍已结算过的单位：穿透时同一单位的多个部位只算一次伤害</summary>
+        private readonly HashSet<GameObject> m_TickHitActors = new();
+
         protected virtual void OnEnable()
         {
             OnShoot += _OnShoot;
@@ -50,6 +61,8 @@ namespace FPSGame.Gameplay
         {
             //这里可以有武器，但是update里面得脱落
             InitCatapult();          // 弹射次数（没配 = 0 = 老行为）+ 清空已命中表
+            finalRaudis = useExplosionRange ? WeaponBase.AttrFinal(WeaponAttrType.ExplosionRange, new(0.1f)).RawFloat : Radius;
+            
             ShootSpeed = WeaponBase.AttrFinal(WeaponAttrType.ShootInterval, new(0.1f)).RawFloat;
             m_ShootTime = Time.time;
             //直接设置父级就不用处理移动了；齐射时绑定实际发射的炮口
@@ -63,21 +76,16 @@ namespace FPSGame.Gameplay
             m_line = GetComponent<LineRenderer>();
             m_line.positionCount = 2;
 
-            RaycastHit hit;
+            m_TickHitActors.Clear();
+            // 开火这一帧只求终点来摆终点特效、不结算（首个伤害节拍在 ShootSpeed 之后，与原逻辑一致）
+            Vector3 normal;
+            bool hitSomething, endIsUnit;
+            m_lastPos = SampleBeam(false, out normal, out hitSomething, out endIsUnit);
 
-            if (!Physics.SphereCast(transform.position + MinRange * transform.forward, Radius, transform.forward, out hit, MaxRange, FpsHelper.GetHittableLayers(999)))
-            {
-                hit.point = transform.position + transform.forward * MaxRange;
-                hit.normal = -transform.forward;
-
-            }
-            //Debug.DrawLine(transform.position + MinRange * transform.forward, hit.point,Color.red,3);
-            m_lastPos = hit.point;
             m_EndObject = new();
             foreach (var item in EndObject)
             {
-                //m_EndObject.Add(VFXManager.Creat(item, hit.point, Quaternion.LookRotation(hit.normal, Vector3.forward), null).transform);
-                m_EndObject.Add(FPSGame.Core.VfxPool.Creat(item, hit.point, default, null).transform);
+                m_EndObject.Add(FPSGame.Core.VfxPool.Creat(item, m_lastPos, default, null).transform);
             }
             foreach (var item in EndMoveObject)
             {
@@ -94,51 +102,126 @@ namespace FPSGame.Gameplay
         protected virtual void Move()
         {
             m_line.SetPosition(0, transform.position);
-            Vector3 vector = transform.forward;
-            Vector3 end;
-            if (Physics.SphereCast(transform.position + MinRange * vector, Radius, vector, out var hit, MaxRange, FpsHelper.GetHittableLayers(999)))
-            {
-                m_line.SetPosition(1, hit.point);
-                end = hit.point;
-                TryHit(hit);
-                SetEnd(m_lastPos,end, hit.normal, hit.transform.gameObject.layer == LayerDefinition.UnitLayers);
-                m_lastPos = end;
 
+            // 结算节拍（一个节拍 = 一次"发"）。⚠ 必须整段提到扫描之前：放在每个命中内部的话，
+            // 第一个命中就把 m_ShootTime 顶掉，穿透的后续命中全被这道闸门挡掉。
+            bool settle = Time.time >= m_ShootTime + ShootSpeed;
+            if (settle)
+            {
+                m_ShootTime = Time.time;
+                // 每个伤害节拍都重新给满跳数：光束是"按住就一直在打"，不是一颗子弹只弹几次
+                RefreshCatapult();
+                m_TickHitActors.Clear();
+            }
+            Vector3 normal;
+            bool hitSomething, endIsUnit;
+            Vector3 end = SampleBeam(settle, out normal, out hitSomething, out endIsUnit);
+
+            m_line.SetPosition(1, end);
+
+            if (hitSomething)
+            {
+                SetEnd(m_lastPos, end, normal, endIsUnit);
+                m_lastPos = end;
             }
             else
             {
-                hit.point = transform.position + vector * MaxRange;
-                m_line.SetPosition(1, hit.point);
                 SetLife();
-                
             }
         }
 
-
-        protected virtual void TryHit(RaycastHit hit)
+        /// <summary>
+        /// 沿整条光束做一次球扫，按距离从近到远决定"结算谁、在哪里截断"。
+        ///
+        /// <para>▍标旗口径与飞行弹 <see cref="ProjectileStandard"/> 一致：
+        /// <c>PenetrateUnits</c> = 打中单位继续往后；<c>PenetrateTerrain</c> = 打中地形（没有 <see cref="Damageable"/>）也继续。
+        /// 没勾的那一类就是光束的挡点。</para>
+        /// <para>▍⚠ 激光是瞬时从头扫到尾的，不像实体弹那样逐帧推进，所以穿透**不需要累计位移**，一次查询就够。</para>
+        /// </summary>
+        /// <param name="settle">是否结算伤害（开火首帧只求终点，不结算）</param>
+        /// <param name="normal">终点法线</param>
+        /// <param name="hitSomething">是否打在实体上（false = 直达最大射程）</param>
+        /// <param name="endIsUnit">终点是不是单位（给 <see cref="SetEnd"/> 的命中类型）</param>
+        protected Vector3 SampleBeam(bool settle, out Vector3 normal, out bool hitSomething, out bool endIsUnit)
         {
-            //这样会导致前面射空了后，新击中目标立即造成伤害，属于无伤大雅的小bug，不管
-            //每ShootSpeed 1Hit
-            if (Time.time< m_ShootTime + ShootSpeed) return;
-            m_ShootTime = Time.time;
-            // 每个伤害节拍都重新给满跳数：光束是"按住就一直在打"，不是一颗子弹只弹几次
-            RefreshCatapult();
+            Vector3 dir = transform.forward;
+            Vector3 origin = transform.position + MinRange * dir;
+            Vector3 end = transform.position + dir * MaxRange;
+            normal = -dir;
+            hitSomething = false;
+            endIsUnit = false;
 
-            if (IsHitValid(hit))
+            int count = Physics.SphereCastNonAlloc(origin, finalRaudis, dir, m_BeamHits, MaxRange,
+                FpsHelper.GetHittableLayers(999));
+            if (count <= 0) return end;
+
+            // 一根光束通常只有 0~3 个命中，插入排序比 Sort + 比较器省
+            for (int i = 1; i < count; ++i)
             {
-                // 处理在碰撞箱内部的问题
-                if (hit.distance <= 0f)
-                {
-                    hit.point = transform.position;
-                    hit.normal = -transform.forward;
-                }
-                //Debug.LogError("击中"+ hit.collider.name);
-                OnHit?.Invoke(BuildHitData(hit.point, hit.normal, hit.collider));
-
-                // 链状闪电：主光束照旧跟着枪，伤害从命中点往最近的敌人逐跳传导
-                ChainLightning(hit.point, hit.collider);
+                RaycastHit cur = m_BeamHits[i];
+                int j = i - 1;
+                while (j >= 0 && m_BeamHits[j].distance > cur.distance) { m_BeamHits[j + 1] = m_BeamHits[j]; --j; }
+                m_BeamHits[j + 1] = cur;
             }
 
+            bool chainUsed = false;
+            for (int i = 0; i < count; ++i)
+            {
+                RaycastHit hit = m_BeamHits[i];
+                // 被忽略的命中（自身碰撞 / IgnoreHitDetection / 无伤害组件触发器）既不结算也不截断，
+                // 否则穿透会被这类杂物挡在半路
+                if (!IsHitValid(hit)) continue;
+
+                IDamageable damageable = hit.collider.GetComponent<IDamageable>();
+                bool isUnit = damageable.IsValid();
+
+                if (isUnit && !BulletFlag.HasFlag(BulletFlag.PenetrateUnits))
+                {
+                    if (settle) HitUnit(hit, damageable, ref chainUsed);
+                    end = hit.point; normal = hit.normal; hitSomething = true; endIsUnit = true;
+                    break;
+                }
+                if (!isUnit && !BulletFlag.HasFlag(BulletFlag.PenetrateTerrain))
+                {
+                    // 地形/道具也要走一次结算：爆炸、弹痕、命中音效都挂在 OnHit 那条链上
+                    if (settle) ApplyHit(hit, false);
+                    end = hit.point; normal = hit.normal; hitSomething = true;
+                    break;
+                }
+
+                // 穿透：单位照常吃伤害，地形直接忽略继续往后打
+                if (settle && isUnit) HitUnit(hit, damageable, ref chainUsed);
+            }
+
+            return end;
+        }
+
+        /// <summary>结算一次单位命中：同一单位本节拍只算一次（多个部位/护甲碰撞体不重复吃伤害）。</summary>
+        private void HitUnit(RaycastHit hit, IDamageable damageable, ref bool chainUsed)
+        {
+            GameObject actorGo = damageable.ActorGo;
+            if (actorGo == null) actorGo = hit.collider.gameObject;
+            if (!m_TickHitActors.Add(actorGo)) return;
+
+            // 链状闪电只从本节拍第一个吃伤害的单位起跳，穿透的后续目标不再重开一条链
+            ApplyHit(hit, !chainUsed);
+            chainUsed = true;
+        }
+
+        /// <summary>结算一次命中：伤害 + 命中表现。</summary>
+        protected virtual void ApplyHit(RaycastHit hit, bool allowChain)
+        {
+            // 处理在碰撞箱内部的问题
+            if (hit.distance <= 0f)
+            {
+                hit.point = transform.position;
+                hit.normal = -transform.forward;
+            }
+            //Debug.LogError("击中"+ hit.collider.name);
+            OnHit?.Invoke(BuildHitData(hit.point, hit.normal, hit.collider));
+
+            // 链状闪电：主光束照旧跟着枪，伤害从命中点往最近的敌人逐跳传导
+            if (allowChain) ChainLightning(hit.point, hit.collider);
         }
 
         /// <summary>

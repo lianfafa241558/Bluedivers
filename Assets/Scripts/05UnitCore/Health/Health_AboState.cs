@@ -139,7 +139,9 @@ namespace FPSGame.Game
                     EnsureAboVfx(entry, stateData);
 
                     // 超过最短维持时间才开始扣除恢复速度 * _AboTick 的积蓄值
-                    if ((PEInt)Time.time - entry.LastGainTime > (PEInt)stateData.duration)
+                    // ⚠ 骇入是永久性的：完成骇入后槽不再回落（否则倒戈几秒就被打回原队伍）
+                    if (type != DamageTypeEnum.Hacker
+                        && (PEInt)Time.time - entry.LastGainTime > (PEInt)stateData.duration)
                     {
                         entry.Current -= (PEInt)(stateData.recovery * _AboTick / 100f) * entry.Max;
                         if (entry.Current < 0) entry.Current = 0;

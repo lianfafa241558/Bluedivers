@@ -26,9 +26,9 @@ namespace FPSGame.Game {
         public int MaxShield;
 
         /// <summary>整体伤害抗性（各类型减伤乘区，1=无减伤）。动能/爆炸由护甲等级AP判定，此处不含这两项</summary>
-        [Header("伤害抗性")]
+        [Header("伤害倍率")]
         [SerializeField]
-        [InspectorName("伤害抗性")]
+        [InspectorName("伤害倍率")]
         private List<SKVP<DamageTypeEnum, float>> showArmorLists = new();
 
 
@@ -315,8 +315,6 @@ namespace FPSGame.Game {
             => damageAffected != null ? (pos - damageAffected.bounds.center).normalized : Vector3.up;
 
         private PEInt HandleDamage(DamageTypeEnum type, PEInt value, GameObject damageCaused, bool isAboTick = false) {
-            //只有需求特殊处理的才单独写，目前没有状态槽，直接全部默认
-            //Debug.LogWarning("对"+gameObject.name+"伤害:类型"+type+"值"+value);
             // 异常状态 tick 伤害：不更新积蓄槽（Current/LastGainTime），直接造成对应类型伤害
             if (isAboTick) {
                 return type == DamageTypeEnum.Destruction ? 0 : value;

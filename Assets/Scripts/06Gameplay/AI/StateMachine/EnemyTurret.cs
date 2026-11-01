@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using FPSGame.Core;
+using FPSGame.Game;
+using FPSGame.GameContract;
 using PEMaths;
 
 using UnityEngine;
@@ -13,6 +16,13 @@ namespace FPSGame.AI
     public class EnemyTurret : AIInputUnitController<EnemyTurret.AIState>
     {
         protected EnemyController m_EnemyController;
+
+        /// <summary>骇入是否生效（队伍已被改成攻击者的）</summary>
+        private bool _hackerActive;
+        /// <summary>被骇入的这个单位（改 Team 用）</summary>
+        private Actor _hackerActor;
+        /// <summary>骇入前的原始队伍，解除/销毁时还原</summary>
+        private int _hackerOriginTeam;
 
         protected Vector3 TargetPosition => m_EnemyController.Target.Pos;
 
@@ -64,6 +74,12 @@ namespace FPSGame.AI
             // 示警直接听侦测模块的事件(不再每帧轮询 module.BewarePoint)
             var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
             if (module != null) module.onBeware += OnBeware;
+
+            // 异常状态：炮塔也要吃骇入倒戈（口径同 EnemyMobile_AboState）
+            var health = m_EnemyController != null ? m_EnemyController.GetComponent<IHealth>() : null;
+            if (health != null) health.OnAboStateFullChanged += OnAboStateFullChanged;
+            _hackerActor = m_EnemyController != null ? m_EnemyController.GetComponent<Actor>() : null;
+            if (_hackerActor != null) _hackerOriginTeam = _hackerActor.Team;
         }
 
         protected override void OnDestroy()
@@ -71,6 +87,71 @@ namespace FPSGame.AI
             base.OnDestroy();
             var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
             if (module != null) module.onBeware -= OnBeware;
+
+            var health = m_EnemyController != null ? m_EnemyController.GetComponent<IHealth>() : null;
+            if (health != null) health.OnAboStateFullChanged -= OnAboStateFullChanged;
+            // 销毁/回收前把队伍改回去，别让 Team 残留到下一次复用
+            RestoreHackerTeam();
+        }
+
+        private void OnAboStateFullChanged(DamageTypeEnum type, GameObject source, bool full)
+        {
+            if (type == DamageTypeEnum.Hacker) HandleHacker(full, source);
+        }
+
+        /// <summary>
+        /// 骇入满：把炮塔所属改成攻击者的队伍（真倒戈）—— 改完 <c>DetectionModule.CheckNewTarget</c>
+        /// 只找"非本队"，即它的原队友。解除/销毁时复原。
+        /// <para>⚠ 与 <c>EnemyMobile_AboState.HandleHacker</c> 同口径；炮塔不是 EnemyMobile 的子类，
+        /// 那条实现覆盖不到它（2026-11-02 实测：炮塔满槽后照旧打玩家）。</para>
+        /// <para>▍槽是永久满的（见 <c>Health.AboTick</c>），所以解除分支基本只在销毁时走到。</para>
+        /// </summary>
+        private void HandleHacker(bool full, GameObject source)
+        {
+            if (!full)
+            {
+                RestoreHackerTeam();
+                return;
+            }
+            if (_hackerActive) return;   // 重复满槽不再改（否则会把"当前队伍"当成原队伍记下来）
+
+            if (_hackerActor == null)
+            {
+                _hackerActor = m_EnemyController != null ? m_EnemyController.GetComponent<Actor>() : null;
+                if (_hackerActor == null) return;
+                _hackerOriginTeam = _hackerActor.Team;
+            }
+
+            Actor sourceActor = null;
+            if (source != null)
+            {
+                sourceActor = source.GetComponent<Actor>();
+                if (sourceActor == null) sourceActor = source.GetComponentInParent<Actor>();
+            }
+            if (sourceActor == null)
+            {
+                Debug.LogWarning($"[骇入] {name} 的来源 {source} 不是单位，无法倒戈", this);
+                return;
+            }
+
+            _hackerActive = true;
+            _hackerActor.Team = sourceActor.Team;
+
+            // 旧目标（原阵营）现在变同队了，清掉交给感知重找 —— 改 Team 后它只会锁定原队友
+            var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
+            if (module != null)
+            {
+                module.SetTargetActor(null);
+                module.ClearBeware();
+            }
+        }
+
+        /// <summary>把队伍还原成骇入前的样子（幂等）。</summary>
+        private void RestoreHackerTeam()
+        {
+            if (!_hackerActive) return;
+            _hackerActive = false;
+            if (_hackerActor != null) _hackerActor.Team = _hackerOriginTeam;
         }
 
         protected override Dictionary<AIState, AiStateHook> InitState()

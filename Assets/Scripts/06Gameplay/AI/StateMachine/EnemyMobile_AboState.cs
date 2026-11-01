@@ -35,6 +35,10 @@ namespace FPSGame.AI
         private const float _ToxicityWanderRadius = 5f;
         /// <summary>Hacker 是否生效</summary>
         private bool _hackerActive;
+        /// <summary>被骇入的那个单位（改 Team 用；惰性缓存，不与 m_EnemyController 同生命周期）</summary>
+        private Actor _hackerActor;
+        /// <summary>骇入前的原始队伍，解除/销毁时还原</summary>
+        private int _hackerOriginTeam;
         /// <summary>Terror 逃离方向的目标点</summary>
         private Vector3 _terrorFleeDestination;
 
@@ -46,6 +50,10 @@ namespace FPSGame.AI
             {
                 health.OnAboStateFullChanged += OnAboStateFullChanged;
             }
+
+            // 原始队伍必须在这里记：骇入会改写 Team，事后取回来就已经是被改过的值了
+            _hackerActor = m_EnemyController.GetComponent<Actor>();
+            if (_hackerActor != null) _hackerOriginTeam = _hackerActor.Team;
         }
 
         private void OnDestroyAboState()
@@ -55,6 +63,9 @@ namespace FPSGame.AI
             {
                 health.OnAboStateFullChanged -= OnAboStateFullChanged;
             }
+
+            // 销毁/回收前把队伍改回去，别让 Team 残留到下一次复用
+            RestoreHackerTeam();
         }
 
         private void OnAboStateFullChanged(DamageTypeEnum type, GameObject source, bool full)
@@ -77,7 +88,7 @@ namespace FPSGame.AI
                     HandleToxicity(full);
                     break;
                 case DamageTypeEnum.Hacker:
-                    HandleHacker(full);
+                    HandleHacker(full, source);
                     break;
             }
         }
@@ -161,15 +172,59 @@ namespace FPSGame.AI
             _toxicityWanderNextTime = Time.time + _ToxicityWanderInterval;
         }
 
-        /// <summary>Hacker 满：尝试锁定同队伍单位；解除时清目标</summary>
-        private void HandleHacker(bool full)
+        /// <summary>
+        /// Hacker 满：把单位所属改成攻击者的队伍（真倒戈）—— 改完 <c>DetectionModule.CheckNewTarget</c>
+        /// 只会找"非本队"，即它的原队友，不用再手动塞目标。解除/销毁时复原。
+        ///
+        /// <para>⚠ 代价（选 A 方案时就接受的）：玩家打它会走友伤减伤
+        /// （<c>Damageable.InflictDamage</c> 按 <c>Actor.Team == SourceActor.Team</c> 乘 <c>SensibilityToSelfdamage</c>）。
+        /// 要让它"倒戈但照样吃满伤"，得在伤害链上单独给骇入单位开洞，别在这里绕。</para>
+        /// <para>▍槽是永久满的（见 <c>Health.AboTick</c>），所以解除分支基本只在销毁时走到。</para>
+        /// </summary>
+        /// <param name="full">是否满槽</param>
+        /// <param name="source">直接来源（<c>AboGaugeEntry.Source</c>）：倒戈后加入它的队伍</param>
+        private void HandleHacker(bool full, GameObject source)
         {
-            _hackerActive = full;
-            if (full)
+            if (!full)
             {
-                m_EnemyController.DetectionModule.SetTargetActor(null);
-                m_EnemyController.DetectionModule.ClearBeware();
+                RestoreHackerTeam();
+                return;
             }
+            if (_hackerActive) return;   // 重复满槽不再改（否则会把"当前队伍"当成原队伍记下来）
+
+            if (_hackerActor == null)
+            {
+                _hackerActor = m_EnemyController != null ? m_EnemyController.GetComponent<Actor>() : null;
+                if (_hackerActor == null) return;
+                _hackerOriginTeam = _hackerActor.Team;
+            }
+
+            Actor sourceActor = null;
+            if (source != null)
+            {
+                sourceActor = source.GetComponent<Actor>();
+                if (sourceActor == null) sourceActor = source.GetComponentInParent<Actor>();
+            }
+            if (sourceActor == null)
+            {
+                Debug.LogWarning($"[骇入] {name} 的来源 {source} 不是单位，无法倒戈", this);
+                return;
+            }
+
+            _hackerActive = true;
+            _hackerActor.Team = sourceActor.Team;
+
+            // 旧目标（原阵营）现在变同队了，清掉交给感知重找 —— 改 Team 后它只会锁定原队友
+            m_EnemyController.DetectionModule.SetTargetActor(null);
+            m_EnemyController.DetectionModule.ClearBeware();
+        }
+
+        /// <summary>把队伍还原成骇入前的样子（幂等）。</summary>
+        private void RestoreHackerTeam()
+        {
+            if (!_hackerActive) return;
+            _hackerActive = false;
+            if (_hackerActor != null) _hackerActor.Team = _hackerOriginTeam;
         }
 
         /// <summary>是否被异常状态禁止攻击（Freeze/Vertigo/Terror），或弱点受击僵直期间</summary>
@@ -181,28 +236,8 @@ namespace FPSGame.AI
         /// <summary>是否被异常状态强制原地乱攻（Toxicity）</summary>
         public bool IsForcedAttack => _toxicityActive;
 
-        /// <summary>是否被异常状态强制锁定同队（Hacker）</summary>
+        /// <summary>是否已被骇入（队伍已被改成攻击者的）</summary>
         public bool IsHacked => _hackerActive;
-
-        /// <summary>每帧处理 Hacker：寻找并锁定同队伍单位</summary>
-        private void UpdateHackerTarget()
-        {
-            if (!_hackerActive) return;
-            if (!FPSGame.GameContract.BattleHub.Current.IsPresent) return;
-
-            var actor = m_EnemyController.GetComponent<Actor>();
-            if (actor == null) return;
-
-            var list = FPSGame.Game.UnitQuery.FindUnits(
-                new PEMaths.PECircle(actor.LogicPos, (PEMaths.PEInt)20f),
-                TargetCfg.EnemyAI,
-                item => item.Team == actor.Team && item != (IActor)actor && FpsHelper.VaildTarget(item));
-
-            if (list.Count > 0)
-            {
-                m_EnemyController.DetectionModule.SetTargetActor(list[0]);
-            }
-        }
     }
 }
 

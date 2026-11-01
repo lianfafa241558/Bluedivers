@@ -445,35 +445,33 @@ MonoBehaviour:
       Value: 1
     - Key: 17
       Value: 1
-  BulletFlag: 1
+  BulletFlag: 3
   Damages:
-  - BulletPrefab: {fileID: -7807231914088266234, guid: 06542f76b95ea874f929fd17392f74bc,
+  - BulletPrefab: {fileID: -7807231914088266234, guid: 619890997c9e69540b3dea220d4adf9e,
       type: 3}
     LandingPrefab: {fileID: 0}
     Speed: 70
     Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 1.6
-    MaxRange: 120
+    MaxRange: 60
     MinRange: 1
     NoSource: 0
-    SoundRadius: 20
-    ImpactSoundRadius: 8
-    DamageExplosion: 7
-    DamageDirect: 0
+    SoundRadius: 40
+    ImpactSoundRadius: 0
+    DamageExplosion: 0
+    DamageDirect: 7
     DamageGroupDirect:
-    - Key: 5
-      Value: 0.5
-    - Key: 10
-      Value: 0.5
+    - Key: 3
+      Value: 1
     WeaknessBonus: 0
-    ExplosionInnerRange: 0.4
-    ExplosionRange: 0.9
+    ExplosionInnerRange: 2
+    ExplosionRange: 2.1
     DestructeRadius: 0
     ShockwaveRadius: 0
     ShockwaveForce: 10
     DamageGroupExplosion:
-    - Key: 5
+    - Key: 3
       Value: 1
     AboVulnerabilityGroup:
     - Key: 4
@@ -482,17 +480,16 @@ MonoBehaviour:
       Value: 1
     - Key: 6
       Value: 1
-    UseCollisionDirection: 1
+    UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.1
-    ImpactVfx: {fileID: 7655095426451682942, guid: c0b2ad8985e3e6d40bb13d04f56c6649,
-      type: 3}
-    ImpactSfx: {fileID: 8300000, guid: dc0335c8764cec842b7e0fa572fc0a61, type: 3}
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 1
+    DirectAP: 10
     DirectAPChargeScale: 1
-    ExplosionAP: 5
+    ExplosionAP: 0
     ExplosionAPChargeScale: 1
     demolishValue: 0
     UseCharge: 0
@@ -504,20 +501,19 @@ MonoBehaviour:
     ChargeHeatScale: 1
     ChargeSpreadScale: 1
   UseDamageIndex: 0
-  MuzzleFlashPrefab: {fileID: 748781637555137343, guid: a342e37561382d744ba2a23497329771,
+  MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 2fbcbabde66ba764d9d73014ef7e0b8f,
     type: 3}
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 50
-  FireNoiseRadius: 30
+  FireNoiseRadius: 0
   LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 1
-  ContinuousShootStartSfx: {fileID: 8300000, guid: dff37a303c908e846b3137a637cbbf7a,
+  ContinuousShootStartSfx: {fileID: 0}
+  ContinuousShootLoopSfx: {fileID: 8300000, guid: 61b939ef9705bb6458d4d15eca7d48ba,
     type: 3}
-  ContinuousShootLoopSfx: {fileID: 8300000, guid: 62e9686756f5a394db66ca01ce110bfe,
-    type: 3}
-  ContinuousShootEndSfx: {fileID: 8300000, guid: b2804c2e99f02d54c9cd8b36ab673f9e,
+  ContinuousShootEndSfx: {fileID: 8300000, guid: 57faab8f4a5f8bc41baedd4d4caf1966,
     type: 3}
   _currentHeat: 0
   wantsToShoot: 0
@@ -527,7 +523,7 @@ MonoBehaviour:
   showReloadTime: 0
   showCool: 0
   ShootType: 3
-  WeaponFlag: 2
+  WeaponFlag: 0
   AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
@@ -536,10 +532,10 @@ MonoBehaviour:
   WeaponAnimator: {fileID: 0}
   PlayerIndex: 0
   WeaponName: "\u79D1\u83B1\u7279\u5FAE\u6CE2\u67AA"
-  WeaponType: "\u91CD\u578B\u6B66\u5668"
+  WeaponType: "\u5FAE\u6CE2\u6B66\u5668"
   WeaponTypeEnum: 1
-  WeaponIcon: {fileID: 21300000, guid: 21fd89523808e4042b8ad062e1caea22, type: 3}
-  Sight: {fileID: 1123618372036048713, guid: b72539764b0dbef469852ef17c048765, type: 3}
+  WeaponIcon: {fileID: 21300000, guid: 839e436a5fb2c204c9fee7a850e32ba9, type: 3}
+  Sight: {fileID: 1123618372036048713, guid: edb48c58689cdb3439f969e8217b7199, type: 3}
   ScopeGo: {fileID: 0}
   LHand: {fileID: 0}
   RHand: {fileID: 390647978284266955}
@@ -566,7 +562,7 @@ MonoBehaviour:
     SpreadBloomDecay: 10
     ShakePerShot: 0.02
   AimingHideCrosshair: 1
-  AimZoomRatio: 0.6
+  AimZoomRatio: 1
   AimOffset: {x: -0.05, y: 0.12, z: 0}
   playerAngle: 0
   _showAttrInfo: 
@@ -580,8 +576,27 @@ MonoBehaviour:
     type: 2
     addTag: 0
     removeTag: 0
-  showAttr: 1400000002000000010000000d0000000e0000000f0000001000000015000000160000000700000019000000f0000000f1000000f2000000
-  m_UniqueAttr: []
+  - name: "\u5FAE\u6CE2\u5BBD\u5EA6"
+    type: 22
+    addTag: 0
+    removeTag: 0
+  - name: "\u6563\u5E03"
+    type: 7
+    addTag: 64
+    removeTag: 0
+  - name: "\u4F24\u5BB3"
+    type: 203
+    addTag: 64
+    removeTag: 0
+  - name: "\u9A87\u5BA2\u4F24\u5BB3"
+    type: 211
+    addTag: 64
+    removeTag: 0
+  showAttr: 02000000010000000d0000000e0000000f00000010000000150000001600000019000000
+  m_UniqueAttr:
+  - name: "\u9ED1\u5BA2\u653B\u51FB"
+    value: 0
+    tag: 32
   Upgrade:
   - Key: 2
     Value:
@@ -612,8 +627,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b4d9ae6698d01afffb64fc635a983007, type: 2}
   - {fileID: 11400000, guid: 664f67d3a8187db21277147177adf3a6, type: 2}
   - {fileID: 11400000, guid: c6592d947cc6e6a33c072b6cfd280261, type: 2}
-  - {fileID: 11400000, guid: 40001abaee677a686091b277beedd83d, type: 2}
-  - {fileID: 11400000, guid: 26109fcf65654c79450c2dad3bd93d21, type: 2}
+  - {fileID: 11400000, guid: 84c97706d4f18f347aa0a9801e3e51e4, type: 2}
   ActiveModule: {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
 --- !u!114 &2817651771312968552
 MonoBehaviour:
@@ -672,6 +686,7 @@ MonoBehaviour:
     m_NumColorKeys: 3
     m_NumAlphaKeys: 2
   ReverseCoolRatioFill: 1
+  CoolRatioSmoothSpeed: 12
 --- !u!114 &8568470241816925444
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -685,7 +700,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _steamVfx: {fileID: 6852935839986262978}
-  _steamEmissionRateMax: 8
+  _steamEmissionRateMax: 12
   _overheatGradient:
     serializedVersion: 2
     key0: {r: 0, g: 0, b: 0, a: 1}
@@ -719,7 +734,7 @@ MonoBehaviour:
   _overheatingMaterial: {fileID: 2100000, guid: 366c326edaf5178419e4c214104c410e,
     type: 2}
   _overheatingMaterialName: _EmissionColor
-  _coolingSound: {fileID: 8300000, guid: 93331a7c9fe98494a84f18effb358899, type: 3}
+  _coolingSound: {fileID: 8300000, guid: 47d59e853884122479bfb6806159ed30, type: 3}
   _dangerToVolume:
     serializedVersion: 2
     m_Curve:
@@ -765,7 +780,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc94179cece5b4e41ae9298ddbf83fdf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SimultaneousFuelCellsUsage: 0
+  SimultaneousFuelCellsUsage: 1
   FuelCells:
   - {fileID: 519453220248056313}
   - {fileID: 1325719345651962163}
@@ -773,8 +788,9 @@ MonoBehaviour:
   - {fileID: 1235716694077421164}
   - {fileID: 7851883574516815076}
   - {fileID: 684895484349012083}
-  FuelCellUsedPosition: {x: 0, y: 0.25, z: 0}
-  FuelCellUnusedPosition: {x: 0, y: 0, z: 0}
+  FuelCellUsedPosition: {x: 0, y: 0.24, z: 0}
+  FuelCellUnusedPosition: {x: 0, y: 0.18, z: 0}
+  SmoothSpeed: 12
 --- !u!1 &6342002738232370379
 GameObject:
   m_ObjectHideFlags: 0
@@ -877,7 +893,7 @@ Transform:
   m_GameObject: {fileID: 7699149593370536803}
   serializedVersion: 2
   m_LocalRotation: {x: 0.49771714, y: -0.53703666, z: -0.4768757, w: -0.4862704}
-  m_LocalPosition: {x: -0.004, y: -0.019, z: 0.048}
+  m_LocalPosition: {x: 0.02, y: -0.021, z: 0.027}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

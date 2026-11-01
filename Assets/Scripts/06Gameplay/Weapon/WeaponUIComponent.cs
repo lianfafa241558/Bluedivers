@@ -58,10 +58,19 @@ namespace FPSGame.Weapon
         [SerializeField]
         bool ReverseCoolRatioFill;
 
+        [InspectorName("冷却条跟随平滑速度")]
+        [Tooltip("热量是「每发一档」的阶梯（热量武器一发 4.5%），直接赋值会让条子跳格；0 = 不平滑（旧行为）。文本和蓄力条不受影响")]
+        [SerializeField]
+        float CoolRatioSmoothSpeed = 12f;
+
         WeaponController m_weapon;
 
         /// <summary>上一帧写进 Image 的填充量（0~1）：只在变化时才写，别每帧标脏 Canvas</summary>
         private float _lastCoolRatio = -1f;
+
+        /// <summary>平滑后的显示用热量（0=冷，1=满热）：填充与取色共用同一个值，
+        /// 否则会出现"条子还在慢慢走、颜色已经跳到下一档"的错位。</summary>
+        private float _displayedHeat = -1f;
 
         private void Awake()
         {
@@ -124,15 +133,22 @@ namespace FPSGame.Weapon
                     heat = 1f - m_weapon.ShootInterval.ScaleValue.RawFloat;
                 }
 
-                // 反转只动填充方向，取色永远按热量 ⇒ 红不红跟这个开关无关
-                float fill = ReverseCoolRatioFill ? heat : 1f - heat;
+                // 阶梯跳变先过一道帧率无关阻尼（热量的离散档位、射击间隔的 20ms 步进都吃这个）
+                if (_displayedHeat < 0f) _displayedHeat = heat;
+                else if (CoolRatioSmoothSpeed > 0f)
+                    _displayedHeat = Mathf.Lerp(_displayedHeat, heat, 1f - Mathf.Exp(-CoolRatioSmoothSpeed * Time.deltaTime));
+                else _displayedHeat = heat;
 
+                // 反转只动填充方向，取色永远按热量 ⇒ 红不红跟这个开关无关
+                float fill = ReverseCoolRatioFill ? _displayedHeat : 1f - _displayedHeat;
+
+                // 平滑到贴近目标后就不再写：静止时不标脏 Canvas（平滑过程本身每帧要写）
                 if (Mathf.Abs(fill - _lastCoolRatio) < 0.001f) return;
                 _lastCoolRatio = fill;
 
                 // ⚠ Gradient 是类，Unity 会给"没序列化的字段"补一个白色默认值 ⇒ 只能用显式开关，不能靠 null 判断
                 bool tinted = TintCoolRatio && CoolRatioGradient != null;
-                Color tint = tinted ? CoolRatioGradient.Evaluate(heat) : default;
+                Color tint = tinted ? CoolRatioGradient.Evaluate(_displayedHeat) : default;
                 for (int i = 0; i < I_CoolRatio.Count; i++)
                 {
                     var image = I_CoolRatio[i];
