@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
@@ -51,6 +51,9 @@ namespace FPSGame.Weapon
         /// <summary>强制连射：开火后松手不停，直到弹匣打空(无限弹匣则一直打)</summary>
         [InspectorName("强制连射(打空弹匣才停)")]
         ForceShoot = 1 << 3,
+        /// <summary>允许锁定重定向：锁满后每个节拍把最远的一层挪到最靠近屏幕中心的目标（没有它则是锁上就不改）</summary>
+        [InspectorName("允许锁定重定向")]
+        Relock = 1 << 4,
     }
 
     public abstract partial class WeaponController : WeaponReloadController
@@ -613,6 +616,37 @@ namespace FPSGame.Weapon
             return actor!=null;
         }
 
+        /// <summary>
+        /// 锁定重定向（满层后才生效）：把"最背离准心的一层"改指向"当前最靠近准心的目标"。
+        /// <para>⚠ 每节拍只挪 1 层，且必须"新的确实更近"才挪 —— 否则两个目标距离接近时会来回横跳，
+        /// 层数永远攒不齐，锁定武器等于废掉。</para>
+        /// </summary>
+        void TryRelockOneLayer()
+        {
+            if (WeaponLockTarget.Count == 0) return;
+            if (!GetLockActor(out var best)) return;//视口内没有可锁的(含"都已锁满每敌上限") ⇒ 不挪
+
+            Vector3 screenCenter = Camera.main.ViewportToScreenPoint(new(0.5f, 0.5f, 0));
+            int farIndex = 0;
+            float farDist = -1;
+            for (int i = 0; i < WeaponLockTarget.Count; ++i)
+            {
+                float d = Vector3.Distance(Camera.main.WorldToScreenPoint(WeaponLockTarget[i].CenterPos), screenCenter);
+                if (d <= farDist) continue;
+                farDist = d;
+                farIndex = i;
+            }
+
+            var lost = WeaponLockTarget[farIndex];
+            if (lost == best) return;//最近的目标就是手里最远的那个 ⇒ 已经对齐
+            if (Vector3.Distance(Camera.main.WorldToScreenPoint(best.CenterPos), screenCenter) >= farDist) return;
+
+            //就地换目标：层数、列表长度不变，GetLockBullet 的弹出顺序也保持稳定
+            WeaponLockTarget[farIndex] = best;
+            OnLockUpdate?.Invoke(lost, false);
+            OnLockUpdate?.Invoke(best, true);
+        }
+
  
 
         /// <summary>
@@ -680,6 +714,8 @@ namespace FPSGame.Weapon
                         }
 
                     }
+                    //锁满了才谈重定向：每节拍挪 1 层到更靠近准心的目标（没该标旗则保持"锁上就不改"）
+                    else if (HasFlag(WeaponFlag.Relock)) TryRelockOneLayer();
                 }
                 
             }

@@ -106,9 +106,13 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     [InspectorName("第三人称")]
     [SerializeField] private bool _isThirdPerson;
 
+    /// <summary>
+    /// 是否第三人称 —— **生效值**：第三人称下按住中键临时切第一人称时返回 false，
+    /// 玩家的视角偏好仍是 <see cref="_isThirdPerson"/>（松开即还原，见 PlayerController_ThirdPerson）。
+    /// </summary>
     public bool IsThirdPerson
     {
-        get => _isThirdPerson;
+        get => _isThirdPerson && !_thirdPersonAimOverride;
         private set => _isThirdPerson = value;
     }
 
@@ -361,6 +365,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         UpdateSprint();
         HandleKei();
         HandleToggleView();
+        HandleThirdPersonAimOverride();
 
         
     }
@@ -552,6 +557,13 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     void OnDie(GameObject caused, GameObject origin)
     {
         IsDead = true;
+        // 死前若正按住中键切了第一人称，先还原第三人称再记录偏好：否则偏好被记成第一人称（复活后永久丢第三人称），
+        // 且武器相机还开着会叠在死亡镜头上
+        if (_thirdPersonAimOverride)
+        {
+            _thirdPersonAimOverride = false;
+            ApplyViewMode();
+        }
         _wasThirdPersonBeforeDeath = IsThirdPerson;
         _downCameraVelocity = Vector3.zero;
 

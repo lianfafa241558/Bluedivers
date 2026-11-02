@@ -1,11 +1,13 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Events;
 namespace FPSGame.Weapon
 {
-    using Weapon = WeaponPlayerController;
     using Info =  WeaponPlayerController.AttrInfo;
+    using Weapon = WeaponPlayerController;
     /// <summary>
     /// 特殊的升级应用的场合
     /// </summary>
@@ -31,9 +33,30 @@ namespace FPSGame.Weapon
                 weapon.ShootType = attr.Value>0? WeaponShootType.Automatic: WeaponShootType.Manual;
             },
             ["强制连射"] = (Weapon weapon, Info attr) => {
-                weapon.WeaponFlag = attr.Value > 0 ? weapon.WeaponFlag |WeaponFlag.ForceShoot: weapon.WeaponFlag & ~WeaponFlag.ForceShoot;
+                SetTag(attr, ref weapon.WeaponFlag, WeaponFlag.ForceShoot);
             },
+            ["穿透单位"] = (Weapon weapon, Info attr) => {
+                SetTag(attr,ref weapon.BulletFlag, BulletFlag.PenetrateUnits);
+            },
+            ["锁定重定向"] = (Weapon weapon, Info attr) => {
+                SetTag(attr, ref weapon.WeaponFlag, WeaponFlag.Relock);
+            },
+            
         };
+
+
+
+        private static void SetTag<T>(Info attr,ref T now,T flag) where T:Enum
+        {
+            ref int nowRef = ref Unsafe.As<T, int>(ref now);
+            int flagValue = Unsafe.As<T, int>(ref flag);
+
+            if (attr.Value > 0)
+                nowRef |= flagValue;
+            else
+                nowRef &= ~flagValue;
+        }
+
 
 
         public static void Apply(Weapon weapon, Dictionary<string, Info> parameter)

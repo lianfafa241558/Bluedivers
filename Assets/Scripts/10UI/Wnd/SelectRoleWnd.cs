@@ -177,8 +177,9 @@ public class SelectRoleWnd : Window
         {
             var a = i;
             SetCilck(weaponitemListLayout.GetChild(i), () => {
-                arch.weaponSelect[(WeaponTypeEnum)nowSelectWeapon] = a;
-                meetSave = true;
+                // 武器页里点图标 = 给这一类武器换型号，必须和角色页的 ◀▶ 走同一套
+                //（原来只写存档不刷行 ⇒ 选完回角色页那行还停着旧枪）
+                SetWeaponSelect(nowSelectWeapon, a);
                 WndState = RoleWndState.Weapon;
             });
         }
@@ -268,7 +269,10 @@ public class SelectRoleWnd : Window
     protected override void HideWnd()
     {
 
-        if (meetSave)
+        bool changed = meetSave;
+        meetSave = false;   // 只在"真改过"的那一次收尾，避免每次关窗都重装武器
+
+        if (changed)
         {
             ArchivesData_SO.Current.Save();
             // 联机：本窗口改的是"武器选择 / 改装档位 / 模组"，都只落在存档上 ⇒ 关窗时把本机配置重发一次
@@ -276,6 +280,9 @@ public class SelectRoleWnd : Window
             TeamNetBridge.SendSelfLoadout();
         }
         if(ActorsManager.Player.IsValidMono()) ActorsManager.Player.gameObject.SetActive(true);
+        // 手里那把武器是实例快照（改装只在 Awake 时算一次）⇒ 改完必须按存档重装；
+        // ⚠ 必须放在 SetActive(true) 之后，否则新武器不会 Awake、改装会被 InitAttribute 抹掉
+        if (changed && m_manager) m_manager.RefreshPlayerWeapons();
         WindowState = WindowStateEnum.Game;
         if (m_SelectRoleCamera) SetActive(m_SelectRoleCamera.gameObject, false);
         if(m_SelectPoint) SetActive(m_SelectPoint.gameObject, false);
@@ -340,15 +347,27 @@ public class SelectRoleWnd : Window
     #endregion 
 
     #region 人物界面武器列表
+    /// <summary>
+    /// 把"某一类武器选中的型号"写进存档，并同步角色页那一行的预览（名字 / 图标 / 已选改装图标 / "1/3" 计数）。
+    /// <para>▍两个入口共用：角色页行上的 ◀▶（相对翻一格）与武器页里的图标列表（绝对点选）。
+    /// 以前后者只写存档、不刷行 ⇒ 选完回角色页那行还停着旧枪。</para>
+    /// </summary>
+    /// <param name="typeIndex">武器类型，= <c>(int)WeaponTypeEnum</c>，同时也是 <c>weaponListRoot</c> 的行下标</param>
+    private void SetWeaponSelect(int typeIndex, int index)
+    {
+        var type = (WeaponTypeEnum)typeIndex;
+        int count = data.weapons[type].Count;
+        index = Tool.PositiveRemainder(index, count);
+
+        arch.weaponSelect[type] = index;
+        SetWeaponPreView(typeIndex, data.GetWeapon(type, index));
+        SetText(weaponListRoot.GetChild(typeIndex, 4), (1 + index) + "/" + count);
+        meetSave = true;
+    }
+
     private void SwitchWeapon(int index,bool left)
     {
-        var type = (WeaponTypeEnum)index;
-
-        int count = data.weapons[type].Count;
-        arch.weaponSelect[type] = (arch.weaponSelect[type] + count + (left ? -1 : 1)) % count;
-        SetWeaponPreView(index, data.GetWeapon(type,arch.weaponSelect[type]));
-        SetText(weaponListRoot.GetChild(index, 4), (1 + arch.weaponSelect[type]) + "/" + count);
-        meetSave = true;
+        SetWeaponSelect(index, arch.weaponSelect[(WeaponTypeEnum)index] + (left ? -1 : 1));
     }
 
     /// <summary>
@@ -492,9 +511,9 @@ public class SelectRoleWnd : Window
                 {
                     SetSprite(weaponUpgradeItemLayout.GetChild(y, x, 0), showWeapon.GetUpgrade(y, x).icon);
                     int state = 0;
-                    if (archWeaponData.Level < levels[y]) state = 3;
+                    if (!LevelEnough(y)) state = 3;
                     else if (archWeaponData.selectIndex[y] == x) state = 0;
-                    else if (archWeaponData.GetBuy(y, x)) state = 1;
+                    else if (HasBuy(y, x)) state = 1;
                     else state = 2;
 
                     SetUpgradeItemButton(y, x, state);
@@ -515,14 +534,21 @@ public class SelectRoleWnd : Window
             if (showSelect)
             {
                 SetUpgradeSelectButton(archWeaponData.selectIndex, y, archWeaponData.selectIndex[y], false);
-                SetActive(weaponUpgradeSelectLayout.GetChild(y, 2), archWeaponData.Level < levels[y]);
-                SetActive(weaponUpgradeSelectLayout.GetChild(y, 1), archWeaponData.Level >= levels[y]);
+                // 子2 = "Lv.x 解锁"提示，子1 = 可选框；等级不够时用提示顶掉可选框
+                bool unlocked = LevelEnough(y);
+                SetActive(weaponUpgradeSelectLayout.GetChild(y, 2), !unlocked);
+                SetActive(weaponUpgradeSelectLayout.GetChild(y, 1), unlocked);
                 SetText(weaponUpgradeSelectLayout.GetChild(y, 2, 0), levels[y]);
             }
             
             
         }
+#if TEST_ENV
+        // 全买口径下"已购数量"也得按满显示，否则进度行和上面的格子对不上（不写存档）
+        SetBuyCountLayout(totleLenght, totleLenght);
+#else
         SetBuyCountLayout(totleLenght, archWeaponData.BuyCount);
+#endif
 
 
         weaponInst.ApplyUpgrade(archWeaponData.selectIndex, archWeaponData.selectModuleIndex);
@@ -658,13 +684,13 @@ public class SelectRoleWnd : Window
     /// </summary>
     private void SelectUpgrade(int y, int x)
     {
-        if (archWeaponData.Level < showWeapon.UpgradeLevel(y))
+        if (!LevelEnough(y))
         {
-            wndManager.PlaySound(new("UI/UI_Reward2", volume:0.1f));
+            wndManager.PlaySound(new("UI/PerformanceLevelNewRewardUnlockedA_1", volume:0.1f));
             return;
         }
         var upgrade = showWeapon.GetUpgrade(y, x);
-        if (archWeaponData.GetBuy(y, x))
+        if (HasBuy(y, x))
         {
             SetUpgradeSelectButton(archWeaponData.selectIndex,y, x,true);
             meetSave = true;
@@ -700,6 +726,35 @@ public class SelectRoleWnd : Window
         }
         
         SetActive(tipRoot, false);
+    }
+
+    /// <summary>
+    /// 该升级项是否已拥有。
+    /// <para>▍测试环境（宏 <c>TEST_ENV</c>，用菜单 <c>Tools/环境/测试环境</c> 开关）一律视为已购买 ⇒
+    /// 走"选中"分支，不扣资源也不弹购买框。只是判定放宽，<c>SetBuy</c> 不会被调用，
+    /// 存档里"真买过哪些"不会被测试状态污染。</para>
+    /// </summary>
+    private bool HasBuy(int y, int x)
+    {
+#if TEST_ENV
+        return true;
+#else
+        return archWeaponData.GetBuy(y, x);
+#endif
+    }
+
+    /// <summary>
+    /// 该改装槽位是否已到解锁等级（<c>Upgrade[y].Key</c> = 武器等级门槛）。
+    /// <para>▍测试环境（宏 <c>TEST_ENV</c>）全解锁：等级不够的槽位不再置灰、也不拦点击 ——
+    /// 只放宽"已购买"还是点不动，因为入口先被等级挡了（用户实测 2026-11-02）。</para>
+    /// </summary>
+    private bool LevelEnough(int y)
+    {
+#if TEST_ENV
+        return true;
+#else
+        return archWeaponData.Level >= showWeapon.UpgradeLevel(y);
+#endif
     }
 
     /// <summary>
@@ -748,7 +803,7 @@ public class SelectRoleWnd : Window
             if (x != -1) SetUpgradeItemButton(y, x, 1);//将原来选择的位置重置
             else
             {
-                SetColor(weaponUpgradeSelectLayout.GetChild(y), archWeaponData.Level < showWeapon.UpgradeLevel(y)?unLevelColor:Color.black);
+                SetColor(weaponUpgradeSelectLayout.GetChild(y), LevelEnough(y) ? Color.black : unLevelColor);
             }
         }
         else //X有效且不相同

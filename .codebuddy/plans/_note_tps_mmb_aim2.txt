@@ -1,0 +1,1 @@
+- 追加（同日）：这条组合键**双持期间禁用** —— 判据加 `WeaponsManager.GetActiveSecWeapon() == null`。原因：双持时右键是"开火右手武器"（`PlayerWeaponsManager.UpdateFirstWeapon` 用 `GetAimInputHeld` 当开火），放行就变成边开火边切第一人称。`offline_compile.py 06_Gameplay` 0 error。

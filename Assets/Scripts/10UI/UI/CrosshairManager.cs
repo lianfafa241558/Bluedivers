@@ -7,6 +7,7 @@ using FPSGame.Game;
 using FPSGame.Gameplay;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 using FPSGame.Utils;
 using FPSGame.Weapon;
 
@@ -26,6 +27,26 @@ namespace FPSGame.UI
         [SerializeField]
         bool isStartHave;
 #pragma warning restore CS0414
+
+        [Header("热量环")]
+        [InspectorName("热量环（一圈填充）")]
+        [Tooltip("不使用热量系统的武器会自动隐藏它")]
+        [SerializeField] private Image _heatRing;
+
+        [InspectorName("热量渐变色（0=冷 → 1=满热）")]
+        [Tooltip("按当前热量取色，可手调冷→热的颜色与透明度")]
+        [GradientUsage(true)]
+        [SerializeField] private Gradient _heatGradient;
+
+        [InspectorName("热量环跟随平滑速度")]
+        [Tooltip("热量是「每发一档」的阶梯，直接赋值会跳格；0 = 不平滑")]
+        [SerializeField] private float _heatSmoothSpeed = 12f;
+
+        /// <summary>上次写入的填充量（0~1）：没变就别标脏 Canvas</summary>
+        private float _lastHeat = -1f;
+
+        /// <summary>平滑后的显示用热量：填充与取色共用，避免"条子还在走、颜色已跳档"</summary>
+        private float _displayedHeat = -1f;
 
         protected override void Start()
         {
@@ -75,6 +96,39 @@ namespace FPSGame.UI
             base.SwitchWeapon(weapon, isSec);
             // 切武器后刷新准星（考虑第三人称状态）
             RefreshCrosshairVisibility(m_WeaponsManager.IsAiming);
+            RefreshHeatRing();
+        }
+
+        private void Update() => RefreshHeatRing();
+
+        /// <summary>
+        /// 热量环：填充与取色都用 <see cref="WeaponBaseController.HeatRatio"/>，不用热量的武器直接隐藏。
+        /// ⚠ 热量是「每发一档」的阶梯，必须过一道帧率无关阻尼再写；只在数值变化时写 Image（每帧赋值会标脏 Canvas）。
+        /// </summary>
+        private void RefreshHeatRing()
+        {
+            if (!_heatRing) return;
+
+            bool show = m_Weapons.IsValid() && m_Weapons.HasHeatSystem;
+            if (_heatRing.enabled != show)
+            {
+                _heatRing.enabled = show;
+                _lastHeat = -1f;
+                _displayedHeat = -1f;   // 别从上一把枪的热量插值过来
+            }
+            if (!show) return;
+
+            float heat = m_Weapons.HeatRatio;
+            if (_displayedHeat < 0f) _displayedHeat = heat;
+            else if (_heatSmoothSpeed > 0f)
+                _displayedHeat = Mathf.Lerp(_displayedHeat, heat, 1f - Mathf.Exp(-_heatSmoothSpeed * Time.deltaTime));
+            else _displayedHeat = heat;
+
+            if (Mathf.Abs(_displayedHeat - _lastHeat) < 0.001f) return;
+            _lastHeat = _displayedHeat;
+
+            _heatRing.fillAmount = _displayedHeat;
+            if (_heatGradient != null) _heatRing.color = _heatGradient.Evaluate(_displayedHeat);
         }
 
         protected override void SetAnimGo()

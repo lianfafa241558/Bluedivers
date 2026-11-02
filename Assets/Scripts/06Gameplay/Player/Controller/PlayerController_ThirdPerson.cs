@@ -49,9 +49,47 @@ public partial class PlayerController
     {
         if (!IsDead && InputHandler.GetToggleViewDown())
         {
-            IsThirdPerson = !IsThirdPerson;
-            ApplyViewMode();
+            // 只翻转"偏好"：按住中键期间 IsThirdPerson 已是 false，按生效值翻会翻不动
+            bool before = IsThirdPerson;
+            _isThirdPerson = !_isThirdPerson;
+            if (IsThirdPerson != before) ApplyViewMode();
         }
+    }
+
+    /// <summary>第三人称下按住中键时的临时第一人称（生效状态，不是玩家的视角偏好）</summary>
+    private bool _thirdPersonAimOverride;
+
+    /// <summary>
+    /// 是否正由"第三人称按住中键"临时切到第一人称。
+    /// 武器层拿它当瞄准触发（不是放行 canAim）：能瞄准的枪切过去就进瞄准，不能瞄准的只切视角。
+    /// </summary>
+    public bool FirstPersonAimOverride => _thirdPersonAimOverride;
+
+    /// <summary>
+    /// 第三人称按住中键 ⇒ 临时切第一人称（可瞄准的武器自动进瞄准姿态），松开即还原。
+    /// ⚠ 只改 IsThirdPerson 的**生效值**（见其 getter），视角偏好 _isThirdPerson 不动 ⇒ 松手必然回第三人称。
+    /// </summary>
+    private void HandleThirdPersonAimOverride()
+    {
+        if (IsDead)
+        {
+            SetThirdPersonAimOverride(false);
+            return;
+        }
+
+        // ⚠ 双持期间禁用：那时 IsAiming 被强制为 true 且被当作开火口（见 PlayerWeaponsManager.UpdateFirstWeapon），
+        // 一拍下中键就会变成开火 + 切视角
+        SetThirdPersonAimOverride(_isThirdPerson
+            && WeaponsManager.GetActiveSecWeapon() == null
+            && InputHandler.GetMiddleMouseHeld());
+    }
+
+    private void SetThirdPersonAimOverride(bool value)
+    {
+        if (_thirdPersonAimOverride == value) return;
+        _thirdPersonAimOverride = value;
+        // 复用整套视角切换（剔除层/武器相机/相机父级/准星事件），不要在东家再各改一遍
+        ApplyViewMode();
     }
 
     /// <summary>

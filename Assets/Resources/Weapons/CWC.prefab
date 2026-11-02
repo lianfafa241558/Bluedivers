@@ -434,7 +434,7 @@ MonoBehaviour:
     - Key: 7
       Value: 2
     - Key: 13
-      Value: 4.5
+      Value: 9
     - Key: 14
       Value: 0.25
     - Key: 15
@@ -445,7 +445,7 @@ MonoBehaviour:
       Value: 1
     - Key: 17
       Value: 1
-  BulletFlag: 3
+  BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: -7807231914088266234, guid: 619890997c9e69540b3dea220d4adf9e,
       type: 3}
@@ -487,7 +487,60 @@ MonoBehaviour:
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
-    DirectAP: 10
+    DirectAP: 7
+    DirectAPChargeScale: 1
+    ExplosionAP: 0
+    ExplosionAPChargeScale: 1
+    demolishValue: 0
+    UseCharge: 0
+    ChargeDamageScale: 1
+    ChargeAOERangeScale: 1
+    ChargeSpeedScale: 1
+    ChargeGravityScale: 1
+    ChargeSoundScale: 1
+    ChargeHeatScale: 1
+    ChargeSpreadScale: 1
+  - BulletPrefab: {fileID: -7807231914088266234, guid: 15b21ccd95826e6408747394dd252f30,
+      type: 3}
+    LandingPrefab: {fileID: 0}
+    Speed: 70
+    Gravity: 0
+    InheritWeaponSpeed: 0
+    MaxLifeTime: 1.6
+    MaxRange: 60
+    MinRange: 1
+    NoSource: 0
+    SoundRadius: 40
+    ImpactSoundRadius: 0
+    DamageExplosion: 0
+    DamageDirect: 7
+    DamageGroupDirect:
+    - Key: 3
+      Value: 1
+    WeaknessBonus: 0
+    ExplosionInnerRange: 2
+    ExplosionRange: 2.1
+    DestructeRadius: 0
+    ShockwaveRadius: 0
+    ShockwaveForce: 10
+    DamageGroupExplosion:
+    - Key: 3
+      Value: 1
+    AboVulnerabilityGroup:
+    - Key: 4
+      Value: 1
+    - Key: 5
+      Value: 1
+    - Key: 6
+      Value: 1
+    UseCollisionDirection: 0
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 0}
+    ImpactSfx: {fileID: 0}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0
+    DirectAP: 7
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
@@ -592,17 +645,20 @@ MonoBehaviour:
     type: 211
     addTag: 64
     removeTag: 0
-  showAttr: 02000000010000000d0000000e0000000f00000010000000150000001600000019000000
+  showAttr: 02000000010000000d0000000e0000000f000000100000001500000016000000
   m_UniqueAttr:
   - name: "\u9ED1\u5BA2\u653B\u51FB"
+    value: 0
+    tag: 32
+  - name: "\u7A7F\u900F\u5355\u4F4D"
     value: 0
     tag: 32
   Upgrade:
   - Key: 2
     Value:
-    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
     - {fileID: 11400000, guid: b0357e49f9634cdc426097769bf9622a, type: 2}
     - {fileID: 11400000, guid: 078eca0fab87a8a5ae6cb4d8df5a8e0f, type: 2}
+    - {fileID: 11400000, guid: 4be7ce2fef2cd754180e58233d4889cc, type: 2}
   - Key: 6
     Value:
     - {fileID: 11400000, guid: 36c761bcf84c76e6bca2e36527c4163d, type: 2}
@@ -610,7 +666,6 @@ MonoBehaviour:
     - {fileID: 11400000, guid: e6cecc91cdec3afef5cdab1340afbdea, type: 2}
   - Key: 10
     Value:
-    - {fileID: 11400000, guid: 8fd615b7855aca028f91410a370f22c7, type: 2}
     - {fileID: 11400000, guid: ede750cb708021fde6d0f05190c3e325, type: 2}
   - Key: 14
     Value:
@@ -619,13 +674,10 @@ MonoBehaviour:
   - Key: 18
     Value:
     - {fileID: 11400000, guid: 87e924f0a50d1b9939e5eef9a9156bfb, type: 2}
-    - {fileID: 11400000, guid: 479dae42132ee589a0085a2a99701bba, type: 2}
-    - {fileID: 11400000, guid: 500d3ebab8374814677bccc7eab69ac5, type: 2}
   Modules:
   - {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
   - {fileID: 11400000, guid: 2f153511888455a10dc46e5d56dff62a, type: 2}
   - {fileID: 11400000, guid: b4d9ae6698d01afffb64fc635a983007, type: 2}
-  - {fileID: 11400000, guid: 664f67d3a8187db21277147177adf3a6, type: 2}
   - {fileID: 11400000, guid: c6592d947cc6e6a33c072b6cfd280261, type: 2}
   - {fileID: 11400000, guid: 84c97706d4f18f347aa0a9801e3e51e4, type: 2}
   ActiveModule: {fileID: 11400000, guid: a19bae1a0785866409ae31f377bde9cf, type: 2}
@@ -782,7 +834,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SimultaneousFuelCellsUsage: 1
   FuelCells:
-  - {fileID: 519453220248056313}
+  - {fileID: 2594269055982439136}
   - {fileID: 1325719345651962163}
   - {fileID: 1329164931382654446}
   - {fileID: 1235716694077421164}
@@ -1388,6 +1440,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1916352467902790717}
     m_Modifications:
+    - target: {fileID: -8704132837534791235, guid: 60482dadf37e08c43b7bf0160d125f93,
+        type: 3}
+      propertyPath: m_Name
+      value: Battery2A
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 60482dadf37e08c43b7bf0160d125f93,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1438,22 +1495,41 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7147090408135491331, guid: 60482dadf37e08c43b7bf0160d125f93,
+        type: 3}
+      propertyPath: m_Name
+      value: Battery3A
+      objectReference: {fileID: 0}
+    - target: {fileID: 321855903552696034, guid: 60482dadf37e08c43b7bf0160d125f93,
+        type: 3}
+      propertyPath: m_Name
+      value: Battery5A
+      objectReference: {fileID: 0}
+    - target: {fileID: 514386182938291552, guid: 60482dadf37e08c43b7bf0160d125f93,
+        type: 3}
+      propertyPath: m_Name
+      value: Battery6A
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 60482dadf37e08c43b7bf0160d125f93,
         type: 3}
       propertyPath: m_Name
       value: CWC
+      objectReference: {fileID: 0}
+    - target: {fileID: 3553870081001837166, guid: 60482dadf37e08c43b7bf0160d125f93,
+        type: 3}
+      propertyPath: m_Name
+      value: Battery1A
+      objectReference: {fileID: 0}
+    - target: {fileID: 8765743713802734698, guid: 60482dadf37e08c43b7bf0160d125f93,
+        type: 3}
+      propertyPath: m_Name
+      value: Battery4A
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 60482dadf37e08c43b7bf0160d125f93, type: 3}
---- !u!1 &519453220248056313 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1325223806860437879, guid: 60482dadf37e08c43b7bf0160d125f93,
-    type: 3}
-  m_PrefabInstance: {fileID: 1536101257253476494}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &684895484349012083 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -7147090408135491331, guid: 60482dadf37e08c43b7bf0160d125f93,
@@ -1481,6 +1557,12 @@ GameObject:
 --- !u!4 &1358937586967691109 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 60482dadf37e08c43b7bf0160d125f93,
+    type: 3}
+  m_PrefabInstance: {fileID: 1536101257253476494}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2594269055982439136 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3553870081001837166, guid: 60482dadf37e08c43b7bf0160d125f93,
     type: 3}
   m_PrefabInstance: {fileID: 1536101257253476494}
   m_PrefabAsset: {fileID: 0}

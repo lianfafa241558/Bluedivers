@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
 using PEMaths;
@@ -501,8 +501,8 @@ namespace FPSGame.Weapon
                 }
 
                 var percentSuffix = HasFlag(AttrTag.ScaleFromPrime) || HasFlag(AttrTag.Percentage) ? "%" : "";
-                re = BuildDiffHtml(Tool.Round(cv - fv), percentSuffix);
-                var baseString = Tool.Round(cv).ToString() + percentSuffix;
+                re = BuildDiffHtml(cv - fv, percentSuffix);
+                var baseString = FormatValue(cv) + percentSuffix;   // ⚠ 先成串再量长度，否则 padding 与实际显示对不上
                 var padWidth = Mathf.Max(0, 15 - Tool.TextLength(baseString, 2, 1, 0.5f, 2));
                 re += baseString.PadLeft(padWidth);
                
@@ -512,6 +512,7 @@ namespace FPSGame.Weapon
             /// <summary>变化值的高亮片段（diff 为 0 时返回空串）。正负配色受 <see cref="AttrTag.FlipPlus"/> 反转。</summary>
             private string BuildDiffHtml(float diff, string suffix = "")
             {
+                diff = Tool.Round(diff, 2);   // 与主数值同口径：不足 0.01 的变化不算变化（否则会冒出 "+0"）
                 if (diff == 0) return "";
                 Color Positive = new(0.2f, 1, 0.2f), Negative = new(1, 0.2f, 0.2f);
                 if (HasFlag(AttrTag.FlipPlus))
@@ -523,7 +524,15 @@ namespace FPSGame.Weapon
                 return string.Format("<color=#{1}>{0}{2}</color>",
                     diff > 0 ? "+" : "",
                     ColorUtility.ToHtmlStringRGB(diff > 0 ? Positive : Negative),
-                    diff + suffix);
+                    FormatValue(diff) + suffix);
+            }
+
+            /// <summary>参数面板的数值文本：**最多两位小数**，尾随 0 不显示（整数不带小数点）。
+            /// ⚠ 不再用 <c>Tool.Round(v).ToString()</c>：那只保留 1 位，且浮点残余会印成 <c>12.300001</c>。</summary>
+            private static string FormatValue(float v)
+            {
+                if (Mathf.Abs(v) < 0.005f) return "0";   // 防 -0.001 印成 "-0"
+                return v.ToString("0.##");
             }
 
             public void Modify(ModifierType type,float value)

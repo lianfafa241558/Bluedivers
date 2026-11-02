@@ -12,21 +12,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 744367736a7aee740922335e2157ba81, type: 3}
   m_Name: WMD_HeavyHitter
   m_EditorClassIdentifier: 
-  name: "\u91CD\u51FB\u673A\u5323"
-  describe: "\u867D\u7136\u5916\u89C2\u4E0D\u597D\u770B\uFF0C\u4F46\u8FD9\u4E2A\u8D85\u9891\u80FD\u8F7B\u677E\u78BE\u538B\u4EFB\u4F55\u9760\u8FD1\u7684\u76EE\u6807\uFF0C\u867D\u7136\u8FDC\u8DDD\u79BB\u65F6\u4F1A\u6709\u70B9\u4E0D\u7A33\u5B9A\u3002"
+  name: "\u9547\u9759\u5F39"
+  describe: "\u8FD9\u4E9B\u5F39\u836F\u90E8\u5206\u662F\u5B50\u5F39\uFF0C\u90E8\u5206\u662F\u6CE8\u5C04\u5668\uFF0C\u80FD\u6709\u6548\u7729\u6655\u5927\u591A\u6570\u654C\u4EBA\u3002"
   type: 3
-  icon: {fileID: 21300000, guid: 678d408e5f4e687488611606db9f06d9, type: 3}
+  icon: {fileID: 21300000, guid: 716ce596dadc6e944b4f5c629298eb58, type: 3}
   desc:
   - Key: 1
-    Value: "\u76F4\u51FB\u4F24\u5BB3\u6781\u5927\u63D0\u5347"
+    Value: "\u9644\u52A0\u7729\u6655\u4F24\u5BB3"
   - Key: 0
-    Value: "\u6B66\u5668\u6563\u5E03\u6781\u5927\u63D0\u9AD8"
+    Value: "\u964D\u4F4E\u5C04\u901F"
+  - Key: 0
+    Value: "\u964D\u4F4E\u5F39\u5323\u5BB9\u91CF"
   modifys:
   - name: 
-    type: 20
-    modifier: 2
-    value: 0.5
+    type: 1
+    modifier: 1
+    value: -4
   - name: 
-    type: 7
+    type: 2
     modifier: 2
-    value: 3
+    value: 0.35
+  - name: 
+    type: 208
+    modifier: 4
+    value: 0.5

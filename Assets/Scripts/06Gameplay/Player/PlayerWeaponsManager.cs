@@ -156,8 +156,10 @@ namespace FPSGame.Gameplay
             {
                 // 双持时始终视为正在瞄准
                 bool dualWielding = activeSecWeapon != null;
+                // ⚠ 中键切第一人称**不放宽 canAim**：无缩放武器就停在这一条，只切视角不进瞄准（正常第一人称）
                 bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
-                IsAiming = (dualWielding || (!activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld())));
+                IsAiming = (dualWielding || (!activeSecWeapon && canAim
+                    && (ForceAim || m_PlayerCharacterController.FirstPersonAimOverride || m_InputHandler.GetAimInputHeld())));
             }
             else
             {
@@ -276,8 +278,10 @@ namespace FPSGame.Gameplay
             {
                 // 双持时始终视为正在瞄准
                 bool dualWielding = activeSecWeapon != null;
+                // ⚠ 中键切第一人称**不放宽 canAim**：无缩放武器就停在这一条，只切视角不进瞄准（正常第一人称）
                 bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
-                IsAiming = (dualWielding || (!activeSecWeapon && canAim && (ForceAim || m_InputHandler.GetAimInputHeld())));
+                IsAiming = (dualWielding || (!activeSecWeapon && canAim
+                    && (ForceAim || m_PlayerCharacterController.FirstPersonAimOverride || m_InputHandler.GetAimInputHeld())));
             }
 
 
@@ -865,6 +869,40 @@ namespace FPSGame.Gameplay
                 AddWeapon(weapon);
             }
             //SwitchWeapon(true);
+        }
+
+        /// <summary>
+        /// 按存档的"武器选择 / 改装档位 / 模组"重建角色武器槽（支援武器 / 空手 / 护甲槽原样保留）。
+        /// <para>▍为什么整组重建、而不是对旧实例再调一次 <c>ApplyUpgrade</c>：改装是往 <c>cfg</c> 的 GameAttribute
+        /// 上叠加 modifier，而 <c>cfg.Init()</c> 只在 <c>LogicInit</c>（Awake）里跑一次 ⇒ 二次应用会叠成双倍；
+        /// 换枪型号更是另一个 prefab，也只能重建。</para>
+        /// <para>▍⚠ 调用时玩家 GameObject **必须已激活**：武器是 Instantiate 出来的，挂在不激活的父级下不会 Awake，
+        /// 于是 <c>ApplyUpgrade</c> 会先于 <c>InitAttribute</c> 执行，再被随后的 <c>cfg.Init()</c> 抹掉。</para>
+        /// </summary>
+        public void RebuildRoleWeapons()
+        {
+            var player = m_PlayerCharacterController;
+            if (player == null || player.Cfg == null) return;
+
+            var prefabs = player.Cfg.GetStartingWeapons(ArchivesData_SO.Current.GetRoleCfg(player.Id));
+            int activeSlot = ActiveWeaponIndex;
+
+            // 同类型槽位 1:1 替换；RemoveWeapon 摘掉当前武器时会自动切一次枪，所以下面要切回来
+            for (int i = 0; i < prefabs.Count; ++i)
+            {
+                var prefab = prefabs[i];
+                if (prefab == null) continue;
+                int slot = SlotOf(prefab.WeaponTypeEnum);
+                if (m_WeaponSlots[slot] != null) RemoveWeapon(m_WeaponSlots[slot]);
+                AddWeapon(prefab);
+            }
+
+            // 改改装/换型号不该顺手把枪切走
+            if (activeSlot >= 0 && activeSlot < m_WeaponSlots.Length
+                && m_WeaponSlots[activeSlot] != null && activeSlot != ActiveWeaponIndex)
+            {
+                SwitchToWeaponIndex(activeSlot, true, false, true);
+            }
         }
 
         /// <summary>

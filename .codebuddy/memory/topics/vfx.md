@@ -89,3 +89,39 @@ EditorSceneManager.CloseScene(scene, true);
 - 不能链式改 struct 返回值：`p.main.startSize = ..` 报 "Cannot modify a value type return value" ⇒ 先 `var m = p.main;`。
 - lambda 参数名不能与外层局部变量同名（含 `root`/`bg`/`m`），否则 "would give a different meaning"。
 - 变量不能在相邻块重复 `var` 同名；不能 `out var`；`Object` 与 `UnityEngine.Object` 有歧义 ⇒ 写全名。
+
+## 8 2026-11-02：黑客光束 `Pro_P_MicrowaveHackerBeam`（10 层）+ 两个必踩坑
+
+预制体根下：`Glitch`（小方块闪断）/`Pixel`（损坏像素块）/`Stream`（Stretch 前冲数据条）/`Hex`+`HexShell`（全息六边形，大层缓慢）/`Code`（数字图集）/`Digit`（hacker_0 派生括号）/`ScanRing`/`Spark`/`Muzzle`+`MuzzleRing`；根 LineRenderer 用 `MW_Beam_Hacker.mat`（绿 HDR、`_MoveSpeed=-1500`、宽度 0.16→0.09 才不至于远端隐没）。
+
+### 8.1 【坑】`LX/Texture2` 加法吃的是 **RGB**，白 RGB 的透明区照样被加亮
+- 表现：明明贴图 alpha 只有细线，粒子却渲成**实心大块**。
+- 两个独立原因：① 用 `new Color32(255,255,255,0)` 画透明区（RGB 白）；② 导入时勾了 **`alphaIsTransparency`** —— 它会给透明像素做**颜色膨胀**（把附近白色铺满全图），代码画的图瞬间变全白。
+- 正解：透明区写 `(0,0,0,0)`，且 `alphaIsTransparency=false` + `alphaSource=None` + Uncompressed + Point。工程现成贴图（`tronhex1_blue`/`techRing`）本来就是黑底，才一直没暴露。
+- 反之，**要"实心块"效果就用白底/实心贴图**（`tronsquare1_blue` 就是实心方块，做 glitch 块正合适）。
+
+### 8.2 【坑】Billboard 下 `main.startSize3D` 不生效
+- 只设 `startSizeX/Y/Z` 而不设 `startSize` ⇒ 粒子回落成**默认 1m 大方块**（`GetParticles` 读回的 `startSize` 是 1）。想用非等比矩形只能走 `renderMode=Mesh` + 自定义 quad，别指望 3D size。
+
+### 8.3 诊断法：逐层拆图
+- 关 **`ParticleSystemRenderer.enabled`**（不是 `gameObject.SetActive`，那样粒子直接停）逐层渲一张拼图，一次就能看出哪层是元凶。
+- ⚠ **更正（同日）**：手写 `ARGBHalf → c/(1+c) → γ2.2` 这条管线**会溢出**（实测读到 `maxG=65504`、整屏 avg 21），把正常的层误判成"大白块"。**`RenderTextureFormat.ARGB32 + ReadWrite.sRGB` 直出**才可靠，只丢 Bloom 而已；要判"是否过亮"直接看 HDR 数值，不要再套自定义色调映射。
+- `ParticleSystem.textureSheetAnimation` 在 `LX/Texture2` 这类自研 shader 上**不生效**（整张 4×4 图集一起显示，成了"数字面板"）—— 要用就用，别指望单帧。
+
+## 9 2026-11-02：挂在单位身上的持续型异常状态特效 `Vfx_AboHacker`
+
+产物：`Assets/Resources/VFX/AboState/Vfx_AboHacker.prefab` —— 根下 7 层：`Hacker_Shell`（躯干外围环绕六边形）/`Hacker_Code`（脚下圆环升起的代码字型）/`Hacker_Pulse`（向外扩的环形脉冲）/`Hacker_Glitch`（身上闪断像素）/`Hacker_Mark` + `Hacker_MarkRing`（头顶"被控制"标记：六边形 + 反向旋转圆环）/`Hacker_Spark`。
+
+### 9.1 【必须】根上必须留一个"活着的 loop PS"，否则会被池秒回收
+- `VFXManager.ItemUpdate` 只 `go.TryGetComponent<ParticleSystem>()` 看**根**：根没有 PS ⇒ 存活判定恒 false ⇒ 一进池就被回收；`Release` 也是靠根 `ps.Stop(true)` 来触发回收。
+- 做法：根 PS `loop=true` + 极小不可见粒子（rate 2、size 0.01）+ `ParticleSystemRenderer.enabled=false`，视觉全交给子层。
+
+### 9.2 挂载口径：父级是**单位根**，几何按"局部 = 世界 / 2"设计
+- `Health_AboState.EnsureAboVfx`：`VfxPool.Creat(vfx, transform.position, transform.rotation, transform)` 然后 `localScale = VisualScale * 2`。
+- 单位预制体原点在**脚底**（PMC_AR 网格包围盒 center.y≈0.96、size.y≈2.04），`VisualScale` 默认 1 ⇒ 局部 1 单位 = 世界 2 米。人形光环按"躯干 y≈0.42、头顶 y≈1.20、半径 0.28"这种局部值设计。
+- 全部子层 `simulationSpace=Local`（跟着单位走，也随单位旋转）。
+
+### 9.3 【坑】Tron 系列贴图底色不纯黑，加法下整块发亮
+- `tronhex1_blue` 六边形内部是 `-`（0.05~0.2 亮度）、`tronsquare1_blue` 内部同理、**`techRing` 整张全白**（做加法粒子 = 白色实心方块）。之前光速/光束预览里的"白色纸片"就是它们。
+- 正解：**程序化生成干净遮罩**（黑底 + SDF 形状 + 软边）——`VFX_Hacker_HexMask/SquareMask/RingMask.png`，六边形 SDF / max(|x|,|y|) / 环 SDF，256×256、Uncompressed、`alphaIsTransparency=false`。材质只换 `_MainTex`，blend 不变。
+- 通用判据：**先看贴图底色**。黑底 = 随时能用；不纯黑 = 加法会发白，必须重新做遮罩。

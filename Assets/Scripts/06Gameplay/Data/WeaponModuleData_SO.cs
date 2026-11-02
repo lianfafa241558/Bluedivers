@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Attributes;
 using UnityEngine;
 using FPSGame.Core;
-using FPSGame.Game;
 using FPSGame.Weapon;
 
 

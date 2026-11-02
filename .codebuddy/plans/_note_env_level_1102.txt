@@ -1,0 +1,10 @@
+### ✔ 补充：测试环境连带解除「等级限制」（2026-11-02）
+
+- 现象：开了 `TEST_ENV` 只解开"已购买"，改装格还是被 `archWeaponData.Level < Upgrade[y].Key` 挡着点不动（用户实测）。
+- 新增 `SelectRoleWnd.LevelEnough(int y)`（`#if TEST_ENV return true`），替换 4 处等级判定：
+  - `ShowWeaponWnd` 格子状态 `state = 3`（等级未解锁 → 灰格）
+  - `ShowWeaponWnd` 选择槽：子2「Lv.x 解锁」提示 vs 子1 可选框的显隐
+  - `SelectUpgrade` 点击前的等级拦截（含 "PerformanceLevelNewRewardUnlockedA_1" 提示音）
+  - `SetUpgradeSelectButton` 里 `unLevelColor` 置色
+- `archWeaponData.Level` 仍保留给 `weaponLevel` 文本（真实等级，那是显示不是判定）。
+- 验证：`offline_compile.py 10_UI`（发布态）0 error；csc 追加 `-define:TEST_ENV` 再编也 0 error；Unity 17:35:19 重编、Console 0 error。

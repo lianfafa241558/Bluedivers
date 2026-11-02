@@ -1,0 +1,10 @@
+## ✔ 环境开关：测试环境"全部已购买"（2026-11-02）
+
+- 口径：**编译期**条件编译 `#if UNITY_EDITOR || TEST_ENV`。⚠ 用户明确否掉了运行时方案（PlayerPrefs + 编辑器菜单 + 静态环境类），别再往那方向做。
+- 两处收口，测试环境 `return true`：
+  - `10UI/Wnd/SelectRoleWnd.cs` → `HasBuy(y,x)`（升级项是否已拥有；`#if` 包住返回值）
+  - `10UI/Wnd/ArmamentWnd.cs` → `IsOwned(arch,id)`（战备是否已购买，列表 `.Where` 用它）
+- ⚠ 只放宽**判定**，绝不调 `SetBuy` / `BuyAirdrop` ⇒ 测试状态不落存档，切回发布环境仍是真实购买记录。
+- `SelectRoleWnd.ShowWeaponWnd()` 里"已购数量"进度行也按 `#if` 给满（否则格子数与进度行对不上）。
+- 打包要测试环境：Player Settings → Scripting Define Symbols 加 `TEST_ENV`；编辑器恒为测试环境（要验证真实购买流程用发布包）。
+- 验证：`offline_compile.py 00_Core 10_UI` 0 error；Unity 重编（17:26）Console 只有 3 条存量 warning。

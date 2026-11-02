@@ -1,0 +1,5 @@
+- 【更正上面的口径·同日】热键与瞄准语义改了：
+  - 热键 = **只按住中键**（不再是"右键+中键"）：`HandleThirdPersonAimOverride` 去掉 `GetAimInputHeld()`，仍要求 `_isThirdPerson && 副手为空`。
+  - **不再放宽 canAim**：`canAim` 恢复 `AimZoomRatio < 1 || IsThirdPerson`；`FirstPersonAimOverride` 从 canAim 挪到瞄准**触发**括号里（`ForceAim || FirstPersonAimOverride || GetAimInputHeld()`），两处（`RefreshAimState` / `Update`）。
+  - 效果：能瞄准的枪按住中键切第一人称即进瞄准姿态（FOV 缩放到 `AimZoomRatio*DefaultFov`、枪移到 AimingWeaponPosition）；`AimZoomRatio >= 1` 的无缩放武器切过去只是**正常第一人称平视**，不停留在瞄准。
+  - `offline_compile.py 06_Gameplay 10_UI` 0 error；仍未 Play 实测。

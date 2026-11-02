@@ -12,21 +12,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 744367736a7aee740922335e2157ba81, type: 3}
   m_Name: WMD_SuperFocusLens
   m_EditorClassIdentifier: 
-  name: "\u8d85\u7ea7\u805a\u7126\u900f\u955c"
-  describe: "\u955c\u7247\u88ab\u78e8\u5230\u53ea\u5269\u4e00\u4e2a\u7126\u70b9\uff0c\u6253\u51fa\u53bb\u7684\u4e1c\u897f\u66f4\u72e0\uff0c\u4e5f\u66f4\u7a84\u3002\u5de5\u7a0b\u90e8\u7ba1\u8fd9\u53eb\u4e13\u6ce8\u3002"
+  name: "\u8D85\u7EA7\u7535\u6E90"
+  describe: "\u867D\u7136\u6709\u70B9\u5927\uFF0C\u4F46\u53EA\u8981\u5BF9\u6B66\u5668\u505A\u4E9B\u6539\u88C5\uFF0C\u4F60\u73B0\u5728\u5C31\u80FD\u7528\u7814\u53D1\u80FD\u4ECE\u9ED1\u5E02\u5077\u8FD0\u56DE\u6765\u7684\u6700\u5F3A\u52A8\u529B\u6E90\u4E86\u3002"
   type: 2
-  icon: {fileID: 21300000, guid: f031c56401580d747bd1e9844ab55b15, type: 3}
+  icon: {fileID: 21300000, guid: 61235ea3ae76d1e42b6e10f9d530d1c7, type: 3}
   desc:
   - Key: 1
-    Value: "\u76f4\u51fb\u4f24\u5bb3\u5927\u5e45\u63d0\u5347"
+    Value: "\u63D0\u5347\u7535\u6C60\u5BB9\u91CF"
+  - Key: 1
+    Value: "\u63D0\u5347\u5C04\u901F"
   - Key: 0
-    Value: "\u5d29\u89e3\u8303\u56f4\u660e\u663e\u7f29\u5c0f"
+    Value: "\u66F4\u957F\u7684\u8FC7\u70ED\u65F6\u95F4"
+  - Key: 0
+    Value: "\u964D\u4F4E\u6563\u70ED\u901F\u7387"
   modifys:
   - name: 
-    type: 20
-    modifier: 2
-    value: 0.5
+    type: 1
+    modifier: 1
+    value: 100
   - name: 
-    type: 22
+    type: 2
     modifier: 2
-    value: -0.35
+    value: -0.3
+  - name: 
+    type: 15
+    modifier: 2
+    value: -0.5
+  - name: 
+    type: 16
+    modifier: 1
+    value: 1

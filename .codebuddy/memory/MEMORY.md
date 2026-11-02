@@ -52,7 +52,7 @@
 | 编辑器 / Drawer / MCP / 编译验证 | `topics/tooling.md` |
 | plans 脚本清单 | `topics/plans-scripts.md` |
 | UI 预制体 / 面板布局 / 素材选图 | `topics/ui-wnd.md` |
-| 粒子特效 / VFX 预制体规范 / 特效材质坑 | `topics/vfx.md` |
+| 粒子特效 / VFX 预制体规范 / 特效材质坑 / **挂单位的持续特效（根必须留 loop PS 当池存活钟）** | `topics/vfx.md` |
 | 人设 / 语气 / 诺亚设定 | `rules/人设.md`（行为约束）+ `topics/persona.md`（背景库） |
 | 技术债 / 待改架构 | `Assets/Scripts/00Tools/TechnicalDebt.cs` |
 | 哪天做过什么 / 已下沉原文 | `archive/` |

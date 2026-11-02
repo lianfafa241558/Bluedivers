@@ -1,0 +1,7 @@
+## ✔ 武器参数面板数值：最多两位小数（2026-11-02）
+
+- 用户看的是 `SelectRoleWnd.SetParameter`（右下面板），但**数字串不是在那儿拼的** ⇒ 改动落在 `06Gameplay/Weapon/WeaponUpgradeController.cs` 的 `AttrInfo.ToString()` / `BuildDiffHtml()`（两者只有 `ShowText` 一个消费链，就是该面板）。
+- 新增 `AttrInfo.FormatValue(float)`：`v.ToString("0.##")`（尾随 0 不显示、整数无小数点），`|v| < 0.005` 直接给 `"0"` 防 `-0`。
+- 旧口径两处坑：`Tool.Round(v)` 默认**1 位**小数；且 `Tool.Round()` 出来的浮点残余 `.ToString()` 可能印成 `12.300001`。现在先成串再 `Tool.TextLength` 量 padding（顺序别调换）。
+- `BuildDiffHtml` 先把 diff 收到两位再判 0 ⇒ 不会再冒出 `+0`。
+- 验证：`offline_compile.py 06_Gameplay 10_UI` 0 error；Unity 17:37:01 重编 06_Gameplay、Console 0 error。

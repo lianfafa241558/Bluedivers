@@ -219,6 +219,14 @@ public class PlayerInputHandler : MonoBehaviour
     }
 
     /// <summary>
+    /// 按住鼠标中键。中键不进输入表（没有可改键的语义），只给"第三人称按住中键切第一人称"这条热键用。
+    /// </summary>
+    public bool GetMiddleMouseHeld()
+    {
+        return CanProcessInput(WindowStateEnum.Game) && Input.GetMouseButton(2);
+    }
+
+    /// <summary>
     /// 按住冲刺键
     /// </summary>
     /// <returns></returns>

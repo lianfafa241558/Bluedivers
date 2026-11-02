@@ -432,14 +432,17 @@ namespace FPSGame.UI
         #endregion
 
         /// <summary>
-        /// 显示可选战备（同类型内偏好战备排在最前，并点亮预制体第 1 个子物体）
+        /// 显示可选战备（只列**已购买**的；同类型内偏好战备排在最前，并点亮预制体第 1 个子物体）
         /// </summary>
         private void InitPlayerAirdrop()
         {
 
             var arch = ArchivesData_SO.Current;
             var layout = armamentRoot.GetChild(teamManager.Self.index, 2, 0, 0, 0);
+            // 未购买的战备不显示：拥有与否只认存档 AirdropBuyDic（购买入口是 AirdropConfigWnd），
+            // 别按 cost 是否为空或 isHide 之类旁证去猜
             var airdropList = ResSvc.airdropDic.Values
+                .Where(item => IsOwned(arch, item.ID))
                 .OrderBy(item => arch.IsAirdropPrefer(item.ID) ? 0 : 1)
                 .ThenBy(item => item.ID)
                 .ToList();
@@ -463,6 +466,17 @@ namespace FPSGame.UI
                 }
             }
         }
+        /// <summary>战备是否已拥有。测试环境（宏 <c>TEST_ENV</c>，菜单 <c>Tools/环境/测试环境</c> 开关）
+        /// 下一律视为已购买，只是判定放宽、不写存档。</summary>
+        private static bool IsOwned(ArchivesData_SO arch, int id)
+        {
+#if TEST_ENV
+            return true;
+#else
+            return arch.IsAirdropBought(id);
+#endif
+        }
+
         private void UninitAirdrop()
         {
             var layout = armamentRoot.GetChild(0, 2, 0, 0, 0);

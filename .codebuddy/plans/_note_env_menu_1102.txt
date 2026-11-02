@@ -1,0 +1,8 @@
+### ✎ 更正（同日）：环境开关改为「菜单改宏」
+
+- 上一版是 `#if UNITY_EDITOR || TEST_ENV`（编辑器恒为测试环境，只想用宏）。用户要求"放个 MenuItem 来切换" ⇒ 改成**纯 `#if TEST_ENV`**，编辑器默认 = 发布口径，靠菜单开。
+- 新增 `Assets/Editor/GameEnvDefineMenu.cs`：菜单 `Tools/环境/测试环境（全部已购买）`（带勾选态），点一下增/删**当前 Build Target Group** 的 `TEST_ENV`
+  （`NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup)`；selected 为 Unknown 时按 Standalone）。
+- ⚠ 改宏必然触发重编 + 域重载 ⇒ 在非播放状态点（Play 中会被踢出来）；只改选中平台那套宏，换平台要再点一次。
+- 消费点不变：`SelectRoleWnd.HasBuy` / `ArmamentWnd.IsOwned` / `ShowWeaponWnd` 的已购数量行。
+- 验证：`offline_compile.py 10_UI ProjectEditors` 0 error；再用 csc 追加 `-define:TEST_ENV` 重编 10_UI 也 0 error（覆盖到测试态分支）；Unity 重编 17:30:55 Console 0 error；`menu-items` 里已出现该菜单。

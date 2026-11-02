@@ -47,6 +47,9 @@ namespace FPSGame.Gameplay
 
         private float finalRaudis;
 
+        /// <summary>表现层射线每帧最多"穿过去"几个不挡线的命中（穿透地形贴地打时会出现连片地面碰撞体）</summary>
+        private const int k_VisualSkipLimit = 8;
+
         /// <summary>光束采样的命中缓冲（每帧复用；Update 里不能分配）</summary>
         private readonly RaycastHit[] m_BeamHits = new RaycastHit[16];
         /// <summary>本节拍已结算过的单位：穿透时同一单位的多个部位只算一次伤害</summary>
@@ -78,9 +81,7 @@ namespace FPSGame.Gameplay
 
             m_TickHitActors.Clear();
             // 开火这一帧只求终点来摆终点特效、不结算（首个伤害节拍在 ShootSpeed 之后，与原逻辑一致）
-            Vector3 normal;
-            bool hitSomething, endIsUnit;
-            m_lastPos = SampleBeam(false, out normal, out hitSomething, out endIsUnit);
+            m_lastPos = SampleVisualBeam(out _, out _);
 
             m_EndObject = new();
             foreach (var item in EndObject)
@@ -113,15 +114,27 @@ namespace FPSGame.Gameplay
                 RefreshCatapult();
                 m_TickHitActors.Clear();
             }
-            Vector3 normal;
-            bool hitSomething, endIsUnit;
-            Vector3 end = SampleBeam(settle, out normal, out hitSomething, out endIsUnit);
+            // 玩法层：球扫（粗半径）负责"打到谁"，同时报出真正的挡点（伤害/链状闪电都在里面结算完）
+            Vector3 blockEnd = SampleBeam(settle, out Vector3 blockNormal, out bool blocked, out bool blockIsUnit);
+
+            // 表现层：细射线负责"线画到哪、终点特效放哪"（见 SampleVisualBeam 的说明）
+            Vector3 end = SampleVisualBeam(out Vector3 normal, out bool hitSomething);
+
+            // 球扫被**单位**挡住、细线却从旁边擦过去了（擦边命中）⇒ 线补到单位身上，不然打着人却画到后墙。
+            // ⚠ 地形的挡点不参与这条合并：粗半径贴地时球扫起始就与地面重叠，拿它当终点正是这次要修的 bug
+            if (blocked && blockIsUnit &&
+                (!hitSomething || (blockEnd - transform.position).sqrMagnitude <= (end - transform.position).sqrMagnitude))
+            {
+                end = blockEnd;
+                normal = blockNormal;
+                hitSomething = true;
+            }
 
             m_line.SetPosition(1, end);
 
             if (hitSomething)
             {
-                SetEnd(m_lastPos, end, normal, endIsUnit);
+                SetEnd(m_lastPos, end, normal);
                 m_lastPos = end;
             }
             else
@@ -137,11 +150,13 @@ namespace FPSGame.Gameplay
         /// <c>PenetrateUnits</c> = 打中单位继续往后；<c>PenetrateTerrain</c> = 打中地形（没有 <see cref="Damageable"/>）也继续。
         /// 没勾的那一类就是光束的挡点。</para>
         /// <para>▍⚠ 激光是瞬时从头扫到尾的，不像实体弹那样逐帧推进，所以穿透**不需要累计位移**，一次查询就够。</para>
+        /// <para>▍⚠ 本方法返回的是**玩法终点**，只用于结算与截断判断；线画到哪由 <see cref="SampleVisualBeam"/>
+        /// 单独采样 —— 别拿这里的终点点 <c>LineRenderer</c>（半径被撑大时球扫会贴地即止）。</para>
         /// </summary>
-        /// <param name="settle">是否结算伤害（开火首帧只求终点，不结算）</param>
+        /// <param name="settle">是否结算伤害（false = 只扫出挡点，不结算）</param>
         /// <param name="normal">终点法线</param>
         /// <param name="hitSomething">是否打在实体上（false = 直达最大射程）</param>
-        /// <param name="endIsUnit">终点是不是单位（给 <see cref="SetEnd"/> 的命中类型）</param>
+        /// <param name="endIsUnit">终点是不是单位（截断原因是"打到人"还是"打到地形"）</param>
         protected Vector3 SampleBeam(bool settle, out Vector3 normal, out bool hitSomething, out bool endIsUnit)
         {
             Vector3 dir = transform.forward;
@@ -194,6 +209,61 @@ namespace FPSGame.Gameplay
             }
 
             return end;
+        }
+
+        /// <summary>
+        /// 沿光束打一根**细射线**，求这根线该画到哪（表现层专用，不结算）。
+        ///
+        /// <para>▍为什么不复用球扫的终点：<see cref="finalRaudis"/> 被"作用范围当半径"撑大后（几米级），
+        /// 贴地/贴墙开火时球扫**起始就与地面重叠** ⇒ 命中距离 ≈ 0，光束一开火就画到脚下。
+        /// 伤害判定确实要那个粗球（擦边也算打中），视觉得是细线，所以两条采样分开走。</para>
+        /// <para>▍穿得过去的东西要跳过接着打（<see cref="BlocksBeam"/> 与球扫同一条截断口径）：
+        /// 这条线必须跟玩法一致，勾了穿透却把线停在墙上 = 打穿了还画断在半路。</para>
+        /// <para>▍起点与射程口径跟 <see cref="SampleBeam"/> 一致（<see cref="MinRange"/> 前移 + <see cref="MaxRange"/>），
+        /// 落空时按"枪口 + 最大射程"收尾，与原来的线一致。</para>
+        /// </summary>
+        /// <param name="normal">终点法线（落空 = -forward）</param>
+        /// <param name="hitSomething">是否真的打到挡点（false = 直达最大射程）</param>
+        private Vector3 SampleVisualBeam(out Vector3 normal, out bool hitSomething)
+        {
+            Vector3 dir = transform.forward;
+            Vector3 end = transform.position + dir * MaxRange;
+            normal = -dir;
+            hitSomething = false;
+
+            Vector3 cursor = transform.position + MinRange * dir;
+            float left = MaxRange;
+            // 单条射线只能看到"第一个"命中，穿过去的那些要逐段往前推进重打（正常 0~1 次，不会是性能点）
+            for (int i = 0; i < k_VisualSkipLimit && left > 0f; ++i)
+            {
+                if (!Physics.Raycast(cursor, dir, out RaycastHit hit, left, FpsHelper.GetHittableLayers(999))) break;
+
+                if (IsHitValid(hit) && BlocksBeam(hit.collider))
+                {
+                    end = hit.point;
+                    normal = hit.normal;
+                    hitSomething = true;
+                    break;
+                }
+
+                // 越过这一条继续找；+1cm 免得原地反复命中同一个碰撞体表面
+                float step = hit.distance + 0.01f;
+                left -= step;
+                cursor += dir * step;
+            }
+            return end;
+        }
+
+        /// <summary>
+        /// 这一条命中会不会让线停下来 —— 与 <see cref="SampleBeam"/> 里 break 的条件**同一条规则**：
+        /// 单位看 <c>PenetrateUnits</c>、地形（没有 <see cref="Damageable"/>）看 <c>PenetrateTerrain</c>，
+        /// 勾了就是穿过去。两处口径必须一致，否则线会跟伤害结算错位。
+        /// </summary>
+        private bool BlocksBeam(Collider col)
+        {
+            bool isUnit = col.GetComponent<IDamageable>().IsValid();
+            return isUnit ? !BulletFlag.HasFlag(BulletFlag.PenetrateUnits)
+                          : !BulletFlag.HasFlag(BulletFlag.PenetrateTerrain);
         }
 
         /// <summary>结算一次单位命中：同一单位本节拍只算一次（多个部位/护甲碰撞体不重复吃伤害）。</summary>
@@ -331,7 +401,7 @@ namespace FPSGame.Gameplay
             return true;
         }
 
-        void SetEnd(Vector3 lastPos, Vector3 pos, Vector3 normal,bool isUnit)
+        void SetEnd(Vector3 lastPos, Vector3 pos, Vector3 normal)
         {
 
             bool jump = Mathf.Abs(transform.InverseTransformDirection(pos).z - transform.InverseTransformDirection(lastPos).z) > 1 || Vector3.Distance(pos,lastPos)>3;

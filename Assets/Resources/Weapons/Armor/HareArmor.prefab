@@ -1,0 +1,151 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2225486910712267859
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2225486910712267856}
+  - component: {fileID: 2294730857948444430}
+  m_Layer: 0
+  m_Name: HareArmor
+  m_TagString: Untagged
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2225486910712267856
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2225486910712267859}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2294730857948444430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2225486910712267859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e03ea2fb50b06ab468194bc5b83375d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WeaponRoot: {fileID: 0}
+  UseManyMuzzle: 0
+  WeaponMuzzle: {fileID: 0}
+  WeaponMuzzle2: {fileID: 0}
+  WeaponManyMuzzles: []
+  cfg:
+    _fakeAttrs:
+    - Key: 0
+      Value: 30
+    - Key: 1
+      Value: 8
+    - Key: 2
+      Value: 0.5
+    - Key: 10
+      Value: 2
+  BulletFlag: 0
+  Damages: []
+  UseDamageIndex: 0
+  MuzzleFlashPrefab: {fileID: 0}
+  FlashSizeScale: 1
+  UnparentMuzzleFlash: 0
+  SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
+  ShootSfx: {fileID: 0}
+  UseContinuousShootSound: 0
+  ContinuousShootStartSfx: {fileID: 0}
+  ContinuousShootLoopSfx: {fileID: 0}
+  ContinuousShootEndSfx: {fileID: 0}
+  _currentHeat: 0
+  wantsToShoot: 0
+  RandomSeed: 0
+  showAmmo: 0
+  showInReload: 0
+  showReloadTime: 0
+  showCool: 0
+  ShootType: 0
+  WeaponFlag: 0
+  AutomaticReleaseOnCharged: 0
+  Lockshape: 0
+  ReloadSfx: {fileID: 0}
+  ChangeWeaponSfx: {fileID: 0}
+  ChargeVfx: {fileID: 0}
+  WeaponAnimator: {fileID: 0}
+  PlayerIndex: 0
+  WeaponName: "\u7279\u79CD\u6218\u6597\u670D"
+  WeaponType: "\u88C5\u7532"
+  WeaponTypeEnum: 5
+  WeaponIcon: {fileID: 21300000, guid: f2e748bf627b1ee4b9e042d3a185aca8, type: 3}
+  Sight: {fileID: 4066082357213353509, guid: 682987df4a63fd641bcafdf118cf811e, type: 3}
+  ScopeGo: {fileID: 0}
+  LHand: {fileID: 0}
+  RHand: {fileID: 0}
+  ShowRoot: {fileID: 0}
+  RecoilForce: 1
+  RecoilProfile:
+    PitchKick: 1.5
+    YawKick: 0.4
+    YawStep: 0.12
+    YawRandom: 0.35
+    KickSharpness: 40
+    RecoveryDelay: 0.1
+    RecoverySpeed: 12
+    YawRecoveryRatio: 0.7
+    MaxPitch: 12
+    MaxYaw: 6
+    AdsScale: 0.7
+    WeaponKickBack: 0.05
+    WeaponKickPitch: 2.5
+    WeaponKickRoll: 1.2
+    WeaponSpring: 14
+    SpreadBloomPerShot: 0
+    SpreadBloomMax: 4
+    SpreadBloomDecay: 8
+    ShakePerShot: 0
+  AimingHideCrosshair: 1
+  AimZoomRatio: 1
+  AimOffset: {x: 0, y: 0, z: 0}
+  playerAngle: 0
+  _showAttrInfo: 
+  desc: 
+  m_RenameAttr: []
+  showAttr: 
+  m_UniqueAttr:
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  - name: 
+    value: 0
+    tag: 0
+  Upgrade: []
+  Modules: []
+  ActiveModule: {fileID: 0}

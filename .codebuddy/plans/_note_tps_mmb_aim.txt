@@ -1,0 +1,13 @@
+## 第三人称按住右键+中键 → 临时第一人称瞄准（2026-11-02）
+
+- 需求：玩家视角设为第三人称时，按住 **鼠标右键 + 中键** 切到第一人称瞄准，松开任一键还原。
+- 做法（不另起一套视角管线，全部复用 `ApplyViewMode`）：
+  - `PlayerInputHandler.GetMiddleMouseHeld()`：中键不进输入表（没有可改键语义），直接 `Input.GetMouseButton(2)`，门在 `CanProcessInput(WindowStateEnum.Game)`。
+  - `PlayerController.IsThirdPerson` 的 getter 改成**生效值** `_isThirdPerson && !_thirdPersonAimOverride` ⇒ 剔除层/武器相机/相机父级/准星事件/武器 FOV/第一人称挂点全部自动跟随；偏好字段 `_isThirdPerson` 不动 ⇒ 松手必然回第三人称。
+  - `PlayerController_ThirdPerson.HandleThirdPersonAimOverride()`（在 Update 里紧跟 HandleToggleView）：判据 `_isThirdPerson && GetAimInputHeld() && GetMiddleMouseHeld()`，只在边沿变化时调 `ApplyViewMode()`。
+  - `PlayerWeaponsManager` 两处 `canAim` 补 `|| FirstPersonAimOverride`：`AimZoomRatio==1` 的无缩放武器平时第一人称不能瞄准，放行后才真有"瞄准姿态"（右键本身就是 Aim 键，故不用 ForceAim）。
+- ⚠ 坑：
+  - `HandleToggleView` 必须翻**偏好** `_isThirdPerson`（旧写法 `IsThirdPerson = !IsThirdPerson` 在覆盖生效期间按生效值翻，翻不动）。
+  - `OnDie` 里先清覆盖再记 `_wasThirdPersonBeforeDeath`，否则死亡时把偏好记成第一人称（复活后永久丢第三人称），且武器相机会叠在死亡镜头上。
+  - 进载具（PlayerController.enabled=false）期间覆盖会冻结，出来下一帧自愈；不额外兜底。
+- 验证：`offline_compile.py 06_Gameplay 10_UI` 0 error；尚未进 Play 实测手感。

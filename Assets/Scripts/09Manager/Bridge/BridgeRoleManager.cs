@@ -327,6 +327,17 @@ public class BridgeRoleManager : RoleManagerBase
         selectPointGo.transform.GetChild(0).gameObject.SetActive(true);
     }
 
+    /// <summary>
+    /// 按存档重装本机玩家的武器（选角色窗口改完"武器选择 / 改装档位 / 模组"后调用）。
+    /// <para>▍为什么必须重建实例：改装只在武器实例 Awake（<c>LogicInit</c>）时算进 <c>cfg</c> 一次，之后不再读存档
+    /// ⇒ 只改存档不改实例，手里还是旧枪 / 旧数值（详见 <c>PlayerWeaponsManager.RebuildRoleWeapons</c>）。</para>
+    /// </summary>
+    public void RefreshPlayerWeapons()
+    {
+        if (m_player == null) return;
+        m_player.WeaponsManager.RebuildRoleWeapons();
+    }
+
     public void SelectRole()
     {
         m_nowSelectIndex = m_nowShowIndex;
