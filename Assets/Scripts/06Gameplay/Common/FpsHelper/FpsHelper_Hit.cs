@@ -17,6 +17,10 @@ namespace FPSGame.Gameplay
 {
     public static partial class FpsHelper
     {
+        /// <summary>范围伤害查询的复用缓冲。<para>⚠ 只在"查询 → 立刻拷成快照"这两步之间用：
+        /// 后面逐个 InflictDamage 可能连锁触发另一次爆炸，共享缓冲会被覆盖。</para></summary>
+        private static readonly List<IActor> HitUnitBuffer = new();
+
         /// <summary>取离中心最近的肢体(单肢体单位即其主干)，返回是否找到</summary>
         static bool PickNearestPart(IActor unit, Vector3 center, out Damageable part, out Collider collider)
         {
@@ -318,17 +322,26 @@ namespace FPSGame.Gameplay
             //爆炸
             if (damageData.UseExplode)
             {
-                var unitList = FPSGame.Game.UnitQuery.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new());
-                if (hitData.IgnoreSelf&& hitData.self.TryGetComponent<IActor>(out var self)) unitList.Remove(self);
+                // 查询走复用缓冲，紧接着拷成快照：下面 InflictDamage 可能重入（连锁爆炸），不能让缓冲被覆盖
+                FPSGame.Game.UnitQuery.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new(), null, HitUnitBuffer);
+                if (hitData.IgnoreSelf&& hitData.self.TryGetComponent<IActor>(out var self)) HitUnitBuffer.Remove(self);
                 //Debug.LogError("忽略自身?"+hitData.IgnoreSelf+" "+owner);
                 //Debug.LogError("目标数量"+unitList.Count);
                 //for (int i = 0; i < unitList.Count; ++i)
                 //{
                     //Debug.LogWarning("目标"+ unitList[i].gameObject);
                 //}
-                var list= unitList.Select(item => item.Damageables)
-                    .SelectMany(item => item)
-                    .ToList();
+                // 拷成快照：后面还可能连锁爆炸/单位死亡，缓冲会被下一次查询覆盖（冲击波那一段也要用这份）
+                var unitList = new List<IActor>(HitUnitBuffer);
+
+                // 展平成"伤害组件"快照（替代 Select/SelectMany/ToList 三个分配）
+                var list = new List<IDamageable>(unitList.Count * 2);
+                for (int i = 0, l = unitList.Count; i < l; ++i)
+                {
+                    IDamageable[] parts = unitList[i].Damageables;
+                    if (parts == null) continue;
+                    for (int k = 0, kl = parts.Length; k < kl; ++k) list.Add(parts[k]);
+                }
 
                 //Debug.LogWarning("范围" + "内的目标数量"+ list.Count);
                 foreach (Damageable item in list)//每一个伤害组件
@@ -488,13 +501,16 @@ namespace FPSGame.Gameplay
 
             // 打击范围内任意单位(不做队伍过滤)，仅排除 hitData.exclude
             // 查询走 05_UnitCore 的入口（未接管时返回空列表 ⇒ 下面的 Count==0 提前 return，等价原 IsPresent 守卫）
-            List<IActor> unitList = FPSGame.Game.UnitQuery.FindUnits(
+            FPSGame.Game.UnitQuery.FindUnits(
                 new PECircle((PEVector2)hitData.pos, outer),
                 TargetCfg.All,
                 unit => VaildTarget(unit)
                      && unit != hitData.exclude
-                     && (hitData.filter == null || hitData.filter(unit)));
-            if (unitList == null || unitList.Count == 0) return;
+                     && (hitData.filter == null || hitData.filter(unit)),
+                HitUnitBuffer);
+            if (HitUnitBuffer.Count == 0) return;
+            // 拷成快照：下面逐个 InflictDamage 可能触发死亡/连锁效果，不能继续读共享缓冲（末尾 ApplyKnockback 也要用）
+            var unitList = new List<IActor>(HitUnitBuffer);
 
             var groups = hitData.groups != null && hitData.groups.Count > 0 ? hitData.groups : DefaultKineticGroups;
             bool noSource = hitData.data.NoSource || !hitData.soure;

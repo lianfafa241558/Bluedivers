@@ -464,6 +464,20 @@ namespace FPSGame.Managers
             return new List<IActor>(unitQueryGrid.QueryUnits(targetCfg, customFilter));
         }
 
+        /// <summary>零分配版：结果写进调用方的 <paramref name="result"/>（先 Clear），不建中间 List/HashSet。</summary>
+        public void FindUnits(IPERange range, TargetCfg targetCfg, System.Func<IActor, bool> customFilter, List<IActor> result)
+        {
+            if (unitQueryGrid == null) { if (result != null) result.Clear(); return; }
+            unitQueryGrid.QueryUnits(range, targetCfg, customFilter, result);
+        }
+
+        /// <summary>零分配版（不限范围）：结果写进调用方的 <paramref name="result"/>（先 Clear）。</summary>
+        public void FindUnits(TargetCfg targetCfg, System.Func<IActor, bool> customFilter, List<IActor> result)
+        {
+            if (unitQueryGrid == null) { if (result != null) result.Clear(); return; }
+            unitQueryGrid.QueryUnits(targetCfg, customFilter, result);
+        }
+
         public GameObject CreatUnit(UnitTier tier,Vector3 pos,float range,bool isFixed=true)
         {
            return WaveCont.CreatUnit(tier, pos,range, isFixed);

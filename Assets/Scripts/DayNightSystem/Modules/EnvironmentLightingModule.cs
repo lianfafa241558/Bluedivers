@@ -342,18 +342,22 @@ namespace FPSGame.DayNightSystem
             if (source == null || !Application.isPlaying)
                 return null;
 
-            if (_skyboxInstance == null || _skyboxSourceAsset != source)
-            {
-                ReleaseSkyboxInstance();
+            // ⚠ 脏检查必须认「当前 skybox 就是自己的副本」这个正常态。
+            // 旧写法比的是 _skyboxSourceAsset（上一帧的来源），而自己上一帧刚把 RenderSettings.skybox 换成副本、
+            // 还把 _skyboxSourceAsset 记成了那个副本 ⇒ 比较恒不成立，于是每帧 new Material + Destroy，
+            // 且 name 每帧再拼一次 " (Runtime)"、无限变长 ⇒ 每帧 GC ≈ 4×名字长度（名字 getter 与拼接各分配一次全长字符串）。
+            if (_skyboxInstance != null && source == _skyboxInstance)
+                return _skyboxInstance;
 
-                _skyboxSourceAsset = source;
-                _skyboxInstance = new Material(source)
-                {
-                    name = source.name + " (Runtime)",
-                    hideFlags = HideFlags.DontSave,
-                };
-                RenderSettings.skybox = _skyboxInstance;
-            }
+            ReleaseSkyboxInstance();
+
+            _skyboxSourceAsset = source;   // 只记真资产，别记副本，否则退出 Play 也还原不回去
+            _skyboxInstance = new Material(source)
+            {
+                name = source.name + " (Runtime)",
+                hideFlags = HideFlags.DontSave,
+            };
+            RenderSettings.skybox = _skyboxInstance;
 
             return _skyboxInstance;
         }

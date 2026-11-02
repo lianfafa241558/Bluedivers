@@ -423,7 +423,13 @@ public class AirdropWnd : Window
         if ((time += Time.deltaTime) > 1)
         {
             time -= 1;
-            SetText(powText, controller.useAd.FindAll(item => item.State == AirdropState.Ready).Count);
+            // 手写计数替代 FindAll(lambda).Count：那个 lambda 建闭包 + 结果 List 只为了取一个 Count
+            int readyCount = 0;
+            for (int i = 0; i < controller.useAd.Count; ++i)
+            {
+                if (controller.useAd[i].State == AirdropState.Ready) ++readyCount;
+            }
+            SetText(powText, readyCount);
             if (!expand) {
                 bool have1 = false, have2 = false;
                 for (int i = 0; i < controller.useAd.Count; ++i)

@@ -190,13 +190,13 @@ namespace FPSGame.Gameplay
                 IDamageable damageable = hit.collider.GetComponent<IDamageable>();
                 bool isUnit = damageable.IsValid();
 
-                if (isUnit && !BulletFlag.HasFlag(BulletFlag.PenetrateUnits))
+                if (isUnit && !HasBulletFlag(BulletFlag.PenetrateUnits))
                 {
                     if (settle) HitUnit(hit, damageable, ref chainUsed);
                     end = hit.point; normal = hit.normal; hitSomething = true; endIsUnit = true;
                     break;
                 }
-                if (!isUnit && !BulletFlag.HasFlag(BulletFlag.PenetrateTerrain))
+                if (!isUnit && !HasBulletFlag(BulletFlag.PenetrateTerrain))
                 {
                     // 地形/道具也要走一次结算：爆炸、弹痕、命中音效都挂在 OnHit 那条链上
                     if (settle) ApplyHit(hit, false);
@@ -262,8 +262,8 @@ namespace FPSGame.Gameplay
         private bool BlocksBeam(Collider col)
         {
             bool isUnit = col.GetComponent<IDamageable>().IsValid();
-            return isUnit ? !BulletFlag.HasFlag(BulletFlag.PenetrateUnits)
-                          : !BulletFlag.HasFlag(BulletFlag.PenetrateTerrain);
+            return isUnit ? !HasBulletFlag(BulletFlag.PenetrateUnits)
+                          : !HasBulletFlag(BulletFlag.PenetrateTerrain);
         }
 
         /// <summary>结算一次单位命中：同一单位本节拍只算一次（多个部位/护甲碰撞体不重复吃伤害）。</summary>

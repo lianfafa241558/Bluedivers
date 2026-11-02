@@ -12,7 +12,7 @@ using UnityEngine.Events;
 using static UnityEngine.UI.Image;
 
 namespace FPSGame.Game {
-    public abstract partial class Health : MonoBehaviour, IHealth
+    public abstract partial class Health : MonoBehaviour, IHealth, ITickDriverTarget
     {
 
 
@@ -343,16 +343,8 @@ namespace FPSGame.Game {
             }
         }
 
-        private void Update()
-        {
-            if (m_Unit == null) return;
-            if (Time.time >= m_Time)
-            {
-                AboTick();
-            }
-
-        }
-
+        // ⚠ 异常状态到点判定已交给 TickDriver（见 Health_AboState.TickFrame）：交战时 1006 个 Health
+        //   各自挂 Update，光引擎调度就 ~0.6ms，而这里每次只做一次 Time.time 比较。
 
         /// <summary>复活,要注意这个时候不能获取血量，因为玩家会清空护盾啥的，值会不对</summary>
         public virtual void Revive()

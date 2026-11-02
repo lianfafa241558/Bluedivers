@@ -125,7 +125,9 @@ namespace FPSGame.Gameplay
             {
                 m_isStop = true;
                 // 数据说话：到点收尾（这才是"命中"该有的样子）
-                NetSyncLog.BulletLog("到终点收尾", $"位置={transform.position:F2} 终点={VisualEndPoint:F2} 本帧位移={(transform.position - m_LastRootPosition).magnitude:F2}m");
+                // ⚠ 插值字符串是在**调用点**先拼好的，先判开关再拼，否则每颗弹都白分配一串
+                if (NetSyncLog.Enabled && NetSyncLog.Bullet)
+                    NetSyncLog.BulletLog("到终点收尾", $"位置={transform.position:F2} 终点={VisualEndPoint:F2} 本帧位移={(transform.position - m_LastRootPosition).magnitude:F2}m");
                 // collider = null ⇒ 走 HitFX 的"无碰撞箱"分支：停下 + 收尾迹，不结算任何伤害
                 OnHit?.Invoke(BuildHitData(VisualEndPoint, -transform.forward));
                 return;
@@ -138,10 +140,13 @@ namespace FPSGame.Gameplay
             {
                 m_isStop = true;
                 // 数据说话：这一条就是"子弹从目标身上飞过去"的直接证据（有终点约束时不该走到这里）
-                FPSGame.Utils.NetSyncLog.BulletLog("超射程消散", $"起点={m_RangeOrigin:F2} 位置={transform.position:F2} 飞了={dis:F1}m/上限{MaxRange:F1}m " +
-                    (HasVisualEndPoint ? $"终点={VisualEndPoint:F2} 到终点还差={Vector3.Distance(transform.position, VisualEndPoint):F1}m ←不该发生" : "终点=<无>"));
-                //GlobalEventManager.BulletHit(Owner,transform.position);
-                Debug.Log("落空"+gameObject.name,gameObject);
+                // ⚠ 先判开关：插值字符串在调用点就先拼好了，且 Debug.Log 本身就是每次一大笔分配
+                if (FPSGame.Utils.NetSyncLog.Enabled && FPSGame.Utils.NetSyncLog.Bullet)
+                {
+                    FPSGame.Utils.NetSyncLog.BulletLog("超射程消散", $"起点={m_RangeOrigin:F2} 位置={transform.position:F2} 飞了={dis:F1}m/上限{MaxRange:F1}m " +
+                        (HasVisualEndPoint ? $"终点={VisualEndPoint:F2} 到终点还差={Vector3.Distance(transform.position, VisualEndPoint):F1}m ←不该发生" : "终点=<无>"));
+                    Debug.Log("落空" + gameObject.name, gameObject);
+                }
                 OnHit?.Invoke(BuildHitData(transform.position, transform.forward));
             }
             else
@@ -181,6 +186,10 @@ namespace FPSGame.Gameplay
             return toEnd.sqrMagnitude <= reach * reach;
         }
 
+        /// <summary>SphereCast 的结果缓冲：NonAlloc 版不分配数组。
+        /// <para>⚠ 静态共用是安全的：TryHit 全程同步、没有 yield；命中回调里也不会再进另一颗子弹的 Update。</para></summary>
+        private static readonly RaycastHit[] s_HitBuffer = new RaycastHit[32];
+
         protected virtual void TryHit()
         {
             RaycastHit closestHit = new RaycastHit();
@@ -189,32 +198,41 @@ namespace FPSGame.Gameplay
 
             // Sphere cast
             Vector3 displacementSinceLastFrame = Tip.position - m_LastRootPosition;
-            RaycastHit[] hits = Physics.SphereCastAll(m_LastRootPosition, Radius,
-                displacementSinceLastFrame.normalized, displacementSinceLastFrame.magnitude, FpsHelper.GetHittableLayers(m_Velocity.magnitude),
+            // 原来用 SphereCastAll：每颗子弹每帧都 new 一个 RaycastHit[]
+            int hitCount = Physics.SphereCastNonAlloc(m_LastRootPosition, Radius,
+                displacementSinceLastFrame.normalized, s_HitBuffer, displacementSinceLastFrame.magnitude, FpsHelper.GetHittableLayers(m_Velocity.magnitude),
                 k_TriggerInteraction);
-            foreach (var hit in hits)
+
+            // 穿透标记提到循环外：原来在每个 hit 上都 Enum.HasFlag 一次（每次装箱）
+            bool penetrateUnits = HasBulletFlag(BulletFlag.PenetrateUnits);
+
+            for (int hi = 0; hi < hitCount; ++hi)
             {
+                RaycastHit hit = s_HitBuffer[hi];
                 if (IsHitValid(hit) && hit.distance < closestHit.distance)
                 {
                     //可以伤害说明是单位
-                    //if ((damageable.IsValid() && !BulletFlag.HasFlag(BulletFlag.PenetrateUnits))
-                    //    || (!damageable.IsValid() && !BulletFlag.HasFlag(BulletFlag.PenetrateTerrain)))
+                    //if ((damageable.IsValid() && !HasBulletFlag(BulletFlag.PenetrateUnits))
+                    //    || (!damageable.IsValid() && !HasBulletFlag(BulletFlag.PenetrateTerrain)))
                     //{
                     //这里的意思就是，使用穿透单位击中单位不会结束，而是添加到列表并继续
                     //这里不控制停止，只考虑击中伤害
                     //穿透地面直接写ishitVaild里面了，因为反正不用考虑对地面进行控制（大概吧）
-                    IDamageable damagable = hit.collider.GetComponent<IDamageable>();
-                    if (BulletFlag.HasFlag(BulletFlag.PenetrateUnits) && damagable.IsValid() && damagable.Source.IsValid() && !m_hasHits.Contains(damagable.ActorGo))
+                    // ⚠ 只有"穿透单位"才需要取 IDamageable：GetComponent<接口> 每次都会分配
+                    //   （Unity 内部要枚举组件找接口实现），不穿透时这个值根本用不上
+                    if (penetrateUnits)
                     {
-                        m_hasHits.Add(damagable.ActorGo);
-                        Hit(hit);
+                        IDamageable damagable = hit.collider.GetComponent<IDamageable>();
+                        if (damagable.IsValid() && damagable.Source.IsValid() && !m_hasHits.Contains(damagable.ActorGo))
+                        {
+                            m_hasHits.Add(damagable.ActorGo);
+                            Hit(hit);
+                            continue;
+                        }
+                    }
 
-                    }
-                    else
-                    {
-                        foundHit = true;
-                        closestHit = hit;
-                    }
+                    foundHit = true;
+                    closestHit = hit;
                 }
             }
 
@@ -234,8 +252,10 @@ namespace FPSGame.Gameplay
             }
 
             // 数据说话：是"自己撞上了"还是"被终点收尾"—— 两条日志对照就知道表现弹怎么收场的
-            FPSGame.Utils.NetSyncLog.BulletLog("撞到碰撞体", $"对象={closestHit.collider.name} 点={closestHit.point:F2} 层={LayerMask.LayerToName(closestHit.collider.gameObject.layer)}" +
-                (HasVisualEndPoint ? $" 终点={VisualEndPoint:F2} 距终点={Vector3.Distance(closestHit.point, VisualEndPoint):F1}m" : " 终点=<无>"));
+            // ⚠ 先判开关再拼字符串：这条每次命中都会走，插值串 + LayerToName 都是白分配的
+            if (FPSGame.Utils.NetSyncLog.Enabled && FPSGame.Utils.NetSyncLog.Bullet)
+                FPSGame.Utils.NetSyncLog.BulletLog("撞到碰撞体", $"对象={closestHit.collider.name} 点={closestHit.point:F2} 层={LayerMask.LayerToName(closestHit.collider.gameObject.layer)}" +
+                    (HasVisualEndPoint ? $" 终点={VisualEndPoint:F2} 距终点={Vector3.Distance(closestHit.point, VisualEndPoint):F1}m" : " 终点=<无>"));
             //Debug.LogError("击中于" + gameObject.name, gameObject);
             //Debug.LogError("击中了 "+ closestHit.collider.name, closestHit.collider);
 
@@ -313,7 +333,7 @@ namespace FPSGame.Gameplay
             }
 
             //如果有忽略地面标签并且目标没有伤害组件就直接忽略
-            if (BulletFlag.HasFlag(BulletFlag.PenetrateTerrain) && hit.collider.GetComponent<IDamageable>() == null)
+            if (HasBulletFlag(BulletFlag.PenetrateTerrain) && hit.collider.GetComponent<IDamageable>() == null)
             {
                 //Debug.LogError("穿透地形忽略" + hit.collider);
                 return false;
@@ -342,11 +362,11 @@ namespace FPSGame.Gameplay
 
             bool damageable = hitdata.collider.GetComponent<IDamageable>().IsValid();
             //可以伤害说明是单位
-            //Debug.LogError("是单位?"+ damageable+"有穿透单位标记"+ BulletFlag.HasFlag(BulletFlag.PenetrateUnits)+"有穿透地形标记"+ BulletFlag.HasFlag(BulletFlag.PenetrateTerrain));
+            //Debug.LogError("是单位?"+ damageable+"有穿透单位标记"+ HasBulletFlag(BulletFlag.PenetrateUnits)+"有穿透地形标记"+ HasBulletFlag(BulletFlag.PenetrateTerrain));
 
 
-            if ((damageable && !BulletFlag.HasFlag(BulletFlag.PenetrateUnits))
-                ||(!damageable && !BulletFlag.HasFlag(BulletFlag.PenetrateTerrain))) 
+            if ((damageable && !HasBulletFlag(BulletFlag.PenetrateUnits))
+                ||(!damageable && !HasBulletFlag(BulletFlag.PenetrateTerrain))) 
             {
                 TryStop();
             }
@@ -354,7 +374,7 @@ namespace FPSGame.Gameplay
         }
         void TryStop()
         {
-            if (BulletFlag.HasFlag(BulletFlag.RetainOnHit))
+            if (HasBulletFlag(BulletFlag.RetainOnHit))
             {
                 m_isStop = true;
             }

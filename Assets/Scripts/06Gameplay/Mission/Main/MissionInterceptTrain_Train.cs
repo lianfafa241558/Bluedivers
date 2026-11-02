@@ -116,9 +116,9 @@ namespace FPSGame.Mission
             return true;
         }
 
-        protected override void Update()
+        protected void Update()
         {
-            base.Update();   // ⚠ 必须先跑基类：Tick 节拍在基类 Update 里发
+            // ⚠ Tick 节拍已由 TickDriver 统一驱动（基类不再挂 Update），这里只剩自身的按帧工作
             // 按帧只剩"等着车厢出现"的炮塔复刻要补：它可能在本端还没建车时就到了，那时活车列表还是空的
             // ⚠ 卫队**目标点**不在这里（走 Tick，见 Tick()/RefreshAllGuards）：目标点每 GuardRefreshInterval（≈3 秒）挪 24 米，
             //   按帧重发等于给每只卫队不停排寻路请求（正是 PathRequestManager 被打爆的那种场景）

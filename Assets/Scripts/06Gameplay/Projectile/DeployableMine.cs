@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.GameContract;
@@ -77,6 +79,18 @@ namespace FPSGame.Gameplay
         /// <summary>爆炸延迟协程</summary>
         Coroutine _explodeRoutine;
 
+        /// <summary>触发判定间隔(秒)：触发范围只有米级，不需要逐帧查。
+        /// <para>⚠ 原来是每帧一次空间查询 —— 88 颗雷 = 每帧 100KB+ GC（每次查询 new List + new HashSet + 每节点 new List），
+        /// 而且只为了判"附近有没有敌人"。</para></summary>
+        private const float HitCheckInterval = 0.1f;
+        /// <summary>查询结果缓冲：Update 串行调用，静态共用一份（别每次 new List）。</summary>
+        private static readonly List<IActor> HitBuffer = new();
+        /// <summary>缓存的过滤委托：写成 lambda 会每帧新建闭包类，这里建一次复用。</summary>
+        private Func<IActor, bool> m_Filter;
+        private float m_NextHitCheck;
+        /// <summary>本次判定的队伍（TryHit 每拍刷新，filter 从字段读，避免闭包捕获）</summary>
+        private int m_Team;
+
         private void OnEnable()
         {
             m_Actor = GetComponent<Actor>();
@@ -87,6 +101,9 @@ namespace FPSGame.Gameplay
             if (m_limitedLife) m_limitedLife.OnEnd.AddListener(OnLifeEnd);
 
             m_DeployTime = Time.time;
+            // 相位错开：同一批部署的雷如果都从 0 起算，就会每 0.1s 在**同一帧**一起查一遍空间网格
+            // （88 颗雷同帧 = 一次 40KB+ 的尖峰）。按实例 ID 打散到 0~0.1s 之间。
+            m_NextHitCheck = Time.time + (Mathf.Abs(GetInstanceID()) % 10) * (HitCheckInterval * 0.1f);
             // 池化复用：上一次的触发状态与未完成的延迟协程都要清掉
             m_Exploded = false;
             _triggered = false;
@@ -107,6 +124,11 @@ namespace FPSGame.Gameplay
             if (_triggered) return;
             // 部署延迟：等待稳定落定后再启用触发
             if (Time.time < m_DeployTime + DeployDelay) return;
+
+            // 触发判定降频到 10Hz（见 HitCheckInterval）
+            if (Time.time < m_NextHitCheck) return;
+            m_NextHitCheck = Time.time + HitCheckInterval;
+
             TryHit();
         }
 
@@ -115,20 +137,22 @@ namespace FPSGame.Gameplay
         {
             if (!DamageData.IsValid()) return;
             // 队伍从 Actor 组件读取；未挂 Actor 时退化为非智能(仅 VaildTarget 过滤)
-            int team = m_Actor ? m_Actor.Team : 0;
+            m_Team = m_Actor ? m_Actor.Team : 0;
+            if (m_Filter == null) m_Filter = FilterActor;
 
             // 通过空间网格查询触发范围内的单位（返回 I_Actor，可直接获得队伍信息做智能判定）
             // 注意：TargetCfg.Enemy 只匹配 UnitTypeEnum.Enemy，查不到玩家(Player)，必须用匹配所有类型的目标配置
             // 注意：空间网格内部已用 range.Overlaps(unit.Range) 做"地雷触发范围 与 单位占位范围相交"的水平预筛，
             // 最终是否引爆由 InTriggerRange 按"地雷到单位实际3D距离"判定，
             // 不能直接按单位中心点距离判断，否则地雷黏在巨型敌人身上时中心点离黏附表面过远会导致不炸
-            var units = FPSGame.Game.UnitQuery.FindUnits(
+            // ⚠ 走零分配重载 + 复用缓冲：老接口每次调用都要 new List + new HashSet + 每节点 new List
+            FPSGame.Game.UnitQuery.FindUnits(
                 new PECircle((PEVector2)Root.position, (PEInt)TriggerRange),
                 TargetCfg.EnemyAI,
-                // 智能地雷：只炸与地雷不同队伍的存活目标；按实际3D距离判定(避免高空掠过的单位误触发)
-                item => FpsHelper.VaildTarget(item) && (!intelligent || item.Team != team) && InTriggerRange(item));
+                m_Filter,
+                HitBuffer);
 
-            foreach (var actor in units)
+            for (int i = 0; i < HitBuffer.Count; ++i)
             {
                 // 通过 Health 自杀引爆，与 ProjectileMine 行为一致，避免重复爆炸造成两次伤害
                 // （Health 已死时 Kill() 不会派发 OnDie，下面再兜底直接引爆；TriggerExplosion 幂等）
@@ -137,6 +161,11 @@ namespace FPSGame.Gameplay
                 break;
             }
         }
+
+        /// <summary>触发过滤：智能地雷只炸与地雷不同队伍的存活目标；按实际3D距离判定(避免高空掠过的单位误触发)。
+        /// <para>⚠ 必须缓存成委托（见 m_Filter），别在调用点写 lambda —— lambda 每拍都会新建闭包类。</para></summary>
+        private bool FilterActor(IActor item)
+            => FpsHelper.VaildTarget(item) && (!intelligent || item.Team != m_Team) && InTriggerRange(item);
 
         /// <summary>
         /// 实际距离判定：由单位中心点与单位高度构成竖直占位区间 [CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]
@@ -265,6 +294,7 @@ namespace FPSGame.Gameplay
             transform.position = point;
             Owner = owner;
             m_DeployTime = Time.time;
+            m_NextHitCheck = Time.time + (Mathf.Abs(GetInstanceID()) % 10) * (HitCheckInterval * 0.1f);
             m_Exploded = false;
             _triggered = false;
             StopExplodeRoutine();

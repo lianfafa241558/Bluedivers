@@ -68,6 +68,9 @@ namespace FPSGame.Weapon
         /// <summary>上一帧写进 Image 的填充量（0~1）：只在变化时才写，别每帧标脏 Canvas</summary>
         private float _lastCoolRatio = -1f;
 
+        /// <summary>上一次写进文字的热量百分比：没变就跳过 SetText（省掉每帧的 int→string）</summary>
+        private int _lastHeatPercent = int.MinValue;
+
         /// <summary>平滑后的显示用热量（0=冷，1=满热）：填充与取色共用同一个值，
         /// 否则会出现"条子还在慢慢走、颜色已经跳到下一档"的错位。</summary>
         private float _displayedHeat = -1f;
@@ -116,7 +119,18 @@ namespace FPSGame.Weapon
                     if (!m_weapon.ShootInterval) return;   // 还没 LogicInit（预览实例）
                     heat = 1f - m_weapon.ShootInterval.ScaleValue.RawFloat;
                 }
-                T_CoolRatio.ForEach(item => item.text = ""+(int)(100*heat));
+                // 百分比没变就不写：原来每帧 ForEach(lambda) 建闭包 + 每个 item 一次 ""+int（各分配一个字符串）
+                int heatPercent = (int)(100 * heat);
+                if (heatPercent != _lastHeatPercent)
+                {
+                    _lastHeatPercent = heatPercent;
+                    string percentText = heatPercent.ToString();   // 只分配一次，所有条共用
+                    for (int i = 0; i < T_CoolRatio.Count; i++)
+                    {
+                        var item = T_CoolRatio[i];
+                        if (item) item.text = percentText;
+                    }
+                }
 
             }
             if (I_CoolRatio.Count > 0)

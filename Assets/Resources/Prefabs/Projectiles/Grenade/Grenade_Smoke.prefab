@@ -45,15 +45,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8a0443ef3d7c854bab65c832b6f25bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CatapultRadius: 20
   Radius: 0.2
   Root: {fileID: 4135243334052546420}
   Tip: {fileID: 4135243334052546420}
   Trails: []
   TrailWidth: 0
   LiftTime: 1.5
-  MaxBounce: 3
+  MaxBounce: 5
   BounceDamping: 0.5
   RestSpeed: 0.6
+  Sticky: 0
+  OnCollisionLogic:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCollisionView:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDestroyedLogic:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDestroyedView:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1001 &3368147461315601411
 PrefabInstance:
   m_ObjectHideFlags: 0

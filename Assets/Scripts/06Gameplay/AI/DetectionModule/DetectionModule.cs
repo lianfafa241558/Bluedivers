@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
 using FPSGame.Attributes;
@@ -342,6 +344,11 @@ namespace FPSGame.AI
             return false;
         }
 
+        /// <summary>索敌查询的复用缓冲与缓存委托：<see cref="CheckNewTarget"/> 每个 tick 都会跑
+        /// （50+ 个检测模块），原来每拍 new List + new HashSet + 一个捕获闭包。</summary>
+        private readonly List<IActor> _targetBuffer = new();
+        private Func<IActor, bool> _targetFilter;
+
         /// <summary>
         /// 寻找新对象
         /// </summary>
@@ -352,13 +359,15 @@ namespace FPSGame.AI
             //var fow = Quaternion.Euler(0, EyePoint.eulerAngles.y, 0) * Vector3.forward;
             var pos = m_Actor != null ? m_Actor.LogicPos : new(EyePoint.position);
             //没有无敌
-            var list = FPSGame.Game.UnitQuery.FindUnits(new PECircle(pos, (PEInt)DetectionRange), TargetCfg.EnemyAI
-                ,item=> item.Team != m_Actor.Team && FpsHelper.VaildTarget(item));
+            if (_targetFilter == null) _targetFilter = FilterNewTarget;
+            FPSGame.Game.UnitQuery.FindUnits(new PECircle(pos, (PEInt)DetectionRange), TargetCfg.EnemyAI,
+                _targetFilter, _targetBuffer);
 
             IActor newTarget=null;
             PEInt newThreat = 0;
-            foreach (IActor item in list)
+            for (int i = 0, l = _targetBuffer.Count; i < l; ++i)
             {
+                IActor item = _targetBuffer[i];
                 if (CanLook(item.CenterPos,false, out var hit)//可见反而是没有hit
                     && (newThreat=FpsHelper.ThreatValue(CorePoint.position, item))>closestThreat)
                 {
@@ -383,6 +392,10 @@ namespace FPSGame.AI
         }
 
 
+
+        /// <summary>索敌过滤（缓存成委托复用，别在调用点写 lambda：每拍新建闭包）。</summary>
+        private bool FilterNewTarget(IActor item)
+            => item.Team != m_Actor.Team && FpsHelper.VaildTarget(item);
 
         /// <summary>丢失目标</summary>
         protected virtual void OnLostTarget()

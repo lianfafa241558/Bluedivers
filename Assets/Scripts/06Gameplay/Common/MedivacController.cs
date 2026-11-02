@@ -93,9 +93,9 @@ namespace FPSGame.Gameplay
             return true;
         }
 
-        protected override void Update()
+        protected void Update()
         {
-            base.Update();
+            // Tick 节拍由 TickDriver 统一驱动，基类已无 Update（这里只跑降落/撤离的按帧表现）
             if (!TaskState.HasTask) return;
        
             switch (state)

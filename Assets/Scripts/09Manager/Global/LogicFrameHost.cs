@@ -71,6 +71,11 @@ public class LogicFrameHost : FPSGame.Core.Singleton<LogicFrameHost>, I_GlobaMan
 
     void Update()
     {
+        // 统一逐帧驱动（Health / TickBehaviour / Actor 三个家族，合计 3000+ 实例）：
+        // 它们原本各自挂 MonoBehaviour.Update，每次只做一次时间/位置比较，引擎调度开销 ≈2.5ms/帧。
+        // ⚠ 必须每帧只调一处：再多一个调用点就会把每个目标驱动两次（Tick 节拍翻倍）。
+        TickDriver.Pump(Time.time);
+
         if (list == null) return;
 
         //真实时间累加：逻辑帧率恒为 1/StepSeconds(50Hz)，与渲染帧率解耦 ⇒ 冷却/射速回到"真实秒"。

@@ -54,10 +54,12 @@
 | UI 预制体 / 面板布局 / 素材选图 | `topics/ui-wnd.md` |
 | 粒子特效 / VFX 预制体规范 / 特效材质坑 / **挂单位的持续特效（根必须留 loop PS 当池存活钟）** | `topics/vfx.md` |
 | 人设 / 语气 / 诺亚设定 | `rules/人设.md`（行为约束）+ `topics/persona.md`（背景库） |
+| 帧率 / GC 分配 / Profiler / 装箱 / 渲染剔除 | `topics/perf-gc-hunt.md` |
 | 技术债 / 待改架构 | `Assets/Scripts/00Tools/TechnicalDebt.cs` |
 | 哪天做过什么 / 已下沉原文 | `archive/` |
 
 ## 待办 / 待拍板
+- ⏳ **性能线收尾（2026-11-02）**：一批 GC 修复待 Play 验证；`ScriptRunBehaviourUpdate` 4.58ms 待展开；GPU 需 Development Build 复测 → `topics/perf-gc-hunt.md` §六
 - ✅ **N 倍伤害已修（2026-10-27，待数值实测）** → `topics/net-dup-damage.md`
 - ⏳ Wnd 槽收尾：剩余清单 → `topics/wnd-slot.md`
 - ⏳ `mission-intercept-train` 超预算待拆

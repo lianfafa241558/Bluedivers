@@ -542,7 +542,7 @@ namespace FPSGame.Weapon
         //没继续拓展是因为现在这三种情况已经极端复杂了，绝对够用了
         public void AddModifier(ModifierType modifier, PEInt value)
         {
-            if (!allowModifier.HasFlag(modifier))
+            if ((allowModifier & modifier) != modifier)
             {
                 Debug.LogError($"不支持的Modifier类型:{modifier}     {this}");
                 return;
@@ -583,7 +583,9 @@ namespace FPSGame.Weapon
         }
 
 
-        public bool HasFlag(AttrTag flag) => tag.HasFlag(flag);
+        /// <summary>⚠ 别写回 <c>tag.HasFlag(flag)</c>：<see cref="System.Enum.HasFlag(System.Enum)"/> 的参数每次都要装箱。
+        /// <c>FinalValue</c> 的 getter 每次都会调它 ⇒ 每次读属性值就分配一次（实测逻辑帧 1000 次分配/帧的主力）。</summary>
+        public bool HasFlag(AttrTag flag) => (tag & flag) == flag;
 
 
         // 重写隐式转换运算符
@@ -615,7 +617,8 @@ namespace FPSGame.Weapon
             {
                 var oldValue = currValue;
                 currValue = value;
-                if(tag.HasFlag(AttrTag.LimitCurr))currValue = PEMath.Clamp(value, 0, FinalValue);
+                // 位运算替代 Enum.HasFlag：CurrValue 每次写都会走这里（弹药/热量/冷却），装箱就白烧
+                if ((tag & AttrTag.LimitCurr) == AttrTag.LimitCurr) currValue = PEMath.Clamp(value, 0, FinalValue);
                 OnCurrValueChange?.Invoke(value);
                 if (PEMath.Floor(oldValue) != PEMath.Floor(value))
                 {

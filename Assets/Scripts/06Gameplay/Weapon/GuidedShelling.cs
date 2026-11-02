@@ -82,20 +82,27 @@ public class GuidedShelling : MonoBehaviour
     /// <summary>
     /// 搜索范围内的敌人
     /// </summary>
+    /// <summary>搜索结果的复用缓冲（每次搜索判定一次，别每次 new List + new HashSet）。</summary>
+    private readonly List<IActor> _searchBuffer = new();
+
     private void SearchEnemy()
     {
-        List<IActor> units = FPSGame.Game.UnitQuery.FindUnits(
+        FPSGame.Game.UnitQuery.FindUnits(
             new PECircle(new(transform.position.ToVector2()), new(searchRange)),
-            TargetCfg.Enemy
-        );
+            TargetCfg.Enemy,
+            null,
+            _searchBuffer);
 
-        // 找到敌人 锁定第一个
-        if (units != null && units.Count > 0)
+        //优先锁大型敌人，建筑的权重降低（原来用 OrderByDescending().FirstOrDefault()，这里手写取最大）
+        IActor bestTarget = null;
+        float bestWeight = float.MinValue;
+        for (int i = 0, l = _searchBuffer.Count; i < l; ++i)
         {
-            //优先锁大型敌人，建筑的权重降低
-            currentTarget=units.OrderByDescending(item=>item.HalfRange*(item.HasFlag(FPSGame.Core.ActorFlag.Nest)?0.5f:1)).FirstOrDefault();
-            //currentTarget = units[0];
+            IActor item = _searchBuffer[i];
+            float weight = item.HalfRange * (item.HasFlag(FPSGame.Core.ActorFlag.Nest) ? 0.5f : 1);
+            if (weight > bestWeight) { bestWeight = weight; bestTarget = item; }
         }
+        if (bestTarget != null) currentTarget = bestTarget;
     }
 
     private Vector3 _vel = Vector3.zero;

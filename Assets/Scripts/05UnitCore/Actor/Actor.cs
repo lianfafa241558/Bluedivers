@@ -19,7 +19,7 @@ namespace FPSGame.Game
     /// 单位通用信息组件（队伍、名称、占位范围），是 AI 与伤害体系的载体。
     /// </summary>
     [AddComponentMenu("单位/单位信息")]
-    public class Actor : BaseObject, IActor
+    public class Actor : BaseObject, IActor, ITickDriverTarget
     {
         private static int GlobalIndexID = 0;
         //public event UnityAction<I_Actor> OnStateChange;
@@ -151,7 +151,9 @@ namespace FPSGame.Game
 
         //I_Actor I_Actor.Owner => this.Owner;
 
-        public bool HasFlag(ActorFlag flag) => this.flag.HasFlag(flag);
+        /// <summary>⚠ 别写回 <c>this.flag.HasFlag(flag)</c>：Enum.HasFlag 的参数每次都要装箱，
+        /// 而这个方法在索敌/受击/范围查询里按"每个候选单位"调用。</summary>
+        public bool HasFlag(ActorFlag flag) => (this.flag & flag) == flag;
 
 
         public void AddFlag(ActorFlag flag) => this.flag|=flag;
@@ -319,10 +321,50 @@ namespace FPSGame.Game
 
             damageables = GetComponentsInChildren<Damageable>();
 
+            // ★ CPU：Animator 的**默认** cullingMode 是 AlwaysAnimate —— 屏幕外的单位每帧仍然全量求值骨骼层级，
+            //   而全仓 349 个 Animator 里常驻 200 个在视野外 ⇒ 纯白烧的 CPU（实测这是帧时间最大的一块之一）。
+            //   CullUpdateTransforms：离屏时跳过 transform 写入（省掉骨骼求值），**状态机/动画事件照常跑**，不影响逻辑与 AI。
+            //   ⚠ 别用 CullCompletely：那会把状态机一起冻住，动画事件（开火/落脚）会丢。
+            InitAnimatorCulling();
+
             Range.SetXY((PEVector2)Pos);
             lastAngle = transform.eulerAngles;
             UnitEventBus.UnitPosChange(this);
+            TickDriver.Register(this);   // 逐帧位置/朝向同步改由统一驱动（原 Actor.Update）
             StartCoroutine(WaitSetPos());
+        }
+
+        private Animator[] _animators;
+        private bool _animatorsOff;
+
+        /// <summary>本单位身上的 Animator 是否已被距离剔除关掉（见 <c>UnitAnimatorCuller</c>）。</summary>
+        public bool AnimatorsOff => _animatorsOff;
+
+        /// <summary>把本单位身上 Animator 的裁剪模式从 AlwaysAnimate 改成 CullUpdateTransforms（只改一次）。</summary>
+        private void InitAnimatorCulling()
+        {
+            _animators = GetComponentsInChildren<Animator>(true);
+            for (int i = 0; i < _animators.Length; ++i)
+            {
+                if (_animators[i].cullingMode == AnimatorCullingMode.AlwaysAnimate)
+                    _animators[i].cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+            }
+        }
+
+        /// <summary>按距离开关本单位所有 Animator（调用方：<c>UnitAnimatorCuller</c>）。
+        /// <para>▍⚠ 关掉 Animator 会连状态机一起冻住（动画事件不再触发）⇒ 只对**远处**单位用；
+        /// 近处靠 <c>CullUpdateTransforms</c>（离屏只跳 transform 写入，状态机/事件照跑）。</para></summary>
+        public void SetAnimatorsEnabled(bool on)
+        {
+            if (_animatorsOff == !on) return;   // 状态没变就不遍历
+            _animatorsOff = !on;
+            if (_animators == null) return;
+            for (int i = 0; i < _animators.Length; ++i)
+            {
+                var anim = _animators[i];
+                if (anim == null) continue;
+                anim.enabled = on;
+            }
         }
 
       
@@ -450,6 +492,7 @@ namespace FPSGame.Game
             //     那条路刻意**不移除** Player/Friend（倒地待救 / 全队阵亡统计要靠它们）。
             //   放最前面：后面的清理可能抛异常/早退，而注销注册表必须无条件完成。
             ActorsManager.Unregister(this);
+            TickDriver.Unregister(this);   // 摘出逐帧驱动（否则销毁后的空引用要靠 Pump 每帧判空自愈）
             NetIdProbe.Died(NetId, Id);   // 记账：之后到达的伤害/死亡消息据此判定为"迟到"
 
             // 盟友离场的事件通知：销毁之后谁也读不出它是谁（name/Type 还能读，但引用已经废了）
@@ -480,9 +523,11 @@ namespace FPSGame.Game
             OnDie(null, null);
         }
 
-        private void Update()
+        /// <summary>统一驱动入口（见 <see cref="TickDriver"/>），替代原来的 <c>Update</c>：
+        /// 交战时 1006 个 Actor 各自挂 Update，光引擎调度就 ≈0.6ms/帧。</summary>
+        void ITickDriverTarget.TickFrame(float now)
         {
-            if (!isInitialized) return;
+            if (!isInitialized || !isActiveAndEnabled) return;
 
             if (Range.GetXY() != LogicPos)
             {
@@ -490,7 +535,9 @@ namespace FPSGame.Game
                 UnitEventBus.UnitPosChange(this);
                 OnPosChange?.Invoke(this);
             }
-            if (lastAngle!= transform.eulerAngles)
+            // ⚠ 角度按 4 帧错峰检查：transform.eulerAngles 是原生调用（实测 ~145ns），1006 个单位每帧读 ≈0.15ms/帧；
+            //   而 OnAngleChange 的唯一订阅者是 MiniMapWnd（小地图图标朝向），15Hz 完全够。用 indexID 打散避免同帧扎堆。
+            if (((Time.frameCount + indexID) & 3) == 0 && lastAngle != transform.eulerAngles)
             {
                 lastAngle = transform.eulerAngles;
                 OnAngleChange?.Invoke(this);

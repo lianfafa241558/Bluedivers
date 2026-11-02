@@ -21,6 +21,9 @@ namespace FPSGame.Gameplay
         [SerializeField]
         private float HealPerTick = 12f;
 
+        /// <summary>查询结果复用缓冲：本效果每 <c>TickInterval</c> 都要查一次，别每次 new List + new HashSet。</summary>
+        private readonly List<IActor> _unitBuffer = new();
+
         protected override void ApplyEffect()
         {
             if (!DamageData.IsValid()) return;
@@ -31,8 +34,9 @@ namespace FPSGame.Gameplay
             Vector3 center = DamageAnchor ? DamageAnchor.position : transform.position;
 
             // 治疗：范围内所有玩家/盟友
-            List<IActor> units = FPSGame.Game.UnitQuery.FindUnits(
-                new PECircle((PEVector2)center, outer), TargetCfg.All, unit => FpsHelper.VaildTarget(unit));
+            List<IActor> units = _unitBuffer;
+            FPSGame.Game.UnitQuery.FindUnits(
+                new PECircle((PEVector2)center, outer), TargetCfg.All, unit => FpsHelper.VaildTarget(unit), units);
             for (int i = 0; i < units.Count; ++i)
             {
                 IActor unit = units[i];

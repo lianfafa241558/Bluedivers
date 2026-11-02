@@ -313,9 +313,9 @@ namespace FPSGame.Managers
 
 #if UNITY_EDITOR
 
-        protected override void Update()
+        protected void Update()
         {
-            base.Update();
+            // Tick 节拍由 TickDriver 统一驱动，基类已无 Update（这里只跑编辑器调试键）
             if (Input.GetKeyUp(KeyCode.K))
             {
                 CreatWave(new() {

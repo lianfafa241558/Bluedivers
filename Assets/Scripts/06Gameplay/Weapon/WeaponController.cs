@@ -584,36 +584,61 @@ namespace FPSGame.Weapon
         #region 锁定武器
 
 
+        /// <summary>锁定查询的复用缓冲 / 缓存委托 / 本次调用的屏幕中心（供过滤函数读取，避免闭包捕获）。</summary>
+        private readonly List<IActor> _lockBuffer = new();
+        private Func<IActor, bool> _lockFilter;
+        private Vector3 _lockScreenCenter;
+
         public bool GetLockActor(out IActor actor)
         {
             TargetCfg targetCfg = new() { actorState = ActorState.Normal, targetType = UnitTypeEnum.Enemy };
             // 获取屏幕中心点（屏幕坐标）
-            Vector3 screenCenter = Camera.main.ViewportToScreenPoint(new(0.5f,0.5f,0));
-            
-            bool ActorInLockRange(IActor actor)
+            _lockScreenCenter = Camera.main.ViewportToScreenPoint(new(0.5f,0.5f,0));
+
+            // 走零分配重载 + 缓存委托：本方法每个锁定节拍都会跑，
+            // 原来每拍要 new List + new HashSet + 一个捕获闭包 + OrderBy 一整串
+            if (_lockFilter == null) _lockFilter = ActorInLockRange;
+            FPSGame.Game.UnitQuery.FindUnits(targetCfg, _lockFilter, _lockBuffer);
+
+            // 取"屏幕上离准心最近"的一个（替代 OrderBy(...).FirstOrDefault()：等价于稳定排序取首个最小值）
+            actor = null;
+            float best = float.MaxValue;
+            for (int i = 0, l = _lockBuffer.Count; i < l; ++i)
             {
-                if (Vector3.Distance(actor.CenterPos, transform.position) >= AttrFinal( WeaponAttrType.LockDistance).RawFloat) return false;
-                Vector3 Spos = Camera.main.WorldToScreenPoint(actor.CenterPos);
-                float range = AttrFinal(WeaponAttrType.LockRange).RawFloat;
-                switch (Lockshape)
-                {
-                    case ShapeType.Circle:
-                        if (Vector3.Distance(Spos, screenCenter) > range) return false;
-                        break;
-                    case ShapeType.Rectangle:
-                        if (Mathf.Abs(Spos.x-screenCenter.x) > range || Mathf.Abs(Spos.y - screenCenter.y) > range) return false;
-                        break;
-                    default:
-                        Debug.LogError("错误的锁定形状" + Lockshape);
-                        return false;
-                }
-                return WeaponLockTarget.Count(item=>item==actor)<AttrFinal(WeaponAttrType.LockPerCount);
+                IActor item = _lockBuffer[i];
+                float d = Vector3.Distance(Camera.main.WorldToScreenPoint(item.CenterPos), _lockScreenCenter);
+                if (d < best) { best = d; actor = item; }
             }
-
-            var list = FPSGame.Game.UnitQuery.FindUnits(targetCfg, ActorInLockRange);
-
-            actor = list.OrderBy((actor)=> Vector3.Distance(Camera.main.WorldToScreenPoint(actor.CenterPos), screenCenter)).FirstOrDefault();
             return actor!=null;
+        }
+
+        /// <summary>锁定筛选：距离 + 锁定框形状 + 已锁层数上限。
+        /// <para>⚠ 做成成员方法并缓存成委托（见 _lockFilter）：写在调用点的局部函数每拍都会新建闭包。
+        /// 屏幕中心从 <see cref="_lockScreenCenter"/> 读，别改成参数捕获。</para></summary>
+        private bool ActorInLockRange(IActor actor)
+        {
+            if (Vector3.Distance(actor.CenterPos, transform.position) >= AttrFinal( WeaponAttrType.LockDistance).RawFloat) return false;
+            Vector3 Spos = Camera.main.WorldToScreenPoint(actor.CenterPos);
+            float range = AttrFinal(WeaponAttrType.LockRange).RawFloat;
+            switch (Lockshape)
+            {
+                case ShapeType.Circle:
+                    if (Vector3.Distance(Spos, _lockScreenCenter) > range) return false;
+                    break;
+                case ShapeType.Rectangle:
+                    if (Mathf.Abs(Spos.x-_lockScreenCenter.x) > range || Mathf.Abs(Spos.y - _lockScreenCenter.y) > range) return false;
+                    break;
+                default:
+                    Debug.LogError("错误的锁定形状" + Lockshape);
+                    return false;
+            }
+            // 已锁层数上限：手写计数（原 Count(lambda) 每次调用都要建一份闭包）
+            int locked = 0;
+            for (int i = 0, l = WeaponLockTarget.Count; i < l; ++i)
+            {
+                if (WeaponLockTarget[i] == actor) ++locked;
+            }
+            return locked < AttrFinal(WeaponAttrType.LockPerCount);
         }
 
         /// <summary>
@@ -969,7 +994,9 @@ namespace FPSGame.Weapon
         #endregion
 
 
-        public bool HasFlag(WeaponFlag flag) => WeaponFlag.HasFlag(flag);
+        /// <summary>⚠ 别写回 <c>WeaponFlag.HasFlag(flag)</c>：那是 <see cref="Enum.HasFlag(Enum)"/>，参数每次都要装箱
+        /// ⇒ 每个逻辑帧每把武器都分配一次（大厅 8 把武器实测就吃掉 LogicFrameHost 1.5KB/帧的一大半）。</summary>
+        public bool HasFlag(WeaponFlag flag) => (WeaponFlag & flag) == flag;
 
 
         public void SetTrigger(int name,bool state)

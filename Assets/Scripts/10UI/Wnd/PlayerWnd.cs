@@ -406,6 +406,9 @@ using static FPSGame.WndTools.WndRootTool;
 
         #endregion
 
+        /// <summary>计时文本的字符缓冲（复用一个 char[8]，见 UpdateTime）</summary>
+        private readonly char[] m_TimeChars = new char[8];
+
         void UpdateTime()
         {
             float seconds = Time.time - m_TaskStartTime;
@@ -413,7 +416,23 @@ using static FPSGame.WndTools.WndRootTool;
             int minutes = totalSeconds / 60;
             int remainingSeconds = totalSeconds % 60;
             int milliseconds = (int)((seconds - totalSeconds) * 100);
-            SetText(timeShow, string.Format("{0:D2}:{1:D2}:{2:D2}", minutes, remainingSeconds, milliseconds));
+
+            // 原来用 string.Format：每次一个 object[] + 3 个装箱 + 结果串（每帧 4~5 次分配）。
+            // 这里手拼到复用缓冲，只留最终那一个 string（TMP 只能吃 string，这条省不掉）。
+            if (minutes > 99)
+            {
+                SetText(timeShow, minutes.ToString("D2") + ":" + remainingSeconds.ToString("D2") + ":" + milliseconds.ToString("D2"));
+                return;
+            }
+            m_TimeChars[0] = (char)('0' + minutes / 10 % 10);
+            m_TimeChars[1] = (char)('0' + minutes % 10);
+            m_TimeChars[2] = ':';
+            m_TimeChars[3] = (char)('0' + remainingSeconds / 10 % 10);
+            m_TimeChars[4] = (char)('0' + remainingSeconds % 10);
+            m_TimeChars[5] = ':';
+            m_TimeChars[6] = (char)('0' + milliseconds / 10 % 10);
+            m_TimeChars[7] = (char)('0' + milliseconds % 10);
+            SetText(timeShow, new string(m_TimeChars));
         }
 
         void UpdateCross()
@@ -459,21 +478,33 @@ using static FPSGame.WndTools.WndRootTool;
     //#endif
 
         #region 武器
+        /// <summary>上一帧写进 HUD 的弹药数值：只在变化时才 SetText。
+        /// <para>⚠ <c>SetText(Transform,int)</c> 内部就是 <c>num.ToString()</c>，每帧 5 个数字 = 5 个字符串。</para></summary>
+        private int _hudMagR = int.MinValue, _hudAmmoR = int.MinValue, _hudGrenade = int.MinValue,
+                    _hudMagL = int.MinValue, _hudAmmoL = int.MinValue;
+
+        private void SetTextIfChanged(Transform trans, int value, ref int cache)
+        {
+            if (value == cache) return;
+            cache = value;
+            SetText(trans, value);
+        }
+
         void UpdateWeapon()
         {
             if (!m_ActiveWeapon) return;
             //迫于无奈，直接这边获取了
-            SetText(nowAmmoR, m_ActiveWeapon.Magazine.CurrValue.RawInt);
-            SetText(remainAmmoR, m_ActiveWeapon.Ammo.CurrValue.RawInt);
+            SetTextIfChanged(nowAmmoR, m_ActiveWeapon.Magazine.CurrValue.RawInt, ref _hudMagR);
+            SetTextIfChanged(remainAmmoR, m_ActiveWeapon.Ammo.CurrValue.RawInt, ref _hudAmmoR);
             // ⚠ 手雷槽可能为空（未解锁/换装中）⇒ 读之前必须判空，否则 HUD 每帧 NRE
             var grenade = m_WeaponsManager.GetWeaponAtSlotIndex(PlayerWeaponsManager.SlotOf(WeaponTypeEnum.Grenade));
-            if (grenade) SetText(GrenadeCount, grenade.Ammo.CurrValue.RawInt + grenade.Magazine.CurrValue.RawInt);
+            if (grenade) SetTextIfChanged(GrenadeCount, grenade.Ammo.CurrValue.RawInt + grenade.Magazine.CurrValue.RawInt, ref _hudGrenade);
          
 
             if (m_ActiveSecWeapon)
             {
-                SetText(nowAmmoL, m_ActiveSecWeapon.Magazine.CurrValue.RawInt);
-                SetText(remainAmmoL, m_ActiveSecWeapon.Ammo.CurrValue.RawInt);
+                SetTextIfChanged(nowAmmoL, m_ActiveSecWeapon.Magazine.CurrValue.RawInt, ref _hudMagL);
+                SetTextIfChanged(remainAmmoL, m_ActiveSecWeapon.Ammo.CurrValue.RawInt, ref _hudAmmoL);
             }
 
             shieldBar.SetFill(m_Health.GetShieldRatio());

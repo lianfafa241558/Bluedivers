@@ -40,8 +40,19 @@ public class InterestPoint : BaseObject, IMissionPoint
     {
         if (!FPSGame.Data.BattleState.IsStartBattle) return;
 
-        var dis = ActorsManager.Players.Min(item => Vector2.Distance(item.Pos.ToVector2(), Pos.ToVector2()));
-        
+        // 手写"最近玩家距离"：原来 Min(lambda) 每帧每个兴趣点都要建一个捕获闭包 + 折一个枚举器
+        // （19 个兴趣点实测 3.1KB/帧，每点 163B）
+        var players = ActorsManager.Players;
+        if (players.Count == 0) return;
+        Vector2 selfPos = Pos.ToVector2();
+        float dis = float.MaxValue;
+        for (int i = 0, l = players.Count; i < l; ++i)
+        {
+            if (players[i] == null) continue;
+            float d = Vector2.Distance(players[i].Pos.ToVector2(), selfPos);
+            if (d < dis) dis = d;
+        }
+            
         bool entityRange = dis < HalfRange + 10;
 
 

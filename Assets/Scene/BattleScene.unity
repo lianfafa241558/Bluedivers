@@ -14526,6 +14526,7 @@ GameObject:
   - component: {fileID: 1603278497}
   - component: {fileID: 1603278500}
   - component: {fileID: 1603278502}
+  - component: {fileID: 1603278503}
   m_Layer: 0
   m_Name: MapRoot
   m_TagString: MapRoot
@@ -14778,6 +14779,26 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1603278503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1603278495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b40e41c8f3d45204996bcef95b4e1b13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Enabled: 1
+  ChunkSize: 32
+  ActiveDistance: 110
+  ReadyDistance: 150
+  Hysteresis: 10
+  MoveThreshold: 16
+  RebuildInterval: 30
+  UsePlayerPosition: 1
 --- !u!4 &1687237667 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 28905003217567913, guid: ecdbb7f81f59b934cb72306019ee7a41,

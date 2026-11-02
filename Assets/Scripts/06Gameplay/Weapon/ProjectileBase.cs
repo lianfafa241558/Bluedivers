@@ -46,6 +46,10 @@ namespace FPSGame.Weapon
 
         public BulletFlag BulletFlag { get; private set; }
 
+        /// <summary>⚠ 别写 <c>HasBulletFlag(x)</c>：<see cref="System.Enum.HasFlag(System.Enum)"/> 的参数每次都要装箱，
+        /// 而它在命中判定的**每个 RaycastHit 上**被调 3~4 次（实测子弹每帧上百次分配就是这么来的）。</summary>
+        protected bool HasBulletFlag(BulletFlag flag) => (BulletFlag & flag) == flag;
+
         public UnityAction OnShoot;
         public UnityAction<ProjectileHitData> OnHit;
 
@@ -179,21 +183,28 @@ namespace FPSGame.Weapon
             --m_CatapultLeft;
             m_Catapulted = true;
             ResetLife();
-            NetSyncLog.BulletLog("弹射", $"{GetType().Name} 命中={collider.name} 弹射点={hitPos:F2} " +
-                $"→ {target.ShowName} 剩余次数={m_CatapultLeft}");
+            // ⚠ 先判开关再拼字符串（插值串在调用点就分配了）
+            if (NetSyncLog.Enabled && NetSyncLog.Bullet)
+                NetSyncLog.BulletLog("弹射", $"{GetType().Name} 命中={collider.name} 弹射点={hitPos:F2} " +
+                    $"→ {target.ShowName} 剩余次数={m_CatapultLeft}");
             return true;
         }
 
         /// <summary>在命中点附近找最近的"另一个"目标（排除同队 / 已命中 / 不可伤害 / 无敌）。</summary>
+        /// <summary>弹射索敌的复用缓冲（每次弹射查一次，别每发都 new List + new HashSet）。</summary>
+        private readonly List<IActor> _catapultBuffer = new();
+
         private IActor FindCatapultTarget(Vector3 center)
         {
             int team = ShooterTeam();
-            List<IActor> units = UnitQuery.FindUnits(
+            List<IActor> units = _catapultBuffer;
+            UnitQuery.FindUnits(
                 new PECircle((PEVector2)center, (PEInt)CatapultRadius),
                 TargetCfg.All,
                 item => FpsHelper.VaildTarget(item)
                      && item.Team != team
-                     && !m_hasHits.Contains(item.gameObject));
+                     && !m_hasHits.Contains(item.gameObject),
+                units);
 
             IActor best = null;
             float bestSqr = float.MaxValue;
@@ -249,7 +260,7 @@ namespace FPSGame.Weapon
                 self = gameObject,
                 sfxRange = SFXRange,
                 weapon = WeaponBase,
-                useDiffScale = BulletFlag.HasFlag(BulletFlag.EnemyIntensify),
+                useDiffScale = HasBulletFlag(BulletFlag.EnemyIntensify),
                 // 支援单位（各端各自生成的炮台/无人机）的子弹：伤害要走"非权威端只落玩家/盟友"那道门
                 localEffectDamage = WeaponBase != null && WeaponBase.LocalEffectDamage,
             };

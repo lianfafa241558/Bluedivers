@@ -41,6 +41,23 @@ namespace FPSGame.Game
         public static List<IActor> FindUnits(TargetCfg targetCfg, Func<IActor, bool> customFilter = null)
             => Sink != null ? Sink.FindUnits(targetCfg, customFilter) : new List<IActor>();
 
+        /// <summary>零分配版：结果写进 <paramref name="result"/>（先 Clear）；未接管时清空即返回。
+        /// <para>高频调用点（每帧多次）用它，别再吃"每次 new List + new HashSet"的分配。</para></summary>
+        public static void FindUnits(IPERange range, TargetCfg targetCfg, Func<IActor, bool> customFilter, List<IActor> result)
+        {
+            if (result == null) return;
+            if (Sink != null) Sink.FindUnits(range, targetCfg, customFilter, result);
+            else result.Clear();
+        }
+
+        /// <summary>零分配版（不限范围）：结果写进 <paramref name="result"/>（先 Clear）；未接管时清空即返回。</summary>
+        public static void FindUnits(TargetCfg targetCfg, Func<IActor, bool> customFilter, List<IActor> result)
+        {
+            if (result == null) return;
+            if (Sink != null) Sink.FindUnits(targetCfg, customFilter, result);
+            else result.Clear();
+        }
+
         /// <summary>排查"查询入口是否已接管"（与 <c>VfxPool.Dump()</c> 同款）。</summary>
         public static string Dump() => "UnitQuery: " + (Sink == null ? "<未接管>" : Sink.GetType().Name);
     }
@@ -55,5 +72,11 @@ namespace FPSGame.Game
 
         /// <summary>按配置找单位（不限范围）。</summary>
         List<IActor> FindUnits(TargetCfg targetCfg, Func<IActor, bool> customFilter = null);
+
+        /// <summary>零分配版：结果写进调用方的 <paramref name="result"/>（先 Clear）。</summary>
+        void FindUnits(IPERange range, TargetCfg targetCfg, Func<IActor, bool> customFilter, List<IActor> result);
+
+        /// <summary>零分配版（不限范围）：结果写进调用方的 <paramref name="result"/>（先 Clear）。</summary>
+        void FindUnits(TargetCfg targetCfg, Func<IActor, bool> customFilter, List<IActor> result);
     }
 }

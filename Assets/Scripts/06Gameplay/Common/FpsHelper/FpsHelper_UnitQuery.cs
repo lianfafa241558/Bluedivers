@@ -17,9 +17,10 @@ public static partial class FpsHelper
 {
     public static bool IsTarget(IActor actor, TargetCfg targetCfg)
     {
+        // 位运算代替 Enum.HasFlag：等价但不装箱（这个方法在索敌/范围查询里被逐单位调用）
         if (actor.IsValidMono()
-            && actor.ActorState.HasFlag(targetCfg.actorState)
-            && actor.Type.HasFlag(targetCfg.targetType)
+            && (actor.ActorState & targetCfg.actorState) == targetCfg.actorState
+            && (actor.Type & targetCfg.targetType) == targetCfg.targetType
         ){
             return true;
         }

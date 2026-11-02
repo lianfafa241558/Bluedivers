@@ -129,7 +129,7 @@ MonoBehaviour:
     Speed: 15
     Gravity: 10
     InheritWeaponSpeed: 0
-    MaxLifeTime: 3
+    MaxLifeTime: 2
     MaxRange: -1
     MinRange: -1
     NoSource: 0
@@ -147,7 +147,11 @@ MonoBehaviour:
     ExplosionRange: 5
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion: []
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.5
     ImpactVfx: {fileID: 2115654139197423946, guid: c017b2553037218409ad516f7ecc5241,
@@ -183,7 +187,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -208,6 +211,26 @@ MonoBehaviour:
   RHand: {fileID: 2049475303922612383}
   ShowRoot: {fileID: 9082684586780509535}
   RecoilForce: 1
+  RecoilProfile:
+    PitchKick: 1.5
+    YawKick: 0.4
+    YawStep: 0.12
+    YawRandom: 0.35
+    KickSharpness: 40
+    RecoveryDelay: 0.1
+    RecoverySpeed: 12
+    YawRecoveryRatio: 0.7
+    MaxPitch: 12
+    MaxYaw: 6
+    AdsScale: 0.7
+    WeaponKickBack: 0.05
+    WeaponKickPitch: 2.5
+    WeaponKickRoll: 1.2
+    WeaponSpring: 14
+    SpreadBloomPerShot: 0
+    SpreadBloomMax: 4
+    SpreadBloomDecay: 8
+    ShakePerShot: 0
   AimingHideCrosshair: 1
   AimZoomRatio: 1
   AimOffset: {x: 0, y: 0, z: 0}

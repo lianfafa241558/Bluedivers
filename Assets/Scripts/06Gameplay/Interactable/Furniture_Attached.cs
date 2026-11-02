@@ -152,7 +152,9 @@ namespace FPSGame.Gameplay
 
         public override Vector3 Forward =>/*Quaternion.Euler(90*ForwardAxis) **/transform.forward;
 
-        public bool HaveFlag(FurnitureFlag flag) => flags.HasFlag(flag);
+        /// <summary>⚠ 别写回 <c>flags.HasFlag(flag)</c>：<see cref="System.Enum.HasFlag(System.Enum)"/> 的参数每次都要装箱。
+        /// 这个方法在 <c>SubtitleWnd.Update</c> 里**每帧 × 每个家具 × 2 次**被调，实测贡献了它 1.1KB/帧 的大头。</summary>
+        public bool HaveFlag(FurnitureFlag flag) => (flags & flag) == flag;
 
         public float Press
         {

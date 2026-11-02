@@ -1,24 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using FPSGame.Attributes;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
-using FPSGame.Attributes;
 using FPSGame.Game;
-using UnityEngine;
-using FPSGame.Utils;
-using FPSGame.UI;
 using FPSGame.Gameplay;
+using FPSGame.UI;
+using FPSGame.Utils;
+using UnityEngine;
 
 namespace FPSGame.UI
 {
-using static FPSGame.WndTools.WndRootTool;
-using FPSGame.Managers;
 using FPSGame.GameData;
+using FPSGame.Managers;
 using FPSGame.Weapon;
+    using static FPSGame.GameData.WeaponModuleData_SO;
+using static FPSGame.WndTools.WndRootTool;
 
-/// <summary>
-/// 选择角色界面，这个界面不应该在除舰桥模式以外的界面打开
-/// </summary>
+    /// <summary>
+    /// 选择角色界面，这个界面不应该在除舰桥模式以外的界面打开
+    /// </summary>
 [AddComponentMenu("UI/窗口/选角色")]
 public class SelectRoleWnd : Window
 {
@@ -491,8 +492,9 @@ public class SelectRoleWnd : Window
             }
         }
 
-
-        SetActive(tipRoot, false);
+            SetActive(tipRoot, false);
+            SetActive(moduleTip, false);
+            
         var lenghts= weaponInst.UpgradeCount();
         var levels = weaponInst.UpgradeLevel();
         archWeaponData = ArchivesData_SO.Current.weaponUpgradeDic.TryGet(arch.ID+"_"+ weaponInst.WeaponName, new(arch.ID + "_" + weaponInst.WeaponName, lenghts.Length));
@@ -995,7 +997,8 @@ public class SelectRoleWnd : Window
         SetActive(moduleRoot, false);
 
         if (showWeapon.Modules.Count == 0) return;
-        nowSelectModule = archWeaponData.selectModuleIndex;
+        // 存档里的下标可能大于当前 prefab 的 Modules（改过配）⇒ 走 ClampModule，否则下面直接取 Item 越界
+        nowSelectModule = showWeapon.ClampModule(archWeaponData.selectModuleIndex);
         var activeModule = showWeapon.Modules[nowSelectModule];
         SetModuleToTrans(activeModule, moduleFrame,true);
 

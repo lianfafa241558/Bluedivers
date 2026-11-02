@@ -49,11 +49,49 @@ namespace FPSGame.Game
             }
             m_Time = Time.time + _AboTick;
             m_Unit = GetComponent<FPSGame.GameContract.IUnitScale>();//只取"体型"：避免单位内核引用 IUnit 而连带整套属性系统
+            // ⚠ 这里**刻意不注册**：积蓄槽全 0 时无事可做，交战时上千个单位里常驻挂异常状态的只有个位数，
+            //   全注册等于让每个单位每帧白跑一次比较。改为首次积蓄 >0 时才挂上（见 AddAboGauge）。
         }
 
         private void UninitState()
         {
+            ReleaseAboTick();
+        }
 
+        /// <summary>是否已挂在逐帧驱动里（只有"身上有非零积蓄"的单位才需要每帧问到点没有）。</summary>
+        private bool _aboTickRegistered;
+
+        private bool HasActiveGauge()
+        {
+            foreach (var pair in AboGauge)
+            {
+                if (pair.Value != null && pair.Value.Current > 0) return true;
+            }
+            return false;
+        }
+
+        private void EnsureAboTick()
+        {
+            if (_aboTickRegistered) return;
+            _aboTickRegistered = true;
+            if (m_Time < Time.time) m_Time = Time.time + _AboTick;
+            TickDriver.Register(this);
+        }
+
+        private void ReleaseAboTick()
+        {
+            if (!_aboTickRegistered) return;
+            _aboTickRegistered = false;
+            TickDriver.Unregister(this);
+        }
+
+        /// <summary>统一驱动入口（见 <see cref="TickDriver"/>）：原来这段在 Health.Update 里，
+        /// 交战时上千个 Health 各自挂 Update，每次只做一次到点比较 ⇒ 光引擎调度就 ≈0.6ms/帧。</summary>
+        void ITickDriverTarget.TickFrame(float now)
+        {
+            if (!isActiveAndEnabled) return;   // 与引擎"禁用/回收后不再调 Update"保持一致
+            if (m_Unit == null) return;
+            if (now >= m_Time) AboTick();
         }
 
 
@@ -115,6 +153,7 @@ namespace FPSGame.Game
             entry.LastGainTime = (PEInt)Time.time;
             entry.Source = damageCaused;
             NotifyFullChanged(type, entry);
+            EnsureAboTick();   // 首次积蓄 >0：挂上逐帧驱动，开始问到点没有
         }
         
         /// <summary>异常状态 tick：处理衰减、满槽伤害与特效</summary>
@@ -158,6 +197,9 @@ namespace FPSGame.Game
                 }
                 NotifyFullChanged(type, entry);
             }
+
+            // 积蓄全回到 0 ⇒ 摘出驱动（下一次中招时 AddAboGauge 会重新挂上）
+            if (!HasActiveGauge()) ReleaseAboTick();
         }
 
         /// <summary>本单位是不是玩家 / 盟友（血量本机权威 ⇒ tick 伤害任何角色下都要本地算）。</summary>

@@ -118,13 +118,19 @@ namespace FPSGame.Weapon
                 m_Parameter[item.name] = new AttrInfo(item.name, item.value, item.tag);
             }
 
-            for (int i = 0; i < select.Length; ++i)
+            // select 来自存档 / 联机包：prefab 改过配后行数可能变少变多，逐个校验，别按下标盲取
+            if (select != null)
             {
-                if (select[i] >= 0) ApplyUpgrade(i, select[i]);
+                int rows = Mathf.Min(select.Length, Upgrade.Count);
+                for (int i = 0; i < rows; ++i)
+                {
+                    if (select[i] >= 0 && select[i] < Upgrade[i].Value.Count) ApplyUpgrade(i, select[i]);
+                }
             }
             if (Modules.IsValid() && Modules.Count > 0)
             {
                 int oldIndex = Modules.FindIndex(item => item == ActiveModule);
+                module = ClampModule(module);
                 ActiveModule = Modules[module];
                 ApplyModule(oldIndex >= 0 ? oldIndex : 0, module);
             }
@@ -133,6 +139,20 @@ namespace FPSGame.Weapon
             RefreshDebugAttrInfo();
         }
 
+
+        /// <summary>
+        /// 把存档 / 联机带来的模组下标钳进 <c>0 ~ Modules.Count-1</c>，无法可用时返回 -1。
+        /// <para>▍为什么必须钳：<c>Modules</c> 是 prefab 上的表，删过项之后旧存档里存的下标就 ≥ Count
+        /// （实测存档 <c>Hare_科莱特微波枪</c> 存 5、prefab 只剩 5 个 ⇒ 下标 5 直接 IOOR 崩在开局）。
+        /// 只对存档/网络这种不可控输入兜底，越界退回 0（= 空模组）并记一条。</para>
+        /// </summary>
+        public int ClampModule(int index)
+        {
+            if (!Modules.IsValid() || Modules.Count == 0) return -1;
+            if (index >= 0 && index < Modules.Count) return index;
+            Debug.LogWarning($"武器{WeaponName}的模组下标 {index} 越界（当前共 {Modules.Count} 个），已退回空模组");
+            return 0;
+        }
 
         public void ApplyModule(int oldIndex, int newIndex)
         {
@@ -430,7 +450,7 @@ namespace FPSGame.Weapon
 
             public float PrimeValue => attr != null ? attr.PrimeValue.RawFloat : 0f;
 
-            public bool HasFlag(AttrTag tag) => this.tag.HasFlag(tag);
+            public bool HasFlag(AttrTag tag) => (this.tag & tag) == tag;
   
             public void AddFlag(AttrTag tag)
             {
@@ -512,7 +532,7 @@ namespace FPSGame.Weapon
             /// <summary>变化值的高亮片段（diff 为 0 时返回空串）。正负配色受 <see cref="AttrTag.FlipPlus"/> 反转。</summary>
             private string BuildDiffHtml(float diff, string suffix = "")
             {
-                diff = Tool.Round(diff, 2);   // 与主数值同口径：不足 0.01 的变化不算变化（否则会冒出 "+0"）
+                diff = Tool.Round(diff, 1);   // 与主数值同口径：不足 0.1 的变化不算变化（否则会冒出 "+0"）
                 if (diff == 0) return "";
                 Color Positive = new(0.2f, 1, 0.2f), Negative = new(1, 0.2f, 0.2f);
                 if (HasFlag(AttrTag.FlipPlus))
@@ -532,7 +552,7 @@ namespace FPSGame.Weapon
             private static string FormatValue(float v)
             {
                 if (Mathf.Abs(v) < 0.005f) return "0";   // 防 -0.001 印成 "-0"
-                return v.ToString("0.##");
+                return v.ToString("0.#");
             }
 
             public void Modify(ModifierType type,float value)

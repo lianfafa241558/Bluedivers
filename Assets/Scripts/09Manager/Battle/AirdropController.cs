@@ -95,9 +95,9 @@ namespace FPSGame.Managers
         }
 
 
-        protected override void Update()
+        protected void Update()
         {
-            base.Update();
+            // Tick 节拍由 TickDriver 统一驱动，基类已无 Update（这里只跑战备方向键输入）
             if(WndManager.WindowState == WindowStateEnum.Airdrop)
             {
                 if (InputManager.GetDown(InputState.Left)) Input(DirectionEnum.Left);

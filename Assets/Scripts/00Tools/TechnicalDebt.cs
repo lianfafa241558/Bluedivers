@@ -13,12 +13,13 @@
         #region 性能与分配优化
 
         /*
-         * [P1] UnitQueryGrid / BattleManager 的空间查询分配
-         * 位置：Assets/Scripts/06Gameplay/Game/UnitQueryGrid.cs、Assets/Scripts/09Manager/Battle/BattleManager.cs
-         * 现状：QueryUnits 内部节点列表已用对象池复用；但 FindUnits / GetOverlapsUnits 仍每次
-         *       new List<I_Actor>(...) / new HashSet，高频调用（武器锁敌、AI、爆炸、小地图）会造成 GC 压力。
-         * 方案：为高频调用方引入可复用的缓冲 List（传入缓存实例，或按调用线程复用池化列表），
-         *       需注意返回值被调用方修改（OrderBy/Remove/Count）时的语义。
+         * [已解决 2026-11-02] UnitQueryGrid / BattleManager 的空间查询分配
+         * 位置：Assets/Scripts/05UnitCore/Query/UnitQueryGrid.cs、UnitQuery.cs、09Manager/Battle/BattleManager.cs
+         * 做法：新增零分配重载 QueryUnits / FindUnits(range|targetCfg, cfg, filter, List<IActor> result)，
+         *       内部用实例缓冲 _overlapsUnits / _unitsInRange；老的三参重载保留（语义不变），
+         *       高频调用点（地雷、AI 索敌、爆炸、范围动能、圣水、弹射、制导炮击、武器锁定）已切到新重载。
+         * ⚠ 新重载的硬约束：customFilter 里不能再发起范围查询（会覆盖共享草稿缓冲）。
+         * 待办：剩余低频调用点（小地图 2s、任务 tick、技能释放）按需再迁。
          */
 
         /*

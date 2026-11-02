@@ -44,6 +44,8 @@ GameObject:
   - component: {fileID: 7173985371180672792}
   - component: {fileID: 5027792450717016190}
   - component: {fileID: 4203870551202663118}
+  - component: {fileID: 6973093062856404911}
+  - component: {fileID: 8753566656369767023}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -184,6 +186,47 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   priority: 90
+--- !u!114 &6973093062856404911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343697537709790001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dac67f4b7d9ae5d44b613c1388b85491, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Entries:
+  - Layers:
+      serializedVersion: 2
+      m_Bits: 1
+    Distance: 180
+  - Layers:
+      serializedVersion: 2
+      m_Bits: 64
+    Distance: 250
+  - Layers:
+      serializedVersion: 2
+      m_Bits: 24704
+    Distance: 140
+--- !u!114 &8753566656369767023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343697537709790001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e54cfc8aa0dbc8c45a361e4c5f6ec7e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Enable: 1
+  NearDistance: 100
+  FarDistance: 120
+  Interval: 0.2
 --- !u!1 &430049189319810795
 GameObject:
   m_ObjectHideFlags: 0
@@ -537,6 +580,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

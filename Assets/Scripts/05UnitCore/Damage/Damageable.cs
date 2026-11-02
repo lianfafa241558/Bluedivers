@@ -539,6 +539,11 @@ namespace FPSGame.Game
         public bool IsPlayerLike
             => Actor != null && (Actor.Type == UnitTypeEnum.Player || Actor.Type == UnitTypeEnum.Friend);
 
+        /// <summary>流血结算的复用参数：<c>SKVP</c> 是**类**，每拍 new 一次就是每拍一次分配（受伤单位多时每帧几十 KB）；
+        /// 而 <c>Health.TakeDamage</c> 只在调用期间读 <c>Groups</c>、不持有引用 ⇒ 缓存一条改 Value 即可。</summary>
+        private SKVP<DamageTypeEnum, PEInt> _bleedGroup;
+        private List<SKVP<DamageTypeEnum, PEInt>> _bleedGroups;
+
         /// <summary>每帧tick：护甲已破坏时按流血速度对自身施加真实伤害（流血效果）</summary>
         /// <returns>是否继续 tick</returns>
         public override bool Tick()
@@ -551,7 +556,14 @@ namespace FPSGame.Game
             if (armorValue > 0 && remainArmor <= 0 && FPSGame.Data.BattleState.ShouldApplyTickDamage(IsPlayerLike))
             {
                 // 流血：无源（NoSource=true），来源两头都用"最后打破护甲的那个人"（与改动前同口径）
-                var settle = DamageSettleArgs.Of(new() { new(DamageTypeEnum.Real, BleedValue) },
+                if (_bleedGroup == null)
+                {
+                    _bleedGroup = new SKVP<DamageTypeEnum, PEInt>(DamageTypeEnum.Real, BleedValue);
+                    _bleedGroups = new List<SKVP<DamageTypeEnum, PEInt>>(1) { _bleedGroup };
+                }
+                else _bleedGroup.Value = BleedValue;
+
+                var settle = DamageSettleArgs.Of(_bleedGroups,
                     true, ArmorBreaker, m_colliders[0], m_colliders[0].bounds.center);
                 Health.TakeDamage(in settle);
             }
