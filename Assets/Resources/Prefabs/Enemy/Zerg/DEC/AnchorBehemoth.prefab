@@ -9896,14 +9896,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHealth: 500
+  MaxHealth: 1000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 11
+    Value: 0
+  - Key: 8
+    Value: 0
+  - Key: 9
+    Value: 0
   MainPart: {fileID: 2376310941469795136}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
-  AboGaugeArr: []
+  AboGaugeArr:
+  - Key: 4
+    Value: 80
+  - Key: 5
+    Value: 80
+  - Key: 6
+    Value: 160
 --- !u!114 &3321554110189138805
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9923,6 +9936,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &6569248127134251925
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9948,10 +9966,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 2a3cf663277d9b0439baf3273df8c9e5, type: 2}
   fxMaterial: {fileID: 2100000, guid: 0c1a506957c9319449b20b1a059b361a, type: 2}
+  events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!1 &6265014496227973703
 GameObject:
@@ -15065,18 +15084,19 @@ MonoBehaviour:
   HearingRange: 80
   AttackRange: 0
   AlertRange: 50
+  Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 12
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1001 &5642701990376662551
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15545,6 +15565,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.3
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect:
@@ -15600,6 +15621,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.3
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect:
@@ -15688,6 +15710,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -15738,6 +15761,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.3
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect:
@@ -15881,6 +15905,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.3
   armorLevel: 3
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

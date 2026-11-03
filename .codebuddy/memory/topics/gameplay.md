@@ -59,3 +59,10 @@
 - ⚠ Unity 不能序列化接口字段 ⇒ 存 `GameObject` + 运行时 `GetComponent`；**判 MonoBehaviour 是否被使用只能搜 `.cs.meta` 的 guid**（类名搜索无效）；删脚本 `.cs` 与 `.meta` 成对
 - 表现层 FX 三分：`FxControllerBase`/`EnemyControllerFX`/`HitDeathFX`；敌人特效 MPB 所有权在渲染槽位帧末 Flush
 - ⚠ **单位注册表不变量**：`ActorsManager` 的 `Players/Actors/Enemys/SpecUnits` 里**绝不留已销毁对象**。**死亡 ≠ 移除**（只是倒地：`BattleManager.IsTeamWiped` 统计全队阵亡、`HealBag`/`Furniture_PlayerDown` 救援都要靠 `Players` 里的倒地者）；**只有对象被销毁才摘** ⇒ 统一走 **`ActorsManager.Despawn(actor)`**（先 `Unregister` 再 `Tool.Destroy`，顺序固定），`Actor.OnDestroy` 也调 `Unregister` 兜底。⚠ 命名别用 `Kill`（`Actor.Kill()` 是"致死"）。⚠ 接口引用判空必须用 `IsValidMono()`，**不能用 `== null`/`?.`/`??`**。漏摘后果实测：12 处遍历方集体 `MissingReferenceException`
+
+## 单位空间查询网格（UnitQueryGrid）
+- 网格边界 = **`MapRoot.rect`（BoundsInt，position 是起点）**，由 `MapRoot.Init(true)` → `GenerateTerrainRect()` 按 `terrainData.size - 2*TaskBorder` 重算
+- ⚠ **`EnsureQueryGrid()` 的唯一正确调用点 = `mapRoot.Init(true)` 之后**（`InitTerrain` 第 333 行；`InitSpecial` 是 `Init(false)` 之后）。更早建会读到场景遗留旧 rect（实测网格 512@(16,16)，本图 780@(64,64)）⇒ 只盖半张图、圈外单位不入索引、任务点查出 0（`MissionDestroyActor` 报"摧毁区域内没有匹配到单位"就是它）
+- 为什么能只建一次：`InitTerrain` 从开头到 `EnsureQueryGrid()` 全是同步代码（没有 `yield`），`Init(true)` 只造空气墙、不实例化 Actor ⇒ 仍然早于任何 `Actor.Awake` 的 `UnitPosChange`
+- 所以 **不要**再在 `Start()` 里补建、也不要"先建后重建 + 重新登记"那套（`ReindexUnits`）：多余且容易把 `AddUnit` 写进旧网格
+- `GetNodeByPos` 越界**静默返回 default** ⇒ 查询返回空列表、不报错，只能靠"圆内(0)"这类日志暴露

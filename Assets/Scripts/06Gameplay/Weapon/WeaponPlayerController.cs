@@ -164,6 +164,8 @@ namespace FPSGame.Weapon
 
             Set(Attr.BulletSpeed, (d, v) => d.SetSpeed(v));
             Set(Attr.LifeTime, (d, v) => d.SetLifeTime(v));
+            // 最大射程：写回 MaxRange，子弹生成时经 CurrentWeaponRange 取到
+            Set(Attr.MaxRange, (d, v) => d.SetMaxRange(v));
             // 穿甲等级：直击 / 爆炸两条独立属性，升级项可直接修改并写回子弹数据
             Set(Attr.DirectAP, (d, v) => d.SetDirectAP(v));
             Set(Attr.ExplosionAP, (d, v) => d.SetExplosionAP(v));

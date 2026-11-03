@@ -223,6 +223,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 10
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -243,13 +244,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 5000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 8
+    Value: 0
+  - Key: 9
+    Value: 0
+  - Key: 11
+    Value: 0
   MainPart: {fileID: 6443835993258970330}
   demolishValue: 50
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 0
 --- !u!114 &7679952172348860719
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -279,11 +286,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: dc65f4d8b2d398c409d766e93f18d227, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!114 &6411679824077960959
 MonoBehaviour:
@@ -308,12 +315,15 @@ MonoBehaviour:
     ExplosionRange: 6
     DestructeRadius: 4
     ShockwaveRadius: 8
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 20
+    ImpactSoundRadius: 8
     NoSource: 1
     ExplosionAP: 0
     demolishValue: 0

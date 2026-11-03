@@ -49,7 +49,8 @@ namespace FPSGame.Weapon
             { WeaponAttrType.DirectAP, (false, AttrTag.APGrade, ModifierType.All) },
             { WeaponAttrType.ExplosionAP, (false, AttrTag.APGrade, ModifierType.All) },
             { WeaponAttrType.BulletSpeed, (false, AttrTag.ScaleFromPrime | AttrTag.OneHide, ModifierType.Factor) },
-            //{ WeaponAttrType.MaxDistance, (false, default, ModifierType.All) },
+            // 最大射程(米)：Base 加减米数、Factor 按倍率缩放，写回 DamageData.MaxRange
+            { WeaponAttrType.MaxRange, (false, AttrTag.OnlyInt, ModifierType.All) },
 
             // 激光武器属性
             { WeaponAttrType.LaserWaitTime, (false, default, ModifierType.All) },
@@ -323,9 +324,11 @@ namespace FPSGame.Weapon
         [InspectorName("伤害/爆炸穿甲等级")]
         ExplosionAP = 26,
 
-        // / <summary>最大射程</summary>
-        //[InspectorName("最大射程")]
-        //MaxDistance = 24,
+        /// <summary>最大射程(米)：最终值写回 <c>DamageData.MaxRange</c>。
+        /// <para>⚠ -1 = 不设上限（真射程按"生命周期 × 速度"算），这类武器**别挂射程改装**：
+        /// 在 -1 上加减米数会得到一个几米的小射程，子弹当场消散。</para></summary>
+        [InspectorName("通用/最大射程")]
+        MaxRange = 24,
 
         //---------激光武器属性----------
         /// <summary>预热时间</summary>

@@ -62,7 +62,7 @@ public enum MissionInitMode
                 if (mission.end) continue;
                 if (mission.entity.IsValid())
                 {
-                    Debug.LogError("尝试暴露" + mission, mission);
+                    //Debug.LogError("尝试暴露" + mission, mission);
                     mission.entity.TryDiscovered();
                 }
             }

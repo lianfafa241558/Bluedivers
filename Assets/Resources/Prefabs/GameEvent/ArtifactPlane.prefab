@@ -4984,6 +4984,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -14872,13 +14873,14 @@ MonoBehaviour:
   MaxShield: 1000
   showArmorLists:
   - Key: 8
-    Value: 10
+    Value: 0
   - Key: 9
-    Value: 10
+    Value: 0
   - Key: 11
-    Value: 10
+    Value: 0
   MainPart: {fileID: 5347444331235537537}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -14888,7 +14890,6 @@ MonoBehaviour:
   ShieldFull: {fileID: 0}
   ShieldBreak: {fileID: 0}
   ShieldDamage: []
-  showShield: 0
 --- !u!114 &1733359671218023101
 MonoBehaviour:
   m_ObjectHideFlags: 0

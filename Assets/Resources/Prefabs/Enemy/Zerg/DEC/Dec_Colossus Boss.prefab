@@ -320,9 +320,13 @@ MonoBehaviour:
     ExplosionRange: 3
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 5
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
@@ -361,7 +365,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -1548,7 +1551,7 @@ PrefabInstance:
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       propertyPath: AboGaugeArr.Array.size
-      value: 0
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
@@ -1558,12 +1561,12 @@ PrefabInstance:
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       propertyPath: AboGaugeArr.Array.data[0].Key
-      value: 5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}
       propertyPath: AboGaugeArr.Array.data[0].Value
-      value: 1
+      value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 8450822822576389202, guid: 8d6ef4a967951304baacd7d5f89e548b,
         type: 3}

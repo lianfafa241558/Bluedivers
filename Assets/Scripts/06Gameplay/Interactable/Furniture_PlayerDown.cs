@@ -77,7 +77,7 @@ namespace FPSGame.Gameplay
             BattleEventBus.RequestAuthorize(Constants.HealBag, down);
             if (down)
             {
-                Debug.LogError("击杀来源"+caused);
+                Debug.Log("击杀来源"+caused);
                 PlaySound(audioClose);
                 // 消息窗：谁被谁击倒了。名字/颜色都走 GameMsg.Of（玩家单位取玩家名 + 角色色），
                 // 来源同一个漏斗（无源伤害 / 认不出 ⇒ 空串 ⇒ 播报省掉"被谁"）。

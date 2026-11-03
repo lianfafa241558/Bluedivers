@@ -211,7 +211,7 @@ PrefabInstance:
     - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
         type: 3}
       propertyPath: AboGaugeArr.Array.size
-      value: 5
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
         type: 3}
@@ -245,13 +245,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
         type: 3}
+      propertyPath: AboGaugeArr.Array.data[5].Key
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[6].Key
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
+        type: 3}
       propertyPath: AboGaugeArr.Array.data[0].Value
       value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
         type: 3}
       propertyPath: AboGaugeArr.Array.data[1].Value
-      value: 300
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
         type: 3}
@@ -267,6 +277,16 @@ PrefabInstance:
         type: 3}
       propertyPath: AboGaugeArr.Array.data[4].Value
       value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[5].Value
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[6].Value
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 5165929648284215754, guid: 626228c0ff990e144b362ba1f7dcc7a0,
         type: 3}
@@ -544,11 +564,13 @@ MonoBehaviour:
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 2.2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 0
     ImpactSoundRadius: 0
     NoSource: 0
@@ -590,11 +612,13 @@ MonoBehaviour:
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 2.2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 0
     ImpactSoundRadius: 0
     NoSource: 0

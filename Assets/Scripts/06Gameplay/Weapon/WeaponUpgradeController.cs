@@ -103,6 +103,8 @@ namespace FPSGame.Weapon
             {
                 if (!cfg[WeaponAttrType.DirectAP]) cfg.Add(WeaponAttrType.DirectAP, Damages[0].GetAttr(WeaponAttrType.DirectAP));
                 if (!cfg[WeaponAttrType.ExplosionAP]) cfg.Add(WeaponAttrType.ExplosionAP, Damages[0].GetAttr(WeaponAttrType.ExplosionAP));
+                // 最大射程同属"由 Damages 提供基础值"一类：不补则预览实例里取不到属性对象（ModifierValue 会 NRE）
+                if (!cfg[WeaponAttrType.MaxRange]) cfg.Add(WeaponAttrType.MaxRange, Damages[0].GetAttr(WeaponAttrType.MaxRange));
             }
             for (var i = 0; i < showAttr.Count; ++i)
             {

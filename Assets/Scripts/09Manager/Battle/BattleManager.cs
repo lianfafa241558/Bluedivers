@@ -167,7 +167,7 @@ namespace FPSGame.Managers
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
             WeatherCont = WeatherSystem.Create(Weather, transform);
-            Debug.LogError($"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
+            //Debug.LogError($"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
 
             yield return null;
 
@@ -194,7 +194,6 @@ namespace FPSGame.Managers
 
             yield return InitTerrain();
             NetSyncLog.LoadLog("初始化", $"地形耗时: {sw.ElapsedMilliseconds} ms");
-
             sw.Restart();
 
 
@@ -226,7 +225,11 @@ namespace FPSGame.Managers
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
             WeatherCont = WeatherSystem.Create(Weather, transform);
-            Debug.LogError($"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
+
+            var source = mapRoot.GetComponent<AudioSource>();
+            source.clip = TaskManager.Instance.nowTask.mapCfg.AmbienceCilp;
+            source.Play();
+            //Debug.LogError($"本局天气: {Weather}（权威种子 {TaskState.Seed}）");
 
             yield return null;
 
@@ -277,7 +280,6 @@ namespace FPSGame.Managers
         {
             Transform transMapRoot = GameObject.FindGameObjectWithTag("MapRoot").transform;
             mapRoot = transMapRoot.GetComponent<MapRoot>();
-            EnsureQueryGrid();   // 越早越好：地形生成期间就可能实例化任务实体（见 EnsureQueryGrid 注释）
 
             //var terrain = TerrainUtils.Main = mapRoot.terrain;
             var terrain = mapRoot.terrain;
@@ -318,6 +320,7 @@ namespace FPSGame.Managers
             //TerrainUtils.Main = terrain;
             //不能调换顺序，会出问题
             terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
+            // 尺寸变了 ⇒ 要等下面 Init(true) 才按新尺寸重算 mapRoot.rect，所以网格排序不能提前
             // size.y 变更后刷新 terrainHeight 缓存，否则 AdditionTerrain 高度计算使用旧值
             TerrainUtils.Main = terrain;
             // 新战斗的新地形：重置积雪遮罩，避免上一场战斗的弹坑痕迹残留（下次擦雪时按地形按需重建）
@@ -325,7 +328,9 @@ namespace FPSGame.Managers
             //Debug.LogWarning("地图尺寸" + cfg.MainCfg.sizeType + " 地图大小 + cfg.MapSize);
             //Debug.LogWarning("地图真实" + mapRoot.terrain.terrainData.size);
             //terrainData.size = new(cfg.MapSize, cfg.MapHeight, cfg.MapSize);
-            mapRoot.Init(true);
+            mapRoot.Init(true);   // 按本图尺寸重算 rect（= 网格边界）
+            // ⚠ 网格只在这里建一次：此时 rect 刚刷新，而本协程这一段仍是同步代码 ⇒ 早于任何 Actor 实例化
+            EnsureQueryGrid();
             List<TerrainItemInfo> infos = new(TaskManager.Instance.nowTask.mapCfg.TerrainItem);
             var nestinfo = TaskManager.Instance.nowTask.campData.NestTerrainItem;
             infos[3] = nestinfo;
@@ -351,6 +356,7 @@ namespace FPSGame.Managers
             {
                 debugger.grid = unitQueryGrid;
             }
+
         }
 
         #endregion
@@ -388,22 +394,19 @@ namespace FPSGame.Managers
             BattleEventBus.OnRequestAuthorize += Authorize;
         }
 
-        private void Start()
-        {
-            EnsureQueryGrid();
-        }
-
-        /// <summary>建单位查询网格并接管 <see cref="UnitQuery.Sink"/>（幂等，谁先到谁建）。
-        /// <para>⚠ 必须早于**任何 Actor 实例化**：任务实体的 <c>Actor.Awake</c> 立刻发 <c>UnitPosChange</c>，
-        /// 而 <see cref="OnUnitPosChange"/> 直接解引用 <c>unitQueryGrid</c>。原先只在 <c>Start()</c> 里建，
-        /// 但 <c>Start()</c> 晚于"创建那一帧的协程首段"，而 InitSpecial 的首段就把任务建完了
-        /// ⇒ 从舰桥/前线进新手教程时这里空引用，**整条 InitSpecial 协程被打断**：
-        /// 战备/波次/GameState 全没初始化，玩家也永远停在"舰上无敌"（2026-10-26 实测）。</para></summary>
+        /// <summary>建单位查询网格并接管 <see cref="UnitQuery.Sink"/>（每局只建一次）。
+        /// <para>⚠ 调用点只有一个（<c>InitTerrain</c> 里 <c>mapRoot.Init(true)</c> 之后；<c>InitSpecial</c> 里
+        /// <c>mapRoot.Init(false)</c> 之后）：<c>mapRoot.rect</c> 就是网格边界，而它是 <c>Init(true)</c> 才按本图尺寸
+        /// 重算的 —— 早建读到的是场景遗留旧边界（实测 512@(16,16)，本图 780@(64,64)）⇒ 网格只盖半张图，
+        /// 边界外的单位不入索引、圈外任务点（如 KaiserNest 在 y=614）永远查空。</para>
+        /// <para>⚠ 也必须早于**任何 Actor 实例化**：<c>Actor.Awake</c> 立刻发 <c>UnitPosChange</c>，
+        /// 而 <see cref="OnUnitPosChange"/> 直接解引用 <c>unitQueryGrid</c>。两个调用点都在各自协程的首段同步代码里，
+        /// 所以不用再在 <c>Start()</c> 兜一次（原先那里空引用会打断整条 InitSpecial 协程，2026-10-26 实测）。</para></summary>
         private void EnsureQueryGrid()
         {
             if (unitQueryGrid != null) return;
-            var pos = mapRoot.rect;
-            unitQueryGrid = new(new((PEVector2)pos.center, pos.size.x / 2, pos.size.z / 2), 30);
+            var bounds = mapRoot.rect;
+            unitQueryGrid = new(new PERect((PEVector2)bounds.center, bounds.size.x / 2, bounds.size.z / 2), 30);
             // 查询入口接管：网格建好后对外可用（见 05_UnitCore/UnitQuery.cs）
             UnitQuery.Sink = this;
         }

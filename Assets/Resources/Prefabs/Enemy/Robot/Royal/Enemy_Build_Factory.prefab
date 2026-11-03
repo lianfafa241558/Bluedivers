@@ -84,6 +84,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -375,11 +376,11 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists:
   - Key: 11
-    Value: 10
+    Value: 0
   - Key: 8
-    Value: 10
+    Value: 0
   - Key: 9
-    Value: 10
+    Value: 0
   MainPart: {fileID: 5529930566279991862}
   demolishValue: 30
   AutoDestroy: 0
@@ -404,18 +405,20 @@ MonoBehaviour:
   go: {fileID: 5645958791598517288}
   UseDiffScale: 1
   DamageData:
-    DamageExplosion: 10
-    ExplosionInnerRange: 5
-    ExplosionRange: 10
+    DamageExplosion: 30
+    ExplosionInnerRange: 8
+    ExplosionRange: 12
     DestructeRadius: 4
     ShockwaveRadius: 12
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
-    SoundRadius: 20
-    ImpactSoundRadius: 8
+    AboVulnerabilityGroup: []
+    SoundRadius: 40
+    ImpactSoundRadius: 20
     NoSource: 1
     ExplosionAP: 0
     demolishValue: 0
@@ -612,6 +615,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

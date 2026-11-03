@@ -244,6 +244,8 @@ namespace FPSGame.Weapon
                 Attr.ChargeHeatScale => ChargeHeatScale,
                 Attr.WeaknessBonus => WeaknessBonus,
                 Attr.LifeTime => MaxLifeTime,
+                // 最大射程：直接取原值，不做"-1 折算成等效米数"——那类武器本来就不给射程改装
+                Attr.MaxRange => MaxRange,
                 Attr.DirectAP => DirectAP,
                 Attr.ExplosionAP => ExplosionAP,
                 // 伤害类型系数
@@ -309,6 +311,9 @@ namespace FPSGame.Weapon
 
         public void SetWeaknessBonus(PEInt value) => WeaknessBonus = value.RawFloat;
         public void SetLifeTime(PEInt value) => MaxLifeTime = value.RawFloat;
+        /// <summary>最大射程：只回写，非正值一律落成 -1(不设上限)。
+        /// <para>⚠ 0 不是"无限"而是"零射程"：光束会画成零长、子弹一出生就判超距（cfg 里手填 0 就会这样）。</para></summary>
+        public void SetMaxRange(PEInt value) => MaxRange = value > 0 ? value.RawFloat : -1f;
         public void SetDirectAP(PEInt value) => DirectAP = value.RawInt;
         public void SetExplosionAP(PEInt value) => ExplosionAP = value.RawInt;
 

@@ -524,7 +524,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -561,6 +560,7 @@ MonoBehaviour:
   I_RemainAmmos: []
   I_ChargeRatio: []
   I_CoolRatio: []
+  T_CoolRatio: []
   TintCoolRatio: 0
   CoolRatioGradient:
     serializedVersion: 2
@@ -593,6 +593,7 @@ MonoBehaviour:
     m_NumColorKeys: 2
     m_NumAlphaKeys: 2
   ReverseCoolRatioFill: 0
+  CoolRatioSmoothSpeed: 12
 --- !u!1 &4376479300942105868
 GameObject:
   m_ObjectHideFlags: 0
@@ -845,7 +846,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 9
+    Value: 0
+  - Key: 8
+    Value: 0
   MainPart: {fileID: 320801384810680893}
   demolishValue: -1
   AutoDestroy: 0

@@ -77,7 +77,9 @@ namespace FPSGame.Gameplay
                 float sqr = (unit.Pos - center).sqrMagnitude;
                 if (!actor.AnimatorsOff)
                 {
-                    if (sqr > farSqr) actor.SetAnimatorsEnabled(false);
+                    // ⚠ 一次性表现（入场"从天而降"）播到一半不能冻：状态机停住 ⇒ 模型钉在天上，
+                    //   而逻辑坐标早在地上 ⇒ 玩家在远处看见它悬空，走近才落下来
+                    if (sqr > farSqr && !actor.AnimatorOneShotPlaying) actor.SetAnimatorsEnabled(false);
                 }
                 else if (sqr < nearSqr)
                 {

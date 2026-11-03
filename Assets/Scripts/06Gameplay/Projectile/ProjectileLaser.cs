@@ -38,6 +38,13 @@ namespace FPSGame.Gameplay
                  "跳数由武器属性「通用/弹射次数」给，能跳多远由「弹射索敌半径」给")]
         public GameObject ChainVfx;
 
+        [Header("表现")]
+        [InspectorName("最低表现距离")]
+        [Tooltip("光束线至少画这么长(米)，从枪口沿光束量。\n" +
+                 "贴脸命中、或球扫在起点就与碰撞体重叠(退化命中，落点不可信)时，线不会缩成一个点/整条失踪。\n" +
+                 "⚠ 只管画线，不改命中点与终点特效；0 = 关闭")]
+        public float MinVisualDistance = 1f;
+
         protected float m_ShootTime;
 
         protected List<Collider> m_IgnoredColliders;
@@ -47,8 +54,8 @@ namespace FPSGame.Gameplay
 
         private float finalRaudis;
 
-        /// <summary>表现层射线每帧最多"穿过去"几个不挡线的命中（穿透地形贴地打时会出现连片地面碰撞体）</summary>
-        private const int k_VisualSkipLimit = 8;
+        /// <summary>细线射线每帧最多"穿过去"几个不挡线的命中（穿透地形贴地打时会出现连片地面碰撞体）</summary>
+        private const int k_ThinSkipLimit = 8;
 
         /// <summary>光束采样的命中缓冲（每帧复用；Update 里不能分配）</summary>
         private readonly RaycastHit[] m_BeamHits = new RaycastHit[16];
@@ -81,7 +88,7 @@ namespace FPSGame.Gameplay
 
             m_TickHitActors.Clear();
             // 开火这一帧只求终点来摆终点特效、不结算（首个伤害节拍在 ShootSpeed 之后，与原逻辑一致）
-            m_lastPos = SampleVisualBeam(out _, out _);
+            m_lastPos = SampleThinBeam(out _, out _, out _, out _, out _);
 
             m_EndObject = new();
             foreach (var item in EndObject)
@@ -114,23 +121,18 @@ namespace FPSGame.Gameplay
                 RefreshCatapult();
                 m_TickHitActors.Clear();
             }
-            // 玩法层：球扫（粗半径）负责"打到谁"，同时报出真正的挡点（伤害/链状闪电都在里面结算完）
-            Vector3 blockEnd = SampleBeam(settle, out Vector3 blockNormal, out bool blocked, out bool blockIsUnit);
+            // 终点与截断只由细线给（球扫只结算伤害，绝不改终点），所以线永远是一条直线，见 SampleBeam 说明
+            Vector3 end = SampleBeam(settle, out Vector3 normal, out bool hitSomething, out _);
 
-            // 表现层：细射线负责"线画到哪、终点特效放哪"（见 SampleVisualBeam 的说明）
-            Vector3 end = SampleVisualBeam(out Vector3 normal, out bool hitSomething);
-
-            // 球扫被**单位**挡住、细线却从旁边擦过去了（擦边命中）⇒ 线补到单位身上，不然打着人却画到后墙。
-            // ⚠ 地形的挡点不参与这条合并：粗半径贴地时球扫起始就与地面重叠，拿它当终点正是这次要修的 bug
-            if (blocked && blockIsUnit &&
-                (!hitSomething || (blockEnd - transform.position).sqrMagnitude <= (end - transform.position).sqrMagnitude))
+            // 表现层下限：贴脸命中 / 退化命中时线不能缩成一点。⚠ 只加长画出来的线，
+            // end 仍按真实落点去摆终点特效（不然弹痕/命中药效会飘到半空）
+            Vector3 lineEnd = end;
+            if (MinVisualDistance > 0f &&
+                (end - transform.position).sqrMagnitude < MinVisualDistance * MinVisualDistance)
             {
-                end = blockEnd;
-                normal = blockNormal;
-                hitSomething = true;
+                lineEnd = transform.position + transform.forward * MinVisualDistance;
             }
-
-            m_line.SetPosition(1, end);
+            m_line.SetPosition(1, lineEnd);
 
             if (hitSomething)
             {
@@ -144,14 +146,16 @@ namespace FPSGame.Gameplay
         }
 
         /// <summary>
-        /// 沿整条光束做一次球扫，按距离从近到远决定"结算谁、在哪里截断"。
+        /// 沿整条光束做一次球扫，按距离从近到远决定"结算谁"；扫到哪停、线画到哪，全由细线给。
         ///
         /// <para>▍标旗口径与飞行弹 <see cref="ProjectileStandard"/> 一致：
         /// <c>PenetrateUnits</c> = 打中单位继续往后；<c>PenetrateTerrain</c> = 打中地形（没有 <see cref="Damageable"/>）也继续。
         /// 没勾的那一类就是光束的挡点。</para>
+        /// <para>▍⚠ 职责必须拆开（2026-11-03 微波枪实测）：球扫半径 = 武器「作用范围」(米级)，只用来**放宽打人**；
+        /// 截断与终点由细线 <see cref="SampleThinBeam"/> 独家决定。两条都踩过坑：拿粗球判地形 ⇒ 提前一个半径撞上
+        /// 光束旁边的岩石，目标在二十米外线就断了、伤害永远落不到人身上；拿粗球落点当终点 ⇒ 落点偏轴一个半径，
+        /// 近处 4m 就能偏 17°，线像"吸"在目标身上。</para>
         /// <para>▍⚠ 激光是瞬时从头扫到尾的，不像实体弹那样逐帧推进，所以穿透**不需要累计位移**，一次查询就够。</para>
-        /// <para>▍⚠ 本方法返回的是**玩法终点**，只用于结算与截断判断；线画到哪由 <see cref="SampleVisualBeam"/>
-        /// 单独采样 —— 别拿这里的终点点 <c>LineRenderer</c>（半径被撑大时球扫会贴地即止）。</para>
         /// </summary>
         /// <param name="settle">是否结算伤害（false = 只扫出挡点，不结算）</param>
         /// <param name="normal">终点法线</param>
@@ -161,14 +165,15 @@ namespace FPSGame.Gameplay
         {
             Vector3 dir = transform.forward;
             Vector3 origin = transform.position + MinRange * dir;
-            Vector3 end = transform.position + dir * MaxRange;
-            normal = -dir;
-            hitSomething = false;
-            endIsUnit = false;
 
+            // ① 细线定挡点（与视觉同一条射线）：线画到哪、地形在哪截断，都只看它
+            Vector3 end = SampleThinBeam(out normal, out hitSomething, out RaycastHit blockHit,
+                out bool blockIsUnit, out float blockDist);
+            endIsUnit = blockIsUnit;
+
+            // ② 粗球只负责"擦边也算打中"：挡点之后的一律不算（被掩体挡住的目标不该掉血）
             int count = Physics.SphereCastNonAlloc(origin, finalRaudis, dir, m_BeamHits, MaxRange,
-                FpsHelper.GetHittableLayers(999));
-            if (count <= 0) return end;
+                FpsHelper.GetHittableLayers(DamageData.GetSpeed(1).RawInt));
 
             // 一根光束通常只有 0~3 个命中，插入排序比 Sort + 比较器省
             for (int i = 1; i < count; ++i)
@@ -183,40 +188,36 @@ namespace FPSGame.Gameplay
             for (int i = 0; i < count; ++i)
             {
                 RaycastHit hit = m_BeamHits[i];
+                if (hit.distance > blockDist) break;
                 // 被忽略的命中（自身碰撞 / IgnoreHitDetection / 无伤害组件触发器）既不结算也不截断，
                 // 否则穿透会被这类杂物挡在半路
                 if (!IsHitValid(hit)) continue;
 
                 IDamageable damageable = hit.collider.GetComponent<IDamageable>();
-                bool isUnit = damageable.IsValid();
+                // 粗球擦到的地形不结算也不截断：截断在上面的细线里已经定了
+                if (!damageable.IsValid()) continue;
 
-                if (isUnit && !HasBulletFlag(BulletFlag.PenetrateUnits))
-                {
-                    if (settle) HitUnit(hit, damageable, ref chainUsed);
-                    end = hit.point; normal = hit.normal; hitSomething = true; endIsUnit = true;
-                    break;
-                }
-                if (!isUnit && !HasBulletFlag(BulletFlag.PenetrateTerrain))
-                {
-                    // 地形/道具也要走一次结算：爆炸、弹痕、命中音效都挂在 OnHit 那条链上
-                    if (settle) ApplyHit(hit, false);
-                    end = hit.point; normal = hit.normal; hitSomething = true;
-                    break;
-                }
+                // ⚠ distance=0 = "球在起点就已经和它重叠"，此时 point 是 (0,0,0) 而不是真落点。这类命中多是
+                //   身边贴着的东西（自己的墙/友军），不在光束上 ⇒ 只有细线正好打在同一个碰撞体上才算真命中
+                //   （近身目标走这条，它的落点由细线给，不用这里的 point）。
+                if (hit.distance <= 0f && blockHit.collider != hit.collider) continue;
 
-                // 穿透：单位照常吃伤害，地形直接忽略继续往后打
-                if (settle && isUnit) HitUnit(hit, damageable, ref chainUsed);
+                // ⚠ 只结算、**不改终点**：球扫落点是"球面接触点"，最多偏轴一个半径（作用范围 2.1m 的枪在 4m 处
+                //   能偏 17°），拿它当终点线会朝目标"吸"过去（2026-11-03 用户实测）。终点永远由细线给。
+                if (settle) HitUnit(hit, damageable, ref chainUsed);
             }
 
+            // 地形/道具挡点也要走一次 OnHit：爆炸、弹痕、命中音效都挂在 OnHit 那条链上
+            if (settle && hitSomething && !endIsUnit) ApplyHit(blockHit, false);
             return end;
         }
 
         /// <summary>
-        /// 沿光束打一根**细射线**，求这根线该画到哪（表现层专用，不结算）。
+        /// 沿光束打一根**细射线**，求"线该画到哪、挡点是谁"（表现与玩法共用，本身不结算）。
         ///
         /// <para>▍为什么不复用球扫的终点：<see cref="finalRaudis"/> 被"作用范围当半径"撑大后（几米级），
-        /// 贴地/贴墙开火时球扫**起始就与地面重叠** ⇒ 命中距离 ≈ 0，光束一开火就画到脚下。
-        /// 伤害判定确实要那个粗球（擦边也算打中），视觉得是细线，所以两条采样分开走。</para>
+        /// 球扫会提前一个半径擦到光束旁边的岩石、贴地时甚至起始就与地面重叠 ⇒ 命中距离 ≈ 0，
+        /// 光束一开火就画到脚下、人也永远打不到。所以截断与视觉走细线，粗球只判"打到谁"。</para>
         /// <para>▍穿得过去的东西要跳过接着打（<see cref="BlocksBeam"/> 与球扫同一条截断口径）：
         /// 这条线必须跟玩法一致，勾了穿透却把线停在墙上 = 打穿了还画断在半路。</para>
         /// <para>▍起点与射程口径跟 <see cref="SampleBeam"/> 一致（<see cref="MinRange"/> 前移 + <see cref="MaxRange"/>），
@@ -224,25 +225,38 @@ namespace FPSGame.Gameplay
         /// </summary>
         /// <param name="normal">终点法线（落空 = -forward）</param>
         /// <param name="hitSomething">是否真的打到挡点（false = 直达最大射程）</param>
-        private Vector3 SampleVisualBeam(out Vector3 normal, out bool hitSomething)
+        /// <param name="blockHit">挡点的原始命中（地形要拿它结算爆炸/弹痕/音效）</param>
+        /// <param name="blockIsUnit">挡点是单位还是地形</param>
+        /// <param name="blockDist">挡点离球扫起点（枪口 + <see cref="MinRange"/>）的沿光束距离；落空 = <see cref="MaxRange"/></param>
+        private Vector3 SampleThinBeam(out Vector3 normal, out bool hitSomething,
+                                       out RaycastHit blockHit, out bool blockIsUnit, out float blockDist)
         {
             Vector3 dir = transform.forward;
             Vector3 end = transform.position + dir * MaxRange;
             normal = -dir;
             hitSomething = false;
+            blockHit = default;
+            blockIsUnit = false;
+            blockDist = MaxRange;
 
             Vector3 cursor = transform.position + MinRange * dir;
             float left = MaxRange;
+            float travelled = 0f;
             // 单条射线只能看到"第一个"命中，穿过去的那些要逐段往前推进重打（正常 0~1 次，不会是性能点）
-            for (int i = 0; i < k_VisualSkipLimit && left > 0f; ++i)
+            for (int i = 0; i < k_ThinSkipLimit && left > 0f; ++i)
             {
-                if (!Physics.Raycast(cursor, dir, out RaycastHit hit, left, FpsHelper.GetHittableLayers(999))) break;
+                if (!Physics.Raycast(cursor, dir, out RaycastHit hit, left, FpsHelper.GetHittableLayers(DamageData.GetSpeed(1).RawInt))) break;
 
                 if (IsHitValid(hit) && BlocksBeam(hit.collider))
                 {
+                    // 起点已经嵌在这个碰撞体里时 distance=0、point 不可靠（贴墙开火）⇒ 退化成起点
+                    if (hit.distance <= 0f) { hit.point = cursor; hit.normal = -dir; }
                     end = hit.point;
                     normal = hit.normal;
                     hitSomething = true;
+                    blockHit = hit;
+                    blockIsUnit = hit.collider.GetComponent<IDamageable>().IsValid();
+                    blockDist = travelled + hit.distance;
                     break;
                 }
 
@@ -250,6 +264,7 @@ namespace FPSGame.Gameplay
                 float step = hit.distance + 0.01f;
                 left -= step;
                 cursor += dir * step;
+                travelled += step;
             }
             return end;
         }
@@ -376,12 +391,14 @@ namespace FPSGame.Gameplay
             //使用忽略组件忽略点击
             if (ihd)
             {
-                //双向忽略
-                if (!ihd.Unidirectional) {
+                //双向忽略：对子弹/光束都透明（wire 这类装饰物就该穿过，别再收紧 —— 2026-11-03 用户明确要求）
+                if (!ihd.Unidirectional)
+                {
                     return false;
                 }
                 //单向忽略(如果发射点在碰撞箱内部就忽略)
-                else if(hit.collider.bounds.Contains(InitialPosition)){
+                else if (hit.collider.bounds.Contains(InitialPosition))
+                {
                     return false;
                 }
             }

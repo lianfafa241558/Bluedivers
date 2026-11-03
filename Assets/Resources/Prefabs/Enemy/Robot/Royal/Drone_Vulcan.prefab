@@ -77,6 +77,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 2
     DamageGroupDirect:
@@ -89,7 +90,11 @@ MonoBehaviour:
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion: []
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 7655095426451682942, guid: 347e7ad7d423a6f47acfb062d19f36bf,
@@ -117,6 +122,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 20
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: a56e3c9f90e17894eb1625f603eceb54, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -124,7 +131,7 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -282,18 +289,19 @@ MonoBehaviour:
   HearingRange: 25
   AttackRange: 20
   AlertRange: 30
+  Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 4
   MinSwitchTargetTime: 4
+  TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &3055335680158422594
 GameObject:
   m_ObjectHideFlags: 0
@@ -372,6 +380,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -531,6 +540,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &3641437460785583691
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -569,6 +583,12 @@ MonoBehaviour:
   BewareSpeed: 3
   BewareReachRadius: 2
   BewareStayDuration: 2
+  BewareTimeout: 20
+  BewareObserveDistance: 10
+  SearchObserveDistance: 4
+  ObserveSettleTime: 0.4
+  BewareCooldown: 10
+  BewareCooldownRadius: 10
   IdleMaxDuration: 120
 --- !u!195 &1563498678777212718
 NavMeshAgent:
@@ -633,14 +653,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHealth: 100
+  MaxHealth: 50
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 8686413573593428990}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
-  AboGaugeArr: []
+  AboGaugeArr:
+  - Key: 4
+    Value: 20
+  - Key: 5
+    Value: 20
+  - Key: 6
+    Value: 25
+  - Key: 8
+    Value: 20
+  - Key: 9
+    Value: 20
+  - Key: 11
+    Value: 15
 --- !u!114 &6454001368682065650
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -654,10 +687,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 3368048562739296929}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: b903ba4b4aceaf24084484ae8926d0f7, type: 2}
   fxMaterial: {fileID: 2100000, guid: 4cc504aca1301af4f922fd41464ebd5c, type: 2}
+  events: []
+  BirthMaterial: {fileID: 0}
 --- !u!1001 &2856574745826308164
 PrefabInstance:
   m_ObjectHideFlags: 0

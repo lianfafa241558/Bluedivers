@@ -671,6 +671,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 8
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -691,13 +692,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 5000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 8
+    Value: 0
+  - Key: 9
+    Value: 0
+  - Key: 11
+    Value: 0
   MainPart: {fileID: 6548251721301242072}
   demolishValue: 60
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 0
 --- !u!114 &3684286922843379491
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -727,7 +734,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: dc65f4d8b2d398c409d766e93f18d227, type: 2}
   fxMaterial: {fileID: 2100000, guid: 40db76c49dee7174ea62277914b61d25, type: 2}
@@ -824,6 +830,7 @@ MonoBehaviour:
     Value:
       m_PersistentCalls:
         m_Calls: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!136 &4318964221293320193
 CapsuleCollider:

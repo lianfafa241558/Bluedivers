@@ -140,26 +140,20 @@ namespace FPSGame.Gameplay
             m_Team = m_Actor ? m_Actor.Team : 0;
             if (m_Filter == null) m_Filter = FilterActor;
 
-            // 通过空间网格查询触发范围内的单位（返回 I_Actor，可直接获得队伍信息做智能判定）
-            // 注意：TargetCfg.Enemy 只匹配 UnitTypeEnum.Enemy，查不到玩家(Player)，必须用匹配所有类型的目标配置
-            // 注意：空间网格内部已用 range.Overlaps(unit.Range) 做"地雷触发范围 与 单位占位范围相交"的水平预筛，
-            // 最终是否引爆由 InTriggerRange 按"地雷到单位实际3D距离"判定，
-            // 不能直接按单位中心点距离判断，否则地雷黏在巨型敌人身上时中心点离黏附表面过远会导致不炸
-            // ⚠ 走零分配重载 + 复用缓冲：老接口每次调用都要 new List + new HashSet + 每节点 new List
-            FPSGame.Game.UnitQuery.FindUnits(
+
+            //走零分配重载 + 复用缓冲
+            UnitQuery.FindUnits(
                 new PECircle((PEVector2)Root.position, (PEInt)TriggerRange),
                 TargetCfg.EnemyAI,
                 m_Filter,
                 HitBuffer);
 
-            for (int i = 0; i < HitBuffer.Count; ++i)
-            {
-                // 通过 Health 自杀引爆，与 ProjectileMine 行为一致，避免重复爆炸造成两次伤害
-                // （Health 已死时 Kill() 不会派发 OnDie，下面再兜底直接引爆；TriggerExplosion 幂等）
-                if (m_health.IsValidMono()) m_health.Kill();
-                TriggerExplosion();
-                break;
-            }
+            // 非空即引爆：进 HitBuffer 的都已过 FilterActor（队伍/存活/3D 距离），不需要挑目标。
+            if (HitBuffer.Count == 0) return;
+            // 经 Health 自杀引爆（OnDie → TriggerExplosion），让"被摧毁"与"触发"走同一条链路；
+            // Health 缺失或已死时 Kill() 不派发 OnDie，故后面再兜底直接触发（TriggerExplosion 幂等）
+            if (m_health.IsValidMono()) m_health.Kill();
+            TriggerExplosion();
         }
 
         /// <summary>触发过滤：智能地雷只炸与地雷不同队伍的存活目标；按实际3D距离判定(避免高空掠过的单位误触发)。

@@ -16,6 +16,14 @@ namespace FPSGame.Gameplay
     [AddComponentMenu("子弹/手雷", 31)]
     public class ProjectileGrenade : ProjectileStandard
     {
+        /// <summary>贴面留的余隙(米)：严格相切的话下一帧球扫的**起点**与碰撞体重叠，
+        /// Unity 只给 distance=0 且 point/normal 未填充的退化命中 ⇒ 弹体被瞬移到世界原点。</summary>
+        private const float k_SurfaceGap = 0.01f;
+
+        /// <summary>球扫结果缓冲：NonAlloc 不分配数组（与基类 <c>ProjectileStandard</c> 的 s_HitBuffer 同口径）。
+        /// <para>⚠ 静态共用安全：TryHit 全程同步、无 yield，命中回调里也不会再进另一颗手雷的 TryHit。</para></summary>
+        private static readonly RaycastHit[] s_HitBuffer = new RaycastHit[32];
+
         [Header("弹跳")]
         [InspectorName("可弹跳次数")]
         [Tooltip("超过这个次数后不再反弹，直接趴在原地等引信")]
@@ -112,21 +120,48 @@ namespace FPSGame.Gameplay
             float length = displacement.magnitude;
             if (length < 0.0001f) return;
 
-            RaycastHit[] hits = Physics.SphereCastAll(m_LastRootPosition, Radius, displacement / length, length,
+            // NonAlloc：原来 SphereCastAll 每帧每颗手雷都 new 一个 RaycastHit[]
+            int hitCount = Physics.SphereCastNonAlloc(m_LastRootPosition, Radius, displacement / length, s_HitBuffer, length,
                 FpsHelper.GetHittableLayers(m_Velocity.magnitude), QueryTriggerInteraction.Collide);
 
             RaycastHit closest = default;
             float nearest = float.MaxValue;
             bool found = false;
-            for (int i = 0; i < hits.Length; ++i)
+            bool overlapped = false;      // 出现过"起点就重叠"的退化命中 = 球心已经陷在碰撞体里
+            for (int i = 0; i < hitCount; ++i)
             {
-                if (!IsBounceValid(hits[i]) || hits[i].distance >= nearest) continue;
-                nearest = hits[i].distance;
-                closest = hits[i];
+                RaycastHit hit = s_HitBuffer[i];
+                // ⚠ distance=0 = "扫掠起点已与该碰撞体重叠"的退化命中：point/normal 不填（全是 0），
+                //   当命中用会把弹体瞬移到世界原点、到点就在原点炸开（基类 Hit 里也有同一条判据）
+                if (hit.distance <= 0f)
+                {
+                    if (IsBounceValid(hit)) overlapped = true;
+                    continue;
+                }
+                if (!IsBounceValid(hit) || hit.distance >= nearest) continue;
+                nearest = hit.distance;
+                closest = hit;
                 found = true;
             }
 
             if (found) Collide(closest);
+            else if (overlapped) RecoverFromOverlap();
+        }
+
+        /// <summary>
+        /// 球心已经陷进碰撞体里的自救。**不救就会一路掉到地下**：Unity 对"起点已重叠"只给 distance=0，
+        /// 而上面必须跳过这种命中（它的 point 是 0）⇒ 之后每帧都扫不到它，重力把弹体越拽越深。
+        /// <para>做法：从球心正上方往下探一次拿真实的面，再走 <see cref="Collide"/> 那套贴面 + 反弹。</para>
+        /// </summary>
+        private void RecoverFromOverlap()
+        {
+            float up = Radius * 3f;
+            if (!Physics.SphereCast(transform.position + Vector3.up * up, Radius, Vector3.down, out RaycastHit hit,
+                    up * 2f, FpsHelper.GetHittableLayers(m_Velocity.magnitude), QueryTriggerInteraction.Collide))
+                return;
+            if (hit.distance <= 0f) return;      // 探测起点自己也重叠 ⇒ 这次拿不到面，下一帧再探
+            if (!IsBounceValid(hit)) return;     // 头顶压着的是触发器/投掷者，不是地面
+            Collide(hit);
         }
 
         /// <summary>能不能拿来弹：这里不结算伤害，所以只排除"不该碰的"（自己/投掷者/双向忽略的触发器）。</summary>
@@ -165,7 +200,8 @@ namespace FPSGame.Gameplay
             Vector3 normal = hit.normal.sqrMagnitude > 0.0001f ? hit.normal : -m_Velocity.normalized;
 
             // 贴到碰撞面外沿：贴住/弹跳共用，避免钻在碰撞体里(下一个 SphereCast 起点在内部会漏检)
-            transform.position = hit.point + normal * Radius;
+            // ⚠ 必须留 k_SurfaceGap：恰好相切 ⇒ 下一帧起点重叠 ⇒ 退化命中(见 TryHit 里的判据)
+            transform.position = hit.point + normal * (Radius + k_SurfaceGap);
 
             if (Sticky)
             {
@@ -189,7 +225,13 @@ namespace FPSGame.Gameplay
                 else
                 {
                     m_Velocity = Vector3.Reflect(m_Velocity, normal) * BounceDamping;
-                    if (m_Velocity.magnitude < RestSpeed) m_Velocity = Vector3.zero;
+                    if (m_Velocity.magnitude < RestSpeed)
+                    {
+                        // 静止阈值：必须连重力一起关掉。只清零速度的话基类 Move 每帧还往下沉 1~2cm，
+                        // 而球扫对"起点已重叠"是瞎的 ⇒ 慢慢沉进地里（见 RecoverFromOverlap）
+                        m_Velocity = Vector3.zero;
+                        m_Resting = true;
+                    }
                     if (m_Velocity.sqrMagnitude > 0.0001f) transform.forward = m_Velocity.normalized;
                 }
             }

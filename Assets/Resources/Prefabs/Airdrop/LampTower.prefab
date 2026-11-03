@@ -71,6 +71,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 0
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 20
     DamageGroupDirect:
@@ -83,9 +84,13 @@ MonoBehaviour:
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
@@ -111,6 +116,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 35
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 0d44f0cb2e91f5f4ca09aded9a1bd9ab, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -118,7 +125,7 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -183,6 +190,7 @@ MonoBehaviour:
   AttackRange: 65
   AlertRange: 0
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 0
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -500,9 +508,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 9
+    Value: 0
+  - Key: 8
+    Value: 0
   MainPart: {fileID: 7399909234010293307}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -576,6 +589,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &731077171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -606,6 +624,7 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   PreJudgment: 0
   PreJudgmentFactor: 1
+  BewareLookDuration: 3
 --- !u!114 &4993735179080487280
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -635,11 +654,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 5cb81ed8afa1e7a4da5646aeb9599652, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!114 &7399909234010293307
 MonoBehaviour:
@@ -656,6 +675,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 7184942307819417587}

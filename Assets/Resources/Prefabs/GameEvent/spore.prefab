@@ -85,6 +85,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -105,29 +106,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 5
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 8
+    Value: 0
+  - Key: 9
+    Value: 0
+  - Key: 11
+    Value: 0
   MainPart: {fileID: 5458237786777459053}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr:
   - Key: 4
-    Value: 50
+    Value: 5
   - Key: 5
-    Value: 100
+    Value: 5
   - Key: 6
-    Value: 100
+    Value: 5
   - Key: 7
-    Value: 100
-  - Key: 8
-    Value: 100
-  - Key: 9
-    Value: 100
-  - Key: 10
-    Value: 10
-  - Key: 11
-    Value: 100
-  AutoDestroy: 0
+    Value: 5
 --- !u!114 &829255509231655953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -245,12 +244,15 @@ MonoBehaviour:
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 25
+    ImpactSoundRadius: 8
     NoSource: 0
     ExplosionAP: 0
     demolishValue: 0

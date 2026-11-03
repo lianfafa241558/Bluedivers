@@ -41,6 +41,7 @@
 ## 编译验证
 - ⭐⭐ **首选 = 离线编译 `python -X utf8 .codebuddy/plans/offline_compile.py <AsmName>...`**：借 Unity 自带 Roslyn 按 `.csproj` 编译，**~0.5s、完全不触发域重载**。要点：① 兄弟程序集走 `ProjectReference` → `Temp/offline_compile/<Name>.dll`（**优先**）或 `Library/ScriptAssemblies/`；② **必须按依赖顺序传参**（下游才吃到新 dll）；③ 本机**没装 .NET SDK** ⇒ `dotnet build` 走不通，只能借 Unity 自带 Roslyn；④ 输出只落 `Temp/offline_compile/`（安全）；⑤ `ROOT` 自动推导（`BLUEDIVERS_ROOT`/`UNITY_EDITOR_DATA` 可覆盖）。
   ⚠ **它只认 csproj 的文件清单** ⇒ **刚新建、Unity 还没重生成 csproj 的文件编不到**（表现为 `源:N` 不变、报 0 错误，但 Unity 报 `CS0103` 甚至进 Safe Mode）⇒ **新增 `.cs` 的首次验证必须看 Unity Console**。
+  ⚠⚠ **merge/pull 之后 csproj 全是合并前的**：新文件不在清单里 ⇒ 编**上游**程序集时报一堆 **假错误**（如 `00_Core` 报 `CS0246: 未找到 IScheduledTickTarget`、`06_Gameplay` 报 10 条 `FindUnits 没有 4 参数重载`），看着像代码坏了。解药 = `--add:<Asm>:<漏掉的.cs>` 先补齐 00_Core，再按依赖顺序编下游（2026-11-03 实测：补 `00Core/Timer/TickDriver.cs` 后 00_Core→05_UnitCore→06_Gameplay 全 0 error）。**判据：错误信息里的类型/方法在源码里明明存在 ⇒ 先怀疑 csproj/旧 dll，别改代码。**
 - **三证齐**（必须经 Unity 时）：dll mtime 前进 + Console 0 error（**先清空再读**）+ `is_compiling:false`。
 - ⚠⚠ **某程序集编译失败 ⇒ 依赖它的程序集既不报错也不编译** ⇒ 错误逐层暴露、必须迭代；决定性判据 = "哪个 dll 没更新" + `GetAssemblies().sourceFiles` 是否含新文件。
 - ⚠⚠ **「假空转」**（2026-10-02 实测）：内容已变但增量判定为空 ⇒ dll 不动、Console **也 0 error**、`refresh_unity` 照样返 `refresh_triggered:true`、`ImportAsset(ForceUpdate)` 也白搭 —— 三个"通过"全是假象。**判据改反射**（`GetType/GetMethod` 为 null = 没编上）。**解药** = `CompilationPipeline.RequestScriptCompilation(CleanBuildCache)`（~30s）；⚠ 若 `external_changes_dirty:true`（Unity 未 focus），它单独调用仍空转 ⇒ 先 `AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate)` 再请求编译。

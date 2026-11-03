@@ -4893,6 +4893,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -5153,17 +5154,23 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists:
   - Key: 11
-    Value: 10
+    Value: 0
   - Key: 8
-    Value: 10
+    Value: 0
   - Key: 9
-    Value: 10
+    Value: 0
   MainPart: {fileID: 6496387617214491177}
   demolishValue: 30
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
-  AboGaugeArr: []
+  AboGaugeArr:
+  - Key: 4
+    Value: 80
+  - Key: 5
+    Value: 80
+  - Key: 6
+    Value: 160
 --- !u!114 &1375819787446249209
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5285,6 +5292,7 @@ MonoBehaviour:
   AttackRange: 0
   AlertRange: 50
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 12
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -5457,6 +5465,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

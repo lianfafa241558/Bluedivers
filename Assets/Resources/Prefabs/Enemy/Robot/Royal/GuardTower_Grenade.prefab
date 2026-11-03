@@ -260,11 +260,15 @@ MonoBehaviour:
     ExplosionRange: 4
     DestructeRadius: 1
     ShockwaveRadius: 6
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 7679619540903172253, guid: 903ce8d536e680c4ba7d866df85e7ba3,
@@ -300,7 +304,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -542,6 +545,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -792,7 +796,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 500
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 9
+    Value: 0
   MainPart: {fileID: 4904602674125601417}
   demolishValue: 30
   AutoDestroy: 0
@@ -888,6 +894,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -963,6 +970,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

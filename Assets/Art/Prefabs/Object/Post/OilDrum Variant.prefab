@@ -55,11 +55,13 @@ MonoBehaviour:
     ExplosionRange: 6
     DestructeRadius: 2
     ShockwaveRadius: 6
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 20
     ImpactSoundRadius: 8
     NoSource: 1
@@ -279,6 +281,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

@@ -340,6 +340,27 @@ namespace FPSGame.Game
         /// <summary>本单位身上的 Animator 是否已被距离剔除关掉（见 <c>UnitAnimatorCuller</c>）。</summary>
         public bool AnimatorsOff => _animatorsOff;
 
+        /// <summary>本单位是否正在播**一次性**动画（入场 <c>Appear</c> 这类非循环状态）。
+        /// <para>▍这类状态绝不能冻：状态机一停模型就钉在第 0 帧 —— "从天而降"的单位逻辑坐标已在地上、
+        /// 模型却挂在半空，玩家走近才落下。判据用 <c>loop</c> 而非状态名：Idle/移动/开火都是循环的、随便冻。</para>
+        /// <para>⚠ 有 clip 漏勾循环 ⇒ 该单位永远不被冻结（只少省点 CPU，不破玩法）。</para></summary>
+        public bool AnimatorOneShotPlaying
+        {
+            get
+            {
+                if (_animators == null) return false;
+                for (int i = 0; i < _animators.Length; ++i)
+                {
+                    Animator anim = _animators[i];
+                    if (anim == null || !anim.enabled) continue;
+                    if (anim.IsInTransition(0)) return true;   // 过渡中读到的状态不可靠，这一轮先别冻
+                    AnimatorStateInfo st = anim.GetCurrentAnimatorStateInfo(0);
+                    if (!st.loop && st.normalizedTime < 1f) return true;
+                }
+                return false;
+            }
+        }
+
         /// <summary>把本单位身上 Animator 的裁剪模式从 AlwaysAnimate 改成 CullUpdateTransforms（只改一次）。</summary>
         private void InitAnimatorCulling()
         {
@@ -426,7 +447,7 @@ namespace FPSGame.Game
 
         void OnRevive()
         {
-            Debug.LogError("单位复活");
+            Debug.Log("单位复活");
             ActorState = ActorState.Normal;
             switch (type)
             {

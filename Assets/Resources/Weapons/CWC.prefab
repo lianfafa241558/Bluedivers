@@ -450,13 +450,13 @@ MonoBehaviour:
   - BulletPrefab: {fileID: -7807231914088266234, guid: 619890997c9e69540b3dea220d4adf9e,
       type: 3}
     LandingPrefab: {fileID: 0}
-    Speed: 70
+    Speed: 40
     Gravity: 0
     InheritWeaponSpeed: 0
     MaxLifeTime: 1.6
     MaxRange: 60
     MinRange: 1
-    NoSource: 0
+    NoSource: 1
     SoundRadius: 40
     ImpactSoundRadius: 0
     DamageExplosion: 0
@@ -509,7 +509,7 @@ MonoBehaviour:
     MaxLifeTime: 1.6
     MaxRange: 60
     MinRange: 1
-    NoSource: 0
+    NoSource: 1
     SoundRadius: 40
     ImpactSoundRadius: 0
     DamageExplosion: 0
@@ -657,13 +657,13 @@ MonoBehaviour:
     type: 242
     addTag: 0
     removeTag: 0
-  showAttr: 02000000010000000d0000000e0000000f000000100000001500000016000000
+  showAttr: 140000001600000002000000010000000d0000000e0000000f00000010000000
   m_UniqueAttr:
   - name: "\u9ED1\u5BA2\u653B\u51FB"
     value: 0
     tag: 32
   - name: "\u7A7F\u900F\u5355\u4F4D"
-    value: 0
+    value: 1
     tag: 32
   Upgrade:
   - Key: 2
@@ -683,6 +683,7 @@ MonoBehaviour:
     Value:
     - {fileID: 11400000, guid: d038f835b6553a5e8979490ba17b3d21, type: 2}
     - {fileID: 11400000, guid: 4c1c28985a50d8037dd69b78923910cf, type: 2}
+    - {fileID: 11400000, guid: fc5ca755f077b8947aa8c2427b289644, type: 2}
   - Key: 18
     Value:
     - {fileID: 11400000, guid: 87e924f0a50d1b9939e5eef9a9156bfb, type: 2}

@@ -81,19 +81,18 @@ MonoBehaviour:
   AttackRange: 300
   AlertRange: 0
   Lazy: 1
+  RespondWarning: 1
   KnownTargetTimeout: 5
   MinSwitchTargetTime: 5
   TimeLastTargetSet: -Infinity
+  showGizmos: 0
   Target:
     pos: {x: 0, y: 0, z: 0}
-  showGizmos: 0
+    show: {fileID: 0}
   IsSeeingTarget: 0
   obstacle: {fileID: 0}
   TimeLastSeenTarget: -Infinity
-  showTarget: {fileID: 0}
-  showTargetPos: {x: 0, y: 0, z: 0}
   show: 0
-  ShowTargetState: 0
 --- !u!1 &4759703972466801324
 GameObject:
   m_ObjectHideFlags: 0
@@ -212,6 +211,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &6800930382587050161
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -242,6 +246,7 @@ MonoBehaviour:
     meleeRangeThreshold: 5
   PreJudgment: 0
   PreJudgmentFactor: 1
+  BewareLookDuration: 3
 --- !u!114 &1215996413397476632
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -254,6 +259,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8731a57842b73eb4382ffcc1034c819b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 0}
@@ -265,22 +271,16 @@ MonoBehaviour:
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 1742380729033802866}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 1009844439945072076}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 5
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
-  ShowName: "\u706B\u70AE"
-  Id: Artillery
-  Portrait: {fileID: 21300000, guid: eaa361ab78f30474b9353500a5cc1c30, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: eaa361ab78f30474b9353500a5cc1c30, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 1009844439945072076}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 5
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
   requireId: Shell
   shells: 
   m_weapon: {fileID: 0}
@@ -298,13 +298,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 8
+    Value: 0
+  - Key: 9
+    Value: 0
+  - Key: 11
+    Value: 0
   MainPart: {fileID: 0}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 0
 --- !u!1 &7920068387583443990
 GameObject:
   m_ObjectHideFlags: 0
@@ -408,6 +414,7 @@ MonoBehaviour:
     MinRange: 5
     NoSource: 1
     SoundRadius: 100
+    ImpactSoundRadius: 8
     DamageExplosion: 200
     DamageDirect: 550
     DamageGroupDirect:
@@ -420,11 +427,15 @@ MonoBehaviour:
     ExplosionRange: 10
     DestructeRadius: 3
     ShockwaveRadius: 11
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: 5e0e441763238ba498d5a4847077d889,
@@ -458,6 +469,7 @@ MonoBehaviour:
     MinRange: 5
     NoSource: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 300
     DamageDirect: 700
     DamageGroupDirect:
@@ -470,11 +482,15 @@ MonoBehaviour:
     ExplosionRange: 12
     DestructeRadius: 4
     ShockwaveRadius: 16
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: f4897c6a885fec74185b34e9259784f1,
@@ -508,6 +524,7 @@ MonoBehaviour:
     MinRange: 5
     NoSource: 1
     SoundRadius: 200
+    ImpactSoundRadius: 8
     DamageExplosion: 2500
     DamageDirect: 100
     DamageGroupDirect:
@@ -520,11 +537,15 @@ MonoBehaviour:
     ExplosionRange: 25
     DestructeRadius: 15
     ShockwaveRadius: 30
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 665100303325612391, guid: 4a251ccafda82a644accfe3c2b5efebf,
@@ -558,6 +579,7 @@ MonoBehaviour:
     MinRange: 5
     NoSource: 1
     SoundRadius: 100
+    ImpactSoundRadius: 8
     DamageExplosion: 200
     DamageDirect: 550
     DamageGroupDirect:
@@ -570,6 +592,7 @@ MonoBehaviour:
     ExplosionRange: 10
     DestructeRadius: 3
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 0.5
@@ -577,6 +600,9 @@ MonoBehaviour:
       Value: 0.5
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 8167516518492074666, guid: 9bf5007dbab9f9a4d9c2d3e322a9c375,
@@ -610,6 +636,7 @@ MonoBehaviour:
     MinRange: 5
     NoSource: 1
     SoundRadius: 100
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 550
     DamageGroupDirect:
@@ -622,11 +649,15 @@ MonoBehaviour:
     ExplosionRange: 6
     DestructeRadius: 3
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 2115654139197423946, guid: c017b2553037218409ad516f7ecc5241,
@@ -660,6 +691,7 @@ MonoBehaviour:
     MinRange: 5
     NoSource: 1
     SoundRadius: 100
+    ImpactSoundRadius: 8
     DamageExplosion: 50
     DamageDirect: 550
     DamageGroupDirect:
@@ -672,9 +704,13 @@ MonoBehaviour:
     ExplosionRange: 10
     DestructeRadius: 3
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 4
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 3577755781743022927, guid: 89ff1385eeedab44abb732d49f29da50,
@@ -702,6 +738,8 @@ MonoBehaviour:
   FlashSizeScale: 5
   UnparentMuzzleFlash: 0
   SFXRange: 60
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: c9c63d78fd83ae44b8e1458ff52a1138, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -709,7 +747,7 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0

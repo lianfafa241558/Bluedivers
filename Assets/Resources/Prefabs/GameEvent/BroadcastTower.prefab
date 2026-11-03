@@ -249,13 +249,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 8
+    Value: 0
+  - Key: 9
+    Value: 0
+  - Key: 11
+    Value: 0
   MainPart: {fileID: 994554564314660960}
   demolishValue: 30
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 0
 --- !u!114 &1340381673224083611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -285,7 +291,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 535495981}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: dc65f4d8b2d398c409d766e93f18d227, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
@@ -306,6 +311,7 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!1 &3782099293029178414
 GameObject:
@@ -355,6 +361,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 5
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -462,6 +469,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 5
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -918,6 +926,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
@@ -977,6 +986,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
@@ -1030,6 +1040,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
@@ -1083,6 +1094,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
@@ -1142,6 +1154,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:
@@ -1201,6 +1214,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor: []
   armorBreakEffect:

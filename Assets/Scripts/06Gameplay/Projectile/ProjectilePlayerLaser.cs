@@ -47,7 +47,9 @@ namespace FPSGame.Gameplay
             // ⚠ 必须取**射手**的准心点：原来读 `FpsHelper.PlayerCameraLookPoint`（语义 = "**本机玩家**的点"）
             //   ⇒ 联机时远端那颗表现弹会朝"我的准心"修正方向（2026-10-13 修）。
             //   `TryGetAimPoint` 会自己分流：本机玩家 = 自己的相机；盟友实例 = 用已同步姿态本地重算。
-            if (ShouldLockCrosshair() && FpsHelper.TryGetAimPoint(Owner, out var pos, 500f, 99f))
+            // ⚠ 最后一个参数 true = 跳过"双向忽略"的透明单位（wire 这类）：光束本来就穿过它，
+            //   若把准心点取在它身上，光束会被掰过去再穿出去 ⇒ 越走越偏（实测 3.4m 处偏 13.46°）。
+            if (ShouldLockCrosshair() && FpsHelper.TryGetAimPoint(Owner, out var pos, 500f, 99f, true))
             {
                 Vector3 want = pos - transform.position;
                 float dis = want.magnitude;

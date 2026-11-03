@@ -409,6 +409,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 500
   LineArmor: []
   armorBreakEffect: []
@@ -495,6 +496,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0.5
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -5548,9 +5550,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 11
+    Value: 0
+  - Key: 9
+    Value: 0
+  - Key: 9
+    Value: 0
   MainPart: {fileID: 1857799104042451175}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
@@ -5573,6 +5582,11 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
+  _knockbackWeight: 1
+  _knockbackDrag: 3
+  _knockbackMaxSpeed: 20
+  _pauseAutoRepathWhileKnocked: 1
+  _knockbackImmune: 0
 --- !u!114 &3894886327015234027
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5586,10 +5600,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 05bcb6ee8f6038f4cab058a539403254, type: 2}
   fxMaterial: {fileID: 2100000, guid: b279344f01fec1f448450eb3f40b877d, type: 2}
+  events: []
+  BirthMaterial: {fileID: 0}
 --- !u!114 &8341230476705763374
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5672,6 +5687,7 @@ MonoBehaviour:
   LiftTime: 20
   PreRelease: 1
   allowSeeRelease: 0
+  EndDelay: 0
   allowRelease: 0
   useDebug: 0
   OnEnd:

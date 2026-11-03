@@ -128,6 +128,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 0
     DamageDirect: 0
     DamageGroupDirect:
@@ -138,11 +139,15 @@ MonoBehaviour:
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 1407605918332124854, guid: 292d3d5666b9d414fa1b157bb2410ce1,
@@ -175,6 +180,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 20
     DamageDirect: 0
     DamageGroupDirect:
@@ -185,11 +191,15 @@ MonoBehaviour:
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 6513570022818009108, guid: db88a36f795988344bf2dd4e9120fdbb,
@@ -216,6 +226,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 40
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: 3ce44684e47e96b4f88126500c2a4f36, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -223,7 +235,7 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -279,13 +291,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 30
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 9
+    Value: 0
+  - Key: 8
+    Value: 0
+  - Key: 11
+    Value: 0
   MainPart: {fileID: 4932906196024244537}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 0
 --- !u!114 &4932906196024244537
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,6 +319,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -417,10 +436,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 784931013060139314}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 5cb81ed8afa1e7a4da5646aeb9599652, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
+  events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!1 &582375947040637986
 GameObject:

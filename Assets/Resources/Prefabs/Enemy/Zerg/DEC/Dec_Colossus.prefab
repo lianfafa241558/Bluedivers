@@ -124,11 +124,13 @@ MonoBehaviour:
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 2.2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 0
     ImpactSoundRadius: 0
     NoSource: 0
@@ -479,7 +481,7 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists:
   - Key: 11
-    Value: 10
+    Value: 0
   MainPart: {fileID: 9134004182813535252}
   demolishValue: -1
   AutoDestroy: 0
@@ -489,13 +491,17 @@ MonoBehaviour:
   - Key: 4
     Value: 300
   - Key: 5
-    Value: 300
+    Value: 500
   - Key: 7
     Value: 300
   - Key: 8
     Value: 500
   - Key: 9
     Value: 500
+  - Key: 6
+    Value: 500
+  - Key: 10
+    Value: 100
 --- !u!114 &9122273490031440664
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -841,11 +847,13 @@ MonoBehaviour:
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 2.2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 0
     ImpactSoundRadius: 0
     NoSource: 0
@@ -1011,9 +1019,13 @@ MonoBehaviour:
     ExplosionRange: 1
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 5
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
@@ -1050,7 +1062,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -1190,11 +1201,13 @@ MonoBehaviour:
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 2.2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 0
     ImpactSoundRadius: 0
     NoSource: 0
@@ -1367,11 +1380,13 @@ MonoBehaviour:
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 2.2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 0
     ImpactSoundRadius: 0
     NoSource: 0

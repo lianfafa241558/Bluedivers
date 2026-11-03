@@ -84,11 +84,15 @@ MonoBehaviour:
     ExplosionRange: 6
     DestructeRadius: 1
     ShockwaveRadius: 7
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 7655095426451682942, guid: 8c84ae7d953e4994993fe852f7fd1bf4,
@@ -117,6 +121,7 @@ MonoBehaviour:
   UnparentMuzzleFlash: 0
   SFXRange: 50
   FireNoiseRadius: 30
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 8300000, guid: af816affa8b09494aa3206a041402fe7, type: 3}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -124,7 +129,7 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
@@ -378,6 +383,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7039769bf4a0172489098d31bad4053c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 915b317d03af07547be2e88b48190c87, type: 3}
@@ -389,22 +395,16 @@ MonoBehaviour:
   desc: "\u8FDB\u5165\u9A7E\u9A76"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 6264359104302618753}
+  relatedTrans2: {fileID: 3115704162309591228}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
-  ShowName: "\"\u97A0\u5F0F\"\u53CD\u5766\u514B\u70AE"
-  Id: Exosuit
-  Portrait: {fileID: 21300000, guid: 2052346977a35da42847418ab56ee25b, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 2052346977a35da42847418ab56ee25b, type: 3}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 6264359104302618753}
-  relatedTrans2: {fileID: 3115704162309591228}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
 --- !u!114 &4397792114913368988
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -638,6 +638,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 6415510742381971665}
@@ -896,9 +897,26 @@ MonoBehaviour:
   DefaultBobAmount: 0.2
   AimingBobAmount: 0.1
   RecoilForce: 2
-  RecoilSharpness: 50
-  MaxRecoilDistance: 0.5
-  RecoilRestitutionSharpness: 10
+  RecoilProfile:
+    PitchKick: 1.5
+    YawKick: 0.4
+    YawStep: 0.12
+    YawRandom: 0.35
+    KickSharpness: 40
+    RecoveryDelay: 0.1
+    RecoverySpeed: 12
+    YawRecoveryRatio: 0.7
+    MaxPitch: 12
+    MaxYaw: 6
+    AdsScale: 0.7
+    WeaponKickBack: 0.05
+    WeaponKickPitch: 2.5
+    WeaponKickRoll: 1.2
+    WeaponSpring: 14
+    SpreadBloomPerShot: 0
+    SpreadBloomMax: 4
+    SpreadBloomDecay: 8
+    ShakePerShot: 0
   AimingAnimationSpeed: 10
   DefaultFov: 60
   AimZoomRatio: 0.2
@@ -918,7 +936,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 100
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 9
+    Value: 0
+  - Key: 8
+    Value: 0
   MainPart: {fileID: 1647108703008065935}
   demolishValue: -1
   AutoDestroy: 0

@@ -270,11 +270,13 @@ MonoBehaviour:
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 2.2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 0
     ImpactSoundRadius: 0
     NoSource: 0
@@ -5354,11 +5356,13 @@ MonoBehaviour:
     ExplosionRange: 1.1
     DestructeRadius: 0
     ShockwaveRadius: 2.2
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 0
     ImpactSoundRadius: 0
     NoSource: 0
@@ -6712,14 +6716,6 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 323293385}
-    - targetCorrespondingSourceObject: {fileID: 4689717572165646785, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1357227633}
-    - targetCorrespondingSourceObject: {fileID: 4689717572165646785, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 35552878}
     - targetCorrespondingSourceObject: {fileID: 8313074025348647359, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
         type: 3}
       insertIndex: -1
@@ -6728,6 +6724,14 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 411116502}
+    - targetCorrespondingSourceObject: {fileID: 4689717572165646785, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1357227633}
+    - targetCorrespondingSourceObject: {fileID: 4689717572165646785, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 35552878}
   m_SourcePrefab: {fileID: 100100000, guid: 317ad8ee2ba1bfe4799bccc04cbd0eea, type: 3}
 --- !u!4 &91587337937869699 stripped
 Transform:
@@ -6777,6 +6781,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -6973,6 +6978,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 2
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 323293385}
@@ -7049,6 +7055,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 150
   LineArmor: []
   armorBreakEffect:
@@ -7239,6 +7246,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 150
   LineArmor:
   - {fileID: 1182494268}
@@ -7586,6 +7594,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 150
   LineArmor:
   - {fileID: 1251346717}
@@ -7976,9 +7985,26 @@ MonoBehaviour:
   DefaultBobAmount: 0.05
   AimingBobAmount: 0.02
   RecoilForce: 1
-  RecoilSharpness: 50
-  MaxRecoilDistance: 0.5
-  RecoilRestitutionSharpness: 10
+  RecoilProfile:
+    PitchKick: 1.5
+    YawKick: 0.4
+    YawStep: 0.12
+    YawRandom: 0.35
+    KickSharpness: 40
+    RecoveryDelay: 0.1
+    RecoverySpeed: 12
+    YawRecoveryRatio: 0.7
+    MaxPitch: 12
+    MaxYaw: 6
+    AdsScale: 0.7
+    WeaponKickBack: 0.05
+    WeaponKickPitch: 2.5
+    WeaponKickRoll: 1.2
+    WeaponSpring: 14
+    SpreadBloomPerShot: 0
+    SpreadBloomMax: 4
+    SpreadBloomDecay: 8
+    ShakePerShot: 0
   AimingAnimationSpeed: 10
   DefaultFov: 60
   AimZoomRatio: 0.7
@@ -8009,11 +8035,11 @@ MonoBehaviour:
   - Key: 10
     Value: 0.5
   - Key: 8
-    Value: 1
+    Value: 0
   - Key: 9
-    Value: 1
+    Value: 0
   - Key: 11
-    Value: -1
+    Value: 0
   MainPart: {fileID: 1345760138}
   demolishValue: -1
   AutoDestroy: 0
@@ -8075,11 +8101,13 @@ MonoBehaviour:
     ExplosionRange: 8
     DestructeRadius: 4
     ShockwaveRadius: 10
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 20
     ImpactSoundRadius: 8
     NoSource: 1

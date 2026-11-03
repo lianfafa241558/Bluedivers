@@ -343,11 +343,15 @@ MonoBehaviour:
     ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 0.5
     - Key: 5
       Value: 0.5
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 1637634676204680627, guid: e10409ce661231842b8cf46bef55b627,
@@ -384,7 +388,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -782,6 +785,81 @@ PrefabInstance:
         type: 3}
       propertyPath: showHealth
       value: 40000
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.size
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[0].Key
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[1].Key
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[2].Key
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[3].Key
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[4].Key
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[5].Key
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[6].Key
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[0].Value
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[1].Value
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[2].Value
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[3].Value
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[4].Value
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[5].Value
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 8965386083762794090, guid: 8a59a0e48f53f7c4694a6c8346e03d21,
+        type: 3}
+      propertyPath: AboGaugeArr.Array.data[6].Value
+      value: 100
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

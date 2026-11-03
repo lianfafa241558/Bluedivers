@@ -200,7 +200,21 @@ MonoBehaviour:
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
-  AboGaugeArr: []
+  AboGaugeArr:
+  - Key: 4
+    Value: 40
+  - Key: 5
+    Value: 40
+  - Key: 6
+    Value: 40
+  - Key: 7
+    Value: 40
+  - Key: 8
+    Value: 40
+  - Key: 9
+    Value: 40
+  - Key: 11
+    Value: 40
 --- !u!114 &5114223292933438719
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -369,9 +383,13 @@ MonoBehaviour:
     ExplosionRange: 0.6
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 0
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 0}
@@ -407,7 +425,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0

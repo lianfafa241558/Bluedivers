@@ -291,6 +291,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -311,7 +312,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxHealth: 1000
   MaxShield: 0
-  showArmorLists: []
+  showArmorLists:
+  - Key: 8
+    Value: 0
+  - Key: 9
+    Value: 0
+  - Key: 11
+    Value: 0
   MainPart: {fileID: 1331484001479467211}
   demolishValue: -1
   AutoDestroy: 0

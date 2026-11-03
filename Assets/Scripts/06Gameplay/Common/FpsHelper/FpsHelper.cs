@@ -49,8 +49,14 @@ public static partial class FpsHelper
     /// </summary>
     /// <param name="maxDistance">射线最大距离（打空时目标点取射线该距离处）。</param>
     /// <param name="layerSpeed">命中层集合的挑选参数（高速弹不能穿盾，见 <see cref="GetHittableLayers"/>）。</param>
+    /// <param name="skipDoubleIgnore">
+    /// true = 跳过"双向忽略"的碰撞体（<see cref="IgnoreHitDetection"/> 且 <c>Unidirectional == false</c>，即 wire 这类
+    /// 对子弹/光束**都透明**的装饰物）往后取最近的"真命中"。光束类必须用它：否则准心前 3m 挂着一根铁丝网时，
+    /// 光束会被掰向那个透明点（实测偏 13.46°），越过它之后再一路偏出去，看着像"没对着准心"。
+    /// </param>
     /// <returns>false = 取不到瞄准源（舰桥 / 单位未就绪）⇒ 调用方应保持原行为（不制导）。</returns>
-    public static bool TryGetAimPoint(GameObject owner, out Vector3 point, float maxDistance = 300f, float layerSpeed = 99f)
+    public static bool TryGetAimPoint(GameObject owner, out Vector3 point, float maxDistance = 300f, float layerSpeed = 99f,
+                                      bool skipDoubleIgnore = false)
     {
         point = Vector3.zero;
         if (owner == null) return false;
@@ -60,7 +66,7 @@ public static partial class FpsHelper
         var cam = pc != null ? pc.PlayerCamera : null;
         if (cam != null)
         {
-            point = RaycastPoint(cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)), maxDistance, layerSpeed);
+            point = RaycastPoint(cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)), maxDistance, layerSpeed, skipDoubleIgnore);
             return true;
         }
 
@@ -68,19 +74,40 @@ public static partial class FpsHelper
         var friend = owner.GetComponentInParent<FriendController>();
         if (friend != null && friend.TryGetAimRay(out Vector3 origin, out Vector3 dir))
         {
-            point = RaycastPoint(new Ray(origin, dir), maxDistance, layerSpeed);
+            point = RaycastPoint(new Ray(origin, dir), maxDistance, layerSpeed, skipDoubleIgnore);
             return true;
         }
 
         return false;
     }
 
+    /// <summary>取点缓冲（每帧复用；瞄准取点每帧都跑，不能分配）</summary>
+    private static readonly RaycastHit[] k_AimHits = new RaycastHit[16];
+
     /// <summary>射线采样一个目标点（没打到东西就给射程尽头）—— 本文件里几条取点路径共用。</summary>
-    static Vector3 RaycastPoint(Ray ray, float maxDistance, float layerSpeed)
+    /// <param name="skipDoubleIgnore">跳过"双向忽略"的碰撞体（对子弹/光束都透明的装饰物），见 <see cref="TryGetAimPoint"/></param>
+    static Vector3 RaycastPoint(Ray ray, float maxDistance, float layerSpeed, bool skipDoubleIgnore = false)
     {
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, GetHittableLayers(layerSpeed), QueryTriggerInteraction.Collide))
-            return hit.point;
-        return ray.origin + ray.direction * maxDistance;
+        if (!skipDoubleIgnore)
+        {
+            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, GetHittableLayers(layerSpeed), QueryTriggerInteraction.Collide))
+                return hit.point;
+            return ray.origin + ray.direction * maxDistance;
+        }
+
+        int count = Physics.RaycastNonAlloc(ray, k_AimHits, maxDistance, GetHittableLayers(layerSpeed), QueryTriggerInteraction.Collide);
+        float best = float.MaxValue;
+        Vector3 point = ray.origin + ray.direction * maxDistance;
+        for (int i = 0; i < count; ++i)
+        {
+            RaycastHit h = k_AimHits[i];
+            if (h.distance >= best || h.distance <= 0f) continue;   // distance=0 的命中落点不可靠，不要
+            var ihd = h.collider.GetComponent<IgnoreHitDetection>();
+            if (ihd != null && !ihd.Unidirectional) continue;
+            best = h.distance;
+            point = h.point;
+        }
+        return point;
     }
 
 

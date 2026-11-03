@@ -10038,16 +10038,23 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists:
   - Key: 11
-    Value: 10
+    Value: 0
   - Key: 8
-    Value: 10
+    Value: 0
   - Key: 9
-    Value: 10
+    Value: 0
   MainPart: {fileID: 2647102820940276906}
   demolishValue: 40
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
-  AboGaugeArr: []
+  AboGaugeArr:
+  - Key: 4
+    Value: 80
+  - Key: 5
+    Value: 80
+  - Key: 6
+    Value: 160
 --- !u!114 &2647102821790562783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10115,11 +10122,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 2a3cf663277d9b0439baf3273df8c9e5, type: 2}
   fxMaterial: {fileID: 2100000, guid: f3410a3cafb0f4b459fd14b95a4457d5, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!1 &2647102822303826459
 GameObject:
@@ -19841,6 +19848,7 @@ MonoBehaviour:
   AttackRange: 0
   AlertRange: 50
   Lazy: 0
+  RespondWarning: 1
   KnownTargetTimeout: 12
   MinSwitchTargetTime: 4
   TimeLastTargetSet: -Infinity
@@ -20377,6 +20385,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 1
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor:
   - {fileID: 2647102821158558576}
@@ -20428,6 +20437,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 200
   LineArmor: []
   armorBreakEffect:
@@ -20529,6 +20539,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor:
   - {fileID: 2647102822092411316}
@@ -20649,6 +20660,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 200
   LineArmor: []
   armorBreakEffect:
@@ -20783,6 +20795,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor:
   - {fileID: 2647102820832019066}
@@ -20886,6 +20899,7 @@ MonoBehaviour:
   isWeakness: 1
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -21003,6 +21017,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 300
   LineArmor:
   - {fileID: 2647102821011056386}
@@ -21102,6 +21117,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 1
   armorLevel: 4
+  useHealthInsteadOfArmor: 0
   armorValue: 200
   LineArmor: []
   armorBreakEffect:

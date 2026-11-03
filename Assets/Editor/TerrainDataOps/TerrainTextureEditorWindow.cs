@@ -14,7 +14,7 @@ public class TerrainTextureEditorWindow : EditorWindow
     private int moveStep = 1;
     private bool wrapEdges = true;
     private TerrainTarget applyTarget = TerrainTarget.Both;
-    private bool moveHeightWhileMoveAlpha = true;
+    //private bool moveHeightWhileMoveAlpha = true;
     private static readonly string[] ApplyTargetLabels = { "仅纹理混合 (Alphamap)", "仅高度图 (Heightmap)", "两者" };
 
     [MenuItem("Tools/Terrain/地形操作器")]
