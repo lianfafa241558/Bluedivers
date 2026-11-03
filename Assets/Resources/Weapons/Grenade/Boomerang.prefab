@@ -103,7 +103,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   WeaponRoot: {fileID: 7105197679822007025}
   UseManyMuzzle: 0
-  WeaponMuzzle: {fileID: 9062468467788106025}
+  WeaponMuzzle: {fileID: 5644134898345056342}
   WeaponMuzzle2: {fileID: 0}
   WeaponManyMuzzles: []
   cfg:
@@ -146,16 +146,20 @@ MonoBehaviour:
     ExplosionRange: 3
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 1860645395204038794, guid: 74a3f4379b6d5334b83c874af756f390,
       type: 3}
-    ImpactSfx: {fileID: 0}
+    ImpactSfx: {fileID: 8300000, guid: 5ba45a457f58abe47a6d562bca07b057, type: 3}
     UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
@@ -186,7 +190,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -211,6 +214,26 @@ MonoBehaviour:
   RHand: {fileID: 2321957633454148700}
   ShowRoot: {fileID: 3473478241216373623}
   RecoilForce: 1
+  RecoilProfile:
+    PitchKick: 1.5
+    YawKick: 0.4
+    YawStep: 0.12
+    YawRandom: 0.35
+    KickSharpness: 40
+    RecoveryDelay: 0.1
+    RecoverySpeed: 12
+    YawRecoveryRatio: 0.7
+    MaxPitch: 12
+    MaxYaw: 6
+    AdsScale: 0.7
+    WeaponKickBack: 0.05
+    WeaponKickPitch: 2.5
+    WeaponKickRoll: 1.2
+    WeaponSpring: 14
+    SpreadBloomPerShot: 0
+    SpreadBloomMax: 4
+    SpreadBloomDecay: 8
+    ShakePerShot: 0
   AimingHideCrosshair: 1
   AimZoomRatio: 1
   AimOffset: {x: 0, y: 0, z: 0}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using FPSGame.Audio;
 using FPSGame.Core;
 using FPSGame.GameContract;
 using PEMaths;
@@ -229,9 +230,17 @@ namespace FPSGame.Game
             _isAboTickDamage = false;
         }
 
-        /// <summary>满槽时异常状态特效挂载到自己身上</summary>
+        /// <summary>满槽时异常状态特效挂载到自己身上 + 播一次满槽音效</summary>
         private void EnsureAboVfx(AboGaugeEntry entry, AboStateData_SO stateData)
         {
+            // 音效用独立标记：vfx 没配时本方法会每 tick 重进，靠 VfxInstance 判重会让音效跟着每 0.5s 重播一次
+            if (!entry.SfxPlayed)
+            {
+                entry.SfxPlayed = true;
+                if (stateData.sfx != null)
+                    AudioSvc.PlaySound(new(stateData.sfx, transform.position, 30, AudioGroups.General));
+            }
+
             if (entry.VfxInstance != null) return;
             if (stateData.vfx == null || entry.Source == null) return;
             if (m_Unit == null) return;
@@ -242,11 +251,13 @@ namespace FPSGame.Game
                 transform.rotation,
                 transform);
             entry.VfxInstance.transform.localScale = Vector3.one * m_Unit.VisualScale * 2;
+            
         }
 
-        /// <summary>释放已挂载的异常状态特效</summary>
+        /// <summary>释放已挂载的异常状态特效（并复位"本段满槽已播过音效"）</summary>
         private void ReleaseAboVfx(AboGaugeEntry entry)
         {
+            entry.SfxPlayed = false;
             if (entry.VfxInstance == null) return;
             FPSGame.Core.VfxPool.Release(entry.VfxInstance);
             entry.VfxInstance = null;
@@ -268,6 +279,8 @@ namespace FPSGame.Game
             public GameObject Source;
             /// <summary>已挂载的异常状态特效实例（运行时）</summary>
             public GameObject VfxInstance;
+            /// <summary>本段满槽是否已播过音效（运行时）</summary>
+            public bool SfxPlayed;
             /// <summary>上一 tick 是否满槽（用于检测满槽状态变化）</summary>
             public bool WasFull;
 

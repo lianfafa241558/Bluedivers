@@ -82,8 +82,11 @@ EditorSceneManager.CloseScene(scene, true);
 - 手写 `rootLife` 极易短于 `子层 duration + startLifetime`，被 `VFXManager` 提前判死 ⇒ 尾巴（烟/焦痕）被截断。
 - 收尾脚本：遍历子 PS 取 `max(duration + startLifetime.constantMax) + 0.15`，回写根 PS 的 `startLifetime`（本次 11/13 个 prefab 都需要抬，最大 +1.55s）。
 
-### 7.5 `velocityOverLifetime` 的 x/y/z/radial 必须同 mode
-- 否则每次 Simulate/更新都刷 `Particle Velocity curves must all be in the same mode`。批量归一：`v.x = new MinMaxCurve(x.constantMin, x.constantMax)` 四路同上。
+### 7.5 `velocityOverLifetime` 的 x/y/z（以及 orbitalX/Y/Z）必须同 mode
+- 否则每次 Simulate/更新都刷 `Particle Velocity curves must all be in the same mode` / `Particle Orbital Velocity curves…`（在 job 线程 `VelocityModule::Update` 里刷，日志栈看不出是哪个特效）。
+- `minMaxState`: 0=Constant / 1=Curve / 2=TwoConstants / 3=TwoCurves，**三轴必须完全相同**；`radial` 不参与判定（现代 UI 改不到），算进去会得到 250+ 假阳性。
+- 修法：以视觉主轴的 mode 为准，把另两轴改成同 mode（曲线/scalar 保持原值，通常本来全 0 ⇒ 零视觉变化）。
+- 排查工具：`.codebuddy/plans/scan_ps_curve_mode.py`（只读扫全 Assets 的 prefab/scene）。⚠ **一个 prefab 有 N 个 PS、N 个 VelocityModule**，按"第一个 VelocityModule"定位会改到 disabled 的那个 ⇒ 按块内特征（`enabled: 1`、`orbitalY` 模式）挑。
 
 ### 7.6 MCP `execute_code`（CodeDom / C#6）的三个硬约束
 - 不能链式改 struct 返回值：`p.main.startSize = ..` 报 "Cannot modify a value type return value" ⇒ 先 `var m = p.main;`。
