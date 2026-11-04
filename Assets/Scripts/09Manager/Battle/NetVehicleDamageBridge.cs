@@ -15,8 +15,8 @@ namespace FPSGame.Managers
     /// ——两端各 Instantiate 一份、各自挨子弹、成员还会把这一扣上报 ⇒ 2 倍。判据见
     /// <see cref="Actor.HostAuthorityUnit"/>，与载具共用同一道门。</para>
     ///
-    /// <para>▍键 = 载具 <c>Actor.NetId</c>（房主随 4028 分配、两端一致，见 <c>ActorsManager.VehicleNetIdBase</c>）；
-    /// 通道 = 既有统一伤害（成员 4025 上报 / 房主 4040 下发，死亡靠同一类的 <c>IsDeath</c>）。</para>
+    /// <para>▍键 = 载具 <c>Actor.NetId</c>（房主随 4034 分配、两端一致，见 <c>ActorsManager.VehicleNetIdBase</c>）；
+    /// 通道 = 既有统一伤害（成员 4053 上报 / 房主 4054 下发，死亡靠同一类的 <c>IsDeath</c>）。</para>
     ///
     /// <para>▍**下行刻意不在这里**：<c>EnemyNetBridge</c> 的应用路径是按 <c>NetId</c> 在 <c>ActorsManager.Actors</c>
     /// 全表里找、**不按 <c>UnitTypeEnum</c> 过滤** ⇒ 载具天然吃得下（含死亡那条 <c>ApplyRemoteDeath</c>）。
@@ -43,7 +43,8 @@ namespace FPSGame.Managers
             if (installed) return;
             installed = true;
             Damageable.LocalDamageGate = Gate;
-            UnitEventBus.OnUnitDamaged += OnLocalDamaged;
+            // 用 Settled（0 伤害也回调）：纯冰冻/催化/破甲命中也要同步，见 EnemyController._OnSettled
+            UnitEventBus.OnUnitSettled += OnLocalDamaged;
         }
 
         public static void Uninstall()
@@ -51,7 +52,7 @@ namespace FPSGame.Managers
             if (!installed) return;
             installed = false;
             Damageable.LocalDamageGate = null;
-            UnitEventBus.OnUnitDamaged -= OnLocalDamaged;
+            UnitEventBus.OnUnitSettled -= OnLocalDamaged;
         }
 
         // ==================== 权威门：这笔伤害该不该在本端落地 ====================
@@ -100,7 +101,7 @@ namespace FPSGame.Managers
 
         // ==================== 上行：本端真掉血了 -> 上报 / 下发 ====================
 
-        /// <summary>载具**真掉血**了（<c>Health.TakeDamage</c> 里真伤害 &gt; 0 时派发）⇒ 成员上报 4025 / 房主下发 4040。
+        /// <summary>载具**真掉血**了（<c>Health.TakeDamage</c> 里真伤害 &gt; 0 时派发）⇒ 成员上报 4053 / 房主下发 4054。
         /// <para>▍与 <c>NetDestructibleBridge.OnLocalDamaged</c> 同款，只换过滤条件为"载具"。</para>
         /// <para>▍"落地了才报"就够：非权威端的 AI 伤害被 <see cref="Gate"/> 挡在伤害入口 ⇒ 根本不会派发这个事件
         /// ⇒ 自动做到"AI 来源的载具伤害只有房主算"。</para>
@@ -121,7 +122,12 @@ namespace FPSGame.Managers
             }
 
             int dmg = Mathf.RoundToInt(damage.RawFloat);
-            if (dmg <= 0) return;
+            // ★ 成分数值（2026-11-04 起不再是系数）：接收端要靠它补"护甲破坏（含破甲流血）"与"异常状态积蓄"
+            //   （只带总伤害时那两条分支整段被跳过 —— 见 Health.LastRawGroups / §7.2e）
+            var hp = actor.GetComponent<IHealth>();
+            float[] groups = PackGroups(hp);
+            // 0 伤害但带成分（纯冰冻 / 催化 / 破甲）也要发 —— 否则成员端载具的积蓄槽与护甲永远不动
+            if (dmg <= 0 && groups == null) return;
 
             var flow = NetRoomFlow.Instance;
             if (flow == null || !flow.InRoom) return;   // 单机 / 不在房：两端本来就一致
@@ -135,11 +141,6 @@ namespace FPSGame.Managers
             // 部位下标（两端同一把 prefab 同序 ⇒ 稳定；-1 = 认不出，接收端自己挑主躯干）
             int part = actor.IndexOfDamageable(hitBody);
 
-            // ★ 原始伤害成分：接收端要靠它补"护甲破坏（含破甲流血）"与"异常状态积蓄"
-            //   （只带总伤害时那两条分支整段被跳过 —— 见 Health.LastRawGroups / §7.2e）
-            var hp = actor.GetComponent<IHealth>();
-            float[] groups = PackGroups(hp);
-
             FPSGame.Utils.NetSyncLog.BulletLog("载具/血·发",
                 $"{actor.ShowName}({actor.Id}) netId={netId} 伤害={dmg} 起源号={attackerNetId} 直接来源号={causedNetId} 部位={part} 是房主={flow.IsHost}");
 
@@ -147,8 +148,9 @@ namespace FPSGame.Managers
             else BattleEventBus.EnemyHit(netId, dmg, attackerNetId, groups, part, causedNetId);                  // 成员：上报房主（由他转发）
         }
 
-        /// <summary>把 <c>Health.LastRawGroups</c> 摊平成 <c>[count, type, coeff, ...]</c>（口径同 <c>EnemyController.PackDamageGroups</c>）。
-        /// <para>⚠ 只在下发/上报的**同步打包**里有效（复用缓冲）；拿不到 ⇒ null（接收端退回中性成分）。</para></summary>
+        /// <summary>把 <c>Health.LastRawGroups</c> 摊平成 <c>[count, type, value, ...]</c>（口径同 <c>EnemyController.PackDamageGroups</c>）。
+        /// <para>⚠ 只在下发/上报的**同步打包**里有效（复用缓冲）；拿不到 ⇒ null（接收端退回中性成分）。</para>
+        /// <para>⚠ value 是**每个成分的数值**（不是系数，2026-11-04 改口径）。</para></summary>
         static float[] PackGroups(IHealth hp)
         {
             var g = hp != null ? hp.LastRawGroups : null;   // 结算期间有效；TakeDamage 返回后就被清空
@@ -160,8 +162,8 @@ namespace FPSGame.Managers
             _groupScratch[0] = g.Count;
             for (int i = 0; i < g.Count; ++i)
             {
-                _groupScratch[1 + i * 2] = (int)g[i].Key;    // DamageTypeEnum 的 int
-                _groupScratch[2 + i * 2] = g[i].Value;       // 系数
+                _groupScratch[1 + i * 2] = (int)g[i].Key;          // DamageTypeEnum 的 int
+                _groupScratch[2 + i * 2] = g[i].Value.RawFloat;    // 成分数值
             }
             return _groupScratch;
         }

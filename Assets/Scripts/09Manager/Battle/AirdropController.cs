@@ -46,6 +46,10 @@ namespace FPSGame.Managers
         private const float _PowerMax = 10;
         private const float _PowerReSpeed = 0.167f;//60s回满
 
+        /// <summary>哨戒炮战备的 ID 区间（机枪 200 / 速射 201 / 迫击 202 / 火箭 203 / 激光 204），"阵地战大师"从这里随机取。</summary>
+        private const int TurretAdFirst = 200;
+        private const int TurretAdLast = 204;
+
         public List<AirdropData> useAd;
 
         IActor Player => ActorsManager.Player;
@@ -123,6 +127,11 @@ namespace FPSGame.Managers
             {
                 //Debug.LogError("添加任务所需战备"+ ResManager.airdropDic[required[i]].showName);
                 useAd.Add(new(ResSvc.airdropDic[required[i]], true));
+            }
+            // 阵地战大师：随机发一件哨戒炮（200~204）
+            if (BattleManager.Instance.HaveBooster(BoosterType.RandomTurret))
+            {
+                useAd.Add(new(ResSvc.airdropDic[Random.Range(TurretAdFirst, TurretAdLast + 1)], true));
             }
             //读取玩家携带的战备
             var arr = TeamManager.Instance.Self.airdrop;
@@ -235,6 +244,10 @@ namespace FPSGame.Managers
         /// <summary>完成输入，等待释放</summary>
         private void OnWaitRelease(AirdropData item)
         {
+            // ⚠ 自动装填（Unavailable 分支）可能在玩家**正选着一发**时插进来：必须先把那发取消掉，
+            //   否则它永远停在 Wait（此后输入再也匹配不到它），而 WaitRelease 被顶成 null
+            //   ⇒ 玩家开枪只会落进"没有待释放的战备"（**空信标警告**），档位也切不回 0。
+            if (WaitRelease != null && WaitRelease != item) OnCancel(Player.gameObject, WaitRelease);
             item.State = AirdropState.Wait;
             WaitRelease = item;
             Close();
@@ -250,6 +263,9 @@ namespace FPSGame.Managers
                     item.State = AirdropState.Sustain;
                 }
                 WaitRelease = null;
+                // ⚠ 顺序不能反：先清 WaitRelease 再回切（`SwitchToWeaponIndex` 会拿它判"要不要取消战备"）。
+                //   直接释放不走信标 ⇒ 没有 `OnAirdrop` 事件来换回武器，不补这一句玩家会一直举着信号枪。
+                Player.transform.GetComponent<PlayerWeaponsManager>().ExitTempFlareGun();
             }
             else if (Player.ActorState == ActorState.Hide)
             {
@@ -331,7 +347,7 @@ namespace FPSGame.Managers
         /// 团队冷却（<see cref="AirdropData_SO.teamCool"/>）：把本机玩家那份**同名战备**置为冷却。
         ///
         /// <para>▍为什么要外部来调：战备表是**各端各自一份**的（<see cref="useAd"/> 只装本机玩家那份），
-        /// 队友放的那一发在本机只是"呼叫同步"（4027/4028）⇒ 由 <c>NetFriendBridge.HandleAirdropCall</c> 调本方法冻住本机这份。
+        /// 队友放的那一发在本机只是"呼叫同步"（4033/4034）⇒ 由 <c>NetFriendBridge.HandleAirdropCall</c> 调本方法冻住本机这份。
         /// 判据（<c>cfg.teamCool</c>）在这里查，调用方只管给 id。</para>
         /// <para>⚠ <paramref name="except"/> 传"本机正在释放的那一发"：它自己走 Arrive→Sustain→Cool，
         /// 且 <c>Cool</c> 的时长是 <c>cool - 持续 - 部署</c> ⇒ 结束时刻与这里写的 <c>time = cool</c> 正好对齐，别再去动它。</para>
@@ -429,7 +445,7 @@ namespace FPSGame.Managers
                             }
                         }
                     }
-                    //团队冷却：这一发勾了 teamCool ⇒ 本机其余同名条目立刻进 CD；队友那几台靠呼叫同步（4027/4028）
+                    //团队冷却：这一发勾了 teamCool ⇒ 本机其余同名条目立刻进 CD；队友那几台靠呼叫同步（4033/4034）
                     //到 NetFriendBridge.HandleAirdropCall 后各调一次 ApplyTeamCool。
                     //⚠ 直接释放(isDirect)的战备不走信标、也到不了这里 ⇒ 目前对它们不生效（见 AirdropData_SO.teamCool）
                     ApplyTeamCool(data.cfg.ID, data);

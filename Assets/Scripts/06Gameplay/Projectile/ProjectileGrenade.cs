@@ -44,6 +44,17 @@ namespace FPSGame.Gameplay
         [SerializeField]
         private bool Sticky;
 
+        [Header("自转(表现)")]
+        [InspectorName("自转最低速度(米/秒)")]
+        [Tooltip("低于此速度就定住不转。低速段速度方向几乎全由重力决定，越慢甩得越快，不拦就会出现\"快停下了还在原地高速自转\"")]
+        [SerializeField]
+        private float SpinMinSpeed = 2f;
+
+        [InspectorName("自转最大角速度(度/秒)")]
+        [Tooltip("只压低速段的甩头：高速飞行时方向本来就不变，调它不影响弹道")]
+        [SerializeField]
+        private float MaxSpinSpeed = 240f;
+
         [InspectorName("碰撞时(逻辑)")]
         [Tooltip("只有真实弹派发；远端那颗表现弹不派发 ⇒ 挂会结算伤害/持续效果的东西用这个")]
         [SerializeField]
@@ -110,6 +121,25 @@ namespace FPSGame.Gameplay
                     m_StickPivot.TransformPoint(m_StickLocalPos),
                     m_StickPivot.rotation * m_StickLocalRot);
             }
+        }
+
+        /// <summary>
+        /// 手雷不能直接朝速度转向：方向每帧的变化率 ≈ 重力/速度，速度掉到 1 米/秒时已近 500 度/秒
+        /// ⇒ 明明快停下了还在原地高速自转。这里"低速定住 + 角速度上限"压下来，只改表现、不动弹道。
+        /// </summary>
+        protected override void FaceVelocity()
+        {
+            float speed = m_Velocity.magnitude;
+            if (speed < SpinMinSpeed || speed < 0.0001f) return;
+
+            Vector3 target = m_Velocity / speed;
+            float maxDegrees = MaxSpinSpeed * Mathf.Min(Time.deltaTime, 0.1f);
+            if (Vector3.Angle(transform.forward, target) <= maxDegrees)
+            {
+                transform.forward = target;
+                return;
+            }
+            transform.forward = Vector3.RotateTowards(transform.forward, target, maxDegrees * Mathf.Deg2Rad, 0f);
         }
 
         protected override void TryHit()
@@ -232,7 +262,8 @@ namespace FPSGame.Gameplay
                         m_Velocity = Vector3.zero;
                         m_Resting = true;
                     }
-                    if (m_Velocity.sqrMagnitude > 0.0001f) transform.forward = m_Velocity.normalized;
+                    // 朝向不在这一帧直接甩到新方向：反弹是瞬时的 180° 翻面，低速时看起来就是"抽一下"。
+                    // 交给 FaceVelocity 限速转过去（低于 SpinMinSpeed 干脆不转）。
                 }
             }
 

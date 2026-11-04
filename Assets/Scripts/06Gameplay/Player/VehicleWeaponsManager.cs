@@ -340,7 +340,7 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
     ///
     /// <para>▍为什么要它：载具武器是**每端各一份实例**（<c>BattleApplyVehicleData</c> 按持有者配置重建），
     /// 弹量天然会分叉 —— 驾驶者那台打了 10 发，另一端的副本还是满的（实测：玩家 a 打完下车、玩家 b 上车看到满弹）。
-    /// 口径 = **驾驶者那台才是权威**，每次开火随 4054 把弹量推给其余端（见 <c>NetVehicleBridge</c>）。</para>
+    /// 口径 = **驾驶者那台才是权威**，每次开火随 4035 把弹量推给其余端（见 <c>NetVehicleBridge</c>）。</para>
     /// </summary>
     public bool TryGetAmmo(int index, out int magazine, out int ammo)
     {

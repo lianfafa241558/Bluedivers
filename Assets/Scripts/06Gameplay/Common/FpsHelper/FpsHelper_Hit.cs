@@ -323,7 +323,7 @@ namespace FPSGame.Gameplay
             if (damageData.UseExplode)
             {
                 // 查询走复用缓冲，紧接着拷成快照：下面 InflictDamage 可能重入（连锁爆炸），不能让缓冲被覆盖
-                FPSGame.Game.UnitQuery.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new(), null, HitUnitBuffer);
+                UnitQuery.FindUnits(new PECircle((PEVector2)point, damageOuterRadius), new(), null, HitUnitBuffer);
                 if (hitData.IgnoreSelf&& hitData.self.TryGetComponent<IActor>(out var self)) HitUnitBuffer.Remove(self);
                 //Debug.LogError("忽略自身?"+hitData.IgnoreSelf+" "+owner);
                 //Debug.LogError("目标数量"+unitList.Count);
@@ -346,9 +346,6 @@ namespace FPSGame.Gameplay
                 //Debug.LogWarning("范围" + "内的目标数量"+ list.Count);
                 foreach (Damageable item in list)//每一个伤害组件
                 {
-                    // ⚠ item 可能是**已销毁**的幽灵条目（UnityEngine.Object 的 ToString 会打印成 "null"，
-                    //   打包端实测就是 `目标null没有碰撞箱`）：单位被销毁了、但它还留在查询结果里
-                    //   ⇒ 静默跳过；原来那条 LogError 只会刷屏并掩盖真正的问题（谁没注销）。
                     if (item == null) continue;
 
                     Collider exolosionCollider = item.ClosestCollider(point);
@@ -362,7 +359,6 @@ namespace FPSGame.Gameplay
                     //伤害数字/受击反馈的落点：碰撞体表面朝向爆心的最近点
                     //用爆心 point 会让大范围爆炸的所有伤害堆在同一处；用 bounds.center 则巨型单位（如整片护盾）会把数字显示在球心，看不出实际命中位置
                     Vector3 hitPoint = GetExplosionHitPoint(exolosionCollider, point);
-                    // 【诊断·临时】记下实际参与衰减计算的距离与遮挡结论，供"某单位完全吃不到爆炸"排查
                     float hitDistance = -1f;
                     bool blocked = false;
                     if (centerDisance <= damageInnerRadius)
@@ -379,7 +375,6 @@ namespace FPSGame.Gameplay
                             value = damageData.GetExplosionDamage(charg, (PEInt)hitDistance) * damageScale;
                         }
                     }
-                    // 【诊断·临时】每个伤害体一行：中心距/命中距/内外半径/最终伤害值
                     var ownerGo = ((IDamageable)item).ActorGo;
 
                     if (value > 0)

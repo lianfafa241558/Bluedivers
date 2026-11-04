@@ -5,6 +5,7 @@ using UnityEngine;
 using FPSGame.Audio;
 using FPSGame.Utils;
 using FPSGame.Core;
+using FPSGame.Core.Interface;
 using FPSGame.Game;
 using FPSGame.GameContract;
 namespace FPSGame.AI
@@ -37,13 +38,37 @@ namespace FPSGame.AI
         [DisplayField(DisplayFieldEnum.RunRead)]
         private float lastDamagedTime = Mathf.NegativeInfinity, creatTime= Mathf.Infinity;
 
-        #region 联机 · 房主唯一生成 / 成员复刻（4052）
+        /// <summary>巢穴的生命组件（骇入满 ⇒ 直接自毁）</summary>
+        private IHealth _health;
+
+        #region 联机 · 房主唯一生成 / 成员复刻（4063）
 
         /// <summary>登记为"生成器"（复刻时由桥按来源键找回）。
         /// ⚠ 必须在 OnEnable：复刻出来的单位在 <c>Instantiate</c> 内**只跑过 Awake/OnEnable**，Start 还没跑。</summary>
-        private void OnEnable() => SpawnerRegistry.Register(this);
+        private void OnEnable()
+        {
+            SpawnerRegistry.Register(this);
 
-        private void OnDisable() => SpawnerRegistry.Unregister(this);
+            // 异常状态订阅也放这里：复刻/池复用的单位 Start 只跑一次，OnEnable 才是每次激活都成对的一侧
+            _health = GetComponent<IHealth>();
+            if (_health != null) _health.OnAboStateFullChanged += OnAboStateFullChanged;
+        }
+
+        private void OnDisable()
+        {
+            SpawnerRegistry.Unregister(this);
+            if (_health.IsValidMono()) _health.OnAboStateFullChanged -= OnAboStateFullChanged;
+        }
+
+        /// <summary>骇入满：巢穴直接自毁（2026-11-04）。
+        /// <para>⚠ 走 <c>IHealth.Kill()</c>：先抹血再死，<c>Actor.OnDie</c> 的"死时血>0"守卫不会误报；
+        /// 销毁 / 掉落 / 联机死亡广播（4054 IsDeath）都由 OnDie 链带走。无 origin ⇒ 不计击杀。</para></summary>
+        private void OnAboStateFullChanged(DamageTypeEnum type, GameObject source, bool full)
+        {
+            if (type != DamageTypeEnum.Hacker || !full) return;
+            if (!_health.IsValidMono()) return;
+            _health.Kill();
+        }
 
         /// <summary>生成者身份键（房主上报、成员据此找回本端这一份）。</summary>
         public int SpawnSourceKey => NetSpawnKey.Of(gameObject);
@@ -81,7 +106,7 @@ namespace FPSGame.AI
             };
         }
 
-        /// <summary>Active：按生产节奏生成单位并派遣（★ 联机：只有房主真生成，成员等 4052 复刻）。</summary>
+        /// <summary>Active：按生产节奏生成单位并派遣（★ 联机：只有房主真生成，成员等 4063 复刻）。</summary>
         private void ActiveBehavior()
         {
             if (Time.time <= creatTime) return;
@@ -95,7 +120,7 @@ namespace FPSGame.AI
             var ctrl = GetComponent<EnemyController>();
             Vector3 target = ctrl != null ? ctrl.Target.Pos : default;
 
-            // 目标点随 4052 一起下发（成员复刻后同帧设上，否则"复刻出来原地罚站"）
+            // 目标点随 4063 一起下发（成员复刻后同帧设上，否则"复刻出来原地罚站"）
             BattleHub.Current.CreatUnit(item.Key, creatPoint.position + creatPoint.forward, creatPoint.rotation,
                 this, creatData.IndexOf(item), target);
 

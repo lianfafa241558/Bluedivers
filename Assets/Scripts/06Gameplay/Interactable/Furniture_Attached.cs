@@ -359,17 +359,17 @@ namespace FPSGame.Gameplay
         public static bool IsRemoteReplay { get; private set; }
 
         /// <summary>家具"需要两端一致的状态"发生了变化（子类调用 <see cref="ReportState"/> 触发）。
-        /// <para>参数：(家具, int 编码, 原始键)。由 09 侧 <c>NetFurnitureBridge</c> 订阅后走 4036 上行。</para></summary>
+        /// <para>参数：(家具, int 编码, 原始键)。由 09 侧 <c>NetFurnitureBridge</c> 订阅后走 4059 上行。</para></summary>
         public static event Action<Furniture_Attached, int, string> OnStateChanged;
 
         /// <summary>子类在改完"两端必须一致"的状态后调用（如管道的 PipeLink / PipeWait / PipeError）。
-        /// <para>▍只用于**没有交互驱动**的状态变更（任务把管道打成 PipeError）；交互路径本身走 4036 重放，不用调这个。</para></summary>
+        /// <para>▍只用于**没有交互驱动**的状态变更（任务把管道打成 PipeError）；交互路径本身走 4059 重放，不用调这个。</para></summary>
         protected void ReportState(int code, string key = null)
         {
             OnStateChanged?.Invoke(this, code, key);
         }
 
-        /// <summary>【联机】应用远端下发的状态（与 <see cref="ReportState"/> 成对，走同一条 4036）。
+        /// <summary>【联机】应用远端下发的状态（与 <see cref="ReportState"/> 成对，走同一条 4059）。
         /// <para>默认空实现；有状态机的子类覆写它（如 <c>Furniture_Pipe</c> 还原 <c>Id</c>）。</para></summary>
         public virtual void ApplyRemoteState(int code, string key) { }
 

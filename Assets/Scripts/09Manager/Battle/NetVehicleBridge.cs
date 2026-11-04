@@ -8,14 +8,14 @@ using UnityEngine;
 namespace FPSGame.Managers
 {
     /// <summary>
-    /// 联机 · **载具**桥（09）：上下机（原 4053，2026-10-27 并入 **4036** 的 NetId 分支）—— 全工程唯一同时看得见载具/盟友实例与网络层的地方。
+    /// 联机 · **载具**桥（09）：上下机（原 4093，2026-10-27 并入 **4059** 的 NetId 分支）—— 全工程唯一同时看得见载具/盟友实例与网络层的地方。
     ///
-    /// <para>▍键 = 载具 <c>Actor.NetId</c>（房主随 4028 分配、两端一致，见 <c>ActorsManager.VehicleNetIdBase</c>）；
+    /// <para>▍键 = 载具 <c>Actor.NetId</c>（房主随 4034 分配、两端一致，见 <c>ActorsManager.VehicleNetIdBase</c>）；
     /// 值 = 驾驶者 sid（房主 = 0）⇒ 各端按 sid 解析"本端那个实体"（本机玩家 / 盟友实例）。</para>
     ///
-    /// <para>▍ ⚠ 远端**不能**走家具重放：4036 的 <c>ApplyRemoteOperate</c> 会调 <c>Furniture_Vehicle.Operate()</c>
+    /// <para>▍ ⚠ 远端**不能**走家具重放：4059 的 <c>ApplyRemoteOperate</c> 会调 <c>Furniture_Vehicle.Operate()</c>
     /// ⇒ <c>VehicleController.SetOwener(远端实例)</c>，而其中一批开关（<c>ActorState.Hide</c> / 相机 / 本机输入）
-    /// 本质是"本机玩家专属"。故 4036 只当**传输**（NetId 分支），应用一律走
+    /// 本质是"本机玩家专属"。故 4059 只当**传输**（NetId 分支），应用一律走
     /// <see cref="Furniture_Vehicle.ApplyRemoteMount"/>（只做"挂到挂点 + 停位姿/停动画"）。</para>
     ///
     /// <para>▍自举：<c>[RuntimeInitializeOnLoadMethod]</c>（与 <c>NetPlayerStateBridge</c> / <c>SceneUnitMoveSink</c>
@@ -130,7 +130,7 @@ namespace FPSGame.Managers
             if (netId == 0)
             {
                 FPSGame.Utils.NetSyncLog.Warn("载具/上机·发",
-                    $"载具 {vehicleGo.name} 没有 NetId ⇒ 上下机同步不了（这一发空投的 4028 没带上载具号？见 P0）");
+                    $"载具 {vehicleGo.name} 没有 NetId ⇒ 上下机同步不了（这一发空投的 4034 没带上载具号？见 P0）");
                 return;
             }
 
@@ -179,7 +179,7 @@ namespace FPSGame.Managers
             else UnbindLocalDrivenWeapons();
         }
 
-        // ==================== P4 载具开火表现（4054） ====================
+        // ==================== P4 载具开火表现（4035） ====================
 
         /// <summary>【本机驾驶的那台】的载具武器管理器（订阅它的 <c>OnWeaponShoot</c>；下机 / 换车时退订）。</summary>
         static VehicleWeaponsManager _localDrivenWeapons;
@@ -271,7 +271,7 @@ namespace FPSGame.Managers
 
         // ==================== 网络 -> 本机 ====================
 
-        /// <summary>收到"某人上/下机"。走法同 4036：**房主先转发全体、再本地应用**；发起方按 sid 丢掉自己那条。
+        /// <summary>收到"某人上/下机"。走法同 4059：**房主先转发全体、再本地应用**；发起方按 sid 丢掉自己那条。
         /// <para>⚠ 顺序不能反：<c>SendVehicleMount</c> 的房主分支只 <c>SendToAll</c>（**不自派发**）⇒ 不会递归回到这里。</para>
         /// <para>▍【一车一人 · 2026-10-15】**房主是唯一裁决者，先到先得，成员永远让**（见 <see cref="_drivers"/>）：
         /// ① 请求者要上、而这辆已有**别人**在案 ⇒ 房主**不应用**它，并把"占用者在上机"重播回去
@@ -314,7 +314,7 @@ namespace FPSGame.Managers
             else if (mounted && _selfDriven.Contains(netId))
             {
                 // ★【成员让车】房主把"这辆归别人"发回来了，而**本机自己正开着它**（我抢在前面上了）⇒
-                //   先把我自己从车里放出来（走唯一收口；它回出来的那条 4053 会被房主按"非占用者"忽略掉），
+                //   先把我自己从车里放出来（走唯一收口；它回出来的那条 4059 会被房主按"非占用者"忽略掉），
                 //   再把占用者挂上去 —— 这样两端最终是同一份状态，而不是各开各的。
                 FPSGame.Utils.NetSyncLog.SyncLog("载具/上机·收",
                     $"netId={netId} 房主裁决归 sid={sid} ⇒ 本机让车（先下车再挂他）");
@@ -333,7 +333,7 @@ namespace FPSGame.Managers
             else ApplyUnmount(sid);
         }
 
-        /// <summary>收到"某台载具开了一次火"。走法同 4053：**房主先转发全体、再本地应用**；发起方丢自己那条。
+        /// <summary>收到"某台载具开了一次火"。走法同 4059：**房主先转发全体、再本地应用**；发起方丢自己那条。
         /// <para>⚠ 丢自己那条**按"这辆车是不是我开的"**判（键是载具号 ⇒ 没有 sid 可用）：
         /// 我开的那台本机已经真放过一发，再放一遍就是双份枪口焰。</para>
         /// <para>▍<paramref name="magazine"/> / <paramref name="ammo"/> = 开枪者那台**扣完之后**的弹量
@@ -708,14 +708,14 @@ namespace FPSGame.Managers
         /// <summary>【骑手自己死了 ⇒ 也要把他摘出来】(2026-10-15)。
         ///
         /// <para>▍驾驶者那台：死亡收口在 <c>VehicleController.OnDriverDie</c> / <c>Furniture_Vehicle.OnRiderDie</c>
-        /// （唯一收口 = <c>SetOwener(null)</c>，回包就是 4053 <c>mounted=false</c>）。</para>
+        /// （唯一收口 = <c>SetOwener(null)</c>，回包就是 4059 <c>mounted=false</c>）。</para>
         ///
         /// <para>▍**远端**：盟友实例上没有任何人会走那条路（他的 Health / 输入都在**他自己的**机器上）⇒
         /// 尸体一直挂在机甲里、机甲还照着他的网络位姿被"推导"着跑（实测：玩家死在机甲上没被移出载具）。
         /// 这里只清**本端那条绑定**：人已经死了，运动栈/父级该还原；占用表跟着清（车不能被尸体钉住）。</para>
         ///
         /// <para>▍本机玩家死亡不走这里（他没在 <see cref="_remoteRides"/> 表里）：那次由
-        /// <c>VehicleController</c> 的死亡收口负责，并且**会**上报 4053。</para>
+        /// <c>VehicleController</c> 的死亡收口负责，并且**会**上报 4059。</para>
         /// </summary>
         static void EvictRiderOfActor(Actor actor)
         {

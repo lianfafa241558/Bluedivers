@@ -189,15 +189,17 @@ MonoBehaviour:
   UseDiffScale: 0
   DamageData:
     DamageExplosion: 2500
-    ExplosionInnerRange: 12.5
+    ExplosionInnerRange: 17
     ExplosionRange: 25
     DestructeRadius: 25
     ShockwaveRadius: 30
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 80
     ImpactSoundRadius: 80
     NoSource: 1
@@ -328,10 +330,10 @@ MonoBehaviour:
   showArmorLists: []
   MainPart: {fileID: 5900522125013508120}
   demolishValue: -1
+  AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
-  AutoDestroy: 0
 --- !u!114 &5900522125226825038
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -377,11 +379,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
-  BirthMaterial: {fileID: 0}
   fxData: {fileID: 11400000, guid: c30440fc949a46844b16a0fe7faaab16, type: 2}
   fxEvent: {fileID: 11400000, guid: 7d7bbb7da0f892d48b8f5c037578814b, type: 2}
   fxMaterial: {fileID: 2100000, guid: 1068c69528801d8499a37be9ca889f28, type: 2}
   events: []
+  BirthMaterial: {fileID: 0}
   UseAttack: 0
 --- !u!1001 &522461915341328083
 PrefabInstance:
@@ -1150,6 +1152,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

@@ -70,24 +70,30 @@ namespace FPSGame.Managers
             var tmp = cfg.templates.RandomTake(random);
 
 
-            TierWeight = tmp.template.Select(item => new SKVP<int, UnitTier>(item.weight, item.tier)).Where(item => item.Key > 0).ToList();
-
+            // ⚠ tier 的 weight 只表示"进不进随机波次构成"，**不代表这个 tier 没有单位**：
+            //   刷怪器（CreatEnemy）是直接指定 tier 取 prefab 的，首领/警戒/特殊这类常配 weight=0
+            //   ⇒ 原来按 `weight == 0` 整个跳过，这些 tier 就查不到、报"tier 'Boss' 不存在"再降级抽别的单位。
+            //   所以这里收**所有配了单位的 tier**，weight 只在下面的 TierWeight（随机波次）里生效。
             TierItemWeight = new Dictionary<UnitTier, List<KVP<int, UnitWeightCfg>>>();
 
             foreach (var kvp in tmp.template)
             {
-                if (kvp.weight == 0) continue;
+                if (kvp.unitWeights == null) continue;
+                // 单位权重取 cfg.weight（Inspector 里每只怪的"权重"），原先误用了 tier 的 weight ⇒ 同 tier 内配额全一样
                 var list = kvp.unitWeights
-                    .Select(cfg => new KVP<int, UnitWeightCfg>(kvp.weight, cfg))
+                    .Where(uw => uw.unit != null)
+                    .Select(uw => new KVP<int, UnitWeightCfg>(uw.weight, uw))
                     .ToList();
+                if (list.Count == 0) continue;
 
-                //Debug.LogError(string.Join(",",list.Select(item=>item.Value.unit.name).ToList()));
-
-                if (TierItemWeight.ContainsKey(kvp.tier))
-                    TierItemWeight[kvp.tier] = list;
-                else
-                    TierItemWeight.Add(kvp.tier, list);
+                TierItemWeight[kvp.tier] = list;   // 同一 tier 配了多条 ⇒ 后者覆盖（保持原行为）
             }
+
+            // 随机波次只从"tier 权重 > 0 且真的有单位"的 tier 里抽
+            TierWeight = tmp.template
+                .Where(item => item.weight > 0 && TierItemWeight.ContainsKey(item.tier))
+                .Select(item => new SKVP<int, UnitTier>(item.weight, item.tier))
+                .ToList();
 
             //Debug.LogError(cfg.ShowName + "选择" + tmp.name + "模板");
 
@@ -139,11 +145,11 @@ namespace FPSGame.Managers
             NetDestructibleBridge.Install();  // 场景可破坏物（油桶这类）被打掉 ⇒ 远端也炸（2026-10-10）
             NetGameFlowBridge.Install();      // 局内世界状态（本局结束 / 撤离）
             NetMissionBridge.Install();       // 任务状态 / 进度（房主权威）
-            // 家具交互桥（4036）已改成**常驻**（NetFurnitureBridge.Bootstrap）：舰桥里也有 NPC 对话/门，
+            // 家具交互桥（4059）已改成**常驻**（NetFurnitureBridge.Bootstrap）：舰桥里也有 NPC 对话/门，
             // 原来只在这里装 ⇒ 舰桥阶段没有任何家具同步通道（2026-10-22 用户报"和 NPC 对话不同步"）。
             NetActionBridge.Install();        // 标记点位 / 呼叫凯伊
             NetKeyScreenBridge.Install();     // 按键终端阶段推进（驱动端上报 / 其余端只应用）
-            NetHostSpawnBridge.Install();     // 房主生成族（巡逻队 + 巢穴/召唤师/刷怪器/环绕装甲）：房主唯一生成 + 4052 复刻
+            NetHostSpawnBridge.Install();     // 房主生成族（巡逻队 + 巢穴/召唤师/刷怪器/环绕装甲）：房主唯一生成 + 4063 复刻
             NetVehicleDamageBridge.Install(); // 载具伤害（上行 + 权威门；下行复用 EnemyNetBridge）（2026-10-14）
         }
 
@@ -440,7 +446,8 @@ namespace FPSGame.Managers
             if (!TierItemWeight.TryGetValue(tier, out var weightList) || weightList.Count == 0)
             {
                 // 降级：如果指定 tier 不存在，尝试使用字典中任意可用的 tier
-                Debug.LogWarning($"CreatUnit: tier '{tier}' 在当前模板配置中不存在，降级到默认 tier");
+                // （tier 存在但 unitWeights 为空/全是空引用也会走到这里，所以把已配置的 tier 一并打出来）
+                Debug.LogWarning($"CreatUnit: tier '{tier}' 在当前模板配置中不存在（已配置: {string.Join(",", TierItemWeight.Keys)}），降级到默认 tier");
                 var firstKvp = TierItemWeight.FirstOrDefault();
                 if (firstKvp.Value == null || firstKvp.Value.Count == 0)
                 {
@@ -501,7 +508,7 @@ namespace FPSGame.Managers
             return go;
         }
 
-        /// <summary>【联机·刷怪器】房主侧：按 tier 抽 prefab + 落点/朝向，再走统一入口（自动上报 4052）。
+        /// <summary>【联机·刷怪器】房主侧：按 tier 抽 prefab + 落点/朝向，再走统一入口（自动上报 4063）。
         /// <para>▍为什么不复用上面那条 tier 重载：那条两端各自生成、靠"同落点派生构成"对齐、**不发消息**；
         /// 刷怪器的生成时机由场景摆放 + 概率驱动、两端必然不同 ⇒ 必须房主唯一生成。槽位 = <c>(int)tier</c>，
         /// 成员按 <c>PrefabId</c> 回同一张 tier 表取回同一把 prefab（见 <see cref="FindTierPrefab"/>）。</para></summary>
@@ -541,9 +548,9 @@ namespace FPSGame.Managers
                 return list[0].Value.unit;
             }
 
-            // ② 本端这张表里没有该 tier ⇒ 只能靠 4052 里的 **prefabId** 还原。
+            // ② 本端这张表里没有该 tier ⇒ 只能靠 4063 里的 **prefabId** 还原。
             //    ▍为什么会有这种消息：房主侧 `TakeTierUnit` 在"tier 不在模板里"时会**降级**抽别的 tier 的单位
-            //      （只打一条 `CreatUnit: tier 'xxx' 不存在，降级到默认 tier`），但 4052 里的 `slot` 仍是 `(int)tier`
+            //      （只打一条 `CreatUnit: tier 'xxx' 不存在，降级到默认 tier`），但 4063 里的 `slot` 仍是 `(int)tier`
             //      ⇒ 不按 prefabId 兜底就必然复刻失败：成员端少一只怪，之后它的移动/伤害/死亡消息全部"找不到副本"
             //      （2026-10-21 实测：`tier 'Small'` 缺失 ⇒ `复刻失败（生成器=CreatSmall）` + 一串 `远端死亡落地 找不到 netId`）。
             if (!string.IsNullOrEmpty(prefabId))
@@ -568,11 +575,11 @@ namespace FPSGame.Managers
         }
 
         /// <summary>【联机】所有"运行时生成"的**唯一入口**（巢穴 / 召唤师 / 刷怪器）：房主（或单机）创建，成员直接返回 null
-        /// （不生成、等 4052 复刻）—— 否则两端各生一份，<c>Actor.Awake</c> 的号段立刻错位。
+        /// （不生成、等 4063 复刻）—— 否则两端各生一份，<c>Actor.Awake</c> 的号段立刻错位。
         ///
         /// <para>▍取号：房主侧走 <c>ActorsManager.HostSpawnNetIdBase</c> 段（与敌人自增段解耦：这类生成的时机由各自 AI / 计时
         /// 驱动，两端必然交错）；成员复刻回来的号由 <c>INetSpawner.ReplaySpawn</c> 覆盖。</para>
-        /// <para>⚠ 波次（ZergWave/RobotWave，走 4023 整批复刻、两端同序）与场景 / 任务实体（派生号）**不要**走这条。</para>
+        /// <para>⚠ 波次（ZergWave/RobotWave，走 4050 整批复刻、两端同序）与场景 / 任务实体（派生号）**不要**走这条。</para>
         /// </summary>
         /// <param name="slot">生成者自己表里的下标（由生成器决定口径，成员复刻时按同一口径取回同一把 prefab）。</param>
         /// <param name="target">首帧目标点（全 0 = 无）。</param>
@@ -612,7 +619,7 @@ namespace FPSGame.Managers
         {
             // ★ 联机：巡逻队是**房主权威**（2026-10-11）—— 成员端不在本地造：`Actor.Awake` 会给新单位分配 NetId，
             //   而 NetId 的口径是"房主分配 + 两端创建顺序一致" ⇒ 成员端自造就会与房主下发的号段撞号（移错位/错杀）。
-            //   成员端等房主广播（4052）后由 NetHostSpawnBridge 调 CreatPatrolRemote 复刻（同 CreatWave 的 applyingRemoteWave 模式）。
+            //   成员端等房主广播（4063）后由 NetHostSpawnBridge 调 CreatPatrolRemote 复刻（同 CreatWave 的 applyingRemoteWave 模式）。
             var flow = FPSGame.Net.NetRoomFlow.Instance;
             bool online = flow != null && (flow.IsHost || flow.SelfSid != 0u);
             if (!applyingRemotePatrol && online && !flow.IsHost) return new List<GameObject>();

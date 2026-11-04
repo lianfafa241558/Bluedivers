@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace FPSGame.GameContract
 {
@@ -32,5 +32,7 @@ namespace FPSGame.GameContract
         [InspectorName("样本拯救者")] SampleSaver,
         /// <summary>荆棘护甲：近战攻击你的敌人会受到 24 点伤害</summary>
         [InspectorName("荆棘护甲")] ThornArmor,
+        /// <summary>阵地战大师：随机配发一件哨戒炮战备</summary>
+        [InspectorName("阵地战大师")] RandomTurret,
     }
 }

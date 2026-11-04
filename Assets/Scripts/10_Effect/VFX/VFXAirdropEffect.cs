@@ -89,7 +89,7 @@ namespace FPSGame.Effect
         /// <summary>契约实现：标记本次空投生成的**单位号**（见 <see cref="FPSGame.GameContract.IAirdropEffect.SetVehicleNetId"/>）。
         /// <para>▍覆盖范围：载具（<c>SpecUnit</c>）+ 支援单位（炮台/无人机/火箭包，<c>Enemy</c> 类型）——
         /// 它们的共同点是"每端各自 Instantiate"，没有房主定的号就必然分叉。</para>
-        /// <para>⚠ 可能在生成**之后**才被调用：成员的 4028 比它本机的生成晚到 ⇒ 这里必须能"补盖章"。</para></summary>
+        /// <para>⚠ 可能在生成**之后**才被调用：成员的 4034 比它本机的生成晚到 ⇒ 这里必须能"补盖章"。</para></summary>
         public void SetVehicleNetId(int netId)
         {
             _vehicleNetId = netId;
@@ -102,7 +102,7 @@ namespace FPSGame.Effect
         /// <para>▍为什么不再只认 <c>SpecUnit</c>（2026-10-27）：支援单位（炮台 / 治疗无人机 / 火箭包）是
         /// <c>Enemy</c> 类型、同样"每端各自 Instantiate" ⇒ 不盖章就会两端**各领自增号**、必然分叉，
         /// 表现为"炮台挨打/被打死只有一端生效"（对方的伤害消息按号寻址，查不到就丢）。
-        /// 号本身早就由 4028 送到每一端了（见 <see cref="SetVehicleNetId"/>）。</para>
+        /// 号本身早就由 4034 送到每一端了（见 <see cref="SetVehicleNetId"/>）。</para>
         /// <para>⚠ 只在 <see cref="SpawnCreatObject"/> 里用：对象刚由这次空投创建 ⇒ 盖谁都是对的，
         /// 不会误盖到别的敌人（这也是"怎么区分支援单位和普通敌人"的答案：不用区分，按生成时机认）。</para></summary>
         private static void StampCreatUnitNetId(Transform root, int netId)

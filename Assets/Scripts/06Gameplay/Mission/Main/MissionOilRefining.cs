@@ -287,7 +287,7 @@ namespace FPSGame.Mission
                 controller.HomePoint = target;
             }
 
-            // ★ 联机（2026-10-11）：巡逻队是房主权威 —— 房主把"生成点 + HomePoint"报给桥，成员端复刻同一支（4052）。
+            // ★ 联机（2026-10-11）：巡逻队是房主权威 —— 房主把"生成点 + HomePoint"报给桥，成员端复刻同一支（4063）。
             //   ⚠ 成员端这一句是空操作（CreatPatrol 已被闸门挡成空表 + 桥只认房主），不会重复生成。
             if (units != null && units.Count > 0)
                 FPSGame.Gameplay.BattleEventBus.ReportPatrolSpawn(spawn, target, true);

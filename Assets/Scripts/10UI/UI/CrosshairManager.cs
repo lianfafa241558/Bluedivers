@@ -10,6 +10,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using FPSGame.Utils;
 using FPSGame.Weapon;
+using PEMaths;
 
 namespace FPSGame.UI
 {
@@ -47,6 +48,17 @@ namespace FPSGame.UI
 
         /// <summary>平滑后的显示用热量：填充与取色共用，避免"条子还在走、颜色已跳档"</summary>
         private float _displayedHeat = -1f;
+
+        /// <summary>准星的原始 localScale（按 Animator 实例缓存）：同一个准星会被多把武器复用，
+        /// 不缓存就会在每次切武器时把已放大的尺寸再乘一次。</summary>
+        private readonly Dictionary<Animator, Vector3> m_SightBaseScale = new();
+
+        /// <summary>当前订阅散布属性的那个属性对象</summary>
+        private GameAttribute m_SpreadAttr;
+
+        /// <summary>热量环的原始 localScale（只取一次）：它不在准星层级里，得跟准星一起按同一倍率缩放</summary>
+        private Vector3 m_HeatRingBaseScale;
+        private bool m_HeatRingScaleCached;
 
         protected override void Start()
         {
@@ -98,6 +110,74 @@ namespace FPSGame.UI
             RefreshCrosshairVisibility(m_WeaponsManager.IsAiming);
             RefreshHeatRing();
         }
+
+        protected override void OnWeaponUnbound() => UnbindSpreadAttr();
+
+        protected override void OnWeaponBound(WeaponPlayerController weapon)
+        {
+            BindSpreadAttr(weapon);
+            ApplySightScale();
+        }
+
+        /// <summary>
+        /// 用「子弹散布角」的 最终值/原始值 等比缩放当前准星（原始 5 → 最终 10 ⇒ 两倍大）。
+        /// 由切武器与散布属性变化（升级/装模组）触发，不放在 Update 里。
+        /// </summary>
+        private void ApplySightScale()
+        {
+            float scale = GetSpreadScale();
+
+            if (m_ActiveSightGo)
+            {
+                if (!m_SightBaseScale.TryGetValue(m_ActiveSightGo, out var baseScale))
+                {
+                    baseScale = m_ActiveSightGo.transform.localScale;
+                    m_SightBaseScale.Add(m_ActiveSightGo, baseScale);
+                }
+                m_ActiveSightGo.transform.localScale = baseScale * scale;
+            }
+
+            // 热量环不在准星层级里（是 PlayerWnd 上独立的 UI 元素）⇒ 得单独跟着缩，否则散布变大时环会显得偏小
+            if (_heatRing)
+            {
+                if (!m_HeatRingScaleCached)
+                {
+                    m_HeatRingBaseScale = _heatRing.transform.localScale;
+                    m_HeatRingScaleCached = true;
+                }
+                _heatRing.transform.localScale = m_HeatRingBaseScale * scale;
+            }
+        }
+
+        /// <summary>散布倍率。⚠ 原始值/最终值为 0 时比值无意义（最终值 0 会把准星缩成看不见），一律按 1 处理。</summary>
+        private float GetSpreadScale()
+        {
+            if (!m_SpreadAttr) return 1f;
+            float prime = m_SpreadAttr.PrimeValue.RawFloat;
+            float final = m_SpreadAttr.FinalValue.RawFloat;
+            if (prime <= 0f || final <= 0f) return 1f;
+            return final / prime;
+        }
+
+        private void BindSpreadAttr(WeaponPlayerController weapon)
+        {
+            UnbindSpreadAttr();
+            if (!weapon.IsValid()) return;
+            var attr = weapon.cfg[WeaponAttrType.BulletsSpreadAngle];
+            if (!attr) return;
+            m_SpreadAttr = attr;
+            m_SpreadAttr.OnFinalValueChange += OnSpreadAttrChanged;
+        }
+
+        private void UnbindSpreadAttr()
+        {
+            if (!m_SpreadAttr) return;
+            m_SpreadAttr.OnFinalValueChange -= OnSpreadAttrChanged;
+            m_SpreadAttr = null;
+        }
+
+        /// <summary>属性值变了（升级/模组写回）时同步准星尺寸</summary>
+        private void OnSpreadAttrChanged(PEInt value) => ApplySightScale();
 
         private void Update() => RefreshHeatRing();
 

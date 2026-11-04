@@ -1367,6 +1367,12 @@ namespace FPSGame.Gameplay
         }
         void OnInputCompletedAirdrop(GameObject go, AirdropData data) {
             if (go != gameObject) return;
+            // ★ 直接释放的战备（增援 / 飞鹰装填 / 插旗）**不乱档位**：它不发信标那一发 ⇒
+            //   既不会有 `Airdrop`（释放成功）也不会有 `CancelAirdrop` ⇒ 切到 1 之后没有任何地方切回 0，
+            //   信号枪就永久停在"呼叫档"：之后每次标记都放出一个被回收的空信标（2026-11-04 定位；
+            //   飞鹰弹药耗尽时的自动装填也会走这里，所以是"某些时候"卡住）。
+            if (data != null && data.cfg != null && data.cfg.isDirect) return;
+
             var weapon = GetWeaponAtSlotIndex(SlotOf(WeaponTypeEnum.FlareGun));
             weapon.UseDamageIndex = 1;
         }
@@ -1376,6 +1382,19 @@ namespace FPSGame.Gameplay
             var weapon = GetWeaponAtSlotIndex(SlotOf(WeaponTypeEnum.FlareGun));
             weapon.UseDamageIndex = 0;
         }
+        /// <summary>直接释放的战备（增援/飞鹰装填/插旗）用不到信号枪那一发 ⇒ 把手里那把枪换回进战备前的。
+        /// <para>▍为什么要单独一个入口：那条路不发 `Airdrop` 事件，`OnAirdrop` 里的"回切武器"永远轮不到；
+        /// 而 `Close()` 发生在 `WaitRelease = null` **之前**，窗口回调那一刻判据也不成立 ⇒ 玩家一直举着信号枪。</para>
+        /// <para>⚠ 只在**当前真握着信号枪**时切：飞鹰弹药耗尽的自动装填会在玩家正常持枪时走同一条路，
+        /// 无条件切会把玩家手里的主武器顶掉。</para>
+        /// <para>⚠ 调用方必须**先**把 `WaitRelease` 清空：<see cref="SwitchToWeaponIndex"/> 会用它判"要不要取消战备"，
+        /// 提前切会把刚释放的那发当成未释放而取消掉。</para></summary>
+        public void ExitTempFlareGun()
+        {
+            if (ActiveWeaponIndex != SlotOf(WeaponTypeEnum.FlareGun)) return;
+            SwitchToWeaponIndex((m_LastWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun)) ? 0 : m_LastWeaponIndex, false, false, false);
+        }
+
         public void OnAirdrop(GameObject owner, GameObject _, Vector3 point, AirdropData data)
         {
             if (owner==gameObject)

@@ -280,7 +280,7 @@ namespace FPSGame.Gameplay
         /// <summary>兼容旧调用（不带俯仰）。</summary>
         public void ApplyPose(Vector3 pos, float yaw, bool teleport) => ApplyPose(pos, yaw, 0f, teleport);
 
-        /// <summary>【桥调用】载具接管：<c>true</c> = 该盟友实例**已被挂到载具挂点上**（联机 4053）。
+        /// <summary>【桥调用】载具接管：<c>true</c> = 该盟友实例**已被挂到载具挂点上**（联机 4059）。
         /// <para>▍为什么必须告诉本类（而不是桥自己关组件）：本类每帧都在用"位移"驱动动画，而挂上载具后
         /// 位移是**载具的**（世界空间算）⇒ 不挡就是"队友在舱里原地狂奔"。位姿那边同理：不停写
         /// <c>NetTransformView</c> 会每帧把骑手拽回地面。</para>

@@ -197,7 +197,7 @@ namespace FPSGame.Gameplay
         /// 还会在死亡镜头上叠一层武器画面）。所以这里只置 <see cref="_ownerDead"/>，由还原分支自己跳过那两件。</para>
         ///
         /// <para>▍为什么"必须"走 <see cref="SetOwener"/>：它是上下机的**唯一收口**，它抛的
-        /// <c>BattleEventBus.VehicleOwnerChanged</c> 是 09 的桥上报 4053 的唯一来源 ⇒ 远端才会把骑手摘掉。
+        /// <c>BattleEventBus.VehicleOwnerChanged</c> 是 09 的桥上报 4059 的唯一来源 ⇒ 远端才会把骑手摘掉。
         /// 若在这里自己散着做几件事，客机上会留一个"人死了还坐在机甲里"的幽灵。</para>
         /// </summary>
         void OnDriverDie(GameObject caused, GameObject origin)

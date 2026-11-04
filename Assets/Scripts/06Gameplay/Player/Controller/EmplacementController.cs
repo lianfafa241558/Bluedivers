@@ -114,7 +114,7 @@ public class EmplacementController : BaseSelfController, IDrivable
         OnSetOwner?.Invoke(owner);
 
         // ★【联机】上下机的**唯一收口**就是这里 —— 与 <c>VehicleController.SetOwener</c> 完全同款：
-        //   抛给 09 的 NetVehicleBridge 去上报 4053（上下机）、并让 4054（开火表现）跟着绑定。
+        //   抛给 09 的 NetVehicleBridge 去上报 4059（上下机）、并让 4035（开火表现）跟着绑定。
         //   ⚠ 原来漏了这一句 ⇒ 炮位上机**完全不同步**（客机上骑手站在地上、炮台也不转）——2026-10-14 修。
         BattleEventBus.VehicleOwnerChanged(gameObject, owner);
     }
@@ -128,7 +128,7 @@ public class EmplacementController : BaseSelfController, IDrivable
     /// <summary>
     /// 【驾驶者死亡 ⇒ 强制下车】只撤接管，**不**把人还原成活人（口径同 <c>VehicleController.OnDriverDie</c>）。
     /// <para>▍为什么必须走 <see cref="SetOwener"/>：它是上下机的唯一收口，抛的 <c>VehicleOwnerChanged</c>
-    /// 是 09 的桥上报 4053 的唯一来源 ⇒ 远端才会把骑手摘掉。自己散着做几件事会留下"死人还坐在炮位上"的幽灵。</para>
+    /// 是 09 的桥上报 4059 的唯一来源 ⇒ 远端才会把骑手摘掉。自己散着做几件事会留下"死人还坐在炮位上"的幽灵。</para>
     /// </summary>
     void OnDriverDie(GameObject caused, GameObject origin)
     {

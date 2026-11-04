@@ -94,7 +94,7 @@ public class WeatherSystem : MonoBehaviour
     private void Update()
     {
         if (_effect == null || !_effect.UseStormCycle) return;
-        // ⚠ 开打前不计时：相位要锚在"全体加载完成、一起开打"（4042 → IsStartBattle）那一刻，
+        // ⚠ 开打前不计时：相位要锚在"全体加载完成、一起开打"（4010 → IsStartBattle）那一刻，
         //   各端加载快慢差几秒，按创建时刻起算必然错相（见 TickStorm）。
         var battle = BattleManager.Instance;
         if (battle == null || !battle.IsStartBattle) return;
@@ -118,7 +118,7 @@ public class WeatherSystem : MonoBehaviour
     /// <summary>周期风暴计时：平静 CalmDuration 秒后进入风暴，持续 StormDuration 秒后回到平静。
     /// <para>▍相位用**墙钟差**而不是 `_stormTimer += Time.deltaTime`：天气控制器是各端在初始化协程里各自创建的，
     /// 两端创建时刻差（加载快慢）就是相位差 ⇒ 暴雪/沙尘暴会"一边在风暴、一边还平静"（看起来天气不同步）。
-    /// 锚点取开打那一刻（两端由 4042 在同一瞬间置位）⇒ 无消息、纯静态对齐。</para></summary>
+    /// 锚点取开打那一刻（两端由 4010 在同一瞬间置位）⇒ 无消息、纯静态对齐。</para></summary>
     private void TickStorm()
     {
         if (_stormOrigin < 0f)

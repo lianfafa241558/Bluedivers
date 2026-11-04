@@ -94,6 +94,7 @@ namespace FPSGame.Weapon
             { WeaponAttrType.DamageTypeTerror, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.DamageTypeRadiation, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.DamageTypeHacker, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.DamageTypeCatalyst, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
 
             // 易伤系数（目标挂着对应异常状态时的伤害倍率；基础值取伤害配置的"易伤成分"，没配 = 0 = 无易伤）
             { WeaponAttrType.VulnerabilityToxicity, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
@@ -118,6 +119,7 @@ namespace FPSGame.Weapon
             { WeaponAttrType.ExplosionTypeTerror, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.ExplosionTypeRadiation, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.ExplosionTypeHacker, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.ExplosionTypeCatalyst, (false, AttrTag.Percentage | AttrTag.OneHide, ModifierType.All) },
 
         };
         /// <summary>穿甲等级档位名：0~1 轻穿 / 2~3 中穿 / 4 重穿 / 5+ 反坦克。</summary>
@@ -426,6 +428,9 @@ namespace FPSGame.Weapon
         /// <summary>伤害类型-骇入系数</summary>
         [InspectorName("直击/直击骇入伤害")]
         DamageTypeHacker = 211,
+        /// <summary>伤害类型-催化系数（自身不造成伤害，只推动目标已有的异常状态积蓄）</summary>
+        [InspectorName("直击/直击催化伤害")]
+        DamageTypeCatalyst = 212,
 
         //---------伤害类型系数（爆炸伤害组）----------
         /// <summary>伤害类型-动能系数(爆炸)</summary>
@@ -464,6 +469,9 @@ namespace FPSGame.Weapon
         /// <summary>伤害类型-骇入系数(爆炸)</summary>
         [InspectorName("爆炸/范围骇入伤害")]
         ExplosionTypeHacker = 231,
+        /// <summary>伤害类型-催化系数(爆炸)</summary>
+        [InspectorName("爆炸/范围催化伤害")]
+        ExplosionTypeCatalyst = 232,
 
         //---------易伤系数（目标挂着对应异常状态时的伤害倍率）----------
         /// <summary>易伤-毒：目标毒素积蓄槽满时，本武器造成的伤害倍率(3 = 3 倍)</summary>

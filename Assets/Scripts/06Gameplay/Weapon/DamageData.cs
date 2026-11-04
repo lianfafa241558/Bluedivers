@@ -261,6 +261,7 @@ namespace FPSGame.Weapon
                 Attr.DamageTypeTerror => DamageGroupDirect.GetValue(DamageTypeEnum.Terror),
                 Attr.DamageTypeRadiation => DamageGroupDirect.GetValue(DamageTypeEnum.Radiation),
                 Attr.DamageTypeHacker => DamageGroupDirect.GetValue(DamageTypeEnum.Hacker),
+                Attr.DamageTypeCatalyst => DamageGroupDirect.GetValue(DamageTypeEnum.Catalyst),
                 // 伤害类型系数（爆炸伤害组）
                 Attr.ExplosionTypeGun => DamageGroupExplosion.GetValue(DamageTypeEnum.Gun),
                 Attr.ExplosionTypeExplosion => DamageGroupExplosion.GetValue(DamageTypeEnum.Explosion),
@@ -274,6 +275,7 @@ namespace FPSGame.Weapon
                 Attr.ExplosionTypeTerror => DamageGroupExplosion.GetValue(DamageTypeEnum.Terror),
                 Attr.ExplosionTypeRadiation => DamageGroupExplosion.GetValue(DamageTypeEnum.Radiation),
                 Attr.ExplosionTypeHacker => DamageGroupExplosion.GetValue(DamageTypeEnum.Hacker),
+                Attr.ExplosionTypeCatalyst => DamageGroupExplosion.GetValue(DamageTypeEnum.Catalyst),
                 // 易伤系数（没配 = 0 = 无易伤，乘法那边按 <=0 跳过）
                 Attr.VulnerabilityToxicity => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Toxicity),
                 Attr.VulnerabilityBurn => AboVulnerabilityGroup.GetValue(DamageTypeEnum.Burn),
@@ -330,6 +332,7 @@ namespace FPSGame.Weapon
         public void SetDamageTypeTerror(PEInt value) => DamageGroupDirect.SetValue(DamageTypeEnum.Terror, value.RawFloat);
         public void SetDamageTypeRadiation(PEInt value) => DamageGroupDirect.SetValue(DamageTypeEnum.Radiation, value.RawFloat);
         public void SetDamageTypeHacker(PEInt value) => DamageGroupDirect.SetValue(DamageTypeEnum.Hacker, value.RawFloat);
+        public void SetDamageTypeCatalyst(PEInt value) => DamageGroupDirect.SetValue(DamageTypeEnum.Catalyst, value.RawFloat);
 
         // 易伤系数：0/负 = 没配（Damageable 跳过），≥1 = 目标挂着该异常状态时的伤害倍率
         public void SetVulnerabilityToxicity(PEInt value) => AboVulnerabilityGroup.SetValue(DamageTypeEnum.Toxicity, value.RawFloat);
@@ -354,6 +357,7 @@ namespace FPSGame.Weapon
         public void SetExplosionTypeTerror(PEInt value) => DamageGroupExplosion.SetValue(DamageTypeEnum.Terror, value.RawFloat);
         public void SetExplosionTypeRadiation(PEInt value) => DamageGroupExplosion.SetValue(DamageTypeEnum.Radiation, value.RawFloat);
         public void SetExplosionTypeHacker(PEInt value) => DamageGroupExplosion.SetValue(DamageTypeEnum.Hacker, value.RawFloat);
+        public void SetExplosionTypeCatalyst(PEInt value) => DamageGroupExplosion.SetValue(DamageTypeEnum.Catalyst, value.RawFloat);
 
         #endregion
 

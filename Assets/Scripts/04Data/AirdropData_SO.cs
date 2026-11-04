@@ -133,7 +133,7 @@ namespace FPSGame.Data
         [InspectorName("忽略干扰")]
         public bool ignoreJammer;
 
-        /// <summary>团队冷却：任一玩家释放本战备 ⇒ **每人本机那份同名战备**都进冷却（跨机器，靠 4027/4028 呼叫同步触发）。
+        /// <summary>团队冷却：任一玩家释放本战备 ⇒ **每人本机那份同名战备**都进冷却（跨机器，靠 4033/4034 呼叫同步触发）。
         /// ⚠ 直接释放(isDirect)的战备不走信标、也不走呼叫同步 ⇒ 目前对它们不生效（如增援 HealBag）。</summary>
         [InspectorName("团队冷却")]
         public bool teamCool;

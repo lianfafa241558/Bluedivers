@@ -12,7 +12,7 @@ namespace FPSGame.Managers
     /// <para>▍分工：房主的 <c>NPCWalk</c> 决策 → <see cref="BattleEventBus.OnSceneUnitMove"/> → 本组件转上网络；
     /// 收到房主下发的目标点后按 <c>Actor.Id</c> 找本端那只 NPC 应用。</para>
     /// <para>⚠ 本组件**不做消息注册**（注册在常驻的 <c>NetRoomFlow</c>）：否则场景不在时收到这条会刷
-    /// "未注册消息:4032" 并丢包。它只负责"场景内找对象 + 落地"。</para>
+    /// "未注册消息:4055" 并丢包。它只负责"场景内找对象 + 落地"。</para>
     /// </summary>
     public class SceneUnitMoveSink : MonoBehaviour
     {

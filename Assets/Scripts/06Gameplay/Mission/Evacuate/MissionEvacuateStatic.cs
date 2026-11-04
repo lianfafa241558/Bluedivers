@@ -101,7 +101,7 @@ namespace FPSGame.Mission
                         {
                             CreatNotice("Ayane", "WarnArea");
                         }
-                        UpdateTip("<color=#FF4040>请返回撤离区范围  [" + Tool.FloatToTime(--suspendCountDown) + "]</color>");
+                        UpdateTip("<color=#FF4054>请返回撤离区范围  [" + Tool.FloatToTime(--suspendCountDown) + "]</color>");
                         if (suspendCountDown <= 0)
                         {
                             Suspend();

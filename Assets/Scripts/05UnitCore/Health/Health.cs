@@ -69,6 +69,10 @@ namespace FPSGame.Game {
         /// <para>⚠ 用 Action 而非 UnityAction：后者最多只支持 4 个泛型参数。</para></summary>
         public event Action<PEInt, GameObject, GameObject, Collider, bool> OnDamaged;
 
+        /// <summary>**每次真实命中都派发**（值为实际扣减量，可能为 0）：联机上报专用，见 <see cref="IHealth.OnSettled"/>。
+        /// <para>⚠ 表现/统计仍走 <see cref="OnDamaged"/>：把 0 伤害塞进那条会污染受击闪变、喊话与"命中次数"。</para></summary>
+        public event Action<PEInt, GameObject, GameObject, Collider, bool> OnSettled;
+
         /// <summary>被击中时 第 1 参 = **直接来源**（显示口径），受击点,法线，是弱点</summary>
         public event UnityAction<GameObject, Vector3,Vector3, bool> OnHit;
 
@@ -124,12 +128,14 @@ namespace FPSGame.Game {
         /// <summary>标记当前 TakeDamage 调用来自异常状态 tick，HandleDamage 据此跳过积蓄槽更新</summary>
         private bool _isAboTickDamage;
 
-        /// <summary>**本次伤害的原始成分**（类型 + 系数），由 <c>Damageable.InflictDamage</c> 在结算前写入、结算后清空。
-        /// <para>▍给联机上报用（见 <c>EnemyController._OnDamaged</c>）：接收端只带总伤害时，
-        /// `Damageable.ArmorDestruction`（护甲破坏/流血）与 `Health.HandleDamage → AddAboGauge`（异常状态积蓄）
-        /// 两条分支会被**整段跳过** ⇒ 主机把怪冻住、成员那边它照常跑。</para>
-        /// <para>⚠ 直接调 <c>TakeDamage</c> 的路径（流血 / 异常状态 tick）拿到的是 null ⇒ 上报退回中性成分。</para></summary>
-        public List<SKVP<DamageTypeEnum, float>> LastRawGroups { get; private set; }
+        /// <summary>**本次伤害的成分数值**（类型 + 每个成分拆解后的量，含 <c>Destruction</c>），
+        /// 只在 <see cref="TakeDamage"/> 派发事件的同步回调期间有值。
+        /// <para>▍给联机上报用（见 <c>EnemyController._OnDamaged</c>）：接收端拿这份数值直接补
+        /// `Damageable.ArmorDestruction`（护甲破坏/流血）与 `Health.HandleDamage → AddAboGauge`（异常状态积蓄），
+        /// 不再按系数分摊（2026-11-04 改口径）。</para>
+        /// <para>⚠ 直接调 <c>TakeDamage</c> 的路径（流血 / 异常状态 tick）为 null ⇒ 上报退回中性成分
+        /// （不让 tick 伤害在远端顺手给积蓄槽补一次）。</para></summary>
+        public List<SKVP<DamageTypeEnum, PEInt>> LastRawGroups { get; private set; }
 
         /// <summary>整体伤害抗性缓存字典（由 showArmorLists 构建，避免每帧遍历列表）</summary>
         private readonly Dictionary<DamageTypeEnum, float> _armorResistance = new();
@@ -277,20 +283,32 @@ namespace FPSGame.Game {
 
             // call OnDamage action
             PEInt trueDamageAmount = healthBefore - CurrentHealth + shieldBefore - CurrentShield;
-            if (trueDamageAmount > 0) {
-                m_LastHitTime = Time.time;
-                // 原始成分只在这段事件期间有效：联机上报的订阅方是在回调里**同步**读的（敌人 / 载具两条通道）。
+            // 只有 `Damageable.InflictDamage` 那条路径带成分（tick / 流血为 null）⇒ 0 伤害的"纯异常状态/破甲命中"也进这个窗口
+            List<SKVP<DamageTypeEnum, PEInt>> rawGroups = args.RawGroups;
+            if (trueDamageAmount > 0 || rawGroups != null) {
+                // 成分数值只在这段事件期间有效：联机上报的订阅方是在回调里**同步**读的（敌人 / 载具两条通道）。
                 // ⚠ 用 prev 保存而不是置 null：OnDamaged 回调里可能重入再打一次（击杀触发爆炸之类）。
                 var prevRaw = LastRawGroups;
-                LastRawGroups = args.RawGroups;
+                LastRawGroups = rawGroups;
                 try
                 {
-                    OnDamaged?.Invoke(trueDamageAmount, damageCaused, damageOrigin, damageAffected, noSource);
-                    if(response)OnHit?.Invoke(damageCaused,pos, HitNormal(pos, damageAffected),isWeakness);
-                    if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
+                    if (trueDamageAmount > 0)
+                    {
+                        m_LastHitTime = Time.time;
+                        OnDamaged?.Invoke(trueDamageAmount, damageCaused, damageOrigin, damageAffected, noSource);
+                        if(response)OnHit?.Invoke(damageCaused,pos, HitNormal(pos, damageAffected),isWeakness);
+                        if (haveshield) OnShieldDamaged?.Invoke(isBreakShield);
 
-                    // ★ 联机伤害通道的上行点：**实际扣减量**（见 UnitEventBus.OnUnitDamaged 的注释）
-                    UnitEventBus.UnitDamaged(gameObject, trueDamageAmount, damageCaused, damageAffected, damageOrigin);
+                        // ★ 联机伤害通道的上行点：**实际扣减量**（见 UnitEventBus.OnUnitDamaged 的注释）
+                        UnitEventBus.UnitDamaged(gameObject, trueDamageAmount, damageCaused, damageAffected, damageOrigin);
+                    }
+                    if (rawGroups != null)
+                    {
+                        // 一次真实命中已落地（0 伤害也发）：纯冰冻/催化/破甲靠它过网。
+                        // ⚠ 不并进上面那段：0 伤害不该触发受击闪变 / 喊话 / "命中次数"统计。
+                        OnSettled?.Invoke(trueDamageAmount, damageCaused, damageOrigin, damageAffected, noSource);
+                        UnitEventBus.UnitSettled(gameObject, trueDamageAmount, damageCaused, damageAffected, damageOrigin);
+                    }
                 }
                 finally { LastRawGroups = prevRaw; }
             }
@@ -324,19 +342,28 @@ namespace FPSGame.Game {
             switch (type) {
                 case DamageTypeEnum.Destruction:
                     return 0;//护甲破坏不计入伤害量
+                case DamageTypeEnum.Catalyst:
+                    // 催化：只推动目标身上已有的异常状态积蓄，自身零伤害
+                    CatalyzeAboGauge(value, damageCaused);
+                    return 0;
                 case DamageTypeEnum.Burn:
-                
+                    // 冰火互斥（2026-11-04）：燃烧先消融冰冻槽，冰冻归零后剩余量才升温
+                    AddOpposedAboGauge(DamageTypeEnum.Burn, DamageTypeEnum.Freeze, value, damageCaused);
+                    return value;//燃烧伤害计入伤害量
+                case DamageTypeEnum.Freeze:
+                    // 同理：冰冻先压制燃烧槽，燃烧归零后才开始结冰
+                    AddOpposedAboGauge(DamageTypeEnum.Freeze, DamageTypeEnum.Burn, value, damageCaused);
+                    return 0;//冰冻不计入伤害量
                 case DamageTypeEnum.Electric:
                 case DamageTypeEnum.Radiation:
                     AddAboGauge(type, value, damageCaused);
-                    return value;//燃烧/雷击/辐射 伤害计入伤害量
-                case DamageTypeEnum.Freeze:
+                    return value;//雷击/辐射 伤害计入伤害量
                 case DamageTypeEnum.Toxicity:
                 case DamageTypeEnum.Hacker:
                 case DamageTypeEnum.Terror:
                 case DamageTypeEnum.Vertigo:
                     AddAboGauge(type, value, damageCaused);
-                    return 0;//冰冻/毒/骇入/恐慌/眩晕不计入伤害量
+                    return 0;//毒/骇入/恐慌/眩晕不计入伤害量
 
                 default:
                     return value;

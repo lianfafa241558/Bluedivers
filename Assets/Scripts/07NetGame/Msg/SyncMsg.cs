@@ -3,7 +3,7 @@
 namespace FPSGame.Net
 {
     // ============================================================
-    // 局内世界状态同步（4033+，2026-10-08）
+    // 局内世界状态同步（4050+，2026-10-08）
     // 设计见 .codebuddy/plans/联机_未同步清单与同步方案.md
     //
     // ⚠ 字段类型只能用 NetMsgCodec 支持的那些（int/uint/float/bool/string 等），
@@ -74,7 +74,7 @@ namespace FPSGame.Net
     }
 
     /// <summary>有人把某个玩家扶起来了（同型双向：救人者 -> 房主 -> 全体）。
-    /// <para>▍为什么按 <c>Sid</c> 而不是复用家具交互（4036）：见 <c>CmdId.PlayerReviveNtf</c> 的注释。</para></summary>
+    /// <para>▍为什么按 <c>Sid</c> 而不是复用家具交互（4059）：见 <c>CmdId.PlayerReviveNtf</c> 的注释。</para></summary>
     [MessagePackObject]
     public class PlayerReviveMsg
     {
@@ -100,9 +100,9 @@ namespace FPSGame.Net
         /// 用于"改了状态但没有人交互"的场合（任务把管道打成 PipeError）。</para></summary>
         [Key(3)] public string StateKey;
 
-        /// <summary>【载具上下机】载具的 <c>Actor.NetId</c>（= 原 4053 的键；0 = 普通家具消息，本字段不参与）。
+        /// <summary>【载具上下机】载具的 <c>Actor.NetId</c>（= 原 4093 的键；0 = 普通家具消息，本字段不参与）。
         /// <para>▍为什么载具不用自己的 <c>SyncId</c>：它两端各生成一份、生成时机与落点都差几厘米
-        /// ⇒ <c>FNV1a(Id+位置量化)</c> 必然对不上；号由房主随 4028 分配、两端一致，只能用它。</para>
+        /// ⇒ <c>FNV1a(Id+位置量化)</c> 必然对不上；号由房主随 4034 分配、两端一致，只能用它。</para>
         /// <para>⚠ 必须**追加在末尾**：旧端跳过它拿默认 0 ⇒ 退化成"按家具处理并丢弃"，不会串字段。</para></summary>
         [Key(4)] public int NetId;
         /// <summary>【载具上下机】驾驶者会话号（房主 = 0）⇒ 接收端据此解析"本端那个实体"（本机玩家 / 盟友实例）。</summary>
@@ -112,7 +112,7 @@ namespace FPSGame.Net
     }
 
   /// <summary>按键终端(KeyScreen)阶段推进（双向）。<c>SyncId</c> = 终端家具的 <c>Furniture_Attached.SyncId</c>
-    /// （与 4036 同口径 ⇒ 两端日志可直接对照）。
+    /// （与 4059 同口径 ⇒ 两端日志可直接对照）。
     /// <para>只传"推进到第几阶段"：阶段本身的语义（UI 显隐 / 谜题初始化 / 任务标志）由各端跑同一条本地
     /// <c>SetStage</c> 逻辑，不需要过网。</para></summary>
     [MessagePackObject]
@@ -182,7 +182,7 @@ namespace FPSGame.Net
         Unit = 1,
     }
 
-    /// <summary>【房主 → 全体】**实体生成**的统一消息（原 4047 巡逻队 + 4051 运行时生成合并，2026-10-12）。
+    /// <summary>【房主 → 全体】**实体生成**的统一消息（原 4091 巡逻队 + 4092 运行时生成合并，2026-10-12）。
     ///
     /// <para>▍为什么合成一条：两者的前提完全同型 —— 都是"房主是唯一的生成权威"，都是因为
     /// <c>Actor.Awake</c> 会领 NetId（号的口径是"房主分配 + 两端创建顺序一致"，成员端自造必然错位）。
@@ -313,7 +313,7 @@ namespace FPSGame.Net
     [MessagePackObject]
     public class VehicleShootMsg
     {
-        /// <summary>载具 <c>Actor.NetId</c>（房主随 4028 分配 ⇒ 两端一致；0 = 无效，收端丢弃）。</summary>
+        /// <summary>载具 <c>Actor.NetId</c>（房主随 4034 分配 ⇒ 两端一致；0 = 无效，收端丢弃）。</summary>
         [Key(0)] public int NetId;
 
         /// <summary>载具武器下标（<c>VehicleWeaponsManager.GetWeaponAtSlotIndex</c> 的口径：两端按**同一个持有者配置**重建，顺序一致）。</summary>
@@ -353,8 +353,8 @@ namespace FPSGame.Net
     #region 伤害
 
     /// <summary>**统一的"伤害 / 生死"事件**（房主与成员共用；三条号共挂这一个 DTO）。
-    /// <para>▍方向由**到达的 cmdId** 决定：<c>EnemyHitNtf</c>(4025) = 成员上报房主；
-    /// <c>EnemyDamagedSync</c>(4040) = 房主下发全体；<c>SceneDestructibleNtf</c>(4043) = 无号可破坏物的双向兜底 + 房主"已打掉"账本补发。</para>
+    /// <para>▍方向由**到达的 cmdId** 决定：<c>EnemyHitNtf</c>(4053) = 成员上报房主；
+    /// <c>EnemyDamagedSync</c>(4054) = 房主下发全体；<c>SceneDestructibleNtf</c>(4058) = 无号可破坏物的双向兜底 + 房主"已打掉"账本补发。</para>
     /// <para>⚠ 只同步"数值结果"，不重放弹道：两边各自的表现弹照旧（那是 <c>PlayerShootSync</c> 的事）。</para></summary>
     [MessagePackObject]
     public class DamageMsg
@@ -369,12 +369,14 @@ namespace FPSGame.Net
         [Key(2)] public int Key;
 
         /// <summary>最终伤害值；0 + <see cref="IsDeath"/> = 只报"死了"。</summary>
-        [Key(3)] public int Damage;
+        [Key(3)] public int Damage;   // 开枪端实际扣减量（血+盾）：2026-11-04 起不参与远端结算，只做日志/判空/兜底
 
         /// <summary>**起源**单位的 NetId（谁该记这笔账；0 = 未知/玩家 ⇒ 退回按 <see cref="Sid"/> 找盟友实例）。
         [Key(4)] public int AttackerNetId;
 
-        /// <summary>伤害成分，摊平编码 <c>[count, type0, coeff0, type1, coeff1, ...]</c>（null/空 = 按中性成分结算）。
+        /// <summary>伤害成分，摊平编码 <c>[count, type, value, ...]</c>（null/空 = 按中性成分结算）。
+        /// <para>⚠ <b>value 是每个成分的数值</b>（开枪端拆解后的量，含 <c>Destruction</c>），不是系数 ——
+        /// 接收端直接按它结算并补护甲破坏 / 异常状态积蓄，不再按 Σcoeff 分摊（2026-11-04 改口径）。</para>
         [Key(5)] public float[] Groups;
 
         /// <summary>命中部位：**下标 + 1**（<c>0</c> = 未指定 ⇒ 接收端按自己的受击体挑主躯干）。
@@ -389,31 +391,17 @@ namespace FPSGame.Net
         /// <see cref="AttackerNetId"/> / 按 <see cref="Sid"/> 找盟友实例）。
         [Key(8)] public int CausedNetId;
 
-    }
+        /// <summary>【背包护盾专用】护盾归属者 sid（房主 = 0）；**-1 = 普通单位伤害**（默认值）。
+        /// <para>▍为什么并进这条 DTO（2026-11-04）：护盾罩子没有 <c>Actor</c>/<c>NetId</c>，统一通道按号寻址认不到它，
+        /// 只能按"谁的护盾"定点投递 —— 但这不值得单开一条消息：同一个方向号（4053/4054）+ 一个归属者字段就够。
+        /// 接收端按本字段认领，走 <c>NetShieldBagBridge</c>，**不进** <c>NetId</c> 寻址。</para>
+        /// <para>⚠ 用 <c>-1</c> 而不是 0 表示"无"：0 是房主自己的合法 sid。</para></summary>
+        [Key(9)] public int OwnerSid = -1;
 
-    /// <summary>
-    /// **背包护盾被打**（<c>ShieldBag</c> 的罩子）：把"开枪那台已经算好的最终扣减量"送到**护盾归属者**那台落地。
-    ///
-    /// <para>▍为什么不能走 4025/4040：护盾罩子（<c>Sphere</c>）没有 <c>Actor</c>、没有 <c>NetId</c>，
-    /// 统一伤害通道按号寻址，认不到它；而它又确实是独立可破坏单位（自带 <c>Damageable</c> + <c>HealthShield</c>）。</para>
-    ///
-    /// <para>▍只带三样：归属者 sid（谁认领）、最终扣减量（<c>UnitEventBus.OnUnitDamaged</c> 的那个值，接收端
-    /// <c>Resolved = true</c> 直接用，别再算护甲）、落点（受击特效位置）。不带护盾键 —— 每个玩家同时只装一件背包
-    /// （<c>BagBase.NeedUninstall</c> 对任何 <c>Id</c> 含 "Bag" 的都返回 true）⇒ 归属者的"本人那件"唯一。</para>
-    /// </summary>
-    [MessagePackObject]
-    public class ShieldDamageMsg
-    {
-        /// <summary>护盾归属者 sid（房主 = 0）。收端**只在自己是它时**应用。</summary>
-        [Key(0)] public uint Sid;
-
-        /// <summary>最终扣减量（已乘完护甲/抗性，见 <c>UnitEventBus.OnUnitDamaged</c>）。</summary>
-        [Key(1)] public float Damage;
-
-        // 受击落点（世界空间）：归装者那台用它摆受击粒子/法线，零向量 = 未知 ⇒ 用护盾中心。
-        [Key(2)] public float X;
-        [Key(3)] public float Y;
-        [Key(4)] public float Z;
+        /// <summary>【背包护盾专用】受击落点（世界空间；<see cref="OwnerSid"/> &lt; 0 时无意义）。</summary>
+        [Key(10)] public float X;
+        [Key(11)] public float Y;
+        [Key(12)] public float Z;
     }
 
     #endregion

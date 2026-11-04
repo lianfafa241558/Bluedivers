@@ -6,7 +6,7 @@ using UnityEngine;
 namespace FPSGame.Managers
 {
     /// <summary>
-    /// 联机 · 玩家世界动作同步桥（09）：**标记点位（4037） / 呼叫凯伊（4038）**。
+    /// 联机 · 玩家世界动作同步桥（09）：**标记点位（4031） / 呼叫凯伊（4032）**。
     ///
     /// <para>▍这两条都是"玩家发起、别人该看见"的动作，且都**带动玩法副作用**，所以不能只同步一个视觉：
     /// 标记会驱动盟友的"敌情"喊话与任务点暴露；呼叫凯伊会让**凯伊单位真的走过去 + 放信标 + 救人**。
@@ -97,7 +97,7 @@ namespace FPSGame.Managers
             else if (m.Sid == flow.SelfSid) return;                 // 成员：自己那条绕回来了
 
             // ⚠ target 传 null：目标实体是**引用**不能过网。标记的表现落点（字幕/光环）用 owner + point 就够；
-            //   任务点的"被发现"由任务同步（4035）负责，不依赖这条。
+            //   任务点的"被发现"由任务同步（4066）负责，不依赖这条。
             var owner = ResolveRemoteUser(m.Sid);
 
             _applyingRemote = true;

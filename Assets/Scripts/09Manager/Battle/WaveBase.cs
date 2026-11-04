@@ -194,7 +194,7 @@ namespace FPSGame.Managers
         /// 照样摘账本，但**不修改它的导航目标**(不硬塞一个假点把单位引到乱七八糟的地方)。</para>
         ///
         /// <para>▍只换目标点，不击杀也不销毁：单位继续活在场上(不凭空消失) ⇒ 不走联机死亡通道。
-        /// 房主端 <c>SetNavDestination</c> 会经既有 4033(敌人移动) 把新目标下发给成员；成员端该调用本就作废
+        /// 房主端 <c>SetNavDestination</c> 会经既有 4052(敌人移动) 把新目标下发给成员；成员端该调用本就作废
         /// (只认房主下发，见 <c>EnemyController.RemoteDrivenMovement</c>)，两端只需同步"摘账本"这一步。</para>
         /// </summary>
         protected virtual void RetreatRemainingUnits()

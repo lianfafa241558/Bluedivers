@@ -125,7 +125,7 @@ namespace FPSGame.Weapon
             // ⚠ 伤害配置为空的武器（如角色**装备槽**的 *Armor：Damages.Count == 0）原来直接 Damages[0]
             //   ⇒ **IndexOutOfRangeException** 把整条 LogicInit 链打断：后面 `WeaponReloadController.LogicInit`
             //   的 Magazine/Ammo/ReloadTime 也建不出来 ⇒ 之后 `ApplyUpgrade` 里 `cfg[type]` 取到 null 再炸一次
-            //   （联机 4045 载入配置时实测）。配置错误上面 `WeaponBaseController.LogicInit` 已报过，这里静默早退。
+            //   （联机 6005 载入配置时实测）。配置错误上面 `WeaponBaseController.LogicInit` 已报过，这里静默早退。
             if (Damages == null || Damages.Count == 0) return;
 
             _damagePrimeBackup.Clear();   // 武器重建后 Damages 换了，旧备份作废
@@ -186,6 +186,7 @@ namespace FPSGame.Weapon
             Set(Attr.DamageTypeTerror, (d, v) => d.SetDamageTypeTerror(v));
             Set(Attr.DamageTypeRadiation, (d, v) => d.SetDamageTypeRadiation(v));
             Set(Attr.DamageTypeHacker, (d, v) => d.SetDamageTypeHacker(v));
+            Set(Attr.DamageTypeCatalyst, (d, v) => d.SetDamageTypeCatalyst(v));
 
             // 易伤系数（目标挂着对应异常状态时的伤害倍率）
             Set(Attr.VulnerabilityToxicity, (d, v) => d.SetVulnerabilityToxicity(v));
@@ -210,6 +211,7 @@ namespace FPSGame.Weapon
             Set(Attr.ExplosionTypeTerror, (d, v) => d.SetExplosionTypeTerror(v));
             Set(Attr.ExplosionTypeRadiation, (d, v) => d.SetExplosionTypeRadiation(v));
             Set(Attr.ExplosionTypeHacker, (d, v) => d.SetExplosionTypeHacker(v));
+            Set(Attr.ExplosionTypeCatalyst, (d, v) => d.SetExplosionTypeCatalyst(v));
 
             // 子弹配置序号：基础值取当前 UseDamageIndex（信号枪等运行时切档的值不能在这里被重置），
             // 只在属性真变时才回写字段。tag = IsHide ⇒ 参数面板永远不显示这一行。

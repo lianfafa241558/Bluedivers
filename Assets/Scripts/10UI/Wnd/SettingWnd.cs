@@ -760,7 +760,7 @@ namespace FPSGame.UI
 
         /// <summary>与小队终止任务（联机 · 房主的"中止任务"）：本地效果与单机那条完全相同，区别只在**广播**。
         /// <para>▍为什么走 <c>BattleEventBus.EndGame</c> 而不是 <c>BattleManager.Instance.EndGame</c>：
-        /// <c>NetGameFlowBridge</c> 订阅的是这个事件 —— 房主一触发就 <c>SendGameOver</c>(4033) 广播给全队，
+        /// <c>NetGameFlowBridge</c> 订阅的是这个事件 —— 房主一触发就 <c>SendGameOver</c>(4064) 广播给全队，
         /// 各端跑同一条 EndGame ⇒ 大家一起进中止（2026-10-11 用户口径）。
         /// 直接调 <c>BattleManager</c> 只结束本机，别人继续打。</para></summary>
         void TryAbortSquad()

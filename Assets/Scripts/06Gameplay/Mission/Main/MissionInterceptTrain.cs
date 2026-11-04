@@ -76,7 +76,7 @@ namespace FPSGame.Mission
         {
             base.InitMission();
             // 附加炮塔是"有 Actor 的运行时生成单位"⇒ 本任务要挂进生成器登记表（成对注销见 Uninit）：
-            // 成员端凭 4052 带回来的来源键（本任务 SpawnSourceKey）找回本端这一份，再由它复刻炮塔
+            // 成员端凭 4063 带回来的来源键（本任务 SpawnSourceKey）找回本端这一份，再由它复刻炮塔
             SpawnerRegistry.Register(this);
             Active = this;
             BuildRailOnce();

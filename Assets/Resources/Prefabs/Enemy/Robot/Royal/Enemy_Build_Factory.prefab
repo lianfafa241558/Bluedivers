@@ -375,8 +375,6 @@ MonoBehaviour:
   MaxHealth: 500
   MaxShield: 0
   showArmorLists:
-  - Key: 11
-    Value: 0
   - Key: 8
     Value: 0
   - Key: 9
@@ -386,7 +384,15 @@ MonoBehaviour:
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
-  AboGaugeArr: []
+  AboGaugeArr:
+  - Key: 4
+    Value: 80
+  - Key: 5
+    Value: 80
+  - Key: 6
+    Value: 160
+  - Key: 11
+    Value: 300
 --- !u!114 &5698537551989269744
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -252,7 +252,7 @@ namespace FPSGame.Managers
             }
 
             // ★ "呼叫战备"那一发**不上报表现弹**（判据 = 信号枪的非 0 档位，即"呼叫战备"档）：
-            //   空投有自己的同步通道（AirdropCallNtf/Sync 4027/4028，带落点+朝向+呼叫者），而"开枪那一发"
+            //   空投有自己的同步通道（AirdropCallNtf/Sync 4033/4034，带落点+朝向+呼叫者），而"开枪那一发"
             //   在对端只会按**命中特效**重放 ⇒ 对端把空投当成"标记"放出一个假标记（2026-10-10 实测）
             //   —— 且与对端版本无关（旧包连档位都收不到）。其余武器的多档位（火炮炮弹等）不受影响。
             if (weapon != null
@@ -260,7 +260,7 @@ namespace FPSGame.Managers
                 && weapon.UseDamageIndex > 0)
             {
                 FPSGame.Utils.NetSyncLog.BulletLog("开火·发", $"档位={weapon.UseDamageIndex}（信号枪·呼叫战备那一发）" +
-                    "⇒ 不上报表现弹（空投由 AirdropCall 4027/4028 同步，避免对端放出假标记）");
+                    "⇒ 不上报表现弹（空投由 AirdropCall 4033/4034 同步，避免对端放出假标记）");
                 return;
             }
 
@@ -354,8 +354,8 @@ namespace FPSGame.Managers
         // ==================== 呼叫战备（局内释放） ====================
 
         /// <summary>【成员】本机自己叫的那发"待定号"信标（FIFO）—— 只记成员那份，房主当场就定了号。
-        /// <para>▍为什么需要：成员发 4027 时还不知道房主会给什么号（号随 4028 回来），而本机那份载具**已经生成**
-        /// （运输机/空投舱是"立刻投送"的）⇒ 得记住"哪几个信标等着补号"。KCP 可靠有序 ⇒ 自派发回来的 4028
+        /// <para>▍为什么需要：成员发 4033 时还不知道房主会给什么号（号随 4034 回来），而本机那份载具**已经生成**
+        /// （运输机/空投舱是"立刻投送"的）⇒ 得记住"哪几个信标等着补号"。KCP 可靠有序 ⇒ 自派发回来的 4034
         /// 与本地呼叫顺序一致，按 FIFO 出队就能对上（本机呼叫有 CD，通常队列里最多一个）。</para></summary>
         private readonly Queue<GameObject> _pendingVehicleBeacons = new Queue<GameObject>();
 
@@ -376,8 +376,8 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow == null || !flow.InRoom) return;
 
-            // ★ 载具号（本机这一发）：房主 = 当场分配（它就是权威，号随 4028 一起出去）；
-            //   成员 = 0（待定号），等房主 4028 回来按 FIFO 覆盖（见 HandleAirdropCall 的 IsSelf 分支）。
+            // ★ 载具号（本机这一发）：房主 = 当场分配（它就是权威，号随 4034 一起出去）；
+            //   成员 = 0（待定号），等房主 4034 回来按 FIFO 覆盖（见 HandleAirdropCall 的 IsSelf 分支）。
             int vehicleNetId = flow.IsHost ? ActorsManager.NextVehicleNetId() : 0;
             var fx = target != null ? target.GetComponent<IAirdropEffect>() : null;
             if (fx != null)

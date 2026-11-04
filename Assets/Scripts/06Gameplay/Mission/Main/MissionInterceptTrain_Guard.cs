@@ -12,7 +12,7 @@ using UnityEngine;
 namespace FPSGame.Mission
 {
     /// <summary>
-    /// 拦截火车 · 火车卫队（partial）：随列车发车生成（房主 <c>CreatPatrol</c> + 4052 复刻）、
+    /// 拦截火车 · 火车卫队（partial）：随列车发车生成（房主 <c>CreatPatrol</c> + 4063 复刻）、
     /// 按 Tick 节拍把**护航位**（车头两侧）写进 <c>HomePoint</c> 并自己推目的地、补跟随速度，任务收尾时静默移除。
     /// <para>⚠ 引导必须"先发车、后引导"且落在<b>同一帧</b>内（理由见 <c>Tick</c> 里的注释）。</para>
     /// <para>⚠ 用 <c>HomePoint</c>（到达即**待命**）而**不是** <c>PatrolPos</c>（到达即**自毁**）：
@@ -47,7 +47,7 @@ namespace FPSGame.Mission
         #region 卫队
 
         /// <summary>
-        /// 生成火车卫队（房主权威：<c>CreatPatrol</c> 内部就是房主生成 + 4052 复刻）。
+        /// 生成火车卫队（房主权威：<c>CreatPatrol</c> 内部就是房主生成 + 4063 复刻）。
         /// <para>⚠ 卫队里带 <see cref="ActorFlag.Boss"/> 的单位要**立刻摘掉**这个标：否则会占一个 boss 血条。</para>
         /// </summary>
         private void SpawnGuards(TrainRuntime runtime, int squads)
@@ -70,7 +70,7 @@ namespace FPSGame.Mission
                     GuideGuard(unit, spawnPos);
                     runtime.Guards.Add(unit);
                 }
-                // 联机：巡逻队是房主权威 ⇒ 上报"生成点 + HomePoint"（4052），成员端按 HomePoint 复刻同一支。
+                // 联机：巡逻队是房主权威 ⇒ 上报"生成点 + HomePoint"（4063），成员端按 HomePoint 复刻同一支。
                 // ⚠ 不报的话成员端**根本没有这支卫队**（CreatPatrol 在成员端被闸成空表）。口径同 MissionOilRefining。
                 BattleEventBus.ReportPatrolSpawn(spawnPos, spawnPos, true);
             }
@@ -142,7 +142,7 @@ namespace FPSGame.Mission
         /// （顿挫感）；放在前方一个刷新周期的行程处，它就一直在跑、从不"到点停住"。</para>
         /// <para>⚠ 投影到 NavMesh 不能省：目标不可达时 SetDestination 会失败，而 <c>EnemyController</c> 的去重会把失败记成"已请求"。</para>
         /// <para>⚠ 成员端 <c>SetNavDestination</c> 会被 <c>RemoteDrivenMovement</c> 门掉（还会刷限流日志）⇒ 只在非成员端推；
-        /// 成员端靠房主广播的目的地（<c>SetNavDestination → BattleEventBus.EnemyMove → 4024</c>）。</para>
+        /// 成员端靠房主广播的目的地（<c>SetNavDestination → BattleEventBus.EnemyMove → 4052</c>）。</para>
         /// </summary>
         private void RefreshGuards(TrainRuntime runtime)
         {

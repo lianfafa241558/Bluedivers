@@ -214,10 +214,10 @@ public class Furniture_General : Furniture_Attached
         action._Start?.Invoke(this);
     }
 
-    /// <summary>⚠ 本覆写**不调用 <c>base.Operate()</c>**：交互事件（4036 同步的 <c>GlobalEventBus.FurnitureOperate</c>）、
+    /// <summary>⚠ 本覆写**不调用 <c>base.Operate()</c>**：交互事件（4059 同步的 <c>GlobalEventBus.FurnitureOperate</c>）、
     /// <c>inOperate</c> 置位、语音都在基类里 ⇒ **只配了 <c>_InOperateUpdate</c>/<c>_CanOperate</c> 而没有 <c>_Operate</c>
     /// 的家具会"点了没反应"**（<c>SignaTower</c> 就是：它的旋转依赖 <c>inOperate == true</c>，没人置真 ⇒ 旋转不生效、
-    /// 联机 4036 也永远不会为它上报）。新增配置项时：要么给 <c>_Operate</c>，要么在 lambda 里显式调 <c>furn.BaseOp()</c>。</summary>
+    /// 联机 4059 也永远不会为它上报）。新增配置项时：要么给 <c>_Operate</c>，要么在 lambda 里显式调 <c>furn.BaseOp()</c>。</summary>
     public override void Operate() {
         action._Operate?.Invoke(this);
     }

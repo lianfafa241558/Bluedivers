@@ -113,8 +113,9 @@ public class ShieldBag : BagBase
         damageable.InflictDamage(new DamagePacket
         {
             Damage = (PEInt)damage,
-            // 中性成分（Gun×1）+ Resolved：总额就是开枪那台的最终值，本端不再算一遍护甲/抗性（口径同 EnemyNetBridge）
-            DamageGroups = new List<SKVP<DamageTypeEnum, float>> { new SKVP<DamageTypeEnum, float>(default, 1f) },
+            // 中性成分 + Resolved（2026-11-04 口径）：成分里带的是**数值**（Gun = damage）而不是系数 1，
+            // 本端不再算任何乘区（同 EnemyNetBridge 的远端落地）。
+            DamageGroups = new List<SKVP<DamageTypeEnum, float>> { new SKVP<DamageTypeEnum, float>(default, damage) },
             NoSource = true,                    // 不传来源：本端没有开枪者那份实例，按无源结算（受击表现仍会播）
             Pos = point,
             // ⚠ 不传受击体：远端那条链没有真实命中点，传了罩子的话 HitNormal 会算出 (pos - 中心) = 零向量

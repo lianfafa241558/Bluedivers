@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace FPSGame.GameContract
 {
-    /// <summary>【联机】生成器登记表（按 <see cref="INetSpawner.SpawnSourceKey"/> 惰性比较），供成员端凭 4052 的来源键找回本端那份生成器。
+    /// <summary>【联机】生成器登记表（按 <see cref="INetSpawner.SpawnSourceKey"/> 惰性比较），供成员端凭 4063 的来源键找回本端那份生成器。
     ///
     /// <para>▍为什么不是字典：键要**现算**（生成者自己的 <c>NetId</c> 可能在复刻时才被覆盖）⇒ 存列表、查的时候逐个比。
     /// 数量级只有几十，够用。⚠ 登记点必须成对（<c>OnEnable</c>/<c>OnDisable</c> 或 <c>Init</c>/<c>Uninit</c>），

@@ -48,7 +48,7 @@ namespace FPSGame.Gameplay
             }
             else
             {
-                // 装不上的唯一入口：owner 为空、或它不是玩家预制体（远端重放 4036 时 owner = 盟友实例，应当带 EquipController）
+                // 装不上的唯一入口：owner 为空、或它不是玩家预制体（远端重放 4059 时 owner = 盟友实例，应当带 EquipController）
                 // ⚠ 原来这里静默跳过 ⇒ "装备没同步"在 Console 上查不到任何线索
                 Debug.LogWarning($"[装备] {ShowName}({Id}) 装不上：owner={(owner != null ? owner.name : "<null>")} 没有 EquipController", gameObject);
             }

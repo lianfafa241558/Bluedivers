@@ -9,10 +9,11 @@ namespace FPSGame.Managers
     /// <summary>
     /// 联机 · **背包护盾（<c>ShieldBag</c> 的罩子）伤害**桥（09）：把"打到别人护盾上的那一笔"送到**归属者本机**落地。
     ///
-    /// <para>▍为什么必须单开一条：罩子（<c>Sphere</c>，带 <c>Damageable</c> + <c>HealthShield</c>）是**独立可破坏单位**，
-    /// 但它没有 <c>Actor</c> / <c>NetId</c> ⇒ 统一伤害通道（4025/4040）按号寻址，认不到它；而子弹只在**开枪那台**
-    /// 上模拟（玩家血量各自机器权威，见 <c>topics/net-battle.md</c>）⇒ 不打这条，就是"我打你的盾，掉的是我这儿那份副本、
-    /// 你的屏幕纹丝不动"（2026-10-21 实测）。</para>
+    /// <para>▍为什么仍然按"归属者 sid"定点投递（2026-11-04 并入伤害族后不变）：罩子（<c>Sphere</c>，带
+    /// <c>Damageable</c> + <c>HealthShield</c>）是**独立可破坏单位**，但它没有 <c>Actor</c> / <c>NetId</c>
+    /// ⇒ 统一通道按号寻址认不到它；而子弹只在**开枪那台**上模拟（玩家血量各自机器权威）⇒ 不打这条，就是
+    /// "我打你的盾，掉的是我这儿那份副本、你的屏幕纹丝不动"（2026-10-21 实测）。
+    /// 现在这条消息就是 <c>DamageMsg</c>（<c>OwnerSid &gt;= 0</c> 分支），走 4053/4054 两个方向号。</para>
     ///
     /// <para>▍归属者判定：背包被远端重放装到盟友实例上时 <c>BagBase.IsLocalDriver == false</c>，
     /// 它的 <c>Owner</c> 上挂 <c>FriendController</c>（有 <c>NetSid</c>）⇒ 目标就是那个 sid。本机自己那件
@@ -72,10 +73,11 @@ namespace FPSGame.Managers
 
         // ==================== 网络 -> 本端 ====================
 
-        /// <summary>本机就是归属者 ⇒ 在本机这份罩子上真扣一次（事件只在目标是本机时到达，见 <c>NetRoomFlow.HandleShieldDamageNtf</c>）。</summary>
-        static void OnRemoteDamaged(ShieldDamageMsg m)
+        /// <summary>本机就是归属者 ⇒ 在本机这份罩子上真扣一次（事件只在目标是本机时到达，
+        /// 见 <c>NetRoomFlow.HandleDamageUp / HandleDamageDown</c> 的 <c>OwnerSid</c> 分支）。</summary>
+        static void OnRemoteDamaged(DamageMsg m)
         {
-            if (m == null || m.Damage <= 0f) return;
+            if (m == null || m.Damage <= 0) return;
 
             var player = ActorsManager.Player as Component;   // IActor 是接口，取组件得先转 Component
             if (player == null) return;                       // 单机还没建出玩家 / 已阵亡清场
@@ -83,7 +85,7 @@ namespace FPSGame.Managers
             var bag = player.GetComponentInChildren<ShieldBag>(true);
             if (bag == null || !bag.IsLocalDriver)
             {
-                FPSGame.Utils.NetSyncLog.Warn("护盾/伤害·收", $"收到 {m.Damage:F1} 点护盾伤害，但本机玩家身上没有已装备的护盾 ⇒ 丢弃");
+                FPSGame.Utils.NetSyncLog.Warn("护盾/伤害·收", $"收到 {m.Damage} 点护盾伤害，但本机玩家身上没有已装备的护盾 ⇒ 丢弃");
                 return;
             }
 
@@ -97,7 +99,7 @@ namespace FPSGame.Managers
                 NetApplyGuard.End();
             }
 
-            FPSGame.Utils.NetSyncLog.SyncLog("护盾/伤害·收", $"扣 {m.Damage:F1}（落点={new Vector3(m.X, m.Y, m.Z):F2}）");
+            FPSGame.Utils.NetSyncLog.SyncLog("护盾/伤害·收", $"扣 {m.Damage}（落点={new Vector3(m.X, m.Y, m.Z):F2}）");
         }
     }
 }

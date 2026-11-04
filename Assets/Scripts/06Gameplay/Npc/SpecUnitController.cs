@@ -101,7 +101,7 @@ namespace FPSGame.Gameplay
 
         /// <summary>
         /// 设置目标点
-        /// <para>▍对凯伊为什么是真修复：它的落点是**网络上重放**过来的（4038 <c>CallKai</c>），
+        /// <para>▍对凯伊为什么是真修复：它的落点是**网络上重放**过来的（4032 <c>CallKai</c>），
         /// 而重放那一刻这只凯伊可能还没 Warp 上导航网格 ⇒ 旧实现 <c>SetDestination</c> 静默失败、
         /// 这条呼叫就没了；现在会先存下来，等 agent 就绪再落地。</para>
         /// </summary>

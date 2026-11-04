@@ -608,7 +608,7 @@ namespace FPSGame.Managers
         /// <para>▍为什么必须有：<c>BattleData</c> 只在 <see cref="SetTask"/> / <see cref="EnsureSceneData"/> 那一刻按
         /// <c>players.Count</c> 建，而 Ready/Armament 阶段**仍允许玩家入房**（<c>TeamNetBridge</c>：名单重建 ⇒
         /// <c>players</c> 变长、<c>BattleData</c> 不变）⇒ 局内任何按 <c>players</c> 下标写统计的地方都会越界。
-        /// 实测（2026-10-13）：房主收成员 4025 命中上报 → 起源解析成盟友实例 → <c>PlayerIndex</c> 已是新下标 →
+        /// 实测（2026-10-13）：房主收成员 4053 命中上报 → 起源解析成盟友实例 → <c>PlayerIndex</c> 已是新下标 →
         /// <c>BattleData[1]</c> 抛 <c>ArgumentOutOfRangeException</c>，整条消息处理失败；结算窗口
         /// （<c>GameEndWnd</c>，按 <c>players.Count</c> 遍历）同样会崩。</para>
         ///

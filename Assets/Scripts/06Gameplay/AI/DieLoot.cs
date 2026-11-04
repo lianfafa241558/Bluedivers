@@ -19,7 +19,7 @@ namespace FPSGame.AI
         void Start()
         {
             // ★ 静态同步（2026-10-12）：掉落数量改走**派生流** —— 原来 `UnityEngine.Random` 是全局流 ⇒ 两端数量必然不同。
-            //   键 = 本单位的 NetId（两端一致：波次同序 / 场景派生号 / 4052 房主分配）⇒ 两端数量一致，**零消息**。
+            //   键 = 本单位的 NetId（两端一致：波次同序 / 场景派生号 / 4063 房主分配）⇒ 两端数量一致，**零消息**。
             //   ⚠ 必须放 Start：同一 GameObject 上 Actor 与 DieLoot 的 Awake 顺序不保证 ⇒ Awake 里读不到 NetId。
             lootCount = RollLootCount();
 

@@ -672,7 +672,7 @@ namespace FPSGame.Weapon {
         /// <para>▍默认 false = 本机真开火。需要覆写的是"**各端本地生成、自己按 tick 开火**"的装置
         /// （<c>WeaponTemporaryController</c>）：非权威端必须只打表现弹，否则 N 个端 = N 倍伤害
         /// （见 <c>BattleState.IsTickDamageAuthority</c>、<c>topics/net-dup-damage.md</c>）。</para>
-        /// <para>⚠ 别在基类统一判定：玩家自己的枪在成员端也**必须**真开火（伤害靠 4025 上报、房主结算），
+        /// <para>⚠ 别在基类统一判定：玩家自己的枪在成员端也**必须**真开火（伤害靠 4053 上报、房主结算），
         /// 一律门掉会让他永远打不出伤害。</para></summary>
         protected virtual bool IsShotVisualOnly => false;
 

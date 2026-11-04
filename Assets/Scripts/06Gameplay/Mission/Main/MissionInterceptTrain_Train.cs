@@ -15,7 +15,7 @@ namespace FPSGame.Mission
     /// 进度 / 失败判定与开战节拍（<c>TickTime</c> = 1 秒，供提示里的发车倒计时走字）。附加炮塔见 <c>MissionInterceptTrain_Turret</c>、
     /// 卫队见 <c>MissionInterceptTrain_Guard</c>。
     /// <para>⚠ 生成口径分两类：① **车头 + 车厢**（都没有 <c>Actor</c>）两端各自 Instantiate，靠"名字/顺序一致"对齐；
-    /// ② **附加炮塔是有 <c>Actor</c> 的单位** ⇒ 必须走 <c>CreatUnit</c>（房主唯一生成 + 4052）——
+    /// ② **附加炮塔是有 <c>Actor</c> 的单位** ⇒ 必须走 <c>CreatUnit</c>（房主唯一生成 + 4063）——
     /// 成员端不生成、由 <see cref="ReplaySpawn"/> 按槽位复刻（同卫队的 <c>CreatPatrol</c>）。</para>
     /// </summary>
     public partial class MissionInterceptTrain
@@ -187,7 +187,7 @@ namespace FPSGame.Mission
                     carDamageable.SetRelay(engineDamageable);
                 }
                 runtime.Cars.Add(car);
-                // 附加炮塔：查计划表这一节该挂哪门（-1 = 不挂）⇒ 走 CreatUnit（房主生成 + 4052 复刻）
+                // 附加炮塔：查计划表这一节该挂哪门（-1 = 不挂）⇒ 走 CreatUnit（房主生成 + 4063 复刻）
                 GameObject turret = SpawnTurret(scheduleIndex, i, car);
                 if (turret != null) runtime.Turrets.Add(turret);
                 carTransforms.Add(car.transform);

@@ -157,9 +157,9 @@ namespace FPSGame.Core
         /// <summary>骇入</summary>
         [InspectorName("骇入")]
         Hacker,
-        /// <summary>占位符</summary>
-        [InspectorName("占位符")]
-        placeholder,
+        /// <summary>催化：本身不造成伤害，只推动目标**身上已有**的异常状态积蓄槽</summary>
+        [InspectorName("催化")]
+        Catalyst,
     }
 
     public enum ActorState

@@ -107,7 +107,7 @@ namespace FPSGame.Game
         /// <summary>【联机】**房主分配段**起点：运行时生成（巢穴 / 召唤师 / 刷怪器）走这里。
         /// <para>▍为什么不与敌人自增段共用：自增号的口径是"两端第几个被创建"，而这类生成的**时机由各自的 AI / 计时驱动**，
         /// 会与波次的逐 Tick 投放交错 ⇒ 两端"谁先谁后"必然不同，混在一个计数器里会把其后所有号整体平移。
-        /// 这一段由房主分配、随 4052 下发，成员只覆盖 ⇒ 与自增段彻底解耦。</para></summary>
+        /// 这一段由房主分配、随 4063 下发，成员只覆盖 ⇒ 与自增段彻底解耦。</para></summary>
         public const int HostSpawnNetIdBase = 0x2000_0000;
 
         /// <summary>本局"房主分配段"的序号（每局在 <see cref="Awake"/> 归零）。</summary>
@@ -118,8 +118,8 @@ namespace FPSGame.Game
 
         /// <summary>【联机】**空投载具段**起点：战备呼叫出来的载具（机甲/炮台/运输机这类可交互大件）的号。
         /// <para>▍为什么既不能用自增段也不能用派生键：载具**两端各生成一份、且生成时机不同**
-        /// （呼叫方立刻生成、其余端收到 4028 才生成）⇒ 自增号必然错位；它的落点又是**各端各自打地面射线**求的
-        /// （地形被炸过后差几厘米）⇒ 派生键也会分叉。只能"**房主随 4028 分配 + 两端显式覆盖**"。</para>
+        /// （呼叫方立刻生成、其余端收到 4034 才生成）⇒ 自增号必然错位；它的落点又是**各端各自打地面射线**求的
+        /// （地形被炸过后差几厘米）⇒ 派生键也会分叉。只能"**房主随 4034 分配 + 两端显式覆盖**"。</para>
         /// <para>⚠ 与既有段互不相交（<see cref="HostSpawnNetIdBase"/> / <see cref="DerivedNetIdBase"/> / 敌人自增 / SpecUnit 自增）：
         /// <c>EnemyNetBridge.FindActor</c> 统一按号查 ⇒ 号段相交就会"一个号指两个单位"。</para></summary>
         public const int VehicleNetIdBase = 0x3000_0000;
@@ -134,7 +134,7 @@ namespace FPSGame.Game
         /// <summary>【联机】"接下来创建的单位一律取**房主分配**号"（运行时生成的房主侧；Instantiate 前开、finally 关）。</summary>
         public static bool ForceHostSpawnNetId;
 
-        /// <summary>【联机】"正在复刻房主下发的单位"：<c>Actor.Awake</c> 期间**一个号都不发**（号来自 4052，由 <c>ReplaySpawn</c> 覆盖）。
+        /// <summary>【联机】"正在复刻房主下发的单位"：<c>Actor.Awake</c> 期间**一个号都不发**（号来自 4063，由 <c>ReplaySpawn</c> 覆盖）。
         /// <para>⚠ 与 <see cref="ForceDerivedNetId"/> 语义相反、必须分开：那个是"按身份算号"，这个是"不许发号"。</para></summary>
         public static bool Replicating;
 

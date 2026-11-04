@@ -11,7 +11,7 @@ using UnityEngine;
 namespace FPSGame.Mission
 {
     /// <summary>
-    /// 拦截火车 · 车厢附加炮塔（partial）：配置与概率计划表、房主生成（<c>CreatUnit</c> + 4052）、
+    /// 拦截火车 · 车厢附加炮塔（partial）：配置与概率计划表、房主生成（<c>CreatUnit</c> + 4063）、
     /// 成员按槽位复刻（含"车厢还没建出来"时的挂起补挂）、随车厢一起收尾。
     /// <para>⚠ 静态同步：概率计划表在本任务的<b>第一个 yield 之前</b>算好（两端同一份 BattleRandom 流），
     /// 发车只查表 ⇒ 连"该不该挂"都一致；复刻位置一律取<b>本端车厢挂点</b>，不用房主消息里的落点
@@ -105,7 +105,7 @@ namespace FPSGame.Mission
             return turretEntries.Count - 1;
         }
 
-        #region 生成器（INetSpawner：附加炮塔走"房主生成 + 4052 复刻"）
+        #region 生成器（INetSpawner：附加炮塔走"房主生成 + 4063 复刻"）
 
         /// <summary>
         /// 【联机】生成者身份键（<see cref="INetSpawner.SpawnSourceKey"/>）：房主上报、成员凭它在本端找回"同一个任务"。
@@ -202,7 +202,7 @@ namespace FPSGame.Mission
             if (mount == null) return null;
 
             GameObject turret = Instantiate(turretEntries[entry].Value, mount.position, mount.rotation, mount);
-            // ★ 号随 4052 来：复刻期间 Actor.Awake 一个号都不发（ActorsManager.Replicating），这里必须补上
+            // ★ 号随 4063 来：复刻期间 Actor.Awake 一个号都不发（ActorsManager.Replicating），这里必须补上
             if (turret.TryGetComponent(out Actor actor))
             {
                 actor.NetId = netId;
@@ -231,7 +231,7 @@ namespace FPSGame.Mission
 
         /// <summary>
         /// 【房主 / 单机】按计划表给一节车厢生成附加炮塔：走 <c>CreatUnit</c>（运行时生成的唯一入口）——
-        /// 房主真生成并上报 4052，成员端这一句直接返回 null（等复刻，见 <see cref="ReplaySpawn"/>）。
+        /// 房主真生成并上报 4063，成员端这一句直接返回 null（等复刻，见 <see cref="ReplaySpawn"/>）。
         /// <para>⚠ 生成完**必须挂到车厢挂点下**：<c>CreatUnit</c> 默认挂在 <c>ActorsManager</c> 下
         /// （"生成者死了不能把单位一起带走"）⇒ 不挂过来炮塔就不跟车走。</para>
         /// </summary>
@@ -246,7 +246,7 @@ namespace FPSGame.Mission
 
             GameObject turret = manager.CreatUnit(turretEntries[entry].Value, mount.position, mount.rotation,
                 this, TurretSlot(departure, carIndex));
-            if (turret == null) return null;   // 成员端：不生成（号由 4052 覆盖）
+            if (turret == null) return null;   // 成员端：不生成（号由 4063 覆盖）
 
             MountTurret(turret, mount);
             turret.name = TurretName(departure, carIndex);

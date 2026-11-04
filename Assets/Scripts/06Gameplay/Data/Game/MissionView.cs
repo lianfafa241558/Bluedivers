@@ -68,16 +68,27 @@ namespace FPSGame.Game
             this.discovered = HaveTag(MissionTag.StratDiscovered);
             areaRange = HaveTag(MissionTag.IsArea) ? mission.entitySize : 0;
             this.mission.OnMissionCompleted += OnMissionComplete;
-            GlobalEventBus.OnMark += Mark;
+            // ⚠ 已发现的任务（StratDiscovered 开局即暴露）不需要 Mark，订了也永远用不到
+            if (!discovered) GlobalEventBus.OnMark += Mark;
             if (requiredAD.Length > 0) BattleEventBus.OnAirdrop += OnAirdrop;
         }
 
         public void Uninit()
         {
             this.mission.OnMissionCompleted -= OnMissionComplete;
-            if (!discovered) GlobalEventBus.OnMark -= Mark;
+            GlobalEventBus.OnMark -= Mark;
             if (requiredAD!=null&&requiredAD.Length > 0) BattleEventBus.OnAirdrop -= OnAirdrop;
             enabled = false;
+        }
+
+        /// <summary>
+        /// ⚠ 静态事件不随场景卸载消失：任务未结束时转场/卸载任务 prefab 走不到 Uninit，
+        /// 残留订阅会在下次 Mark 命中已销毁对象（MissingReferenceException）⇒ 销毁时再退一次。
+        /// </summary>
+        private void OnDestroy()
+        {
+            GlobalEventBus.OnMark -= Mark;
+            BattleEventBus.OnAirdrop -= OnAirdrop;
         }
 
         private IEnumerator Wait()
@@ -183,9 +194,10 @@ namespace FPSGame.Game
         }
         private void Mark(GameObject owner, GameObject target, Vector3 point)
         {
-            if (!target) return;
+            // 静态事件在本帧 Destroy 之后仍可能回调（OnDestroy 还没跑）⇒ 取 transform 前先自检
+            if (!this || !target) return;
 
-            if (!discovered && target && target.transform.IsChildOf(transform))
+            if (!discovered && target.transform.IsChildOf(transform))
             {
                 TryDiscovered();
             }

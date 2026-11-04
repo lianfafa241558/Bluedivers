@@ -54,7 +54,7 @@ namespace FPSGame.AI
                 Vector3 pos = transform.position + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * orbitDistance;
 
                 // ★ 联机（2026-10-12）：装甲**也是单位**（自己会从 `Actor.Awake` 领 NetId）⇒ 必须走统一生成入口：
-                //   房主（或单机）造 + 上报 4052，成员端拿到 null（不生成、等复刻）—— 否则两端各 Instantiate 一份，
+                //   房主（或单机）造 + 上报 4063，成员端拿到 null（不生成、等复刻）—— 否则两端各 Instantiate 一份，
                 //   号段立刻错位（其后所有单位错位：伤害打到别的怪、移动指令发错对象）。
                 //   ⚠ 成员端那只由 `ReplaySpawn` 建出来，并**自己**注册进无敌体系（见下）。
                 GameObject go = FPSGame.GameContract.BattleHub.Current.CreatUnit(prefab, pos, transform.rotation, this, i);

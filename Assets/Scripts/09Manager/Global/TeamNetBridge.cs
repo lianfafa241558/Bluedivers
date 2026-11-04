@@ -308,7 +308,7 @@ namespace FPSGame.Managers
         }
 
         /// <summary>
-        /// 局内有人离开（<c>PlayerLeftNtf</c>/4029，只带 sid、名单**不重排**）⇒ 补一条"退出任务"。
+        /// 局内有人离开（<c>PlayerLeftNtf</c>/4008，只带 sid、名单**不重排**）⇒ 补一条"退出任务"。
         /// <para>▍为什么必须单独接：战斗期房主不再广播名单（<c>BroadcastPlayerList</c> 冻结），
         /// 上面那条 diff 看不到这次离开 —— 2026-10-09 修的正是"房主端从来没人告诉他有人走了"。</para>
         /// </summary>

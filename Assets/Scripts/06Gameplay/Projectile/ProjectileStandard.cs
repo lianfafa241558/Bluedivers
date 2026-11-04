@@ -278,8 +278,8 @@ namespace FPSGame.Gameplay
             transform.position += (m_Velocity + InheritedMuzzleVelocity) * tick;
 
             //朝向速度(仅仅为展示方向，与逻辑速度无关)
-            if(m_Velocity!=Vector3.zero) transform.forward = m_Velocity.normalized;
-            
+            FaceVelocity();
+
             // 下坠速度
             if (Gravity > 0)
             {
@@ -290,6 +290,13 @@ namespace FPSGame.Gameplay
                 m_Trails[i].transform.position = Root.position;
                 m_Trails[i].transform.rotation = Root.rotation;
             }
+        }
+
+        /// <summary>朝向速度（纯表现，不影响弹道）。抽成虚方法是给低速弹种关小它：
+        /// 方向每帧的变化率 ≈ 重力×Δt/速度，速度越低甩得越快（手雷落地前会像原地自转）。</summary>
+        protected virtual void FaceVelocity()
+        {
+            if (m_Velocity != Vector3.zero) transform.forward = m_Velocity.normalized;
         }
 
         bool IsHitValid(RaycastHit hit)

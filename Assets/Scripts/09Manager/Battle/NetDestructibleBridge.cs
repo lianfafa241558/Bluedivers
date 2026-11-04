@@ -15,15 +15,15 @@ namespace FPSGame.Managers
     /// 联机 · **场景可破坏物**（油桶这类"摆在场上的物件"）同步桥（09）：一处收口"被打掉"这件事。
     ///
     /// <para>▍为什么需要：敌人的生死有 <see cref="EnemyNetBridge"/>（NetId 通道），玩家/盟友有 sid 通道，
-    /// 家具交互有 4036；**"摆在场上的可破坏物"一条都没有** ⇒ 客机把油桶打爆、房主那边还是完好
+    /// 家具交互有 4059；**"摆在场上的可破坏物"一条都没有** ⇒ 客机把油桶打爆、房主那边还是完好
     /// （2026-10-10 用户实测：客机命中日志有、房主那边一点反应都没有）。</para>
     ///
-    /// <para>▍口径（2026-10-12 第 8 步升级）：**有号的物件走统一伤害通道**（4025 上报 / 4040 下发，键 = <c>Actor.NetId</c>）
+    /// <para>▍口径（2026-10-12 第 8 步升级）：**有号的物件走统一伤害通道**（4053 上报 / 4054 下发，键 = <c>Actor.NetId</c>）
     /// —— 战斗前创建的 <c>Other</c> 现在有派生号，所以"打到一半的血量/受击表现"两端也能一致；
-    /// **4043（只传"死了"）保留为兜底**：没号的物件（战斗中途生成）、以及"有号但没走生死通道"的场合，
+    /// **4058（只传"死了"）保留为兜底**：没号的物件（战斗中途生成）、以及"有号但没走生死通道"的场合，
     /// 仍靠它 + 房主侧 <c>_destroyed</c> 账本（新人入房补发）。谁打死的谁上报，房主收到后**转发全体 + 本地应用**。</para>
     ///
-    /// <para>▍4043 的匹配键仍是 <c>FNV1a(Actor.Id + 位置 0.1m 量化)</c>（同 <c>Furniture_Attached.SyncId</c> 口径）：
+    /// <para>▍4058 的匹配键仍是 <c>FNV1a(Actor.Id + 位置 0.1m 量化)</c>（同 <c>Furniture_Attached.SyncId</c> 口径）：
     /// 无号物件只能这么认；同类物件多实例（油桶全叫 <c>OilDrum</c>）⇒ 只用 <c>Actor.Id</c> 会撞车、用 <c>IndexID</c> 两端不一致。
     /// ⚠ 键必须稳定 ⇒ 会位移的物件不适用（油桶这类静止物件正好合适）。</para>
     ///
@@ -74,7 +74,7 @@ namespace FPSGame.Managers
         static void OnLocalDeath(Actor actor)
         {
             if (_applyingRemote) return;                  // 远端那次重放触发的：别再报一次
-            // ★ 远端伤害（4025/4040）把本端副本打死的：那是"应用伤害"的副作用，不算本端打爆 ⇒ 不必再报 4043
+            // ★ 远端伤害（4053/4054）把本端副本打死的：那是"应用伤害"的副作用，不算本端打爆 ⇒ 不必再报 4058
             //   （报出去也不出错，但纯属噪音：对面已从伤害通道知道这件事）
             if (EnemyController.ApplyingRemoteDamage) return;
             if (!IsSceneDestructible(actor)) return;
@@ -93,11 +93,11 @@ namespace FPSGame.Managers
             flow.SendSceneDestructible(key, flow.IsHost ? 0u : flow.SelfSid);
         }
 
-        /// <summary>【联机】可破坏物**被打掉血** ⇒ 走统一伤害通道（成员 4025 上报 / 房主 4040 下发，键 = <c>NetId</c>）。
+        /// <summary>【联机】可破坏物**被打掉血** ⇒ 走统一伤害通道（成员 4053 上报 / 房主 4054 下发，键 = <c>NetId</c>）。
         /// <para>▍为什么要这条（2026-10-12 第 8 步）：原来只传"死了" ⇒ 两端血量各算各的：客机把油桶打到一半，
         /// 房主那边还是满血（血条 / 受击表现不一致）。战斗前创建的 <c>Other</c> 现在有**派生号**，于是能并进
         /// <c>EnemyDamagedMsg</c> 那条通道（同一套 <c>attackerNetId</c> / <c>DamagePacket.Resolved</c> 口径）。
-        /// ⚠ 没号的物件（战斗中途生成）照旧只靠 4043 兜底。</para></summary>
+        /// ⚠ 没号的物件（战斗中途生成）照旧只靠 4058 兜底。</para></summary>
         static void OnLocalDamaged(GameObject victim, PEInt damage, GameObject caused, Collider hitBody, GameObject origin)
         {
             if (_applyingRemote) return;                       // 本端正在重放"远端那次打爆"
@@ -107,7 +107,7 @@ namespace FPSGame.Managers
             if (!IsSceneDestructible(actor)) return;
 
             int netId = actor.NetId;
-            if (netId == 0) return;                            // 没号 ⇒ 只保留"死了"那条兜底（4043）
+            if (netId == 0) return;                            // 没号 ⇒ 只保留"死了"那条兜底（4058）
 
             int dmg = Mathf.RoundToInt(damage.RawFloat);
             if (dmg <= 0) return;

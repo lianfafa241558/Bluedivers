@@ -69,7 +69,7 @@ namespace FPSGame.Game
         static string SegmentName(int seg) => seg switch
         {
             3 => "派生段（场景摆放/任务实体：两端各算各的，号必须相同）",
-            2 => "房主生成段（4052 复刻：号由房主下发，两端必须相同）",
+            2 => "房主生成段（4063 复刻：号由房主下发，两端必须相同）",
             1 => "特殊单位段（自增，两端必须同序）",
             _ => "敌人自增段（波次/巢穴：**第 n 号必须是同一种单位**）",
         };
@@ -109,7 +109,7 @@ namespace FPSGame.Game
 
         static float Now => Time.unscaledTime;
 
-        /// <summary>号被赋给某个单位（含 4051 复刻后覆盖）。同号仍被另一个 Id 占用 ⇒ 直接告警"两端号串了"。</summary>
+        /// <summary>号被赋给某个单位（含 4063 复刻后覆盖）。同号仍被另一个 Id 占用 ⇒ 直接告警"两端号串了"。</summary>
         public static void Born(int netId, string id)
         {
             if (netId == 0) return;   // ⚠ 不看 Enabled：账本是"日志分级"的依据，见 Enabled 的注释
@@ -260,7 +260,7 @@ namespace FPSGame.Game
             _map.Add(new MapEntry { NetId = netId, Id = id, QX = qx, QY = qy, QZ = qz, Ordinal = ordinal, Seg = 3 });
         }
 
-        /// <summary>记录一个**非派生段**的号（调用点：<c>Actor.NetId</c> 的 setter ⇒ 自增 / 特殊 / 4052 覆盖都在内）。
+        /// <summary>记录一个**非派生段**的号（调用点：<c>Actor.NetId</c> 的 setter ⇒ 自增 / 特殊 / 4063 覆盖都在内）。
         /// <para>▍为什么要它：敌人自增号的口径是"两端第几个被创建"，只要两端创建顺序/数量有一点不同，
         /// 从某个号起就整体平移（A 端的 7 号是怪、B 端的 7 号是别的）⇒ 命中/死亡消息打到错误的单位或查不到。
         /// 记录 <c>号 → Id</c> 后，两端按号对齐就能直接看出"从第几号开始错位、错成什么"。</para>
@@ -303,7 +303,7 @@ namespace FPSGame.Game
         /// <c>netid_map_&lt;role&gt;.log</c>（覆盖写，按号段分块）。
         /// <para>▍两段比较口径不同：<b>自增 / 特殊 / 房主生成段按 NetId 对齐</b>（同一个号是不是同一种单位）；
         /// <b>派生段按 Id+坐标+序号对齐</b>（两端各算各的号是不是同一个）。</para>
-        /// <para>▍去重：同一个号被重赋（4052 覆盖）/ 同一身份被重建 ⇒ 只留**最后一条**，
+        /// <para>▍去重：同一个号被重赋（4063 覆盖）/ 同一身份被重建 ⇒ 只留**最后一条**，
         /// 否则文件的条数会被"重建次数"干扰（上一版实测 688 条里有 122 条重复）。</para></summary>
         public static void DumpMap(string role)
         {
@@ -413,7 +413,7 @@ namespace FPSGame.Game
         static string Diag(int netId)
         {
             if (netId >= DerivedNetIdBase) return "派生号两端算出的值不同（同 Id 的位置/序号有偏差）";
-            if (netId >= HostSpawnNetIdBase) return "房主生成段：本端没收到 / 没复刻出 4051 那一只";
+            if (netId >= HostSpawnNetIdBase) return "房主生成段：本端没收到 / 没复刻出 4063 那一只";
             if (netId >= SpecNetIdBase) return "特殊单位段：本端少建了一个 SpecUnit";
             return "敌人段：本端少建了一只（波次 / 巢穴投放数量两端不一致）";
         }

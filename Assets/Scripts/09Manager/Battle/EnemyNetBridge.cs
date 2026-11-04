@@ -72,7 +72,7 @@ namespace FPSGame.Managers
             FPSGame.Net.NetRoomFlow.OnEnemyMove += OnRemoteMove;
             FPSGame.Net.NetRoomFlow.OnEnemyHitUp += OnRemoteHit;
             FPSGame.Net.NetRoomFlow.OnEnemyDamaged += OnRemoteDamaged;
-            // ⚠ 死亡已并入 4040（DamageMsg.IsDeath）⇒ 不再订阅 OnEnemyDied（4026 已不外发）
+            // ⚠ 死亡已并入 4054（DamageMsg.IsDeath）⇒ 不再订阅 OnEnemyDied（4090 已不外发）
             FPSGame.Net.NetRoomFlow.OnHostLost += OnHostLost;   // ★ 房主掉了 ⇒ 恢复本端自主
         }
 
@@ -273,19 +273,20 @@ namespace FPSGame.Managers
 
             FlushPendingDamage();   // 消息密集 ⇒ 每来一条顺手补落上一次"副本晚到"的伤害
 
-            // "只报死了"的那种（Damage = 0 + IsDeath，原 4026 的语义）⇒ 本地照样跑死亡链
-            if (m.Damage <= 0)
+            // 0 伤害 + 有成分 = 纯异常状态/破甲命中（2026-11-04）：对端也要跟着结算；
+            // 0 伤害 + 无成分 = "只报死了"（原 4090 的语义）⇒ 只跑死亡链。
+            bool hasGroups = m.Groups != null && m.Groups.Length > 0;
+            if (m.Damage > 0 || hasGroups)
             {
-                if (m.IsDeath) ApplyRemoteDeath(m);
-                return;
+                ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId, true);
+
+                // ★ 结算完**再转发给除来源外的其他成员**：原来应用完就结束了（`ApplyingRemoteDamage` 把回传也挡了）
+                //   ⇒ 成员 A 打出的伤害**从不到达成员 B**：B 那边这只怪的血一动不动，直到死亡消息才突然消失
+                //   （≥3 人必现；2 人时 B 就是房主，所以测不出来）。⚠ 必须排除来源端（它本地已扣过一次）。
+                FPSGame.Net.NetRoomFlow.Instance?.SendEnemyDamaged(m.NetId, m.Damage, m.Sid, m.AttackerNetId, m.Groups, m.Part, m.CausedNetId);
             }
-
-            ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId, true);
-
-            // ★ 结算完**再转发给除来源外的其他成员**：原来应用完就结束了（`ApplyingRemoteDamage` 把回传也挡了）
-            //   ⇒ 成员 A 打出的伤害**从不到达成员 B**：B 那边这只怪的血一动不动，直到死亡消息才突然消失
-            //   （≥3 人必现；2 人时 B 就是房主，所以测不出来）。⚠ 必须排除来源端（它本地已扣过一次）。
-            FPSGame.Net.NetRoomFlow.Instance?.SendEnemyDamaged(m.NetId, m.Damage, m.Sid, m.AttackerNetId, m.Groups, m.Part, m.CausedNetId);
+            // 死亡是"被打到 0 血"的特例；"只报死了"也走这里
+            if (m.IsDeath) ApplyRemoteDeath(m);
         }
 
         /// <summary>成员侧应用房主下发的"打中 / 打死"（房主是血量权威）。⚠ 死亡是"打到 0 血"的特例，同一条消息带来。</summary>
@@ -295,7 +296,8 @@ namespace FPSGame.Managers
 
             FlushPendingDamage();
 
-            if (m.Damage > 0) ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId, true);
+            bool hasGroups = m.Groups != null && m.Groups.Length > 0;
+            if (m.Damage > 0 || hasGroups) ApplyRemoteDamage(m.Sid, m.NetId, m.Damage, m.AttackerNetId, m.Groups, DecodePart(m.Part), m.CausedNetId, true);
             if (m.IsDeath) ApplyRemoteDeath(m);
         }
 
@@ -313,9 +315,13 @@ namespace FPSGame.Managers
         /// </summary>
         static void ApplyRemoteDamage(uint attackerSid, int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0, int causedNetId = 0, bool allowRetry = false)
         {
-            if (damage <= 0)
+            // 0 伤害是合法的（纯异常状态/破甲命中，2026-11-04）：只要带了成分就照常结算；
+            // 0 + 无成分 = "只报死了"，由上层走死亡链，不在这里落地。
+            bool hasGroups = groups != null && groups.Length > 0;
+            if (damage < 0 || (damage == 0 && !hasGroups))
             {
-                FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={netId} 伤害={damage}<=0 ⇒ 丢弃（上游本不该发）| " + NetIdProbe.Explain(netId, 0, "伤害"));
+                if (damage < 0)
+                    FPSGame.Utils.NetSyncLog.Warn("远端伤害落地", $"netId={netId} 伤害={damage}<0 ⇒ 丢弃（上游本不该发）| " + NetIdProbe.Explain(netId, 0, "伤害"));
                 return;
             }
 
@@ -376,18 +382,19 @@ namespace FPSGame.Managers
                 {
                     Damage = (PEInt)damage,
                     // ⚠ DamageGroups 不能空（InflictDamage 见空就直接返回）⇒ 拿不到成分时给一条中性的普通伤害成分。
-                    // ★ 能拿到就用**开枪端的原始成分**：接收端要靠它补"护甲破坏"（Damageable.ArmorDestruction，含破甲后的流血）
+                    // ★ 能拿到就用**开枪端的成分数值**：接收端要靠它补"护甲破坏"（Damageable.ArmorDestruction，含破甲后的流血）
                     //   与"异常状态积蓄"（Health.HandleDamage → AddAboGauge）—— 只给总伤害时这两条分支整段被跳过，
                     //   表现就是"主机把怪冻住/破甲了，成员那边它照常跑、护甲还在"（2026-10-12 修）。
-                    DamageGroups = UnpackDamageGroups(groups) ?? NeutralGroups(),
+                    DamageGroups = UnpackDamageGroups(groups) ?? NeutralGroups(damage),
                     // 直接来源（显示/AI）与起源（统计）分开落地；两者都取不到 ⇒ NoSource（保持拆分前口径）
                     DamageCaused = caused,
                     DamageOrigin = origin,
                     NoSource = origin == null,
                     Pos = actor.transform.position,
                     damageAffected = hitCollider,
-                    // ★ `damage` 是**开枪端算完护甲/爆炸抗性的最终值**（来自 `EnemyController._OnDamaged` 的上报）
-                    //   ⇒ 本端跳过那两个乘区，否则护甲被减两次（两端血量/生死不一致，2026-10-11 修）。
+                    // ★ 整包已在开枪端拆解完（2026-11-04）：`DamageGroups` 是**数值**、`damage` 只是扣减量参考
+                    //   ⇒ 本端跳过全部乘区（友伤/弱点/易伤/爆炸抗性/AP），否则两端血量与死亡判定不一致。
+                    //   （类型抗性仍在 `Health.TakeDamage` 里按本端同一份 prefab 配置乘一次，与开枪端逐字相等。）
                     Resolved = true,
                 });
             }
@@ -399,7 +406,8 @@ namespace FPSGame.Managers
                 (hp != null ? hp.GetHpCurrent().ToString("F0") + "/" + hp.GetHpMax().ToString("F0") : "<无生命组件>"));
         }
 
-        /// <summary>解开枪端摊平的伤害成分 <c>[count, type, coeff, ...]</c>（见 <c>EnemyController.PackDamageGroups</c>）；拿不到 ⇒ null。</summary>
+        /// <summary>解开枪端摊平的伤害成分 <c>[count, type, value, ...]</c>（见 <c>EnemyController.PackDamageGroups</c>）；拿不到 ⇒ null。
+        /// <para>⚠ value 是**每个成分的数值**（不是系数）：<c>Damageable.InflictDamage</c> 在 <c>Resolved</c> 分支里直接用它结算。</para></summary>
         static List<SKVP<DamageTypeEnum, float>> UnpackDamageGroups(float[] flat)
         {
             if (flat == null || flat.Length < 1) return null;
@@ -413,11 +421,13 @@ namespace FPSGame.Managers
             return list;
         }
 
-        /// <summary>没有原始成分时的中性成分（Gun × 1）—— 与老行为一致（只扣总伤害，不动护甲/积蓄槽）。</summary>
-        static List<SKVP<DamageTypeEnum, float>> NeutralGroups()
-            => new List<SKVP<DamageTypeEnum, float>> { new SKVP<DamageTypeEnum, float>(default, 1f) };
+        /// <summary>拿不到成分时的中性成分：把总额整笔当动能(Gun) —— 只扣血，不动护甲/积蓄槽。
+        /// <para>⚠ 这里的第二项是**数值**（= 最终扣减量），不是老口径的系数 1：改成数值口径后
+        /// 若仍填 1，接收端只会扣 1 点血。</para></summary>
+        static List<SKVP<DamageTypeEnum, float>> NeutralGroups(int damage)
+            => new List<SKVP<DamageTypeEnum, float>> { new SKVP<DamageTypeEnum, float>(default, damage) };
 
-        /// <summary>日志用：把摊平的成分写成 `Gun×1+Burn×0.3` 这种可读串。</summary>
+        /// <summary>日志用：把摊平的成分写成 `Gun×12+Burn×0.3` 这种可读串。</summary>
         static string GroupText(float[] flat)
         {
             if (flat == null || flat.Length < 1) return "-";
@@ -544,7 +554,7 @@ namespace FPSGame.Managers
             }
         }
 
-        /// <summary>【远端说"它死了"】在本端干掉那份副本（<c>DamageMsg.IsDeath</c>；原 4026 / 4043 的语义）。
+        /// <summary>【远端说"它死了"】在本端干掉那份副本（<c>DamageMsg.IsDeath</c>；原 4090 / 4058 的语义）。
         /// <para>▍寻址：<c>NetId</c> 优先；为 0 时退回无号可破坏物的兜底键（<c>Key</c> = FNV(Id+位置0.1m)）。</para>
         /// <para>⚠ 与"这一发打到 0"不同：这里只保证死（血量不是权威，可能还是满的）。</para></summary>
         static void ApplyRemoteDeath(DamageMsg m)

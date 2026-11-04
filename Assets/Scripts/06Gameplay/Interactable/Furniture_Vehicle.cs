@@ -75,7 +75,7 @@ public class Furniture_Vehicle : Furniture_Attached
     /// （本地上下机的那套动作）—— 死亡下车是把**倒地的人留在原地**，搬过去就穿帮了。</para>
     ///
     /// <para>▍<c>controller.SetOwener(null)</c> 是上下机的唯一收口：它抛的
-    /// <c>BattleEventBus.VehicleOwnerChanged</c> 是 09 的桥上报 4053 的唯一来源 ⇒ 远端才会把骑手摘掉。</para>
+    /// <c>BattleEventBus.VehicleOwnerChanged</c> 是 09 的桥上报 4059 的唯一来源 ⇒ 远端才会把骑手摘掉。</para>
     /// </summary>
     private void OnRiderDie(GameObject caused, GameObject origin)
     {
@@ -140,7 +140,7 @@ public class Furniture_Vehicle : Furniture_Attached
     ///
     /// <para>▍为什么必须走 <see cref="Operate"/>：它是上下机的**唯一收口** —— 里面才有
     /// <c>controller.SetOwener(null)</c> 与它抛的 <c>BattleEventBus.VehicleOwnerChanged</c>
-    /// （= 4053 上报的唯一来源）。在这儿自己散着清几个字段，远端那边会留一个"人还在车里"的幽灵。</para>
+    /// （= 4059 上报的唯一来源）。在这儿自己散着清几个字段，远端那边会留一个"人还在车里"的幽灵。</para>
     ///
     /// <para>▍⚠ 只在"他**真的**在车里"（<c>inOperate</c>）时才动：<see cref="Operate"/> 第一句是
     /// "把 owner 搬到入场点 <c>transform.TransformPoint(0,0,1)</c>"（那是**上车**动作）⇒ 对一个站在旁边的人

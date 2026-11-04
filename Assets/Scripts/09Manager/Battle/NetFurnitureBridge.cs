@@ -15,7 +15,7 @@ namespace FPSGame.Managers
     /// <para>▍键 = <c>Furniture_Attached.SyncId</c>（<c>FNV1a(Id + 位置量化)</c>，创建时算一次并缓存）。
     /// ⚠ 不能只用 <c>Id</c>（同类家具多实例）、不能用 <c>NumberID</c>（各端静态自增）。</para>
     ///
-    /// <para>▍消息走向（一条 4036 双向）：
+    /// <para>▍消息走向（一条 4059 双向）：
     /// ① 本端 <c>FurnitureOperate</c> → 成员**上报房主**、房主**广播全体**；
     /// ② 房主收到成员上报 ⇒ 转发全体 + 本地应用；成员收到 ⇒ **按 Sid 丢掉自己那条**（本地已执行过）再应用。</para>
     ///
@@ -80,11 +80,11 @@ namespace FPSGame.Managers
 
             // ★ 盟友实例身上的家具（典型：倒地救援的 Furniture_PlayerDown）：它的键含"位置量化"，
             //   而盟友出生点与本人出生点差 0.2m(Y) ⇒ 跨端必然对不上，广播过去只会让对方刷一条"找不到这个家具"。
-            //   这类交互走 NetPlayerStateBridge 的 **sid** 通道（4050 扶起队友）。
+            //   这类交互走 NetPlayerStateBridge 的 **sid** 通道（4028 扶起队友）。
             var host = furn as Component;
             if (host != null && host.GetComponent<FriendController>() != null) return;
 
-            // ★ 载具（Furniture_Vehicle）：走 4036 的 **NetId 分支**（NetRoomFlow 解码时已分流，远端应用仍归
+            // ★ 载具（Furniture_Vehicle）：走 4059 的 **NetId 分支**（NetRoomFlow 解码时已分流，远端应用仍归
             //   NetVehicleBridge.ApplyRemoteMount，**不重放** Operate()）。这里的家具事件必须继续摘掉：
             //   载具的触发点是 VehicleOwnerChanged（含被打爆 / 驾驶者死亡），换到这里会漏 + 一次上车双报。
             if (furn is Furniture_Vehicle) return;
@@ -111,7 +111,7 @@ namespace FPSGame.Managers
             flow.SendFurnitureOperate(f.SyncId, sid);
         }
 
-        /// <summary>家具"状态"变更（子类调 <c>Furniture_Attached.ReportState</c>）：走同一条 4036 上行。
+        /// <summary>家具"状态"变更（子类调 <c>Furniture_Attached.ReportState</c>）：走同一条 4059 上行。
         /// <para>▍与交互路径的区别：那条重放 <c>Operate()</c>；这条只带状态（<c>StateKey</c> 非空）⇒ 接收端直接置位。</para></summary>
         static void OnLocalStateChanged(Furniture_Attached f, int code, string key)
         {
@@ -230,7 +230,7 @@ namespace FPSGame.Managers
 
         /// <summary>容器类家具的一次提交（远端）：把个数注入盟友的**幽灵背包**，再跑同一套按压逻辑。
         /// <para>▍这样 <c>held</c> 与 <c>OnSubmit</c>（炮弹架要转成炮弹）在远端自然成立，
-        /// 不需要再单开一条"结果状态"通道；<c>User</c> 必须是**远端单位**（同 4036 的口径）。</para></summary>
+        /// 不需要再单开一条"结果状态"通道；<c>User</c> 必须是**远端单位**（同 4059 的口径）。</para></summary>
         static void OnRemoteSubmit(OOPartSubmitMsg m)
         {
             if (m == null || m.SyncId == 0 || m.Count <= 0) return;

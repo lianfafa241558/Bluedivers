@@ -464,7 +464,7 @@ namespace FPSGame.Managers
                 ? baseHit.position
                 : spawnPos;   // 投影不到就退回出生点（至少是个能站人的地方）
 
-            // ★ 联机（2026-10-11）：逐单位目标点收集起来交给桥 —— 房主广播后成员端才能复刻出同一支（4052）。
+            // ★ 联机（2026-10-11）：逐单位目标点收集起来交给桥 —— 房主广播后成员端才能复刻出同一支（4063）。
             //   成员端这一步不会走到：CreatPatrol 有成员闸门 ⇒ list 为空 ⇒ 上面的早退已 return。
             var targets = new List<Vector3>(list.Count);
 

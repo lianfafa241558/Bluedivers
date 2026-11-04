@@ -177,7 +177,7 @@ using FPSGame.Gameplay;
             => OnEnemyDamaged?.Invoke(netId, damage, attackerNetId, groups, part, causedNetId);
 
         /// <summary>【房主】场景单位（NPC 这类**由场景摆好**、会自己走动的氛围单位）要走向哪 / 停下；键 = <c>Actor.Id</c>。
-        /// <para>▍为什么另开一条：它们没有 AI 控制器、也不在 <c>ActorsManager.Enemys</c> 里 ⇒ 套不上敌人那条 4024；
+        /// <para>▍为什么另开一条：它们没有 AI 控制器、也不在 <c>ActorsManager.Enemys</c> 里 ⇒ 套不上敌人那条 4052；
         /// 而它们的游荡用的是**各端各自的随机** ⇒ 两边看到的 NPC 永远不在同一处。这里只发"意图"，
         /// 由 09 的落地桥（<c>SceneUnitMoveSink</c>，挂对应场景）转发上网络、并把房主下发的目标点应用回本端 NPC。</para></summary>
         public static event Action<string, Vector3, bool> OnSceneUnitMove;
@@ -187,7 +187,7 @@ using FPSGame.Gameplay;
         /// <para>▍为什么要有它：上下机唯一收口 = <c>IDrivable.SetOwener</c> 的两个实现 ——
         /// <c>VehicleController.SetOwener</c>（进入 / 退出 / <c>OnDie</c> 都走它）与
         /// <c>EmplacementController.SetOwener</c>（炮台，同款），而它们在 06（看不见 09）
-        /// ⇒ 抛事件给 <c>NetVehicleBridge</c> 去上报 4053（与 <see cref="OnEnemyHit"/> 那批同口径）。
+        /// ⇒ 抛事件给 <c>NetVehicleBridge</c> 去上报 4059（与 <see cref="OnEnemyHit"/> 那批同口径）。
         /// ⚠ 新加"可驾驶物"实现 <c>IDrivable</c> 时**必须**在这两个收口里抛本事件，否则它上机完全不同步。</para></summary>
         public static event Action<GameObject, GameObject> OnVehicleOwnerChanged;
         public static void VehicleOwnerChanged(GameObject vehicle, GameObject owner) => OnVehicleOwnerChanged?.Invoke(vehicle, owner);

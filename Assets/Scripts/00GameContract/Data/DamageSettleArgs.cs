@@ -14,7 +14,10 @@ namespace FPSGame.GameContract
     /// </summary>
     public struct DamageSettleArgs
     {
-        /// <summary>伤害成分（类型 + 已结算值）</summary>
+        /// <summary>伤害成分（类型 + **每个成分的数值**，不是系数）。
+        /// <para>▍本地包：由 <c>Damageable.InflictDamage</c> 按"伤害 × 系数"拆好；远端包：直接就是线上
+        /// <c>DamageMsg.Groups</c> 里那份数值（2026-11-04 改口径，两端因此不需要再分摊）。</para>
+        /// <para>含 <c>Destruction</c>（破甲已在 <c>Damageable</c> 落地，<c>Health</c> 对它返回 0）。</para></summary>
         public List<SKVP<DamageTypeEnum, PEInt>> Groups;
         /// <summary>无源伤害（下游不当作"有人打我"处理）</summary>
         public bool NoSource;
@@ -32,9 +35,10 @@ namespace FPSGame.GameContract
         public bool IsWeakness;
         /// <summary>拆毁值：≥ 目标自身拆毁值则秒杀；-1 = 不带拆毁</summary>
         public int DemolishValue;
-        /// <summary>本发的**原始成分**（类型 + 系数，未乘伤害值）：结算期间由 Health 暴露为 <c>LastRawGroups</c>，供联机上报。</summary>
-        /// <remarks>只经 <see cref="IHealth"/> 转手，不在 <see cref="Groups"/> 的结算链里；null = 该路径没有原始成分（流血 / tick）。</remarks>
-        public List<SKVP<DamageTypeEnum, float>> RawGroups;
+        /// <summary>本发的**成分数值**（类型 + 每个成分拆解后的量）：结算期间由 Health 暴露为 <c>LastRawGroups</c>，供联机上报。
+        /// <remarks>与 <see cref="Groups"/> 内容相同（同一个列表对象），但它**只表示"可以上报"**：流血 / 异常状态 tick
+        /// 这类直接调 <c>TakeDamage</c> 的路径置 null ⇒ 接收端退回中性成分（不会顺手给积蓄槽补一次）。</remarks>
+        public List<SKVP<DamageTypeEnum, PEInt>> RawGroups;
         /// <summary>是否跳弹（直击且穿甲高于部位护甲 2 级以上）：只给准星提示用，不参与伤害数值。</summary>
         public bool Ricochet;
 

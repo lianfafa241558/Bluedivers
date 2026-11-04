@@ -93,7 +93,7 @@ namespace FPSGame.Gameplay
             => Push(Tinted(who, $"{who.DisplayName}加入任务"));
 
         /// <summary>退出任务：<c>XX退出任务</c>（不带任务名，整行用触发者颜色）。
-        /// <para>▍触发点：同 <see cref="JoinMission"/>（名单里少了一条）；战斗期名单冻结，改由 <c>PlayerLeftNtf</c>(4029) 报。</para></summary>
+        /// <para>▍触发点：同 <see cref="JoinMission"/>（名单里少了一条）；战斗期名单冻结，改由 <c>PlayerLeftNtf</c>(4008) 报。</para></summary>
         public static void ExitMission(Who who)
             => Push(Tinted(who, $"{who.DisplayName}退出任务"));
 

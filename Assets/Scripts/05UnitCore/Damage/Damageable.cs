@@ -318,137 +318,89 @@ namespace FPSGame.Game
             GameObject damageCaused = packet.DamageCaused;
             //I_Damagable source = packet.Source;
 
-            Actor SourceActor=null;
-            if (damageOrigin)
-            {
-                SourceActor = damageOrigin.GetComponent<Actor>();
-            }
-
-            // 友军减伤
-            if (Actor && SourceActor && Actor.Team == SourceActor.Team)
-            {
-                
-                damage *= (PEInt)SensibilityToSelfdamage;
-            }
-            // 全队强化"友情护盾"：友军伤害再降低 50%（总友伤 25%，仅玩家队伍生效）
-            if (Actor && SourceActor && Actor.Team == SourceActor.Team
-                && IsFriendlyUnit(Actor)
-                && FPSGame.Data.BattleState.HaveBooster(BoosterType.FriendShield))
-            {
-                damage *= (PEInt)0.5f;
-            }
-            // 全队强化"生命力强化"：玩家受到的伤害降低 10%
-            if (FPSGame.Data.BattleState.HaveBooster(BoosterType.Vitality) && Actor && (Actor.Type== UnitTypeEnum.Player|| Actor.Type == UnitTypeEnum.Friend))
-            {
-                damage *= (PEInt)0.9f;
-            }
-            if (isWeakness)
-            {
-                damage *= (1+ packet.WeaknessBonus);
-            }
-            // 易伤成分：目标身上挂着对应异常状态(积蓄槽满)就乘该系数，没挂则 ×1。
-            // ⚠ 远端镜像包(Resolved)不带这张表 ⇒ 恒 ×1，不会把开枪端已算过的值再乘一遍。
-            if (packet.AboVulnerabilityGroup != null)
-            {
-                for (int i = 0, l = packet.AboVulnerabilityGroup.Count; i < l; ++i)
-                {
-                    SKVP<DamageTypeEnum, float> item = packet.AboVulnerabilityGroup[i];
-                    // 非正值视为没配：新增行的默认值是 0，直接乘会把整笔伤害清零
-                    if (item == null || item.Value <= 0f) continue;
-                    if (Health.IsAboStateFull(item.Key)) damage *= (PEInt)item.Value;
-                }
-            }
-            //Debug.LogWarning("友军减伤" + damage,gameObject);
-
-
-            // ⚠ 联机镜像（2026-10-11 修）：`packet.Resolved` = 伤害**已在开枪端算过这些乘区**（上报的是最终值）
-            //   ⇒ 这里**不能再乘一遍**，否则护甲/爆炸抗性被二次减免、两端血量与死亡判定不一致。
-            //   （远端包没带 AP ⇒ 原来按 AP=0 算出最大减伤；也没带 isDirect ⇒ 爆炸抗性也再算一遍。）
+            // ★ 全部乘区只在**本地包**上算（2026-11-04 统一口径）：远端包（Resolved）的每个成分
+            //   都是开枪端算完的**数值**（见下面 Groups 的拆解），在本端再乘一遍就是二次减免 ——
+            //   老实现只挡住了爆炸抗性 / AP，友伤与 `Health.TakeDamage` 里的类型抗性仍会各多乘一次。
             if (!packet.Resolved)
             {
-                //爆炸抗性
-                PEInt hitExplosionResistance = PEMath.Clamp(packet.isDirect ? 1 : (1 - (PEInt)explosionResistance),0,1);
-                //Debug.LogWarning("爆炸抗性" + hitExplosionResistance, gameObject);
-
-                //穿甲等级
-                PEInt armorFactor = PEMath.Clamp(1 - (armorLevel - packet.AP) * (PEInt)ArmorPenaltyPerLevel, 0, 1);
-                //Debug.LogWarning("穿甲系数" + armorFactor.RawFloat+"护甲等级"+armorLevel+"穿甲等级"+packet.AP, gameObject);
-                damage *= hitExplosionResistance* armorFactor;
-            }
-
-            //Debug.LogWarning("AP减伤" + damage, gameObject);
-
-            List<SKVP<DamageTypeEnum, PEInt>> finalDamageGroups = new();
-            if (packet.DamageGroups.Count == 0) {
-                // 无成分时按动能(Gun)结算
-                finalDamageGroups.Add(new(DamageTypeEnum.Gun, (damage)));
-            }
-            else {
-                // ★ 成分分摊口径（2026-11-02）：两条入口的 `Damage` 语义不同 ——
-                //   · 本地包（Resolved=false）：`damage` 是**未乘成分**的基值 ⇒ value = damage × coeff；
-                //   · 远端包（Resolved=true）：`damage` 是开枪端**已乘完成分**的最终扣减量
-                //     （`Health.trueDamageAmount`）⇒ 再乘一次 coeff 会整体放大 Σcoeff 倍
-                //     （{Gun:1,Explosion:1} 时两端扣血差一倍，只有单成分/和=1 的武器碰巧对得上）。
-                //   远端改为按"**计入血量的成分**系数"占比分摊：总和恒等于 damage，
-                //   且每个成分分到的加槽量 / 破甲量与本地逐字相等（Destruction 与只加槽的类型不参与分母）。
-                float countedSum = 0f;
-                if (packet.Resolved)
+                Actor SourceActor = null;
+                if (damageOrigin)
                 {
-                    for (int i = 0, l = packet.DamageGroups.Count; i < l; ++i)
+                    SourceActor = damageOrigin.GetComponent<Actor>();
+                }
+
+                // 友军减伤
+                if (Actor && SourceActor && Actor.Team == SourceActor.Team)
+                {
+                    damage *= (PEInt)SensibilityToSelfdamage;
+                }
+                // 全队强化"友情护盾"：友军伤害再降低 50%（总友伤 25%，仅玩家队伍生效）
+                if (Actor && SourceActor && Actor.Team == SourceActor.Team
+                    && IsFriendlyUnit(Actor)
+                    && FPSGame.Data.BattleState.HaveBooster(BoosterType.FriendShield))
+                {
+                    damage *= (PEInt)0.5f;
+                }
+                // 全队强化"生命力强化"：玩家受到的伤害降低 10%
+                if (FPSGame.Data.BattleState.HaveBooster(BoosterType.Vitality) && Actor && (Actor.Type == UnitTypeEnum.Player || Actor.Type == UnitTypeEnum.Friend))
+                {
+                    damage *= (PEInt)0.9f;
+                }
+                if (isWeakness)
+                {
+                    damage *= (1 + packet.WeaknessBonus);
+                }
+                // 易伤成分：目标身上挂着对应异常状态(积蓄槽满)就乘该系数，没挂则 ×1。
+                // ⚠ 远端包不带这张表（整段已跳过）⇒ 不会把开枪端算过的值再乘一遍。
+                if (packet.AboVulnerabilityGroup != null)
+                {
+                    for (int i = 0, l = packet.AboVulnerabilityGroup.Count; i < l; ++i)
                     {
-                        SKVP<DamageTypeEnum, float> g = packet.DamageGroups[i];
-                        if (CountsToHealth(g.Key)) countedSum += g.Value;
+                        SKVP<DamageTypeEnum, float> item = packet.AboVulnerabilityGroup[i];
+                        // 非正值视为没配：新增行的默认值是 0，直接乘会把整笔伤害清零
+                        if (item == null || item.Value <= 0f) continue;
+                        if (Health.IsAboStateFull(item.Key)) damage *= (PEInt)item.Value;
                     }
                 }
 
+                // 爆炸抗性
+                PEInt hitExplosionResistance = PEMath.Clamp(packet.isDirect ? 1 : (1 - (PEInt)explosionResistance), 0, 1);
+                // 穿甲等级
+                PEInt armorFactor = PEMath.Clamp(1 - (armorLevel - packet.AP) * (PEInt)ArmorPenaltyPerLevel, 0, 1);
+                damage *= hitExplosionResistance * armorFactor;
+            }
+
+            // ★ 成分拆解（2026-11-04 改口径）：`Groups` 装的是**每个成分的数值**，不再是系数 ——
+            //   · 本地包：value = 伤害 × 系数；
+            //   · 远端包（Resolved）：value 就是线上那份数值。不再按 Σcoeff 分摊（那是对"最终总额"的近似，
+            //     多成分武器与开枪端的实际值对不上，且要额外维护 `CountsToHealth` 的分母口径）。
+            //   Destruction 也进列表：上报 / 远端重放要靠它补破甲（Health 对它的返回值本来就是 0）。
+            List<SKVP<DamageTypeEnum, PEInt>> settledGroups = new(packet.DamageGroups.Count + 1);
+            if (packet.DamageGroups.Count == 0) {
+                // 无成分时按动能(Gun)结算整笔
+                settledGroups.Add(new(DamageTypeEnum.Gun, damage));
+            }
+            else {
                 foreach (var item in packet.DamageGroups) {
-                    PEInt value = packet.Resolved && countedSum > 0.0001f
-                        ? damage * (PEInt)(item.Value / countedSum)
-                        : damage * (PEInt)item.Value;
+                    PEInt value = packet.Resolved ? (PEInt)item.Value : damage * (PEInt)item.Value;
 
                     if (item.Key == DamageTypeEnum.Destruction) {
                         // 护甲破坏归属不显示 ⇒ 用起源
                         ArmorDestruction(value, damageOrigin);
                     }
-                    else
-                    {
-                        finalDamageGroups.Add(new(item.Key, value));
-                    }
+                    settledGroups.Add(new(item.Key, value));
                 }
             }
-            
-            // 原始成分随包交给 Health 自行挂/清（见 Health.TakeDamage 的事件段）：这里不再写别人的状态
-            var settle = DamageSettleArgs.Of(finalDamageGroups, packet.NoSource, damageOrigin, packet.damageAffected, packet.Pos);
+
+            // 成分随包交给 Health（`LastRawGroups` 挂的就是这份，见 Health.TakeDamage 的事件段）
+            var settle = DamageSettleArgs.Of(settledGroups, packet.NoSource, damageOrigin, packet.damageAffected, packet.Pos);
             settle.Caused = damageCaused;
             settle.IsWeakness = isWeakness;
             settle.DemolishValue = packet.DemolishValue;
-            settle.RawGroups = packet.DamageGroups;
+            settle.RawGroups = settledGroups;   // 同一份列表：只标记"这条路径可以上报"
             settle.Ricochet = IsRicochet(packet);
             Health.TakeDamage(in settle);
             
-        }
-
-        /// <summary>该成分会不会真正扣血 —— 口径必须与 <c>Health.HandleDamage</c> 的返回分支逐条一致：
-        /// <list type="bullet">
-        /// <item><c>Destruction</c> 走 <see cref="ArmorDestruction"/>（破甲 + 流血），不进血量；</item>
-        /// <item><c>Freeze/Toxicity/Hacker/Terror/Vertigo</c> 只加积蓄槽，<c>return 0</c>。</item>
-        /// </list>
-        /// <para>▍用途：远端伤害包（<c>Resolved</c>）的分母只能算这些类型 —— 把只加槽的类型算进去会稀释真正扣血的成分。</para>
-        /// </summary>
-        private static bool CountsToHealth(DamageTypeEnum type)
-        {
-            switch (type)
-            {
-                case DamageTypeEnum.Destruction:
-                case DamageTypeEnum.Freeze:
-                case DamageTypeEnum.Toxicity:
-                case DamageTypeEnum.Hacker:
-                case DamageTypeEnum.Terror:
-                case DamageTypeEnum.Vertigo:
-                    return false;
-                default:
-                    return true;
-            }
         }
 
         /// <summary>跳弹判定（只给准星提示用，**不参与伤害数值**）：直击 + 穿甲比本部位护甲高 <see cref="RicochetArmorGap"/> 级以上。</summary>

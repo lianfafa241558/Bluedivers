@@ -779,6 +779,82 @@ MonoBehaviour:
   range: 2
   probability: 50
   tier: 3
+--- !u!1 &7568359656629133079
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6130991171853747315}
+  - component: {fileID: 1470799949067902809}
+  - component: {fileID: 8039354688761138737}
+  m_Layer: 0
+  m_Name: GameObject (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6130991171853747315
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7568359656629133079}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -15.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2244476956223574155}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1470799949067902809
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7568359656629133079}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &8039354688761138737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7568359656629133079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
+  useHealthInsteadOfArmor: 0
+  armorValue: 0
+  LineArmor: []
+  armorBreakEffect: []
+  BleedValue: 0
+  isMain: 0
+  showArmor: 0
 --- !u!1 &8118382762311368782
 GameObject:
   m_ObjectHideFlags: 0
@@ -2461,7 +2537,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 813632048038942204, guid: a37a67d9ccf6fb341bbb8f5b368703e1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6130991171853747315}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a37a67d9ccf6fb341bbb8f5b368703e1, type: 3}
 --- !u!4 &2244476956223574155 stripped
@@ -3874,7 +3954,7 @@ PrefabInstance:
     - target: {fileID: 5829225604424890705, guid: 8874092072f654445b0d2bd1c717c0d0,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 7.28
+      value: 7.25
       objectReference: {fileID: 0}
     - target: {fileID: 5829225604424890705, guid: 8874092072f654445b0d2bd1c717c0d0,
         type: 3}
@@ -3884,7 +3964,7 @@ PrefabInstance:
     - target: {fileID: 5829225604424890705, guid: 8874092072f654445b0d2bd1c717c0d0,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 7.23
+      value: 8.91
       objectReference: {fileID: 0}
     - target: {fileID: 5829225604424890705, guid: 8874092072f654445b0d2bd1c717c0d0,
         type: 3}

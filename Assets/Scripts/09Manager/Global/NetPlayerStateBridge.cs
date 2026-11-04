@@ -9,10 +9,10 @@ namespace FPSGame.Managers
     ///
     /// <list type="number">
     ///   <item><b>扶起队友</b>：盟友实例身上的 <c>Furniture_PlayerDown</c> 被操作 ⇒ 按 sid 让**他本机**复活
-    ///         （<c>PlayerReviveNtf</c>(4050)。⚠ 不能蹭家具那条 4036：<c>SyncId</c> 含位置量化，而盟友出生点与
+    ///         （<c>PlayerReviveNtf</c>(4028)。⚠ 不能蹭家具那条 4059：<c>SyncId</c> 含位置量化，而盟友出生点与
     ///         本人出生点差 0.2m(Y) ⇒ 两端键必然对不上，那条会被"本端找不到这个家具"丢掉）；</item>
     ///   <item><b>背包武器开火</b>：<c>WeaponBag</c> 不在 <c>PlayerWeaponsManager</c> 的槽位里 ⇒ 那条
-    ///         <c>OnShoot</c> 永远不响，这里用 <c>BattleEventBus.OnBagShoot</c> 补一条（复用 4015/4016，
+    ///         <c>OnShoot</c> 永远不响，这里用 <c>BattleEventBus.OnBagShoot</c> 补一条（复用 4022/4023，
     ///         槽位用虚拟值 <see cref="BagSlotIndex"/>）。</item>
     /// </list>
     ///
@@ -38,7 +38,7 @@ namespace FPSGame.Managers
             NetRoomFlow.OnPlayerRevive += OnPlayerReviveMsg;                // 收到"某人被扶起"
         }
 
-        // ==================== 扶起队友（4050） ====================
+        // ==================== 扶起队友（4028） ====================
 
         /// <summary>本端操作了盟友实例的"倒地"交互 ⇒ 按 sid 请他本机复活（本地这一下只改盟友的镜像状态）。</summary>
         static void OnLocalFurnitureOperate(GameObject user, IFurniture furn)
@@ -52,7 +52,7 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow == null) return;
 
-            FPSGame.Utils.NetSyncLog.SyncLog("救人·发", $"sid={fc.NetSid}（操作盟友倒地实例 ⇒ 4050；不走 4036，键对不上）");
+            FPSGame.Utils.NetSyncLog.SyncLog("救人·发", $"sid={fc.NetSid}（操作盟友倒地实例 ⇒ 4028；不走 4059，键对不上）");
             flow.SendPlayerRevive(fc.NetSid);
         }
 
@@ -87,7 +87,7 @@ namespace FPSGame.Managers
             FPSGame.Utils.NetSyncLog.SyncLog("救人·收", $"sid={sid} 本端被救 ⇒ 已本地复活");
         }
 
-        // ==================== 背包武器开火（4015/4016 + 虚拟槽位） ====================
+        // ==================== 背包武器开火（4022/4023 + 虚拟槽位） ====================
 
         /// <summary>本机背包武器开火 ⇒ 上报（对端用盟友身上那把背包武器播表现；伤害仍在本机结算）。</summary>
         static void OnLocalBagShoot(GameObject owner, Vector3 direction, int damageIndex)

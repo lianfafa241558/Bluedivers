@@ -46,7 +46,7 @@ namespace FPSGame.Managers
         public WeatherSystem WeatherCont;
 
         /// <summary>本局"结束"是否已经请求过。
-        /// <para>▍联机：房主广播(4033)与本地触发（团灭/撤离）可能并存 ⇒ 不加门会排两个定时器（两次加载场景）。
+        /// <para>▍联机：房主广播(4064)与本地触发（团灭/撤离）可能并存 ⇒ 不加门会排两个定时器（两次加载场景）。
         /// 本类由 <see cref="Creat"/> 每局新建 ⇒ 不需要额外复位。</para></summary>
         private bool _gameOverRequested;
 
@@ -492,7 +492,7 @@ namespace FPSGame.Managers
             return WaveCont.CreatUnit(prefab, pos, rot, source, slot, target);
         }
 
-        /// <summary>【联机·刷怪器】按 tier 生成一只（房主唯一生成 + 上报 4052；给 <c>10_Effect/CreatEnemy</c> 用）。</summary>
+        /// <summary>【联机·刷怪器】按 tier 生成一只（房主唯一生成 + 上报 4063；给 <c>10_Effect/CreatEnemy</c> 用）。</summary>
         public GameObject CreatSpawnerUnit(UnitTier tier, Vector3 pos, float range, INetSpawner source)
         {
             return WaveCont.CreatSpawnerUnit(tier, pos, range, source);
@@ -640,7 +640,7 @@ namespace FPSGame.Managers
         /// <para>▍为什么要它：这次生成的载具（外骨骼/炮台/运输机）按**呼叫者的载具改装**渲染
         /// —— 远端复现那条路是这里建的、信标没有 owner ⇒ 只能由调用方把 sid 显式带下来
         /// （见 <c>NetFriendBridge.HandleAirdropCall</c>；本机玩家自己叫的走 <c>SetOwner</c> 那条路，不走这里）。</para>
-        /// <param name="vehicleNetId">本次载具的 <c>Actor.NetId</c>（房主随 4028 分配）。
+        /// <param name="vehicleNetId">本次载具的 <c>Actor.NetId</c>（房主随 4034 分配）。
         /// <para>▍为什么要有：载具两端各生成一份、时机不同 ⇒ 自增号必错位（见 <c>ActorsManager.VehicleNetIdBase</c>）。
         /// <c>&lt;= 0</c> = 不托管（单机 / 旧版房主）⇒ 保持原来的自增号行为。默认值保证老调用点不受影响。</para></param>
         /// </summary>
@@ -671,7 +671,7 @@ namespace FPSGame.Managers
         {
             if (result != GameResult.Unknow) TaskManager.Instance.nowTask.result = result;
 
-            // ★ 联机：本局只结束一次 —— 房主广播(4033)与本地触发可能并存，重复调用会排两个定时器。
+            // ★ 联机：本局只结束一次 —— 房主广播(4064)与本地触发可能并存，重复调用会排两个定时器。
             //   这里只挡"再排一次"，**结果仍允许被补正**（如本地以 Unknow 结束、随后收到房主权威的 Victory）。
             if (_gameOverRequested) return;
             _gameOverRequested = true;

@@ -75,7 +75,7 @@ namespace FPSGame.Net
         /// <summary>玩家生命状态同步（血/盾/倒地；房主自己也收）。参数：整条 DTO（含权威 Sid）。</summary>
         public static event Action<PlayerVital> OnVital;
 
-        /// <summary>有人把某个玩家扶起来了（<c>PlayerReviveNtf</c>(4050)）。参数：被救者的 sid（房主 = 0）。
+        /// <summary>有人把某个玩家扶起来了（<c>PlayerReviveNtf</c>(4028)）。参数：被救者的 sid（房主 = 0）。
         /// <para>▍各端都收：房主收到成员的请求要**转发全体**，成员只应用（sid 必然是自己）。</para></summary>
         public static event Action<uint> OnPlayerRevive;
 
@@ -94,7 +94,7 @@ namespace FPSGame.Net
 
         /// <summary>【成员侧】房主下发"打中了 / 打死了"（统一的 <c>DamageMsg</c>；<c>IsDeath</c> = 这一发打死了）。
         /// <para>▍为什么要往下播：以前只有"成员 → 房主"，房主打出的伤害**从不下发** ⇒ 两侧副本血量各算各的。
-        /// ▍死亡也走这条（原来单开 4026）：死亡就是"被打到 0 血"的特例。</para></summary>
+        /// ▍死亡也走这条（原来单开 4090）：死亡就是"被打到 0 血"的特例。</para></summary>
         public static event Action<DamageMsg> OnEnemyDamaged;
 
         /// <summary>【成员侧】房主下发场景单位（NPC 等氛围单位）的移动目标 / 停下。
@@ -106,7 +106,7 @@ namespace FPSGame.Net
         /// ⚠ 发起方要靠 sid 丢掉自己那条（本地已经放过一次），但**要拿载具号补盖自己那台的号**（见 <c>NetFriendBridge</c>）。</summary>
         public static event Action<uint, int, Vector3, float, int> OnAirdropCall;
 
-        /// <summary>载具上下机（双向；**已并入 <c>FurnitureOperateNtf</c>(4036) 的 NetId 分支**，一个号两个方向）。
+        /// <summary>载具上下机（双向；**已并入 <c>FurnitureOperateNtf</c>(4059) 的 NetId 分支**，一个号两个方向）。
         /// <para>参数：载具 <c>Actor.NetId</c> / 驾驶者 sid（房主 = 0）/ 是否上机。
         /// ⚠ 发起方要按 sid 丢掉自己那条 —— 驾驶者本机已经真跑过一次 <c>SetOwener</c>。</para></summary>
         public static event Action<int, uint, bool> OnVehicleMount;
@@ -118,9 +118,10 @@ namespace FPSGame.Net
         /// <para>⚠ 发起方按"**这辆车是不是我开的**"丢掉自己那条（本机已经真放过一发）—— 键是载具号，不是 sid。</para></summary>
         public static event Action<int, int, Vector3, Vector3, int, int, int, int> OnVehicleShoot;
 
-        /// <summary>背包护盾被打（双向一条；本事件**只在本机就是护盾归属者**时触发，见 <see cref="HandleShieldDamageNtf"/>）。
-        /// <para>参数：整条 DTO（<c>Sid</c> = 归属者，必然等于本机自己的 sid 或 0=房主）。</para></summary>
-        public static event Action<ShieldDamageMsg> OnShieldDamaged;
+        /// <summary>背包护盾被打（双向；本事件**只在本机就是护盾归属者**时触发，见 <see cref="HandleDamageUp"/> / <see cref="HandleDamageDown"/>）。
+        /// <para>参数：整条 <see cref="DamageMsg"/>（<c>OwnerSid</c> = 归属者，必然等于本机自己的 sid 或 0=房主；
+        /// <c>X/Y/Z</c> = 受击落点）。2026-11-04 起并入伤害族，不再单开 4094。</para></summary>
+        public static event Action<DamageMsg> OnShieldDamaged;
 
         /// <summary>某成员离开（房主下发，**战斗期也会来**）。参数：离开者 sid。
         /// <para>各端据此销毁对应盟友实例 / 收起 HUD 那行 —— 名单本身**不重排**（战斗期冻结，见 <see cref="PlayerLeftMsg"/>）。</para></summary>
@@ -181,7 +182,7 @@ namespace FPSGame.Net
         /// <summary>【双向】按键终端(KeyScreen)阶段推进（键 = 终端家具 SyncId）⇒ 其余端只应用、不自行推进。</summary>
         public static event Action<KeyScreenStageMsg> OnKeyScreenStage;
 
-        /// <summary>【成员侧】房主广播的"实体生成"（原巡逻队 4047 + 运行时生成 4051 合并，见 <c>HostSpawnMsg</c>）⇒
+        /// <summary>【成员侧】房主广播的"实体生成"（原巡逻队 4091 + 运行时生成 4092 合并，见 <c>HostSpawnMsg</c>）⇒
         /// 本端按 <c>Kind</c> 复刻：巡逻队（生成点 + 逐单位目标点）/ 单只单位（来源键 + 槽位 ⇒ 生成器自己复刻）。</summary>
         public static event Action<HostSpawnMsg> OnHostSpawn;
 
@@ -285,15 +286,14 @@ namespace FPSGame.Net
             MessageCenter.Register<DamageMsg>(CmdId.SceneDestructibleNtf, HandleSceneDestructibleNtf);
             // 按键终端阶段推进（驱动端上报 / 房主转发全体）
             MessageCenter.Register<KeyScreenStageMsg>(CmdId.KeyScreenStageNtf, HandleKeyScreenStageNtf);
-            // 房主生成族（原 4047 巡逻队 + 4051 运行时生成合并）：房主唯一生成 + 成员按 Kind 复刻
+            // 房主生成族（原 4091 巡逻队 + 4092 运行时生成合并）：房主唯一生成 + 成员按 Kind 复刻
             MessageCenter.Register<HostSpawnMsg>(CmdId.HostSpawnNtf, HandleHostSpawnNtf);
             MessageCenter.Register<OOPartSubmitMsg>(CmdId.OOPartSubmitNtf, HandleOOPartSubmitNtf);
             MessageCenter.Register<KeyScreenInputMsg>(CmdId.KeyScreenInputNtf, HandleKeyScreenInputNtf);
-            // ⚠ 载具上下机已并入 4036（见 HandleFurnitureOperateNtf 的 NetId 分支）⇒ 这里不再单独注册
+            // ⚠ 载具上下机已并入 4059（见 HandleFurnitureOperateNtf 的 NetId 分支）⇒ 这里不再单独注册
             // 载具开火表现（同款：双向一条，注册在这里，桥只订阅 OnVehicleShoot 事件）
             MessageCenter.Register<VehicleShootMsg>(CmdId.VehicleShootNtf, HandleVehicleShootNtf);
-            // 背包护盾伤害（同款：双向一条，注册在这里，桥只订阅 OnShieldDamaged 事件）
-            MessageCenter.Register<ShieldDamageMsg>(CmdId.ShieldDamageNtf, HandleShieldDamageNtf);
+            // ⚠ 背包护盾伤害已并入伤害族（DamageMsg.OwnerSid，走 4053/4054 两个号）⇒ 4094 不再注册/外发
         }
 
         private void OnDestroy()
@@ -313,7 +313,7 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.EnemyMoveSync);
             MessageCenter.Unregister(CmdId.EnemyHitNtf);
             MessageCenter.Unregister(CmdId.EnemyDamagedSync);
-            // ⚠ CmdId.EnemyDiedSync(4026) 已并入 4040（DamageMsg.IsDeath）⇒ 不再注册（常量保留，不外发）
+            // ⚠ CmdId.EnemyDiedSync(4090) 已并入 4054（DamageMsg.IsDeath）⇒ 不再注册（常量保留，不外发）
             MessageCenter.Unregister(CmdId.SceneUnitMoveSync);
             MessageCenter.Unregister(CmdId.AirdropCallSync);
             MessageCenter.Unregister(CmdId.PlayerLeftNtf);
@@ -331,10 +331,10 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.SceneDestructibleNtf);
             MessageCenter.Unregister(CmdId.KeyScreenStageNtf);
             MessageCenter.Unregister(CmdId.HostSpawnNtf);
-            // ⚠ CmdId.PatrolSpawnNtf(4047) / EnemySpawnNtf(4051) 已并入 HostSpawnNtf(4052) ⇒ 不再注册/外发
+            // ⚠ CmdId.PatrolSpawnNtf(4091) / EnemySpawnNtf(4092) 已并入 HostSpawnNtf(4063) ⇒ 不再注册/外发
             MessageCenter.Unregister(CmdId.OOPartSubmitNtf);
             MessageCenter.Unregister(CmdId.KeyScreenInputNtf);
-            MessageCenter.Unregister(CmdId.ShieldDamageNtf);
+            // ⚠ CmdId.ShieldDamageNtf(4094) 已并入 DamageMsg.OwnerSid（4053/4054）⇒ 不再注册
             MessageCenter.Unregister(CmdId.VehicleShootNtf);
             if (ReferenceEquals(Instance, this)) Instance = null;
         }
@@ -757,7 +757,7 @@ namespace FPSGame.Net
                 return;
             }
             if (!CanSendToHost) return;
-            // ★ 成员这条先发 0：号由房主在转发时补（成员自己那份的号随后由房主的 4028 覆盖）
+            // ★ 成员这条先发 0：号由房主在转发时补（成员自己那份的号随后由房主的 4034 覆盖）
             NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.AirdropCallNtf,
                 new AirdropCallMsg { Sid = SelfSid, AirdropId = airdropId, X = point.x, Y = point.y, Z = point.z, Yaw = yaw, VehicleNetId = 0 }));
         }
@@ -765,12 +765,12 @@ namespace FPSGame.Net
         /// <summary>【上行】载具上下机（分流同 <see cref="SendAirdropCall"/>：房主广播、成员上报房主）。
         /// <para>⚠ 本端**不派发自己那条**：驾驶者本机已经真跑过一次 <c>SetOwener</c>，这只是"告诉别人"。
         /// 而"房主转发成员那条"由**桥**做：桥收到成员那条时先调本方法广播、再本地应用
-        /// —— 这条就是 4036（<c>FurnitureOperateMsg.NetId != 0</c>），见 <c>NetVehicleBridge.OnVehicleMountMsg</c>。</para></summary>
+        /// —— 这条就是 4059（<c>FurnitureOperateMsg.NetId != 0</c>），见 <c>NetVehicleBridge.OnVehicleMountMsg</c>。</para></summary>
         public void SendVehicleMount(int netId, uint sid, bool mounted)
         {
             if (netId == 0) return;
 
-            // 已并入 4036：NetId != 0 即"这条是上下机"，键 = 载具 Actor.NetId
+            // 已并入 4059：NetId != 0 即"这条是上下机"，键 = 载具 Actor.NetId
             // （载具两端生成落点差几厘米 ⇒ SyncId 必然对不上，只能用车号）
             var msg = MessageCenter.Pack(CmdId.FurnitureOperateNtf,
                 new FurnitureOperateMsg { NetId = netId, VehicleSid = sid, Mounted = mounted });
@@ -789,7 +789,7 @@ namespace FPSGame.Net
         /// <c>NetVehicleBridge._selfDriven</c>）⇒ 够用来丢自己那条，不必再加一个会分叉的身份字段。</para>
         /// <para>⚠ 本端**不派发自己那条**：驾驶者本机已经真放过一发（枪口焰/弹道都是本机的），这只是"告诉别人"。
         /// 而"房主转发成员那条"由**桥**做（本号只有一个注册者 = 本类）：桥收到成员那条时先调本方法广播、再本地应用
-        /// —— 与 4053 / 4036 完全同款，见 <c>NetVehicleBridge.OnVehicleShootMsg</c>。</para>
+        /// —— 与载具上下机（同走 4059）完全同款，见 <c>NetVehicleBridge.OnVehicleShootMsg</c>。</para>
         /// <para>▍<paramref name="magazine"/> / <paramref name="ammo"/> = 开火后该武器的弹匣/后备剩余
         /// （<c>&lt;0</c> = 未带/无限）：载具武器每端各一份实例、弹量本来会分叉，这里让**驾驶者那台当权威**顺手推给其余端。</para></summary>
         public void SendVehicleShoot(int netId, int weaponIndex, UnityEngine.Vector3 dir, UnityEngine.Vector3 hit,
@@ -818,23 +818,35 @@ namespace FPSGame.Net
             NetSvc.Instance.SendMsg(msg);
         }
 
-        /// <summary>【上行】背包护盾被打（分流同 <see cref="SendVehicleMount"/>：房主广播、成员上报房主）。
+        /// <summary>【上行/下行】背包护盾被打（2026-11-04 并入伤害族：<c>DamageMsg.OwnerSid</c>）。
         /// <para>⚠ 本端**不派发自己那条**：归属者本机已经真扣过血（那边才是权威），这里只是"告诉归属者该扣多少"。
-        /// 房主转发成员那条由**桥**做（本号只有一个注册者 = 本类），见 <c>NetShieldBagBridge</c>。</para></summary>
-        public void SendShieldDamage(uint targetSid, float damage, Vector3 point)
+        /// 房主转发成员那条由本方法自己按角色分流（这个 DTO 只有本类一个注册者），接收端认领见
+        /// <see cref="HandleDamageUp"/> / <see cref="HandleDamageDown"/>。</para>
+        /// <para>⚠ 走伤害族 ⇒ 与单位伤害同口径取整（<c>Mathf.RoundToInt</c>），护盾的小数伤害会被吃掉 &lt;1 点。</para></summary>
+        public void SendShieldDamage(uint ownerSid, float damage, Vector3 point)
         {
             if (damage <= 0f) return;
 
-            var msg = MessageCenter.Pack(CmdId.ShieldDamageNtf,
-                new ShieldDamageMsg { Sid = targetSid, Damage = damage, X = point.x, Y = point.y, Z = point.z });
+            int dmg = Mathf.RoundToInt(damage);
+            if (dmg <= 0) return;
+
+            var payload = new DamageMsg
+            {
+                Sid = SelfSid,
+                OwnerSid = (int)ownerSid,
+                Damage = dmg,
+                X = point.x,
+                Y = point.y,
+                Z = point.z,
+            };
 
             if (IsHost)
             {
-                NetHostSvc.Instance?.SendToAll(msg);   // 房主：只广播（目标端按 Sid 认领）
+                NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.EnemyDamagedSync, payload));   // 房主：直接下发全体
                 return;
             }
             if (!CanSendToHost) return;
-            NetSvc.Instance.SendMsg(msg);
+            NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.EnemyHitNtf, payload));                  // 成员：上报房主（由他转发）
         }
 
         /// <summary>
@@ -909,26 +921,6 @@ namespace FPSGame.Net
             if (m == null || m.NetId == 0) return;
             OnVehicleShoot?.Invoke(m.NetId, m.WeaponIndex, new Vector3(m.DirX, m.DirY, m.DirZ),
                 new Vector3(m.HitX, m.HitY, m.HitZ), m.DamageIndex, m.MuzzleIndex, m.Magazine, m.Ammo);
-        }
-
-        /// <summary>背包护盾被打（双向一条）：房主收到成员上报 ⇒ 转发全体；**只有归属者本机**收到事件。
-        /// <para>⚠ 房主自己那条（<c>Sid == 0</c>）不再广播 —— 别人的机器上没有房主本人那份护盾，发过去没人认领。</para></summary>
-        private void HandleShieldDamageNtf(ShieldDamageMsg m)
-        {
-            if (m == null || m.Damage <= 0f) return;
-
-            if (IsHost)
-            {
-                if (m.Sid == 0u)
-                {
-                    OnShieldDamaged?.Invoke(m);   // 打在房主自己的护盾上 ⇒ 房主本地落地
-                    return;
-                }
-                NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.ShieldDamageNtf, m));   // 成员的护盾 ⇒ 广播，目标端认领
-                return;
-            }
-            if (m.Sid != SelfSid) return;
-            OnShieldDamaged?.Invoke(m);
         }
 
         private void HandlePlayerLeftNtf(PlayerLeftMsg m)
@@ -1035,17 +1027,19 @@ namespace FPSGame.Net
 
         /// <summary>【成员】上报一次命中，由房主结算。</summary>
         /// <param name="attackerNetId">**起源**单位的 NetId（0 = 未知/玩家 ⇒ 房主退回按 sid 找盟友实例）</param>
-        /// <param name="groups">原始伤害成分（摊平 `[count,type,coeff,...]`；null = 中性）⇒ 对端补护甲破坏/异常状态积蓄</param>
+        /// <param name="groups">成分数值（摊平 `[count,type,value,...]`；null = 中性）⇒ 对端补护甲破坏/异常状态积蓄</param>
         /// <param name="causedNetId">**直接来源**单位的 NetId（0 = 拿不到 ⇒ 接收端退成 attackerNetId/sid）</param>
+        /// <remarks>⚠ <paramref name="damage"/> 允许 0（2026-11-04）：纯冰冻/催化/破甲命中不掉血，但成分必须过网。
+        /// 0 + 无成分的包不发（那是 <see cref="SendEnemyDied"/> 的"只报死亡"语义）。</remarks>
         public void SendEnemyHit(int netId, int damage, int attackerNetId = 0, float[] groups = null, int part = 0, int causedNetId = 0)
         {
-            if (IsHost || netId == 0 || damage <= 0) return;
+            if (IsHost || netId == 0 || damage < 0) return;
             if (!CanSendToHost) return;
             NetSvc.Instance.SendMsg(MessageCenter.Pack(CmdId.EnemyHitNtf,
                 new DamageMsg { Sid = SelfSid, NetId = netId, Damage = damage, AttackerNetId = attackerNetId, Groups = groups, Part = part, CausedNetId = causedNetId }));
         }
 
-        /// <summary>【房主】广播某只怪死亡 —— 死亡已并入伤害族（<c>DamageMsg.IsDeath</c>，走 4040），不再单开 4026。
+        /// <summary>【房主】广播某只怪死亡 —— 死亡已并入伤害族（<c>DamageMsg.IsDeath</c>，走 4054），不再单开 4090。
         /// <para>⚠ 与"这一发把它打到 0"的区别：这里是**只报死亡**（<c>Damage = 0</c>），用于"本地判定死亡但没走伤害事件"的场合
         /// （如 <c>EnemyNetBridge.OnLocalDeath</c> 收到 <c>UnitEventBus</c> 的死亡事件）。</para></summary>
         public void SendEnemyDied(int netId)
@@ -1060,7 +1054,8 @@ namespace FPSGame.Net
         /// 这样接收端能把"这一发"归到开枪者那个单位上（受击表现/仇恨）。</para></summary>
         public void SendEnemyDamaged(int netId, int damage, uint exceptSid = 0u, int attackerNetId = 0, float[] groups = null, int part = 0, int causedNetId = 0)
         {
-            if (!IsHost || netId == 0 || damage <= 0) return;
+            // damage 允许 0（纯异常状态/破甲命中），见 SendEnemyHit 的注释
+            if (!IsHost || netId == 0 || damage < 0) return;
             var msg = MessageCenter.Pack(CmdId.EnemyDamagedSync,
                 new DamageMsg { Sid = exceptSid, NetId = netId, Damage = damage, AttackerNetId = attackerNetId, Groups = groups, Part = part, CausedNetId = causedNetId });
 
@@ -1073,16 +1068,46 @@ namespace FPSGame.Net
             if (m != null) OnEnemyMove?.Invoke(m.NetId, new Vector3(m.X, m.Y, m.Z));
         }
 
-        /// <summary>成员上报（4025）⇒ 交给房主侧的桥结算 / 转发。⚠ 死亡也走这条（<c>IsDeath</c>）。</summary>
+        /// <summary>成员上报（4053）⇒ 交给房主侧的桥结算 / 转发。⚠ 死亡也走这条（<c>IsDeath</c>）。
+        /// <para>▍<c>OwnerSid &gt;= 0</c> = 背包护盾伤害（2026-11-04 并入）：按归属者定点投递，与单位伤害分支互斥。</para></summary>
         private void HandleDamageUp(DamageMsg m)
         {
-            if (m != null) OnEnemyHitUp?.Invoke(m);
+            if (m == null) return;
+
+            if (m.OwnerSid >= 0)
+            {
+                HandleShieldDamageUp(m);
+                return;
+            }
+            OnEnemyHitUp?.Invoke(m);
         }
 
-        /// <summary>房主下发（4040）⇒ 成员按数扣自己那份副本（<c>IsDeath</c> 的话直接干掉）。</summary>
+        /// <summary>护盾伤害上行（成员 → 房主）：**只有归属者本机**应用。
+        /// <para>⚠ 房主自己就是归属者（<c>OwnerSid == 0</c>）时不广播 —— 别人的机器上没有房主本人那份护盾，发过去没人认领。</para></summary>
+        private void HandleShieldDamageUp(DamageMsg m)
+        {
+            if (!IsHost) return;
+
+            if (m.OwnerSid == 0)
+            {
+                OnShieldDamaged?.Invoke(m);   // 打在房主自己的护盾上 ⇒ 房主本地落地
+                return;
+            }
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.EnemyDamagedSync, m));   // 成员的护盾 ⇒ 下发全体，归属者认领
+        }
+
+        /// <summary>房主下发（4054）⇒ 成员按数扣自己那份副本（<c>IsDeath</c> 的话直接干掉）。
+        /// <para>▍<c>OwnerSid &gt;= 0</c> = 背包护盾伤害：只有归属者本机认领（开枪端那份副本不在网络这边落地）。</para></summary>
         private void HandleDamageDown(DamageMsg m)
         {
-            if (m != null) OnEnemyDamaged?.Invoke(m);
+            if (m == null) return;
+
+            if (m.OwnerSid >= 0)
+            {
+                if (m.OwnerSid == (int)SelfSid) OnShieldDamaged?.Invoke(m);
+                return;
+            }
+            OnEnemyDamaged?.Invoke(m);
         }
 
         /// <summary>【房主下行】场景单位（NPC）走向某点 / 就地停下。
@@ -1165,7 +1190,7 @@ namespace FPSGame.Net
         {
             if (m == null) return;
 
-            // ⚠ 载具上下机（原 4053）也走这个号：NetId != 0 ⇒ 键是载具 Actor.NetId，SyncId/State 不参与。
+            // ⚠ 载具上下机（原 4093）也走这个号：NetId != 0 ⇒ 键是载具 Actor.NetId，SyncId/State 不参与。
             //   必须在这里就分流给 OnVehicleMount（转发与否由桥按**一车一人**裁决），绝不能流进家具重放。
             if (m.NetId != 0)
             {

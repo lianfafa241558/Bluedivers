@@ -156,6 +156,62 @@ namespace FPSGame.Game
             NotifyFullChanged(type, entry);
             EnsureAboTick();   // 首次积蓄 >0：挂上逐帧驱动，开始问到点没有
         }
+
+        /// <summary>冰火互斥灌注：先抵消对方槽，归零后剩余量才计入自己的槽。</summary>
+        /// <remarks>▍规则（2026-11-04）：燃烧降冰冻槽、冰冻降燃烧槽 ⇒ 冰火不得共存。
+        /// <para>⚠ 只用于"命中灌注"这一条路径：催化填充与异常继承（<see cref="FillAboGauge"/>）不该互相抵消，
+        /// 所以别把这段塞进 <see cref="AddAboGauge"/>. 被抵消掉的量直接丢弃、不回流本槽，
+        /// 否则一次命中会同时推进两个互斥状态。对方由满变不满要发事件 —— AI 的冻结停滞/减速靠它解除。</para></remarks>
+        private void AddOpposedAboGauge(DamageTypeEnum type, DamageTypeEnum opposed, PEInt amount, GameObject damageCaused)
+        {
+            if (amount <= 0) return;
+
+            AboGauge.TryGetValue(opposed, out AboGaugeEntry other);
+            if (other != null && other.Max > 0 && other.Current > 0)
+            {
+                PEInt consumed = PEMath.Min(other.Current, amount);
+                other.Current -= consumed;
+                amount -= consumed;
+                NotifyFullChanged(opposed, other);
+                // 与 AboTick 的衰减同口径：掉出满槽就撤特效（音效标记一并复位，再满时会重播）
+                if (!other.IsFull) ReleaseAboVfx(other);
+            }
+
+            // 对方仍有积蓄 ⇒ 本次命中只起到"消融/压制"作用，自己的槽一点都不涨
+            if (other == null || other.Current <= 0) AddAboGauge(type, amount, damageCaused);
+        }
+
+        /// <summary>催化：自身不结算伤害，只把**身上已有**（Current &gt; 0）的异常状态积蓄槽按同一数值往前推。</summary>
+        /// <remarks>⚠ 只改 entry 字段、不增删 <c>AboGauge</c> 的键 ⇒ 可以在 foreach 里直接调 <see cref="AddAboGauge"/>。
+        /// <para>催化本身不算异常状态：它没有积蓄槽，也不参与冰火互斥。</para></remarks>
+        private void CatalyzeAboGauge(PEInt amount, GameObject damageCaused)
+        {
+            if (amount <= 0) return;
+
+            foreach (var pair in AboGauge)
+            {
+                if (pair.Key == DamageTypeEnum.Catalyst) continue;
+                AboGaugeEntry entry = pair.Value;
+                if (entry == null || entry.Max <= 0 || entry.Current <= 0) continue;
+                AddAboGauge(pair.Key, amount, damageCaused);
+            }
+        }
+
+        /// <summary>直接把积蓄槽灌满（不给伤害、不走抗性与无敌判定）。
+        /// <para>▍用途：异常状态"继承"—— 例：召唤师的母体被骇入后，召唤物也要跟着满槽。
+        /// 不走 <c>TakeDamage</c> 是因为那样会顺带派发 <c>UnitEventBus.UnitHit</c>（准星命中反馈）。</para>
+        /// <para>⚠ 槽 Max 配成 0（该单位不接这条异常状态）时静默不做任何事。</para></summary>
+        /// <param name="source">记作造成者：满槽特效挂载点、骇入倒戈的队伍来源都取它</param>
+        public void FillAboGauge(DamageTypeEnum type, GameObject source)
+        {
+            if (!AboGauge.TryGetValue(type, out AboGaugeEntry entry) || entry.Max <= 0) return;
+
+            entry.Current = entry.Max;
+            entry.LastGainTime = (PEInt)Time.time;
+            entry.Source = source;
+            NotifyFullChanged(type, entry);
+            EnsureAboTick();   // 与 AddAboGauge 同口径：积蓄 >0 才挂逐帧驱动（Hacker 靠它挂特效）
+        }
         
         /// <summary>异常状态 tick：处理衰减、满槽伤害与特效</summary>
         private void AboTick()

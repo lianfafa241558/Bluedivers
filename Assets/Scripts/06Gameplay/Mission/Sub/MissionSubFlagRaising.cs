@@ -100,7 +100,7 @@ namespace FPSGame.Mission
             {
                 if (nowTime > 0) nowTime -= TickTime;
 
-                UpdateTip("<color=#FF4040>请返回升旗范围</color> [" + Tool.FloatToTime(remainTime) + "]");
+                UpdateTip("<color=#FF4054>请返回升旗范围</color> [" + Tool.FloatToTime(remainTime) + "]");
                 flag.speed = -1;
             }
             else

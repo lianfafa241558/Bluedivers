@@ -146,7 +146,12 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit, FPSGa
         m_Health.OnHit += _OnHit;
         m_Health.OnDie += _OnDie;
         m_Health.OnDamaged += _OnDamaged;
+        // 结算落地（0 伤害也回调）：只给联机上报用，见 EnemyController._OnSettled
+        m_Health.OnSettled += _OnSettled;
     }
+
+    /// <summary>一次真实命中已结算（**0 伤害也会回调**）。默认空实现 —— 表现/统计仍走 <see cref="_OnDamaged"/>。</summary>
+    protected virtual void _OnSettled(PEInt damage, GameObject caused, GameObject origin, Collider collider, bool noSource) { }
 
     /// <param name="caused">**直接来源**（显示/AI 口径）</param>
     /// <param name="origin">**起源**（统计口径）</param>
@@ -162,6 +167,7 @@ public abstract class AIController : MonoBehaviour, I_AIController, IUnit, FPSGa
         m_Health.OnHit -= _OnHit;
         m_Health.OnDie -= _OnDie;
         m_Health.OnDamaged -= _OnDamaged;
+        m_Health.OnSettled -= _OnSettled;
 
         Tool.Destroy(gameObject, IsRemove?0: DeathDuration);
 

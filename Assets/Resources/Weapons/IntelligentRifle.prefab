@@ -134,11 +134,15 @@ MonoBehaviour:
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
@@ -175,7 +179,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -200,6 +203,26 @@ MonoBehaviour:
   RHand: {fileID: 1123143589602372177}
   ShowRoot: {fileID: 4033812356989932351}
   RecoilForce: 1
+  RecoilProfile:
+    PitchKick: 1.5
+    YawKick: 0.4
+    YawStep: 0.12
+    YawRandom: 0.35
+    KickSharpness: 40
+    RecoveryDelay: 0.1
+    RecoverySpeed: 12
+    YawRecoveryRatio: 0.7
+    MaxPitch: 12
+    MaxYaw: 6
+    AdsScale: 0.7
+    WeaponKickBack: 0.05
+    WeaponKickPitch: 2.5
+    WeaponKickRoll: 1.2
+    WeaponSpring: 14
+    SpreadBloomPerShot: 0
+    SpreadBloomMax: 4
+    SpreadBloomDecay: 8
+    ShakePerShot: 0
   AimingHideCrosshair: 0
   AimZoomRatio: 1
   AimOffset: {x: 0, y: 0, z: 0}
@@ -225,14 +248,25 @@ MonoBehaviour:
     removeTag: 0
   - name: "\u6050\u60E7\u6548\u679C"
     type: 209
-    addTag: 0
+    addTag: 32
     removeTag: 1
   - name: "\u9501\u5B9A\u901F\u5EA6"
     type: 64
     addTag: 0
     removeTag: 0
+  - name: "\u5BF9\u71C3\u70E7\u654C\u4EBA\u4F24\u5BB3"
+    type: 241
+    addTag: 0
+    removeTag: 0
+  - name: "\u5BF9\u89E6\u7535\u654C\u4EBA\u4F24\u5BB3"
+    type: 243
+    addTag: 0
+    removeTag: 0
   showAttr: 140000000200000001000000000000003e000000400000003c0000003f00000019000000
-  m_UniqueAttr: []
+  m_UniqueAttr:
+  - name: "\u7A7F\u900F\u5355\u4F4D"
+    value: 0
+    tag: 32
   Upgrade:
   - Key: 2
     Value:
@@ -243,7 +277,9 @@ MonoBehaviour:
     - {fileID: 11400000, guid: e20993f7fe7ac1d4182c6ec7f8aa7371, type: 2}
     - {fileID: 11400000, guid: 74ecda0574076d642b4164a88be69320, type: 2}
   - Key: 8
-    Value: []
+    Value:
+    - {fileID: 11400000, guid: d2b901409a3439a40b773a1ff489b755, type: 2}
+    - {fileID: 11400000, guid: 5c3000fd5d1f9e749928473045517734, type: 2}
   - Key: 12
     Value:
     - {fileID: 11400000, guid: 11263dec80557044c9c3e73f12441d31, type: 2}

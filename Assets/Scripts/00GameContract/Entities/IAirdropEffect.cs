@@ -32,7 +32,7 @@ namespace FPSGame.GameContract
         /// <para>▍覆盖范围（2026-10-27 扩）：载具（<c>SpecUnit</c>）与支援单位（炮台 / 治疗无人机 / 火箭包，
         /// <c>Enemy</c> 类型）—— 它们的共同点是"每端各自 Instantiate"，没有房主定的号就必然分叉。</para>
         /// <para>▍传值语义：<c>&gt; 0</c> = 房主已定号（远端复现 / 房主自己的呼叫）；<c>0</c> = 待房主定号
-        /// （成员自己叫的那发 —— 先不领自增号，等 4028 回来由 <c>NetFriendBridge</c> 覆盖）；
+        /// （成员自己叫的那发 —— 先不领自增号，等 4034 回来由 <c>NetFriendBridge</c> 覆盖）；
         /// **不调用** = 不托管（单机 / 旧版房主 ⇒ 保持原来的自增号行为）。</para>
         /// <para>▍为什么要它：生成物两端各生成一份、时机不同，落点还会差几厘米 ⇒ 号必须显式给（理由同
         /// <see cref="SetCallerSid"/>，见 <c>ActorsManager.VehicleNetIdBase</c>）。</para>

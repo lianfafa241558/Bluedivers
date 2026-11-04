@@ -60,14 +60,14 @@ namespace FPSGame.Game
             set
             {
                 if (_netId == value) return;
-                // 复刻（4051）是"先 Awake 后覆盖号"⇒ 账本必须挂在 setter 上，否则探针看不到这类单位，
+                // 复刻（4063）是"先 Awake 后覆盖号"⇒ 账本必须挂在 setter 上，否则探针看不到这类单位，
                 // 会把"消息迟到"误判成"本端从未有过这个号"。
                 if (_netId != 0) NetIdProbe.Died(_netId, Id);
                 _netId = value;
                 if (value != 0)
                 {
                     NetIdProbe.Born(value, Id);
-                    // 号 → 身份 映射（两端对照用）。挂在 setter 上 ⇒ 自增 / 特殊 / 4052 覆盖**全都**经过这里；
+                    // 号 → 身份 映射（两端对照用）。挂在 setter 上 ⇒ 自增 / 特殊 / 4063 覆盖**全都**经过这里；
                     // 派生段在 ActorsManager.DerivedNetId 里已带"同 Id 同坐标序号"记过，RecordMap 内部会跳过它。
                     NetIdProbe.RecordMap(value, Id, transform.position);
                 }
@@ -265,15 +265,15 @@ namespace FPSGame.Game
             //   ① 战斗开始**前**就存在的（场景摆放 / 大厅）⇒ **派生号**（Id + 位置量化 + 同组序号，两端各算各的、零消息）。
             //      它们从此不受任何"创建顺序分叉"影响 —— 巢穴/召唤师多生几只也不会把它们挤错号。
             //   ② 战斗开始**后**由运行时生成的（波次 / 巢穴 / 召唤 / 刷怪器）⇒ 自增号（波次那条链路两端同序）。
-            //      ⚠ 这批正是"两端会分叉"的，后续由"房主唯一创建 + 4052"接管（见 topics/net-battle §7.1）。
+            //      ⚠ 这批正是"两端会分叉"的，后续由"房主唯一创建 + 4063"接管（见 topics/net-battle §7.1）。
             //   ⚠ 玩家 / 盟友不取号：它们的身份就是 sid（房主 = 0），不参与这套号空间。
             //   ★ 2026-10-12 再拆两档：③ 战斗开始后的"运行时生成"（巢穴 / 召唤师 / 刷怪器）改走**房主分配段**
-            //     （NextHostSpawnNetId，两端时机必然不同、不能再赌同序）；④ 复刻期间**不发号**（Replicating，号随 4052 来）。
+            //     （NextHostSpawnNetId，两端时机必然不同、不能再赌同序）；④ 复刻期间**不发号**（Replicating，号随 4063 来）。
             if (ActorsManager.Instance != null && type != UnitTypeEnum.Player && type != UnitTypeEnum.Friend)
             {
                 if (ActorsManager.Replicating)
                 {
-                    // ★ 联机复刻（4052）：号随消息带来，由 INetSpawner.ReplaySpawn 覆盖 ⇒ 这里**一个号都不能领**，
+                    // ★ 联机复刻（4063）：号随消息带来，由 INetSpawner.ReplaySpawn 覆盖 ⇒ 这里**一个号都不能领**，
                     //   领了就会把房主与自己这侧的计数器推歪（其后所有自增号整体错位）。
                 }
                 else if (ActorsManager.ForceHostSpawnNetId)

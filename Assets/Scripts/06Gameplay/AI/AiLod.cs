@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FPSGame.AI
 {
-    /// <summary>联机 · **成员端 AI LOD**：本端敌人的移动意图由房主 4024 下发（<c>SetNavDestination</c> 一律作废），
+    /// <summary>联机 · **成员端 AI LOD**：本端敌人的移动意图由房主 4052 下发（<c>SetNavDestination</c> 一律作废），
     /// 它的 AI 决策只剩"表现"价值 ⇒ 按距离把**没在交战**的敌人的感知 / 决策降频，砍掉远处杂兵的开销。
     ///
     /// <para>▍两条硬门（踩了就是玩法事故）：

@@ -39,12 +39,12 @@ namespace FPSGame.Gameplay
             ReviveSelf();
         }
 
-        /// <summary>本机执行复活：本地玩家被救、以及收到 <c>PlayerReviveNtf</c>(4050) 时都走这一条。</summary>
+        /// <summary>本机执行复活：本地玩家被救、以及收到 <c>PlayerReviveNtf</c>(4028) 时都走这一条。</summary>
         public void ReviveSelf()
         {
             // ⚠ 幂等（很重要）：救人路径不止一条 —— `PlayerOperationController` 手动扶、`HealBag`（增援）、
             //   `SpecUnitKei`（凯伊）都会调 `Handle → Operate`，而它们在各机器上**各跑一遍** ⇒ 同一个人
-            //   可能连着收到两次 4050。而 `HealthPlayer.Revive` 会把血量压回 `MaxHealth/10`
+            //   可能连着收到两次 4028。而 `HealthPlayer.Revive` 会把血量压回 `MaxHealth/10`
             //   ⇒ 刚被加满的血会被第二次"复活"拉掉（10%）。
             if (Health != null && Health.GetHpCurrent() > 0f)
             {

@@ -50,6 +50,15 @@ public static class UnitEventBus
     public static void UnitDamaged(GameObject victim, PEInt damage, GameObject caused, Collider hitBody, GameObject origin)
         => OnUnitDamaged?.Invoke(victim, damage, caused, hitBody, origin);
 
+    /// <summary>单位**一次真实命中已结算**（受击者 / 实际扣减量（**可能为 0**）/ 直接来源 / 受击体 / 起源）。
+    /// <para>▍与 <see cref="OnUnitDamaged"/> 的区别：那条只在真掉血时发；这条**0 伤害也发**，
+    /// 用来同步"只加异常状态积蓄 / 只破甲"的命中（纯冰冻、眩晕、催化、护甲破坏）。</para>
+    /// <para>⚠ 发布点同样在 <c>Health.TakeDamage</c>，且只对 <c>Damageable.InflictDamage</c> 路径发（tick 不发）；
+    /// 订阅方拿到 0 伤害时**不要**当"有人打我"处理（表现/AI 走 <see cref="OnUnitDamaged"/> / <c>IHealth.OnDamaged</c>）。</para></summary>
+    public static event Action<GameObject, PEInt, GameObject, Collider, GameObject> OnUnitSettled;
+    public static void UnitSettled(GameObject victim, PEInt damage, GameObject caused, Collider hitBody, GameObject origin)
+        => OnUnitSettled?.Invoke(victim, damage, caused, hitBody, origin);
+
 
     /// <summary>表现层：子弹击中地面(近战，超射程消失也算)，给 HUD 做擦弹/受击提示用</summary>
     public static event Action<GameObject, PEVector3, PEInt> OnBulletHit;

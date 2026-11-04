@@ -13,7 +13,7 @@ namespace FPSGame.Managers
     /// <para>▍驱动口径（判定唯一收口在 <c>KeyScreen.IsStageDriver</c>）：**只有驱动端上报** —— 有人操作时 =
     /// 操作者所在那台；无人操作（Load/Wait 自动阶段） = 房主。其余端只应用，不自行推进。</para>
     ///
-    /// <para>▍键 = 终端家具的 <c>Furniture_Attached.SyncId</c>（与 4036 同口径 ⇒ 两端日志可直接对照）。</para>
+    /// <para>▍键 = 终端家具的 <c>Furniture_Attached.SyncId</c>（与 4059 同口径 ⇒ 两端日志可直接对照）。</para>
     ///
     /// <para>▍每局一份，由 <see cref="WaveManager"/> Install/Uninstall（同 <see cref="NetFurnitureBridge"/> 模式）。</para>
     /// </summary>
@@ -122,7 +122,7 @@ namespace FPSGame.Managers
             FPSGame.Utils.NetSyncLog.SyncLog("同步/终端/收",
                 $"{furn.name} → 阶段 {m.Stage}（发起 sid={m.Sid}）");
 
-            // 共享门：应用阶段可能顺带触发 furn.Operate() ⇒ 会派发 FurnitureOperate（4036）⇒ 挡住它的上报
+            // 共享门：应用阶段可能顺带触发 furn.Operate() ⇒ 会派发 FurnitureOperate（4059）⇒ 挡住它的上报
             NetApplyGuard.Begin();
             try
             {

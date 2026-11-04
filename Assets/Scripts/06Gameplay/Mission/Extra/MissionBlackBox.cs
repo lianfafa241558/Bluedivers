@@ -64,7 +64,7 @@ namespace FPSGame.Mission
             {
                 if (nowTime > 0) keyScreen.AddTime(2 * TickTime);
 
-                UpdateTip("<color=#FF4040>请返回信号发射范围</color> [" + Tool.FloatToTime(remainTime) + "]");
+                UpdateTip("<color=#FF4054>请返回信号发射范围</color> [" + Tool.FloatToTime(remainTime) + "]");
             }
             else
             {

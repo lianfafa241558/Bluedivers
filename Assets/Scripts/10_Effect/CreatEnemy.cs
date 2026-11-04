@@ -80,7 +80,7 @@ public class CreatEnemy : MonoBehaviour, INetSpawner
         }
 
         // ★ 联机（2026-10-12）：**成员端完全不跑**（不抽随机、不生成）—— 生成时机与随机全由房主定，
-        //   本端等 4052 复刻。各生各的会让 `Actor.Awake` 的号段与房主错开（其后所有单位错位）。
+        //   本端等 4063 复刻。各生各的会让 `Actor.Awake` 的号段与房主错开（其后所有单位错位）。
         //   ⚠ 本程序集看不见 07_NetGame ⇒ 成员判定走 BattleManager.IsNetMember（09）。
         if (BattleManager.Instance != null && BattleManager.Instance.IsNetMember)
         {
@@ -95,7 +95,7 @@ public class CreatEnemy : MonoBehaviour, INetSpawner
             if (BattleManager.Instance.BattleRandom.Bool(info.probability))
             {
                 //Debug.LogError("创建类型为  "+ info.tier+"单位"+"  在" + info.vector+"  范围" + info.range);
-                // ⚠ 走"统一入口"（房主唯一生成 + 上报 4052），别再用旧的那条 tier 重载（它两端各自生成、不发消息）
+                // ⚠ 走"统一入口"（房主唯一生成 + 上报 4063），别再用旧的那条 tier 重载（它两端各自生成、不发消息）
                 BattleManager.Instance.CreatSpawnerUnit(info.tier, info.vector, info.range, this);
             }
             if (Time.realtimeSinceStartup - startTime >= maxTimePerFrame)
@@ -105,7 +105,7 @@ public class CreatEnemy : MonoBehaviour, INetSpawner
         }
     }
 
-    #region 联机 · 房主唯一生成 / 成员复刻（4052）
+    #region 联机 · 房主唯一生成 / 成员复刻（4063）
 
     /// <summary>生成者身份键（房主上报、成员据此找回本端这一份）。</summary>
     public int SpawnSourceKey => NetSpawnKey.Of(gameObject);
