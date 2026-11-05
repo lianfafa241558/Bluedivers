@@ -3741,7 +3741,7 @@ TerrainCollider:
   m_ProvidesContacts: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_TerrainData: {fileID: 15600000, guid: 6d20ce09ac72e3b499576459c63aa7d5, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: 94692390b1abbf0458a4647ecc321687, type: 2}
   m_EnableTreeColliders: 1
 --- !u!218 &1376797506
 Terrain:
@@ -3752,7 +3752,7 @@ Terrain:
   m_GameObject: {fileID: 1376797503}
   m_Enabled: 1
   serializedVersion: 6
-  m_TerrainData: {fileID: 15600000, guid: 6d20ce09ac72e3b499576459c63aa7d5, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: 94692390b1abbf0458a4647ecc321687, type: 2}
   m_TreeDistance: 100
   m_TreeBillboardDistance: 50
   m_TreeCrossFadeLength: 5
@@ -14798,6 +14798,7 @@ MonoBehaviour:
   Hysteresis: 10
   MoveThreshold: 16
   RebuildInterval: 30
+  RebuildBatchSize: 256
   UsePlayerPosition: 1
 --- !u!4 &1687237667 stripped
 Transform:
@@ -30561,6 +30562,16 @@ PrefabInstance:
         type: 3}
       propertyPath: fullscreenFogDensity.m_Curve.Array.data[3].value
       value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 579071849834076489, guid: 482e71a15885df94a94c0aaabd4e3173,
+        type: 3}
+      propertyPath: dayOffect
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 579071849834076489, guid: 482e71a15885df94a94c0aaabd4e3173,
+        type: 3}
+      propertyPath: nightOffect
+      value: -0.05
       objectReference: {fileID: 0}
     - target: {fileID: 6507723844999803862, guid: 482e71a15885df94a94c0aaabd4e3173,
         type: 3}

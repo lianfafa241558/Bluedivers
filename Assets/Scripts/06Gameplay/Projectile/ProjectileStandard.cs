@@ -203,37 +203,43 @@ namespace FPSGame.Gameplay
                 displacementSinceLastFrame.normalized, s_HitBuffer, displacementSinceLastFrame.magnitude, FpsHelper.GetHittableLayers(m_Velocity.magnitude),
                 k_TriggerInteraction);
 
-            // 穿透标记提到循环外：原来在每个 hit 上都 Enum.HasFlag 一次（每次装箱）
+            // 标旗提到循环外：原来在每个 hit 上都 Enum.HasFlag 一次（每次装箱）
             bool penetrateUnits = HasBulletFlag(BulletFlag.PenetrateUnits);
+            bool penetrateTerrain = HasBulletFlag(BulletFlag.PenetrateTerrain);
 
             for (int hi = 0; hi < hitCount; ++hi)
             {
                 RaycastHit hit = s_HitBuffer[hi];
-                if (IsHitValid(hit) && hit.distance < closestHit.distance)
+                if (!IsHitValid(hit) || hit.distance >= closestHit.distance) continue;
+
+                // ⚠ "这一下停不停"只在这里判、只按标旗判。原来 TryHit 只判"够不够得着"、HitFX 又按标旗判一遍，
+                //   两处对"算不算单位"的口径只要不一致（部位碰撞体上没 IDamageable / Source 没连），标旗就等于没生效。
+                if (penetrateUnits || penetrateTerrain)
                 {
-                    //可以伤害说明是单位
-                    //if ((damageable.IsValid() && !HasBulletFlag(BulletFlag.PenetrateUnits))
-                    //    || (!damageable.IsValid() && !HasBulletFlag(BulletFlag.PenetrateTerrain)))
-                    //{
-                    //这里的意思就是，使用穿透单位击中单位不会结束，而是添加到列表并继续
-                    //这里不控制停止，只考虑击中伤害
-                    //穿透地面直接写ishitVaild里面了，因为反正不用考虑对地面进行控制（大概吧）
-                    // ⚠ 只有"穿透单位"才需要取 IDamageable：GetComponent<接口> 每次都会分配
-                    //   （Unity 内部要枚举组件找接口实现），不穿透时这个值根本用不上
-                    if (penetrateUnits)
+                    IDamageable damageable = hit.collider.GetComponent<IDamageable>();
+                    if (damageable.IsValid())
                     {
-                        IDamageable damagable = hit.collider.GetComponent<IDamageable>();
-                        if (damagable.IsValid() && damagable.Source.IsValid() && !m_hasHits.Contains(damagable.ActorGo))
+                        // 是单位：没开"穿透单位"就照常挡下；开了就只结算一次，随后连它的其它部位碰撞体一起穿过去
+                        if (penetrateUnits)
                         {
-                            m_hasHits.Add(damagable.ActorGo);
-                            Hit(hit);
+                            // ⚠ Source 没连（TransferDamageable 忘配）时 ActorGo 会 NRE，这种部位直接穿过去
+                            if (damageable.Source.IsValid() && !m_hasHits.Contains(damageable.ActorGo))
+                            {
+                                m_hasHits.Add(damageable.ActorGo);
+                                Hit(hit);
+                            }
                             continue;
                         }
                     }
-
-                    foundHit = true;
-                    closestHit = hit;
+                    else if (penetrateTerrain)
+                    {
+                        // 地形 / 道具（没有 IDamageable）：穿透地形就直接过去，不结算也不播命中特效
+                        continue;
+                    }
                 }
+
+                foundHit = true;
+                closestHit = hit;
             }
 
             if (foundHit)
@@ -339,12 +345,8 @@ namespace FPSGame.Gameplay
                 return false;
             }
 
-            //如果有忽略地面标签并且目标没有伤害组件就直接忽略
-            if (HasBulletFlag(BulletFlag.PenetrateTerrain) && hit.collider.GetComponent<IDamageable>() == null)
-            {
-                //Debug.LogError("穿透地形忽略" + hit.collider);
-                return false;
-            }
+            // ⚠ "穿透地形"不在这里判：停不停统一由 TryHit 一处按标旗决定（这里滤掉的话，
+            //   同一个标旗就有两个解释点，改一边忘一边就是"标旗没反应"）。
             //Debug.LogError("碰撞成功" + hit.collider);
             return true;
         }
@@ -367,13 +369,12 @@ namespace FPSGame.Gameplay
                 return;
             }
 
+            // ⚠ 这里的"停不停"必须与 TryHit 同口径（都对 collider.GetComponent<IDamageable>() 判"是不是单位"）：
+            //   穿透单位打中的那份 Hit 也会走到这（要播命中特效、要结算伤害），不能被误停。
+            //   两处口径一旦分叉（例如这边要求 Source 有效），标旗就等于没生效。
             bool damageable = hitdata.collider.GetComponent<IDamageable>().IsValid();
-            //可以伤害说明是单位
-            //Debug.LogError("是单位?"+ damageable+"有穿透单位标记"+ HasBulletFlag(BulletFlag.PenetrateUnits)+"有穿透地形标记"+ HasBulletFlag(BulletFlag.PenetrateTerrain));
-
-
             if ((damageable && !HasBulletFlag(BulletFlag.PenetrateUnits))
-                ||(!damageable && !HasBulletFlag(BulletFlag.PenetrateTerrain))) 
+                || (!damageable && !HasBulletFlag(BulletFlag.PenetrateTerrain)))
             {
                 TryStop();
             }

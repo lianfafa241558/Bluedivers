@@ -199,11 +199,15 @@ MonoBehaviour:
     ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 0.5
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: c0b2ad8985e3e6d40bb13d04f56c6649,
@@ -216,7 +220,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1.34
     ExplosionAP: 3
     ExplosionAPChargeScale: 1.34
-    demolishValue: 0
+    demolishValue: 20
     UseCharge: 1
     ChargeDamageScale: 3
     ChargeAOERangeScale: 2
@@ -242,7 +246,6 @@ MonoBehaviour:
     type: 3}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -267,7 +270,7 @@ MonoBehaviour:
   LHand: {fileID: 9081195229715227740}
   RHand: {fileID: 3663223465844238167}
   ShowRoot: {fileID: 6502699919811179858}
-  RecoilForce: 0.15
+  RecoilForce: 1
   RecoilProfile:
     PitchKick: 3
     YawKick: 0.5

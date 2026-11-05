@@ -1,4 +1,4 @@
-Shader "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Add Pass)"
+Shader "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Add Pass) Triplanar"
 {
     Properties
     {
@@ -34,6 +34,13 @@ Shader "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Add Pass)"
         [HideInInspector] _BaseColor("Main Color", Color) = (1,1,1,1)
 
         [HideInInspector] _TerrainHolesTexture("Holes Map (RGB)", 2D) = "white" {}
+
+        // ---- 陡坡三平面映射（与 TerrainLit 主 shader 共用同一套材质属性）----
+        // 数值开关：本 pass 的材质是 Terrain 内部拼出来的，只有数值属性一定会带过来。
+        [ToggleUI] _TriplanarOn("Triplanar On Steep Slope", Float) = 1.0
+        _TriplanarStartAngle("Triplanar Start Angle (deg)", Range(0.0, 90.0)) = 80.0
+        _TriplanarBlendRange("Triplanar Blend Range (deg)", Range(1.0, 45.0)) = 10.0
+        _TriplanarTerrainSize("Terrain World Size (X, Z)", Vector) = (256, 256, 0, 0)
     }
 
     HLSLINCLUDE

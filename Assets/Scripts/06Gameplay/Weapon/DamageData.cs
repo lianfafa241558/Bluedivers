@@ -180,8 +180,11 @@ namespace FPSGame.Weapon
             if (outerRange == innerRange || distance < innerRange) return 1;
             else return PEMath.Clamp((outerRange - distance) / (outerRange - innerRange), 0, 1);
         }
+        /// <summary>爆炸伤害：半径衰减 × 满蓄伤害倍率。
+        /// <para>⚠ 2026-11-05 前只乘了半径衰减，导致蓄力枪满蓄时直击 ×N 而爆炸原封不动
+        /// （书记的惩戒 20×6=120，爆炸 5 却还是 5）。判断"是否吃倍率"用 <see cref="UseCharge"/>，与直击同一个开关。</para></summary>
         public PEInt GetExplosionDamage(PEInt chargeScale, PEInt distance) =>
-            GetEffectRadiusScale(distance, chargeScale) * (PEInt)DamageExplosion;
+            GetEffectRadiusScale(distance, chargeScale) * _HandleValue(DamageExplosion, ChargeDamageScale, chargeScale);
 
         /// <summary>直击伤害</summary>
         public PEInt GetDirectDamage(PEInt ChargeScale) => _HandleValue(DamageDirect, ChargeDamageScale, ChargeScale);

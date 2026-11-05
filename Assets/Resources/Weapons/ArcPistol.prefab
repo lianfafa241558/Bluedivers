@@ -138,7 +138,7 @@ MonoBehaviour:
     - Key: 0
       Value: 0
     - Key: 1
-      Value: 128
+      Value: 24
     - Key: 2
       Value: 0.1
     - Key: 7
@@ -148,9 +148,9 @@ MonoBehaviour:
     - Key: 14
       Value: 0.35
     - Key: 15
-      Value: 45
+      Value: 34
     - Key: 16
-      Value: 2.2
+      Value: 4
     - Key: 18
       Value: 1
     - Key: 102
@@ -172,10 +172,10 @@ MonoBehaviour:
   - BulletPrefab: {fileID: 6427322605795972283, guid: b9cc371f165a2cc4bad3605bd9647bb4,
       type: 3}
     LandingPrefab: {fileID: 0}
-    Speed: 200
+    Speed: 400
     Gravity: 0
     InheritWeaponSpeed: 0
-    MaxLifeTime: 1
+    MaxLifeTime: 0.125
     MaxRange: -1
     MinRange: 0.35
     NoSource: 0
@@ -187,7 +187,7 @@ MonoBehaviour:
     - Key: 0
       Value: 1
     - Key: 2
-      Value: 1
+      Value: 0.3
     WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
@@ -259,7 +259,7 @@ MonoBehaviour:
   LHand: {fileID: 4252058404234028685}
   RHand: {fileID: 4531709416284622041}
   ShowRoot: {fileID: 6627561337967778495}
-  RecoilForce: 2
+  RecoilForce: 4
   RecoilProfile:
     PitchKick: 2.2
     YawKick: 0.25
@@ -388,6 +388,7 @@ MonoBehaviour:
   - {fileID: 0}
   I_CoolRatio:
   - {fileID: 5784112763353637691}
+  T_CoolRatio: []
   TintCoolRatio: 1
   CoolRatioGradient:
     serializedVersion: 2
@@ -420,6 +421,7 @@ MonoBehaviour:
     m_NumColorKeys: 3
     m_NumAlphaKeys: 2
   ReverseCoolRatioFill: 1
+  CoolRatioSmoothSpeed: 12
 --- !u!114 &8268288915393899451
 MonoBehaviour:
   m_ObjectHideFlags: 0

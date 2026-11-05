@@ -9,6 +9,14 @@ CBUFFER_START(UnityPerMaterial)
     float4 _MainTex_ST;
     half4 _BaseColor;
     half _Cutoff;
+
+    // ---- 陡坡三平面映射 ----
+    // 注意：这里用 0/1 的数值开关而不是 shader keyword。Terrain 的 Add Pass 材质是引擎
+    // 内部拼出来的，只保证数值属性会被复制过去，local keyword 不一定带得过去。
+    half _TriplanarOn;
+    float4 _TriplanarTerrainSize;   // xy: 地形世界尺寸 (X, Z)，用于把世界坐标换算成贴图 UV
+    half _TriplanarStartAngle;      // 开始启用三平面的坡度角（度）
+    half _TriplanarBlendRange;      // 与原 UV 采样之间的过渡角度范围（度）
 CBUFFER_END
 
 #define _Surface 0.0 // Terrain is always opaque

@@ -29,6 +29,14 @@ Shader "Universal Render Pipeline/Terrain/TerrainLit"
 
         [ToggleUI] _EnableInstancedPerPixelNormal("Enable Instanced per-pixel normal", Float) = 1.0
 
+        // ---- 陡坡三平面映射 ----
+        // 用数值开关而不是 keyword：Terrain 的 Add Pass 材质由引擎内部拼出来，
+        // 只有数值属性一定能带过去，local keyword 会丢。
+        [ToggleUI] _TriplanarOn("Triplanar On Steep Slope", Float) = 1.0
+        _TriplanarStartAngle("Triplanar Start Angle (deg)", Range(0.0, 90.0)) = 80.0
+        _TriplanarBlendRange("Triplanar Blend Range (deg)", Range(1.0, 45.0)) = 10.0
+        _TriplanarTerrainSize("Terrain World Size (X, Z)", Vector) = (256, 256, 0, 0)
+
         [Toggle(_EnableToon)] _EnableToon("_EnableToon", Float) = 0
     }
 
@@ -269,7 +277,9 @@ Shader "Universal Render Pipeline/Terrain/TerrainLit"
 
         UsePass "Hidden/Nature/Terrain/Utilities/PICKING"
     }
-    Dependency "AddPassShader" = "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Add Pass)"
+    // 注意：名字必须唯一。URP 包里已经有一个 "Hidden/.../TerrainLit (Add Pass)"，
+    // 同名时 Terrain 实际会绑到包里那个（导致多出来的 Layer 不走三平面）。
+    Dependency "AddPassShader" = "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Add Pass) Triplanar"
     Dependency "BaseMapShader" = "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Base Pass)"
     Dependency "BaseMapGenShader" = "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Basemap Gen)"
 

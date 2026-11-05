@@ -116,6 +116,101 @@ void InitializeInputData(Varyings IN, half3 normalTS, out InputData inputData)
 
 #ifndef TERRAIN_SPLAT_BASEPASS
 
+// ============================================================================
+// 陡坡三平面映射（steep-slope triplanar）
+//   - 只有坡度角 > _TriplanarStartAngle（默认 80°）才启用，
+//     在 [_TriplanarStartAngle - _TriplanarBlendRange, _TriplanarStartAngle] 内平滑过渡；
+//   - 陡坡上顶面(XZ)投影会被极度拉伸、且其权重接近 0，所以这里只保留两个竖直投影
+//     （面朝 ±X 用 (z,y)，面朝 ±Z 用 (x,y)），每个 Layer 只多 2 次采样；
+//   - 世界坐标 -> UV 的缩放由 _SplatN_ST 与地形世界尺寸推导，保证陡坡和坡下的
+//     贴图密度一致（_TriplanarTerrainSize 必须与 TerrainData.size.xz 一致）。
+//   - 开关用数值 _TriplanarOn(0/1) 而不是 keyword：Add Pass 的材质由 Terrain 内部
+//     拼出来，只有数值属性一定会被复制过去。
+// ============================================================================
+
+// 三平面启用权重：1 = 完全使用三平面，0 = 完全使用原始 UV 采样
+half ComputeTriplanarWeight(half3 normalWS)
+{
+    half ny = abs(normalize(normalWS).y);
+
+    // 坡度角 theta 与 |n.y| 的关系是 |n.y| = cos(theta)，角度越大 cos 越小
+    half startCos = cos(radians(_TriplanarStartAngle));
+    half fadeAngle = max(_TriplanarStartAngle - max(_TriplanarBlendRange, 0.5h), 0.0h);
+    half fadeCos = max(cos(radians(fadeAngle)), startCos + 1e-4h);
+
+    return (1.0h - smoothstep(startCos, fadeCos, ny)) * saturate(_TriplanarOn);
+}
+
+// 两个竖直投影的混合权重：x -> (z,y) 投影（面朝 ±X），y -> (x,y) 投影（面朝 ±Z）
+half2 ComputeTriplanarXZWeights(half3 normalWS)
+{
+    half3 n = abs(normalize(normalWS));
+    half2 w = max(half2(n.x, n.z), half2(1e-4h, 1e-4h));
+    return w / (w.x + w.y);
+}
+
+// 每层贴图的世界坐标 -> UV 缩放
+float2 TriplanarUVScale(float4 st)
+{
+    return st.xy / max(_TriplanarTerrainSize.xy, 1e-3);
+}
+
+// 陡坡双平面采样（跳过被拉伸的顶面 XZ 投影）
+half4 TriplanarSplat(Texture2D tex, SamplerState samp, float3 positionWS, half2 weights, float2 uvScale, float4 st)
+{
+    half4 colX = SAMPLE_TEXTURE2D(tex, samp, float2(positionWS.z, positionWS.y) * uvScale.y + st.zw);
+    half4 colZ = SAMPLE_TEXTURE2D(tex, samp, float2(positionWS.x, positionWS.y) * uvScale.x + st.zw);
+    return colX * weights.x + colZ * weights.y;
+}
+
+// 把两个投影采样到的切线空间法线重组到世界空间后混合
+half3 TriplanarNormalBlend(half3 nX, half3 nZ, half2 weights, half3 geomNormalWS)
+{
+    // 面朝 -X / -Z 时贴图是镜像的，用几何法线符号把切向分量翻回来；
+    // "朝外"分量同时跟着翻转，保证两个投影的结果朝同一侧、不会互相抵消。
+    half sx = geomNormalWS.x < 0.0h ? -1.0h : 1.0h;
+    half sz = geomNormalWS.z < 0.0h ? -1.0h : 1.0h;
+
+    half3 worldX = half3(nX.z * sx, nX.y, nX.x * sx);   // (z,y) 投影：T=+Z, B=+Y, N=+X
+    half3 worldZ = half3(nZ.x * sz, nZ.y, nZ.z * sz);   // (x,y) 投影：T=+X, B=+Y, N=+Z
+
+    return normalize(worldX * weights.x + worldZ * weights.y);
+}
+
+// 陡坡三平面法线（各 Layer 按 splatControl 加权）
+half3 TriplanarNormalMix(float3 positionWS, half2 weights, half3 geomNormalWS, half4 splatControl)
+{
+    half3 nrm = geomNormalWS;
+#if defined(_NORMALMAP)
+    float2 uvScale0 = TriplanarUVScale(_Splat0_ST);
+    float2 uvScale1 = TriplanarUVScale(_Splat1_ST);
+    float2 uvScale2 = TriplanarUVScale(_Splat2_ST);
+    float2 uvScale3 = TriplanarUVScale(_Splat3_ST);
+
+    half3 n0 = TriplanarNormalBlend(
+        UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal0, sampler_Normal0, float2(positionWS.z, positionWS.y) * uvScale0.y + _Splat0_ST.zw), _NormalScale0),
+        UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal0, sampler_Normal0, float2(positionWS.x, positionWS.y) * uvScale0.x + _Splat0_ST.zw), _NormalScale0),
+        weights, geomNormalWS);
+    half3 n1 = TriplanarNormalBlend(
+        UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal1, sampler_Normal0, float2(positionWS.z, positionWS.y) * uvScale1.y + _Splat1_ST.zw), _NormalScale1),
+        UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal1, sampler_Normal0, float2(positionWS.x, positionWS.y) * uvScale1.x + _Splat1_ST.zw), _NormalScale1),
+        weights, geomNormalWS);
+    half3 n2 = TriplanarNormalBlend(
+        UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal2, sampler_Normal0, float2(positionWS.z, positionWS.y) * uvScale2.y + _Splat2_ST.zw), _NormalScale2),
+        UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal2, sampler_Normal0, float2(positionWS.x, positionWS.y) * uvScale2.x + _Splat2_ST.zw), _NormalScale2),
+        weights, geomNormalWS);
+    half3 n3 = TriplanarNormalBlend(
+        UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal3, sampler_Normal0, float2(positionWS.z, positionWS.y) * uvScale3.y + _Splat3_ST.zw), _NormalScale3),
+        UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal3, sampler_Normal0, float2(positionWS.x, positionWS.y) * uvScale3.x + _Splat3_ST.zw), _NormalScale3),
+        weights, geomNormalWS);
+
+    nrm = n0 * splatControl.r + n1 * splatControl.g + n2 * splatControl.b + n3 * splatControl.a;
+#endif
+
+    // 加一点几何法线，避免全部权重为 0 时 normalize(0) 出 NaN
+    return normalize(nrm + geomNormalWS * 1e-4h);
+}
+
 void NormalMapMix(float4 uvSplat01, float4 uvSplat23, inout half4 splatControl, inout half3 mixedNormal)
 {
     #if defined(_NORMALMAP)
@@ -136,7 +231,9 @@ void NormalMapMix(float4 uvSplat01, float4 uvSplat23, inout half4 splatControl, 
     #endif
 }
 
-void SplatmapMix(float4 uvMainAndLM, float4 uvSplat01, float4 uvSplat23, inout half4 splatControl, out half weight, out half4 mixedDiffuse, out half4 defaultSmoothness, inout half3 mixedNormal)
+void SplatmapMix(float4 uvMainAndLM, float4 uvSplat01, float4 uvSplat23, float3 positionWS, half3 geomNormalWS,
+                 inout half4 splatControl, out half weight, out half4 mixedDiffuse, out half4 defaultSmoothness,
+                 inout half3 mixedNormal, out half3 triplanarNormalWS, out half triplanarWeight)
 {
     half4 diffAlbedo[4];
 
@@ -144,6 +241,21 @@ void SplatmapMix(float4 uvMainAndLM, float4 uvSplat01, float4 uvSplat23, inout h
     diffAlbedo[1] = SAMPLE_TEXTURE2D(_Splat1, sampler_Splat0, uvSplat01.zw);
     diffAlbedo[2] = SAMPLE_TEXTURE2D(_Splat2, sampler_Splat0, uvSplat23.xy);
     diffAlbedo[3] = SAMPLE_TEXTURE2D(_Splat3, sampler_Splat0, uvSplat23.zw);
+
+    // 陡坡：把被拉伸的 UV 采样结果替换成三平面（陡坡退化为双平面）采样结果
+    half2 triplanarWeights = half2(0.0h, 0.0h);
+    triplanarWeight = 0.0h;
+    triplanarNormalWS = geomNormalWS;
+    triplanarWeight = ComputeTriplanarWeight(geomNormalWS);
+    if (triplanarWeight > 1e-3h)
+    {
+        triplanarWeights = ComputeTriplanarXZWeights(geomNormalWS);
+
+        diffAlbedo[0] = lerp(diffAlbedo[0], TriplanarSplat(_Splat0, sampler_Splat0, positionWS, triplanarWeights, TriplanarUVScale(_Splat0_ST), _Splat0_ST), triplanarWeight);
+        diffAlbedo[1] = lerp(diffAlbedo[1], TriplanarSplat(_Splat1, sampler_Splat0, positionWS, triplanarWeights, TriplanarUVScale(_Splat1_ST), _Splat1_ST), triplanarWeight);
+        diffAlbedo[2] = lerp(diffAlbedo[2], TriplanarSplat(_Splat2, sampler_Splat0, positionWS, triplanarWeights, TriplanarUVScale(_Splat2_ST), _Splat2_ST), triplanarWeight);
+        diffAlbedo[3] = lerp(diffAlbedo[3], TriplanarSplat(_Splat3, sampler_Splat0, positionWS, triplanarWeights, TriplanarUVScale(_Splat3_ST), _Splat3_ST), triplanarWeight);
+    }
 
     //这可能有点冒险——这里的假设是，如果diffuseMap没有
     //alpha通道，然后diffAlbedo[n].a=1.0（和_DiffuseHasAlphaN=0.0）
@@ -184,6 +296,10 @@ void SplatmapMix(float4 uvMainAndLM, float4 uvSplat01, float4 uvSplat23, inout h
     mixedDiffuse += diffAlbedo[3] * half4(_DiffuseRemapScale3.rgb * splatControl.aaa, 1.0h);
 
     NormalMapMix(uvSplat01, uvSplat23, splatControl, mixedNormal);
+
+    // 陡坡：用三平面法线（世界空间）覆盖切线空间结果，调用方按 triplanarWeight 混合
+    if (triplanarWeight > 1e-3h)
+        triplanarNormalWS = TriplanarNormalMix(positionWS, triplanarWeights, geomNormalWS, splatControl);
 }
 
 #endif
@@ -375,6 +491,8 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
 #endif
     
     half3 normalTS = half3(0.0h, 0.0h, 1.0h);
+    half3 triplanarNormalWS = half3(0.0h, 1.0h, 0.0h);
+    half triplanarWeight = 0.0h;
 #ifdef TERRAIN_SPLAT_BASEPASS
     half3 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uvMainAndLM.xy).rgb;
 
@@ -396,7 +514,8 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
     half weight;
     half4 mixedDiffuse;
     half4 defaultSmoothness;
-    SplatmapMix(IN.uvMainAndLM, IN.uvSplat01, IN.uvSplat23, splatControl, weight, mixedDiffuse, defaultSmoothness, normalTS);
+    SplatmapMix(IN.uvMainAndLM, IN.uvSplat01, IN.uvSplat23, IN.positionWS, IN.normal.xyz,
+                splatControl, weight, mixedDiffuse, defaultSmoothness, normalTS, triplanarNormalWS, triplanarWeight);
     half3 albedo = mixedDiffuse.rgb;
 
     half4 defaultOcclusion = half4(_MaskMapRemapScale0.g, _MaskMapRemapScale1.g, _MaskMapRemapScale2.g, _MaskMapRemapScale3.g) +
@@ -411,6 +530,12 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
     InputData inputData;
     InitializeInputData(IN, normalTS, inputData);
     SETUP_DEBUG_TEXTURE_DATA(inputData, IN.uvMainAndLM.xy, _BaseMap);
+
+    // 陡坡：切线空间法线在贴图被拉伸时没有意义，按坡度权重换成三平面法线
+#if defined(_NORMALMAP)
+    if (triplanarWeight > 1e-3h)
+        inputData.normalWS = normalize(lerp(inputData.normalWS, triplanarNormalWS, triplanarWeight));
+#endif
 
 #if defined(_DBUFFER)
     half3 specular = half3(0.0h, 0.0h, 0.0h);
@@ -507,11 +632,11 @@ half4 SplatmapFragment(Varyings IN) : SV_TARGET
 
     // 暗部添加自发光
     half luminance = dot(albedo, half3(0.2126, 0.7152, 0.0722));
-    //half darkFactor = 1.0 - saturate(luminance * 4.0); // 越暗因子越大
+    half darkFactor = 1.0 - saturate(luminance * 4.0); // 越暗因子越大
 
     // 根据贴图颜色添加微弱自发光
-    //half3 emissive = lerp(albedo,0.2,0.9) * darkFactor * 0.08; // 10%自发光
-    //color.rgb += emissive;
+    half3 emissive = lerp(albedo,0.2,0.9) * darkFactor * 0.08; // 10%自发光
+    color.rgb += emissive;
 
     // 受光强度越高雾越淡，使用 NdotL * 主光亮度 做平滑渐变
     // originalStrength 反映附加光强度，主光亮度由 mainLightResult 灰度体现

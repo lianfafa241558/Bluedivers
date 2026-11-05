@@ -109,7 +109,11 @@ Shader "Hidden/Universal Render Pipeline/Terrain/TerrainLit (Basemap Gen)"
 
             #endif
 
-                SplatmapMix(IN.uvMainAndLM, IN.uvSplat01, IN.uvSplat23, splatControl, weight, mixedDiffuse, defaultSmoothness, normalTS);
+                half3 triplanarNormalWS;
+                half triplanarWeight;
+                // 烘焙 basemap 没有世界坐标，也不需要法线，这里不启用三平面
+                SplatmapMix(IN.uvMainAndLM, IN.uvSplat01, IN.uvSplat23, float3(0.0f, 0.0f, 0.0f), half3(0.0h, 1.0h, 0.0h),
+                            splatControl, weight, mixedDiffuse, defaultSmoothness, normalTS, triplanarNormalWS, triplanarWeight);
 
                 half4 hasMask = half4(_LayerHasMask0, _LayerHasMask1, _LayerHasMask2, _LayerHasMask3);
 

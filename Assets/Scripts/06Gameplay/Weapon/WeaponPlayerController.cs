@@ -56,7 +56,7 @@ namespace FPSGame.Weapon
         [Foldout("武器参数", true)]
         [Space]
         [InspectorName("后坐力")]
-        [Range(0f, 2f)]
+        [Range(0f, 5f)]
         public float RecoilForce = 1;
 
         /// <summary>后坐力手感参数（每把玩家武器一份）：相机冲量/回正节奏 + 武器模型回弹 + 连射散布膨胀 + 屏震。

@@ -92,7 +92,7 @@ MonoBehaviour:
     - Key: 1
       Value: 8
     - Key: 2
-      Value: 0.24
+      Value: 0.5
     - Key: 7
       Value: 2
     - Key: 10
@@ -132,7 +132,7 @@ MonoBehaviour:
       Value: 1
     - Key: 2
       Value: 0.3
-    WeaknessBonus: 0
+    WeaknessBonus: 0.2
     ExplosionInnerRange: 0
     ExplosionRange: 0
     DestructeRadius: 0
@@ -143,6 +143,9 @@ MonoBehaviour:
       Value: 1
     - Key: 2
       Value: 0.3
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
@@ -179,7 +182,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0

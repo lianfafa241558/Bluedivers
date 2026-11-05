@@ -353,7 +353,7 @@ namespace FPSGame.Game {
                 case DamageTypeEnum.Freeze:
                     // 同理：冰冻先压制燃烧槽，燃烧归零后才开始结冰
                     AddOpposedAboGauge(DamageTypeEnum.Freeze, DamageTypeEnum.Burn, value, damageCaused);
-                    return 0;//冰冻不计入伤害量
+                    return value;
                 case DamageTypeEnum.Electric:
                 case DamageTypeEnum.Radiation:
                     AddAboGauge(type, value, damageCaused);
