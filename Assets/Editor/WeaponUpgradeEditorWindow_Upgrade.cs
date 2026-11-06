@@ -829,7 +829,8 @@ namespace FPSGame.Game.Editor
                 so => so.icon,
                 so => so.name,
                 so => so.type,
-                getExtra: GetEffectSummary,
+                // 不能直接传方法组：GetEffectSummary 多了个可选参数，委托只认无默认值的精确签名
+                getExtra: so => GetEffectSummary(so),
                 getExtraColor: GetEffectColor));
         }
 
@@ -837,14 +838,14 @@ namespace FPSGame.Game.Editor
         /// 把 modifys 压成一行数值摘要：Base/Extra 直出，Factor 转百分比（0.3 ⇒ +30%）。
         /// 只显示数值不显示属性名 —— 选择器一行放不下，属性名在下方 SO 详情里能看到。
         /// </summary>
-        private static string GetEffectSummary(WeaponUpgradeData_SO so)
+        private static string GetEffectSummary(WeaponUpgradeData_SO so, int maxParts = 3)
         {
             if (so == null || so.modifys == null || so.modifys.Count == 0) return "";
 
             var parts = new List<string>(so.modifys.Count);
             for (var i = 0; i < so.modifys.Count; i++)
             {
-                if (i >= 3)
+                if (i >= maxParts)
                 {
                     parts.Add("…");
                     break;

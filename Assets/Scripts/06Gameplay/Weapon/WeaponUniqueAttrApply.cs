@@ -27,7 +27,7 @@ namespace FPSGame.Weapon
                 weapon.Damages[1].SetExplosionTypeBurn(new(attr.Value));
             },
             ["尾迹范围"] = (Weapon weapon, Info attr) => {
-                weapon.Damages[1].SetExplosionTypeElectric(new(attr.Value));
+                ApplyTrailRange(weapon, attr.Value);
             },
             ["全自动模式"] = (Weapon weapon, Info attr) => {
                 weapon.ShootType = attr.Value>0? WeaponShootType.Automatic: WeaponShootType.Manual;
@@ -45,6 +45,33 @@ namespace FPSGame.Weapon
         };
 
 
+
+        /// <summary>
+        /// 尾迹档位(1 号)的原始爆炸半径。首次应用时抓一次，"尾迹范围"每次都按「原始 + 累计加成」重算。
+        /// <para>⚠ 不能直接 +=：<see cref="Apply"/> 在每次 <c>ApplyUpgrade</c> 都会用重建的参数表重跑一遍，
+        /// 累加写法会让半径随每次换装一路膨胀。</para>
+        /// </summary>
+        private static readonly Dictionary<DamageData, float> s_TrailBaseRange = new();
+
+        /// <summary>
+        /// 「尾迹范围」：把 1 号伤害档的爆炸半径改成「原始半径 + 加成」。
+        /// <para>用 <see cref="DamageData.SetExplosionRange"/> 而不是直接写字段：它会按原内/外比例
+        /// 同步内半径，否则只放大外半径会把整圈变成"边缘大幅衰减"。</para>
+        /// </summary>
+        private static void ApplyTrailRange(Weapon weapon, float bonus)
+        {
+            var damages = weapon.Damages;
+            if (damages == null || damages.Count <= 1) return;   // 没有尾迹档，改了也没人读
+            var data = damages[1];
+            if (data == null) return;
+
+            if (!s_TrailBaseRange.TryGetValue(data, out var baseRange))
+            {
+                baseRange = data.GetDamageOuterRadius(1).RawFloat;
+                s_TrailBaseRange[data] = baseRange;
+            }
+            data.SetExplosionRange(new(Mathf.Max(0f, baseRange + bonus)));
+        }
 
         private static void SetTag<T>(Info attr,ref T now,T flag) where T:Enum
         {

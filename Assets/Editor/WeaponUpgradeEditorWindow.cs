@@ -20,6 +20,7 @@ namespace FPSGame.Game.Editor
     /// <para>分部文件（同一个 partial 类，按职责拆开，改之前先看对文件）：</para>
     /// <para>· <c>_Score.cs</c> 评分页的权重表/锚点/明细行/对比表/评级（只画）；</para>
     /// <para>· <c>_ScoreCompute.cs</c> <c>BuildScoreReport</c> 与取值/曲线工具（评分口径改这里）；</para>
+    /// <para>· <c>_Loadout.cs</c> 评分页右上角的改装模拟（5 档升级 + 1 模组，叠 modifys 到 cfg 副本上重算）；</para>
     /// <para>· <c>_Derivative.cs</c> 衍生物折算（持续效果/临时武器/地面火焰）与伤害成分口径；</para>
     /// <para>· <c>_Upgrade.cs</c> 改装树/显示属性/模组/底部 SO 检查器/增删选项；</para>
     /// <para>· <c>_Common.cs</c> 样式构建与内部数据结构（评分报告/列表项）。</para>

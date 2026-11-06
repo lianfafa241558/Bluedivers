@@ -342,28 +342,33 @@ namespace FPSGame.Game {
             switch (type) {
                 case DamageTypeEnum.Destruction:
                     return 0;//护甲破坏不计入伤害量
+
                 case DamageTypeEnum.Catalyst:
                     // 催化：只推动目标身上已有的异常状态积蓄，自身零伤害
                     CatalyzeAboGauge(value, damageCaused);
                     return 0;
+
                 case DamageTypeEnum.Burn:
                     // 冰火互斥（2026-11-04）：燃烧先消融冰冻槽，冰冻归零后剩余量才升温
                     AddOpposedAboGauge(DamageTypeEnum.Burn, DamageTypeEnum.Freeze, value, damageCaused);
                     return value;//燃烧伤害计入伤害量
+
                 case DamageTypeEnum.Freeze:
                     // 同理：冰冻先压制燃烧槽，燃烧归零后才开始结冰
                     AddOpposedAboGauge(DamageTypeEnum.Freeze, DamageTypeEnum.Burn, value, damageCaused);
                     return value;
+
                 case DamageTypeEnum.Electric:
                 case DamageTypeEnum.Radiation:
-                    AddAboGauge(type, value, damageCaused);
-                    return value;//雷击/辐射 伤害计入伤害量
                 case DamageTypeEnum.Toxicity:
+                    AddAboGauge(type, value, damageCaused);
+                    return value;//毒/雷击/辐射 伤害计入伤害量
+
                 case DamageTypeEnum.Hacker:
                 case DamageTypeEnum.Terror:
                 case DamageTypeEnum.Vertigo:
                     AddAboGauge(type, value, damageCaused);
-                    return 0;//毒/骇入/恐慌/眩晕不计入伤害量
+                    return 0;//骇入/恐慌/眩晕不计入伤害量
 
                 default:
                     return value;

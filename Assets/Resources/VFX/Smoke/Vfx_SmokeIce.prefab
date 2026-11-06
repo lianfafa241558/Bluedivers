@@ -4858,17 +4858,18 @@ MonoBehaviour:
   TickInterval: 0.5
   UseDiffScale: 0
   DamageData:
-    DamageExplosion: 1
+    DamageExplosion: 8
     ExplosionInnerRange: 3
     ExplosionRange: 4
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
-    - Key: 0
-      Value: 1
     - Key: 6
-      Value: 13
+      Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 10
+    ImpactSoundRadius: 8
     NoSource: 1
     ExplosionAP: 0
     demolishValue: 0

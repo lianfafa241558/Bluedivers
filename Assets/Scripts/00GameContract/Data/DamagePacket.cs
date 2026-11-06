@@ -55,5 +55,14 @@ namespace FPSGame.GameContract
         /// <c>Damageable</c>，房主替他们扣不了血），其余目标等房主结算后的伤害广播。
         /// 门只有一处：<c>Damageable.InflictDamage</c>。</para></summary>
         public bool LocalEffect;
+
+        /// <summary>范围/爆炸包：同一次结算会给**同一单位的每个部位各发一份包**，而各部位共用主体那管 Health。
+        /// <para>▍标它干什么：元素成分（毒/燃烧/冰冻/电击…）按"每部位一份"落地 ⇒ 一次爆炸的元素伤害与
+        /// 异常积蓄会被肢体数量放大 N 倍。置 true ⇒ 肢体那份只保留动能/爆炸/溶解/护甲破坏，元素只由主体结算
+        /// （门在 <c>Damageable.InflictDamage</c>）。</para>
+        /// <para>▍谁该置：只有"按部位循环"的 AoE 生成方（<c>FpsHelper.Hit</c> 的爆炸分支）。
+        /// 直击包、单部位只算一次的包（<c>HitAreaKinetic</c>、电磁尾迹、远端镜像）**不要**置 ——
+        /// 它们本来就只有一份，置了元素就真丢了。</para></summary>
+        public bool AreaHit;
     }
 }

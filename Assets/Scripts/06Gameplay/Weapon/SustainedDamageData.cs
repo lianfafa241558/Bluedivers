@@ -128,6 +128,34 @@ namespace FPSGame.Weapon
         /// <summary>拆毁值（不随蓄力缩放）</summary>
         public int GetDemolishValue(PEInt distance) => (GetEffectRadiusScale(distance, 1) * demolishValue).RawInt;
 
+        /// <summary>
+        /// 从武器的伤害配置转出一份持续伤害配置：只搬"伤害 / 范围 / 成分 / 穿甲 / 拆毁"这些关键字段。
+        /// <para>▍为什么不直接复用原配置：直击伤害、蓄力倍率、弹道参数对"每 0.5 秒沿一条线结算一次"没有意义，
+        /// 搬进来只会让两条路径互相污染（直击包还会绕开爆炸抗性）。</para>
+        /// <para>▍成分表按引用共享：武器的改装/永久升级是在运行时改那几个 list 的，拷贝一份会立刻过期。</para>
+        /// </summary>
+        /// <param name="src">武器伤害配置</param>
+        /// <param name="chargeScale">蓄力系数（非蓄力武器无差别，传子弹的 Charge 即可）</param>
+        public static SustainedDamageData FromDamageData(IDamageData src, PEInt chargeScale)
+        {
+            return new SustainedDamageData
+            {
+                DamageExplosion = src.GetExplosionDamage(chargeScale, 0).RawFloat,
+                ExplosionInnerRange = src.GetDamageInnerRadius(chargeScale).RawFloat,
+                ExplosionRange = src.GetDamageOuterRadius(chargeScale).RawFloat,
+                DestructeRadius = src.GetDestructeRadius(chargeScale).RawFloat,
+                ShockwaveRadius = src.GetShockwaveRadius(chargeScale).RawFloat,
+                ShockwaveForce = src.GetShockwaveForce(chargeScale).RawFloat,
+                DamageGroupExplosion = src.DamageGroupExplosion,
+                AboVulnerabilityGroup = src.AboVulnerabilityGroup,
+                SoundRadius = src.GetSoundRadius(chargeScale).RawInt,
+                ImpactSoundRadius = src.GetImpactSoundRadius(chargeScale).RawInt,
+                NoSource = src.NoSource,
+                ExplosionAP = src.GetExplosionAP(chargeScale),
+                demolishValue = src.GetDemolishValue(0),
+            };
+        }
+
         #region 接口映射(显式实现以保留字段的Unity序列化)
         List<SKVP<DamageTypeEnum, float>> IDamageData.DamageGroupExplosion => DamageGroupExplosion;
         List<SKVP<DamageTypeEnum, float>> IDamageData.AboVulnerabilityGroup => AboVulnerabilityGroup;

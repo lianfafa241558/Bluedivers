@@ -399,6 +399,8 @@ namespace FPSGame.Gameplay
                             damageAffected = exolosionCollider,
                             // 透传"各端本地生成"标记，门在 Damageable.InflictDamage
                             LocalEffect = hitData.localEffectDamage,
+                            // 这一份是"每个部位各一份"的爆炸包 ⇒ 元素成分只给主体结算（肢体那份会被丢掉）
+                            AreaHit = true,
                         };
                        
                         //爆炸

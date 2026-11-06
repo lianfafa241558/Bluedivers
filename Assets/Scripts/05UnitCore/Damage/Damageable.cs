@@ -375,6 +375,12 @@ namespace FPSGame.Game
             //   · 远端包（Resolved）：value 就是线上那份数值。不再按 Σcoeff 分摊（那是对"最终总额"的近似，
             //     多成分武器与开枪端的实际值对不上，且要额外维护 `CountsToHealth` 的分母口径）。
             //   Destruction 也进列表：上报 / 远端重放要靠它补破甲（Health 对它的返回值本来就是 0）。
+
+            // ★ 元素只落主体（2026-11-06）：范围/爆炸包是**按部位各发一份**（FpsHelper 爆炸循环），
+            //   而各部位共用主体那管 Health ⇒ 肢体那份再带元素，等于一次爆炸的元素伤害/异常积蓄被部位数放大 N 倍。
+            // ⚠ 判据是"单位配了主体部位 + 我不是主体"，别只写 `!isMain`：没配 MainPart 的单位
+            //   （如 Dec_FlyTitan）全部部位都是 isMain=false，那样会把元素伤害整段丢光。
+            bool dropElement = packet.AreaHit && !isMain && Health.GetMainPart().IsValid();
             List<SKVP<DamageTypeEnum, PEInt>> settledGroups = new(packet.DamageGroups.Count + 1);
             if (packet.DamageGroups.Count == 0) {
                 // 无成分时按动能(Gun)结算整笔
@@ -382,6 +388,9 @@ namespace FPSGame.Game
             }
             else {
                 foreach (var item in packet.DamageGroups) {
+                    // 元素成分（毒/燃烧/冰冻/…）不作用于肢体：肢体这份直接丢弃，由主体那份结算
+                    if (dropElement && IsElementType(item.Key)) continue;
+
                     PEInt value = packet.Resolved ? (PEInt)item.Value : damage * (PEInt)item.Value;
 
                     if (item.Key == DamageTypeEnum.Destruction) {
@@ -391,6 +400,8 @@ namespace FPSGame.Game
                     settledGroups.Add(new(item.Key, value));
                 }
             }
+            // 肢体这份包里只有元素 ⇒ 没有东西可结算，别派发"0 伤害命中"（否则会多一条上报/受击表现）
+            if (settledGroups.Count == 0) return;
 
             // 成分随包交给 Health（`LastRawGroups` 挂的就是这份，见 Health.TakeDamage 的事件段）
             var settle = DamageSettleArgs.Of(settledGroups, packet.NoSource, damageOrigin, packet.damageAffected, packet.Pos);
@@ -411,6 +422,28 @@ namespace FPSGame.Game
         /// <summary>是否为玩家阵营单位（玩家/盟友）</summary>
         private static bool IsFriendlyUnit(Actor actor)
             => actor.Type == UnitTypeEnum.Player || actor.Type == UnitTypeEnum.Friend;
+
+        /// <summary>是否为"元素"成分（毒/燃烧/冰冻/电击/眩晕/恐惧/辐射/骇入/催化）—— 范围/爆炸包只让主体吃这些。
+        /// <para>⚠ 刻意写成枚举白名单，别改成"除动能/爆炸/溶解以外的都算元素"：护甲破坏
+        /// （<c>Destruction</c>，肢体也有护甲）以及以后新增的结构类成分会被一起误丢。</para></summary>
+        private static bool IsElementType(DamageTypeEnum type)
+        {
+            switch (type)
+            {
+                case DamageTypeEnum.Toxicity:
+                case DamageTypeEnum.Burn:
+                case DamageTypeEnum.Freeze:
+                case DamageTypeEnum.Electric:
+                case DamageTypeEnum.Vertigo:
+                case DamageTypeEnum.Terror:
+                case DamageTypeEnum.Radiation:
+                case DamageTypeEnum.Hacker:
+                case DamageTypeEnum.Catalyst:
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
         /// <summary>计算护甲破坏：扣减剩余护甲，护甲归零时触发破坏，否则触发受击事件</summary>
         /// <param name="value">破坏类伤害值</param>
