@@ -298,7 +298,10 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
             m_FootstepDistanceCounter +=  targetVelocity.Magnitude.RawFloat * Time.deltaTime;
 
             //脚步声
-            float chosenFootstepSfxFrequency = FootstepSfxFrequency / MoveSpeedScale;
+            // ⚠ 别裸除 MoveSpeedScale：它是"射击/换弹移速惩罚"叠加出来的**可能为 0** 的倍率，
+            //   除零 ⇒ 频率 ∞ ⇒ 1/∞ = 0 ⇒ 阈值 0 ⇒ 站着不动也每帧一声脚步（2026-11-08 实测：RoyalRose 蓄力时）。
+            float footstepSpeedScale = Mathf.Max(MoveSpeedScale, 0.01f);
+            float chosenFootstepSfxFrequency = FootstepSfxFrequency / footstepSpeedScale;
             if (m_FootstepDistanceCounter >= 1f / Mathf.Max(chosenFootstepSfxFrequency,0.1f))
             {
                 m_FootstepDistanceCounter = 0f;
@@ -345,14 +348,10 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
             IgnoreSelfCollisions();
         }
 
-        //防止掉出地面
+        //防止掉出地面（具体怎么救交给子类：舰桥场景没有 NavMesh，见 HandleOutOfWorld）
         if (transform.position.y < Constants.KillHeight)
         {
-            //Health.Kill();
-            if (UnityEngine.AI.NavMesh.SamplePosition(transform.position + Vector3.up * 100, out var hit, 10, UnityEngine.AI.NavMesh.AllAreas))
-            {
-                transform.position = hit.position;
-            }
+            HandleOutOfWorld();
         }
 
         //在这一帧起跳
@@ -553,6 +552,19 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         if (Time.time >= m_LastTimeLand + k_JumpGroundingPreventionTime) AudioSource.PlayOneShot(LandSfx);
 
         m_LastTimeLand = Time.time;
+    }
+
+    /// <summary>
+    /// 掉出世界（y 低于 <see cref="Constants.KillHeight"/>）后的自救：默认吸回脚下 NavMesh。
+    /// <para>▍做成 virtual 的原因：舰桥场景没有 NavMesh ⇒ 这里必然吸不到点、玩家会一直下坠，
+    /// 由 <see cref="PlayerController"/> 改成传送到 StartPoint。</para>
+    /// </summary>
+    protected virtual void HandleOutOfWorld()
+    {
+        if (UnityEngine.AI.NavMesh.SamplePosition(transform.position + Vector3.up * 100, out var hit, 10, UnityEngine.AI.NavMesh.AllAreas))
+        {
+            transform.position = hit.position;
+        }
     }
 
     public void Move(Vector3 pos,bool isTeleport=false)

@@ -4993,33 +4993,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8af08ec1d0a8d984fb923e2af91ba04e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 8300000, guid: e1ddd1b8454955e49aa7a8a44aa14f1a, type: 3}
   audioOper: {fileID: 8300000, guid: 9a0b74a8a68dfa340a496cbf9b44d059, type: 3}
   audioClose: {fileID: 8300000, guid: d05f62fd01e443644b8c09f74d8c87f2, type: 3}
   flags: 0
+  showOnMap: 0
   pressTime: 0
   canOperate: 1
   inOperate: 0
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
-  ShowName: "\u7BA1\u9053"
-  Id: PipeLink
-  Portrait: {fileID: 0}
-  ExtraPortrait: {fileID: 0}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
   root: {fileID: 6409203964078883989}
   Temp: {fileID: 2537452196779284970, guid: 75157775355aa5d4995beedecc1102ac, type: 3}
   pipeSkin: {fileID: 0}
@@ -5239,33 +5235,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8af08ec1d0a8d984fb923e2af91ba04e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 8300000, guid: e1ddd1b8454955e49aa7a8a44aa14f1a, type: 3}
   audioOper: {fileID: 8300000, guid: 9a0b74a8a68dfa340a496cbf9b44d059, type: 3}
   audioClose: {fileID: 8300000, guid: d05f62fd01e443644b8c09f74d8c87f2, type: 3}
   flags: 0
+  showOnMap: 0
   pressTime: 0
   canOperate: 1
   inOperate: 0
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
-  ShowName: "\u7BA1\u9053"
-  Id: PipeLink
-  Portrait: {fileID: 0}
-  ExtraPortrait: {fileID: 0}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
   root: {fileID: 7127482435449339783}
   Temp: {fileID: 2537452196779284970, guid: 75157775355aa5d4995beedecc1102ac, type: 3}
   pipeSkin: {fileID: 0}
@@ -10186,33 +10178,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8af08ec1d0a8d984fb923e2af91ba04e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 8300000, guid: e1ddd1b8454955e49aa7a8a44aa14f1a, type: 3}
   audioOper: {fileID: 8300000, guid: 9a0b74a8a68dfa340a496cbf9b44d059, type: 3}
   audioClose: {fileID: 8300000, guid: d05f62fd01e443644b8c09f74d8c87f2, type: 3}
   flags: 0
+  showOnMap: 0
   pressTime: 0
   canOperate: 1
   inOperate: 0
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
-  ShowName: "\u7BA1\u9053"
-  Id: PipeLink
-  Portrait: {fileID: 0}
-  ExtraPortrait: {fileID: 0}
-  Color: {r: 1, g: 1, b: 1, a: 1}
-  relatedTrans: {fileID: 0}
-  relatedTrans2: {fileID: 0}
-  ExtFloatParameter: 0
-  ExtBoolParameter: 0
-  particle: {fileID: 0}
-  obs: {fileID: 0}
   root: {fileID: 8238349763969012660}
   Temp: {fileID: 2537452196779284970, guid: 75157775355aa5d4995beedecc1102ac, type: 3}
   pipeSkin: {fileID: 0}
@@ -12186,11 +12174,13 @@ MonoBehaviour:
     ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 0
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup: []
     SoundRadius: 20
     ImpactSoundRadius: 8
     NoSource: 0
@@ -12650,7 +12640,7 @@ PrefabInstance:
     - target: {fileID: 5771361483922654411, guid: cf02da3a4781fac46a2d26154e498fdc,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 5.5
+      value: 5.3
       objectReference: {fileID: 0}
     - target: {fileID: 5771361483922654411, guid: cf02da3a4781fac46a2d26154e498fdc,
         type: 3}
@@ -12700,7 +12690,7 @@ PrefabInstance:
     - target: {fileID: 6583187459899956849, guid: cf02da3a4781fac46a2d26154e498fdc,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

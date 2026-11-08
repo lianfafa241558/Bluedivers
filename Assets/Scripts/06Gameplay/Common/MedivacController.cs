@@ -158,6 +158,9 @@ namespace FPSGame.Gameplay
                 //撤离流程到此结束 ⇒ 请求进入"配置战备"阶段，由 `GameRoot` 订阅后落成既有的静态 setter（照旧发 SceneChange 广播）。
                 //⚠ 倒计时读数**不在这里复位**：复位是"开始新一局"的职责，已在 `TaskManager.SetTask()` 里
                 //   （本组件一局只会走到这里一次，已确认）。
+                // ★ 起飞前先收掉"选图窗"：它会一直压在新开的战备界面上。放在 RequestGameState **之前** ——
+                //   收窗会把全局 WindowState 压回 Game，必须在战备窗写 UI 之前发生（2026-11-08 实测鼠标被锁）。
+                WindowRegistry.SetState(WndType.SelectMap, false);
                 GlobalEventBus.RequestGameState(GameStateEnum.Armament);
                 enabled = false;
                 foreach (var item in players)

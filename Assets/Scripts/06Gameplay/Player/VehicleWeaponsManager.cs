@@ -1,14 +1,7 @@
 using System;
 using FPSGame.Attributes;
-// 原有一行 `using FPSGame.UI;` 是废弃 using（未用 DynamicBar），且 FPSGame.UI 属 04_UI 程序集
-// ⇒ 会构成"玩法层 → UI 层"的反向依赖，已删：
-using TMPro;
-
-using FPSGame.Game;
 using UnityEngine;
 using UnityEngine.Events;
-using FPSGame.GameContract;
-using static FPSGame.WndTools.WndRootTool;
 using FPSGame.AI;
 using FPSGame.Weapon;
 
@@ -450,14 +443,19 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
     
     void SetWeaponStateInternal(WeaponController weapon, bool state)
     {
+        // ⚠ 先 ShowWeapon 再退订：收起武器会把 IsReloading 置 false，此时还订阅着才能还原换弹移速惩罚
         weapon.ShowWeapon(state);
         if (state)
         {
             weapon.OnWantShootChange += OnWantShootChange;
+            // 先 -= 再 +=：防重复订阅导致惩罚翻倍
+            weapon.OnReloadStateChange -= OnReloadStateChange;
+            weapon.OnReloadStateChange += OnReloadStateChange;
         }
         else
         {
             weapon.OnWantShootChange -= OnWantShootChange;
+            weapon.OnReloadStateChange -= OnReloadStateChange;
         }
 
         // ★ 联机：开火表现的订阅点必须跟着**武器生灭**走（武器会被 ClearWeapons + AddWeapon 整批重建）
@@ -470,6 +468,14 @@ public class VehicleWeaponsManager : MonoBehaviour, IVehicleUIController
         {
             m_Controller.MoveSpeedScale += (state ? -1 : 1) * (1 - weapon.AttrFinal(WeaponAttrType.MoveSpeedToShoot, 1)).RawFloat;
         }
+    }
+
+    /// <summary>换弹时移动速度：进/出换弹按属性倍率压/提移速，与射击移速各自累加。</summary>
+    private void OnReloadStateChange(WeaponBaseController weapon, bool state)
+    {
+        var scale = weapon.AttrFinal(WeaponAttrType.MoveSpeedToReload, 1);
+        if (scale == 1) return;
+        m_Controller.MoveSpeedScale += (state ? -1 : 1) * (1 - scale).RawFloat;
     }
 
     void OnSetOwner(bool state)

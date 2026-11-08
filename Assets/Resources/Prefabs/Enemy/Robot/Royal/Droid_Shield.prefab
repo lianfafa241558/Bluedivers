@@ -6760,6 +6760,14 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 797918699466742607}
+    - targetCorrespondingSourceObject: {fileID: 8173722476636093407, guid: a17b1a84c022782499b42b6cfd959cf6,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2498420718892074282}
+    - targetCorrespondingSourceObject: {fileID: 8173722476636093407, guid: a17b1a84c022782499b42b6cfd959cf6,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 186432161078265492}
     - targetCorrespondingSourceObject: {fileID: 7594688238738041953, guid: a17b1a84c022782499b42b6cfd959cf6,
         type: 3}
       insertIndex: -1
@@ -6854,8 +6862,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0.9
-  armorLevel: 4
+  explosionResistance: 0.8
+  armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 1000
   LineArmor: []
@@ -6879,3 +6887,52 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 797918699466742597}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8825968527658606746 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8173722476636093407, guid: a17b1a84c022782499b42b6cfd959cf6,
+    type: 3}
+  m_PrefabInstance: {fileID: 797918699466742597}
+  m_PrefabAsset: {fileID: 0}
+--- !u!135 &2498420718892074282
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8825968527658606746}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.4
+  m_Center: {x: -0.2, y: 0, z: 0}
+--- !u!114 &186432161078265492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8825968527658606746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 2
+  useHealthInsteadOfArmor: 1
+  armorValue: 100
+  LineArmor: []
+  armorBreakEffect: []
+  BleedValue: 200
+  isMain: 0
+  showArmor: 0

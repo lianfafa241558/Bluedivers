@@ -49,45 +49,50 @@ public partial class PlayerController
     {
         if (!IsDead && InputHandler.GetToggleViewDown())
         {
-            // 只翻转"偏好"：按住中键期间 IsThirdPerson 已是 false，按生效值翻会翻不动
+            // 只翻转"偏好"：瞄准期间的临时翻转会让生效值反着来，按生效值翻会翻不动
             bool before = IsThirdPerson;
             _isThirdPerson = !_isThirdPerson;
             if (IsThirdPerson != before) ApplyViewMode();
         }
     }
 
-    /// <summary>第三人称下按住中键时的临时第一人称（生效状态，不是玩家的视角偏好）</summary>
-    private bool _thirdPersonAimOverride;
+    /// <summary>第三人称下按住右键期间点中键临时切的第一人称（生效状态，不是玩家的视角偏好）</summary>
+    private bool _aimViewOverride;
 
     /// <summary>
-    /// 是否正由"第三人称按住中键"临时切到第一人称。
+    /// 是否正由"按住右键 + 点中键"临时停在第一人称。
     /// 武器层拿它当瞄准触发（不是放行 canAim）：能瞄准的枪切过去就进瞄准，不能瞄准的只切视角。
     /// </summary>
-    public bool FirstPersonAimOverride => _thirdPersonAimOverride;
+    public bool FirstPersonAimOverride => _aimViewOverride && _isThirdPerson;
 
     /// <summary>
-    /// 第三人称按住中键 ⇒ 临时切第一人称（可瞄准的武器自动进瞄准姿态），松开即还原。
-    /// ⚠ 只改 IsThirdPerson 的**生效值**（见其 getter），视角偏好 _isThirdPerson 不动 ⇒ 松手必然回第三人称。
+    /// 第三人称下按住右键（瞄准键）时点中键 ⇒ 临时切第一人称（再点一次切回），松开右键 ⇒ 无条件还原。
+    /// ⚠ 只改 IsThirdPerson 的**生效值**（见其 getter），偏好 _isThirdPerson 不动 ⇒ 松右键必定回第三人称。
+    /// ⚠ 偏好本来就是第一人称时整条不响应（本热键只服务"第三人称时想临时看看第一人称"）。
+    /// ⚠ 双持时也不生效：那时右键是副手开火口（见 PlayerWeaponsManager.UpdateFirstWeapon），
+    ///   兼做视角键会边打边翻。
     /// </summary>
-    private void HandleThirdPersonAimOverride()
+    private void HandleAimViewToggle()
     {
-        if (IsDead)
-        {
-            SetThirdPersonAimOverride(false);
-            return;
-        }
-
-        // ⚠ 双持期间禁用：那时 IsAiming 被强制为 true 且被当作开火口（见 PlayerWeaponsManager.UpdateFirstWeapon），
-        // 一拍下中键就会变成开火 + 切视角
-        SetThirdPersonAimOverride(_isThirdPerson
+        bool aiming = !IsDead
+            && _isThirdPerson
             && WeaponsManager.GetActiveSecWeapon() == null
-            && InputHandler.GetMiddleMouseHeld());
+            && InputHandler.GetAimInputHeld();
+
+        if (!aiming)
+        {
+            SetAimViewOverride(false); // 松右键 / 死亡 / 双持 / 偏好非第三人称 ⇒ 立刻还原
+        }
+        else if (InputHandler.GetMiddleMouseDown())
+        {
+            SetAimViewOverride(!_aimViewOverride);
+        }
     }
 
-    private void SetThirdPersonAimOverride(bool value)
+    private void SetAimViewOverride(bool value)
     {
-        if (_thirdPersonAimOverride == value) return;
-        _thirdPersonAimOverride = value;
+        if (_aimViewOverride == value) return;
+        _aimViewOverride = value;
         // 复用整套视角切换（剔除层/武器相机/相机父级/准星事件），不要在东家再各改一遍
         ApplyViewMode();
     }

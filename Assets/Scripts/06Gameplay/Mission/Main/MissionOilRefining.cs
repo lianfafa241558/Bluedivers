@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using FPSGame.GameContract;
@@ -203,6 +203,8 @@ namespace FPSGame.Mission
             errorPipes.Clear();
             fixedPipeCount = -1;
             int subIndex = 0;
+            CreatNotice("Yuuka", "PipeError");
+            
             foreach (var sub in subCP)
             {
                 if (!sub || sub.pipes == null) continue;
@@ -311,7 +313,7 @@ namespace FPSGame.Mission
         void InitPlane(GameObject go)
         {
             plane = go;
-            keyScreen = go.GetComponentInChildren<KeyScreen>();
+            keyScreen = go.GetComponentInChildren<KeyScreen>(true);
             keyScreen.OnComple.AddListener(OnComple);
             //因为这个战备是后摇下来的，要重新绑定
             keyScreen.OnUpdateStage += OnUpdateStage;

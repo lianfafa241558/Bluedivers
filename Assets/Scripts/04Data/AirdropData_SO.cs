@@ -44,7 +44,8 @@ namespace FPSGame.Data
         Jet=8,
         [InspectorName("运输机")]
         Medivac=16,
-
+        [InspectorName("支援武器")]
+        SupportWeapon = 32,
     }
 
 

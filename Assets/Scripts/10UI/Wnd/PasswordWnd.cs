@@ -162,6 +162,9 @@ namespace FPSGame.UI
             }
 
             Cancel();
+            // ⚠ 队列里还有下一条时 Cancel() 只换内容、窗口不关，而监听已被输入层弹出 ⇒ 必须补回，
+            //    否则排队的第二条按 ESC 没反应（窗口还开着，只剩按钮能关）。
+            if (State) InputManager.AddListenerCancel(CancelListener);
             return true;
         }
     }

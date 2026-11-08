@@ -231,7 +231,7 @@ namespace FPSGame.UI
         }
 
         /// <summary>
-        /// 开镜时隐藏准星（第三人称时反转：非瞄准显示，瞄准隐藏）
+        /// 瞄准状态变化时刷新准星显隐（第三人称：只有瞄准才显示；第一人称：瞄准即藏准星的武器才收起）
         /// </summary>
         void OnAim(bool state)
         {
@@ -252,9 +252,10 @@ namespace FPSGame.UI
             }
             else
             {
-                // 第一人称：原逻辑
-                if (!m_Weapons.AimingHideCrosshair) return;
-                hideCrosshair = aimState;
+                // 第一人称：只有"瞄准即藏准星"的武器在瞄准时才收起
+                // ⚠ 别在条件不成立时直接 return（原写法）：第三人称非瞄准是**藏**准星的，
+                //   第三人称→第一人称若走"什么都不做"，准星就一直藏在交换区，要等换枪重挂父子才恢复
+                hideCrosshair = aimState && m_Weapons.AimingHideCrosshair;
             }
 
             if (hideCrosshair)

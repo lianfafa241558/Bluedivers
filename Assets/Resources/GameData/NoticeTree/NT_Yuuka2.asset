@@ -249,6 +249,36 @@ MonoBehaviour:
   priority: 101
   group: 8
   flags: 0
+--- !u!114 &-1403755909083140265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Yuuka_PipeError
+  m_EditorClassIdentifier: 
+  groupName: PipeError
+  clips:
+  - audioClip: {fileID: 8300000, guid: 2596738319fdc3340bd842e5ca02b78c, type: 3}
+    subtitle: "\u62BD\u53D6\u4F5C\u4E1A\u505C\u6B62\u4E86\uFF01\u7BA1\u7EBF\u9700\u8981\u7EF4\u62A4\uFF01"
+  - audioClip: {fileID: 8300000, guid: b14200e82195ca141975edb72582ef80, type: 3}
+    subtitle: "\u6CE8\u610F\u4E86\uFF0C\u7BA1\u9053\u53D1\u751F\u4E86\u51E0\u5904\u6CC4\u9732\uFF0C\u9700\u8981\u7EF4\u62A4\u3002"
+  - audioClip: {fileID: 8300000, guid: 9f69eff6d6d8a64429345daf5c11e177, type: 3}
+    subtitle: "\u63D0\u53D6\u6682\u505C\u4E86\uFF0C\u9700\u8981\u5927\u5BB6\u4FEE\u7406\u4E00\u4E0B\u7BA1\u9053\u3002"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 100
+  group: 8
+  flags: 4
 --- !u!114 &-878155441134465983
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -311,6 +341,7 @@ MonoBehaviour:
   - {fileID: -3632780759653151285}
   - {fileID: -8466106794347335363}
   - {fileID: -5208517834575222357}
+  - {fileID: -1403755909083140265}
 --- !u!114 &2485493942135106216
 MonoBehaviour:
   m_ObjectHideFlags: 0

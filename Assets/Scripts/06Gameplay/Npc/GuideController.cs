@@ -209,6 +209,19 @@ public class GuideController : Furniture_Attached
     {
         base.Update();
         TryAutoNextStage();
+        FacePlayerWhileWaiting();
+    }
+
+    /// <summary>
+    /// 到达目标点、等待玩家时**水平注视玩家**（只绕 Y 轴，不点头）。
+    /// <para>▍为什么放 Update 而不是到达协程里对一次：等待期间玩家一直在动，一次性对准马上就失效了。</para>
+    /// <para>⚠ 别在移动中也跑：移动是"先转到拐点再走"（<see cref="MoveRoutine"/> 里既写朝向又写位移），
+    /// 这里再抢朝向会让 NPC 横着蹭过去。</para>
+    /// </summary>
+    private void FacePlayerWhileWaiting()
+    {
+        if (IsMoving || !IsGuiding || _playerTransform == null) return;
+        FaceTarget(_playerTransform.position, _rotateSpeed);
     }
 
     public override bool CanOperate(GameObject unit)
@@ -454,7 +467,7 @@ public class GuideController : Furniture_Attached
 
     /// <summary>
     /// 移动协程：先旋转朝向，再沿 NavMesh 路径拐点依次移动直至到达。
-    /// 到达后旋转对齐到目标物体的朝向。
+    /// 到达后（**没有玩家**时才）旋转对齐到目标物体的朝向；有玩家则一直注视着玩家（见 <see cref="FacePlayerWhileWaiting"/>）。
     /// </summary>
     private IEnumerator MoveRoutine(Transform target)
     {
@@ -570,9 +583,10 @@ public class GuideController : Furniture_Attached
 
         _moveCoroutine = null;
 
-        // 到达后平滑旋转对齐到目标物体的朝向，完成后触发到达回调
+        // 到达后：有玩家就交给 Update 里的"注视玩家"（每帧都会覆盖朝向，这里再对一次只会白转 0.5 秒）
+        // 只有还没建出玩家时才回退到"对齐目标物体朝向"
         // 注意：重力协程持续运行，不在此停止，保证角色始终受重力
-        if (target != null)
+        if (target != null && _playerTransform == null)
         {
             yield return StartCoroutine(RotateToRoutine(target));
         }

@@ -41,7 +41,7 @@ public class SimpleAimCrosshairManager : CrosshairManagerBase
     protected override void SetAnimGo()
     {
         m_ActiveSightGo = GetComponent<Animator>();
-        m_ActiveSightGo.SetFloat(Constants.k_AnimChatgetSpeedParameter, 1 / Mathf.Max(m_Weapons.AttrFinal(WeaponAttrType.ChargeDuration).RawFloat, 0.1f));
+        if(m_ActiveSightGo) m_ActiveSightGo.SetFloat(Constants.k_AnimChatgetSpeedParameter, 1 / Mathf.Max(m_Weapons.AttrFinal(WeaponAttrType.ChargeDuration).RawFloat, 0.1f));
     }
 
 }

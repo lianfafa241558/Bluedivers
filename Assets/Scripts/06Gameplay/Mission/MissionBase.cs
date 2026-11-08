@@ -120,6 +120,12 @@ namespace FPSGame.Mission
         /// <summary>已使用战备</summary>
         private bool allowUseAirdrop;
 
+        /// <summary>已把"本任务所需战备"授权出去的登记：授权/撤销必须成对。
+        /// <para>⚠ 撤销不能用 <see cref="InAirdropRange"/> 当判据：<see cref="OnAirdrop"/>（已呼叫）那条路已经撤过一次，
+        /// 结束任务时再撤一次会把 <c>AirdropData.authorizeCounter</c> 扣成 -1 ⇒ 下一个同 ID 的任务点发 +1 只回到 0，
+        /// <c>IsAuthorize</c> 仍为 false，UI 里那条战备**永远不再出现**（升旗第二个点实测，2026-11-08）。</para></summary>
+        private readonly List<int> _authorizedAdIds = new();
+
         /// <summary>配了实体预制体（<c>prefabs</c> 非空）⇒ 正常情况下 <see cref="entity"/> 一定会被建出来。
         /// <para>没配的是"容器任务"（如 <c>Robbery</c> 根任务：实体只是它下面的子任务/玩法）⇒ 没有实体属正常，
         /// 消费方（小地图等）别把它当缺陷告警。</para></summary>
@@ -382,13 +388,8 @@ namespace FPSGame.Mission
         protected virtual void EndMission()
         {
             end = true;
-            if (InAirdropRange)
-            {
-                foreach (var ad in data.cfg.RequiredAD)
-                {
-                    FPSGame.Gameplay.BattleEventBus.RequestAuthorize(ad.ID, false);
-                }
-            }
+            // 幂等撤销：**不再看 InAirdropRange**（"已呼叫"那条路已经撤过一次，重复撤会把计数扣成负数）
+            SyncAirdropAuthorize(false);
             BattleEventBus.MissionEnd(this);
             OnMissionEnd?.Invoke(this);
             Uninit();
@@ -396,6 +397,8 @@ namespace FPSGame.Mission
 
         protected virtual void Uninit()
         {
+            // 没走 EndMission 就被销毁（场景卸载 / 编辑器停播）也要把授权还回去，否则计数永久 +1
+            SyncAirdropAuthorize(false);
             if (entity.IsValid()) entity.Uninit();
             if (data.cfg.RequiredAD.Count > 0) BattleEventBus.OnAirdrop -= OnAirdrop;
         }
@@ -499,6 +502,22 @@ namespace FPSGame.Mission
 
         }
 
+        /// <summary>同步"本任务所需战备"的授权（幂等：以登记表为准，重复调用不会重复加减计数）。
+        /// <para>口径：在范围内且**还没呼叫过**才授权；呼叫过 / 任务结束一律收回。计数器是共享的
+        /// <c>AirdropData.authorizeCounter</c>，多任务同 ID 时靠各自这份登记 ±1。</para></summary>
+        protected void SyncAirdropAuthorize(bool state)
+        {
+            if (data?.cfg?.RequiredAD == null) return;
+            foreach (var ad in data.cfg.RequiredAD)
+            {
+                bool has = _authorizedAdIds.Contains(ad.ID);
+                if (has == state) continue;
+                if (state) _authorizedAdIds.Add(ad.ID);
+                else _authorizedAdIds.Remove(ad.ID);
+                FPSGame.Gameplay.BattleEventBus.RequestAuthorize(ad.ID, state);
+            }
+        }
+
         public override bool Tick()
         {
             if (entitySize <= 0) return true;
@@ -510,10 +529,7 @@ namespace FPSGame.Mission
             if (airdropRange != InAirdropRange)
             {
                 InAirdropRange = airdropRange;
-                foreach (var ad in data.cfg.RequiredAD)
-                {
-                    FPSGame.Gameplay.BattleEventBus.RequestAuthorize(ad.ID, airdropRange);
-                }
+                SyncAirdropAuthorize(airdropRange);
             }
 
             return true;
@@ -526,7 +542,7 @@ namespace FPSGame.Mission
                 if (!HasTag(MissionTag.RepeatCall))
                 {
                     allowUseAirdrop = true;
-                    FPSGame.Gameplay.BattleEventBus.RequestAuthorize(data.cfg.ID, false);
+                    SyncAirdropAuthorize(false);   // 用掉就收回授权（幂等：登记的才撤，不重复扣计数）
                     BattleEventBus.OnAirdrop -= OnAirdrop;
 
                 }

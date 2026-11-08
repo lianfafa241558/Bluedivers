@@ -211,7 +211,10 @@ internal static class WndHub
             ResSvc.Instance.GetVoice(role, type, out var data, out var sourceName, out var portrait);
             if (data==null)
             {
+                // ⚠ 必须早退：原来只报错还继续 `data.Get()` ⇒ 紧跟着一个 NullReferenceException，
+                //   而下一条语音的排队流程也一起断掉（调用方以为提示已经发出去了）。
                 Debug.LogError("找不到"+role+"的"+type+"音效");
+                return;
             }
             var noticeData = new NoticeWnd.NoticeData()
             {

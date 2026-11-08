@@ -66,15 +66,11 @@ namespace FPSGame.UI
             for (int i=0;i< count; ++i)
             {
                 var go = Instantiate(prefab, armamentRoot).transform;
-                var a = i;
                 if (i == 0)//自己在显示上面固定第一个
                 {
                     showSelect = go.Find("ShowSelect");
-                    //装备
-                    SetCilck(go.GetChild(4), () => {
-                        SendPlayerReady(teamManager.SelfIndex, !ready[a]);
-                        wndManager.PlaySound(new("Bridge/"+(!ready[a]? "Ready" : "CancelReady")));
-                    });
+                    //装备（与 B 快捷键同一条路）
+                    SetCilck(go.GetChild(4), ToggleSelfReady);
                     for (int u = 0; u < 4; ++u)
                     {
                         var b = u;
@@ -134,12 +130,17 @@ namespace FPSGame.UI
             }
         }
 
+        /// <summary>上一次做过"每局重置"的局号（<see cref="int.MinValue"/> = 还没做过）。</summary>
+        private int m_ResetMatchId = int.MinValue;
+
         protected override void ShowWnd()
         {
             ready.Clear();
             animators.Clear();
             SetSelectIndex(-1, true);
 
+            // 与选图窗共用光标：登记之后，选图窗后收也不会把我这边的鼠标收走（见 Window.SetUiCursor）
+            SetUiCursor(this, true);
             WindowState = WindowStateEnum.UI;
             GetComponent<Animator>().Play("Entry");
             SetColor(enemyIcon, taskManager.nowTask.campData.Color);
@@ -148,21 +149,34 @@ namespace FPSGame.UI
             SetText(enemyName, "" + taskManager.nowTask.campData.ShowName + "控制");
             EnsureRoleViews();
             m_RowRole = null;                        // 每次打开都重挂模型（保持原来"打开即刷新"的行为）
+
+            // ★ "每局重来"只做**一次**：下面清的是**所有玩家**的数据，而 ShowWnd 在窗口每次显示时都会跑
+            //   ⇒ 客机重开一次战备界面就把房主已同步过来的选择抹掉，而房主只推"变化"、不会重发
+            //   ⇒ 此后永远看不到别人的战备/就绪（2026-11-08 实测）。改按局号判"是不是新一局"。
+            int matchId = FPSGame.Net.NetRoomFlow.CurrentMatchId;
+            bool newMatch = matchId != m_ResetMatchId;
+            m_ResetMatchId = matchId;
             for (int i = 0; i < armamentRoot.childCount; ++i)
             {
                 var item = armamentRoot.GetChild(i);
                 if (i < teamManager.players.Count)
                 {
                     var data = teamManager.players[i];
-                    data.airdrop = new int[4];
-                    data.boosterId = 0;              // 全队强化槽位：本局恢复为未选择
+                    if (newMatch)
+                    {
+                        data.airdrop = new int[4];
+                        data.boosterId = 0;              // 全队强化槽位：本局恢复为未选择
+                        // ★ 就绪也是"每局重来"：不清的话上一局结束时的就绪会原样带到新一局 —— 一打开就是"已就绪"，
+                        //   战备/强化被 SelfReady 锁死，而且 ready[] 全满会直接推倒计时进场（2026-11-08 实测）
+                        data.isReady = false;
+                    }
                     SetActive(item, true);
                     //重置全队强化展开状态与动画
                     item.GetComponent<Animator>().SetBool("Booster",false);
                     boosterExpanded = false;
 
                     BindRowIdentity(item, i, data);
-                    ApplyRowAirdrop(item, i, data);  // 数据刚被重置 ⇒ 等于把 4 个战备格与强化格清空
+                    ApplyRowAirdrop(item, i, data);  // 按数据渲染（新一局已重置 = 清空；同一局重开窗口保留已同步的选择）
                     ApplyRowReady(item, i, data);    // 就绪状态按数据渲染（事件只在变化时推一次，窗口后开会漏）
                 }
                 else
@@ -502,6 +516,10 @@ namespace FPSGame.UI
         }
 
 
+        /// <summary>ESC / 右键：只收子面板，本窗口不关（关闭由战备流程控制）。</summary>
+        /// <remarks>⚠ 监听是"按需挂"且输入层弹出即丢（<c>InputManagerBase.Update</c>）⇒ 这里吃掉 ESC 的分支都要补回。
+        /// 战备槽位面板与全队强化面板**可以同时展开**，只挂着一份监听 ⇒ 收掉一个不补回，另一个就再也收不掉。
+        /// 两个都收完后补回的那份会在下次 ESC 走到 <c>selectAirdropIndex==-1</c> 返回 false 自行退场。</remarks>
         private bool Cancel()
         {
             if (boosterExpanded)
@@ -509,6 +527,7 @@ namespace FPSGame.UI
                 wndManager.PlaySound(new("UI/UI_Button_Back"));
                 armamentRoot.GetChild(teamManager.Self.index).GetComponent<Animator>().SetBool("Booster",false);
                 boosterExpanded = false;
+                InputManager.AddListenerCancel(Cancel);
                 return true;
             }
             if (selectAirdropIndex==-1) return false;
@@ -517,11 +536,18 @@ namespace FPSGame.UI
             SetSelectIndex(-1, true);
             //selectAirdropIndex = -1;
             //SetSelectIndex(-1,false);
+            InputManager.AddListenerCancel(Cancel);
             return true;
         }
 
         protected override void HideWnd()
         {
+            // 只注销登记、不写全局 WindowState：本窗口的关闭时机归"战备流程"（Ready→Transition），
+            // 而光标要不要压回 Game 由**最后关掉的那个窗口**决定（见 Window.SetUiCursor）
+            SetUiCursor(this, false);
+            // ⚠ 监听是"按需挂"的，关窗必须摘掉：残留的回调若还认为面板开着会 return true，
+            //   在游戏里把本应用来开设置窗的那次 ESC 吞掉（SettingWnd.OnEsc 的 CancelEmpty 就为 false 了）。
+            InputManager.RemoveListenerCancel(Cancel);
             UninitAirdrop();
             UninitBooster();
         }
@@ -782,6 +808,28 @@ namespace FPSGame.UI
             // 本机自己的就绪：本地立刻记账（数据 + UI 都按它走，不等房主回程）
             if (teamManager.Self != null && playerIndex == teamManager.SelfIndex) teamManager.Self.isReady = state;
             BridgeSys.Instance.SendPlayerReady(playerIndex, state);
+        }
+
+        /// <summary>
+        /// 切换**自己**的就绪状态：就绪按钮与 <c>B</c> 快捷键共用的唯一入口。
+        /// <para>⚠ 别在调用方自己算 `!ready[i]` 再各调一遍 SendPlayerReady：两处下标/取反各写一次就会走岔
+        /// （原来按钮那条硬用行号 0 当自己，而队伍表里自己不一定在 0 号）。</para>
+        /// </summary>
+        private void ToggleSelfReady()
+        {
+            if (ready == null) return;                      // 窗口还没第一次显示（FirstShowWnd 之前）
+            int self = teamManager != null ? teamManager.SelfIndex : -1;
+            if (self < 0 || self >= ready.Length) return;
+
+            bool next = !ready[self];
+            SendPlayerReady(self, next);
+            wndManager.PlaySound(new("Bridge/" + (next ? "Ready" : "CancelReady")));
+        }
+
+        /// <summary>B = 切换就绪（仅本窗口打开时生效：窗口 GameObject 不激活时 Unity 不会调本方法）。</summary>
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.B)) ToggleSelfReady();
         }
 
         /// <summary> 收到玩家准备的回调</summary>

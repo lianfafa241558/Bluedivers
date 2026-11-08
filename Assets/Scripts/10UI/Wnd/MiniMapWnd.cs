@@ -72,6 +72,17 @@ public class MiniMapWnd : Window
     /// </summary>
     readonly List<RectTransform> TrainPoints = new();
 
+    /// <summary>
+    /// 世界关注物（地面支援武器等）的小地图点。
+    /// <para>▍为什么不并进 <see cref="ActorPoint"/>：那张表是"任务点 / 单位"的口径（带区域圈、任务颜色、状态切换），
+    /// 而且**没有删除路径**（<c>MissionPointEnd</c> 只认任务、<c>OtherDeath</c> 只认 IActor）⇒ 枪被捡走后图标会永久留着。
+    /// 这里的点只做两件事：跟坐标、能被注销。</para>
+    /// </summary>
+    Dictionary<IEntity, RectTransform> MarkPoints;
+
+    /// <summary>对齐标记表时复用的临时表（避免每次增删都分配）</summary>
+    readonly List<IEntity> markStale = new();
+
     /// <summary>铁轨路线线（首次显示时建，之后一直复用）</summary>
     MiniMapRailGraphic railGraphic;
     /// <summary>世界 XZ → 小地图锚点坐标（交给线渲染器做投影回调）</summary>
@@ -140,6 +151,12 @@ public class MiniMapWnd : Window
         center = new(Vector2.one * (TaskManager.Instance.nowTask.MapSize) / 2, 8, 0.1f, Vector2.Lerp, Vector2.Distance);
         //Debug.LogError("中心"+center.Target);
 
+        // 世界关注物（地面武器…）：本窗口只在战斗阶段创建，晚于场景里武器对象的 OnEnable
+        // ⇒ 光靠 MapMarkRegistry.OnChanged 会漏掉"开图前就躺在地上"的那些，必须在这里全量补一遍
+        MarkPoints = new();
+        MapMarkRegistry.OnChanged += SyncMarkPoints;
+        SyncMarkPoints();
+
         // 铁轨路线：轨道在任务 InitMission 阶段就规划好了（铺轨协程第一个 yield 之前）⇒ 这里一定读得到
         // （真出问题时可以把这个开关关掉：整条功能不建对象、不进画线代码）
         if (DrawRailRoutes)
@@ -155,6 +172,7 @@ public class MiniMapWnd : Window
         UnitEventBus.OnPlayerCreate += PlayerCreat;
         UnitEventBus.OnFriendCreate += FriendCreat;
         UnitEventBus.OnFriendLeave += FriendLeave;   // ★ 补上"离场"（2026-10-09）：原来只有创建 ⇒ 队友强退后小地图上的点会一直留着
+        UnitEventBus.OnActorDestroyed += OnActorDestroyed;   // ★ 不分类型的销毁（玩家/特殊单位/Other），与离场处理幂等
         UnitEventBus.OnSpecUnitCreate += OtherCreat;
         UnitEventBus.OnSpecUnitDead += OtherDeath;
         BattleEventBus.OnMissionStart += MissionPointCreat;
@@ -167,11 +185,17 @@ public class MiniMapWnd : Window
     }
     public override void OnDestroy()
     {
+        // ⚠ 退订放在最前面：后面的 base.OnDestroy / InputManager.UnBindDown 在场景拆除时可能抛异常
+        //   （实测 "KeyNotFoundException: 'Game'"），一旦中途抛出，后面的退订全部不会执行 ——
+        //   而 MapMarkRegistry/各种 Bus 都是**静态**事件，漏退订就会指着一个已销毁的窗口。
+        MapMarkRegistry.OnChanged -= SyncMarkPoints;
+
         base.OnDestroy();
         InputManager.UnBindDown(WindowStateEnum.Game, InputState.MiniMap, SwitchWnd);
         UnitEventBus.OnPlayerCreate -= PlayerCreat;
         UnitEventBus.OnFriendCreate -= FriendCreat;
         UnitEventBus.OnFriendLeave -= FriendLeave;
+        UnitEventBus.OnActorDestroyed -= OnActorDestroyed;
         UnitEventBus.OnSpecUnitCreate -= OtherCreat;
         UnitEventBus.OnSpecUnitDead -= OtherDeath;
         BattleEventBus.OnMissionStart -= MissionPointCreat;
@@ -182,6 +206,7 @@ public class MiniMapWnd : Window
 
         ActorPoint = null;
         EnemyPoint = null;
+        MarkPoints = null;
     }
 
     //考虑到如果使用事件方法，会出现每个单位都有一个图标的问题，这里使用传统方法
@@ -220,6 +245,8 @@ public class MiniMapWnd : Window
 
             foreach (var item in ActorPoint)
             {
+                // 表里会残留已销毁实体（详见 MiniMapVisible 的注释）：Pos 走 transform ⇒ 读它就是另一个异常点
+                if (!item.Key.IsValidMono()) continue;
                 item.Value.anchoredPosition = WorldPosToMapPos(item.Key.Pos.ToVector2());
                 if(item.Key is IMissionPoint mission&&mission.AreaRange>0)
                 {
@@ -244,6 +271,9 @@ public class MiniMapWnd : Window
 
         // 火车图标跟列车实际位置走（车在动 ⇒ 必须每帧，不能放进上面的"地图插值"分支）
         RefreshTrainPoints();
+
+        // 关注物（地面武器…）同理：卸载落地会换坐标，只能每帧跟
+        UpdateMarkPointPositions();
 
 
 
@@ -387,6 +417,68 @@ public class MiniMapWnd : Window
         SetSprite(point.GetChild(1, 1), train.icon);
         SetColor(point.GetChild(1, 1), MainColor);
         TrainPoints.Add(point);
+    }
+
+    #endregion
+
+    #region 世界关注物标记
+
+    /// <summary>
+    /// 与 <see cref="MapMarkRegistry"/> 对齐：收掉"已注销 / 已销毁"的点，补上新增的点。
+    /// <para>事件驱动（登记方 enable / disable 各一次），另有 <see cref="FirstShowWnd"/> 里的全量补建那一次。</para>
+    /// </summary>
+    private void SyncMarkPoints()
+    {
+        if (MarkPoints == null) return;
+
+        // 先收集再删：不能一边 foreach 一边 Remove
+        markStale.Clear();
+        foreach (var item in MarkPoints)
+        {
+            if (!item.Key.IsValidMono() || !MapMarkRegistry.Contains(item.Key)) markStale.Add(item.Key);
+        }
+        for (int i = 0; i < markStale.Count; i++)
+        {
+            if (!MarkPoints.TryGetValue(markStale[i], out RectTransform point)) continue;
+            if (point != null) Tool.Destroy(point.gameObject);
+            MarkPoints.Remove(markStale[i]);
+        }
+
+        IReadOnlyList<MapMark> all = MapMarkRegistry.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            MapMark mark = all[i];
+            if (!mark.Entity.IsValidMono() || MarkPoints.ContainsKey(mark.Entity)) continue;
+
+            RectTransform point = Instantiate(OtherPrefab, OtherRoot).transform.GetRect();
+            point.gameObject.name = "Mark_" + mark.Entity.Id;
+            // 图标：登记时显式给的就用它，否则用身份组件自带的（额外图标 → 头像）
+            Sprite icon = mark.Icon != null
+                ? mark.Icon
+                : (mark.Entity.ExtraPortrait != null ? mark.Entity.ExtraPortrait : mark.Entity.Portrait);
+            if (icon == null)
+            {
+                Debug.LogWarning($"[小地图] {mark.Entity.Id} 既没有登记图标也没有 ExtraPortrait ⇒ 这个点看不见",
+                    mark.Entity as UnityEngine.Object);
+            }
+            SetSprite(point, icon);
+            point.anchoredPosition = WorldPosToMapPos(mark.Entity.Pos.ToVector2());
+            MarkPoints.Add(mark.Entity, point);
+        }
+    }
+
+    /// <summary>
+    /// 每帧跟位置：武器卸载落地会被摆到新坐标，不能只在创建时算一次。
+    /// <para>⚠ 不能塞进 <c>mapScale/center</c> 的插值分支 —— 玩家站住不动时那个分支根本不进。</para>
+    /// </summary>
+    private void UpdateMarkPointPositions()
+    {
+        if (MarkPoints == null) return;
+        foreach (var item in MarkPoints)
+        {
+            if (!item.Key.IsValidMono()) continue;
+            item.Value.anchoredPosition = WorldPosToMapPos(item.Key.Pos.ToVector2());
+        }
     }
 
     #endregion
@@ -562,14 +654,31 @@ public class MiniMapWnd : Window
     /// </summary>
     void FriendLeave(FPSGame.Game.Actor actor)
     {
-        if (actor == null || ActorPoint == null) return;
-        if (!ActorPoint.TryGetValue(actor, out var point)) return;
+        if (!RemoveActorPoint(actor)) return;
+        // ⚠ 此刻对象已在 OnDestroy 里：只能读 name 这种托管字段，别碰 transform
+        FPSGame.Utils.NetSyncLog.SyncLog("盟友离场", $"小地图点已收掉 actor={actor.name}（剩余点位 {ActorPoint.Count}）");
+    }
+
+    /// <summary>任意单位被销毁（<see cref="UnitEventBus.OnActorDestroyed"/>）⇒ 收掉它的图标。
+    /// <para>▍与 <see cref="FriendLeave"/> 同源但覆盖**所有类型**：玩家 / 特殊单位 / Other 被直接 Destroy
+    /// （换场景 / 回收 / 控制台）不派发死亡事件，没人收点就会留着一个已销毁引用 —— <c>Update</c> 要去
+    /// 读它的 <c>enabled</c> 和 <c>Pos</c>，每帧一条 NRE（2026-11-08 实测）。</para>
+    /// <para>⚠ 盟友会两条都收到 ⇒ <see cref="RemoveActorPoint"/> 必须幂等。</para></summary>
+    void OnActorDestroyed(FPSGame.Game.Actor actor) => RemoveActorPoint(actor);
+
+    /// <summary>把一个单位的图标摘掉，返回"是否真摘到了"。幂等。
+    /// <para>⚠ 可能被 <c>Actor.OnDestroy</c> 调到：这里只走托管字段（字典的键用 <c>indexID</c> 的 hash +
+    /// <c>ReferenceEquals</c> 比较，不碰原生），别在这里加 <c>transform</c>/<c>enabled</c> 之类的访问。</para></summary>
+    bool RemoveActorPoint(FPSGame.Game.Actor actor)
+    {
+        if (actor == null || ActorPoint == null) return false;
+        if (!ActorPoint.TryGetValue(actor, out var point)) return false;
 
         ActorPoint.Remove(actor);
         actor.OnPosChange -= OnGenericMove;
         actor.OnAngleChange -= OnGenericRotate;
         if (point != null) Tool.Destroy(point.gameObject);
-        FPSGame.Utils.NetSyncLog.SyncLog("盟友离场", $"小地图点已收掉 actor={actor.name}（剩余点位 {ActorPoint.Count}）");
+        return true;
     }
 
 
@@ -595,8 +704,12 @@ public class MiniMapWnd : Window
     /// </summary>
     private static bool MiniMapVisible(IActor actor)
     {
-        if (actor is not MonoBehaviour mono) return false;
-        if (!mono.enabled) return false;
+        // ⚠ 不能只判 `is MonoBehaviour`：ActorPoint 只在死亡/离场事件里摘点，"被直接销毁"的单位会留个
+        //   已销毁引用，而它的**托管对象还在** ⇒ 类型判断照样成立。再去读 enabled 就抛
+        //   （编辑器是 MissingReferenceException，IL2CPP 打包版表现就是这条每帧 NRE，2026-11-08 实测）。
+        //   用 Unity 的 == 判空（IsValidMono 里面的 `o != null` 会走 Object 重载）才能认出销毁对象。
+        if (!actor.IsValidMono()) return false;
+        if (actor is not MonoBehaviour mono || !mono.enabled) return false;
         return !actor.HasFlag(ActorFlag.MiniMapIgnore);
     }
 

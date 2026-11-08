@@ -8,6 +8,7 @@
 - ⚠ 外部编辑器会**静默覆盖**工作区文件（编译还全过）⇒ 大批改动收尾跑 `audit_markers.py` + 逐行回查；单点优先 `replace_in_file`，批量/编码敏感才写字节级脚本
 - ⚠ **MCP 存 prefab 会按内存旧值回写**（`LoadPrefabContents`+`SaveAsPrefabAsset` 抹掉没碰的字段，已实测清空 `ImpactVfx`/`UseCollisionDirection`）⇒ 存完必 `git diff` 逐行核对，单引用改动优先直接改 YAML → `2026-11-02.md`
 - ⚠ BOM 用 `add_bom.py`；**严禁** `open(p,'w').write(open(p).read())`（先截断后读 ⇒ 清空）；**空 .cs 也 0 error** ⇒ 改完跑 `check_sources.py`
+- ⚠ `replace_in_file` 可能把 **LF 文件整份写成 CRLF**（git 只给一条 warning）⇒ 改完核一眼换行符，保持与 HEAD 一致
 - ⚠ **EditorWindow 里缓存的 `GUIStyle` 在域重载后会被还原成默认空样式**（黑字/字号 0/clipping=Overflow），而 `_stylesBuilt` 标志照样是 true ⇒ 缓存样式必须用哨兵自检再重建，别只信标志位
 - ⚠ 注释口径：默认 **1~3 行**（为什么 + 陷阱）；长文档放 `topics/*.md`
 - ⚠ **token 口径**：每轮重发全历史 ⇒ 五杠杆（换窗口 / 输出收敛 / 少往返 / 注入瘦身 / 探索丢 subagent）→ `topics/tooling.md`

@@ -54,18 +54,32 @@ public class SoundGroup_SO: ScriptableObject
 
     public RuntimeSoundData Get(Vector3 point=default)
     {
+        // ⚠ 空组（没配任何音频）以前两条路都会炸：isOrder 是 `number % 0` 除零，否则 RandomTake
+        //   返回 null 再 `.audioClip` 抛空引用 —— 两种都只说"空引用"，查不出是哪个组。
+        //   这里统一给一份"没有 Clip"的数据：Clip 为 null ⇒ 播放层按"找不到音效"跳过（报错会点名本组），
+        //   调用方那些 `Clip == null` 的守卫也照常生效；**不消耗随机数**，两端派生流不受影响。
+        int count = clips != null ? clips.Count : 0;
+        if (count == 0)
+        {
+            return new RuntimeSoundData { Cfg = this, Point = point };
+        }
+
         SoundItem selectedItem;
         if (isOrder)
         {
             int number=0;
             number=orderNumber.GetValueOrDefault(name, 0);
             orderNumber[name]= number+1;
-            selectedItem = clips[number%clips.Count];
+            selectedItem = clips[number%count];
 
         }
         else
         {
             selectedItem = clips.RandomTake();
+        }
+        if (selectedItem == null)   // 组里留了空条目
+        {
+            return new RuntimeSoundData { Cfg = this, Point = point };
         }
         return new RuntimeSoundData {
             Clip = selectedItem.audioClip,
@@ -445,6 +459,8 @@ public struct RuntimeSoundData
     public static implicit operator AudioPlayInfo(RuntimeSoundData data)
     {
         return new AudioPlayInfo() {
+            // 排查用：从组来的请求 path 恒为 null，报错时不带组名就永远查不出漏配的是哪个组
+            debug = data.Cfg != null ? data.Cfg.name : null,
             cilp = data.Clip,
             group = data.Cfg.group,
             volume = data.Volume,

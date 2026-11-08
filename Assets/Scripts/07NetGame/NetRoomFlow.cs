@@ -656,7 +656,9 @@ namespace FPSGame.Net
 
             // 记住"我在房主那边的 sid"：后续战备/强化同步要靠它映射本地下标
             SelfSid = rsp.Self != null ? rsp.Self.Sid : 0;
-            FinishJoin(true, string.Empty, rsp.Players);
+            // ⚠ 不用 rsp.Players 落名册：它没带资料（同序同长的契约满足不了）⇒ 名册只认随后的
+            //   PlayerListSync（见 FinishJoin 里的注释）。
+            FinishJoin(true, string.Empty);
         }
 
         private void HandlePlayerListSync(PlayerListSync sync)
@@ -1350,11 +1352,6 @@ namespace FPSGame.Net
 
         private void FinishJoin(bool ok, string reason)
         {
-            FinishJoin(ok, reason, null);
-        }
-
-        private void FinishJoin(bool ok, string reason, PlayerInfo[] players)
-        {
             IsJoining = false;
             _timeoutLeft = 0f;
 
@@ -1376,7 +1373,11 @@ namespace FPSGame.Net
 
             Debug.Log("[NetRoomFlow] 入房成功");
             cb?.Invoke(true, string.Empty);
-            OnPlayerList?.Invoke(players, null);   // 入房响应里还没带资料 ⇒ profiles 传 null
+            // ⚠ 这里**不再**抛 OnPlayerList：JoinRoomRsp 里只有名单没有资料，profiles 只能是 null，
+            //   而该事件的契约是"名单与资料同序同长"⇒ 抛出去各桥一律判成"长度不一致"整份丢掉
+            //   （TeamNetBridge 还会刷一条 error）。权威名单紧跟着就由房主的 BroadcastPlayerList 发来
+            //   （见 NetHostSvc.OnJoinRoomReq 的发送顺序：JoinRoomRsp → 补发 TaskConfirm → 名单），
+            //   所以"名册落表"只留那一条路径。
             OnJoinResult?.Invoke(true, string.Empty);
         }
     }

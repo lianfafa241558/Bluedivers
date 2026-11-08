@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
@@ -219,10 +219,9 @@ public class Furniture_Pipe : Furniture_Attached
         SetId("PipeError");
         canOperate = true;
         meetTime = 5;
-        pressTime = 0;
-        Press = 5;
+        Press = 0;
         if (relatedTrans2) relatedTrans2.gameObject.SetActive(true);
-        }
+    }
 
         /// <summary>
         /// 写入状态 Id（PipeLink/PipeWait/PipeComplete/PipeError，任务与 <see cref="MissionSubConnectPipes"/> 依赖它）。

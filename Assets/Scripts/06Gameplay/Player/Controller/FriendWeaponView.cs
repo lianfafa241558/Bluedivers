@@ -43,6 +43,9 @@ namespace FPSGame.Gameplay
         /// <summary>槽位容器（下标 = 槽位，口径同 <see cref="PlayerWeaponsManager.SlotOf"/>）。</summary>
         private readonly WeaponPlayerController[] _slots = new WeaponPlayerController[9];
 
+        /// <summary>该槽是不是**借来的世界物件**（地面武器 / 战备枪）：是 ⇒ 清空时不销毁、丢弃时还回地上。</summary>
+        private readonly bool[] _external = new bool[9];
+
         /// <summary>枪械动画参数（枪自身控制器用它播开火动画，见 WeaponController 的 HandleShoot 注释）。</summary>
         private static readonly int AnimAttack = Constants.k_AnimAttackParameter;
 
@@ -231,15 +234,94 @@ namespace FPSGame.Gameplay
         }
 
         /// <summary>清空所有武器实例（换角色/离场）。</summary>
+        /// <para>⚠ 只清**角色配置**那份：`_external` 槽里是场景里那件地面武器（见 <see cref="AttachEquippedWeapon"/>），
+        /// 它不是本类 Instantiate 出来的，销毁会把对端的世界物件一起删掉。</para>
         public void Clear()
         {
             for (int i = 0; i < _slots.Length; i++)
             {
+                if (_external[i])
+                {
+                    // 借来的世界物件：不销毁，但正显示着就先收起（下面 _active 归 -1，没人再帮它收）
+                    if (_active == i && _slots[i] != null) _slots[i].ShowWeapon(false);
+                    continue;
+                }
                 if (_slots[i] != null) Destroy(_slots[i].gameObject);
                 _slots[i] = null;
             }
             _active = -1;
             ApplyHandIK(null);
+        }
+
+        /// <summary>
+        /// 【远端拾取/卸下】把一件**已经存在的**武器实例（地面支援武器 / 战备叫下来的枪）挂进它自己的槽位。
+        ///
+        /// <para>▍为什么直接用实例而不是按名字重装：这批枪是**两端各一份**的世界物件（`Furniture_WeaponPickup`
+        /// 走 4059 的"在地 / 被拿走"状态），对端那份就在原地 ⇒ 拿它挂上即可，枪口/改装/弹道与本人完全一致，
+        /// 也不需要再同步"我捡了哪把枪"。</para>
+        ///
+        /// <para>▍不顶掉已有武器：该槽被角色配置占着就返回 false（支援槽本来是空的，出现这种情况说明数据不对）。</para>
+        /// </summary>
+        public bool AttachEquippedWeapon(WeaponPlayerController w)
+        {
+            if (w == null) return false;
+
+            int slot = PlayerWeaponsManager.SlotOf(w.WeaponTypeEnum);
+            if (slot < 0 || slot >= _slots.Length) return false;
+            if (_slots[slot] == w) return true;
+            if (_slots[slot] != null) return false;
+
+            var parent = weaponSocket != null ? weaponSocket : transform;
+            w.transform.SetParent(parent, false);
+            w.transform.localPosition = Vector3.zero;
+            w.transform.localRotation = Quaternion.identity;
+            w.Owner = gameObject;      // 命中特效/音效按它归属（枪伤不结算，但表现要认得是谁打的）
+
+            // 他"拿着"的东西不能再被地上的交互扫到（本机拾取那条路也是这么关的，见 EquipGroundWeapon）
+            var pickup = w.GetComponent<Furniture_WeaponPickup>();
+            if (pickup != null) pickup.enabled = false;
+            // 地面拾取用的碰撞体只服务于"躺在地上"，挂到身上后留着会挡子弹/挡准心射线
+            var cols = w.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < cols.Length; ++i) cols[i].enabled = false;
+
+            w.ShowWeapon(false);
+            _slots[slot] = w;
+            _external[slot] = true;
+
+            // 他正拿着这一槽（切枪消息可能先到）⇒ 立刻显示
+            if (_active == slot)
+            {
+                w.ShowWeapon(true);
+                ApplyHandIK(w);
+                ApplyAimHold(w);
+            }
+            return true;
+        }
+
+        /// <summary>【远端丢下】把挂进来的实例摘掉。⚠ 不销毁：它要回到地上继续当可拾取物，
+        /// 所以还要把 `ShowWeapon(false)` 关掉的模型重新打开（同 <c>WeaponPlayerController.OnUninstall</c>）。</summary>
+        public void DetachEquippedWeapon(WeaponPlayerController w)
+        {
+            if (w == null) return;
+
+            for (int i = 0; i < _slots.Length; ++i)
+            {
+                if (_slots[i] != w) continue;
+
+                if (_active == i)
+                {
+                    w.ShowWeapon(false);
+                    ApplyHandIK(null);
+                }
+                _slots[i] = null;
+                _external[i] = false;
+
+                if (w.WeaponRoot != null) w.WeaponRoot.SetActive(true);
+
+                var cols = w.GetComponentsInChildren<Collider>(true);
+                for (int k = 0; k < cols.Length; ++k) cols[k].enabled = true;
+                return;
+            }
         }
 
         // ==================== 内部 ====================

@@ -36,6 +36,10 @@ public abstract class Window : MonoBehaviour
     /// <param name="isActive">是否显示</param>
     public virtual void SetWndState(bool isActive = true)
     {
+        // 静态事件（BattleEventBus/GlobalEventBus）会把"已经随场景拆掉的窗口"再叫起来：
+        // 销毁后 this == null，下一句 gameObject.activeSelf 就是空引用（打包版栈里只剩本方法名，查不出是谁）。
+        if (!this) return;
+
         if (gameObject.activeSelf != isActive||(isActive&&!firstInit))
         {
             gameObject.SetActive(isActive);
@@ -104,6 +108,29 @@ public abstract class Window : MonoBehaviour
     protected WindowStateEnum WindowState {
         get => WndManager.WindowState;
         set => WndManager.WindowState = value;
+    }
+
+    /// <summary>当前"要求鼠标可用（= <see cref="WindowStateEnum.UI"/>）"的窗口集合。
+    /// <para>▍为什么要有：光标是**全局**开关，而各窗口的 <c>HideWnd</c> 都在写 <c>WindowState = Game</c>
+    /// （那里会 <c>Cursor.lockState = Locked</c>）⇒ 两个窗口叠着时先关的那个会把另一个的光标一起收走
+    /// （2026-11-08 实测：撤离倒计时进 Armament 时选图窗还开着，它一收，新开的战备界面就没鼠标）。</para>
+    /// </summary>
+    private static readonly HashSet<Window> UiCursorOwners = new HashSet<Window>();
+
+    /// <summary>登记 / 注销"本窗口要求鼠标可用"，返回处理完之后是否**还有**窗口要求（false = 可以压回 Game）。
+    /// <para>用法：<c>ShowWnd</c> 里 <c>SetUiCursor(this, true)</c> 再写 <c>WindowState = UI</c>；
+    /// <c>HideWnd</c> 里 <c>if (!SetUiCursor(this, false)) WindowState = Game;</c> —— 有人还要就**别**压回 Game。</para>
+    /// </summary>
+    protected static bool SetUiCursor(Window wnd, bool wanted)
+    {
+        if (wnd != null)
+        {
+            if (wanted) UiCursorOwners.Add(wnd);
+            else UiCursorOwners.Remove(wnd);
+        }
+        // 随场景被销毁、却没走到 HideWnd 的窗口会留下死引用 ⇒ 不清掉就永远"还有人要光标"（进游戏鼠标不锁）
+        UiCursorOwners.RemoveWhere(w => w == null);
+        return UiCursorOwners.Count > 0;
     }
     protected float TimeScale
     {

@@ -1,6 +1,7 @@
-using FPSGame.Attributes;
+﻿using FPSGame.Attributes;
 using PEMaths;
 using UnityEngine;
+using UnityEngine.Events;
 using FPSGame.Utils;
 
 namespace FPSGame.Weapon
@@ -43,7 +44,48 @@ namespace FPSGame.Weapon
 
         #endregion
 
-        public bool IsReloading { get; protected set; }
+        /// <summary>换弹状态翻转时抛（true=开始 / false=结束）。⚠ 只在**真正翻转**时抛：
+        /// 收起武器（<c>ShowWeapon(false)</c>）也会经 setter 转成 false，订阅方据此还原移速惩罚。</summary>
+        public event UnityAction<WeaponBaseController, bool> OnReloadStateChange;
+
+        /// <summary>
+        /// 【联机】读当前弹量交给对端（<c>&lt;0</c> = 该格无限 / 未带 ⇒ 对端不要动）。
+        /// <para>▍用途：地面武器 / 背包武器是**每端各一份实例**，弹药只在持有者那端变化 ⇒
+        /// 在"交接"（拾取 / 卸下）时把权威值带过去，另一端的副本才不会永远是满的。</para>
+        /// <para>⚠ 口径与 <c>VehicleWeaponsManager.TryGetAmmo</c> 一致（无限的那格给 -1）。</para>
+        /// </summary>
+        public void GetAmmoForSync(out int magazine, out int ammo)
+        {
+            magazine = -1;
+            ammo = -1;
+            // 刚实例化那一帧 LogicInit 还没跑（属性未建立）⇒ 两个 -1 = "本端没有权威值"
+            if (Magazine == null || Ammo == null) return;
+
+            if (!InfiniteMagazine) magazine = Magazine.CurrValue.RawInt;
+            if (!InfiniteAmmo) ammo = Ammo.CurrValue.RawInt;
+        }
+
+        /// <summary>【联机】把对端交过来的权威弹量写进本端这一份（<c>&lt;0</c> = 该项不动）。
+        /// <para>⚠ <c>GameCurrentAttribute</c> 的 setter 自带上下限约束，这里不要再夹一次。</para></summary>
+        public void ApplyAmmoForSync(int magazine, int ammo)
+        {
+            if (Magazine == null || Ammo == null) return;
+
+            if (magazine >= 0 && !InfiniteMagazine) Magazine.CurrValue = magazine;
+            if (ammo >= 0 && !InfiniteAmmo) Ammo.CurrValue = ammo;
+        }
+
+        private bool _isReloading;
+        public bool IsReloading
+        {
+            get => _isReloading;
+            protected set
+            {
+                if (_isReloading == value) return;
+                _isReloading = value;
+                OnReloadStateChange?.Invoke(this, value);
+            }
+        }
         [DisplayField]
         [SerializeField]
         private int showAmmo;

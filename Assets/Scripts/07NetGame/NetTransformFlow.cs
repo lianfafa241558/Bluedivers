@@ -31,6 +31,10 @@ namespace FPSGame.Net
         /// <summary>本机是不是房主（开了房）。</summary>
         public bool IsHost => NetHostSvc.Instance != null && NetHostSvc.Instance.RoomInfo != null;
 
+        /// <summary>累计处理过的位姿批次数（只增不减，调试 HUD 用：两次采样相减 ÷ 间隔 = 实际下行频率）。
+        /// <para>⚠ 房主本地自派发也走 <see cref="HandleBatch"/> ⇒ 两端口径一致（"本机真正处理了几批"）。</para></summary>
+        public int ReceivedBatchCount { get; private set; }
+
         private void Awake()
         {
             Instance = this;
@@ -65,6 +69,7 @@ namespace FPSGame.Net
         private void HandleBatch(PoseBatchMsg batch)
         {
             if (batch == null || batch.Items == null || batch.Items.Length == 0) return;
+            ++ReceivedBatchCount;
             OnPose?.Invoke(batch);
         }
     }

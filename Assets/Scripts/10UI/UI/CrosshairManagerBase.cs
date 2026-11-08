@@ -1,110 +1,107 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using FPSGame.Core;
+﻿using FPSGame.Core;
 using FPSGame.GameContract;
-
 using FPSGame.Game;
-using FPSGame.Gameplay;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
 using FPSGame.Utils;
 using FPSGame.Weapon;
-using PEMaths;
 
 namespace FPSGame.UI
 {
 
-public abstract class CrosshairManagerBase : MonoBehaviour
-{
-    public UnityAction OnSwitchWeapon;
-    /// <summary>锁定一个敌人时</summary>
-    public UnityAction<IActor, bool> OnLockUpdate;
-    /// <summary>开启结束锁定</summary>
-    public UnityAction<bool> OnLock;
-
-
-    public WeaponPlayerController m_Weapons;
-    [SerializeField]
-    protected Animator m_ActiveSightGo;
-
-    [SerializeField]
-    protected Animator m_RicochetGo;
-
-    protected virtual void Start()
+    public abstract class CrosshairManagerBase : MonoBehaviour
     {
-        UnitEventBus.OnUnitHit += Hit;
-    }
+        public UnityAction OnSwitchWeapon;
+        /// <summary>锁定一个敌人时</summary>
+        public UnityAction<IActor, bool> OnLockUpdate;
+        /// <summary>开启结束锁定</summary>
+        public UnityAction<bool> OnLock;
 
-    protected virtual void OnDestroy()
-    {
-        UnitEventBus.OnUnitHit -= Hit;
-        SwitchWeapon(null, false);
-    }
-    protected virtual void SwitchWeapon(WeaponPlayerController weapon,bool isSec = false)
-    {
-        if (isSec) return;
-        //清空旧的
-        if (m_Weapons.IsValid())
+
+        public WeaponPlayerController m_Weapons;
+        [SerializeField]
+        protected Animator m_ActiveSightGo;
+
+        [SerializeField]
+        protected Animator m_RicochetGo;
+
+        protected virtual void Start()
         {
-            m_Weapons.OnShoot -= Attack;
-            //m_Weapons.OnHit -= Hit;
-            m_Weapons.OnCharget -= Chatget;
-            m_Weapons.OnLock -= Chatget;
-            m_Weapons.OnLockUpdate -= LockUpdate;
-            OnWeaponUnbound();
+            UnitEventBus.OnUnitHit += Hit;
         }
-        //Debug.LogError("新武器+ m_Weapons, m_Weapons);
-        //设置新的
-        m_Weapons = weapon;
-        if (!weapon.IsValid()) return;//销毁只清空，不设置
-        weapon.OnShoot += Attack;
-        //weapon.OnHit += Hit;
-        weapon.OnCharget += Chatget;
-        weapon.OnLock += Chatget;
-        weapon.OnLockUpdate += LockUpdate;
-        SetAnimGo();
-        OnWeaponBound(weapon);
-        OnSwitchWeapon?.Invoke();
-    }
 
-    /// <summary>旧武器解绑时的子类附加清理（切武器/销毁都会走）。默认什么都不做。</summary>
-    protected virtual void OnWeaponUnbound() { }
+        protected virtual void OnDestroy()
+        {
+            UnitEventBus.OnUnitHit -= Hit;
+            SwitchWeapon(null, false);
+        }
+        protected virtual void SwitchWeapon(WeaponPlayerController weapon,bool isSec = false)
+        {
+            if (isSec) return;
+            //清空旧的
+            if (m_Weapons.IsValid())
+            {
+                m_Weapons.OnShoot -= Attack;
+                //m_Weapons.OnHit -= Hit;
+                m_Weapons.OnCharget -= Chatget;
+                m_Weapons.OnLock -= Chatget;
+                m_Weapons.OnLockUpdate -= LockUpdate;
+                OnWeaponUnbound();
+            }
+            //Debug.LogError("新武器+ m_Weapons, m_Weapons);
+            //设置新的
+            m_Weapons = weapon;
+            if (!weapon.IsValid()) return;//销毁只清空，不设置
+            weapon.OnShoot += Attack;
+            //weapon.OnHit += Hit;
+            weapon.OnCharget += Chatget;
+            weapon.OnLock += Chatget;
+            weapon.OnLockUpdate += LockUpdate;
+            SetAnimGo();
+            OnWeaponBound(weapon);
+            OnSwitchWeapon?.Invoke();
+        }
 
-    /// <summary>新武器绑定后的子类附加逻辑（此时 <see cref="m_ActiveSightGo"/> 已由 <see cref="SetAnimGo"/> 换好）。默认什么都不做。</summary>
-    protected virtual void OnWeaponBound(WeaponPlayerController weapon) { }
+        /// <summary>旧武器解绑时的子类附加清理（切武器/销毁都会走）。默认什么都不做。</summary>
+        protected virtual void OnWeaponUnbound() { }
 
-    protected abstract void SetAnimGo();
+        /// <summary>新武器绑定后的子类附加逻辑（此时 <see cref="m_ActiveSightGo"/> 已由 <see cref="SetAnimGo"/> 换好）。默认什么都不做。</summary>
+        protected virtual void OnWeaponBound(WeaponPlayerController weapon) { }
 
-    /// <summary>击中目标回调</summary>
-    protected void Hit(GameObject victim, GameObject attacker,bool ricochet)
-    {
+        protected abstract void SetAnimGo();
+
+        /// <summary>击中目标回调</summary>
+        protected void Hit(GameObject victim, GameObject attacker,bool ricochet)
+        {
+            // ⚠ OnUnitHit 是全局静态事件：准星比玩家先存在（或武器已被销毁）时 m_Weapons 为空，
+            //   这里仍会收到全场景的命中回调 ⇒ 不判空必 NRE（原写法直接 m_Weapons.Owner）。
+            if (!m_Weapons.IsValid()) return;
             if (victim != attacker && attacker == m_Weapons.Owner)
             {
-                m_ActiveSightGo.SetTrigger(Constants.k_AnimOnDamagedParameter);
+                if (m_ActiveSightGo) m_ActiveSightGo.SetTrigger(Constants.k_AnimOnDamagedParameter);
                 if(ricochet&& m_RicochetGo!=null) m_RicochetGo.SetTrigger(Constants.k_AnimOnDamagedParameter);
             }
-    }
-    /// <summary>发起攻击回调</summary>
-    protected void Attack(WeaponBaseController weapon)
-    {
-        //Debug.LogError("设置射击");
-        m_ActiveSightGo.SetTrigger(Constants.k_AnimAttackParameter);
-        //Debug.LogError("设置取消蓄力");
-        //m_ActiveSightGo.SetBool(Constants.k_AnimChatgetParameter,false);
-    }
-    /// <summary>开启?取消蓄力回调</summary>
-    protected void Chatget(bool state)
-    {
-        OnLock?.Invoke(state);
-        //Debug.LogError(state+"设置开始蓄力 + m_ActiveSightGo, m_ActiveSightGo);
-        m_ActiveSightGo.SetBool(Constants.k_AnimChatgetParameter, state);
-        //Debug.LogError(state+"获取蓄力状态 + m_ActiveSightGo.GetBool(Constants.k_AnimChatgetParameter), gameObject);
-    }
+        }
+        /// <summary>发起攻击回调</summary>
+        protected void Attack(WeaponBaseController weapon)
+        {
+            //Debug.LogError("设置射击");
+            if(m_ActiveSightGo) m_ActiveSightGo.SetTrigger(Constants.k_AnimAttackParameter);
+            //Debug.LogError("设置取消蓄力");
+            //m_ActiveSightGo.SetBool(Constants.k_AnimChatgetParameter,false);
+        }
+        /// <summary>开启?取消蓄力回调</summary>
+        protected void Chatget(bool state)
+        {
+            OnLock?.Invoke(state);
+            //Debug.LogError(state+"设置开始蓄力 + m_ActiveSightGo, m_ActiveSightGo);
+            if (m_ActiveSightGo) m_ActiveSightGo.SetBool(Constants.k_AnimChatgetParameter, state);
+            //Debug.LogError(state+"获取蓄力状态 + m_ActiveSightGo.GetBool(Constants.k_AnimChatgetParameter), gameObject);
+        }
 
-    protected void LockUpdate(IActor actor,bool state)
-    {
-        OnLockUpdate?.Invoke(actor, state);
+        protected void LockUpdate(IActor actor,bool state)
+        {
+            OnLockUpdate?.Invoke(actor, state);
+        }
     }
-}
 }

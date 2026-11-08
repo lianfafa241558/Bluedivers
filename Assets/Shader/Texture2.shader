@@ -291,5 +291,8 @@ Shader "LX/Texture2"
             ENDHLSL
         }
 
-    }Fallback "Texture"//备选着色器
+    }
+    // 原写 "Texture"：那是**内置管线**的着色器名，URP 工程里不存在 ⇒ 打包版刷
+    // "fallback shader 'Texture' not found"，真进回退分支时就是粉块/黑块。
+    Fallback "Universal Render Pipeline/Unlit"
 }

@@ -1831,13 +1831,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
-  explosionResistance: 0
+  explosionResistance: 1
   armorLevel: 0
-  useHealthInsteadOfArmor: 0
-  armorValue: 0
+  useHealthInsteadOfArmor: 1
+  armorValue: 400
   LineArmor: []
   armorBreakEffect: []
-  BleedValue: 0
+  BleedValue: 400
   isMain: 0
   showArmor: 0
 --- !u!136 &8555651529297571840
@@ -1860,8 +1860,8 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.7
-  m_Height: 1
-  m_Direction: 1
+  m_Height: 2
+  m_Direction: 0
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8779045290885002740
 GameObject:

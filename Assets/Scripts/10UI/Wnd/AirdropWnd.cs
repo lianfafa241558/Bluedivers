@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using FPSGame.Audio;
 using FPSGame.Gameplay;
@@ -18,6 +19,8 @@ using FPSGame.Managers;
 [AddComponentMenu("UI/窗口/战斗战备")]
 public class AirdropWnd : Window
 {
+    const string EntryState = "Entry", ExitState = "Exit";
+
     [SerializeField]
     Transform expandRoot,showRoot;
     [SerializeField]
@@ -35,6 +38,9 @@ public class AirdropWnd : Window
     AirdropController controller;
     List<DirectionEnum> opterlist;
     float time;
+
+    /// <summary>切出动画播完后再收 expandRoot 的协程（切出途中又展开要能取消，否则会被延迟收起）</summary>
+    Coroutine _hideExpandCo;
 
     /// <summary>本帧玩家是否被信号干扰（见 <c>SignalJammer</c>）：干扰期间战备位显示"受到干扰"。</summary>
     bool jammed;
@@ -167,7 +173,21 @@ public class AirdropWnd : Window
     {
         if (gameObject.activeInHierarchy)
         {
-            anim.Play(state ? "Entry": "Exit");
+            // 显隐由脚本给（动画事件只当补刀，不再当唯一来源）：
+            // ⚠ 原来"展开"全靠 Entry 的动画事件 SetActive(true)，而 anim.Play 传 NaN 会沿用该状态上次的播放进度，
+            //   叠加 Entry→Idle 的退出过渡，面板会在"播完切入后又被收起/压根不出现"（2026-11-08）
+            if (_hideExpandCo != null) { StopCoroutine(_hideExpandCo); _hideExpandCo = null; }
+
+            anim.Play(state ? EntryState : ExitState, 0, 0f);   // 每次都从 0 起，别续用上次进度
+            if (state)
+            {
+                SetActive(expandRoot, true);                     // 先进场再滑：AirdropList 停在 -310，滑进来才看得见
+            }
+            else if (expandRoot && expandRoot.gameObject.activeSelf)
+            {
+                _hideExpandCo = StartCoroutine(HideExpandAfterExit());
+            }
+
             if (controller&& state)
             {
                 for (int i = 0; i < controller.useAd.Count; ++i)
@@ -463,6 +483,19 @@ public class AirdropWnd : Window
             UpdateExpand();
         }
     }
+    /// <summary>等 Exit 播完再收起 expandRoot。时长取当前 clip 的 length，别硬编码 0.4167s。</summary>
+    private IEnumerator HideExpandAfterExit()
+    {
+        yield return null;      // 等一帧让 Play 生效，否则读到的还是上一个状态
+        var info = anim.GetCurrentAnimatorStateInfo(0);
+        yield return new WaitForSeconds(info.IsName(ExitState) ? info.length : 0.42f);
+        _hideExpandCo = null;
+        if (!expand) SetActive(expandRoot, false);
+    }
+
+    /// <summary>动画事件入口（Entry 开头显 / Exit 结尾隐，clip 里已有事件指向本方法，别删）。
+    /// <para>⚠ "显"现在脚本也会做（见 <see cref="ExpandMenu"/>）；"隐"仍以本事件为准，
+    /// <see cref="HideExpandAfterExit"/> 只是兜底（事件没触发时也能收干净）。</para></summary>
     private void AnimSetExpandWnd(int state)
     {
         SetActive(expandRoot, state > 0);

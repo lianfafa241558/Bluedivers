@@ -114,7 +114,7 @@ public enum MissionInitMode
                 EntityRoot = new GameObject("EntityRoot").transform;
                 waitMissions = GetTask();
                 missionCreatPoints = new();
-                // 本局的"已占圆"从零开始登记（任务点由 GenerateNewMissionPoint 登记，见 TerrainUtils.ReservedCircles）
+                // 本局的"已占圆"从零开始登记（任务点由 TryGenerateNewMissionPoint 登记，见 TerrainUtils.ReservedCircles）
                 TerrainUtils.ClearReservedCircles();
 
                 NetSyncLog.LoadLog("任务", "开始生成任务");
@@ -180,7 +180,9 @@ public enum MissionInitMode
             if (go is IResConsumer resConsumer) resConsumer.Inject(ResSvc.Instance);
             var size = RandomUtils.Range(random, go.mapEntitySize.x, go.mapEntitySize.y);
             // 任务点仍用全局战斗流（它的顺序在两端一致，实测任务实体 Id/位置都对得上）
-            go.Init(root, task, task.cfg.sprite, GenerateNewMissionPoint(size, random), size, EntityRoot);
+            // ⚠ 找不到落点也**不跳过创建**：主线/撤离链少一个就会在下游空引用；方法内部已退到地图中心并记 error
+            TryGenerateNewMissionPoint(size, random, out Vector3 point);
+            go.Init(root, task, task.cfg.sprite, point, size, EntityRoot);
             while (!go.IsInitialized) yield return null;
             // 联机稳定键：按创建顺序（本模式的顺序由本局配置 + 稳定排序决定 ⇒ 两端一致）
             go.netOrder = missions.Count;
@@ -318,8 +320,8 @@ public enum MissionInitMode
             //GameObject[] objects= new GameObject[count];
             for (int i =0;i< count;++i)
             {
-                var pos = GenerateNewMissionPoint(8, rnd);
-                if (pos == default) { Debug.LogWarning("兴趣点数量" + i); break; }
+                // 连中心兜底都摆不下（图被占满）⇒ 后面的也摆不下，直接收工；失败原因由方法内部记 error
+                if (!TryGenerateNewMissionPoint(8, rnd, out Vector3 pos)) break;
                 Instantiate(root.mapCfg.interestPoints.WeightTake(totleWeight, rnd), pos, Quaternion.Euler(0, RandomUtils.Range(rnd, 0, 360), 0), EntityRoot);
                 yield return null;
             }
@@ -336,16 +338,22 @@ public enum MissionInitMode
             //GameObject[] objects= new GameObject[count];
             for (int i = 0; i < count; ++i)
             {
-                var pos = GenerateNewMissionPoint(6, rnd);
-                if (pos == default) { Debug.LogWarning("场景点数量" + i); break; }
+                // 同上：摆不下就收工，失败原因由方法内部记 error
+                if (!TryGenerateNewMissionPoint(6, rnd, out Vector3 pos)) break;
                 Instantiate(root.mapCfg.scenePoints.WeightTake(totleWeight, rnd), pos, Quaternion.Euler(0, RandomUtils.Range(rnd, 0, 360), 0), EntityRoot);
                 yield return null;
             }
         }
         /// <summary>
-        /// 生成新的任务点
+        /// 生成新的任务点（带确定性放宽）：先按原半径找，找不到就按半径逐级减半重试，仍无解则退到地图中心。
+        /// <para>▍为什么必须放宽：<c>newRange &gt; mapRadius - 5</c> 时"没超出地图范围"那条判据会退化成
+        /// "只接受正中心"，而候选点自带 ±0.3 格抖动 ⇒ 100 次必然全废。原实现此时返回 <c>Vector3.zero</c>，
+        /// 任务实体被刷到世界原点（图外 + y=0 未取地表高度），主线于是永不发现、也不授权战备。</para>
+        /// <para>▍放宽必须是确定性的：落点要进 <c>MissionAngle()</c> 与实体 Actor 的派生号，两端得走同一条分支，
+        /// 所以放宽次序只由"半径减半"决定，不再额外掷骰。</para>
+        /// <para>返回 <c>false</c> = 用了中心兜底（本方法内已记 error），调用方据此决定还要不要继续摆物件。</para>
         /// </summary>
-        Vector3 GenerateNewMissionPoint(int newRange, System.Random rnd)
+        bool TryGenerateNewMissionPoint(int newRange, System.Random rnd, out Vector3 pos)
         {
             // 地表占地圆（巨型悬崖等）每次现读一遍：它们可能已被 ModifyTerrain 清除，
             // 只读一次就长期用的话会一直躲着已经不存在的石头
@@ -354,7 +362,7 @@ public enum MissionInitMode
             int mapRadius = (root.CameraSize) / 2;
             Vector2 center = root.MapSize / 2 * Vector2.one;
             Vector2 statrPoint = root.MapBorder * Vector2.one;
-            if (newRange == 0)
+            if (newRange <= 0)
             {
                 // 半径 0 的任务（如主任务）固定刷在地图中心，这里不做挪位，只警告：
                 // 中心若已被占（任务点/地表占地圆如巨型悬崖），应该在地形或布局侧解决
@@ -362,12 +370,49 @@ public enum MissionInitMode
                 {
                     Debug.LogWarning($"地图中心 {center} 落在已占用范围内，该任务点可能与已有物体重叠");
                 }
-                return center.ToVector3();
+                pos = center.ToVector3();
+                return true;
             }
 
+            // 半径逐级减半、最后保底 5m（= 间距判据里的最小间隔）；只有"原半径根本摆不下"才会走到后面几轮
+            int searchRange = newRange;
+            while (true)
+            {
+                if (TryFindPoint(center, mapRadius, statrPoint, searchRange, rnd, out Vector2 bestPoint))
+                {
+                    // 登记一律用**真实半径**：放宽只表示"这次能挤在多小的空位里"，下次别人仍得躲开实体真实大小
+                    missionCreatPoints.Add((bestPoint, newRange));
+                    // 同步登记到共享"已占圆"：本类自己的列表只够自己避让，别的生产者（如铁轨路径规划）需要一份
+                    // 不反向依赖 09_Managers 就能读到的薄数据（与 TerrainUtils.AreaCircles 同款）
+                    TerrainUtils.AddReservedCircle(bestPoint, newRange);
+                    pos = new Vector3(bestPoint.x, TerrainUtils.WSToHeight(bestPoint), bestPoint.y);
+                    if (searchRange != newRange)
+                    {
+                        Debug.LogWarning($"半径 {newRange} 找不到完整空位，已按 {searchRange} 放宽落点 {bestPoint}");
+                    }
+                    return true;
+                }
+                if (searchRange <= 5) break;
+                searchRange = Mathf.Max(5, searchRange / 2);
+            }
+
+            Debug.LogError($"任务点完全无解（半径 {newRange}，地图半径 {mapRadius}，已有任务点 {missionCreatPoints.Count} 个，"
+                + $"需避让的地表占地圆 {_areaCircles.Count} 个）⇒ 退到地图中心 {center}");
+            pos = center.ToVector3();
+            return false;
+        }
+
+        /// <summary>
+        /// 在 <paramref name="searchRange"/> 这个半径要求下找一个可用点：网格采样 → 边界/占位校验 → 取最平坦。
+        /// <para>半径只决定"这次要求多空"，不写任何全局状态 ⇒ 可被 <see cref="TryGenerateNewMissionPoint"/> 反复调用。</para>
+        /// </summary>
+        bool TryFindPoint(Vector2 center, int mapRadius, Vector2 statrPoint, int searchRange, System.Random rnd, out Vector2 bestPoint)
+        {
+            bestPoint = default;
             // 步骤1：将地图划分为网格，保证均匀分布（网格大小为"最小安全间距"）
-            float gridSize = newRange * 2; // 新点与其他点的最小安全间距（避免相切）
+            float gridSize = searchRange * 2; // 新点与其他点的最小安全间距（避免相切）
             int gridCount = Mathf.CeilToInt(mapRadius * 2 / gridSize); // 网格数量
+            if (gridCount < 1) return false;
 
             // 收集多个符合条件的候选点，然后选最平坦的
             const int candidateCount = 4;
@@ -379,46 +424,41 @@ public enum MissionInitMode
                 float gridY = Mathf.Clamp(RandomUtils.Range(rnd, 0, gridCount) +0.5f + RandomUtils.Range(rnd, -0.3f, 0.3f), 0.5f, gridCount - 0.5f) * gridSize;
                 var candidatePos = statrPoint+ new Vector2(gridX, gridY);
 
-                if (Vector2.Distance(candidatePos, center)+ newRange <= Mathf.Max( mapRadius - 5, newRange) //没超出地图范围
-                    && !IsOverlapWithExistingPoints(candidatePos, (int)(newRange*(100- attemptCount) /100f)))//没和其他占地点（任务/兴趣点/地表占地圆）相交
+                if (Vector2.Distance(candidatePos, center)+ searchRange <= Mathf.Max( mapRadius - 5, searchRange) //没超出地图范围
+                    && !IsOverlapWithExistingPoints(candidatePos, (int)(searchRange*(100- attemptCount) /100f)))//没和其他占地点（任务/兴趣点/地表占地圆）相交
                 {
                     candidates.Add(candidatePos);
                 }
             }
 
-            if (candidates.Count == 0)
-            {
-                Debug.LogWarning($"没有找到可用的点（半径 {newRange}，已有任务点 {missionCreatPoints.Count} 个，"
-                    + $"需避让的地表占地圆 {_areaCircles.Count} 个）");
-                return Vector3.zero;
-            }
+            if (candidates.Count == 0) return false;
 
             // 选最平坦的点：在候选点周围采样高度，计算标准差
-            Vector2 bestPoint = candidates[0];
+            bestPoint = candidates[0];
             float bestFlatness = float.MaxValue;
-            int sampleStep = Mathf.Max(2, newRange / 4); // 采样间距
+            int sampleStep = Mathf.Max(2, searchRange / 4); // 采样间距
 
-            foreach (var pos in candidates)
+            foreach (var point in candidates)
             {
                 float mean = 0;
                 int sampleCount = 0;
                 // 从 -range/2 到 +range/2 范围内均匀采样
-                for (float dx = -newRange * 0.5f; dx <= newRange * 0.5f; dx += sampleStep)
+                for (float dx = -searchRange * 0.5f; dx <= searchRange * 0.5f; dx += sampleStep)
                 {
-                    for (float dy = -newRange * 0.5f; dy <= newRange * 0.5f; dy += sampleStep)
+                    for (float dy = -searchRange * 0.5f; dy <= searchRange * 0.5f; dy += sampleStep)
                     {
-                        mean += TerrainUtils.WSToHeight(pos + new Vector2(dx, dy));
+                        mean += TerrainUtils.WSToHeight(point + new Vector2(dx, dy));
                         sampleCount++;
                     }
                 }
                 mean /= sampleCount;
 
                 float variance = 0;
-                for (float dx = -newRange * 0.5f; dx <= newRange * 0.5f; dx += sampleStep)
+                for (float dx = -searchRange * 0.5f; dx <= searchRange * 0.5f; dx += sampleStep)
                 {
-                    for (float dy = -newRange * 0.5f; dy <= newRange * 0.5f; dy += sampleStep)
+                    for (float dy = -searchRange * 0.5f; dy <= searchRange * 0.5f; dy += sampleStep)
                     {
-                        float h = TerrainUtils.WSToHeight(pos + new Vector2(dx, dy));
+                        float h = TerrainUtils.WSToHeight(point + new Vector2(dx, dy));
                         variance += (h - mean) * (h - mean);
                     }
                 }
@@ -427,15 +467,11 @@ public enum MissionInitMode
                 if (variance < bestFlatness)
                 {
                     bestFlatness = variance;
-                    bestPoint = pos;
+                    bestPoint = point;
                 }
             }
 
-            missionCreatPoints.Add((bestPoint, newRange));
-            // 同步登记到共享"已占圆"：本类自己的列表只够自己避让，别的生产者（如铁轨路径规划）需要一份
-            // 不反向依赖 09_Managers 就能读到的薄数据（与 TerrainUtils.AreaCircles 同款）
-            TerrainUtils.AddReservedCircle(bestPoint, newRange);
-            return new Vector3(bestPoint.x, TerrainUtils.WSToHeight(bestPoint), bestPoint.y);
+            return true;
         }
 
         /// <summary>

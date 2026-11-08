@@ -26,7 +26,9 @@ namespace FPSGame.Game.Editor
             // ⚠ 不能只信 _stylesBuilt：Unity 域热重载会把缓存的 GUIStyle 字段还原成"默认空样式"
             //   （字号 0、黑字、clipping=Overflow），而 bool 标志本身照样是 true
             //   ⇒ 只看标志就会一直拿坏样式画，表现为整片黑字、行高塌掉。这里用哨兵样式自检，坏了重建。
-            if (_stylesBuilt && _compareCellStyle != null && _compareCellStyle.fontSize == CompareCellFontSize)
+            //   ⚠ 新加的样式也要进哨兵：只判 _compareCellStyle 时，隔行底色样式坏了不会被重建
+            if (_stylesBuilt && _compareCellStyle != null && _compareCellStyle.fontSize == CompareCellFontSize
+                && _compareRowOddStyle != null)
             {
                 return;
             }
@@ -92,6 +94,17 @@ namespace FPSGame.Game.Editor
                 clipping = TextClipping.Clip,
                 // 纯白：颜色全靠 GUI.contentColor 乘出来，底色带灰会把红绿压暗
                 normal = { textColor = Color.white },
+            };
+
+            // 对比表隔行底色：HorizontalScope 是"先画样式背景、再画子控件" ⇒ 直接把背景塞进
+            // 行容器样式，天然就是行底色。别改成"量完 rect 再 DrawRect"：DrawRect 只在 Repaint 生效，
+            // 画在标签之后会盖住文字，画在之前又只有上一帧量得到的 rect（拖动窗口时会闪）。
+            // ⚠ 必须克隆 GUIStyle.none（padding/margin 全 0）：列宽是硬编码的 684 贴着内容宽，
+            //   带上边距或内边距会把最后一列顶出面板。
+            _compareRowEvenStyle = new GUIStyle(GUIStyle.none);
+            _compareRowOddStyle = new GUIStyle(GUIStyle.none)
+            {
+                normal = { background = MakeTex(1, 1, new Color(1f, 1f, 1f, 0.05f)) },
             };
         }
 

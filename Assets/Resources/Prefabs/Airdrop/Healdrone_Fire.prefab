@@ -445,7 +445,11 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 6130525007567554612}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3934286715313500991, guid: 2f7f2b02984600145bdbad132e552728,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5109635399101721801}
   m_SourcePrefab: {fileID: 100100000, guid: 2f7f2b02984600145bdbad132e552728, type: 3}
 --- !u!4 &4720816851962546048 stripped
 Transform:
@@ -456,6 +460,33 @@ Transform:
 --- !u!1 &5541968204023268471 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1299246795375933029, guid: 2f7f2b02984600145bdbad132e552728,
+    type: 3}
+  m_PrefabInstance: {fileID: 6840647513916273170}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5109635399101721801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6260029466172558011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 353e2a5a83e815841b7088f2d19c38b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxHealth: 100
+  MaxShield: 0
+  showArmorLists: []
+  MainPart: {fileID: 0}
+  demolishValue: -1
+  AutoDestroy: 1
+  showHealth: 0
+  m_IsDead: 0
+  AboGaugeArr: []
+--- !u!1 &6260029466172558011 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3934286715313500991, guid: 2f7f2b02984600145bdbad132e552728,
     type: 3}
   m_PrefabInstance: {fileID: 6840647513916273170}
   m_PrefabAsset: {fileID: 0}

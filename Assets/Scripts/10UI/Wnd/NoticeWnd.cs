@@ -101,7 +101,7 @@ public class NoticeWnd : Window
 
     public void Clear()
     {
-        Debug.LogError("清空");
+        Debug.Log("清空");
         queue.Clear();
         noticeState = NoticeState.Exit;
         SetWndState(false);

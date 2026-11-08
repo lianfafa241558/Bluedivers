@@ -115,6 +115,9 @@ public class TipWnd : Window
         if (!State) return false;
 
         ClickButton(optB);
+        // ⚠ 同 PasswordWnd：Close() 在队列还有下一条时只换内容、窗口不关，而监听已被输入层弹出 ⇒ 必须补回，
+        //    否则排队的第二条提示按 ESC 没反应。
+        if (State) InputManager.AddListenerCancel(Listener);
         return true;
     }
 

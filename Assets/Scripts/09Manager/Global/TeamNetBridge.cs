@@ -581,6 +581,11 @@ namespace FPSGame.Managers
 
             bool booster = slotIndex == PlayerSetupMsg.BoosterSlot;
 
+            // 联机诊断：这条是"客机看不到别人选的战备/就绪"时最先要看的一行 ——
+            // 收得到但 localIndex 不对（映射错行）与收不到（消息/订阅问题）是两种完全不同的坏法。
+            FPSGame.Utils.NetSyncLog.SyncLog("准备项/收",
+                $"sid={sid} → 本地下标 {localIndex}（{(booster ? "全队强化" : "战备")} 槽 {slotIndex} = id {id}）");
+
             // ★ 先落数据、再叫 UI：桥是常驻的，而舰桥界面（BridgeSys/ArmamentWnd）只在舰桥场景
             //   ⇒ 数据落点必须在这里，否则"不在舰桥时收到的同步"会被静默丢掉
             //   （战斗中 BattleManager/空投都读 players[i].airdrop / boosterId）。

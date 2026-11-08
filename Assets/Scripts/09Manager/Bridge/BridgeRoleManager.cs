@@ -117,8 +117,8 @@ public class BridgeRoleManager : RoleManagerBase
         //
         //   ▍为什么这里直接读本机 GameState 就够（顺序保证，别想当然）：
         //     房主收人时的发送顺序 = JoinRoomRsp → 补发 TaskConfirmNtf → BroadcastPlayerList。
-        //     · JoinRoomRsp 在本端 FinishJoin 里**先**抛 OnPlayerList（那时 _pendingStartSnap 还没置位 ⇒ 本方法
-        //       直接 return，不会用"还没跟阶段"的状态去挪人），**再**抛 OnJoinResult（置位）；
+        //     · JoinRoomRsp 只在本端 FinishJoin 里抛 OnJoinResult（置位 _pendingStartSnap）；
+        //       ⚠ 它**不再**顺带抛 OnPlayerList（那条没带资料，会被各桥判成"名单与资料长度不一致"丢掉）；
         //     · 补发 TaskConfirmNtf ⇒ 本机 GameState 跟到 Armament；
         //     · 最后 BroadcastPlayerList 才触发本方法真正落位 ⇒ 这时读到的已经是**跟过阶段**的新值。
         bool armament = GameRoot.GameState == FPSGame.Core.GameStateEnum.Armament;

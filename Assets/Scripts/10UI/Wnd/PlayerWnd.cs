@@ -244,6 +244,8 @@ using static FPSGame.WndTools.WndRootTool;
                 m_Health.OnHit -= OnTakeDamage;
                 m_Health.OnHealed -= OnHealed;
             }
+            // 换场景：旧玩家没了，上一局的受击闪光 / 预警 / 濒死心跳还会留在 HUD 上（心跳是 Loop 音源）
+            ResetFeedback();
         }
 
 
@@ -462,6 +464,9 @@ using static FPSGame.WndTools.WndRootTool;
         float m_AccumulatedDeltaTime = 0f;
         int m_AccumulatedFrameCount = 0;
 
+        /// <summary>上次结算时 <see cref="FPSGame.Net.NetTransformFlow.ReceivedBatchCount"/> 的值（只算窗口内的差值）。</summary>
+        private int m_LastNetBatches;
+
         private void UpdateDebug()
         {
             m_AccumulatedDeltaTime += Time.deltaTime;
@@ -470,10 +475,29 @@ using static FPSGame.WndTools.WndRootTool;
             if (m_AccumulatedDeltaTime >= 1)
             {
                 int framerate = Mathf.RoundToInt((float)m_AccumulatedFrameCount / m_AccumulatedDeltaTime);
-                SetText(framerateCounter, framerate);
+                // 同行显示：`144Fps 18Hz 32ms`（帧数 + 网络帧数 + 延迟）
+                SetText(framerateCounter, framerate + "Fps " + NetHudText(m_AccumulatedDeltaTime));
                 m_AccumulatedDeltaTime = 0f;
                 m_AccumulatedFrameCount = 0;
             }
+        }
+
+        /// <summary>网络帧数（每秒真收到的位姿批次）+ 延迟（RTT），与帧数共用同一个结算窗口。
+        /// <para>⚠ 延迟只有成员侧有：房主收不到"回应答"的那一端 ⇒ <c>RttMs</c> 恒 -1，这里显示 <c>--</c>。
+        /// 每秒才拼一次字符串（1 次/秒，不在热路径），所以不建字符缓冲。</para></summary>
+        private string NetHudText(float span)
+        {
+            var flow = FPSGame.Net.NetTransformFlow.Instance;
+            int total = flow != null ? flow.ReceivedBatchCount : 0;
+            int batches = total - m_LastNetBatches;
+            m_LastNetBatches = total;
+
+            int hz = Mathf.RoundToInt(batches / span);
+
+            var svc = FPSGame.Net.NetSvc.Instance;
+            float rtt = svc != null && svc.IsConnected ? svc.RttMs : -1f;
+
+            return hz + "Hz " + (rtt < 0f ? "--" : Mathf.RoundToInt(rtt).ToString()) + "ms";
         }
     //#endif
 

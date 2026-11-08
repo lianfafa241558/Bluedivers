@@ -131,11 +131,12 @@ namespace FPSGame.Gameplay
         public bool IsAiming {
             get => m_isAiming;
             private set {
-                if (IsAiming != value && OnAim != null)
-                {
-                    OnAim.Invoke(value);
-                }
+                if (m_isAiming == value) return;
+                // ⚠ 必须**先落值再抛事件**：订阅方 OnAiming → RefreshScopeVisible 要在回调里读"当前"瞄准状态。
+                //   原来先 Invoke 后赋值 ⇒ 回调里读到的是上一帧的值 ⇒ 瞄准镜显隐整个反相
+                //   （第一人称：瞄准时藏、松手时显示；2026-11-08 实测）
                 m_isAiming = value;
+                OnAim?.Invoke(value);
             }
         }
 
@@ -156,7 +157,7 @@ namespace FPSGame.Gameplay
             {
                 // 双持时始终视为正在瞄准
                 bool dualWielding = activeSecWeapon != null;
-                // ⚠ 中键切第一人称**不放宽 canAim**：无缩放武器就停在这一条，只切视角不进瞄准（正常第一人称）
+                // ⚠ 右键+中键切第一人称**不放宽 canAim**：无缩放武器就停在这一条，只切视角不进瞄准（正常第一人称）
                 bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
                 IsAiming = (dualWielding || (!activeSecWeapon && canAim
                     && (ForceAim || m_PlayerCharacterController.FirstPersonAimOverride || m_InputHandler.GetAimInputHeld())));
@@ -278,7 +279,7 @@ namespace FPSGame.Gameplay
             {
                 // 双持时始终视为正在瞄准
                 bool dualWielding = activeSecWeapon != null;
-                // ⚠ 中键切第一人称**不放宽 canAim**：无缩放武器就停在这一条，只切视角不进瞄准（正常第一人称）
+                // ⚠ 右键+中键切第一人称**不放宽 canAim**：无缩放武器就停在这一条，只切视角不进瞄准（正常第一人称）
                 bool canAim = activeWeapon.AimZoomRatio < 1 || m_PlayerCharacterController.IsThirdPerson;
                 IsAiming = (dualWielding || (!activeSecWeapon && canAim
                     && (ForceAim || m_PlayerCharacterController.FirstPersonAimOverride || m_InputHandler.GetAimInputHeld())));
@@ -1284,6 +1285,8 @@ namespace FPSGame.Gameplay
             {
                 //Debug.LogWarning("切换到新武器"+newWeapon);
                 SetWeaponState(newWeapon, true);
+                // 换枪时 IsAiming 不变 ⇒ OnAim 不抛，新枪的瞄准镜得在这里对一次
+                ApplyScopeVisible(newWeapon, IsAiming);
 
                 // 后坐偏移/模型回弹归零：两把枪的 profile 完全不同，带着上一把的残余进新枪会"接手"错手感
                 m_WeaponRecoilLocalRotation = Vector3.zero;
@@ -1314,32 +1317,77 @@ namespace FPSGame.Gameplay
 
         void SetWeaponState(WeaponPlayerController weapon,bool state)
         {
+            // ⚠ 先 ShowWeapon 再退订：收起武器会把 IsReloading 置 false，此时还订阅着才能还原换弹移速惩罚
             weapon.ShowWeapon(state);
             if (state)
             {
+                // ⚠ 三个事件**全都**先 -= 再 +=：SetWeaponState(true) 可能对同一把枪重复调用，
+                //   重复订阅不是"多响一次"这么轻 —— 移速惩罚会被扣两份（0.5 的枪直接变 0 速），
+                //   而后坐/开火统计也会翻倍（见 OnWantShootChange 的说明）。
+                weapon.OnShoot -= _OnShoot;
                 weapon.OnShoot += _OnShoot;
+                weapon.OnWantShootChange -= OnWantShootChange;
                 weapon.OnWantShootChange += OnWantShootChange;
+                weapon.OnReloadStateChange -= OnReloadStateChange;
+                weapon.OnReloadStateChange += OnReloadStateChange;
             }
             else
             {
                 weapon.OnShoot -= _OnShoot;
                 weapon.OnWantShootChange -= OnWantShootChange;
+                weapon.OnReloadStateChange -= OnReloadStateChange;
             }
             
         }
 
+        /// <summary>当前正把"射击移速惩罚"挂在 <c>MoveSpeedScale</c> 上的武器。
+        /// <para>▍为什么要按枪记账、而不是直接 <c>+=</c>/<c>-=</c>：这是**同一个浮点**上的累加，
+        /// 重复订阅、连射/蓄力中阈值反复抛同一状态，都会多扣一份。典型后果：RoyalRose 的
+        /// <c>MoveSpeedToShoot = 0.5</c> 被扣两次 ⇒ <c>MoveSpeedScale = 0</c> ⇒ 移速 0，
+        /// 而脚步声那边是 <c>FootstepSfxFrequency / MoveSpeedScale</c> ⇒ 除零 ⇒ 每帧一声脚步（2026-11-08 实测）。</para>
+        /// <para>▍按枪记账同时解决双持：主副两把枪各扣自己的那一份，谁松手只撤自己的。</para></summary>
+        private readonly HashSet<WeaponBaseController> _shootSlowWeapons = new();
+
         private void OnWantShootChange(WeaponBaseController weapon, bool state)
         {
-            if ( weapon.AttrFinal(WeaponAttrType.MoveSpeedToShoot, 1) != 1)
-            {
-                m_PlayerCharacterController.MoveSpeedScale += (state ? -1 : 1) * (1 - weapon.AttrFinal(WeaponAttrType.MoveSpeedToShoot, 1)).RawFloat;
-            }
+            if (weapon == null || m_PlayerCharacterController == null) return;
+
+            // 同一把枪同一状态只记一次（幂等）：重复事件直接忽略，不再动 MoveSpeedScale
+            if (state) { if (!_shootSlowWeapons.Add(weapon)) return; }
+            else { if (!_shootSlowWeapons.Remove(weapon)) return; }
+
+            var scale = weapon.AttrFinal(WeaponAttrType.MoveSpeedToShoot, 1);
+            if (scale == 1) return;
+            m_PlayerCharacterController.MoveSpeedScale += (state ? -1 : 1) * (1 - scale).RawFloat;
         }
 
+        /// <summary>换弹时移动速度：进/出换弹按属性倍率压/提移速，与射击移速各自累加。</summary>
+        private void OnReloadStateChange(WeaponBaseController weapon, bool state)
+        {
+            var scale = weapon.AttrFinal(WeaponAttrType.MoveSpeedToReload, 1);
+            if (scale == 1) return;
+            m_PlayerCharacterController.MoveSpeedScale += (state ? -1 : 1) * (1 - scale).RawFloat;
+        }
+
+        // 瞄准状态变了一圈只做"瞄准镜显隐"这一件事；用事件带下来的 state（别再进回调里读 IsAiming 二次取值）
         void OnAiming(bool state)
         {
-            var weapon = GetActiveWeapon();
-            if(weapon.ScopeGo) weapon.ScopeGo.SetActive(state);
+            ApplyScopeVisible(GetActiveWeapon(), state);
+        }
+
+        /// <summary>
+        /// 同步瞄准镜模型显隐：**只有第一人称 + 正在瞄准**才显示，第三人称瞄准（含右键点中键临时切视角）一律隐藏。
+        /// ⚠ 别只挂在 OnAim 上：切视角/换枪时 IsAiming 可能压根没变 ⇒ 事件不抛，那些路径得自己再推一次。
+        /// </summary>
+        public void RefreshScopeVisible()
+        {
+            ApplyScopeVisible(GetActiveWeapon(), IsAiming);
+        }
+
+        private void ApplyScopeVisible(WeaponPlayerController weapon, bool aiming)
+        {
+            if (weapon == null || weapon.ScopeGo == null) return;
+            weapon.ScopeGo.SetActive(aiming && !m_PlayerCharacterController.IsThirdPerson);
         }
 
         private int m_LastWeaponIndex;

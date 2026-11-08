@@ -118,8 +118,16 @@ using static FPSGame.WndTools.WndRootTool;
             if (!_visible) return;
             _visible = false;
             anim.Play("Hide");
-            AudioSvc.PlayMusic(AudioSvc.MusicGroup.Game, 0.5f);
+            RestoreGameMusic();
+        }
+
+        /// <summary>把 Boss 音乐还给战斗音乐。
+        /// <para>⚠ 顺序不能反：<c>AudioSvc.PlayMusic(MusicGroup, float)</c> 开头就 <c>if (musicLock) return;</c>
+        /// —— 先解锁再切歌，否则这一句是个空操作（Boss 音乐照旧压着，2026-11-08 实测"死亡后音乐没变回去"）。</para></summary>
+        private void RestoreGameMusic()
+        {
             AudioSvc.SetLockMusic(false);
+            AudioSvc.PlayMusic(AudioSvc.MusicGroup.Game, 0.5f);
         }
 
         public override void Tick()
@@ -173,6 +181,16 @@ using static FPSGame.WndTools.WndRootTool;
             if (enemy != null) enemy.OnInvincibleArmorListChanged -= RebuildArmor;
             anim.Play("Death");
             AudioSvc.PlaySound(new(deathCilp, FPSGame.Core.AudioGroups.UI));
+
+            // ★ Boss 死亡走的是 Death 动画，**不经过 Hide()** ⇒ 音乐得在这里自己还回去。
+            //   否则 Show() 里那次 SetLockMusic(true) 没人解锁：Boss 音乐一直压着，战斗音乐再也起不来（2026-11-08 实测）。
+            //   ⚠ 只在"确实是我们放的音乐"（_visible）时还：血条因为 70m 外 / 超时先隐藏过的话，Hide() 早就还过了，
+            //   这里再还一次等于把正在播的战斗音乐重头重放。
+            if (_visible)
+            {
+                _visible = false;
+                RestoreGameMusic();
+            }
         }
 
         void OnDamage(Damageable damageable)

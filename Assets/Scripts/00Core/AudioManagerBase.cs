@@ -15,6 +15,10 @@ namespace FPSGame.Core
         private static AutoObjectPool<AudioSource> sourcePool;
         private static MusicItem[] audMusics;
         private static List<AudioPlayInfo> delayAudios;
+
+        /// <summary>已经报过"找不到音效"的来源。同一来源只报一次 —— 漏配的那条（教程语音 / 单位音效）
+        /// 会被反复触发，原来每一发都刷一行，把真正的一行埋掉了。</summary>
+        private static readonly HashSet<string> s_missingLogged = new HashSet<string>();
         public AudioMixer audioMixer;
 
         public static AudioMixerGroup GetMixGroup(AudioGroups type) => mixerDic[type];
@@ -30,6 +34,7 @@ namespace FPSGame.Core
             var mixerMusic = GetMixGroup(AudioGroups.Music);
             var mixerGeneral = GetMixGroup(AudioGroups.General);
             delayAudios = new();
+            s_missingLogged.Clear();   // 新的一局/新场景：允许各来源再报一次（旧的报错已不在本次日志里）
             audMusics = new MusicItem[2];
             for (int i = 0; i < audMusics.Length; ++i)
             {
@@ -128,7 +133,15 @@ namespace FPSGame.Core
             var cilp = info.cilp ??(!string.IsNullOrEmpty(info.path)? Instance.PathToCilp("SFX/" + info.path, info.cache):null);
             if (!cilp)
             {
-                Debug.LogError("找不到音效"+ info.cilp+"或者"+ info.path);
+                // 来源要能认出来：从音效组来的请求 path 恒为 null，原来那句
+                // "找不到音效{cilp}或者{path}" 只会印成"找不到音效或者"，等于没信息。
+                string src = !string.IsNullOrEmpty(info.debug) ? info.debug
+                    : (!string.IsNullOrEmpty(info.path) ? info.path : "未知来源");
+                if (s_missingLogged.Add(src))
+                {
+                    Debug.LogError($"[音效] 找不到音效：{src}（cilp={info.cilp}，path={info.path}）" +
+                                   "—— 同一来源只报一次；请检查该音效组是否漏挂音频剪辑");
+                }
                 return null;
             }
             //禁止重复

@@ -188,6 +188,7 @@ namespace FPSGame.UI
 
         protected override void ShowWnd()
         {
+            SetUiCursor(this, true);
             selfChangeState = true;
             oldStste = WindowState!= WindowStateEnum.FreeCamera? WindowState : WindowStateEnum.Game;
             WindowState = WindowStateEnum.UI;
@@ -223,7 +224,8 @@ namespace FPSGame.UI
         }
         protected override void HideWnd()
         {
-            WindowState = oldStste;
+            // 本窗是叠加窗：恢复到打开前的状态；但别的 UI 窗口还开着就不许抢光标（见 Window.SetUiCursor）
+            if (!SetUiCursor(this, false)) WindowState = oldStste;
             //wndManager.WndUI.gameObject.SetActive(true);
             //feature.SetActive(false);
             if (_slowedTime)
@@ -842,9 +844,12 @@ namespace FPSGame.UI
         {
             if (!State) return false;
 
+            // ⚠ Cancel 列表是「消费制」：InputManager 弹出回调就不会再放回来。凡是"吃掉 Esc 但窗口不关"
+            //   的分支都必须重新挂上，否则第二次 Esc 没人接（现象：改完键位后 Esc 再也退不出设置窗）。
             // HandleKeyCodeInput 已在本帧处理了选择框/改键的取消，不再重复关闭窗口
-            if (_escHandledThisFrame)
+            if (_escHandledFrame == Time.frameCount)
             {
+                InputManager.AddListenerCancel(Cancel);
                 return true;
             }
 
@@ -852,11 +857,13 @@ namespace FPSGame.UI
             if (_rebindSelectionRoot != null && _rebindSelectionRoot.activeSelf)
             {
                 HideSelection();
+                InputManager.AddListenerCancel(Cancel);
                 return true;
             }
             if (_rebindState == RebindState.WaitingForKey)
             {
                 ResetRebindState();
+                InputManager.AddListenerCancel(Cancel);
                 return true;
             }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using FPSGame.Gameplay;
 using FPSGame.Utils;
 using UnityEngine;
 
@@ -112,6 +113,19 @@ public class InformationWnd : Window
         // 编辑器里摆在窗口下的子项只是预览占位（运行时由「子项预制体」实例接管）⇒ 首次显示时收起
         var root = _listRoot ? _listRoot : transform;
         for (var i = 0; i < root.childCount; ++i) SetActive(root.GetChild(i), false);
+
+        // 换场景整体清空：本窗口常驻，而 Add 的调用方（WaveBase / WeatherEffect）都是**场景物体**
+        // ⇒ 旧场景的提示没人再发 Remove，不清就会永远挂在屏上。
+        GlobalEventBus.OnSceneChange += OnSceneChange;
+    }
+
+    /// <summary>换场景 ⇒ 直接清空全部提示（键表与子项一起丢，新场景重新 Add）。</summary>
+    private void OnSceneChange(string _) => Clear();
+
+    public override void OnDestroy()
+    {
+        GlobalEventBus.OnSceneChange -= OnSceneChange;
+        base.OnDestroy();
     }
 
     protected override void ShowWnd() { }

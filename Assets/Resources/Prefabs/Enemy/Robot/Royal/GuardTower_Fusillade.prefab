@@ -346,12 +346,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0
-  armorLevel: 0
+  explosionResistance: 1
+  armorLevel: 4
   useHealthInsteadOfArmor: 0
-  armorValue: 0
+  armorValue: 200
   LineArmor: []
-  armorBreakEffect: []
+  armorBreakEffect:
+  - go: {fileID: 743989481515052227}
+    state: 1
+    scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
+  - go: {fileID: 1907355279678626851}
+    state: 1
+    scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
   BleedValue: 0
   isMain: 0
   showArmor: 0
@@ -634,6 +644,7 @@ MonoBehaviour:
   line: {fileID: 0}
   sphere: {fileID: 0}
   disance: {fileID: 0}
+  useScale: 0
 --- !u!120 &5158004117012769434
 LineRenderer:
   serializedVersion: 2
@@ -807,7 +818,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   explosionResistance: 0
-  armorLevel: 0
+  armorLevel: 3
   useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
@@ -934,9 +945,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
-  explosionResistance: 0
-  armorLevel: 0
+  isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 3
   useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
@@ -2265,6 +2276,21 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8574616159637404362, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,
         type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8574616159637404362, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8574616159637404362, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8574616159637404362, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.118488856
       objectReference: {fileID: 0}
@@ -2282,6 +2308,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 7.016709e-15
+      objectReference: {fileID: 0}
+    - target: {fileID: 8574616159637404362, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,
+        type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8611990477979378437, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,
         type: 3}
@@ -2386,6 +2417,18 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4787467333579863158}
   m_SourcePrefab: {fileID: 100100000, guid: 4c6ab179a8163eb45a5343a5a6d75fd6, type: 3}
+--- !u!1 &743989481515052227 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3185327732636938856, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,
+    type: 3}
+  m_PrefabInstance: {fileID: 6456014726012690779}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1907355279678626851 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4332437873122296456, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,
+    type: 3}
+  m_PrefabInstance: {fileID: 6456014726012690779}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3921819582062246349 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8067430249191757974, guid: 4c6ab179a8163eb45a5343a5a6d75fd6,

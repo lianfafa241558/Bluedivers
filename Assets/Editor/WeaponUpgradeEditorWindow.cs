@@ -75,6 +75,8 @@ namespace FPSGame.Game.Editor
         private GUIStyle _compareHeaderStyle;
         private GUIStyle _compareCellStyle;
         private GUIStyle _compareDeltaStyle;
+        private GUIStyle _compareRowEvenStyle;
+        private GUIStyle _compareRowOddStyle;
         private bool _stylesBuilt;
 
 

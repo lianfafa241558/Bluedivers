@@ -101,7 +101,7 @@ public class PlayerOperationController : MonoBehaviour
                 if (furn.CanOperate(gameObject))
                 {
                     float dist = Vector3.Distance(furn.CenterPos, checkPos);
-                    if (dist < nearestDist && dist <= 2.0f)
+                    if (dist < nearestDist && dist <= 2.6f)
                     {
                         nearestDist = dist;
                         newtar = furn;
@@ -127,7 +127,7 @@ public class PlayerOperationController : MonoBehaviour
             // 第三人称处于交互操作时自动切瞄准模式
             m_PlayerController.WeaponsManager.ForceAim = m_InputHandler.InOperation;
         }
-        else if (Physics.Raycast(m_Camera.ScreenPointToRay(new(Screen.width / 2, Screen.height / 2, 0)), out var hit, 1.3f, m_Camera.cullingMask))
+        else if (Physics.Raycast(m_Camera.ScreenPointToRay(new(Screen.width / 2, Screen.height / 2, 0)), out var hit, 1.7f, m_Camera.cullingMask))
         {
             TrySetTarget(hit);
         }

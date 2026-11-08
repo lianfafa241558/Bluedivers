@@ -54,6 +54,15 @@ public class MissionCompleteWnd : Window
 
     void MissionCompleted(MissionBase mission)
     {
+        // 只在对局进行中弹：结算/加载/过场阶段 UI 根随时会被拆掉，这时再去 SetWndState
+        // 就是在"正在被销毁的层级"上跑（打包版 NRE 的现场，栈里只剩 SetWndState 一个方法名）。
+        if (mission == null) return;
+        if (FPSGame.Data.FlowState.GameState != GameStateEnum.Game)
+        {
+            Debug.LogWarning($"[任务完成窗] 当前状态 {FPSGame.Data.FlowState.GameState}，不弹「{mission.title}」完成提示");
+            return;
+        }
+
         SetWndState(true);
 
         Color color = mission.missionType == MissionType.Main ? MainColor : ExtraColor;
@@ -61,8 +70,11 @@ public class MissionCompleteWnd : Window
         SetColor(text, color);
         SetColor(right, color);
         SetText(desc, mission.title);
-        SetText(item1, mission.data.reward);
-        SetText(item2, mission.data.reward / 5);
+        // data 来自 TaskItem：场景摆放的任务若没配 _sceneMissionData 就是 null（策划可改的 SO 数据）
+        int reward = mission.data != null ? mission.data.reward : 0;
+        if (mission.data == null) Debug.LogError($"[任务完成窗] 任务「{mission.name}」没有任务数据(data)，奖励显示按 0 处理", mission);
+        SetText(item1, reward);
+        SetText(item2, reward / 5);
         anim.Play("Entry", 0, 0);
         if (!mission.HasTag(FPSGame.GameContract.MissionTag.NoAudio)) AudioSvc.PlaySound(new(mission.missionType == MissionType.Main || mission.missionType == MissionType.Sub ? m_MainCompletedSound : m_ExtraCompletedSound, AudioGroups.UI,1,1));
         AudioSvc.Suppressed(3);

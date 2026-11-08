@@ -149,6 +149,7 @@ public class VehicleWnd : Window
 
     protected override void ShowWnd()
     {
+        SetUiCursor(this, true);
         WindowState = WindowStateEnum.UI;
         m_SelectVehicleCamera.gameObject.SetActive(true);
         ActorsManager.Player.gameObject.SetActive(false);
@@ -168,9 +169,13 @@ public class VehicleWnd : Window
         }
         m_SelectVehicleCamera.gameObject.SetActive(false);
         if(ActorsManager.Player.IsValidMono()) ActorsManager.Player.gameObject.SetActive(true);
-        WindowState = WindowStateEnum.Game;
+        // 还有别的 UI 窗口开着就别把光标收走（见 Window.SetUiCursor）
+        if (!SetUiCursor(this, false)) WindowState = WindowStateEnum.Game;
         InputManager.RemoveListenerCancel(Cancel);
     }
+    /// <summary>ESC / 右键：直接关窗。</summary>
+    /// <remarks>⚠ 输入层弹出回调就丢了（<c>InputManagerBase.Update</c>），这里因为**一定会关窗**才不用补挂
+    /// （<c>ShowWnd</c> 会重新挂）。以后若加了"先收子面板/涂装页"的分支，必须自己 <c>AddListenerCancel(Cancel)</c>。</remarks>
     private bool Cancel()
     {
         if (!State) return false;

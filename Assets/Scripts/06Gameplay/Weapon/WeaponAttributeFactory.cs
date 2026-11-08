@@ -30,6 +30,7 @@ namespace FPSGame.Weapon
             { WeaponAttrType.BulletsSpreadAngle, (false, AttrTag.FlipPlus|AttrTag.DefaultHide, ModifierType.All) },
             { WeaponAttrType.BulletsOffect, (false, AttrTag.FlipPlus, ModifierType.All) },
             { WeaponAttrType.MoveSpeedToShoot, (false,AttrTag.Percentage|AttrTag.OneHide, ModifierType.All) },
+            { WeaponAttrType.MoveSpeedToReload, (false, AttrTag.Percentage|AttrTag.OneHide, ModifierType.All) },
             { WeaponAttrType.ReloadTime, (true, AttrTag.FlipPlus, ModifierType.All) },
             { WeaponAttrType.AutoReloadTime, (true, AttrTag.FlipPlus|AttrTag.UpdateToZero, ModifierType.Extra) },
             { WeaponAttrType.AutoReloadSpeed, (false, default, ModifierType.All) },
@@ -259,6 +260,10 @@ namespace FPSGame.Weapon
         /// <summary>射击时移动速度</summary>
         [InspectorName("通用/射击时移动速度")]
         MoveSpeedToShoot = 9,
+        /// <summary>换弹时移动速度(倍率，1=原速)：换弹期间生效，与射击移速互不影响(可叠加)。
+        /// <para>⚠ 编号取空号 29，理由同 <see cref="ShootCost"/>：重排会让存量 <c>_fakeAttrs</c> 配错。</para></summary>
+        [InspectorName("通用/换弹时移动速度")]
+        MoveSpeedToReload = 29,
         /// <summary>手动装弹时间</summary>
         [InspectorName("通用/手动装弹时间")]
         ReloadTime = 10,

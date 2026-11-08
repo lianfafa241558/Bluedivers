@@ -110,5 +110,6 @@ Shader "LX/SimpleFogAdditive"
         }
     }
 
-    Fallback "Texture"
+    // 同 Texture2.shader："Texture" 是内置管线名，URP 下不存在 ⇒ 回退失效（粉块/黑块）。
+    Fallback "Universal Render Pipeline/Unlit"
 }

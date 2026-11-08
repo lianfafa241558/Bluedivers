@@ -55,9 +55,10 @@ public class AirdropConfigWnd : Window
         new("轨道打击", AirdropData_SO.AirdropType.Red),
         new("凤鹰空袭", AirdropData_SO.AirdropType.Red, AirdropLabelEnum.Jet),
         // 装备型：背包 / 无人机 / 其余支援武器
+        new("支援武器", AirdropData_SO.AirdropType.Blue,AirdropLabelEnum.SupportWeapon),
         new("战术背包", AirdropData_SO.AirdropType.Blue, AirdropLabelEnum.Bag),
         new("无人机", AirdropData_SO.AirdropType.Blue, AirdropLabelEnum.Drone),
-        new("支援武器", AirdropData_SO.AirdropType.Blue),
+        new("其他", AirdropData_SO.AirdropType.Blue),
         // 炮台型：地雷 / 其余哨戒炮
         new("地雷发射器", AirdropData_SO.AirdropType.Greed, AirdropLabelEnum.Mine),
         new("哨戒炮", AirdropData_SO.AirdropType.Greed),
@@ -188,6 +189,7 @@ public class AirdropConfigWnd : Window
 
     protected override void ShowWnd()
     {
+        SetUiCursor(this, true);
         WindowState = WindowStateEnum.UI;
         InputManager.AddListenerCancel(Cancel);
         //展示相机默认关闭（避免编辑器/场景里误渲染），打开窗口时才启用
@@ -205,7 +207,8 @@ public class AirdropConfigWnd : Window
         ClearModel();
         ClearList();
 
-        WindowState = WindowStateEnum.Game;
+        // 还有别的 UI 窗口开着就别把光标收走（见 Window.SetUiCursor）
+        if (!SetUiCursor(this, false)) WindowState = WindowStateEnum.Game;
         InputManager.RemoveListenerCancel(Cancel);
     }
 
@@ -220,6 +223,9 @@ public class AirdropConfigWnd : Window
         _renderTexture = null;
     }
 
+    /// <summary>ESC / 右键：直接关窗。</summary>
+    /// <remarks>⚠ 输入层弹出回调就丢了（<c>InputManagerBase.Update</c>），这里因为**一定会关窗**才不用补挂
+    /// （<c>ShowWnd</c> 会重新挂）。以后若加了"先收购买面板"的分支，必须自己 <c>AddListenerCancel(Cancel)</c>。</remarks>
     private bool Cancel()
     {
         if (!State) return false;

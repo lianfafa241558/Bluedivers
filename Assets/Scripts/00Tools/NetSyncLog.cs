@@ -79,8 +79,8 @@ namespace FPSGame.Utils
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void InitFromStartup()
         {
-            //Enabled = !Application.isEditor;
-            Enabled = true;
+            Enabled = !Application.isEditor;
+            //Enabled = true;
             if (System.Environment.GetEnvironmentVariable("NETSYNC_LOG") == "1") Enabled = true;
 
             string[] args = System.Environment.GetCommandLineArgs();

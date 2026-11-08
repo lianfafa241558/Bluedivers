@@ -539,11 +539,14 @@ namespace FPSGame.AI
             //    "新目标仇恨" + FpsHelper.ThreatValue(CorePoint.position, newActor));
 
             //}
-            if (!newActor.IsValidMono()|| CorePoint == null) return;
+            // 无敌单位（护卫犬等）不能被锁定：CheckNewTarget 的 FilterNewTarget 已经这么判，受击这条路原来只判
+            // IsValidMono ⇒ 敌人被狗打一下就转火到狗身上，然后既不追也不开火（2026-11-08 实测"傻站"）
+            if (!FpsHelper.VaildTarget(newActor) || CorePoint == null) return;
 
             var oldThreat = Target!=null? FpsHelper.ThreatValue(CorePoint.position, Target.Actor):0;
             var newThreat = FpsHelper.ThreatValue(CorePoint.position, newActor);
-            if (!Target.Actor.IsValidMono()|| oldThreat > newThreat)
+            // ThreatValue 越大越优先（见 FpsHelper.ThreatValue）⇒ 只有新来源更值得打才转火
+            if (!Target.Actor.IsValidMono()|| newThreat > oldThreat)
             {
                 // 有当前目标且处于转火冷却期时，不因受击切换目标，避免被围殴时反复转火无法开火
                 if (!Target.Actor.IsValidMono() || !IsSwitchingCooldown)

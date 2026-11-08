@@ -34,7 +34,8 @@ public partial class SettingWnd : Window
     private RebindState _rebindState;
     private KeyCode _rebindingKeyCode;
     private InputItem _rebindingItem;
-    private bool _escHandledThisFrame;
+    /// <summary>本帧是否已被改键模块吃掉 Esc（帧号，别用 bool：切走后再切回来会留下永真标记）。</summary>
+    private int _escHandledFrame = -1;
     private bool _haveInputChanged;
 
     private List<InputItem> InputList => (InputManager.Instance as InputManager).InputList;
@@ -277,8 +278,6 @@ public partial class SettingWnd : Window
 
     private void HandleKeyCodeInput()
     {
-        _escHandledThisFrame = false;
-
         if (_keyDisplay == null) return;
 
         // 改键模块内优先处理 Esc/右键 取消
@@ -288,14 +287,14 @@ public partial class SettingWnd : Window
             {
                 wndManager.PlaySound(new("UI/UI_Button_Back"));
                 HideSelection();
-                _escHandledThisFrame = true;
+                _escHandledFrame = Time.frameCount;
                 return;
             }
             if (_rebindState == RebindState.WaitingForKey)
             {
                 wndManager.PlaySound(new("UI/UI_Button_Back"));
                 ResetRebindState();
-                _escHandledThisFrame = true;
+                _escHandledFrame = Time.frameCount;
                 return;
             }
         }

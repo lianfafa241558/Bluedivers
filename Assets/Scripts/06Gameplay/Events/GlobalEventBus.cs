@@ -84,8 +84,19 @@ namespace FPSGame.Gameplay
 
         /// <summary>请求打开某个窗口：玩法层只说"开哪个"（<see cref="WndType"/> 在契约层），
         /// 由 <c>WndManager</c> 订阅后转调 <c>WindowRegistry</c>。⚠ 无人订阅时静默无操作。</summary>
+        /// <remarks>⚠ 远端交互重放（<see cref="Furniture_Attached.ApplyRemoteOperate"/>）**不许开本机界面**：
+        /// 家具的 <c>Operate</c> 覆写里常带"开窗"（`Furniture_General` 的 SelectRole / SelectTask…），
+        /// 重放是"两端跑同一份共享逻辑"，界面却是每个玩家自己的 ⇒ 队友点一下，其他人窗口全弹（2026-11-08 实测）。</remarks>
         public static event Action<WndType> OnOpenWnd;
-        public static void OpenWnd(WndType type) => OnOpenWnd?.Invoke(type);
+        public static void OpenWnd(WndType type)
+        {
+            if (Furniture_Attached.IsRemoteReplay)
+            {
+                FPSGame.Utils.NetSyncLog.SyncLog("界面/重放", $"{type} 由远端家具重放触发 ⇒ 本端不开窗");
+                return;
+            }
+            OnOpenWnd?.Invoke(type);
+        }
 
         /// <summary>弹一条 NPC 提示（角色 / 类型 / 持续条件 / 有效时长）。同样由 <c>WndManager</c> 订阅转调。</summary>
         public static event Action<string, string, Func<bool>, float> OnNotice;

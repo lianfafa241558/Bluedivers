@@ -438,24 +438,46 @@ namespace FPSGame.Managers
             return unit && unit.GetComponent<Actor>() is { } actor && actor.HasFlag(ActorFlag.Boss);
         }
 
+        /// <summary>取 tier 的权重表：**表里没有就逐级往下找**（tier-1 → tier-2 … → Small），全都没有才判失败。
+        ///
+        /// <para>▍为什么不能随便挑一个 tier 兜底：原来是 `TierItemWeight.FirstOrDefault()`，字典顺序不定 ⇒
+        /// 要"小型单位"的刷怪器可能刷出巨型，而且只留一条 warning，排查时完全看不懂敌人构成。
+        /// 现在按 <see cref="UnitTier"/> 的数值**只降不升**，缺配的 tier 至少还是"同一量级偏弱"。</para>
+        ///
+        /// <para>⚠ **不往上找**：越级往上等于凭空加强度，缺配的波次会突然变成地狱难度。</para>
+        /// <para>▍`Init` 建表时已滤掉空引用，所以"表里有这个 tier"就等价于"至少有一把能用的 prefab"。</para>
+        /// </summary>
+        private List<KVP<int, UnitWeightCfg>> ResolveTierWeightList(UnitTier tier)
+        {
+            if (TierItemWeight == null || TierItemWeight.Count == 0)
+            {
+                Debug.LogError("CreatUnit: 当前模板一个单位都没配，无法创建单位");
+                return null;
+            }
+
+            if (TierItemWeight.TryGetValue(tier, out var list) && list != null && list.Count > 0) return list;
+
+            // 逐级降低：tier-1、tier-2 … 一直找到 Small(1)，None(0) 是"无"，不参与
+            for (int t = (int)tier - 1; t > (int)UnitTier.None; --t)
+            {
+                var lower = (UnitTier)t;
+                if (!TierItemWeight.TryGetValue(lower, out list) || list == null || list.Count == 0) continue;
+
+                Debug.LogWarning($"CreatUnit: tier '{tier}' 没有可用单位 ⇒ 逐级降到 '{lower}'（已配置: {string.Join(",", TierItemWeight.Keys)}）");
+                return list;
+            }
+
+            Debug.LogError($"CreatUnit: tier '{tier}' 及以下所有 tier 都没有可用单位（已配置: {string.Join(",", TierItemWeight.Keys)}）⇒ 本次不创建单位");
+            return null;
+        }
+
         /// <summary>按 tier 取一把 prefab，并把落点吸附 / 抖动、朝向一并算好（上面那条 tier 重载与刷怪器那条共用）。
         /// <para>⚠ 取值顺序 = 权重 → 落点抖动 → 朝向：改顺序等于改随机序列（两端会错位）。</para></summary>
         GameObject TakeTierUnit(UnitTier tier, ref Vector3 pos, float range, Random rand, out Quaternion rot)
         {
             rot = default;
-            if (!TierItemWeight.TryGetValue(tier, out var weightList) || weightList.Count == 0)
-            {
-                // 降级：如果指定 tier 不存在，尝试使用字典中任意可用的 tier
-                // （tier 存在但 unitWeights 为空/全是空引用也会走到这里，所以把已配置的 tier 一并打出来）
-                Debug.LogWarning($"CreatUnit: tier '{tier}' 在当前模板配置中不存在（已配置: {string.Join(",", TierItemWeight.Keys)}），降级到默认 tier");
-                var firstKvp = TierItemWeight.FirstOrDefault();
-                if (firstKvp.Value == null || firstKvp.Value.Count == 0)
-                {
-                    Debug.LogError("CreatUnit: 模板配置中没有可用的 tier，无法创建单位");
-                    return null;
-                }
-                weightList = firstKvp.Value;
-            }
+            var weightList = ResolveTierWeightList(tier);
+            if (weightList == null) return null;   // 一条可用单位都没有（日志已在里面打过）
 
             var item = weightList.WeightTake(100, rand);
 

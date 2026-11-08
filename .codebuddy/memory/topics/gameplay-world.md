@@ -63,3 +63,9 @@
 - 0 半径的四个后果：`MissionDestroyActor.FindUnit` 的 `PECircle(pos,0)` 退化成点（只捞任务点上的那个物件）、`MissionView.areaRange=0`（小地图无区域圈）、`WaveBase.TrySampleNestPoint` 退化成 1m 刷怪半径、`MissionBase.Tick` 因 `entitySize<=0` 不做战备范围授权。
 - 修法：`InitFromSceneData` 里 `entitySize = mapEntitySize.x`（**必须在 `entity.Init` 前**）。场景任务里只有需要区域的那几个把 `mapEntitySize` 写成 (20,20)，其余 (0,0) ⇒ 该字段就是作者表达半径的地方。
 - ⚠ `MissionDestroyActor.actorNames` 比的是 **`Actor.Id`**，不是物体名：路障 `Wall3` 的 Id=`Wall`，巢穴外围挡墙（RobotWall/WallLenght）全是 `wire`。
+
+## 任务落点无解 ⇒ 刷到世界原点（2026-11-08 修）
+- 病灶：`MissionController.GenerateNewMissionPoint` 100 次采样全失败时 `return Vector3.zero`，而**唯一不校验返回值的调用点是 `CreatMission`**（兴趣点/场景点都有 `pos == default` 早退）⇒ 任务实体 `Instantiate` 到 (0,0,0)：图外角上 + y=0 未取 `WSToHeight`，`MissionView` 永不发现、`MissionBase.Tick` 也不授权战备。
+- 其中一类是**必然失败**：判据 `dist + newRange <= max(mapRadius-5, newRange)` 在 `newRange > mapRadius-5` 时退化成"只接受正中心"，而候选取点带 ±0.3 格抖动 ⇒ 永远命中不了（mapRadius：Mini 96 / Small 195 / Medium 292 / Large 390）。
+- 修：改成 `bool TryGenerateNewMissionPoint(int, System.Random, out Vector3)`，失败按**半径逐级减半**（保底 5m）重试，仍无解 → `LogError` + 退到地图中心并返回 false。放宽次序只由半径算、**不额外掷骰**：落点会进 `MissionAngle()` 与实体 Actor 派生号，两端必须走同一分支。抽出的 `TryFindPoint` 不写全局状态；登记（`missionCreatPoints` / `TerrainUtils.ReservedCircles`）一律用**真实半径**。
+- `CreatMission` 拿到 false 也**照常创建**（主线/撤离链少一个下游就空引用）；兴趣点/场景点在 false 时 `break`。

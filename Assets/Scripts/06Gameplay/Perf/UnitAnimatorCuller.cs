@@ -2,6 +2,7 @@
 using FPSGame.Core;
 using FPSGame.Game;
 using FPSGame.GameContract;
+using FPSGame.Utils;
 using UnityEngine;
 
 namespace FPSGame.Gameplay
@@ -46,6 +47,9 @@ namespace FPSGame.Gameplay
         private float _nextCheck;
         private Camera _cam;
 
+        /// <summary>离地超过这个高度(m)就算"悬空"，一律不冻。地面单位离地只有 0.x 米，飞行单位才在这个量级。</summary>
+        private const float AirborneHeight = 3f;
+
         private void OnValidate()
         {
             if (FarDistance < NearDistance) FarDistance = NearDistance;
@@ -79,13 +83,33 @@ namespace FPSGame.Gameplay
                 {
                     // ⚠ 一次性表现（入场"从天而降"）播到一半不能冻：状态机停住 ⇒ 模型钉在天上，
                     //   而逻辑坐标早在地上 ⇒ 玩家在远处看见它悬空，走近才落下来
-                    if (sqr > farSqr && !actor.AnimatorOneShotPlaying) actor.SetAnimatorsEnabled(false);
+                    // ⚠ 双层保险：`AnimatorOneShotPlaying` 靠动画器状态，而动画器被关掉/未绑定时状态读不出来
+                    //   （返回默认结构）；`ModelLifted` 直接读渲染包围盒，模型已经被抬离本体就一律不冻。
+                    //   冻住的姿态是单向不可恢复的，代价只有"少数单位白跑动画"
+                    if (sqr > farSqr
+                        && !IsAirborne(actor)
+                        && !actor.ModelLifted(AirborneHeight)
+                        && !actor.AnimatorOneShotPlaying)
+                    {
+                        actor.SetAnimatorsEnabled(false);
+                    }
                 }
                 else if (sqr < nearSqr)
                 {
                     actor.SetAnimatorsEnabled(true);
                 }
             }
+        }
+
+        /// <summary>单位是否悬空（离地形超过 <see cref="AirborneHeight"/> 米）。</summary>
+        /// <para>▍只查地形高度、不做物理射线：0.2 s 才判一次、且只判超出远距的候选，开销可忽略。
+        /// ⚠ 没有地形（TerrainUtils.Main 为空）时一律当"在地面"，保持原来的剔除行为。</para>
+        private static bool IsAirborne(Actor actor)
+        {
+            var terrain = TerrainUtils.Main;
+            if (terrain == null) return false;
+            Vector3 pos = actor.transform.position;
+            return pos.y - terrain.WSToHeight(pos) > AirborneHeight;
         }
 
         /// <summary>判定中心：主相机优先（没有相机时退到玩家位置，再退到自身）。</summary>

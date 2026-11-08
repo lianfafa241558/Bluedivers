@@ -107,12 +107,12 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     [SerializeField] private bool _isThirdPerson;
 
     /// <summary>
-    /// 是否第三人称 —— **生效值**：第三人称下按住中键临时切第一人称时返回 false，
-    /// 玩家的视角偏好仍是 <see cref="_isThirdPerson"/>（松开即还原，见 PlayerController_ThirdPerson）。
+    /// 是否第三人称 —— **生效值**：第三人称下按住右键点中键临时切第一人称时返回 false，
+    /// 玩家的视角偏好仍是 <see cref="_isThirdPerson"/>（松开右键即还原，见 PlayerController_ThirdPerson）。
     /// </summary>
     public bool IsThirdPerson
     {
-        get => _isThirdPerson && !_thirdPersonAimOverride;
+        get => _isThirdPerson && !_aimViewOverride;
         private set => _isThirdPerson = value;
     }
 
@@ -181,6 +181,38 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         Actor.RemoveFlag(ActorFlag.Invincible);
     }
 
+    /// <summary>舰桥开工点（场景里挂 "StartPoint" 标签的物体）。首次真用到时才查场景，之后复用。</summary>
+    private Transform _bridgeStartPoint;
+    private bool _bridgeStartPointSearched;
+
+    /// <summary>掉出世界后的自救：舰桥没有 NavMesh ⇒ 吸 NavMesh 必失败，改为传送回开工点。</summary>
+    protected override void HandleOutOfWorld()
+    {
+        if (FPSGame.Data.FlowState.GameState != GameStateEnum.Bridge)
+        {
+            base.HandleOutOfWorld();
+            return;
+        }
+
+        if (!_bridgeStartPointSearched)
+        {
+            _bridgeStartPointSearched = true;
+            var go = GameObject.FindGameObjectWithTag("StartPoint");
+            if (go != null) _bridgeStartPoint = go.transform;
+            else Debug.LogWarning("[玩家] 舰桥场景里没有带 StartPoint 标签的物体，掉出世界后无法自救", this);
+        }
+        // 舰桥里没有可兜的点：只记一次日志直接不做（别再降级去吸 NavMesh）
+        if (_bridgeStartPoint == null) return;
+
+        // ⚠ 必须关掉 CC 再挪：直接写 transform.position 时 CC 内部位置不跟随，大体量传送会被弹回或继续下坠
+        Controller.enabled = false;
+        transform.position = _bridgeStartPoint.position + Vector3.up * 0.2f;
+        Physics.SyncTransforms();
+        Controller.enabled = true;
+        // 清掉下坠速度，否则传送完当帧还会被重力再推下去一次
+        CharacterVelocity = new PEVector3(CharacterVelocity.x, 0, CharacterVelocity.z);
+    }
+
     protected override void Start()
     {
         Controller.enableOverlapRecovery = true;
@@ -237,6 +269,8 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
 
         // 视角切换后刷新武器瞄准状态，确保准星等UI正确
         WeaponsManager.RefreshAimState();
+        // 瞄准镜模型只在第一人称显示：切视角时 IsAiming 往往不变（不抛 OnAim）⇒ 必须在这里补一次
+        WeaponsManager.RefreshScopeVisible();
     }
     private void OnEnable()
     {
@@ -264,6 +298,8 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
 
     private void OnDisable()
     {
+        // 组件被关掉（进载具等）时临时视角已无意义：不复位会让下面和 VehicleController 读到翻转后的 IsThirdPerson
+        _aimViewOverride = false;
         if (!PlayerCamera) return;
 
         PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
@@ -365,7 +401,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         UpdateSprint();
         HandleKei();
         HandleToggleView();
-        HandleThirdPersonAimOverride();
+        HandleAimViewToggle();
 
         
     }
@@ -557,13 +593,9 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     void OnDie(GameObject caused, GameObject origin)
     {
         IsDead = true;
-        // 死前若正按住中键切了第一人称，先还原第三人称再记录偏好：否则偏好被记成第一人称（复活后永久丢第三人称），
+        // 死前若正按住右键点中键切了第一人称，先还原第三人称再记录偏好：否则偏好被记成第一人称（复活后永久丢第三人称），
         // 且武器相机还开着会叠在死亡镜头上
-        if (_thirdPersonAimOverride)
-        {
-            _thirdPersonAimOverride = false;
-            ApplyViewMode();
-        }
+        SetAimViewOverride(false);
         _wasThirdPersonBeforeDeath = IsThirdPerson;
         _downCameraVelocity = Vector3.zero;
 

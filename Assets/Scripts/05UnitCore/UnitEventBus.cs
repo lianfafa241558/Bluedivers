@@ -146,6 +146,21 @@ public static class UnitEventBus
     public static event Action<Actor> OnFriendLeave;
     public static void FriendLeave(Actor unit) => OnFriendLeave?.Invoke(unit);
 
+    /// <summary>
+    /// 单位实例**被销毁**（任意 <c>UnitTypeEnum</c>；发布者是 <c>Actor.OnDestroy</c>）。
+    /// <para>▍与 <see cref="OnUnitDeath"/> / <see cref="OnSpecUnitDead"/> 的区别：那些是"倒地/死亡"，对象还在场上
+    /// （还能被救起、还要统计）；这条是**引用即将失效**，为它建的实例（UI 行 / 小地图点 / 以 Actor 为键的表）
+    /// 必须在此收尾。</para>
+    /// <para>▍为什么不能只靠 <see cref="OnFriendLeave"/>：那条只管 <c>UnitTypeEnum.Friend</c>；玩家 /
+    /// 特殊单位 / Other 被直接 Destroy（换场景 / 回收 / 控制台）时没有任何通知 ⇒ 订阅方留着已销毁引用，
+    /// 之后每帧读 <c>enabled</c> / <c>Pos</c> 就抛（2026-11-08 小地图每帧 NRE 实证）。</para>
+    /// <para>⚠ 在 <c>OnDestroy</c> 里发 ⇒ 处理函数**只能读托管字段**（<c>name</c> / <c>Type</c> / <c>indexID</c> 可以，
+    /// <c>transform</c> / <c>enabled</c> 这类原生调用一律别碰）；盟友会连 <see cref="OnFriendLeave"/> 收两次
+    /// ⇒ 处理必须幂等。</para>
+    /// </summary>
+    public static event Action<Actor> OnActorDestroyed;
+    public static void ActorDestroyed(Actor unit) => OnActorDestroyed?.Invoke(unit);
+
     #endregion
 }
 

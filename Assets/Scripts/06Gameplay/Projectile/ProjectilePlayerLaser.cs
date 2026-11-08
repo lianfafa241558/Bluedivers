@@ -53,7 +53,9 @@ namespace FPSGame.Gameplay
             {
                 Vector3 want = pos - transform.position;
                 float dis = want.magnitude;
-                if (dis >= MinCorrectionDistance)
+                // 准心点必须在枪口**前方**：它落在身后时（自己的护盾罩、贴墙时的背面）掰过去只会把光束拧成回头箭
+                // （2026-11-08 CWC 微波枪实测：护盾罩挡住准心 ⇒ 光束被掰 20° 打向自己）
+                if (dis >= MinCorrectionDistance && Vector3.Dot(want, barrel) > 0f)
                 {
                     dir = Vector3.RotateTowards(barrel, want / dis, MaxCorrectionAngle * Mathf.Deg2Rad, 0f);
                     // 沿用原手感：够远直接对齐，近处按 TrajectoryCorrectionTime 平滑（0 = 立即对齐）

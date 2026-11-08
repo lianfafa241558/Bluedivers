@@ -69,7 +69,14 @@ public class FrontWnd : Window
 
     private void Update()
     {
-        if (Input.anyKeyDown 
+#if UNITY_EDITOR
+            if (Input.GetKeyDown(KeyCode.U))
+        {
+            EnterTeach();
+            return;
+        }
+#endif
+            if (Input.anyKeyDown 
             && !Input.GetMouseButtonDown(0)
             && !Input.GetMouseButtonDown(1)
             && !Input.GetMouseButtonDown(2)

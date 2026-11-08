@@ -18,7 +18,7 @@ namespace FPSGame.Mission
     {
         [InspectorName("击杀基数")]
         [SerializeField]
-        private int enemyBaseValue=15;
+        private int enemyBaseValue=10;
         [SerializeField]
         private int LastWaveTickCount;
         [SerializeField]

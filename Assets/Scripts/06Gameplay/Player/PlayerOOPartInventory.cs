@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -51,7 +51,7 @@ public class PlayerOOPartInventory : MonoBehaviour, IOOPartInventory
     /// </summary>
     public bool TryAdd(OOPartEnum type, int count)
     {
-        Debug.LogError("尝试添加"+type+" "+count);
+        //Debug.LogError("尝试添加"+type+" "+count);
         if (count <= 0 || IsFull(type)) return false;
 
         int actual = Mathf.Min(count, Remaining(type));

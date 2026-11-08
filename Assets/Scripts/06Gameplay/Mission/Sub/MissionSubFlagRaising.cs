@@ -128,6 +128,14 @@ namespace FPSGame.Mission
             }
         }
 
+        /// <summary>结束/销毁都要退订：<see cref="OnSelectAirdrop"/> 原来只在"呼叫成功"那条路退过，
+        /// 没用掉就被完成/销毁时，事件上会留着已结束任务的回调（下一次同 ID 的战备会打到死任务上）。</summary>
+        protected override void Uninit()
+        {
+            BattleEventBus.OnSelectAirdrop -= OnSelectAirdrop;
+            base.Uninit();
+        }
+
         void InitFlag(GameObject flag)
         {
             this.flag = flag.GetComponent<Animator>();

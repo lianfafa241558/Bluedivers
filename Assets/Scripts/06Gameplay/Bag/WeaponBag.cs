@@ -86,6 +86,11 @@ namespace FPSGame.Gameplay
             {
                 Owner.gameObject.GetComponent<EquipController>()?.UninstallEquip(this);
             }
+            // 【联机】"打光消失"要通知对端：背包开火只同步表现、没有弹药字段 ⇒ 对端那份永远不满弹，
+            // 也就永远走不到这里，不通知的话队友背上那件背包会一直留着。
+            var equip = GetComponent<Furniture_Equip>();
+            if (equip != null) equip.ReportGone();
+
             // 整个物体消失（隐藏，便于对象池复用）
             gameObject.SetActive(false);
         }

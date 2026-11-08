@@ -462,6 +462,8 @@ namespace FPSGame.Weapon {
 
             // 噪声倍率与伤害配置无关，基础值恒为 1(不改行为)；只吃改装加成。
             if (!cfg[Attr.NoiseScale]) cfg.Add(Attr.NoiseScale, 1);
+            // 换弹时移速倍率：基础值必须是 1（倍率型）。不注入的话改装走 Factor 时会在 0 上乘 ⇒ 换弹当场定身。
+            if (!cfg[Attr.MoveSpeedToReload]) cfg.Add(Attr.MoveSpeedToReload, 1);
             // 弹射次数：0 = 不弹射，同样与伤害配置无关（消费点是子弹那边读 AttrFinal）。
             if (!cfg[Attr.Catapult]) cfg.Add(Attr.Catapult, 0);
             // 射击消耗：齐射武器一次消耗 = 发射点位数量，其余为 1。

@@ -59,6 +59,10 @@ namespace FPSGame.Gameplay
         [InspectorName("标旗")]
         protected FurnitureFlag flags;
 
+        [SerializeField]
+        [InspectorName("小地图显示")]
+        protected bool showOnMap;
+
 
         [SerializeField]
         [InspectorName("已按时间")]
@@ -115,6 +119,36 @@ namespace FPSGame.Gameplay
 
         /// <summary>身份提供者（Actor 或 BaseObject）：名称/ID/头像/颜色 全工程只存这一份。</summary>
         protected IEntity Identity { get; private set; }
+
+        /// <summary>
+        /// 是否**允许**登记到小地图（配置 + 类型去重）。默认关，各 prefab 按需勾"小地图显示"；
+        /// 整个类型都该上图的（武器拾取 / 装备）由子类覆写放开。
+        /// <para>图标取身份自带的那张（<c>BaseObject.ExtraPortrait → Portrait</c>），由界面侧解析，家具不掺和。</para>
+        /// <para>⚠ 身份是 <see cref="IActor"/> 的家具在这里**不重复登记**：单位本身已经走
+        /// <c>UnitEventBus.OnSpecUnitCreate</c> 那条通道上图，再走标记通道会在图上出现两个点。</para>
+        /// </summary>
+        protected virtual bool ShowOnMinimap => showOnMap && Identity is not IActor;
+
+        /// <summary>
+        /// **当前**是否该在图上（运行时状态）。默认 = <see cref="ShowOnMinimap"/>。
+        /// <para>需要"装上就消失"这类状态的子类（背包 / 护卫犬）覆写它，并在状态变化后自己调一次
+        /// <see cref="RefreshMapMark"/> —— 光改返回值不会自动生效。</para>
+        /// </summary>
+        protected virtual bool MapMarkActive => ShowOnMinimap;
+
+        /// <summary>当前是否已登记（<see cref="RefreshMapMark"/> 的幂等依据）</summary>
+        private bool mapMarkRegistered;
+
+        /// <summary>按 <see cref="MapMarkActive"/> 对齐小地图登记状态（幂等，可反复调用）。</summary>
+        protected void RefreshMapMark()
+        {
+            bool want = MapMarkActive;
+            if (want == mapMarkRegistered) return;
+
+            mapMarkRegistered = want;
+            if (want) MapMarkRegistry.Register(Identity, null);
+            else MapMarkRegistry.Unregister(Identity);
+        }
 
         private Vector3 _colliderCenterOffset = Vector3.up;
 
@@ -241,10 +275,19 @@ namespace FPSGame.Gameplay
         {
             list[NumberID] = this;
             if (SyncId != 0) listBySyncId[SyncId] = this;
+            // 小地图标记与"是否在世界里"同生共死（子类覆写 ShowOnMinimap / MapMarkActive 决定要不要上图）
+            mapMarkRegistered = false;
+            RefreshMapMark();
         }
 
         protected virtual void OnDisable()
         {
+            // ⚠ 与 RefreshMapMark 成对：注册表按引用计数，多家具共用同一身份时不会互相摘掉
+            if (mapMarkRegistered)
+            {
+                mapMarkRegistered = false;
+                MapMarkRegistry.Unregister(Identity);
+            }
             list.Remove(NumberID);
             UnregisterSyncId();
         }
@@ -372,6 +415,12 @@ namespace FPSGame.Gameplay
         /// <summary>【联机】应用远端下发的状态（与 <see cref="ReportState"/> 成对，走同一条 4059）。
         /// <para>默认空实现；有状态机的子类覆写它（如 <c>Furniture_Pipe</c> 还原 <c>Id</c>）。</para></summary>
         public virtual void ApplyRemoteState(int code, string key) { }
+
+        /// <summary>同上，外加**远端操作者**（4059 消息里本来就有 <c>Sid</c>，但状态路径以前把它丢了）。
+        /// <para>▍默认丢掉这个参数走旧实现：只有"要按操作者做点什么"的子类才覆写这一版
+        /// （典型：地面武器被拿走 ⇒ 要挂到那个盟友手里，见 <c>Furniture_WeaponPickup</c>）。</para></summary>
+        /// <param name="remoteUser">房主 = 房主的盟友镜像；解析不到为 null</param>
+        public virtual void ApplyRemoteState(int code, string key, GameObject remoteUser) => ApplyRemoteState(code, key);
 
         public virtual bool CanOperate(GameObject unit)
         {

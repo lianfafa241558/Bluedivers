@@ -6,6 +6,10 @@ namespace FPSGame.Core
     public class AudioPlayInfo
     {
         public string path;
+        /// <summary>排查用的来源标识（音效组名等）。**只**出现在"找不到音效"那条报错里 ——
+        /// 从 <see cref="RuntimeSoundData"/> 转过来的请求一律带 <c>path=null</c>，
+        /// 光看 cilp/path 根本认不出是哪个音效组漏配了音频。</summary>
+        public string debug;
         public bool cache = true;
         public AudioGroups group;
         public AudioClip cilp;

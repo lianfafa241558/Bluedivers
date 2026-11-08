@@ -38,19 +38,19 @@ namespace FPSGame.Game.Editor
         private const float WeightTotalDamage = 0f;
         // 续航：整池弹药打完能撑多久（弹匣量 / 总备弹 / 换弹时长都在这里体现）。
         // 放在「综合能力」那一片（和清杂/反重/拆巢/控制/人机工学并列）。
-        private const float WeightEndurance = 0.08f;
+        private const float WeightEndurance = 0.12f;
         private const float WeightAp = 0.02f;             // 穿透（反重的输入）
-        private const float WeightArmorBreak = 0.03f;     // 破甲（单列项；同时是反重的 20% 输入）
-        private const float WeightWeakness = 0.03f;
+        private const float WeightArmorBreak = 0.04f;     // 破甲（单列项；同时是反重的 20% 输入）
+        private const float WeightWeakness = 0.01f;       // 弱点加成
         private const float WeightAoe = 0.03f;            // 范围（清杂的输入）
-        private const float WeightHandling = 0.09f;       // 人机工学（散布 + 后坐力，各 50%；已挪到"综合能力"区）
+        private const float WeightHandling = 0.08f;       // 人机工学（散布 + 后坐力，各 50%；已挪到"综合能力"区）
         private const float WeightBallistics = 0.04f;     // 弹道（弹速 + 有效射程）
-        private const float WeightSpecial = 0.03f;        // 特殊标签
-        private const float WeightClear = 0.18f;          // 综合能力：清杂 / 反中 / 反重 / 续航 / 拆巢 / 控制 / 人机工学
-        private const float WeightAntiHeavy = 0.15f;
-        private const float WeightAntiMedium = 0.10f;     // 反中（500 血 3 甲 + 200 血 1 甲头部弱点）
-        private const float WeightDemolish = 0.08f;
-        private const float WeightControl = 0.08f;        // 控制（异常状态成分）
+        private const float WeightSpecial = 0.00f;        // 特殊标签
+        private const float WeightClear = 0.15f;          // 综合能力：清杂 / 反中 / 反重 / 续航 / 拆巢 / 控制 / 人机工学
+        private const float WeightAntiHeavy = 0.12f;
+        private const float WeightAntiMedium = 0.12f;     // 反中（500 血 3 甲 + 200 血 1 甲头部弱点）
+        private const float WeightDemolish = 0.09f;
+        private const float WeightControl = 0.12f;        // 控制（异常状态成分）
 
         // 人机工学内部配比：子弹散布角 / 后坐力 各占一半（**加权平均**，不是相乘）
         private const float HandlingSpreadWeight = 0.5f;
@@ -59,6 +59,9 @@ namespace FPSGame.Game.Editor
         // 差值表的列宽：字比上方明细大一号，列宽要跟着放宽，否则武器名会被裁
         private const float CompareLabelWidth = 110f;
         private const float CompareColWidth = 150f;
+        // 得分差列窄一点（只放 "+1.23"）：110 + 150×3 + 124 = 684，刚好塞进最小窗口 960 下的内容宽
+        //（右面板 ≈ 960-244-12-18 = 686）；再宽就会顶出面板、被 Clip 掉右边。
+        private const float CompareScoreWidth = 124f;
 
         private const int CompareCellFontSize = 13;
         private const int CompareDeltaFontSize = 14;
@@ -180,6 +183,9 @@ namespace FPSGame.Game.Editor
         /// 竖向滚动条三者一变就对不上，卡片会顶出面板。这里直接量到的就是内容真实宽度。</para>
         /// </summary>
         private float _scoreContentWidth = 700f;
+
+        /// <summary>对比表行号：只用来算隔行底色，每帧从 0 重数（别在 DrawCompareRow 之外读它）。</summary>
+        private int _compareRowIndex;
 
         private void DrawScoreContent(Rect rect)
         {
@@ -461,11 +467,7 @@ namespace FPSGame.Game.Editor
                     max.ScoreSustainDps, min.ScoreSustainDps, WeightSustainDps, hasRange);
             }
             DrawScoreRow("单发伤害", RealDamageText(max), RealDamageText(min),
-                max.ScorePerTrigger, min.ScorePerTrigger,
-                max.IsThrowable
-                    ? WeightPerTrigger + WeightBurstDps + WeightSustainDps + WeightEndurance
-                    : WeightPerTrigger,
-                hasRange);
+                max.ScorePerTrigger, min.ScorePerTrigger, PerTriggerWeight(max), hasRange);
             // 弹匣/全弹总伤：行留着、权重 0（只展示）—— 弹药相关的评分统一由「续航能力」负责，
             // 三项都计分等于同一批弹药算两遍。
             // 热量武器的"弹匣"就是那 100 热：一匣 = 到过热为止的一轮，标签上写明免得看错
@@ -653,7 +655,7 @@ namespace FPSGame.Game.Editor
             }
         }
 
-        /// <summary>对比区：按钮 + 选中后的四列对照（指标 / 当前 / 对比 / 差值）。</summary>
+        /// <summary>对比区：按钮 + 选中后的五列对照（指标 / 当前 / 对比 / 差值 / 得分差）。</summary>
         private void DrawCompareSection(WeaponScoreReport current, WeaponScoreReport currentMin)
         {
             // 切左边列表正好切到自己、或资产被重导删掉时（Unity 的 == 能把已销毁判成 null），顺手清掉对比
@@ -729,50 +731,98 @@ namespace FPSGame.Game.Editor
                 GUILayout.Label(DisplayNameOf(_currentController), _compareHeaderStyle, GUILayout.Width(CompareColWidth));
                 GUILayout.Label(DisplayNameOf(_compareController), _compareHeaderStyle, GUILayout.Width(CompareColWidth));
                 GUILayout.Label("差值（左-右）", _compareHeaderStyle, GUILayout.Width(CompareColWidth));
+                GUILayout.Label("得分差", _compareHeaderStyle, GUILayout.Width(CompareScoreWidth));
             }
 
             // 复合项目（范围/人机工学/弹道/特殊）直接比 0~100 的单项分：原始值单位不同，没法摆一列比。
             // 蓄力武器的单项分同样按"满蓄/最低蓄力"取平均，与主面板一致；明细数值仍取满蓄。
             var anyCharge = currentMin.Valid || otherMin.Valid;
-            DrawCompareRow("综合评分", AvgScore(current.Overall, currentMin), AvgScore(other.Overall, otherMin), "0.0");
-            DrawCompareRow("爆发 DPS", current.BurstDps, other.BurstDps, "0.#");
-            DrawCompareRow("持续 DPS", current.SustainedDps, other.SustainedDps, "0.#");
-            DrawCompareRow("单发伤害", current.RealDamagePerTrigger, other.RealDamagePerTrigger, "0.#");
+
+            // 末列"得分差" = 单项分 × 权重 后左右相减 ⇒ 这一项到底给综合评分贡献了多少分。
+            // 权重基本是 2%~15%，原始差值（DPS/秒数）看不出分量，光看差值列会误判"差得多厉害"。
+            float RowDelta(Func<WeaponScoreReport, float> selector, float weight)
+                => (SubScore(current, currentMin, selector) - SubScore(other, otherMin, selector)) * weight;
+
+            // 权重随武器类型变（投掷物把 DPS/续航的权重并进单发）⇒ 左右两侧分别取自己的权重。
+            // ⚠ 别写成 RowDelta 的重载：C# 不允许局部函数同名重载（CS0128）
+            float RowDeltaByWeight(Func<WeaponScoreReport, float> selector,
+                Func<WeaponScoreReport, float> weightOf)
+                => SubScore(current, currentMin, selector) * weightOf(current)
+                   - SubScore(other, otherMin, selector) * weightOf(other);
+
+            // 隔行底色从第一行重新数（表头不参与，所以在这里清零而不是进方法时自动数）
+            _compareRowIndex = 0;
+
+            var currentOverall = AvgScore(current.Overall, currentMin);
+            var otherOverall = AvgScore(other.Overall, otherMin);
+            // 综合评分权重就是 1 ⇒ 末列与差值列同值（留着是为了让下面各项的得分差有个"合计"可对）
+            DrawCompareRow("综合评分", currentOverall, otherOverall, "0.0", false, currentOverall - otherOverall);
+            DrawCompareRow("爆发 DPS", current.BurstDps, other.BurstDps, "0.#", false,
+                RowDelta(r => r.ScoreBurstDps, WeightBurstDps));
+            DrawCompareRow("持续 DPS", current.SustainedDps, other.SustainedDps, "0.#", false,
+                RowDelta(r => r.ScoreSustainDps, WeightSustainDps));
+            DrawCompareRow("单发伤害", current.RealDamagePerTrigger, other.RealDamagePerTrigger, "0.#", false,
+                RowDeltaByWeight(r => r.ScorePerTrigger, PerTriggerWeight));
             var anyHeat = current.HasHeat || other.HasHeat;
-            DrawCompareRow("续航时长(s)", current.EnduranceSeconds, other.EnduranceSeconds, "0");
-            DrawCompareRow(anyHeat ? "全弹总伤(整池)" : "全弹总伤", current.TotalDamage, other.TotalDamage, "0");
-            DrawCompareRow("穿甲等级", current.AP, other.AP, "0");
+            DrawCompareRow("续航时长(s)", current.EnduranceSeconds, other.EnduranceSeconds, "0", false,
+                RowDeltaByWeight(r => r.ScoreEndurance, r => r.IsThrowable ? 0f : WeightEndurance));
+            DrawCompareRow(anyHeat ? "全弹总伤(整池)" : "全弹总伤", current.TotalDamage, other.TotalDamage, "0", false,
+                RowDelta(r => r.ScoreTotalDamage, WeightTotalDamage));
+            DrawCompareRow("穿甲等级", current.AP, other.AP, "0", false,
+                RowDelta(r => r.ScoreAp, WeightAp));
             // 投掷物比"一颗清几只"，枪械比"10 秒击杀数"（两者单位不同，别混一列）
             var anyThrowable = current.IsThrowable || other.IsThrowable;
             DrawCompareRow(anyThrowable ? "单颗清杂(只)" : "10s 清杂击杀",
                 anyThrowable ? current.ClearKillsPerThrow : current.ClearKillsIn10s,
-                anyThrowable ? other.ClearKillsPerThrow : other.ClearKillsIn10s, "0.#");
+                anyThrowable ? other.ClearKillsPerThrow : other.ClearKillsIn10s, "0.#", false,
+                RowDelta(r => r.ScoreClear, WeightClear));
             // TTK 越低越好 ⇒ 差值着色要反过来（0 = 打不死，也按"最差"排）
-            DrawCompareRow("中甲击杀耗时(s)", current.MediumTtk, other.MediumTtk, "0.#", true);
-            DrawCompareRow("重甲击杀耗时(s)", current.HeavyTtk, other.HeavyTtk, "0.#", true);
+            DrawCompareRow("中甲击杀耗时(s)", current.MediumTtk, other.MediumTtk, "0.#", true,
+                RowDelta(r => r.ScoreAntiMedium, WeightAntiMedium));
+            DrawCompareRow("重甲击杀耗时(s)", current.HeavyTtk, other.HeavyTtk, "0.#", true,
+                RowDelta(r => r.ScoreAntiHeavy, WeightAntiHeavy));
+            // 弱点命中率不是独立计分项（它是反中/反重的输入）⇒ 末列留空，别硬塞一个分
             DrawCompareRow("弱点命中率%", current.WeakPointPrecision * 100f, other.WeakPointPrecision * 100f, "0");
             // 破甲用"每次扣扳机的护甲破坏值"而不是 0~100 的分数：这个数是直接拿去和敌人护甲比大小的，
             // 换成分数还得反推锚点，比不出手感。蓄力枪取满蓄那一份，与明细行一致。
-            DrawCompareRow("破甲值", current.ArmorDamage, other.ArmorDamage, "0");
-            DrawCompareRow("弱点加成%", current.WeaknessBonus * 100f, other.WeaknessBonus * 100f, "0");
-            DrawCompareRow("范围伤害（分）", AvgSub(current.ScoreAoe, currentMin.ScoreAoe, currentMin.Valid),
-                AvgSub(other.ScoreAoe, otherMin.ScoreAoe, otherMin.Valid), "0");
-            DrawCompareRow("人机工学（分）", AvgSub(current.ScoreHandling, currentMin.ScoreHandling, currentMin.Valid),
-                AvgSub(other.ScoreHandling, otherMin.ScoreHandling, otherMin.Valid), "0");
-            DrawCompareRow("弹道射程（分）", AvgSub(current.ScoreBallistics, currentMin.ScoreBallistics, currentMin.Valid),
-                AvgSub(other.ScoreBallistics, otherMin.ScoreBallistics, otherMin.Valid), "0");
-            DrawCompareRow("特殊标签（分）", AvgSub(current.ScoreSpecial, currentMin.ScoreSpecial, currentMin.Valid),
-                AvgSub(other.ScoreSpecial, otherMin.ScoreSpecial, otherMin.Valid), "0");
-            DrawCompareRow("清杂能力（分）", AvgSub(current.ScoreClear, currentMin.ScoreClear, currentMin.Valid),
-                AvgSub(other.ScoreClear, otherMin.ScoreClear, otherMin.Valid), "0");
-            DrawCompareRow("反中能力（分）", AvgSub(current.ScoreAntiMedium, currentMin.ScoreAntiMedium, currentMin.Valid),
-                AvgSub(other.ScoreAntiMedium, otherMin.ScoreAntiMedium, otherMin.Valid), "0");
-            DrawCompareRow("反重能力（分）", AvgSub(current.ScoreAntiHeavy, currentMin.ScoreAntiHeavy, currentMin.Valid),
-                AvgSub(other.ScoreAntiHeavy, otherMin.ScoreAntiHeavy, otherMin.Valid), "0");
-            DrawCompareRow("拆巢能力（分）", AvgSub(current.ScoreDemolish, currentMin.ScoreDemolish, currentMin.Valid),
-                AvgSub(other.ScoreDemolish, otherMin.ScoreDemolish, otherMin.Valid), "0");
-            DrawCompareRow("控制能力（分）", AvgSub(current.ScoreControl, currentMin.ScoreControl, currentMin.Valid),
-                AvgSub(other.ScoreControl, otherMin.ScoreControl, otherMin.Valid), "0");
+            DrawCompareRow("破甲值", current.ArmorDamage, other.ArmorDamage, "0", false,
+                RowDelta(r => r.ScoreArmorBreak, WeightArmorBreak));
+            DrawCompareRow("弱点加成%", current.WeaknessBonus * 100f, other.WeaknessBonus * 100f, "0", false,
+                RowDelta(r => r.ScoreWeakness, WeightWeakness));
+            // 空一行分开两段：上面是带单位的实测值（DPS / 秒数 / 数值），下面是换算成 0~100 的评分
+            EditorGUILayout.Space(10);
+            DrawCompareRow("范围伤害（分）", SubScore(current, currentMin, r => r.ScoreAoe),
+                SubScore(other, otherMin, r => r.ScoreAoe), "0", false,
+                RowDelta(r => r.ScoreAoe, WeightAoe));
+            DrawCompareRow("人机工学（分）", SubScore(current, currentMin, r => r.ScoreHandling),
+                SubScore(other, otherMin, r => r.ScoreHandling), "0", false,
+                RowDelta(r => r.ScoreHandling, WeightHandling));
+            DrawCompareRow("弹道射程（分）", SubScore(current, currentMin, r => r.ScoreBallistics),
+                SubScore(other, otherMin, r => r.ScoreBallistics), "0", false,
+                RowDelta(r => r.ScoreBallistics, WeightBallistics));
+            DrawCompareRow("特殊标签（分）", SubScore(current, currentMin, r => r.ScoreSpecial),
+                SubScore(other, otherMin, r => r.ScoreSpecial), "0", false,
+                RowDelta(r => r.ScoreSpecial, WeightSpecial));
+            DrawCompareRow("清杂能力（分）", SubScore(current, currentMin, r => r.ScoreClear),
+                SubScore(other, otherMin, r => r.ScoreClear), "0", false,
+                RowDelta(r => r.ScoreClear, WeightClear));
+            DrawCompareRow("反中能力（分）", SubScore(current, currentMin, r => r.ScoreAntiMedium),
+                SubScore(other, otherMin, r => r.ScoreAntiMedium), "0", false,
+                RowDelta(r => r.ScoreAntiMedium, WeightAntiMedium));
+            DrawCompareRow("反重能力（分）", SubScore(current, currentMin, r => r.ScoreAntiHeavy),
+                SubScore(other, otherMin, r => r.ScoreAntiHeavy), "0", false,
+                RowDelta(r => r.ScoreAntiHeavy, WeightAntiHeavy));
+            DrawCompareRow("拆巢能力（分）", SubScore(current, currentMin, r => r.ScoreDemolish),
+                SubScore(other, otherMin, r => r.ScoreDemolish), "0", false,
+                RowDelta(r => r.ScoreDemolish, WeightDemolish));
+            DrawCompareRow("控制能力（分）", SubScore(current, currentMin, r => r.ScoreControl),
+                SubScore(other, otherMin, r => r.ScoreControl), "0", false,
+                RowDelta(r => r.ScoreControl, WeightControl));
+
+            EditorGUILayout.LabelField(
+                "得分差 = 单项分 × 该行权重，左右相减 ⇒ 这一项给综合评分贡献了多少分（原始差值只是 DPS/秒数，看不出权重，判断\"差得算不算事\"看这一列）；" +
+                "同一项在表里出现两次（原始值行 +（分）行）时两行得分差相同、权重 0 的行（全弹总伤、特殊标签）恒为 0 ⇒ 别把整列相加当成总分差。",
+                EditorStyles.wordWrappedMiniLabel);
 
             if (anyCharge)
             {
@@ -787,29 +837,71 @@ namespace FPSGame.Game.Editor
         private static float AvgSub(float maxScore, float minScore, bool hasRange)
             => hasRange ? (maxScore + minScore) * 0.5f : maxScore;
 
+        /// <summary>单个 0~100 单项分：蓄力武器取满蓄与最低蓄力的均值（与主面板同口径）。</summary>
+        private static float SubScore(WeaponScoreReport max, WeaponScoreReport min,
+            Func<WeaponScoreReport, float> selector)
+            => AvgSub(selector(max), selector(min), min.Valid);
+
+        /// <summary>单发伤害的权重：投掷物不吃 DPS/续航，那三项的权重并进单发（合计 15%）。</summary>
+        private static float PerTriggerWeight(WeaponScoreReport report)
+            => report.IsThrowable
+                ? WeightPerTrigger + WeightBurstDps + WeightSustainDps + WeightEndurance
+                : WeightPerTrigger;
+
         /// <summary>
         /// 一行对照：差值 = 左（当前武器）- 右（对比武器）。
         /// <para>默认"越高越好" ⇒ &gt;0 绿；<paramref name="lowerIsBetter"/>（如击杀耗时）反之。</para>
+        /// <para><paramref name="scoreDelta"/> = 这一项对综合评分的贡献差（单项分 × 权重，左-右）。
+        /// 传 NaN（默认）表示该行不参与计分，末列画 "—" 占位，保持列对齐。</para>
         /// </summary>
         private void DrawCompareRow(string label, float current, float other, string format,
-            bool lowerIsBetter = false)
+            bool lowerIsBetter = false, float scoreDelta = float.NaN)
         {
-            using (new EditorGUILayout.HorizontalScope())
+            // 隔行底色：奇数行铺一层淡白，偶数行不铺 —— 二十多行的长表不隔色很容易看串行
+            var rowStyle = (_compareRowIndex++ & 1) == 0 ? _compareRowEvenStyle : _compareRowOddStyle;
+            using (new EditorGUILayout.HorizontalScope(rowStyle))
             {
                 GUILayout.Label(label, _compareCellStyle, GUILayout.Width(CompareLabelWidth));
                 GUILayout.Label(current.ToString(format), _compareCellStyle, GUILayout.Width(CompareColWidth));
                 GUILayout.Label(other.ToString(format), _compareCellStyle, GUILayout.Width(CompareColWidth));
 
-                var delta = current - other;
-                var better = lowerIsBetter ? delta < 0f : delta > 0f;
                 var oldColor = GUI.contentColor;
-                GUI.contentColor = Mathf.Approximately(delta, 0f)
-                    ? new Color(0.7f, 0.7f, 0.7f)
-                    : better ? new Color(0.5f, 0.9f, 0.5f) : new Color(0.95f, 0.5f, 0.45f);
-                GUILayout.Label($"{(delta > 0f ? "+" : "")}{delta.ToString(format)}", _compareDeltaStyle,
+                var delta = current - other;
+                GUI.contentColor = DeltaColor(delta, lowerIsBetter);
+                GUILayout.Label(SignedText(delta, format), _compareDeltaStyle,
                     GUILayout.Width(CompareColWidth));
+
+                // 末列是权重缩过的数：小权重(2%)差 10 分只有 0.2 ⇒ 固定两位小数，否则一片 0
+                if (float.IsNaN(scoreDelta))
+                {
+                    GUI.contentColor = new Color(0.7f, 0.7f, 0.7f);
+                    GUILayout.Label("—", _compareDeltaStyle, GUILayout.Width(CompareScoreWidth));
+                }
+                else
+                {
+                    GUI.contentColor = DeltaColor(scoreDelta, lowerIsBetter);
+                    GUILayout.Label(SignedText(scoreDelta, "0.00"), _compareDeltaStyle,
+                        GUILayout.Width(CompareScoreWidth));
+                }
+
                 GUI.contentColor = oldColor;
             }
+        }
+
+        /// <summary>差值着色：默认越高越好，<paramref name="lowerIsBetter"/> 反过来（越低越绿）。</summary>
+        private static Color DeltaColor(float delta, bool lowerIsBetter)
+        {
+            if (Mathf.Approximately(delta, 0f)) return new Color(0.7f, 0.7f, 0.7f);
+            var better = lowerIsBetter ? delta < 0f : delta > 0f;
+            return better ? new Color(0.5f, 0.9f, 0.5f) : new Color(0.95f, 0.5f, 0.45f);
+        }
+
+        /// <summary>带正负号的差值文本。<para>被格式吞掉的负零（"-0.00"）画出来像 bug ⇒ 去掉符号也不补 "+"。</para></summary>
+        private static string SignedText(float value, string format)
+        {
+            var text = value.ToString(format);
+            if (text.TrimStart('-', '0', '.').Length == 0) return text.TrimStart('-');
+            return value > 0f ? "+" + text : text;
         }
 
         private void ShowCompareWeaponPicker()

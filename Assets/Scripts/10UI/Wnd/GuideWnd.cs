@@ -48,6 +48,7 @@ public class GuideWnd : Window
 
     protected override void ShowWnd()
     {
+        SetUiCursor(this, true);
         WindowState = WindowStateEnum.UI;
         InputManager.AddListenerCancel(Cancel);
         _currentIndex = 0;
@@ -63,7 +64,8 @@ public class GuideWnd : Window
 
     protected override void HideWnd()
     {
-        WindowState = WindowStateEnum.Game;
+        // 还有别的 UI 窗口开着就别把光标收走（见 Window.SetUiCursor）
+        if (!SetUiCursor(this, false)) WindowState = WindowStateEnum.Game;
         InputManager.RemoveListenerCancel(Cancel);
         if (_loadCoroutine != null)
         {
@@ -155,6 +157,9 @@ public class GuideWnd : Window
         _sprites.Clear();
     }
 
+    /// <summary>ESC / 右键：直接关窗。</summary>
+    /// <remarks>⚠ 输入层弹出回调就丢了（<c>InputManagerBase.Update</c>），这里因为**一定会关窗**才不用补挂
+    /// （<c>ShowWnd</c> 会重新挂）。以后若加了"先收子面板"的分支，必须自己 <c>AddListenerCancel(Cancel)</c>。</remarks>
     private bool Cancel()
     {
         if (this == null || !State) return false;

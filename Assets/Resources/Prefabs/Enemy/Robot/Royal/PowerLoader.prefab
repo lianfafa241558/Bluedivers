@@ -1019,10 +1019,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.55
-  m_Height: 2.2
+  m_Radius: 0.8
+  m_Height: 1.8
   m_Direction: 2
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0, z: -0.2}
 --- !u!1 &7026255309937828050
 GameObject:
   m_ObjectHideFlags: 0
@@ -2114,7 +2114,80 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 852066671604590156}
+    - targetCorrespondingSourceObject: {fileID: 4913730501128602789, guid: 02c36cadced0e1048bff91bf85f60e37,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2288637335697345203}
+    - targetCorrespondingSourceObject: {fileID: 4913730501128602789, guid: 02c36cadced0e1048bff91bf85f60e37,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6481109632088802765}
+    - targetCorrespondingSourceObject: {fileID: 6313358414469883002, guid: 02c36cadced0e1048bff91bf85f60e37,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7766316689670114549}
+    - targetCorrespondingSourceObject: {fileID: 6313358414469883002, guid: 02c36cadced0e1048bff91bf85f60e37,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7049588273097353642}
+    - targetCorrespondingSourceObject: {fileID: 1023743719078565612, guid: 02c36cadced0e1048bff91bf85f60e37,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4959283676781055986}
+    - targetCorrespondingSourceObject: {fileID: 1023743719078565612, guid: 02c36cadced0e1048bff91bf85f60e37,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 559492978633784124}
   m_SourcePrefab: {fileID: 100100000, guid: 02c36cadced0e1048bff91bf85f60e37, type: 3}
+--- !u!1 &425088111451041957 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1023743719078565612, guid: 02c36cadced0e1048bff91bf85f60e37,
+    type: 3}
+  m_PrefabInstance: {fileID: 852066671604590153}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4959283676781055986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 425088111451041957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 2
+  useHealthInsteadOfArmor: 1
+  armorValue: 100
+  LineArmor: []
+  armorBreakEffect: []
+  BleedValue: 200
+  isMain: 0
+  showArmor: 0
+--- !u!135 &559492978633784124
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 425088111451041957}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: -0.3, y: -0.25, z: 0}
 --- !u!1 &509557455940606744 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 02c36cadced0e1048bff91bf85f60e37,
@@ -2178,6 +2251,114 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 852066671604590153}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5756222392954594028 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4913730501128602789, guid: 02c36cadced0e1048bff91bf85f60e37,
+    type: 3}
+  m_PrefabInstance: {fileID: 852066671604590153}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2288637335697345203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5756222392954594028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 2
+  useHealthInsteadOfArmor: 1
+  armorValue: 100
+  LineArmor: []
+  armorBreakEffect:
+  - go: {fileID: 5756222392954594028}
+    state: 1
+    scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
+  BleedValue: 0
+  isMain: 0
+  showArmor: 0
+--- !u!135 &6481109632088802765
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5756222392954594028}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.4
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &6651438524325397043 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6313358414469883002, guid: 02c36cadced0e1048bff91bf85f60e37,
+    type: 3}
+  m_PrefabInstance: {fileID: 852066671604590153}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7766316689670114549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6651438524325397043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 2
+  useHealthInsteadOfArmor: 1
+  armorValue: 100
+  LineArmor: []
+  armorBreakEffect:
+  - go: {fileID: 6651438524325397043}
+    state: 1
+    scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
+  BleedValue: 0
+  isMain: 0
+  showArmor: 0
+--- !u!135 &7049588273097353642
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6651438524325397043}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.4
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &6864227577449953083 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3129574569503305358, guid: 02c36cadced0e1048bff91bf85f60e37,

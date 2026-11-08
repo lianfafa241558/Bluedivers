@@ -255,6 +255,7 @@ public class SelectRoleWnd : Window
             SetActive(m_SelectPoint.gameObject, true);
         }
         m_manager = FindObjectOfType<BridgeRoleManager>();
+        SetUiCursor(this, true);
         WindowState = WindowStateEnum.UI;
         ActorsManager.Player.gameObject.SetActive(false);
         m_manager.StartShowRole(out var go, out var data,out var arch, out bool isNow);
@@ -284,7 +285,8 @@ public class SelectRoleWnd : Window
         // 手里那把武器是实例快照（改装只在 Awake 时算一次）⇒ 改完必须按存档重装；
         // ⚠ 必须放在 SetActive(true) 之后，否则新武器不会 Awake、改装会被 InitAttribute 抹掉
         if (changed && m_manager) m_manager.RefreshPlayerWeapons();
-        WindowState = WindowStateEnum.Game;
+        // 还有别的 UI 窗口开着就别把光标收走（见 Window.SetUiCursor）
+        if (!SetUiCursor(this, false)) WindowState = WindowStateEnum.Game;
         if (m_SelectRoleCamera) SetActive(m_SelectRoleCamera.gameObject, false);
         if(m_SelectPoint) SetActive(m_SelectPoint.gameObject, false);
         InputManager.RemoveListenerCancel(Cancel);
@@ -325,6 +327,9 @@ public class SelectRoleWnd : Window
         }
     }
 
+    /// <summary>ESC / 右键：按 <see cref="wndState"/> 逐级退，<see cref="RoleWndState.Role"/> 这一级直接关窗。</summary>
+    /// <remarks>⚠ 输入层把回调弹出后就丢了（<c>InputManagerBase.Update</c>）⇒ 每条"吃掉输入但不关窗"的分支
+    /// 都必须自己 <c>AddListenerCancel(Cancel)</c>（下面 2 处已挂）；关窗那条不必重挂。新增分支别忘了。</remarks>
     private bool Cancel()
     {
         if (!State) return false;

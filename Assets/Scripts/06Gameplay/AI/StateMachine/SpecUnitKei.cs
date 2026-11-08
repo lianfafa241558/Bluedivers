@@ -11,6 +11,7 @@ using FPSGame.Utils;
 using FPSGame.Data;
 using FPSGame.Audio;
 using FPSGame.Gameplay;
+using UnityEngine.AI;
 
 namespace FPSGame.AI
 {
@@ -186,7 +187,7 @@ namespace FPSGame.AI
                 ArriveEvacuatePoint();
                 return;
             }
-
+            GetComponent<NavMeshAgent>().speed = 6;
             SwitchState(AIState.Move);
             m_Controller.SetNavDestination(m_Target);
             mpb.Set("_Expression", 20).Apply();

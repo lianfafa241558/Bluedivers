@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
@@ -32,15 +32,27 @@ public static partial class FpsHelper
     }
 
     
+    /// <summary>仇恨值：**越大越该优先打** = 仇恨系数 ÷ 距离（就近优先）。
+    /// <para>⚠ 原来是"距离 × 仇恨"= 越远越优先，与两处调用方的 `&gt;` 比较正好读反
+    /// （2026-11-08 用户确认填反；表现为放着眼前的不打、锁住远处/空中的目标傻站）。</para>
+    /// <para>返回 0 = 不值得打（仇恨系数 0，或取不到位置）。</para>
+    /// </summary>
     public static PEInt ThreatValue(PEVector3 pos,IActor target)
     {
         if (!target.IsValidMono() || !target.gameObject) return 0;
-        return PEVector3.Distance(pos, (PEVector3)target.CenterPos) * (PEInt)target.Threat;
+        return ToThreat(target.Threat, PEVector3.Distance(pos, (PEVector3)target.CenterPos).RawFloat);
     }
     public static PEInt ThreatValue(Vector3 pos, IActor target)
     {
         if (!target.IsValidMono()|| !target.gameObject) return 0;
-        return PEVector3.Distance((PEVector3)pos, (PEVector3)target.CenterPos) * (PEInt)target.Threat;
+        return ToThreat(target.Threat, PEVector3.Distance((PEVector3)pos, (PEVector3)target.CenterPos).RawFloat);
+    }
+
+    /// <summary>仇恨系数 ÷ 距离（距离下限 1m，免得贴脸时爆成大数）；×100 留点精度。</summary>
+    private static PEInt ToThreat(float threat, float distance)
+    {
+        if (threat <= 0f) return 0;
+        return (PEInt)(threat * 100f / Mathf.Max(distance, 1f));
     }
 
     public static bool HaveNavMeshAgent(NavMeshAgent navMeshAgent) => navMeshAgent && navMeshAgent.isActiveAndEnabled&& navMeshAgent.isOnNavMesh;

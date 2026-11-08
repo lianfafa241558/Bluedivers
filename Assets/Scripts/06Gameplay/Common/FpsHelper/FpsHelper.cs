@@ -55,18 +55,24 @@ public static partial class FpsHelper
     /// 光束会被掰向那个透明点（实测偏 13.46°），越过它之后再一路偏出去，看着像"没对着准心"。
     /// </param>
     /// <returns>false = 取不到瞄准源（舰桥 / 单位未就绪）⇒ 调用方应保持原行为（不制导）。</returns>
+    /// <remarks>
+    /// ▍**射手自己的碰撞体一律不参与取点**（<paramref name="owner"/> 整棵子树）：护盾背包的罩子是玩家的子物体，
+    /// 第三人称相机在罩外 ⇒ 准心射线必然先撞到罩子背面，取回的点在射手身后，光束被掰向自己
+    /// （CWC 微波枪"光束歪了、像打在自己盾上"，2026-11-08 实测）。
+    /// </remarks>
     public static bool TryGetAimPoint(GameObject owner, out Vector3 point, float maxDistance = 300f, float layerSpeed = 99f,
                                       bool skipDoubleIgnore = false)
     {
         point = Vector3.zero;
         if (owner == null) return false;
+        Transform self = owner.transform;
 
         // ① 本机玩家：相机屏幕中心
         var pc = owner.GetComponent<PlayerController>();
         var cam = pc != null ? pc.PlayerCamera : null;
         if (cam != null)
         {
-            point = RaycastPoint(cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)), maxDistance, layerSpeed, skipDoubleIgnore);
+            point = RaycastPoint(cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)), maxDistance, layerSpeed, skipDoubleIgnore, self);
             return true;
         }
 
@@ -74,7 +80,7 @@ public static partial class FpsHelper
         var friend = owner.GetComponentInParent<FriendController>();
         if (friend != null && friend.TryGetAimRay(out Vector3 origin, out Vector3 dir))
         {
-            point = RaycastPoint(new Ray(origin, dir), maxDistance, layerSpeed, skipDoubleIgnore);
+            point = RaycastPoint(new Ray(origin, dir), maxDistance, layerSpeed, skipDoubleIgnore, self);
             return true;
         }
 
@@ -86,9 +92,11 @@ public static partial class FpsHelper
 
     /// <summary>射线采样一个目标点（没打到东西就给射程尽头）—— 本文件里几条取点路径共用。</summary>
     /// <param name="skipDoubleIgnore">跳过"双向忽略"的碰撞体（对子弹/光束都透明的装饰物），见 <see cref="TryGetAimPoint"/></param>
-    static Vector3 RaycastPoint(Ray ray, float maxDistance, float layerSpeed, bool skipDoubleIgnore = false)
+    /// <param name="ignoreRoot">不参与取点的子树根（= 射手自己，含背包护盾罩）；null = 不过滤</param>
+    static Vector3 RaycastPoint(Ray ray, float maxDistance, float layerSpeed, bool skipDoubleIgnore = false, Transform ignoreRoot = null)
     {
-        if (!skipDoubleIgnore)
+        // 没有要过滤的子树时保留原来的单射线快路径
+        if (!skipDoubleIgnore && ignoreRoot == null)
         {
             if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, GetHittableLayers(layerSpeed), QueryTriggerInteraction.Collide))
                 return hit.point;
@@ -102,8 +110,11 @@ public static partial class FpsHelper
         {
             RaycastHit h = k_AimHits[i];
             if (h.distance >= best || h.distance <= 0f) continue;   // distance=0 的命中落点不可靠，不要
+            if (ignoreRoot != null && h.collider.transform.IsChildOf(ignoreRoot)) continue;   // 射手自己（含护盾罩）
             var ihd = h.collider.GetComponent<IgnoreHitDetection>();
-            if (ihd != null && !ihd.Unidirectional) continue;
+            if (skipDoubleIgnore && ihd != null && !ihd.Unidirectional) continue;
+            // 单向盾：射线起点就在盾内 ⇒ 与子弹同口径（ProjectileLaser.IsHitValid）整面透明
+            if (ihd != null && ihd.Unidirectional && h.collider.bounds.Contains(ray.origin)) continue;
             best = h.distance;
             point = h.point;
         }

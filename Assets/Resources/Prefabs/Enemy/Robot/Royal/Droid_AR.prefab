@@ -5212,7 +5212,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   explosionResistance: 0
-  armorLevel: 0
+  armorLevel: 1
   useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
@@ -5239,10 +5239,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.55
-  m_Height: 2.2
+  m_Radius: 0.4
+  m_Height: 1.5
   m_Direction: 2
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0, z: -0.2}
 --- !u!1 &2165942947594035747
 GameObject:
   m_ObjectHideFlags: 0
@@ -6528,6 +6528,14 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 2083019694302220766}
+    - targetCorrespondingSourceObject: {fileID: 7406868877247319317, guid: db1ea06348d58034fbebbc9a79ffd9d0,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1211820747017663487}
+    - targetCorrespondingSourceObject: {fileID: 7406868877247319317, guid: db1ea06348d58034fbebbc9a79ffd9d0,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7436123311230184983}
   m_SourcePrefab: {fileID: 100100000, guid: db1ea06348d58034fbebbc9a79ffd9d0, type: 3}
 --- !u!1 &50019820407474144 stripped
 GameObject:
@@ -6574,6 +6582,55 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 896459400042052273}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7690636417624045476 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7406868877247319317, guid: db1ea06348d58034fbebbc9a79ffd9d0,
+    type: 3}
+  m_PrefabInstance: {fileID: 896459400042052273}
+  m_PrefabAsset: {fileID: 0}
+--- !u!135 &1211820747017663487
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7690636417624045476}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.35
+  m_Center: {x: -0.2, y: 0, z: 0}
+--- !u!114 &7436123311230184983
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7690636417624045476}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 1
+  explosionResistance: 1
+  armorLevel: 1
+  useHealthInsteadOfArmor: 1
+  armorValue: 20
+  LineArmor: []
+  armorBreakEffect: []
+  BleedValue: 100
+  isMain: 0
+  showArmor: 0
 --- !u!4 &9019253613996809471 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -1055515274937047474, guid: db1ea06348d58034fbebbc9a79ffd9d0,

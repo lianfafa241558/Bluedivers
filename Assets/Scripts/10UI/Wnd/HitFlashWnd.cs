@@ -140,6 +140,7 @@ public partial class PlayerWnd
                 else
                 {
                     m_WarningActive = false;
+                    FlashCanvasGroupWarning.alpha = 0f;   // 不收尾的话最后一帧的 alpha 会一直挂在屏幕上
                 }
             }
           
@@ -154,6 +155,40 @@ public partial class PlayerWnd
         }
     }
 
+
+    /// <summary>
+    /// 把受击相关表现全部归零（玩家解绑时调用，换场景必走）。
+    /// <para>⚠ 不能指望 <see cref="UpdateFeedback"/> 自己衰减收尾：换场景时它已经不跑了，
+    /// 而 alpha/心跳音是**上一次写下的值**留在界面上的（<c>DyingAudio</c> 还是 Loop 音源）。</para>
+    /// </summary>
+    void ResetFeedback()
+    {
+        m_FlashActive = false;
+        m_LastTimeFlashStarted = Mathf.NegativeInfinity;
+        m_WarningActive = false;
+        m_LastTimeWarningStarted = Mathf.NegativeInfinity;
+
+        FlashCanvasGroupShield.alpha = 0f;
+        FlashCanvasGroupHp.alpha = 0f;
+        FlashCanvasGroupWarning.alpha = 0f;
+
+        VignetteCanvasGroup.alpha = 0f;
+        VignetteCanvasGroup.gameObject.SetActive(false);
+
+        DyingAudio.Stop();
+        DyingAudio.volume = 0f;
+
+        // 从未显示过的窗口不会有残留（InitHitFlash 还没跑，指针本身是 null）
+        if (m_hitGroup == null) return;
+        for (int i = 0; i < m_hitGroup.Length; ++i)
+        {
+            var img = m_hitGroup[i].image;
+            m_hitGroup[i].time = Mathf.NegativeInfinity;
+            if (!img) continue;
+            img.fillAmount = 0f;
+            img.color = new Color(1f, 1f, 1f, 0f);
+        }
+    }
 
     bool m_FlashActive;
     float m_LastTimeFlashStarted = Mathf.NegativeInfinity;

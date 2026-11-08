@@ -15,6 +15,7 @@ namespace FPSGame.UI
 using static FPSGame.WndTools.WndRootTool;
 using FPSGame.Managers;
     using FPSGame.GameContract;
+using FPSGame.Data;
 using FPSGame.GameData;
 
     /// <summary>
@@ -233,11 +234,17 @@ public class SelectMapWnd : Window
 
     protected override void ShowWnd()
     {
+        SetUiCursor(this, true);
         WindowState = WindowStateEnum.UI;
         SetActive(mapRoot, true);
         SetActive(areaRoot, false);
         SetActive(areaSelectLayout, false);
         mapState = MapWndState.Map;
+        // 窗口每次打开都从"还没选任务点"开始：上次按下「准备」只会关窗（mapState/SelectTaskIndex 都留着），
+        // 再开窗若沿用旧下标，点同一个任务点会被 SelectTask 的"同下标直接 return"挡掉（面板不弹），
+        // 而旧下标还可能指向本图上不存在的任务点（越界）。
+        SelectTaskIndex = -1;
+        SetActive(areaInfoExtraDiffRoot.parent, false);   // 与下标一起收掉「任务配置」块（难度/准备），别留下"能点但没任务"的状态
         infoRoot.Play("Exit", 0, 1);
         areaInfoRoot.GetComponent<Animator>().Play("Exit", 0, 1);
         InputManager.AddListenerCancel(Cancel);
@@ -250,7 +257,8 @@ public class SelectMapWnd : Window
 
     protected override void HideWnd()
     {
-        WindowState = WindowStateEnum.Game;
+        // 还有别的 UI 窗口开着（撤离倒计时已经展开战备界面）就**别**把光标收走，见 Window.SetUiCursor
+        if (!SetUiCursor(this, false)) WindowState = WindowStateEnum.Game;
         InputManager.RemoveListenerCancel(Cancel);
         // ★ 窗口收起时把「房间列表」一并收掉：它的发现器占着局域网 UDP 广播端口，而本机随后要开房时
         //   <c>LanBroadcaster</c> 也要同一个端口 ⇒ 监听不能留到窗口之外（否则开房直接 SocketException）。
@@ -332,14 +340,18 @@ public class SelectMapWnd : Window
     /// </summary>
     private void QuickMatch()
     {
-        if (SelectTaskIndex < 0)
+        if (!IsValidTaskPoint(SelectTaskIndex))
         {
             WndHub.Tip.Creat(new() { title = "还没选任务", desc = "先点地图上的任务图标，再点「加入」。" });
             return;
         }
 
+        // 任务枚举在**开搜那一刻**取定：搜索要跑 ~2s，期间玩家还能点别的任务点 ⇒
+        // 协程里再读 SelectTaskIndex 会拿"另一个任务"去比对房间（甚至读到已作废的下标）。
+        int taskMain = (int)taskManager.TaskCfgs[SelectTaskRow, SelectTaskIndex].main;
+
         if (_matchRoutine != null) StopCoroutine(_matchRoutine);
-        _matchRoutine = StartCoroutine(MatchRoutine());
+        _matchRoutine = StartCoroutine(MatchRoutine(taskMain));
     }
 
     /// <summary>
@@ -351,10 +363,10 @@ public class SelectMapWnd : Window
     /// <para>▍窗口内**反复重扫**（<see cref="MatchRescanSeconds"/>）：DISCOVER 是裸 UDP、库不重传，
     /// 只扫一次的话那一个包丢了就整轮空 ⇒ 两人都点「加入」却各自开房、互相看不见。</para>
     /// </summary>
-    private IEnumerator MatchRoutine()
+    /// <param name="taskMain">要匹配的主任务枚举（开搜那一刻取定，见 <see cref="QuickMatch"/>）。</param>
+    private IEnumerator MatchRoutine(int taskMain)
     {
         string mapName = mapRoot.childCount > SelectMapIndex ? mapRoot.GetChild(SelectMapIndex).name : string.Empty;
-        int taskMain = (int)taskManager.TaskCfgs[SelectTaskRow, SelectTaskIndex].main;
 
         var panel = serverPanel;
         if (panel) panel.EnsureDiscovery();   // 面板没打开过 ⇒ 先让发现器在听广播
@@ -497,6 +509,10 @@ public class SelectMapWnd : Window
         return svc != null && svc.IsConnected;   // 连上了但自己不是房主 ⇒ 我是成员
     }
 
+    /// <summary>ESC / 右键：先收服务器列表，再按 <see cref="mapState"/> 逐级退。</summary>
+    /// <remarks>⚠ 输入层把回调弹出后就丢了（<c>InputManagerBase.Update</c>）⇒ 每条"吃掉输入但不关窗"的分支
+    /// 都必须自己 <c>AddListenerCancel(Cancel)</c>（下面 4 处已挂）；只有 <see cref="MapWndState.Map"/> 那条是关窗，不必重挂。
+    /// 新增分支别忘了这一条，否则第二次 ESC 没人接。</remarks>
     private bool Cancel()
     {
         if (this==null||!State) return false;
@@ -542,6 +558,29 @@ public class SelectMapWnd : Window
 
     /// <summary>当前选中地图对应的任务表行（-1 = 取不到）。</summary>
     private int SelectTaskRow => TaskRow(SelectMapIndex);
+
+    /// <summary>当前选中地图的资料（取不到 ⇒ null）。</summary>
+    private MapData_SO CurrentMapData
+    {
+        get
+        {
+            if (mapRoot == null || SelectMapIndex < 0 || SelectMapIndex >= mapRoot.childCount) return null;
+            taskManager.MapData.TryGetValue(mapRoot.GetChild(SelectMapIndex).name, out var data);
+            return data;
+        }
+    }
+
+    /// <summary><paramref name="index"/> 是不是**当前这张图上真实存在**的任务点下标。
+    /// <para>▍必须三处一起判：<b>-1</b>（还没选）/ <b>本图任务点数</b>（<c>mapItemInfos</c>，各图 0~6 个不等）/
+    /// <b><c>TaskCount</c></b>（任务表列数，见 TaskManager 的 <c>new TaskCfg[AreaCount, TaskCount]</c>）。
+    /// 只判 <c>&gt;= 0</c> 就把它拿去索引 <c>mapItemInfos</c> / <c>TaskCfgs</c>，
+    /// 换图或换任务表后残留的旧下标会直接抛 IndexOutOfRangeException。</para></summary>
+    private bool IsValidTaskPoint(int index)
+    {
+        if (index < 0 || index >= taskManager.TaskCount || SelectTaskRow < 0) return false;
+        var data = CurrentMapData;
+        return data != null && data.mapItemInfos != null && index < data.mapItemInfos.Length;
+    }
 
     /// <summary>
     /// 一次画全「外层地图列表的小任务图标」+「内层地图上的任务标记」。
@@ -651,6 +690,9 @@ public class SelectMapWnd : Window
         primeRootSize = trans.sizeDelta * trans.lossyScale;
         primeRootPos = trans.anchoredPosition;
         SelectMapIndex = index;
+        // 换图 ⇒ 上一张图上选的任务点下标作废：任务点是**每图一份**的（各图 0~6 个不等），
+        // 沿用旧下标会让 mapItemInfos / TaskCfgs 越界（IndexOutOfRangeException）。
+        SelectTaskIndex = -1;
         // ⚠ 此刻 mapState 已是 Switch ⇒ 只摆位置、不点亮标记（FinalSwitch 才亮）
         RefreshAreaRoot();
     }
@@ -679,10 +721,14 @@ public class SelectMapWnd : Window
     {
         var data = taskManager.MapData[trans.name];
 
-        bool byPoint = pointIndex >= 0 && pointIndex < data.mapItemInfos.Length;
+        // 任务点级要**同时**落在 mapItemInfos 与 TaskCfgs 内（两边的长度并不保证相等）：
+        // 只判前者的旧写法在"本图任务点比任务表列多"时会拿越界列去索引 TaskCfgs。
+        int row = taskManager.MapIndex(trans.name);
+        bool byPoint = pointIndex >= 0 && row >= 0
+            && pointIndex < taskManager.TaskCount && pointIndex < data.mapItemInfos.Length;
         SetText(descName, byPoint ? data.mapItemInfos[pointIndex].name : GetText(trans.GetChild(1, 2)));
         SetText(descDesc, byPoint
-            ? taskManager.TaskCfgs[taskManager.MapIndex(trans.name), pointIndex].TaskDesc
+            ? taskManager.TaskCfgs[row, pointIndex].TaskDesc
             : data.AreaDesc);
         SetSprite(descBg, data.AreaBackground);
 
@@ -731,6 +777,9 @@ public class SelectMapWnd : Window
     /// </summary>
     private void ShowAreaInfoWnd(int index, bool immediately = false)
     {
+        // 悬停/退出回调里带进来的可能是"上一张图选中的旧下标"（见 IsValidTaskPoint），
+        // 越界就直接不动这次面板（否则下面 mapItemInfos[index] 会抛 IndexOutOfRangeException）。
+        if (!IsValidTaskPoint(index)) return;
         //Debug.LogWarning("鼠标进入任务");
         var info = taskManager.TaskCfgs[SelectTaskRow, index];
         SetText(areaInfoType, info.TaskType);
@@ -899,6 +948,9 @@ public class SelectMapWnd : Window
 
     private void AccountReward(int index,bool useDiff=true)
     {
+        // 调用它的三个入口（难度箭头 / 额外难度 / 展开配置）都会读到 SelectTaskIndex，
+        // 而"还没选任务点"时它是 -1 ⇒ 直接拿来索引 TaskCfgs 会抛 IndexOutOfRangeException。
+        if (!IsValidTaskPoint(index)) return;
         if (useDiff)
         {
             float diffScale = taskManager.DiffScale((DifficultyEnum)SelectTaskDiff);
@@ -939,6 +991,14 @@ public class SelectMapWnd : Window
     /// </summary>
     private void ConfirmTask()
     {
+        // 「准备」必须绑着一个**本图上真实存在**的任务点：否则 SetTaskByIndex 会带着越界/负下标返回，
+        // 而下面那句 host.ConfirmTask 还会把一份空配置广播出去（成员端拿到的就是"没任务"）。
+        if (!IsValidTaskPoint(SelectTaskIndex))
+        {
+            WndHub.Tip.Creat(new() { title = "还没选任务", desc = "先点地图上的任务图标，再点「准备」。" });
+            return;
+        }
+
         // ★ 公开房：**建服推迟到这一刻**（2026-10-06 口径）—— 地图界面的「公开」只负责记住模式，
         //   玩家像单人一样调难度 / 选任务 / 选加成，按下「准备」时服务器才**静默**创建。
         //   ⚠ 放在 SetWndState 之前：建服失败（端口刚被占用等）就停在选图界面重试，别先把界面关掉。

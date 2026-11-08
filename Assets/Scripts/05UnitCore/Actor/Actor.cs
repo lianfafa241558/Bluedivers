@@ -348,11 +348,15 @@ namespace FPSGame.Game
         {
             get
             {
-                if (_animators == null) return false;
+                if (_animators == null || _animators.Length == 0) return true;   // 没可冻的动画器，别让剔除器记账
                 for (int i = 0; i < _animators.Length; ++i)
                 {
                     Animator anim = _animators[i];
-                    if (anim == null || !anim.enabled) continue;
+                    if (anim == null) continue;
+                    // ⚠ 已被**别人**关掉的动画器读不出状态（GetCurrentAnimatorStateInfo 返回默认结构
+                    //   loop=false/nt=0 或哈希 0），既不能说"在播一次性"也不能说"不在播" ⇒ 这一轮别冻。
+                    //   典型来源：空投吊装时的 WaveBase.SetUnitAnimator(false)。
+                    if (!anim.enabled) return true;
                     if (anim.IsInTransition(0)) return true;   // 过渡中读到的状态不可靠，这一轮先别冻
                     AnimatorStateInfo st = anim.GetCurrentAnimatorStateInfo(0);
                     if (!st.loop && st.normalizedTime < 1f) return true;
@@ -361,14 +365,42 @@ namespace FPSGame.Game
             }
         }
 
+        private Renderer[] _renderers;
+
+        /// <summary>模型是否被骨架抬到本体上方超过 <paramref name="maxRise"/> 米。
+        /// <para>▍为什么要单独判：<c>Appear</c> 这类"从天而降"的 clip 是把骨架整段拉高的
+        /// （PMC_Shield 的 <c>Droid_Shield_Appear</c> 起手就抬 40 m），而动画器一旦停在那一帧，
+        /// 模型就永久悬空、逻辑坐标却在地上，且**不可恢复**。这个判据读渲染包围盒、不依赖动画器状态，
+        /// 所以动画器被关掉（读不到 state）时依然成立。</para>
+        /// <para>⚠ 包围盒按"底边"比：整坨模型都在本体之上才算抬起，地面单位的底边就在本体附近。</para></summary>
+        public bool ModelLifted(float maxRise)
+        {
+            if (_renderers == null) _renderers = GetComponentsInChildren<Renderer>(true);
+            float rootY = transform.position.y;
+            for (int i = 0; i < _renderers.Length; ++i)
+            {
+                Renderer r = _renderers[i];
+                if (r == null || !r.enabled) continue;
+                if (r.bounds.min.y - rootY > maxRise) return true;
+            }
+            return false;
+        }
+
         /// <summary>把本单位身上 Animator 的裁剪模式从 AlwaysAnimate 改成 CullUpdateTransforms（只改一次）。</summary>
         private void InitAnimatorCulling()
         {
             _animators = GetComponentsInChildren<Animator>(true);
             for (int i = 0; i < _animators.Length; ++i)
             {
-                if (_animators[i].cullingMode == AnimatorCullingMode.AlwaysAnimate)
-                    _animators[i].cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+                Animator anim = _animators[i];
+                if (anim == null) continue;
+                if (anim.cullingMode == AnimatorCullingMode.AlwaysAnimate)
+                    anim.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+
+                // ⚠ 距离剔除会 `enabled = false` 再开回来：默认**重开即重置状态机**，直接从头播默认状态
+                //   （PMC 单位默认状态就是 Appear）⇒ 近处一开关，模型当场弹回 40 m 高空再落一次。
+                //   打开这个开关后关/开等同于"暂停/继续"，姿态与进度都保住。
+                anim.keepAnimatorStateOnDisable = true;
             }
         }
 
@@ -519,6 +551,11 @@ namespace FPSGame.Game
             // 盟友离场的事件通知：销毁之后谁也读不出它是谁（name/Type 还能读，但引用已经废了）
             // ⇒ 必须**在这里、趁引用还有效**发出去，让为它建的 UI/桥做收尾。
             if (Type == UnitTypeEnum.Friend) UnitEventBus.FriendLeave(this);
+
+            // 通用销毁通知（不分类型）：玩家 / 特殊单位 / Other 被直接 Destroy 时**不走死亡事件**，
+            // 订阅方（小地图这类以 Actor 为键建表的模块）不及时收尾就留着已销毁引用，之后每帧判空
+            // 读 enabled/Pos 就抛（2026-11-08 小地图每帧 NRE）。⚠ 盟友会与上面那条各收一次 ⇒ 处理要幂等。
+            UnitEventBus.ActorDestroyed(this);
 
             /*
             if (ActorState != ActorState.Dead)

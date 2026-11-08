@@ -49,7 +49,20 @@ namespace FPSGame.Weapon
                 HasFlag(WeaponFlag.AutoDeath))
             {
                 ShowWeapon(false);
-                GetComponentInParent<IHealth>().Kill();
+
+                // ⚠ 有的武器挂点根本不在有血的对象下面：治疗无人机 Healdrone_Normal/Fire 的根节点就没有
+                //   Health（Healdrone_Laser 的 WeaponFlag 还配成了 -1 = 全标志）。以前这里直接 NRE，
+                //   而 ShowWeapon(false) 只关 WeaponRoot、逻辑帧照跑 ⇒ 每帧刷一条异常。
+                //   没有可杀的对象就停火收工，不写别的兜底链（规范 §5）；数据上该给无人机配 Ammo=-1 或去掉 AutoDeath。
+                var health = GetComponentInParent<IHealth>();
+                if (health == null)
+                {
+                    Debug.LogWarning($"[武器] {name} 子弹打光要触发 AutoDeath，但父级没有 IHealth ⇒ 只停火（请检查预制体）", this);
+                    enabled = false;
+                    return;
+                }
+
+                health.Kill();
             }
         }
 

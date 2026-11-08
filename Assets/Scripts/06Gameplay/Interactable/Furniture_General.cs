@@ -176,7 +176,11 @@ public class Furniture_General : Furniture_Attached
         ["Caisson"] = new() {
             _Operate = (Furniture_General furn) => {
                 //furn.transform.parent.parent.GetComponent<Animator>().Play("Exit", (int)furn.ExtFloatParameter, 0);
-                furn.owner.GetComponent<PlayerController>().UseCaisson();
+                // 补给收益是"谁按谁吃"（本机玩家的事），而"被用掉"是两端共享状态：远端重放（4059）时
+                // owner 是盟友镜像（FriendController，身上没有 PlayerController）或 null ⇒ 只跳过收益，
+                // 别让 GetComponent 的空引用把 BaseOp / 销毁一起打断（那样本端物件没了、对端还在）。
+                if (furn.owner != null && furn.owner.TryGetComponent(out PlayerController player))
+                    player.UseCaisson();
                 furn.BaseOp();
                 Tool.Destroy(furn.gameObject);
             }
@@ -184,7 +188,8 @@ public class Furniture_General : Furniture_Attached
         ["MedicalBag"] = new() {
             _Operate = (Furniture_General furn) => {
                 //furn.transform.parent.parent.GetComponent<Animator>().Play("Exit", (int)furn.ExtFloatParameter, 0);
-                furn.owner.GetComponent<PlayerController>().UseMedicalBag();
+                if (furn.owner != null && furn.owner.TryGetComponent(out PlayerController player))
+                    player.UseMedicalBag();
                 furn.BaseOp();
                 Tool.Destroy(furn.gameObject);
             }

@@ -184,7 +184,10 @@ namespace FPSGame.Managers
             if (flow.IsHost)
             {
                 // 房主：转发给全体（含发起者；发起者按 Sid 丢掉自己那条）—— 权威 Sid 原样带上
-                flow.SendFurnitureOperate(m.SyncId, m.Sid);
+                // ⚠ 必须连 State/StateKey 一起转发：只带 SyncId 的话，别的成员收到的是一条"没有状态"的消息
+                //   ⇒ 掉进下面的"重放 Operate()"分支（原来漏了，2 人房里发起者会丢自己那条所以看不出来，
+                //   3 人以上第三个玩家就会看到"状态没同步"）。
+                flow.SendFurnitureOperate(m.SyncId, m.Sid, m.State, m.StateKey);
             }
             else if (m.Sid == flow.SelfSid)
             {
@@ -205,9 +208,11 @@ namespace FPSGame.Managers
             // ★ 状态同步（StateKey 非空）：直接应用状态，**不重放 Operate()**（那是交互路径的事）
             if (!string.IsNullOrEmpty(m.StateKey))
             {
-                FPSGame.Utils.NetSyncLog.SyncLog("家具/状态·收", $"{Describe(furn, furn)} → {m.StateKey}（发起 sid={m.Sid}）");
+                // ⚠ 操作者要一起传：状态里可能含"被谁拿走了"，应用端得知道挂到哪个盟友身上
+                var stateUser = ResolveRemoteUser(m.Sid);
+                FPSGame.Utils.NetSyncLog.SyncLog("家具/状态·收", $"{Describe(furn, furn)} → {m.StateKey}（发起 sid={m.Sid} 操作者={(stateUser != null ? stateUser.name : "<null>")}）");
                 NetApplyGuard.Begin();
-                try { furn.ApplyRemoteState(m.State, m.StateKey); }
+                try { furn.ApplyRemoteState(m.State, m.StateKey, stateUser); }
                 finally { NetApplyGuard.End(); }
                 return;
             }
