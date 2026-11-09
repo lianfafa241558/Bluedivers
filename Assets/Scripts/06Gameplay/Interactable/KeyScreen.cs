@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using UnityEngine.Events;
 
+using FPSGame.Core;             // WindowStateEnum（窗口状态门）
 using FPSGame.Core.Interface;   // IsValidMono（接口引用判空）
 using FPSGame.Game;          // ActorsManager（驱动端判定要认"本机玩家"）
 using FPSGame.Utils;
@@ -103,6 +104,33 @@ public partial class KeyScreen : MonoBehaviour
     {
         // 远端"本帧按下"只对下一帧的 Update 有效（同 InputManager.GetDown 的语义）
         if (_remoteDown.Count > 0) _remoteDown.Clear();
+    }
+
+    private void OnEnable() => FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange += OnWindowStateChange;
+
+    private void OnDisable() => FPSGame.Gameplay.GlobalEventBus.OnWindowStateChange -= OnWindowStateChange;
+
+    /// <summary>
+    /// 有窗口打开（离开 Game 态）时**收掉本端正在进行的终端操作**，走的是"玩家再按一次 E 退出"同一条路
+    /// （<c>furn.Operate()</c> ⇒ <see cref="SetOwener"/> 收到 null + <c>inOperate</c> 翻转 + 4059 上报）。
+    ///
+    /// <para>▍为什么必须收：<c>PlayerOperationController.OnWindowStateChange</c> 会把
+    /// <c>PlayerInputHandler.InOperation</c> 清掉（否则关窗后还被交互锁着），但**家具自己的
+    /// <c>inOperate</c>/<c>owner</c> 没人管** ⇒ 关掉设置后玩家能 WASD 走动，终端又在吃同一批键。
+    /// 方向键在输入表里绑的是 <c>WindowStateEnum.All</c>，**跟窗口状态无关**，所以会被两边同时吃到。</para>
+    ///
+    /// <para>▍⚠ 只在"本端就是操作者"时收：联机时非操作端的 <c>owner</c> 是盟友镜像，跟着收会派发
+    /// <c>FurnitureOperate</c> ⇒ 4059 上报，把真正在操作的那一端也关掉。</para>
+    ///
+    /// <para>▍阶段进度**不重置**（和按 E 退出一致）：关窗后回到终端再按 E 就能接着做当前阶段。</para>
+    /// </summary>
+    private void OnWindowStateChange(WindowStateEnum oldState, WindowStateEnum newState)
+    {
+        if (newState == WindowStateEnum.Game) return;
+        // 无人值守阶段（Load/Wait/Artillery）本来就不绑定玩家，inOperate 为假 ⇒ 不打断
+        if (!furn || !furn.inOperate || owner == null) return;
+        if (!IsStageDriver()) return;
+        furn.Operate();
     }
 
     [SerializeField]

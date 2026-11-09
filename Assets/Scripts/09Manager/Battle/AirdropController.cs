@@ -397,7 +397,7 @@ namespace FPSGame.Managers
                         {
                             if (item.cfg.deliveryType == AirdropDeliveryEnum.Jet)
                             {
-                                Debug.Log("所有飞鹰重新装填");
+                                //Debug.Log("所有飞鹰重新装填");
                                 item.State = AirdropState.Cool;//所有飞鹰共装填
                                 item.time = data.cool;
                                 item.count = item.arriveCount;

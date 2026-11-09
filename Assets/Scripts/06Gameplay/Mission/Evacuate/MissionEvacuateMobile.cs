@@ -326,6 +326,9 @@ namespace FPSGame.Mission
             medivac.SetType(MedivacController.MedivacState.Evacuate);
             medivac.Play("Idle");
 
+            // 落点算一次并存下来：降落时直接用它；顺手把落点旁的树/石块/悬崖清掉（石头会直接穿进机腹）
+            PrepareMedivacLanding(medivac.transform);
+
             float scale = medivac.transform.lossyScale.x;
             Vector3 hover = areaPoint + Vector3.up * (m_HoverHeight * scale);
             Vector3 euler = area.eulerAngles;
@@ -345,13 +348,14 @@ namespace FPSGame.Mission
             UpdateTip("进入雨云号完成撤离 [" + Tool.FloatToTime(countDown) + "]");
 
             float scale = medivac.transform.lossyScale.x;
-            Vector3 landPos = areaPoint + (Vector3.up * 5.5f - area.forward * 5.5f) * scale;
-            medivac.transform.position = areaPoint + (Vector3.up * 5.5f + area.forward * 10f) * scale;
+            Vector3 forward = Vector3.ProjectOnPlane(area.forward, Vector3.up).normalized;
+            // 先摆到落点正后方，再由计时器压过去（垂直方向两者相同，下降表现交给 Land 动画）
+            medivac.transform.position = medivacLandPos + forward * (15.5f * scale);
             medivac.Play("Land");
 
             TimerHost.CreatePerTimer(() => {
                 if (!medivac || stage != EvacuateState.Land) return;
-                medivac.transform.position = Vector3.Lerp(medivac.transform.position, landPos, 15 * Time.deltaTime);
+                medivac.transform.position = Vector3.Lerp(medivac.transform.position, medivacLandPos, 15 * Time.deltaTime);
             }, m_LandTime, null);
         }
 

@@ -280,6 +280,8 @@ namespace FPSGame.Mission
             medivac.Complete += End;
             medivac.SetType(MedivacController.MedivacState.Evacuate);
             medivac.Play("Idle");
+            // 落点算一次并存下来：等玩家进撤离区真正降落时直接复用；顺手清掉落点旁的树/石块/悬崖
+            PrepareMedivacLanding(medivac.transform);
             FPSGame.Core.TimerHost.CreatePerTimer(() => {
                 medivac.transform.position = Vector3.Lerp(medivac.transform.position, areaPoint + (Vector3.up * 50) * medivac.transform.lossyScale.x, 30 * Time.deltaTime);
                 medivac.transform.eulerAngles = Vector3.Lerp(medivac.transform.eulerAngles, area.eulerAngles, 30 * Time.deltaTime);
@@ -306,9 +308,11 @@ namespace FPSGame.Mission
             countDown = 5;
             UpdateText("运输船即将着陆", "");
             beacon.GetComponent<Animator>().Play("Hide");
-            medivac.transform.position = areaPoint + (Vector3.up * 5.5f + area.forward * +10) * medivac.transform.lossyScale.x;
+            float scale = medivac.transform.lossyScale.x;
+            Vector3 forward = Vector3.ProjectOnPlane(area.forward, Vector3.up).normalized;
+            medivac.transform.position = medivacLandPos + forward * (15.5f * scale);
             FPSGame.Core.TimerHost.CreatePerTimer(() => {
-                medivac.transform.position = Vector3.Lerp(medivac.transform.position, areaPoint + (Vector3.up * 5.5f + area.forward * -5.5f) * medivac.transform.lossyScale.x, 15 * Time.deltaTime);
+                medivac.transform.position = Vector3.Lerp(medivac.transform.position, medivacLandPos, 15 * Time.deltaTime);
             }, 3, null);
 
             medivac.Play("Land");

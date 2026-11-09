@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using FPSGame.Gameplay;
 using FPSGame.Mission;
 using FPSGame.Net;
+using UnityEngine;
 
 namespace FPSGame.Managers
 {
@@ -33,9 +34,12 @@ namespace FPSGame.Managers
         /// <summary>回环门：true = 正在应用远端状态（此时本地事件不许再上行；同时放行被 <c>RemoteDriven</c> 门住的出口）。</summary>
         static bool _applyingRemote;
 
-        /// <summary>上次已广播的状态 / 进度 —— 去重，避免每次 <c>UpdateMission</c> 都发包。</summary>
+        /// <summary>上次已广播的状态 / 进度 —— 去重，避免每次 <c>UpdateMission</c> 都发包。
+        /// <para>⚠ 必须把 <see cref="MissionBase.percentage"/> 也算进去重键：计时类任务（炼油提香、撤离倒计时）
+        /// 是"NowProgress 不变、只有 percentage 在走"，只按进度去重会把整段计时全吃掉 ⇒ 成员端进度条不动。</para></summary>
         static readonly Dictionary<int, int> _lastState = new Dictionary<int, int>();
         static readonly Dictionary<int, int> _lastProgress = new Dictionary<int, int>();
+        static readonly Dictionary<int, float> _lastPercentage = new Dictionary<int, float>();
 
         public static void Install()
         {
@@ -44,6 +48,7 @@ namespace FPSGame.Managers
             _applyingRemote = false;
             _lastState.Clear();
             _lastProgress.Clear();
+            _lastPercentage.Clear();
 
             // 成员端：任务不自行推进 / 完成（一律以房主下发为准）
             var flow = NetRoomFlow.Instance;
@@ -109,11 +114,15 @@ namespace FPSGame.Managers
             if (_lastState.TryGetValue(key, out lastState) && lastState == state)
             {
                 int lastProgress;
-                if (_lastProgress.TryGetValue(key, out lastProgress) && lastProgress == progress) return;
+                float lastPercentage;
+                if (_lastProgress.TryGetValue(key, out lastProgress) && lastProgress == progress &&
+                    _lastPercentage.TryGetValue(key, out lastPercentage) && Mathf.Abs(lastPercentage - m.percentage) < 1e-4f)
+                    return;
             }
 
             _lastState[key] = state;
             _lastProgress[key] = progress;
+            _lastPercentage[key] = m.percentage;
             NetRoomFlow.Instance.SendMissionUpdate(key, state, progress, m.MaxProgress, m.percentage);
         }
 
@@ -144,6 +153,7 @@ namespace FPSGame.Managers
 
             _lastState[m.Key] = m.State;
             _lastProgress[m.Key] = m.Progress;
+            _lastPercentage[m.Key] = m.Percentage;
         }
 
         #endregion

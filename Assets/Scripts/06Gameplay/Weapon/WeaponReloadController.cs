@@ -232,10 +232,13 @@ namespace FPSGame.Weapon
             }
             else//扣除后备子弹
             {
-                var oldAmmo = Magazine.CurrValue;
-                var newAmmo = PEMath.Min(Ammo.CurrValue, Magazine.FinalValue);
-                Magazine.CurrValue = newAmmo;
-                Ammo.CurrValue -= newAmmo - oldAmmo;
+                // 只补"弹匣空出来的那部分"。旧写法把后备弹量当成了换弹后的弹匣总弹量，
+                // 弹匣没打空时 newAmmo < oldAmmo ⇒ Ammo -= 负数 = **反向加弹**，
+                // 于是"三连发"(ShootCost=3) 在弹匣2/后备1时 2/1 → 1/2 → 2/1 无限来回换弹。
+                var space = PEMath.Max(Magazine.FinalValue - Magazine.CurrValue, 0);
+                var take = PEMath.Min(Ammo.CurrValue, space);
+                Magazine.CurrValue += take;
+                Ammo.CurrValue -= take;
             }
             IsReloading = false;
         }

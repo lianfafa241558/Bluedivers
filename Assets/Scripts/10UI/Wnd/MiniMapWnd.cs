@@ -775,13 +775,7 @@ public class MiniMapWnd : Window
 
             if (targetActive)
             {
-                Color color = mission.missionType switch {
-                    MissionType.Main => MainColor,
-                    MissionType.Extra => ExtraColor,
-                    MissionType.Nest => mission.color,
-                    MissionType.Sub => MainColor,
-                    _ => Color.red,
-                };
+                Color color = MissionColor(mission);
                 SetColor(go.GetChild(1, 1), color);
                 SetColor(go.GetChild(1, 0), color);
             }
@@ -845,6 +839,17 @@ public class MiniMapWnd : Window
             OnGenericMove(entity);
         }
     }
+    /// <summary>任务点图标的"已激活"颜色。创建与状态更新**必须共用这一张映射**。
+    /// <para>⚠ 曾经 <see cref="OnMissionUpdate"/> 里另写了一份 switch 且漏了 <c>Sub</c>/<c>Evacuate</c>，
+    /// 落到 <c>default(Color)</c>（RGBA 全 0 = 全透明）⇒ 动态撤离一进入阶段（第一次 UpdateText 触发
+    /// MissionUpdate、而此时刚 AddTag(IsActive)）图标就直接"消失"。</para></summary>
+    private Color MissionColor(MissionBase mission) => mission.missionType switch
+    {
+        MissionType.Extra => ExtraColor,
+        MissionType.Nest => mission.color,
+        _ => MainColor,          // Main / Sub / Evacuate：都不许给透明色
+    };
+
     public void OnMissionUpdate(MissionBase mission)
     {
         if (!mission.entity) return;
@@ -856,12 +861,7 @@ public class MiniMapWnd : Window
             {
                 if (targetActive)
                 {
-                    Color color = mission.missionType switch {
-                        MissionType.Main => MainColor,
-                        MissionType.Extra => ExtraColor,
-                        MissionType.Nest => mission.color,
-                        _ => default,
-                    };
+                    Color color = MissionColor(mission);
                     SetColor(go.GetChild(1, 1), color);
                     SetColor(go.GetChild(1, 0), color);
                 }

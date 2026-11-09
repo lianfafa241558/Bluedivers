@@ -123,7 +123,16 @@ namespace FPSGame.Mission
                     break;
                 case MissionState.Start:
                     tickCount = (int)keyScreen.GetTime();
-                    percentage = tickCount / keyScreen.nowProcedure.time;
+                    // ★ 提香阶段"进度"= 终端计时，必须落进 NowProgress/MaxProgress/percentage 三个**会走 4058** 的字段：
+                    //   ① 房主独占写入 —— 成员端若拿自己终端的时钟再算一遍，会把 ApplyRemoteState 刚写进来的值当帧冲掉；
+                    //   ② 只写 percentage 不够 —— 4058 按 (state, progress) 去重，progress 不变时那一包根本发不出去。
+                    if (!RemoteDriven)
+                    {
+                        int total = (int)keyScreen.nowProcedure.time;
+                        MaxProgress = Mathf.Max(1, total);
+                        NowProgress = tickCount;
+                        percentage = total > 0 ? tickCount / (float)total : 0f;
+                    }
                     UpdateMission();
                     if(tickCount == errorTimes[battleStage] + 5)
                     {

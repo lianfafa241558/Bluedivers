@@ -13,9 +13,9 @@ namespace FPSGame.Mission
     {
         public List<Furniture_Pipe> pipes;
         Furniture_Attached furniture;
-        int count;
-        /// <summary>当前点了 tip 的那根（OnLink 早于 Complete 触发，靠它把"刚建完的"排除掉）</summary>
+        /// <summary>当前点亮"等待建造"标记（tip = PipelineA 里名为 Wait 的子物体）的那根管道</summary>
         Furniture_Pipe _tipPipe;
+
         protected override void StartMission()
         {
             furniture = entity.GetComponentInChildren<Furniture_Attached>();
@@ -23,58 +23,62 @@ namespace FPSGame.Mission
         }
         protected override void Uninit()
         {
-            furniture.OnOperate -= OnOperate;
+            if (furniture) furniture.OnOperate -= OnOperate;
+            UnsubscribePipes();
+            _tipPipe = null;
             base.Uninit();
         }
 
 
+        /// <summary>油泵（PipeHead）被接上时触发：这一刻整条链已经长满，取一次快照后改由管道状态驱动。</summary>
         private void OnOperate()
         {
             furniture.OnOperate -= OnOperate;
             UpdateTip("建造全部管道");
             pipes = furniture.relatedTrans.GetComponent<Furniture_Pipe>().GetAllPipes();
-            count = 0;
             foreach (var item in pipes)
             {
-                if (item.Id == "PipeWait")
-                {
-                    item.OnOperate += OnLink;
-                    ++count;
-                }
-                
+                if (item) item.OnStateSettled += Refresh;
             }
-            // 进入"建造管道"阶段：先把此刻能建的那一根点亮（tip），免得玩家在一排管道里挨个试
-            TipBuildable(null);
+            Refresh();
         }
 
-        /// <summary>把 tip 挪到"当前可建造"的那根管道（同一时刻只有一根满足条件；<paramref name="exclude"/> = 刚建完的那根）。</summary>
-        private void TipBuildable(Furniture_Pipe exclude)
+        /// <summary>把 Wait 标记对齐到"此刻唯一可建造的那根"，全部建完即完成子任务。
+        /// <para>⚠ 驱动源必须是 <see cref="Furniture_Pipe.OnStateSettled"/>（switch 之后触发）。
+        /// 原来的 <c>item.OnOperate += OnLink</c> 是在 <c>base.Operate()</c> 里发出的 —— 那时本根 Id 还是
+        /// PipeWait、3 秒长按的 Complete() 还没跑 ⇒ 下一根判不成"可建造"，而被点的那根随后的 Complete()
+        /// 又不会再通知任何人，于是 Wait 永远停在第一根上。</para>
+        /// <para>⚠ <c>pipes</c> 是连接瞬间的快照：建管道阶段不会再产生新管道，所以不用每帧刷新；
+        /// 若将来出现"接上之后还能继续延长"，要在这里重新取快照。</para></summary>
+        private void Refresh()
         {
+            Furniture_Pipe buildable = null;
+            int remain = 0;
+            for (int i = 0; i < pipes.Count; ++i)
+            {
+                var item = pipes[i];
+                if (!item) continue;
+                if (item.Id == "PipeWait") ++remain;
+                if (buildable == null && item.CanBuildNow) buildable = item;
+            }
+
+            // 同一时刻只有一根可建造：上一根的 Wait 由这里熄灭（它的 Complete() 也会熄一次，幂等）
+            if (_tipPipe && _tipPipe != buildable) _tipPipe.UnTip();
+            _tipPipe = buildable;
+            if (buildable) buildable.Tip();
+
+            if (remain > 0) return;
+            UnsubscribePipes();
+            CompleteMission();
+        }
+
+        private void UnsubscribePipes()
+        {
+            if (pipes == null) return;
             foreach (var item in pipes)
             {
-                if (!item || item == exclude || !item.CanBuildNow) continue;
-                _tipPipe = item;
-                item.Tip();
-                return;
+                if (item) item.OnStateSettled -= Refresh;
             }
-            _tipPipe = null;
-        }
-
-        private void OnLink()
-        {
-            if ((--count) == 0)
-            {
-                foreach (var item in pipes)
-                {
-                    if(item) item.OnOperate -= OnLink;
-                }
-                CompleteMission();
-                return;
-            }
-            // ⚠ OnLink 由 Operate() 在 Complete() 之前触发 ⇒ 刚建完那根的 Id 还是 PipeWait、
-            //   判据仍成立，只能按引用排除；否则会重新点亮它，紧接着又被 Complete() 的 tip 关掉。
-            var done = _tipPipe;
-            TipBuildable(done);
         }
     }
 }

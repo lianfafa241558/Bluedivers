@@ -328,9 +328,15 @@ namespace FPSGame.Game {
         /// 老实现是 <c>damageAffected.bounds.center</c> 直接解引用 ⇒ <c>NullReferenceException</c>
         /// 把整条网络消息的处理打断（2026-10-10 用户实测：客机应用房主下发的 <c>EnemyDamagedSync</c> 时崩）。</para>
         /// <para>▍兜底取 <c>Vector3.up</c>：只影响特效朝向，不影响任何结算数值。</para>
+        /// <para>▍落点正好等于包围盒中心时（AOE 传中心点 / 单点碰撞体），`normalized` 返回零向量，
+        /// 下游 <c>Quaternion.LookRotation</c> 刷 "Look rotation viewing vector is zero" ⇒ 同样兜底 up。</para>
         /// </summary>
         private static Vector3 HitNormal(Vector3 pos, Collider damageAffected)
-            => damageAffected != null ? (pos - damageAffected.bounds.center).normalized : Vector3.up;
+        {
+            if (damageAffected == null) return Vector3.up;
+            Vector3 dir = pos - damageAffected.bounds.center;
+            return dir.sqrMagnitude > 1e-8f ? dir.normalized : Vector3.up;
+        }
 
         private PEInt HandleDamage(DamageTypeEnum type, PEInt value, GameObject damageCaused, bool isAboTick = false) {
             // 异常状态 tick 伤害：不更新积蓄槽（Current/LastGainTime），直接造成对应类型伤害

@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using FPSGame.Attributes;
 using FPSGame.Core;
 using FPSGame.Core.Interface;
-using FPSGame.Attributes;
 using FPSGame.GameContract;
-using RootMotion.FinalIK;
-
-using UnityEngine;
 using FPSGame.Utils;
+using RootMotion.FinalIK;
+using UnityEditor;
+using UnityEngine;
+using static Unity.IO.LowLevel.Unsafe.AsyncReadManagerMetrics;
 
 namespace FPSGame.Gameplay
 {
@@ -29,6 +31,12 @@ namespace FPSGame.Gameplay
     public class Furniture_Pipe : Furniture_Attached
     {
         public static List<Furniture_Attached> targets=new();
+
+        /// <summary>本根管道状态**已落定**（在 <see cref="SetId"/> 里、Operate 的 switch 执行完之后触发）。
+        /// <para>▍为什么不能监听 <c>Furniture_Attached.OnOperate</c>：它在 <c>base.Operate()</c> 里就发出，
+        /// 早于 switch ⇒ 监听方此刻看到的 <see cref="Id"/> 还是旧的（PipeWait），
+        /// 判不出"下一根是否已可建造"（<see cref="MissionSubConnectPipes"/> 的 Wait 标记就靠这条链推进）。</para></summary>
+        public event Action OnStateSettled;
 
         [Foldout("配置", true)]
         [SerializeField]
@@ -202,9 +210,17 @@ namespace FPSGame.Gameplay
             }
 
         }
+        /// <summary>点亮"等待建造"标记（tip = prefab 里那个名为 Wait 的子物体）。
+        /// 平台上的起始管道（OilPlane.prefab 里那 3 根，Id=PipeLink）没配它 ⇒ 这里可能为空。</summary>
         public void Tip()
         {
-            tip.SetActive(true);
+            if (tip) tip.SetActive(true);
+        }
+
+        /// <summary>熄灭"等待建造"标记（移交下一根时用）。</summary>
+        public void UnTip()
+        {
+            if (tip) tip.SetActive(false);
         }
 
         [ContextMenu("完成")]
@@ -212,8 +228,10 @@ namespace FPSGame.Gameplay
         {
             //Debug.LogError("完成", gameObject);
             SetId("PipeComplete");
-            tip.SetActive(false);
+            UnTip();
             PlaySound(audioClose);
+            flags &= FurnitureFlag.ControlAnim;
+
             canOperate = false;
             inOperate = false;
             meetTime = 3;
@@ -244,6 +262,8 @@ namespace FPSGame.Gameplay
         // ★ 联机（2026-10-11）：管道状态（决定 CanOperate 与任务进度）必须两端一致 ⇒ 上报（键 = 家具 SyncId，值 = 状态名）。
         //   没有交互驱动的那条路径（任务 EnterRepair 直接调 Error()）也能靠它传出去。
         ReportState(EncodeState(value), value);
+        // 状态已写进身份源 ⇒ 此时 CanBuildNow / GetAllPipes 才是新值，通知监听方重算
+        OnStateSettled?.Invoke();
         }
 
         private static int EncodeState(string value)
