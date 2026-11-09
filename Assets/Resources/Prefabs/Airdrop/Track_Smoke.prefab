@@ -112,7 +112,7 @@ MonoBehaviour:
     NoSource: 1
     SoundRadius: 120
     ImpactSoundRadius: 30
-    DamageExplosion: 0
+    DamageExplosion: 5
     DamageDirect: 100
     DamageGroupDirect:
     - Key: 0
@@ -123,8 +123,8 @@ MonoBehaviour:
     ExplosionInnerRange: 2
     ExplosionRange: 4
     DestructeRadius: 2
-    ShockwaveRadius: 0
-    ShockwaveForce: 10
+    ShockwaveRadius: 16
+    ShockwaveForce: 3
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -166,7 +166,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0

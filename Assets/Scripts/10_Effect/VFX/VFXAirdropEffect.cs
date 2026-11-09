@@ -560,19 +560,29 @@ namespace FPSGame.Effect
                 {
                     pro.OnHit -= PodHit;
                 }
-                //Debug.LogError("创建位置" + transform.position);
-                //创建实际物体
-                var go = m_creatObject = SpawnCreatObject(data.cfg.creatObect, transform.position + 0.2f * Vector3.up, transform.rotation);
-                if (go.TryGetComponentInChildren(out WeaponBaseController weapon))
+                // ⚠ 勾了"使用标准空投舱"却没填"创建的物体"时**绝不能** Instantiate(null)：
+                //   本回调跑在 `AirdropPod.Land()` 里，异常会跳过它后面的 `Stop()` ⇒ 舱永远不算落地、
+                //   每帧重进这里刷 ArgumentException（2026-11-09 实测）。这种配置按"空舱"处理。
+                if (data.cfg.creatObect == null)
                 {
-                    weapon.Origin = m_origin;
+                    Debug.LogWarning($"[VFXAirdropEffect] 战备「{data.cfg.showName}」(ID={data.cfg.ID}) 勾了「使用标准空投舱」但「创建的物体」为空 ⇒ 只落地舱、不生成内容物");
                 }
-                // ⚠ 同 UpdatePod：m_origin 允许为 null（解析不到呼叫者）
-                if (m_origin != null && m_origin.TryGetComponent(out IActor originActor)
-                    && go.TryGetComponentInChildren(out Actor actor))
+                else
                 {
-                    actor.Team = originActor.Team;
-                    actor.Origin = originActor;
+                    //Debug.LogError("创建位置" + transform.position);
+                    //创建实际物体
+                    var go = m_creatObject = SpawnCreatObject(data.cfg.creatObect, transform.position + 0.2f * Vector3.up, transform.rotation);
+                    if (go.TryGetComponentInChildren(out WeaponBaseController weapon))
+                    {
+                        weapon.Origin = m_origin;
+                    }
+                    // ⚠ 同 UpdatePod：m_origin 允许为 null（解析不到呼叫者）
+                    if (m_origin != null && m_origin.TryGetComponent(out IActor originActor)
+                        && go.TryGetComponentInChildren(out Actor actor))
+                    {
+                        actor.Team = originActor.Team;
+                        actor.Origin = originActor;
+                    }
                 }
             }
             else
@@ -618,6 +628,11 @@ namespace FPSGame.Effect
         }
         void UpdateBomb()
         {
+            // 没配「创建的物体」的轰炸 = **纯信号战备**（火炮阵地 18 / 极速射 19 / 实验性弹头 20）：作用点在
+            // `BattleEventBus.Airdrop`（SetOrigin 那步就发出了，见 DetectionModuleAirdrop）⇒ 这里本来就不生成东西。
+            // ⚠ 不能只靠"信标死得早"躲开：寿命 = arriveTime+sustainTime 再加 EndDelay(1s) ⇒ Sustain 那一帧信标还活着。
+            if (data.cfg.creatObect == null) return;
+
             if (!m_creatObject)
             {
                 if (data.State == AirdropState.Sustain)

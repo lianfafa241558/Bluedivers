@@ -96,7 +96,9 @@ public class Furniture_Artillery : Furniture_Attached
         owner = null;
     }
 
-    /// <summary>是否玩家手持匹配 ID 的物体</summary>
+    /// <summary>是否玩家手持匹配 ID 的物体。
+    /// ⚠这是每帧路径（SubtitleWnd / PlayerOperationController 逐家具调 CanOperate），
+    /// 不能打日志、不能走 AllFurns()（IEnumerable 会把字典枚举器装箱，每帧每次分配）。</summary>
     private bool HasRequireItem(GameObject user)
     {
         if (user == null || string.IsNullOrEmpty(requireId))
@@ -107,12 +109,11 @@ public class Furniture_Artillery : Furniture_Attached
         {
             return false;
         }
-        foreach (var furn in equip.AllFurns())
+        foreach (var kv in equip.Equips)
         {
-            Debug.LogWarning("furn"+(furn != null? furn.Id : ""));
+            var furn = kv.Value;
             if (furn != null && furn.Id == requireId) return true;
         }
-        Debug.LogWarning("没有找到对应id的物品");
         return false;
     }
 

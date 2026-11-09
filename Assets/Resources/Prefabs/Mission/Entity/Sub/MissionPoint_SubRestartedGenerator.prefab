@@ -79,6 +79,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   datas: []
+  hardnessDatas:
+  - localPos: {x: 0, y: 0, z: 0}
+    shape: 0
+    innerRadius: 12
+    outerRadius: 15
+    rectInnerHalfSize: {x: 0, y: 0}
+    rectHalfSize: {x: 0, y: 0}
+    innerHardness: 0.8
+    outerHardness: 0
   additionTerrain: {fileID: 1954428656643466638}
   transitionDistance: 9
   StartModify: 0
@@ -889,6 +898,7 @@ MonoBehaviour:
   audioOper: {fileID: 0}
   audioClose: {fileID: 0}
   flags: 0
+  showOnMap: 0
   pressTime: 0
   canOperate: 0
   inOperate: 0

@@ -40,7 +40,17 @@ using static FPSGame.WndTools.WndRootTool;
 
             SetFill(FillW, 1);
             SetFill(FillR, 1);
-            RebuildArmor();
+            // ★ 不是每个 Boss 都有部件系统：爆裂者家族（Dec_Bane_Boss / Ung_Bane_Boss）只挂 Actor，
+            //   没有 PartController ⇒ 原样去读 invincibleArmor 就是 NRE，整条 Boss 血条建不出来（2026-11-09 实测）。
+            //   无护甲的单位只显示血条，护甲排整排隐藏。
+            if (enemy != null)
+            {
+                RebuildArmor();
+            }
+            else if (armorLayout != null)
+            {
+                SetActive(armorLayout, false);
+            }
             _originalRColor = GetColor(FillR);
             _isInvincibleShown = false;
 
@@ -78,19 +88,35 @@ using static FPSGame.WndTools.WndRootTool;
                 }
             }
 
+            if (enemy == null) return;   // 无部件系统（见 Set）：事件残留订阅时直接退出
+
             damageables = enemy.invincibleArmor.Count > 0 ? enemy.invincibleArmor.ToArray() : enemy.deathArmor;
             lenght = damageables.Length;
+
+            // 护甲格数由 Art 决定：护甲比格子多时不截断，Tick/GetChild 会越界抛 ArgumentOutOfRange。
+            int slots = armorLayout.childCount;
+            if (lenght > slots)
+            {
+                Debug.LogWarning($"Boss 血条护甲格不足：{enemy.name} 有 {lenght} 块护甲，UI 只有 {slots} 格", this);
+                lenght = slots;
+            }
 
             int i = 0;
             for (; i < lenght; ++i)
             {
                 var item = damageables[i];
-                SetActive(armorLayout.GetChild(i), true);
+                Transform slot = armorLayout.GetChild(i);
+                if (item == null)   // 预制体漏引用 / 已销毁的部位：空格子隐藏，别订阅
+                {
+                    SetActive(slot, false);
+                    continue;
+                }
+                SetActive(slot, true);
                 SetFill(armorLayout.GetChild(i, 1, 0), 1);
                 SetFill(armorLayout.GetChild(i, 1, 1), 1);
                 item.OnDamage += OnDamage;
             }
-            for (; i < armorLayout.childCount; ++i)
+            for (; i < slots; ++i)
             {
                 SetActive(armorLayout.GetChild(i), false);
             }

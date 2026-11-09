@@ -22,6 +22,15 @@ public class ModifyTerrain : MonoBehaviour
 
     [SerializeField]
     List<ModifyTerrainData> datas=new();
+
+    /// <summary>
+    /// 只刷硬度、不改高度：条目内形状范围内的地形被"炸实"，之后炸弹坑按 (1 - 硬度) 削浅。
+    /// <para>与 <see cref="datas"/> 分开是刻意的：硬度是"地表属性"，而整平条目是"这次要不要压平"，
+    /// 两者半径往往不同（例如平台 20m 整平、硬度圈 30m）。</para>
+    /// </summary>
+    [SerializeField]
+    List<ModifyTerrainHardnessData> hardnessDatas = new();
+
     [SerializeField]
     Terrain additionTerrain;
     [SerializeField]
@@ -105,6 +114,18 @@ public class ModifyTerrain : MonoBehaviour
                 //Debug.LogError("附加了地形" + gameObject);
             }
 
+            //硬度单独一遍，放在所有改高度的操作之后：先刷后挖的话，这次的坑会被自己刚刷的硬度削弱
+            foreach (var hard in hardnessDatas)
+            {
+                if (hard.innerHardness <= 0f && hard.outerHardness <= 0f) continue;
+                Vector3 pos = transform.TransformPoint(hard.localPos);
+                Vector2 outerHalfSize = ResolveOuterHalfSize(hard.rectHalfSize, hard.outerRadius);
+                Vector2 innerHalfSize = ResolveInnerHalfSize(hard.rectInnerHalfSize, hard.innerRadius, hard.outerRadius, outerHalfSize);
+                //矩形要跟着物体的世界 Y 旋转（与上面整平那条路同一个角度），否则硬化的范围和压平的范围会拧成风车
+                TerrainUtils.StampHardness(TerrainUtils.WSToUV(pos), innerHalfSize, outerHalfSize,
+                    hard.shape, transform.eulerAngles.y, hard.innerHardness, hard.outerHardness);
+            }
+
             // 地形刚被改过：标脏 + 立刻兑现一次（跳过 4/s、8/s 限流与 RefreshInterval），
             // 一次性完成"树/草提交 + 树碰撞体重建 + NavMesh 重烘"，避免"地面已经变了、树和石块还悬在半空"
             TerrainClearer.MarkTerrainChanged();
@@ -160,6 +181,15 @@ public class ModifyTerrain : MonoBehaviour
                 //没落在自己的地面上：补一根 1m 竖线当锚点（红=射线没打到物体脚下的地面）
                 Gizmos.DrawLine(pos, pos + Vector3.up);
             }
+        }
+
+        //硬度圈（只刷硬度那批）：绿色外框，方便和上面的整平框对齐检查
+        Gizmos.color = Color.green;
+        foreach (var hard in hardnessDatas)
+        {
+            var pos = transform.TransformPoint(hard.localPos);
+            if (hard.shape == ShapeType.Rectangle) DrawRect(pos, ResolveOuterHalfSize(hard.rectHalfSize, hard.outerRadius));
+            else DrawCircle(pos, hard.outerRadius, Vector3.up);
         }
 
 
@@ -222,9 +252,7 @@ public class ModifyTerrain : MonoBehaviour
         /// <para>逐轴回落：某个分量 &lt;= 0 时该轴用 <see cref="outerRadius"/>，
         /// 这样"只填一轴"也能表达出来，并兼容项目里"矩形只给一个半长度"的惯例（Actor.shape）。</para>
         /// </summary>
-        public Vector2 GetOuterHalfSize()
-            => new(rectHalfSize.x > 0f ? rectHalfSize.x : outerRadius,
-                   rectHalfSize.y > 0f ? rectHalfSize.y : outerRadius);
+        public Vector2 GetOuterHalfSize() => ResolveOuterHalfSize(rectHalfSize, outerRadius);
 
         /// <summary>
         /// 取矩形的**内框** XZ 半长（米）：该范围内地形完全按目标高度拉平。
@@ -233,11 +261,50 @@ public class ModifyTerrain : MonoBehaviour
         /// </summary>
         /// <param name="outerHalfSize">外框半长（米），由 <see cref="GetOuterHalfSize"/> 给出</param>
         public Vector2 GetInnerHalfSize(Vector2 outerHalfSize)
-        {
-            float scale = innerRadius / (outerRadius + 0f);
-            return new(rectInnerHalfSize.x > 0f ? rectInnerHalfSize.x : outerHalfSize.x * scale,
-                       rectInnerHalfSize.y > 0f ? rectInnerHalfSize.y : outerHalfSize.y * scale);
-        }
+            => ResolveInnerHalfSize(rectInnerHalfSize, innerRadius, outerRadius, outerHalfSize);
+    }
+
+    /// <summary>
+    /// 只刷硬度的条目：不改高度，只把这块地表"炸实"，让之后的炸弹坑按 (1 - 硬度) 削浅。
+    /// <para>⚠ 与 <see cref="ModifyTerrainData"/> 分开是刻意的：整平可能这次不做（改高度会被存档/回放影响），
+    /// 但地表被压实的既成事实要保留，两者半径也常常不同。</para>
+    /// </summary>
+    [System.Serializable]
+    struct ModifyTerrainHardnessData
+    {
+        public Vector3 localPos;
+        public ShapeType shape;
+        [Compare("shape", (int)ShapeType.Circle, CompareOperate.Equal)]
+        public int innerRadius;
+        [Compare("shape", (int)ShapeType.Circle, CompareOperate.Equal)]
+        public int outerRadius;
+
+        [InspectorName("矩形内半尺寸(X,Z)")]
+        [Compare("shape", (int)ShapeType.Rectangle, CompareOperate.Equal)]
+        public Vector2 rectInnerHalfSize;
+        [InspectorName("矩形外半尺寸(X,Z)")]
+        [Compare("shape", (int)ShapeType.Rectangle, CompareOperate.Equal)]
+        public Vector2 rectHalfSize;
+
+        [InspectorName("内圈硬度(0-1)")]
+        [Range(0f, 1f)]
+        public float innerHardness;
+        [InspectorName("外圈硬度(0-1)")]
+        [Range(0f, 1f)]
+        public float outerHardness;
+    }
+
+    /// <summary>矩形外框半长：逐轴回落，某分量 &lt;= 0 时该轴用 <paramref name="outerRadius"/></summary>
+    private static Vector2 ResolveOuterHalfSize(Vector2 rectHalfSize, float outerRadius)
+        => new(rectHalfSize.x > 0f ? rectHalfSize.x : outerRadius,
+               rectHalfSize.y > 0f ? rectHalfSize.y : outerRadius);
+
+    /// <summary>矩形内框半长：逐轴回落，某分量 &lt;= 0 时该轴按 外框 × (内半径 / 外半径) 推导</summary>
+    private static Vector2 ResolveInnerHalfSize(Vector2 rectInnerHalfSize, float innerRadius, float outerRadius, Vector2 outerHalfSize)
+    {
+        float scale = innerRadius / (outerRadius + 0f);
+        return new(rectInnerHalfSize.x > 0f ? rectInnerHalfSize.x : outerHalfSize.x * scale,
+                   rectInnerHalfSize.y > 0f ? rectInnerHalfSize.y : outerHalfSize.y * scale);
     }
 }
 }

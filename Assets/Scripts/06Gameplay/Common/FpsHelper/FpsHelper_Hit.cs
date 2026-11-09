@@ -237,6 +237,11 @@ namespace FPSGame.Gameplay
                 {
                     GameObject ps = VfxPool.Creat(damageData.ImpactVfx, point + (normal * damageData.ImpactVfxSpawnOffset), damageData.UseCollisionDirection ? Quaternion.LookRotation(normal) : default, (collider.IsValid() && (!damageData.OnlyTerrain || collider is TerrainCollider)) ? collider.transform : null);
                     ps?.GetComponentInChildren<IVfxEffect>()?.SetOrigin(origin, hitData.weapon.IsValid() ? hitData.weapon.gameObject : null, collider, point);
+                    if(ps!=null&&ps.TryGetComponent<IActor>(out var actor)&& origin.TryGetComponent<IActor>(out var Oactor))
+                    {
+                        actor.Origin = Oactor;
+                        actor.Team = Oactor.Team;
+                    }
                 }
 
             }

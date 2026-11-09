@@ -400,6 +400,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   datas: []
+  hardnessDatas:
+  - localPos: {x: -5, y: 0, z: 0}
+    shape: 2
+    innerRadius: 0
+    outerRadius: 10
+    rectInnerHalfSize: {x: 0, y: 0}
+    rectHalfSize: {x: 8, y: 12}
+    innerHardness: 0.5
+    outerHardness: 0
   additionTerrain: {fileID: 1163590556745743613}
   transitionDistance: 7
   StartModify: 0
@@ -1725,6 +1734,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []

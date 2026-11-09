@@ -86,8 +86,8 @@ MonoBehaviour:
     ExplosionInnerRange: 3
     ExplosionRange: 10
     DestructeRadius: 2
-    ShockwaveRadius: 0
-    ShockwaveForce: 10
+    ShockwaveRadius: 16
+    ShockwaveForce: 3
     DamageGroupExplosion:
     - Key: 4
       Value: 1
@@ -129,7 +129,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0

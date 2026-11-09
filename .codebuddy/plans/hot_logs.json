@@ -1,0 +1,748 @@
+[
+ {
+  "file": "Assets/Plugins/RootMotion/FinalIK/IK Components/VRIK.cs",
+  "line": 252,
+  "method": "UpdateSolver",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"VRIK Root Transform's scale is zero, can not update VRIK. Make sure you have not calibrated the character to a zero scale.\", transform);"
+ },
+ {
+  "file": "Assets/Plugins/RootMotion/FinalIK/_DEMOS/VRIK/Scripts/VRIKCalibrationBasic.cs",
+  "line": 49,
+  "method": "LateUpdate",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"No Calibration Data to calibrate to, please calibrate with 'C' first.\");"
+ },
+ {
+  "file": "Assets/Plugins/RootMotion/FinalIK/_DEMOS/VRIK/Scripts/VRIKCalibrationBasic.cs",
+  "line": 62,
+  "method": "LateUpdate",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"Avatar needs to be calibrated before RecalibrateScale is called.\");"
+ },
+ {
+  "file": "Assets/Plugins/RootMotion/Shared Scripts/Navigator.cs",
+  "line": 69,
+  "method": "Update",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"Trying to update an uninitiated Navigator.\");"
+ },
+ {
+  "file": "Assets/Plugins/RootMotion/Shared Scripts/Navigator.cs",
+  "line": 86,
+  "method": "Update",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning(\"Zero Corner Path\", transform);"
+ },
+ {
+  "file": "Assets/Plugins/RootMotion/Shared Scripts/Navigator.cs",
+  "line": 98,
+  "method": "Update",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning(\"Path Partial\", transform);"
+ },
+ {
+  "file": "Assets/Plugins/RootMotion/Shared Scripts/Navigator.cs",
+  "line": 103,
+  "method": "Update",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning(\"Path Invalid\", transform);"
+ },
+ {
+  "file": "Assets/Scripts/05_EffectComp/HaloController.cs",
+  "line": 62,
+  "method": "UpdateHalo",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.Log($\"[Halo] frame{Time.frameCount} parentMove={Vector3.Distance(parent.position, _prevParentPos):F3} parent={parent.position} halo={transform.position}\")"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/AI/Controller/PhoenixEagleController.cs",
+  "line": 249,
+  "method": "UpdateDivingMovement",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法",
+   "被每帧调 Update→UpdateMovement→UpdateDivingMovement"
+  ],
+  "editorOnly": false,
+  "text": "Debug.Log(\"到点用时\" + (Time.time - time));"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Common/FpsHelper/FpsHelper_Utility.cs",
+  "line": 30,
+  "method": "UpdatePipeBounds",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"参数错误\", smr);"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Projectile/ProjectileStandard.cs",
+  "line": 148,
+  "method": "Update",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.Log(\"落空\" + gameObject.name, gameObject);"
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetHostSvc.cs",
+  "line": 1267,
+  "method": "Update",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning($\"[NetHostSvc] 等待成员加载完成超时（{loadWaitTimeout:0.#}s）⇒ 先行开打；未上报：{MissingLoadDesc()}\");"
+ },
+ {
+  "file": "Assets/Editor/PrefabBatchToolBase.cs",
+  "line": 227,
+  "method": "OnGUI",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": true,
+  "text": "Debug.Log(\"已复制到剪贴板\");"
+ },
+ {
+  "file": "Assets/Editor/TerrainTreePrototypePreparer.cs",
+  "line": 329,
+  "method": "OnGUI",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": true,
+  "text": "else if (!string.IsNullOrEmpty(abs)) Debug.LogWarning(\"[地形树原型] 请选择 Assets 目录下的文件夹\");"
+ },
+ {
+  "file": "Assets/Editor/Tool/FindCorruptedChars.cs",
+  "line": 52,
+  "method": "OnGUI",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": true,
+  "text": "Debug.Log(\"已复制到剪贴板\");"
+ },
+ {
+  "file": "Assets/Plugins/RootMotion/FinalIK/Tools/EditorIK.cs",
+  "line": 25,
+  "method": "OnEnable",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "中频(OnEnable)"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"EditorIK needs to have an IK component on the same GameObject.\", transform);"
+ },
+ {
+  "file": "Assets/Plugins/RootMotion/Shared Scripts/Hierarchy.cs",
+  "line": 154,
+  "method": "IsCommonAncestor",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "循环体"
+  ],
+  "editorOnly": false,
+  "text": "Debug.Log(\"Transforms[\" + i + \"] is null.\");"
+ },
+ {
+  "file": "Assets/Scripts/00Tools/TransformUtils.cs",
+  "line": 47,
+  "method": "GetChild",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→GetChild"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"找不到\" + transform + \"下\" + values[i] + \" 停留在\" + re);"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Data/RoleData_SO.cs",
+  "line": 52,
+  "method": "SpeechGroup",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→Speech→SpeechGroup"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(ID + \"没有配置\" + type + \"的语音\");"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain_Train.cs",
+  "line": 145,
+  "method": "DepartTrain",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Tick→DepartTrain"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning($\"拦截火车：时刻表第 {departedCount} 班指向的轨道不存在，跳过\", this);"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain_Train.cs",
+  "line": 151,
+  "method": "DepartTrain",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Tick→DepartTrain"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"拦截火车：没有配「车头预制体」⇒ 不发车\", this);"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain_Train.cs",
+  "line": 171,
+  "method": "DepartTrain",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Tick→DepartTrain"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"拦截火车：车头预制体上没有 Damageable ⇒ 车厢伤害无法转发\", this);"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain_Turret.cs",
+  "line": 255,
+  "method": "SpawnTurret",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Tick→DepartTrain→SpawnTurret"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning($\"拦截火车：炮塔预制体 {turretEntries[entry].Value.name} 上没有 Actor（不是单位）\""
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetHostSvc.cs",
+  "line": 491,
+  "method": "HandleMemberLeft",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→EvictIdleMembers→HandleMemberLeft"
+  ],
+  "editorOnly": false,
+  "text": "if (!selfClosed && _ghostLogged.Add(sid)) Debug.Log($\"[NetHostSvc] 成员断连 sid={sid}（未入房，未参与游戏，后续同类不再提示）\");"
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetHostSvc.cs",
+  "line": 519,
+  "method": "EvictIdleMembers",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→EvictIdleMembers"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning($\"[NetHostSvc] 成员 sid={sid} 已 {memberIdleTimeout:0.#}s 无任何消息（疑似强退/断网）⇒ 按离开处理\");"
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetHostSvc.cs",
+  "line": 1076,
+  "method": "StartBattle",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→StartBattle"
+  ],
+  "editorOnly": false,
+  "text": "Debug.Log($\"[NetHostSvc] 全体加载完成 ⇒ 广播开打（局号 {_matchId}，玩家 {TotalPlayers}）\");"
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetRoomFlow.cs",
+  "line": 385,
+  "method": "DetectHostLost",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→DetectHostLost"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning(silent"
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetRoomFlow.cs",
+  "line": 440,
+  "method": "Join",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→BuildSignature→Join"
+  ],
+  "editorOnly": false,
+  "text": "Debug.Log($\"[NetRoomFlow] 回连房主 {room.HostIp}:{room.HostPort} …\");"
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetRoomFlow.cs",
+  "line": 1364,
+  "method": "FinishJoin",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→FinishJoin"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning($\"[NetRoomFlow] 入房失败：{reason}\");"
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetRoomFlow.cs",
+  "line": 1374,
+  "method": "FinishJoin",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→FinishJoin"
+  ],
+  "editorOnly": false,
+  "text": "Debug.Log(\"[NetRoomFlow] 入房成功\");"
+ },
+ {
+  "file": "Assets/Scripts/07NetGame/NetSvc.cs",
+  "line": 135,
+  "method": "SendMsg",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→SendLocalPose→SendMsg"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"服务器未连接\");"
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Battle/PatrolContriller.cs",
+  "line": 446,
+  "method": "SpawnPatrol",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Tick→SpawnPatrol"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning($\"尝试为玩家{targetPlayer.gameObject.name} 生成巡逻队\");"
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Battle/PatrolContriller.cs",
+  "line": 525,
+  "method": "GetValidSpawnPosition",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Tick→SpawnPatrol→GetValidSpawnPosition"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning(\"有效影响力点\" + spawnPoint);"
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Battle/PatrolContriller.cs",
+  "line": 538,
+  "method": "GetValidSpawnPosition",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Tick→SpawnPatrol→GetValidSpawnPosition"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning($\"地图边界点{spawnPoint},x{Mathf.Cos(theta + dx)},y{Mathf.Sin(theta + dx)}\");"
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Global/NetFriendBridge.cs",
+  "line": 862,
+  "method": "EnsureFriend",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→ReconcileFriends→EnsureFriend"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogError(\"[NetFriendBridge] 未指定盟友预制体（friendPrefab）⇒ 联机时看不到其他玩家。\" +"
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Global/NetFriendBridge.cs",
+  "line": 875,
+  "method": "EnsureFriend",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→ReconcileFriends→EnsureFriend"
+  ],
+  "editorOnly": false,
+  "text": "Debug.LogWarning($\"[NetFriendBridge] 盟友预制体上没有 FriendController，已临时补一个（请在预制体上挂好）。\", go);"
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Global/NetFriendBridge.cs",
+  "line": 894,
+  "method": "EnsureFriend",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 Update→ReconcileFriends→EnsureFriend"
+  ],
+  "editorOnly": false,
+  "text": "Debug.Log($\"[NetFriendBridge] 创建盟友实例 sid={info.Sid} 名={fc.PlayerName}\");"
+ },
+ {
+  "file": "Assets/Editor/MaterialUsageFinder.cs",
+  "line": 1036,
+  "method": "CopyReport",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→DrawSummary→CopyReport"
+  ],
+  "editorOnly": true,
+  "text": "UnityEngine.Debug.Log(report);"
+ },
+ {
+  "file": "Assets/Editor/TerrainTreePrototypePreparer.cs",
+  "line": 100,
+  "method": "RunBatch",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→RunBatch"
+  ],
+  "editorOnly": true,
+  "text": "Debug.LogWarning(\"[地形树原型] 上一次处理尚未结束，已忽略本次调用\");"
+ },
+ {
+  "file": "Assets/Editor/TerrainTreePrototypePreparer.cs",
+  "line": 106,
+  "method": "RunBatch",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→RunBatch"
+  ],
+  "editorOnly": true,
+  "text": "Debug.LogError($\"[地形树原型] 文件夹不存在：{folder}\");"
+ },
+ {
+  "file": "Assets/Editor/TerrainTreePrototypePreparer.cs",
+  "line": 168,
+  "method": "RunBatch",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→RunBatch"
+  ],
+  "editorOnly": true,
+  "text": "Debug.Log(_lastReport);"
+ },
+ {
+  "file": "Assets/Editor/Tool/FindCorruptedChars.cs",
+  "line": 140,
+  "method": "FixAll",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→FixAll"
+  ],
+  "editorOnly": true,
+  "text": "Debug.LogWarning($\"跳过文件 {file}：{ex.Message}\");"
+ },
+ {
+  "file": "Assets/Editor/Tool/FindCorruptedChars.cs",
+  "line": 146,
+  "method": "FixAll",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→FixAll"
+  ],
+  "editorOnly": true,
+  "text": "Debug.Log(msg);"
+ },
+ {
+  "file": "Assets/Editor/Tool/SpriteMaskGenerator.cs",
+  "line": 186,
+  "method": "ConvertAll",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→ConvertAll"
+  ],
+  "editorOnly": true,
+  "text": "Debug.LogError($\"转换 {_pngNames[i]} 失败：{ex.Message}\");"
+ },
+ {
+  "file": "Assets/Editor/Tool/SpriteMaskGenerator.cs",
+  "line": 211,
+  "method": "ConvertSingle",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→ConvertSelected→ConvertSingle"
+  ],
+  "editorOnly": true,
+  "text": "Debug.LogError($\"无法加载纹理：{sourceAssetPath}\");"
+ },
+ {
+  "file": "Assets/Editor/Tool/SpriteMaskGenerator.cs",
+  "line": 268,
+  "method": "ConvertSingle",
+  "kind": "Log",
+  "gated": false,
+  "reasons": [
+   "被每帧调 OnGUI→ConvertSelected→ConvertSingle"
+  ],
+  "editorOnly": true,
+  "text": "Debug.Log($\"已生成遮罩：{outputAssetPath}\");"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Projectile/ProjectileStandard.cs",
+  "line": 129,
+  "method": "Update",
+  "kind": "gated:Enabled",
+  "gated": true,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "if (NetSyncLog.Enabled && NetSyncLog.Bullet)"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Projectile/ProjectileStandard.cs",
+  "line": 130,
+  "method": "Update",
+  "kind": "gated:BulletLog",
+  "gated": true,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "NetSyncLog.BulletLog(\"到终点收尾\", $\"位置={transform.position:F2} 终点={VisualEndPoint:F2} 本帧位移={(transform.position - m_LastRootPosition).magnitude:F2}m\");"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Projectile/ProjectileStandard.cs",
+  "line": 144,
+  "method": "Update",
+  "kind": "gated:Enabled",
+  "gated": true,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "if (FPSGame.Utils.NetSyncLog.Enabled && FPSGame.Utils.NetSyncLog.Bullet)"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Projectile/ProjectileStandard.cs",
+  "line": 146,
+  "method": "Update",
+  "kind": "gated:BulletLog",
+  "gated": true,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "FPSGame.Utils.NetSyncLog.BulletLog(\"超射程消散\", $\"起点={m_RangeOrigin:F2} 位置={transform.position:F2} 飞了={dis:F1}m/上限{MaxRange:F1}m \" +"
+ },
+ {
+  "file": "Assets/Scripts/10UI/Wnd/PlayerWnd.cs",
+  "line": 405,
+  "method": "UpdatePlayerStates",
+  "kind": "gated:SyncLog",
+  "gated": true,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "FPSGame.Utils.NetSyncLog.SyncLog(\"HUD 盟友行\", $\"显示 {used} 行（ActorsManager.Players={ActorsManager.Players.Count} 项）\");"
+ },
+ {
+  "file": "Assets/Scripts/10_Effect/BattleApplyVehicleData.cs",
+  "line": 69,
+  "method": "Update",
+  "kind": "gated:SyncLog",
+  "gated": true,
+  "reasons": [
+   "每帧方法"
+  ],
+  "editorOnly": false,
+  "text": "NetSyncLog.SyncLog(\"载具/外观\","
+ },
+ {
+  "file": "Assets/Scripts/05UnitCore/Health/Health.cs",
+  "line": 257,
+  "method": "TakeDamage",
+  "kind": "gated:DamageLog",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Tick→TakeDamage",
+   "中频(TakeDamage)"
+  ],
+  "editorOnly": false,
+  "text": "NetSyncLog.DamageLog(\"伤害\",damageCaused+\"对\" + m_Actor.ShowName + \"造成\"+ item.Key+ \"伤害\" + finaldamgage + \"血量\" + CurrentHealth, gameObject);"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Interactable/KeyScreen.cs",
+  "line": 239,
+  "method": "SetStageCore",
+  "kind": "gated:SyncLog",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Update→SetStage→SetStageCore"
+  ],
+  "editorOnly": false,
+  "text": "FPSGame.Utils.NetSyncLog.SyncLog(\"终端/阶段\", $\"{name} → {stage}/{procedure.Count}（owner={(owner != null ? owner.name : \"null\")}）\");"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain_Arrow.cs",
+  "line": 98,
+  "method": "RefreshTrackArrows",
+  "kind": "gated:LoadLog",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Tick→DepartTrain→RefreshTrackArrows"
+  ],
+  "editorOnly": false,
+  "text": "NetSyncLog.LoadLog(\"任务\", $\"[拦截火车] 轨道{track.Index + 1} 箭头{(lit ? \"点亮\" : \"熄灭\")}（{set.Objects.Count} 个）\");"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain_Train.cs",
+  "line": 214,
+  "method": "DepartTrain",
+  "kind": "gated:LoadLog",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Tick→DepartTrain"
+  ],
+  "editorOnly": false,
+  "text": "NetSyncLog.LoadLog(\"任务\", $\"[拦截火车] 发车 #{departedCount}：轨道 {trackIndex + 1} / 车厢 {runtime.Cars.Count} 节 / \""
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain_Train.cs",
+  "line": 251,
+  "method": "OnEngineDied",
+  "kind": "gated:LoadLog",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Tick→DepartTrain→OnEngineDied"
+  ],
+  "editorOnly": false,
+  "text": "NetSyncLog.LoadLog(\"任务\", $\"[拦截火车] 火车被打掉：{NowProgress + 1}/{MaxProgress}\");"
+ },
+ {
+  "file": "Assets/Scripts/06Gameplay/Mission/Main/MissionInterceptTrain_Turret.cs",
+  "line": 189,
+  "method": "FlushPendingTurrets",
+  "kind": "gated:Warn",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Update→FlushPendingTurrets"
+  ],
+  "editorOnly": false,
+  "text": "NetSyncLog.Warn(\"任务\", $\"[拦截火车] 附加炮塔复刻超时：槽位 {pending.Slot} 号 {pending.NetId} \""
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Battle/NetHostSpawnBridge.cs",
+  "line": 79,
+  "method": "ReportPatrol",
+  "kind": "gated:SyncLog",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Tick→SpawnPatrol→ReportPatrol"
+  ],
+  "editorOnly": false,
+  "text": "FPSGame.Utils.NetSyncLog.SyncLog(\"生成/发·巡逻\","
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Bridge/BridgeRoleManager.cs",
+  "line": 247,
+  "method": "MoveSelfTo",
+  "kind": "gated:SyncLog",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Update→MoveSelfToReadyPoint→MoveSelfTo"
+  ],
+  "editorOnly": false,
+  "text": "NetSyncLog.SyncLog(\"挪本机玩家\", $\"{what} {target:F2}（序号={SelfOrdinal()}/{SpawnSlots.TeamCount}；\" +"
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Global/NetFriendBridge.cs",
+  "line": 199,
+  "method": "BindLocalWeapons",
+  "kind": "gated:BulletLog",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Update→SendAmmoTick→BindLocalWeapons"
+  ],
+  "editorOnly": false,
+  "text": "FPSGame.Utils.NetSyncLog.BulletLog(\"绑本机武器\", $\"本机玩家武器管理器={(wm != null ? wm.name : \"<无>\")} ⇒ 开火上报{(wm != null ? \"已订阅\" : \"**未订阅**（本机开火不会上报）\")}\");"
+ },
+ {
+  "file": "Assets/Scripts/09Manager/Global/NetFriendBridge.cs",
+  "line": 829,
+  "method": "ReconcileFriends",
+  "kind": "gated:Warn",
+  "gated": true,
+  "reasons": [
+   "被每帧调 Update→ReconcileFriends"
+  ],
+  "editorOnly": false,
+  "text": "FPSGame.Utils.NetSyncLog.Warn(\"盟友自愈\","
+ }
+]

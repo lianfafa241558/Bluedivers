@@ -281,7 +281,7 @@ namespace FPSGame.Managers
             }
 
         }
-
+        
         /// <summary>释放战备</summary>
         private void OnRelease(GameObject owner, GameObject target, Vector3 point, AirdropData data)
         {

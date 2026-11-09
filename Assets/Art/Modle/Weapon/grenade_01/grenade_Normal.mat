@@ -7,14 +7,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: grenade_01
+  m_Name: grenade_Normal
   m_Shader: {fileID: 4800000, guid: 242d39e501376824a90015d3ae2d01c9, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _MAIN_LIGHT_SHADOWS
   m_InvalidKeywords:
-  - OUTLINE_AVG_NORMALS
+  - _USESPECULAR_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -30,7 +30,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: f5401ecfdbc1476689ed92191ee67920, type: 3}
+        m_Texture: {fileID: 2800000, guid: f1f2196d17d250843b2c914c4f6e2451, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BlendingMap:
@@ -58,7 +58,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: f5401ecfdbc1476689ed92191ee67920, type: 3}
+        m_Texture: {fileID: 2800000, guid: f1f2196d17d250843b2c914c4f6e2451, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -73,7 +73,23 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SpecularMap:
+        m_Texture: {fileID: 2800000, guid: d194854d61472d744b8684ceab84264a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -81,36 +97,35 @@ Material:
     m_Floats:
     - _AdditionalLightIgnoreCelShade: 0.9
     - _AlphaClip: 0
+    - _AlphaToMask: 0
     - _BaseScale: 1
     - _Blend: 0
+    - _BlendModePreserveSpecular: 1
     - _BlendingScale: 0
     - _BumpScale: 1
-    - _CelShadeMidPoint: -0.5
+    - _CelShadeMidPoint: 0
     - _CelShadeSoftness: 0.05
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
     - _Cull: 2
     - _Cutoff: 0.5
+    - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DirectLightMultiplier: 1
-    - _DitherThreshold: 0
     - _DstBlend: 0
+    - _DstBlendAlpha: 0
     - _EdgeWidth: 0.05
     - _EmissionMaskAddite: 0
     - _EmissionMulByBaseColor: 0
     - _EmissionScale: 1
+    - _EnvironmentReflections: 1
     - _FixOutlineColor: 0
     - _FogMaxValue: 1
     - _GlossMapScale: 1
-    - _Glossiness: 0
+    - _Glossiness: 0.4472136
     - _GlossyReflections: 1
-    - _GlowStrength0: 0
-    - _GlowStrictness0: 3
-    - _GrayBrightness: 1
     - _IndirectLightMultiplier: 1
-    - _IsDither: 0
     - _IsFace: 0
-    - _LightPow: 3.5
-    - _LightStrong: 10
-    - _LightValue: 0.047
     - _MAIN_LIGHT_SHADOWS: 1
     - _MainLightIgnoreCelShade: 0
     - _Metallic: 0
@@ -118,63 +133,59 @@ Material:
     - _OcclusionRemapEnd: 1
     - _OcclusionRemapStart: 0
     - _OcclusionStrength: 1
-    - _OutlineScreenZCorrection: 1
-    - _OutlineThickness: 0.0004
-    - _OutlineWidth: 4
+    - _OutlineWidth: 2.5
     - _OutlineZOffset: 0.0001
     - _Parallax: 0.02
+    - _QueueOffset: 0
     - _ReceiveShadowMappingAmount: 0.65
     - _ReceiveShadowMappingPosOffset: 0
+    - _ReceiveShadows: 1
     - _RenderRef: 0
-    - _ShadowPow: 32.48
-    - _ShadowStrong: 10
-    - _ShadowThreshold: 0.5
-    - _ShadowValue: 0.41
-    - _Smoothness: 8
+    - _Smoothness: 0.4472136
     - _SmoothnessTextureChannel: 0
-    - _SpecPow: 0.15
-    - _SpecStrong: 0.1
     - _SpecularHighlights: 1
     - _SpecularMulByBaseColor: 0
     - _SpecularOffest: 0
     - _SpecularSoftness: 0.05
     - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
     - _Surface: 0
     - _UVSec: 0
     - _UseAlphaClipping: 0
     - _UseAlphaUV: 0
-    - _UseAverNormal: 0
+    - _UseAverNormal: 1
     - _UseColour: 0
     - _UseEmission: 0
-    - _UseGlow: 0
     - _UseOcclusion: 0
-    - _UseOutlineNormal: 0
-    - _UseOutlineVertexColor: 1
-    - _UseSpecular: 0
+    - _UseSpecular: 1
     - _UseUV1: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _CodeAddColor: {r: 0, g: 0, b: 0, a: 0}
-    - _CodeAddRimColor: {r: 0, g: 0, b: 0, a: 0}
-    - _CodeMultiplyColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
+    - _Color: {r: 0.8, g: 0.8, b: 0.8, a: 1}
     - _DissolveValue: {r: 0, g: 0, b: 0, a: 1}
     - _EdgeColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionMapChannelMask: {r: 1, g: 1, b: 1, a: 0}
-    - _FakeLightDir: {r: 0.1, g: 0.65, b: 0, a: 0}
-    - _GlowMaskColor0: {r: 1, g: 1, b: 1, a: 1}
-    - _GlowTint0: {r: 0, g: 0, b: 0, a: 1}
     - _HitColor: {r: 0, g: 0, b: 0, a: 1}
     - _IndirectLightMinColor: {r: 0.09999997, g: 0.09999997, b: 0.09999997, a: 1}
     - _OcclusionMapChannelMask: {r: 1, g: 0, b: 0, a: 0}
     - _OutlineColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _OutlineTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _ShadowCol: {r: 0.4528302, g: 0.4528302, b: 0.4528302, a: 0}
     - _ShadowMapColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
-    - _ShadowTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _SpecColor: {r: 1, g: 0.4366836, b: 0.3632075, a: 1}
-    - _SpecularColor: {r: 0, g: 0, b: 0, a: 1}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpecularColor: {r: 0.05, g: 0.05, b: 0.05, a: 1}
   m_BuildTextureStacks: []
+--- !u!114 &1799838300313905625
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 7

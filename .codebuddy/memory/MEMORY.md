@@ -7,6 +7,7 @@
 - 口径：先结论+证据(文件:行)再列选项；诊断序 = 谁调它 → prefab 数值 → 逻辑（能反射就别只读代码）
 - ⚠ 外部编辑器会**静默覆盖**工作区文件（编译还全过）⇒ 大批改动收尾跑 `audit_markers.py` + 逐行回查；单点优先 `replace_in_file`，批量/编码敏感才写字节级脚本
 - ⚠ **MCP 存 prefab 会按内存旧值回写**（`LoadPrefabContents`+`SaveAsPrefabAsset` 抹掉没碰的字段，已实测清空 `ImpactVfx`/`UseCollisionDirection`）⇒ 存完必 `git diff` 逐行核对，单引用改动优先直接改 YAML → `2026-11-02.md`
+- ⚠ **引用体检别只看 YAML**：`{fileID,guid}` 有 guid ≠ 引用有效（fileID 不存在 ⇒ 运行时 null）⇒ 判定用 `field==null` + `GetAssetPath`（2026-11-09 无人机战备）
 - ⚠ BOM 用 `add_bom.py`；**严禁** `open(p,'w').write(open(p).read())`（先截断后读 ⇒ 清空）；**空 .cs 也 0 error** ⇒ 改完跑 `check_sources.py`
 - ⚠ `replace_in_file` 可能把 **LF 文件整份写成 CRLF**（git 只给一条 warning）⇒ 改完核一眼换行符，保持与 HEAD 一致
 - ⚠ **EditorWindow 里缓存的 `GUIStyle` 在域重载后会被还原成默认空样式**（黑字/字号 0/clipping=Overflow），而 `_stylesBuilt` 标志照样是 true ⇒ 缓存样式必须用哨兵自检再重建，别只信标志位

@@ -71,7 +71,16 @@ public static partial class TerrainUtils
                 heightmapRes = value.terrainData.heightmapResolution - 1;
                 alphamapRes = value.terrainData.alphamapResolution;
                 terrainHeight = (int)value.terrainData.size.y;
+                //硬度场跟着地形走：分辨率取高度图的一半（高度图 512 ⇒ 硬度 256），换图即全部重置为 0（都可挖）
+                hardnessRes = Mathf.Max(2, heightmapRes / 2);
+                hardness = new float[hardnessRes * hardnessRes];
                 Debug.Log("设置main地形", value);
+            }
+            else
+            {
+                //地形没了，硬度场跟着作废（否则下一张图会误读上一张的硬度）
+                hardness = null;
+                hardnessRes = 0;
             }
         }
     }
@@ -192,6 +201,131 @@ public static partial class TerrainUtils
 
     #endregion
 
+    #region 地形硬度（低分辨率标量场）
+
+    /// <summary>
+    /// 地形硬度场：0 = 软（原样挖），1 = 硬（挖不动）。
+    /// <para>分辨率只取高度图的一半（高度图 512 ⇒ 硬度 256²），因为它表达的是"这一片被炸实了"这种低频信息；
+    /// 采样一律双线性插值，否则弹坑边缘会出现硬度台阶（坑壁上有方格棱）。</para>
+    /// <para>只在"挖"（<c>isSet == false</c>，炸弹坑 / 管道压地面）这条路上生效：实际挖深 × (1 - 硬度)；
+    /// "设置"语义（任务点整平、附加地形）不受硬度约束，否则任务平台永远压不平。</para>
+    /// </summary>
+    private static float[] hardness;
+
+    /// <summary>硬度场分辨率（每边格数），由 <see cref="Main"/> 赋值时按高度图分辨率的一半重建</summary>
+    private static int hardnessRes;
+
+    /// <summary>硬度场分辨率（每边格数）；0 = 尚未绑定地形</summary>
+    public static int HardnessRes => hardnessRes;
+
+    /// <summary>是否已有硬度场（<see cref="Main"/> 未赋值时为 false）</summary>
+    public static bool HasHardness => hardness != null && hardnessRes > 0;
+
+    /// <summary>清空硬度场（全部恢复为"可挖"，例如重开一局复用同一张地形时）</summary>
+    public static void ResetHardness()
+    {
+        if (hardness == null) return;
+        System.Array.Clear(hardness, 0, hardness.Length);
+    }
+
+    /// <summary>双线性采样硬度（u/v = 地形归一化坐标 [0,1]）</summary>
+    public static float SampleHardness(float u, float v)
+    {
+        if (!HasHardness) return 0f;
+        float cx = Mathf.Clamp01(u) * (hardnessRes - 1);
+        float cy = Mathf.Clamp01(v) * (hardnessRes - 1);
+        int x0 = (int)cx;
+        int y0 = (int)cy;
+        int x1 = Mathf.Min(x0 + 1, hardnessRes - 1);
+        int y1 = Mathf.Min(y0 + 1, hardnessRes - 1);
+        float tx = cx - x0;
+        float ty = cy - y0;
+        float row0 = Mathf.Lerp(hardness[y0 * hardnessRes + x0], hardness[y0 * hardnessRes + x1], tx);
+        float row1 = Mathf.Lerp(hardness[y1 * hardnessRes + x0], hardness[y1 * hardnessRes + x1], tx);
+        return Mathf.Lerp(row0, row1, ty);
+    }
+
+    /// <summary>
+    /// 把"内圈硬度 → 外圈硬度"刷进硬度场（同一格只增不减：后续较弱的爆炸不会把已硬化区域软化回来）。
+    /// <para>⚠ 必须在本轮高度**写完之后**调用：先刷后挖的话，这个坑会被自己的硬度削弱（同一次爆炸内自相矛盾）。</para>
+    /// <para>形状 / 内外尺寸 / 旋转角与高度修改完全一致，所以"被改动的地表"与"被硬化的地表"是同一块。</para>
+    /// </summary>
+    /// <param name="uv">形状中心的地形 UV</param>
+    /// <param name="innerHalfSize">内圈半长（米）：此处取 <paramref name="innerHardness"/></param>
+    /// <param name="outerHalfSize">外圈半长（米）：此处取 <paramref name="outerHardness"/>，中间线性过渡</param>
+    /// <param name="shape">形状（矩形按 <paramref name="angleDeg"/> 旋转）</param>
+    /// <param name="angleDeg">矩形绕 Y 的旋转角（度）；其他形状忽略</param>
+    /// <param name="innerHardness">内圈硬度 [0,1]</param>
+    /// <param name="outerHardness">外圈硬度 [0,1]</param>
+    public static void StampHardness(Vector2 uv, Vector2 innerHalfSize, Vector2 outerHalfSize,
+        ShapeType shape, float angleDeg, float innerHardness, float outerHardness)
+    {
+        if (!HasHardness) return;
+        innerHardness = Mathf.Clamp01(innerHardness);
+        outerHardness = Mathf.Clamp01(outerHardness);
+        if (innerHardness <= 0f && outerHardness <= 0f) return;
+
+        Vector3 tPos = Main.transform.position;
+        Vector3 tSize = data.size;
+        float cellPerUV = hardnessRes - 1f;
+        float worldPerCellX = tSize.x / cellPerUV;
+        float worldPerCellZ = tSize.z / cellPerUV;
+        float centerX = tPos.x + uv.x * tSize.x;
+        float centerZ = tPos.z + uv.y * tSize.z;
+
+        //矩形旋转后要用外接圆半径才罩得住整个外框（与高度修改里的 patchRadiusRes 同口径）
+        bool rotateRect = shape == ShapeType.Rectangle && !Mathf.Approximately(angleDeg, 0f);
+        float cosA = 1f;
+        float sinA = 0f;
+        if (rotateRect)
+        {
+            float rad = angleDeg * Mathf.Deg2Rad;
+            cosA = Mathf.Cos(rad);
+            sinA = Mathf.Sin(rad);
+        }
+        float patchHalf = rotateRect
+            ? Mathf.Sqrt(outerHalfSize.x * outerHalfSize.x + outerHalfSize.y * outerHalfSize.y)
+            : Mathf.Max(outerHalfSize.x, outerHalfSize.y);
+        float outerRadius = Mathf.Max(MinFalloffWidth, outerHalfSize.x);
+        float innerScale = innerHalfSize.x / outerRadius;
+
+        //外接方框 → 硬度格范围（+/-1 格余量，避免插值边缘被硬切）
+        int minX = Mathf.Clamp(Mathf.FloorToInt((uv.x - patchHalf / tSize.x) * cellPerUV) - 1, 0, hardnessRes - 1);
+        int maxX = Mathf.Clamp(Mathf.CeilToInt((uv.x + patchHalf / tSize.x) * cellPerUV) + 1, 0, hardnessRes - 1);
+        int minY = Mathf.Clamp(Mathf.FloorToInt((uv.y - patchHalf / tSize.z) * cellPerUV) - 1, 0, hardnessRes - 1);
+        int maxY = Mathf.Clamp(Mathf.CeilToInt((uv.y + patchHalf / tSize.z) * cellPerUV) + 1, 0, hardnessRes - 1);
+
+        for (int y = minY; y <= maxY; y++)
+        {
+            float dz = tPos.z + (y + 0.5f) * worldPerCellZ - centerZ;
+            for (int x = minX; x <= maxX; x++)
+            {
+                float dx = tPos.x + (x + 0.5f) * worldPerCellX - centerX;
+                float power;
+                if (shape == ShapeType.Rectangle)
+                {
+                    //旋进矩形自己的坐标系再按"米"归一化（worldPerPixel 传 1 ⇒ 直接把米喂进去）
+                    float lx = rotateRect ? dx * cosA - dz * sinA : dx;
+                    float lz = rotateRect ? dx * sinA + dz * cosA : dz;
+                    power = RectFalloffPower(lx, lz, 1f, innerHalfSize, outerHalfSize);
+                }
+                else
+                {
+                    //椭圆沿用历史口径（按方框归一化）；圆用真距离
+                    float d = shape == ShapeType.Ellipse
+                        ? Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dz)) * 2f
+                        : Mathf.Sqrt(dx * dx + dz * dz);
+                    power = Mathf.Clamp01((1f - d / outerRadius) / Mathf.Max(MinFalloffWidth, 1f - innerScale));
+                }
+                float value = Mathf.Lerp(outerHardness, innerHardness, power);
+                int index = y * hardnessRes + x;
+                if (value > hardness[index]) hardness[index] = value;
+            }
+        }
+    }
+
+    #endregion
+
     #region 修改地形
     /// <summary>
     /// 修改高度 ?
@@ -202,11 +336,13 @@ public static partial class TerrainUtils
     /// <param name="outerRadius">外半 ? ?/param>
     /// <param name="depth">深度: ?/param>
     /// <param name="isSet">设置/修改</param>
-    public static IEnumerator ModifyHeightMap(Vector3 pos, float innerRadius, float outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true)
+    /// <param name="hardnessInner">内圈硬度 [0,1]：改完高度后刷进硬度场（0 = 不动硬度）</param>
+    /// <param name="hardnessOuter">外圈硬度 [0,1]</param>
+    public static IEnumerator ModifyHeightMap(Vector3 pos, float innerRadius, float outerRadius, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true, float hardnessInner = 0f, float hardnessOuter = 0f)
     {
         if (!Main) yield break;
         yield return ModifyHeightMap(WSToUV(pos), pos.y,
-            new Vector2(innerRadius, innerRadius), new Vector2(outerRadius, outerRadius), depth, shape, isSet, refresh);
+            new Vector2(innerRadius, innerRadius), new Vector2(outerRadius, outerRadius), depth, shape, isSet, refresh, 0f, hardnessInner, hardnessOuter);
     }
 
     /// <summary>
@@ -225,10 +361,12 @@ public static partial class TerrainUtils
     /// <param name="angleDeg">绕 Y 的旋转角（度），与物体世界 Y 旋转一致；0 = 世界轴对齐</param>
     /// <param name="isSet">true = 设置（压到目标高度）；false = 只往下挖，不抬升</param>
     /// <param name="refresh">是否刷新地形与 NavMesh</param>
-    public static IEnumerator ModifyHeightMapRect(Vector3 pos, Vector2 innerHalfSize, Vector2 outerHalfSize, float depth, float angleDeg = 0f, bool isSet = true, bool refresh = true)
+    /// <param name="hardnessInner">内框硬度 [0,1]：高度写完后刷进硬度场（0 = 不动硬度）</param>
+    /// <param name="hardnessOuter">外框硬度 [0,1]</param>
+    public static IEnumerator ModifyHeightMapRect(Vector3 pos, Vector2 innerHalfSize, Vector2 outerHalfSize, float depth, float angleDeg = 0f, bool isSet = true, bool refresh = true, float hardnessInner = 0f, float hardnessOuter = 0f)
     {
         if (!Main) yield break;
-        yield return ModifyHeightMap(WSToUV(pos), pos.y, innerHalfSize, outerHalfSize, depth, ShapeType.Rectangle, isSet, refresh, angleDeg);
+        yield return ModifyHeightMap(WSToUV(pos), pos.y, innerHalfSize, outerHalfSize, depth, ShapeType.Rectangle, isSet, refresh, angleDeg, hardnessInner, hardnessOuter);
     }
 
     /// <summary>
@@ -262,7 +400,9 @@ public static partial class TerrainUtils
     /// <param name="innerHalfSize">内框半长（米）：该范围内完全生效</param>
     /// <param name="outerHalfSize">外框半长（米）：该范围外不动，两者之间线性淡化</param>
     /// <param name="angleDeg">矩形绕 Y 的旋转角（度）；其他形状忽略</param>
-    public static IEnumerator ModifyHeightMap(Vector2 uv, float baseHeight, Vector2 innerHalfSize, Vector2 outerHalfSize, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true, float angleDeg = 0f)
+    /// <param name="hardnessInner">内圈硬度 [0,1]：高度写完后刷进硬度场（0 = 不动硬度）</param>
+    /// <param name="hardnessOuter">外圈硬度 [0,1]：外框边缘处取这个值，中间线性过渡</param>
+    public static IEnumerator ModifyHeightMap(Vector2 uv, float baseHeight, Vector2 innerHalfSize, Vector2 outerHalfSize, float depth, ShapeType shape = ShapeType.Circle, bool isSet = true, bool refresh = true, float angleDeg = 0f, float hardnessInner = 0f, float hardnessOuter = 0f)
     {
         if (shape != ShapeType.Circle && shape != ShapeType.Ellipse && shape != ShapeType.Rectangle)
         {
@@ -329,6 +469,9 @@ public static partial class TerrainUtils
 
 
             Vector2 center = Vector2.one * size * 0.5f;
+            //硬度只约束"挖"（isSet == false）：越硬的地方实际挖下去的越少，避免同一个坑被反复加深
+            bool useHardness = !isSet && HasHardness;
+            float invHeightmapRes = 1f / heightmapRes;
             float startTime = Time.realtimeSinceStartup;
             for (int y = 0; y < size; y++)
             {
@@ -363,9 +506,17 @@ public static partial class TerrainUtils
                         }
                         else
                         {
-                            //最终深度[0,1]
-                            float nowDepth = Mathf.Max(0, depth / terrainHeight - (baseHeight - centerOldHeight));
-                            heights[y, x] = Mathf.Max(0, Mathf.Min(height, Mathf.Lerp(height, centerOldHeight, power) - nowDepth * power));
+                            //硬度：实际挖深 × (1 - 硬度)，双线性采样保证坑壁平滑；硬度 = 1 的格子整格不动
+                            //（不能只把挖深归零——上面那步 Lerp 到 centerOldHeight 会把低洼处抬起来）
+                            float digScale = 1f;
+                            if (useHardness)
+                                digScale = 1f - SampleHardness((xBase + x) * invHeightmapRes, (yBase + y) * invHeightmapRes);
+                            if (digScale > 0f)
+                            {
+                                //最终深度[0,1]
+                                float nowDepth = Mathf.Max(0, depth / terrainHeight - (baseHeight - centerOldHeight));
+                                heights[y, x] = Mathf.Max(0, Mathf.Min(height, Mathf.Lerp(height, centerOldHeight, power) - nowDepth * power * digScale));
+                            }
                         }
                     }
                 }
@@ -386,6 +537,8 @@ public static partial class TerrainUtils
             sumHeightReadMs += LastHeightReadMs;
             sumHeightWriteMs += LastHeightWriteMs;
             HeightModifyCount++;
+            //硬度刷在高度写完之后（顺序很重要：先刷后挖的话，这个坑会被自己刚刷的硬度削弱）
+            StampHardness(uv, innerHalfSize, outerHalfSize, shape, angleDeg, hardnessInner, hardnessOuter);
                                  //这里高度已经被标准化过了
             //ModifyAlphaMap 是协程（迭代器），必须 yield return 驱动，裸调用不会执行
             yield return ModifyAlphaMap(uv, 1 - Mathf.Clamp01((baseHeight - centerOldHeight) / (depth / terrainHeight) - 0.1f), innerHalfSize, outerHalfSize, shape, isSet, angleDeg);

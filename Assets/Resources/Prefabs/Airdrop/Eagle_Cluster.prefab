@@ -151,11 +151,15 @@ MonoBehaviour:
     ExplosionRange: 2
     DestructeRadius: 0
     ShockwaveRadius: 10
+    ShockwaveForce: 3
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 5787557760003359419, guid: b61011e34e88fe7428a68d10c2beeddb,
@@ -191,7 +195,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0

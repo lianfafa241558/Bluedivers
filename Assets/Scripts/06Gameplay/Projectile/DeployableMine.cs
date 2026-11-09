@@ -18,11 +18,13 @@ namespace FPSGame.Gameplay
     /// <summary>
     /// 地雷
     /// 由外部脚本 Instantiate 后调用 <see cref=" SetOrigin(GameObject, GameObject, Collider, Vector3)"/> 部署。
-    /// - Actor 提供队伍(Team)，用于智能触发判定敌我
+    /// - 队伍(Team)在 <see cref="SetOrigin"/> 时从投放者解析，用于智能触发判定敌我（不必挂 Actor）
     /// - Health 提供被破坏时引爆(OnDie)以及触发引爆(Kill)
     /// - LimitedLife 提供超时回收
     /// 引爆链路：触发(自动命中 / 被摧毁 / 外部调 <see cref="TriggerExplosion"/>) → 派发"触发爆炸时"
     /// → 等待 <see cref="ExplosionDelay"/> 秒 → 结算范围伤害 + 派发"爆炸时" → 回池。
+    /// 爆炸后是否回池由 <see cref="ConsumeOnExplosion"/> 决定，留在场上时用 <see cref="Rearm"/> 重装
+    /// （重复引爆的实现在 <see cref="RepeatableMine"/>）。
     /// </summary>
     [AddComponentMenu("单位/地雷", 30)]
     public class DeployableMine : MonoBehaviour,IVfxEffect
@@ -30,49 +32,55 @@ namespace FPSGame.Gameplay
         [Header("通用")]
         [InspectorName("根部变换")]
         [SerializeField]
-        private Transform Root;
+        protected Transform Root;
         [InspectorName("部署后启动延迟(秒)")]
         [SerializeField]
-        private float DeployDelay = 2f;
+        protected float DeployDelay = 2f;
         [InspectorName("触发范围")]
         [SerializeField]
-        private float TriggerRange = 0.7f;
+        protected float TriggerRange = 0.7f;
         [InspectorName("触发距离(0=同触发范围)")]
         [Tooltip("实际3D距离判定使用的容差；为 0 时复用触发范围")]
         [SerializeField]
-        private float VerticalRange = 0f;
+        protected float VerticalRange = 0f;
         [InspectorName("智能(只炸敌方队伍)")]
         [SerializeField]
-        private bool intelligent = false;
+        protected bool intelligent = false;
+        [InspectorName("己方队伍(-1=跟随投放者)")]
+        [Tooltip("智能过滤用：只炸与此队伍不同的单位。-1 = 部署时取投放者的队伍（拿不到按 0，玩家/盟友队）")]
+        [SerializeField]
+        protected int TeamOverride = -1;
 
         [Header("爆炸")]
         [InspectorName("爆炸延迟(秒)")]
         [Tooltip("触发后等待多久才真正结算伤害与回收(0=触发即爆)；延迟期间不会再被触发")]
         [SerializeField]
-        private float ExplosionDelay = 0f;
+        protected float ExplosionDelay = 0f;
         [InspectorName("触发爆炸时")]
         [Tooltip("进入爆炸延迟那一刻派发(预警音效/闪烁等)；延迟为 0 时与\"爆炸时\"同帧")]
         [SerializeField]
-        private UnityEvent OnTriggered;
+        protected UnityEvent OnTriggered;
         [InspectorName("爆炸时")]
         [SerializeField]
-        private UnityEvent OnExploded;
+        protected UnityEvent OnExploded;
 
         [Header("伤害数据")]
         [InspectorName("地雷自带伤害")]
         [SerializeField]
-        private SustainedDamageData DamageData;
+        protected SustainedDamageData DamageData;
 
 
 
 
         /// <summary>伤害来源</summary>
         public GameObject Owner { get; private set; }
+        /// <summary>本次部署的队伍（智能过滤用，<see cref="SetOrigin"/> 里从投放者解析一次）</summary>
+        public int Team { get; private set; }
 
-        Actor m_Actor;
         IHealth m_health;
         LimitedLife m_limitedLife;
-        float m_DeployTime;
+        /// <summary>可触发时刻（部署延迟与重复引爆的重装间隔都折算到它）</summary>
+        float m_ReadyTime;
         bool m_Exploded;
         /// <summary>本次已触发(进入爆炸延迟)，用于防止重复触发</summary>
         bool _triggered;
@@ -88,19 +96,16 @@ namespace FPSGame.Gameplay
         /// <summary>缓存的过滤委托：写成 lambda 会每帧新建闭包类，这里建一次复用。</summary>
         private Func<IActor, bool> m_Filter;
         private float m_NextHitCheck;
-        /// <summary>本次判定的队伍（TryHit 每拍刷新，filter 从字段读，避免闭包捕获）</summary>
-        private int m_Team;
 
         private void OnEnable()
         {
-            m_Actor = GetComponent<Actor>();
             m_health = GetComponent<IHealth>();
             m_limitedLife = GetComponent<LimitedLife>();
 
             if (m_health.IsValidMono()) m_health.OnDie += OnHealthDie;
             if (m_limitedLife) m_limitedLife.OnEnd.AddListener(OnLifeEnd);
 
-            m_DeployTime = Time.time;
+            m_ReadyTime = Time.time + DeployDelay;
             // 相位错开：同一批部署的雷如果都从 0 起算，就会每 0.1s 在**同一帧**一起查一遍空间网格
             // （88 颗雷同帧 = 一次 40KB+ 的尖峰）。按实例 ID 打散到 0~0.1s 之间。
             m_NextHitCheck = Time.time + (Mathf.Abs(GetInstanceID()) % 10) * (HitCheckInterval * 0.1f);
@@ -108,6 +113,7 @@ namespace FPSGame.Gameplay
             m_Exploded = false;
             _triggered = false;
             _explodeRoutine = null;
+            OnMineReset();
         }
 
         private void OnDisable()
@@ -122,8 +128,8 @@ namespace FPSGame.Gameplay
             if (m_Exploded) return;
             // 已触发：交给爆炸延迟协程(延迟为 0 时触发那一刻已直接引爆，走不到这里)
             if (_triggered) return;
-            // 部署延迟：等待稳定落定后再启用触发
-            if (Time.time < m_DeployTime + DeployDelay) return;
+            // 部署延迟 / 重装间隔：等待到点后再启用触发
+            if (Time.time < m_ReadyTime) return;
 
             // 触发判定降频到 10Hz（见 HitCheckInterval）
             if (Time.time < m_NextHitCheck) return;
@@ -136,8 +142,7 @@ namespace FPSGame.Gameplay
         void TryHit()
         {
             if (!DamageData.IsValid()) return;
-            // 队伍从 Actor 组件读取；未挂 Actor 时退化为非智能(仅 VaildTarget 过滤)
-            m_Team = m_Actor ? m_Actor.Team : 0;
+            // 队伍见 SetOrigin/ResolveTeam：不再需要地雷自己挂 Actor
             if (m_Filter == null) m_Filter = FilterActor;
 
 
@@ -150,16 +155,24 @@ namespace FPSGame.Gameplay
 
             // 非空即引爆：进 HitBuffer 的都已过 FilterActor（队伍/存活/3D 距离），不需要挑目标。
             if (HitBuffer.Count == 0) return;
-            // 经 Health 自杀引爆（OnDie → TriggerExplosion），让"被摧毁"与"触发"走同一条链路；
+            TriggerByHit();
+        }
+
+        /// <summary>命中判定通过后的触发入口。
+        /// <para>▍基类经 Health 自杀引爆（OnDie → TriggerExplosion），让"被摧毁"与"触发"走同一条链路。
+        /// ⚠ 重复引爆的子类必须重写：非最后一次**不能** Kill —— Health 一死就再也不派发 OnDie，
+        /// 后面几次就失去"被击毁提前结算"这条链路。</para></summary>
+        protected virtual void TriggerByHit()
+        {
             // Health 缺失或已死时 Kill() 不派发 OnDie，故后面再兜底直接触发（TriggerExplosion 幂等）
             if (m_health.IsValidMono()) m_health.Kill();
             TriggerExplosion();
         }
 
-        /// <summary>触发过滤：智能地雷只炸与地雷不同队伍的存活目标；按实际3D距离判定(避免高空掠过的单位误触发)。
+        /// <summary>触发过滤：智能地雷只炸与己方不同队伍的存活目标；按实际3D距离判定(避免高空掠过的单位误触发)。
         /// <para>⚠ 必须缓存成委托（见 m_Filter），别在调用点写 lambda —— lambda 每拍都会新建闭包类。</para></summary>
         private bool FilterActor(IActor item)
-            => FpsHelper.VaildTarget(item) && (!intelligent || item.Team != m_Team) && InTriggerRange(item);
+            => FpsHelper.VaildTarget(item) && (!intelligent || item.Team != Team) && InTriggerRange(item);
 
         /// <summary>
         /// 实际距离判定：由单位中心点与单位高度构成竖直占位区间 [CenterPos.y - HalfHeight, CenterPos.y + HalfHeight]
@@ -190,22 +203,39 @@ namespace FPSGame.Gameplay
         }
 
         /// <summary>
-        /// 生命周期结束(超时)：已触发的不留哑火，立即引爆；未触发的直接回收。
+        /// 生命周期结束(超时)：已触发的不留哑火，立即引爆；未触发的走 <see cref="OnLifeEndNotTriggered"/>。
         /// </summary>
         void OnLifeEnd()
         {
             if (m_Exploded) return;
-            if (_triggered)
+            if (!_triggered)
             {
-                StopExplodeRoutine();
-                DoExplosion();
+                OnLifeEndNotTriggered();
                 return;
             }
-            Tool.Destroy(gameObject);
+            ExplodeNow();
+        }
+
+        /// <summary>寿命到点但从未触发过：默认静默回收。
+        /// <para>要到点自爆的子类重写为 <see cref="ExplodeNow"/>（重复引爆的地雷即走这条）。</para></summary>
+        protected virtual void OnLifeEndNotTriggered() => Tool.Destroy(gameObject);
+
+        /// <summary>跳过 <see cref="ExplosionDelay"/> 立即引爆（超时兜底 / 被摧毁用）：
+        /// 先让子类作废剩余次数，再结算并回收。</summary>
+        protected void ExplodeNow()
+        {
+            if (m_Exploded) return;
+            StopExplodeRoutine();
+            PrepareFinalExplosion();
+            DoExplosion();
         }
 
         /// <summary>Health 死亡(被摧毁) → 引爆</summary>
-        private void OnHealthDie(GameObject caused, GameObject origin) => TriggerExplosion();
+        private void OnHealthDie(GameObject caused, GameObject origin)
+        {
+            PrepareFinalExplosion();
+            TriggerExplosion();
+        }
 
         /// <summary>
         /// 触发爆炸：外部(含其它物体的 UnityEvent)也可直接调用，幂等(只生效一次)。
@@ -269,10 +299,39 @@ namespace FPSGame.Gameplay
             });
             // 先派发再回池：监听者还能拿到仍然存活的物体
             OnExploded?.Invoke();
-            //Debug.LogWarning("回收"+gameObject,gameObject);
-            // 地雷爆炸后自毁
-            FPSGame.Core.VfxPool.Release(gameObject);
+            if (ConsumeOnExplosion())
+            {
+                // 地雷爆炸后自毁
+                FPSGame.Core.VfxPool.Release(gameObject);
+                return;
+            }
+            // 未消耗 ⇒ 留在场上，交给子类决定多久后重新武装
+            RearmAfterExplosion();
         }
+
+        /// <summary>本次爆炸是否消耗掉地雷（=回池）。重复引爆的子类重写为按剩余次数判断。</summary>
+        protected virtual bool ConsumeOnExplosion() => true;
+
+        /// <summary>不消耗时（<see cref="ConsumeOnExplosion"/> 返回 false）的重装动作。</summary>
+        protected virtual void RearmAfterExplosion() => Rearm(0f);
+
+        /// <summary>重新武装：清掉"已触发/已爆炸"，<paramref name="delay"/> 秒后才重新可触发（0=立刻）。
+        /// <para>⚠ 只给爆炸后仍留在场上的子类用；回池时机由 <see cref="ConsumeOnExplosion"/> 决定。</para></summary>
+        protected void Rearm(float delay)
+        {
+            StopExplodeRoutine();
+            m_Exploded = false;
+            _triggered = false;
+            m_ReadyTime = Time.time + delay;
+            // 相位错开，理由见 OnEnable
+            m_NextHitCheck = Time.time + (Mathf.Abs(GetInstanceID()) % 10) * (HitCheckInterval * 0.1f);
+        }
+
+        /// <summary>池化复用 / 重新部署时的状态复位（子类扩展点：重置自己的计数等）。</summary>
+        protected virtual void OnMineReset() { }
+
+        /// <summary>被击毁 / 超时兜底：不论子类还剩几次，本次一律按"最后一次"结算（会被消耗）。</summary>
+        protected virtual void PrepareFinalExplosion() { }
 
         private void OnDrawGizmosSelected()
         {
@@ -287,11 +346,21 @@ namespace FPSGame.Gameplay
         {
             transform.position = point;
             Owner = owner;
-            m_DeployTime = Time.time;
+            Team = ResolveTeam(owner);
+            m_ReadyTime = Time.time + DeployDelay;
             m_NextHitCheck = Time.time + (Mathf.Abs(GetInstanceID()) % 10) * (HitCheckInterval * 0.1f);
             m_Exploded = false;
             _triggered = false;
             StopExplodeRoutine();
+            OnMineReset();
+        }
+
+        /// <summary>己方队伍：显式配置优先，否则取投放者的队伍（投放者没有单位身份 ⇒ 按 0，即玩家/盟友队）。
+        /// <para>⚠ 这样地雷 prefab 不需要挂 <c>Actor</c>：它只要一个"阵营"值，不该顺带进单位网格/号段/逐帧驱动。</para></summary>
+        private int ResolveTeam(GameObject owner)
+        {
+            if (TeamOverride >= 0) return TeamOverride;
+            return owner != null && owner.TryGetComponent(out IActor ownerActor) ? ownerActor.Team : 0;
         }
 
         /// <summary>
