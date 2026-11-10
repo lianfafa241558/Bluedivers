@@ -214,10 +214,12 @@ namespace FPSGame.Gameplay
                 return;
             }
 
-            FPSGame.Utils.NetSyncLog.BulletLog("命中表现", $"点={hitData.pos:F2} 命中物={(hitData.collider != null ? hitData.collider.name : "<无>")}" +
-                $" 特效={damageData.ImpactVfx} 音效={damageData.ImpactSfx} 弹痕={damageData.UseHole}" +
-                // 三项都没有 ⇒ "打中了但什么也看不见"，这条日志就是那件事的直接证据
-                ((!damageData.ImpactVfx && !damageData.ImpactSfx && !damageData.UseHole) ? " ←三项全空：本发命中注定没有任何视觉反馈" : ""));
+            // ⚠ 先判开关再拼串：每发命中都走这里，BulletLog 不是 [Conditional]
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                FPSGame.Utils.NetSyncLog.BulletLog("命中表现", $"点={hitData.pos:F2} 命中物={(hitData.collider != null ? hitData.collider.name : "<无>")}" +
+                    $" 特效={damageData.ImpactVfx} 音效={damageData.ImpactSfx} 弹痕={damageData.UseHole}" +
+                    // 三项都没有 ⇒ "打中了但什么也看不见"，这条日志就是那件事的直接证据
+                    ((!damageData.ImpactVfx && !damageData.ImpactSfx && !damageData.UseHole) ? " ←三项全空：本发命中注定没有任何视觉反馈" : ""));
 
             Vector3 point = hitData.pos;
             Vector3 normal = hitData.normal;

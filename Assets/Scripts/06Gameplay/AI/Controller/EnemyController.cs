@@ -350,63 +350,6 @@ namespace FPSGame.AI
             m_lastDestination = default;
         }
 
-        /// <summary>一次真实命中已结算（**0 伤害也会回调**）：联机上报/下发的唯一触发点。
-        /// <para>▍为什么不挂在 <see cref="_OnDamaged"/> 上（2026-11-04）：那条只在真掉血时发 ⇒ 纯冰冻/眩晕/催化/破甲的命中
-        /// 整段不上报，成员端的积蓄槽与护甲永远不动。表现/统计仍留在 <see cref="_OnDamaged"/>，0 伤害不污染它们。</para></summary>
-        protected override void _OnSettled(PEInt damage, GameObject caused, GameObject origin, Collider collider, bool noSource)
-        {
-            // ★ 联机命中：**成员往上报、房主往下播**（血量/死亡以房主为唯一权威）。
-            //   ⚠ 两个方向必须互斥，否则回声；应用远端伤害时（ApplyingRemoteDamage）两边都不发。
-            int netId = m_Actor != null ? m_Actor.NetId : 0;
-            int dmg = Mathf.RoundToInt(damage.RawFloat);
-            // 0 伤害也放行：只要这一发带了非零成分（异常状态积蓄 / 破甲），对端就要跟着结算
-            bool hasEffect = HasEffectGroups(m_Health != null ? m_Health.LastRawGroups : null);
-            bool toNetwork = !ApplyingRemoteDamage && netId != 0 && (dmg > 0 || hasEffect);
-            // 数据说话：这是"客机打中 ⇒ 主机真扣血"这条链的**起点**
-            // （后续依次是「命中上报·发」/「伤害下发·发」→ 对端「远端伤害落地」→「远端伤害落地后」）
-            FPSGame.Utils.NetSyncLog.BulletLog("本地命中结算", $"本端该怪={netId} 伤害={dmg} 有成分={hasEffect} 来源={(caused != null ? caused.name : "<无>")} " +
-                $"成员模式={RemoteDrivenMovement} 应用远端伤害中={ApplyingRemoteDamage} ⇒ " +
-                (toNetwork ? (RemoteDrivenMovement ? "上报房主" : "下发给成员") : "**不往网络走**"));
-            if (toNetwork)
-            {
-                // ★ 两个来源号一起带：
-                //   AttackerNetId = **起源**（谁该记这笔账）—— 语义与拆分前**一字不变**（旧 DamageSource 就是起源），
-                //     非玩家来源（怪/炮塔互殴）不带号 ⇒ 接收端退成按 Sid 找盟友实例 / NoSource，与旧行为一致。
-                //   CausedNetId   = **直接来源**（炮台/地雷本身）—— 接收端靠它重建"显示 / AI 用的那个身份"。
-                var attackerActor = origin != null ? origin.GetComponent<Actor>() : null;
-                int attackerNetId = attackerActor != null ? attackerActor.NetId : 0;
-                var causedActorNet = caused != null ? caused.GetComponent<Actor>() : null;
-                int causedNetId = causedActorNet != null ? causedActorNet.NetId : 0;
-
-                // ★ 带上这一发的**成分数值**（类型 + 每个成分拆解后的量，2026-11-04 起不再是系数）：
-                //   接收端要拿它补"护甲破坏 / 异常状态积蓄"（只带总伤害时那两条分支会被整段跳过 —— 见 Health.LastRawGroups）
-                float[] groups = PackDamageGroups(m_Health != null ? m_Health.LastRawGroups : null);
-
-                // ★ 带上**命中部位下标**（`Actor.IndexOfDamageable`，-1 = 认不出）：接收端据此打在同一部位上
-                //   （两端"挑部位"的算法不完全等价 —— 装甲 / 弱点倍率口径会差一点）
-                int part = m_Actor is Actor me ? me.IndexOfDamageable(collider) : -1;
-
-                if (RemoteDrivenMovement) FPSGame.Gameplay.BattleEventBus.EnemyHit(netId, dmg, attackerNetId, groups, part, causedNetId);
-                else FPSGame.Gameplay.BattleEventBus.EnemyDamaged(netId, dmg, attackerNetId, groups, part, causedNetId);   // 房主：下发给成员
-            }
-            else if (!ApplyingRemoteDamage && m_Actor != null && netId == 0)
-            {
-                // NetId=0 的怪不参与同步（上报会被 SendEnemyHit 静默挡掉）⇒ 这就是"本端看得见命中、对端毫无反应"的成因
-                FPSGame.Utils.NetSyncLog.Warn("本地命中结算", $"这只怪没有 NetId ⇒ **打了也不会同步到对端** 该怪={gameObject.name} 伤害={dmg}");
-            }
-        }
-
-        /// <summary>这一发是否带**非零成分**（异常状态 / 破甲都算）：0 伤害但成分非空时也必须过网。</summary>
-        static bool HasEffectGroups(List<SKVP<DamageTypeEnum, PEInt>> groups)
-        {
-            if (groups == null) return false;
-            for (int i = 0, l = groups.Count; i < l; ++i)
-            {
-                if (groups[i] != null && groups[i].Value > 0) return true;
-            }
-            return false;
-        }
-
         /// <param name="caused">**直接来源**（显示 / AI / 上网重建用）</param>
         /// <param name="origin">**起源**（统计口径，见下方"命中次数"）</param>
         protected override void _OnDamaged(PEInt damage, GameObject caused, GameObject origin, Collider collider,bool noSource)
@@ -435,28 +378,6 @@ namespace FPSGame.AI
                 if (FPSGame.GameContract.PlayerUnitUtil.TryGetPlayerIndex(origin, out int hitIndex))
                     FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(hitIndex, "命中次数");
             }
-        }
-
-        /// <summary>伤害成分的摊平缓冲（`[count, type0, value0, ...]`）：只在打包网络消息内复用（序列化是**同步**的），
-        /// 所以不分配、也不要缓存 —— 见 <c>EnemyNetBridge.UnpackDamageGroups</c> 的读取侧。</summary>
-        static float[] m_groupScratch;
-
-        /// <summary>把 <c>Health.LastRawGroups</c> 摊平成 <c>[count, type, value, ...]</c>（null/空 ⇒ null = 中性成分）。
-        /// <para>⚠ value 是**每个成分的数值**（不是系数，2026-11-04 改口径）：接收端直接按它结算，不再分摊。</para></summary>
-        static float[] PackDamageGroups(List<SKVP<DamageTypeEnum, PEInt>> groups)
-        {
-            if (groups == null || groups.Count == 0) return null;
-
-            int need = 1 + groups.Count * 2;
-            if (m_groupScratch == null || m_groupScratch.Length < need) m_groupScratch = new float[need];
-
-            m_groupScratch[0] = groups.Count;
-            for (int i = 0; i < groups.Count; ++i)
-            {
-                m_groupScratch[1 + i * 2] = (int)groups[i].Key;
-                m_groupScratch[2 + i * 2] = groups[i].Value.RawFloat;
-            }
-            return m_groupScratch;
         }
 
         private void OnDestroy()

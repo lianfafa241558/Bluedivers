@@ -135,14 +135,17 @@ namespace FPSGame.Managers
             // 数据说话：本端上报的每一发 —— 与房主侧的「远端伤害落地」配对，中间没有别的步骤，
             // 两条日志一对一出现才说明"客机打中 ⇒ 主机真扣血"这条链是通的
             var flow = FPSGame.Net.NetRoomFlow.Instance;
-            FPSGame.Utils.NetSyncLog.BulletLog("命中上报·发", $"netId={netId} 伤害={damage} 起源号={attackerNetId} 直接来源号={causedNetId} 部位={part} 成分={GroupText(groups)} 是房主={(flow != null && flow.IsHost)} 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")}");
+            // ⚠ 先判开关再拼串：GroupText 会 new StringBuilder，插值也无条件分配（每次命中 ~500B）
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                FPSGame.Utils.NetSyncLog.BulletLog("命中上报·发", $"netId={netId} 伤害={damage} 起源号={attackerNetId} 直接来源号={causedNetId} 部位={part} 成分={GroupText(groups)} 是房主={(flow != null && flow.IsHost)} 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")}");
             flow?.SendEnemyHit(netId, damage, attackerNetId, groups, EncodePart(part), causedNetId);   // 内部判"成员才发"
         }
 
         static void OnLocalDamaged(int netId, int damage, int attackerNetId, float[] groups, int part, int causedNetId)
         {
             var flow = FPSGame.Net.NetRoomFlow.Instance;
-            FPSGame.Utils.NetSyncLog.BulletLog("伤害下发·发", $"netId={netId} 伤害={damage} 起源号={attackerNetId} 直接来源号={causedNetId} 部位={part} 成分={GroupText(groups)} 是房主={(flow != null && flow.IsHost)}");
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                FPSGame.Utils.NetSyncLog.BulletLog("伤害下发·发", $"netId={netId} 伤害={damage} 起源号={attackerNetId} 直接来源号={causedNetId} 部位={part} 成分={GroupText(groups)} 是房主={(flow != null && flow.IsHost)}");
             flow?.SendEnemyDamaged(netId, damage, 0u, attackerNetId, groups, EncodePart(part), causedNetId);   // 内部判"房主才发"
         }
 
@@ -401,9 +404,12 @@ namespace FPSGame.Managers
             finally { EnemyController.ApplyingRemoteDamage = false; }
 
             // 数据说话：落完之后本端这份副本的血量 —— 与"开枪端自己看到的血量"对照，一眼看出两边是否同步
-            var hp = actor.GetComponent<IHealth>();
-            FPSGame.Utils.NetSyncLog.BulletLog("远端伤害落地后", $"netId={netId} 扣={damage} 本端该怪={actor.Id} 血量=" +
-                (hp != null ? hp.GetHpCurrent().ToString("F0") + "/" + hp.GetHpMax().ToString("F0") : "<无生命组件>"));
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+            {
+                var hp = actor.GetComponent<IHealth>();
+                FPSGame.Utils.NetSyncLog.BulletLog("远端伤害落地后", $"netId={netId} 扣={damage} 本端该怪={actor.Id} 血量=" +
+                    (hp != null ? hp.GetHpCurrent().ToString("F0") + "/" + hp.GetHpMax().ToString("F0") : "<无生命组件>"));
+            }
         }
 
         /// <summary>解开枪端摊平的伤害成分 <c>[count, type, value, ...]</c>（见 <c>EnemyController.PackDamageGroups</c>）；拿不到 ⇒ null。

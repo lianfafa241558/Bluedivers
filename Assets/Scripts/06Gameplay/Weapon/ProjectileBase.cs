@@ -184,7 +184,7 @@ namespace FPSGame.Weapon
             m_Catapulted = true;
             ResetLife();
             // ⚠ 先判开关再拼字符串（插值串在调用点就分配了）
-            if (NetSyncLog.Enabled && NetSyncLog.Bullet)
+            if (NetSyncLog.BulletEnabled)
                 NetSyncLog.BulletLog("弹射", $"{GetType().Name} 命中={collider.name} 弹射点={hitPos:F2} " +
                     $"→ {target.ShowName} 剩余次数={m_CatapultLeft}");
             return true;

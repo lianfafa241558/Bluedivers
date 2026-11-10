@@ -23,6 +23,7 @@ public partial class SettingWnd : Window
     [SerializeField] private GameObject _tooltipRoot;
     [SerializeField] private GameObject _rebindSelectionRoot;
     [SerializeField] private TMP_Text _rebindHintText;
+    [SerializeField] private Button _resetDefaultButton;
 
     [Header("快捷键仅显示")]
     [SerializeField] private GameObject _displayOnlyKeyCodeRoot;
@@ -65,6 +66,48 @@ public partial class SettingWnd : Window
             _rebindHintText.gameObject.SetActive(true);
             _rebindHintText.text = "点击按键以修改键位";
         }
+
+        BindResetDefaultButton();
+    }
+
+    private void BindResetDefaultButton()
+    {
+        if (_resetDefaultButton == null)
+        {
+            Debug.LogWarning("[SettingWnd] 未接上\"恢复默认\"按钮（预制体 ExpandRoot/ShortWnd/ResetDefault），本功能不可用");
+            return;
+        }
+
+        _resetDefaultButton.onClick.RemoveAllListeners();
+        _resetDefaultButton.onClick.AddListener(OnResetDefaultClicked);
+    }
+
+    // ==================== 恢复默认 ====================
+
+    private void OnResetDefaultClicked()
+    {
+        wndManager.PlaySound(new("UI/UI_Bubble"));
+        WndHub.Tip.Creat(new TipWndInfo
+        {
+            title = "恢复默认设置",
+            desc = "\n所有快捷键都会变回初始键位，确定要恢复吗？",
+            optA_Text = "确定",
+            optA_Click = ApplyResetDefault,
+            optB_Text = "取消"
+        });
+    }
+
+    private void ApplyResetDefault()
+    {
+        // 先退出改键/选择框：否则界面还停在"请按下新的按键"，刷新后新按键会套用到快照之外的旧状态
+        HideSelection();
+        ResetRebindState();
+
+        (InputManager.Instance as InputManager).ResetToDefault();
+
+        RefreshKeyBindingDisplay();
+        _displayOnlyKeyDisplay?.RefreshDisplay();
+        wndManager.PlaySound(new("UI/UI_Ready"));
     }
 
     private void RefreshKeyBindingDisplay()

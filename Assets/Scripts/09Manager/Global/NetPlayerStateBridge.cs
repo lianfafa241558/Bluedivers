@@ -100,7 +100,8 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow == null) return;
 
-            FPSGame.Utils.NetSyncLog.BulletLog("背包开火·发", $"方向={direction:F2} 档位={damageIndex} ⇒ 虚拟槽位={BagSlotIndex}");
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                FPSGame.Utils.NetSyncLog.BulletLog("背包开火·发", $"方向={direction:F2} 档位={damageIndex} ⇒ 虚拟槽位={BagSlotIndex}");
             flow.SendShoot(BagSlotIndex, direction, default, damageIndex, 0);
         }
     }

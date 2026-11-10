@@ -284,6 +284,10 @@ namespace FPSGame.Gameplay
         /// <summary>结算一次单位命中：同一单位本节拍只算一次（多个部位/护甲碰撞体不重复吃伤害）。</summary>
         private void HitUnit(RaycastHit hit, IDamageable damageable, ref bool chainUsed)
         {
+            // ⚠ 顺序不能反：Source 没连（TransferDamageable 忘配进 LineArmor）时 ActorGo 会 NRE，
+            //   而且光束每帧都扫 ⇒ 刷屏 + Move 半途中断。这类部位直接跳过（口径同 ProjectileStandard）
+            if (!damageable.Source.IsValid()) return;
+
             GameObject actorGo = damageable.ActorGo;
             if (actorGo == null) actorGo = hit.collider.gameObject;
             if (!m_TickHitActors.Add(actorGo)) return;

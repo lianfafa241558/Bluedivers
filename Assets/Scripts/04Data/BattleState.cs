@@ -15,6 +15,11 @@ namespace FPSGame.Data
     /// <para>▍它同时解决了"注入来不及"的问题：<c>HealthPlayer</c>/<c>HealthShield</c> 在 <c>Awake</c> 里
     /// 读 <see cref="HaveBooster"/> 决定 <c>MaxShield += 10</c>，那时任何"注入"都还没发生 ⇒ 只能读数据自持点。</para>
     ///
+    /// <para>▍⚠ 但"写入时机"很晚：<c>BattleManager</c> 是**战斗场景加载完之后**才创建的（<c>AsyncLoadScene</c> 回调里），
+    /// 那时场景里所有 <c>Awake/OnEnable</c> 早就跑完了 ⇒ 任何**挂在场景物体上**的效果组件在 <c>OnEnable</c> 里读
+    /// <see cref="HaveBooster"/> 都恒 false。所以给了两个"时机事件"：<see cref="OnTeamEnhanceApplied"/>（表可读）与
+    /// <see cref="OnBattleStart"/>（世界就绪，**要在世界里生成东西必须等这个**）。</para>
+    ///
     /// <para>▍写入方 <c>BattleManager</c> 的同步点（漏一处就读到过期值）：
     /// ① <c>Awake</c> 里的**跨局重置**（静态字段不会随新实例自动归零，必须显式清，否则上一局的强化/开战状态会残留）；
     /// ② <c>ApplyTeamEnhance</c>（<see cref="ActiveTeamEnhance"/> 的**唯一**写入点）；
@@ -31,13 +36,43 @@ namespace FPSGame.Data
         private static readonly System.Random NullRandom = new System.Random(0);
 
         /// <summary>本局已启用的全队强化（未就绪时为空数组 ⇒ <see cref="HaveBooster"/> 恒 false）。</summary>
-        public static BoosterType[] ActiveTeamEnhance { get; internal set; } = System.Array.Empty<BoosterType>();
+        private static BoosterType[] _activeTeamEnhance = System.Array.Empty<BoosterType>();
+
+        /// <summary>本局已启用的全队强化（只读；写入走 <see cref="ApplyTeamEnhance"/>）。</summary>
+        public static BoosterType[] ActiveTeamEnhance => _activeTeamEnhance;
+
+        /// <summary>强化表**是否已经写入**。
+        /// <para>⚠ false 只代表"还没写"（场景里所有 <c>OnEnable</c> 都跑在这之前，见类注释），
+        /// **不代表"没启用强化"** ⇒ 想判启用必须等 <see cref="OnTeamEnhanceApplied"/>。</para></summary>
+        public static bool TeamEnhanceApplied { get; private set; }
+
+        /// <summary>强化表写入后触发一次（= <c>BattleManager</c> 的 Init 协程第一句）。</summary>
+        public static event System.Action OnTeamEnhanceApplied;
+
+        /// <summary>开打后触发一次（世界已就绪：<c>ActorsManager</c> / 波次 / 4063 桥都在）。</summary>
+        public static event System.Action OnBattleStart;
 
         /// <summary>某类全队强化是否已启用（未就绪时恒 false）。</summary>
-        public static bool HaveBooster(BoosterType type) => System.Array.IndexOf(ActiveTeamEnhance, type) >= 0;
+        public static bool HaveBooster(BoosterType type) => System.Array.IndexOf(_activeTeamEnhance, type) >= 0;
 
         /// <summary>是否已开战（未就绪时 = false）。</summary>
-        public static bool IsStartBattle { get; internal set; }
+        public static bool IsStartBattle { get; private set; }
+
+        /// <summary>写入强化表并通知（**唯一写入点** = <c>BattleManager.ApplyTeamEnhance</c>）。</summary>
+        internal static void ApplyTeamEnhance(BoosterType[] types)
+        {
+            _activeTeamEnhance = types;
+            TeamEnhanceApplied = true;
+            OnTeamEnhanceApplied?.Invoke();
+        }
+
+        /// <summary>置"已开战"并通知（两处置真点共用；幂等 —— 订阅方按"只来一次"写的）。</summary>
+        internal static void MarkBattleStarted()
+        {
+            if (IsStartBattle) return;
+            IsStartBattle = true;
+            OnBattleStart?.Invoke();
+        }
 
         /// <summary>【联机】本端是不是 **tick 伤害（破甲流血 / 异常状态跳伤）的权威端**。
         /// <para>▍为什么需要（2026-10-12）：tick 是从**已同步的状态**推导出来的（护甲破了 → 每拍流血；积蓄满 → 每拍跳伤），
@@ -77,7 +112,8 @@ namespace FPSGame.Data
         /// </summary>
         internal static void Reset()
         {
-            ActiveTeamEnhance = System.Array.Empty<BoosterType>();
+            _activeTeamEnhance = System.Array.Empty<BoosterType>();
+            TeamEnhanceApplied = false;   // 新一局还没写强化表 ⇒ 效果组件要重新等事件
             IsStartBattle = false;
             BattleRandom = NullRandom;
             IsTickDamageAuthority = true;   // 未就绪 = 中性（单机）⇒ 本端自己算 tick

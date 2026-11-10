@@ -50,7 +50,7 @@ namespace FPSGame.Managers
             _destroyed.Clear();
 
             UnitEventBus.OnUnitDeath += OnLocalDeath;
-            UnitEventBus.OnUnitDamaged += OnLocalDamaged;
+            // ⚠ 掉血上报（4053/4054）已收口到 NetUnitDamageReporter（2026-11-11）：本桥只管"打掉了"这一条（4058）
             NetRoomFlow.OnSceneDestructible += OnRemoteDestroyed;
             NetRoomFlow.OnPlayerList += OnPlayerList;
         }
@@ -61,7 +61,6 @@ namespace FPSGame.Managers
             installed = false;
 
             UnitEventBus.OnUnitDeath -= OnLocalDeath;
-            UnitEventBus.OnUnitDamaged -= OnLocalDamaged;
             NetRoomFlow.OnSceneDestructible -= OnRemoteDestroyed;
             NetRoomFlow.OnPlayerList -= OnPlayerList;
 
@@ -87,48 +86,19 @@ namespace FPSGame.Managers
 
             _destroyed.Add(key);
 
-            var p = actor.transform.position;
-            NetSyncLog.BulletLog("可破坏物·发", $"{actor.ShowName}({actor.Id}) key={key} 位置={p:F2} 是房主={flow.IsHost}");
+            if (NetSyncLog.BulletEnabled)
+            {
+                var p = actor.transform.position;
+                NetSyncLog.BulletLog("可破坏物·发", $"{actor.ShowName}({actor.Id}) key={key} 位置={p:F2} 是房主={flow.IsHost}");
+            }
 
             flow.SendSceneDestructible(key, flow.IsHost ? 0u : flow.SelfSid);
         }
 
-        /// <summary>【联机】可破坏物**被打掉血** ⇒ 走统一伤害通道（成员 4053 上报 / 房主 4054 下发，键 = <c>NetId</c>）。
-        /// <para>▍为什么要这条（2026-10-12 第 8 步）：原来只传"死了" ⇒ 两端血量各算各的：客机把油桶打到一半，
-        /// 房主那边还是满血（血条 / 受击表现不一致）。战斗前创建的 <c>Other</c> 现在有**派生号**，于是能并进
-        /// <c>EnemyDamagedMsg</c> 那条通道（同一套 <c>attackerNetId</c> / <c>DamagePacket.Resolved</c> 口径）。
-        /// ⚠ 没号的物件（战斗中途生成）照旧只靠 4058 兜底。</para></summary>
-        static void OnLocalDamaged(GameObject victim, PEInt damage, GameObject caused, Collider hitBody, GameObject origin)
-        {
-            if (_applyingRemote) return;                       // 本端正在重放"远端那次打爆"
-            if (EnemyController.ApplyingRemoteDamage) return;  // 本端正在应用远端伤害 ⇒ 必须挡回环（否则两端互相转发）
-            if (victim == null) return;
-            if (!victim.TryGetComponent(out Actor actor)) return;
-            if (!IsSceneDestructible(actor)) return;
-
-            int netId = actor.NetId;
-            if (netId == 0) return;                            // 没号 ⇒ 只保留"死了"那条兜底（4058）
-
-            int dmg = Mathf.RoundToInt(damage.RawFloat);
-            if (dmg <= 0) return;
-
-            var flow = NetRoomFlow.Instance;
-            if (flow == null || !flow.InRoom) return;          // 单机 / 不在房里：两端本来就一致
-
-            // 两个来源号一起带（口径同 EnemyController._OnDamaged）：
-            //   attackerNetId = **起源**（统计；玩家是 0 ⇒ 对端退回按 Sid 找盟友实例）
-            //   causedNetId   = **直接来源**（显示/AI；炮台 / 地雷本身）
-            var agent = origin != null ? origin.GetComponent<Actor>() : null;
-            int attackerNetId = agent != null ? agent.NetId : 0;
-            var causer = caused != null ? caused.GetComponent<Actor>() : null;
-            int causedNetId = causer != null ? causer.NetId : 0;
-
-            NetSyncLog.BulletLog("可破坏物·伤",
-                $"{actor.ShowName}({actor.Id}) netId={netId} 伤害={dmg} 起源号={attackerNetId} 直接来源号={causedNetId} 是房主={flow.IsHost}");
-
-            if (flow.IsHost) BattleEventBus.EnemyDamaged(netId, dmg, attackerNetId, null, -1, causedNetId);   // 房主：下发全体
-            else BattleEventBus.EnemyHit(netId, dmg, attackerNetId, null, -1, causedNetId);                   // 成员：上报房主（由他转发）
-        }
+        // ==================== 掉血上报（已迁出） ====================
+        // 可破坏物"被打掉血"的同步（4053/4054、键 = NetId）已收口到 NetUnitDamageReporter（2026-11-11）：
+        // 判据 = 有 Actor.NetId 且这一发带真伤害或非零成分，与 UnitTypeEnum 无关 ⇒ 本桥不再单独写一份。
+        // 本桥只保留"打掉了 ⇒ 4058"这一条（无号物件也靠它兜底）。
 
         #endregion
 
@@ -160,8 +130,11 @@ namespace FPSGame.Managers
                 return;
             }
 
-            var pos = actor.transform.position;
-            NetSyncLog.BulletLog("可破坏物·收", $"{actor.ShowName}({actor.Id}) key={m.Key} 位置={pos:F2} 发起者sid={m.Sid} ⇒ 本端也炸掉");
+            if (NetSyncLog.BulletEnabled)
+            {
+                var pos = actor.transform.position;
+                NetSyncLog.BulletLog("可破坏物·收", $"{actor.ShowName}({actor.Id}) key={m.Key} 位置={pos:F2} 发起者sid={m.Sid} ⇒ 本端也炸掉");
+            }
 
             _applyingRemote = true;
             try

@@ -72,6 +72,9 @@ namespace FPSGame.GameContract
         /// <summary>服务未就位 ⇒ 不生成（等同于"成员端等复刻"的中性结果）。</summary>
         public GameObject CreatUnit(GameObject prefab, Vector3 pos, Quaternion rot, INetSpawner source, int slot, Vector3 target = default) => null;
 
+        /// <summary>服务未就位 ⇒ 不生成（同 <see cref="CreatUnit"/> 的中性结果）。</summary>
+        public GameObject SpawnAt(int prefabKey, Vector3 pos, float yaw) => null;
+
         public int WaveCount => 0;
     }
 }

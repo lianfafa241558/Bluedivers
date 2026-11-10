@@ -1,4 +1,4 @@
-
+﻿
 using FPSGame.Core;
 using FPSGame.Attributes;
 using PEMaths;
@@ -15,6 +15,7 @@ namespace FPSGame.Game
     /// 因此 prefab（ShieldBag / Dec_Colossus Boss / ArtifactPlane）上的原有字段与数值不受影响。
     /// </para>
     /// </summary>
+    [AddComponentMenu("生命/护盾生命")]
     public class HealthShield : Health
     {
         // ↓ 配置保留在本组件上（prefab 数据不丢），运行时注入给 ShieldBehaviour

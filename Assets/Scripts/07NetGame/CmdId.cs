@@ -177,7 +177,8 @@
         /// <para>▍为什么必须房主权威：<c>Actor.Awake</c> 会给新单位领 NetId（口径是"房主分配 + 两端创建顺序一致"），
         /// 成员端自造必然错位（其后所有单位错号：伤害打到别的怪身上、移动指令发错对象）。合并成一条消息、一处回环门、一处日志口径。</para>
         /// <para>▍形态（<c>HostSpawnMsg.Kind</c>）：<c>Patrol</c> = 巡逻队（生成点 + 逐单位目标点；构成由落点派生 ⇒ 不传）、
-        /// <c>Unit</c> = 单只单位（来源键 + 槽位 ⇒ 成员让本端同一份生成器复刻并覆盖号，见 <c>INetSpawner</c>）。</para>
+        /// <c>Unit</c> = 单只单位（来源键 + 槽位 ⇒ 成员让本端同一份生成器复刻并覆盖号，见 <c>INetSpawner</c>）、
+        /// <c>Table</c> = 按可生成单位表直发（`PrefabKey` 查表取 prefab，**不需要生成者在场**，2026-11-10 追加）。</para>
         /// <para>▍与 <see cref="WaveStartSync"/> / <see cref="SceneActorNtf"/> 的分工：波次是**逐 Tick 投放**、场景单位是**加载期摆好**，
         /// 频率档与本条不同 ⇒ 不合并（它们各自的路由已被验证，见 <c>WaveManager</c> 的整批复刻与 <c>SceneActorSync</c>）。</para></summary>
         public const int HostSpawnNtf = 4063;

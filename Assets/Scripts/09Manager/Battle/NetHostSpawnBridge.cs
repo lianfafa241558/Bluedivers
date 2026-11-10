@@ -30,6 +30,10 @@ namespace FPSGame.Managers
     /// **来源键 + 槽位**：成员拿来源键找回本端同一份生成器、按槽位取同一把 prefab 复刻，号由消息覆盖
     /// （见 <see cref="INetSpawner"/>）。</para>
     ///
+    /// <para>▍Kind = Table（2026-11-10）：**不需要生成者在场** —— 成员拿 <c>PrefabKey</c> 查
+    /// <see cref="FPSGame.Data.SpawnableTable_SO"/> 取 prefab。给"调用方有编号、但两端没有一个共同的生成器当钥匙"
+    /// 的场合用（例：挂在场景物件上的强化效果凭空造个单位）。号同样走房主分配段。</para>
+    ///
     /// <para>▍入口三个：09 自己的 <c>PatrolContriller</c> 直接调 <see cref="ReportPatrol"/>；06 的任务（看不见 09）
     /// 经 <c>BattleEventBus.ReportPatrolSpawn</c> 中转（见 <see cref="OnLocalPatrolReport"/>）；
     /// 运行时生成由 <c>WaveManager.CreatUnit</c> 调 <see cref="ReportUnit"/>。</para>
@@ -121,6 +125,68 @@ namespace FPSGame.Managers
             });
         }
 
+        /// <summary>【房主 / 单机】**按可生成单位表的编号直接造一个单位**并广播（成员返回 null，等 4063 复刻）。
+        /// <para>▍与 <c>WaveManager.CreatUnit(prefab, …)</c> 的区别：那条要先有一个 <see cref="INetSpawner"/> 当钥匙；
+        /// 这条只要编号，成员端查表还原 prefab ⇒ 调用方不必两端都存在。</para>
+        /// <para>⚠ 成员端**不要**提前判强化/条件再决定要不要复刻：条件两端各算一份，判了就会静默丢复刻（复刻在
+        /// <see cref="ReplayTable"/> 里只认表、不认条件）。</para></summary>
+        /// <param name="prefabKey">可生成单位表编号（<c>SpawnableTable_SO</c> 主键）。</param>
+        /// <param name="pos">生成点（**房主算，成员照用** —— 各端自己算必然差几厘米）。</param>
+        /// <param name="yaw">水平朝向（俯仰由 AI/瞄准点决定）。</param>
+        /// <returns>房主（或单机）= 新建单位；成员 = null。</returns>
+        /// <remarks>⚠ 预制体没有 <c>Actor</c> 也支持（"纯表现"生成物，如护罩）：不领号、消息里 <c>NetId=0</c>。</remarks>
+        public static GameObject SpawnFromTable(int prefabKey, Vector3 pos, float yaw)
+        {
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            // 成员端不生成：本端自造会领号 ⇒ 与房主下发的号撞车（同 WaveManager.CreatUnit 的闸门）
+            if (flow != null && !flow.IsHost && flow.SelfSid != 0u) return null;
+
+            if (!FPSGame.Data.SpawnableTable_SO.TryGet(prefabKey, out var prefab) || prefab == null)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("生成/发·表", $"编号={prefabKey} 不在可生成单位表里 ⇒ 本端不创建");
+                return null;
+            }
+
+            GameObject go;
+            ActorsManager.ForceHostSpawnNetId = true;   // 号走房主分配段（与 Kind=Unit 同一段，互不干扰）
+            try
+            {
+                var parent = ActorsManager.Instance != null ? ActorsManager.Instance.transform : null;
+                go = Object.Instantiate(prefab, pos, Quaternion.Euler(0f, yaw, 0f), parent);
+            }
+            finally { ActorsManager.ForceHostSpawnNetId = false; }
+
+            ReportTable(prefabKey, go, yaw);
+            return go;
+        }
+
+        /// <summary>【房主】把"我按表造了一个"下发（成员据此复刻并覆盖号）。非房主 / 单机直接返回。
+        /// <para>⚠ 没有 <c>Actor</c> 的生成物**照发**（<c>NetId = 0</c>）：那是"纯表现"（护罩/光效这类不参与按号寻址的），
+        /// 成员端只要按 pos/yaw 复制一份就对了，不需要号。</para></summary>
+        static void ReportTable(int prefabKey, GameObject spawned, float yaw)
+        {
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            if (flow == null || !flow.IsHost || spawned == null) return;
+
+            var actor = spawned.GetComponent<Actor>();
+            int netId = actor != null ? actor.NetId : 0;
+
+            var pos = spawned.transform.position;
+            FPSGame.Utils.NetSyncLog.SyncLog("生成/发·表",
+                $"编号={prefabKey} 号={(netId != 0 ? netId.ToString() : "无(纯表现)")} " +
+                $"单位={(actor != null ? actor.Id : spawned.name)} 位置={pos:F1} yaw={yaw:F0}");
+
+            flow.SendHostSpawn(new FPSGame.Net.HostSpawnMsg
+            {
+                Kind = (int)FPSGame.Net.HostSpawnKind.Table,
+                PrefabKey = prefabKey,
+                NetId = netId,
+                X = pos.x, Y = pos.y, Z = pos.z,
+                Yaw = yaw,
+                PrefabId = actor != null ? actor.Id : spawned.name,   // 只用于日志对照（成员取 prefab 靠 PrefabKey）
+            });
+        }
+
         /// <summary>06 侧（任务）的巡逻队报告入口：任务看不见 09 ⇒ 经 <c>BattleEventBus</c> 中转到这里统一走房主权威。</summary>
         static void OnLocalPatrolReport(Vector3 spawnPos, Vector3 target, bool home)
             => ReportPatrol(spawnPos, new[] { target }, home ? PatrolTargetKind.HomePoint : PatrolTargetKind.PatrolPos);
@@ -136,8 +202,15 @@ namespace FPSGame.Managers
             var flow = FPSGame.Net.NetRoomFlow.Instance;
             if (flow == null || flow.IsHost) return;      // 房主自己那份上面已经建过（不做本地自派发）
 
-            if (m.Kind == (int)FPSGame.Net.HostSpawnKind.Patrol) ReplayPatrol(m);
-            else ReplayUnit(m);
+            switch ((FPSGame.Net.HostSpawnKind)m.Kind)
+            {
+                case FPSGame.Net.HostSpawnKind.Patrol: ReplayPatrol(m); break;
+                case FPSGame.Net.HostSpawnKind.Unit: ReplayUnit(m); break;
+                case FPSGame.Net.HostSpawnKind.Table: ReplayTable(m); break;
+                default:
+                    FPSGame.Utils.NetSyncLog.Warn("生成/收·未知", $"Kind={m.Kind} ⇒ 本端不认识（新旧版本不一致？）");
+                    break;
+            }
         }
 
         static void ReplayPatrol(FPSGame.Net.HostSpawnMsg m)
@@ -221,6 +294,40 @@ namespace FPSGame.Managers
 
             FPSGame.Utils.NetSyncLog.SyncLog("生成/收·单位",
                 $"来源键={m.SourceKey} 槽位={m.Slot} 号={m.NetId} prefabId={m.PrefabId} 单位={go.name} 位置={pos:F1} 目标={target:F1}");
+        }
+
+        /// <summary>【成员】按 <c>PrefabKey</c> 查表复刻（位置/朝向/号全用消息里的值，不自己算）。</summary>
+        static void ReplayTable(FPSGame.Net.HostSpawnMsg m)
+        {
+            if (!FPSGame.Data.SpawnableTable_SO.TryGet(m.PrefabKey, out var prefab) || prefab == null)
+            {
+                FPSGame.Utils.NetSyncLog.Warn("生成/收·表",
+                    $"编号={m.PrefabKey} 不在本端的可生成单位表里 ⇒ 号={m.NetId} 这只在本端不存在（表没重建？）");
+                return;
+            }
+
+            var pos = new Vector3(m.X, m.Y, m.Z);
+            GameObject go;
+            // ★ 复刻期间**不许发号**：号由本条覆盖（见 Actor.Awake / ActorsManager.Replicating）
+            ActorsManager.Replicating = true;
+            try
+            {
+                var parent = ActorsManager.Instance != null ? ActorsManager.Instance.transform : null;
+                go = Object.Instantiate(prefab, pos, Quaternion.Euler(0f, m.Yaw, 0f), parent);
+            }
+            finally { ActorsManager.Replicating = false; }
+
+            var actor = go.GetComponent<Actor>();
+            if (actor == null) actor = go.GetComponentInChildren<Actor>(true);
+            if (actor != null && m.NetId != 0) actor.NetId = m.NetId;   // ⚠ 早于任何用到号的动作
+            else if (actor == null)
+            {
+                // NetId=0 的"纯表现"生成物是合法形态（护罩/光效），只记一条明细方便排查
+                FPSGame.Utils.NetSyncLog.SyncLog("生成/收·表", $"编号={m.PrefabKey} 的预制体没有 Actor ⇒ 按纯表现复制（号={m.NetId}）");
+            }
+
+            FPSGame.Utils.NetSyncLog.SyncLog("生成/收·表",
+                $"编号={m.PrefabKey} 号={m.NetId} 单位={go.name} 位置={pos:F1} yaw={m.Yaw:F0}");
         }
 
         #endregion

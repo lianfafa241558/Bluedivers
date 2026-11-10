@@ -73,6 +73,16 @@ namespace FPSGame.GameContract
         /// <returns>房主（或单机）= 新建单位；成员 = null。</returns>
         GameObject CreatUnit(GameObject prefab, Vector3 pos, Quaternion rot, INetSpawner source, int slot, Vector3 target = default);
 
+        /// <summary>【联机】按**可生成单位表的编号**凭空造一个单位：房主（或单机）创建并广播 4063 的 <c>Kind=Table</c>，
+        /// 成员返回 null（等复刻）。
+        /// <para>▍与 <see cref="CreatUnit"/> 的分工：那条要一个 <see cref="INetSpawner"/> 当钥匙（生成者两端都得在）；
+        /// 这条只要编号 —— 成员查 <c>SpawnableTable_SO</c> 还原 prefab ⇒ 适合"调用方两端不同时存在"的场合
+        /// （例：挂在场景物件上的全队强化效果凭空造个单位）。</para>
+        /// <para>⚠ 生成点/朝向必须由调用方用**两端一致的来源**给出（房主算完随消息下发，成员照用）。</para></summary>
+        /// <param name="prefabKey">可生成单位表编号（<c>SpawnableTable_SO</c> 主键，0 = 无效）。</param>
+        /// <returns>房主（或单机）= 新建单位；成员 = null。</returns>
+        GameObject SpawnAt(int prefabKey, Vector3 pos, float yaw);
+
         /// <summary>当前波次（等价 <c>BattleManager.WaveCont.WaveCount</c>；MissionEradicate 用）。</summary>
         int WaveCount { get; }
     }

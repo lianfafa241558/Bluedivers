@@ -22,8 +22,8 @@ namespace FPSGame.Managers
     /// 全表里找、**不按 <c>UnitTypeEnum</c> 过滤** ⇒ 载具天然吃得下（含死亡那条 <c>ApplyRemoteDeath</c>）。
     /// 本桥只补两件真正缺的东西：</para>
     /// <list type="number">
-    ///   <item><b>上行</b>：载具没有 <c>EnemyController</c>，敌人那条上报链挂不上；而 <c>NetDestructibleBridge</c>
-    ///         只认 <c>UnitTypeEnum.Other</c> ⇒ 载具"被打掉血"今天**根本没人报**；</item>
+    ///   <item><b>上行</b>（2026-11-10 已迁出）：现在统一由 <c>NetUnitDamageReporter</c> 报
+    ///         （判据 = 有 <c>Actor.NetId</c> 且这一发带真伤害或非零成分，与物件类型无关）；</item>
     ///   <item><b>权威门</b>：两端各自模拟子弹（含敌人 AI 的子弹）⇒ 各扣一次必然分叉。门插在伤害入口
     ///         <c>Damageable.LocalDamageGate</c>（在 <c>InflictDamage</c> 最前面），口径见
     ///         <c>BattleState.IsVehicleDamageAuthority</c>。</item>
@@ -35,16 +35,12 @@ namespace FPSGame.Managers
     {
         static bool installed;
 
-        /// <summary>成分摊平的复用缓冲（只在"打包网络消息"内有效 —— 序列化是**同步**的，见 <c>EnemyController</c> 同款做法）。</summary>
-        static float[] _groupScratch;
-
         public static void Install()
         {
             if (installed) return;
             installed = true;
             Damageable.LocalDamageGate = Gate;
-            // 用 Settled（0 伤害也回调）：纯冰冻/催化/破甲命中也要同步，见 EnemyController._OnSettled
-            UnitEventBus.OnUnitSettled += OnLocalDamaged;
+            // ⚠ 上行（本端掉血 ⇒ 上报/下发）已收口到 NetUnitDamageReporter（2026-11-11），本桥只剩权威门
         }
 
         public static void Uninstall()
@@ -52,7 +48,6 @@ namespace FPSGame.Managers
             if (!installed) return;
             installed = false;
             Damageable.LocalDamageGate = null;
-            UnitEventBus.OnUnitSettled -= OnLocalDamaged;
         }
 
         // ==================== 权威门：这笔伤害该不该在本端落地 ====================
@@ -99,73 +94,8 @@ namespace FPSGame.Managers
             return a != null && (a.Type == UnitTypeEnum.Player || a.Type == UnitTypeEnum.Friend);
         }
 
-        // ==================== 上行：本端真掉血了 -> 上报 / 下发 ====================
-
-        /// <summary>载具**真掉血**了（<c>Health.TakeDamage</c> 里真伤害 &gt; 0 时派发）⇒ 成员上报 4053 / 房主下发 4054。
-        /// <para>▍与 <c>NetDestructibleBridge.OnLocalDamaged</c> 同款，只换过滤条件为"载具"。</para>
-        /// <para>▍"落地了才报"就够：非权威端的 AI 伤害被 <see cref="Gate"/> 挡在伤害入口 ⇒ 根本不会派发这个事件
-        /// ⇒ 自动做到"AI 来源的载具伤害只有房主算"。</para>
-        /// </summary>
-        static void OnLocalDamaged(GameObject victim, PEInt damage, GameObject caused, Collider hitBody, GameObject origin)
-        {
-            if (EnemyController.ApplyingRemoteDamage) return;   // 本端正在应用远端伤害 ⇒ 挡回环（否则两端互相转发）
-            if (victim == null) return;
-            if (!victim.TryGetComponent(out Actor actor)) return;
-            if (!IsAuthorityGatedActor(actor)) return;
-
-            int netId = actor.NetId;
-            if (netId == 0)
-            {
-                // 没号 = 同步不了（多半是那一发空投没带号 / 旧端）⇒ 留痕，别静默
-                FPSGame.Utils.NetSyncLog.Warn("载具/血·发", $"{actor.ShowName}({actor.Id}) 没有 NetId ⇒ 载具血量同步不了");
-                return;
-            }
-
-            int dmg = Mathf.RoundToInt(damage.RawFloat);
-            // ★ 成分数值（2026-11-04 起不再是系数）：接收端要靠它补"护甲破坏（含破甲流血）"与"异常状态积蓄"
-            //   （只带总伤害时那两条分支整段被跳过 —— 见 Health.LastRawGroups / §7.2e）
-            var hp = actor.GetComponent<IHealth>();
-            float[] groups = PackGroups(hp);
-            // 0 伤害但带成分（纯冰冻 / 催化 / 破甲）也要发 —— 否则成员端载具的积蓄槽与护甲永远不动
-            if (dmg <= 0 && groups == null) return;
-
-            var flow = NetRoomFlow.Instance;
-            if (flow == null || !flow.InRoom) return;   // 单机 / 不在房：两端本来就一致
-
-            // 两个来源号一起带（口径同敌人那条）：起源 = 统计、直接来源 = 显示/AI
-            var agent = origin != null ? origin.GetComponent<Actor>() : null;
-            int attackerNetId = agent != null ? agent.NetId : 0;
-            var causer = caused != null ? caused.GetComponent<Actor>() : null;
-            int causedNetId = causer != null ? causer.NetId : 0;
-
-            // 部位下标（两端同一把 prefab 同序 ⇒ 稳定；-1 = 认不出，接收端自己挑主躯干）
-            int part = actor.IndexOfDamageable(hitBody);
-
-            FPSGame.Utils.NetSyncLog.BulletLog("载具/血·发",
-                $"{actor.ShowName}({actor.Id}) netId={netId} 伤害={dmg} 起源号={attackerNetId} 直接来源号={causedNetId} 部位={part} 是房主={flow.IsHost}");
-
-            if (flow.IsHost) BattleEventBus.EnemyDamaged(netId, dmg, attackerNetId, groups, part, causedNetId);  // 房主：下发全体
-            else BattleEventBus.EnemyHit(netId, dmg, attackerNetId, groups, part, causedNetId);                  // 成员：上报房主（由他转发）
-        }
-
-        /// <summary>把 <c>Health.LastRawGroups</c> 摊平成 <c>[count, type, value, ...]</c>（口径同 <c>EnemyController.PackDamageGroups</c>）。
-        /// <para>⚠ 只在下发/上报的**同步打包**里有效（复用缓冲）；拿不到 ⇒ null（接收端退回中性成分）。</para>
-        /// <para>⚠ value 是**每个成分的数值**（不是系数，2026-11-04 改口径）。</para></summary>
-        static float[] PackGroups(IHealth hp)
-        {
-            var g = hp != null ? hp.LastRawGroups : null;   // 结算期间有效；TakeDamage 返回后就被清空
-            if (g == null || g.Count == 0) return null;
-
-            int need = 1 + g.Count * 2;
-            if (_groupScratch == null || _groupScratch.Length < need) _groupScratch = new float[need];
-
-            _groupScratch[0] = g.Count;
-            for (int i = 0; i < g.Count; ++i)
-            {
-                _groupScratch[1 + i * 2] = (int)g[i].Key;          // DamageTypeEnum 的 int
-                _groupScratch[2 + i * 2] = g[i].Value.RawFloat;    // 成分数值
-            }
-            return _groupScratch;
-        }
+        // ==================== 上行 ====================
+        // ⚠ 本端掉血后的"上报 / 下发"已收口到 NetUnitDamageReporter（判据：有 Actor.NetId + 带真伤害或非零成分）
+        //   ⇒ 敌人 / 载具 / 空投支援单位 / 凯伊盾 / 场景可破坏物走的是同一份实现，这里不再各写一遍。
     }
 }

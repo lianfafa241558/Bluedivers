@@ -440,7 +440,7 @@ namespace FPSGame.Effect
             }
             if (m_creatObject&&m_creatObject.TryGetComponent(out AirdropPod pro))
             {
-                pro.OnHit -= PodHit;
+                pro.OnHit.RemoveListener(PodHit);
             }
             OnCreatObject = null;
             data = null;
@@ -500,7 +500,7 @@ namespace FPSGame.Effect
                     {
                         pro.SetFallSpeedScale(m_PodFallScale);
                         pro.Launch(m_origin);
-                        pro.OnHit += PodHit;
+                        pro.OnHit.AddListener(PodHit);
                         _fallPod = pro;   // 供 UpdatePod 判断"舱还没落地 ⇒ 信标续命"
                     }
 
@@ -558,7 +558,7 @@ namespace FPSGame.Effect
                 }
                 if (m_creatObject.TryGetComponentInChildren(out AirdropPod pro))
                 {
-                    pro.OnHit -= PodHit;
+                    pro.OnHit.RemoveListener(PodHit);
                 }
                 // ⚠ 勾了"使用标准空投舱"却没填"创建的物体"时**绝不能** Instantiate(null)：
                 //   本回调跑在 `AirdropPod.Land()` 里，异常会跳过它后面的 `Stop()` ⇒ 舱永远不算落地、
@@ -589,7 +589,7 @@ namespace FPSGame.Effect
             {
                 if (m_creatObject.TryGetComponent(out AirdropPod pro))
                 {
-                    pro.OnHit -= PodHit;
+                    pro.OnHit.RemoveListener(PodHit);
                 }
             }
 

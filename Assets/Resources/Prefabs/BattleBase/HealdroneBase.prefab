@@ -174,9 +174,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EyePoint: {fileID: 7480769015270205574}
-  DetectionRange: 50
-  HearingRange: 20
-  AttackRange: 48
+  DetectionRange: 60
+  HearingRange: 30
+  AttackRange: 58
   AlertRange: 0
   Lazy: 0
   RespondWarning: 1
@@ -446,9 +446,13 @@ MonoBehaviour:
     ExplosionRange: 0
     DestructeRadius: 0
     ShockwaveRadius: 0
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 7655095426451682942, guid: 358eca6adc32a89459c54b6b62d9c825,
@@ -485,7 +489,6 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
@@ -936,6 +939,7 @@ MonoBehaviour:
   floowRaudius: 8
   attackRaudius: 20
   flag: 0
+  targetPoint: {x: 0, y: 0, z: 0}
   _formationOffsetAngle: 0
 --- !u!114 &1919478008454359820
 MonoBehaviour:
@@ -955,6 +959,7 @@ MonoBehaviour:
   audioOper: {fileID: 8300000, guid: 5fd17dbdd75469740a06d85ed7f56f7f, type: 3}
   audioClose: {fileID: 8300000, guid: c2ab3d02bd1e2e34eb62dcf29477b813, type: 3}
   flags: 262
+  showOnMap: 0
   pressTime: 0
   canOperate: 1
   inOperate: 0

@@ -126,7 +126,7 @@ namespace FPSGame.Gameplay
                 m_isStop = true;
                 // 数据说话：到点收尾（这才是"命中"该有的样子）
                 // ⚠ 插值字符串是在**调用点**先拼好的，先判开关再拼，否则每颗弹都白分配一串
-                if (NetSyncLog.Enabled && NetSyncLog.Bullet)
+                if (NetSyncLog.BulletEnabled)
                     NetSyncLog.BulletLog("到终点收尾", $"位置={transform.position:F2} 终点={VisualEndPoint:F2} 本帧位移={(transform.position - m_LastRootPosition).magnitude:F2}m");
                 // collider = null ⇒ 走 HitFX 的"无碰撞箱"分支：停下 + 收尾迹，不结算任何伤害
                 OnHit?.Invoke(BuildHitData(VisualEndPoint, -transform.forward));
@@ -141,7 +141,7 @@ namespace FPSGame.Gameplay
                 m_isStop = true;
                 // 数据说话：这一条就是"子弹从目标身上飞过去"的直接证据（有终点约束时不该走到这里）
                 // ⚠ 先判开关：插值字符串在调用点就先拼好了，且 Debug.Log 本身就是每次一大笔分配
-                if (FPSGame.Utils.NetSyncLog.Enabled && FPSGame.Utils.NetSyncLog.Bullet)
+                if (FPSGame.Utils.NetSyncLog.BulletEnabled)
                 {
                     FPSGame.Utils.NetSyncLog.BulletLog("超射程消散", $"起点={m_RangeOrigin:F2} 位置={transform.position:F2} 飞了={dis:F1}m/上限{MaxRange:F1}m " +
                         (HasVisualEndPoint ? $"终点={VisualEndPoint:F2} 到终点还差={Vector3.Distance(transform.position, VisualEndPoint):F1}m ←不该发生" : "终点=<无>"));
@@ -259,7 +259,7 @@ namespace FPSGame.Gameplay
 
             // 数据说话：是"自己撞上了"还是"被终点收尾"—— 两条日志对照就知道表现弹怎么收场的
             // ⚠ 先判开关再拼字符串：这条每次命中都会走，插值串 + LayerToName 都是白分配的
-            if (FPSGame.Utils.NetSyncLog.Enabled && FPSGame.Utils.NetSyncLog.Bullet)
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
                 FPSGame.Utils.NetSyncLog.BulletLog("撞到碰撞体", $"对象={closestHit.collider.name} 点={closestHit.point:F2} 层={LayerMask.LayerToName(closestHit.collider.gameObject.layer)}" +
                     (HasVisualEndPoint ? $" 终点={VisualEndPoint:F2} 距终点={Vector3.Distance(closestHit.point, VisualEndPoint):F1}m" : " 终点=<无>"));
             //Debug.LogError("击中于" + gameObject.name, gameObject);

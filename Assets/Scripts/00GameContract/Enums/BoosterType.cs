@@ -34,5 +34,7 @@ namespace FPSGame.GameContract
         [InspectorName("荆棘护甲")] ThornArmor,
         /// <summary>阵地战大师：随机配发一件哨戒炮战备</summary>
         [InspectorName("阵地战大师")] RandomTurret,
+        /// <summary>定向护盾空投仓：所有使用空投仓的战备附赠小型定向护盾</summary>
+        [InspectorName("定向护盾空投仓")] BarrierShield,
     }
 }

@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 8924492267938482431}
   - component: {fileID: 6902098988878153305}
   - component: {fileID: 6939292290188872427}
-  m_Layer: 6
+  m_Layer: 16
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -127,6 +127,7 @@ MonoBehaviour:
   isWeakness: 0
   explosionResistance: 0
   armorLevel: 0
+  useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
   armorBreakEffect: []
@@ -203,7 +204,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Animator: {fileID: 0}
   fxData: {fileID: 11400000, guid: eafb0f1a817f8d44fb01152b5a0690dd, type: 2}
-  fxEvent: {fileID: 11400000, guid: dd7cef45915f0f943bd5c7edd65286d5, type: 2}
+  fxEvent: {fileID: 11400000, guid: b16dff0cecd048b409045a8fa2120185, type: 2}
   fxMaterial: {fileID: 2100000, guid: efe935f38a12f6a4284537d08aea0f5b, type: 2}
   events: []
   _healthGo: {fileID: 207114199184333362}
@@ -218,7 +219,7 @@ GameObject:
   - component: {fileID: 5477167338942374425}
   - component: {fileID: 1944807780008946245}
   - component: {fileID: 7634926540911823601}
-  m_Layer: 6
+  m_Layer: 16
   m_Name: Particle System
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5213,6 +5214,7 @@ MonoBehaviour:
   audioOper: {fileID: 8300000, guid: 5fd17dbdd75469740a06d85ed7f56f7f, type: 3}
   audioClose: {fileID: 8300000, guid: c2ab3d02bd1e2e34eb62dcf29477b813, type: 3}
   flags: 262
+  showOnMap: 0
   pressTime: 0
   canOperate: 1
   inOperate: 0
@@ -5299,7 +5301,7 @@ GameObject:
   - component: {fileID: 138788905821263560}
   - component: {fileID: 978478848630173428}
   - component: {fileID: 5282715814714998396}
-  m_Layer: 6
+  m_Layer: 16
   m_Name: Point Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5417,7 +5419,7 @@ GameObject:
   - component: {fileID: 8492395895231513291}
   - component: {fileID: 5859908700603694341}
   - component: {fileID: 3362504453886937144}
-  m_Layer: 6
+  m_Layer: 16
   m_Name: Particle System (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

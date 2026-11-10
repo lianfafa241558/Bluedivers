@@ -173,13 +173,17 @@ namespace FPSGame.Net
     }
 
   
-    /// <summary>房主生成消息的两种形态（＝ <see cref="HostSpawnMsg.Kind"/>）。</summary>
+    /// <summary>房主生成消息的三种形态（＝ <see cref="HostSpawnMsg.Kind"/>）。</summary>
     public enum HostSpawnKind
     {
         /// <summary>巡逻队（用 X/Y/Z 生成点 + <c>Targets[]</c> 逐单位目标点；构成由落点派生 ⇒ 不传）。</summary>
         Patrol = 0,
         /// <summary>运行时生成的**单只**单位（用 SourceKey/Slot ⇒ 让本端同一份生成器复刻）。</summary>
         Unit = 1,
+        /// <summary>**按可生成单位表直发创建**（用 <c>PrefabKey</c> 查表取 prefab，不需要生成者在场）。
+        /// <para>▍与 Unit 的分工：Unit 要求"成员端已经有那个生成器"（巢穴/召唤师/刷怪器）；
+        /// 本档给"生成者不在场或没有稳定身份"的调用方用（例：挂在场景物件上的强化效果凭空造个单位）。</para></summary>
+        Table = 2,
     }
 
     /// <summary>【房主 → 全体】**实体生成**的统一消息（原 4091 巡逻队 + 4092 运行时生成合并，2026-10-12）。
@@ -191,7 +195,10 @@ namespace FPSGame.Net
     /// <para>▍Kind = Patrol（0）：构成不传 —— <c>WaveManager.CreatPatrol</c> 按**落点位置**派生随机流 ⇒
     /// 同落点 ⇒ 同构成同顺序；但**逐单位目标点必须传**（它由房主侧的几何 / 玩家位置算出，成员算不出同一个值）。</para>
     /// <para>▍Kind = Unit（1）：不传 prefab 引用（过不了网）—— 成员的生成器拿 <see cref="Slot"/> 回自己的表取同一把 prefab，
-    /// <see cref="PrefabId"/> 只是给"按类型抽表"的刷怪器做二次确认。</para></summary>
+    /// <see cref="PrefabId"/> 只是给"按类型抽表"的刷怪器做二次确认。</para>
+    /// <para>▍Kind = Table（2，2026-11-10）：<b>不需要生成者在场</b> —— 成员拿 <see cref="PrefabKey"/> 查
+    /// <c>SpawnableTable_SO</c> 取 prefab，位置/朝向/号全用消息里的值。适用判据："调用方手上有 prefab 表里的编号，
+    /// 但没有一个两端都存在的生成器可以当钥匙"（例：强化效果在场景物件上凭空造个单位）。</para></summary>
     [MessagePackObject]
     public class HostSpawnMsg
     {
@@ -222,6 +229,10 @@ namespace FPSGame.Net
         [Key(12)] public float Tz;
         /// <summary>【Unit】单位的 <c>Actor.Id</c>（可为空）：刷怪器按 tier 抽表时用它精确取回同一把 prefab。</summary>
         [Key(13)] public string PrefabId;
+
+        /// <summary>【Table】可生成单位表的编号（<c>SpawnableTable_SO</c> 的主键）—— 成员查表取 prefab。
+        /// <para>⚠ **只许追加在末尾**：旧端 Skip 掉它拿默认值 0 ⇒ 只会在本档里查不到表（一条 Warn），不会串字段。</para></summary>
+        [Key(14)] public int PrefabKey;
     }
 
     /// <summary>

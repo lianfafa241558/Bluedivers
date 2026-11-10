@@ -558,7 +558,7 @@ namespace FPSGame.Weapon {
 
             // 数据说话：表现弹的身份 / 起点 / 有没有终点约定（有终点就该在终点收尾，没终点才会"飞过去"）
             // ⚠ 先判开关再拼字符串：插值串在调用点就分配了，连发时每颗表现弹白白几百字节
-            if (FPSGame.Utils.NetSyncLog.Enabled && FPSGame.Utils.NetSyncLog.Bullet)
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
                 FPSGame.Utils.NetSyncLog.BulletLog("生成表现弹", $"{bullet.GetType().Name} 起点={muzzle.position:F2} 方向={dir:F2}" +
                     (endPoint.sqrMagnitude > 0.0001f ? $" 终点={endPoint:F2} 距终点={(endPoint - muzzle.position).magnitude:F1}m" : " 终点=<无>（自由飞，会飞到射程尽头）"));
 

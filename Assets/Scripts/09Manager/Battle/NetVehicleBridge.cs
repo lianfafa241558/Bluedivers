@@ -245,10 +245,11 @@ namespace FPSGame.Managers
             //   ⚠ 必须是"扣完之后"的值：OnShoot 是在 HandleShoot() 里抛的，UseMagazine 还在它后面。
             _localDrivenWeapons.TryGetAmmoAfterShot(weaponIndex, out int magLeft, out int ammoLeft);
 
-            FPSGame.Utils.NetSyncLog.BulletLog("载具/开火·发",
-                $"netId={_localDrivenNetId} 武器={weapon.name} 下标={weaponIndex} 档位={weapon.UseDamageIndex} " +
-                $"发射点={weapon.LastMuzzleIndex} 方向={dir:F2} 落点={(aim.sqrMagnitude > 0.0001f ? aim.ToString("F2") : "<无>")} " +
-                $"弹匣余={magLeft} 备弹余={ammoLeft}");
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                FPSGame.Utils.NetSyncLog.BulletLog("载具/开火·发",
+                    $"netId={_localDrivenNetId} 武器={weapon.name} 下标={weaponIndex} 档位={weapon.UseDamageIndex} " +
+                    $"发射点={weapon.LastMuzzleIndex} 方向={dir:F2} 落点={(aim.sqrMagnitude > 0.0001f ? aim.ToString("F2") : "<无>")} " +
+                    $"弹匣余={magLeft} 备弹余={ammoLeft}");
 
             flow.SendVehicleShoot(_localDrivenNetId, weaponIndex, dir, aim, weapon.UseDamageIndex,
                 weapon.LastMuzzleIndex, magLeft, ammoLeft);
@@ -395,10 +396,11 @@ namespace FPSGame.Managers
             //   b 上车看到的还是满弹（"载具的子弹没有真扣除"）。
             if (wm != null) wm.ApplyRemoteAmmo(weaponIndex, magazine, ammo);
 
-            FPSGame.Utils.NetSyncLog.BulletLog("载具/开火·收",
-                $"netId={netId} 武器={weapon.name} 下标={weaponIndex} 档位={weapon.UseDamageIndex} 发射点={muzzleIndex} " +
-                $"方向={dir:F2} 落点={(hit.sqrMagnitude > 0.0001f ? hit.ToString("F2") : "<无>")} " +
-                $"弹匣余={magazine} 备弹余={ammo}");
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                FPSGame.Utils.NetSyncLog.BulletLog("载具/开火·收",
+                    $"netId={netId} 武器={weapon.name} 下标={weaponIndex} 档位={weapon.UseDamageIndex} 发射点={muzzleIndex} " +
+                    $"方向={dir:F2} 落点={(hit.sqrMagnitude > 0.0001f ? hit.ToString("F2") : "<无>")} " +
+                    $"弹匣余={magazine} 备弹余={ammo}");
         }
 
         /// <summary>应用"某人上了某辆载具"：把本端那个实体挂到载具挂点上，并停掉它的位姿/动画。</summary>

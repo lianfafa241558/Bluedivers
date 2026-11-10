@@ -259,8 +259,9 @@ namespace FPSGame.Managers
                 && weapon.WeaponTypeEnum == FPSGame.GameData.WeaponTypeEnum.FlareGun
                 && weapon.UseDamageIndex > 0)
             {
-                FPSGame.Utils.NetSyncLog.BulletLog("开火·发", $"档位={weapon.UseDamageIndex}（信号枪·呼叫战备那一发）" +
-                    "⇒ 不上报表现弹（空投由 AirdropCall 4033/4034 同步，避免对端放出假标记）");
+                if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                    FPSGame.Utils.NetSyncLog.BulletLog("开火·发", $"档位={weapon.UseDamageIndex}（信号枪·呼叫战备那一发）" +
+                        "⇒ 不上报表现弹（空投由 AirdropCall 4033/4034 同步，避免对端放出假标记）");
                 return;
             }
 
@@ -272,10 +273,11 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             bool connected = FPSGame.Net.NetSvc.Instance != null && FPSGame.Net.NetSvc.Instance.IsConnected;
             bool isHost = flow != null && flow.IsHost;
-            FPSGame.Utils.NetSyncLog.BulletLog("开火·发", $"槽={_localWeapons.ActiveWeaponIndex} 枪={(weapon != null ? weapon.name : "<无>")}" +
-                $" 档位={(weapon != null ? weapon.UseDamageIndex : -1)} 方向={dir:F2} 落点={(aim.sqrMagnitude > 0.0001f ? aim.ToString("F2") : "<无>")}" +
-                $" 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")} 已连房主={connected} 是房主={isHost}" +
-                ((connected || isHost) ? "" : " ←**发不出去**：SendShoot 会静默 return（没连上房主）"));
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                FPSGame.Utils.NetSyncLog.BulletLog("开火·发", $"槽={_localWeapons.ActiveWeaponIndex} 枪={(weapon != null ? weapon.name : "<无>")}" +
+                    $" 档位={(weapon != null ? weapon.UseDamageIndex : -1)} 方向={dir:F2} 落点={(aim.sqrMagnitude > 0.0001f ? aim.ToString("F2") : "<无>")}" +
+                    $" 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")} 已连房主={connected} 是房主={isHost}" +
+                    ((connected || isHost) ? "" : " ←**发不出去**：SendShoot 会静默 return（没连上房主）"));
             // ★ 伤害档位一起发：接收端要按**开枪者**的档位取命中特效（信号枪 0=标记 / 1=呼叫战备）
             // ★ 发射点下标一起发：多管枪轮流开火，接收端没有那份计数 ⇒ 不发就都从 0 号管出（2026-10-11）
             flow?.SendShoot(_localWeapons.ActiveWeaponIndex, dir, aim,
@@ -332,8 +334,9 @@ namespace FPSGame.Managers
             // 数据说话：收到的这一发到底有没有**落到盟友实体**上（找不到实体是最常见的"没反应"原因）
             FriendController fc;
             bool found = _friends.TryGetValue(sid, out fc) && fc != null;
-            FPSGame.Utils.NetSyncLog.BulletLog("开火·收", $"sid={sid} 槽={slotIndex} 档位={damageIndex} 发射点={(muzzleIndex < 0 ? "齐射" : muzzleIndex.ToString())} 方向={dir:F2} " +
-                $"落点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")} 盟友实体={(found ? fc.name : "<没有>")}");
+            if (FPSGame.Utils.NetSyncLog.BulletEnabled)
+                FPSGame.Utils.NetSyncLog.BulletLog("开火·收", $"sid={sid} 槽={slotIndex} 档位={damageIndex} 发射点={(muzzleIndex < 0 ? "齐射" : muzzleIndex.ToString())} 方向={dir:F2} " +
+                    $"落点={(aimPoint.sqrMagnitude > 0.0001f ? aimPoint.ToString("F2") : "<无>")} 盟友实体={(found ? fc.name : "<没有>")}");
             if (!found)
             {
                 FPSGame.Utils.NetSyncLog.Warn("开火·收", $"sid={sid} 找不到盟友实体 ⇒ 这一发在**本端完全没表现**（盟友是没建出来，还是已被销毁？）");

@@ -56,7 +56,13 @@ namespace FPSGame.Gameplay
         public GameObject Origin { get; private set; }
 
         /// <summary>命中回调(外部挂接，用于在落地时创建实际物体)</summary>
-        public UnityAction<ProjectileHitData> OnHit;
+        public UnityEvent<ProjectileHitData> OnHit;
+
+        /// <summary>**落地**专用（无参）：<see cref="OnHit"/> 连"撞到单位"也会触发，而这条只在贴地/到落地高度那一次触发，
+        /// 且发在 <c>Stop()</c> 之后 ⇒ 监听方读 <see cref="HasLanded"/> 拿到的是 true。
+        /// <para>▍为什么单独一条：Inspector 里挂方法时，带 <c>ProjectileHitData</c> 参数的方法不一定画得出来
+        /// （那个结构里有接口字段），无参事件则永远能绑。</para></summary>
+        public UnityEvent OnLanded;
 
         private readonly List<Collider> m_IgnoredColliders = new();
 
@@ -91,10 +97,8 @@ namespace FPSGame.Gameplay
             if (fire) fire.SetActive(false);
         }
 
-        private void OnDisable()
-        {
-            OnHit = null;
-        }
+        // ⚠ 不要在 OnDisable 里把 OnHit/OnLanded 置空：它们是 Inspector 配的 UnityEvent，置空会把 prefab 上那串
+        //   持久化监听在该实例上永久丢掉（池化复用后再 OnEnable 也不会回来）。运行时监听者自己 RemoveListener。
 
         private void FixedUpdate()
         {
@@ -234,6 +238,7 @@ namespace FPSGame.Gameplay
             OnHit?.Invoke(hitData);
 
             Stop();
+            OnLanded?.Invoke();   // 放在 Stop() 之后：监听方读 HasLanded 才是 true（OnHit 里读还是 false）
         }
         
         private ProjectileHitData BuildHitData(Vector3 pos, Vector3 normal, Collider collider)

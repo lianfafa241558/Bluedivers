@@ -178,7 +178,7 @@ namespace FPSGame.Managers
             DrainInitQueue();
             yield return WaitAllPlayersLoaded();   // ★ 联机：等所有端都加载完战斗场景再一起开打
             IsStartBattle = true;
-            BattleState.IsStartBattle = true;//数据自持同步点（见 BattleState.cs）
+            BattleState.MarkBattleStarted();//数据自持同步点 + 通知（见 BattleState.cs）
             NetSyncLog.LoadLog("初始化", $"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
 
 
@@ -240,7 +240,7 @@ namespace FPSGame.Managers
             DrainInitQueue();
             yield return WaitAllPlayersLoaded();   // ★ 联机：等所有端都加载完战斗场景再一起开打
             IsStartBattle = true;
-            BattleState.IsStartBattle = true;//数据自持同步点（见 BattleState.cs）
+            BattleState.MarkBattleStarted();//数据自持同步点 + 通知（见 BattleState.cs）
             NetSyncLog.LoadLog("初始化", $"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
 
 
@@ -490,6 +490,13 @@ namespace FPSGame.Managers
         public GameObject CreatUnit(GameObject prefab, Vector3 pos, Quaternion rot, INetSpawner source, int slot, Vector3 target = default)
         {
             return WaveCont.CreatUnit(prefab, pos, rot, source, slot, target);
+        }
+
+        /// <summary>【联机】按可生成单位表编号凭空造单位（见 <see cref="IBattleService.SpawnAt"/>）：
+        /// 房主/单机真生成并广播 4063 的 <c>Kind=Table</c>；成员返回 null（等复刻）。</summary>
+        public GameObject SpawnAt(int prefabKey, Vector3 pos, float yaw)
+        {
+            return NetHostSpawnBridge.SpawnFromTable(prefabKey, pos, yaw);
         }
 
         /// <summary>【联机·刷怪器】按 tier 生成一只（房主唯一生成 + 上报 4063；给 <c>10_Effect/CreatEnemy</c> 用）。</summary>
@@ -765,7 +772,7 @@ namespace FPSGame.Managers
         private void ApplyTeamEnhance()
         {
             _activeTeamEnhance = TeamManager.Instance.players.Where(item => item.boosterId > 0).Select(item =>ResSvc.boostDic[item.boosterId].type).ToArray();
-            BattleState.ActiveTeamEnhance = _activeTeamEnhance;//数据自持同步点（唯一写入点，见 BattleState.cs）
+            BattleState.ApplyTeamEnhance(_activeTeamEnhance);//数据自持同步点（唯一写入点 + 通知，见 BattleState.cs）
 
         }
 

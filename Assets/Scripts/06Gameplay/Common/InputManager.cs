@@ -34,6 +34,10 @@ public class InputManager : InputManagerBase<InputState, WindowStateEnum>,I_Glob
     public WindowStateEnum nowState;
     public List<InputItem> InputList => inputList;
 
+    /// <summary>设计默认键位快照（场景上序列化的那批）。<b>必须深拷贝</b>：首次运行没有存档文件时
+    /// <c>inputList</c> 与快照会是同一批对象，之后改键会就地污染快照（<c>InputItem</c> 是引用类型）。</summary>
+    private List<InputItem> _defaultList;
+
     // 走窗口服务契约（原为 WndManager.WindowState ⇒ 本类将随玩法层进 06_Gameplay 程序集，
     // 不能反向依赖 09Manager；契约的 WindowState 语义与静态版一致：服务未就绪时返回 Game）
     public override WindowStateEnum NowWindowState => FPSGame.Data.UIState.WindowState;
@@ -60,6 +64,25 @@ public class InputManager : InputManagerBase<InputState, WindowStateEnum>,I_Glob
     /// </summary>
     public void Init()
     {
+        // 磁盘存档会整表覆盖 inputList ⇒ 设计默认值只在这之前存在，"恢复默认"全靠这份快照
+        if (_defaultList == null)
+        {
+            _defaultList = new List<InputItem>(inputList.Count);
+            foreach (var item in inputList)
+            {
+                if (item == null) continue;
+                _defaultList.Add(new InputItem
+                {
+                    window = item.window,
+                    key = item.key,
+                    positiveMainValue = item.positiveMainValue,
+                    positiveSpareValue = item.positiveSpareValue,
+                    negativeMainValue = item.negativeMainValue,
+                    negativeSpareValue = item.negativeSpareValue,
+                });
+            }
+        }
+
         string filePath = GetSaveDirectory() + SaveFileName;
 
         if (File.Exists(filePath))
@@ -116,6 +139,44 @@ public class InputManager : InputManagerBase<InputState, WindowStateEnum>,I_Glob
     public void UnInit()
     {
 
+    }
+
+    /// <summary>把键位恢复成场景上序列化的设计值（快照在 <see cref="Init"/> 里取）。
+    /// <para>⚠ 只就地把 <see cref="InputItem"/> 的键值改回去、<b>不换整表</b>：<c>inputDic</c> 与
+    /// <c>BindDown</c> 订阅存的是这些实例的引用，整表替换后按键监听会全指向旧对象
+    /// （现象：界面显示已恢复，游戏里还是改过的键）。</para></summary>
+    public void ResetToDefault()
+    {
+        if (_defaultList == null || _defaultList.Count == 0)
+        {
+            Debug.LogWarning("[InputManager] 没有默认键位快照（Init 未执行），无法恢复默认");
+            return;
+        }
+
+        int reset = 0;
+        foreach (var item in inputList)
+        {
+            if (item == null) continue;
+
+            InputItem def = null;
+            foreach (var d in _defaultList)
+            {
+                if (d == null) continue;
+                if (!d.key.Equals(item.key) || d.window.GetHashCode() != item.window.GetHashCode()) continue;
+                def = d;
+                break;
+            }
+            if (def == null) continue;   // 存档里多出来的条目没有"默认"可回，保持原样
+
+            item.positiveMainValue = def.positiveMainValue;
+            item.positiveSpareValue = def.positiveSpareValue;
+            item.negativeMainValue = def.negativeMainValue;
+            item.negativeSpareValue = def.negativeSpareValue;
+            ++reset;
+        }
+
+        Save();
+        Debug.Log("[InputManager] 键位已恢复默认：" + reset + " 项");
     }
 
     /// <summary>

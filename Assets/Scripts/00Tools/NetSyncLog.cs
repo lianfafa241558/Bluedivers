@@ -35,10 +35,28 @@ namespace FPSGame.Utils
         /// <summary>同步时序：NetId 分配、离场收尾、HUD 行数等。</summary>
         public static bool Sync = false;
 
+        // ── 调用点前置判据（2026-11-11）─────────────────────────────────────────
+        // ⚠ 下面的 XXXLog 都是**普通方法**（不是 [Conditional]）⇒ 调用点的 $"..." 插值**无论如何都会先求值**，
+        //   开关关掉也照样每命中分配几百字节（实测：一次命中 4~6 个 string ≈ 800B）。
+        // ⇒ 热路径（每次命中 / 每发子弹 / 每个特效）**必须**先判下面这些属性，再拼日志串：
+        //       if (NetSyncLog.BulletEnabled) NetSyncLog.BulletLog("...", $"...");
+        /// <summary>子弹/弹道通道（含命中上报）是否开启。</summary>
+        public static bool BulletEnabled => Enabled && Bullet;
+        /// <summary>AI 通道是否开启。</summary>
+        public static bool AiEnabled => Enabled && Ai;
+        /// <summary>同步时序通道是否开启。</summary>
+        public static bool SyncEnabled => Enabled && Sync;
+        /// <summary>伤害通道是否开启。</summary>
+        public static bool DamageEnabled => Enabled && Damage;
+        /// <summary>特效池通道是否开启。</summary>
+        public static bool PoolEnabled => Enabled && Pool;
+        /// <summary>加载通道是否开启。</summary>
+        public static bool LoadEnabled => Enabled && Load;
+
 
         // ⚠ context 必须传 UnityEngine.Object（Component/GameObject/资产）；传 null 等价于不带 context。
         // 作用：Console 里点这条日志会在 Hierarchy/Project 里 Ping 到该物体，排查"是哪只怪的日志"极省时间。
-        public static void DamageLog(string tag, string msg, Object context = null) { if (!Enabled || !Load) return; Debug.Log($"[伤害/{tag}] {msg}", context); }
+        public static void DamageLog(string tag, string msg, Object context = null) { if (!Enabled || !Damage) return; Debug.Log($"[伤害/{tag}] {msg}", context); }
         public static void PoolLog(string tag, string msg, Object context = null) { if (!Enabled || !Bullet) return; Debug.Log($"[特效池/{tag}] {msg}", context); }
         public static void LoadLog(string tag, string msg, Object context = null) { if (!Enabled || !Load) return; Debug.Log($"[加载/{tag}] {msg}", context); }
         public static void BulletLog(string tag, string msg, Object context = null) { if (!Enabled || !Bullet) return; Debug.Log($"[子弹/{tag}] {msg}", context); }

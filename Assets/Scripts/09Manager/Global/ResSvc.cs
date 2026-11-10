@@ -43,6 +43,8 @@ public class ResSvc: Singleton<ResSvc>, I_GlobaManager, FPSGame.GameContract.IRe
             voiceDic.Add(role.ID, role);
         }
         AboStateData_SO.Dic = LoadObjects<AboStateData_SO>("GameData/AboState").ToDictionary(item => item.typeEnum);
+        // 可生成单位表：房主只发 int，成员端靠它把编号还原成 prefab（缺表 ⇒ 所有按编号生成都会失败，见 Inject 的 Warn）
+        SpawnableTable_SO.Inject(LoadObject<SpawnableTable_SO>("GameData/SpawnableTable"));
     }
     public void UnInit()
     {
