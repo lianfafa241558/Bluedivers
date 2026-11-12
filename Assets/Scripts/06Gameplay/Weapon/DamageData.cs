@@ -362,6 +362,85 @@ namespace FPSGame.Weapon
         public void SetExplosionTypeHacker(PEInt value) => DamageGroupExplosion.SetValue(DamageTypeEnum.Hacker, value.RawFloat);
         public void SetExplosionTypeCatalyst(PEInt value) => DamageGroupExplosion.SetValue(DamageTypeEnum.Catalyst, value.RawFloat);
 
+        /// <summary>把另一条配置的**战斗部分**整份抄过来（伤害/范围/穿甲/蓄力倍率/特效/碰撞），
+        /// 运动与弹体部分保持本条的。
+        /// <para>▍用途：支援位的"发射手雷的武器"要与投掷物槽共用一套伤害配置
+        /// （见 <c>WeaponGrenadeLinkController</c>）。逐字段写在这里而不是在外面临时拼，
+        /// 是因为下面这些字段是 private + 只有半套 setter，外面抄不全（内半径/冲击波/拆毁值就没有 setter）。</para>
+        /// <para>▍刻意不动：<see cref="LandingPrefab"/> / <see cref="Speed"/> /
+        /// <see cref="Gravity"/> / <see cref="InheritWeaponSpeed"/> / <see cref="MaxLifeTime"/> /
+        /// <see cref="MaxRange"/> / <see cref="MinRange"/> —— 这些是"这把武器怎么把东西扔出去"，
+        /// 抄过来会让两把武器的投掷手感与引信互相污染。</para>
+        /// <para>▍<see cref="BulletPrefab"/> **要抄**（用户口径）：发射的是"手雷本体"，外形/弹跳/引信都在这个预制体上；
+        /// 它不影响飞行手感 —— <c>ProjectileStandard</c> 的初速取 <c>WeaponBase.CurrentSpeed</c>（本条 Speed），
+        /// 重力取武器当前重力（本条 Gravity）。</para></summary>
+        public void CopyCombatConfigFrom(DamageData src)
+        {
+            if (src == null || src == this) return;
+
+            // 弹体：换成源那条的投掷物预制体（飞行速度/下坠仍按本条，见方法注释）
+            BulletPrefab = src.BulletPrefab;
+
+            // 伤害主体
+            DamageDirect = src.DamageDirect;
+            DamageExplosion = src.DamageExplosion;
+            WeaknessBonus = src.WeaknessBonus;
+
+            // 爆炸/破坏/冲击波
+            ExplosionInnerRange = src.ExplosionInnerRange;
+            ExplosionRange = src.ExplosionRange;
+            DestructeRadius = src.DestructeRadius;
+            ShockwaveRadius = src.ShockwaveRadius;
+            ShockwaveForce = src.ShockwaveForce;
+
+            // 穿甲与拆毁
+            DirectAP = src.DirectAP;
+            DirectAPChargeScale = src.DirectAPChargeScale;
+            ExplosionAP = src.ExplosionAP;
+            ExplosionAPChargeScale = src.ExplosionAPChargeScale;
+            demolishValue = src.demolishValue;
+
+            // 蓄力倍率（⚠ 速度/重力两条倍率不抄，见方法注释）
+            UseCharge = src.UseCharge;
+            ChargeDamageScale = src.ChargeDamageScale;
+            ChargeAOERangeScale = src.ChargeAOERangeScale;
+            ChargeHeatScale = src.ChargeHeatScale;
+            ChargeSpreadScale = src.ChargeSpreadScale;
+
+            // 碰撞与特效
+            ImpactVfx = src.ImpactVfx;
+            ImpactSfx = src.ImpactSfx;
+            ImpactVfxSpawnOffset = src.ImpactVfxSpawnOffset;
+            UseCollisionDirection = src.UseCollisionDirection;
+            UseHole = src.UseHole;
+            Hole = src.Hole;
+            OnlyTerrain = src.OnlyTerrain;
+            NoSource = src.NoSource;
+            SoundRadius = src.SoundRadius;
+            ImpactSoundRadius = src.ImpactSoundRadius;
+
+            // 成分列表必须深拷贝：直接赋引用会让两条配置共享同一个 List，之后谁改都会串味
+            // ⚠ 源为 null 时保持本条的列表（这几个列表是 GetAttr / 伤害结算的下标读取对象，不能被置 null）
+            var direct = CloneGroups(src.DamageGroupDirect);
+            if (direct != null) DamageGroupDirect = direct;
+            var explosion = CloneGroups(src.DamageGroupExplosion);
+            if (explosion != null) DamageGroupExplosion = explosion;
+            var vulnerability = CloneGroups(src.AboVulnerabilityGroup);
+            if (vulnerability != null) AboVulnerabilityGroup = vulnerability;
+        }
+
+        /// <summary>深拷贝一份伤害成分表（只在切武器时调一次，分配可接受）。</summary>
+        private static List<SKVP<DamageTypeEnum, float>> CloneGroups(List<SKVP<DamageTypeEnum, float>> src)
+        {
+            if (src == null) return null;
+            var dst = new List<SKVP<DamageTypeEnum, float>>(src.Count);
+            for (int i = 0; i < src.Count; ++i)
+            {
+                dst.Add(new SKVP<DamageTypeEnum, float>(src[i].Key, src[i].Value));
+            }
+            return dst;
+        }
+
         #endregion
 
         #region 接口映射(显式实现以保留字段的Unity序列化)

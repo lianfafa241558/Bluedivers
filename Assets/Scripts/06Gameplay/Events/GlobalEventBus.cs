@@ -198,6 +198,15 @@ namespace FPSGame.Gameplay
         public static event Action<GameObject, RuntimeSoundData> OnActorSpeech;
         public static void ActorSpeech(GameObject go, RuntimeSoundData data) => OnActorSpeech?.Invoke(go, data);
 
+        /// <summary>
+        /// 玩家使用了一次补给（参数 = 使用者）。
+        /// <para>▍发布点只有一处：<c>PlayerController.UseSupply</c>（弹药箱 + 医疗包 + 投掷包那条总入口）。</para>
+        /// <para>▍"是不是我该管的人"由订阅端按自己的 Owner 过滤 —— 别在发布端加玩家判断，
+        /// 否则每加一种靠补给回充的装备都要改一次发布点。</para>
+        /// </summary>
+        public static event Action<PlayerController> OnSupplyUsed;
+        public static void SupplyUsed(PlayerController user) => OnSupplyUsed?.Invoke(user);
+
 
         #endregion
 

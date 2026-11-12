@@ -4963,7 +4963,7 @@ GameObject:
   - component: {fileID: 5779400505596893891}
   - component: {fileID: 1637444547006318101}
   m_Layer: 6
-  m_Name: BlinkBag
+  m_Name: Bag_BlinkBag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5117,27 +5117,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3704b6bfebbc2374da4a9b194065d456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  identitySource: {fileID: 0}
   meetTime: 0
   audioPress: {fileID: 0}
   audioOper: {fileID: 8300000, guid: 5fd17dbdd75469740a06d85ed7f56f7f, type: 3}
   audioClose: {fileID: 8300000, guid: c2ab3d02bd1e2e34eb62dcf29477b813, type: 3}
   flags: 262
+  showOnMap: 0
   pressTime: 0
   canOperate: 1
   inOperate: 0
   desc: "\u8FDB\u884C\u4EA4\u4E92"
   anim: {fileID: 0}
   _audioSource: {fileID: 0}
+  relatedTrans: {fileID: 0}
+  relatedTrans2: {fileID: 0}
+  ExtFloatParameter: 0
+  particle: {fileID: 0}
+  obs: {fileID: 0}
   lastOperatetime: 0
   owner: {fileID: 0}
   time: 0
   count: 0
   _collider: {fileID: 0}
   ContGo: []
-  showName: "\u4F20\u9001\u80CC\u5305"
-  id: BlinkBag
-  Portrait: {fileID: 21300000, guid: c5d5e080245501b40afd4cbd071b7b7f, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: c5d5e080245501b40afd4cbd071b7b7f, type: 3}
 --- !u!114 &5779400505596893891
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19971,6 +19974,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Layer
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d94abccd7e1f7d24d99adf3d725193d8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

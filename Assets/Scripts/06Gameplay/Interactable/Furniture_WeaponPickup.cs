@@ -7,6 +7,7 @@ using UnityEngine;
 using FPSGame.Gameplay;
 using FPSGame.GameData;
 using FPSGame.Weapon;
+using UnityEngine.Events;
 
 namespace FPSGame.Gameplay
 {
@@ -43,6 +44,9 @@ namespace FPSGame.Gameplay
 
         /// <summary>弹尽被弃：不可再交互 / 不上小地图 / <see cref="SpentDestroyDelay"/> 秒后销毁（见 <see cref="MarkSpent"/>）</summary>
         bool m_Spent;
+
+        [SerializeField]
+        protected UnityEvent OnInstall,OnUninstall;
 
 
         protected override void Awake()
@@ -241,10 +245,12 @@ namespace FPSGame.Gameplay
                     {
                         // 替换式卸载：紧接着 InstallEquip 会播"安装"语音，两条连着播会打架
                         equipController.UninstallEquip(oldWeapon, silent: true);
+                        OnUninstall?.Invoke();
                     }
                 }
 
                 equipController.InstallEquip(m_Weapon, this);
+                OnInstall?.Invoke();
                 inOperate = true;
                 // 入槽后由 EquipGroundWeapon 禁用本组件
 
@@ -259,6 +265,7 @@ namespace FPSGame.Gameplay
             else
             {
                 equipController.UninstallEquip(m_Weapon);
+                OnUninstall?.Invoke();
                 // 卸载落地后由武器 OnUninstall 调 ResetForPickup 复位并 re-enable
             }
         }

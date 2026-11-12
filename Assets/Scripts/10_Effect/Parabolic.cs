@@ -17,6 +17,10 @@ public class Parabolic : MonoBehaviour
     [Range(0.1f, 2f)]
     [InspectorName("每段距离间隔")]
     public float lenght = 1f;
+    // true = 命中后不提前收线，强制把 50 段全部算完（会穿过墙体显示完整弹道）
+    [SerializeField]
+    [InspectorName("模拟完整弹道")]
+    private bool _simulateAllSegments = false;
     //[HideInInspector]
     public Transform RayGo;
     [HideInInspector]
@@ -57,9 +61,17 @@ public class Parabolic : MonoBehaviour
                     RayGo = hit.transform;
                     posList[i] = hit.point;
                     count = i+1;
-                    break;
+                    // 勾选后把命中点当作本段终点继续往下算，不再提前 break
+                    if (!_simulateAllSegments)
+                    {
+                        break;
+                    }
                 }
-                posList[i] = posList[i - 1] + velocity * paragraph;
+                else
+                {
+                    posList[i] = posList[i - 1] + velocity * paragraph;
+                    count = i + 1;
+                }
             }
             line.positionCount = count;
             //写入数据

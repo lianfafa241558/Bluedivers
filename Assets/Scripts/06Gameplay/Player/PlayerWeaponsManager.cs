@@ -1193,17 +1193,30 @@ namespace FPSGame.Gameplay
 
 
         /// <summary>
-        /// 使用补给
+        /// 补给弹药
         /// </summary>
         public void UseSupply()
         {
             for (int i = 0; i < m_WeaponSlots.Length; ++i)
             {
-                if (m_WeaponSlots[i])
+                if (i != SlotOf(WeaponTypeEnum.Grenade) && m_WeaponSlots[i])
                 {
                     m_WeaponSlots[i].UseSupply();
                 }
             }
+        }
+
+        /// <summary>
+        /// 补给投掷物
+        /// </summary>
+        public void UseThrow()
+        {
+            int i = SlotOf(WeaponTypeEnum.Grenade);
+            if (m_WeaponSlots[i])
+            {
+                m_WeaponSlots[i].UseSupply();
+            }
+
         }
 
         /// <summary>

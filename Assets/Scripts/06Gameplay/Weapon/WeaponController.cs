@@ -811,9 +811,11 @@ namespace FPSGame.Weapon
 
         /// <summary>
         /// 设置武器状态
+        /// <para>▍virtual 的原因：子类要"切到这把武器时"做一次同步（见 <c>WeaponGrenadeLinkController</c>），
+        /// 而切枪的唯一入口就是这里 —— 别在子类再写一个同名 new 方法，调用方持有的是基类引用。</para>
         /// </summary>
         /// <param name="show"></param>
-        public void ShowWeapon(bool show)
+        public virtual void ShowWeapon(bool show)
         {
           
             WeaponRoot.SetActive(show);

@@ -661,6 +661,9 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     {
         UseCaisson();
         UseMedicalBag();
+        UseThrowBag();
+        // 补给吃完再广播：靠补给回充的装备（如榴弹背包）收到后补一格，顺序反了会补出"下一顿"的格
+        GlobalEventBus.SupplyUsed(this);
     }
     /// <summary>
     /// 使用弹药箱
@@ -674,6 +677,11 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
             WeaponsManager.ReloadAllWeapons();
         }
     }
+    public void UseThrowBag()
+    {
+        WeaponsManager.UseThrow();
+    }
+
     /// <summary>
     /// 使用医疗包
     /// </summary>

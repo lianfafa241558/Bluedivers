@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7100214043958108873}
   - component: {fileID: -8166166637206497874}
   - component: {fileID: 4804845564000217898}
+  - component: {fileID: 7608898954352323045}
   m_Layer: 6
   m_Name: Grenade_Mine
   m_TagString: Untagged
@@ -172,6 +173,23 @@ MonoBehaviour:
   _collider: {fileID: 0}
   CreatorOnly: 1
   RefundCount: 1
+--- !u!114 &7608898954352323045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1407605918332124854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a96ab6487d5b47a05a4f0d3c637ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowName: "\u53CD\u6B65\u5175\u5730\u96F7"
+  Id: Grenade_Mine
+  Portrait: {fileID: 0}
+  ExtraPortrait: {fileID: 0}
+  Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2162941621322845660
 GameObject:
   m_ObjectHideFlags: 0
