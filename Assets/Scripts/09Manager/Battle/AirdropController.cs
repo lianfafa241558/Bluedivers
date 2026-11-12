@@ -128,11 +128,16 @@ namespace FPSGame.Managers
                 //Debug.LogError("添加任务所需战备"+ ResManager.airdropDic[required[i]].showName);
                 useAd.Add(new(ResSvc.airdropDic[required[i]], true));
             }
+            if (BattleManager.Instance.HaveBooster(BoosterType.Eat))
+            {
+                useAd.Add(new(ResSvc.airdropDic[Constants.EatExtra], true));
+            }
             // 阵地战大师：随机发一件哨戒炮（200~204）
             if (BattleManager.Instance.HaveBooster(BoosterType.RandomTurret))
             {
                 useAd.Add(new(ResSvc.airdropDic[Random.Range(TurretAdFirst, TurretAdLast + 1)], true));
             }
+
             //读取玩家携带的战备
             var arr = TeamManager.Instance.Self.airdrop;
 
@@ -171,6 +176,7 @@ namespace FPSGame.Managers
             {
                 ApplyReinforcementBudget();
             }
+
         }
 
         /// <summary>

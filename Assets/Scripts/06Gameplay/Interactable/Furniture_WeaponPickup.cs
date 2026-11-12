@@ -28,11 +28,21 @@ namespace FPSGame.Gameplay
         const int StateTaken = 0;
         /// <summary>被拿走时的 StateKey（只需非空，内容不代表位置）</summary>
         const string TakenKey = "taken";
+        /// <summary>弹尽被弃（<c>WeaponFlag.AutoDeath</c>）：两端各自清掉，别再当"回到地上"</summary>
+        const int StateSpent = 2;
+        /// <summary>弹尽被弃时的 StateKey（同 TakenKey：只需非空）</summary>
+        const string SpentKey = "spent";
+
+        /// <summary>弹尽被弃后到销毁的延迟(秒)</summary>
+        const float SpentDestroyDelay = 5f;
 
         WeaponPlayerController m_Weapon;
 
         /// <summary>本实例是否已经历过"开局那次 OnEnable"（见 <see cref="OnEnable"/> 里的广播条件）</summary>
         bool sawFirstEnable;
+
+        /// <summary>弹尽被弃：不可再交互 / 不上小地图 / <see cref="SpentDestroyDelay"/> 秒后销毁（见 <see cref="MarkSpent"/>）</summary>
+        bool m_Spent;
 
 
         protected override void Awake()
@@ -52,6 +62,9 @@ namespace FPSGame.Gameplay
         /// <summary>支援武器一律上图（不必在每个武器 prefab 上逐个勾"小地图显示"）；显隐就是"还在不在手上"。</summary>
         protected override bool ShowOnMinimap => true;
 
+        /// <summary>弹尽被弃的那把不再上图（否则躺在地上等销毁的 5 秒里还会被当成可捡的支援武器）。</summary>
+        protected override bool MapMarkActive => ShowOnMinimap && !m_Spent;
+
         /// <summary>
         /// "这把枪现在还在地上"= 本组件 enabled：入槽时 <c>PlayerWeaponsManager.EquipGroundWeapon</c> 会 disable，
         /// 卸载落地时 <c>WeaponPlayerController.OnUninstall</c> 会 enable ⇒ 直接拿 enabled 当开关，不另存状态量；
@@ -65,6 +78,10 @@ namespace FPSGame.Gameplay
         protected override void OnEnable()
         {
             base.OnEnable();   // 小地图标记由基类按 ShowOnMinimap 统一登记
+
+            // 弹尽被弃后落地（卸载流程会 re-enable 本组件）：StateSpent 已在 MarkSpent 里报过，
+            // 这里再报"回到地上 + 落点"会让对端把刚清掉的枪又摆回来。
+            if (m_Spent) return;
 
             // ⚠ 开局那次不广播：两端场景里本来就各有一份同位置的枪，广播只会互相覆盖"权威状态"
             //   （典型翻车：队友已把它的那份藏了，此时有人中途加入 ⇒ 他的开局广播会把枪又放出来）。
@@ -84,20 +101,31 @@ namespace FPSGame.Gameplay
         protected override void OnDisable()
         {
             // 被拿走（入槽）。⚠ 换场景销毁时也会走到这里多发一条，对端当场也在销毁 ⇒ 无副作用。
-            ReportState(StateTaken, TakenKey);
+            // ⚠ 弹尽被弃后的销毁不算"被拿走"：报 StateTaken 会让对端把枪挂到谁身上，两端的账就对不上了。
+            if (!m_Spent) ReportState(StateTaken, TakenKey);
             base.OnDisable();   // 小地图标记由基类注销（与 OnEnable 成对）
         }
 
         /// <summary>
         /// 远端状态（走 4059 的 StateKey 分支，**不重放** <see cref="Operate"/>）：
         /// <c>StateTaken</c> = 挂到拿走它的那个盟友手上（拿不到盟友时退回"本端这份收起"）；
-        /// <c>StateOnGround</c> = 从盟友手里摘下、复位到 StateKey 里的落点。
+        /// <c>StateOnGround</c> = 从盟友手里摘下、复位到 StateKey 里的落点；
+        /// <c>StateSpent</c> = 他那把打空被弃 ⇒ 本端这份跟着 <see cref="MarkSpent"/>。
         /// </summary>
         /// <param name="remoteUser">拿走的那个盟友（4059 的 <c>Sid</c> 解析结果；解析不到为 null）</param>
         public override void ApplyRemoteState(int code, string key, GameObject remoteUser)
         {
             // 本端也正拿着它（两端几乎同时去捡的竞态）⇒ 不跟着远端把手里这把收掉 / 挪走
             if (inOperate) return;
+
+            if (code == StateSpent)
+            {
+                // 队友那把支援武器打空被自动丢弃：本端这份镜像（可能正挂在他手上）跟着消失。
+                // ⚠ 两端各一份实例，各删各的，只同步"该删了"这件事。
+                DetachFromCarrier();
+                MarkSpent();
+                return;
+            }
 
             if (code == StateTaken)
             {
@@ -240,10 +268,32 @@ namespace FPSGame.Gameplay
         /// </summary>
         public void ResetForPickup()
         {
+            // ⚠ 弹尽被弃的那把不能再复位成"可拾取"：卸载流程（OnUninstall）落地时照样会调到这里
+            if (m_Spent) return;
+
             canOperate = true;
             inOperate = false;
             owner = null;
             pressTime = 0;
+        }
+
+        /// <summary>
+        /// 子弹打空（<c>WeaponFlag.AutoDeath</c>）：不再可交互、从小地图消失，<see cref="SpentDestroyDelay"/> 秒后销毁。
+        /// <para>▍调用点两处：<c>WeaponPlayerController</c> 打空自动丢弃时（本端真持有者）；
+        /// 对端收到 <c>StateSpent</c> 时（见 <see cref="ApplyRemoteState"/>）。</para>
+        /// <para>▍⚠ 必须在"卸载落地"**之前**调：<c>OnUninstall</c> 会把本组件 re-enable 并复位，
+        /// 先置位才能让 <see cref="ResetForPickup"/> / <see cref="OnEnable"/> 跳过那套"重新可捡"的状态。</para>
+        /// </summary>
+        public void MarkSpent()
+        {
+            if (m_Spent) return;
+            m_Spent = true;
+            canOperate = false;
+            inOperate = false;
+            owner = null;
+            RefreshMapMark();                 // 被携带时本组件是禁用的，这一步其实是空操作；这里只为覆盖"就地打空"的路径
+            ReportState(StateSpent, SpentKey);
+            Destroy(gameObject, SpentDestroyDelay);
         }
     }
 }

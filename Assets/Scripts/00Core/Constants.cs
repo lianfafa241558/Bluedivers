@@ -95,5 +95,7 @@ namespace FPSGame.Core
         public const int PlayerArtilleryAId = 19;
         /// <summary>实验性弹头ID</summary>
         public const int PlayerArtilleryBId = 20;
+        /// <summary>盈余Eat</summary>
+        public const int EatExtra = 21;
     }
 }

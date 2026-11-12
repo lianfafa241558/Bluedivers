@@ -577,7 +577,7 @@ GameObject:
   - component: {fileID: 3847745933799528504}
   - component: {fileID: 8821863189033460922}
   m_Layer: 10
-  m_Name: Weapon_Gatling
+  m_Name: Weapon_Flamethrower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -973,7 +973,7 @@ MonoBehaviour:
     chassis: {fileID: 5240970916890292219}
     barrel: {fileID: 5240970916890292219}
     weapon: {fileID: 3847745933799528504}
-    aimSharpness: 180
+    aimSharpness: 90
     autoRotateSpeed: 0
     detectionFireDelay: 0.5
     minAttackRange: 0
@@ -984,11 +984,11 @@ MonoBehaviour:
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
-  - type: 0
+  - type: 1
     chassis: {fileID: 6735583885833813288}
     barrel: {fileID: 0}
     weapon: {fileID: 3847745933799528504}
-    aimSharpness: 90
+    aimSharpness: 45
     autoRotateSpeed: 0
     detectionFireDelay: 0.5
     minAttackRange: 0

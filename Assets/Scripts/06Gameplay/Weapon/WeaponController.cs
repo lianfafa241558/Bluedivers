@@ -45,8 +45,8 @@ namespace FPSGame.Weapon
         /// <summary>禁止手动换弹</summary>
         [InspectorName("禁止手动换弹")]
         NoManualReload = 1 << 1,
-        /// <summary>子弹耗尽死亡 敌人专用</summary>
-        [InspectorName("子弹耗尽死亡 敌人专用")]
+        /// <summary>子弹耗尽死亡/丢弃</summary>
+        [InspectorName("子弹耗尽死亡/丢弃")]
         AutoDeath = 1 << 2,
         /// <summary>强制连射：开火后松手不停，直到弹匣打空(无限弹匣则一直打)</summary>
         [InspectorName("强制连射(打空弹匣才停)")]

@@ -11,6 +11,8 @@ using UnityEngine.UI;
 using FPSGame.Utils;
 using FPSGame.Weapon;
 using PEMaths;
+using FPSGame.GameData;
+using FPSGame.Managers;
 
 namespace FPSGame.UI
 {
@@ -29,6 +31,15 @@ namespace FPSGame.UI
         bool isStartHave;
 #pragma warning restore CS0414
 
+        [Header("屏幕中心点")]
+        [InspectorName("屏幕中心点")]
+        [Tooltip("没有显示任何准星时才按存档设置「显示屏幕中心点」显示")]
+        [SerializeField]
+        protected GameObject m_CenterPoint;
+
+        /// <summary>当前是否有准星真的在屏幕上。设置变化时不用重走瞄准判定，直接拿它重算中心点。</summary>
+        private bool _crosshairShown;
+
         [Header("热量环")]
         [InspectorName("热量环（一圈填充）")]
         [Tooltip("不使用热量系统的武器会自动隐藏它")]
@@ -42,6 +53,7 @@ namespace FPSGame.UI
         [InspectorName("热量环跟随平滑速度")]
         [Tooltip("热量是「每发一档」的阶梯，直接赋值会跳格；0 = 不平滑")]
         [SerializeField] private float _heatSmoothSpeed = 12f;
+
 
         /// <summary>上次写入的填充量（0~1）：没变就别标脏 Canvas</summary>
         private float _lastHeat = -1f;
@@ -76,12 +88,14 @@ namespace FPSGame.UI
             }
             UnitEventBus.OnPlayerCreate += OnPlayerCreate;
             GlobalEventBus.OnViewSwitch += OnViewSwitch;
+            GlobalEventBus.OnSettingCange += OnSettingCange;
         }
 
         protected override void OnDestroy()
         {
             UnitEventBus.OnPlayerCreate -= OnPlayerCreate;
             GlobalEventBus.OnViewSwitch -= OnViewSwitch;
+            GlobalEventBus.OnSettingCange -= OnSettingCange;
             if (m_WeaponsManager)
             {
                 m_WeaponsManager.OnSwitchedToWeapon -= SwitchWeapon;
@@ -105,6 +119,7 @@ namespace FPSGame.UI
         }
         protected override void SwitchWeapon(WeaponPlayerController weapon, bool isSec = false)
         {
+            
             base.SwitchWeapon(weapon, isSec);
             // 切武器后刷新准星（考虑第三人称状态）
             RefreshCrosshairVisibility(m_WeaponsManager.IsAiming);
@@ -240,7 +255,14 @@ namespace FPSGame.UI
 
         private void RefreshCrosshairVisibility(bool aimState)
         {
-            if (m_Weapons == null || m_ActiveSightGo == null) return;
+            // 无武器 / 武器没配准星预制体（Sight 为空）同样算"没有显示任何准星"
+            // ⚠ 不能在此直接 return：那会把中心点停在上一把枪的状态
+            if (m_Weapons == null || m_ActiveSightGo == null)
+            {
+                _crosshairShown = false;
+                RefreshCenterPoint();
+                return;
+            }
 
             bool isThirdPerson = m_WeaponsManager.GetComponent<PlayerController>().IsThirdPerson;
             bool hideCrosshair;
@@ -262,6 +284,27 @@ namespace FPSGame.UI
                 m_ActiveSightGo.transform.SetParent(Tool.GetExchangeArea(), true);
             else
                 m_ActiveSightGo.transform.SetParent(transform, true);
+
+            _crosshairShown = !hideCrosshair;
+            RefreshCenterPoint();
+        }
+
+        /// <summary>
+        /// 屏幕中心点：只有"当前没有任何准星"且存档开了「显示屏幕中心点」才显示。
+        /// 由准星显隐刷新与设置广播触发，不进 Update。
+        /// </summary>
+        private void RefreshCenterPoint()
+        {
+            if (!m_CenterPoint) return;
+
+            var archive = ArchivesData_SO.Current;
+            bool show = !_crosshairShown && archive != null && archive.GetSetting("显示屏幕中心点") > 0f;
+            if (m_CenterPoint.activeSelf != show) m_CenterPoint.SetActive(show);
+        }
+
+        private void OnSettingCange(string key, float value)
+        {
+            if (key == "显示屏幕中心点") RefreshCenterPoint();
         }
     }
 }

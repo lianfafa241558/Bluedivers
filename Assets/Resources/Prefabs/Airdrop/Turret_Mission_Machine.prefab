@@ -5230,7 +5230,7 @@ MonoBehaviour:
     chassis: {fileID: 6984232059227718007}
     barrel: {fileID: 6984232059227718007}
     weapon: {fileID: 8246265038156560385}
-    aimSharpness: 15
+    aimSharpness: 90
     autoRotateSpeed: 0
     detectionFireDelay: 0.5
     minAttackRange: 0
@@ -5241,11 +5241,11 @@ MonoBehaviour:
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
-  - type: 0
+  - type: 1
     chassis: {fileID: 1904168379638373649}
     barrel: {fileID: 0}
     weapon: {fileID: 8246265038156560385}
-    aimSharpness: 90
+    aimSharpness: 45
     autoRotateSpeed: 0
     detectionFireDelay: 0.5
     minAttackRange: 0
@@ -5454,6 +5454,12 @@ MonoBehaviour:
     UseHole: 1
     Hole: {fileID: 3744692740160411619, guid: a6dfed1623e96604aa1c3c1ac3cc57ca, type: 3}
     OnlyTerrain: 1
+  OnHit:
+    m_PersistentCalls:
+      m_Calls: []
+  OnLanded:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &2759190545591540230
 GameObject:
   m_ObjectHideFlags: 0

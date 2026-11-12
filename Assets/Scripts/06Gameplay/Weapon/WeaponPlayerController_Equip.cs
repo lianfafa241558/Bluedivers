@@ -22,6 +22,48 @@ namespace FPSGame.Weapon
         /// <summary>落地时玩家前方偏移</summary>
         const float DropForwardDistance = 1f;
 
+        /// <summary>弹尽自动丢弃是否已经做过（逻辑帧每帧都进 ⇒ 只做一次）</summary>
+        bool m_AutoDropped;
+
+        public override void LogicTick()
+        {
+            base.LogicTick();
+            TryAutoDropWhenExhausted();
+        }
+
+        /// <summary>
+        /// <c>WeaponFlag.AutoDeath</c>（"子弹耗尽死亡/丢弃"）：玩家手里这把打空 ⇒ 自动卸下落地，
+        /// 收尾交给 <see cref="Furniture_WeaponPickup.MarkSpent"/>（不可再交互 / 下小地图 / 5 秒后销毁）。
+        /// <para>▍为什么不写在 <c>WeaponController</c>：那边的 AutoDeath 是敌人武器的"打空自爆"
+        /// （见 <c>WeaponEnemyController.LogicTick</c>），玩家的枪要的是丢弃，两种语义别混。</para>
+        /// <para>▍为什么要求"被携带"：地上那份实例也在跑逻辑帧，谁捡谁算 —— 已经落地的枪不该自己消失。</para>
+        /// </summary>
+        void TryAutoDropWhenExhausted()
+        {
+            if (m_AutoDropped) return;
+            if (m_EquipOwner == null) return;               // 没被携带（就在地上）：不归这里管
+            if (!HasFlag(WeaponFlag.AutoDeath)) return;
+            if (InfiniteAmmo || InfiniteMagazine) return;   // 无限弹的枪永远打不空
+            if (Magazine == null || Ammo == null) return;   // LogicInit 还没把属性建起来
+            if (!Exhausted) return;
+
+            m_AutoDropped = true;   // 打空这一刻只走一次（下面的 GetComponent 也只为这一次）
+
+            // 只有"落地可拾取"的武器（支援武器）才有丢弃→销毁这一套；别的主武器打空就地丢会连带删掉玩家的枪
+            var pickup = GetComponent<Furniture_WeaponPickup>();
+            if (pickup == null) return;
+
+            var equip = m_EquipOwner.gameObject.GetComponent<EquipController>();
+            if (equip == null)
+            {
+                Debug.LogWarning($"[武器] {name} 弹尽要自动丢弃，但持有者身上没有 EquipController ⇒ 不丢", this);
+                return;
+            }
+
+            pickup.MarkSpent();          // 先置"已打空"，紧接着的 OnUninstall 才不会把它复位成可再捡
+            equip.UninstallEquip(this);  // 出槽 + 落地（DetachWeapon 会顺带切到下一把武器）
+        }
+
         /// <summary>显式实现规避与基类 Owner(GameObject) 的同名冲突</summary>
         IActor IEquippable.Owner => m_EquipOwner;
 
