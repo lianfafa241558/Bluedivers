@@ -165,6 +165,9 @@ namespace FPSGame.Managers
 
             for (int i = 0; i < arr.Length; ++i)
             {
+                // ⚠ 必须挡 0：撤离信标的 ID 就是 0（ADSO_Y_EvacuationBeacon），空槽位直接查表不会报错，
+                //   而是给回撤离信标 ⇒ 没选战备时 HUD 会凭空长出 4 条"撤离信标"
+                if (arr[i] <= 0) continue;
                 useAd.Add(new(ResSvc.airdropDic[arr[i]], false));
             }
 

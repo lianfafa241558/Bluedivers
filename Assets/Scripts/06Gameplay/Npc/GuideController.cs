@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using FPSGame.Data;
 using FPSGame.Game;
+using FPSGame.Audio;
 using FPSGame.Gameplay;
 
 namespace FPSGame.Gameplay
@@ -109,6 +110,8 @@ public class GuideController : Furniture_Attached
     private Coroutine _moveCoroutine;
     private Coroutine _gravityCoroutine;
     private Coroutine _speakCoroutine;
+    /// <summary>当前正在响的语音剪辑（打断时按它停，语音源是对象池里的 AudioSource）</summary>
+    private AudioClip _speakingClip;
     private float _lastSpeakTime = Mathf.NegativeInfinity;
     [SerializeField]
     private Transform _playerTransform;
@@ -388,6 +391,9 @@ public class GuideController : Furniture_Attached
         _currentIndex = index;
         GuideInfo info = _guideInfos[index];
         if (info == null) return;
+
+        // 切阶段先打断上一段语音：语音只在"进入阶段"那一刻播，元素 N-1 的长语音会一直盖到元素 N 头上
+        StopSpeak();
 
         // 阶段开始播放音效
         if (info.soundGroup != null)
@@ -751,14 +757,14 @@ public class GuideController : Furniture_Attached
         RuntimeSoundData soundData = soundGroup.Get(transform.position);
         if (soundData.Clip == null) return false;
 
+        // 新语音顶掉旧语音（语音源不能单条停，见 StopSpeak 的说明）
+        StopSpeak();
+
         GlobalEventBus.ActorSpeech(gameObject, soundData);
         _lastSpeakTime = Time.time;
+        _speakingClip = soundData.Clip;
 
         float clipLength = soundData.Clip.length;
-        if (_speakCoroutine != null)
-        {
-            StopCoroutine(_speakCoroutine);
-        }
         _speakCoroutine = StartCoroutine(SpeakRoutine(clipLength));
         return true;
     }
@@ -786,6 +792,13 @@ public class GuideController : Furniture_Attached
         {
             StopCoroutine(_speakCoroutine);
             _speakCoroutine = null;
+        }
+        // ⚠ 只停协程是不够的：语音走 AudioSvc 对象池的 AudioSource，协程停了声音照样放完。
+        //   池里一条源可能叠着多条 PlayOneShot，只能按 clip 名整源停（Stop 内部 Release ⇒ SetActive(false)）。
+        if (_speakingClip != null)
+        {
+            AudioSvc.Stop(_speakingClip);
+            _speakingClip = null;
         }
         IsSpeaking = false;
     }

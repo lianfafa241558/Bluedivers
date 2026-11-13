@@ -118,11 +118,6 @@ namespace FPSGame.Core
             }
 
 
-            if (info.delay > 0)
-            {
-                delayAudios.Add(info);
-                return null;
-            }
             if (sourcePool==null) return null;
             // ⚠ 管理器已被销毁 / 应用正在退出（`Uninit` 收尾、切场景卸载阶段）时**不要再建音源**：
             //   那时 `new GameObject() + AddComponent<AudioSource>()` 会失败 ⇒ 池的 Add 回调拿到 null ⇒ `aud.xxx` NRE。
@@ -142,6 +137,15 @@ namespace FPSGame.Core
                     Debug.LogError($"[音效] 找不到音效：{src}（cilp={info.cilp}，path={info.path}）" +
                                    "—— 同一来源只报一次；请检查该音效组是否漏挂音频剪辑");
                 }
+                return null;
+            }
+            // ⚠ 延迟请求也必须**先解析出 clip 再入队**：以前 delay 分支在解析前就 return，漏配的音频要等
+            //   倒计时结束才在 Update 里报"找不到音效"（堆栈落在 Update，认不出是谁发的）。解析结果回写，
+            //   到点时直接命中 info.cilp，不再走一次路径查找。
+            info.cilp = cilp;
+            if (info.delay > 0)
+            {
+                delayAudios.Add(info);
                 return null;
             }
             //禁止重复
@@ -210,13 +214,15 @@ namespace FPSGame.Core
         /// <param name="name">音频名称</param>
         public static void Stop(string name = null)
         {
+            if (sourcePool == null) return;
             if (string.IsNullOrEmpty(name))
             {
                 sourcePool.Release();
             }
             else
             {
-                sourcePool.Release(item => item.clip?.name == name);
+                // 谓词先判 item：场景卸载那几帧池里可能残留已销毁的音源，读 clip 会抛（同 PlaySound 的口径）
+                sourcePool.Release(item => item && item.clip && item.clip.name == name);
             }
         }
         /// <summary>

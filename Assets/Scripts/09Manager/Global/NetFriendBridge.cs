@@ -298,6 +298,16 @@ namespace FPSGame.Managers
             return bsc != null ? bsc.CameraPitch : 0f;
         }
 
+        /// <summary>本机姿态的联机口径（<see cref="PlayerStance"/> 的整数值）。取不到玩家 ⇒ 0（立姿）。</summary>
+        private static byte LocalStanceByte()
+        {
+            var self = ActorsManager.Player;
+            if (self == null || self.transform == null) return 0;
+
+            var pc = self.transform.GetComponent<PlayerController>();
+            return pc != null ? (byte)pc.Stance : (byte)0;
+        }
+
         /// <summary>本机准心实指那一点（世界空间）。取不到相机（舰桥/玩家未生成）⇒ 零向量 = 未知。</summary>
         private static UnityEngine.Vector3 LocalAimPoint()
         {
@@ -1197,6 +1207,7 @@ namespace FPSGame.Managers
                 Yaw = self.eulerAngles.y,
                 Pitch = LocalAimPitch(),     // 抬头/低头也要同步（否则对端看你永远平举枪，见 PoseSnapshot.Pitch）
                 Teleport = !_firstPoseSent,   // 首次一律吸附，避免别人看到我从原点滑过去
+                Stance = LocalStanceByte(),   // 蹲/趴：离散状态，远端直写动画参数（见 FriendController.ApplyStance）
             };
             _firstPoseSent = true;
 
@@ -1224,7 +1235,7 @@ namespace FPSGame.Managers
 
                 if (_friends.TryGetValue(it.Sid, out var fc) && fc != null)
                 {
-                    fc.ApplyPose(pos, it.Yaw, it.Pitch, it.Teleport);
+                    fc.ApplyPose(pos, it.Yaw, it.Pitch, it.Teleport, it.Stance);
                 }
             }
         }

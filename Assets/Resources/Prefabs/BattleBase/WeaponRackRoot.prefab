@@ -14,8 +14,9 @@ GameObject:
   - component: {fileID: 7660976221370106194}
   - component: {fileID: 1390212872342544647}
   - component: {fileID: 152109784216720970}
-  - component: {fileID: 2729292855230507776}
   - component: {fileID: 5896789896352289379}
+  - component: {fileID: 7253833277672140809}
+  - component: {fileID: 3138625616019860848}
   m_Layer: 0
   m_Name: WeaponRackRoot
   m_TagString: Untagged
@@ -149,8 +150,23 @@ MonoBehaviour:
   showHealth: 0
   m_IsDead: 0
   AboGaugeArr: []
---- !u!136 &2729292855230507776
-CapsuleCollider:
+--- !u!114 &5896789896352289379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964688188174952964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a714883ad8482eb41b1946c80e39d619, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _targets:
+  - {fileID: 9211456088332255000}
+  - {fileID: 7283736479966837753}
+--- !u!65 &7253833277672140809
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -167,26 +183,30 @@ CapsuleCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.7
-  m_Height: 3
-  m_Direction: 1
+  serializedVersion: 3
+  m_Size: {x: 1.5, y: 2.2, z: 0.6}
   m_Center: {x: 0, y: -1, z: 0}
---- !u!114 &5896789896352289379
-MonoBehaviour:
+--- !u!65 &3138625616019860848
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 964688188174952964}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a714883ad8482eb41b1946c80e39d619, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _targets:
-  - {fileID: 9211456088332255000}
-  - {fileID: 7283736479966837753}
+  serializedVersion: 3
+  m_Size: {x: 1.5, y: 0.1, z: 1.5}
+  m_Center: {x: 0, y: 0.1, z: 0}
 --- !u!1 &1229950078323971072
 GameObject:
   m_ObjectHideFlags: 0

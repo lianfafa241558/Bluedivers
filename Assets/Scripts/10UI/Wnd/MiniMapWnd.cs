@@ -825,6 +825,11 @@ public class MiniMapWnd : Window
     }
     public void OnMissionShow(IEntity entity)
     {
+        // 静态事件会把"已拆掉的小地图"和"已销毁的任务实体"再叫起来：后者多在收尾时随任务/场景卸载
+        // （托管引用还在、Unity 对象已是伪 null），这里取 gameObject 就是 MissingReferenceException
+        // （2026-11-13 撤离任务结束实测）。与本文件其它路径同一口径：先判存活。
+        if (!this || !entity.IsValidMono()) return;
+
         if (ActorPoint.TryGetValue(entity, out var go))//任务
         {
             //显示之后就不再隐藏

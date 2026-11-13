@@ -13,6 +13,21 @@ PrefabInstance:
       propertyPath: turrets.Array.data[0].weapon
       value: 
       objectReference: {fileID: 4214501374209683944}
+    - target: {fileID: -7209647432018548843, guid: 2f7f2b02984600145bdbad132e552728,
+        type: 3}
+      propertyPath: turrets.Array.data[0].limitFollow
+      value: 
+      objectReference: {fileID: 7150705667032980375}
+    - target: {fileID: -7209647432018548843, guid: 2f7f2b02984600145bdbad132e552728,
+        type: 3}
+      propertyPath: turrets.Array.data[0].aimSharpness
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: -7209647432018548843, guid: 2f7f2b02984600145bdbad132e552728,
+        type: 3}
+      propertyPath: turrets.Array.data[0].limitRotation
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3934286715313500991, guid: 2f7f2b02984600145bdbad132e552728,
         type: 3}
       propertyPath: m_Name
@@ -99,6 +114,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1925424471e3fe949a952edf108dc17b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &7150705667032980375 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4454821171153398149, guid: 2f7f2b02984600145bdbad132e552728,
+    type: 3}
+  m_PrefabInstance: {fileID: 6840647513916273170}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7527687919712059693 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3934286715313500991, guid: 2f7f2b02984600145bdbad132e552728,

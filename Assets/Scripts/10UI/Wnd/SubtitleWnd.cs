@@ -211,7 +211,7 @@ public class SubtitleWnd : Window
         AirDropSubtitlesPool.Update();
 
 
-        if (InputManager.GetDown(InputState.Crouch) && !alwaysShow)
+        if (InputManager.GetDown(InputState.FlareGun) && !alwaysShow)
         {
             for (int i = Subtitles.Count - 1; i >= 0; --i)
             {
@@ -223,7 +223,7 @@ public class SubtitleWnd : Window
                 Subtitles[i].TryActive(true);
             }
         }
-        else if (InputManager.GetUp(InputState.Crouch) && !alwaysShow)
+        else if (InputManager.GetUp(InputState.FlareGun) && !alwaysShow)
         {
             for (int i = Subtitles.Count - 1; i >= 0; --i)
             {

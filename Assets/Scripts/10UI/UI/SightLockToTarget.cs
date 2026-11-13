@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FPSGame.Core;
 using FPSGame.GameContract;
@@ -87,6 +87,7 @@ namespace FPSGame.UI
                     {
                         SetActive(group.Item1.GetChild(0), true);
                         SetText(group.Item1.GetChild(0), group.Item2);
+                        if (group.Item1.gameObject.activeInHierarchy&&group.Item1.TryGetComponent(out Animator anim)) anim.SetTrigger(Constants.k_AnimEntry);
                     }
                     //Debug.LogError(actor + "锁定"+ group.Item2+"层");
                 }

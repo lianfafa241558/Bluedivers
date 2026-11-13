@@ -54,6 +54,9 @@ namespace FPSGame.Weapon
         /// <summary>允许锁定重定向：锁满后每个节拍把最远的一层挪到最靠近屏幕中心的目标（没有它则是锁上就不改）</summary>
         [InspectorName("允许锁定重定向")]
         Relock = 1 << 4,
+        /// <summary>满层自动射击：蓄力满 / 锁定层满时自动放枪，不用再松手（原 AutomaticReleaseOnCharged 字段并入此标旗）</summary>
+        [InspectorName("满层自动射击")]
+        AutoFireOnFull = 1 << 5,
     }
 
     public abstract partial class WeaponController : WeaponReloadController
@@ -137,11 +140,6 @@ namespace FPSGame.Weapon
         [InspectorName("武器标旗")]
         public WeaponFlag WeaponFlag;
 
-        [Space]
-        /// <summary>满蓄自动射击</summary>
-        [InspectorName("满蓄自动射击")]
-        [Compare("ShootType", (int)WeaponShootType.Charge, CompareOperate.Equal)]
-        public bool AutomaticReleaseOnCharged;
         [Space]
         /// <summary>锁定形状</summary>
         [InspectorName("锁定形状")]
@@ -442,7 +440,7 @@ namespace FPSGame.Weapon
 
                     OnChargeRatioUpdate?.Invoke(ChargeDuration.StageScale.RawFloat);
                 }
-                else if (AutomaticReleaseOnCharged)
+                else if (HasFlag(WeaponFlag.AutoFireOnFull))
                 {
                     TryReleaseCharge();
                 }
@@ -632,13 +630,16 @@ namespace FPSGame.Weapon
                     Debug.LogError("错误的锁定形状" + Lockshape);
                     return false;
             }
-            // 已锁层数上限：手写计数（原 Count(lambda) 每次调用都要建一份闭包）
+            // 每敌层数上限：<=0 = 不限制，谁都允许锁（总量仍由 LockLayers 卡）
+            int perCap = AttrFinal(WeaponAttrType.LockPerCount).RawInt;
+            if (perCap <= 0) return true;
+            // 已锁层数计数：手写（原 Count(lambda) 每次调用都要建一份闭包）
             int locked = 0;
             for (int i = 0, l = WeaponLockTarget.Count; i < l; ++i)
             {
                 if (WeaponLockTarget[i] == actor) ++locked;
             }
-            return locked < AttrFinal(WeaponAttrType.LockPerCount);
+            return locked < perCap;
         }
 
         /// <summary>
@@ -730,7 +731,8 @@ namespace FPSGame.Weapon
                         }
                     }
 
-                    if (WeaponLockTarget.Count < PEMath.Min(AttrFinal(Attr.LockLayers), Magazine.CurrValue))//没超过锁定上限
+                    int lockCap = PEMath.Min(AttrFinal(Attr.LockLayers), Magazine.CurrValue).RawInt;//本拍最多能锁几层
+                    if (WeaponLockTarget.Count < lockCap)//没超过锁定上限
                     {
                         if (GetLockActor(out var target))
                         {
@@ -739,8 +741,13 @@ namespace FPSGame.Weapon
                         }
 
                     }
-                    //锁满了才谈重定向：每节拍挪 1 层到更靠近准心的目标（没该标旗则保持"锁上就不改"）
-                    else if (HasFlag(WeaponFlag.Relock)) TryRelockOneLayer();
+                    //锁满后：开了 AutoFireOnFull 就立刻放枪（层由下面 else 分支逐发打出去），没开才谈重定向
+                    //（层每满即打空，重定向就没意义了，所以两者互斥）
+                    if (WeaponLockTarget.Count > 0 && WeaponLockTarget.Count >= lockCap)
+                    {
+                        if (HasFlag(WeaponFlag.AutoFireOnFull)) TryReleaseLock();
+                        else if (HasFlag(WeaponFlag.Relock)) TryRelockOneLayer();
+                    }
                 }
                 
             }
@@ -986,9 +993,11 @@ namespace FPSGame.Weapon
             var bsa = AttrFinal(WeaponAttrType.BulletsSpreadAngle);
             if (bsa == 0) return shootTransform.forward;
             PEInt spreadAngleRatio = bsa / 180 * (PEInt)(m_InAiming ? 0.3f : 1);
+            //姿态（蹲/趴）在最末尾收一档：不动上面的定点除法口径（改 bsa 会连带改掉既有取整结果）
+            float ratio = spreadAngleRatio.RawFloat * StanceSpreadScale;
             //从方向向球面随机方向移动spreadAngleRatio;
             Vector3 spreadWorldDirection = Vector3.Slerp(shootTransform.forward, UnityEngine.Random.insideUnitSphere,
-                spreadAngleRatio.RawFloat);
+                ratio);
 
             return spreadWorldDirection;
         }

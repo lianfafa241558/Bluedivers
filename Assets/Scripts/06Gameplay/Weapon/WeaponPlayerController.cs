@@ -86,9 +86,12 @@ namespace FPSGame.Weapon
         /// <summary>后坐力倍率(属性，1=原值)：只吃改装加成，0 = 完全无后坐力</summary>
         public float RecoilScale => AttrFinal(Attr.Recoil, 1).RawFloat;
 
-        /// <summary>后坐力最终值(基础 × 改装倍率)：**武器回弹与镜头抬头共用这一口径**。
+        /// <summary>姿态后坐倍率（1 = 立姿）：由 <c>PlayerWeaponsManager</c> 每帧写，蹲/趴时压一档。</summary>
+        public float StanceRecoilScale { get; set; } = 1f;
+
+        /// <summary>后坐力最终值(基础 × 改装倍率 × 姿态倍率)：**武器回弹与镜头抬头共用这一口径**。
         /// 瞄准减弱不在这里做 —— 那是 <see cref="WeaponRecoilProfile.AdsScale"/> 的职责（同一份参数只写一处）。</summary>
-        public float RecoilForceFinal => RecoilForce * RecoilScale;
+        public float RecoilForceFinal => RecoilForce * RecoilScale * StanceRecoilScale;
 
         // ---- 连射散布膨胀的参数来自本枪的 RecoilProfile（基类默认全关，只有这里覆写）----
         protected override float SpreadBloomPerShot => RecoilProfile.SpreadBloomPerShot;

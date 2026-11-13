@@ -47,13 +47,19 @@ public class MissionCompleteWnd : Window
     }
     public override void OnDestroy()
     {
-        base.OnDestroy();
+        // 先退订：base.OnDestroy 里 WndHub/HideWnd 在场景拆除时可能抛异常，一旦抛出后面的 -= 不会执行
+        // ⇒ 静态事件会一直指着一个已销毁的窗口（同 MiniMapWnd 的坑，2026-11-13 实测）。
         BattleEventBus.OnMissionCompleted -= MissionCompleted;
+        base.OnDestroy();
 
     }
 
     void MissionCompleted(MissionBase mission)
     {
+        // 静态事件会把已拆掉的窗口叫起来，而 Destroy 是延迟的：同帧里 this 已是伪 null、OnDestroy 还没跑。
+        // 必须自己判活 —— 下面 SetWndState 开头就 return、SetColor/SetText 内部也判空，只有 anim.Play 裸露
+        // ⇒ 它成了唯一的 MissingReferenceException 报点（2026-11-13 实测）。
+        if (!this) return;
         // 只在对局进行中弹：结算/加载/过场阶段 UI 根随时会被拆掉，这时再去 SetWndState
         // 就是在"正在被销毁的层级"上跑（打包版 NRE 的现场，栈里只剩 SetWndState 一个方法名）。
         if (mission == null) return;

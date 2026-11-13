@@ -189,11 +189,15 @@ MonoBehaviour:
     ExplosionRange: 22
     DestructeRadius: 12
     ShockwaveRadius: 30
+    ShockwaveForce: 10
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 0.33
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 4370978237973065981, guid: 239ee2d38bf66ec45bc986c1ae79f715,
@@ -230,15 +234,13 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
   RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
   showCool: 0
   ShootType: 2
-  WeaponFlag: 4
-  AutomaticReleaseOnCharged: 1
+  WeaponFlag: 36
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -283,12 +285,12 @@ PrefabInstance:
     - target: {fileID: -7209647432018548843, guid: 2f7f2b02984600145bdbad132e552728,
         type: 3}
       propertyPath: turrets.Array.data[0].aimSharpness
-      value: 10
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: -7209647432018548843, guid: 2f7f2b02984600145bdbad132e552728,
         type: 3}
       propertyPath: turrets.Array.data[0].limitRotation
-      value: 20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7209647432018548843, guid: 2f7f2b02984600145bdbad132e552728,
         type: 3}

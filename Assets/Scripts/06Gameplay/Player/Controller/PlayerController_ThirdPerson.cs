@@ -212,10 +212,10 @@ public partial class PlayerController
             // ⚠ 偏移只加在相机上，_cameraYaw 本身不变 ⇒ 后坐力/屏震不会把移动方向也带偏
             Quaternion rotation = Quaternion.Euler(clampedV, _cameraYaw + RecoilYaw + ShakeYaw, CameraRoll);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
-            Vector3 desiredPosition = CenterPos + offset;
+            Vector3 desiredPosition = StanceOrbitCenter + offset;
 
             // 遮挡检测
-            Vector3 origin = CenterPos;
+            Vector3 origin = StanceOrbitCenter;
             Vector3 dir = (desiredPosition - origin).normalized;
             float maxDist = Vector3.Distance(origin, desiredPosition);
             if (Physics.Raycast(origin, dir, out RaycastHit hit, maxDist, _thirdPersonOcclusionLayers, QueryTriggerInteraction.Ignore))
@@ -253,10 +253,10 @@ public partial class PlayerController
             Quaternion rotation = Quaternion.Euler(clampedVertical, _cameraYaw + RecoilYaw + ShakeYaw, CameraRoll);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
 
-            Vector3 desiredPosition = CenterPos + offset;
+            Vector3 desiredPosition = StanceOrbitCenter + offset;
 
             // 遮挡检测
-            Vector3 origin = CenterPos;
+            Vector3 origin = StanceOrbitCenter;
             Vector3 dir = (desiredPosition - origin).normalized;
             float maxDist = Vector3.Distance(origin, desiredPosition);
             if (Physics.Raycast(origin, dir, out RaycastHit hit, maxDist, _thirdPersonOcclusionLayers, QueryTriggerInteraction.Ignore))

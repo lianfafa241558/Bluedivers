@@ -27,6 +27,9 @@ namespace FPSGame.Net
         [Key(5)] public float Pitch;
         /// <summary>是否为传送</summary>
         [Key(6)] public bool Teleport;
+        /// <summary>姿态：口径 = <c>FPSGame.Gameplay.PlayerStance</c>（0 站立 / 1 下蹲 / 2 卧倒）。
+        /// <para>⚠ 只追加、别重排既有 Key；旧端没有这个键 ⇒ 反序列化后为 0（立姿），天然兼容。</para></summary>
+        [Key(7)] public byte Stance;
     }
 
 

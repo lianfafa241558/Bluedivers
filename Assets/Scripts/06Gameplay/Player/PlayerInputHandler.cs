@@ -115,7 +115,15 @@ public class PlayerInputHandler : MonoBehaviour
     public Vector3 GetMoveInput()
     {
         if (!CanProcessInput()) return Vector3.zero;
-        return new Vector3(InputManager.GetAxis(InputState.Horizontal), 0f, InputManager.GetAxis(InputState.Vertical)).normalized;
+
+        // Left/Up/Right/Down 也当位移用。它们绑定在"任意界面"(Window=All)，而 Horizontal/Vertical 只认游戏界面
+        // ⇒ 开战备面板(Airdrop)时轴失效，靠这四个方向键照样能走。
+        // ⚠ 这两套键通常就是同一批 WASD ⇒ 叠加后必须统一归一化，否则两边同时生效时速度翻倍。
+        float x = InputManager.GetAxis(InputState.Horizontal)
+                + InputManager.GetAxis(InputState.Right) - InputManager.GetAxis(InputState.Left);
+        float z = InputManager.GetAxis(InputState.Vertical)
+                + InputManager.GetAxis(InputState.Up) - InputManager.GetAxis(InputState.Down);
+        return new Vector3(x, 0f, z).normalized;
     }
     /// <summary>
     /// 鼠标X轴移动
@@ -244,29 +252,32 @@ public class PlayerInputHandler : MonoBehaviour
         return CanProcessInput() && InputManager.GetDouble(InputState.Shift);
     }
 
-    /// <summary>
-    /// 按下Ctrl键
-    /// </summary>
-    /// <returns></returns>
-    public bool GetCrouchDown()
+    /// <summary>按下信号枪键（左Ctrl）。⚠ 老名字叫 GetCrouchDown，与真正的蹲键撞名 ⇒ 已改名。</summary>
+    public bool GetFlareGunDown()
     {
-        return CanProcessInput(GameStateEnum.Game) && InputManager.GetDown(InputState.Crouch);
+        return CanProcessInput(GameStateEnum.Game) && InputManager.GetDown(InputState.FlareGun);
     }
-    /// <summary>
-    /// 按住Ctrl键
-    /// </summary>
-    /// <returns></returns>
-    public bool GetCrouch()
+    /// <summary>按住信号枪键（左Ctrl）</summary>
+    public bool GetFlareGunHeld()
     {
-        return CanProcessInput(GameStateEnum.Game) && InputManager.Get(InputState.Crouch);
+        return CanProcessInput(GameStateEnum.Game) && InputManager.Get(InputState.FlareGun);
     }
-    /// <summary>
-    /// 松开Ctrl键
-    /// </summary>
-    /// <returns></returns>
-    public bool GetCrouchUp()
+    /// <summary>松开信号枪键（左Ctrl）</summary>
+    public bool GetFlareGunUp()
     {
-        return CanProcessInput(GameStateEnum.Game) && InputManager.GetUp(InputState.Crouch);
+        return CanProcessInput(GameStateEnum.Game) && InputManager.GetUp(InputState.FlareGun);
+    }
+
+    /// <summary>按下下蹲键（C）：切换式，由 PlayerController 维护姿态状态机。</summary>
+    public bool GetCrouchToggleDown()
+    {
+        return CanProcessInput(WindowStateEnum.Game) && InputManager.GetDown(InputState.Crouching);
+    }
+
+    /// <summary>按下卧倒键（Z）：切换式，由 PlayerController 维护姿态状态机。</summary>
+    public bool GetProneToggleDown()
+    {
+        return CanProcessInput(WindowStateEnum.Game) && InputManager.GetDown(InputState.Prone);
     }
     /// <summary>
     /// 按下投掷键

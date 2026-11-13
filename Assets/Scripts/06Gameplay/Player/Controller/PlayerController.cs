@@ -158,6 +158,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     {
         base.Awake();
         WeaponsManager = GetComponent<PlayerWeaponsManager>();
+        InitStance();   // 必须在 base.Awake() 与 WeaponsManager 赋值之后：胶囊/相机/武器挂点那时才有值
         WeaponsManager.OnAim+= OnAim;
     }
 
@@ -300,6 +301,8 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     {
         // 组件被关掉（进载具等）时临时视角已无意义：不复位会让下面和 VehicleController 读到翻转后的 IsThirdPerson
         _aimViewOverride = false;
+        // 同理：蹲/趴的胶囊与镜头基线也不该跨载具带出去（下车 OnEnable 时按立姿重开）
+        if (_stanceReady) SetStance(PlayerStance.Stand);
         if (!PlayerCamera) return;
 
         PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
@@ -344,6 +347,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         Actor.ExtraPortrait = baseMono.ExtraPortrait;
         Actor.Color = baseMono.Color;
         m_Anim = modleRoot.GetComponent<Animator>();
+        RefreshStanceAnimParams();   // 新模型的动画参数表可能不同（有的模型压根没接蹲/趴参数）
 
 
 
@@ -395,6 +399,8 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
 
     protected override void Update()
     {
+        // 姿态要先判：本帧改的胶囊高度/移速倍率要被 base.Update() 里的移动循环吃到
+        HandleStanceInput();
         //在这一帧起床
         DownHandleCharacterMovement();
         base.Update();
@@ -423,7 +429,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
             float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z) * _thirdPersonDistanceScale;
             Quaternion rotation = Quaternion.Euler(CameraPitch + ShakePitch, _cameraYaw + RecoilYaw + ShakeYaw, CameraRoll);
             Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
-            PlayerCamera.transform.position = CenterPos + offset;
+            PlayerCamera.transform.position = StanceOrbitCenter + offset;
             PlayerCamera.transform.rotation = rotation;
         }
 
@@ -491,6 +497,8 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     protected override void TryJump()
     {
         if (IsDead) return;
+        // 蹲/趴时按跳跃先起身再跳（允许跳，但姿态自动回立姿，否则起跳高度会被半截胶囊吃掉）
+        if (Stance != PlayerStance.Stand && JumpInput()) SetStance(PlayerStance.Stand);
         base.TryJump();
     }
 
@@ -510,6 +518,9 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
 
     void UpdateSprint()
     {
+        // 蹲/趴时双击冲刺先起身：起身发生在同帧，下面的 *= 才能正常吃到（姿态移速是现算属性）
+        if (Stance != PlayerStance.Stand && InputHandler.GetSprintInputDouble()) SetStance(PlayerStance.Stand);
+
         // 冲刺
         if (m_sprintTime < -CurrentSprintCool && InputHandler.GetSprintInputDouble())
         {
@@ -560,10 +571,10 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         // 相机位置：围绕 CenterPos 轨道旋转（与第三人称一致的公式）
         Quaternion rotation = Quaternion.Euler(m_CameraVerticalAngle, _cameraYaw, 0);
         Vector3 offset = rotation * new Vector3(0, 1f, -4f);
-        Vector3 desiredPosition = CenterPos + offset;
+        Vector3 desiredPosition = StanceOrbitCenter + offset;
 
         // 遮挡检测（与第三人称一致）
-        Vector3 origin = CenterPos;
+        Vector3 origin = StanceOrbitCenter;
         Vector3 dir = (desiredPosition - origin).normalized;
         float maxDist = Vector3.Distance(origin, desiredPosition);
         if (Physics.Raycast(origin, dir, out RaycastHit hit, maxDist, _thirdPersonOcclusionLayers, QueryTriggerInteraction.Ignore))
@@ -593,6 +604,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     void OnDie(GameObject caused, GameObject origin)
     {
         IsDead = true;
+        SetStance(PlayerStance.Stand);   // 死亡一律立姿：半截胶囊会让尸体悬空、复活时还卡在蹲姿
         // 死前若正按住右键点中键切了第一人称，先还原第三人称再记录偏好：否则偏好被记成第一人称（复活后永久丢第三人称），
         // 且武器相机还开着会叠在死亡镜头上
         SetAimViewOverride(false);
@@ -607,7 +619,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
 
         PlayerCamera.gameObject.SetActive(false);
         PlayerDownCamera.gameObject.SetActive(true);
-        m_Anim.SetBool("IsDeath", true);
+        m_Anim.SetBool(Constants.k_AnimIsDeathParameter, true);
         WeaponsManager.SwitchToWeaponIndex("", true, false, true);
 
         if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game) FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(PlayerIndex, "死亡次数");
@@ -617,6 +629,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     void OnRevive()
     {
         IsDead = false;
+        SetStance(PlayerStance.Stand);
         _downCameraVelocity = Vector3.zero;
         PlayerCamera.gameObject.SetActive(true);
         PlayerDownCamera.gameObject.SetActive(false);
@@ -625,7 +638,7 @@ public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
         WeaponsManager.SwitchToWeaponIndex(1, true, false, true);
         GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Thank);
         Actor.ActorState = ActorState.Normal;
-        m_Anim.SetBool("IsDeath",false);
+        m_Anim.SetBool(Constants.k_AnimIsDeathParameter, false);
         //喘息之时现在免费送
         Actor.AddFlag(ActorFlag.Invincible);
         FPSGame.Core.TimerHost.CreateTimer(() => Actor.RemoveFlag(ActorFlag.Invincible), 4);

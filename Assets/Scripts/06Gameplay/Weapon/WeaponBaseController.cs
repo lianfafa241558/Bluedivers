@@ -101,8 +101,12 @@ namespace FPSGame.Weapon {
         /// <summary>连射散布膨胀(度)：每"次"射击加上去，停火按 <see cref="SpreadBloomDecay"/> 回落</summary>
         private float _spreadBloom;
 
-        /// <summary>当前实际散布角(度) = 属性散布 + 连射膨胀（首发不带膨胀，见 HandleShoot 的累加时机）</summary>
-        public PEInt CurrentSpreadAngle => AttrFinal(Attr.BulletsSpreadAngle) + (PEInt)_spreadBloom;
+        /// <summary>姿态散布倍率（1 = 立姿）：由 <c>PlayerWeaponsManager</c> 每帧写给玩家手里的枪；
+        /// AI / 炮塔武器不动它（恒 1）⇒ 折进这里不会影响别的单位。</summary>
+        public float StanceSpreadScale { get; set; } = 1f;
+
+        /// <summary>当前实际散布角(度) = (属性散布 + 连射膨胀) × 姿态倍率（首发不带膨胀，见 HandleShoot 的累加时机）</summary>
+        public PEInt CurrentSpreadAngle => (PEInt)((AttrFinal(Attr.BulletsSpreadAngle).RawFloat + _spreadBloom) * StanceSpreadScale);
 
         // ---- 连射散布膨胀的参数：**默认全关**，只有玩家武器覆写成读 RecoilProfile ----
         // ⚠ 刻意用虚属性而不是序列化字段：这是"玩家手感"，不该让每把敌人/炮塔武器都平白多 3 个字段。

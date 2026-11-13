@@ -678,7 +678,7 @@ namespace FPSGame.Game.Editor
         private static readonly string[] WeaponProps =
         {
             // [Foldout("武器参数")]
-            "cfg", "ShootType", "WeaponFlag", "AutomaticReleaseOnCharged", "Lockshape",
+            "cfg", "ShootType", "WeaponFlag", "Lockshape",
             "RecoilForce", "AimingHideCrosshair", "AimZoomRatio", "AimOffset", "playerAngle",
         };
 

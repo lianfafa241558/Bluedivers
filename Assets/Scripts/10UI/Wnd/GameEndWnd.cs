@@ -91,6 +91,8 @@ public class GameEndWnd : Window
                 script.enabled = false;
             }
             actors[i] = showModle.transform.GetComponent<Animator>();
+            // 非任务胜利（失败/中断/未知）⇒ 展示模型直接倒地；学生 controller 的死亡是 bool IsDeath，不是 OnDeath trigger
+            if (task.result != GameResult.Victory) actors[i]?.SetBool(Constants.k_AnimIsDeathParameter, true);
             
             if(i==teamManager.SelfIndex) AudioSvc.PlaySound(Resources.Load<RoleData_SO>("GameData/Role/RD_" + teamManager.players[i].roleName).SpeechGroup(taskManager.nowTask.main.complete? SpeechTypeEnum.Victory: SpeechTypeEnum.Defeat).Get());
 

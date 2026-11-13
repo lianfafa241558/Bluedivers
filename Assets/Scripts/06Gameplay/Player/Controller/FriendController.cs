@@ -91,6 +91,15 @@ namespace FPSGame.Gameplay
         private static readonly int AnimSpeed = Animator.StringToHash("Speed");
         private static readonly int AnimIsMove = Animator.StringToHash("IsMove");
         private static readonly int AnimIsDeath = Animator.StringToHash("IsDeath");
+        // 蹲/趴：目前只占位（模型控制器里加了参数、动画还没做），远端照本地口径直写
+        private static readonly int AnimIsCrouch = Animator.StringToHash("IsCrouch");
+        private static readonly int AnimIsProne = Animator.StringToHash("IsProne");
+
+        /// <summary>模型动画参数是否存在（缺参数时静默跳过，别每帧刷 Animator warning）。</summary>
+        private bool _hasCrouchParam;
+        private bool _hasProneParam;
+        /// <summary>上一次应用过的远端姿态（<see cref="PlayerStance"/> 整数值）：只在变化时写参数。</summary>
+        private byte _remoteStance;
 
         /// <summary>【桥在创建时调用一次】写入身份。</summary>
         public void SetIdentity(uint sid, string playerName)
@@ -146,6 +155,7 @@ namespace FPSGame.Gameplay
             if (_actor != null) UnitEventBus.FriendRoleChanged(_actor);
 
             _anim = model.GetComponentInChildren<Animator>(true);
+            RefreshStanceAnimParams();   // 先探参数再复位，否则新模型会带着上一个模型的蹲/趴位
             ResetAnimState();      // 新模型先给一套"站立不动"基线，否则参数是默认 0，可能停在异常姿态
             if (_weapons != null) _weapons.BindModel(model);   // 手部 IK 要重新解析模型内的 IK
             _lastPos = transform.position;
@@ -159,6 +169,26 @@ namespace FPSGame.Gameplay
             _anim.SetFloat(AnimSpeed, 1f);
             _lastDead = false;
             _anim.SetBool(AnimIsDeath, false);
+
+            // 姿态也归零：下次收到的姿态包若同样是"立姿"就不会再写一次参数，这里必须清干净
+            _remoteStance = 0;
+            if (_hasCrouchParam) _anim.SetBool(AnimIsCrouch, false);
+            if (_hasProneParam) _anim.SetBool(AnimIsProne, false);
+            if (_weapons != null) _weapons.SetStanceSocketDrop(0f);
+        }
+
+        /// <summary>重建"蹲/趴参数是否存在"缓存（模型换过就要重探：不同角色控制器参数表不同）。</summary>
+        private void RefreshStanceAnimParams()
+        {
+            _hasCrouchParam = _hasProneParam = false;
+            if (_anim == null) return;
+
+            var ps = _anim.parameters;
+            for (int i = 0; i < ps.Length; ++i)
+            {
+                if (ps[i].nameHash == AnimIsCrouch) _hasCrouchParam = true;
+                else if (ps[i].nameHash == AnimIsProne) _hasProneParam = true;
+            }
         }
 
         private void Awake()
@@ -166,6 +196,7 @@ namespace FPSGame.Gameplay
             _view = GetComponent<NetTransformView>();
             _weapons = GetComponent<FriendWeaponView>();
             _anim = GetComponentInChildren<Animator>(true);
+            RefreshStanceAnimParams();
             _actor = GetComponent<Actor>();
             _lastPos = transform.position;
         }
@@ -279,6 +310,37 @@ namespace FPSGame.Gameplay
 
         /// <summary>兼容旧调用（不带俯仰）。</summary>
         public void ApplyPose(Vector3 pos, float yaw, bool teleport) => ApplyPose(pos, yaw, 0f, teleport);
+
+        /// <summary>【桥调用】带姿态的位姿应用：姿态是离散状态，不参与插值，直接写动画参数。</summary>
+        /// <param name="stance">口径 = <see cref="PlayerStance"/> 的整数值（旧端没有该字段 ⇒ 0 = 立姿）</param>
+        public void ApplyPose(Vector3 pos, float yaw, float pitch, bool teleport, byte stance)
+        {
+            ApplyPose(pos, yaw, pitch, teleport);
+            ApplyStance(stance);
+        }
+
+        /// <summary>与本地玩家同口径的持枪点下沉量（见 PlayerController_Stance 的 _crouchSocketDrop/_proneSocketDrop）。</summary>
+        private const float k_CrouchSocketDrop = 0.60f;
+        private const float k_ProneSocketDrop = 1.00f;
+
+        /// <summary>远端姿态 → 动画参数 + 持枪点高度。盟友实例没有 CharacterController / 相机，胶囊与镜头无需还原。</summary>
+        private void ApplyStance(byte stance)
+        {
+            if (_remoteStance == stance) return;
+            _remoteStance = stance;
+
+            // 枪也得跟着降（远端的挂点是自己摆的，不跟玩家的 FirstPersonSocket 走）
+            if (_weapons != null)
+            {
+                float drop = stance == (byte)PlayerStance.Crouch ? k_CrouchSocketDrop
+                           : stance == (byte)PlayerStance.Prone ? k_ProneSocketDrop : 0f;
+                _weapons.SetStanceSocketDrop(drop);
+            }
+
+            if (_anim == null) return;
+            if (_hasCrouchParam) _anim.SetBool(AnimIsCrouch, stance == (byte)PlayerStance.Crouch);
+            if (_hasProneParam) _anim.SetBool(AnimIsProne, stance == (byte)PlayerStance.Prone);
+        }
 
         /// <summary>【桥调用】载具接管：<c>true</c> = 该盟友实例**已被挂到载具挂点上**（联机 4059）。
         /// <para>▍为什么必须告诉本类（而不是桥自己关组件）：本类每帧都在用"位移"驱动动画，而挂上载具后

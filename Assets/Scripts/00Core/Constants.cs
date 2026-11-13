@@ -62,6 +62,8 @@ namespace FPSGame.Core
         public static int k_AnimOnDamagedParameter { get; } = Animator.StringToHash("OnDamaged");
         /// <summary>Animator 参数 <c>OnDeath</c>（hash = -42616333）</summary>
         public static int k_AnimOnDeathParameter { get; } = Animator.StringToHash("OnDeath");
+        /// <summary>Animator 参数 <c>IsDeath</c>（hash = 569220492；学生模型是 bool 状态位，不是 OnDeath 那种 trigger）</summary>
+        public static int k_AnimIsDeathParameter { get; } = Animator.StringToHash("IsDeath");
         /// <summary>Animator 参数 <c>OnReload</c>（hash = 1522553424）</summary>
         public static int k_AnimOnReloadParameter { get; } = Animator.StringToHash("OnReload");
         /// <summary>Animator 参数 <c>IsActive</c>（hash = 1929417870）</summary>

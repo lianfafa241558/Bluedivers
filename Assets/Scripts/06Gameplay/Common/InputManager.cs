@@ -211,7 +211,7 @@ public enum InputState
     [InspectorName("装弹")] Reload,
     [InspectorName("开火")] Fire,
     [InspectorName("瞄准")] Aim,
-    [InspectorName("下蹲")] Crouch,
+    [InspectorName("信号枪")] FlareGun,
 
     [InspectorName("武器1")] Weapon1,
     [InspectorName("武器2")] Weapon2,
@@ -240,6 +240,10 @@ public enum InputState
 
     [InspectorName("切换视角")] Perspective,
     [InspectorName("使用背包")] UseBag,
+
+    [InspectorName("趴下")] Prone,
+    [InspectorName("下蹲")] Crouching,
+
 }
 
 #if UNITY_EDITOR

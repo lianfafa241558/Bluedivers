@@ -40,6 +40,22 @@ namespace FPSGame.Gameplay
         /// <summary>挂模型的根（用来复刻玩家那套"侧身角"）。</summary>
         private Transform _modelRoot;
 
+        /// <summary>当前持枪点的高度（模型根空间）。站姿 = <see cref="aimSocketOffset"/>.y；
+        /// 蹲/趴时由 <see cref="FriendController"/> 按同步来的姿态下调（本地玩家同口径：挂点随姿态下沉）。</summary>
+        private float _socketY;
+        private bool _socketYInit;
+
+        /// <summary>【桥/控制器调用】姿态变化时调整持枪点高度。0 = 站姿基线。</summary>
+        public void SetStanceSocketDrop(float drop)
+        {
+            _socketY = aimSocketOffset.y - drop;
+            if (weaponSocket != null)
+            {
+                weaponSocket.localPosition = new Vector3(aimSocketOffset.x, _socketY, aimSocketOffset.z)
+                    + (GetSlot(_active) != null ? GetSlot(_active).AimOffset : Vector3.zero);
+            }
+        }
+
         /// <summary>槽位容器（下标 = 槽位，口径同 <see cref="PlayerWeaponsManager.SlotOf"/>）。</summary>
         private readonly WeaponPlayerController[] _slots = new WeaponPlayerController[9];
 
@@ -400,10 +416,16 @@ namespace FPSGame.Gameplay
         /// </summary>
         private void ApplyAimHold(WeaponPlayerController w)
         {
+            if (!_socketYInit)
+            {
+                _socketY = aimSocketOffset.y;
+                _socketYInit = true;
+            }
             if (weaponSocket != null)
             {
                 // ⚠ 玩家的 Point 是"玩家根空间"的（WeaponSocket 挂在 ModelSocket 下、ModelSocket 在原点 ⇒ 同一空间）
-                weaponSocket.localPosition = aimSocketOffset + (w != null ? w.AimOffset : Vector3.zero);
+                var basePos = new Vector3(aimSocketOffset.x, _socketY, aimSocketOffset.z);
+                weaponSocket.localPosition = basePos + (w != null ? w.AimOffset : Vector3.zero);
             }
 
             if (_modelRoot != null)

@@ -163,6 +163,11 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     /// <summary>移动速度乘数</summary>
     public float MoveSpeedScale { get; set; } = 1;
 
+    /// <summary>姿态等"外部状态"的额外移速倍率（蹲/趴）。
+    /// <para>▍为什么不塞进 <see cref="MoveSpeedScale"/>：那一个 float 已被武器射击/换弹惩罚、手持装备、
+    /// 冲刺的 <c>*= / =</c> 共同改写，再挂一条会互相污染（乘除顺序一变就回不去）。</para></summary>
+    protected virtual float ExtraSpeedScale => 1f;
+
     protected GrounderFBBIK grounderIK;
 
     /// <summary>最近一次判为可靠接地的时间（供地面IK权重防抖用）</summary>
@@ -711,7 +716,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         Vector3 worldspaceMoveInput = GetInputMove();
 
         //根据输入、最大速度和电流斜率计算所需速度
-        Vector3 targetVelocity = worldspaceMoveInput * MaxSpeedOnGround * Mathf.Max(MoveSpeedScale, 0);
+        Vector3 targetVelocity = worldspaceMoveInput * MaxSpeedOnGround * Mathf.Max(MoveSpeedScale, 0) * ExtraSpeedScale;
 
         targetVelocity = GetDirectionReorientedOnSlope(targetVelocity.normalized, m_GroundNormal) * targetVelocity.magnitude;
 
@@ -736,7 +741,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         //在up平面的投影，Y归零
         PEVector3 horizontalVelocity = (PEVector3)Vector3.ProjectOnPlane(CharacterVelocity.RawVector3, Vector3.up);
         //最大速度
-        var maxSpeed = MaxSpeedInAir * Mathf.Max(MoveSpeedScale, 0);
+        var maxSpeed = MaxSpeedInAir * Mathf.Max(MoveSpeedScale, 0) * ExtraSpeedScale;
         //不会直接限制速度，但是会lerp缓慢降低
         horizontalVelocity = (PEVector3)Vector3.Lerp(horizontalVelocity.RawVector3, Vector3.ClampMagnitude(horizontalVelocity.RawVector3, maxSpeed), accelerate);
         //重新组合速度

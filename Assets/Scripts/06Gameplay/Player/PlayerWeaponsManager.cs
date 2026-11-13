@@ -402,12 +402,12 @@ namespace FPSGame.Gameplay
             //投掷不会打断指示器
             if (m_InputHandler.GetThrow()) return;
             if (!m_PlayerCharacterController.enabled) return;
-            if (m_InputHandler.GetCrouchDown())
+            if (m_InputHandler.GetFlareGunDown())
             {
                 if (ActiveWeaponIndex != SlotOf(WeaponTypeEnum.FlareGun)) m_LastWeaponIndex = ActiveWeaponIndex;
                 SwitchToWeaponIndex(SlotOf(WeaponTypeEnum.FlareGun), true,false,false);
             }
-            else if (m_InputHandler.GetCrouchUp())
+            else if (m_InputHandler.GetFlareGunUp())
             {
                 //信号枪重置原武器
                 SwitchToWeaponIndex(m_LastWeaponIndex, true, false, false);
@@ -417,7 +417,7 @@ namespace FPSGame.Gameplay
         private void UpdateThrow()
         {
             //指示器不会打断投掷
-            if (m_InputHandler.GetCrouch()) return;
+            if (m_InputHandler.GetFlareGunHeld()) return;
             var grenade = SlotOf(WeaponTypeEnum.Grenade);
             if (m_InputHandler.GetThrowDown() && GetWeaponAtSlotIndex(grenade).Magazine.CurrValue> 0)
             {
@@ -439,7 +439,7 @@ namespace FPSGame.Gameplay
         /// <summary>
         /// 【跨窗口状态收尾】从"会吞输入的状态"（设置界面 / 自由相机）切回 <c>Game</c> 时，对账手里那把**临时武器**。
         ///
-        /// <para>▍为什么需要：扔雷与蹲-信号枪的收尾全靠**按键抬起**这个边沿（<c>GetThrowUP</c>/<c>GetCrouchUp</c>），
+        /// <para>▍为什么需要：扔雷与蹲-信号枪的收尾全靠**按键抬起**这个边沿（<c>GetThrowUP</c>/<c>GetFlareGunUp</c>），
         /// 而这两个查询在 UI / 自由相机状态恒为 false（鼠标被解锁 ⇒ <c>CanProcessInput</c> 直接失败），
         /// 边沿被吞掉就是**永久丢失** ⇒ 出来时手雷卡在手上（<c>UpdateFirstWeapon</c> 里"拿手雷不能开火"
         /// ⇒ 既扔不出去也打不了枪），或者一直举着信号枪（2026-10-11 实测定位）。</para>
@@ -455,7 +455,7 @@ namespace FPSGame.Gameplay
         {
             if (newState != WindowStateEnum.Game) return;
             if (oldState != WindowStateEnum.UI && oldState != WindowStateEnum.FreeCamera) return;
-            // 只有战斗中才有"临时武器"这回事（`GetThrow/GetCrouch` 本身也以 GameState==Game 为门）
+            // 只有战斗中才有"临时武器"这回事（`GetThrow/GetFlareGunHeld` 本身也以 GameState==Game 为门）
             if (FPSGame.Data.FlowState.GameState != FPSGame.Core.GameStateEnum.Game) return;
             if (m_PlayerCharacterController == null || m_InputHandler == null) return;
 
@@ -471,8 +471,8 @@ namespace FPSGame.Gameplay
                 return;
             }
 
-            // 蹲-信号枪：蹲键早松了 ⇒ 还原武器（与 UpdateFlareGun 的抬蹲分支同一套）
-            if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun) && !m_InputHandler.GetCrouch())
+            // 信号枪：Ctrl 早松了 ⇒ 还原武器（与 UpdateFlareGun 的抬键分支同一套）
+            if (ActiveWeaponIndex == SlotOf(WeaponTypeEnum.FlareGun) && !m_InputHandler.GetFlareGunHeld())
             {
                 SwitchToWeaponIndex(m_LastWeaponIndex, true, false, false);
             }
@@ -480,9 +480,35 @@ namespace FPSGame.Gameplay
         
 
         #region 手部/身体位置
+
+        /// <summary>姿态（蹲/趴）的散布与后坐倍率：每帧写给手里那两把枪。
+        /// <para>▍为什么每帧写而不是姿态变化时广播：切枪/双持都会换实例，往武器属性上装/卸 Modifier
+        /// 只要在"新枪没装"这条路上漏一次就是永久错误；这里只是两个浮点赋值，代价可以忽略。</para></summary>
+        private void ApplyStanceWeaponScales()
+        {
+            if (m_PlayerCharacterController == null) return;
+            float spread = m_PlayerCharacterController.StanceSpreadScale;
+            float recoil = m_PlayerCharacterController.StanceRecoilScale;
+
+            WeaponPlayerController active = GetActiveWeapon();
+            if (active != null)
+            {
+                active.StanceSpreadScale = spread;
+                active.StanceRecoilScale = recoil;
+            }
+
+            WeaponPlayerController sec = GetActiveSecWeapon();
+            if (sec != null)
+            {
+                sec.StanceSpreadScale = spread;
+                sec.StanceRecoilScale = recoil;
+            }
+        }
+
         //在LateUpdate中更新各种动画功能，因为它需要覆盖动画手臂位置
         void LateUpdate()
         {
+            ApplyStanceWeaponScales();
             UpdatePlayerAngle();
             UpdateWeaponAiming();
             UpdateWeaponBob();
