@@ -594,6 +594,7 @@ namespace FPSGame.UI
                         SetText(tip.GetChild(4), "");
                         SetText(tip.GetChild(5), "");
                         SetText(tip.GetChild(6), "");
+                        SetText(tip.GetChild(7), "");
                         return;
                     }
                 }
@@ -610,6 +611,7 @@ namespace FPSGame.UI
                         SetText(tip.GetChild(4), data.AttrName);
                         SetText(tip.GetChild(5), data.AttrValue);
                         SetText(tip.GetChild(6), data.opter.OpterTMPString());
+                        SetText(tip.GetChild(7), data.GetDisplayLabelText());
                         return;
                     }
 

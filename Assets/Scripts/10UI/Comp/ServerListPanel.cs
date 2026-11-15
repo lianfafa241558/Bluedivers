@@ -1215,11 +1215,13 @@ namespace FPSGame.UI
         }
 
         /// <summary>
-        /// 【手动直连】把输入框里的「IP」或「IP:端口」拼成一个房间对象，交给与列表点击**同一条** <see cref="Activate"/> 路径。
+        /// 【手动直连】把输入框里的「地址」或「地址:端口」拼成一个房间对象，交给与列表点击**同一条** <see cref="Activate"/> 路径。
         ///
         /// <para>▍为什么要有：UDP 广播只在同一广播域有效 —— 展会 / 公司网的路由器一旦开了「客户端隔离」，
         /// 房间列表永远是空的。直连不经过"发现"，只要房主的监听端口可达就能进房，也便于现场判断
         /// "到底是发现层被挡，还是网络根本不通"。</para>
+        /// <para>▍地址可以是 IP 也可以是**域名**：玩家自建 frp / 用 DDNS 时手上只有
+        /// <c>xxx.frp.example.com:17667</c> 这种形式，只认 IP 字面量等于把这条路堵死。</para>
         /// <para>⚠ 直连只知道地址、不知道房名与是否有密码 ⇒ 一律按"无密码"处理：房主真设了密码时由它回绝，
         /// 失败原因经 <c>NetRoomFlow</c> 提示给玩家。端口可省略，默认 <see cref="NetConfig.HostGamePort"/>。</para>
         /// </summary>
@@ -1232,7 +1234,7 @@ namespace FPSGame.UI
                 WndHub.Tip?.Creat(new TipWndInfo
                 {
                     title = "地址不正确",
-                    desc = "请填「房主IP:端口」，例如 192.168.1.5:17666（端口可省，默认 " + NetConfig.HostGamePort + "）；IPv6 写成 [地址]:端口。",
+                    desc = "请填「地址:端口」，例如 192.168.1.5:17666 或 xxx.frp.example.com:17667（端口可省，默认 " + NetConfig.HostGamePort + "）；IPv6 写成 [地址]:端口。",
                 });
                 return;
             }
@@ -1255,8 +1257,9 @@ namespace FPSGame.UI
         }
 
         /// <summary>
-        /// 解析「IP」或「IP:端口」，支持方括号的 IPv6：
-        /// <c>192.168.1.5</c> / <c>192.168.1.5:17666</c> / <c>[2408:8207::1]:17666</c> / <c>::1</c>。
+        /// 解析「地址」或「地址:端口」，地址支持 IPv4 / 域名 / 方括号 IPv6：
+        /// <c>192.168.1.5</c> / <c>192.168.1.5:17666</c> / <c>xxx.frp.example.com:17667</c> /
+        /// <c>[2408:8207::1]:17666</c> / <c>::1</c>。
         ///
         /// <para>▍为什么要专门处理 IPv6：裸 IPv6 里全是冒号，用"最后一个冒号切端口"会把 <c>::1</c>
         /// 切成 ip=":"、port=1 ⇒ 只能靠方括号区分「地址」与「端口」（URL 也是这个约定）。
@@ -1303,11 +1306,20 @@ namespace FPSGame.UI
 
             if (ip.Length == 0 || port <= 0 || port > 65535) return false;
 
-            System.Net.IPAddress parsed;
-            return System.Net.IPAddress.TryParse(ip, out parsed);
+            // 域名也要放行（frp / DDNS）：库侧 StartAsClient 走 ResolveAddress 能解析域名，
+            // 这里若只认 IP 字面量，玩家拿到的 xxx.frp.example.com 会被判成"地址不正确"。
+            switch (System.Uri.CheckHostName(ip))
+            {
+                case System.UriHostNameType.IPv4:
+                case System.UriHostNameType.IPv6:
+                case System.UriHostNameType.Dns:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
-        /// <summary>把「本机 IP」提示刷到界面上（每次展开房间列表算一次）。</summary>
+        /// <summary>把「局域网 IP」提示刷到界面上（每次展开房间列表算一次）。</summary>
         private void RefreshLocalAddress()
         {
             if (localIpText == null) return;
@@ -1324,12 +1336,19 @@ namespace FPSGame.UI
         /// <para>▍为什么不能用"有没有网关"过滤：Radmin VPN / Hamachi 这类点对点虚拟网卡可能**没有网关**，
         /// 按网关筛会把整张网卡漏掉 —— 而房主恰恰要把**虚拟网卡的地址**报给网友。</para>
         /// <para>没有可用 IPv4 时退回列一条全局 IPv6（家庭宽带无公网 IPv4 时只剩这条路）。</para>
+        /// <para>▍为什么要带端口：这一行的用途就是"列表搜不到时让队友手填直连"，
+        /// 而直连框省略端口会落到默认值 —— 房主改过监听端口时，只报 IP 会让对方永远连不上。</para>
         /// </summary>
         private static string LocalAddressText()
         {
             var routed = new System.Collections.Generic.List<string>();
             var others = new System.Collections.Generic.List<string>();
             string ipv6 = null;
+
+            // 端口：开房后以真实监听端口为准（广播里的 HostPort），还没开房就用即将使用的那个
+            int port = NetConfig.HostGamePort;
+            var host = NetHostSvc.Instance;
+            if (host != null) port = host.RoomInfo != null ? host.RoomInfo.HostPort : host.HostPort;
 
             try
             {
@@ -1366,7 +1385,7 @@ namespace FPSGame.UI
                             // 169.254.x.x = 没拿到 DHCP 时的自动私有地址（APIPA），报出去别人也连不上
                             byte[] b = addr.GetAddressBytes();
                             if (b.Length == 4 && b[0] == 169 && b[1] == 254) continue;
-                            bucket.Add(addr.ToString() + "（" + nicName + "）");
+                            bucket.Add(addr.ToString() + ":" + port + "（" + nicName + "）");
                         }
                         else if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
                         {
@@ -1385,16 +1404,18 @@ namespace FPSGame.UI
             for (int i = 0; i < routed.Count; ++i) { if (all.Length > 0) all.Append("  |  "); all.Append(routed[i]); }
             for (int i = 0; i < others.Count; ++i) { if (all.Length > 0) all.Append("  |  "); all.Append(others[i]); }
 
-            // 全局 IPv6 一并报出来（没有公网 IPv4 的人只能靠它直连）；可能略超宽，完整内容同时打 Console
+            // 全局 IPv6 一并报出来（没有公网 IPv4 的人只能靠它直连）；⚠ 带端口时**必须加方括号**，
+            // 否则玩家照抄进直连框会把最后一段当成端口。**另起一行**：与 IPv4 挤同一行会被挤断看不清。
             if (!string.IsNullOrEmpty(ipv6))
             {
-                if (all.Length > 0) all.Append("   IPv6: ");
-                all.Append(ipv6);
+                all.Append(all.Length > 0 ? "\nIPv6: " : "IPv6: ");
+                all.Append("[").Append(ipv6).Append("]:").Append(port);
             }
 
-            if (all.Length == 0) return "本机 IP：未找到可用网卡（检查网络是否已连接）";
+            if (all.Length == 0) return "局域网 IP：未找到可用网卡（检查网络是否已连接）";
 
-            return "本机 IP：" + all;
+            // 协议声明：KCP 全程走 UDP ⇒ 防火墙/端口映射按 TCP 放行是"配了也连不上"的常见坑
+            return "局域网 IP：" + all + "\n（上述端口为 UDP，防火墙与端口映射请放行 UDP）";
         }
 
         #endregion

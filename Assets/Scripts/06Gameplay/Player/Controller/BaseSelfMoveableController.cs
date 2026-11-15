@@ -73,6 +73,13 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     [InspectorName("移动一米时播放的脚步声频率")]
     public float FootstepSfxFrequency = 1f;
 
+    /// <summary>脚步声最小间隔(秒)：<see cref="FootstepSfxFrequency"/> 只管"多少米一声"，
+    /// 跑动时那个距离很短 ⇒ 触发会被拉到每帧一次，必须再按时间封顶。</summary>
+    private const float FootstepSfxMinInterval = 0.5f;
+
+    /// <summary>上一次真正播出脚步的时间(节流用)：负无穷 ⇒ 第一次必播。</summary>
+    private float _lastFootstepSfxTime = float.NegativeInfinity;
+
     [InspectorName("脚步声")]
     public AudioClip FootstepSfx;
 
@@ -169,6 +176,11 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     protected virtual float ExtraSpeedScale => 1f;
 
     protected GrounderFBBIK grounderIK;
+
+    /// <summary>地面 IK 是否允许作用。趴姿必须关：Grounder 的前提是"脚踩在自己脚下的地面"，
+    /// 趴姿的脚在身后/抬在空中，它会把骨盆往下压、双脚往地面拽，整段趴姿被摊平。
+    /// ⚠ 动画窗口预览不走 Final IK，所以预览正常、进 Play 才变形 —— 别把这种差异当成动画资源问题。</summary>
+    protected virtual bool AllowGroundIK => true;
 
     /// <summary>最近一次判为可靠接地的时间（供地面IK权重防抖用）</summary>
     private float _lastGroundedTime = -999f;
@@ -269,6 +281,17 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
     }
 
 
+    /// <summary>播一声脚步声（按 <see cref="FootstepSfxMinInterval"/> 节流）：两处播放点共用，别在调用处各判一次。
+    /// <para>⚠ 两处 = 本类 LateUpdate 与 <c>PlayerController</c> 自己的 LateUpdate：第一人称时两者都会跑到，
+    /// 不共用同一个时间戳就会同帧播两声。</para></summary>
+    protected void PlayFootstepSfx()
+    {
+        float now = Time.time;
+        if (now - _lastFootstepSfxTime < FootstepSfxMinInterval) return;
+        _lastFootstepSfxTime = now;
+        AudioSource.PlayOneShot(FootstepSfx);
+    }
+
     protected virtual void LateUpdate()
     {
         if (!FpsHelper.IsMainStage()) return;
@@ -311,7 +334,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
             {
                 m_FootstepDistanceCounter = 0f;
 
-                AudioSource.PlayOneShot(FootstepSfx);
+                PlayFootstepSfx();
             }
         }
 
@@ -507,7 +530,7 @@ public class BaseSelfMoveableController : BaseSelfController, IPhysical
         //地面IK权重防抖：不随单帧接地判定硬切，而是在宽限期内保持开启，再平滑过渡到目标值
         if (grounderIK)
         {
-            bool ikGrounded = Time.time - _lastGroundedTime <= GrounderGracePeriod;
+            bool ikGrounded = AllowGroundIK && Time.time - _lastGroundedTime <= GrounderGracePeriod;
             grounderIK.weight = Mathf.MoveTowards(grounderIK.weight, ikGrounded ? 1f : 0f, Time.deltaTime * GrounderWeightSpeed);
         }
     }

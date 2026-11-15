@@ -19834,6 +19834,7 @@ MonoBehaviour:
   LiftTime: 5
   PreRelease: 1
   allowSeeRelease: 0
+  EndDelay: 0
   allowRelease: 0
   useDebug: 0
   OnEnd:
@@ -19869,12 +19870,11 @@ MonoBehaviour:
       Value: 45
     - Key: 6
       Value: 8
-  ProjectilePrefab: {fileID: 5179882210499984565, guid: f1be970d48f284c4c80b26cf92019d4c,
-    type: 3}
   BulletFlag: 0
   Damages:
   - BulletPrefab: {fileID: 5179882210499984565, guid: f1be970d48f284c4c80b26cf92019d4c,
       type: 3}
+    LandingPrefab: {fileID: 0}
     Speed: 20
     Gravity: 50
     InheritWeaponSpeed: 0
@@ -19883,6 +19883,7 @@ MonoBehaviour:
     MinRange: -1
     NoSource: 1
     SoundRadius: 20
+    ImpactSoundRadius: 8
     DamageExplosion: 75
     DamageDirect: 0
     DamageGroupDirect:
@@ -19895,11 +19896,15 @@ MonoBehaviour:
     ExplosionRange: 6
     DestructeRadius: 0
     ShockwaveRadius: 8
+    ShockwaveForce: 3
     DamageGroupExplosion:
     - Key: 1
       Value: 1
     - Key: 2
       Value: 0.5
+    AboVulnerabilityGroup:
+    - Key: 6
+      Value: 3
     UseCollisionDirection: 1
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 5911405891695202493, guid: e85a93dde3ae31d4f9839df39fb4d0f6,
@@ -19926,6 +19931,8 @@ MonoBehaviour:
   FlashSizeScale: 1
   UnparentMuzzleFlash: 0
   SFXRange: 80
+  FireNoiseRadius: 20
+  LastMuzzleIndex: 0
   ShootSfx: {fileID: 0}
   UseContinuousShootSound: 0
   ContinuousShootStartSfx: {fileID: 0}
@@ -19933,14 +19940,13 @@ MonoBehaviour:
   ContinuousShootEndSfx: {fileID: 0}
   _currentHeat: 0
   wantsToShoot: 0
-  ShootCost: 1
+  RandomSeed: 0
   showAmmo: 0
   showInReload: 0
   showReloadTime: 0
   showCool: 0
   ShootType: 0
   WeaponFlag: 0
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}

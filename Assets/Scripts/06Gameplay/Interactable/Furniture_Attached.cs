@@ -30,7 +30,9 @@ namespace FPSGame.Gameplay
         /// <para>▍为什么不能只用 <c>Id</c>：同类家具存在多个实例（同 Id 多份）。</para>
         /// <para>▍为什么不每帧重算：家具会位移，键必须稳定。</para>
         /// <para>▍为什么不用 <c>NumberID</c>：那是各端静态自增且从不复位（同 <c>KeyScreenControl</c> 的结论）。</para>
-        /// <para>▍量化到 0.1m 是为了吃掉两端浮点抖动；位置来自场景 / 已同步的生成落点 ⇒ 跨端一致。</para>
+        /// <para>▍量化到 0.1m 是为了吃掉两端浮点抖动；场景家具的落点确实跨端一致。</para>
+        /// <para>⚠ **空投/战备这类"两端各生成一份"的物件不成立**（各打自己的地面射线 ⇒ 差几厘米就换桶）
+        /// ⇒ 查表一律走 <see cref="Resolve"/>（精确键 → Id+位置软键），别直接 <see cref="FindBySyncId"/>。</para>
         /// </summary>
         public int SyncId { get; private set; }
 
@@ -255,6 +257,42 @@ namespace FPSGame.Gameplay
         public static Furniture_Attached FindBySyncId(int syncId)
         {
             return listBySyncId.TryGetValue(syncId, out Furniture_Attached f) ? f : null;
+        }
+
+        /// <summary>软键匹配半径(米)：两端各生成一份的物件，位置差通常只有几厘米~几十厘米。</summary>
+        public const float SoftKeyRadius = 5f;
+
+        /// <summary>【联机】先按 <see cref="SyncId"/> 精确找；找不到再按 <c>Id + 发送端位置</c> 找**最近**的一个。
+        /// <para>▍为什么需要软键：空投/战备这类物件是**两端各生成一份**（各打自己的地面射线、各跑舱体物理），
+        /// 位置差几厘米就跨过 0.1m 量化桶 ⇒ FNV 键完全不同（不是"接近"，是彻底不同）⇒ 精确查找必然失败、
+        /// 整条交互被丢弃（撤离信标的终端阶段卡住就是这么来的）。</para>
+        /// <para>⚠ 只在"同 Id 的候选里取最近且 ≤ <see cref="SoftKeyRadius"/>"：同 Id 多份靠发送端位置区分，
+        /// 不要退化成"随便找同 Id 的一个"。</para>
+        /// <para>⚠ 没有旧键兼容负担：<paramref name="id"/> 为空（旧端 / 无身份源）⇒ 行为与 <see cref="FindBySyncId"/> 完全一致。</para></summary>
+        public static Furniture_Attached Resolve(int syncId, string id, Vector3 senderPos, string tag)
+        {
+            var exact = FindBySyncId(syncId);
+            if (exact != null) return exact;
+            if (string.IsNullOrEmpty(id)) return null;
+
+            Furniture_Attached best = null;
+            float bestSqr = SoftKeyRadius * SoftKeyRadius;
+            foreach (var item in list.Values)
+            {
+                if (item is not Furniture_Attached f || f.SyncId == 0) continue;   // 不参与同步的不当候选
+                if (f.Id != id) continue;
+                float sqr = (f.transform.position - senderPos).sqrMagnitude;
+                if (sqr > bestSqr) continue;
+                bestSqr = sqr;
+                best = f;
+            }
+
+            if (best != null)
+            {
+                FPSGame.Utils.NetSyncLog.SyncLog("家具/软键",
+                    $"{tag} sync={syncId} 未命中 ⇒ 按 Id={id} 软键命中 {best.name}(sync={best.SyncId})，偏差 {Mathf.Sqrt(bestSqr):F2}m");
+            }
+            return best;
         }
 
         /// <summary>

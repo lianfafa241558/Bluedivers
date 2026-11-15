@@ -54,6 +54,14 @@ public class Furniture_PlayerArtillery : Furniture_OOPartDepositBase
     {
         base.Awake();
         m_weapon = GetComponentInChildren<WeaponController>();
+        // ⚠ 漏挂 WeaponController 时 StartSubmit / OnAirdrop / OnSubmit 全是 m_weapon.xxx
+        //   ⇒ 配置错就一条日志 + 关掉本组件（OnEnable 不会跑，装填与开火订阅都不会挂上）。
+        if (!m_weapon)
+        {
+            Debug.LogError($"[玩家火炮] {name} 上找不到 WeaponController ⇒ 本架不可用", this);
+            enabled = false;
+            return;
+        }
         m_weapon.OnShoot += OnShoot;
         // 若场景/配置里预置了已装填炮弹，让进度与上限计算从该基数继续
         held = shells.Count;

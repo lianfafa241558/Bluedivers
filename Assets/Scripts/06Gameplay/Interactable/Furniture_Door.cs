@@ -15,13 +15,11 @@ using static FPSGame.WndTools.WndRootTool;
 public class Furniture_Door : Furniture_Attached
 {
     public bool lockState;
-    private bool front;
 
     public override void Operate()
     {
         base.Operate();
         time = 0;
-        front = Vector3.Angle(owner.transform.position - Forward, Forward)<90;
     }
 
     protected override void Update()
@@ -53,12 +51,31 @@ public class Furniture_Door : Furniture_Attached
 
     protected override void InOperateUpdate()
     {
-        if (!lockState&&(time+=Time.deltaTime)>4&& Vector3.Distance(Pos, owner.transform.position) > 3f )
+        if (lockState) return;
+        if ((time += Time.deltaTime) <= 4) return;
+
+        // ⚠ owner 可能为 null（4059 远端重放解析不到操作者）或已销毁（操作者退出/死亡）⇒ 不能直接取它的
+        //   transform。取不到就退化成"门口还有没有人"：语义与"操作者走远"一致，也不会让门永远卡在开态。
+        bool someoneNear = owner != null
+            ? Vector3.Distance(Pos, owner.transform.position) <= 3f
+            : AnyActorWithin(3f);
+        if (someoneNear) return;
+
+        anim.Play("Exit");
+        PlaySound(audioClose);
+        inOperate = false;
+    }
+
+    /// <summary>半径内是否有任意单位（⚠ 不建闭包：门每帧都要跑）。</summary>
+    private bool AnyActorWithin(float radius)
+    {
+        var actors = ActorsManager.Actors;
+        for (int i = 0, l = actors.Count; i < l; ++i)
         {
-            anim.Play("Exit");
-            PlaySound(audioClose);
-            inOperate = false;
+            FPSGame.GameContract.IActor item = actors[i];
+            if (item.IsValidMono() && Vector3.Distance(Pos, item.Pos) <= radius) return true;
         }
+        return false;
     }
 
     public void Lock()

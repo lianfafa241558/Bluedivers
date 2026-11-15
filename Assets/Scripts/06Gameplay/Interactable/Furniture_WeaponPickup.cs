@@ -55,7 +55,9 @@ namespace FPSGame.Gameplay
             m_Weapon = GetComponent<WeaponPlayerController>();
         }
 
-        public override string ShowName => m_Weapon.WeaponName;
+        /// <summary>⚠ 必须判 m_Weapon：实测 <c>Weapons/Support/ThrowLauncher.prefab</c> 上没挂 WeaponPlayerController
+        /// （同类的 <see cref="Id"/>/<see cref="Icon"/> 早就判了，只有这里漏）⇒ 任何读名字的 UI/日志都会 NRE。</summary>
+        public override string ShowName => m_Weapon ? m_Weapon.WeaponName : name;
 
         public override string Id => m_Weapon ? m_Weapon.WeaponName : name;
 
@@ -181,6 +183,9 @@ namespace FPSGame.Gameplay
         private string FormatGroundState()
         {
             Vector3 p = transform.position;
+            // ⚠ 没有武器组件的那份（ThrowLauncher）走到 OnEnable 广播就会 NRE ⇒ 退化成"-1 = 弹量未知"
+            if (!m_Weapon)
+                return string.Format(CultureInfo.InvariantCulture, "{0:F2},{1:F2},{2:F2},-1,-1", p.x, p.y, p.z);
             m_Weapon.GetAmmoForSync(out int magazine, out int ammo);
             return string.Format(CultureInfo.InvariantCulture, "{0:F2},{1:F2},{2:F2},{3},{4}",
                 p.x, p.y, p.z, magazine, ammo);

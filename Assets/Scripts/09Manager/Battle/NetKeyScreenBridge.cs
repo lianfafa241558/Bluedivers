@@ -1,5 +1,6 @@
 using FPSGame.Gameplay;
 using FPSGame.Net;
+using UnityEngine;
 
 namespace FPSGame.Managers
 {
@@ -69,9 +70,12 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow == null) return;
 
+            // 软键：本端这枚终端自己的 Id + 位置（撤离信标这类两端各生成一份的终端，SyncId 会因位置微差分叉）
+            var local = Furniture_Attached.FindBySyncId(syncId);
             FPSGame.Utils.NetSyncLog.SyncLog("同步/终端/发",
                 $"sync={syncId} → 阶段 {stage}（我是{(flow.IsHost ? "房主" : "成员")}）");
-            flow.SendKeyScreenStage(syncId, flow.IsHost ? 0u : flow.SelfSid, stage);
+            flow.SendKeyScreenStage(syncId, flow.IsHost ? 0u : flow.SelfSid, stage,
+                local != null ? local.Id : null, local != null ? local.transform.position : (Vector3?)null);
         }
 
         /// <summary>【驱动端】把本机对终端的每一次按键传出去（非驱动端靠它复现整个终端）。
@@ -85,7 +89,9 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow == null || !flow.InRoom) return;      // 单机 / 不在房里
 
-            flow.SendKeyScreenInput(syncId, flow.IsHost ? 0u : flow.SelfSid, key, kind);
+            var local = Furniture_Attached.FindBySyncId(syncId);
+            flow.SendKeyScreenInput(syncId, flow.IsHost ? 0u : flow.SelfSid, key, kind,
+                local != null ? local.Id : null, local != null ? local.transform.position : (Vector3?)null);
         }
 
         #endregion
@@ -102,37 +108,129 @@ namespace FPSGame.Managers
             if (flow.IsHost)
             {
                 // 房主：转发全体（含发起者；发起者按 Sid 丢掉自己那条）—— 权威 Sid 原样带上
-                flow.SendKeyScreenStage(m.SyncId, m.Sid, m.Stage);
+                flow.SendKeyScreenStage(m.SyncId, m.Sid, m.Stage, m.Id, new Vector3(m.X, m.Y, m.Z));
             }
             else if (m.Sid == flow.SelfSid)
             {
                 return;                              // 自己发的那条绕回来了：本地已经推进过
             }
 
-            var furn = Furniture_Attached.FindBySyncId(m.SyncId);
+            // 精确键 → 软键（Id + 发送端位置取最近）：撤离信标这类两端各生成一份的终端靠它兜住
+            var furn = Furniture_Attached.Resolve(m.SyncId, m.Id, new Vector3(m.X, m.Y, m.Z), "同步/终端/收");
             var screen = furn != null ? furn.GetComponentInChildren<KeyScreen>(true) : null;
             if (screen == null)
             {
-                // ⚠ 不静默：要么两端 SyncId 不一致，要么本端压根没这个终端（同 NetFurnitureBridge 的排查口径）
-                FPSGame.Utils.NetSyncLog.Warn("同步/终端/收",
-                    $"sync={m.SyncId} 阶段{m.Stage}（发起 sid={m.Sid}）**本端找不到这个终端** ⇒ 丢弃");
+                // ⚠ 不能直接丢：本端终端可能**还没落地**（空投信标两端各生成一份，舱体落体有先后）。
+                //   一次性丢弃 = 客机永远停在旧阶段，而且驱动端那条阶段是一次性的（无人阶段推完就不再发）。
+                QueueStage(m);
                 return;
             }
 
+            ApplyStage(furn, screen, m.Stage, m.Sid);
+        }
+
+        /// <summary>把阶段真正应用到本端终端（统一的执行口：立刻命中与挂起重试都走这里）。</summary>
+        static void ApplyStage(Furniture_Attached furn, KeyScreen screen, int stage, uint sid)
+        {
             FPSGame.Utils.NetSyncLog.SyncLog("同步/终端/收",
-                $"{furn.name} → 阶段 {m.Stage}（发起 sid={m.Sid}）");
+                $"{furn.name} → 阶段 {stage}（发起 sid={sid}）");
 
             // 共享门：应用阶段可能顺带触发 furn.Operate() ⇒ 会派发 FurnitureOperate（4059）⇒ 挡住它的上报
             NetApplyGuard.Begin();
             try
             {
-                screen.ApplyRemoteStage(m.Stage);
+                screen.ApplyRemoteStage(stage);
             }
             finally
             {
                 NetApplyGuard.End();
             }
         }
+
+        #region 挂起重试（终端还没生成）
+
+        /// <summary>收端暂时找不到终端时挂起的阶段（同一终端只留最新一条）。</summary>
+        private struct PendingStage
+        {
+            public int SyncId;
+            public string Id;
+            public Vector3 Pos;
+            public int Stage;
+            public float Deadline;
+        }
+
+        private static readonly System.Collections.Generic.List<PendingStage> _pending = new();
+
+        /// <summary>挂起窗口(秒)：空投舱 <c>arriveTime</c> + 落地 + 生成物 Awake 一般远小于它。</summary>
+        private const float PendingWindow = 15f;
+
+        /// <summary>重试间隔(秒)：够密（终端一出现就补上），又不会每帧扫全表。</summary>
+        private const float RetryInterval = 0.5f;
+
+        static void QueueStage(KeyScreenStageMsg m)
+        {
+            var pos = new Vector3(m.X, m.Y, m.Z);
+            for (int i = 0; i < _pending.Count; ++i)
+            {
+                if (_pending[i].SyncId != m.SyncId) continue;
+                var item = _pending[i];              // 同一条终端又来新阶段：覆盖成最新，别排队重放旧阶段
+                item.Stage = m.Stage;
+                item.Deadline = Time.unscaledTime + PendingWindow;
+                _pending[i] = item;
+                return;
+            }
+
+            _pending.Add(new PendingStage
+            {
+                SyncId = m.SyncId,
+                Id = m.Id,
+                Pos = pos,
+                Stage = m.Stage,
+                Deadline = Time.unscaledTime + PendingWindow,
+            });
+
+            FPSGame.Utils.NetSyncLog.Error("同步/终端/收",
+                $"sync={m.SyncId} 阶段{m.Stage}（软键 id={m.Id}）**本端还没有这个终端** ⇒ 挂起 {PendingWindow}s 内每 {RetryInterval}s 重试" +
+                "（空投信标这类两端各生成一份的终端，落体先后会让消息先到）");
+
+            if (_pending.Count == 1) ScheduleRetry();
+        }
+
+        static void ScheduleRetry()
+        {
+            // ⚠ 用 TimerHost（宿主 = ViewTimerController）：本类是静态类，没有自己的 Update
+            //   宿主还没发布（极早期）⇒ 排不上就作废，别让挂起表永久留住条目
+            if (FPSGame.Core.TimerHost.CreateTimer(RetryPending, RetryInterval) == null) _pending.Clear();
+        }
+
+        static void RetryPending()
+        {
+            float now = Time.unscaledTime;
+            for (int i = _pending.Count - 1; i >= 0; --i)
+            {
+                PendingStage item = _pending[i];
+                var furn = Furniture_Attached.Resolve(item.SyncId, item.Id, item.Pos, "同步/终端/收·重试");
+                var screen = furn != null ? furn.GetComponentInChildren<KeyScreen>(true) : null;
+
+                if (screen != null)
+                {
+                    _pending.RemoveAt(i);
+                    FPSGame.Utils.NetSyncLog.SyncLog("同步/终端/收", $"挂起重试命中 {furn.name}（等了 {(PendingWindow - (item.Deadline - now)):F1}s）");
+                    ApplyStage(furn, screen, item.Stage, 0u);
+                }
+                else if (now > item.Deadline)
+                {
+                    _pending.RemoveAt(i);
+                    FPSGame.Utils.NetSyncLog.Error("同步/终端/收",
+                        $"sync={item.SyncId}（软键 id={item.Id} 位置={item.Pos}）阶段{item.Stage}：{PendingWindow}s 内始终没有这个终端 ⇒ 放弃" +
+                        "（本端没生成这件终端 / Id 与位置都对不上）");
+                }
+            }
+
+            if (_pending.Count > 0) ScheduleRetry();
+        }
+
+        #endregion
 
         /// <summary>【非驱动端】复现远端玩家的按键（房主转发全体；发起者按 Sid 丢自己那条）。</summary>
         static void OnRemoteInput(KeyScreenInputMsg m)
@@ -142,10 +240,10 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow == null) return;
 
-            if (flow.IsHost) flow.SendKeyScreenInput(m.SyncId, m.Sid, m.Key, m.Kind);
+            if (flow.IsHost) flow.SendKeyScreenInput(m.SyncId, m.Sid, m.Key, m.Kind, m.Id, new Vector3(m.X, m.Y, m.Z));
             else if (m.Sid == flow.SelfSid) return;
 
-            var furn = Furniture_Attached.FindBySyncId(m.SyncId);
+            var furn = Furniture_Attached.Resolve(m.SyncId, m.Id, new Vector3(m.X, m.Y, m.Z), "同步/终端/输入·收");
             var screen = furn != null ? furn.GetComponentInChildren<KeyScreen>(true) : null;
             if (screen == null) return;          // 找不到终端：静默（阶段同步那边已经会告警一次）
 

@@ -84,6 +84,13 @@ namespace FPSGame.AI
         [SerializeField]
         private bool showGizmos;
 
+        /// <summary>【联机】成员端**炮塔**：目标由房主下发（true ⇒ 本端不再自己扫目标）。
+        /// <para>▍为什么需要：<see cref="Tick"/> 里的 <c>HandleTargetDetection</c> 两端都在跑 ⇒ 成员端每拍会把自己扫到的目标
+        /// 盖回去，房主下发的目标根本立不住。门只对 <see cref="DetectionModuleTurret"/> 生效。</para>
+        /// <para>⚠ **不能复用** <c>EnemyController.RemoteDrivenMovement</c>：那是全敌人共用的"移动"门，
+        /// 拿它挡侦测会连带停掉会走位的敌人的感知。房主掉线时必须复位（见 <c>EnemyNetBridge.OnHostLost</c>）。</para></summary>
+        public static bool RemoteDrivenTarget;
+
         //[DisplayField]
         public TargetData Target = new();// { get; protected set; } = new();
 
@@ -156,6 +163,8 @@ namespace FPSGame.AI
             if(!FPSGame.GameContract.BattleHub.Current.IsPresent) return true;
             // 没归属(自取失败)就没法判敌我 ⇒ 直接歇着，别让下面解引用 m_Actor 刷空引用
             if (!m_Actor.IsValidMono()) return true;
+            // ★ 成员端炮塔：目标由房主下发（见 RemoteDrivenTarget）⇒ 不做本端扫描，否则每拍会把下发目标盖回去
+            if (RemoteDrivenTarget && this is DetectionModuleTurret) return true;
             // ★ 成员端 AI LOD（见 AiLod）：远处的**敌人**不必每秒重扫一遍（FindUnits + 视线判定是最贵的一步）；
             //   有目标 / 非敌人 / 房主 / 单机 ⇒ 照常扫。⚠ 必须 return true：返回 false 会被 TickBehaviour 摘出 ticks 列表。
             if (!AiLod.ShouldTick(m_Actor, Target.Actor != null)) return true;
@@ -239,7 +248,8 @@ namespace FPSGame.AI
 
         }
 
-        protected bool CanLook(Vector3 targetPos, bool ignoreAngle, out RaycastHit hit)
+        /// <param name="target">目标单位：它的姿态会缩放"被发现的距离"（趴/蹲更难被发现，见 <see cref="IActor.DetectRangeScale"/>）</param>
+        protected bool CanLook(IActor target, Vector3 targetPos, bool ignoreAngle, out RaycastHit hit)
         {
             Vector3 startPoint = CorePoint.position;
             float distance = (targetPos - startPoint).magnitude;
@@ -250,9 +260,12 @@ namespace FPSGame.AI
                 float angle = Vector3.Angle(targetPos - startPoint, fow);
                 float scale = FastAngleScale(angle);
 
+                // 目标姿态缩放：趴/蹲把"能看见它的距离"按倍率缩小（1 = 站直，见 IActor.DetectRangeScale）
+                float stanceScale = target != null && target.IsValidMono() ? Mathf.Max(0.01f, target.DetectRangeScale) : 1f;
+
                 //Debug.LogError(transform.parent+"到目标点" + targetPos + "的距离为" + distance+"角度"+ angle+"角度允许的距离为"+ DetectionRange * scale,gameObject);
-                //如果到目标的距离小于视野范围*角度系数
-                allowRay = distance < DetectionRange * scale;
+                //如果到目标的距离小于视野范围*角度系数*姿态系数
+                allowRay = distance < DetectionRange * scale * stanceScale;
             }
 
             if (allowRay)
@@ -327,7 +340,7 @@ namespace FPSGame.AI
         protected bool CheckOldTarget()
         {
             //旧目标锁上了无视角度限制
-            if (CanLook(Target.Pos, true, out var hit))//可见反而是没有hit，因为排除的单位层)
+            if (CanLook(Target.Actor, Target.Pos, true, out var hit))//可见反而是没有hit，因为排除的单位层)
                 //&& targetColliders.Contains(hit.collider))
             {
                 // 如果有友方单位遮挡，视为不可见
@@ -368,7 +381,7 @@ namespace FPSGame.AI
             for (int i = 0, l = _targetBuffer.Count; i < l; ++i)
             {
                 IActor item = _targetBuffer[i];
-                if (CanLook(item.CenterPos,false, out var hit)//可见反而是没有hit
+                if (CanLook(item, item.CenterPos, false, out var hit)//可见反而是没有hit
                     && (newThreat=FpsHelper.ThreatValue(CorePoint.position, item))>closestThreat)
                 {
                     //Debug.LogError(transform.parent + "可以看见" + item+"碰撞"+hit.collider, transform);

@@ -5,6 +5,7 @@ using FPSGame.Core;
 using FPSGame.Attributes;
 using UnityEngine;
 using FPSGame.GameContract;
+using FPSGame.Utils;
 
 namespace FPSGame.Data
 {
@@ -48,10 +49,74 @@ namespace FPSGame.Data
         SupportWeapon = 32,
     }
 
+    /// <summary>纯展示用标签，不参与 AirdropLabelEnum 的分组与预览模型判定；位值只追加不重排。</summary>
+    [Flags]
+    public enum AirdropDisplayLabelEnum
+    {
+        [InspectorName("炸弹")]
+        Bomb = 1 << 0,
+        [InspectorName("轻甲穿透")]
+        LightArmorPenetration = 1 << 1,
+        [InspectorName("中甲穿透")]
+        MediumArmorPenetration = 1 << 2,
+        [InspectorName("重甲穿透")]
+        HeavyArmorPenetration = 1 << 3,
+        [InspectorName("反坦克")]
+        AntiTank = 1 << 4,
+        [InspectorName("凤鹰轰炸")]
+        EagleBombardment = 1 << 5,
+        [InspectorName("轨道武器")]
+        OrbitalWeapon = 1 << 6,
+        [InspectorName("背包")]
+        Backpack = 1 << 7,
+        [InspectorName("载具")]
+        Vehicle = 1 << 8,
+        [InspectorName("无人机")]
+        Drone = 1 << 9,
+        [InspectorName("燃烧")]
+        Incendiary = 1 << 10,
+        [InspectorName("毒气")]
+        Gas = 1 << 11,
+        [InspectorName("电弧")]
+        Arc = 1 << 12,
+        [InspectorName("冰冻")]
+        Freeze = 1 << 13,
+        [InspectorName("激光")]
+        Laser = 1 << 14,
+
+        [InspectorName("占位符2")]
+        placeholder2 = 1 << 15,
+        [InspectorName("占位符3")]
+        placeholder3 = 1 << 16,
+        [InspectorName("占位符4")]
+        placeholder4 = 1 << 17,
+
+        [InspectorName("支援武器")]
+        SupportWeapon = 1 << 18,
+        [InspectorName("占位符5")]
+        placeholder6 = 1 << 19,
+        
+        [InspectorName("逐发装填")]
+        RoundsReload = 1 << 20,
+        [InspectorName("近战")]
+        Melee = 1 << 21,
+        [InspectorName("充能")]
+        Charge = 1 << 22,
+        [InspectorName("固定装弹")]
+        FixedAmmo = 1 << 23,
+        [InspectorName("消耗品")]
+        Consumable = 1 << 24,
+
+        [InspectorName("哨戒炮")]
+        Sentry = 1 << 25,
+    }
+
 
     [CreateAssetMenu(fileName = "new Data", menuName = "Data/战备")]
     public class AirdropData_SO : ScriptableObject
     {
+
+
         [InspectorName("在战备配置界面隐藏")]
         public bool isHide;
         public int ID;
@@ -75,6 +140,9 @@ namespace FPSGame.Data
         public AirdropDeliveryEnum deliveryType;
         [InspectorName("标签")]
         public AirdropLabelEnum labels;
+        /// <summary>只供界面展示标签文字；分组与预览模型仍看 labels。</summary>
+        [InspectorName("显示标签")]
+        public AirdropDisplayLabelEnum displayLabels;
 
         [Space]
         [InspectorName("冷却")]
@@ -170,6 +238,23 @@ namespace FPSGame.Data
         public string AttrValue
         {
             get => arriveTime+"秒\n"+(arriveCount>0? arriveCount+"":"无限")+"\n"+(cool>900?"无法冷却": cool+"秒");
+        }
+
+        public string GetDisplayLabelText(string prefix = "")
+        {
+            var sb = new System.Text.StringBuilder();
+            ulong bits = Convert.ToUInt64(displayLabels);
+
+            foreach (AirdropDisplayLabelEnum value in Enum.GetValues(typeof(AirdropDisplayLabelEnum)))
+            {
+                ulong bit = Convert.ToUInt64(value);
+                if (bit == 0) continue;              // 跳过 None
+                if ((bits & bit) == 0) continue;     // 未勾选
+
+                if (sb.Length > 0) sb.Append('\n');
+                sb.Append(prefix).Append(Tool.GetEnumString(value));
+            }
+            return sb.ToString();
         }
 
 

@@ -51,6 +51,12 @@ public class BaseSelfController : MonoBehaviour, IUnit, FPSGame.GameContract.IUn
     [InspectorName("垂直旋转的下限")]
     protected float LowerRotationLimit=70;
 
+    /// <summary>仰角上限（度，正值）。做成可覆写：趴姿第一人称要收紧到 25，见 <c>PlayerController_Stance</c>。</summary>
+    protected virtual float PitchUpLimit => UpperRotationLimit;
+
+    /// <summary>俯角上限（度，正值）。</summary>
+    protected virtual float PitchDownLimit => LowerRotationLimit;
+
     public IHealth Health { get; private set; }
     public PlayerInputHandler InputHandler { get; private set; }
 
@@ -81,7 +87,7 @@ public class BaseSelfController : MonoBehaviour, IUnit, FPSGame.GameContract.IUn
     /// （盟友模型的武器挂点靠它俯仰，见 <c>PoseSnapshot.Pitch</c>）。
     /// <para>▍为什么不含屏震：屏震是**纯表现**，若混进这里，武器挂点朝向会跟着抖 ⇒ 子弹也跟着抖（不该影响精度）。
     /// 相机渲染要自己再叠 <see cref="ShakePitch"/>，见各应用点。</para></summary>
-    public float CameraPitch => Mathf.Clamp(m_CameraVerticalAngle + m_Recoil.Pitch, -UpperRotationLimit, LowerRotationLimit);
+    public float CameraPitch => Mathf.Clamp(m_CameraVerticalAngle + m_Recoil.Pitch, -PitchUpLimit, PitchDownLimit);
 
     /// <summary>后坐力俯仰偏移(度，负 = 抬头)：第三人称有自己的一套限位，需要单独取用</summary>
     public float RecoilPitch => m_Recoil.Pitch;
@@ -188,7 +194,7 @@ public class BaseSelfController : MonoBehaviour, IUnit, FPSGame.GameContract.IUn
         //后坐力不在这里算：它是 m_Recoil 里的独立偏移，由 Update 推进、CameraPitch/RecoilYaw 叠加输出
 
         //此处只设置，子类要抬头就自己把相机根据这个设置
-        m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -UpperRotationLimit, LowerRotationLimit);//-89,70
+        m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -PitchUpLimit, PitchDownLimit);//-89,70
 
     }
 

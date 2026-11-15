@@ -63,8 +63,34 @@ namespace FPSGame.Net
         /// <param name="data"><see cref="Serialize"/> 产出的字节</param>
         public static object Deserialize(Type type, byte[] data)
         {
+            return Deserialize(type, data, out _);
+        }
+
+        /// <summary>同上，并回报"读完声明的字段后还剩多少字节"。
+        /// <para>▍诊断用（2026-11-15）：正常载荷必须恰好读完（= 0）。&gt;0 说明字节流前面混进了别的东西
+        /// （两端 DTO 布局不同 / 信封错位）⇒ 这次解出来的值不可信，调用方据此留证据。</para>
+        /// <para>⚠ 对端字段比本端**多**时不算错：多出来的会被 <see cref="ReadValue"/> 里的 <c>Skip()</c> 吃掉。</para></summary>
+        public static object Deserialize(Type type, byte[] data, out int remaining)
+        {
             var reader = new MessagePackReader(new ReadOnlyMemory<byte>(data));
-            return ReadValue(ref reader, type);
+            object obj = ReadValue(ref reader, type);
+            // ⚠ 本工程的 MessagePack 版本里 MessagePackReader 没有 Remaining，只能用 Consumed 反推
+            remaining = data.Length - (int)reader.Consumed;
+            return obj;
+        }
+
+        /// <summary>该类型在线上占几个字段（= array header 的值）；-1 = 不是网络 DTO。诊断用（失败时打出来对照）。</summary>
+        public static int MemberCount(Type type)
+        {
+            try
+            {
+                Member[] members = TryGetMembers(type);
+                return members == null ? -1 : members.Length;
+            }
+            catch
+            {
+                return -1;   // 标了 [MessagePackObject] 却没有 [Key]：让调用方打日志，别在诊断路径上再抛一次
+            }
         }
 
         #endregion

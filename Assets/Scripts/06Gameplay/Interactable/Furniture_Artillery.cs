@@ -47,11 +47,19 @@ public class Furniture_Artillery : Furniture_Attached
     {
         base.Awake();
         m_weapon = GetComponentInChildren<WeaponController>();
+        // ⚠ prefab 漏挂 WeaponController 时这里是 null，而 PlaceHeldItem 里全是 m_weapon.xxx
+        //   （那条还在 4059 重放路径上）⇒ 配置错就一条日志 + 关掉本组件，别再让交互链进来。
+        if (!m_weapon)
+        {
+            Debug.LogError($"[火炮] {name} 上找不到 WeaponController ⇒ 本架不可用", this);
+            enabled = false;
+            return;
+        }
         m_weapon.OnShoot += OnShoot;
     }
     private void OnDestroy()
     {
-        m_weapon.OnShoot -= OnShoot;
+        if (m_weapon) m_weapon.OnShoot -= OnShoot;
         m_weapon = null;
     }
 
@@ -120,7 +128,8 @@ public class Furniture_Artillery : Furniture_Attached
     /// <summary>放下玩家手持的匹配物体：从装备移除、禁用家具、关闭重力、移到放置点位</summary>
     private void PlaceHeldItem(GameObject user)
     {
-        if (user == null || !user.TryGetComponent(out EquipController equip)) return;
+        // ⚠ m_weapon 为 null 时（Awake 已关组件，但外部可能仍持有本家具直接调 Handle）别往下走
+        if (user == null || !m_weapon || !user.TryGetComponent(out EquipController equip)) return;
         foreach (var kv in equip.Equips.ToList())
         {
             var furn = kv.Value;

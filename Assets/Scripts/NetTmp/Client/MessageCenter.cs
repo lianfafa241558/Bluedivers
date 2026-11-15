@@ -3,6 +3,7 @@ namespace FPSGame.Net
 {
 using System;
 using System.Collections.Generic;
+using System.Text;
 using KCPNet;
 using UnityEngine;
 
@@ -91,7 +92,14 @@ public static class MessageCenter
             // 2. 反序列化 Data，还原成具体消息对象（用注册时保存的类型）
             //    ⚠ 与 Pack 同理：必须走 NetMsgCodec，不能再用 MessagePackSerializer.Deserialize
             //       （它最终落到 DynamicObjectResolver，IL2CPP 下会抛 PlatformNotSupportedException）。
-            object body = NetMsgCodec.Deserialize(handler.MsgType, msg.Data);
+            object body = NetMsgCodec.Deserialize(handler.MsgType, msg.Data, out int remaining);
+
+            // ★ 载荷自检（2026-11-15）：读完声明的字段还剩下字节 ⇒ 两端 DTO 布局对不上（多端混旧包）。
+            //   这时值已经不可信，但解码"成功"了 ⇒ 不在这里留痕就完全查不到。
+            if (remaining > 0)
+            {
+                Debug.LogError($"[解码自检] cmd={msg.CmdId} type={handler.MsgType.Name} 解完还剩 {remaining} 字节 ⇒ 两端 DTO 布局不一致（多半混了旧包）；本次解析值不可信。{DescribeData(msg.Data)}");
+            }
 
             // 3. 调用对应的处理回调
             handler.Callback(body);
@@ -102,7 +110,25 @@ public static class MessageCenter
             //   只打 e.Message 会把"哪个处理器、哪一行"全丢掉（2026-10-06 打包版实测：
             //   只看到"消息 4004 处理失败:Object reference not set..."，定位不到具体位置）。
             Debug.LogError($"消息 {msg.CmdId} 处理失败:{e}");
+
+            // ★ 载荷自检（2026-11-15 加）：EndOfStream 这类"字节比声明短"的失败，光看异常分不清是
+            //   ①两端 4054 对应的 DTO 不同源（旧包）还是 ②载荷被截断（传输/信封）。
+            //   ⚠ NetMsgCodec 对字段数**增减是双向兼容**的（多→Skip、少→缺省）⇒ 单纯"字段数量不同"
+            //     不会抛这个异常，所以这两条日志（长度 + 头部字节 + 期望字段数）是唯一能定性的证据。
+            Debug.LogError($"[解码自检] cmd={msg.CmdId} type={handler.MsgType.Name} 期望字段={NetMsgCodec.MemberCount(handler.MsgType)} {DescribeData(msg.Data)}");
         }
+    }
+
+    /// <summary>诊断用：载荷长度 + 前 16 字节 hex（够看出 array header 的值与字段边界）。</summary>
+    private static string DescribeData(byte[] data)
+    {
+        if (data == null) return "len=null";
+        int n = data.Length < 16 ? data.Length : 16;
+        var sb = new StringBuilder(80);
+        sb.Append("len=").Append(data.Length).Append(" head=");
+        for (int i = 0; i < n; ++i) sb.Append(data[i].ToString("X2")).Append(' ');
+        if (data.Length > n) sb.Append("...");
+        return sb.ToString();
     }
 
     /// <summary>

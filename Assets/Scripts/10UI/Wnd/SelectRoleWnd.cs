@@ -416,8 +416,8 @@ public class SelectRoleWnd : Window
         SetSprite(weaponListRoot.GetChild(index, 2), weapon.WeaponIcon);
 
         var lenghts = weapon.UpgradeCount();
-        //Debug.Log("ID"+ arch.ID + "_" + weapon.WeaponName + "升级数量" + lenghts.Length);
-        var weaponData = ArchivesData_SO.Current.weaponUpgradeDic.TryGet(arch.ID + "_" + weapon.WeaponName, new(arch.ID + "_" + weapon.WeaponName, lenghts.Length));
+        // 存下来的档位数组长度可能和当前改装树对不上（prefab 改过配）⇒ 必须经这个入口对齐，别裸 TryGet
+        var weaponData = ArchivesData_SO.Current.GetWeaponUpgradeData(arch.ID, weapon.WeaponName, lenghts);
         for (int x = 0; x < lenghts.Length; ++x)
         {
             if (weaponData.selectIndex[x] >= 0)
@@ -502,7 +502,7 @@ public class SelectRoleWnd : Window
             
         var lenghts= weaponInst.UpgradeCount();
         var levels = weaponInst.UpgradeLevel();
-        archWeaponData = ArchivesData_SO.Current.weaponUpgradeDic.TryGet(arch.ID+"_"+ weaponInst.WeaponName, new(arch.ID + "_" + weaponInst.WeaponName, lenghts.Length));
+        archWeaponData = ArchivesData_SO.Current.GetWeaponUpgradeData(arch.ID, weaponInst.WeaponName, lenghts);
         RefreshWeaponLevel();
         var totleLenght = IEnumerableUtils.Sum(lenghts);
 

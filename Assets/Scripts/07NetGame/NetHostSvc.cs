@@ -51,6 +51,9 @@ public class NetHostSvc : MonoBehaviour
     [InspectorName("监听端口")]
     [SerializeField] private int hostPort = NetConfig.HostGamePort;
 
+    /// <summary>当前监听端口（只读）。给「局域网 IP」提示拼 <c>IP:端口</c> 用。</summary>
+    public int HostPort => hostPort;
+
     /// <summary>{要让成员用哪个地址回连我}（可选；空 = 让库用"收包源地址"兜底）。
     /// <para>▍用途：多网卡 / 虚拟局域网（ZeroTier、Radmin…）时，"广播出去的网卡"与"想让成员走的网卡"
     /// 可能不是同一块 ⇒ 在这里显式指定。库侧语义（2026-10-13 起）：**填了可解析 IP 就信任它**，
@@ -345,6 +348,9 @@ public class NetHostSvc : MonoBehaviour
     /// </summary>
     public void StopHost()
     {
+        // ★ 先通知所有成员"房间已解散"再关服：UDP 没有 FIN，不发这条他们只能等心跳静默（5s）才发现
+        _server?.SendToAll(MessageCenter.Pack(CmdId.HostDismissNtf, new HostDismissMsg { Reason = "房间已被房主解散" }));
+
         _broadcaster?.Stop();
         _broadcaster = null;
 

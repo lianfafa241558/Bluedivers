@@ -164,7 +164,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 0
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -187,6 +186,7 @@ GameObject:
   - component: {fileID: 6976885803080383999}
   - component: {fileID: 6976885803080383995}
   - component: {fileID: -2478132353070689857}
+  - component: {fileID: 4416555758914683363}
   m_Layer: 6
   m_Name: Dec_Front
   m_TagString: Untagged
@@ -386,6 +386,34 @@ MonoBehaviour:
   fxMaterial: {fileID: 2100000, guid: b3ba03c7840b27144ad2bd663a4e0106, type: 2}
   events: []
   BirthMaterial: {fileID: 2100000, guid: 87de3173c6fa6f74286bdef615d4c14d, type: 2}
+--- !u!114 &4416555758914683363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6976885803080383985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f18f2dad46d5d1345a24144ee1732de5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Cool: 30
+  Duration: 1
+  releaseType: 1
+  MeetDetectedTime: 1
+  Range: 8
+  DamageSkillTime: 0
+  tag: 0
+  m_Controller: {fileID: 0}
+  nowCoolTime: 0
+  nowDurationTime: 0
+  m_LastDetectedTarget: 0
+  _flyHeight: 4
+  _stopDistance: 2
+  _quotaCost: 0.3
+  _ShowJumped: 0
+  _ShowUsedQuota: 0
 --- !u!1 &6976885803152303137
 GameObject:
   m_ObjectHideFlags: 0

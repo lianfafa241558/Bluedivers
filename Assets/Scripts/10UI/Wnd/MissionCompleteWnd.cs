@@ -81,7 +81,10 @@ public class MissionCompleteWnd : Window
         if (mission.data == null) Debug.LogError($"[任务完成窗] 任务「{mission.name}」没有任务数据(data)，奖励显示按 0 处理", mission);
         SetText(item1, reward);
         SetText(item2, reward / 5);
-        anim.Play("Entry", 0, 0);
+        // anim 是场景序列化引用：漏挂 / 被别的订阅者随手拆掉时，这里就是本方法唯一裸露的崩溃点
+        // （编辑器报 MissingReferenceException、打包版报 NullReferenceException，栈里只剩本方法名）。
+        if (anim) anim.Play("Entry", 0, 0);
+        else Debug.LogWarning("[任务完成窗] 没有 Animator(anim)，跳过 Entry 动画", this);
         if (!mission.HasTag(FPSGame.GameContract.MissionTag.NoAudio)) AudioSvc.PlaySound(new(mission.missionType == MissionType.Main || mission.missionType == MissionType.Sub ? m_MainCompletedSound : m_ExtraCompletedSound, AudioGroups.UI,1,1));
         AudioSvc.Suppressed(3);
     }

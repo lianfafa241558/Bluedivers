@@ -60,6 +60,10 @@ namespace FPSGame.Managers
             _pendingDamages.Clear();
 
             BattleEventBus.OnEnemyMove += OnLocalMove;
+            // ★ 炮塔目标：房主把"锁了谁"下发全体（两端锁同一目标；成员端不再自己扫，见 DetectionModule.RemoteDrivenTarget）
+            BattleEventBus.OnTurretTarget += OnLocalTurretTarget;
+            var roleFlow = FPSGame.Net.NetRoomFlow.Instance;
+            DetectionModule.RemoteDrivenTarget = roleFlow != null && roleFlow.SelfSid != 0u;
 
             BattleEventBus.OnEnemyHit += OnLocalHit;
             BattleEventBus.OnEnemyDamaged += OnLocalDamaged;
@@ -69,6 +73,7 @@ namespace FPSGame.Managers
             UnitEventBus.OnSpecUnitDead += OnLocalDeath;
             UnitEventBus.OnSpecUnitCreate += OnEnemyCreated;
 
+            FPSGame.Net.NetRoomFlow.OnTurretTarget += OnRemoteTurretTarget;
             FPSGame.Net.NetRoomFlow.OnEnemyMove += OnRemoteMove;
             FPSGame.Net.NetRoomFlow.OnEnemyHitUp += OnRemoteHit;
             FPSGame.Net.NetRoomFlow.OnEnemyDamaged += OnRemoteDamaged;
@@ -85,6 +90,10 @@ namespace FPSGame.Managers
             _pendingDamages.Clear();
 
             BattleEventBus.OnEnemyMove -= OnLocalMove;
+            BattleEventBus.OnTurretTarget -= OnLocalTurretTarget;
+            // ⚠ 必须复位：否则退到单机 / 下一局，炮塔不再自己扫目标（同 RemoteDrivenMovement 那个坑）
+            DetectionModule.RemoteDrivenTarget = false;
+
             BattleEventBus.OnEnemyHit -= OnLocalHit;
             BattleEventBus.OnEnemyDamaged -= OnLocalDamaged;
             UnitEventBus.OnEnemyDead -= OnLocalDeath;
@@ -92,6 +101,7 @@ namespace FPSGame.Managers
             UnitEventBus.OnSpecUnitDead -= OnLocalDeath;
             UnitEventBus.OnSpecUnitCreate -= OnEnemyCreated;
 
+            FPSGame.Net.NetRoomFlow.OnTurretTarget -= OnRemoteTurretTarget;
             FPSGame.Net.NetRoomFlow.OnEnemyMove -= OnRemoteMove;
             FPSGame.Net.NetRoomFlow.OnEnemyHitUp -= OnRemoteHit;
             FPSGame.Net.NetRoomFlow.OnEnemyDamaged -= OnRemoteDamaged;
@@ -109,6 +119,7 @@ namespace FPSGame.Managers
         static void OnHostLost()
         {
             EnemyController.RemoteDrivenMovement = false;
+            DetectionModule.RemoteDrivenTarget = false;   // 炮塔目标也恢复本端自扫（否则永远等一个已经没有的房主）
             // 房主没了 ⇒ tick 伤害也没人广播了 ⇒ 本端重新变成 tick 权威（否则怪再也不流血/不掉异常血）
             FPSGame.Data.BattleState.IsTickDamageAuthority = true;
             FPSGame.Data.BattleState.IsVehicleDamageAuthority = true;   // 载具同理：房主没了 ⇒ 本端重新权威（否则载具不再掉血）
@@ -128,6 +139,16 @@ namespace FPSGame.Managers
                 $"netId={netId} 目标={destination:F2} 是房主={(flow != null && flow.IsHost)} 本机sid={(flow != null ? flow.SelfSid.ToString() : "-")}",
                 netId, 2f);
             flow?.SendEnemyMove(netId, destination);   // 内部判 IsHost
+        }
+
+        /// <summary>【房主】某座炮塔换了目标（0 = 丢目标）⇒ 下发全体；成员端不回传（<c>RemoteDrivenTarget</c> 已挡住）。</summary>
+        static void OnLocalTurretTarget(int netId, int targetNetId)
+        {
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            if (flow == null || !flow.IsHost) return;          // 房主权威（单机没有对端，SendTurretTarget 内部也会挡）
+            FPSGame.Utils.NetSyncLog.AiLog("炮塔目标·发",
+                $"netId={netId} 目标={targetNetId}", netId, 1f);
+            flow.SendTurretTarget(netId, targetNetId);
         }
 
         static void OnLocalHit(int netId, int damage, int attackerNetId, float[] groups, int part, int causedNetId)
@@ -166,6 +187,35 @@ namespace FPSGame.Managers
         #endregion
 
         #region 网络 → 本端
+
+        /// <summary>【成员】应用房主下发的炮塔目标（<c>0</c> = 丢目标）。
+        /// <para>⚠ 找不到本端副本时**直接返回**（不像移动那样暂存）：交战中房主 1Hz 会重发，天然自愈。</para></summary>
+        static void OnRemoteTurretTarget(TurretTargetMsg m)
+        {
+            var flow = FPSGame.Net.NetRoomFlow.Instance;
+            if (flow == null || flow.IsHost) return;     // 房主是发布方，不收自己那条
+            if (m == null || m.NetId == 0) return;
+
+            var module = ResolveTurretModule(m.NetId);
+            if (module == null) return;                  // 本端还没有这份副本 / 不是炮塔类
+
+            Actor target = m.TargetNetId != 0 ? FindActor(m.TargetNetId) : null;
+            FPSGame.Utils.NetSyncLog.AiLog("炮塔目标·收",
+                $"netId={m.NetId} 目标={m.TargetNetId}（本端解析={(target != null ? target.ShowName : "<无>")}）", m.NetId, 2f);
+            module.ApplyRemoteTarget(target);
+        }
+
+        /// <summary>按炮塔 NetId 取它的**炮塔专用**侦测模块（普通敌人不吃这条：它们仍各算各的目标）。</summary>
+        static DetectionModuleTurret ResolveTurretModule(int netId)
+        {
+            var actor = FindActor(netId);
+            if (actor == null) return null;
+
+            var ctrl = actor.GetComponent<EnemyController>();
+            if (ctrl == null) ctrl = actor.GetComponentInParent<EnemyController>();
+            if (ctrl == null) ctrl = actor.GetComponentInChildren<EnemyController>(true);
+            return ctrl != null ? ctrl.DetectionModule as DetectionModuleTurret : null;
+        }
 
         static void OnRemoteMove(int netId, Vector3 destination)
         {

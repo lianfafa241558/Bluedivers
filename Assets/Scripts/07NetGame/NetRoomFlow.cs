@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using KCPNet;
 using UnityEngine;
 
@@ -40,6 +41,13 @@ namespace FPSGame.Net
         /// <para>另：<c>NetFriendBridge</c> 会销毁**全部**盟友实例（房主没了 ⇒ 别人的位姿/血量再也不会更新，
         /// 留着只会骗人）⇒ 模型与 <c>PlayerWnd</c> 那几行一起收掉，观感就是回到单机。</para></summary>
         public static event Action OnHostLost;
+
+        /// <summary>【成员侧】房主**主动解散**了房间（关房 / 房主去加入别人的房）。
+        /// <para>▍与 <see cref="OnHostLost"/> 的区别：那条是"断了但没人通知"（只能等心跳静默 5s 发现）；
+        /// 这条是房主显式告知 ⇒ 成员立刻回单机，并且可以弹「房间已被房主解散」而不是"房主掉线"。
+        /// 参数 = 提示文案（可能为空）。</para>
+        /// <para>⚠ 消费方：<c>WndHub</c>（弹 Tip）。各桥的复位仍走 <c>OnHostLost</c>（本类会一并抛）。</para></summary>
+        public static event Action<string> OnRoomDismissed;
 
         /// <summary>房主广播的玩家列表 + 详细资料（入房成功、有人进出、准备/资料变化时都会来）。
         /// <c>profiles</c> 与 <c>infos</c> **同序同长**（房主保证）⇒ 消费方直接按下标取，不必判空。</summary>
@@ -176,8 +184,14 @@ namespace FPSGame.Net
         /// <summary>【双向】呼叫凯伊（点）⇒ 远端让本机凯伊走到同一点（放信标 / 就近救人）。</summary>
         public static event Action<CallKaiMsg> OnCallKai;
 
+        /// <summary>【成员侧】房主下发的炮塔目标（换目标即发 + 交战中 1s 幂等重发）⇒ 本端炮塔锁同一目标。</summary>
+        public static event Action<TurretTargetMsg> OnTurretTarget;
+
         /// <summary>【成员侧】房主下发的追击波次中心（~2Hz）⇒ 本端只跟随，不自己算"最近玩家"。</summary>
         public static event Action<WaveCenterMsg> OnWaveCenter;
+
+        /// <summary>【成员侧】房主下发的列车弧长快照（~2Hz，见 <c>CmdId.TrainPoseSync</c>）⇒ 本端列车按弧长追赶。</summary>
+        public static event Action<TrainPoseBatchMsg> OnTrainPose;
 
         /// <summary>【双向】按键终端(KeyScreen)阶段推进（键 = 终端家具 SyncId）⇒ 其余端只应用、不自行推进。</summary>
         public static event Action<KeyScreenStageMsg> OnKeyScreenStage;
@@ -267,6 +281,8 @@ namespace FPSGame.Net
             MessageCenter.Register<SceneUnitMoveMsg>(CmdId.SceneUnitMoveSync, HandleSceneUnitMoveSync);
             MessageCenter.Register<AirdropCallMsg>(CmdId.AirdropCallSync, HandleAirdropCallSync);
             MessageCenter.Register<PlayerLeftMsg>(CmdId.PlayerLeftNtf, HandlePlayerLeftNtf);
+            // 房主解散房间：立刻回单机（不等心跳静默），并通知 UI 弹提示
+            MessageCenter.Register<HostDismissMsg>(CmdId.HostDismissNtf, HandleHostDismiss);
             MessageCenter.Register<PlayerSpeechMsg>(CmdId.SpeechSync, HandleSpeechSync);
             // 两条都注册：房主只会收到 Req、成员只会收到 Ntf（另一边永远收不到）⇒ 不必按角色分支，
             // 也避免"注册时角色还没定"（本组件在 Awake 注册，那时可能还没开房/还没连上）
@@ -278,8 +294,12 @@ namespace FPSGame.Net
             MessageCenter.Register<MissionUpdateMsg>(CmdId.MissionUpdateNtf, HandleMissionUpdateNtf);
             MessageCenter.Register<FurnitureOperateMsg>(CmdId.FurnitureOperateNtf, HandleFurnitureOperateNtf);
             MessageCenter.Register<MarkMsg>(CmdId.MarkNtf, HandleMarkNtf);
+            // 炮塔目标（房主权威单向）：两端炮塔锁同一目标（见 CmdId.TurretTargetSync）
+            MessageCenter.Register<TurretTargetMsg>(CmdId.TurretTargetSync, HandleTurretTargetSync);
             MessageCenter.Register<CallKaiMsg>(CmdId.CallKaiNtf, HandleCallKaiNtf);
             MessageCenter.Register<WaveCenterMsg>(CmdId.WaveCenterNtf, HandleWaveCenterNtf);
+            // 列车弧长快照（房主 -> 全体，~2Hz）：两端各自 Instantiate 的火车靠它对齐位置
+            MessageCenter.Register<TrainPoseBatchMsg>(CmdId.TrainPoseSync, HandleTrainPoseSync);
             // 开局加载闸门：房主"全体加载完成 ⇒ 一起开打"（成员收广播、房主收本地自派发，走同一条路）
             MessageCenter.Register<BattleStartMsg>(CmdId.BattleStartSync, HandleBattleStartSync);
             // 场景可破坏物（油桶这类）被打掉 ⇒ 远端把同一件也打掉（双向一条；DTO 与伤害族共用，键走 DamageMsg.Key）
@@ -317,6 +337,7 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.SceneUnitMoveSync);
             MessageCenter.Unregister(CmdId.AirdropCallSync);
             MessageCenter.Unregister(CmdId.PlayerLeftNtf);
+            MessageCenter.Unregister(CmdId.HostDismissNtf);
             MessageCenter.Unregister(CmdId.SpeechSync);
             MessageCenter.Unregister(CmdId.SceneActorReq);
             MessageCenter.Unregister(CmdId.SceneActorNtf);
@@ -327,6 +348,8 @@ namespace FPSGame.Net
             MessageCenter.Unregister(CmdId.MarkNtf);
             MessageCenter.Unregister(CmdId.CallKaiNtf);
             MessageCenter.Unregister(CmdId.WaveCenterNtf);
+            MessageCenter.Unregister(CmdId.TrainPoseSync);
+            MessageCenter.Unregister(CmdId.TurretTargetSync);
             MessageCenter.Unregister(CmdId.BattleStartSync);
             MessageCenter.Unregister(CmdId.SceneDestructibleNtf);
             MessageCenter.Unregister(CmdId.KeyScreenStageNtf);
@@ -421,6 +444,16 @@ namespace FPSGame.Net
                 return;
             }
 
+            // ★ 自己还开着房 ⇒ 先关掉：本端必须**二选一**（房主 or 成员）。
+            //   否则 <see cref="IsHost"/> 那个二元判据同时成立 ⇒ 所有上行（战备/准备/加载票/资料）
+            //   都走"房主分支"、永远不发给新东家；DetectHostLost 也因 IsHost 直接 return（新东家掉线发现不了）。
+            //   ⚠ 原来的房间成员会失去房主：他们靠心跳静默（5s）自行回单机，没有更快的通知通道。
+            if (IsHost)
+            {
+                Debug.LogWarning("[NetRoomFlow] 要加入别人的房间 ⇒ 先关闭自己开的房（原房间成员将各自回单机）");
+                NetHostSvc.Instance.StopHost();
+            }
+
             if (IsJoining)
             {
                 cb?.Invoke(false, "正在连接中，请稍候");
@@ -468,6 +501,31 @@ namespace FPSGame.Net
             // ★ 必须清：DetectHostLost 靠它区分"房主掉了"与"我主动退房"，而 Disconnect 是**同步**把
             //   IsConnected 置 false 的 ⇒ 不清的话下一帧就按"房主掉了"走一遍（误报 + 白跑一次 OnHostLost 的收尾）。
             _wasInRoom = false;
+        }
+
+        /// <summary>【成员侧】房主解散房间（4036）：立刻退出、回单机，并让 UI 弹「房间已被房主解散」。</summary>
+        private void HandleHostDismiss(HostDismissMsg msg)
+        {
+            if (IsHost) return;                              // 房主自己不该收到（防误派发）
+            if (CurrentRoom == null && !IsJoining) return;    // 已经不在房间里（重复包 / 迟到包）
+
+            string reason = msg != null && !string.IsNullOrEmpty(msg.Reason)
+                ? msg.Reason
+                : "房主解散了房间，已回到单机模式。";
+            Debug.LogWarning("[NetRoomFlow] 收到房主解散通知：" + reason);
+
+            NetSvc.Instance?.Disconnect();
+            IsJoining = false;
+            _joinCallback = null;
+            _pendingRoom = null;
+            CurrentRoom = null;
+            SelfSid = 0u;
+            SelfHostIndex = -1;
+            _battleStarted = false;
+            _wasInRoom = false;        // 本端主动收尾：别让 DetectHostLost 再按"房主掉了"跑一遍
+
+            OnHostLost?.Invoke();          // 09 各桥复位（敌人/任务/NPC/终端/载具/盟友）
+            OnRoomDismissed?.Invoke(reason);
         }
 
         // ==================== 开局加载闸门（等所有人都加载完再一起开打，2026-10-10） ====================
@@ -616,6 +674,13 @@ namespace FPSGame.Net
             {
                 reason = "场景缺少 NetHostSvc（网络未初始化）";
                 return false;
+            }
+
+            // ★ 对称的另一半：已经在别人房里 ⇒ 先退房，否则本端同时是"成员 + 房主"（与 Join 同一类冲突）
+            if (NetSvc.Instance != null && NetSvc.Instance.IsConnected)
+            {
+                Debug.LogWarning("[NetRoomFlow] 要开自己的房 ⇒ 先退出别人的房间");
+                Leave();
             }
 
             try
@@ -1179,10 +1244,16 @@ namespace FPSGame.Net
         /// <para>▍<paramref name="stateKey"/> 非空 = 这是一条**状态**同步（不是交互重放）：接收端走
         /// <c>Furniture_Attached.ApplyRemoteState</c> 而不是 <c>Operate()</c> —— 用于"改了状态但没人交互"
         /// （如任务把管道打成 <c>PipeError</c>）。<paramref name="state"/> 只是编码，接收端可用 Key 自行解析。</para></summary>
-        public void SendFurnitureOperate(int syncId, uint sid, int state = 0, string stateKey = null)
+        public void SendFurnitureOperate(int syncId, uint sid, int state = 0, string stateKey = null,
+            string id = null, Vector3? senderPos = null)
         {
+            var p = senderPos ?? default;
             var msg = MessageCenter.Pack(CmdId.FurnitureOperateNtf,
-                new FurnitureOperateMsg { SyncId = syncId, Sid = sid, State = state, StateKey = stateKey });
+                new FurnitureOperateMsg
+                {
+                    SyncId = syncId, Sid = sid, State = state, StateKey = stateKey,
+                    Id = id, X = p.x, Y = p.y, Z = p.z,   // 软键：两端各生成一份的物件靠 Id+位置兜底匹配
+                });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
             else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
@@ -1204,10 +1275,15 @@ namespace FPSGame.Net
         }
 
         /// <summary>终端阶段推进：驱动端上报 / 房主转发全体（走向由 09 侧的 NetKeyScreenBridge 决定）。</summary>
-        public void SendKeyScreenStage(int syncId, uint sid, int stage)
+        public void SendKeyScreenStage(int syncId, uint sid, int stage, string id = null, Vector3? senderPos = null)
         {
+            var p = senderPos ?? default;
             var msg = MessageCenter.Pack(CmdId.KeyScreenStageNtf,
-                new KeyScreenStageMsg { SyncId = syncId, Sid = sid, Stage = stage });
+                new KeyScreenStageMsg
+                {
+                    SyncId = syncId, Sid = sid, Stage = stage,
+                    Id = id, X = p.x, Y = p.y, Z = p.z,   // 软键（撤离信标这类两端各生成一份的终端）
+                });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
             else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
@@ -1246,10 +1322,15 @@ namespace FPSGame.Net
         }
 
         /// <summary>终端输入：驱动端上报 / 房主转发全体（走向由 09 侧的 NetKeyScreenBridge 决定）。</summary>
-        public void SendKeyScreenInput(int syncId, uint sid, int key, int kind)
+        public void SendKeyScreenInput(int syncId, uint sid, int key, int kind, string id = null, Vector3? senderPos = null)
         {
+            var p = senderPos ?? default;
             var msg = MessageCenter.Pack(CmdId.KeyScreenInputNtf,
-                new KeyScreenInputMsg { SyncId = syncId, Sid = sid, Key = key, Kind = kind });
+                new KeyScreenInputMsg
+                {
+                    SyncId = syncId, Sid = sid, Key = key, Kind = kind,
+                    Id = id, X = p.x, Y = p.y, Z = p.z,   // 软键（同阶段消息口径）
+                });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
             else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
@@ -1276,10 +1357,12 @@ namespace FPSGame.Net
         }
 
         /// <summary>标记点位：成员上报房主 / 房主转发全体（走向由 09 侧的 NetActionBridge 决定）。</summary>
-        public void SendMark(uint sid, float x, float y, float z)
+        /// <param name="targetNetId">被标记单位的 <c>Actor.NetId</c>（0 = 只标了点）；收端按号取本端那份 ⇒
+        /// 炮塔「响应玩家标记」在远端也能转向（原来引用过不了网，只能传 null）。</param>
+        public void SendMark(uint sid, float x, float y, float z, int targetNetId = 0)
         {
             var msg = MessageCenter.Pack(CmdId.MarkNtf,
-                new MarkMsg { Sid = sid, Kind = 0, X = x, Y = y, Z = z });
+                new MarkMsg { Sid = sid, Kind = 0, X = x, Y = y, Z = z, TargetNetId = targetNetId });
 
             if (IsHost) NetHostSvc.Instance?.SendToAll(msg);
             else if (CanSendToHost) NetSvc.Instance.SendMsg(msg);
@@ -1300,6 +1383,19 @@ namespace FPSGame.Net
             if (m != null) OnMark?.Invoke(m);
         }
 
+        /// <summary>【房主】下发某座炮塔当前锁定的目标（0 = 丢目标）。只在房主端有调用点。</summary>
+        public void SendTurretTarget(int netId, int targetNetId)
+        {
+            if (!IsHost || netId == 0) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.TurretTargetSync,
+                new TurretTargetMsg { NetId = netId, TargetNetId = targetNetId }));
+        }
+
+        private void HandleTurretTargetSync(TurretTargetMsg m)
+        {
+            if (m != null) OnTurretTarget?.Invoke(m);
+        }
+
         private void HandleCallKaiNtf(CallKaiMsg m)
         {
             if (m != null) OnCallKai?.Invoke(m);
@@ -1316,6 +1412,20 @@ namespace FPSGame.Net
         private void HandleWaveCenterNtf(WaveCenterMsg m)
         {
             if (m != null) OnWaveCenter?.Invoke(m);
+        }
+
+        /// <summary>【房主】下发列车弧长快照（节流由 06 的拦截火车任务做，这里只打包）。
+        /// <para>⚠ 不做本地自派发：房主自己那份列车就是权威，本地已经在跑，回灌反而会自己校正自己。</para></summary>
+        public void SendTrainPose(List<TrainPoseMsg> items)
+        {
+            if (!IsHost || items == null || items.Count == 0) return;
+            NetHostSvc.Instance?.SendToAll(MessageCenter.Pack(CmdId.TrainPoseSync,
+                new TrainPoseBatchMsg { Items = items.ToArray() }));
+        }
+
+        private void HandleTrainPoseSync(TrainPoseBatchMsg m)
+        {
+            if (m?.Items != null && m.Items.Length > 0) OnTrainPose?.Invoke(m);
         }
 
         private void HandleLoadoutSync(PlayerLoadoutMsg m)

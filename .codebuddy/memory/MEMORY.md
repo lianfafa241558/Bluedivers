@@ -48,7 +48,7 @@
 | 房间 / 开房 / 阶段 / 名单 / 会话 / 房主掉线 | `topics/net-flow.md` |
 | 搜不到 / 连不上 / 版本门槛 | `topics/net-connect.md` |
 | 战斗同步 / 世界模型 / 种子 / 波次 / 消息号 CmdId | `topics/net-battle.md` · `net-battle-msg.md` |
-| NetId / 号段 / 生成器复刻（HostSpawn 4063）/ 任务炮塔 | `topics/net-netid.md` · `net-spawn.md` |
+| NetId / 号段 / 生成器复刻（HostSpawn 4063）/ 任务炮塔 / **列车 4067 弧长** | `topics/net-netid.md` · `net-spawn.md §7.2y` |
 | 伤害同步 / DamageMsg / 起源 vs 直接来源 | `topics/net-damage.md` |
 | **谁该上报伤害**（唯一入口）/ 护盾通道 / `None` 不吃范围伤害 | `topics/net-damage-report.md` |
 | 两端各算一次 / 伤害翻倍 / 支援单位同步 | `topics/net-dup-damage.md` |

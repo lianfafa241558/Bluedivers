@@ -1124,7 +1124,7 @@ namespace FPSGame.Gameplay
             {
                 var arch = ArchivesData_SO.Current.GetRoleCfg(m_PlayerCharacterController.Id);//数据自持：玩法层不再直连 09Manager（ArchiveLoader）
                 var lenghts = weaponInstance.UpgradeCount();
-                var archWeaponData = ArchivesData_SO.Current.weaponUpgradeDic.TryGet(arch.ID + "_" + weaponInstance.WeaponName, new(arch.ID + "_" + weaponInstance.WeaponName, lenghts.Length));
+                var archWeaponData = ArchivesData_SO.Current.GetWeaponUpgradeData(arch.ID, weaponInstance.WeaponName, lenghts);
                 weaponInstance.ApplyUpgrade(archWeaponData.selectIndex, archWeaponData.selectModuleIndex);
             }
 

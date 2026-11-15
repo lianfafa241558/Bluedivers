@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 733078088}
   - component: {fileID: 733078087}
-  m_Layer: 10
+  m_Layer: 6
   m_Name: Weapon_Lamp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -132,7 +132,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 0
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -150,7 +149,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1618611148}
   - component: {fileID: 1618611149}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DetectionModule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -212,7 +211,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2080002075}
-  m_Layer: 10
+  m_Layer: 6
   m_Name: GunRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -302,10 +301,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8159412932280508937, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: -5107054126005254486, guid: eb6945ceeb524c34eafcb4551c4d6396,
         type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.53
+      objectReference: {fileID: 0}
+    - target: {fileID: -3441741364759053172, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: -3385604430752132528, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: -2797864980895152918, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: -2532592831398241129, guid: eb6945ceeb524c34eafcb4551c4d6396,
         type: 3}
@@ -317,20 +336,50 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: -2.983933e-18
       objectReference: {fileID: 0}
+    - target: {fileID: -2240151287705473546, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: -1241058847572682039, guid: eb6945ceeb524c34eafcb4551c4d6396,
         type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.53
+      objectReference: {fileID: 0}
+    - target: {fileID: -511657747548963401, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: -412989040442181847, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: eb6945ceeb524c34eafcb4551c4d6396,
         type: 3}
       propertyPath: m_Name
       value: LampTower
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 2726568780636716469, guid: eb6945ceeb524c34eafcb4551c4d6396,
         type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823340429344771396, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4140668533725440856, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4918753458281921464, guid: eb6945ceeb524c34eafcb4551c4d6396,
         type: 3}
@@ -341,6 +390,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 7789475227647485745, guid: eb6945ceeb524c34eafcb4551c4d6396,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 8001793519699034412, guid: eb6945ceeb524c34eafcb4551c4d6396,
         type: 3}
@@ -741,10 +795,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4001177412378443822, guid: 099387833863da74a904343ca5a1ee14,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 4080690665424694982, guid: 099387833863da74a904343ca5a1ee14,
         type: 3}
       propertyPath: m_AdditionalLightsShadowResolutionTier
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4922104531926061740, guid: 099387833863da74a904343ca5a1ee14,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5778750166032446646, guid: 099387833863da74a904343ca5a1ee14,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6241943110601904227, guid: 099387833863da74a904343ca5a1ee14,
         type: 3}
@@ -781,10 +850,25 @@ PrefabInstance:
       propertyPath: m_Name
       value: Lamp
       objectReference: {fileID: 0}
+    - target: {fileID: 6323003738840652307, guid: 099387833863da74a904343ca5a1ee14,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6347218132346430861, guid: 099387833863da74a904343ca5a1ee14,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 6347218132346430861, guid: 099387833863da74a904343ca5a1ee14,
         type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6374450459126905207, guid: 099387833863da74a904343ca5a1ee14,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6697981615863234729, guid: 099387833863da74a904343ca5a1ee14,
         type: 3}

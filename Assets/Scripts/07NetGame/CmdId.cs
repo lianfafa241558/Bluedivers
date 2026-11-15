@@ -39,6 +39,11 @@
         /// （重排会让 players 下标漂移），但"有人走了"这件事必须传出去 ⇒ 用这条**只带 sid、不重排**的消息。</summary>
         public const int PlayerLeftNtf = 4008;
 
+        /// <summary>房主 -> 全体：**房主解散了房间**（关房 / 房主去加入别人的房间）。
+        /// <para>▍为什么要单独一条：UDP 没有 FIN，只停服的话成员得等心跳静默（5s）才发觉；
+        /// 这条让他们**立刻**回单机并弹「房间已被房主解散」，而不是当成"房主掉线"。</para></summary>
+        public const int HostDismissNtf = 4036;
+
         /// <summary>成员 -> 房主：本机**战斗场景加载完成**（本地初始化跑到 <c>BattleManager</c> 的开局闸门）。</summary>
         public const int LoadCompleteNtf = 4009;
         /// <summary>房主 -> 全体：**全体加载完成 ⇒ 一起开打**（各端凭它把 <c>IsStartBattle</c> 打开）。
@@ -191,6 +196,25 @@
         public const int EvacuateNtf = 4065;
         /// <summary>房主 -> 全体：任务状态/进度（<c>Key = MissionBase.netOrder</c>）。</summary>
         public const int MissionUpdateNtf = 4066;
+
+        /// <summary>房主 -> 全体：**列车弧长快照**（拦截火车，~2Hz、幂等全量）。
+        /// <para>▍为什么单独一条、不复用 5002 位姿：5002 的键是玩家 sid、载荷是整套 (XYZ/Yaw/Pitch/Stance)；
+        /// 而列车的位姿由"同一条确定性轨道 + 已行驶弧长"唯一决定（两端轨道由 <c>BattleRandom</c> 同序算出）
+        /// ⇒ 只发一个 float 就够，且车厢按弧长偏移自动跟随，不需要每节各占一个键。</para>
+        /// <para>▍为什么不能靠"两端各自积分"：<c>TrainUnit</c> 每帧按 <c>Time.deltaTime</c> 累加，发车时刻又由各端
+        /// 自己的 <c>Tick</c> 驱动 ⇒ 帧率/卡顿不同就是固定偏移，且 Unity 的 <c>maximumDeltaTime</c> 会让丢的时间永久追不回来。</para></summary>
+        public const int TrainPoseSync = 4067;
+
+        // ===== 炮塔目标 =====
+        /// <summary>房主 -> 全体：**炮塔当前锁定的目标**（键 = 炮塔 <c>Actor.NetId</c>，值 = 目标 <c>Actor.NetId</c>，0 = 丢目标）。
+        /// <para>▍为什么需要：<c>EnemyTurret</c> 的目标来自 <c>DetectionModule.Target</c>，而
+        /// <c>DetectionModule.Tick → HandleTargetDetection</c> **两端都在跑** ⇒ 同一座炮塔两端可能锁**不同目标**；
+        /// 非权威端的 AI 打人伤害是**落地**的 ⇒ 会变成"实际挨打的人不一致"，不只是观感问题。</para>
+        /// <para>▍为什么同步"目标号"而不是炮口角度：角度由各端按**本端那份目标**的位置每帧本地算
+        /// （<c>Turret.Look</c> + 重力预判） ⇒ 只差"敌人位置同步延迟"那几米；发四元数反而更大且会与本地物理打架。</para>
+        /// <para>▍频率（用户口径：可低）：换目标时立即发一条，交战中另按 1s 幂等重发
+        /// （兜住"消息比本端副本先到"以及偶发丢弃），详见 <c>EnemyTurret.TargetReportInterval</c>。</para></summary>
+        public const int TurretTargetSync = 4068;
 
         #endregion
 

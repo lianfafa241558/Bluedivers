@@ -86,24 +86,25 @@ public class Furniture_General : Furniture_Attached
             }
         },
 
-        ["SettingWnd"] = new() {
-            _Operate = (furn) => {
-                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.Setting);
-                furn.BaseOp();
-            }
-        },
+        //["SettingWnd"] = new() {
+        //    _Operate = (furn) => {
+        //        FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.Setting);
+        //        furn.BaseOp();
+        //    }
+        //},
 
-        ["AirdropConfigWnd"] = new() {
-            _Operate = (furn) => {
-                FPSGame.Gameplay.GlobalEventBus.OpenWnd(FPSGame.GameContract.WndType.AirdropConfig);
-                furn.BaseOp();
-            }
-        },
 
         
         ["KeyScreen"] = new (){
             _Operate = (Furniture_General furn) => {
-                furn.gameObject.GetComponent<KeyScreen>().SetOwener(furn.inOperate || !furn.owner ? null: furn.owner.gameObject);
+                // ⚠ Id 配成 KeyScreen 却没挂 KeyScreen 组件就会 NRE（4059 重放也走这条）⇒ 一条日志、不推阶段
+                var screen = furn.GetComponent<KeyScreen>();
+                if (!screen)
+                {
+                    Debug.LogError($"[终端] {furn.name} 的 Id=KeyScreen 但没挂 KeyScreen 组件 ⇒ 本次交互无效", furn);
+                    return;
+                }
+                screen.SetOwener(furn.inOperate || !furn.owner ? null: furn.owner.gameObject);
                 furn.desc = furn.inOperate ? "激活终端" : "";
                 furn.BaseOp();
                 //Debug.LogError("距离"+ Vector3.Distance(furn.transform.position, furn.relatedTrans.transform.position));
@@ -128,25 +129,33 @@ public class Furniture_General : Furniture_Attached
                     }
                     
                 }
-                else if(!furn.owner||Vector3.Distance(furn.relatedTrans.position,furn.owner.transform.position)>1)//被撞飞之类的
+                // ⚠ relatedTrans 可能没配（KeyScreen.prefab 有、BlackBox 这类就没有）⇒ 取不到就判不了"被撞飞"，跳过
+                else if(!furn.owner || (furn.relatedTrans && Vector3.Distance(furn.relatedTrans.position,furn.owner.transform.position)>1))//被撞飞之类的
                 {
                     furn.Operate();
                 }
             }
         },
-        ["SignaTower"] = new() {
-            _InOperateUpdate = (Furniture_General furn) => {
-                if (furn.ExtFloatParameter != 0)
-                {
-                    furn.relatedTrans.Rotate(0, furn.ExtFloatParameter, 0, Space.World);
-                    furn.ExtFloatParameter = 0;
-                }
-            }
-        },
+        
+        //["SignaTower"] = new() {
+        //    _InOperateUpdate = (Furniture_General furn) => {
+        //        // ⚠ 同 KeyScreen 分支：relatedTrans 未配时别解引用（SignaTower.prefab 现在是配了的）
+        //        if (furn.relatedTrans && furn.ExtFloatParameter != 0)
+        //        {
+        //            furn.relatedTrans.Rotate(0, furn.ExtFloatParameter, 0, Space.World);
+        //            furn.ExtFloatParameter = 0;
+        //        }
+        //    }
+        //},
 
         ["Supply"] = new() {
             _Operate = (Furniture_General furn) => {
-                furn.transform.parent.parent.GetComponent<Animator>().Play("Exit",(int)furn.ExtFloatParameter,0);
+                // ⚠ 原写法 transform.parent.parent.GetComponent<Animator>() 三级全不判空，而且**在 owner 判空之前**
+                //   就执行（4059 远端重放也照跑）⇒ 层级/Animator 一变就 NRE。取不到就不播这段表现。
+                var p1 = furn.transform.parent;
+                var p2 = p1 ? p1.parent : null;
+                var supplyAnim = p2 ? p2.GetComponent<Animator>() : null;
+                if (supplyAnim) supplyAnim.Play("Exit",(int)furn.ExtFloatParameter,0);
                 if (furn.owner != null && furn.owner.TryGetComponent(out PlayerController player))
                 {
                     player.UseSupply();
@@ -160,7 +169,8 @@ public class Furniture_General : Furniture_Attached
         ["BlackBox"] = new() {
             _Operate = (Furniture_General furn) => {
                 furn.BaseOp();
-                furn.relatedTrans.gameObject.SetActive(true);
+                // ⚠ relatedTrans 未配就是 null（这段"开箱表现"全靠它）
+                if (furn.relatedTrans) furn.relatedTrans.gameObject.SetActive(true);
                 //Debug.LogError("开启了黑匣子");
             }
         },

@@ -159,6 +159,13 @@ using FPSGame.Gameplay;
         public static event Action<int, Vector3> OnEnemyMove;
         public static void EnemyMove(int netId, Vector3 destination) => OnEnemyMove?.Invoke(netId, destination);
 
+        /// <summary>【房主】某座炮塔锁定了谁（炮塔 NetId / 目标 NetId，0 = 丢目标）⇒ 09 的桥下发全体。
+        /// <para>▍为什么需要：炮塔目标由本端 <c>DetectionModule</c> 各自扫出来，两端可以锁不同的人；
+        /// 同步"目标号"后各端仍按本地那份目标算角度（见 <c>CmdId.TurretTargetSync</c>）。</para>
+        /// <para>⚠ 成员端应用远端目标时**不再回传**（看 <c>DetectionModule.RemoteDrivenTarget</c>）。</para></summary>
+        public static event Action<int, int> OnTurretTarget;
+        public static void TurretTarget(int netId, int targetNetId) => OnTurretTarget?.Invoke(netId, targetNetId);
+
         /// <summary>【成员】本机打中了某只怪（NetId / 伤害 / **起源**号 / **原始伤害成分** / **命中部位下标** / **直接来源**号）
         /// ⇒ 上报房主结算（血量/死亡以房主为准）
         /// <para>▍成分 `groups` 摊平编码 <c>[count, type0, coeff0, ...]</c>（null = 中性）：接收端要拿它补护甲破坏/异常状态积蓄。</para>

@@ -106,7 +106,9 @@ public partial class PlayerController
         float rawAngularSpeed = GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat;
 
         m_CameraVerticalAngle += InputHandler.GetLookInputsVertical() * rawAngularSpeed * dt;
-        m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -UpperRotationLimit, LowerRotationLimit);
+        // 存的角度也用第三人称那一套限位：否则鼠标能一直往累积到 89，切回第一人称会突然抬头
+        // ⚠ 走带姿态收紧的取值（趴姿 25），别直接读 _thirdPersonUpperLimit，否则趴着还能抬 70 度
+        m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -ThirdPersonPitchUpLimit, ThirdPersonPitchDownLimit);
 
         bool isAiming = WeaponsManager.IsAiming;
 
@@ -201,7 +203,7 @@ public partial class PlayerController
             }
 
             // 后坐力/屏震偏移叠加在限位之后：限位只约束"鼠标能抬多高"，不该把偏移切掉
-            float clampedV = Mathf.Clamp(m_CameraVerticalAngle, -_thirdPersonUpperLimit, _thirdPersonLowerLimit)
+            float clampedV = Mathf.Clamp(m_CameraVerticalAngle, -ThirdPersonPitchUpLimit, ThirdPersonPitchDownLimit)
                 + RecoilPitch + ShakePitch;
 
             Transform aimPoint = _thirdPersonAimCameraPoint ?? _thirdPersonCameraPoint;
@@ -242,7 +244,7 @@ public partial class PlayerController
             float angularSpeed = GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat * _thirdPersonRotationSensitivity;
             _cameraYaw += InputHandler.GetLookInputsHorizontal() * angularSpeed * Time.deltaTime;
 
-            float clampedVertical = Mathf.Clamp(m_CameraVerticalAngle, -_thirdPersonUpperLimit, _thirdPersonLowerLimit)
+            float clampedVertical = Mathf.Clamp(m_CameraVerticalAngle, -ThirdPersonPitchUpLimit, ThirdPersonPitchDownLimit)
                 + RecoilPitch + ShakePitch;
 
             // 相机位置：基于 _thirdPersonCameraPoint 的偏移

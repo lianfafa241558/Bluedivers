@@ -379,7 +379,7 @@ public class AirdropConfigWnd : Window
         SetText(_traitText, BuildTraitText(data));
     }
 
-    /// <summary>战备特性：由附属战备的名称拼接而成</summary>
+    /// <summary>战备特性：附属战备名称 + 展示标签，逐行列出</summary>
     private string BuildTraitText(AirdropData_SO data)
     {
         var sb = new System.Text.StringBuilder();
@@ -391,6 +391,12 @@ public class AirdropConfigWnd : Window
                 if (sb.Length > 0) sb.Append('\n');
                 sb.Append("· ").Append(sub.showName);
             }
+        }
+        string labels = data.GetDisplayLabelText("· ");
+        if (labels.Length > 0)
+        {
+            if (sb.Length > 0) sb.Append('\n');
+            sb.Append(labels);
         }
         return sb.ToString();
     }
@@ -567,7 +573,10 @@ public class AirdropConfigWnd : Window
             body.useGravity = false;
             body.isKinematic = true;
         }
-
+        foreach (var body in _model.GetComponentsInChildren<Animator>(true))
+        {
+            body.enabled = false;
+        }
         _yaw = 0f;
         ApplyModelRotation();
 

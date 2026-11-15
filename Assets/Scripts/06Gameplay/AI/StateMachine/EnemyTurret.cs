@@ -43,6 +43,32 @@ namespace FPSGame.AI
 
         private Vector3 lastTargetPos;//上一帧目标的位置
 
+        /// <summary>【联机】目标上报节流(秒)：换目标立即发，交战中按这个间隔**幂等重发**。
+        /// <para>▍为什么要重发：炮塔/敌人是两端各自生成/复刻的，目标消息可能比"本端那份副本"先到；
+        /// 1Hz 重发让晚建出来的那份也能补上（同 <c>NetKeyScreenBridge</c> 的挂起重试口径）。</para></summary>
+        private const float TargetReportInterval = 1f;
+        private float _lastTargetReport = float.NegativeInfinity;
+
+        /// <summary>把"我锁了谁"广播给 09 的桥（房主权威；成员端**应用**远端目标时不回传，防回环）。</summary>
+        private void ReportTarget(bool force)
+        {
+            if (m_EnemyController == null) return;
+            // 只有"炮塔专用侦测器"才走目标同步（普通侦测器的炮塔在本端自扫，收端也没有落地入口）
+            if (!(m_EnemyController.DetectionModule is DetectionModuleTurret)) return;
+            // ⚠ 成员端：目标是从房主下发的 ⇒ 别回传（静态门写作全名，避免和基类字段 DetectionModule 撞名）
+            if (FPSGame.AI.DetectionModule.RemoteDrivenTarget) return;
+            if (!force && Time.time - _lastTargetReport < TargetReportInterval) return;
+            _lastTargetReport = Time.time;
+
+            var self = m_EnemyController.Actor;
+            int netId = self != null ? self.NetId : 0;
+            if (netId == 0) return;                                  // 没号（无 Actor / 未分配）⇒ 无从寻址
+            var target = m_EnemyController.Target.Actor;
+            // 只报"交战中锁定的那个"：Idle 期的警惕方向/巡逻不属于同步范围（那是本端表现）
+            int targetNetId = AiState == AIState.Attack && target.IsValidMono() ? target.NetId : 0;
+            FPSGame.Gameplay.BattleEventBus.TurretTarget(netId, targetNetId);
+        }
+
         /// <summary>是否正在朝警惕方向看（Idle 期间）</summary>
         private bool _bewareLooking;
         /// <summary>朝警惕方向看的结束时间</summary>
@@ -202,6 +228,7 @@ namespace FPSGame.AI
                 }
             }
             lastTargetPos = TargetPosition;
+            ReportTarget(false);   // 交战中 1Hz 幂等重发（兜住"消息先于本端副本生成"）
         }
 
         protected override void UpdateCurrentAiState()
@@ -227,6 +254,8 @@ namespace FPSGame.AI
             // 交战中不再响应警告(既不转头看别的动静，也不再向外扩散)
             var module = m_EnemyController != null ? m_EnemyController.DetectionModule : null;
             if (module != null) module.RespondWarning = false;
+
+            ReportTarget(true);   // 换目标：立刻同步给对端
         }
 
         protected override void OnLostTarget()
@@ -242,6 +271,8 @@ namespace FPSGame.AI
                 m_TimeLostDetection = Time.time;
                 turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
             }
+
+            ReportTarget(true);   // 丢目标：立刻同步（对端跟着回 Idle、停火）
         }
 
         protected override bool AimTargrt()

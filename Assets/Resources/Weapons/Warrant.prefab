@@ -96,7 +96,7 @@ MonoBehaviour:
     - Key: 2
       Value: 0.14
     - Key: 7
-      Value: 1
+      Value: 0.5
     - Key: 10
       Value: 2
     - Key: 61
@@ -112,8 +112,8 @@ MonoBehaviour:
   - BulletPrefab: {fileID: 4785953143517723025, guid: 453a9b50e7f2d7f4eab1bccc1a471460,
       type: 3}
     LandingPrefab: {fileID: 0}
-    Speed: 100
-    Gravity: 0
+    Speed: 120
+    Gravity: 10
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: -1
@@ -122,12 +122,12 @@ MonoBehaviour:
     SoundRadius: 20
     ImpactSoundRadius: 8
     DamageExplosion: 0
-    DamageDirect: 21
+    DamageDirect: 24
     DamageGroupDirect:
     - Key: 0
       Value: 1
     - Key: 2
-      Value: 1
+      Value: 0.5
     WeaknessBonus: 0
     ExplosionInnerRange: 0
     ExplosionRange: 0
@@ -154,7 +154,7 @@ MonoBehaviour:
     DirectAPChargeScale: 1
     ExplosionAP: 0
     ExplosionAPChargeScale: 1
-    demolishValue: 0
+    demolishValue: 10
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 1
@@ -194,13 +194,13 @@ MonoBehaviour:
   WeaponName: "P-92 \u6CD5\u4EE4"
   WeaponType: "\u667A\u80FD\u6B66\u5668"
   WeaponTypeEnum: 1
-  WeaponIcon: {fileID: 21300000, guid: 860383b4909acef4a876a11ee81e09b8, type: 3}
+  WeaponIcon: {fileID: 21300000, guid: 41d68b59db224c14b95e7f32d6fba032, type: 3}
   Sight: {fileID: 1123618372036048713, guid: 9f41a156aab248043853739c7695723e, type: 3}
   ScopeGo: {fileID: 0}
   LHand: {fileID: 0}
   RHand: {fileID: 2512936872590975090}
   ShowRoot: {fileID: 1426339597752517921}
-  RecoilForce: 1
+  RecoilForce: 0.5
   RecoilProfile:
     PitchKick: 1.5
     YawKick: 0.4
@@ -226,11 +226,40 @@ MonoBehaviour:
   AimOffset: {x: 0, y: 0.08, z: 0}
   playerAngle: 0
   _showAttrInfo: 
-  desc: "\u4E00\u628A\u80FD\u5FEB\u901F\u5236\u5BFC\u7684\u667A\u80FD\u624B\u67AA"
-  m_RenameAttr: []
-  showAttr: 14000000020000000100000000000000
-  m_UniqueAttr: []
-  Upgrade: []
+  desc: "\u6674\u4F7F\u7528\u7684\u667A\u80FD\u624B\u67AA\u3002\r\n\u7531\u771F\u7406\u90E8\u5168\u65B0\u7814\u53D1\uFF0C\u80FD\u591F\u5FEB\u901F\u9501\u5B9A\u654C\u4EBA\u5E76\u53D1\u5C04\u5236\u5BFC\u5B50\u5F39\u3002"
+  m_RenameAttr:
+  - name: "\u5C04\u901F"
+    type: 2
+    addTag: 0
+    removeTag: 0
+  showAttr: 140000000200000001000000000000000a0000000700000066000000190000001200000017000000
+  m_UniqueAttr:
+  - name: "\u5168\u81EA\u52A8\u6A21\u5F0F"
+    value: 0
+    tag: 32
+  Upgrade:
+  - Key: 2
+    Value:
+    - {fileID: 11400000, guid: 7345a0f8cdbe6a90c5e2258785ab4127, type: 2}
+    - {fileID: 11400000, guid: ba50776a5e8b6534a85429031db5ffa8, type: 2}
+  - Key: 6
+    Value:
+    - {fileID: 11400000, guid: 74ecda0574076d642b4164a88be69320, type: 2}
+    - {fileID: 11400000, guid: e20993f7fe7ac1d4182c6ec7f8aa7371, type: 2}
+  - Key: 10
+    Value:
+    - {fileID: 11400000, guid: 4cba25027414a8252368517a2048159b, type: 2}
+    - {fileID: 11400000, guid: 537eca2e9befe67058fa316cb88e2879, type: 2}
+    - {fileID: 11400000, guid: cbb681a42ea84ebc67e72808d4e75510, type: 2}
+  - Key: 14
+    Value:
+    - {fileID: 11400000, guid: 0a01454bb348bcd40a0e10403c33c443, type: 2}
+    - {fileID: 11400000, guid: a272edbbe7721e9aa8f00416d53ffcf2, type: 2}
+    - {fileID: 11400000, guid: de48ab60672cf834009b78955de9ab94, type: 2}
+  - Key: 18
+    Value:
+    - {fileID: 11400000, guid: 617c56e711949d9db72b7b861984e51a, type: 2}
+    - {fileID: 11400000, guid: 4eaf5174676c1b9ab776a4b14d7ea3d3, type: 2}
   Modules: []
   ActiveModule: {fileID: 0}
 --- !u!95 &2576758130705347008

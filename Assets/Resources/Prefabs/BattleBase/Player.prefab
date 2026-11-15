@@ -469,7 +469,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 9
   _thirdPersonMinDistance: 1
-  _thirdPersonUpperLimit: 80
+  _thirdPersonUpperLimit: 50
   _thirdPersonLowerLimit: 50
   _thirdPersonRotationSensitivity: 0.5
   PlayerIndex: 0
@@ -479,6 +479,37 @@ MonoBehaviour:
   SprintCool: 5
   SprintGravity: 0.2
   SkipCameraDeactivateOnDisable: 0
+  _stanceParams:
+  - Stance: 0
+    CapsuleHeight: 0
+    CameraHeight: 0
+    CameraForward: 0
+    SocketDrop: 0
+    SpeedScale: 1
+    SpreadScale: 1
+    RecoilScale: 1
+    PitchLimit: 0
+    DetectRangeScale: 1
+  - Stance: 1
+    CapsuleHeight: 1.2
+    CameraHeight: 0.82
+    CameraForward: 0
+    SocketDrop: 0.6
+    SpeedScale: 0.5
+    SpreadScale: 0.7
+    RecoilScale: 0.75
+    PitchLimit: 0
+    DetectRangeScale: 0.7
+  - Stance: 2
+    CapsuleHeight: 0.8
+    CameraHeight: 0.4
+    CameraForward: 0.28
+    SocketDrop: 1
+    SpeedScale: 0.2
+    SpreadScale: 0.5
+    RecoilScale: 0.55
+    PitchLimit: 25
+    DetectRangeScale: 0.4
 --- !u!114 &7469861678843619888
 MonoBehaviour:
   m_ObjectHideFlags: 0

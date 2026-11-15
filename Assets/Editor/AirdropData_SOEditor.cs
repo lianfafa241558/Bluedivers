@@ -96,6 +96,7 @@ public class AirdropData_SOEditor : DataSOEditorBase
         DrawField("type");
         DrawField("deliveryType");
         DrawField("labels");
+        DrawField("displayLabels");
         GUILayout.Space(6);
 
         // ================= 部署参数 =================
@@ -565,6 +566,7 @@ public class AirdropData_SOEditor : DataSOEditorBase
             case "type": return "类型";
             case "deliveryType": return "投送方式";
             case "labels": return "标签";
+            case "displayLabels": return "显示标签";
             case "cool": return "冷却";
             case "arriveTime": return "部署时间";
             case "arriveHeight": return "部署高度";

@@ -77,23 +77,19 @@ MonoBehaviour:
     NoSource: 1
     SoundRadius: 120
     ImpactSoundRadius: 30
-    DamageExplosion: 200
-    DamageDirect: 400
+    DamageExplosion: 100
+    DamageDirect: 75
     DamageGroupDirect:
     - Key: 0
       Value: 1
-    - Key: 2
-      Value: 1
     WeaknessBonus: 0
-    ExplosionInnerRange: 5
-    ExplosionRange: 10
-    DestructeRadius: 2
-    ShockwaveRadius: 16
+    ExplosionInnerRange: 0.5
+    ExplosionRange: 4
+    DestructeRadius: 0
+    ShockwaveRadius: 6
     ShockwaveForce: 3
     DamageGroupExplosion:
     - Key: 1
-      Value: 1
-    - Key: 2
       Value: 1
     AboVulnerabilityGroup:
     - Key: 6
@@ -108,9 +104,9 @@ MonoBehaviour:
     OnlyTerrain: 0
     DirectAP: 7
     DirectAPChargeScale: 1
-    ExplosionAP: 5
+    ExplosionAP: 3
     ExplosionAPChargeScale: 1
-    demolishValue: 40
+    demolishValue: 10
     UseCharge: 0
     ChargeDamageScale: 1
     ChargeAOERangeScale: 0
@@ -140,7 +136,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 0
   WeaponFlag: 0
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}

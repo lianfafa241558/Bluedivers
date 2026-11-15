@@ -35,7 +35,7 @@ namespace FPSGame.Mission
                 _ => 5
             };
             // 难度/额外系数走「数据自持」（2026-10-01 取代 ServiceLocator.Task 槽）
-            MaxProgress = (int)(MaxProgress * Mathf.Sqrt((int)FPSGame.Data.TaskState.Difficulty) * (1 + 0.1f * FPSGame.Data.TaskState.ExtraDifficulty[2]));
+            MaxProgress = (int)(MaxProgress *(1+Mathf.Sqrt((int)FPSGame.Data.TaskState.Difficulty)) * (1 + 0.1f * FPSGame.Data.TaskState.ExtraDifficulty[2]));
             //MaxProgress /= 100;
             UpdateText("消灭敌方部队", "");
             TickTime = 5;

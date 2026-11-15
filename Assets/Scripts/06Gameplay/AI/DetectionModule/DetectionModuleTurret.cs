@@ -1,5 +1,6 @@
 ﻿using FPSGame.Core;
 using FPSGame.Core.Interface;
+using FPSGame.GameContract;
 
 using FPSGame.Game;
 using UnityEngine;
@@ -24,6 +25,18 @@ namespace FPSGame.AI
         private void OnDisable()
         {
             GlobalEventBus.OnMark -= OnMark;
+        }
+
+        /// <summary>【联机·成员端】应用房主下发的目标（<c>null</c> = 丢目标）。
+        /// <para>⚠ 必须**连带抛**检测/丢失回调：<c>SetTargetActor</c> 只改数据、不抛
+        /// <c>onDetectedTarget/onLostTarget</c> ⇒ 炮塔会停在上一个状态（开火判定与警告响应都不跟着变）。</para>
+        /// <para>⚠ 幂等：同一目标重复调用直接返回（交战中房主每秒重发一次，不能每拍重放状态切换）。</para></summary>
+        public void ApplyRemoteTarget(IActor actor)
+        {
+            if (Target.Actor == actor) return;
+            SetTargetActor(actor);
+            if (actor != null) OnDetect();
+            else OnLostTarget();
         }
 
         void OnMark(GameObject owner, GameObject target, Vector3 point)

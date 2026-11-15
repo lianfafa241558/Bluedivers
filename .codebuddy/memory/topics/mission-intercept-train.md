@@ -20,7 +20,9 @@
 - **路基**：按 `bedStep` 采样地面 → 纵坡按 `bedSmoothLength`(60m) 滑动平均 → `TerrainUtils.SmoothCorridorBed` 成型（实现坑见 §4）。
 - **铺轨**：`MeasureRail` 量 prefab 包围盒得真实尺寸（不写死）→ 按弧长切成整数节、节内按**弦向**摆 + 长轴缩放 ⇒ 首尾相接；`tarsonisrail` 长轴在 local X ⇒ `YawOffset = −90°`。
 - **随机**：一律 `random`（BattleRandom 派生），且时刻表/炮塔计划都在**第一个 yield 之前**算好 ⇒ 两端一致。
-- **联机**：车头 + 车厢（都没有 `Actor`）两端各自 Instantiate、靠**同名**对齐；**附加炮塔有 `Actor` ⇒ 必须走 `CreatUnit` + 4052 复刻**；卫队走房主 `CreatPatrol`。
+- **联机**：车厢（`TrainEngineCar`，无 `Actor`）+ 车头（`TrainEngineSam`，**有** `Actor`/Enemy+Boss/`HealthEnemy`）两端各自 Instantiate、靠**同名/班次**对齐；
+  **附加炮塔有 `Actor` ⇒ 必须走 `CreatUnit` + 4052 复刻**；卫队走房主 `CreatPatrol`。
+  位置不同步是历史遗留 ⇒ 2026-11-14 已加 **4067 列车弧长同步**（口径见 `net-spawn.md §7.2x`）。
 
 ## 3. 附加炮塔
 - 配置：`List<SKVP<int,GameObject>> additionalTurrets`（**Key 之和 = 单节车厢挂载概率 %**，命中后按各自 Key 占比抽预制体；总和 > 100 = 必挂、Key 退化成权重）+ 挂点名常量 `TurretMountName = "Additional"`（2026-10-18 从字段收成常量）。

@@ -35,6 +35,7 @@ namespace FPSGame.Gameplay
 
         [SerializeField]
         AudioClip landCilp;
+
         [SerializeField]
         bool complete, arrive,nextComplete;
         public Transform targetPoint;
@@ -267,6 +268,7 @@ namespace FPSGame.Gameplay
                 anim.Play("Wait");
                 aud.PlayOneShot(landCilp);
                 arrive = true;
+                
                 return;
             }
             else
@@ -299,6 +301,7 @@ namespace FPSGame.Gameplay
             //transform.position = Vector3.Lerp(transform.position, targetPoint.position + (Vector3.up * 5.5f + targetPoint.forward * -5.5f) * transform.lossyScale.x, 15 * Time.deltaTime);
             //}
         }
+
 
         public enum MedivacState
         {

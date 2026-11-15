@@ -141,7 +141,8 @@ namespace FPSGame.Gameplay
                 if (pipeSkin) FpsHelper.UpdatePipeBounds(pipeSkin.GetComponent<SkinnedMeshRenderer>(),transform);
                 if (pipeSkeleton) FpsHelper.UpdatePipeBounds(pipeSkeleton.GetComponent<SkinnedMeshRenderer>(),transform);
             }
-            if (root.TryGetComponent<CCDIK>(out var cCDIK))
+            // ⚠ root 是序列化引用，漏配就是 null（本函数在 4059 重放路径上）⇒ 先判 root 再取组件
+            if (root && root.TryGetComponent<CCDIK>(out var cCDIK))
             {
                 cCDIK.enabled = false;
                 foreach (var item in root.GetComponentsInChildren<Collider>())
@@ -161,7 +162,8 @@ namespace FPSGame.Gameplay
                 target.relatedTrans = transform;
                 target.Operate();
             }
-            else if (!lastPipeline.lastPipeline.IsValid())
+            // ⚠ lastPipeline 本身可能是 null（链首 / 没配）——`lastPipeline.lastPipeline` 会先解引用它 ⇒ NRE
+            else if (!lastPipeline || !lastPipeline.lastPipeline.IsValid())
             {
                 Complete();
                 canOperate = true;
@@ -194,7 +196,16 @@ namespace FPSGame.Gameplay
         public void Link()
         {
             //Debug.LogError("连接",gameObject);
-            nextPipeline = Instantiate(Temp, transform.position, transform.rotation, root.transform.parent).GetComponentInChildren<Furniture_Pipe>();
+            // ⚠ Temp 漏配 / Temp 上没挂 Furniture_Pipe ⇒ 下面 nextPipeline.xxx 直接 NRE（4059 重放也会走这条，
+            //   两端各造一根）⇒ 缺前置条件就一条日志、不造。
+            Transform parent = root ? root.transform.parent : transform.parent;
+            var go = Temp && parent ? Instantiate(Temp, transform.position, transform.rotation, parent) : null;
+            nextPipeline = go ? go.GetComponentInChildren<Furniture_Pipe>() : null;
+            if (!nextPipeline)
+            {
+                Debug.LogError($"[管道] {name} 无法延伸：Temp={(Temp ? Temp.name : "<未配>")} 上找不到 Furniture_Pipe", this);
+                return;
+            }
             nextPipeline.lastPipeline = this;
             nextPipeline.owner = owner;
             if (lastPipeline)

@@ -1,13 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FPSGame.GameContract;
-
-using FPSGame.Game;
-using UnityEngine;
-using FPSGame.Utils;
 using FPSGame.AI;
+using FPSGame.Core;
+using FPSGame.Core.Interface;
+using FPSGame.Data;
+using FPSGame.Game;
+using FPSGame.GameContract;
 using FPSGame.Gameplay;
 using FPSGame.MapUtils;
+using FPSGame.Utils;
+using UnityEngine;
 namespace FPSGame.Mission
 {
 
@@ -170,8 +172,41 @@ namespace FPSGame.Mission
             medivacLandPos = ToGround(areaPoint - forward * (5.5f * scale)) + Vector3.up * (MedivacPivotHeight * scale);
             // 走"清除"语义(忽略可被摧毁白名单)：落点上的树/石块/悬崖一律让位
             TerrainClearer.ClearInRadius(medivacLandPos, MedivacClearRadius, TerrainClearTarget.All);
+            CrushUnitsOnLanding(medivacLandPos);
             return medivacLandPos;
         }
+
+        /// <summary>落地瞬间碾压机腹范围内的单位（战备炮台/治疗包、敌人；玩家与盟友不算）。
+        /// <para>⚠ 只由权威端结算（<see cref="BattleState.IsTickDamageAuthority"/> = 房主/单机）：成员端这些单位是
+        /// 房主那份的镜像，本地再扣一次就是两份伤害；房主这笔会经既有 4054 落到成员端。</para>
+        /// <para>⚠ 用 <c>DemolishValue</c> 而不是纯伤害：带护盾/高血量的装置也能一击压死（拆毁值 ≥ 目标自身 ⇒ 秒杀）。</para></summary>
+        protected void CrushUnitsOnLanding(Vector3 center)
+        {
+            if (!BattleState.IsTickDamageAuthority) return;
+
+            float sqrRadius = 64;
+            List<IActor> units = ActorsManager.Actors;
+            for (int i = units.Count - 1; i >= 0; --i)
+            {
+                IActor unit = units[i];
+                if (!unit.IsValidMono()) continue;
+                // 玩家/盟友站在机腹下也不能被压死（登机口就在机身下沿）
+                if (unit.Type == UnitTypeEnum.Player || unit.Type == UnitTypeEnum.Friend) continue;
+                Vector3 unitPos = unit.transform.position;
+                if ((unitPos - center).sqrMagnitude > sqrRadius) continue;
+
+                var health = unit.transform.GetComponent<IHealth>();
+                if (!health.IsValidMono()) continue;
+
+                var args = DamageSettleArgs.Of(new() { new(DamageTypeEnum.Real, new(100)) },
+                    true, null, null, unitPos);
+                args.DemolishValue = 100;
+                args.Response = false;   // 碾压不派发受击响应/AI 反应
+                health.TakeDamage(in args);
+                NetSyncLog.SyncLog("撤离/碾压", $"{unit.Id} @{unitPos} 被运输机压死");
+            }
+        }
+
 
     }
 

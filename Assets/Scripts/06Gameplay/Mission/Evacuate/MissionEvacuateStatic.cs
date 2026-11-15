@@ -254,9 +254,12 @@ namespace FPSGame.Mission
 
         private void StartWait()
         {
-            if (keyScreen.owner)
+            // ⚠ owner 不一定是本机玩家：4059 远端重放会把 owner 设成**盟友镜像**（无 PlayerSpeechManager），
+            //   所以 GetComponent 会返回 null（2026-11-15 实测：客机收 4061 ⇒ 这里 NRE ⇒ SetStageCore 被打断
+            //   ⇒ 终端 UI 永远停在"未启动"）。喊话只有本机玩家有，取不到就跳过。
+            if (keyScreen.owner && keyScreen.owner.TryGetComponent(out PlayerSpeechManager speech))
             {
-                keyScreen.owner.GetComponent<PlayerSpeechManager>().Speech(SpeechTypeEnum.Evacuate);
+                speech.Speech(SpeechTypeEnum.Evacuate);
             }
             stage = EvacuateState.Wait;
             UpdateText("运输船接近中", "");

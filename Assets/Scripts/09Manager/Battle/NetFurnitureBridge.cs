@@ -108,7 +108,7 @@ namespace FPSGame.Managers
             // 本端已经真执行过一次了 ⇒ 这里只负责把"发生了什么"传出去
             uint sid = flow.IsHost ? 0u : flow.SelfSid;
             FPSGame.Utils.NetSyncLog.SyncLog("家具/操作·发", $"{Describe(f, furn)} sid={sid} 操作者={(user != null ? user.name : "<null>")}");
-            flow.SendFurnitureOperate(f.SyncId, sid);
+            flow.SendFurnitureOperate(f.SyncId, sid, 0, null, f.Id, f.transform.position);   // 带软键：Id + 位置
         }
 
         /// <summary>家具"状态"变更（子类调 <c>Furniture_Attached.ReportState</c>）：走同一条 4059 上行。
@@ -123,7 +123,7 @@ namespace FPSGame.Managers
 
             FPSGame.Utils.NetSyncLog.SyncLog("同步/家具/状态·发",
                 $"{Describe(f, f)} code={code} key={key}");
-            flow.SendFurnitureOperate(f.SyncId, flow.IsHost ? 0u : flow.SelfSid, code, key);
+            flow.SendFurnitureOperate(f.SyncId, flow.IsHost ? 0u : flow.SelfSid, code, key, f.Id, f.transform.position);
         }
 
         /// <summary>容器类家具提交完成（子类调 <c>OnSubmitReported</c>）：上报"提交了几个 + 主类型"。
@@ -163,9 +163,16 @@ namespace FPSGame.Managers
             {
                 if (kv.Value == null) continue;
                 if (n++ > 0) sb.Append(", ");
-                sb.Append(kv.Value.Id).Append(':').Append(kv.Key);
+                // ★ 2026-11-15 带上**量化位置**（口径同 ComputeSyncId）：这样和发起端创建期那条
+                //   「家具/键」日志（含 id/sync/量化位置）可以逐字对齐，一眼看出是"键不同"还是"根本没这个家具"。
+                //   ⚠ 这里取的是**当前**位置（家具会动就没法和创建时一致）；建好后不动的物件（补给箱这类）才准。
+                var p = kv.Value.transform.position;
+                sb.Append(kv.Value.Id).Append(':').Append(kv.Key)
+                  .Append("@(").Append(Mathf.RoundToInt(p.x * 10f)).Append(',')
+                  .Append(Mathf.RoundToInt(p.y * 10f)).Append(',')
+                  .Append(Mathf.RoundToInt(p.z * 10f)).Append(')');
             }
-            FPSGame.Utils.NetSyncLog.Warn(tag, $"本端键表共 {n} 条（Id:SyncId）：{sb}");
+            FPSGame.Utils.NetSyncLog.Error(tag, $"本端键表共 {n} 条（Id:SyncId@量化位置）：{sb}");
         }
 
         #endregion
@@ -187,20 +194,24 @@ namespace FPSGame.Managers
                 // ⚠ 必须连 State/StateKey 一起转发：只带 SyncId 的话，别的成员收到的是一条"没有状态"的消息
                 //   ⇒ 掉进下面的"重放 Operate()"分支（原来漏了，2 人房里发起者会丢自己那条所以看不出来，
                 //   3 人以上第三个玩家就会看到"状态没同步"）。
-                flow.SendFurnitureOperate(m.SyncId, m.Sid, m.State, m.StateKey);
+                flow.SendFurnitureOperate(m.SyncId, m.Sid, m.State, m.StateKey, m.Id, new Vector3(m.X, m.Y, m.Z));
             }
             else if (m.Sid == flow.SelfSid)
             {
                 return;                               // 自己发的那条绕回来了：本地已经执行过
             }
 
-            var furn = Furniture_Attached.FindBySyncId(m.SyncId);
+            // 精确键 → 软键（Id + 发送端位置取最近）：空投/战备这类两端各生成一份的物件只能靠软键
+            var furn = Furniture_Attached.Resolve(m.SyncId, m.Id, new Vector3(m.X, m.Y, m.Z), "家具/操作·收");
             if (furn == null)
             {
                 // ⚠ 这里原来是静默 return —— "交互没同步"最常见的真凶就藏在这一行：
                 //   要么两端 SyncId 不一致（键 = Id + 位置量化），要么本端压根没生成这个家具。
                 //   把本端整张键表打出来，和发起端那行"操作·发"对照即可定性。
-                FPSGame.Utils.NetSyncLog.Warn("家具/操作·收", $"sync={m.SyncId}（发起 sid={m.Sid}）**本端找不到这个家具** ⇒ 这一下被丢弃");
+                // ★ 2026-11-15 改走 Error 通道：这是"交互真的丢了"，而 ErrorLogCapture 只收
+                //   Error/Exception/Assert ⇒ 用 Warn 在打包端**不会**进 Error_*.log，试玩后就查不到了。
+                FPSGame.Utils.NetSyncLog.Error("家具/操作·收", $"sync={m.SyncId}（发起 sid={m.Sid}，软键 id={m.Id}）**本端找不到这个家具** ⇒ 这一下被丢弃" +
+                    "（空投等「两端各生成一份」的物件已按 Id+位置软键兜过一层；仍失败说明本端压根没生成它，或偏差超过 5m）");
                 LogSyncTable("家具/键表");
                 return;
             }

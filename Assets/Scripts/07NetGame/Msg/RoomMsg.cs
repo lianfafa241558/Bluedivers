@@ -62,6 +62,17 @@ namespace FPSGame.Net
     }
 
     /// <summary>
+    /// 房主解散房间：房主 -> 全体（关房 / 房主自己去加入别人的房间时发）。
+    /// <para>▍收到即视为"房主主动离开" ⇒ 成员立刻回单机并弹提示，不必等心跳静默（5s）。</para>
+    /// </summary>
+    [MessagePackObject]
+    public class HostDismissMsg
+    {
+        /// <summary>给玩家看的原因（空 ⇒ 用 UI 默认文案）。</summary>
+        [Key(0)] public string Reason;
+    }
+
+    /// <summary>
     /// 加入房间请求：成员 -> 房主。
     /// 成员在局域网发现房间并回连成功后，用它向房主申请进房。
     /// </summary>

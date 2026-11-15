@@ -73,7 +73,9 @@ namespace FPSGame.Managers
 
             var flow = NetRoomFlow.Instance;
             if (flow == null || !flow.InRoom) return;   // 单机 / 不在房里：没有对端要收，标记本来就是纯本地表现
-            flow.SendMark(flow.IsHost ? 0u : flow.SelfSid, point.x, point.y, point.z);
+            // ★ 被标记单位的号一起带上：远端按号取它那份 Actor 再重放 ⇒ 炮塔「响应玩家标记」在远端也能转向
+            //   （引用过不了网；玩家/盟友 NetId 恒 0 ⇒ 退化成只标点，与旧行为一致）
+            flow.SendMark(flow.IsHost ? 0u : flow.SelfSid, point.x, point.y, point.z, NetIdOf(target));
         }
 
         static void OnLocalCallKai(GameObject source, Vector3 point)
@@ -93,17 +95,20 @@ namespace FPSGame.Managers
             var flow = NetRoomFlow.Instance;
             if (flow == null) return;
 
-            if (flow.IsHost) flow.SendMark(m.Sid, m.X, m.Y, m.Z);   // 房主：转发全体
+            if (flow.IsHost) flow.SendMark(m.Sid, m.X, m.Y, m.Z, m.TargetNetId);   // 房主：转发全体（号一起带）
             else if (m.Sid == flow.SelfSid) return;                 // 成员：自己那条绕回来了
 
-            // ⚠ target 传 null：目标实体是**引用**不能过网。标记的表现落点（字幕/光环）用 owner + point 就够；
-            //   任务点的"被发现"由任务同步（4066）负责，不依赖这条。
+            // target 是**引用**不能过网 ⇒ 用 <see cref="MarkMsg.TargetNetId"/> 取本端那份 Actor。
+            // ⚠ 必须给真 target：<c>DetectionModuleTurret.OnMark</c>（响应玩家标记）见到 null 直接 return
+            //   ⇒ 以前只有发起端那侧的友军炮塔会转向（2026-11-15 用户实测"炮塔目标不同步"）。
+            //   解析不到（单位已死/不在本端）时退回 null，与旧行为一致。
             var owner = ResolveRemoteUser(m.Sid);
+            var target = ResolveActorObject(m.TargetNetId);
 
             _applyingRemote = true;
             try
             {
-                GlobalEventBus.Mark(owner, null, new Vector3(m.X, m.Y, m.Z));
+                GlobalEventBus.Mark(owner, target, new Vector3(m.X, m.Y, m.Z));
             }
             finally
             {
@@ -140,6 +145,30 @@ namespace FPSGame.Managers
             // ⚠ NetFriendBridge 没有静态 Instance（挂在常驻 GameRoot 上的 I_GlobaManager）⇒ 惰性解析一次并缓存
             if (_friendBridge == null) _friendBridge = UnityEngine.Object.FindObjectOfType<NetFriendBridge>();
             if (_friendBridge != null && _friendBridge.TryGetFriendObject(sid, out GameObject go)) return go;
+            return null;
+        }
+
+        /// <summary>取 GameObject 所属单位的 <c>Actor.NetId</c>（0 = 不是带号单位：玩家 / 盟友 / 场景件）。
+        /// <para>⚠ 走 <c>GetComponentInParent</c>：标记的 target 可能是子碰撞体/模型节点。</para></summary>
+        static int NetIdOf(GameObject go)
+        {
+            if (go == null) return 0;
+            var actor = go.GetComponentInParent<Actor>();
+            return actor != null ? actor.NetId : 0;
+        }
+
+        /// <summary>按 <c>Actor.NetId</c> 取本端那份单位的 GameObject（0 / 找不到 = null）。</summary>
+        static GameObject ResolveActorObject(int netId)
+        {
+            if (netId == 0) return null;
+            var actors = ActorsManager.Actors;
+            for (int i = 0; i < actors.Count; ++i)
+            {
+                var actor = actors[i];
+                if (actor == null || actor.NetId != netId) continue;
+                var trans = actor.transform;
+                return trans != null ? trans.gameObject : null;
+            }
             return null;
         }
 

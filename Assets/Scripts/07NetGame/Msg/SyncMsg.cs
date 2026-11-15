@@ -61,6 +61,13 @@ namespace FPSGame.Net
         [Key(2)] public float X;
         [Key(3)] public float Y;
         [Key(4)] public float Z;
+
+        /// <summary>【被标记单位】<c>Actor.NetId</c>（0 = 只标了点，没有具体单位）。
+        /// <para>▍为什么必须带：引用过不了网，重放时原来只能传 <c>target = null</c> ⇒
+        /// <c>DetectionModuleTurret.OnMark</c>（响应玩家标记）在远端直接 return，表现是"我标了、友军炮塔只在
+        /// 我这端转向，队友那端的炮塔不转"。号两端一致（房主分配），收端按号取本端那份即可。</para>
+        /// <para>⚠ **只许追加在末尾**：旧端会拿默认值 0 ⇒ 退化成原来的"只标点"行为，可混联。</para></summary>
+        [Key(5)] public int TargetNetId;
     }
 
     /// <summary>呼叫凯伊（双向；带表现 + 凯伊移动）。</summary>
@@ -109,6 +116,16 @@ namespace FPSGame.Net
         [Key(5)] public uint VehicleSid;
         /// <summary>【载具上下机】true = 上机；false = 下机 / 被打爆 / 驾驶者离场 / 驾驶者死亡。</summary>
         [Key(6)] public bool Mounted;
+
+        /// <summary>【软键】家具身份 Id + 发送端位置。
+        /// <para>▍为什么需要：空投/战备这类物件**两端各生成一份**（各打自己的地面射线、各跑舱体物理），
+        /// 位置差几厘米就跨过 0.1m 量化桶 ⇒ <c>SyncId</c> 必然对不上，纯键查找会整条丢弃。
+        /// 带上 Id + 位置后，接收端可以"同 Id 的候选里取最近的那个"。</para>
+        /// <para>⚠ 必须**追加在末尾**：旧端读不到就走默认（null / 0）⇒ 退回纯 SyncId 查找，不会串字段。</para></summary>
+        [Key(7)] public string Id;
+        [Key(8)] public float X;
+        [Key(9)] public float Y;
+        [Key(10)] public float Z;
     }
 
   /// <summary>按键终端(KeyScreen)阶段推进（双向）。<c>SyncId</c> = 终端家具的 <c>Furniture_Attached.SyncId</c>
@@ -124,6 +141,13 @@ namespace FPSGame.Net
         [Key(1)] public int SyncId;
         /// <summary>目标阶段号。</summary>
         [Key(2)] public int Stage;
+
+        /// <summary>【软键】终端家具 Id + 发送端位置（口径同 <see cref="FurnitureOperateMsg.Id"/>）：
+        /// 撤离信标这类"两端各生成一份"的终端，位置微差就会让 SyncId 分叉。</summary>
+        [Key(3)] public string Id;
+        [Key(4)] public float X;
+        [Key(5)] public float Y;
+        [Key(6)] public float Z;
     }
 
 
@@ -152,6 +176,12 @@ namespace FPSGame.Net
         [Key(1)] public int SyncId;
         [Key(2)] public int Key;
         [Key(3)] public int Kind;
+
+        /// <summary>【软键】终端家具 Id + 发送端位置（同 <see cref="KeyScreenStageMsg"/>）。</summary>
+        [Key(4)] public string Id;
+        [Key(5)] public float X;
+        [Key(6)] public float Y;
+        [Key(7)] public float Z;
     }
 
 
@@ -170,6 +200,30 @@ namespace FPSGame.Net
         [Key(1)] public float X;
         [Key(2)] public float Y;
         [Key(3)] public float Z;
+    }
+
+    /// <summary>单趟列车的位置快照（房主 -> 全体，见 <c>CmdId.TrainPoseSync</c>）。
+    /// <para>▍只发弧长不发位姿：两端轨道是同一份确定性规划 ⇒ 弧长唯一决定车头 + 全部车厢的位姿，
+    /// 4 字节就能表达整列火车（见 <c>TrainUnit.Place</c>）。</para></summary>
+    [MessagePackObject]
+    public class TrainPoseMsg
+    {
+        /// <summary>班次（0 基 = <c>MissionInterceptTrain</c> 的发车序号；两端同一趟车同号，车厢命名也用它）。</summary>
+        [Key(0)] public int Tour;
+        /// <summary>已行驶弧长（米，沿本趟的 <c>RailTrack</c>）。</summary>
+        [Key(1)] public float Distance;
+        /// <summary>收尾状态：0 = 行驶中 / 1 = 到站逃走 / 2 = 被打掉。
+        /// <para>▍为什么不能只靠"血量归零 / 弧长跑满"这两个副作用：那两条都依赖两端各自算对
+        /// （伤害按号寻址、弧长同步），一旦分叉，客机那列车会继续开到站并自己记一次"逃走"，
+        /// 与房主的"已摧毁"完全相反 ⇒ 收尾这件事必须由房主**显式**说一次。</para></summary>
+        [Key(2)] public byte State;
+    }
+
+    /// <summary>列车快照批次（一趟车一项）：一趟车一条包比"每趟一条包"少一半报文头。</summary>
+    [MessagePackObject]
+    public class TrainPoseBatchMsg
+    {
+        [Key(0)] public TrainPoseMsg[] Items;
     }
 
   
@@ -357,6 +411,25 @@ namespace FPSGame.Net
 
         /// <summary>开火之后该武器的**后备弹**剩余（同上；<c>&lt;0</c> = 未带/无限后备 ⇒ 收端不动）。</summary>
         [Key(11)] public int Ammo;
+    }
+
+    #endregion
+
+    #region 炮塔目标
+
+    /// <summary>炮塔当前锁定的目标（房主权威，单向下发）。键 = 炮塔 <c>Actor.NetId</c>。</summary>
+    /// <remarks>▍为什么只发号：瞄准角度各端按**本端那份目标**的位置本地算（<c>Turret.Look</c> 含重力预判），
+    /// 只差"敌人位置同步延迟"那几米；发角度反而更大、还会与本地物理打架。
+    /// <para>⚠ 接收端**必须**再经 <c>DetectionModuleTurret.ApplyRemoteTarget</c> 落地：只调 <c>SetTargetActor</c>
+    /// 不抛检测/丢失回调，炮塔会停在原状态。</para></remarks>
+    [MessagePackObject]
+    public class TurretTargetMsg
+    {
+        /// <summary>炮塔的 <c>Actor.NetId</c>（房主分配，两端一致）。</summary>
+        [Key(0)] public int NetId;
+
+        /// <summary>目标的 <c>Actor.NetId</c>；<c>0</c> = 丢目标（接收端清目标并回 Idle）。</summary>
+        [Key(1)] public int TargetNetId;
     }
 
     #endregion

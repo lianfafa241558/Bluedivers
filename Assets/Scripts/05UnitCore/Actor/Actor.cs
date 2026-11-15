@@ -111,6 +111,10 @@ namespace FPSGame.Game
 
         public int Team { get => team; set => team=value; }
 
+        /// <summary>被 AI 视觉发现的距离倍率（1 = 站直）。玩家控制器按当前姿态写入（趴 0.4 / 蹲 0.7），
+        /// 其它单位恒 1；<c>DetectionModule</c> 只读。口径见 <see cref="IActor.DetectRangeScale"/>。</summary>
+        public float DetectRangeScale { get; set; } = 1f;
+
         List<UnitQueryGridNode> IActor.GridNodes => curQueryGridNodes;
 
         public Transform AimPoint=> aimPoint;

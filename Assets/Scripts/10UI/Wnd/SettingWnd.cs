@@ -60,7 +60,10 @@ namespace FPSGame.UI
 
         private List<UpdateData_SO> m_UpdateDataArr;
         private int nowUpdateIndex=0;
+        /// <summary>顶部 tab 的**视觉**下标（<see cref="_tabPanels"/> / layoutRoot 顺序），不是 expandRoot 的 siblingIndex。</summary>
         private int nowExpandIndex=1;
+        /// <summary>顶部 tab 顺序 → 对应的展开面板。⚠ 两个根节点顺序不保证一致，见 <see cref="BuildTabOrder"/>。</summary>
+        private readonly List<GameObject> _tabPanels = new();
         private int _secondaryIndex = 0;
         private List<string> _secondaryTitles = new();
         private List<List<KVP<string, ArchSettingData>>> _secondaryGroups = new();
@@ -107,6 +110,7 @@ namespace FPSGame.UI
             SetUpdate(false);
             BuildSettingGroups();
             BuildKeyCodeDict();
+            BuildTabOrder();
 
             // 首次打开时隐藏次级菜单和选中高亮
             SetActive(secondaryLayoutRoot, false);
@@ -213,11 +217,16 @@ namespace FPSGame.UI
             bool squadHost = GameState == GameStateEnum.Game && abortSquad != null && IsOnlineHost;
             SetActive(returnShop, GameState == GameStateEnum.Game && !squadHost);
             if (abortSquad != null) SetActive(abortSquad, squadHost);
-            SetActive(rebirth, GameState == GameStateEnum.Bridge);
-            SetActive(freeCamera, teamManager.IsSingle);
+            // 重置：Ready / Armament 也还在舰桥船里 —— 联机入房后 GameState 就不再是 Bridge
+            SetActive(rebirth, GameState == GameStateEnum.Bridge
+                            || GameState == GameStateEnum.Ready);
+            // 自由视角：单人一直可用；联机时**非战斗**也放开（只动相机，不影响同步）。
+            // ⚠ 别写成"仅非战斗"：单机战斗里 IsSingle 才是它原本的入口
+            SetActive(freeCamera, (teamManager.IsSingle || GameState != GameStateEnum.Game) 
+                            && GameState != GameStateEnum.Armament);
             // ★ 新手教程（2026-10-11 用户口径）：**已联机**（开了房 / 在别人房里）或**战斗中**都不显示 ——
             //   教程关是单人流程，联机时点它会把房间和队友晾在半路。
-            SetActive(teach, GameState != GameStateEnum.Game && !IsInRoom);
+            SetActive(teach, GameState != GameStateEnum.Game && !IsInRoom && GameState != GameStateEnum.Armament);
 
             SetStateRoot();
             InputManager.AddListenerCancel(Cancel);
@@ -297,15 +306,54 @@ namespace FPSGame.UI
             }
         }
 
+        /// <summary>建立"顶部 tab 项 ↔ 展开面板"的配对，按 layoutRoot 的**视觉顺序**排。
+        /// <para>⚠ 别再按下标对齐：<c>ExpandRoot</c> 里 <c>ShortWnd</c> 排在最后，而 <c>Layout</c> 里 Short 被挪到 setting 后面，
+        /// 用 <c>layoutRoot.GetChild(expandIndex + 1)</c> 会让点 Short 时高亮跑到 author（2026-11-15 实测）。</para></summary>
+        private void BuildTabOrder()
+        {
+            _tabPanels.Clear();
+            // 首尾是 Left / Right 翻页按钮，中间才是 tab
+            for (int i = 1; i < layoutRoot.childCount - 1; ++i)
+            {
+                string tabName = layoutRoot.GetChild(i).name;
+                var panel = FindExpandPanel(tabName);
+                if (panel == null)
+                {
+                    // 预制体里改名/换结构就会走到这 —— 宁可少一个 tab，也不要亮错位置
+                    Debug.LogWarning("[SettingWnd] 顶部 tab \"" + tabName + "\" 找不到配对的展开面板（ExpandRoot 下应为 " + tabName + "Wnd）");
+                    continue;
+                }
+                _tabPanels.Add(panel);
+            }
+        }
+
+        /// <summary>面板命名统一是 tab 名 + "Wnd"（state→stateWnd / Short→ShortWnd）。</summary>
+        private GameObject FindExpandPanel(string tabName)
+        {
+            for (int i = 0; i < expandRoot.childCount; ++i)
+            {
+                var child = expandRoot.GetChild(i).gameObject;
+                if (child.name == tabName || child.name == tabName + "Wnd") return child;
+            }
+            return null;
+        }
+
         private void SwitchNextExpand(bool isAdd)
         {
-            SwitchExpand(expandRoot.GetChild(Tool.PositiveRemainder(nowExpandIndex + (isAdd ? 1 : -1), expandRoot.childCount)).gameObject);
+            if (_tabPanels.Count == 0) return;
+            SwitchExpand(_tabPanels[Tool.PositiveRemainder(nowExpandIndex + (isAdd ? 1 : -1), _tabPanels.Count)]);
         }
         public void SwitchExpand(GameObject go)
         {
             if (go.activeSelf) return;
-            nowExpandIndex = go.transform.GetSiblingIndex();
-            var select = (RectTransform)layoutRoot.GetChild(nowExpandIndex + 1);
+            int index = _tabPanels.IndexOf(go);
+            if (index < 0)
+            {
+                Debug.LogWarning("[SettingWnd] 展开面板 " + go.name + " 不在顶部 tab 配对表里，忽略本次切换");
+                return;
+            }
+            nowExpandIndex = index;
+            var select = (RectTransform)layoutRoot.GetChild(index + 1);
             nowSelect.position = select.position;
             nowSelect.sizeDelta = select.sizeDelta;
             expandRoot.ForEach(item =>SetActive(item,false));

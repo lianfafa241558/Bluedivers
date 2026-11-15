@@ -15,702 +15,722 @@ using FPSGame.Weapon;
 namespace FPSGame.Gameplay
 {
 
-/// <summary>
-/// 主控制器
-/// </summary>
-[RequireComponent(typeof(CharacterController), typeof(PlayerInputHandler), typeof(AudioSource))]
-[AddComponentMenu("玩家/玩家控制器")]
-public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
-{
-
-    [Foldout("一般", true)]
-
-    [SerializeField]
-    [InspectorName("玩家倒地摄像机")]
-    private Camera PlayerDownCamera;
-
-
-    [InspectorName("拾取道具点")]
-    public Transform HandPoint;
-
-    private Vector3 _downCameraVelocity;
-
-    [Range(0, 1f)]
-    [InspectorName("摄像机所在位置的角色高度")]
-    public float CameraHeightRatio = 0.9f;
-    [InspectorName("站立高度")]
-    public float CapsuleHeightStanding = 1.8f;
-
-    [Foldout("第三人称", true)]
-    [InspectorName("第三人称相机基准点")]
-    [Tooltip("控制第三人称相机的偏移位置，相对于角色Transform")]
-    [SerializeField] private Transform _thirdPersonCameraPoint;
-
-    [InspectorName("第三人称瞄准相机点")]
-    [Tooltip("瞄准时相机的偏移位置")]
-    [SerializeField] private Transform _thirdPersonAimCameraPoint;
-
-    [InspectorName("相机跟随平滑度")]
-    [Range(1f, 20f)]
-    [SerializeField] private float _thirdPersonSmoothSpeed = 8f;
-
-    [InspectorName("遮挡检测层")]
-    [SerializeField] private LayerMask _thirdPersonOcclusionLayers = -1;
-
-    [InspectorName("遮挡时最小距离")]
-    [Range(0.5f, 3f)]
-    [SerializeField] private float _thirdPersonMinDistance = 1f;
-
-    [InspectorName("最大上仰角")]
-    [Range(0f, 89f)]
-    [SerializeField] private float _thirdPersonUpperLimit = 70f;
-
-    [InspectorName("最大下俯角")]
-    [Range(0f, 89f)]
-    [SerializeField] private float _thirdPersonLowerLimit = 70f;
-
-    [InspectorName("旋转灵敏度")]
-    [Range(0.1f, 1f)]
-    [SerializeField] private float _thirdPersonRotationSensitivity = 0.5f;
-
-    [DisplayField]
-    [InspectorName("所属玩家")]
-    public int PlayerIndex;
-
-    /// <summary><see cref="IPlayerUnit"/> 的实现（= 上面的 <see cref="PlayerIndex"/> 字段）。
-    /// <para>▍为什么用**显式实现**：上面那个是 public 字段，而字段**不能**实现接口属性
-    /// ⇒ 显式实现既能满足接口，又不动既有字段（全工程读它的地方一处都不用改）。</para></summary>
-    int IPlayerUnit.PlayerIndex => PlayerIndex;
-
-    /// <summary><see cref="IPlayerUnit.PlayerName"/> 的实现：本机玩家的**存档昵称**
-    /// （= <c>ArchivesData_SO.playerName</c>，开房 / 入房上报的就是它，所以两端报出来的名字一致）。
-    ///
-    /// <para>▍同样用显式实现：基类的 <c>PlayerName</c> 是 <c>Actor.ShowName</c>，那是**角色名**
-    /// （"演谁"），与这里要的"谁"口径不同 ⇒ 显式实现让两者各归各的
-    /// （既有的 <c>PlayerWnd</c> / <c>BridgeWnd</c> 依旧读到角色名，消息窗播报读到昵称）。</para>
-    /// <para>▍老存档 / 起名前（<c>playerName</c> 空）**就地返回空**，由调用方按接口约定回落角色名
-    /// （<c>GameMsg.Of</c> 就是这么做的）—— 回落只写一处，别在这里再判一次。</para></summary>
-    string IPlayerUnit.PlayerName
-    {
-        get
-        {
-            var arch = ArchivesData_SO.Current;
-            return arch != null ? arch.playerName : null;
-        }
-    }
-
     /// <summary>
-    /// 是否处于第三人称视角
+    /// 主控制器
     /// </summary>
-    [DisplayField]
-    [InspectorName("第三人称")]
-    [SerializeField] private bool _isThirdPerson;
-
-    /// <summary>
-    /// 是否第三人称 —— **生效值**：第三人称下按住右键点中键临时切第一人称时返回 false，
-    /// 玩家的视角偏好仍是 <see cref="_isThirdPerson"/>（松开右键即还原，见 PlayerController_ThirdPerson）。
-    /// </summary>
-    public bool IsThirdPerson
+    [RequireComponent(typeof(CharacterController), typeof(PlayerInputHandler), typeof(AudioSource))]
+    [AddComponentMenu("玩家/玩家控制器")]
+    public partial class PlayerController : BaseSelfMoveableController, IPlayerUnit
     {
-        get => _isThirdPerson && !_aimViewOverride;
-        private set => _isThirdPerson = value;
-    }
+        #region 一般
+        [Foldout("一般", true)]
+
+        [SerializeField]
+        [InspectorName("玩家倒地摄像机")]
+        private Camera PlayerDownCamera;
 
 
-    [Foldout("冲刺", true)]
-    [InspectorName("冲刺持续时间")]
-    /// <summary>冲刺持续时间</summary>
-    public float SprintDuration = 1f;
+        [InspectorName("拾取道具点")]
+        public Transform HandPoint;
 
-    [InspectorName("冲刺倍数")]
-    /// <summary>冲刺倍数</summary>
-    public float SprintSpeedModifier = 2f;
+        private Vector3 _downCameraVelocity;
 
-    [InspectorName("冲刺冷却")]
-    /// <summary>冲刺冷却</summary>
-    public float SprintCool = 15f;
+        [Range(0, 1f)]
+        [InspectorName("摄像机所在位置的角色高度")]
+        public float CameraHeightRatio = 0.9f;
+        [InspectorName("站立高度")]
+        public float CapsuleHeightStanding = 1.8f;
 
-    [InspectorName("冲刺时重力程度")]
-    /// <summary>冲刺时重力程度</summary>
-    [Range(0, 1f)]
-    public float SprintGravity = 0.2f;
+        [Foldout("第三人称", true)]
+        [InspectorName("第三人称相机基准点")]
+        [Tooltip("控制第三人称相机的偏移位置，相对于角色Transform")]
+        [SerializeField] private Transform _thirdPersonCameraPoint;
 
+        [InspectorName("第三人称瞄准相机点")]
+        [Tooltip("瞄准时相机的偏移位置")]
+        [SerializeField] private Transform _thirdPersonAimCameraPoint;
 
+        [InspectorName("相机跟随平滑度")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _thirdPersonSmoothSpeed = 8f;
 
-    public RoleData_SO Cfg { get; private set; }
+        [InspectorName("遮挡检测层")]
+        [SerializeField] private LayerMask _thirdPersonOcclusionLayers = -1;
 
-    public bool IsDead { get; private set; }
+        [InspectorName("遮挡时最小距离")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _thirdPersonMinDistance = 1f;
 
-    public Transform ModleRoot { get; private set; }
+        [InspectorName("最大上仰角")]
+        [Range(0f, 89f)]
+        [SerializeField] private float _thirdPersonUpperLimit = 25f;
 
-    public PlayerWeaponsManager WeaponsManager { get; private set; }
+        [InspectorName("最大下俯角")]
+        [Range(0f, 89f)]
+        [SerializeField] private float _thirdPersonLowerLimit = 70f;
 
+        [InspectorName("旋转灵敏度")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _thirdPersonRotationSensitivity = 0.5f;
 
-    float m_sprintTime;//冲刺的剩余时间
+        [DisplayField]
+        [InspectorName("所属玩家")]
+        public int PlayerIndex;
 
+        /// <summary><see cref="IPlayerUnit"/> 的实现（= 上面的 <see cref="PlayerIndex"/> 字段）。
+        /// <para>▍为什么用**显式实现**：上面那个是 public 字段，而字段**不能**实现接口属性
+        /// ⇒ 显式实现既能满足接口，又不动既有字段（全工程读它的地方一处都不用改）。</para></summary>
+        int IPlayerUnit.PlayerIndex => PlayerIndex;
 
-    public void Init(int playerIndex)
-    {
-        PlayerIndex = playerIndex;
-    }
-
-    protected override void Awake()
-    {
-        base.Awake();
-        WeaponsManager = GetComponent<PlayerWeaponsManager>();
-        InitStance();   // 必须在 base.Awake() 与 WeaponsManager 赋值之后：胶囊/相机/武器挂点那时才有值
-        WeaponsManager.OnAim+= OnAim;
-    }
-
-    private void OnDestroy()
-    {
-        GlobalEventBus.OnGameStateChange -= OnBridgeInvincibleOff;   // 没订阅过时 -= 无副作用
-        if (!WeaponsManager) return;
-        WeaponsManager.OnAim -= OnAim;
-    }
-
-    /// <summary>离开舰桥（战斗 / 新手教程）立刻撤掉"舰上无敌"。
-    /// <para>▍为什么必须撤：<c>FpsHelper.VaildTarget</c> 把带 <see cref="ActorFlag.Invincible"/> 的单位当
-    /// **不可选目标** ⇒ 所有 AI / 侦测器（<c>DetectionModule.CheckNewTarget</c> 的过滤）永远锁不到玩家。
-    /// 从舰桥进教程时玩家是在 <c>GameState==Bridge</c> 那一刻实例化的，旗标只加不撤 ——
-    /// 表现就是"贴到 Mission3/Room2 的侦测器脸上也不理我"（2026-10-26 实测）。
-    /// 大厅正常开局 GameState 不是 Bridge，本来就不加，所以这条只补"从舰桥出发"这条路。</para></summary>
-    private void OnBridgeInvincibleOff(GameStateEnum _, GameStateEnum newState)
-    {
-        if (newState == GameStateEnum.Bridge) return;
-        GlobalEventBus.OnGameStateChange -= OnBridgeInvincibleOff;
-        Actor.RemoveFlag(ActorFlag.Invincible);
-    }
-
-    /// <summary>舰桥开工点（场景里挂 "StartPoint" 标签的物体）。首次真用到时才查场景，之后复用。</summary>
-    private Transform _bridgeStartPoint;
-    private bool _bridgeStartPointSearched;
-
-    /// <summary>掉出世界后的自救：舰桥没有 NavMesh ⇒ 吸 NavMesh 必失败，改为传送回开工点。</summary>
-    protected override void HandleOutOfWorld()
-    {
-        if (FPSGame.Data.FlowState.GameState != GameStateEnum.Bridge)
+        /// <summary><see cref="IPlayerUnit.PlayerName"/> 的实现：本机玩家的**存档昵称**
+        /// （= <c>ArchivesData_SO.playerName</c>，开房 / 入房上报的就是它，所以两端报出来的名字一致）。
+        ///
+        /// <para>▍同样用显式实现：基类的 <c>PlayerName</c> 是 <c>Actor.ShowName</c>，那是**角色名**
+        /// （"演谁"），与这里要的"谁"口径不同 ⇒ 显式实现让两者各归各的
+        /// （既有的 <c>PlayerWnd</c> / <c>BridgeWnd</c> 依旧读到角色名，消息窗播报读到昵称）。</para>
+        /// <para>▍老存档 / 起名前（<c>playerName</c> 空）**就地返回空**，由调用方按接口约定回落角色名
+        /// （<c>GameMsg.Of</c> 就是这么做的）—— 回落只写一处，别在这里再判一次。</para></summary>
+        string IPlayerUnit.PlayerName
         {
-            base.HandleOutOfWorld();
-            return;
-        }
-
-        if (!_bridgeStartPointSearched)
-        {
-            _bridgeStartPointSearched = true;
-            var go = GameObject.FindGameObjectWithTag("StartPoint");
-            if (go != null) _bridgeStartPoint = go.transform;
-            else Debug.LogWarning("[玩家] 舰桥场景里没有带 StartPoint 标签的物体，掉出世界后无法自救", this);
-        }
-        // 舰桥里没有可兜的点：只记一次日志直接不做（别再降级去吸 NavMesh）
-        if (_bridgeStartPoint == null) return;
-
-        // ⚠ 必须关掉 CC 再挪：直接写 transform.position 时 CC 内部位置不跟随，大体量传送会被弹回或继续下坠
-        Controller.enabled = false;
-        transform.position = _bridgeStartPoint.position + Vector3.up * 0.2f;
-        Physics.SyncTransforms();
-        Controller.enabled = true;
-        // 清掉下坠速度，否则传送完当帧还会被重力再推下去一次
-        CharacterVelocity = new PEVector3(CharacterVelocity.x, 0, CharacterVelocity.z);
-    }
-
-    protected override void Start()
-    {
-        Controller.enableOverlapRecovery = true;
-        Health.OnDie += OnDie;
-        Health.OnRevive += OnRevive;
-        WeaponsManager.OnShoot += WeapomRecoil;
-        m_sprintTime = -SprintCool;
-        if (FPSGame.Data.FlowState.GameState == GameStateEnum.Bridge)
-        {
-            Actor.AddFlag(ActorFlag.Invincible);
-            // 舰上无敌只在"还在舰桥"时成立 ⇒ 离开舰桥立刻撤（见 OnBridgeInvincibleOff）
-            GlobalEventBus.OnGameStateChange += OnBridgeInvincibleOff;
-        }
-
-        // 根据存档中的"默认操作视角"设置初始化视角（0=第一人称，1=第三人称）
-        // 走「数据自持」：ArchivesData_SO.Current 由 ArchiveLoader.Init() 写入，玩法层直接读数据自身
-        // （同 PlayerWeaponsManager/BattleApplyVehicleData），不再经 ServiceLocator.Archive 服务槽。
-        // ⚠ 保留判空：Current 在 ArchiveLoader.Init() 之前确实为 null（语义与原空对象的 GetSetting=0 一致）。
-        var archive = ArchivesData_SO.Current;
-        bool defaultThirdPerson = archive != null && archive.GetSetting("默认操作视角") == 1;
-        if (IsThirdPerson != defaultThirdPerson)
-        {
-            IsThirdPerson = defaultThirdPerson;
-            ApplyViewMode();
-        }
-        //Debug.LogWarning($"[挣脱诊断] {name} 被压住自动挣脱开关 = {_autoEscapeFromOverlap}", gameObject);
-
-    }
-
-    /// <summary>
-    /// 根据 IsThirdPerson 状态应用视角切换效果
-    /// </summary>
-    private void ApplyViewMode()
-    {
-        var lookAt = GetComponentInChildren<RootMotion.FinalIK.LookAtController>();
-        var lookAtIK = GetComponentInChildren<RootMotion.FinalIK.LookAtIK>();
-        if (IsThirdPerson)
-        {
-            PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
-            WeaponsManager.WeaponCamera.enabled = false;
-            if (lookAt) lookAt.enabled = false;
-            if (lookAtIK) lookAtIK.enabled = false;
-        }
-        else
-        {
-            PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
-            WeaponsManager.WeaponCamera.enabled = true;
-            RestoreCameraParent();
-            if (lookAt) lookAt.enabled = true;
-            if (lookAtIK) lookAtIK.enabled = true;
-        }
-
-        GlobalEventBus.ViewSwitch(IsThirdPerson);
-
-        // 视角切换后刷新武器瞄准状态，确保准星等UI正确
-        WeaponsManager.RefreshAimState();
-        // 瞄准镜模型只在第一人称显示：切视角时 IsAiming 往往不变（不抛 OnAim）⇒ 必须在这里补一次
-        WeaponsManager.RefreshScopeVisible();
-    }
-    private void OnEnable()
-    {
-        if (!PlayerCamera) return;
-
-        if (IsThirdPerson)
-        {
-            // 第三人称：显示 FirstPersonIgnoreLayers（头部等），激活相机
-            PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
-            if (!PlayerCamera.gameObject.activeSelf)
-                PlayerCamera.gameObject.SetActive(true);
-        }
-        else
-        {
-            // 第一人称：隐藏 FirstPersonIgnoreLayers
-            PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
-        }
-    }
-
-    /// <summary>
-    /// 载具等外部系统接管相机时设为 true，跳过 OnDisable 中的相机隐藏
-    /// </summary>
-    [HideInInspector]
-    public bool SkipCameraDeactivateOnDisable;
-
-    private void OnDisable()
-    {
-        // 组件被关掉（进载具等）时临时视角已无意义：不复位会让下面和 VehicleController 读到翻转后的 IsThirdPerson
-        _aimViewOverride = false;
-        // 同理：蹲/趴的胶囊与镜头基线也不该跨载具带出去（下车 OnEnable 时按立姿重开）
-        if (_stanceReady) SetStance(PlayerStance.Stand);
-        if (!PlayerCamera) return;
-
-        PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
-
-        // 组件关闭时恢复相机父级并重置视角
-        if (IsThirdPerson)
-        {
-            RestoreCameraParent();
-            // 第三人称相机已脱离父级，需要手动隐藏，确保 UICamera 能正确切换
-            // 载具接管时跳过隐藏，由 VehicleController 管理相机生命周期
-            if (!SkipCameraDeactivateOnDisable)
+            get
             {
-                PlayerCamera.gameObject.SetActive(false);
+                var arch = ArchivesData_SO.Current;
+                return arch != null ? arch.playerName : null;
             }
         }
 
-        // 玩家进载具等被禁用时广播，供手持装备等订阅（用于进载具丢下不可携带装备）
-        OnEnterVehicle?.Invoke();
-    }
+        /// <summary>
+        /// 是否处于第三人称视角
+        /// </summary>
+        [DisplayField]
+        [InspectorName("第三人称")]
+        [SerializeField] private bool _isThirdPerson;
 
-    public void OnAim(bool state)
-    {
-        GetAttribute(UnitAttrType.AngularSpeed).AddModifier(ModifierType.Factor, (state?-1:1)*(1-(PEInt)AimingRotationMultiplier));
-    }
-
-
-    public void SetBody(Transform modleRoot, RoleData_SO cfg, List<WeaponPlayerController> extraWeapons)
-    {
-        if (ModleRoot) {
-            DestroyImmediate(ModleRoot.gameObject);
-            _aimIK = null;
-            _aimController = null;
+        /// <summary>
+        /// 是否第三人称 —— **生效值**：第三人称下按住右键点中键临时切第一人称时返回 false，
+        /// 玩家的视角偏好仍是 <see cref="_isThirdPerson"/>（松开右键即还原，见 PlayerController_ThirdPerson）。
+        /// </summary>
+        public bool IsThirdPerson
+        {
+            get => _isThirdPerson && !_aimViewOverride;
+            private set => _isThirdPerson = value;
         }
+
+        #endregion
+
+        #region 冲刺
+
+        [Foldout("冲刺", true)]
+        [InspectorName("冲刺持续时间")]
+        /// <summary>冲刺持续时间</summary>
+        public float SprintDuration = 1f;
+
+        [InspectorName("冲刺倍数")]
+        /// <summary>冲刺倍数</summary>
+        public float SprintSpeedModifier = 2f;
+
+        [InspectorName("冲刺冷却")]
+        /// <summary>冲刺冷却</summary>
+        public float SprintCool = 15f;
+
+        [InspectorName("冲刺时重力程度")]
+        /// <summary>冲刺时重力程度</summary>
+        [Range(0, 1f)]
+        public float SprintGravity = 0.2f;
+
+        #endregion 
+
+        public RoleData_SO Cfg { get; private set; }
+
+        public bool IsDead { get; private set; }
+
+        public Transform ModleRoot { get; private set; }
+
+        public PlayerWeaponsManager WeaponsManager { get; private set; }
+
+
+        float m_sprintTime;//冲刺的剩余时间
+
+
+        public void Init(int playerIndex)
+        {
+            PlayerIndex = playerIndex;
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            WeaponsManager = GetComponent<PlayerWeaponsManager>();
+            InitStance();   // 必须在 base.Awake() 与 WeaponsManager 赋值之后：胶囊/相机/武器挂点那时才有值
+            WeaponsManager.OnAim+= OnAim;
+        }
+
+        private void OnDestroy()
+        {
+            GlobalEventBus.OnGameStateChange -= OnBridgeInvincibleOff;   // 没订阅过时 -= 无副作用
+            if (!WeaponsManager) return;
+            WeaponsManager.OnAim -= OnAim;
+        }
+
+        /// <summary>离开舰桥（战斗 / 新手教程）立刻撤掉"舰上无敌"。
+        /// <para>▍为什么必须撤：<c>FpsHelper.VaildTarget</c> 把带 <see cref="ActorFlag.Invincible"/> 的单位当
+        /// **不可选目标** ⇒ 所有 AI / 侦测器（<c>DetectionModule.CheckNewTarget</c> 的过滤）永远锁不到玩家。
+        /// 从舰桥进教程时玩家是在 <c>GameState==Bridge</c> 那一刻实例化的，旗标只加不撤 ——
+        /// 表现就是"贴到 Mission3/Room2 的侦测器脸上也不理我"（2026-10-26 实测）。
+        /// 大厅正常开局 GameState 不是 Bridge，本来就不加，所以这条只补"从舰桥出发"这条路。</para></summary>
+        private void OnBridgeInvincibleOff(GameStateEnum _, GameStateEnum newState)
+        {
+            if (newState == GameStateEnum.Bridge) return;
+            GlobalEventBus.OnGameStateChange -= OnBridgeInvincibleOff;
+            Actor.RemoveFlag(ActorFlag.Invincible);
+        }
+
+        /// <summary>舰桥开工点（场景里挂 "StartPoint" 标签的物体）。首次真用到时才查场景，之后复用。</summary>
+        private Transform _bridgeStartPoint;
+        private bool _bridgeStartPointSearched;
+
+        /// <summary>掉出世界后的自救：舰桥没有 NavMesh ⇒ 吸 NavMesh 必失败，改为传送回开工点。</summary>
+        protected override void HandleOutOfWorld()
+        {
+            if (FPSGame.Data.FlowState.GameState != GameStateEnum.Bridge)
+            {
+                base.HandleOutOfWorld();
+                return;
+            }
+
+            if (!_bridgeStartPointSearched)
+            {
+                _bridgeStartPointSearched = true;
+                var go = GameObject.FindGameObjectWithTag("StartPoint");
+                if (go != null) _bridgeStartPoint = go.transform;
+                else Debug.LogWarning("[玩家] 舰桥场景里没有带 StartPoint 标签的物体，掉出世界后无法自救", this);
+            }
+            // 舰桥里没有可兜的点：只记一次日志直接不做（别再降级去吸 NavMesh）
+            if (_bridgeStartPoint == null) return;
+
+            // ⚠ 必须关掉 CC 再挪：直接写 transform.position 时 CC 内部位置不跟随，大体量传送会被弹回或继续下坠
+            Controller.enabled = false;
+            transform.position = _bridgeStartPoint.position + Vector3.up * 0.2f;
+            Physics.SyncTransforms();
+            Controller.enabled = true;
+            // 清掉下坠速度，否则传送完当帧还会被重力再推下去一次
+            CharacterVelocity = new PEVector3(CharacterVelocity.x, 0, CharacterVelocity.z);
+        }
+
+        protected override void Start()
+        {
+            Controller.enableOverlapRecovery = true;
+            Health.OnDie += OnDie;
+            Health.OnRevive += OnRevive;
+            WeaponsManager.OnShoot += WeapomRecoil;
+            m_sprintTime = -SprintCool;
+            if (FPSGame.Data.FlowState.GameState == GameStateEnum.Bridge)
+            {
+                Actor.AddFlag(ActorFlag.Invincible);
+                // 舰上无敌只在"还在舰桥"时成立 ⇒ 离开舰桥立刻撤（见 OnBridgeInvincibleOff）
+                GlobalEventBus.OnGameStateChange += OnBridgeInvincibleOff;
+            }
+
+            // 根据存档中的"默认操作视角"设置初始化视角（0=第一人称，1=第三人称）
+            // 走「数据自持」：ArchivesData_SO.Current 由 ArchiveLoader.Init() 写入，玩法层直接读数据自身
+            // （同 PlayerWeaponsManager/BattleApplyVehicleData），不再经 ServiceLocator.Archive 服务槽。
+            // ⚠ 保留判空：Current 在 ArchiveLoader.Init() 之前确实为 null（语义与原空对象的 GetSetting=0 一致）。
+            var archive = ArchivesData_SO.Current;
+            bool defaultThirdPerson = archive != null && archive.GetSetting("默认操作视角") == 1;
+            if (IsThirdPerson != defaultThirdPerson)
+            {
+                IsThirdPerson = defaultThirdPerson;
+                ApplyViewMode();
+            }
+            //Debug.LogWarning($"[挣脱诊断] {name} 被压住自动挣脱开关 = {_autoEscapeFromOverlap}", gameObject);
+
+        }
+
+        /// <summary>
+        /// 根据 IsThirdPerson 状态应用视角切换效果
+        /// </summary>
+        private void ApplyViewMode()
+        {
+            var lookAt = GetComponentInChildren<RootMotion.FinalIK.LookAtController>();
+            var lookAtIK = GetComponentInChildren<RootMotion.FinalIK.LookAtIK>();
+            if (IsThirdPerson)
+            {
+                PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
+                WeaponsManager.WeaponCamera.enabled = false;
+                if (lookAt) lookAt.enabled = false;
+                if (lookAtIK) lookAtIK.enabled = false;
+            }
+            else
+            {
+                PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
+                WeaponsManager.WeaponCamera.enabled = true;
+                RestoreCameraParent();
+                if (lookAt) lookAt.enabled = true;
+                if (lookAtIK) lookAtIK.enabled = true;
+            }
+
+            GlobalEventBus.ViewSwitch(IsThirdPerson);
+
+            // 趴姿的"藏 Body 网格"只对第一人称生效 ⇒ 切视角时立刻重新应用一次
+            // （第三人称必须把 Body 还原出来，否则看不到自己的身体）；俯仰限位则按当前视角重新夹一次
+            ApplyStanceBodyLayer();
+            ClampPitchToStance();
+
+            // 视角切换后刷新武器瞄准状态，确保准星等UI正确
+            WeaponsManager.RefreshAimState();
+            // 瞄准镜模型只在第一人称显示：切视角时 IsAiming 往往不变（不抛 OnAim）⇒ 必须在这里补一次
+            WeaponsManager.RefreshScopeVisible();
+        }
+        private void OnEnable()
+        {
+            if (!PlayerCamera) return;
+
+            if (IsThirdPerson)
+            {
+                // 第三人称：显示 FirstPersonIgnoreLayers（头部等），激活相机
+                PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
+                if (!PlayerCamera.gameObject.activeSelf)
+                    PlayerCamera.gameObject.SetActive(true);
+            }
+            else
+            {
+                // 第一人称：隐藏 FirstPersonIgnoreLayers
+                PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
+            }
+        }
+
+        /// <summary>
+        /// 载具等外部系统接管相机时设为 true，跳过 OnDisable 中的相机隐藏
+        /// </summary>
+        [HideInInspector]
+        public bool SkipCameraDeactivateOnDisable;
+
+        private void OnDisable()
+        {
+            // 组件被关掉（进载具等）时临时视角已无意义：不复位会让下面和 VehicleController 读到翻转后的 IsThirdPerson
+            _aimViewOverride = false;
+            // 同理：蹲/趴的胶囊与镜头基线也不该跨载具带出去（下车 OnEnable 时按立姿重开）
+            if (_stanceReady) SetStance(PlayerStance.Stand);
+            if (!PlayerCamera) return;
+
+            PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
+
+            // 组件关闭时恢复相机父级并重置视角
+            if (IsThirdPerson)
+            {
+                RestoreCameraParent();
+                // 第三人称相机已脱离父级，需要手动隐藏，确保 UICamera 能正确切换
+                // 载具接管时跳过隐藏，由 VehicleController 管理相机生命周期
+                if (!SkipCameraDeactivateOnDisable)
+                {
+                    PlayerCamera.gameObject.SetActive(false);
+                }
+            }
+
+            // 玩家进载具等被禁用时广播，供手持装备等订阅（用于进载具丢下不可携带装备）
+            OnEnterVehicle?.Invoke();
+        }
+
+        public void OnAim(bool state)
+        {
+            GetAttribute(UnitAttrType.AngularSpeed).AddModifier(ModifierType.Factor, (state?-1:1)*(1-(PEInt)AimingRotationMultiplier));
+        }
+
+
+        /// <summary>按名字片段找模型网格（忽略大小写）：角色模型命名不统一（Nagisa 是 <c>Nagisa_Battle_body</c> 的小写 b），
+        /// 用 <c>Contains("Body")</c> 会一个都找不到 ⇒ Body/Head/Hand 一律走这里。</summary>
+        private static bool MeshNameHas(Transform t, string key) =>
+            t.name.IndexOf(key, System.StringComparison.OrdinalIgnoreCase) >= 0;
+
+        public void SetBody(Transform modleRoot, RoleData_SO cfg, List<WeaponPlayerController> extraWeapons)
+        {
+            if (ModleRoot) {
+                DestroyImmediate(ModleRoot.gameObject);
+                _aimIK = null;
+                _aimController = null;
+            }
     
 
 
-        ModleRoot = modleRoot;
-        BaseObject baseMono = modleRoot.GetComponent<BaseObject>();
-        Actor.ShowName = baseMono.ShowName;
-        Actor.Id = baseMono.Id;
-        Actor.Portrait = baseMono.Portrait;
-        Actor.ExtraPortrait = baseMono.ExtraPortrait;
-        Actor.Color = baseMono.Color;
-        m_Anim = modleRoot.GetComponent<Animator>();
-        RefreshStanceAnimParams();   // 新模型的动画参数表可能不同（有的模型压根没接蹲/趴参数）
+            ModleRoot = modleRoot;
+            BaseObject baseMono = modleRoot.GetComponent<BaseObject>();
+            Actor.ShowName = baseMono.ShowName;
+            Actor.Id = baseMono.Id;
+            Actor.Portrait = baseMono.Portrait;
+            Actor.ExtraPortrait = baseMono.ExtraPortrait;
+            Actor.Color = baseMono.Color;
+            m_Anim = modleRoot.GetComponent<Animator>();
+            RefreshStanceAnimParams();   // 新模型的动画参数表可能不同（有的模型压根没接蹲/趴参数）
 
 
 
-        Tool.Destroy(baseMono);
-        Tool.Destroy(modleRoot.GetComponent<Collider>());
+            Tool.Destroy(baseMono);
+            Tool.Destroy(modleRoot.GetComponent<Collider>());
         
-        modleRoot.SetParent(transform,false);
-        modleRoot.localPosition = Vector3.zero;
-        modleRoot.localEulerAngles = Vector3.zero;
-        modleRoot.Find(item=>item.name.Contains("Head")).gameObject.layer=LayerMask.NameToLayer("MainCameraIgnore");
-        var hand = modleRoot.Find(item => item.name.Contains("Hand"));
-        hand.gameObject.layer = LayerMask.NameToLayer("FirstPersonWeapon");
-        //使手臂在屏幕外也更新
-        hand.GetComponent<SkinnedMeshRenderer>().updateWhenOffscreen = true;
+            modleRoot.SetParent(transform,false);
+            modleRoot.localPosition = Vector3.zero;
+            modleRoot.localEulerAngles = Vector3.zero;
+            // 头部网格常驻 MainCameraIgnore（这一层只在第三人称的 cullingMask 里 ⇒ 第一人称看不到自己的头）
+            // ⚠ 一个模型可能有多张头部网格（Nagisa 有 Nagisa_Battle_Head 和 Nagisa_Battle_Head (1)），只改第一张剩下的还糊在镜头前
+            int headLayer = LayerMask.NameToLayer("MainCameraIgnore");
+            var heads = modleRoot.FindAll(item => MeshNameHas(item, "Head"));
+            for (int i = 0; i < heads.Count; ++i) heads[i].gameObject.layer = headLayer;
 
-        this.Cfg = cfg;
-        modleRoot.GetComponent<LookAtController>().target = PlayerCamera.transform.GetChild(0);
-        List<WeaponPlayerController> StartingWeapons=new(cfg.GetStartingWeapons(ArchivesData_SO.Current.GetRoleCfg(Actor.Id)));//数据自持（同 PlayerWeaponsManager）
-        StartingWeapons.AddRange(extraWeapons);
-        WeaponsManager.SetStatrtWeapon(StartingWeapons);
+            // 手臂常驻 FirstPersonWeapon（第一人称武器相机专属层）：这是该看见的持枪手臂，姿态系统不许动它
+            var hand = modleRoot.Find(item => MeshNameHas(item, "Hand"));
+            hand.gameObject.layer = LayerMask.NameToLayer("FirstPersonWeapon");
+            //使手臂在屏幕外也更新
+            hand.GetComponent<SkinnedMeshRenderer>().updateWhenOffscreen = true;
 
-        grounderIK = modleRoot.GetComponent<GrounderFBBIK>();
+            this.Cfg = cfg;
+            modleRoot.GetComponent<LookAtController>().target = PlayerCamera.transform.GetChild(0);
+            List<WeaponPlayerController> StartingWeapons=new(cfg.GetStartingWeapons(ArchivesData_SO.Current.GetRoleCfg(Actor.Id)));//数据自持（同 PlayerWeaponsManager）
+            StartingWeapons.AddRange(extraWeapons);
+            WeaponsManager.SetStatrtWeapon(StartingWeapons);
 
-        // 第三人称时关闭新模型的头部IK组件
-        if (IsThirdPerson)
-        {
-            var lookAt = modleRoot.GetComponent<LookAtController>();
-            if (lookAt) lookAt.enabled = false;
-            var lookAtIK = modleRoot.GetComponent<LookAtIK>();
-            if (lookAtIK) lookAtIK.enabled = false;
+            grounderIK = modleRoot.GetComponent<GrounderFBBIK>();
 
-            _aimIK = modleRoot.GetComponent<AimIK>();
-            if (_aimIK) _aimIK.enabled = false;
-            _aimController = modleRoot.GetComponent<AimController>();
-            if (_aimController) _aimController.enabled = false;
+            // 第三人称时关闭新模型的头部IK组件
+            if (IsThirdPerson)
+            {
+                var lookAt = modleRoot.GetComponent<LookAtController>();
+                if (lookAt) lookAt.enabled = false;
+                var lookAtIK = modleRoot.GetComponent<LookAtIK>();
+                if (lookAtIK) lookAtIK.enabled = false;
+
+                _aimIK = modleRoot.GetComponent<AimIK>();
+                if (_aimIK) _aimIK.enabled = false;
+                _aimController = modleRoot.GetComponent<AimController>();
+                if (_aimController) _aimController.enabled = false;
+            }
+
+            // 模型加载完成，广播给 PlayerMountPoint 等订阅方（解析动态模型内的 IK/背部点位）
+            OnBodySet?.Invoke();
         }
 
-        // 模型加载完成，广播给 PlayerMountPoint 等订阅方（解析动态模型内的 IK/背部点位）
-        OnBodySet?.Invoke();
-    }
 
+        public override Vector3 GetInputMove()
+        {
+            if (IsDead) return Vector3.zero;
+            if (IsThirdPerson) return GetInputMoveThirdPerson();
+            return base.GetInputMove();
+        }
 
-    public override Vector3 GetInputMove()
-    {
-        if (IsDead) return Vector3.zero;
-        if (IsThirdPerson) return GetInputMoveThirdPerson();
-        return base.GetInputMove();
-    }
-
-    protected override void Update()
-    {
-        // 姿态要先判：本帧改的胶囊高度/移速倍率要被 base.Update() 里的移动循环吃到
-        HandleStanceInput();
-        //在这一帧起床
-        DownHandleCharacterMovement();
-        base.Update();
-        UpdateSprint();
-        HandleKei();
-        HandleToggleView();
-        HandleAimViewToggle();
+        protected override void Update()
+        {
+            // 姿态要先判：本帧改的胶囊高度/移速倍率要被 base.Update() 里的移动循环吃到
+            HandleStanceInput();
+            //在这一帧起床
+            DownHandleCharacterMovement();
+            base.Update();
+            UpdateSprint();
+            HandleKei();
+            HandleToggleView();
+            HandleAimViewToggle();
 
         
-    }
-    private bool _wasThirdPersonLastFrame;
-
-    protected override void LateUpdate()
-    {
-        LookPointHandle();
-
-
-        // 刚切换到第三人称时，瞬间跳转到第三人称相机位置
-        if (IsThirdPerson && !_wasThirdPersonLastFrame && !IsDead && PlayerCamera && _thirdPersonCameraPoint)
-        {
-            // 第一人称期间水平角直接转在角色 transform 上（_cameraYaw 未更新），
-            // 切第三人称时先同步为角色当前朝向，避免相机瞬移回上次退出第三人称时的旧角度（同死亡相机处理）
-            _cameraYaw = transform.eulerAngles.y;
-            float xOffset = _thirdPersonCameraPoint.localPosition.x;
-            float height = _thirdPersonCameraPoint.localPosition.y;
-            float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z) * _thirdPersonDistanceScale;
-            Quaternion rotation = Quaternion.Euler(CameraPitch + ShakePitch, _cameraYaw + RecoilYaw + ShakeYaw, CameraRoll);
-            Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
-            PlayerCamera.transform.position = StanceOrbitCenter + offset;
-            PlayerCamera.transform.rotation = rotation;
         }
+        private bool _wasThirdPersonLastFrame;
 
-        if (IsThirdPerson && !IsDead)
+        protected override void LateUpdate()
         {
-            HandleThirdPersonCamera();
-        }
-        else
-        {
-            // 刚从第三人称切回第一人称时，瞬间跳转到第一人称位置，避免看到头部消失
-            if (_wasThirdPersonLastFrame && PlayerCamera)
+            LookPointHandle();
+
+
+            // 刚切换到第三人称时，瞬间跳转到第三人称相机位置
+            if (IsThirdPerson && !_wasThirdPersonLastFrame && !IsDead && PlayerCamera && _thirdPersonCameraPoint)
             {
-                PlayerCamera.transform.position = transform.TransformPoint(CameraBasePoint);
-                PlayerCamera.transform.localEulerAngles = new Vector3(CameraPitch + ShakePitch, RecoilYaw + ShakeYaw, CameraRoll);
+                // 第一人称期间水平角直接转在角色 transform 上（_cameraYaw 未更新），
+                // 切第三人称时先同步为角色当前朝向，避免相机瞬移回上次退出第三人称时的旧角度（同死亡相机处理）
+                _cameraYaw = transform.eulerAngles.y;
+                float xOffset = _thirdPersonCameraPoint.localPosition.x;
+                float height = _thirdPersonCameraPoint.localPosition.y;
+                float distance = Mathf.Abs(_thirdPersonCameraPoint.localPosition.z) * _thirdPersonDistanceScale;
+                Quaternion rotation = Quaternion.Euler(CameraPitch + ShakePitch, _cameraYaw + RecoilYaw + ShakeYaw, CameraRoll);
+                Vector3 offset = rotation * new Vector3(xOffset, height, -distance);
+                PlayerCamera.transform.position = StanceOrbitCenter + offset;
+                PlayerCamera.transform.rotation = rotation;
             }
-            base.LateUpdate();
-        }
 
-        // 动画器移动参数（第一/第三人称都需要）
-        var targetVelocity = CharacterVelocity;
-        targetVelocity.y = 0;
-        if (targetVelocity.Magnitude.RawFloat > 0.5f)
-        {
-            m_Anim?.SetBool("IsMove", true);
-            m_Anim?.SetFloat("Speed", targetVelocity.Magnitude.RawFloat / 5 * Mathf.Sign(transform.InverseTransformDirection(CharacterVelocity.RawVector3).z));
-        }
-        else
-        {
-            m_Anim?.SetBool("IsMove", false);
-            m_Anim?.SetFloat("Speed", 1);
-        }
-
-        // 脚步声（第一/第三人称都需要）
-        if (IsGrounded)
-        {
-            m_FootstepDistanceCounter += targetVelocity.Magnitude.RawFloat * Time.deltaTime;
-            float chosenFootstepSfxFrequency = FootstepSfxFrequency * MoveSpeedScale;
-            if (m_FootstepDistanceCounter >= 1f / Mathf.Max(chosenFootstepSfxFrequency, 0.1f))
+            if (IsThirdPerson && !IsDead)
             {
-                m_FootstepDistanceCounter = 0f;
-                AudioSource.PlayOneShot(FootstepSfx);
+                HandleThirdPersonCamera();
             }
-        }
-
-        if (IsThirdPerson)
-        {
-            // 第三人称时用世界旋转同步武器朝向（相机俯仰 + 角色朝向）：
-            // 瞄准时角色已转向相机 yaw，等价于完全对齐相机；未瞄准时也同步相机俯仰，
-            // 使枪口跟随视野中心上下摆动（是否在未瞄准时同步由 WeaponsManager.ThirdPersonAimAtViewCenter 控制）
-            if (WeaponsManager.IsAiming || WeaponsManager.ThirdPersonAimAtViewCenter)
+            else
             {
-                // 武器挂点**不含屏震**：屏震是纯表现，混进来会让弹道跟着抖
-                WeaponsManager.FirstPersonSocket.transform.rotation = Quaternion.Euler(CameraPitch, transform.eulerAngles.y + RecoilYaw, 0);
+                // 刚从第三人称切回第一人称时，瞬间跳转到第一人称位置，避免看到头部消失
+                if (_wasThirdPersonLastFrame && PlayerCamera)
+                {
+                    PlayerCamera.transform.position = transform.TransformPoint(CameraBasePoint);
+                    PlayerCamera.transform.localEulerAngles = new Vector3(CameraPitch + ShakePitch, RecoilYaw + ShakeYaw, CameraRoll);
+                }
+                base.LateUpdate();
             }
+
+            // 动画器移动参数（第一/第三人称都需要）
+            var targetVelocity = CharacterVelocity;
+            targetVelocity.y = 0;
+            if (targetVelocity.Magnitude.RawFloat > 0.5f)
+            {
+                m_Anim?.SetBool("IsMove", true);
+                m_Anim?.SetFloat("Speed", targetVelocity.Magnitude.RawFloat / 5 * Mathf.Sign(transform.InverseTransformDirection(CharacterVelocity.RawVector3).z));
+            }
+            else
+            {
+                m_Anim?.SetBool("IsMove", false);
+                m_Anim?.SetFloat("Speed", 1);
+            }
+
+            // 脚步声（第一/第三人称都需要）
+            if (IsGrounded)
+            {
+                m_FootstepDistanceCounter += targetVelocity.Magnitude.RawFloat * Time.deltaTime;
+                float chosenFootstepSfxFrequency = FootstepSfxFrequency * MoveSpeedScale;
+                if (m_FootstepDistanceCounter >= 1f / Mathf.Max(chosenFootstepSfxFrequency, 0.1f))
+                {
+                    m_FootstepDistanceCounter = 0f;
+                    PlayFootstepSfx();   // 与基类 LateUpdate 共用同一个节流时间戳（第一人称两者都会跑到）
+                }
+            }
+
+            if (IsThirdPerson)
+            {
+                // 第三人称时用世界旋转同步武器朝向（相机俯仰 + 角色朝向）：
+                // 瞄准时角色已转向相机 yaw，等价于完全对齐相机；未瞄准时也同步相机俯仰，
+                // 使枪口跟随视野中心上下摆动（是否在未瞄准时同步由 WeaponsManager.ThirdPersonAimAtViewCenter 控制）
+                if (WeaponsManager.IsAiming || WeaponsManager.ThirdPersonAimAtViewCenter)
+                {
+                    // 武器挂点**不含屏震**：屏震是纯表现，混进来会让弹道跟着抖
+                    WeaponsManager.FirstPersonSocket.transform.rotation = Quaternion.Euler(CameraPitch, transform.eulerAngles.y + RecoilYaw, 0);
+                }
+            }
+            else
+            {
+                // 同上：挂点只吃后坐，不吃屏震
+                WeaponsManager.FirstPersonSocket.transform.localEulerAngles = new Vector3(CameraPitch, RecoilYaw, 0);
+            }
+            _wasThirdPersonLastFrame = IsThirdPerson;
+
         }
-        else
+
+        protected override void TryJump()
         {
-            // 同上：挂点只吃后坐，不吃屏震
-            WeaponsManager.FirstPersonSocket.transform.localEulerAngles = new Vector3(CameraPitch, RecoilYaw, 0);
+            if (IsDead) return;
+            // 蹲/趴时按跳跃先起身再跳（允许跳，但姿态自动回立姿，否则起跳高度会被半截胶囊吃掉）
+            if (Stance != PlayerStance.Stand && JumpInput()) SetStance(PlayerStance.Stand);
+            base.TryJump();
         }
-        _wasThirdPersonLastFrame = IsThirdPerson;
 
-    }
-
-    protected override void TryJump()
-    {
-        if (IsDead) return;
-        // 蹲/趴时按跳跃先起身再跳（允许跳，但姿态自动回立姿，否则起跳高度会被半截胶囊吃掉）
-        if (Stance != PlayerStance.Stand && JumpInput()) SetStance(PlayerStance.Stand);
-        base.TryJump();
-    }
-
-    protected override void HandleRotation()
-    {
-        if (IsDead) return;
-        if (IsThirdPerson)
+        protected override void HandleRotation()
         {
-            HandleRotationThirdPerson();
-            return;
+            if (IsDead) return;
+            if (IsThirdPerson)
+            {
+                HandleRotationThirdPerson();
+                return;
+            }
+            base.HandleRotation();
         }
-        base.HandleRotation();
-    }
-    /// <summary>当前冲刺冷却时间（全队强化"疾风二度"降低20%）</summary>
-    private float CurrentSprintCool
-        => HaveBooster(BoosterType.Windrunner) ? SprintCool * 0.8f : SprintCool;
+        /// <summary>当前冲刺冷却时间（全队强化"疾风二度"降低20%）</summary>
+        private float CurrentSprintCool
+            => HaveBooster(BoosterType.Windrunner) ? SprintCool * 0.8f : SprintCool;
 
-    void UpdateSprint()
-    {
-        // 蹲/趴时双击冲刺先起身：起身发生在同帧，下面的 *= 才能正常吃到（姿态移速是现算属性）
-        if (Stance != PlayerStance.Stand && InputHandler.GetSprintInputDouble()) SetStance(PlayerStance.Stand);
+        void UpdateSprint()
+        {
+            // 蹲/趴时双击冲刺先起身：起身发生在同帧，下面的 *= 才能正常吃到（姿态移速是现算属性）
+            if (Stance != PlayerStance.Stand && InputHandler.GetSprintInputDouble()) SetStance(PlayerStance.Stand);
 
-        // 冲刺
-        if (m_sprintTime < -CurrentSprintCool && InputHandler.GetSprintInputDouble())
-        {
-            m_sprintTime = SprintDuration;
-            MoveSpeedScale *= SprintSpeedModifier;
-            GravityDownForce *= SprintGravity;
+            // 冲刺
+            if (m_sprintTime < -CurrentSprintCool && InputHandler.GetSprintInputDouble())
+            {
+                m_sprintTime = SprintDuration;
+                MoveSpeedScale *= SprintSpeedModifier;
+                GravityDownForce *= SprintGravity;
+            }
+            else if (m_sprintTime > 0 && m_sprintTime < Time.deltaTime)
+            {
+                MoveSpeedScale /= SprintSpeedModifier;
+                GravityDownForce /= SprintGravity;
+            }
+            m_sprintTime -= Time.deltaTime;
         }
-        else if (m_sprintTime > 0 && m_sprintTime < Time.deltaTime)
-        {
-            MoveSpeedScale /= SprintSpeedModifier;
-            GravityDownForce /= SprintGravity;
-        }
-        m_sprintTime -= Time.deltaTime;
-    }
 
    
-    /// <summary>武器后坐力：参数取**开火这把枪**的 profile，偏移由 <see cref="BaseSelfController"/> 的状态机维护。
-    /// <para>▍与老实现的差别：不再把"抬头量"直接写进视角角，而是作为独立偏移叠加（回正不会吃掉玩家压枪）。
-    /// ADS 减弱由 profile 的 <see cref="FPSGame.Weapon.WeaponRecoilProfile.AdsScale"/> 负责。</para></summary>
-    public void WeapomRecoil(WeaponController weapon)
-    {
-        var wpc = weapon as WeaponPlayerController;
-        if (!wpc) return;
-
-        RecoilProfile = wpc.RecoilProfile;
-        float strength = wpc.RecoilForceFinal;
-        AddRecoil(strength, WeaponsManager && WeaponsManager.IsAiming);
-
-        // 开火屏震：profile 里配 0 就是关（比调后坐力更"闷"的一档反馈）
-        if (wpc.RecoilProfile.ShakePerShot > 0f) AddCameraShake(wpc.RecoilProfile.ShakePerShot * strength);
-    }
-
-    /// <summary>
-    /// 倒地后的相机控制（与第三人称一致的轨道旋转方式）
-    /// </summary>
-    void DownHandleCharacterMovement()
-    {
-        if (!IsDead) return;
-
-        float angSpeed = GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat;
-        float dt = Time.deltaTime;
-
-        // 更新旋转角度（与第三人称 HandleThirdPersonCamera 一致：累积 _cameraYaw）
-        _cameraYaw += InputHandler.GetLookInputsHorizontal() * angSpeed * dt;
-        m_CameraVerticalAngle += InputHandler.GetLookInputsVertical() * angSpeed * dt;
-        m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -_thirdPersonUpperLimit, _thirdPersonLowerLimit);
-
-        // 相机位置：围绕 CenterPos 轨道旋转（与第三人称一致的公式）
-        Quaternion rotation = Quaternion.Euler(m_CameraVerticalAngle, _cameraYaw, 0);
-        Vector3 offset = rotation * new Vector3(0, 1f, -4f);
-        Vector3 desiredPosition = StanceOrbitCenter + offset;
-
-        // 遮挡检测（与第三人称一致）
-        Vector3 origin = StanceOrbitCenter;
-        Vector3 dir = (desiredPosition - origin).normalized;
-        float maxDist = Vector3.Distance(origin, desiredPosition);
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, maxDist, _thirdPersonOcclusionLayers, QueryTriggerInteraction.Ignore))
+        /// <summary>武器后坐力：参数取**开火这把枪**的 profile，偏移由 <see cref="BaseSelfController"/> 的状态机维护。
+        /// <para>▍与老实现的差别：不再把"抬头量"直接写进视角角，而是作为独立偏移叠加（回正不会吃掉玩家压枪）。
+        /// ADS 减弱由 profile 的 <see cref="FPSGame.Weapon.WeaponRecoilProfile.AdsScale"/> 负责。</para></summary>
+        public void WeapomRecoil(WeaponController weapon)
         {
-            float occludedDist = Mathf.Max(hit.distance - 0.3f, _thirdPersonMinDistance);
-            desiredPosition = origin + dir * occludedDist;
+            var wpc = weapon as WeaponPlayerController;
+            if (!wpc) return;
+
+            RecoilProfile = wpc.RecoilProfile;
+            float strength = wpc.RecoilForceFinal;
+            AddRecoil(strength, WeaponsManager && WeaponsManager.IsAiming);
+
+            // 开火屏震：profile 里配 0 就是关（比调后坐力更"闷"的一档反馈）
+            if (wpc.RecoilProfile.ShakePerShot > 0f) AddCameraShake(wpc.RecoilProfile.ShakePerShot * strength);
         }
 
-        // 平滑位置（SmoothDamp 替代 Lerp）
-        PlayerDownCamera.transform.position = Vector3.SmoothDamp(
-            PlayerDownCamera.transform.position, desiredPosition, ref _downCameraVelocity, 1f / _thirdPersonSmoothSpeed);
-
-        // 平滑旋转（Slerp 替代 LookAt）
-        PlayerDownCamera.transform.rotation = Quaternion.Slerp(
-            PlayerDownCamera.transform.rotation, rotation, dt * _thirdPersonSmoothSpeed);
-
-        // 呼叫
-        if (InputHandler.GetJumpInputUp())
+        /// <summary>
+        /// 倒地后的相机控制（与第三人称一致的轨道旋转方式）
+        /// </summary>
+        void DownHandleCharacterMovement()
         {
-            BattleEventBus.CallKai(gameObject, transform.position);
-            GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Help);
+            if (!IsDead) return;
+
+            float angSpeed = GetAttribute(UnitAttrType.AngularSpeed).FinalValue.RawFloat;
+            float dt = Time.deltaTime;
+
+            // 更新旋转角度（与第三人称 HandleThirdPersonCamera 一致：累积 _cameraYaw）
+            _cameraYaw += InputHandler.GetLookInputsHorizontal() * angSpeed * dt;
+            m_CameraVerticalAngle += InputHandler.GetLookInputsVertical() * angSpeed * dt;
+            // 与第三人称同一套取值（含姿态收紧）：死亡时已强制立姿 ⇒ 实际等于表里的 25/70
+            m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -ThirdPersonPitchUpLimit, ThirdPersonPitchDownLimit);
+
+            // 相机位置：围绕 CenterPos 轨道旋转（与第三人称一致的公式）
+            Quaternion rotation = Quaternion.Euler(m_CameraVerticalAngle, _cameraYaw, 0);
+            Vector3 offset = rotation * new Vector3(0, 1f, -4f);
+            Vector3 desiredPosition = StanceOrbitCenter + offset;
+
+            // 遮挡检测（与第三人称一致）
+            Vector3 origin = StanceOrbitCenter;
+            Vector3 dir = (desiredPosition - origin).normalized;
+            float maxDist = Vector3.Distance(origin, desiredPosition);
+            if (Physics.Raycast(origin, dir, out RaycastHit hit, maxDist, _thirdPersonOcclusionLayers, QueryTriggerInteraction.Ignore))
+            {
+                float occludedDist = Mathf.Max(hit.distance - 0.3f, _thirdPersonMinDistance);
+                desiredPosition = origin + dir * occludedDist;
+            }
+
+            // 平滑位置（SmoothDamp 替代 Lerp）
+            PlayerDownCamera.transform.position = Vector3.SmoothDamp(
+                PlayerDownCamera.transform.position, desiredPosition, ref _downCameraVelocity, 1f / _thirdPersonSmoothSpeed);
+
+            // 平滑旋转（Slerp 替代 LookAt）
+            PlayerDownCamera.transform.rotation = Quaternion.Slerp(
+                PlayerDownCamera.transform.rotation, rotation, dt * _thirdPersonSmoothSpeed);
+
+            // 呼叫
+            if (InputHandler.GetJumpInputUp())
+            {
+                BattleEventBus.CallKai(gameObject, transform.position);
+                GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Help);
+            }
         }
-    }
 
-    private bool _wasThirdPersonBeforeDeath;
+        private bool _wasThirdPersonBeforeDeath;
 
-    void OnDie(GameObject caused, GameObject origin)
-    {
-        IsDead = true;
-        SetStance(PlayerStance.Stand);   // 死亡一律立姿：半截胶囊会让尸体悬空、复活时还卡在蹲姿
-        // 死前若正按住右键点中键切了第一人称，先还原第三人称再记录偏好：否则偏好被记成第一人称（复活后永久丢第三人称），
-        // 且武器相机还开着会叠在死亡镜头上
-        SetAimViewOverride(false);
-        _wasThirdPersonBeforeDeath = IsThirdPerson;
-        _downCameraVelocity = Vector3.zero;
-
-        // 第一人称死亡时 _cameraYaw 未更新，初始化为角色后方
-        if (!IsThirdPerson)
+        void OnDie(GameObject caused, GameObject origin)
         {
-            _cameraYaw = transform.eulerAngles.y - 180;
+            IsDead = true;
+            SetStance(PlayerStance.Stand);   // 死亡一律立姿：半截胶囊会让尸体悬空、复活时还卡在蹲姿
+            // 死前若正按住右键点中键切了第一人称，先还原第三人称再记录偏好：否则偏好被记成第一人称（复活后永久丢第三人称），
+            // 且武器相机还开着会叠在死亡镜头上
+            SetAimViewOverride(false);
+            _wasThirdPersonBeforeDeath = IsThirdPerson;
+            _downCameraVelocity = Vector3.zero;
+
+            // 第一人称死亡时 _cameraYaw 未更新，初始化为角色后方
+            if (!IsThirdPerson)
+            {
+                _cameraYaw = transform.eulerAngles.y - 180;
+            }
+
+            PlayerCamera.gameObject.SetActive(false);
+            PlayerDownCamera.gameObject.SetActive(true);
+            m_Anim.SetBool(Constants.k_AnimIsDeathParameter, true);
+            WeaponsManager.SwitchToWeaponIndex("", true, false, true);
+
+            if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game) FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(PlayerIndex, "死亡次数");
+            WeaponsManager.enabled = false;
         }
 
-        PlayerCamera.gameObject.SetActive(false);
-        PlayerDownCamera.gameObject.SetActive(true);
-        m_Anim.SetBool(Constants.k_AnimIsDeathParameter, true);
-        WeaponsManager.SwitchToWeaponIndex("", true, false, true);
-
-        if (FPSGame.Data.FlowState.GameState == GameStateEnum.Game) FPSGame.Gameplay.BattleEventBus.AddBattleDataItem(PlayerIndex, "死亡次数");
-        WeaponsManager.enabled = false;
-    }
-
-    void OnRevive()
-    {
-        IsDead = false;
-        SetStance(PlayerStance.Stand);
-        _downCameraVelocity = Vector3.zero;
-        PlayerCamera.gameObject.SetActive(true);
-        PlayerDownCamera.gameObject.SetActive(false);
-
-        WeaponsManager.enabled = true;
-        WeaponsManager.SwitchToWeaponIndex(1, true, false, true);
-        GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Thank);
-        Actor.ActorState = ActorState.Normal;
-        m_Anim.SetBool(Constants.k_AnimIsDeathParameter, false);
-        //喘息之时现在免费送
-        Actor.AddFlag(ActorFlag.Invincible);
-        FPSGame.Core.TimerHost.CreateTimer(() => Actor.RemoveFlag(ActorFlag.Invincible), 4);
-
-        // 恢复死亡前的视角状态
-        if (_wasThirdPersonBeforeDeath)
+        void OnRevive()
         {
-            IsThirdPerson = true;
-            PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
-            WeaponsManager.WeaponCamera.enabled = false;
-            GlobalEventBus.ViewSwitch(true);
+            IsDead = false;
+            SetStance(PlayerStance.Stand);
+            _downCameraVelocity = Vector3.zero;
+            PlayerCamera.gameObject.SetActive(true);
+            PlayerDownCamera.gameObject.SetActive(false);
+
+            WeaponsManager.enabled = true;
+            WeaponsManager.SwitchToWeaponIndex(1, true, false, true);
+            GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Thank);
+            Actor.ActorState = ActorState.Normal;
+            m_Anim.SetBool(Constants.k_AnimIsDeathParameter, false);
+            //喘息之时现在免费送
+            Actor.AddFlag(ActorFlag.Invincible);
+            FPSGame.Core.TimerHost.CreateTimer(() => Actor.RemoveFlag(ActorFlag.Invincible), 4);
+
+            // 恢复死亡前的视角状态
+            if (_wasThirdPersonBeforeDeath)
+            {
+                IsThirdPerson = true;
+                PlayerCamera.cullingMask |= LayerDefinition.FirstPersonIgnoreLayers;
+                WeaponsManager.WeaponCamera.enabled = false;
+                GlobalEventBus.ViewSwitch(true);
+            }
+            else
+            {
+                IsThirdPerson = false;
+                PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
+            }
+            _wasThirdPersonBeforeDeath = false;
         }
-        else
+        void HandleKei()
         {
-            IsThirdPerson = false;
-            PlayerCamera.cullingMask &= ~LayerDefinition.FirstPersonIgnoreLayers;
+            if (!IsDead && InputHandler.GetMuleDown())
+            {
+                BattleEventBus.CallKai(gameObject, transform.position);
+                GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Kei);
+            }
         }
-        _wasThirdPersonBeforeDeath = false;
-    }
-    void HandleKei()
-    {
-        if (!IsDead && InputHandler.GetMuleDown())
+
+        /// <summary>
+        /// 使用补给
+        /// </summary>
+        public void UseSupply()
         {
-            BattleEventBus.CallKai(gameObject, transform.position);
-            GlobalEventBus.PlayMeetSpeech(gameObject, SpeechTypeEnum.Kei);
+            UseCaisson();
+            UseMedicalBag();
+            UseThrowBag();
+            // 补给吃完再广播：靠补给回充的装备（如榴弹背包）收到后补一格，顺序反了会补出"下一顿"的格
+            GlobalEventBus.SupplyUsed(this);
         }
-    }
-
-    /// <summary>
-    /// 使用补给
-    /// </summary>
-    public void UseSupply()
-    {
-        UseCaisson();
-        UseMedicalBag();
-        UseThrowBag();
-        // 补给吃完再广播：靠补给回充的装备（如榴弹背包）收到后补一格，顺序反了会补出"下一顿"的格
-        GlobalEventBus.SupplyUsed(this);
-    }
-    /// <summary>
-    /// 使用弹药箱
-    /// </summary>
-    public void UseCaisson()
-    {
-        WeaponsManager.UseSupply();
-        // 全队强化"补给大师"：吃完补给后所有武器立刻装弹完成
-        if (HaveBooster(BoosterType.SuppleMaster))
+        /// <summary>
+        /// 使用弹药箱
+        /// </summary>
+        public void UseCaisson()
         {
-            WeaponsManager.ReloadAllWeapons();
+            WeaponsManager.UseSupply();
+            // 全队强化"补给大师"：吃完补给后所有武器立刻装弹完成
+            if (HaveBooster(BoosterType.SuppleMaster))
+            {
+                WeaponsManager.ReloadAllWeapons();
+            }
         }
+        public void UseThrowBag()
+        {
+            WeaponsManager.UseThrow();
+        }
+
+        /// <summary>
+        /// 使用医疗包
+        /// </summary>
+        public void UseMedicalBag()
+        {
+            // 全队强化"补给大师"：恢复的生命值从 50% 提升到 60%
+            float healRatio = HaveBooster(BoosterType.SuppleMaster) ? 0.6f : 0.5f;
+            Health.Heal(Health.GetHpMax() * healRatio);
+        }
+
+        /// <summary>本局是否激活了指定的全队强化</summary>
+        private bool HaveBooster(BoosterType type)
+            => FPSGame.Data.BattleState.HaveBooster(type);// 数据自持：未就绪时恒 false ⇒ 等价于原来的"无管理器则 false"
+
+
     }
-    public void UseThrowBag()
-    {
-        WeaponsManager.UseThrow();
-    }
-
-    /// <summary>
-    /// 使用医疗包
-    /// </summary>
-    public void UseMedicalBag()
-    {
-        // 全队强化"补给大师"：恢复的生命值从 50% 提升到 60%
-        float healRatio = HaveBooster(BoosterType.SuppleMaster) ? 0.6f : 0.5f;
-        Health.Heal(Health.GetHpMax() * healRatio);
-    }
-
-    /// <summary>本局是否激活了指定的全队强化</summary>
-    private bool HaveBooster(BoosterType type)
-        => FPSGame.Data.BattleState.HaveBooster(type);// 数据自持：未就绪时恒 false ⇒ 等价于原来的"无管理器则 false"
-
-
-}
 
 
 }

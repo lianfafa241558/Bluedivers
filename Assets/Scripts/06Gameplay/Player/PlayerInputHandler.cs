@@ -116,13 +116,13 @@ public class PlayerInputHandler : MonoBehaviour
     {
         if (!CanProcessInput()) return Vector3.zero;
 
-        // Left/Up/Right/Down 也当位移用。它们绑定在"任意界面"(Window=All)，而 Horizontal/Vertical 只认游戏界面
-        // ⇒ 开战备面板(Airdrop)时轴失效，靠这四个方向键照样能走。
-        // ⚠ 这两套键通常就是同一批 WASD ⇒ 叠加后必须统一归一化，否则两边同时生效时速度翻倍。
-        float x = InputManager.GetAxis(InputState.Horizontal)
-                + InputManager.GetAxis(InputState.Right) - InputManager.GetAxis(InputState.Left);
-        float z = InputManager.GetAxis(InputState.Vertical)
-                + InputManager.GetAxis(InputState.Up) - InputManager.GetAxis(InputState.Down);
+            // Left/Up/Right/Down 也当位移用。它们绑定在"任意界面"(Window=All)，而 Horizontal/Vertical 只认游戏界面
+            // ⇒ 开战备面板(Airdrop)时轴失效，靠这四个方向键照样能走。
+            // ⚠ 这两套键通常就是同一批 WASD ⇒ 叠加后必须统一归一化，否则两边同时生效时速度翻倍。
+            float x = InputManager.GetAxis(InputState.Horizontal);
+            //+ InputManager.GetAxis(InputState.Right) - InputManager.GetAxis(InputState.Left);
+            float z = InputManager.GetAxis(InputState.Vertical);
+                //+ InputManager.GetAxis(InputState.Up) - InputManager.GetAxis(InputState.Down);
         return new Vector3(x, 0f, z).normalized;
     }
     /// <summary>

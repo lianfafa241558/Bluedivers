@@ -396,7 +396,7 @@ public enum MissionInitMode
                 searchRange = Mathf.Max(5, searchRange / 2);
             }
 
-            Debug.LogError($"任务点完全无解（半径 {newRange}，地图半径 {mapRadius}，已有任务点 {missionCreatPoints.Count} 个，"
+            NetSyncLog.LoadLog("任务",$"任务点完全无解（半径 {newRange}，地图半径 {mapRadius}，已有任务点 {missionCreatPoints.Count} 个，"
                 + $"需避让的地表占地圆 {_areaCircles.Count} 个）⇒ 退到地图中心 {center}");
             pos = center.ToVector3();
             return false;

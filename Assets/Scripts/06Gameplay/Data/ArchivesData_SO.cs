@@ -184,6 +184,21 @@ public class ArchivesData_SO : ArchivesDataBase_SO
     [InspectorName("武器改装")]
     public DisplayDic<string, WeaponUpgradeData> weaponUpgradeDic = new();
 
+    /// <summary>
+    /// 取某角色某把武器的改装存档（没有就建档），并先让它对齐到**当前武器 prefab 的改装树**。
+    /// </summary>
+    /// <param name="columns">当前改装树每行的可选项数，= <c>WeaponPlayerController.UpgradeCount()</c></param>
+    /// <remarks>⚠ 全项目**只经这里**取 <see cref="WeaponUpgradeData"/>：<c>selectIndex</c>/<c>buyIndex</c>
+    /// 的长度是**建档那一刻**写死的，prefab 事后加/删改装行，老存档就对不上 ⇒ 谁拿裸
+    /// <c>weaponUpgradeDic.TryGet(...)</c> 谁就可能拿到短数组（选角色界面曾因此 IndexOutOfRange）。</remarks>
+    public WeaponUpgradeData GetWeaponUpgradeData(string ID, string weaponName, int[] columns)
+    {
+        var key = ID + "_" + weaponName;
+        var data = weaponUpgradeDic.TryGet(key, new WeaponUpgradeData(key, columns.Length));
+        data.EnsureSize(columns);
+        return data;
+    }
+
     public int[][] GetWeaponUpgrade(string ID)
     {
         var re = new int[6][];
@@ -194,7 +209,7 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         {
             //如果超出范围自动回滚
             var weapon = data[(WeaponTypeEnum)i][role.weaponSelect[(WeaponTypeEnum)i]%data[(WeaponTypeEnum)i].Count];
-            re[i]=weaponUpgradeDic.TryGet(ID + "_" + weapon.WeaponName,new(ID + "_" + weapon.WeaponName, weapon.UpgradeCount().Length)).selectIndex;
+            re[i] = GetWeaponUpgradeData(ID, weapon.WeaponName, weapon.UpgradeCount()).selectIndex;
         }
         return re;
     }
@@ -213,7 +228,7 @@ public class ArchivesData_SO : ArchivesDataBase_SO
         for (int i = 0; i < 6; ++i)
         {
             var weapon = data[(WeaponTypeEnum)i][role.weaponSelect[(WeaponTypeEnum)i] % data[(WeaponTypeEnum)i].Count];
-            re[i] = weaponUpgradeDic.TryGet(ID + "_" + weapon.WeaponName, new(ID + "_" + weapon.WeaponName, weapon.UpgradeCount().Length)).selectModuleIndex;
+            re[i] = GetWeaponUpgradeData(ID, weapon.WeaponName, weapon.UpgradeCount()).selectModuleIndex;
         }
         return re;
     }
@@ -234,9 +249,9 @@ public class ArchivesData_SO : ArchivesDataBase_SO
             if (list == null || list.Count == 0) continue;
             var weapon = list[role.weaponSelect[type] % list.Count];
             if (weapon == null) continue;
-            int lenght = weapon.UpgradeCount().Length;
-            if (lenght == 0) continue;   // Armor 之类没有改装树，加了也没地方用
-            weaponUpgradeDic.TryGet(ID + "_" + weapon.WeaponName, new(ID + "_" + weapon.WeaponName, lenght)).GainExp(gainValue);
+            var columns = weapon.UpgradeCount();
+            if (columns.Length == 0) continue;   // Armor 之类没有改装树，加了也没地方用
+            GetWeaponUpgradeData(ID, weapon.WeaponName, columns).GainExp(gainValue);
         }
     }
     #endregion
@@ -416,9 +431,44 @@ public class ArchivesData_SO : ArchivesDataBase_SO
             level = 1;
             exp = 0;
         }
+        /// <summary>
+        /// 把两个数组对齐到**当前武器 prefab 的改装树**：行数变了就重建（缺的行补"未选择/未购买"），
+        /// 行内可选项变少就把越界的旧档位归为"未选择"。
+        /// </summary>
+        /// <param name="columns">每行的可选项数，= <c>WeaponPlayerController.UpgradeCount()</c></param>
+        /// <remarks>⚠ 长度是建档那一刻写死的，prefab 改配后老存档必然对不上；不在这里对齐，
+        /// UI 按 <c>columns.Length</c> 循环下标取 <c>selectIndex[x]</c> 就会 IndexOutOfRange。
+        /// 旧档位指向已删掉的那一列也同样危险（<c>GetUpgrade(y, 旧列)</c> 越界），一并对掉。</remarks>
+        public void EnsureSize(int[] columns)
+        {
+            int rows = columns.Length;
+            if (selectIndex == null || selectIndex.Length != rows)
+            {
+                var old = selectIndex;
+                selectIndex = new int[rows];
+                for (int i = 0; i < rows; ++i)
+                {
+                    selectIndex[i] = (old != null && i < old.Length) ? old[i] : -1;
+                }
+            }
+            if (buyIndex == null || buyIndex.Length != rows)
+            {
+                var old = buyIndex;
+                buyIndex = new int[rows];
+                for (int i = 0; i < rows && old != null && i < old.Length; ++i)
+                {
+                    buyIndex[i] = old[i];
+                }
+            }
+            for (int i = 0; i < rows; ++i)
+            {
+                if (selectIndex[i] >= columns[i]) selectIndex[i] = -1;
+            }
+        }
+
         public bool GetBuy(int y, int x)
         {
-            if (y > buyIndex.Length) return false;
+            if (y < 0 || y >= buyIndex.Length) return false;
             if (x > 2) return false;
             return (buyIndex[y] & (1 << x)) > 0;
         }

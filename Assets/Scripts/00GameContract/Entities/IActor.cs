@@ -30,6 +30,13 @@ namespace FPSGame.GameContract
         /// <summary>仇恨系数</summary>
         public float Threat { get; }
 
+        /// <summary>"被 AI 视觉发现"的距离倍率（1 = 站直；越小越难被发现）。
+        /// <para>▍谁写：玩家控制器的姿态参数表（<c>StanceParam.DetectRangeScale</c>）在切姿态时写入；
+        /// 盟友实例由 <c>FriendController</c> 按同名默认表写入。非玩家单位恒 1。</para>
+        /// <para>▍为什么挂在 Actor 上：AI（<c>DetectionModule</c>）每拍要按候选逐个取这个值，
+        /// 走组件查找/接口查询都太贵，而且 06 不应该依赖具体控制器类型。</para></summary>
+        public float DetectRangeScale { get; }
+
         public Transform AimPoint { get; }
 
         public Vector3 HpPos { get; }

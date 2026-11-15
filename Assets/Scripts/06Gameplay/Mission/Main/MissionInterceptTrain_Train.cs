@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FPSGame.Attributes;
 using FPSGame.AI;
 using FPSGame.Core;
@@ -23,9 +24,21 @@ namespace FPSGame.Mission
         /// <summary>车厢间距系数（0.92 = 相邻车厢留一点缝；固定值，不进 Inspector）</summary>
         private const float CarSpacingFactor = 0.92f;
 
+        /// <summary>列车收尾状态（与 4067 <c>TrainPoseMsg.State</c> 对齐）：0 行驶 / 1 到站逃走 / 2 被打掉</summary>
+        private const byte TrainStateEscaped = 1;
+        private const byte TrainStateDestroyed = 2;
+
+        /// <summary>车头派生号的键前缀（后缀 = 班次）。
+        /// <para>⚠ 不能直接用 <c>ForceDerivedNetId</c>：派生号的序号按"同 Id 同位置的**当前存活**单位"数，
+        /// 而同一条轨道每趟都从同一个起点发车、前车早已开走 ⇒ 每趟都数成 0 ⇒ 多趟同轨的车会撞号。
+        /// 用班次做键 ⇒ 每趟唯一，位置取确定性起点（两端算出来相同）。</para></summary>
+        private const string EngineNetIdKey = "TrainEngineSam#";
+
         /// <summary>一趟列车（车头 + 车厢 + 它自己的卫队）</summary>
         private class TrainRuntime
         {
+            /// <summary>班次（0 基 = 发车序号）：联机按它对上"同一趟车"（见 4067 的 <c>TrainPoseMsg.Tour</c>）</summary>
+            public int Tour;
             public TrainUnit Unit;
             public GameObject Engine;
             public IHealth Health;
@@ -39,6 +52,27 @@ namespace FPSGame.Mission
         }
 
         private readonly List<TrainRuntime> liveTrains = new();
+
+        /// <summary>【联机】列车弧长上报间隔（秒）：与追击中心同档（~2Hz，位置由 <see cref="TrainUnit"/> 侧平滑追赶）</summary>
+        private const float TrainPoseInterval = 0.5f;
+
+        /// <summary>上报用的临时容器（每 0.5s 复用一次，稳态 0 分配）</summary>
+        private readonly List<TrainUnit> _poseBuffer = new();
+        private float _poseSendTimer;
+
+        /// <summary>【成员】房主已经宣告收尾、但本端**还没建出**这趟车（Tick 落后 / 卡顿时）⇒ 先记下，
+        /// 发车那一刻直接收尾，否则这趟车会一直开到站、多记一次"逃走"。</summary>
+        private readonly Dictionary<int, byte> _pendingRemoteEnds = new();
+
+        /// <summary>【联机·上报】在跑列车的弧长快照（房主侧每 <see cref="TrainPoseInterval"/> 抛一次）。
+        /// <para>▍为什么不在这里直接发网络消息：06 看不见 07（<c>NetRoomFlow</c>）⇒ 由 09 的 <c>NetTrainBridge</c>
+        /// 订阅本事件后打包成 4067。节流留在"数据所在地"，桥只做搬运与寻址。</para></summary>
+        public static event Action<IReadOnlyList<TrainUnit>> TrainPoseTick;
+
+        /// <summary>【联机·上报】某趟车**收尾**（班次, 状态 1=到站 / 2=被打掉）：摘车那一刻立刻抛一次。
+        /// <para>▍与 <see cref="TrainPoseTick"/> 分开：收尾是一次性事件，不能等 0.5s 的周期性包
+        /// （那时这趟车已经从活车列表里删掉了）。</para></summary>
+        public static event Action<int, byte> TrainEndTick;
 
         /// <summary>在跑的列车数（小地图画"跟着车走的任务图标"用；到站/被打掉会立刻减一）</summary>
         public int LiveTrainCount => liveTrains.Count;
@@ -86,6 +120,7 @@ namespace FPSGame.Mission
             }
             liveTrains.Clear();
             pendingTurrets.Clear();   // 还没等到车厢的复刻也一并作废（本任务已经结束了）
+            _pendingRemoteEnds.Clear();
         }
 
         public override bool Tick()
@@ -126,6 +161,8 @@ namespace FPSGame.Mission
             // 卫队**速度**必须按帧兜（不碰寻路）：AI 在 Patrol/Beware/Return 切换时会自己改速度修饰，
             // 只在 Tick 补会留下最长 3 秒的龟速窗口 ⇒ 又被火车甩开（见 RefreshGuardSpeeds）
             if (liveTrains.Count > 0) RefreshGuardSpeeds();
+            // 列车位置：房主按 2Hz 抛弧长（成员端在 PublishTrainPoses 里直接返回）⇒ 见 4067
+            if (liveTrains.Count > 0) PublishTrainPoses();
         }
 
         #region 发车
@@ -161,9 +198,21 @@ namespace FPSGame.Mission
             Quaternion heading = Quaternion.LookRotation(forward);
             Vector3 spawnPos = new(start.x, track.BedHeight(0f) - engineMetrics.PivotToBottom, start.y);
 
-            GameObject engine = Instantiate(enginePrefab, spawnPos, heading * Quaternion.Euler(0f, engineMetrics.YawOffset, 0f), transform);
+            // ⚠ 车头**先不领号**（Replicating = "Instantiate 期间一个号都不发"）：紧接着按班次盖派生号。
+            //   领了自增号既有"两端号差一批"的风险（见 StampEngineNetId），还会多一次号账本抖动。
+            GameObject engine;
+            ActorsManager.Replicating = true;
+            try
+            {
+                engine = Instantiate(enginePrefab, spawnPos, heading * Quaternion.Euler(0f, engineMetrics.YawOffset, 0f), transform);
+            }
+            finally
+            {
+                ActorsManager.Replicating = false;
+            }
             engine.name = "TrainEngine_" + departedCount;
-            TrainRuntime runtime = new() { Engine = engine };
+            StampEngineNetId(engine, scheduleIndex, spawnPos);
+            TrainRuntime runtime = new() { Engine = engine, Tour = scheduleIndex };
             Damageable engineDamageable = engine.GetComponent<Damageable>();
             if (engineDamageable == null)
             {
@@ -197,7 +246,7 @@ namespace FPSGame.Mission
 
             TrainUnit unit = engine.AddComponent<TrainUnit>();
             unit.Init(track, trainSpeed, -engineMetrics.PivotToBottom, engineMetrics.YawOffset,
-                carTransforms, carOffsets, carHeights);
+                carTransforms, carOffsets, carHeights, scheduleIndex);
             unit.OnArrived += OnTrainArrived;
             runtime.Unit = unit;
             runtime.Health = engine.GetComponent<IHealth>();
@@ -207,6 +256,13 @@ namespace FPSGame.Mission
                 runtime.Health.OnDie += runtime.DieHandler;
             }
             liveTrains.Add(runtime);
+            // 房主已宣告这趟收尾（本端 Tick 落后才建出它）⇒ 立刻走同一条收尾链，别再让它开出去
+            if (_pendingRemoteEnds.TryGetValue(scheduleIndex, out byte remoteEnd))
+            {
+                _pendingRemoteEnds.Remove(scheduleIndex);
+                EndTrain(runtime, remoteEnd);
+                return;
+            }
             RefreshTrackArrows(track);   // 这条轨道上的方向箭头点亮（MPB 改 _EmittIntensity，不动共享材质）
 
             SpawnGuards(runtime, squads);
@@ -224,44 +280,69 @@ namespace FPSGame.Mission
         {
             TrainRuntime runtime = liveTrains.Find(item => item.Unit == unit);
             if (runtime == null) return;
-            // 到站：火车 + 卫队一起移除，**不计摧毁进度**，记一次"逃走"
-            runtime.Ended = true;
-            DetachTrain(runtime, true);
-            RemoveGuards(runtime);
-            escapedTrains++;
-            RefreshTrainTip();
-            NetSyncLog.LoadLog("任务", $"[拦截火车] 火车到站逃走：{escapedTrains}/{escapeLimit}");
-            if (escapedTrains >= escapeLimit)
-            {
-                serviceStopped = true;
-                FailMission();
-            }
-            else
-            {
-                CreatNotice("Yuuka", "TrainFailure");
-            }
+            EndTrain(runtime, TrainStateEscaped);
         }
 
         /// <summary>车头被打掉：计一次进度（到站移除走 <see cref="OnTrainArrived"/>，不会进这里）</summary>
-        private void OnEngineDied(TrainRuntime runtime)
+        private void OnEngineDied(TrainRuntime runtime) => EndTrain(runtime, TrainStateDestroyed);
+
+        /// <summary>一趟车的收尾（到站逃走 / 被打掉）——两端走同一条链。
+        /// <para>⚠ 房主在这里**显式**补一包收尾状态（4067 的 <c>State</c>）：不能只靠"血量归零 / 弧长跑满"这两个副作用。
+        /// 前者依赖伤害按号寻址，一旦打偏，客机那列车会继续开到站、还自己记一次"逃走"，与房主的"已摧毁"相反。</para></summary>
+        private void EndTrain(TrainRuntime runtime, byte state)
         {
-            if (runtime.Ended) return;
+            if (runtime == null || runtime.Ended) return;
             runtime.Ended = true;
-            DetachTrain(runtime, false);
-            NetSyncLog.LoadLog("任务", $"[拦截火车] 火车被打掉：{NowProgress + 1}/{MaxProgress}");
-            
-            if(!AddProgress(true, true))
+            bool escaped = state == TrainStateEscaped;
+
+            // 到站：火车 + 卫队一起移除，**不计摧毁进度**；被打掉：卫队留着继续打
+            DetachTrain(runtime, escaped);
+            if (escaped) RemoveGuards(runtime);
+            ReportTrainEnd(runtime.Tour, state);
+
+            if (escaped)
             {
-                if (NowProgress == MaxProgress / 2)
+                escapedTrains++;
+                RefreshTrainTip();
+                NetSyncLog.LoadLog("任务", $"[拦截火车] 火车到站逃走：{escapedTrains}/{escapeLimit}");
+                if (escapedTrains >= escapeLimit)
                 {
-                    CreatNotice("Yuuka", "TrainHalf");
+                    serviceStopped = true;
+                    FailMission();      // 成员端被 RemoteDriven 门住 ⇒ 失败只认房主下发
                 }
                 else
                 {
-                    CreatNotice("Yuuka", "TrainDestroy");
+                    CreatNotice("Yuuka", "TrainFailure");
                 }
+                return;
             }
 
+            NetSyncLog.LoadLog("任务", $"[拦截火车] 火车被打掉：{NowProgress + 1}/{MaxProgress}");
+            if (!AddProgress(true, true))
+            {
+                if (NowProgress == MaxProgress / 2) CreatNotice("Yuuka", "TrainHalf");
+                else CreatNotice("Yuuka", "TrainDestroy");
+            }
+        }
+
+        /// <summary>【房主】收尾上报（成员端只应用、不上报）。</summary>
+        private void ReportTrainEnd(int tour, byte state)
+        {
+            if (RemoteDriven || TrainEndTick == null) return;
+            TrainEndTick.Invoke(tour, state);
+        }
+
+        /// <summary>车头身份 = **派生号**（键带班次）⇒ 两端同号，4053/4054 的按号寻址才对得上。
+        /// <para>⚠ 车头两端各自 Instantiate，走自增段时依赖"创建同序"；而发车由任务 Tick 驱动、刷怪由波次 Tick 驱动
+        /// （两条独立时钟）⇒ 交错一旦不同就错一整批号，表现是"打火车不掉血 / 火车没死却没了"。</para></summary>
+        private void StampEngineNetId(GameObject engine, int tour, Vector3 spawnPos)
+        {
+            if (!engine.TryGetComponent(out Actor engineActor))
+            {
+                Debug.LogError("拦截火车：车头预制体上没有 Actor ⇒ 伤害无法按号同步到对端", engine);
+                return;
+            }
+            engineActor.NetId = ActorsManager.DerivedNetId(EngineNetIdKey + tour, spawnPos);
         }
 
         /// <summary>
@@ -308,6 +389,59 @@ namespace FPSGame.Mission
             }
             float nextIn = firstDepartureDelay + departureInterval * departedCount - serviceTime;
             UpdateTip($"下一列火车时间 {Tool.FloatToTime(Mathf.Max(0f, nextIn))}");
+        }
+
+        #endregion
+
+        #region 联机（4067 列车弧长）
+
+        /// <summary>【房主】把在跑列车的弧长抛给 09 的桥（节流 <see cref="TrainPoseInterval"/>）。
+        /// <para>⚠ 成员端直接返回：成员不自判也不上报（口径同 <c>MissionBase.RemoteDriven</c>）。</para></summary>
+        private void PublishTrainPoses()
+        {
+            if (RemoteDriven || TrainPoseTick == null) return;
+
+            _poseSendTimer += Time.deltaTime;
+            if (_poseSendTimer < TrainPoseInterval) return;
+            _poseSendTimer = 0f;
+
+            _poseBuffer.Clear();
+            for (int i = 0; i < liveTrains.Count; i++)
+            {
+                TrainRuntime runtime = liveTrains[i];
+                if (runtime.Unit != null) _poseBuffer.Add(runtime.Unit);
+            }
+            if (_poseBuffer.Count > 0) TrainPoseTick.Invoke(_poseBuffer);
+        }
+
+        /// <summary>【成员】应用房主下发的某一趟车的弧长（由 09 的 <c>NetTrainBridge</c> 调用）。
+        /// <para>⚠ 本端还没建出这趟车（两端 Tick 驱动的发车差 1~2 帧）就直接丢这一包：
+        /// 4067 是**幂等全量**、0.5s 后下一包就到，不需要挂起队列。</para></summary>
+        public void ApplyRemoteTrainDistance(int tour, float distance)
+        {
+            for (int i = 0; i < liveTrains.Count; i++)
+            {
+                TrainRuntime runtime = liveTrains[i];
+                if (runtime.Tour != tour || runtime.Unit == null) continue;
+                runtime.Unit.ApplyRemoteDistance(distance);
+                return;
+            }
+        }
+
+        /// <summary>【成员】应用房主下发的收尾（1 = 到站逃走 / 2 = 被打掉）⇒ 同趟车立刻走同一条收尾链。
+        /// <para>⚠ 这是"死亡/逃离"唯一的**显式**口径：弧长对齐只保证"到站时刻差不多"，
+        /// 而"被摧毁"在客机端原本只能靠伤害同步的副作用，一旦号打偏就是"房主说没了、客机还开着"。</para></summary>
+        public void ApplyRemoteTrainEnd(int tour, byte state)
+        {
+            for (int i = 0; i < liveTrains.Count; i++)
+            {
+                TrainRuntime runtime = liveTrains[i];
+                if (runtime.Tour != tour || runtime.Ended) continue;
+                EndTrain(runtime, state);
+                return;
+            }
+            // 本端还没发出这一趟（Tick 落后）⇒ 记下来，见 DepartTrain 里的即时收尾
+            _pendingRemoteEnds[tour] = state;
         }
 
         #endregion

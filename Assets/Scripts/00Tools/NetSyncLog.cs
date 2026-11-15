@@ -88,6 +88,14 @@ namespace FPSGame.Utils
         /// <summary>丢消息 / 找不到对象 / 决策作废这类"不正常"，用 Warning 便于在 Console 里筛。</summary>
         public static void Warn(string tag, string msg, Object context = null) { if (!Enabled) return; Debug.LogWarning($"[异常/{tag}] {msg}", context); }
 
+        /// <summary>
+        /// 「本该同步成功却没成」这类**会影响玩法的异常**（丢伤害 / 丢交互）：`Debug.LogError` 输出。
+        /// <para>▍为什么要 Error 而不是 Warning：只有 Error / Exception / Assert 会进
+        /// <c>ErrorLogCapture</c> 的 <c>Error_*.log</c>（它按 <see cref="LogType"/> 过滤）⇒ 打包端试玩后
+        /// 想把这几条捞出来看，必须走这条通道；Console 里红色也更好筛。</para>
+        /// </summary>
+        public static void Error(string tag, string msg, Object context = null) { if (!Enabled) return; Debug.LogError($"[异常/{tag}] {msg}", context); }
+
         /// <summary>启动时定默认值：**编辑器默认关、打包端默认开**（与类注释一致）。
         /// <para>▍为什么打包端要给"开"：它没有 <c>execute_code</c>，日志只能落 <c>Player.log</c> 再回读；
         /// 默认关掉就等于"客机一侧什么都看不到"（2026-10-10 实测踩到：主机有日志、客机一条都没有，

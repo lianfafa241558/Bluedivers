@@ -4,6 +4,7 @@ using FPSGame.Core;
 using FPSGame.GameContract;
 using UnityEngine;
 using FPSGame.Managers;
+using FPSGame.Net;
 
 namespace FPSGame.UI
 {
@@ -41,6 +42,13 @@ internal static class WndHub
     {
         // 契约层插槽为空时会回调这里做一次"全场景扫描"
         WindowRegistry.Scanner = Scan;
+
+        // 房主解散房间（关房 / 房主去加入别人的房）⇒ 成员侧立刻提示，不必等 5s 心跳静默
+        NetRoomFlow.OnRoomDismissed += reason => Tip?.Creat(new TipWndInfo
+        {
+            title = "房间已解散",
+            desc = string.IsNullOrEmpty(reason) ? "房主解散了房间，已回到单机模式。" : reason,
+        });
     }
 
     /// <summary>

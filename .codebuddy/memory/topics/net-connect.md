@@ -17,3 +17,11 @@
 - 比较口径：`RoomMeta.CompareVersion` 按 `'.'` 切段比数值、缺段补 0；**任一段不是纯数字 / 对面没带 Version ⇒ `Unknown` = 放行**（别误拦老房主与手动直连）。
 - 快速匹配侧：`ServerListPanel.FindJoinableRoom` 会**跳过**版本不兼容的房间（可看不可连）。
 - ⚠ 版本号来自 `Application.version` = `ProjectSettings.bundleVersion`（现 **0.0.1**）⇒ 内测要区分版本必须**改 bundleVersion 再各出一份包**。
+
+### 8.2 公网穿透（frp）口径（2026-11-15）
+- **只映射 `17666/UDP`**：29800（+降级 29801）是局域网广播（发 `255.255.255.255`），frp 穿不了也没用；`56778` 之类的随机 UDP 是客户端 `UdpClient(0)` 临时端口，不用管；`55000/TCP` 不是本工程链路（Unity Player 的 PlayerConnection/Profiler 监听，Dev Build 才有）。
+- frpc：`type = udp` / `local_ip = 127.0.0.1`（房主绑 `0.0.0.0` ⇒ 可达）/ `local_port = 17666` / `remote_port` **显式写死**才不会被 frps 随机分配；frps 上该端口被占 ⇒ 启动直接失败（`port already used`），不会自动改号。云服务器还要在安全组放行 **UDP**（最常见"frpc 成功但连不上"）。
+- ⚠ `remote_port ≠ 17666`，或用公共 frp 平台（端口由平台分配）⇒ 玩家**必须**填 `地址:端口`；省略端口时 `TryParseDirect` 固定取 `NetConfig.HostGamePort`。
+- ✅ **域名已放行**（2026-11-15，`ServerListPanel.TryParseDirect` 末尾改用 `Uri.CheckHostName` 接受 `IPv4/IPv6/Dns`；DLL 已核实含 `ResolveAddress`）。此前只认 `IPAddress.TryParse`，frp 给的域名会被判「地址不正确」。现已支持 `xxx.frp.example.com:17667`。免费平台只限制 `remote_port`、不限 `local_port` ⇒ **房主的 `hostPort` 不必可改**，玩家填 `域名:平台端口` 即可。
+- **不用改 KCPNet.dll**：端口全由调用方传（`NetHostSvc.hostPort` Inspector 可改），库内 `NetConfig.HostGamePort` 只是默认值。
+- 「局域网 IP」提示（`ServerListPanel.LocalAddressText`，2026-11-15 起）**带端口**：`192.168.1.5:17666（以太网）`、IPv6 为 `[addr]:17666`；端口取 `RoomInfo.HostPort` → `NetHostSvc.HostPort`（新增只读属性）→ 默认。列表点选不需要端口（广播自带 `HostPort`），这行只服务于"搜不到时手填直连"。

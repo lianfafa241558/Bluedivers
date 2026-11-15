@@ -234,6 +234,10 @@ public class GuideController : Furniture_Attached
 
     public override void Operate()
     {
+        // ⚠ _currentIndex 初值与引导结束后都是 -1（见 StartGuide / NextStage）⇒ 必须先判范围再索引，
+        //   否则"引导还没开始 / 已走完"时交互会抛 ArgumentOutOfRangeException，把整条交互链掐断。
+        if (_guideInfos == null || _currentIndex < 0 || _currentIndex >= _guideInfos.Count) return;
+
         GuideInfo info = _guideInfos[_currentIndex];
         if (info == null) return;
 

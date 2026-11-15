@@ -75,6 +75,8 @@ namespace FPSGame.Gameplay
         private FriendWeaponView _weapons;
 
         private Animator _anim;
+        /// <summary>模型内的地面 IK（趴姿要关：Grounder 的假设是"脚踩在身体下方地面"）。</summary>
+        private RootMotion.FinalIK.GrounderFBBIK _grounder;
         private Actor _actor;
         private bool _lastDead;
         private Vector3 _lastPos;
@@ -155,6 +157,7 @@ namespace FPSGame.Gameplay
             if (_actor != null) UnitEventBus.FriendRoleChanged(_actor);
 
             _anim = model.GetComponentInChildren<Animator>(true);
+            _grounder = model.GetComponentInChildren<RootMotion.FinalIK.GrounderFBBIK>(true);
             RefreshStanceAnimParams();   // 先探参数再复位，否则新模型会带着上一个模型的蹲/趴位
             ResetAnimState();      // 新模型先给一套"站立不动"基线，否则参数是默认 0，可能停在异常姿态
             if (_weapons != null) _weapons.BindModel(model);   // 手部 IK 要重新解析模型内的 IK
@@ -174,6 +177,8 @@ namespace FPSGame.Gameplay
             _remoteStance = 0;
             if (_hasCrouchParam) _anim.SetBool(AnimIsCrouch, false);
             if (_hasProneParam) _anim.SetBool(AnimIsProne, false);
+            if (_grounder != null) _grounder.weight = 1f;
+            if (_actor != null) _actor.DetectRangeScale = 1f;   // 复位成站姿基线
             if (_weapons != null) _weapons.SetStanceSocketDrop(0f);
         }
 
@@ -196,6 +201,7 @@ namespace FPSGame.Gameplay
             _view = GetComponent<NetTransformView>();
             _weapons = GetComponent<FriendWeaponView>();
             _anim = GetComponentInChildren<Animator>(true);
+            _grounder = GetComponentInChildren<RootMotion.FinalIK.GrounderFBBIK>(true);
             RefreshStanceAnimParams();
             _actor = GetComponent<Actor>();
             _lastPos = transform.position;
@@ -319,27 +325,28 @@ namespace FPSGame.Gameplay
             ApplyStance(stance);
         }
 
-        /// <summary>与本地玩家同口径的持枪点下沉量（见 PlayerController_Stance 的 _crouchSocketDrop/_proneSocketDrop）。</summary>
-        private const float k_CrouchSocketDrop = 0.60f;
-        private const float k_ProneSocketDrop = 1.00f;
-
-        /// <summary>远端姿态 → 动画参数 + 持枪点高度。盟友实例没有 CharacterController / 相机，胶囊与镜头无需还原。</summary>
+        /// <summary>远端姿态 → 动画参数 + 持枪点高度。盟友实例没有 CharacterController / 相机，胶囊与镜头无需还原。
+        /// <para>▍数值口径：本端没有本机玩家的姿态参数表，一律用 <see cref="StanceParam.Default"/> 的同一套默认值,
+        /// 别再写第二份常量（改数值时只改结构体那一处）。</para></summary>
         private void ApplyStance(byte stance)
         {
             if (_remoteStance == stance) return;
             _remoteStance = stance;
 
+            StanceParam p = StanceParam.Default((PlayerStance)stance);
+
             // 枪也得跟着降（远端的挂点是自己摆的，不跟玩家的 FirstPersonSocket 走）
-            if (_weapons != null)
-            {
-                float drop = stance == (byte)PlayerStance.Crouch ? k_CrouchSocketDrop
-                           : stance == (byte)PlayerStance.Prone ? k_ProneSocketDrop : 0f;
-                _weapons.SetStanceSocketDrop(drop);
-            }
+            if (_weapons != null) _weapons.SetStanceSocketDrop(p.SocketDrop);
+
+            // 远端也参与"被 AI 发现"的距离缩放（放在 _anim 判空之前：没接动画参数的模型也该有姿态隐身收益）
+            if (_actor != null) _actor.DetectRangeScale = Mathf.Max(0.01f, p.DetectRangeScale);
 
             if (_anim == null) return;
             if (_hasCrouchParam) _anim.SetBool(AnimIsCrouch, stance == (byte)PlayerStance.Crouch);
             if (_hasProneParam) _anim.SetBool(AnimIsProne, stance == (byte)PlayerStance.Prone);
+
+            // 趴姿关地面 IK：远端模型没人跑 BaseSelfMoveableController 的权重过渡，这里直接给目标值
+            if (_grounder != null) _grounder.weight = stance == (byte)PlayerStance.Prone ? 0f : 1f;
         }
 
         /// <summary>【桥调用】载具接管：<c>true</c> = 该盟友实例**已被挂到载具挂点上**（联机 4059）。

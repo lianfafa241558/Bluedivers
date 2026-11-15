@@ -34,3 +34,24 @@
   **不能直接失败**（会掉在轨道上不跟车）：记 `pendingTurrets`、`Update` 里重试、10s 超时丢弃 + `Warn`；
   复刻位置/朝向取**本端挂点**，别用消息里的 pos（含 RTT 期间车厢前进的位移）。
 - ⚠ 这条通道的 prefab 必须**有 `Actor` 且 `UnitTypeEnum != Player/Friend`**（这两类不取号 ⇒ `ReportUnit` 只告警不上报 ⇒ 成员端静默缺失）。
+
+### 7.2y ⭐ 列车位置同步 = 4067「弧长」（2026-11-14 落地，生成器第 4 例的补丁）
+- 问题：车头 + 车厢两端各自 `Instantiate`，位置由 `TrainUnit` 每帧 `_distance += _speed * Time.deltaTime` 积分，
+  发车又由各端自己的 `Tick`（本地 `Time.time`）驱动 ⇒ 帧率/卡顿不同就是固定偏移，且 `maximumDeltaTime` 会永久丢时间。
+- 口径：**只发弧长不发位姿**。两端轨道是同一份确定性规划 ⇒ `Distance` 唯一决定车头 + 全部车厢（`TrainUnit.Place`）。
+  `TrainPoseMsg { Tour(班次 0 基), Distance }` + `TrainPoseBatchMsg`，房主 2Hz 全量下发（幂等 ⇒ 丢包自愈、不给挂起队列）。
+- 键是**班次**：不能用 `Actor.Id`（所有趟次都是 `TrainEngineSam` ⇒ 撞键），也不能用 `Actor.NetId`（见 §7.2x 的号错位风险）。
+- 分层：节流在 06（`MissionInterceptTrain_Train.PublishTrainPoses`，成员端 `RemoteDriven` 直接返回）→ 静态事件
+  `MissionInterceptTrain.TrainPoseTick`；09 的 `NetTrainBridge`（自举）打包 4067 / 收包调 `ApplyRemoteTrainDistance`。
+- 成员端追赶：`TrainUnit.ApplyRemoteDistance` 只在差值 > `SnapDistance(15m)` 时吸附，否则把差值按"限速"在几帧内消化
+  （⚠ 不能收到就赋 `_distance` ⇒ 每包跳一下，与载具 `NetTransformView` 的结论一致）。
+- ⭐ **收尾（到站 / 被打掉）必须显式同步**：`TrainPoseMsg.State`（0 行驶 / 1 到站逃走 / 2 被打掉），
+  房主在 `EndTrain` 里立刻单独补一包（不等 2Hz 周期包——那时车已从活车列表删掉）。只靠"血量归零 / 弧长跑满"
+  这两个副作用不够：一旦伤害打偏，客机那列车会继续开到站并自己记一次"逃走"，与房主"已摧毁"相反。
+  成员端 `ApplyRemoteTrainEnd` → 同一条 `EndTrain` 链（`runtime.Ended` 幂等）；本端还没发出这趟车时记进
+  `_pendingRemoteEnds`，`DepartTrain` 那一刻直接收尾（否则会开到站）。
+- ⭐ **车头身份 = 派生号**（`EngineNetIdKey + 班次`）：`Instantiate` 前后用 `ActorsManager.Replicating` 让它**不领自增号**，
+  再 `NetId = ActorsManager.DerivedNetId("TrainEngineSam#" + tour, spawnPos)`。
+  ⚠ **不能直接 `ForceDerivedNetId`**：派生号的序号按"同 Id 同位置的**当前存活**单位"数，而同轨每趟都从同一起点发车、
+  前车早开走 ⇒ 每趟都数成 0 ⇒ 多趟同轨的车会撞号。带班次的键每趟唯一，且位置是确定性起点 ⇒ 两端同号。
+  自增段的毛病是"依赖两端创建同序"，而发车（任务 Tick）与刷怪（波次 Tick）是两条独立时钟，交错一变就错一整批。
