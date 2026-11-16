@@ -17,6 +17,8 @@
 - 调试用数据说话 ⇒ 同步/子弹/AI 日志走 `NetSyncLog`（⚠ 编辑器默认**关**，实测前先开）
 - ⭐ 伤害两口径：`DamageOrigin`（统计）/ `DamageCaused`（显示·AI）—— 新路径先选对 → `topics/gameplay.md`
 - ⭐ 两套圆**绝不能混存**：`AreaCircles`（地形覆盖物）/ `ReservedCircles`（任务点/走廊）；跨层避让走后者（06 不能引用 09）
+- ⭐ **命中层口径**：子弹命中集 = `HittableLayers` = `ground|unit` = **0x49（含 Default(0)，因为 `groundLayers=9` 带了 bit0）**；
+  `UnitLayers(0x40)` 只表示"单位在哪层" ⇒ 拿它当命中集筛会漏掉一半挂在 Default 的肢体
 - ⭐ 美化 SO Inspector = 专属 `[CustomEditor]`（继承 `Editor/Drawer/DataSOEditorBase.cs`），**禁用**全局 `EditorOverride` → `topics/tooling.md`
 - ⭐ **少写兜底**：MCP 配好的引用直接用，禁 `Resources.Load`/`Find` 二级取路径；缺前置条件就一条日志 + return → `rules/UnityCSharp编码规范.md §5`
 
@@ -40,6 +42,7 @@
 | UI 开窗 / Wnd 槽 / 新增窗口 SOP | `topics/wnd-slot.md` |
 | 家具身份 / Identity / BaseObject | `topics/furniture-identity.md` |
 | 战斗 / AI / 伤害管线 / 组件存活 | `topics/gameplay.md` |
+| 虚拟碰撞体 / 命中部位数学 / 肢体 collider 预算 | `topics/virtual-collider.md` |
 | 武器升级 / 模组 / WUD_ 通用池复用（禁复制） | `skills/weapon-upgrade/SKILL.md` §4.1 |
 | 玩家 / 相机 / 武器子弹 / 战备 / 寻路 | `topics/gameplay-player.md` |
 | 家具交互 / 任务 / 逻辑帧 / 存档 / 地形 | `gameplay-world.md` · `terrain-render.md` |

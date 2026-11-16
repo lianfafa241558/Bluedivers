@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 
 namespace FPSGame.Rendering
 {
@@ -46,6 +47,16 @@ public class OutlineRendererFeature : ScriptableRendererFeature
     public override void Create()
     {
         _outlinePass = new OutlineRenderPass(settings);
+
+        // 切换场景（运行时 LoadScene，编辑器里打开场景）后立刻作废分桶，下一帧就重扫一次，
+        // 而不是等 10 秒长间隔 —— 否则"刚进新场景描边要等一会儿才出来"。
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (_outlinePass != null) _outlinePass.InvalidateBuckets();
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -53,14 +64,21 @@ public class OutlineRendererFeature : ScriptableRendererFeature
         // 每台相机都会进这里：先把"可描边渲染器"的分层缓存刷新到最新（10s 一次，与相机无关）
         _outlinePass.EnsureBuckets();
 
-        // 该相机一层可描边物体都看不到（UIFx/武器相机）⇒ 整趟 pass 都不用排
+        // 该相机一层可描边物体都看不到（UIFx/武器相机）⇒ 整趟 pass 都不用排。
+        // ⚠ 只在**运行时**做这个预判：编辑模式（未进 Play）不看分桶，永远排这趟 —— 否则在大厅/
+        //   空场景里分桶为 0，Scene 视图就看不到任何描边（"原本能看到的描边没了"就是这个原因）。
         if (settings.skipCamerasWithoutOutlineLayers
+            && Application.isPlaying
             && (renderingData.cameraData.camera.cullingMask & _outlinePass.OutlineLayerBits) == 0)
         {
             return;
         }
 
-        _outlinePass.Setup(renderer);
+        // 配了覆盖材质 ⇒ 用同一份描边材质给"这一层里的所有渲染器"描边（不要求它们自己有 Outline pass）；
+        // 没配 ⇒ 走各材质自己的 Outline pass（当前工程的用法）。
+        if (settings.outlineMaterial != null) _outlinePass.SetupWithMaterial(renderer, settings.outlineMaterial);
+        else _outlinePass.Setup(renderer);
+
         renderer.EnqueuePass(_outlinePass);
     }
 
@@ -174,8 +192,19 @@ public class OutlineRendererFeature : ScriptableRendererFeature
         /// </summary>
         public void EnsureBuckets()
         {
-            if (Time.unscaledTime < _nextScan) return;
-            _nextScan = Time.unscaledTime + 10f;   // 道具会生灭，定期重扫；不用每帧 Find
+            // 编辑模式下分桶只有两个用途：①给 AddRenderPasses 做预判（已旁路）②给距离/像素过滤临时静音。
+            // 两个用途在编辑模式都不存在时（默认配置就是），别每 0.5s 扫一遍全场 Renderer。
+            // ⚠ 这里**不要**改 _nextScan：保持原值，这样进入 Play 的第一帧会立刻重扫一次（不会等 10 秒）。
+            if (!Application.isPlaying && _settings.maxDistance <= 0f && _settings.minScreenPixels <= 0f) return;
+
+            // ⚠ 用 realtimeSinceStartup 而不是 unscaledTime：**编辑模式（未进 Play）**下也要能扫到描边对象，
+            //   而 unscaledTime 依赖玩法时钟，在编辑器里不稳定。realtimeSinceStartup 两种模式都匀速推进。
+            if (Time.realtimeSinceStartup < _nextScan) return;
+
+            // 分桶为空时用短间隔快速重试：刚进场景 / 刚打开场景 / 刚拖进模型时，对象可能还没就绪，
+            // 否则要等满 10 秒描边才出现（实测"进游戏一会儿后描边才显示"就是这个）。
+            // 一旦扫到内容就回到 10 秒长间隔，避免每帧全场 Find。
+            _nextScan = Time.realtimeSinceStartup + (_outlineLayerBits == 0 ? 0.5f : 10f);
 
             for (int i = 0; i < _byLayer.Length; i++) _byLayer[i].Clear();
             _outlineLayerBits = 0;
@@ -194,6 +223,13 @@ public class OutlineRendererFeature : ScriptableRendererFeature
                 _byLayer[layer].Add(r);
                 _outlineLayerBits |= 1 << layer;
             }
+        }
+
+        /// <summary>作废分桶，让下一次 <see cref="EnsureBuckets"/> 立刻重扫（切换场景 / 手动刷新时调）。</summary>
+        public void InvalidateBuckets()
+        {
+            _nextScan = 0f;
+            _outlineLayerBits = 0;
         }
 
         /// <summary>渲染器用的材质里是否有 <c>LightMode = Outline</c> 的 pass。

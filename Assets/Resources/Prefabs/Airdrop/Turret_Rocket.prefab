@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1158665786}
   - component: {fileID: 1158665788}
   - component: {fileID: 1158665787}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: BodyArmor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -90,7 +90,7 @@ GameObject:
   - component: {fileID: 1723935825}
   - component: {fileID: 1723935824}
   - component: {fileID: 1723935823}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: GunArmor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -228,7 +228,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4641694894036422852}
   - component: {fileID: 4777321867563133129}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DetectionModule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -292,7 +292,7 @@ GameObject:
   - component: {fileID: 7236998583409685851}
   - component: {fileID: 5677320646864376765}
   - component: {fileID: 7166395112399625786}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -376,7 +376,7 @@ GameObject:
   - component: {fileID: 3650264035900970055}
   - component: {fileID: -6346691286985588002}
   - component: {fileID: 7276606273339162089}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Turret_Rocket
   m_TagString: Untagged
   m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
@@ -609,7 +609,7 @@ GameObject:
   - component: {fileID: 6938456517276130179}
   - component: {fileID: 4368543821678466896}
   - component: {fileID: 7416326198659889919}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -684,7 +684,7 @@ GameObject:
   - component: {fileID: 4417879454228291945}
   - component: {fileID: 4556388465083998150}
   - component: {fileID: 6242808114718393907}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -758,7 +758,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4686271095640194481}
-  m_Layer: 10
+  m_Layer: 6
   m_Name: GunRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -791,7 +791,7 @@ GameObject:
   - component: {fileID: 4686271097601895284}
   - component: {fileID: 4686271097601895285}
   - component: {fileID: 8361144821073885971}
-  m_Layer: 10
+  m_Layer: 6
   m_Name: Weapon_Rocket
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -925,7 +925,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 5
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -1000,7 +999,7 @@ GameObject:
   - component: {fileID: 8865388721352434598}
   - component: {fileID: 8585070876664927125}
   - component: {fileID: 4438363140370105732}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: T_TotalAmmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1094,7 +1093,7 @@ GameObject:
   - component: {fileID: 1900168136119589756}
   - component: {fileID: 8372357400555088072}
   - component: {fileID: 1443033234785694099}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: I_TotalAmmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1170,7 +1169,7 @@ GameObject:
   - component: {fileID: 8100112332783246278}
   - component: {fileID: 6531896641182413144}
   - component: {fileID: 317139416262397887}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1358,10 +1357,50 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6942020167913707341, guid: f459de3327904d8468894ccb431b844e,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: -5768002781900746835, guid: f459de3327904d8468894ccb431b844e,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f459de3327904d8468894ccb431b844e,
         type: 3}
       propertyPath: m_Name
       value: Turret6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f459de3327904d8468894ccb431b844e,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1042847161072211204, guid: f459de3327904d8468894ccb431b844e,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2015785552118512550, guid: f459de3327904d8468894ccb431b844e,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2756068402857428676, guid: f459de3327904d8468894ccb431b844e,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3432752939617450523, guid: f459de3327904d8468894ccb431b844e,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4852658523827833205, guid: f459de3327904d8468894ccb431b844e,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

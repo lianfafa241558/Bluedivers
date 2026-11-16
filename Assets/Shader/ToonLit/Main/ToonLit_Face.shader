@@ -39,7 +39,7 @@ Shader "ToonLit/ToonLit_Face"
             // 标记上 Stencil，给 XRay 效果时防止重复绘制
             Stencil
             {
-                Ref [_RenderRef]
+                Ref 1
                 Comp Always
                 Pass Replace
             }
@@ -88,7 +88,7 @@ Shader "ToonLit/ToonLit_Face"
             Name "Outline"
             Stencil
             {
-                Ref[_RenderRef]
+                Ref 1
                 Comp Always
                 Pass Replace
             }

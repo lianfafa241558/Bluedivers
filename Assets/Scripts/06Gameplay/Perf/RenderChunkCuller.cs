@@ -71,7 +71,7 @@ namespace FPSGame.Gameplay
         [Min(32)] public int RebuildBatchSize = 256;
 
         [InspectorName("用玩家位置判定")]
-        [Tooltip("关掉则用 Main Camera 的位置（相机摆动大时更贴合视野，但更新更频繁）")]
+        [Tooltip("关掉则用「当前出图的玩法相机」的位置（相机摆动大时更贴合视野，但更新更频繁）")]
         public bool UsePlayerPosition = true;
 
         private const int GroundLayer = 3;
@@ -96,9 +96,9 @@ namespace FPSGame.Gameplay
         /// <summary>超大物体（包围半径 &gt; ChunkSize）：永不剔除</summary>
         private readonly List<Renderer> _always = new();
 
-        private Camera _cam;
         private Vector3 _lastPos = new Vector3(float.MaxValue, 0f, 0f);
         private float _nextRebuild;
+        private bool _warnedNoRef;
 
         // 分帧重建的游标
         private Renderer[] _rebuildList;
@@ -135,9 +135,13 @@ namespace FPSGame.Gameplay
             RestoreAll();
             _chunks.Clear();
             _always.Clear();
+            // 分帧重建跑到一半就被禁用 / 切场景时，游标必须一起清：否则下次 Update 会接着用旧数组分类，
+            // 把已经销毁的渲染器塞进新表（表现为"重建完一批物体不参与剔除"）
+            _rebuildList = null;
+            _rebuildIndex = 0;
+            _rebuilding = false;
             _lastPos = new Vector3(float.MaxValue, 0f, 0f);
             _nextRebuild = 0f;
-            _cam = null;
         }
 
         /// <summary>把所有被本组件关掉/改过投影的渲染器还原（切场景 / 禁用组件时）。</summary>
@@ -161,6 +165,11 @@ namespace FPSGame.Gameplay
             if (!Enabled)
             {
                 if (_chunks.Count > 0) { RestoreAll(); _chunks.Clear(); }
+                // 关掉期间不保留任何分块/重建状态：再打开时从"全可见"重新来（分帧游标留着会接着跑旧数组）
+                _always.Clear();
+                _rebuildList = null;
+                _rebuildIndex = 0;
+                _rebuilding = false;
                 return;
             }
 
@@ -186,7 +195,7 @@ namespace FPSGame.Gameplay
             Apply(pos);
         }
 
-        /// <summary>判定用的参考点：优先玩家（相机摆动时不会反复触发更新），退化到相机。</summary>
+        /// <summary>判定用的参考点：优先玩家（相机摆动时不会反复触发更新），退化到当前出图的玩法相机。</summary>
         private bool TryGetEvalPosition(out Vector3 pos)
         {
             if (UsePlayerPosition)
@@ -199,9 +208,15 @@ namespace FPSGame.Gameplay
                 }
             }
 
-            var cam = _cam != null ? _cam : (_cam = Camera.main);
+            // ⚠ 不再用 Camera.main：多相机并存时它挑到谁不确定（见 GameplayCamera 的注释）
+            Camera cam = GameplayCamera.Current;
             if (cam == null)
             {
+                if (!_warnedNoRef)
+                {
+                    _warnedNoRef = true;
+                    Debug.LogWarning("[区块剔除] 既没有玩家也没有可用的玩法相机，先跳过；玩家出生后会自动恢复", this);
+                }
                 pos = Vector3.zero;
                 return false;
             }

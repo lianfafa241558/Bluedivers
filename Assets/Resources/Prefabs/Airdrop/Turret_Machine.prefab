@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8077198482837236147}
   - component: {fileID: 3747169184846885742}
   - component: {fileID: 9153384156980457414}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: I_TotalAmmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -86,7 +86,7 @@ GameObject:
   - component: {fileID: 7312136182014957803}
   - component: {fileID: 3378916781065070390}
   - component: {fileID: 6216775845952219538}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -169,7 +169,7 @@ GameObject:
   - component: {fileID: 2232695837178289715}
   - component: {fileID: 2161978062655193621}
   - component: {fileID: 5903196357237015941}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: GunArmor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -356,7 +356,7 @@ GameObject:
   - component: {fileID: -5027991563151779132}
   - component: {fileID: -1825093634734883031}
   - component: {fileID: 590467402387076702}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Turret_Machine
   m_TagString: Untagged
   m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
@@ -589,7 +589,7 @@ GameObject:
   - component: {fileID: 6115689698198507792}
   - component: {fileID: 2590139226977133109}
   - component: {fileID: 8100892464724627978}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -664,7 +664,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8291962606118224816}
   - component: {fileID: 5557398631987123748}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DetectionModule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -728,7 +728,7 @@ GameObject:
   - component: {fileID: 1287890782657929269}
   - component: {fileID: 286380530083605513}
   - component: {fileID: 5405515961915425725}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -803,7 +803,7 @@ GameObject:
   - component: {fileID: 8181133694413820312}
   - component: {fileID: 4776785427341706915}
   - component: {fileID: 2056903970478725723}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: BodyArmor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -880,7 +880,7 @@ GameObject:
   - component: {fileID: 1254097056420612896}
   - component: {fileID: 7103402214474405112}
   - component: {fileID: 1162143543694852874}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -981,7 +981,7 @@ GameObject:
   - component: {fileID: 8246265038156560384}
   - component: {fileID: 8246265038156560385}
   - component: {fileID: 6319603131283923105}
-  m_Layer: 10
+  m_Layer: 6
   m_Name: Weapon_MachineGun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1106,7 +1106,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 4
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -1178,7 +1177,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8246265039555047109}
-  m_Layer: 10
+  m_Layer: 6
   m_Name: GunRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1212,7 +1211,7 @@ GameObject:
   - component: {fileID: 5830555977583150091}
   - component: {fileID: 6610177821578692929}
   - component: {fileID: 6911834984411348262}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: T_TotalAmmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1306,7 +1305,7 @@ GameObject:
   - component: {fileID: 7799059694174753681}
   - component: {fileID: 642903628337960483}
   - component: {fileID: 2477418703435989826}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1501,6 +1500,16 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6942020167913707341, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: -5768002781900746835, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: -3417716661118585958, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
         type: 3}
       propertyPath: m_LocalRotation.y
@@ -1515,6 +1524,36 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Turret4
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1042847161072211204, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2015785552118512550, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2756068402857428676, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3432752939617450523, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5580381056393921796, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 7724353501295518323, guid: 17ffb537fc8943947ab9ebb1624f3d8d,
         type: 3}

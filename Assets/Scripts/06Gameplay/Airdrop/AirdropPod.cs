@@ -26,6 +26,9 @@ namespace FPSGame.Gameplay
     {
         private const QueryTriggerInteraction k_TriggerInteraction = QueryTriggerInteraction.Collide;
 
+        /// <summary>落地高度探测的命中缓冲（NonAlloc，逐次复用）</summary>
+        private static readonly RaycastHit[] s_LandingHits = new RaycastHit[8];
+
         [Header("通用")]
         [InspectorName("根部变换(精确碰撞检测)")]
         [SerializeField]
@@ -137,11 +140,20 @@ namespace FPSGame.Gameplay
             m_HitUnits.Clear();
             GetComponentsInChildren(m_IgnoredColliders);
 
-            // 未命中地面时退化为 0 高度，保证始终有落地兜底
+            // 未命中地面时退化为 0 高度，保证始终有落地兜底。
+            // ⚠ 不能直接用 Raycast 的第一个命中：GroundLayers 含 Default(0)，而单位肢体有一半在 Default 层
+            //   ⇒ 舱正下方站着单位时，会把"单位头顶"当成落地高度。这里取**第一个能截停的**（见 AirdropStopper）。
             m_LandingHeight = 0f;
-            if (Physics.Raycast(Root.position, Vector3.down, out var hit, LandingDetectDistance, LayerDefinition.GroundLayers))
+            int landHitCount = Physics.RaycastNonAlloc(Root.position, Vector3.down, s_LandingHits,
+                LandingDetectDistance, LayerDefinition.GroundLayers);
+            float nearest = float.MaxValue;
+            for (int i = 0; i < landHitCount; ++i)
             {
-                m_LandingHeight = hit.point.y;
+                RaycastHit h = s_LandingHits[i];
+                if (h.distance >= nearest) continue;
+                if (!AirdropStopper.IsStoppingHit(h.collider)) continue;
+                nearest = h.distance;
+                m_LandingHeight = h.point.y;
             }
 
             if (fire) fire.SetActive(true);

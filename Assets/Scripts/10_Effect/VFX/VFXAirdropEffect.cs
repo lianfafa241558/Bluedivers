@@ -523,11 +523,10 @@ namespace FPSGame.Effect
 
         void PodHit(ProjectileHitData hitData)
         {
-            if (hitData.collider&&!LayerDefinition.GroundLayers.Contains(1<<hitData.collider.gameObject.layer))
-            {
-                //Debug.LogError("截获撞击的物体 "+ hitData.collider.gameObject + " 层级 "+hitData.collider.gameObject.layer +"  "+ System.Convert.ToString((1<<hitData.collider.gameObject.layer),2)+" 地面层级 " + System.Convert.ToString(LayerDefinition.GroundLayers.value,2), hitData.collider.gameObject);
-                return;
-            }
+            // 撞到的东西算不算「落地」：Landed(collider=null) / 挂了「可截停空投舱」/ 真地面 ⇒ 算；
+            // 单位肢体（哪怕挂在 Default 层）⇒ 不算，舱穿过它继续落。
+            // ⚠ 不能用「层 ∈ GroundLayers」直接判：GroundLayers 含 Default(0)，而单位肢体有一半在 Default 层。
+            if (!AirdropStopper.IsStoppingHit(hitData.collider)) return;
             AudioSvc.Stop("PodIntA_1");
 
             //AudioManager.PlaySound(new("AirDrop/PodDoor_Stop_1", transform.position, 50, AudioGroups.WeaponShoot));

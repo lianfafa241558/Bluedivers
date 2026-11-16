@@ -122,7 +122,9 @@ public class SubtitleWnd : Window
     {
         if ((GameState== GameStateEnum.Game|| GameState == GameStateEnum.Bridge) && ActorsManager.OnActorCreat.Count > 0) OnActorCreat(ActorsManager.OnActorCreat.Dequeue());
         //if (ActorsManager.Player != null && ActorsManager.OnActorCreat.Count > 0) OnActorCreat(ActorsManager.OnActorCreat.Dequeue());
-        var camera = Camera.main;
+        // ⚠ 不用 Camera.main：它按 tag 挑"第一台启用的相机"，主相机被关掉时会指向俯视/自由相机，
+        //   ⇒ 交互提示的位置与朝向判断都会用错的参照点。只认玩家真正出图的那台。
+        var camera = GameplayCamera.Current;
         if (camera == null) return;
         var pos = camera.transform.position;
         var forward = camera.transform.forward;
@@ -143,24 +145,35 @@ public class SubtitleWnd : Window
         {
             foreach (var item in Furniture_Attached.list.Values)
             {
+                // 便宜的判断放前面：CanOperate/HaveFlag 只读 bool，CenterPos 要调 Collider.bounds（原生调用）
                 if (!item.CanOperate(player.gameObject) || item.HaveFlag(FurnitureFlag.AutoOperate)) continue;
-                float dis = Vector3.Distance(item.CenterPos, pos);
-                if (dis < 20 && item != WndHub.Operation.furn && !item.InOperate && item != thirdPersonTarget)
-                {
-                    float angle = Vector3.Angle(forward, item.Forward);
-                    var viewPos = camera.WorldToViewportPoint(item.CenterPos);
-                    if ((angle > 120 || item.HaveFlag(FurnitureFlag.AnyAngle)) && Tool.In2D(viewPos, Vector3.zero, Vector3.one) && viewPos.z > 0)
-                    {
-                        if (useIndex < 8)
-                        {
-                            SetActive(Concerns[useIndex], true);
-                            Concerns[useIndex].transform.position = camera.WorldToScreenPoint(item.CenterPos);
-                            Concerns[useIndex].color = new Color(1, 1, 1, (1.5f - dis / 6));
-                            ++useIndex;
-                            show.Add(new(item.gameObject, viewPos));
-                        }
-                    }
-                }
+                if (item == WndHub.Operation.furn || item.InOperate || item == thirdPersonTarget) continue;
+
+                // CenterPos 每项只取一次（原来在距离/Angle/投影里取了 3 次），
+                // 它内部会读 _collider.bounds，是这条循环里最贵的一次调用。
+                // 已销毁的对象它返回 zero（自带保护），这里据此跳过。
+                Vector3 center = item.CenterPos;
+                if (center == Vector3.zero) continue;
+
+                Vector3 delta = center - pos;
+                float sqr = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+                if (sqr >= 400f) continue;              // 20m（先用平方距离，省一次 sqrt）
+                float dis = Mathf.Sqrt(sqr);
+
+                // 角度判定放到相机投影之前：不满足的一个矩阵变换都不做
+                if (Vector3.Angle(forward, item.Forward) <= 120f && !item.HaveFlag(FurnitureFlag.AnyAngle)) continue;
+
+                var viewPos = camera.WorldToViewportPoint(center);
+                if (viewPos.z <= 0f || !Tool.In2D(viewPos, Vector3.zero, Vector3.one)) continue;
+
+                // 8 个槽位满了就不必再扫剩余家具（原实现是继续遍历但什么都不做）
+                if (useIndex >= 8) break;
+
+                SetActive(Concerns[useIndex], true);
+                Concerns[useIndex].transform.position = camera.WorldToScreenPoint(center);
+                Concerns[useIndex].color = new Color(1, 1, 1, (1.5f - dis / 6));
+                ++useIndex;
+                show.Add(new(item.gameObject, viewPos));
             }
             for (; useIndex < 8; ++useIndex)
             {
@@ -439,4 +452,5 @@ public class SubtitleWnd : Window
     }
         
 }
+
 }

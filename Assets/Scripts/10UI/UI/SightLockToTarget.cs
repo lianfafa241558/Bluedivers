@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using FPSGame.Core;
 using FPSGame.GameContract;
 
 using FPSGame.Game;
+using FPSGame.Gameplay;
 using UnityEngine;
 using FPSGame.Utils;
 using FPSGame.Weapon;
@@ -63,14 +63,19 @@ namespace FPSGame.UI
 
         private void Update()
         {
-            var keys = dic.Keys.ToArray();
-            for (int i = 0; i < keys.Length; ++i)
+            if (dic.Count == 0) return;
+
+            // ⚠ 两处老写法都换掉：`Camera.main` 挑到哪台不确定；`Keys.ToArray()` 每帧一份数组（锁定数个就多大）
+            Camera cam = GameplayCamera.Current;
+            if (cam == null) return;
+
+            foreach (var kv in dic)
             {
-                var actor = keys[i];
-                dic[actor].Item1.position = Camera.main.WorldToScreenPoint(actor.CenterPos);
+                IActor actor = kv.Key;
+                kv.Value.Item1.position = cam.WorldToScreenPoint(actor.CenterPos);
                 if (UseLine)
                 {
-                    UpdateLine(dic[actor].Item1.GetComponent<LineRenderer>(), actor.CenterPos);
+                    UpdateLine(kv.Value.Item1.GetComponent<LineRenderer>(), actor.CenterPos);
                 }
             }
         }

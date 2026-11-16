@@ -586,12 +586,20 @@ namespace FPSGame.Weapon
         private readonly List<IActor> _lockBuffer = new();
         private Func<IActor, bool> _lockFilter;
         private Vector3 _lockScreenCenter;
+        /// <summary>本次锁定节拍用的相机：`ActorInLockRange` 是委托回调拿不到参数 ⇒ 只能走字段。</summary>
+        private Camera _lockCam;
 
         public bool GetLockActor(out IActor actor)
         {
+            actor = null;
+            // ⚠ 不用 Camera.main：多相机并存时它挑到谁不确定（倒地会换成观察相机）⇒ 锁定投影跟着错
+            Camera cam = GameplayCamera.Current;
+            if (cam == null) return false;      // 没有出图相机（大厅 / 换场景瞬间）：这一拍不锁
+            _lockCam = cam;
+
             TargetCfg targetCfg = new() { actorState = ActorState.Normal, targetType = UnitTypeEnum.Enemy };
             // 获取屏幕中心点（屏幕坐标）
-            _lockScreenCenter = Camera.main.ViewportToScreenPoint(new(0.5f,0.5f,0));
+            _lockScreenCenter = cam.ViewportToScreenPoint(new(0.5f,0.5f,0));
 
             // 走零分配重载 + 缓存委托：本方法每个锁定节拍都会跑，
             // 原来每拍要 new List + new HashSet + 一个捕获闭包 + OrderBy 一整串
@@ -604,7 +612,7 @@ namespace FPSGame.Weapon
             for (int i = 0, l = _lockBuffer.Count; i < l; ++i)
             {
                 IActor item = _lockBuffer[i];
-                float d = Vector3.Distance(Camera.main.WorldToScreenPoint(item.CenterPos), _lockScreenCenter);
+                float d = Vector3.Distance(cam.WorldToScreenPoint(item.CenterPos), _lockScreenCenter);
                 if (d < best) { best = d; actor = item; }
             }
             return actor!=null;
@@ -615,8 +623,10 @@ namespace FPSGame.Weapon
         /// 屏幕中心从 <see cref="_lockScreenCenter"/> 读，别改成参数捕获。</para></summary>
         private bool ActorInLockRange(IActor actor)
         {
+            // 过滤器只由 GetLockActor 挂出去，走到这里 _lockCam 必然已就绪；判空只为挡住"被别处误调"
+            if (_lockCam == null) return false;
             if (Vector3.Distance(actor.CenterPos, transform.position) >= AttrFinal( WeaponAttrType.LockDistance).RawFloat) return false;
-            Vector3 Spos = Camera.main.WorldToScreenPoint(actor.CenterPos);
+            Vector3 Spos = _lockCam.WorldToScreenPoint(actor.CenterPos);
             float range = AttrFinal(WeaponAttrType.LockRange).RawFloat;
             switch (Lockshape)
             {
@@ -652,12 +662,14 @@ namespace FPSGame.Weapon
             if (WeaponLockTarget.Count == 0) return;
             if (!GetLockActor(out var best)) return;//视口内没有可锁的(含"都已锁满每敌上限") ⇒ 不挪
 
-            Vector3 screenCenter = Camera.main.ViewportToScreenPoint(new(0.5f, 0.5f, 0));
+            // 复用 GetLockActor 那一拍的相机：重新解析可能与筛选时不是同一台（换相机的那一帧）
+            Camera cam = _lockCam;
+            Vector3 screenCenter = cam.ViewportToScreenPoint(new(0.5f, 0.5f, 0));
             int farIndex = 0;
             float farDist = -1;
             for (int i = 0; i < WeaponLockTarget.Count; ++i)
             {
-                float d = Vector3.Distance(Camera.main.WorldToScreenPoint(WeaponLockTarget[i].CenterPos), screenCenter);
+                float d = Vector3.Distance(cam.WorldToScreenPoint(WeaponLockTarget[i].CenterPos), screenCenter);
                 if (d <= farDist) continue;
                 farDist = d;
                 farIndex = i;
@@ -665,7 +677,7 @@ namespace FPSGame.Weapon
 
             var lost = WeaponLockTarget[farIndex];
             if (lost == best) return;//最近的目标就是手里最远的那个 ⇒ 已经对齐
-            if (Vector3.Distance(Camera.main.WorldToScreenPoint(best.CenterPos), screenCenter) >= farDist) return;
+            if (Vector3.Distance(cam.WorldToScreenPoint(best.CenterPos), screenCenter) >= farDist) return;
 
             //就地换目标：层数、列表长度不变，GetLockBullet 的弹出顺序也保持稳定
             WeaponLockTarget[farIndex] = best;

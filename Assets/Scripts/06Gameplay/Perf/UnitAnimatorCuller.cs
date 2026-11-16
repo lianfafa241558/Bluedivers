@@ -45,7 +45,6 @@ namespace FPSGame.Gameplay
         private float Interval = 0.2f;
 
         private float _nextCheck;
-        private Camera _cam;
 
         /// <summary>离地超过这个高度(m)就算"悬空"，一律不冻。地面单位离地只有 0.x 米，飞行单位才在这个量级。</summary>
         private const float AirborneHeight = 3f;
@@ -112,14 +111,18 @@ namespace FPSGame.Gameplay
             return pos.y - terrain.WSToHeight(pos) > AirborneHeight;
         }
 
-        /// <summary>判定中心：主相机优先（没有相机时退到玩家位置，再退到自身）。</summary>
+        /// <summary>判定中心：当前出图的玩法相机 → 本机玩家 → 自身。</summary>
+        /// <para>▍为什么不再用 <c>Camera.main</c>：多相机并存时它挑到谁不确定（实测被挑到过俯视观察相机），
+        /// 而这里 100 m / 120 m 的阈值一旦按错的参照点算，就会"该冻的不冻、不该冻的冻住"。</para>
         private Vector3 ResolveCenter()
         {
-            if (_cam == null) _cam = Camera.main;
-            if (_cam != null) return _cam.transform.position;
+            Camera cam = GameplayCamera.Current;
+            if (cam != null) return cam.transform.position;
 
             IActor player = ActorsManager.Player;
-            return player != null ? player.Pos : transform.position;
+            if (player is Component comp && comp != null) return player.Pos;
+
+            return transform.position;
         }
 
         private void OnDisable()

@@ -177,16 +177,59 @@ namespace FPSGame.Gameplay
             get
             {
                 // 防止对象已被销毁后访问（切场景等情况）
-                if (this == null || gameObject == null)
-                    return Vector3.zero;
-                if (_collider) return _collider.bounds.center;
-                return transform.position + _colliderCenterOffset;
+                if (this == null) return Vector3.zero;
+
+                Transform tr = TransformCached;
+                Vector3 root = tr.position;
+                Quaternion rot = tr.rotation;
+
+                // ▍以"根节点世界位置 + 旋转"为失效判据：家具绝大多数是静止的，没动过就不必重算包围盒。
+                //   命中缓存时省掉 `_collider` 的 Unity 判空 + `Collider.bounds`（两次原生调用，
+                //   是 SubtitleWnd 每帧逐项取 CenterPos 这条链路上最贵的部分）。
+                //   ⚠ 旋转也要进判据：炮塔这类原地旋转的家具，若碰撞体相对枢轴有偏移，bounds.center 会随之变。
+                if (_centerCacheValid && root == _centerCacheRoot && rot == _centerCacheRotation) return _centerCache;
+
+                _centerCacheRoot = root;
+                _centerCacheRotation = rot;
+                _centerCache = _collider != null ? _collider.bounds.center : root + _colliderCenterOffset;
+                _centerCacheValid = true;
+                return _centerCache;
             }
         }
+
         [SerializeField]
         private Collider _collider;
 
-        public override Vector3 Forward =>/*Quaternion.Euler(90*ForwardAxis) **/transform.forward;
+        /// <summary>缓存的 Transform（`transform` 属性本身是原生调用，这条链路上每帧每家具都要取一次）</summary>
+        private Transform _cachedTransform;
+        private bool _hasTransform;
+
+        private Vector3 _centerCache;
+        private Vector3 _centerCacheRoot;
+        private Quaternion _centerCacheRotation;
+        private bool _centerCacheValid;
+
+        private Transform TransformCached
+        {
+            get
+            {
+                if (!_hasTransform)
+                {
+                    _cachedTransform = transform;
+                    _hasTransform = true;
+                }
+                return _cachedTransform;
+            }
+        }
+
+        /// <summary>换了 collider / 手动改过包围盒后调一次。
+        /// <para>⚠ 缓存只按**根节点位置**失效：位置不变但子节点动画/缩放改变了包围盒时不会自动重算。</para></summary>
+        public void InvalidateCenterCache()
+        {
+            _centerCacheValid = false;
+        }
+
+        public override Vector3 Forward =>/*Quaternion.Euler(90*ForwardAxis) **/TransformCached.forward;
 
         /// <summary>⚠ 别写回 <c>flags.HasFlag(flag)</c>：<see cref="System.Enum.HasFlag(System.Enum)"/> 的参数每次都要装箱。
         /// 这个方法在 <c>SubtitleWnd.Update</c> 里**每帧 × 每个家具 × 2 次**被调，实测贡献了它 1.1KB/帧 的大头。</summary>

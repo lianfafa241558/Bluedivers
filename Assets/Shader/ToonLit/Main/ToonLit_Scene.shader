@@ -85,6 +85,25 @@ Shader "ToonLit/ToonLit_Scene"
         //[NoScaleOffset]_OutlineZOffsetMaskTex("_OutlineZOffsetMask (black is apply ZOffset)", 2D) = "black" {}
         //_OutlineZOffsetMaskRemapStart("_OutlineZOffsetMaskRemapStart", Range(0,1)) = 0
         //_OutlineZOffsetMaskRemapEnd("_OutlineZOffsetMaskRemapEnd", Range(0,1)) = 1
+
+        // ===== SRP Batcher 对齐：本 shader 未使用，仅为满足 UnityPerMaterial 一一对应（自动生成）=====
+        [HideInInspector] _MouthMap("_MouthMap", 2D) = "white" {}
+        [HideInInspector] _Expression("_Expression", Float) = 0
+        [HideInInspector] _Column("_Column", Float) = 0
+        [HideInInspector] _TerrainBlending("_TerrainBlending", Float) = 0
+        [HideInInspector] _HitColor("_HitColor", Vector) = (0,0,0,0)
+        [HideInInspector] _UseMouthMap("_UseMouthMap", Float) = 0
+        [HideInInspector] _UseSpecular("_UseSpecular", Float) = 0
+        [HideInInspector] _SpecularColor("_SpecularColor", Color) = (0,0,0,0)
+        [HideInInspector] _SpecularMulByBaseColor("_SpecularMulByBaseColor", Float) = 0
+        [HideInInspector] _Smoothness("_Smoothness", Float) = 0
+        [HideInInspector] _SpecularSoftness("_SpecularSoftness", Float) = 0
+        [HideInInspector] _SpecularOffest("_SpecularOffest", Float) = 0
+        [HideInInspector] _UseColour("_UseColour", Float) = 0
+        [HideInInspector] _ColourTex("_ColourTex", 2D) = "white" {}
+        [HideInInspector] _ColourMaskTex("_ColourMaskTex", 2D) = "white" {}
+        [HideInInspector] _ColourScale("_ColourScale", Float) = 0
+        [HideInInspector] _ColourColor("_ColourColor", Color) = (0,0,0,0)
     }
     SubShader
     {       
@@ -143,7 +162,7 @@ Shader "ToonLit/ToonLit_Scene"
             // 标记上 Stencil，给 XRay 效果时防止重复绘制
             Stencil
             {
-                Ref [_RenderRef]
+                Ref 0
                 Comp Always
                 Pass Replace
             }
@@ -219,7 +238,7 @@ Shader "ToonLit/ToonLit_Scene"
             Name "Outline"
             Stencil
             {
-                Ref[_RenderRef]
+                Ref 0
                 Comp Always
                 Pass Replace
             }

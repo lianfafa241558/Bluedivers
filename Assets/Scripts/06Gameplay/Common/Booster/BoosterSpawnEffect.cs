@@ -1,4 +1,5 @@
 ﻿using FPSGame.Core;
+using FPSGame.Game;        // AirdropStopper
 using FPSGame.GameContract;
 using FPSGame.Utils;      // Tool.Contains(this LayerMask, int)
 using FPSGame.Weapon;
@@ -46,8 +47,8 @@ namespace FPSGame.Gameplay
         /// <para>用于绑 <c>AirdropPod.OnHit</c>（它连"下落中撞到单位"也会触发）；有 <c>OnLanded</c> 时优先绑那个。</para></summary>
         public void OnGroundHit(ProjectileHitData hit)
         {
-            // 落地那一次 collider 为 null（AirdropPod.Land 的 hitData），撞到实物的那次带 collider
-            if (hit.collider && !LayerDefinition.GroundLayers.Contains(1 << hit.collider.gameObject.layer)) return;
+            // 与 AirdropPod 共用同一个判据：单位肢体不算落地（见 AirdropStopper.IsStoppingHit）
+            if (!AirdropStopper.IsStoppingHit(hit.collider)) return;
             EvaluateNow();
         }
 

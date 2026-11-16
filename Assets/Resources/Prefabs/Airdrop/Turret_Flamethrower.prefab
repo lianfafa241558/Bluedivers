@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 981792320828314240}
   - component: {fileID: 8515378693804517187}
   - component: {fileID: 3584646915634238533}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -86,7 +86,7 @@ GameObject:
   - component: {fileID: 1741344437931071905}
   - component: {fileID: 1741344437931071919}
   - component: {fileID: 1741344437931071918}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: BodyArmor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -167,7 +167,7 @@ GameObject:
   - component: {fileID: 1741344437950759643}
   - component: {fileID: 1741344437950759642}
   - component: {fileID: 1741344437950759645}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: GunArmor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -349,7 +349,7 @@ GameObject:
   - component: {fileID: 4007145268987640058}
   - component: {fileID: 5674626210055982775}
   - component: {fileID: 3288608211922920472}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -451,7 +451,7 @@ GameObject:
   - component: {fileID: 8293318490249315679}
   - component: {fileID: 6433418733940314047}
   - component: {fileID: 8811396469789146060}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: T_TotalAmmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -543,7 +543,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3847745932548296444}
-  m_Layer: 10
+  m_Layer: 6
   m_Name: GunRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -576,7 +576,7 @@ GameObject:
   - component: {fileID: 3847745933799528505}
   - component: {fileID: 3847745933799528504}
   - component: {fileID: 8821863189033460922}
-  m_Layer: 10
+  m_Layer: 6
   m_Name: Weapon_Flamethrower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -700,7 +700,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 4
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -774,7 +773,7 @@ GameObject:
   - component: {fileID: 3142964024636392247}
   - component: {fileID: 447268789806057810}
   - component: {fileID: 7831396429916504662}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -850,7 +849,7 @@ GameObject:
   - component: {fileID: 7973204172354601027}
   - component: {fileID: 4512529307350202905}
   - component: {fileID: 8777046821318384438}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: I_TotalAmmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -931,7 +930,7 @@ GameObject:
   - component: {fileID: -8239079352543141918}
   - component: {fileID: 445952548175473370}
   - component: {fileID: 8820247994943132606}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Turret_Flamethrower
   m_TagString: Untagged
   m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
@@ -1179,7 +1178,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3749131070564967305}
   - component: {fileID: 2059103227334209265}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DetectionModule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1243,7 +1242,7 @@ GameObject:
   - component: {fileID: 2653282115924759392}
   - component: {fileID: 1640840066508206557}
   - component: {fileID: 7441991261632839812}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1398,6 +1397,16 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6942020167913707341, guid: 5881cfa01e393654996e7381857a6ff3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: -5768002781900746835, guid: 5881cfa01e393654996e7381857a6ff3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 5881cfa01e393654996e7381857a6ff3,
         type: 3}
       propertyPath: m_Name
@@ -1405,8 +1414,38 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 5881cfa01e393654996e7381857a6ff3,
         type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5881cfa01e393654996e7381857a6ff3,
+        type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1042847161072211204, guid: 5881cfa01e393654996e7381857a6ff3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2015785552118512550, guid: 5881cfa01e393654996e7381857a6ff3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2756068402857428676, guid: 5881cfa01e393654996e7381857a6ff3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3432752939617450523, guid: 5881cfa01e393654996e7381857a6ff3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6615263766139020284, guid: 5881cfa01e393654996e7381857a6ff3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
