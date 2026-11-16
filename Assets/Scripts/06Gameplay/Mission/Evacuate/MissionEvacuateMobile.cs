@@ -152,7 +152,7 @@ namespace FPSGame.Mission
         {
             if (stage != EvacuateState.Activation) return;
             CreatNotice("Yuuka", IsComplete ? "Evacuate" : "EvacuateFail");
-            UpdateTip("在回收信标上交互，请求撤离");
+            UpdateTip("在Kei的回收信标上交互，请求撤离");
         }
 
         /// <summary>玩家在回收信标上请求撤离</summary>

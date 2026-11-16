@@ -105,6 +105,9 @@ public class SelectRoleWnd : Window
             switch (value)
             {
                 case RoleWndState.Role:
+                    // 武器页改的改装档位只落存档，角色页那一行是快照 ⇒ 退回时必须按存档重刷一次，
+                    // 否则要关窗重开才更新（用户实测 2026-11-16）
+                    if (nowSelectWeapon >= 0) RefreshWeaponRow(nowSelectWeapon);
                     break;
                 case RoleWndState.Switch:
                     break;
@@ -366,8 +369,7 @@ public class SelectRoleWnd : Window
         index = Tool.PositiveRemainder(index, count);
 
         arch.weaponSelect[type] = index;
-        SetWeaponPreView(typeIndex, data.GetWeapon(type, index));
-        SetText(weaponListRoot.GetChild(typeIndex, 4), (1 + index) + "/" + count);
+        RefreshWeaponRow(typeIndex);
         meetSave = true;
     }
 
@@ -410,6 +412,28 @@ public class SelectRoleWnd : Window
 
     }
 
+    /// <summary>
+    /// 重刷角色页某一类武器那一行：名字 / 图标 / 已选改装图标 / "1/3" 计数 / 多余槽位隐藏。
+    /// <para>▍武器页改完改装档位只写存档，这一行是快照、不会自己变 ⇒ 每次退回角色页都要按存档重刷，
+    /// 否则得关窗重开才看到新的图标（用户实测 2026-11-16）。切换角色型号的 <see cref="SetWeaponSelect"/> 也复用这里。</para>
+    /// </summary>
+    private void RefreshWeaponRow(int typeIndex)
+    {
+        var type = (WeaponTypeEnum)typeIndex;
+        int index = arch.weaponSelect[type], count = data.weapons[type].Count;
+
+        var weapon = data.GetWeapon(type, index);
+        SetWeaponPreView(typeIndex, weapon);
+        SetActive(weaponListRoot.GetChild(typeIndex, 4), count > 1);
+        SetText(weaponListRoot.GetChild(typeIndex, 4), (1 + index) + "/" + count);
+
+        var lenghts = weapon.UpgradeCount();
+        for (int x = 0; x < weaponListRoot.GetChild(typeIndex, 5).childCount; ++x)
+        {
+            SetActive(weaponListRoot.GetChild(typeIndex, 5, x), x < lenghts.Length);
+        }
+    }
+
     private void SetWeaponPreView(int index, WeaponPlayerController weapon)
     {
         SetText(weaponListRoot.GetChild(index, 0), weapon.WeaponName);
@@ -448,21 +472,7 @@ public class SelectRoleWnd : Window
         GlobalEventBus.SelectRolePreview(data);
         var list = data.GetStartingWeapons(arch);
 
-        for(int i = 0; i < 6; ++i)
-        {
-            var type = (WeaponTypeEnum)i;
-            int index = arch.weaponSelect[type], count = data.weapons[type].Count;
-
-            SetWeaponPreView(i, data.GetWeapon(type, index));
-            SetActive(weaponListRoot.GetChild(i, 4), count > 1);
-            SetText(weaponListRoot.GetChild(i, 4), (1 + index) + "/" + count);
-
-            var lenghts = data.GetWeapon(type, index).UpgradeCount();
-            for (int x = 0; x < weaponListRoot.GetChild(i, 5).childCount; ++x)
-            {
-                SetActive(weaponListRoot.GetChild(i, 5, x), x < lenghts.Length);
-            }
-        }
+        for(int i = 0; i < 6; ++i) RefreshWeaponRow(i);
 
     }
 

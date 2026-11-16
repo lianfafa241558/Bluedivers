@@ -17,6 +17,11 @@ namespace FPSGame.AI
         /// <summary>每个窗口允许起跳的"单位量"总量：固定 1，各单位按自己的占用扣，凑满本窗口就不再放行</summary>
         private const float WindowQuota = 1f;
 
+        [InspectorName("飞扑时长(秒)")]
+        [Tooltip("起跳到落地的总时长(秒)：本技能自管，与基类\"技能持续\"无关(那个是 int 整秒 + 1 秒一拍，表达不了飞扑)。<=0 视为不飞")]
+        [SerializeField]
+        private float _flyTime = 2f;
+
         [InspectorName("飞扑高度")]
         [Tooltip("弧线拱高(米)：0 表示贴地平移")]
         [SerializeField]
@@ -83,13 +88,20 @@ namespace FPSGame.AI
 
         protected override void SkillStart()
         {
+            // ⚠ 基类 Tick 是 1 秒一拍，每拍把 nowDurationTime 扣掉 TickTime，归零就回调 SkillEnd 收尾；
+            //   基类 Duration 又是 int 整秒 ⇒ Duration=2 只飞 1 秒、=1 直接 0 秒瞬移，且表达不了小数。
+            //   所以时长一律由 _flyTime 交协程自管，这里把基类倒计时关掉。
+            //   必须写在方法最前面：基类是在调用本方法**之后**才判 nowDurationTime，且 _flying 早退路径
+            //   也要清掉它（否则 Cool=0 时飞行途中再进一次，基类会重新填 Duration 并在 1 秒后硬切落地）。
+            nowDurationTime = 0f;
+
             // 空中不重复触发：Cool=0 时每个 Tick 都会进这里
             if (_flying) return;
 
-            // 飞扑时长就取基类的"技能持续"(秒)：为 0 时扑不出去（弧线时长为 0 等同于瞬移）
-            if (Duration <= 0)
+            // 弧线时长为 0 等同于瞬移，视为没配
+            if (_flyTime <= 0f)
             {
-                Debug.LogWarning("技能/飞扑: 基类\"技能持续\"未配置(<=0)，放弃", gameObject);
+                Debug.LogWarning("技能/飞扑: 飞扑时长未配置(<=0)，放弃", gameObject);
                 return;
             }
 
@@ -128,7 +140,7 @@ namespace FPSGame.AI
                 _agent.enabled = false;
             }
 
-            _flyRoutine = StartCoroutine(FlyRoutine(transform.position, _landPos, Duration));
+            _flyRoutine = StartCoroutine(FlyRoutine(transform.position, _landPos, _flyTime));
         }
 
         /// <summary>窗口内还塞得下本单位这一份？</summary>
@@ -194,14 +206,6 @@ namespace FPSGame.AI
             _agent.enabled = true;      // ⚠ Warp 只对已启用的 agent 生效：先启用再落位
             _agent.Warp(_landPos);
             m_Controller.StopNav();
-        }
-
-        protected override void SkillEnd()
-        {
-            // 正常时协程已按同一时长落地；基类 Tick 是 1 秒粒度，可能早一拍判到点 ⇒ 还在空中就当场收尾
-            if (!_flying) return;
-            StopFlyRoutine();
-            LandAndRestoreAgent();
         }
 
         protected override void OnDeath()

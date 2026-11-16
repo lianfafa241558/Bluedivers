@@ -127,6 +127,16 @@ namespace FPSGame.Gameplay
         #endregion
 
 
+        #region 任务
+        /// <summary>本局任务配置已确定（<c>TaskManager.SetTask</c> 落库完成，<c>nowTask</c> 内容可显示）。
+        /// <para>▍为什么需要：<c>SetTask</c> 把阶段推到 Ready，但**已经处于 Ready 时状态机不会再进入一次**
+        /// （<c>GameRoot.GameState</c> setter 判"旧值 ≠ 新值"），大厅那张状态表就不会再调 <c>BridgeWnd.DisplayTask</c>
+        /// ⇒ 在舰桥换一个任务，任务面板停在上一份（2026-11-16 用户实测）。</para></summary>
+        public static event Action OnTaskChanged;
+        public static void TaskChanged() => OnTaskChanged?.Invoke();
+        #endregion
+
+
         #region 玩家相关
 
         /// <summary>本机玩家的昵称（存档 <c>playerName</c>）改了：参数 = 新名字。

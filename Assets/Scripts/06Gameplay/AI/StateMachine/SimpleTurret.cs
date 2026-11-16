@@ -62,7 +62,7 @@ namespace FPSGame.AI
 
         void IdleEnter()
         {
-            turrets.ForEach(TryStop);
+            for (int i = 0; i < turrets.Count; i++) TryStop(turrets[i]);
         }
         public void TryStop(Turret turret)
         {
@@ -72,10 +72,13 @@ namespace FPSGame.AI
 
         void IdleUpdate()
         {
-            turrets.ForEach(item => {
-                item.Rotate(RotationSpeed * Time.deltaTime);
-                item.Synchro();
-            });
+            // for 循环：ForEach(lambda) 每次调用都会新建一个委托（Idle 态下炮台每帧都在跑）
+            float delta = RotationSpeed * Time.deltaTime;
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                turrets[i].Rotate(delta);
+                turrets[i].Synchro();
+            }
         }
 
 
@@ -86,27 +89,29 @@ namespace FPSGame.AI
         {
             if (AimTargrt())
             {
-                turrets.ForEach(TryAtack);
+                for (int i = 0; i < turrets.Count; i++) TryAtack(turrets[i]);
             }
         }
 
         protected bool AimTargrt()
         {
             bool mustShoot = false;
-            foreach (var item in turrets)
+            for (int i = 0; i < turrets.Count; i++)
             {
-                if (mustShoot |= Time.time > m_TimeStartedDetection + item.detectionFireDelay) break;
+                if (mustShoot |= Time.time > m_TimeStartedDetection + turrets[i].detectionFireDelay) break;
             }
 
-            //设置锁定目标
-            turrets.ForEach(item => item.Look(DetectionTargetPos));
+            //设置锁定目标（缓存一次目标点，别在循环里反复读属性）
+            Vector3 aimPos = DetectionTargetPos;
+            for (int i = 0; i < turrets.Count; i++) turrets[i].Look(aimPos);
             return mustShoot;
         }
 
         /// <summary>炮台锁头</summary>
         void AttackLateUpdate()
         {
-            turrets.ForEach(item => item.Aiming(Time.time - m_TimeStartedDetection));
+            float blendTime = Time.time - m_TimeStartedDetection;
+            for (int i = 0; i < turrets.Count; i++) turrets[i].Aiming(blendTime);
         }
 
 

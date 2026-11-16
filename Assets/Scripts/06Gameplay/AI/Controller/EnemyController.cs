@@ -36,8 +36,6 @@ namespace FPSGame.AI
         public Sprite Portrait => m_Actor.Portrait;
         public Sprite Halo => m_Actor.ExtraPortrait;
 
-        public bool IsFixed => m_Actor.IsFixed;
-
         public bool Boss => m_Actor.HasFlag(ActorFlag.Boss);
 
         public override Vector3 Pos

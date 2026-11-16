@@ -54,6 +54,7 @@ namespace FPSGame.UI
             GlobalEventBus.OnSwitchRole += OnSwitchRole;
             GlobalEventBus.OnSelectRolePreview += OnSelectRolePreview;
             GlobalEventBus.OnPlayerNameChange += OnPlayerNameChange;
+            GlobalEventBus.OnTaskChanged += OnTaskChanged;
             UnitEventBus.OnPlayerCreate += SwitchRolePreview;
 
 
@@ -135,6 +136,7 @@ namespace FPSGame.UI
             GlobalEventBus.OnSwitchRole -= OnSwitchRole;
             GlobalEventBus.OnSelectRolePreview -= OnSelectRolePreview;
             GlobalEventBus.OnPlayerNameChange -= OnPlayerNameChange;
+            GlobalEventBus.OnTaskChanged -= OnTaskChanged;
             UnitEventBus.OnPlayerCreate -= SwitchRolePreview;
         }
 
@@ -204,7 +206,9 @@ namespace FPSGame.UI
             if (task == null || !task.activeTask) return;
 
             // 同一局只展开一次（"场景 GameState 状态表"与"窗口重新显示"都会调这里）。
-            string key = taskManager.MapId + "|" + task.taskCfg.name + "|" + task.difficulty;
+            // ⚠ key 必须覆盖**所有会显示的字段**：舰桥换任务时 cfg.name / 难度可能不变、只有额外难度变了
+            string key = taskManager.MapId + "|" + task.taskCfg.name + "|" + task.difficulty
+                       + "|" + string.Join(",", task.ExtraDifficulty);
             if (key == _shownTaskKey) return;
             _shownTaskKey = key;
 
@@ -252,6 +256,19 @@ namespace FPSGame.UI
 
 
         
+        }
+
+        /// <summary>换任务（含在舰桥重新确认一次）⇒ 面板内容按新配置重刷，别停在上一份。</summary>
+        private void OnTaskChanged()
+        {
+            // 窗口没显示（别的 UI 还开着把本窗口藏了）⇒ 别刷：Animator 打在未激活物体上会静默失败，
+            // 而且会把 _shownTaskKey 占掉、让下次真正显示时早退；清掉标记等 ShowWnd 里补
+            if (!State)
+            {
+                _shownTaskKey = null;
+                return;
+            }
+            DisplayTask();
         }
 
     }

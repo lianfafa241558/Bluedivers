@@ -220,7 +220,7 @@ namespace FPSGame.Managers
             WaveCont.transform.SetParent(transform);
             PatrolCont = new GameObject("PatrolCont").AddComponent<PatrolContriller>();
             PatrolCont.transform.SetParent(transform);
-            WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
+
             RequestManager = new GameObject("RequestManager").AddComponent<PathRequestManager>();
             RequestManager.transform.SetParent(transform);
             Weather = WeatherSystem.RollWeather(TaskManager.Instance.nowTask.mapCfg?.WeatherInfos, ResolveWeatherRandom());
@@ -243,7 +243,8 @@ namespace FPSGame.Managers
             BattleState.MarkBattleStarted();//数据自持同步点 + 通知（见 BattleState.cs）
             NetSyncLog.LoadLog("初始化", $"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
 
-
+            //初始播报
+            WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
         }
 
         /// <summary>

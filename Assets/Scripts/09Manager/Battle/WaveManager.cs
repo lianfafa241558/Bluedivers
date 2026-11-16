@@ -540,12 +540,7 @@ namespace FPSGame.Managers
             if (prefab == null) return null;
 
             var go = CreatUnit(prefab, pos, rot, source, (int)tier, default);
-            if (go != null)
-            {
-                // 与上面那条的默认 IsFixed=true 对齐（成员复刻时也照抄这两行）
-                go.GetComponent<I_AIController>().BirthDuration = 0;
-                go.GetComponent<IActor>().IsFixed = true;
-            }
+
             return go;
         }
 

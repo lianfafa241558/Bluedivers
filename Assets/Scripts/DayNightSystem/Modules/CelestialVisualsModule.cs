@@ -1,4 +1,4 @@
-using FPSGame.Attributes;
+﻿using FPSGame.Attributes;
 using UnityEngine;
 
 namespace FPSGame.DayNightSystem
@@ -15,6 +15,12 @@ namespace FPSGame.DayNightSystem
         [SerializeField] private MeshRenderer starsRenderer;
         [SerializeField] private MeshRenderer moonRenderer;
         [SerializeField] private MeshRenderer cloudsRenderer;
+
+        [Header("阴影")]
+        [InspectorName("关阴影亮度阈值")]
+        [Tooltip("方向光强度低于它就直接关掉这盏光的阴影（天体落山/被天气压暗时省掉整趟 shadow pass）；涨回 2 倍才重开，避免阈值上下抖动")]
+        [Min(0f)]
+        [SerializeField] private float shadowOffIntensity = 0.05f;
 
         [Header("淡出设置")]
         [InspectorName("淡出角度跨度")]
@@ -35,6 +41,12 @@ namespace FPSGame.DayNightSystem
 
         private float _sunInitialIntensity;
         private float _moonInitialIntensity;
+
+        /// <summary>两盏方向光**原始**的阴影模式（关掉后要还原成它，不能一律设回 Soft）</summary>
+        private LightShadows _sunShadows = LightShadows.None;
+        private LightShadows _moonShadows = LightShadows.None;
+        private bool _sunShadowOff;
+        private bool _moonShadowOff;
         
         private float _sunScale = 1f;
         private float _moonScale = 1f;
@@ -49,8 +61,16 @@ namespace FPSGame.DayNightSystem
 
         public void Initialize(DayNightState state)
         {
-            if (sunLight) _sunInitialIntensity = sunLight.intensity;
-            if (moonLight) _moonInitialIntensity = moonLight.intensity;
+            if (sunLight)
+            {
+                _sunInitialIntensity = sunLight.intensity;
+                _sunShadows = sunLight.shadows;
+            }
+            if (moonLight)
+            {
+                _moonInitialIntensity = moonLight.intensity;
+                _moonShadows = moonLight.shadows;
+            }
             _lastAngle = state.CurrentAngle;
 
             if (moonRenderer)
@@ -106,10 +126,43 @@ namespace FPSGame.DayNightSystem
                 _cloudsMat.SetColor("_EmissionColor", cloudColor);
                 _cloudsMat.color = cloudColor;
             }
+
+            UpdateShadowGating(sunLight, _sunShadows, ref _sunShadowOff);
+            UpdateShadowGating(moonLight, _moonShadows, ref _moonShadowOff);
+        }
+
+        /// <summary>
+        /// 亮度不足就把这盏方向光的阴影整趟关掉：shadow pass 是"每个投射体再画一遍"，
+        /// 天体落到地平线下（或天气压到几乎无光）时它的视觉贡献为 0，draw call 却照付。
+        /// <para>⚠ 关掉后要还原成**原始**模式（有的光本来就是 None / 硬阴影）；回开阈值取 2 倍做滞回，
+        /// 否则强度在阈值附近浮动会反复重建阴影贴图（比一直开着更贵）。</para>
+        /// </summary>
+        private void UpdateShadowGating(Light light, LightShadows original, ref bool off)
+        {
+            if (light == null) return;
+
+            if (off)
+            {
+                if (light.intensity <= shadowOffIntensity * 2f) return;
+                off = false;
+                light.shadows = original;
+            }
+            else
+            {
+                if (light.intensity > shadowOffIntensity) return;
+                off = true;
+                light.shadows = LightShadows.None;
+            }
         }
 
         public void Dispose()
         {
+            // 阴影是被本模块改过的全局状态：模块销毁时还原，别把"关阴影"留给下一场 / 下一个场景
+            if (_sunShadowOff && sunLight != null) sunLight.shadows = _sunShadows;
+            if (_moonShadowOff && moonLight != null) moonLight.shadows = _moonShadows;
+            _sunShadowOff = false;
+            _moonShadowOff = false;
+
             if (_moonMat != null) Destroy(_moonMat);
             if (_starsMat != null) Destroy(_starsMat);
             if (_cloudsMat != null) Destroy(_cloudsMat);

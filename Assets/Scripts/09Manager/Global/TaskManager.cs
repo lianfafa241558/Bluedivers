@@ -533,6 +533,9 @@ namespace FPSGame.Managers
             //倒计时读数走数据自持（2026-10-01 取代 nowTask.Countdown）
             WndManager.Instance.CreatCountDown(()=> TaskState.Countdown,CountDownTypeEnum.Blue,16);
             SyncTaskState();//发布给下层（数据自持）：难度 / 系数 / 敌人种类 / 收集表
+
+            // 阶段已是 Ready 时上面那句赋值不会触发状态机（旧值==新值）⇒ 舰桥任务面板得靠这条事件重刷
+            GlobalEventBus.TaskChanged();
         }
 
         /// <summary>

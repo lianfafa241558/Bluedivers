@@ -208,6 +208,9 @@ namespace FPSGame.AI
         /// <summary>进入Idle的时间</summary>
         private float m_IdleStartTime;
 
+        /// <summary>下一次"Idle 超时自毁"检查的时刻（1s 一次；原来每帧跑一次 LINQ）</summary>
+        private float _nextIdleCheckTime;
+
         [InspectorName("Idle最大停留时间（秒）")]
         public float IdleMaxDuration = 120f;
 
@@ -420,9 +423,23 @@ namespace FPSGame.AI
             UpdateAutoRotate();
 
             // 非固定单位Idle超时后移动
-            if (!m_EnemyController.IsFixed && Time.time >= m_IdleStartTime + IdleMaxDuration)
+            if (!m_EnemyController.Actor.IsFixed && Time.time >= m_IdleStartTime + IdleMaxDuration
+                && Time.time >= _nextIdleCheckTime)
             {
-                if (ActorsManager.Players.Min(item => Vector3.Distance(item.Pos, m_EnemyController.Pos)) > 80)
+                // ⚠ 这里原来是 ActorsManager.Players.Min(lambda)：每个空闲单位**每帧**都会分配
+                //   闭包 + 委托 + List<IActor> 的装箱枚举器（≈110B/单位/帧，单位越多 GC 越频繁）。
+                //   改手写循环 + 1s 一次 —— 自毁判定不需要帧级精度。
+                _nextIdleCheckTime = Time.time + 1f;
+                var players = ActorsManager.Players;
+                Vector3 selfPos = m_EnemyController.Pos;
+                float nearest = float.MaxValue;
+                for (int i = 0; i < players.Count; i++)
+                {
+                    float d = Vector3.Distance(players[i].Pos, selfPos);
+                    if (d < nearest) nearest = d;
+                }
+                // 空玩家列表时不杀（原 Min 在空列表上会抛异常，这里保守跳过，别让单位凭空消失）
+                if (players.Count > 0 && nearest > 80f)
                 {
                     m_EnemyController.Kill(true);
                 }
@@ -524,33 +541,36 @@ namespace FPSGame.AI
             }
 
             // shoot
+            // ⚠ 不要再用 turrets.ForEach(lambda)：lambda 捕获 this ⇒ 每次调用都新建一个委托，
+            //   战斗中每单位每帧一处（实测 AIInputBaseController.Update 的 129B/单位/帧 GC 主要来自这里）。
+            Vector3 aimPos = TargetPosition;
             if (IsAttackLocked)
             {
                 // Vertigo/Terror：禁止攻击，停止武器
-                turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
+                for (int i = 0; i < turrets.Count; i++) m_EnemyController.TryStop(turrets[i].weapon);
             }
             else if (mustStop)
             {
                 // 开火中且勾选 AttackStop：炮塔保持当前朝向不再追踪(不调 AimTargrt/Look)，
                 // 仅对已锁定的炮塔按开火延迟正常开火
-                if (IsFireDelayPassed())
-                {
-                    turrets.ForEach(item => {
-                        if (item.weapon && item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition))
-                        {
-                            m_EnemyController.TryAtack(item.weapon);
-                        }
-                    });
-                }
+                if (IsFireDelayPassed()) FireTurrets(aimPos);
             }
             else if (AimTargrt())
             {
-                turrets.ForEach(item => {
-                    if (item.weapon && item.IsLockTarget(TargetPosition) && item.CanFireAt(TargetPosition))
-                    {
-                        m_EnemyController.TryAtack(item.weapon);
-                    }
-                });
+                FireTurrets(aimPos);
+            }
+        }
+
+        /// <summary>对已锁定且在射程内的炮塔开火（原 turrets.ForEach(lambda) 的零分配版本）。</summary>
+        private void FireTurrets(Vector3 aimPos)
+        {
+            for (int i = 0; i < turrets.Count; i++)
+            {
+                var item = turrets[i];
+                if (item.weapon && item.IsLockTarget(aimPos) && item.CanFireAt(aimPos))
+                {
+                    m_EnemyController.TryAtack(item.weapon);
+                }
             }
         }
 
@@ -784,15 +804,16 @@ namespace FPSGame.AI
                     RefreshToxicityWanderDestination();
                 }
                 m_EnemyController.SetNavDestination(_toxicityWanderDestination);
-                // 持续攻击：无目标也尝试对炮台朝向方向开火
-                turrets.ForEach(item =>
+                // 持续攻击：无目标也尝试对炮台朝向方向开火（for 循环，别每帧新建委托）
+                for (int i = 0; i < turrets.Count; i++)
                 {
+                    var item = turrets[i];
                     if (item.weapon != null)
                     {
                         //中毒
                         m_EnemyController.TryAtack(item.weapon);
                     }
-                });
+                }
                 return;
             }
 
@@ -863,7 +884,7 @@ namespace FPSGame.AI
             }
 
             m_TimeLostDetection = Time.time;
-            turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
+            for (int i = 0; i < turrets.Count; i++) m_EnemyController.TryStop(turrets[i].weapon);
             m_EnemyController.StopNav();
         }
 
@@ -876,7 +897,9 @@ namespace FPSGame.AI
         {
             if (AiState == AIState.Beware || AiState == AIState.Follow || AiState == AIState.Attack)
             {
-                turrets.ForEach(item => item.Aiming(Time.time - m_TimeStartedDetection));
+                // LateUpdate 每帧跑：for 循环，别用 ForEach(lambda) 新建委托
+                float blendTime = Time.time - m_TimeStartedDetection;
+                for (int i = 0; i < turrets.Count; i++) turrets[i].Aiming(blendTime);
             }
         }
 
@@ -910,7 +933,7 @@ namespace FPSGame.AI
         protected override void OnDie()
         {
             SwitchState(AIState.Death);
-            turrets.ForEach(item => m_EnemyController.TryStop(item.weapon));
+            for (int i = 0; i < turrets.Count; i++) m_EnemyController.TryStop(turrets[i].weapon);
         }
 
     }

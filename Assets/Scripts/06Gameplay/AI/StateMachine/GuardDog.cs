@@ -167,7 +167,7 @@ namespace FPSGame.AI
 
         void StopWeapon()
         {
-            turrets.ForEach(TryStop);
+            for (int i = 0; i < turrets.Count; i++) TryStop(turrets[i]);
         }
 
 
@@ -205,12 +205,12 @@ namespace FPSGame.AI
 
             if (AimTargrt() && mustStop && DetectionModule.IsSeeingTarget)
             {
-                turrets.ForEach(item => {
-                    if (item.IsLockTarget(DetectionTargetPos))
-                    {
-                        TryAtack(item);
-                    }
-                });
+                // for 循环：ForEach(lambda) 每帧新建委托
+                Vector3 aimPos = DetectionTargetPos;
+                for (int i = 0; i < turrets.Count; i++)
+                {
+                    if (turrets[i].IsLockTarget(aimPos)) TryAtack(turrets[i]);
+                }
             }
             if (!InAttackRaudius()) AiState = AIState.Return;
         }
@@ -223,15 +223,17 @@ namespace FPSGame.AI
                 if (mustShoot |= Time.time > m_TimeStartedDetection + item.detectionFireDelay) break;
             }
 
-            //设置锁定点
-            turrets.ForEach(item => item.Look(DetectionTargetPos));
+            //设置锁定点（缓存一次目标点，别在循环里反复读属性）
+            Vector3 aimPos = DetectionTargetPos;
+            for (int i = 0; i < turrets.Count; i++) turrets[i].Look(aimPos);
             return mustShoot;
         }
 
         /// <summary>炮台锁头</summary>
         void AttackLateUpdate()
         {
-            turrets.ForEach(item => item.Aiming(Time.time - m_TimeStartedDetection));
+            float blendTime = Time.time - m_TimeStartedDetection;
+            for (int i = 0; i < turrets.Count; i++) turrets[i].Aiming(blendTime);
         }
 
 
@@ -486,7 +488,7 @@ namespace FPSGame.AI
                 );
             }
 
-            turrets.ForEach(item => item.Synchro());
+            for (int i = 0; i < turrets.Count; i++) turrets[i].Synchro();
         }
 
 

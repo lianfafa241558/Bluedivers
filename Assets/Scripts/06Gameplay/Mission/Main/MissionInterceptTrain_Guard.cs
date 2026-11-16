@@ -91,8 +91,6 @@ namespace FPSGame.Mission
         private void GuideGuard(GameObject unit, Vector3 home)
         {
             if (unit == null) return;
-            // ⚠ IsFixed 是 Actor 的**显式接口实现** ⇒ 必须走 IActor 取（GetComponent<Actor>().IsFixed 也能读，但写着容易误会）
-            if (unit.GetComponent<IActor>() is { } actor) actor.IsFixed = true;
             if (unit.TryGetComponent(out EnemyController controller)) controller.HomePoint = home;
         }
 
