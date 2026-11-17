@@ -569,7 +569,7 @@ MonoBehaviour:
     - Key: 2
       Value: 1
     - Key: 8
-      Value: 1
+      Value: 5.72
     WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 5
@@ -626,7 +626,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 0
   WeaponFlag: 0
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 8300000, guid: 3334a9d224102134eac1f86e1951f7d5, type: 3}
   ChangeWeaponSfx: {fileID: 8300000, guid: 7b83d61917ac1224f942a0609b1221f2, type: 3}
@@ -752,6 +751,12 @@ MonoBehaviour:
   time: 0
   count: 0
   _collider: {fileID: 0}
+  OnInstall:
+    m_PersistentCalls:
+      m_Calls: []
+  OnUninstall:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &2868227475151248685
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -242,7 +242,7 @@ namespace FPSGame.Managers
             IsStartBattle = true;
             BattleState.MarkBattleStarted();//数据自持同步点 + 通知（见 BattleState.cs）
             NetSyncLog.LoadLog("初始化", $"其他初始化耗时 {sw.ElapsedMilliseconds} ms");
-
+            //Debug.Log($"敌人类型 {TaskManager.Instance.EnemyVarietyType}");
             //初始播报
             WndManager.Instance.CreatNotice("Yuuka", "MissionStart");
         }

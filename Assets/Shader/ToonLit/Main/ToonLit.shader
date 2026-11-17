@@ -139,13 +139,13 @@ Shader "ToonLit/ToonLit"
         //_OutlineZOffsetMaskRemapEnd("_OutlineZOffsetMaskRemapEnd", Range(0,1)) = 1
 
         // ===== SRP Batcher 对齐：本 shader 未使用，仅为满足 UnityPerMaterial 一一对应（自动生成）=====
-        [HideInInspector] _MouthMap("_MouthMap", 2D) = "white" {}
+        [HideInInspector] _MouthMap("_MouthMap", 2D) = "black" {}
         [HideInInspector] _Expression("_Expression", Float) = 0
         [HideInInspector] _Column("_Column", Float) = 0
         [HideInInspector] _TerrainBlending("_TerrainBlending", Float) = 0
         [HideInInspector] _UseMouthMap("_UseMouthMap", Float) = 0
-        [HideInInspector] _ColourTex("_ColourTex", 2D) = "white" {}
-        [HideInInspector] _ColourMaskTex("_ColourMaskTex", 2D) = "white" {}
+        [HideInInspector] _ColourTex("_ColourTex", 2D) = "black" {}
+        [HideInInspector] _ColourMaskTex("_ColourMaskTex", 2D) = "black" {}
         [HideInInspector] _ColourScale("_ColourScale", Float) = 0
         [HideInInspector] _ColourColor("_ColourColor", Color) = (0,0,0,0)
     }

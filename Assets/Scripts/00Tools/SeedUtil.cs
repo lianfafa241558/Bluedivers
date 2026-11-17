@@ -1,4 +1,4 @@
-namespace FPSGame.Utils
+﻿namespace FPSGame.Utils
 {
     /// <summary>
     /// 派生随机流的**用途标识**。
@@ -51,6 +51,10 @@ namespace FPSGame.Utils
         InterestPoint = 17,
         /// <summary>**场景点（装饰点）的落点与朝向**（<c>MissionController.InitScenePoint</c>）—— 同上。</summary>
         ScenePoint = 18,
+        /// <summary>**随机变体生成**（<c>RandomChildSpawner</c> 从候选预制体里抽一个挂到自己身下）。
+        /// <para>▍为什么必须独立：这类"变体抽签"是**两端各跑一次、零消息**的静态同步，只能吃派生流；
+        /// 若共用 <see cref="PropSpawn"/> 等已有流，别处多抽一次就会让同一宿主在两端抽到不同 prefab。</para></summary>
+        VariantSpawn = 19,
     }
 
     /// <summary>
