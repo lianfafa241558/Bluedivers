@@ -134,7 +134,7 @@ Shader "ToonLit/ToonLit_Unit"
         //[Header(Outline)]
 
         [ToggleUI]_FixOutlineColor("使用固定颜色而非乘数", Float) = 0
-        [ToggleUI]_UseAverNormal("使用平均化法线", Float) = 0
+        [ToggleUI]_UseAverNormal("使用平均化法线", Float) = 1
         _OutlineWidth("描边宽度 (World Space)", Range(0,20)) = 4
         _OutlineColor("描边颜色", Color) = (0.5,0.5,0.5,1)
         _OutlineZOffset("描边偏移 (View Space)", Range(0,1)) = 0.0001

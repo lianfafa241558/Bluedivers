@@ -551,6 +551,12 @@ namespace FPSGame.Gameplay
         }
         private void UpdatePlayerAngle()
         {
+            // 趴姿身体贴地，武器自带的侧身角会把模型转成“侧躺”；回正即可，LateUpdate 已有 LerpAngle 做平滑
+            if (m_PlayerCharacterController.Stance == PlayerStance.Prone)
+            {
+                m_PlayerAngle = 0f;
+                return;
+            }
             
             WeaponPlayerController activeWeapon = GetActiveWeapon();
             WeaponPlayerController activeSecWeapon = GetActiveSecWeapon();

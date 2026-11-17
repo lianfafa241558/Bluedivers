@@ -308,10 +308,10 @@ namespace FPSGame.UI
             }
 
             showModle.transform.parent = modelRoot;
-            showModle.transform.localPosition = new(0, -2.4f, 980);
+            showModle.transform.localPosition = new(0, -4.7f, 980);
             showModle.transform.eulerAngles = new(0, 180, 0);
-            showModle.transform.localScale = new(2, 2, 2);
-            showModle.SetChildLayer(gameObject.layer, 3);
+            showModle.transform.localScale = new(4, 4, 4);
+            showModle.SetChildLayer(LayerMask.NameToLayer("ModelView"), 3);
             BindRoleView(modelRoot, i);   // ★ 这一行用它自己的 RT（否则 4 行共用 PlayerRole1 ⇒ 全行同一张脸）
             foreach (var script in showModle.GetComponents<MonoBehaviour>()) script.enabled = false;   // 关闭注视等组件
 

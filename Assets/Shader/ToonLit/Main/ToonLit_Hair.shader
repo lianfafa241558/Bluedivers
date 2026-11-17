@@ -46,6 +46,7 @@ Shader "ToonLit/ToonLit_Hair"
         _CelShadeMidPoint("阴影切面的系数", Range(-1,1)) = -0.5
         _ShadowMapColor("阴影颜色", Color) = (0.8,0.8,0.8)
 
+         [HideInInspector]_FixOutlineColor("使用固定颜色而非乘数", Float) = 0
         [ToggleUI]_UseAverNormal("使用平均化法线", Float) = 0
         _OutlineWidth("描边宽度 (World Space)", Range(0,20)) = 4
         _OutlineColor("描边颜色", Color) = (0.5,0.5,0.5,1)

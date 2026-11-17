@@ -58,6 +58,12 @@ namespace FPSGame.UI
         public Transform secondaryLayoutRoot;
         public RectTransform nowsecondarySelect;
 
+        [Foldout("设置", true)]
+        [InspectorName("重置设置按钮")]
+        [Tooltip("点击后把所有设置项恢复为 GameData/Archive_Default 的值；预制体没接就留空")]
+        [SerializeField]
+        private Transform resetting;
+
         private List<UpdateData_SO> m_UpdateDataArr;
         private int nowUpdateIndex=0;
         /// <summary>顶部 tab 的**视觉**下标（<see cref="_tabPanels"/> / layoutRoot 顺序），不是 expandRoot 的 siblingIndex。</summary>
@@ -148,7 +154,11 @@ namespace FPSGame.UI
             SetCilck(exitGame, TryExitGame);
             SetCilck(teach, TryTeach);
             SetCilck(rename, TryRename);
+            if (resetting != null) SetCilck(resetting, OnResetSettingClicked);
             BindEmptyRoomSlots();
+
+            // 首次打开按当前 tab 定一次重置按钮显隐（后续由 SwitchExpand → RefreshSecondaryLayoutVisibility 接管）
+            RefreshSecondaryLayoutVisibility();
 
         
 
@@ -414,8 +424,6 @@ namespace FPSGame.UI
         /// </summary>
         private void RefreshSecondaryLayoutVisibility()
         {
-            if (secondaryLayoutRoot == null) return;
-
             // 判断当前选中的是否是设置子界面（settingRoot 所在的 expandRoot 子项）
             bool isSettingTab = false;
             if (expandRoot != null && expandRoot.childCount > nowExpandIndex)
@@ -423,6 +431,11 @@ namespace FPSGame.UI
                 var currentExpand = expandRoot.GetChild(nowExpandIndex);
                 isSettingTab = settingRoot != null && settingRoot.IsChildOf(currentExpand);
             }
+
+            // 重置按钮只在设置子界面显示；放在早退之前，secondaryLayoutRoot 没接也能正确隐藏
+            if (resetting != null) SetActive(resetting, isSettingTab);
+
+            if (secondaryLayoutRoot == null) return;
 
             SetActive(secondaryLayoutRoot, isSettingTab);
             if (nowsecondarySelect != null)
@@ -613,6 +626,59 @@ namespace FPSGame.UI
                     return;
             }
             SetText(tran.GetChild(0), name);
+        }
+
+        /// <summary>点击重置：确认后把所有设置项恢复为默认资产的值（与键位重置同款弹窗）。</summary>
+        private void OnResetSettingClicked()
+        {
+            wndManager.PlaySound(new("UI/UI_Bubble"));
+            WndHub.Tip.Creat(new TipWndInfo
+            {
+                title = "恢复默认设置",
+                desc = "\n所有选项都会变回初始值，确定要恢复吗？",
+                optA_Text = "确定",
+                optA_Click = ApplyResetSetting,
+                optB_Text = "取消"
+            });
+        }
+
+        /// <summary>
+        /// 按默认资产的 arr 顺序整体重建 settingDic（值 + 顺序 + 剔除多余键），只标脏不落盘，
+        /// 关窗时跟手动改设置走同一条 Save 路径。
+        /// </summary>
+        private void ApplyResetSetting()
+        {
+            ArchivesData_SO defaults = Resources.Load<ArchivesData_SO>("GameData/Archive_Default");
+            if (defaults == null)
+            {
+                Debug.LogError("[SettingWnd] 找不到 GameData/Archive_Default，重置设置取消");
+                return;
+            }
+
+            DisplayDic<string, ArchSettingData> target = ArchivesData_SO.Current.settingDic;
+            DisplayDic<string, ArchSettingData> source = defaults.settingDic;
+            target.Clear();
+
+            // foreach 走的是 arr 顺序；ForEach 走 dic（Dictionary 无序）⇒ 这里不能用 ForEach
+            foreach (var kvp in source)
+            {
+                // ArchSettingData 是引用类型：深拷贝，否则改设置会污染内存里的默认资产
+                var copy = JsonUtility.FromJson<ArchSettingData>(JsonUtility.ToJson(kvp.Value));
+                target.Add(kvp.Key, copy);
+                GlobalEventBus.SettingCange(kvp.Key, copy.value.RawInt);
+            }
+
+            if (target.Count == 0)
+            {
+                Debug.LogError("[SettingWnd] 默认存档里没有设置项，重置设置取消");
+                return;
+            }
+
+            haveSettingChagne = true;
+            BuildSettingGroups(); // 分组缓存里存的是旧 arr 的 data 引用，重建后必须重取
+            _secondaryIndex = Mathf.Clamp(_secondaryIndex, 0, _secondaryTitles.Count - 1);
+            if (_secondaryTitles.Count > 0) RefreshSettingContentByTitle(_secondaryTitles[_secondaryIndex]);
+            wndManager.PlaySound(new("UI/UI_Ready"));
         }
 
         private void HideTask()
