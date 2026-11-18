@@ -19,7 +19,7 @@ MonoBehaviour:
   - name: "\u666E\u901A\u6A21\u677F"
     template:
     - tier: 1
-      weight: 35
+      weight: 0
       unitWeights:
       - unit: {fileID: 3391937395149874175, guid: c8891ce148137eb4184d143a0dc6629e,
           type: 3}
@@ -30,7 +30,7 @@ MonoBehaviour:
         weight: 50
         size: 1
     - tier: 2
-      weight: 39
+      weight: 50
       unitWeights:
       - unit: {fileID: 2699006152325806571, guid: 40f16ca1b2654ae42980ae7a763fddbe,
           type: 3}
@@ -45,23 +45,38 @@ MonoBehaviour:
         weight: 25
         size: 2
     - tier: 3
-      weight: 35
+      weight: 30
       unitWeights:
-      - unit: {fileID: 3717349314490538742, guid: 74965fabe05492a4a98b799f0f02de05,
+      - unit: {fileID: 5834416761282591017, guid: 6f17b4eccfb76fb46bd60131877bec57,
           type: 3}
-        weight: 50
+        weight: 30
         size: 3
-      - unit: {fileID: 2731587229740123642, guid: 63d97e54392830943ae0a63514fa9a23,
+      - unit: {fileID: 5836546863182656228, guid: 3c785edd1a69e7845924a1a7880f676a,
           type: 3}
-        weight: 50
+        weight: 30
+        size: 3
+      - unit: {fileID: 9093705971782582514, guid: 13a17289cf614c148adca675af00d352,
+          type: 3}
+        weight: 40
         size: 3
     - tier: 4
-      weight: 1
+      weight: 15
+      unitWeights:
+      - unit: {fileID: 6882683483566734772, guid: 78bc70cb9538c404e97b70c6249d3f74,
+          type: 3}
+        weight: 10
+        size: 8
+      - unit: {fileID: 3717349314490538742, guid: 74965fabe05492a4a98b799f0f02de05,
+          type: 3}
+        weight: 90
+        size: 8
+    - tier: 5
+      weight: 5
       unitWeights:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
           type: 3}
         weight: 100
-        size: 5
+        size: 16
     - tier: 9
       weight: 0
       unitWeights:
@@ -85,7 +100,7 @@ MonoBehaviour:
   - name: "\u5927\u76FE\u6A21\u677F"
     template:
     - tier: 1
-      weight: 50
+      weight: 0
       unitWeights:
       - unit: {fileID: 3391937395149874175, guid: c8891ce148137eb4184d143a0dc6629e,
           type: 3}
@@ -96,7 +111,7 @@ MonoBehaviour:
         weight: 50
         size: 1
     - tier: 2
-      weight: 40
+      weight: 30
       unitWeights:
       - unit: {fileID: 2699006152325806571, guid: 40f16ca1b2654ae42980ae7a763fddbe,
           type: 3}
@@ -111,23 +126,38 @@ MonoBehaviour:
         weight: 25
         size: 2
     - tier: 3
-      weight: 7
+      weight: 50
       unitWeights:
-      - unit: {fileID: 3717349314490538742, guid: 74965fabe05492a4a98b799f0f02de05,
+      - unit: {fileID: 5834416761282591017, guid: 6f17b4eccfb76fb46bd60131877bec57,
           type: 3}
-        weight: 50
+        weight: 30
         size: 3
-      - unit: {fileID: 2731587229740123642, guid: 63d97e54392830943ae0a63514fa9a23,
+      - unit: {fileID: 5836546863182656228, guid: 3c785edd1a69e7845924a1a7880f676a,
           type: 3}
-        weight: 50
+        weight: 30
+        size: 3
+      - unit: {fileID: 9093705971782582514, guid: 13a17289cf614c148adca675af00d352,
+          type: 3}
+        weight: 40
         size: 3
     - tier: 4
-      weight: 3
+      weight: 15
+      unitWeights:
+      - unit: {fileID: 6882683483566734772, guid: 78bc70cb9538c404e97b70c6249d3f74,
+          type: 3}
+        weight: 10
+        size: 8
+      - unit: {fileID: 3717349314490538742, guid: 74965fabe05492a4a98b799f0f02de05,
+          type: 3}
+        weight: 90
+        size: 8
+    - tier: 5
+      weight: 5
       unitWeights:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
           type: 3}
         weight: 100
-        size: 5
+        size: 10
     - tier: 9
       weight: 0
       unitWeights:
@@ -151,7 +181,7 @@ MonoBehaviour:
   - name: "\u65E0\u754F\u6A21\u677F"
     template:
     - tier: 1
-      weight: 10
+      weight: 0
       unitWeights:
       - unit: {fileID: 3391937395149874175, guid: c8891ce148137eb4184d143a0dc6629e,
           type: 3}
@@ -162,7 +192,7 @@ MonoBehaviour:
         weight: 50
         size: 1
     - tier: 2
-      weight: 54
+      weight: 35
       unitWeights:
       - unit: {fileID: 2699006152325806571, guid: 40f16ca1b2654ae42980ae7a763fddbe,
           type: 3}
@@ -179,21 +209,36 @@ MonoBehaviour:
     - tier: 3
       weight: 35
       unitWeights:
-      - unit: {fileID: 3717349314490538742, guid: 74965fabe05492a4a98b799f0f02de05,
+      - unit: {fileID: 5834416761282591017, guid: 6f17b4eccfb76fb46bd60131877bec57,
           type: 3}
-        weight: 50
+        weight: 30
         size: 3
-      - unit: {fileID: 2731587229740123642, guid: 63d97e54392830943ae0a63514fa9a23,
+      - unit: {fileID: 5836546863182656228, guid: 3c785edd1a69e7845924a1a7880f676a,
           type: 3}
-        weight: 50
+        weight: 30
+        size: 3
+      - unit: {fileID: 9093705971782582514, guid: 13a17289cf614c148adca675af00d352,
+          type: 3}
+        weight: 40
         size: 3
     - tier: 4
-      weight: 1
+      weight: 25
+      unitWeights:
+      - unit: {fileID: 6882683483566734772, guid: 78bc70cb9538c404e97b70c6249d3f74,
+          type: 3}
+        weight: 10
+        size: 8
+      - unit: {fileID: 3717349314490538742, guid: 74965fabe05492a4a98b799f0f02de05,
+          type: 3}
+        weight: 90
+        size: 8
+    - tier: 5
+      weight: 5
       unitWeights:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
           type: 3}
         weight: 100
-        size: 5
+        size: 10
     - tier: 9
       weight: 0
       unitWeights:

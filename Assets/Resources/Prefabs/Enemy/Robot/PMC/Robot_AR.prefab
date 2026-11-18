@@ -323,7 +323,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   explosionResistance: 0
-  armorLevel: 1
+  armorLevel: 0
   useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
@@ -1530,13 +1530,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0
+  explosionResistance: 1
   armorLevel: 0
   useHealthInsteadOfArmor: 0
-  armorValue: 0
+  armorValue: 35
   LineArmor: []
-  armorBreakEffect: []
-  BleedValue: 0
+  armorBreakEffect:
+  - go: {fileID: 2856553618272771027}
+    state: 1
+    scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
+  BleedValue: 10
   isMain: 0
   showArmor: 0
 --- !u!136 &9036512603753186302
@@ -1581,13 +1586,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0
+  explosionResistance: 1
   armorLevel: 0
   useHealthInsteadOfArmor: 0
-  armorValue: 0
+  armorValue: 35
   LineArmor: []
-  armorBreakEffect: []
-  BleedValue: 0
+  armorBreakEffect:
+  - go: {fileID: 3414127846672739168}
+    state: 1
+    scale: 0
+    originActive: 0
+    originLocalScale: {x: 0, y: 0, z: 0}
+  BleedValue: 10
   isMain: 0
   showArmor: 0
 --- !u!136 &5351071804025878919
@@ -1675,7 +1685,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   explosionResistance: 1
-  armorLevel: 1
+  armorLevel: 0
   useHealthInsteadOfArmor: 0
   armorValue: 25
   LineArmor:
@@ -1730,7 +1740,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   explosionResistance: 1
-  armorLevel: 1
+  armorLevel: 0
   useHealthInsteadOfArmor: 0
   armorValue: 25
   LineArmor:
@@ -1785,9 +1795,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 1
   explosionResistance: 1
-  armorLevel: 1
+  armorLevel: 0
   useHealthInsteadOfArmor: 1
-  armorValue: 25
+  armorValue: 18
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 6274234479142125502}

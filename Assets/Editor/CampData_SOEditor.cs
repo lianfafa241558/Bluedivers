@@ -361,11 +361,38 @@ public class CampData_SOEditor : DataSOEditorBase
             "权重 = 抽到该档的概率；巡逻队名必须与下面「巡逻队模板」的 name 一致"),
             tierWeight == 0 || patrolMissing > 0 ? DimWarnStyle : DimStyle);
 
-        if (GUI.Button(new Rect(row.xMax - 20f, row.y + 1f, 18f, 18f),
-                new GUIContent("×", "删除该模板"), EditorStyles.miniButton))
+        var delRect = new Rect(row.xMax - 20f, row.y + 1f, 18f, 18f);
+        if (GUI.Button(delRect, new GUIContent("×", "删除该模板"), EditorStyles.miniButton))
         {
             list.DeleteArrayElementAtIndex(index);
             return true;
+        }
+
+        // 头行右键：整模板复制 / 粘贴（名字 + 全部档位 + 巡逻队引用）。
+        // 名字输入框和删除按钮各自处理右键，排除掉免得弹两层菜单。
+        if (Event.current.type == EventType.ContextClick)
+        {
+            Vector2 mouse = Event.current.mousePosition;
+            if (row.Contains(mouse) && !nameRect.Contains(mouse) && !delRect.Contains(mouse))
+            {
+                int captured = index;
+                bool canPaste = ReadTemplateClip() != null;
+                var menu = new GenericMenu();
+                menu.AddItem(new GUIContent("复制整个模板", "名字 + 全部档位 + 巡逻队引用一起复制"),
+                    false, () => CopyTemplate(list, captured));
+                menu.AddItem(new GUIContent("粘贴覆盖该模板"), canPaste, () => PasteTemplate(list, captured, false));
+                menu.AddItem(new GUIContent("粘贴为新模板"), canPaste, () => PasteTemplate(list, captured, true));
+                menu.AddItem(new GUIContent("删除该模板"), false, () =>
+                {
+                    if (captured >= list.arraySize) return;
+                    list.DeleteArrayElementAtIndex(captured);
+                    list.serializedObject.ApplyModifiedProperties();
+                    EditorUtility.SetDirty(list.serializedObject.targetObject);
+                    ScheduleSave();
+                });
+                menu.ShowAsContext();
+                Event.current.Use();
+            }
         }
 
         if (!item.isExpanded) return false;
@@ -416,7 +443,8 @@ public class CampData_SOEditor : DataSOEditorBase
 
     /// <summary>模板内一档：档位 + 权重 + 该档单位（预制体·权重·占据补给）。返回 true = 已被删除。
     /// ⚠ 这里一律手工切列，不用 <c>GUILayout.Width</c> 的 PropertyField：它的标签吃 labelWidth(150)，
-    /// 面板变窄时字段会被压成 0 宽甚至挤出面板（枚举下拉空白、输入框只剩边框）。</summary>
+    /// 面板变窄时字段会被压成 0 宽甚至挤出面板（枚举下拉空白、输入框只剩边框）。
+    /// 手绘卡片拿不到 Unity 默认数组的元素右键菜单，故卡片空白处右键自己补「复制该档 / 粘贴」。</summary>
     private static bool DrawTierCfg(SerializedProperty tiers, int index)
     {
         var tier = tiers.GetArrayElementAtIndex(index);
@@ -458,11 +486,9 @@ public class CampData_SOEditor : DataSOEditorBase
                 added.FindPropertyRelative("size").intValue = 1;
             }
 
+            // 不早退：早退会跳过卡片底部的右键菜单判定
             if (units.arraySize == 0)
-            {
                 GUILayout.Label("该档没有单位：权重 > 0 时会抽到空档。", s_greyMiniStyle);
-                return false;
-            }
 
             //GUILayout.Label($"单位 {units.arraySize}：预制体 · 权重 · 占据补给", DimStyle);
             for (int i = 0; i < units.arraySize; i++)
@@ -489,7 +515,234 @@ public class CampData_SOEditor : DataSOEditorBase
                 }
             }
         }
+
+        // 卡片右键：整档复制 / 粘贴（手绘卡片拿不到 Unity 默认数组的元素菜单）
+        Rect cardRect = GUILayoutUtility.GetLastRect();
+        if (Event.current.type == EventType.ContextClick && cardRect.Contains(Event.current.mousePosition))
+        {
+            int captured = index;
+            bool canPaste = ReadTierClip() != null;
+            var menu = new GenericMenu();
+            menu.AddItem(new GUIContent("复制该档", "档位 + 权重 + 单位一起复制，可粘到本模板/别的模板/别的阵营的任意一档"),
+                false, () => CopyTier(tiers, captured));
+            menu.AddItem(new GUIContent("粘贴覆盖该档"), canPaste, () => PasteTier(tiers, captured, false));
+            menu.AddItem(new GUIContent("粘贴为新档"), canPaste, () => PasteTier(tiers, captured, true));
+            menu.AddItem(new GUIContent("删除该档"), false, () =>
+            {
+                if (captured >= tiers.arraySize) return;
+                tiers.DeleteArrayElementAtIndex(captured);
+                tiers.serializedObject.ApplyModifiedProperties();
+                EditorUtility.SetDirty(tiers.serializedObject.targetObject);
+                ScheduleSave();
+            });
+            menu.ShowAsContext();
+            Event.current.Use();
+        }
         return false;
+    }
+
+    // =====================================================
+    //  档位 / 模板 复制粘贴（走系统剪贴板的 JSON，预制体只记资产路径）
+    // =====================================================
+
+    /// <summary>一档的快照。用 JSON 文本进出系统剪贴板：域重载/重开窗口/跨资产都还能粘；
+    /// 预制体不存实例引用（跨域会失效）而存资产路径，粘贴时重新 Load。
+    /// kind 是格式标记 —— 档位与模板共用同一个剪贴板，只能靠它区分该不该给「粘贴」亮灯。</summary>
+    [System.Serializable]
+    private class TierClip
+    {
+        public string kind = "tier";
+        public int tier;
+        public int weight;
+        public List<string> unitPaths = new List<string>();
+        public List<int> unitWeights = new List<int>();
+        public List<int> unitSizes = new List<int>();
+    }
+
+    /// <summary>一个波次模板的快照：名字 + 全部档位 + 巡逻队引用（Key 是巡逻队名，跨阵营粘贴可能对不上，由编辑器标 ⚠）</summary>
+    [System.Serializable]
+    private class TemplateClip
+    {
+        public string kind = "template";
+        public string name;
+        public List<TierClip> tiers = new List<TierClip>();
+        public List<string> patrolKeys = new List<string>();
+        public List<int> patrolValues = new List<int>();
+    }
+
+    private static TierClip ReadTier(SerializedProperty tier)
+    {
+        var clip = new TierClip
+        {
+            tier = tier.FindPropertyRelative("tier").intValue,
+            weight = tier.FindPropertyRelative("weight").intValue,
+        };
+
+        var units = tier.FindPropertyRelative("unitWeights");
+        for (int i = 0; i < units.arraySize; i++)
+        {
+            var u = units.GetArrayElementAtIndex(i);
+            var go = u.FindPropertyRelative("unit").objectReferenceValue as GameObject;
+            clip.unitPaths.Add(go != null ? AssetDatabase.GetAssetPath(go) : "");
+            clip.unitWeights.Add(u.FindPropertyRelative("weight").intValue);
+            clip.unitSizes.Add(u.FindPropertyRelative("size").intValue);
+        }
+        return clip;
+    }
+
+    private static void WriteTier(SerializedProperty tier, TierClip clip)
+    {
+        tier.FindPropertyRelative("tier").intValue = clip.tier;
+        tier.FindPropertyRelative("weight").intValue = clip.weight;
+
+        int count = Mathf.Min(clip.unitPaths.Count, Mathf.Min(clip.unitWeights.Count, clip.unitSizes.Count));
+        var units = tier.FindPropertyRelative("unitWeights");
+        units.arraySize = count;
+        for (int i = 0; i < count; i++)
+        {
+            var go = string.IsNullOrEmpty(clip.unitPaths[i])
+                ? null
+                : AssetDatabase.LoadAssetAtPath<GameObject>(clip.unitPaths[i]);
+            if (go == null && !string.IsNullOrEmpty(clip.unitPaths[i]))
+                Debug.LogWarning($"[CampData] 粘贴失败：找不到预制体 {clip.unitPaths[i]}");
+
+            var u = units.GetArrayElementAtIndex(i);
+            u.FindPropertyRelative("unit").objectReferenceValue = go;
+            u.FindPropertyRelative("weight").intValue = clip.unitWeights[i];
+            u.FindPropertyRelative("size").intValue = clip.unitSizes[i];
+        }
+    }
+
+    private static void CopyTier(SerializedProperty tiers, int index)
+    {
+        if (index < 0 || index >= tiers.arraySize) return;
+
+        var clip = ReadTier(tiers.GetArrayElementAtIndex(index));
+        EditorGUIUtility.systemCopyBuffer = JsonUtility.ToJson(clip, true);
+        Debug.Log($"[CampData] 已复制档位：{(UnitTier)clip.tier} 权重 {clip.weight} 单位 {clip.unitPaths.Count} 个");
+    }
+
+    /// <summary>剪贴板里是别的文本/别的格式时返回 null（粘贴项据此置灰）；剪贴板内容不可控，故用 try 兜住 JsonUtility 的异常</summary>
+    private static TierClip ReadTierClip()
+    {
+        string text = EditorGUIUtility.systemCopyBuffer;
+        if (string.IsNullOrEmpty(text) || !text.TrimStart().StartsWith("{")) return null;
+        try
+        {
+            var clip = JsonUtility.FromJson<TierClip>(text);
+            return clip != null && clip.kind == "tier"
+                   && clip.unitPaths != null && clip.unitWeights != null && clip.unitSizes != null
+                ? clip
+                : null;
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>把剪贴板里的档写进 index（append = true 则先在列表末尾追加一档再写）。
+    /// 菜单回调在 OnInspectorGUI 之外执行，基类 ApplyDirty 抓不到 ⇒ 自己 Apply + SetDirty + 落盘。</summary>
+    private static void PasteTier(SerializedProperty tiers, int index, bool append)
+    {
+        var clip = ReadTierClip();
+        if (clip == null) return;
+
+        if (append)
+        {
+            tiers.arraySize++;
+            index = tiers.arraySize - 1;
+        }
+        else if (index < 0 || index >= tiers.arraySize) return;
+
+        var dst = tiers.GetArrayElementAtIndex(index);
+        dst.isExpanded = true;
+        WriteTier(dst, clip);
+
+        tiers.serializedObject.ApplyModifiedProperties();
+        EditorUtility.SetDirty(tiers.serializedObject.targetObject);
+        ScheduleSave();
+    }
+
+    private static void CopyTemplate(SerializedProperty templates, int index)
+    {
+        if (index < 0 || index >= templates.arraySize) return;
+
+        var item = templates.GetArrayElementAtIndex(index);
+        var clip = new TemplateClip { name = item.FindPropertyRelative("name").stringValue };
+
+        var tiers = item.FindPropertyRelative("template");
+        for (int i = 0; i < tiers.arraySize; i++)
+            clip.tiers.Add(ReadTier(tiers.GetArrayElementAtIndex(i)));
+
+        var patrols = item.FindPropertyRelative("patrolTemplate");
+        for (int i = 0; i < patrols.arraySize; i++)
+        {
+            var e = patrols.GetArrayElementAtIndex(i);
+            clip.patrolKeys.Add(e.FindPropertyRelative("Key").stringValue);
+            clip.patrolValues.Add(e.FindPropertyRelative("Value").intValue);
+        }
+
+        EditorGUIUtility.systemCopyBuffer = JsonUtility.ToJson(clip, true);
+        Debug.Log($"[CampData] 已复制模板「{clip.name}」：{clip.tiers.Count} 档 / 巡逻队 {clip.patrolKeys.Count} 项");
+    }
+
+    private static TemplateClip ReadTemplateClip()
+    {
+        string text = EditorGUIUtility.systemCopyBuffer;
+        if (string.IsNullOrEmpty(text) || !text.TrimStart().StartsWith("{")) return null;
+        try
+        {
+            var clip = JsonUtility.FromJson<TemplateClip>(text);
+            return clip != null && clip.kind == "template" && clip.tiers != null
+                   && clip.patrolKeys != null && clip.patrolValues != null
+                ? clip
+                : null;
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>把剪贴板里的模板写进 index（append = true 则先在列表末尾追加一个模板再写）</summary>
+    private static void PasteTemplate(SerializedProperty templates, int index, bool append)
+    {
+        var clip = ReadTemplateClip();
+        if (clip == null) return;
+
+        if (append)
+        {
+            templates.arraySize++;
+            index = templates.arraySize - 1;
+        }
+        else if (index < 0 || index >= templates.arraySize) return;
+
+        var item = templates.GetArrayElementAtIndex(index);
+        item.isExpanded = true;
+        item.FindPropertyRelative("name").stringValue = clip.name ?? "";
+
+        var tiers = item.FindPropertyRelative("template");
+        tiers.arraySize = clip.tiers.Count;
+        for (int i = 0; i < clip.tiers.Count; i++)
+        {
+            if (clip.tiers[i] == null) continue;
+            WriteTier(tiers.GetArrayElementAtIndex(i), clip.tiers[i]);
+        }
+
+        int count = Mathf.Min(clip.patrolKeys.Count, clip.patrolValues.Count);
+        var patrols = item.FindPropertyRelative("patrolTemplate");
+        patrols.arraySize = count;
+        for (int i = 0; i < count; i++)
+        {
+            var e = patrols.GetArrayElementAtIndex(i);
+            e.FindPropertyRelative("Key").stringValue = clip.patrolKeys[i];
+            e.FindPropertyRelative("Value").intValue = clip.patrolValues[i];
+        }
+
+        templates.serializedObject.ApplyModifiedProperties();
+        EditorUtility.SetDirty(templates.serializedObject.targetObject);
+        ScheduleSave();
     }
 
     /// <summary>模板里的巡逻队条目：名字只能从本阵营已定义的巡逻队里选（手写名字对不上会被静默丢弃）。

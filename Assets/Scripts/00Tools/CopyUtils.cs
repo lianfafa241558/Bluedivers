@@ -1,4 +1,4 @@
-
+﻿
 namespace FPSGame.Utils
 {
 #if UNITY_EDITOR
@@ -129,8 +129,10 @@ public static class CopyUtils
                 pos.x = Tool.Round(pos.x, 2);
                 pos.y = Tool.Round(pos.y, 2);
                 pos.z = Tool.Round(pos.z, 2);
-                var box = item.gameObject.AddComponent<BoxCollider>();
-                box.size = new(Mathf.Max(Mathf.Abs(pos.x), 0.2f), Mathf.Max(Mathf.Abs(pos.y), 0.2f), Mathf.Max(Mathf.Abs(pos.z), 0.2f));
+                var box = item.gameObject.AddComponent<CapsuleCollider>();
+                box.radius = Mathf.Max(Mathf.Min(Mathf.Abs(pos.x), Mathf.Abs(pos.y), Mathf.Abs(pos.z)), 0.2f);
+                box.height = Mathf.Max(Mathf.Abs(pos.x), Mathf.Abs(pos.y), Mathf.Abs(pos.z), 0.2f);
+                    box.direction = 0;
                 box.center = pos / 2;
 
             }
