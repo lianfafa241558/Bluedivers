@@ -53,6 +53,12 @@ namespace FPSGame.Weapon
         public UnityAction OnShoot;
         public UnityAction<ProjectileHitData> OnHit;
 
+        /// <summary>本段生命已回收（回池）。⚠ 一发射物会被**回收两次**：命中/引信到点那条 <c>OnHit</c> 上
+        /// <c>HitFX</c> 先 <see cref="Release"/>，随后 <c>DelayedRelese</c> 又 <c>Release</c> 一次。
+        /// 池子不防重（同一个实例被压进空闲栈两次 ⇒ 之后一次 Get 发给"两颗子弹"，OnHit 订阅翻倍、
+        /// 一次爆炸播 N 份特效/结算 N 次伤害）。<see cref="Shoot"/> 里复位。</summary>
+        private bool m_Released;
+
         /// <summary>【表现弹专用】是否约束了终点（见 <see cref="SetVisualEndPoint"/>）。普通子弹恒为 false。</summary>
         public bool HasVisualEndPoint { get; private set; }
 
@@ -102,14 +108,19 @@ namespace FPSGame.Weapon
             Gravity = controller.CurrentGravity;
             BulletFlag = controller.BulletFlag;
             IgnoredColliders = controller.IgnoredColliders;
-            // ★ 池化复用：上一次当"表现弹"时留下的终点/标记必须清掉（普通子弹永不约束弹道）
+            // ★ 池化复用：上一次当"表现弹"时留下的终点/标记 / 回收标记必须清掉（普通子弹永不约束弹道）
             HasVisualEndPoint = false;
             IsVisualBullet = false;
+            m_Released = false;
             OnHit += FpsHelper.Hit;
             OnShoot?.Invoke();
         }
         public void Release()
-        { 
+        {
+            // ⚠ 必须幂等：命中停弹与引信到点会各回收一次，重复回池会把同一实例压进空闲栈两次，
+            //   下一次 Get 就把它当"两颗子弹"发出去 ⇒ OnHit 订阅翻倍，一次爆炸播 N 份特效（见 m_Released）。
+            if (m_Released) return;
+            m_Released = true;
             //Debug.Log("释放" + gameObject, gameObject);
             FPSGame.Core.VfxPool.Release(this);
         }
@@ -266,7 +277,10 @@ namespace FPSGame.Weapon
             };
         }
 
-        private void OnDisable()
+        /// <summary>回池/销毁时清空订阅。⚠ 必须是 <c>protected virtual</c>：Unity 消息按"最先找到的那一个"调用，
+        /// 子类再声明一个私有 <c>OnDisable</c>（如 <c>ProjectileGrenade</c>）会把这条**整条遮掉** ⇒
+        /// 订阅永不清空，每投一次就多叠一份 <c>HitFX</c>/<c>FpsHelper.Hit</c>，一次爆炸播 N 份特效。</summary>
+        protected virtual void OnDisable()
         {
             OnShoot = null;
             OnHit = null;

@@ -402,10 +402,18 @@ namespace FPSGame.Managers
             bool hasBoss = false;
             int skipCount = 0;
 
+            // ⚠ 总权重**现算**（别写死 100）：表里权重和 < 100 时会有一截落空、退化成第一项；
+            //   > 100 时尾巴上的 tier 永远抽不到（现象 = "权重形同虚设"）。tier 总数外提，单位总数每轮按当前 tier 现算。
+            int tierTotalWeight = 0;
+            for (int i = 0; i < TierWeight.Count; ++i) tierTotalWeight += TierWeight[i].Key;
+
             while (remain > 0)
             {
-                UnitTier tier = TierWeight.WeightTake(100, waveRandom);
-                var item = TierItemWeight[tier].WeightTake(100, waveRandom);
+                UnitTier tier = TierWeight.WeightTake(tierTotalWeight, waveRandom);
+                var unitList = TierItemWeight[tier];
+                int unitTotalWeight = 0;
+                for (int i = 0; i < unitList.Count; ++i) unitTotalWeight += unitList[i].Key;
+                var item = unitList.WeightTake(unitTotalWeight, waveRandom);
 
                 // 首领只能出现一个：已出现首领后，再随机到首领单位则跳过本次，接着重新随机
                 if (IsBossUnit(item.unit))
@@ -479,7 +487,17 @@ namespace FPSGame.Managers
             var weightList = ResolveTierWeightList(tier);
             if (weightList == null) return null;   // 一条可用单位都没有（日志已在里面打过）
 
-            var item = weightList.WeightTake(100, rand);
+            // ⚠ 总权重**现算**，别写死 100：表里权重和 < 100 时会有一大截落空、全部退化成 `list[0]`
+            //   （现象就是"权重没生效、永远出第一个"）；> 100 时尾巴上的单位永远抽不到。
+            int totalWeight = 0;
+            for (int i = 0; i < weightList.Count; ++i) totalWeight += weightList[i].Key;
+            if (totalWeight <= 0)
+            {
+                Debug.LogError($"CreatUnit: tier '{tier}' 的单位权重全是 0，无法按权重抽取 ⇒ 本次不创建单位");
+                return null;
+            }
+
+            var item = weightList.WeightTake(totalWeight, rand);
 
             //先取到地点
             if (NavMesh.SamplePosition(pos, out var hit, 50, NavMesh.AllAreas))
@@ -504,18 +522,28 @@ namespace FPSGame.Managers
         }
 
         /// <summary>落点 / 取样用的随机源：有权威种子走**派生流**，单机退回全局战斗流。
-        /// ⚠ 绝不能用全局战斗流做"两端必须一致"的抽取（它会被音效 / 弹孔 / 武器散布推进游标）。</summary>
-        Random NewSpawnRandom()
+        /// ⚠ 绝不能用全局战斗流做"两端必须一致"的抽取（它会被音效 / 弹孔 / 武器散布推进游标）。
+        /// <para>▍<paramref name="salt"/> **必须逐次不同**：只按 (种子, 波序) 播种时，同一波里每次 new 出来的流
+        /// 抽到的是**同一串值** ⇒ 同 tier 永远同一把 prefab、抖动/朝向也一模一样（现象 = "权重没生效，只出第一个"）。</para></summary>
+        Random NewSpawnRandom(int salt)
         {
             int seed = FPSGame.Data.TaskState.Seed;
             return seed != 0
-                ? new Random(SeedUtil.Derive(seed, (int)SeedStream.UnitPlacement * 1000 + waveSeq))
+                ? new Random(SeedUtil.Derive(SeedUtil.Derive(seed, (int)SeedStream.UnitPlacement * 1000 + waveSeq), salt))
                 : random;
         }
 
+        /// <summary>落点量化当 salt：同点两端同流（巡逻队这类"两端各造一次"的），不同点互不干扰。</summary>
+        static int PosSalt(Vector3 pos) => Mathf.RoundToInt(pos.x * 10f) * 31 + Mathf.RoundToInt(pos.z * 10f);
+
         public GameObject CreatUnit(UnitTier tier, Vector3 pos, float range, bool IsFixed = true)
+            => CreatUnit(tier, pos, range, NewSpawnRandom(PosSalt(pos)), IsFixed);
+
+        /// <summary>同一批（巡逻队）共用**一条流**：逐只抽到的结果不同，且两端按同序消费 ⇒ 构成一致。
+        /// ⚠ 别给每只各开一条新流：同点 + 同种子 ⇒ 整队同一把 prefab、并叠在同一个点上。</summary>
+        GameObject CreatUnit(UnitTier tier, Vector3 pos, float range, Random spawnRandom, bool IsFixed)
         {
-            var prefab = TakeTierUnit(tier, ref pos, range, NewSpawnRandom(), out var rot);
+            var prefab = TakeTierUnit(tier, ref pos, range, spawnRandom, out var rot);
             if (prefab == null) return null;
 
             // ★ 跨端稳定的单位标识由 `Actor.Awake` 统一分配（见 `Actor.NetId` 的注释）——
@@ -536,7 +564,9 @@ namespace FPSGame.Managers
         /// 成员按 <c>PrefabId</c> 回同一张 tier 表取回同一把 prefab（见 <see cref="FindTierPrefab"/>）。</para></summary>
         public GameObject CreatSpawnerUnit(UnitTier tier, Vector3 pos, float range, INetSpawner source)
         {
-            var prefab = TakeTierUnit(tier, ref pos, range, NewSpawnRandom(), out var rot);
+            // 刷怪器是**房主唯一生成**（成员只收 4063）⇒ 直接吃战斗流就行，不必两端同流；
+            // 用派生流反而会踩"同种子同首个值"的坑（见 NewSpawnRandom 注释）。
+            var prefab = TakeTierUnit(tier, ref pos, range, random, out var rot);
             if (prefab == null) return null;
 
             var go = CreatUnit(prefab, pos, rot, source, (int)tier, default);
@@ -652,7 +682,8 @@ namespace FPSGame.Managers
 
             var re = new List<GameObject>();
             var temp = Patrol.WeightTake(100, patrolRandom);
-            temp.ForEach(item => re.Add(CreatUnit(item, pos, 5, false)));
+            // ⚠ 整队共用同一条流（继续往下抽）：每只各开一条新流的话，同点同种子 ⇒ 全队同一把 prefab + 叠在一点
+            foreach (var item in temp) re.Add(CreatUnit(item, pos, 5, patrolRandom, false));
             return re;
         }
 

@@ -97,12 +97,15 @@ namespace FPSGame.Gameplay
             m_StickPivot = null;
         }
 
-        /// <summary>回池(SetActive false)或真销毁都会走到 ⇒ 这就是"这颗手雷没了"的唯一时机。</summary>
-        private void OnDisable()
+        /// <summary>回池(SetActive false)或真销毁都会走到 ⇒ 这就是"这颗手雷没了"的唯一时机。
+        /// <para>⚠ 必须 <c>override</c> + 调 <c>base</c>：写成私有 <c>OnDisable</c> 会把基类那条遮掉，
+        /// <c>OnShoot/OnHit</c> 永不清空 ⇒ 每投一颗就叠一份订阅，一次爆炸播 N 份特效。</para></summary>
+        protected override void OnDisable()
         {
             // ⚠ 表现弹的循环标记在 OnDisable 时仍是上一颗的值：Shoot 里复位、MarkVisualBullet 之后再没动过 ⇒ 可靠
             OnDestroyedView?.Invoke();
             if (!IsVisualBullet) OnDestroyedLogic?.Invoke();
+            base.OnDisable();
         }
 
         protected override void Move()

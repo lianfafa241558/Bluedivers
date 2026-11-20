@@ -83,7 +83,7 @@ namespace FPSGame.AI
             int count = list.Count;
             float angle = 360f / count * (index + 1);
             Vector3 dir = Quaternion.AngleAxis(45f + angle, Vector3.up) * Owner.Forward;
-            _formationOffset = dir.normalized * (floowRaudius - 2);
+            _formationOffset = dir.normalized * (floowRaudius - 2)+0.3f*Vector3.up;
             _formationOffsetAngle = Mathf.DeltaAngle(0, 45f + angle);
             return newEquip.ID == ID;//ID相同时卸载
         }

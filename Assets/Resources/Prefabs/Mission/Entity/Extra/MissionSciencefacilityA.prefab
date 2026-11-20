@@ -119,7 +119,7 @@ Transform:
   m_GameObject: {fileID: 2886444750093991375}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10.14, y: -3.4899993, z: -0.66}
+  m_LocalPosition: {x: 0.27, y: -3.4899993, z: -0.66}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -140,7 +140,7 @@ MonoBehaviour:
   range: 10
   probability: 30
   tier: 3
---- !u!1 &3476911328129978700
+--- !u!1 &3344701685473179752
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -148,7 +148,55 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3624858249400704929}
+  - component: {fileID: 8601400729174168316}
+  - component: {fileID: 7027705421061868728}
+  m_Layer: 0
+  m_Name: CreatElite (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 2800000, guid: 0cb9898e36f898345809fab940283789, type: 3}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8601400729174168316
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3344701685473179752}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.27, y: -3.4899993, z: 2.67}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6951077649718186923}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7027705421061868728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3344701685473179752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cb9d998400cce944bfa76344cb8e758, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  range: 10
+  probability: 30
+  tier: 3
+--- !u!1 &5614274932987547495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4060041189969258510}
+  - component: {fileID: 518831409839490205}
   m_Layer: 0
   m_Name: CreatElite (1)
   m_TagString: Untagged
@@ -156,21 +204,36 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3624858249400704929
+--- !u!4 &4060041189969258510
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3476911328129978700}
+  m_GameObject: {fileID: 5614274932987547495}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.32, y: -3.4899993, z: -0.66}
+  m_LocalPosition: {x: 5, y: -3.4899993, z: -0.66}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6951077649718186923}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &518831409839490205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5614274932987547495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cb9d998400cce944bfa76344cb8e758, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  range: 10
+  probability: 30
+  tier: 5
 --- !u!1 &6951077649718186921
 GameObject:
   m_ObjectHideFlags: 0
@@ -208,7 +271,8 @@ Transform:
   - {fileID: 197577467500760498}
   - {fileID: 199183467855279614}
   - {fileID: 6126563466970701878}
-  - {fileID: 3624858249400704929}
+  - {fileID: 8601400729174168316}
+  - {fileID: 4060041189969258510}
   - {fileID: 8598455243000021525}
   - {fileID: 4224862429962512988}
   - {fileID: 5399799026505723167}
