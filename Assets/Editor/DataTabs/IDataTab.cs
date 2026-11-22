@@ -19,6 +19,7 @@ public enum TabType
     Weapon,
     Role,
     Booster,
+    AdditionalFactor,
 }
 
 /// <summary>数据编辑器各 Tab 页的统一契约</summary>

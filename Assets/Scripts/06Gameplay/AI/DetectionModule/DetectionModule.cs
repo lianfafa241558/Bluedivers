@@ -207,11 +207,19 @@ namespace FPSGame.AI
         {
             bool haveOldTarget = Target.Actor.IsValidMono();
 
+            // 目标被 Hide（进载具/机枪位/被收纳）或 GameObject 被关掉（回池、被停用）⇒ 立刻判丢失并抛回调：
+            // 若放给下面的 KnownTargetTimeout，那 4 秒里开火判定与仇恨仍挂在一个碰不到的目标上（打空气）。
+            if (haveOldTarget && !IsValidTarget(Target.Actor))
+            {
+                SetTargetActor(null);
+                OnLostTarget();     // SetTargetActor 只改数据不抛回调，这里补上（与 Turret.ApplyRemoteTarget 同口径）
+                haveOldTarget = false;
+            }
 
             show = (Time.time - TimeLastSeenTarget);
             IsSeeingTarget = false;
 
-            if (!FpsHelper.VaildTarget(Target.Actor) || !CheckOldTarget())
+            if (!IsValidTarget(Target.Actor) || !CheckOldTarget())
             {
                 CheckNewTarget();
             }
@@ -221,7 +229,7 @@ namespace FPSGame.AI
                 SetTargetActor(null);
             }
 
-            var haveNewTarget = FpsHelper.VaildTarget(Target.Actor);
+            var haveNewTarget = IsValidTarget(Target.Actor);
 
             //目标是否在范围内
             IsTargetInAttackRange = haveNewTarget && Vector3.Distance(CorePoint.position, Target.Pos) <= AttackRange + Target.Actor.HalfRange;
@@ -406,9 +414,22 @@ namespace FPSGame.AI
 
 
 
+        /// <summary>可锁定目标：在 <see cref="FpsHelper.VaildTarget"/> 之上再排除 <c>ActorState.Hide</c>
+        /// （进了载具 / 机枪位 / 被收纳）与 GameObject 失活（回池、被停用）两种。
+        /// <para>▍为什么不能只靠现成的两道关：①<see cref="FpsHelper.VaildTarget"/> 只挡 Dead 与 Invincible；
+        /// ②<see cref="TargetCfg"/> 的 <c>actorState</c> 走位运算 <c>(state &amp; Normal) == Normal</c>，
+        /// 而 <c>Hide = 3</c> 的 bit0 正好是 <c>Normal</c> ⇒ 隐身目标照样混进查询结果。</para>
+        /// <para>⚠ 只在本模块内生效，别顺手改 <see cref="FpsHelper.VaildTarget"/>：它还被范围伤害 / 地雷 / 治疗复用，
+        /// 改全局会把"正在开载具(Hide)的玩家"一起排除在爆炸与治疗之外。</para></summary>
+        protected static bool IsValidTarget(IActor actor)
+            => actor.IsValidMono()                       // 先判存活引用：下面取 gameObject 才不会对已销毁对象抛异常
+               && FpsHelper.VaildTarget(actor)
+               && actor.ActorState != ActorState.Hide
+               && actor.gameObject.activeInHierarchy;
+
         /// <summary>索敌过滤（缓存成委托复用，别在调用点写 lambda：每拍新建闭包）。</summary>
         private bool FilterNewTarget(IActor item)
-            => item.Team != m_Actor.Team && FpsHelper.VaildTarget(item);
+            => item.Team != m_Actor.Team && IsValidTarget(item);
 
         /// <summary>丢失目标</summary>
         protected virtual void OnLostTarget()
@@ -554,7 +575,7 @@ namespace FPSGame.AI
             //}
             // 无敌单位（护卫犬等）不能被锁定：CheckNewTarget 的 FilterNewTarget 已经这么判，受击这条路原来只判
             // IsValidMono ⇒ 敌人被狗打一下就转火到狗身上，然后既不追也不开火（2026-11-08 实测"傻站"）
-            if (!FpsHelper.VaildTarget(newActor) || CorePoint == null) return;
+            if (!IsValidTarget(newActor) || CorePoint == null) return;
 
             var oldThreat = Target!=null? FpsHelper.ThreatValue(CorePoint.position, Target.Actor):0;
             var newThreat = FpsHelper.ThreatValue(CorePoint.position, newActor);

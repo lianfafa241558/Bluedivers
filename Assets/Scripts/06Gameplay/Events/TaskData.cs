@@ -128,6 +128,11 @@ namespace FPSGame.Gameplay
         public TerrainType terrainType;
         public EnemyVarietyType enemyVarietyType;
 
+        /// <summary>本任务点被派到的附加因素（<c>TaskManager.CreatAllTask</c> 从
+        /// <c>MapData_SO.additionalFactors</c> 随机摊来；同一枚举不会重复。空数组 = 没有）。
+        /// <para>▍随 <c>TaskCfgDto</c> 一起下发：成员不开选图面板也需要同一份派发结果。</para></summary>
+        public AdditionalFactorType[] additionalFactors;
+
         public string TaskType => (Main as MissionMainData_SO).name;
         public string TaskDesc => Main.desc;
         public Color Color => (Main as MissionMainData_SO).color;

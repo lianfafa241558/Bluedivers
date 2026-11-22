@@ -50,7 +50,7 @@ namespace FPSGame.AI
             if (/*Vector3.Distance(target.transform.position, point) < DetectionRange
                 && */target.transform.TryGetComponentInParent(out Actor actor)
                 && actor != m_Actor//不锁自己
-                && FpsHelper.VaildTarget(actor)
+                && IsValidTarget(actor)   // Hide / 失活的目标同样不锁（见 DetectionModule.IsValidTarget）
             )
             {
 

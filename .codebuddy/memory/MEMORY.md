@@ -46,6 +46,7 @@
 | 武器升级 / 模组 / WUD_ 通用池复用（禁复制） | `skills/weapon-upgrade/SKILL.md` §4.1 |
 | 玩家 / 相机 / 武器子弹 / 战备 / 寻路 | `topics/gameplay-player.md` |
 | 家具交互 / 任务 / 逻辑帧 / 存档 / 地形 | `gameplay-world.md` · `terrain-render.md` |
+| 附加因素（AdditionalFactor）/ 任务点派发 / 选图附加图标 | `2026-11-21.md` · `2026-11-23.md` |
 | 拦截火车 / 轨道 / 路基 / 炮塔 / 卫队 | `mission-intercept-*.md` |
 | 联机总览 / 传输 / KCPNet / 心跳 / NetSyncLog | `topics/net.md` |
 | 房间 / 开房 / 阶段 / 名单 / 会话 / 房主掉线 | `topics/net-flow.md` |

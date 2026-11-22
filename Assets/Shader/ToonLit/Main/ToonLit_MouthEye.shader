@@ -22,6 +22,12 @@ Shader "ToonLit/ToonLit_MouthEye"
         _Column("每行数量", Int) = 8
 
          _CelShadeMidPoint("阴影切面的系数", Range(-1,1)) = -0.5
+
+        // ⚠ 下面两个不是"可选美化项"，缺了就是黑的：
+        // Properties 里没声明的属性，HasProperty=false，材质里存的值不会被上传，cbuffer 拿到 0。
+        // _ShadowMapColor=0 ⇒ ShadeSingleLight 里 lerp(0,1,litOrShadowArea) ⇒ 暗面完全不受光，只剩环境光。
+        _ShadowMapColor("阴影颜色", Color) = (0.85,0.85,0.85)
+        _IndirectLightMinColor("环境光下限", Color) = (0.1,0.1,0.1)
     }
     SubShader
     {       

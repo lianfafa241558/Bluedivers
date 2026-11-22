@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Attributes;
 using UnityEngine;
@@ -73,6 +74,11 @@ namespace FPSGame.UI
             areaInfoMainTarget, areaInfoExtraTarget, areaInfoMainReward, areaInfoExtraReward,
             areaInfoDiffLeft,areaInfoDiffRight, areaInfoDiff, areaInfoDiffReward,
             areaInfoReady;
+        /// <summary>附加因素详情条预制体（挂到 <see cref="areaInfoFactorRoot"/> 下）。
+        /// <para>▍结构约定：子 0 = 图标 Image、子 1 = 名称文本、子 2 = 描述文本 —— 三条各自染色/赋字。</para></summary>
+        [InspectorName("附加因素详情预制体")]
+        [SerializeField]
+        private Transform factorItem;
 
 
         private int SelectMapIndex = 0, SelectMapTaskCount;
@@ -81,6 +87,9 @@ namespace FPSGame.UI
         private OOPartEnum[] product;
         /// <summary>左侧说明卡片当前是否开着（进图后逐个地区悬停会反复重建它，靠它决定要不要播入场动画）。</summary>
         private bool _descShown;
+
+        /// <summary>「附加因素详情」条目池（按需实例化后复用；条目数 0~3 浮动，见 <see cref="RefreshFactorRoot"/>）。</summary>
+        private readonly List<Transform> _factorItems = new();
         private int SelectPlayMode = 2;
         private ArchivesData_SO arch => ArchivesData_SO.Current;
         public void Init()
@@ -104,7 +113,6 @@ namespace FPSGame.UI
                 int a = i;
 
                 // 图标行 / 空标记 / 按钮可交互性统一交给 RefreshMapRoot 按当前任务表算
-                //（原来只在首开时算一次，还顺手改写了 TaskCfgs 的 enable ⇒ 换表后内外对不上）
                 SetCilck(mapRoot.GetChild(a, 1), () => {
                     wndManager.PlaySound(new("UI/UI_Bubble"));
                     SelectMap(mapRoot.GetChild(a).RectTransform(), a);
@@ -649,9 +657,23 @@ namespace FPSGame.UI
                 SetText(areaRoot.GetChild(1, i, 2), info[i].name);
                 SetButtonInteractable(marker, cfg.enable);
                 SetActive(areaRoot.GetChild(1, i, 3), cfg.enable);
-                SetSprite(areaRoot.GetChild(1, i, 3, 0), cfg.Sprite);
-                SetColor(areaRoot.GetChild(1, i, 3), cfg.Color);
-                SetColor(areaRoot.GetChild(1, i, 3, 0), cfg.Color);
+                SetSprite(areaRoot.GetChild(1, i, 3, 0,0), cfg.Sprite);
+                SetColor(areaRoot.GetChild(1, i, 3,0), cfg.Color);
+                SetColor(areaRoot.GetChild(1, i, 3, 0,0), cfg.Color);
+
+                // 附加因素图标：Layout 槽 0 被任务图标占着，1 起是附加因素（轮转发牌，每点 0~3 个）
+                var factorSlots = areaRoot.GetChild(1, i, 3);
+                for (int f = 1; f < factorSlots.childCount; ++f) SetActive(factorSlots.GetChild(f), false);
+                var factors = cfg.additionalFactors;
+                for (int f = 0; f < factors.Length && f + 1 < factorSlots.childCount; ++f)
+                {
+                    var factor = taskManager.FindFactor(factors[f]);
+                    if (factor == null) continue;   // 目录里没有这份资产 ⇒ 该位不点亮，别留个空图
+                    SetActive(factorSlots.GetChild(f + 1), true);
+                    SetSprite(factorSlots.GetChild(f + 1), factor.Sprite);
+                    SetColor(factorSlots.GetChild(f + 1), factor.Color);
+                }
+
                 SetActive(areaRoot.GetChild(1, i, 4), !cfg.enable);
                 SetActive(marker, visible);
             }
@@ -783,6 +805,7 @@ namespace FPSGame.UI
             SetText(areaInfoName, info.name);
             SetText(areaInfoMainTarget, info.TaskDesc);
             SetText(areaInfoExtraTarget,"可选任务* " + info.extra.Length);
+            RefreshFactorRoot(info);
     #if UNITY_EDITOR
             RefreshExtraTaskIcons(info);
     #endif
@@ -801,6 +824,40 @@ namespace FPSGame.UI
             float normScale =Mathf.Clamp01(areaInfoRoot.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).normalizedTime);
 
             areaInfoRoot.GetComponent<Animator>().Play("Entry", 0, immediately ? 1 : 1- normScale);
+        }
+
+        /// <summary>
+        /// 把本任务点派到的附加因素铺到 <see cref="areaInfoFactorRoot"/>（图标 + 名称 + 描述，图标与名称按 SO 的颜色染色）。
+        /// <para>▍为什么按需实例化再复用：一个点 0~3 个因素（不同枚举可叠同一点）⇒ 造一次后反复用，
+        /// 别每次悬停都 Instantiate/Destroy（<see cref="RefreshExtraTaskIcons"/> 同一套做法）。</para>
+        /// <para>▍条目结构约定（见 <see cref="factorItem"/>）：子 0 = 图标、子 1 = 名称、子 2 = 描述。</para>
+        /// </summary>
+        private void RefreshFactorRoot(in TaskCfg info)
+        {
+            var factors = info.additionalFactors;
+            int shown = 0;
+
+            if (factors != null)
+            {
+                for (int i = 0; i < factors.Length; ++i)
+                {
+                    var cfg = taskManager.FindFactor(factors[i]);
+                    if (cfg == null) continue;   // 目录里没这份资产 ⇒ 这条不显示
+
+                    if (shown >= _factorItems.Count) _factorItems.Add(Instantiate(factorItem, areaInfoFactorRoot, false));
+                    var item = _factorItems[shown++];
+
+                    SetActive(item, true);
+                    SetSprite(item.GetChild(0), cfg.Sprite);
+                    SetColor(item.GetChild(0), cfg.Color);
+                    SetText(item.GetChild(1), cfg.ShowName);
+                    SetColor(item.GetChild(1), cfg.Color);
+                    SetText(item.GetChild(2), cfg.Desc);
+                }
+            }
+
+            // 条目数随任务点变（0~3）：多出来的关掉，别留上一条任务的残影
+            for (int i = shown; i < _factorItems.Count; ++i) SetActive(_factorItems[i], false);
         }
 
     #if UNITY_EDITOR

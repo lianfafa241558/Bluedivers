@@ -4925,7 +4925,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2096102184159026477}
-  - {fileID: 1217066582141775494}
   - {fileID: 2452145112481865723}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5028,7 +5027,7 @@ MonoBehaviour:
   ShowName: "\u51EF\u6492\u7A81\u51FB\u5175"
   Id: robot00
   Portrait: {fileID: 21300000, guid: f7ec68ced5915e24c8b5f96b4d734217, type: 3}
-  ExtraPortrait: {fileID: 21300000, guid: 42cf8bb75fd4d004c98a9bbdcc8afcd7, type: 3}
+  ExtraPortrait: {fileID: 21300000, guid: f7ec68ced5915e24c8b5f96b4d734217, type: 3}
   Color: {r: 1, g: 1, b: 1, a: 1}
   actorState: 1
   IsFixed: 0
@@ -5036,7 +5035,7 @@ MonoBehaviour:
   type: 4
   team: 2
   threat: 1
-  aimPoint: {fileID: 1217066582141775494}
+  aimPoint: {fileID: 4074670117071268354}
   UseHpBar: 1
   HpHeight: 1
   shape: 0
@@ -5079,7 +5078,7 @@ MonoBehaviour:
   MaxHealth: 50
   MaxShield: 0
   showArmorLists: []
-  MainPart: {fileID: 4091762366389825200}
+  MainPart: {fileID: 4836506824394967111}
   demolishValue: -1
   AutoDestroy: 0
   showHealth: 0
@@ -5170,93 +5169,6 @@ MonoBehaviour:
   m_LastDetectedTarget: 0
   cilp: {fileID: 8300000, guid: 7ed7f696400707c48bf9d42a3a6e2498, type: 3}
   ps: {fileID: 8596584320823240780, guid: bacb9b0fe3f498644985c69bc7ab3a22, type: 3}
---- !u!1 &2884199750606311352
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1217066582141775494}
-  - component: {fileID: 3276159202006404726}
-  - component: {fileID: 4091762366389825200}
-  - component: {fileID: 7390800446470593731}
-  m_Layer: 6
-  m_Name: HitBox
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1217066582141775494
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2884199750606311352}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.097, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4068616440128362144}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &3276159202006404726
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2884199750606311352}
-  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &4091762366389825200
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2884199750606311352}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isWeakness: 0
-  explosionResistance: 0
-  armorLevel: 0
-  useHealthInsteadOfArmor: 0
-  armorValue: 0
-  LineArmor: []
-  armorBreakEffect: []
-  BleedValue: 0
-  isMain: 0
-  showArmor: 0
---- !u!136 &7390800446470593731
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2884199750606311352}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.25
-  m_Height: 0.7
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7124412155444879465
 GameObject:
   m_ObjectHideFlags: 0
@@ -5335,7 +5247,7 @@ MonoBehaviour:
   EyePoint: {fileID: 8146674506770638706}
   DetectionRange: 50
   HearingRange: 25
-  AttackRange: 50
+  AttackRange: 40
   AlertRange: 30
   Lazy: 0
   RespondWarning: 1
@@ -5598,6 +5510,11 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5324531855699944674, guid: 59160b63536b07849847035650ab4a3a,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 489100040025fbf4dbf69b770b06b4fd, type: 2}
     - target: {fileID: -5304007380566502795, guid: 59160b63536b07849847035650ab4a3a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -6387,6 +6304,14 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 5351071804025878919}
+    - targetCorrespondingSourceObject: {fileID: 2775784415737879155, guid: 59160b63536b07849847035650ab4a3a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4836506824394967111}
+    - targetCorrespondingSourceObject: {fileID: 2775784415737879155, guid: 59160b63536b07849847035650ab4a3a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2573686576107197180}
     - targetCorrespondingSourceObject: {fileID: -2904295805275494801, guid: 59160b63536b07849847035650ab4a3a,
         type: 3}
       insertIndex: -1
@@ -6627,6 +6552,63 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.4, y: 0.2, z: 0.2}
   m_Center: {x: -0.2, y: -0, z: 0}
+--- !u!4 &4074670117071268354 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2454534690127466692, guid: 59160b63536b07849847035650ab4a3a,
+    type: 3}
+  m_PrefabInstance: {fileID: 1917513823758416582}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4330758125592928437 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2775784415737879155, guid: 59160b63536b07849847035650ab4a3a,
+    type: 3}
+  m_PrefabInstance: {fileID: 1917513823758416582}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4836506824394967111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4330758125592928437}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isWeakness: 0
+  explosionResistance: 0
+  armorLevel: 0
+  useHealthInsteadOfArmor: 0
+  armorValue: 0
+  LineArmor: []
+  armorBreakEffect: []
+  BleedValue: 0
+  isMain: 0
+  showArmor: 0
+--- !u!136 &2573686576107197180
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4330758125592928437}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.25
+  m_Height: 0.7
+  m_Direction: 0
+  m_Center: {x: -0.15, y: 0, z: 0}
 --- !u!1 &4641245132605949292 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6554254175486115754, guid: 59160b63536b07849847035650ab4a3a,
@@ -7004,6 +6986,11 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 6386635922366813501, guid: b19b26ab789c57e43bc31b722d6e51f6,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 489100040025fbf4dbf69b770b06b4fd, type: 2}
     - target: {fileID: 8478077576814488247, guid: b19b26ab789c57e43bc31b722d6e51f6,
         type: 3}
       propertyPath: m_Name

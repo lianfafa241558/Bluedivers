@@ -40,6 +40,12 @@ namespace FPSGame.Data
         [InspectorName("次要资源")]
         public OOPartEnum[] otherProduct;
 
+        [InspectorName("附加因素")]
+        [Tooltip("本图可出现的额外敌方阵营。刷新任务表时按**条目顺序轮转**摊到本图已启用的任务点上" +
+                 "（a→b→c→d→a…，每点数量最多差 1；每点最多 3 个，同一点不会重复同一枚举）。\n" +
+                 "可以重复填同一个枚举 —— 会落到不同任务点。名称/图标/波次见 AdditionalFactorData_SO。")]
+        public List<AdditionalFactorType> additionalFactors;
+
         [InspectorName("兴趣点")]
         public SKVP<GameObject, int>[] interestPoints;
         [InspectorName("场景点")]

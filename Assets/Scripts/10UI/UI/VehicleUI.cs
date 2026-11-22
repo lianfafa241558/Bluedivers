@@ -1,4 +1,5 @@
-﻿using FPSGame.UI;
+﻿using System.Globalization;
+using FPSGame.UI;
 using TMPro;
 
 using UnityEngine;
@@ -138,8 +139,26 @@ public class VehicleUI : MonoBehaviour
     }
     void TextChange(bool isMain, string text)
     {
-        (isMain ? weaponMainText : weaponSecText).SetText(text);
+        (isMain ? weaponMainText : weaponSecText).SetText(NoDecimal(text));
     }
+
+    /// <summary>把 "12.5/100" 这类文本里的数字取整（→ "13/100"），只认 "数字/数字" 一种格式。
+    /// <para>▍为什么在 UI 出口做：弹药/护盾/格数都是离散值，但推送方有四家
+    /// （<c>VehicleWeaponsManager</c> / <c>WeaponBag</c> / <c>AmmoBagBase</c> / <c>ShieldBag</c>），
+    /// 各自拼 <c>PEInt</c> / <c>float</c> 就会漏出 "300.0000"、"88.28"，逐个改迟早漏。</para>
+    /// <para>⚠ 不含小数点时原样返回、不产生新串（这条路径每发子弹都会走）。</para></summary>
+    private static string NoDecimal(string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.IndexOf('.') < 0) return text;
+        int slash = text.IndexOf('/');
+        if (slash < 0) return RoundPart(text);
+        return RoundPart(text.Substring(0, slash)) + "/" + RoundPart(text.Substring(slash + 1));
+    }
+
+    private static string RoundPart(string part)
+        => float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float value)
+            ? value.ToString("0", CultureInfo.InvariantCulture)
+            : part;
     void IconChange(bool isMain, Sprite icon)
     {
         (isMain ? weaponMainIcon : weaponSecIcon).sprite = icon;

@@ -93,6 +93,9 @@ namespace FPSGame.Managers
         public Dictionary<EnemyVarietyType, CampData_SO> Camps;
         public Dictionary<string, MapData_SO> MapData;
 
+        /// <summary>附加因素目录（键 = 枚举，与 <see cref="Camps"/> 同一套"枚举 → SO"口径）。</summary>
+        public Dictionary<AdditionalFactorType, AdditionalFactorData_SO> Factors;
+
         [SerializeField]
         private string[] codeA, codeB;
         private List<string> residualCodeA, residualCodeB;
@@ -198,6 +201,7 @@ namespace FPSGame.Managers
             Missions = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<MissionData_SO>("GameData/Mission"),item => item.type);
             MissionData_SO.Catalog = Missions;//数据自持：玩法层的 TaskCfg 从这里读（见 MissionData_SO.Catalog）
             Camps = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<CampData_SO>("GameData/Camp"),item => item.enemyVarietyType);
+            Factors = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<AdditionalFactorData_SO>("GameData/AdditionalFactor"), item => item.type);
             MapData = Enumerable.ToDictionary(ResSvc.Instance.LoadObjects<MapData_SO>("GameData/Map"), item => item.name.Substring(3));
             TaskCfgs = new TaskCfg[AreaCount,TaskCount];
 
@@ -302,8 +306,12 @@ namespace FPSGame.Managers
                         },
                         terrainType = values[i].mapItemInfos[u].terrainType,
                         enemyVarietyType = values[i].mapItemInfos[u].enemyVarietyType,
+                        // 先占空数组：AssignFactors 直接在它上面追加，省掉 UI 侧的判空
+                        additionalFactors = new AdditionalFactorType[0],
                     };
                 }
+
+                AssignFactors(values[i], i);
             }
             OnTaskTableRefreshed?.Invoke();   // 表换完了：UI 侧要把「外层图标 + 内层标记」一起重画
 
@@ -316,6 +324,96 @@ namespace FPSGame.Managers
                 }
                 return re;
             }
+        }
+
+        /// <summary>一个任务点最多挂几个附加因素 —— 必须与选图标记的图标槽位数对齐
+        /// （<c>MapTaskButton.prefab</c> 的 <c>Layout</c>：槽 0 是任务图标，槽 1~3 才是附加因素）。</summary>
+        private const int MaxFactorsPerPoint = 3;
+
+        /// <summary>
+        /// 把一张图的附加因素**轮转发牌**到本图已启用的任务点上（<c>TaskCfg.additionalFactors</c>）。
+        ///
+        /// <para>▍规则（2026-11-23 用户口径）：按 <c>additionalFactors</c> 的条目顺序逐个派，游标 a→b→c→d→a→b…
+        /// ⇒ 每个点的数量最多差 1（12 条 ÷ 4 点 = 每点 3 条）。派的时候跳过"已满
+        /// <see cref="MaxFactorsPerPoint"/> 个"或"已经有同一个枚举"的点 ⇒ 同一点不会出现重复阵营，
+        /// 也不会出现"某点堆满、另一个点空着"。</para>
+        ///
+        /// <para>▍不再全局去重：以前按枚举去重（同枚举只派一次），配 12 条重复枚举等于白配；现在按**条目**派，
+        /// 重复的枚举会落到不同任务点。</para>
+        ///
+        /// <para>▍为什么用 <c>TaskRandom</c>：整张任务表靠「窗口 id」在各端复现，附加因素的派发
+        /// 必须跟同一个随机序列走，否则两端同一任务点的阵营不一致。⚠ 因此**只能在
+        /// <see cref="CreatAllTask"/> 里、任务点字段全部写完之后调用**（改随机消费次数会换掉整张表）。</para>
+        /// </summary>
+        private void AssignFactors(MapData_SO map, int row)
+        {
+            var factors = map.additionalFactors;
+            if (factors == null || factors.Count == 0) return;
+
+            int capacity = Mathf.Min(TaskCount, map.mapItemInfos.Length);
+            var points = new List<int>();
+            for (int u = 0; u < capacity; ++u)
+            {
+                if (TaskCfgs[row, u].enable) points.Add(u);   // 禁用的点玩家选不了，派上去等于白丢
+            }
+            if (points.Count == 0) return;
+
+            bool HasRoom()
+            {
+                for (int i = 0; i < points.Count; ++i)
+                {
+                    if (TaskCfgs[row, points[i]].additionalFactors.Length < MaxFactorsPerPoint) return true;
+                }
+                return false;
+            }
+
+            // 发牌起点随机（只掷一次，两端同流复现）：换窗口时"哪个点吃第一条"会变，别总从 0 号点开始
+            int cursor = TaskRandom.Range(0, points.Count);
+
+            for (int i = 0; i < factors.Count; ++i)
+            {
+                var type = factors[i];
+
+                // 从游标往后找第一个"还能放"的点：没到上限、且这个点还没有同一个枚举
+                int slot = -1;
+                for (int step = 0; step < points.Count; ++step)
+                {
+                    int idx = (cursor + step) % points.Count;
+                    var list = TaskCfgs[row, points[idx]].additionalFactors;
+                    if (list.Length >= MaxFactorsPerPoint) continue;
+                    if (System.Array.IndexOf(list, type) >= 0) continue;
+                    slot = idx;
+                    break;
+                }
+
+                if (slot < 0)
+                {
+                    // 还有空位，只是这个枚举在所有空位点上都已存在 ⇒ 跳过这一条，继续尝试后面的枚举
+                    if (HasRoom()) continue;
+
+                    Debug.LogWarning($"[TaskManager] {map.name} 的附加因素放不下：{factors.Count} 条 × 每点上限 " +
+                                     $"{MaxFactorsPerPoint} 个（可用任务点 {points.Count} 个）⇒ 第 {i} 条起被丢弃");
+                    break;
+                }
+
+                int point = points[slot];
+                var cfg = TaskCfgs[row, point];   // struct ⇒ 取出来拼好再写回，别指望改副本生效
+                int n = cfg.additionalFactors.Length;
+                var merged = new AdditionalFactorType[n + 1];
+                System.Array.Copy(cfg.additionalFactors, merged, n);
+                merged[n] = type;
+                cfg.additionalFactors = merged;
+                TaskCfgs[row, point] = cfg;
+
+                cursor = (slot + 1) % points.Count;   // 下一个因素从下一个点起 ⇒ 轮转，永远先铺数量最少的点
+            }
+        }
+
+        /// <summary>按枚举取附加因素配置（UI / 后续生成逻辑的唯一入口）；目录里没配 ⇒ null。</summary>
+        public AdditionalFactorData_SO FindFactor(AdditionalFactorType type)
+        {
+            AdditionalFactorData_SO cfg;
+            return Factors != null && Factors.TryGetValue(type, out cfg) ? cfg : null;
         }
 
 
@@ -368,6 +466,7 @@ namespace FPSGame.Managers
             EnemyVariety = (int)c.enemyVarietyType,
             Enable = c.enable,
             Name = c.name,
+            AdditionalFactors = c.additionalFactors != null ? c.additionalFactors.Select(e => (int)e).ToArray() : new int[0],
         };
 
         /// <summary>【成员侧】把房主下发的 DTO 还原成 <see cref="TaskCfg"/>
@@ -383,6 +482,9 @@ namespace FPSGame.Managers
             enemyVarietyType = (EnemyVarietyType)dto.EnemyVariety,
             enable = dto.Enable,
             name = dto.Name,
+            additionalFactors = dto.AdditionalFactors != null
+                ? dto.AdditionalFactors.Select(e => (AdditionalFactorType)e).ToArray()
+                : new AdditionalFactorType[0],
         };
 
         private string RandomName()//不会重复出现

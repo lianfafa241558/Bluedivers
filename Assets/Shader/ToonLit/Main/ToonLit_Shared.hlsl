@@ -231,7 +231,7 @@ float3 UnpackNormalRG(float2 packednormal) //从UV中解码出法线
 float3 TransformPositionWSToOutlinePositionWS(float3 positionWS, float positionVS_Z, float3 normalWS)
 {
     //可以替换成自己的方法！这里我们会写一个简单的世界空间方法，因为教程的原因，它不是最好的方法！
-    float width = _OutlineWidth * clamp(length(positionWS - _WorldSpaceCameraPos.xyz) / 10, 1, 3);
+    float width = _OutlineWidth * clamp(length(positionWS - _WorldSpaceCameraPos.xyz) / 10, 0.5, 5);
     //float width=_OutlineWidth*clamp(positionVS_Z/2,0.5,30);
     float outlineExpandAmount = width * GetOutlineCameraFovAndDistanceFixMultiplier(positionVS_Z);
     return positionWS + normalWS * outlineExpandAmount;
@@ -615,6 +615,14 @@ half3 ShadeAllLights(ToonSurfaceData surfaceData, ToonLightingData lightingData)
     //所以我们可以在只有单一方向光的情况下尽可能快
     //您可以选择性地传递一个shadowCoord。如果是这样，将计算阴影衰减。
     Light mainLight = GetMainLight();
+
+#ifdef ToonShaderIsOutline
+    // Outline 是"重画一遍"的独立 pass，拿不到管线按物体给的 per-object 光照数据：
+    // 工程是 Forward+（URP Asset m_RenderingMode=2），而 Outline pass 没有声明 _FORWARD_PLUS，
+    // GetMainLight() 会退回非 Forward+ 分支去读 unity_LightData.z，Forward+ 根本不填这个值
+    // ⇒ 主光恒为 0，描边只剩 ~0.1 的环境光，任何 _OutlineColor 乘完都是黑的。平行光没有距离衰减，直接置 1。
+    mainLight.distanceAttenuation = 1.0;
+#endif
 
     float3 shadowTestPosWS = lightingData.positionWS + mainLight.direction * (_ReceiveShadowMappingPosOffset + _IsFace);
 #ifdef _MAIN_LIGHT_SHADOWS

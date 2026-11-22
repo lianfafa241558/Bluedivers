@@ -240,6 +240,7 @@ namespace FPSGame.Net
         [Key(6)] public int EnemyVariety;      // EnemyVarietyType
         [Key(7)] public bool Enable;           // 该任务项是否启用（展示用）
         [Key(8)] public string Name;           // 任务名（展示用，形如"深渊回响"）
+        [Key(9)] public int[] AdditionalFactors; // AdditionalFactorType[]（该任务点被派到的附加因素；成员端不再本地重掷）
     }
 
     /// <summary>

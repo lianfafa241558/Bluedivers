@@ -130,8 +130,6 @@ public class OutlineRendererFeature : ScriptableRendererFeature
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            RenderTargetIdentifier cameraColorTarget = _renderer.cameraColorTargetHandle;
-
             CommandBuffer cmd = CommandBufferPool.Get("Draw Outlines");
 
             // ---- 手动设置主光 uniform，使 Outline pass 中的 GetMainLight() 能正常工作----
@@ -140,8 +138,12 @@ public class OutlineRendererFeature : ScriptableRendererFeature
             // 额外光数量置 0（Outline 不需要额外光，避免读脏数据导致奇怪效果）
             cmd.SetGlobalVector(Shader.PropertyToID("_AdditionalLightsCount"), Vector4.zero);
 
-            // 设置渲染目标
-            cmd.SetRenderTarget(cameraColorTarget);
+            // ⚠ 命令必须在 DrawRenderers 之前执行：DrawRenderers 是立即提交，排在它后面的 cmd
+            //   （全局 uniform 等）当帧不生效，只能靠"全局残留到下一帧"侥幸。
+            // ⚠ 千万别在这里 cmd.SetRenderTarget(colorTarget)：只绑 color 会把当前绑好的深度摘掉，
+            //   描边壳失去遮挡关系 ⇒ 描边"穿透"所有物体。AfterRenderingOpaques 时相机颜色+深度已绑好，直接继承。
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
 
             // 排序设置
             SortingSettings sortingSettings = new SortingSettings(renderingData.cameraData.camera)
@@ -164,6 +166,10 @@ public class OutlineRendererFeature : ScriptableRendererFeature
                 drawingSettings = new DrawingSettings(OutlineShaderTagId, sortingSettings);
             }
 
+            // 与 URP 标准 pass 用同一份 per-object 光照数据（探针 SH / lightmap / unity_LightData 等）。
+            // 不设的话 DrawRenderers 默认 PerObjectData.None，重画出来的描边读到的是"上一个物体残留"的光照数据。
+            drawingSettings.perObjectData = renderingData.perObjectData;
+
             // 过滤设置
             FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.all, _settings.outlineLayerMask);
 
@@ -178,9 +184,6 @@ public class OutlineRendererFeature : ScriptableRendererFeature
             {
                 if (limited) RestoreSuppressed();
             }
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
         }
 
         /// <summary>

@@ -13,6 +13,7 @@ using FPSGame.Utils;
 using FPSGame.AI;
 using Random = System.Random;
 using UnitWeightCfg = FPSGame.Data.CampData_SO.UnitWeightCfg;
+using TierCfg = FPSGame.Data.CampData_SO.TierCfg;
 
 namespace FPSGame.Managers
 {
@@ -68,6 +69,9 @@ namespace FPSGame.Managers
             // ⚠ 必须走带 random 参数的重载：无参重载用的是全局静态流 RandomUtils，
             //   而那条流会被音效/弹孔/武器散布/谜题推进游标 ⇒ 两端"整场敌人构成"会不同。
             var tmp = cfg.templates.RandomTake(random);
+            // ★ 本局任务点被派到的附加因素（喷射旅 / 焚化兵团 …）在这里**叠**进同一张 tier 表：
+            //   下面的 TierItemWeight / TierWeight、刷怪器/巡逻队查表、成员端 4063 复刻取 prefab 全都吃这张表
+            var template = MergeFactorTemplate(tmp.template);
 
 
             // ⚠ tier 的 weight 只表示"进不进随机波次构成"，**不代表这个 tier 没有单位**：
@@ -76,7 +80,7 @@ namespace FPSGame.Managers
             //   所以这里收**所有配了单位的 tier**，weight 只在下面的 TierWeight（随机波次）里生效。
             TierItemWeight = new Dictionary<UnitTier, List<KVP<int, UnitWeightCfg>>>();
 
-            foreach (var kvp in tmp.template)
+            foreach (var kvp in template)
             {
                 if (kvp.unitWeights == null) continue;
                 // 单位权重取 cfg.weight（Inspector 里每只怪的"权重"），原先误用了 tier 的 weight ⇒ 同 tier 内配额全一样
@@ -90,7 +94,7 @@ namespace FPSGame.Managers
             }
 
             // 随机波次只从"tier 权重 > 0 且真的有单位"的 tier 里抽
-            TierWeight = tmp.template
+            TierWeight = template
                 .Where(item => item.weight > 0 && TierItemWeight.ContainsKey(item.tier))
                 .Select(item => new SKVP<int, UnitTier>(item.weight, item.tier))
                 .ToList();
@@ -151,6 +155,64 @@ namespace FPSGame.Managers
             NetKeyScreenBridge.Install();     // 按键终端阶段推进（驱动端上报 / 其余端只应用）
             NetHostSpawnBridge.Install();     // 房主生成族（巡逻队 + 巢穴/召唤师/刷怪器/环绕装甲）：房主唯一生成 + 4063 复刻
             NetVehicleDamageBridge.Install(); // 载具伤害（上行 + 权威门；下行复用 EnemyNetBridge）（2026-10-14）
+        }
+
+        /// <summary>
+        /// 基础阵营模板 + 本局任务点被派到的附加因素（<c>TaskCfg.additionalFactors</c>）合并成一张 tier 表。
+        ///
+        /// <para>▍规则：**同一 tier ⇒ 单位追加**到该 tier 的权重表（基础单位与附加单位一起抽，按各自 weight 分比例）；
+        /// 附加因素独有的 tier ⇒ 整条收进来（连它自己的 weight，weight=0 就只给刷怪器按 tier 点名用）。</para>
+        ///
+        /// <para>▍为什么合进模板而不是另开一张表：<c>TierItemWeight</c> / <c>TierWeight</c>、刷怪器 / 巡逻队查表、
+        /// 成员端按 <c>(tier, prefabId)</c> 复刻，全都从这一张表派生 —— 分开存就会出现"波次里有、复刻时找不到"。</para>
+        ///
+        /// <para>▍⚠ 顺序即随机序列：先基础、后附加，附加内部按 <c>additionalFactors</c> 的数组顺序。那份数组随
+        /// <c>TaskCfgDto</c> 下发，两端一致；**别**改成读本地 <c>MapData_SO.additionalFactors</c> 重掷，
+        /// 否则房主与成员的整场敌人构成会分叉。</para>
+        /// </summary>
+        List<TierCfg> MergeFactorTemplate(List<TierCfg> baseTemplate)
+        {
+            var re = new List<TierCfg>(baseTemplate);
+
+            var factors = TaskManager.Instance.nowTask.taskCfg.additionalFactors;
+            if (factors == null || factors.Length == 0) return re;   // 场景模式 / 本局没派因素
+
+            var used = new HashSet<AdditionalFactorType>();
+            for (int i = 0; i < factors.Length; ++i)
+            {
+                var type = factors[i];
+                if (!used.Add(type)) continue;   // 同一枚举只叠一次
+
+                var factor = TaskManager.Instance.FindFactor(type);
+                if (factor == null || factor.template == null)
+                {
+                    Debug.LogWarning($"[WaveManager] 附加因素 {type} 没有配 SO（Resources/GameData/AdditionalFactor）⇒ 已跳过");
+                    continue;
+                }
+
+                for (int t = 0; t < factor.template.Count; ++t)
+                {
+                    var extra = factor.template[t];
+                    if (extra.unitWeights == null || extra.unitWeights.Count == 0) continue;
+
+                    int idx = re.FindIndex(item => item.tier == extra.tier);
+                    if (idx < 0)
+                    {
+                        re.Add(extra);   // 附加因素独有的 tier
+                        continue;
+                    }
+
+                    var merged = re[idx];
+                    var units = merged.unitWeights != null
+                        ? new List<UnitWeightCfg>(merged.unitWeights)
+                        : new List<UnitWeightCfg>();
+                    units.AddRange(extra.unitWeights);
+                    merged.unitWeights = units;
+                    re[idx] = merged;   // struct ⇒ 必须写回，改副本无效
+                }
+            }
+
+            return re;
         }
 
         private void OnDestroy()

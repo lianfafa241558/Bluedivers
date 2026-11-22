@@ -119,6 +119,23 @@ namespace FPSGame.Core
 
     }
 
+    /// <summary>
+    /// 附加因素类型（本局额外派到某个任务点上的敌方阵营）。
+    /// <para>▍同一张图可配多个（按条目轮转摊到各任务点，每点最多 3 个且不重复同一枚举，
+    /// 见 <c>TaskManager.AssignFactors</c>）。</para>
+    /// <para>▍⚠ 只许在末尾追加：<c>MapData_SO.additionalFactors</c> 按序号落盘、联机 <c>TaskCfgDto.AdditionalFactors</c>
+    /// 也按序号传输，插队会让已配好的地图与两端的任务点派发错位。</para>
+    /// </summary>
+    public enum AdditionalFactorType
+    {
+        /// <summary>喷射旅</summary>
+        [InspectorName("喷射旅")] JetBrigade,
+        /// <summary>焚化兵团</summary>
+        [InspectorName("焚化兵团")] IncinerationCorps,
+        /// <summary>凯撒矫正局</summary>
+        [InspectorName("凯撒矫正局")] Cyborg,
+    }
+
     public enum DamageTypeEnum
     {
         /// <summary>动能</summary>

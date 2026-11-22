@@ -120,7 +120,7 @@ GameObject:
   - component: {fileID: 2723675280396940598}
   - component: {fileID: 2723675280396940599}
   m_Layer: 6
-  m_Name: HitBox
+  m_Name: legR
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -163,9 +163,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   explosionResistance: 1
-  armorLevel: 2
-  useHealthInsteadOfArmor: 0
-  armorValue: 0
+  armorLevel: 5
+  useHealthInsteadOfArmor: 1
+  armorValue: 400
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
@@ -204,7 +204,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2723675280913999902}
   - component: {fileID: 2723675280913999888}
-  - component: {fileID: 2723675280913999889}
+  - component: {fileID: 1837737819739920966}
   m_Layer: 6
   m_Name: GameObject
   m_TagString: Untagged
@@ -250,7 +250,7 @@ CapsuleCollider:
   m_Height: 4
   m_Direction: 0
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &2723675280913999889
+--- !u!114 &1837737819739920966
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -259,24 +259,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 2723675280913999903}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Script: {fileID: 11500000, guid: c661b922f5a2365469cd86394bae0e06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0.5
-  armorLevel: 2
-  useHealthInsteadOfArmor: 0
-  armorValue: 1000
-  LineArmor: []
-  armorBreakEffect:
-  - go: {fileID: 7227105190494820569}
-    state: 0
-    scale: 0
-    originActive: 0
-    originLocalScale: {x: 0, y: 0, z: 0}
-  BleedValue: 0
-  isMain: 0
-  showArmor: 0
+  armorLevel: 4
+  source: {fileID: 0}
 --- !u!1 &2723675281037743511
 GameObject:
   m_ObjectHideFlags: 0
@@ -289,7 +277,7 @@ GameObject:
   - component: {fileID: 2723675281037743496}
   - component: {fileID: 2723675281037743497}
   m_Layer: 6
-  m_Name: GameObject
+  m_Name: Arm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -345,12 +333,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
+  isWeakness: 1
   explosionResistance: 1
-  armorLevel: 1
-  useHealthInsteadOfArmor: 0
-  armorValue: 1000
-  LineArmor: []
+  armorLevel: 3
+  useHealthInsteadOfArmor: 1
+  armorValue: 100
+  LineArmor:
+  - {fileID: 1837737819739920966}
   armorBreakEffect:
   - go: {fileID: 7227105190494820569}
     state: 0
@@ -373,7 +362,7 @@ GameObject:
   - component: {fileID: 2723675281408863990}
   - component: {fileID: 2723675281408863991}
   m_Layer: 6
-  m_Name: HitBox
+  m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -416,9 +405,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 1
   explosionResistance: 1
-  armorLevel: 3
+  armorLevel: 50
   useHealthInsteadOfArmor: 1
-  armorValue: 350
+  armorValue: 225
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 6512250307423866939}
@@ -426,7 +415,7 @@ MonoBehaviour:
     scale: 0
     originActive: 0
     originLocalScale: {x: 0, y: 0, z: 0}
-  BleedValue: 300
+  BleedValue: 0
   isMain: 0
   showArmor: 0
 --- !u!136 &2723675281408863991
@@ -465,7 +454,7 @@ GameObject:
   - component: {fileID: 2723675281559671757}
   - component: {fileID: 2723675281559671754}
   m_Layer: 6
-  m_Name: HitBox
+  m_Name: LegL
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -506,11 +495,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
+  isWeakness: 1
   explosionResistance: 1
-  armorLevel: 2
-  useHealthInsteadOfArmor: 0
-  armorValue: 0
+  armorLevel: 5
+  useHealthInsteadOfArmor: 1
+  armorValue: 400
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
@@ -551,7 +540,7 @@ GameObject:
   - component: {fileID: 2723675281561408889}
   - component: {fileID: 2723675281561408774}
   m_Layer: 6
-  m_Name: GameObject
+  m_Name: Arm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -607,12 +596,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
+  isWeakness: 1
   explosionResistance: 1
-  armorLevel: 1
-  useHealthInsteadOfArmor: 0
-  armorValue: 1000
-  LineArmor: []
+  armorLevel: 3
+  useHealthInsteadOfArmor: 1
+  armorValue: 100
+  LineArmor:
+  - {fileID: 4989044582933774862}
   armorBreakEffect:
   - go: {fileID: 8123733457477064338}
     state: 0
@@ -632,7 +622,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2723675281877568954}
   - component: {fileID: 2723675281877568956}
-  - component: {fileID: 2723675281877568957}
+  - component: {fileID: 4989044582933774862}
   m_Layer: 6
   m_Name: GameObject
   m_TagString: Untagged
@@ -678,7 +668,7 @@ CapsuleCollider:
   m_Height: 4
   m_Direction: 0
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &2723675281877568957
+--- !u!114 &4989044582933774862
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -687,24 +677,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 2723675281877568955}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
+  m_Script: {fileID: 11500000, guid: c661b922f5a2365469cd86394bae0e06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 0.5
-  armorLevel: 2
-  useHealthInsteadOfArmor: 0
-  armorValue: 1000
-  LineArmor: []
-  armorBreakEffect:
-  - go: {fileID: 8922969383773025653}
-    state: 0
-    scale: 0
-    originActive: 0
-    originLocalScale: {x: 0, y: 0, z: 0}
-  BleedValue: 0
-  isMain: 0
-  showArmor: 0
+  armorLevel: 4
+  source: {fileID: 0}
 --- !u!1 &2723675281896223175
 GameObject:
   m_ObjectHideFlags: 0
@@ -1006,7 +984,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 1
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -1155,7 +1132,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 1
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -1370,7 +1346,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 1
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -3478,12 +3453,6 @@ GameObject:
 --- !u!4 &8687330003951469536 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6720470846733611010, guid: eec5ab69f5651cd46a36f5827622ff4f,
-    type: 3}
-  m_PrefabInstance: {fileID: 2723675280118002658}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &8922969383773025653 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -2443007787013765481, guid: eec5ab69f5651cd46a36f5827622ff4f,
     type: 3}
   m_PrefabInstance: {fileID: 2723675280118002658}
   m_PrefabAsset: {fileID: 0}
