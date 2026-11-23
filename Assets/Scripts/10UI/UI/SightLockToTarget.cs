@@ -41,23 +41,54 @@ namespace FPSGame.UI
 
         void Start()
         {
+            EnsureInit();
+        }
+
+        /// <summary>
+        /// 容器只建一次。<c>Bind</c> 会早于本组件 <c>Start</c>（CrosshairManager 在 Instantiate 后立刻绑定，
+        /// 而 Start 要等本帧末尾）⇒ 期间任何事件回调直接用 <see cref="dic"/> 都是 NRE，必须先建好。
+        /// </summary>
+        void EnsureInit()
+        {
+            if (dic != null) return;
             dic = new();
             pool = new(_Add, _Pop, _Push,1);
-            if (transform.TryGetComponentInParent(out manager)){
+        }
+
+        /// <summary>
+        /// 由 <see cref="CrosshairManager"/> 创建/切枪准星时显式调用。
+        /// <para>⚠ 别改回在 Start 里 GetComponentInParent：准星实例化后同一帧就会被 SetParent 到 ExchangeArea
+        /// （y=-1000 的**活跃**隐藏区），Start 在那里执行 ⇒ 父链上没有管理器、事件一个都订阅不到，
+        /// 表现就是"锁定照常生效但图标和连线全没了"（2026-11-23 实测 manager 为 CLR null、订阅者 0）。</para>
+        /// </summary>
+        public void Bind(CrosshairManager owner)
+        {
+            if (!owner) return;
+            EnsureInit();       // 订阅后随时可能收到 OnSwitchWeapon → Clear，不能等 Start
+            if (owner != manager)
+            {
+                Unbind();
+                manager = owner;
                 manager.OnLockUpdate += LockUpdate;
                 manager.OnLock += LockStateChange;
                 manager.OnSwitchWeapon += Clear;
-                m_Weapons = manager.m_Weapons;
             }
+            // 换枪后管理器手上已是新武器，旧引用留着会让连线从上一把枪的枪口出发
+            m_Weapons = manager.m_Weapons;
         }
+
+        void Unbind()
+        {
+            if (!manager) return;
+            manager.OnLockUpdate -= LockUpdate;
+            manager.OnLock -= LockStateChange;
+            manager.OnSwitchWeapon -= Clear;
+            manager = null;
+        }
+
         private void OnDestroy()
         {
-            if (manager)
-            {
-                manager.OnLockUpdate -= LockUpdate;
-                manager.OnLock -= LockStateChange;
-                manager.OnSwitchWeapon -= Clear;
-            }
+            Unbind();
             dic = null;
         }
 
@@ -108,15 +139,17 @@ namespace FPSGame.UI
                 //Debug.LogError("给 " + actor + "移除锁定");
                 if (dic.TryGetValue(actor, out var group))
                 {
-                    --group.Item2;
-                    if (group.Item2 <=0)
+                    // ⚠ 元组是值类型：旧的 `--group.Item2` 只减了局部副本、从不写回字典 ⇒ 层数只增不减
+                    int left = group.Item2 - 1;
+                    if (left <= 0)
                     {
                         pool.Release(group.Item1);
                         dic.Remove(actor);
                     }
-                    else if (group.Item2 == 1&& !OnceDisplyNumber)
+                    else
                     {
-                        SetActive(group.Item1.GetChild(0), false);
+                        dic[actor] = (group.Item1, left);
+                        if (left == 1 && !OnceDisplyNumber) SetActive(group.Item1.GetChild(0), false);
                     }
                 }
                 if (FillImage.IsValid()) SetFill(FillImage, GetFill(FillImage) - EachValue);
@@ -131,6 +164,7 @@ namespace FPSGame.UI
                 pool.Release(item.Value.Item1);
             }
             dic.Clear();
+            if (manager) m_Weapons = manager.m_Weapons;
             if (FillImage.IsValid()) SetFill(FillImage,0);
         }
 
@@ -163,6 +197,9 @@ namespace FPSGame.UI
         Vector3[] posList = new Vector3[51];
         void UpdateLine(LineRenderer line, Vector3 end)
         {
+            if (line == null) return;
+            // 切枪瞬间可能还没拿到新武器（Clear 只在事件里刷新）⇒ 这一帧不画线，别 NRE
+            if (!m_Weapons.IsValid()) return;
 
             var start = m_Weapons.GetMuzzle(0);
             if (!start) return;

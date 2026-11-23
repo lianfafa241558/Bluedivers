@@ -15,7 +15,6 @@ namespace FPSGame.Effect
     {
         [SerializeField]
         private EnemyTextureVariant_SO data;
-
         private void Awake()
         {
             MpbController mpb = new(transform);

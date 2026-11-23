@@ -243,6 +243,20 @@ namespace FPSGame.UI
                 m_DicSightGo.Add(m_Weapons, m_ActiveSightGo);
             }
             m_ActiveSightGo.SetFloat(Constants.k_AnimChatgetSpeedParameter, 1 / Mathf.Max(m_Weapons.AttrFinal(WeaponAttrType.ChargeDuration).RawFloat, 0.1f));
+            BindLockMarkers();
+        }
+
+        /// <summary>
+        /// 把当前准星上的 <see cref="SightLockToTarget"/> 绑到本管理器。
+        /// <para>⚠ 必须由这里显式绑定，别指望标记自己 GetComponentInParent：准星实例化后同一帧就会被
+        /// <see cref="RefreshCrosshairVisibility"/> 挪进 ExchangeArea（y=-1000 的活跃隐藏区），Start 在那边跑
+        /// ⇒ 父链上没有管理器，锁定标记永远收不到事件（图标/连线全无、锁定本身照常）。</para>
+        /// </summary>
+        private void BindLockMarkers()
+        {
+            if (m_ActiveSightGo == null) return;
+            var markers = m_ActiveSightGo.GetComponentsInChildren<SightLockToTarget>(true);
+            for (int i = 0; i < markers.Length; ++i) markers[i].Bind(this);
         }
 
         /// <summary>

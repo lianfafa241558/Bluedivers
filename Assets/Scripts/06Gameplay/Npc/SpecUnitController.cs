@@ -79,7 +79,8 @@ namespace FPSGame.Gameplay
                 var Speed = GetAttribute(UnitAttrType.Speed);
                 if (Speed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.speed = value.RawFloat; };
                 var AngularSpeed = GetAttribute(UnitAttrType.AngularSpeed);
-                if (AngularSpeed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.angularSpeed = value.RawFloat; };
+                // ⚠ 同 EnemyController：曾误订阅 Speed 的事件 ⇒ 速度值被当角速度写进 agent（转身只剩几度/秒）
+                if (AngularSpeed.PrimeValue > 0) AngularSpeed.OnFinalValueChange += (value) => { NavMeshAgent.angularSpeed = value.RawFloat; };
             }
 
         }

@@ -170,7 +170,9 @@ namespace FPSGame.AI
                 var Speed = GetAttribute(UnitAttrType.Speed);
                 if (Speed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.speed = value.RawFloat; };
                 var AngularSpeed = GetAttribute(UnitAttrType.AngularSpeed);
-                if (AngularSpeed.PrimeValue > 0) Speed.OnFinalValueChange += (value) => { NavMeshAgent.angularSpeed = value.RawFloat; };
+                // ⚠ 必须订阅 AngularSpeed 自己的事件：曾误写成 Speed.OnFinalValueChange ⇒ 速度值(m/s, 5) 被当角速度写进 agent，
+                //   出生结束(±Factor)一改速度就把 120°/s 砸成 5°/s，单位只会侧着走/倒着滑。
+                if (AngularSpeed.PrimeValue > 0) AngularSpeed.OnFinalValueChange += (value) => { NavMeshAgent.angularSpeed = value.RawFloat; };
             }
 
         }
