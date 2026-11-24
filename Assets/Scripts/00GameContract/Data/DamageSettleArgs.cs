@@ -33,8 +33,7 @@ namespace FPSGame.GameContract
         public bool Response;
         /// <summary>是否弱点命中（表现用）</summary>
         public bool IsWeakness;
-        /// <summary>拆毁值：≥ 目标自身拆毁值则秒杀；-1 = 不带拆毁</summary>
-        public int DemolishValue;
+
         /// <summary>本发的**成分数值**（类型 + 每个成分拆解后的量）：结算期间由 Health 暴露为 <c>LastRawGroups</c>，供联机上报。
         /// <remarks>与 <see cref="Groups"/> 内容相同（同一个列表对象），但它**只表示"可以上报"**：流血 / 异常状态 tick
         /// 这类直接调 <c>TakeDamage</c> 的路径置 null ⇒ 接收端退回中性成分（不会顺手给积蓄槽补一次）。</remarks>
@@ -57,7 +56,6 @@ namespace FPSGame.GameContract
                 Pos = pos,
                 Response = true,
                 IsWeakness = false,
-                DemolishValue = -1,
                 RawGroups = null,
                 Ricochet = false,
             };

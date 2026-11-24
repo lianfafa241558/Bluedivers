@@ -99,19 +99,47 @@ namespace FPSGame.Gameplay
             EndHandle();
         }
 
-        /// <summary>把玩家背包里的欧帕兹全部提交给凯伊，计入任务采集计数</summary>
-        private static void SubmitBagOOParts(GameObject user)
+        /// <summary>
+        /// 把玩家背包里的欧帕兹全部提交给凯伊，计入任务采集计数，返回提交总量。
+        /// <para>⚠ 面向 <see cref="IOOPartInventory"/> 取背包：远端盟友挂的是 <c>FriendOOPartInventory</c>。</para>
+        /// </summary>
+        private static int SubmitBagOOParts(GameObject user)
         {
-            if (user == null || !user.TryGetComponent(out PlayerOOPartInventory bag)) return;
+            if (user == null || !user.TryGetComponent(out IOOPartInventory bag)) return 0;
+            if (bag.CurrentCount <= 0) return 0;
 
+            int total = 0;
             // 取快照：提交过程中会从背包移除条目，避免枚举时修改同一集合
             foreach (var kvp in bag.GetAll().ToList())
             {
                 OOPartEnum type = kvp.Key;
                 int count = kvp.Value;
-                bag.Remove(type, count);
+                if (count <= 0) continue;
+                if (bag.Remove(type, count) <= 0) continue;
+                total += count;
                 // 计入任务采集计数
                 FPSGame.Gameplay.BattleEventBus.SubmitOOPart(user, type, count);
+            }
+            return total;
+        }
+
+        /// <summary>
+        /// 本局不再有交付机会时调用（撤离起飞）：把**每个玩家**背包里还没交的欧帕兹一并视为已提交。
+        /// <para>▍为什么要补这一步：欧帕兹只有交给凯伊才写进 <c>TaskState.CollectProperty</c>，
+        /// 而结算中栏（<c>GameEndWnd.InitMiddle</c>）与已提交列表（<c>KeiSubmitWnd</c>）都只读那张表
+        /// ⇒ 打完任务还没回提交点就撤了，结算会显示"什么都没交"。</para>
+        /// <para>▍调用点：<c>MissionEvacuateStatic.End()</c> / <c>MissionEvacuateMobile.End()</c>（起飞那一刻，
+        /// 此时玩家/背包都还在场上；结算场景里 <c>ActorsManager</c> 已空，放到结算再做就晚了）。
+        /// 联机各端都跑一次，提交的只是**本端场上的单位**，与凯伊提交点同一条 <c>SubmitOOPart</c> 口径。</para>
+        /// </summary>
+        public static void SubmitAllPlayersBags()
+        {
+            var players = ActorsManager.Players;
+            for (int i = 0; i < players.Count; i++)
+            {
+                var player = players[i];
+                if (!player.IsValidMono()) continue;
+                SubmitBagOOParts(player.gameObject);
             }
         }
 

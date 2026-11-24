@@ -104,7 +104,7 @@ namespace FPSGame.Game
             mission.IsInitialized = true;
         }
 
-        private void Update()
+        protected virtual void Update()
         {
 
             if (FPSGame.Data.FlowState.GameState != GameStateEnum.Game) return;

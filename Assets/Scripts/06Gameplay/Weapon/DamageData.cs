@@ -135,7 +135,7 @@ namespace FPSGame.Weapon
         [InspectorName("满蓄爆炸穿甲倍率")]
         private float ExplosionAPChargeScale = 1;
 
-        /// <summary>拆毁值：大于目标 Health 的拆毁值时直接秒杀。默认 0</summary>
+        /// <summary>拆毁值：≥ 目标**肢体**的拆毁值时直接拆掉它（主体部位 = 整只单位死亡）。默认 0 = 无拆毁力</summary>
         [SerializeField]
         [InspectorName("拆毁值")]
         private int demolishValue;

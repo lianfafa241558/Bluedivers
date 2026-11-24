@@ -65,6 +65,16 @@ namespace FPSGame.Game
         
         [InspectorName("基础护甲值")]
         public int armorValue;
+
+        /// <summary>肢体拆毁值：伤害自带的拆毁值 ≥ 此值时**直接拆掉本肢体**（不结算血量）。
+        /// <para>默认 -1 = 不可被拆毁（0 同样按"未配置"处理）。</para>
+        /// <para>▍拆掉会怎样：主肢体（<see cref="isMain"/>）拆掉 = **整只单位死亡**；
+        /// 其余由订阅 <see cref="OnDestroyPart"/> 的一方决定（腿→减速、致死装甲→累计 Kill、无敌装甲→摘无敌）。</para></summary>
+        [SerializeField]
+        [InspectorName("拆毁值")]
+        private int demolishValue = -1;
+
+
         [Header("关联护甲")]
         [SerializeField]
         private List<TransferDamageable> LineArmor;
@@ -74,6 +84,7 @@ namespace FPSGame.Game
         private List<ArmorBreakEffect> armorBreakEffect;
         [InspectorName("流血速度")]
         public int BleedValue;
+
 
         public event UnityAction<Damageable> OnDamage;
         public event UnityAction<Damageable> OnDestroyPart;
@@ -98,6 +109,11 @@ namespace FPSGame.Game
 
         /// <summary>护甲破坏(计算流血)</summary>
         private GameObject ArmorBreaker;
+
+        /// <summary>本肢体已被摧毁（护甲被打空 / 被拆毁值命中 都收敛到这里）。
+        /// <para>⚠ 订阅方（<c>PartController</c> 的腿速惩罚 / 致死件计数）**不是幂等的** ⇒ 重复派发会把速度扣多次、
+        /// 致死计数提前凑满，所以事件与表现都必须只做一次。</para></summary>
+        private bool _destroyed;
 
         bool IDamageable.IsWeakness => isWeakness;
 
@@ -318,6 +334,11 @@ namespace FPSGame.Game
             GameObject damageCaused = packet.DamageCaused;
             //I_Damagable source = packet.Source;
 
+            // ★ 肢体拆毁（2026-11-25）：伤害自带的拆毁值够大 ⇒ 直接拆掉这个肢体，不再结算血量。
+            //   ⚠ 拆毁规则**只在肢体层**存在（Health 侧的整只秒杀已随 `Health.demolishValue` 一起删掉）；
+            //   "主肢体 = 本体 ⇒ 拆掉它等于整只单位死"这条由 <see cref="Demolish"/> 负责。
+            if (Demolish(packet.DemolishValue, damageCaused, damageOrigin)) return;
+
             // ★ 全部乘区只在**本地包**上算（2026-11-04 统一口径）：远端包（Resolved）的每个成分
             //   都是开枪端算完的**数值**（见下面 Groups 的拆解），在本端再乘一遍就是二次减免 ——
             //   老实现只挡住了爆炸抗性 / AP，友伤与 `Health.TakeDamage` 里的类型抗性仍会各多乘一次。
@@ -407,7 +428,6 @@ namespace FPSGame.Game
             var settle = DamageSettleArgs.Of(settledGroups, packet.NoSource, damageOrigin, packet.damageAffected, packet.Pos);
             settle.Caused = damageCaused;
             settle.IsWeakness = isWeakness;
-            settle.DemolishValue = packet.DemolishValue;
             settle.RawGroups = settledGroups;   // 同一份列表：只标记"这条路径可以上报"
             settle.Ricochet = IsRicochet(packet);
             Health.TakeDamage(in settle);
@@ -453,6 +473,7 @@ namespace FPSGame.Game
             // 血量部位：不吃护甲破坏 ⇒ 破甲成分在这里丢掉，它只靠走 Health 的动能/爆炸成分掉血。
             // ⚠ 这是本开关**唯一**的分支点，别再去 Tick/RestoreArmor/Awake 里加特判。
             if (useHealthInsteadOfArmor) return;
+            if (_destroyed) return;   // 已摧毁的肢体不再吃破甲（否则会二次应用破坏表现）
             if (remainArmor > 0)
             {
                 remainArmor -= value;
@@ -478,6 +499,7 @@ namespace FPSGame.Game
             remainArmor = maxArmor;
             showArmor = remainArmor.RawFloat;
             ArmorBreaker = null;
+            _destroyed = false;   // 护盾重塑后这块肢体要能再被打碎一次
             foreach (var item in armorBreakEffect)
             {
                 if (item.go != null)
@@ -493,6 +515,10 @@ namespace FPSGame.Game
         /// </summary>
         public void BreakArmor(GameObject source)
         {
+            // 破甲（Destruction 把护甲打空）与拆毁值命中都会进这里：重复进来会把 armorBreakEffect 的缩放叠乘
+            if (_destroyed) return;
+            _destroyed = true;
+
             foreach (var item in armorBreakEffect)
             {
                 if (item.go != null)
@@ -503,14 +529,37 @@ namespace FPSGame.Game
             }
             ArmorBreaker = source;
             OnDamage?.Invoke(this);
-            DestroyPart(null, null);
+            // 直接派发：DestroyPart 里还有一道同样的幂等门，绕不过去的是"这里已经算摧毁过了"
+            OnDestroyPart?.Invoke(this);
         }
 
-        /// <summary>部件销毁处理：广播 OnDestroyPart 事件</summary>
+        /// <summary>
+        /// 按「拆毁值」规则拆掉本肢体 —— **伤害包与脚本碾压共用这一个入口**。
+        /// <para>返回 true = 已拆毁（调用方应跳过后续血量结算）；false = 拆毁值不够 / 不可拆毁 / 已经拆过。</para>
+        /// <para>▍主肢体（<see cref="isMain"/>）= 本体 ⇒ 拆掉它同时让整只单位死亡
+        /// （原 <c>Health.demolishValue</c> 的"整只秒杀"语义已并到这里 ⇒ "打中身体的大拆毁一击"仍是秒杀）。</para>
+        /// <para>⚠ 判据 `demolishValue &gt; 0`：-1 / 0 都是"未配置"，写成 ≥0 会让任何默认枪变成拆迁器。</para>
+        /// </summary>
+        public bool Demolish(int power, GameObject caused, GameObject origin)
+        {
+            if (_destroyed) return false;
+            if (demolishValue <= 0 || power < demolishValue) return false;
+            // 与 Health.TakeDamage 的无敌门同口径：无敌单位不吃拆毁（碾压 / 爆炸都不能越权）
+            if (Actor != null && Actor.HasFlag(ActorFlag.Invincible)) return false;
+
+            // 复用破甲那条"肢体没了"的表现与事件（护甲破坏效果 + OnDamage + OnDestroyPart）
+            BreakArmor(caused);
+            if (isMain && Health.IsValidMono()) Health.Kill(caused, origin);
+            return true;
+        }
+
+        /// <summary>部件销毁处理：广播 OnDestroyPart 事件（主体死亡连带销毁走 <see cref="SetIsMain"/> 里的 OnDie 订阅）</summary>
         /// <param name="caused">未使用（用于匹配 Health.OnDie 签名：直接来源）</param>
         /// <param name="origin">未使用（用于匹配 Health.OnDie 签名：起源）</param>
         private void DestroyPart(GameObject caused, GameObject origin)
         {
+            if (_destroyed) return;   // 破甲 / 拆毁已经派发过：事件只能来一次，订阅方不是幂等的
+            _destroyed = true;
             OnDestroyPart?.Invoke(this);
         }
 

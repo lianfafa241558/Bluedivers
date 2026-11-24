@@ -15,7 +15,9 @@ namespace FPSGame.Mission
 
     public abstract class MissionEvacuateBase : MissionBase
     {
-       
+        /// <summary>运输机落地碾压的拆毁值：≥ 目标**主体部位**的拆毁值 ⇒ 一击压死</summary>
+        private const int CrushDemolishPower = 100;
+
         public bool IsFast;
         [SerializeField]
         protected Transform _startPointEntity;
@@ -179,7 +181,8 @@ namespace FPSGame.Mission
         /// <summary>落地瞬间碾压机腹范围内的单位（战备炮台/治疗包、敌人；玩家与盟友不算）。
         /// <para>⚠ 只由权威端结算（<see cref="BattleState.IsTickDamageAuthority"/> = 房主/单机）：成员端这些单位是
         /// 房主那份的镜像，本地再扣一次就是两份伤害；房主这笔会经既有 4054 落到成员端。</para>
-        /// <para>⚠ 用 <c>DemolishValue</c> 而不是纯伤害：带护盾/高血量的装置也能一击压死（拆毁值 ≥ 目标自身 ⇒ 秒杀）。</para></summary>
+        /// <para>⚠ 走「主体部位拆毁」而不是纯伤害：拆毁规则已收敛到肢体层（Health 侧不再有拆毁值），
+        /// 主肢体被拆 = 整只单位死亡，所以带护盾/高血量的装置也能一击压死；阈值更高的巨型单位免疫。</para></summary>
         protected void CrushUnitsOnLanding(Vector3 center)
         {
             if (!BattleState.IsTickDamageAuthority) return;
@@ -198,11 +201,11 @@ namespace FPSGame.Mission
                 var health = unit.transform.GetComponent<IHealth>();
                 if (!health.IsValidMono()) continue;
 
-                var args = DamageSettleArgs.Of(new() { new(DamageTypeEnum.Real, new(100)) },
-                    true, null, null, unitPos);
-                args.DemolishValue = 100;
-                args.Response = false;   // 碾压不派发受击响应/AI 反应
-                health.TakeDamage(in args);
+                // 碾压 = 对**主体部位**发一笔拆毁值 100 的拆毁（与武器的大拆毁一击同一套规则）。
+                // 没配主体部位的（飞行 / 巨型单位）与阈值 >100 的天然免疫，与原本"拆毁值不够就压不死"同口径。
+                if (!(health.GetMainPart() is Damageable mainPart)) continue;
+                if (!mainPart.Demolish(CrushDemolishPower, null, null)) continue;
+
                 NetSyncLog.SyncLog("撤离/碾压", $"{unit.Id} @{unitPos} 被运输机压死");
             }
         }

@@ -53,6 +53,9 @@ namespace FPSGame.GameContract
         public float GetHpRatio();
         public float GetShieldRatio();
         public void Kill();
+        /// <summary>代码杀（带来源）：拆毁主体部位 / 碾压这类**脚本致死**走这条，
+        /// 击杀归属（caused = 显示·AI，origin = 统计）才不会丢。</summary>
+        public void Kill(GameObject caused, GameObject origin);
 
         public void Revive();
         public IDamageable GetMainPart();

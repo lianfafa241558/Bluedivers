@@ -270,7 +270,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 1
   WeaponFlag: 1
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -350,6 +349,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 200
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 743989481515052227}
@@ -530,7 +530,6 @@ MonoBehaviour:
   - Key: 9
     Value: 0
   MainPart: {fileID: 1071031243089024933}
-  demolishValue: 40
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
@@ -821,6 +820,7 @@ MonoBehaviour:
   armorLevel: 3
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: 30
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
@@ -950,6 +950,7 @@ MonoBehaviour:
   armorLevel: 3
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0

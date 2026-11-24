@@ -37,12 +37,6 @@ namespace FPSGame.Game {
         [InspectorName("主体部位")]
         public Damageable MainPart;
 
-        /// <summary>
-        /// 拆毁值：伤害的拆毁值大于此值则直接秒杀。默认 -1 视为无法被拆毁（不受秒杀）。
-        /// </summary>
-        [SerializeField]
-        [InspectorName("拆毁值")]
-        protected int demolishValue = -1;
 
         /// <summary>
         /// 死亡后自动摧毁自身物体）
@@ -212,22 +206,13 @@ namespace FPSGame.Game {
             Vector3 pos = args.Pos;
             bool noSource = args.NoSource, response = args.Response, isWeakness = args.IsWeakness;
             bool ricochet = args.Ricochet;
-            int demolishValue = args.DemolishValue;
+
 
             // 回落：直接来源缺省时用起源 ⇒ 下游消费点（表现/AI）不必到处判空。
             // ⚠ 必须用 == 判断，别改 ?? ：已销毁对象是 Unity fake-null，?? 不会回落。
             GameObject damageCaused = args.Caused;
             if (damageCaused == null) damageCaused = damageOrigin;
 
-            // 拆毁秒杀：自身拆毁值 -1 视为无法被拆毁；否则伤害拆毁值大于自身拆毁值则直接击杀，无视护盾，但受上面无敌标记保护
-            if (this.demolishValue >0 && demolishValue >= this.demolishValue)
-            {
-                CurrentHealth = 0;
-                showHealth = 0;
-                if (response) OnHit?.Invoke(damageCaused, pos, HitNormal(pos, damageAffected), isWeakness);
-                HandleDeath(damageCaused, damageOrigin);
-                return;
-            }
 
             bool haveshield= CurrentShield > 0, isBreakShield=false;
             PEInt finaldamgage = 0;
@@ -397,13 +382,19 @@ namespace FPSGame.Game {
 
 
         /// <summary>代码杀</summary>
-        public void Kill() {
+        public void Kill() => Kill(null, null);
+
+        /// <summary>代码杀（带来源）：拆毁主体部位 / 碾压这类脚本致死走这条 ——
+        /// 与伤害致死同一条 <see cref="HandleDeath"/>，击杀归属（caused = 显示·AI，origin = 统计）不丢。</summary>
+        public void Kill(GameObject caused, GameObject origin)
+        {
+            if (m_IsDead) return;
             CurrentHealth = 0;
 
             // call OnDamage action
             //OnDamaged?.Invoke(MaxHealth, null,null,true);
 
-            HandleDeath(null, null);
+            HandleDeath(caused, origin);
         }
 
         /// <summary>死亡处理</summary>

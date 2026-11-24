@@ -190,80 +190,6 @@ namespace ProjectEditors
                   $"，顺序{(orderOk ? "对" : "错")}；草层 {td.detailPrototypes.Length}/{detail}）⇒ 再点一次烘焙";
         }
 
-        [MenuItem("Tools/地形/生成每图 TerrainData（方案A）")]
-        public static void BakeAll()
-        {
-            var maps = FindAllMapData();
-            var sb = new StringBuilder();
-            long totalBytes = 0;
-            int baked = 0, shared = 0;
-
-            foreach (var map in maps)
-            {
-                long one = BakeInto(map, sb);
-                if (one < 0) ++shared;
-                else { totalBytes += one; ++baked; }
-            }
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            sb.Insert(0, $"[烘焙] 完成：新建/更新 {baked} 份专属资产（合计 {totalBytes / 1048576.0:N1} MB），" +
-                         $"沿用 MainMap 的 {shared} 张\n");
-            Debug.Log(sb.ToString());
-        }
-
-        [MenuItem("Tools/地形/体检：每图资产 vs 地图数据")]
-        public static void Verify()
-        {
-            var sb = new StringBuilder();
-            int bad = 0;
-            foreach (var map in FindAllMapData())
-            {
-                int stone = map.stonePrototypes != null ? map.stonePrototypes.Length : 0;
-                int tree = map.treePrototypes != null ? map.treePrototypes.Length : 0;
-                int detail = map.detailPrototypes != null ? map.detailPrototypes.Length : 0;
-
-                if (map.terrainAsset == null)
-                {
-                    // 未配原型 + 空引用 = 正常；配了原型却没烘 = 打包端会用 MainMap 那一套（错配）
-                    if (stone + tree + detail > 0)
-                    {
-                        ++bad;
-                        sb.AppendLine($"[✗] {map.name,-22} 未烘焙（terrainAsset 为空）⇒ 打包端会用 MainMap 的原型！" +
-                                      "请跑一次「生成每图 TerrainData」");
-                    }
-                    continue;
-                }
-
-                var td = map.terrainAsset;
-                int expectTree = stone + tree;
-                bool treeOk = td.treePrototypes.Length == expectTree;
-                if (treeOk)
-                {
-                    // 顺带核对"石块在前、树紧随"的顺序（区间语义的根基）
-                    for (int i = 0; i < expectTree && treeOk; ++i)
-                    {
-                        var expect = i < stone ? map.stonePrototypes[i] : map.treePrototypes[i - stone];
-                        treeOk = td.treePrototypes[i].prefab == expect;
-                    }
-                }
-                bool detailOk = map.detailPrototypes == null || td.detailPrototypes.Length == detail;
-
-                if (!treeOk || !detailOk)
-                {
-                    ++bad;
-                    sb.AppendLine($"[✗] {map.name,-22} 资产与地图数据不一致：树原型 {td.treePrototypes.Length}/{expectTree}（顺序" +
-                                  (treeOk ? "对" : "错") + $"）、细节层 {td.detailPrototypes.Length}/{detail} ⇒ 重跑烘焙");
-                }
-                else
-                {
-                    sb.AppendLine($"[✓] {map.name,-22} {Prefix}{(map.name.StartsWith("MD_") ? map.name.Substring(3) : map.name)}.asset " +
-                                  $"树原型 {expectTree}、细节层 {td.detailPrototypes.Length}");
-                }
-            }
-            sb.Insert(0, bad == 0 ? "[体检] 全部一致 ✓\n" : $"[体检] 有 {bad} 张图不一致 ✗\n");
-            Debug.Log(sb.ToString());
-        }
 
         /// <summary>
         /// 把**运行时一定会重设**的那两项缩到最小，让每份专属资产从 13MB 掉到"只剩细节层"（1~7MB）。
@@ -302,17 +228,5 @@ namespace ProjectEditors
                 td.SetDetailLayer(0, 0, i, empty);
         }
 
-        private static List<MapData_SO> FindAllMapData()
-        {
-            var maps = new List<MapData_SO>();
-            foreach (var guid in AssetDatabase.FindAssets("t:MapData_SO"))
-            {
-                var so = AssetDatabase.LoadAssetAtPath<MapData_SO>(AssetDatabase.GUIDToAssetPath(guid));
-                if (so != null) maps.Add(so);
-            }
-            // 顺序只为日志好看（别依赖 AssetDatabase 的枚举顺序——见 OrderedMaps 的教训）
-            maps.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
-            return maps;
-        }
     }
 }

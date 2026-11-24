@@ -343,6 +343,9 @@ namespace FPSGame.Mission
         {
             stage = EvacuateState.End;
             countDown = 0;
+            // 起飞 = 本局再无交付机会：各玩家背包里还没交的欧帕兹直接在此时算已提交，
+            // 否则结算中栏（GameEndWnd 读 CollectProperty）会显示"一件都没交"。
+            Furniture_KeiSubmit.SubmitAllPlayersBags();
             CreatNotice("Ayane", "TakeOff");
             //WndManager.Instance.movieWnd.SetWndState(true);
             // 切阶段走事件（原 ServiceLocator.Flow.SetGameState）：GameRoot 订阅后落成既有的静态 setter
