@@ -43,7 +43,7 @@ GameObject:
   - component: {fileID: 2723675279878056392}
   - component: {fileID: 2723675279878056393}
   m_Layer: 6
-  m_Name: HitBox (1)
+  m_Name: Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77,8 +77,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
-  explosionResistance: 1
-  armorLevel: 0
+  explosionResistance: 0.4
+  armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
@@ -262,8 +262,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c661b922f5a2365469cd86394bae0e06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
-  armorLevel: 4
+  isWeakness: 1
+  armorLevel: 3
   source: {fileID: 0}
 --- !u!1 &2723675281037743511
 GameObject:
@@ -335,7 +335,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 1
   explosionResistance: 1
-  armorLevel: 3
+  armorLevel: 4
   useHealthInsteadOfArmor: 1
   armorValue: 100
   LineArmor:
@@ -404,8 +404,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 1
-  explosionResistance: 1
-  armorLevel: 50
+  explosionResistance: 0.4
+  armorLevel: 5
   useHealthInsteadOfArmor: 1
   armorValue: 225
   LineArmor: []
@@ -495,7 +495,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9b0ce1bb69c96b49a7ac1098a7f5796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 1
+  isWeakness: 0
   explosionResistance: 1
   armorLevel: 5
   useHealthInsteadOfArmor: 1
@@ -598,7 +598,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 1
   explosionResistance: 1
-  armorLevel: 3
+  armorLevel: 4
   useHealthInsteadOfArmor: 1
   armorValue: 100
   LineArmor:
@@ -680,8 +680,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c661b922f5a2365469cd86394bae0e06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWeakness: 0
-  armorLevel: 4
+  isWeakness: 1
+  armorLevel: 3
   source: {fileID: 0}
 --- !u!1 &2723675281896223175
 GameObject:
@@ -696,7 +696,7 @@ GameObject:
   - component: {fileID: 2723675281896222776}
   - component: {fileID: 2723675281896222777}
   m_Layer: 6
-  m_Name: HitBox
+  m_Name: Main
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -730,8 +730,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isWeakness: 0
-  explosionResistance: 1
-  armorLevel: 2
+  explosionResistance: 0.4
+  armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 0
   LineArmor: []
@@ -1572,10 +1572,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6993e4e8bbd3cf440b7174867768cf78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHealth: 1000
+  MaxHealth: 2500
   MaxShield: 0
   showArmorLists: []
-  MainPart: {fileID: 2616920412064224701}
+  MainPart: {fileID: 2723675281896222779}
   demolishValue: -1
   AutoDestroy: 0
   showHealth: 0
@@ -1638,7 +1638,7 @@ MonoBehaviour:
     ExplosionRange: 6
     DestructeRadius: 4
     ShockwaveRadius: 8
-    ShockwaveForce: 10
+    ShockwaveForce: 5
     DamageGroupExplosion:
     - Key: 1
       Value: 1
@@ -1807,7 +1807,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 1
   explosionResistance: 1
-  armorLevel: 0
+  armorLevel: 4
   useHealthInsteadOfArmor: 1
   armorValue: 400
   LineArmor: []
