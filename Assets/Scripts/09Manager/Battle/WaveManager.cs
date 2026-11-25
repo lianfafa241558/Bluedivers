@@ -37,6 +37,8 @@ namespace FPSGame.Managers
         List<SKVP<int, UnitTier>> TierWeight;
 
         List<KVP<int, List<UnitTier>>> Patrol;
+        /// <summary>巡逻队模板权重总和：开局在 <see cref="Awake"/> 里算一次，之后只读（一局内权重表不变）。</summary>
+        int _patrolTotalWeight;
         //List<Wave> waveGroup;
         List<GameObject> WaveUseObject;
 
@@ -114,6 +116,11 @@ namespace FPSGame.Managers
                 })
                 .Where(kvp => kvp != null)
                 .ToList();
+
+            // 巡逻队模板权重总和：开局算一次（Awake 每局只跑一次），后续抽队只读这个值。
+            // ⚠ 别退回"写死 100"：总和 >100 时第一个累计 ≥100 的模板会吃掉全部剩余概率、其后模板永远抽不到。
+            _patrolTotalWeight = 0;
+            for (int i = 0; i < Patrol.Count; ++i) _patrolTotalWeight += Patrol[i].Key;
 
             waveValue = (int)((1 + 0.15f * task.ExtraDifficulty[2]) * 60
                 * task.difficulty switch {
@@ -743,7 +750,14 @@ namespace FPSGame.Managers
                 : random;
 
             var re = new List<GameObject>();
-            var temp = Patrol.WeightTake(100, patrolRandom);
+            // 总权重 = 开局算好的实际总和（不是 100）。为 0 只可能是 Patrol 为空（模板名与 patrolCfgs 对不上），
+            // 此时 WeightTake 会 list[0] 越界 ⇒ 直接不刷，别让异常打断刷怪流程。
+            if (_patrolTotalWeight <= 0)
+            {
+                Debug.LogError($"CreatPatrol: 巡逻队模板权重总和为 0（Patrol 共 {Patrol.Count} 项），本次不生成巡逻队");
+                return re;
+            }
+            var temp = Patrol.WeightTake(_patrolTotalWeight, patrolRandom);
             // ⚠ 整队共用同一条流（继续往下抽）：每只各开一条新流的话，同点同种子 ⇒ 全队同一把 prefab + 叠在一点
             foreach (var item in temp) re.Add(CreatUnit(item, pos, 5, patrolRandom, false));
             return re;

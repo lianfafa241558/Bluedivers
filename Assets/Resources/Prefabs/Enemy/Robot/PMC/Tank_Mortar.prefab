@@ -266,17 +266,22 @@ PrefabInstance:
     - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}
       propertyPath: Damages.Array.data[0].Speed
-      value: 1000
+      value: 600
       objectReference: {fileID: 0}
     - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}
       propertyPath: Damages.Array.data[0].Gravity
-      value: 400
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
+        type: 3}
+      propertyPath: Damages.Array.data[0].MaxRange
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}
       propertyPath: Damages.Array.data[0].MaxLifeTime
-      value: 6
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}
@@ -381,7 +386,7 @@ PrefabInstance:
     - target: {fileID: 6698530403400044790, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}
       propertyPath: turrets.Array.data[0].verticalLimitRotation
-      value: 40
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7710122072706056741, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}

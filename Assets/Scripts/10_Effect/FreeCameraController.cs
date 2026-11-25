@@ -28,6 +28,26 @@ public class FreeCameraController : MonoBehaviour
     private Vector3 targetPoint;
     private float _scrollMomentum;
 
+    /// <summary>关掉后 <see cref="Update"/> 不再读输入（导演的固定机位/选点态用）。
+    /// <para>▍为什么不用 <c>enabled = false</c>：那样 <see cref="LateUpdate"/> 的到位插值也停，
+    /// 机位过渡改位置后会被残留的 <c>targetPoint</c> 慢慢拉回去。</para></summary>
+    public bool InputEnabled { get; set; } = true;
+
+    /// <summary>是否响应鼠标转视角。导演的"选点态"要关掉它：鼠标已解锁，转视角会让光标乱飘；
+    /// 但 WASD 平移仍要能用（边选点边挪机位）。</summary>
+    public bool AllowLook { get; set; } = true;
+
+    /// <summary>地面拾取用的层（纯 Ground；⚠ 不要用含 Default 的 <c>LayerDefinition.GroundLayers</c>）。</summary>
+    public LayerMask GroundMask => _groundLayer;
+
+    /// <summary>本相机组件（导演取景/拾取共用）。</summary>
+    public Camera Cam => camera;
+
+    public float Fov => camera ? camera.fieldOfView : _Min;
+
+    /// <summary>当前移动速度（1..35，`=`/`-` 调）。导演用它换算机位过渡时长：飞得快 ⇒ 跳得也快。</summary>
+    public float Speed => speed;
+
     private void OnEnable()
     {
         if(!camera) camera = GetComponent<Camera>();
@@ -35,9 +55,25 @@ public class FreeCameraController : MonoBehaviour
         targetPoint = transform.position;
     }
 
+    /// <summary>直接摆到指定位姿。必须同步重置 <c>targetPoint</c>，否则 LateUpdate 会从旧点插值过来。</summary>
+    public void SnapTo(Vector3 position, Quaternion rotation, float fov)
+    {
+        transform.SetPositionAndRotation(position, rotation);
+        targetPoint = position;
+        _scrollMomentum = 0f;
+        if (camera) camera.fieldOfView = fov;
+    }
+
+    public void SetFov(float fov)
+    {
+        if (camera) camera.fieldOfView = fov;
+    }
+
     
     void Update()
     {
+        if (!InputEnabled) return;
+
         //设置速度
         if (InputManager.GetDown(InputState.Acceler)) speed=Mathf.Min(speed+1f,35);
         if (InputManager.GetDown(InputState.Deceler)) speed = Mathf.Max(speed - 1f, 1);
@@ -51,33 +87,36 @@ public class FreeCameraController : MonoBehaviour
         {
             camera.fieldOfView = Mathf.Lerp(camera.fieldOfView, _Min, Time.unscaledDeltaTime*4f);
         }
-        //旋转视角
-        if (Input.GetKey(KeyCode.C))
+        //旋转视角（选点态关掉：鼠标解锁时转视角会跟着光标乱飘）
+        if (AllowLook)
         {
-            Ray ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-            if (Physics.Raycast(ray, out RaycastHit hit, 1000f, _groundLayer))
+            if (Input.GetKey(KeyCode.C))
             {
-                // 按住C自动围绕地面落点顺时针旋转
-                float rotY = _orbitSpeed * Time.unscaledDeltaTime;
-                Vector3 posBeforeOrbit = transform.position;
-                transform.RotateAround(hit.point, Vector3.up, rotY);
-                targetPoint += transform.position - posBeforeOrbit;
-                // X轴保持正常旋转
-                transform.Rotate(GetMouseAxis(true) * 150, 0f, 0f, Space.Self);
+                Ray ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+                if (Physics.Raycast(ray, out RaycastHit hit, 1000f, _groundLayer))
+                {
+                    // 按住C自动围绕地面落点顺时针旋转
+                    float rotY = _orbitSpeed * Time.unscaledDeltaTime;
+                    Vector3 posBeforeOrbit = transform.position;
+                    transform.RotateAround(hit.point, Vector3.up, rotY);
+                    targetPoint += transform.position - posBeforeOrbit;
+                    // X轴保持正常旋转
+                    transform.Rotate(GetMouseAxis(true) * 150, 0f, 0f, Space.Self);
+                }
+                else
+                {
+                    // 未命中地面时回退到正常旋转
+                    transform.Rotate(new Vector3((GetMouseAxis(true) * 150), (GetMouseAxis(false) * 150), 0f), Space.Self);
+                }
             }
             else
             {
-                // 未命中地面时回退到正常旋转
                 transform.Rotate(new Vector3((GetMouseAxis(true) * 150), (GetMouseAxis(false) * 150), 0f), Space.Self);
             }
+            Vector3 currentRotation = transform.eulerAngles;
+            currentRotation.z = 0f;
+            transform.eulerAngles = currentRotation;
         }
-        else
-        {
-            transform.Rotate(new Vector3((GetMouseAxis(true) * 150), (GetMouseAxis(false) * 150), 0f), Space.Self);
-        }
-        Vector3 currentRotation = transform.eulerAngles;
-        currentRotation.z = 0f;
-        transform.eulerAngles = currentRotation;
 
         Vector3 dir = Vector3.zero;
         if (InputManager.Get(InputState.Up)) dir+= transform.TransformDirection(Vector3.forward).Mult(new(1,0,1));

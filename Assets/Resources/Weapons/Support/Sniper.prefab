@@ -147,7 +147,6 @@ MonoBehaviour:
   showCool: 0
   ShootType: 0
   WeaponFlag: 0
-  AutomaticReleaseOnCharged: 0
   Lockshape: 0
   ReloadSfx: {fileID: 8300000, guid: 126bfdb6c94a82047b00f4b03867dc1f, type: 3}
   ChangeWeaponSfx: {fileID: 8300000, guid: 7b83d61917ac1224f942a0609b1221f2, type: 3}
@@ -163,7 +162,7 @@ MonoBehaviour:
   LHand: {fileID: 6234991567549549341}
   RHand: {fileID: 4657384761973367273}
   ShowRoot: {fileID: 1702624278292373706}
-  RecoilForce: 1.5
+  RecoilForce: 4
   RecoilProfile:
     PitchKick: 1.5
     YawKick: 0.4
@@ -273,6 +272,12 @@ MonoBehaviour:
   time: 0
   count: 0
   _collider: {fileID: 0}
+  OnInstall:
+    m_PersistentCalls:
+      m_Calls: []
+  OnUninstall:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &2615441623727516480
 MonoBehaviour:
   m_ObjectHideFlags: 0

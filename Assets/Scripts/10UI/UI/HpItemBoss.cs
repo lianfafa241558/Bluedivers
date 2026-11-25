@@ -135,7 +135,7 @@ using static FPSGame.WndTools.WndRootTool;
             anim.Play("Entry");
             AudioSvc.PlaySound(new(showClip, FPSGame.Core.AudioGroups.UI));
             AudioSvc.PlayMusic(AudioSvc.MusicGroup.Boss,1);
-            AudioSvc.SetLockMusic(true);
+            //AudioSvc.SetLockMusic(true);
         }
 
         /// <summary>隐藏：播放 Hide 动画淡出</summary>
@@ -152,7 +152,7 @@ using static FPSGame.WndTools.WndRootTool;
         /// —— 先解锁再切歌，否则这一句是个空操作（Boss 音乐照旧压着，2026-11-08 实测"死亡后音乐没变回去"）。</para></summary>
         private void RestoreGameMusic()
         {
-            AudioSvc.SetLockMusic(false);
+            //AudioSvc.SetLockMusic(false);
             AudioSvc.PlayMusic(AudioSvc.MusicGroup.Game, 0.5f);
         }
 

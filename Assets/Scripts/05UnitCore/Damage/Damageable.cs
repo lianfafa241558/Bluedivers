@@ -54,9 +54,9 @@ namespace FPSGame.Game
         [InspectorName("护甲等级")]
         private int armorLevel;
 
-        /// <summary>本部位用**血量**而非护甲：<c>Destruction</c> 成分不再走 <see cref="ArmorDestruction"/>（不扣护甲、不破甲销毁），
-        /// 只吃动能 / 爆炸这些进 Health 的成分。
-        /// <para>⚠ 只改这一处分支：护甲等级、爆炸抗性、护甲值、流血等一律照旧。</para></summary>
+        /// <summary>本部位用**血量**而非护甲：
+        /// 只吃动能 / 爆炸这些进 Health 的成分。</summary>
+
         [Compare("armorValue",0,CompareOperate.Greater)]
         [SerializeField]
         [InspectorName("使用血量而非护甲")]
@@ -413,9 +413,11 @@ namespace FPSGame.Game
                     if (dropElement && IsElementType(item.Key)) continue;
 
                     PEInt value = packet.Resolved ? (PEInt)item.Value : damage * (PEInt)item.Value;
-
-                    if (item.Key == DamageTypeEnum.Destruction) {
-                        // 护甲破坏归属不显示 ⇒ 用起源
+                    
+                    if (useHealthInsteadOfArmor
+                        ?(item.Key == DamageTypeEnum.Gun|| item.Key == DamageTypeEnum.Explosion) 
+                        : item.Key == DamageTypeEnum.Destruction) 
+                    {
                         ArmorDestruction(value, damageOrigin);
                     }
                     settledGroups.Add(new(item.Key, value));
@@ -472,7 +474,6 @@ namespace FPSGame.Game
         {
             // 血量部位：不吃护甲破坏 ⇒ 破甲成分在这里丢掉，它只靠走 Health 的动能/爆炸成分掉血。
             // ⚠ 这是本开关**唯一**的分支点，别再去 Tick/RestoreArmor/Awake 里加特判。
-            if (useHealthInsteadOfArmor) return;
             if (_destroyed) return;   // 已摧毁的肢体不再吃破甲（否则会二次应用破坏表现）
             if (remainArmor > 0)
             {

@@ -96,11 +96,18 @@ MonoBehaviour:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
           type: 3}
         weight: 100
-        size: 10
+        size: 16
     - tier: 9
       weight: 0
       unitWeights:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
+          type: 3}
+        weight: 100
+        size: 16
+    - tier: 7
+      weight: 10
+      unitWeights:
+      - unit: {fileID: 5225712964640480476, guid: c3837f462facaab41aa6e4b14f8e0413,
           type: 3}
         weight: 100
         size: 10
@@ -115,6 +122,8 @@ MonoBehaviour:
       Value: 12
     - Key: "\u91CD\u578B\u5DE1\u903B\u961FC"
       Value: 12
+    - Key: "\u5766\u514B\u5DE1\u903B\u961F"
+      Value: 8
   - name: "\u5927\u76FE\u6A21\u677F"
     template:
     - tier: 1
@@ -195,11 +204,18 @@ MonoBehaviour:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
           type: 3}
         weight: 100
-        size: 10
+        size: 16
     - tier: 9
       weight: 0
       unitWeights:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
+          type: 3}
+        weight: 100
+        size: 16
+    - tier: 7
+      weight: 10
+      unitWeights:
+      - unit: {fileID: 5225712964640480476, guid: c3837f462facaab41aa6e4b14f8e0413,
           type: 3}
         weight: 100
         size: 10
@@ -214,6 +230,8 @@ MonoBehaviour:
       Value: 12
     - Key: "\u91CD\u578B\u5DE1\u903B\u961FC"
       Value: 12
+    - Key: "\u5766\u514B\u5DE1\u903B\u961F"
+      Value: 8
   - name: "\u65E0\u754F\u6A21\u677F"
     template:
     - tier: 1
@@ -294,11 +312,18 @@ MonoBehaviour:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
           type: 3}
         weight: 100
-        size: 10
+        size: 16
     - tier: 9
       weight: 0
       unitWeights:
       - unit: {fileID: 7758557937006963733, guid: d1309e6840826af4ba52fa01eb616a23,
+          type: 3}
+        weight: 100
+        size: 16
+    - tier: 7
+      weight: 10
+      unitWeights:
+      - unit: {fileID: 5225712964640480476, guid: c3837f462facaab41aa6e4b14f8e0413,
           type: 3}
         weight: 100
         size: 10
@@ -313,6 +338,8 @@ MonoBehaviour:
       Value: 12
     - Key: "\u91CD\u578B\u5DE1\u903B\u961FC"
       Value: 12
+    - Key: "\u5766\u514B\u5DE1\u903B\u961F"
+      Value: 8
   PatrolCreatValue: 240
   patrolCfgs:
   - name: "\u6218\u58EB\u5DE1\u903B\u961F"
@@ -351,6 +378,14 @@ MonoBehaviour:
       Value: 2
     - Key: 4
       Value: 2
+  - name: "\u5766\u514B\u5DE1\u903B\u961F"
+    units:
+    - Key: 2
+      Value: 4
+    - Key: 3
+      Value: 1
+    - Key: 7
+      Value: 1
   enemyVarietyType: 0
   ShowName: "\u51EF\u6492\u96C6\u56E2"
   Sprite: {fileID: 21300000, guid: 9031fba461cf47d469d975bcf4277f46, type: 3}

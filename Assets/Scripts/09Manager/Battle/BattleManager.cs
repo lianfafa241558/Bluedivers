@@ -90,7 +90,7 @@ namespace FPSGame.Managers
         private BoosterType[] _activeTeamEnhance;
 
         /// <summary>团灭判负的宽限时间（秒）。需大于治疗包部署时间，避免最后一次增援还在下落时误判</summary>
-        private const float WipeFailGrace = 10f;
+        private const float WipeFailGrace = 15f;
 
         /// <summary>增援战备（HealBag），初始化后缓存，避免判定时反复遍历</summary>
         private AirdropData _reinforceAd;

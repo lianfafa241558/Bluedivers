@@ -94,6 +94,9 @@ public class PlayerInputHandler : MonoBehaviour
     /// </summary>
     public bool CanProcessInput(bool allowOperation=false)
     {
+        // 自由相机 = PV 导演接管输入。只有导演切到「固定机位」时才把角色交还（UIState.PlayerControl）。
+        // ⚠ 放在 debugging 之前：调试开关不该把"导演态下角色乱动"放出来。
+        if (FPSGame.Data.UIState.WindowState == WindowStateEnum.FreeCamera && !FPSGame.Data.UIState.PlayerControl) return false;
         return debugging||((allowOperation||!InOperation) && (Time.time - LastEndOperateTime)>0.5f && Cursor.lockState == CursorLockMode.Locked);
     }
     public bool CanProcessInput(GameStateEnum state, bool allowOperation = false)
@@ -446,8 +449,8 @@ public class PlayerInputHandler : MonoBehaviour
     /// <returns></returns>
     float GetMouseAxis(bool isY)
     {
-        string mouseInputName = isY ? "" : "";
-        if (FPSGame.Data.UIState.WindowState == WindowStateEnum.FreeCamera || !CanProcessInput()) return 0;
+        // FreeCamera 的门控统一收在 CanProcessInput()（导演固定机位会放行），这里不再单判 WindowState。
+        if (!CanProcessInput()) return 0;
 
         int keyPrefix = isY ? 1 : 0;
         float speed = 100;

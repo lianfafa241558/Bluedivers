@@ -106,7 +106,9 @@ namespace FPSGame.Gameplay
                 int re = 0;
                 for (int i = 0; i < nests.Length; ++i)
                 {
-                    if(nests[i].Length>0) re += nests[i].Sum(item=>item.complete?1:0*item.reward) / nests[i].Length;
+                    // 每座独立结算：清掉一座就拿该座 reward。旧写法 `?1:0*item.reward` 因 `?:` 优先级低于 `*`
+                    // ⇒ 实际恒为 0/1，与 SO 里的 reward 完全脱钩（2026-11-25 修）
+                    if(nests[i].Length>0) re += nests[i].Sum(item=>item.complete?item.reward:0);
                 }
                 return re;
             }

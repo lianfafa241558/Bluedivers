@@ -57,6 +57,7 @@
 | **谁该上报伤害**（唯一入口）/ 护盾通道 / `None` 不吃范围伤害 | `topics/net-damage-report.md` |
 | 两端各算一次 / 伤害翻倍 / 支援单位同步 | `topics/net-dup-damage.md` |
 | 载具 4059（上下机）/ 4035（开火）/ 位姿 / 外观 | `topics/net-vehicle*.md` |
+| PV 导演 / 自由相机 / 机位 / 落点生成 | `2026-11-26.md` |
 | 编辑器 / Drawer / MCP / 编译验证 | `topics/tooling.md` |
 | plans 脚本清单 | `topics/plans-scripts.md` |
 | UI 预制体 / 面板布局 / 素材选图 | `topics/ui-wnd.md` |

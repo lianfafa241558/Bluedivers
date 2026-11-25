@@ -15,26 +15,26 @@ namespace FPSGame.Managers
     /// <summary>
     /// 巡逻队生成器
     /// 生成巡逻队需要的热度和阵营有关
-    /// 每级难度会降低5%热度需求(乘算)(最高的Lunatic降低75%)
+    /// 每级难度会降低5%热度需求(乘算)(最高的Lunatic降低65%)
     /// 每个玩家独立记录热度，每名额外的玩家会降低所有玩家10%的热度需求(乘算)
     /// 本身增加1/秒的热度
     /// 靠近"有影响力"的点时，会额外根据距离[50,150]米，产生[0.5,0]/秒的热量，影响区域不叠加
     /// 摧毁"有影响力"的点会提高(所有玩家)5%的产热速度
-    /// 完成主线任务会降低(所有玩家)20%的热度需求(乘算)，并且将撤离点设置为"有影响力"的点
-    /// 倒地的玩家会额外产生0.5/秒的热度，呼叫增援会立即产生20%的热度
+    /// 完成主线任务会降低(所有玩家)40%的热度需求(乘算)，并且将撤离点设置为"有影响力"的点
+    /// 呼叫增援会立即产生40%的热度
     /// 创建巡逻队有10秒的公共冷却
     /// 50米内，每有一名其他玩家，热度产生速度变为[1/(1+其他玩家人数)](多人分摊)
     /// 
     /// 例如:4个玩家在虫族的Lunatic清完了全图后靠近撤离点
     /// 为每名玩家刷出巡逻队的热度需求为:
-    /// [180(基础)*65%(难度)*70%(人数)*80%(主线)]=66
-    /// 产热速度为{[1+0.25(巢穴)+0.5(撤离点)]}/4= 0.4375 /s =150s
-    /// 也就是说在撤离点时，每名玩家150s(等效全队38s)就可以产生一个巡逻队
+    /// [180(基础)*65%(难度)*70%(人数)*58%(主线)]=47.5
+    /// 产热速度为{[1+0.4(巢穴)+0.5(撤离点)]}/4= 0.475 /s =100s
+    /// 也就是说在撤离点时，每名玩家100s(等效全队25s)就可以产生一个巡逻队
     /// 
     /// 再例如:1个玩家在虫族Extreme清完了全图后靠近撤离点
-    /// [180(基础)*80%(难度)*80%(主线)]=115.2
-    /// 产热速度为{[1+0.25(巢穴)+0.5(撤离点)]}= 1.75 /s = 65s
-    /// 65秒就可以产生一个巡逻队
+    /// [180(基础)*80%(难度)*58%(主线)]=83.5
+    /// 产热速度为{[1+0.4(巢穴)+0.5(撤离点)]}= 1.9 /s = 44s
+    /// 44秒就可以产生一个巡逻队
     /// 
     /// 当地图上的单位超过一个阈值时，将停止生成巡逻队，但热度会继续上升
     /// 定位混淆将提高25%的热度需求(乘算)
@@ -56,20 +56,18 @@ namespace FPSGame.Managers
         private const float PLAYER_REDUCTION_PER_EXTRA = 0.1f;
         /// <summary>基础每秒产热</summary>
         private const float BASE_HEAT_PER_SECOND = 1f;
-        /// <summary>倒地玩家额外产热</summary>
-        private const float DOWNED_HEAT_PER_SECOND = 0.5f;
         /// <summary>影响力点最大额外产热</summary>
         private const float HEATPOINT_BONUS = 0.5f;
         /// <summary>影响力点最小距离</summary>
         private const float HEATPOINT_MIN_DIST = 50f;
         /// <summary>影响力点最大距离</summary>
         private const float HEATPOINT_MAX_DIST = 150f;
-        /// <summary>摧毁巢穴+5%产热</summary>
-        private const float DESTROY_HEATPOINT_BONUS = 0.05f;
-        /// <summary>主线完成-20%需求</summary>
-        private const float MAIN_TASK_REDUCTION = 0.8f;
-        /// <summary>呼叫增援+20%热度</summary>
-        private const float REINFORCEMENT_INSTANT_HEAT = 0.2f;
+        /// <summary>摧毁巢穴+8%产热</summary>
+        private const float DESTROY_HEATPOINT_BONUS = 0.08f;
+        /// <summary>主线完成-42%需求</summary>
+        private const float MAIN_TASK_REDUCTION = 0.58f;
+        /// <summary>呼叫增援+40%热度</summary>
+        private const float REINFORCEMENT_INSTANT_HEAT = 0.4f;
         /// <summary>公共冷却10s</summary>
         private const float PATROL_COOLDOWN = 10f;
         /// <summary>地图最大单位数</summary>
@@ -326,7 +324,7 @@ namespace FPSGame.Managers
         private void OnEvacuateStart(PEVector3 evacuatePos)
         {
             Vector3 evacuate = evacuatePos.RawVector3;
-
+            OnPlayerCallReinforcement();
             foreach (var enemy in ActorsManager.Enemys)
             {
                 if (enemy == null || enemy.gameObject == null) continue;
@@ -345,17 +343,13 @@ namespace FPSGame.Managers
         /// <summary>
         /// 呼叫增援（预留方法，手动调用）
         /// </summary>
-        public void OnPlayerCallReinforcement(IActor player)
+        public void OnPlayerCallReinforcement()
         {
             for (int i = 0; i < _playerHeatList.Count; i++)
             {
-                if (_playerHeatList[i].player == player)
-                {
                     var data = _playerHeatList[i];
                     data.currentHeat += data.requiredHeat * REINFORCEMENT_INSTANT_HEAT;
                     _playerHeatList[i] = data;
-                    break;
-                }
             }
         }
         /// <summary>

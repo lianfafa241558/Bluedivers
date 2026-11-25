@@ -88,7 +88,16 @@ namespace FPSGame.Mission
                         --countDown;
                         suspendCountDown = suspendTime;
                         UpdateTip("请在撤离区坚守 [" + Tool.FloatToTime(countDown) + "]");
-                        if (countDown <= 0)
+                        if (countDown == 60)
+                        {
+                            CreatNotice("Ayane", "EvacuateStatic60S");
+                        }
+                        else if (countDown == 30)
+                        {
+                            CreatNotice("Ayane", "EvacuateStatic30S");
+                        }
+
+                        else if (countDown <= 0)
                         {
                             EndWait();
                             return true;
@@ -266,7 +275,8 @@ namespace FPSGame.Mission
             // 全队强化"专家救援飞行员"：缩短撤离等待时间
             float mul = BattleState.HaveBooster(BoosterType.ExpertPilot) ? 0.6f : 1f;
             countDown = Mathf.FloorToInt(m_EvacuateTime* mul);//如果有撤离效果就变短
-            //if(IsComplete) AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
+            AudioSvc.PlayMusic(AudioSvc.MusicGroup.Evacuate, 0.5f);
+            AudioSvc.SetLockMusic(true);
             CreatNotice("Ayane", "CountDownBegins");
             BattleEventBus.Evacuate(new(pos));
         }
@@ -346,6 +356,7 @@ namespace FPSGame.Mission
             // 起飞 = 本局再无交付机会：各玩家背包里还没交的欧帕兹直接在此时算已提交，
             // 否则结算中栏（GameEndWnd 读 CollectProperty）会显示"一件都没交"。
             Furniture_KeiSubmit.SubmitAllPlayersBags();
+            AudioSvc.SetLockMusic(false);
             CreatNotice("Ayane", "TakeOff");
             //WndManager.Instance.movieWnd.SetWndState(true);
             // 切阶段走事件（原 ServiceLocator.Flow.SetGameState）：GameRoot 订阅后落成既有的静态 setter

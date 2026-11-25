@@ -10,16 +10,6 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 500036101533136824, guid: d8ee86dd588792c429fc363e4674dc8d,
         type: 3}
-      propertyPath: WeaponRoot
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 500036101533136824, guid: d8ee86dd588792c429fc363e4674dc8d,
-        type: 3}
-      propertyPath: WeaponMuzzle
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 500036101533136824, guid: d8ee86dd588792c429fc363e4674dc8d,
-        type: 3}
       propertyPath: Damages.Array.data[0].ImpactVfx
       value: 
       objectReference: {fileID: 8167516518492074666, guid: 8d2c8a537bc7f3a419846a33ed0d318a,
@@ -130,8 +120,7 @@ PrefabInstance:
         type: 3}
       propertyPath: turrets.Array.data[1].weapon
       value: 
-      objectReference: {fileID: 4198496083940394909, guid: aca57d153c7290e4ab46daac26b62641,
-        type: 3}
+      objectReference: {fileID: 3844700704741706095}
     - target: {fileID: 5813950929470489947, guid: d8ee86dd588792c429fc363e4674dc8d,
         type: 3}
       propertyPath: turrets.Array.data[0].chassis
@@ -224,6 +213,18 @@ PrefabInstance:
       addedObject: {fileID: 8219288956338395599}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d8ee86dd588792c429fc363e4674dc8d, type: 3}
+--- !u!114 &3844700704741706095 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 500036101533136824, guid: d8ee86dd588792c429fc363e4674dc8d,
+    type: 3}
+  m_PrefabInstance: {fileID: 3723178114714582743}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1925424471e3fe949a952edf108dc17b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &5236302603768255270 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8863215722329632241, guid: d8ee86dd588792c429fc363e4674dc8d,

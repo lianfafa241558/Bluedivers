@@ -115,6 +115,18 @@ namespace FPSGame.Mission
                     break;
                 case EvacuateState.Land:
                     UpdateTip("进入雨云号完成撤离 [" + Tool.FloatToTime(countDown) + "]");
+                    if (countDown == 60)
+                    {
+                        CreatNotice("Ayane", "EvacuateMobile60S");
+                    }
+                    else if (countDown == 30)
+                    {
+                        CreatNotice("Ayane", "EvacuateMobile30S");
+                    }
+                    else if (countDown == 10)
+                    {
+                        CreatNotice("Ayane", "EvacuateMobile10S");
+                    }
                     if (--countDown <= 0) TimeOut();
                     break;
                 case EvacuateState.End:

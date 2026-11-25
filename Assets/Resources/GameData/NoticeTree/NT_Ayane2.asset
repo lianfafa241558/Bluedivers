@@ -24,7 +24,34 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 50
+  group: 8
+  flags: 0
+--- !u!114 &-8080708141757554200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane_EvacuateStatic30S
+  m_EditorClassIdentifier: 
+  groupName: EvacuateStatic30S
+  clips:
+  - audioClip: {fileID: 8300000, guid: fc619e44c59e46f41a30cb5698f85cea, type: 3}
+    subtitle: "\u9884\u8BA1\u5230\u8FBE\u65F6\u95F4\uFF1A30\u79D2"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
   group: 8
   flags: 0
 --- !u!114 &-7862145429025243397
@@ -51,6 +78,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 100
   group: 8
   flags: 0
@@ -80,6 +108,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 50
   group: 8
   flags: 0
@@ -109,6 +138,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 100
   group: 8
   flags: 0
@@ -136,6 +166,33 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
+  priority: 0
+  group: 8
+  flags: 0
+--- !u!114 &-3748280701699910387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane_EvacuateMobile_30S
+  m_EditorClassIdentifier: 
+  groupName: EvacuateMobile30S
+  clips:
+  - audioClip: {fileID: 8300000, guid: ee7d3abddefe6fa44b4734f33d11c8ba, type: 3}
+    subtitle: "\u5927\u5BB6\u8BF7\u6293\u7D27\uFF0C\u53EA\u670930\u79D2\u4E86"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
   priority: 0
   group: 8
   flags: 0
@@ -163,6 +220,7 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 102
   group: 8
   flags: 0
@@ -191,6 +249,11 @@ MonoBehaviour:
   - {fileID: -3353116320954551144}
   - {fileID: 921317011421383427}
   - {fileID: -6062258871928886837}
+  - {fileID: 2645736030024458624}
+  - {fileID: -3748280701699910387}
+  - {fileID: 4324719462686039962}
+  - {fileID: -8080708141757554200}
+  - {fileID: 5783959397676175691}
 --- !u!114 &921317011421383427
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -213,7 +276,60 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 100
+  group: 8
+  flags: 0
+--- !u!114 &2645736030024458624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane_EvacuateMobile_10S
+  m_EditorClassIdentifier: 
+  groupName: EvacuateMobile10S
+  clips:
+  - audioClip: {fileID: 8300000, guid: c34f975a1ac9f804da3ff722b6c7759d, type: 3}
+    subtitle: "\u6CA1\u65F6\u95F4\u4E86\uFF0C\u6211\u4EEC\u5FC5\u987B\u9A6C\u4E0A\u64A4\u79BB"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
+  group: 8
+  flags: 0
+--- !u!114 &4324719462686039962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane_EvacuateMobile_60S
+  m_EditorClassIdentifier: 
+  groupName: EvacuateMobile60S
+  clips:
+  - audioClip: {fileID: 8300000, guid: a90f9a2fb199f354ba64a8606082b8ee, type: 3}
+    subtitle: "\u8BF7\u5927\u5BB6\u6293\u7D27\u4E0A\u8239\uFF0C\u8FD8\u670960\u79D2"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
   group: 8
   flags: 0
 --- !u!114 &4621325969631382690
@@ -242,6 +358,33 @@ MonoBehaviour:
   fadeInTime: 0
   fadeOutTime: 0
   range: 20
+  isOrder: 0
   priority: 50
+  group: 8
+  flags: 0
+--- !u!114 &5783959397676175691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28a5dab150eab0f4eb4b2f43ae6a77c5, type: 3}
+  m_Name: NT_Ayane_EvacuateStatic60S
+  m_EditorClassIdentifier: 
+  groupName: EvacuateStatic60S
+  clips:
+  - audioClip: {fileID: 8300000, guid: 6fe83f3b837ce9642bd538a722b2868b, type: 3}
+    subtitle: "\u9884\u8BA1\u5230\u8FBE\u65F6\u95F4\uFF1A60\u79D2"
+  volumeRange: {x: 1, y: 1}
+  pitchRange: {x: 1, y: 1}
+  delayRange: {x: 0, y: 0}
+  fadeInTime: 0
+  fadeOutTime: 0
+  range: 60
+  isOrder: 0
+  priority: 0
   group: 8
   flags: 0

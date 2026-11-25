@@ -20,13 +20,20 @@ public partial class GameRoot : GameRootBase<GameRoot>
     public static float TimeScale
     {
         get => Instance ? Instance.timeScale : Time.timeScale;
-        set
-        {
-            var oldstste = Instance.timeScale;
-            Instance.timeScale = Time.timeScale = value;
-            Debug.LogWarning("时间刻度被设置为" + value);
-            GlobalEventBus.TimeScaleChange(oldstste, value);
-        }
+        set => SetTimeScale(value);
+    }
+
+    /// <summary>
+    /// 设置时间刻度的唯一写入点。
+    /// <para>▍<paramref name="log"/> 为什么存在：PV 导演的逐帧步进 / 滑杆拖动会每帧写一次，
+    /// 原来的 <c>Debug.LogWarning</c> 会把 Console 刷满并拖慢编辑器。</para>
+    /// </summary>
+    public static void SetTimeScale(float value, bool log = true)
+    {
+        var oldstste = Instance.timeScale;
+        Instance.timeScale = Time.timeScale = value;
+        if (log) Debug.LogWarning("时间刻度被设置为" + value);
+        GlobalEventBus.TimeScaleChange(oldstste, value);
     }
 
 

@@ -206,7 +206,7 @@ MonoBehaviour:
     chassis: {fileID: 4101532281278396278}
     barrel: {fileID: 5402802040102571149}
     weapon: {fileID: 9013657761431278986}
-    aimSharpness: 20
+    aimSharpness: 15
     autoRotateSpeed: 0
     detectionFireDelay: 0.2
     minAttackRange: 0
@@ -221,7 +221,7 @@ MonoBehaviour:
     chassis: {fileID: 188637982285172159}
     barrel: {fileID: 5053838167270774871}
     weapon: {fileID: 6312367457582549104}
-    aimSharpness: 30
+    aimSharpness: 25
     autoRotateSpeed: 0
     detectionFireDelay: 0.5
     minAttackRange: 3
@@ -306,7 +306,7 @@ NavMeshAgent:
   m_Speed: 3
   m_Acceleration: 8
   avoidancePriority: 30
-  m_AngularSpeed: 120
+  m_AngularSpeed: 15
   m_StoppingDistance: 0.2
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
@@ -405,7 +405,7 @@ MonoBehaviour:
     NoSource: 1
     ExplosionAP: 0
     demolishValue: 0
-    UseCollisionDirection: 1
+    UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0.1
     ImpactVfx: {fileID: 5787557760003359419, guid: a3cf9ad6752f4fc448bcaaad7edfea05,
       type: 3}
@@ -615,7 +615,7 @@ MonoBehaviour:
       Value: 0.5
   BulletFlag: 8
   Damages:
-  - BulletPrefab: {fileID: 828996816448062211, guid: 6af942e200f11d247825ba65533e069e,
+  - BulletPrefab: {fileID: 1177580448967823432, guid: e171309708f06b74193eb48b71f1c59f,
       type: 3}
     LandingPrefab: {fileID: 0}
     Speed: 500
@@ -753,7 +753,7 @@ MonoBehaviour:
     - Key: 1
       Value: 54
     - Key: 2
-      Value: 0.05
+      Value: 0.1
     - Key: 7
       Value: 6
     - Key: 0
@@ -1413,6 +1413,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 8443676718022177101}
+    - targetCorrespondingSourceObject: {fileID: -3029032871660112297, guid: 80247b7abc44b2e40b91fb6eed85f860,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 569162669552201124}
   m_SourcePrefab: {fileID: 100100000, guid: 80247b7abc44b2e40b91fb6eed85f860, type: 3}
 --- !u!4 &188637982285172159 stripped
 Transform:
@@ -2314,6 +2318,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.5, y: 1, z: 0.3}
   m_Center: {x: 0, y: 0, z: -0.2}
+--- !u!1 &7680781664358737610 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3029032871660112297, guid: 80247b7abc44b2e40b91fb6eed85f860,
+    type: 3}
+  m_PrefabInstance: {fileID: 4566976149671383197}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &569162669552201124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7680781664358737610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea3b95a4dfe71f44489ac67a3a5e37c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  data: {fileID: 11400000, guid: e8d403d9a98710e49b7f9e76aad8e80d, type: 2}
 --- !u!1 &7976443837653837547 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3327265170733009290, guid: 80247b7abc44b2e40b91fb6eed85f860,

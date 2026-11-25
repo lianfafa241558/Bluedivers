@@ -4977,7 +4977,7 @@ MonoBehaviour:
     limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
-    barrelSetOffset: {x: -0.000000003809697, y: -0.08715571, z: 0.9961947, w: -0.000000043545054}
+    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
   - type: 0
@@ -4992,7 +4992,7 @@ MonoBehaviour:
     limitFollow: {fileID: 0}
     verticalLimitRotation: 0
     allowDeviation: 0.005
-    barrelSetOffset: {x: -0.000000003809697, y: -0.08715571, z: 0.9961947, w: -0.000000043545054}
+    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
   AttackStop: 1
@@ -5079,7 +5079,6 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 4836506824394967111}
-  demolishValue: -1
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
@@ -5144,6 +5143,7 @@ MonoBehaviour:
             m_BoolArgument: 0
           m_CallState: 2
   BirthMaterial: {fileID: 0}
+  BirthTrigger: 0
 --- !u!114 &5387209107552714108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6421,6 +6421,7 @@ MonoBehaviour:
   armorLevel: 0
   useHealthInsteadOfArmor: 0
   armorValue: 35
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 2856553618272771027}
@@ -6477,6 +6478,7 @@ MonoBehaviour:
   armorLevel: 0
   useHealthInsteadOfArmor: 0
   armorValue: 35
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 3414127846672739168}
@@ -6581,6 +6583,7 @@ MonoBehaviour:
   armorLevel: 0
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
@@ -6632,6 +6635,7 @@ MonoBehaviour:
   armorLevel: 0
   useHealthInsteadOfArmor: 0
   armorValue: 25
+  demolishValue: -1
   LineArmor:
   - {fileID: 819904782059138740}
   armorBreakEffect:
@@ -6687,6 +6691,7 @@ MonoBehaviour:
   armorLevel: 0
   useHealthInsteadOfArmor: 0
   armorValue: 25
+  demolishValue: -1
   LineArmor:
   - {fileID: 1035821033587575804}
   armorBreakEffect:
@@ -6748,6 +6753,7 @@ MonoBehaviour:
   armorLevel: 0
   useHealthInsteadOfArmor: 1
   armorValue: 18
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 6274234479142125502}
@@ -6949,27 +6955,27 @@ PrefabInstance:
     - target: {fileID: 599609976182167998, guid: b19b26ab789c57e43bc31b722d6e51f6,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.99904823
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 599609976182167998, guid: b19b26ab789c57e43bc31b722d6e51f6,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.0436195
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 599609976182167998, guid: b19b26ab789c57e43bc31b722d6e51f6,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.0000006556511
+      value: -0.043619405
       objectReference: {fileID: 0}
     - target: {fileID: 599609976182167998, guid: b19b26ab789c57e43bc31b722d6e51f6,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.000000029802322
+      value: 0.9990483
       objectReference: {fileID: 0}
     - target: {fileID: 599609976182167998, guid: b19b26ab789c57e43bc31b722d6e51f6,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 599609976182167998, guid: b19b26ab789c57e43bc31b722d6e51f6,
         type: 3}
@@ -6985,6 +6991,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Layer
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5254239875945967186, guid: b19b26ab789c57e43bc31b722d6e51f6,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 5254239875945967186, guid: b19b26ab789c57e43bc31b722d6e51f6,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 5254239875945967186, guid: b19b26ab789c57e43bc31b722d6e51f6,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 6386635922366813501, guid: b19b26ab789c57e43bc31b722d6e51f6,
         type: 3}

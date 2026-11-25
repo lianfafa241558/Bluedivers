@@ -99,13 +99,8 @@ namespace FPSGame.Gameplay
             }
 
 
-            //Debug.LogError("创建了" + gameObject.name, gameObject);
-            //忽略武器的碰撞箱
-            //Debug.LogError("所有" + Owner);
-            /*
-            Collider[] weaponColliders = Owner.GetComponentsInChildren<Collider>();
-            if (weaponColliders.IsValid()) m_IgnoredColliders.AddRange(weaponColliders);
-            */
+            // 发射者自身的碰撞体不走这里：由 IsHitValid 直接按 IgnoredColliders 过滤（见那里的说明）。
+
             // 生命引信：时长记下来，弹射时要按同一时长重起一段（见 ResetLife）
             m_LifeTime = WeaponBase.CurrentLife;
             m_LifeRoutine = null;    // 池化复用：上一段的句柄已失效
@@ -307,6 +302,18 @@ namespace FPSGame.Gameplay
 
         bool IsHitValid(RaycastHit hit)
         {
+            // ⚠ 发射者自己的碰撞体一律不算命中。高抛炮弹的炮口(fire_01)就落在自身炮管 BoxCollider 内，
+            //   SphereCast 起点与它重叠 ⇒ Unity 只给 distance=0 的退化命中 ⇒ 出膛即炸在炮口高度。
+            //   列表由 EnemyController.FindAndInitializeAllWeapons 填；玩家武器为 null ⇒ 行为不变。
+            Collider[] ignored = IgnoredColliders;
+            if (ignored != null)
+            {
+                for (int i = 0; i < ignored.Length; ++i)
+                {
+                    if (ignored[i] == hit.collider) return false;
+                }
+            }
+
             //Debug.LogError("尝试碰撞"+ hit.collider);
             var ihd = hit.collider.GetComponent<IgnoreHitDetection>();
             //使用忽略组件忽略点击

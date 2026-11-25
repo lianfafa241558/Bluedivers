@@ -1,0 +1,20 @@
+
+## 增援治疗包（战备 id=9 / HealBag）救不到人 → 改为"出现即锁定目标 + 强制复活"
+
+- 现象：增援落地后经常一个都救不到（旧实现 `HelpPlayer` 里 `Vector3.Distance(item.Pos, transform.position) <= 5`）。
+  根因链：呼叫 → 运输机俯冲 arriveTime=5s → 卸载后包再自由落体 → `LimitedLife` 7s 到点才 OnEnd，这期间尸体被爆炸推走/包落偏，
+  5m 圆永远匹配不上；且 `ActorsManager.Players` 里倒下的人 `ActorState=Dead` 是硬事实，而旧码用**距离**当唯一判据。
+- 改法（只动 `Assets/Scripts/10_Effect/HealBag.cs`，不碰 09Manager 与契约）：
+  - 实现 `IRecyclable`：`OnShow()` 里 `CaptureTargets()`。⚠ 关键：包是 `VFXManager.Creat` 池化复用，`Instantiate` 那一刻
+    `OnEnable` 跑在 **VFXManager 的 transform 下（位置还没摆）**，所以不能拿 `OnEnable/Awake` 当锚点；`OnShow` 是 Creat 里
+    摆好 position/parent 之后才回调的。`Start` 里留一次 `!_captured` 兜底（非池化路径）。
+  - `CaptureTargets`：遍历 `ActorsManager.Players`，取 `ActorState == Dead` 且有 `Furniture_PlayerDown` 的，按**水平距离**升序存 `_targets`；
+    因为 `AirdropController.OnAirdropStateChange` 的 Wait 分支是"每个死人各 ReleaseAirdrop 一个包"（`player.Pos`），最近者即本包该救的人。
+  - `HelpPlayer`（LimitedLife.OnEnd 的 UnityEvent，方法名/签名未变）：`FirstDowned()` = 优先 `canOperate` 的，其次仍 `ActorState.Dead` 的；
+    **不再看距离**；`if (!target.Handle(gameObject)) target.Operate();` 强制拉起（Handle 只是"能否被交互"的门，会被 inOperate 挡住）；
+    随后 `IHealth.Heal(100)`。
+    ⚠ 必须走 `Operate` 链路而不是直接 `ReviveSelf()`：盟友实例要靠 base.Operate 抛的 `GlobalEventBus.FurnitureOperate`
+    让 `NetPlayerStateBridge` 上报 4028，否则只复活本端镜像。
+  - 兜底：`_targets.Count == 0` 时在落地时补锁一次（联机下"倒地"状态可能比战备复现消息晚到）；全都不倒地则一条 `NetSyncLog.Warn` + return。
+- 验证：`offline_compile.py 10_Effect` 0 error；Unity 侧 `Library/ScriptAssemblies/10_Effect.dll` mtime 刷新、Console 无相关报错；BOM+CRLF 保持。
+- 顺手记：本工程**已有 asmdef**（10_Effect / 09_Managers / 06_Gameplay…都有独立 dll 与 csproj），早期"巨型 Assembly-CSharp"诊断已过期。

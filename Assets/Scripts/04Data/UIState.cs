@@ -1,5 +1,7 @@
 ﻿// 写入方唯一 = 09_Managers 的 WndManager（与 TeamState/LogicFrame 同一套写入保护手法）。
+// + 10_Effect 的 DirectorMode（PV 导演固定机位时把玩家输入交还，见 PlayerControl）。
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("09_Managers")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("10_Effect")]
 
 namespace FPSGame.Data
 {
@@ -22,5 +24,16 @@ namespace FPSGame.Data
     {
         /// <summary>当前界面状态。未就绪时 = <c>Game</c>（与旧 <c>WndManager.WindowState</c> 的兜底语义一致）。</summary>
         public static FPSGame.Core.WindowStateEnum WindowState { get; internal set; } = FPSGame.Core.WindowStateEnum.Game;
+
+        /// <summary>
+        /// 自由相机态下是否把输入交还给玩家角色（PV 导演的「固定机位」态）。
+        ///
+        /// <para>▍为什么放在这里：<c>PlayerInputHandler</c>（06_Gameplay）看不见 10_Effect 的 <c>DirectorMode</c>，
+        /// 而它要的是"这一帧该不该吃输入"的**值查询**（不是"变了"的通知）⇒ 按"值走数据自持"落到本类。</para>
+        ///
+        /// <para>▍写入方：<c>DirectorMode</c>，进入/离开固定机位时**成对置位**；窗口关闭（Exit）必须复位 false。
+        /// ⚠ 只在 <see cref="WindowState"/> == FreeCamera 时有意义，其它界面状态一律忽略它。</para>
+        /// </summary>
+        public static bool PlayerControl { get; internal set; }
     }
 }

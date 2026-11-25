@@ -106,7 +106,7 @@ PrefabInstance:
     - target: {fileID: 7514991704324305897, guid: a12fb66335d7750469757d23ff7b0473,
         type: 3}
       propertyPath: m_Name
-      value: Robot_PMC_TransportShip
+      value: TransportShip_PMC
       objectReference: {fileID: 0}
     - target: {fileID: 7542915970699404389, guid: a12fb66335d7750469757d23ff7b0473,
         type: 3}
@@ -116,5 +116,58 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7514991704324305897, guid: a12fb66335d7750469757d23ff7b0473,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6427113189797372012}
   m_SourcePrefab: {fileID: 100100000, guid: a12fb66335d7750469757d23ff7b0473, type: 3}
+--- !u!1 &7420836258381687887 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7514991704324305897, guid: a12fb66335d7750469757d23ff7b0473,
+    type: 3}
+  m_PrefabInstance: {fileID: 1060182517479120806}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6427113189797372012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7420836258381687887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c38bd72727a07134aaba57de6aef07e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  delayTime: 2
+  selfExplosionTime: 0
+  weapon: {fileID: 0}
+  go: {fileID: 7420836258381687887}
+  UseDiffScale: 1
+  DamageData:
+    DamageExplosion: 500
+    ExplosionInnerRange: 3
+    ExplosionRange: 10
+    DestructeRadius: 4
+    ShockwaveRadius: 8
+    ShockwaveForce: 5
+    DamageGroupExplosion:
+    - Key: 1
+      Value: 1
+    - Key: 2
+      Value: 1
+    AboVulnerabilityGroup: []
+    SoundRadius: 800
+    ImpactSoundRadius: 0
+    NoSource: 1
+    ExplosionAP: 7
+    demolishValue: 40
+    UseCollisionDirection: 1
+    ImpactVfxSpawnOffset: 0.1
+    ImpactVfx: {fileID: 5787557760003359419, guid: a3cf9ad6752f4fc448bcaaad7edfea05,
+      type: 3}
+    ImpactSfx: {fileID: 8300000, guid: 879e8f9020762ae4fb63c3b2370decc5, type: 3}
+    UseHole: 0
+    Hole: {fileID: 0}
+    OnlyTerrain: 0

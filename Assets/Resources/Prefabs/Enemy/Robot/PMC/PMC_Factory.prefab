@@ -83,13 +83,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWeakness: 0
   explosionResistance: 0.5
-  armorLevel: 4
+  armorLevel: 6
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: 40
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
-  demolishValue: 40
   isMain: 0
   showArmor: 0
 --- !u!65 &199774465253756156
@@ -448,10 +448,10 @@ MonoBehaviour:
   armorLevel: 2
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: 30
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
-  demolishValue: -1
   isMain: 0
   showArmor: 0
 --- !u!65 &372480650720450257
@@ -642,7 +642,6 @@ MonoBehaviour:
   - Key: 9
     Value: 0
   MainPart: {fileID: 8691633278376171532}
-  demolishValue: 40
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
@@ -716,6 +715,7 @@ MonoBehaviour:
   fxMaterial: {fileID: 2100000, guid: fa184ce1e23e3564e8d105aa74ee6002, type: 2}
   events: []
   BirthMaterial: {fileID: 0}
+  BirthTrigger: 0
   UseAttack: 0
 --- !u!1001 &3756179005374646842
 PrefabInstance:
