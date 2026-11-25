@@ -233,6 +233,11 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0.3596048
       objectReference: {fileID: 0}
+    - target: {fileID: 4511809567977909142, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: _knockbackImmune
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5053838167270774871, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
       propertyPath: m_LocalRotation.w
@@ -331,17 +336,54 @@ PrefabInstance:
     - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
       propertyPath: Damages.Array.data[0].Speed
-      value: 100
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
       propertyPath: Damages.Array.data[0].Gravity
-      value: 100
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
+      propertyPath: Damages.Array.data[0].ImpactVfx
+      value: 
+      objectReference: {fileID: 5787557760003359419, guid: a3cf9ad6752f4fc448bcaaad7edfea05,
+        type: 3}
+    - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
       propertyPath: Damages.Array.data[0].MaxLifeTime
-      value: 1.5
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: Damages.Array.data[0].LandingPrefab
+      value: 
+      objectReference: {fileID: 5724586729671233977, guid: 0a58c84d03d7a5540ba21f5d1ad785ef,
+        type: 3}
+    - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: Damages.Array.data[0].ExplosionRange
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: Damages.Array.data[0].ShockwaveForce
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: Damages.Array.data[0].DestructeRadius
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: Damages.Array.data[0].ShockwaveRadius
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: Damages.Array.data[0].UseCollisionDirection
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6419942815123994723, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
@@ -400,6 +442,21 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
+      propertyPath: turrets.Array.data[0].type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: turrets.Array.data[0].barrel
+      value: 
+      objectReference: {fileID: 4890989740926898725}
+    - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: turrets.Array.data[0].weapon
+      value: 
+      objectReference: {fileID: 5933658029391790594}
+    - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
       propertyPath: turrets.Array.data[1].barrel
       value: 
       objectReference: {fileID: 0}
@@ -410,8 +467,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
+      propertyPath: turrets.Array.data[0].chassis
+      value: 
+      objectReference: {fileID: 530496178752210893}
+    - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
       propertyPath: turrets.Array.data[1].chassis
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: turrets.Array.data[0].limitRotation
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
@@ -422,6 +489,11 @@ PrefabInstance:
         type: 3}
       propertyPath: turrets.Array.data[0].autoRotateSpeed
       value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6428725333665192580, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: turrets.Array.data[0].verticalLimitRotation
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6553225973232097592, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
@@ -477,6 +549,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalRotation.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6888879532152864327, guid: c3837f462facaab41aa6e4b14f8e0413,
+        type: 3}
+      propertyPath: m_Name
+      value: RobotWeapon_Mrotar
       objectReference: {fileID: 0}
     - target: {fileID: 8015639210858924119, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
@@ -620,23 +697,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8911005565198888388, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.0006029439
-      objectReference: {fileID: 0}
-    - target: {fileID: 8911005565198888388, guid: c3837f462facaab41aa6e4b14f8e0413,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0.054999948
-      objectReference: {fileID: 0}
-    - target: {fileID: 8911005565198888388, guid: c3837f462facaab41aa6e4b14f8e0413,
-        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8971839758860604753, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.7
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8971839758860604753, guid: c3837f462facaab41aa6e4b14f8e0413,
         type: 3}
@@ -659,3 +726,27 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c3837f462facaab41aa6e4b14f8e0413, type: 3}
+--- !u!4 &530496178752210893 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 188637982285172159, guid: c3837f462facaab41aa6e4b14f8e0413,
+    type: 3}
+  m_PrefabInstance: {fileID: 415068148089965170}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4890989740926898725 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5053838167270774871, guid: c3837f462facaab41aa6e4b14f8e0413,
+    type: 3}
+  m_PrefabInstance: {fileID: 415068148089965170}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5933658029391790594 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6312367457582549104, guid: c3837f462facaab41aa6e4b14f8e0413,
+    type: 3}
+  m_PrefabInstance: {fileID: 415068148089965170}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1925424471e3fe949a952edf108dc17b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

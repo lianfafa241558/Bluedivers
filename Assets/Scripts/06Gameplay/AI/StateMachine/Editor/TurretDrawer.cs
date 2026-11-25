@@ -23,9 +23,12 @@ namespace FPSGame.AI.Editor
                 return FieldHeight + LineSpacing;
 
             bool selfBody = IsSelfBody(property);
+            bool coaxial = IsCoaxial(property);
             var limitRotationProp = property.FindPropertyRelative("limitRotation");
             bool showLimitFollow = limitRotationProp != null && limitRotationProp.intValue > 0;
-            int lines = selfBody ? GetSelfBodyLineCount(showLimitFollow) : GetFullLineCount(showLimitFollow);
+            int lines = coaxial ? GetCoaxialLineCount()
+                : selfBody ? GetSelfBodyLineCount(showLimitFollow)
+                : GetFullLineCount(showLimitFollow);
             return lines * (FieldHeight + LineSpacing);
         }
 
@@ -47,6 +50,7 @@ namespace FPSGame.AI.Editor
             var dotProp = property.FindPropertyRelative("dot");
 
             bool selfBody = IsSelfBody(property);
+            bool coaxial = IsCoaxial(property);
 
             float y = position.y;
             float fullWidth = position.width;
@@ -54,7 +58,7 @@ namespace FPSGame.AI.Editor
 
             // ---- Foldout 头部 ----
             Rect foldoutRect = new Rect(position.x, y, fullWidth, FieldHeight);
-            var foldoutLabel = BuildFoldoutLabel(property, chassisProp, barrelProp, weaponProp, selfBody);
+            var foldoutLabel = BuildFoldoutLabel(property, chassisProp, barrelProp, weaponProp, selfBody, coaxial);
             property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, foldoutLabel, true);
             y += rowH;
 
@@ -64,7 +68,18 @@ namespace FPSGame.AI.Editor
             // ---- Section 1: 结构 ----
             DrawSectionHeader(position.x, ref y, fullWidth, "结构");
 
-            if (selfBody)
+            if (coaxial)
+            {
+                // 同轴炮塔：不旋转 ⇒ 没有底盘/炮管转轴，只有 绑定武器 + 炮口(复用 barrel 字段)
+                Rect weaponRect = new Rect(position.x, y, fullWidth, FieldHeight);
+                DrawObjectFieldWithChinese(weaponRect, weaponProp, "绑定武器");
+                y += rowH;
+
+                Rect muzzleRect = new Rect(position.x, y, fullWidth, FieldHeight);
+                DrawObjectFieldWithChinese(muzzleRect, barrelProp, "炮口");
+                y += rowH;
+            }
+            else if (selfBody)
             {
                 // 自体炮塔：只显示底盘（炮管/武器不显示）
                 Rect chassisRect = new Rect(position.x, y, fullWidth, FieldHeight);
@@ -95,7 +110,20 @@ namespace FPSGame.AI.Editor
             DrawSectionHeader(position.x, ref y, fullWidth, "瞄准参数");
 
             float halfW = (fullWidth - 8f) * 0.5f;
-            if (selfBody)
+            if (coaxial)
+            {
+                // 同轴炮塔：瞄准由本体朝向决定，只留开火相关的阈值 + 炮口对准容差
+                Rect delayRect = new Rect(position.x, y, halfW, FieldHeight);
+                Rect minRangeRect = new Rect(delayRect.xMax + 8f, y, halfW, FieldHeight);
+                DrawFloatFieldWithChinese(delayRect, detectionFireDelayProp, "开火延迟");
+                DrawFloatFieldWithChinese(minRangeRect, minAttackRangeProp, "最小攻击距离");
+                y += rowH;
+
+                Rect devRect = new Rect(position.x, y, halfW, FieldHeight);
+                DrawFloatFieldWithChinese(devRect, allowDeviationProp, "允许偏差(弧度)");
+                y += rowH;
+            }
+            else if (selfBody)
             {
                 // 自体炮塔：只显示水平限制 + 瞄准锐度（无垂直/混合/开火延迟）
                 Rect limitRect = new Rect(position.x, y, fullWidth, FieldHeight);
@@ -182,6 +210,23 @@ namespace FPSGame.AI.Editor
             return typeProp.enumValueIndex == (int)Turret.TurretType.SelfBody;
         }
 
+        /// <summary>是否为同轴炮塔（不旋转，只登记绑定武器供控制器触发）</summary>
+        private static bool IsCoaxial(SerializedProperty property)
+        {
+            var typeProp = property.FindPropertyRelative("type");
+            if (typeProp == null) return false;
+            return typeProp.enumValueIndex == (int)Turret.TurretType.Coaxial;
+        }
+
+        /// <summary>
+        /// 同轴炮塔展开行数：foldout + 结构标题 + 绑定武器 + 炮口 + 类型 + 参数标题
+        /// + 开火延迟/最小攻击距离 + 允许偏差。
+        /// </summary>
+        private static int GetCoaxialLineCount()
+        {
+            return 8;
+        }
+
         /// <summary>
         /// 自体炮塔展开行数：foldout + 结构标题 + 底盘 + 类型 + 参数标题 + 水平限制 + [跟随物体] + 转向/巡逻速度。
         /// 水平限制为 0 时隐藏跟随物体行。
@@ -202,10 +247,25 @@ namespace FPSGame.AI.Editor
 
         // ---- Helper: 构建 Foldout 标签（显示摘要信息） ----
         private static GUIContent BuildFoldoutLabel(SerializedProperty property,
-            SerializedProperty chassis, SerializedProperty barrel, SerializedProperty weapon, bool selfBody)
+            SerializedProperty chassis, SerializedProperty barrel, SerializedProperty weapon, bool selfBody, bool coaxial)
         {
             string displayName = property.displayName;
             var parts = new System.Text.StringBuilder();
+
+            // 同轴炮塔没有底盘，摘要只显示 武器 + 炮口(barrel 字段)
+            if (coaxial)
+            {
+                if (weapon?.objectReferenceValue != null)
+                    parts.Append("武器✓");
+                else
+                    parts.Append("武器✗");
+
+                if (barrel?.objectReferenceValue != null)
+                    parts.Append(" 炮口✓");
+                else
+                    parts.Append(" 炮口✗");
+                return new GUIContent($" {displayName}  [{parts}]");
+            }
 
             if (chassis?.objectReferenceValue != null)
                 parts.Append("底盘✓");

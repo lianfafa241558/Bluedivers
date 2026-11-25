@@ -5039,7 +5039,7 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
-  _knockbackWeight: 1
+  _knockbackWeight: 3
   _knockbackDrag: 3
   _knockbackMaxSpeed: 20
   _pauseAutoRepathWhileKnocked: 1
@@ -5156,7 +5156,6 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 7201462889275279095}
-  demolishValue: -1
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
@@ -5225,6 +5224,7 @@ MonoBehaviour:
             m_BoolArgument: 0
           m_CallState: 2
   BirthMaterial: {fileID: 0}
+  BirthTrigger: 0
 --- !u!1 &6568554306528623045
 GameObject:
   m_ObjectHideFlags: 0
@@ -6682,6 +6682,7 @@ MonoBehaviour:
   armorLevel: 2
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: -1
   LineArmor:
   - {fileID: 164622262320047789}
   armorBreakEffect: []
@@ -6734,6 +6735,7 @@ MonoBehaviour:
   armorLevel: 2
   useHealthInsteadOfArmor: 0
   armorValue: 125
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 2836887466394278951}
@@ -6802,6 +6804,7 @@ MonoBehaviour:
   armorLevel: 2
   useHealthInsteadOfArmor: 0
   armorValue: 125
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 3430416146359364756}
@@ -6891,6 +6894,7 @@ MonoBehaviour:
   armorLevel: 2
   useHealthInsteadOfArmor: 0
   armorValue: 60
+  demolishValue: -1
   LineArmor:
   - {fileID: 2116825141210901743}
   armorBreakEffect:
@@ -6948,6 +6952,7 @@ MonoBehaviour:
   armorLevel: 2
   useHealthInsteadOfArmor: 0
   armorValue: 60
+  demolishValue: -1
   LineArmor:
   - {fileID: 5773911545586853656}
   armorBreakEffect:
@@ -7032,6 +7037,7 @@ MonoBehaviour:
   armorLevel: 1
   useHealthInsteadOfArmor: 1
   armorValue: 30
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 6858210559977113849}

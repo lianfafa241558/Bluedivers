@@ -72,6 +72,7 @@ namespace FPSGame.Core
         /// <summary>Animator 参数 <c>Entry</c>（hash = -354373004）</summary>
         public static int k_AnimEntry { get; } = Animator.StringToHash("Entry");
 
+
         /// <summary>
         /// 战斗场景名
         /// </summary>

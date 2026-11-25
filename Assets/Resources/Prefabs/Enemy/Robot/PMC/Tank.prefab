@@ -184,7 +184,7 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
-  _knockbackWeight: 1
+  _knockbackWeight: 10
   _knockbackDrag: 3
   _knockbackMaxSpeed: 20
   _pauseAutoRepathWhileKnocked: 1
@@ -202,26 +202,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turrets:
-  - type: 0
+  - type: 1
     chassis: {fileID: 4101532281278396278}
-    barrel: {fileID: 188637982285172159}
-    weapon: {fileID: 6312367457582549104}
-    aimSharpness: 30
-    autoRotateSpeed: 0
-    detectionFireDelay: 0.5
-    minAttackRange: 0
-    limitRotation: 0
-    limitFollow: {fileID: 0}
-    verticalLimitRotation: 20
-    allowDeviation: 0.005
-    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
-    dot: 1
-    meleeRangeThreshold: 5
-  - type: 0
-    chassis: {fileID: 5402802040102571149}
     barrel: {fileID: 5402802040102571149}
     weapon: {fileID: 9013657761431278986}
-    aimSharpness: 1
+    aimSharpness: 20
     autoRotateSpeed: 0
     detectionFireDelay: 0.2
     minAttackRange: 0
@@ -232,10 +217,40 @@ MonoBehaviour:
     barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
     dot: 1
     meleeRangeThreshold: 5
+  - type: 0
+    chassis: {fileID: 188637982285172159}
+    barrel: {fileID: 5053838167270774871}
+    weapon: {fileID: 6312367457582549104}
+    aimSharpness: 30
+    autoRotateSpeed: 0
+    detectionFireDelay: 0.5
+    minAttackRange: 3
+    limitRotation: 0
+    limitFollow: {fileID: 0}
+    verticalLimitRotation: 20
+    allowDeviation: 0.005
+    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
+    dot: 1
+    meleeRangeThreshold: 5
+  - type: 2
+    chassis: {fileID: 5402802040102571149}
+    barrel: {fileID: 5053838167270774871}
+    weapon: {fileID: 9013657761431278986}
+    aimSharpness: 1
+    autoRotateSpeed: 0
+    detectionFireDelay: 0.2
+    minAttackRange: 0
+    limitRotation: 1
+    limitFollow: {fileID: 5053838167270774871}
+    verticalLimitRotation: 1
+    allowDeviation: 0.01
+    barrelSetOffset: {x: 0, y: 0, z: 0, w: 1}
+    dot: 1
+    meleeRangeThreshold: 5
   AttackStop: 0
   WeakPointHitStunDuration: 1
   showState: 0
-  AttackStopDistanceRatio: 0.2
+  AttackStopDistanceRatio: 0.3
   MaintainMaxDis: 0
   EncircleDistance: 8
   PatrolSpeed: 2
@@ -316,7 +331,6 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 6116164257149206712}
-  demolishValue: -1
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
@@ -334,7 +348,7 @@ MonoBehaviour:
   - Key: 9
     Value: 400
   - Key: 11
-    Value: 400
+    Value: 500
   - Key: 10
     Value: 100
 --- !u!114 &7042203559953074835
@@ -352,9 +366,10 @@ MonoBehaviour:
   Animator: {fileID: 114636659793373595}
   fxData: {fileID: 11400000, guid: 9f20c69355625ba4f8d7590b6b34988a, type: 2}
   fxEvent: {fileID: 11400000, guid: 97fb14bbb459ba34e9445874ed6cbc7f, type: 2}
-  fxMaterial: {fileID: 2100000, guid: 489100040025fbf4dbf69b770b06b4fd, type: 2}
+  fxMaterial: {fileID: 2100000, guid: f0eb700a3c4504f41b98a6f5a108a5e2, type: 2}
   events: []
   BirthMaterial: {fileID: 0}
+  BirthTrigger: 0
 --- !u!114 &2656516936744038205
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -550,7 +565,7 @@ Transform:
   m_GameObject: {fileID: 6888879532152864327}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1.5}
+  m_LocalPosition: {x: 0.0006029439, y: 0, z: -0.054999948}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -608,7 +623,7 @@ MonoBehaviour:
     InheritWeaponSpeed: 0
     MaxLifeTime: 1
     MaxRange: -1
-    MinRange: 3
+    MinRange: 5
     NoSource: 0
     SoundRadius: 20
     ImpactSoundRadius: 8
@@ -622,7 +637,7 @@ MonoBehaviour:
     WeaknessBonus: 0
     ExplosionInnerRange: 2
     ExplosionRange: 6
-    DestructeRadius: 1
+    DestructeRadius: 2
     ShockwaveRadius: 10
     ShockwaveForce: 3
     DamageGroupExplosion:
@@ -633,12 +648,12 @@ MonoBehaviour:
     AboVulnerabilityGroup:
     - Key: 6
       Value: 3
-    UseCollisionDirection: 1
+    UseCollisionDirection: 0
     ImpactVfxSpawnOffset: 0
     ImpactVfx: {fileID: 7679619540903172253, guid: 903ce8d536e680c4ba7d866df85e7ba3,
       type: 3}
     ImpactSfx: {fileID: 8300000, guid: f51c4637af2c5444cb6ae43fd10e5a8f, type: 3}
-    UseHole: 1
+    UseHole: 0
     Hole: {fileID: 0}
     OnlyTerrain: 0
     DirectAP: 5
@@ -740,7 +755,7 @@ MonoBehaviour:
     - Key: 2
       Value: 0.05
     - Key: 7
-      Value: 2
+      Value: 6
     - Key: 0
       Value: -1
     - Key: 11
@@ -761,7 +776,7 @@ MonoBehaviour:
     NoSource: 0
     SoundRadius: 20
     ImpactSoundRadius: 8
-    DamageExplosion: 1
+    DamageExplosion: 0
     DamageDirect: 4
     DamageGroupDirect:
     - Key: 0
@@ -822,7 +837,7 @@ MonoBehaviour:
   showReloadTime: 0
   showCool: 0
   ShootType: 1
-  WeaponFlag: 0
+  WeaponFlag: 9
   Lockshape: 0
   ReloadSfx: {fileID: 0}
   ChangeWeaponSfx: {fileID: 0}
@@ -1449,6 +1464,7 @@ MonoBehaviour:
   armorLevel: 3
   useHealthInsteadOfArmor: 0
   armorValue: 200
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 340225613611335898}
@@ -1482,6 +1498,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: -1
   LineArmor:
   - {fileID: 9073777177848558777}
   armorBreakEffect: []
@@ -1574,6 +1591,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 550
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 985696491808567384}
@@ -1628,6 +1646,7 @@ MonoBehaviour:
   armorLevel: 3
   useHealthInsteadOfArmor: 0
   armorValue: 200
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 1426366842831119460}
@@ -1688,6 +1707,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 100
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 1631924883762090648}
@@ -1721,6 +1741,7 @@ MonoBehaviour:
   armorLevel: 3
   useHealthInsteadOfArmor: 1
   armorValue: 400
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7518168504349131964}
@@ -1775,6 +1796,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 200
+  demolishValue: -1
   LineArmor:
   - {fileID: 9122281403537536625}
   armorBreakEffect:
@@ -1830,6 +1852,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 200
+  demolishValue: -1
   LineArmor:
   - {fileID: 7431217814894949918}
   armorBreakEffect:
@@ -1918,6 +1941,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 200
+  demolishValue: -1
   LineArmor:
   - {fileID: 278977638291863426}
   armorBreakEffect:
@@ -2126,6 +2150,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 100
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 5466701236881984968}
@@ -2201,6 +2226,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 0
   armorValue: 200
+  demolishValue: -1
   LineArmor:
   - {fileID: 2131990895985230527}
   armorBreakEffect:
@@ -2256,6 +2282,7 @@ MonoBehaviour:
   armorLevel: 3
   useHealthInsteadOfArmor: 1
   armorValue: 400
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 7518168504349131964}

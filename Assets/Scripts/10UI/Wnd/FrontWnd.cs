@@ -6,113 +6,123 @@ using UnityEngine.Video;
 
 namespace FPSGame.UI
 {
-using FPSGame.Game;
-using static FPSGame.WndTools.WndRootTool;
-using FPSGame.Managers;
-using FPSGame.GameData;
+    using FPSGame.Game;
+    using static FPSGame.WndTools.WndRootTool;
+    using FPSGame.Managers;
+    using FPSGame.GameData;
 
-/// <summary>
-/// 开场 CG 窗口。
-/// </summary>
-[AddComponentMenu("UI/窗口/开场")]
-public class FrontWnd : Window
-{
-    [SerializeField]
-    Transform Button;
-    [SerializeField]
-    VideoPlayer videoPlayer;
-    bool IsLoad = false;
-    float startTime = 0;
-    protected void Start()
+    /// <summary>
+    /// 开场 CG 窗口。
+    /// </summary>
+    [AddComponentMenu("UI/窗口/开场")]
+    public class FrontWnd : Window
     {
-        // 组合得到视频的完整路径
-        string videoPath = Path.Combine(Application.streamingAssetsPath, "StartCG.mp4");
-        videoPlayer.url = videoPath;
-        videoPlayer.Play();
-        startTime = Time.time;
-    }
+        [SerializeField]
+        Transform Button;
+        [SerializeField]
+        VideoPlayer videoPlayer;
+        bool IsLoad = false;
+        float startTime = 0;
+        protected void Start()
+        {
+            // 组合得到视频的完整路径
+            string videoPath = Path.Combine(Application.streamingAssetsPath, "StartCG.mp4");
+            videoPlayer.url = videoPath;
+            videoPlayer.Play();
+            startTime = Time.time;
+        }
 
-    protected override void FirstShowWnd()
-    {
-        SetCilck(Button,()=>{
-            Load();
-            //Debug.LogError("开始");
-        });
+        protected override void FirstShowWnd()
+        {
+            SetCilck(Button,()=>{
+                Load();
+                //Debug.LogError("开始");
+            });
 
-    }
+        }
 
-    protected override void ShowWnd()
-    {
-        WindowState = WindowStateEnum.UI;
-        //GlobalEventManager.OnFakeBg(BG);
-        PlayAnim("Idle");
+        protected override void ShowWnd()
+        {
+            WindowState = WindowStateEnum.UI;
+            //GlobalEventManager.OnFakeBg(BG);
+            PlayAnim("Idle");
 
-    }
-    protected override void HideWnd()
-    {
-        //GlobalEventManager.OnFakeBg(null);
-        /*
-        GameState = GameStateEnum.Load;
-        ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
-            //Debug.LogError("加载front完成");
-            //GameRoot.CreateTimer(()=> GameRoot.GameState = GameStateEnum.Bridge,4);
-            GameState = GameStateEnum.Bridge;
-            WindowState = WindowStateEnum.Game;
-            //AudioManager.PlaySound(new("BG_Shining_L"));
+        }
+        protected override void HideWnd()
+        {
             //GlobalEventManager.OnFakeBg(null);
-        },true);*/
-    }
-    public override void OnDestroy()
-    {
-        //继承就会导致被移除时再加载一次？？
-    }
+            /*
+            GameState = GameStateEnum.Load;
+            ResSvc.Instance.AsyncLoadScene("Utnapishitim", () => {
+                //Debug.LogError("加载front完成");
+                //GameRoot.CreateTimer(()=> GameRoot.GameState = GameStateEnum.Bridge,4);
+                GameState = GameStateEnum.Bridge;
+                WindowState = WindowStateEnum.Game;
+                //AudioManager.PlaySound(new("BG_Shining_L"));
+                //GlobalEventManager.OnFakeBg(null);
+            },true);*/
+        }
+        public override void OnDestroy()
+        {
+            //继承就会导致被移除时再加载一次？？
+        }
 
-    private void Update()
-    {
-#if UNITY_EDITOR
+        private void Update()
+        {
+    #if UNITY_EDITOR
             if (Input.GetKeyDown(KeyCode.U))
-        {
-            EnterTeach();
-            return;
-        }
-#endif
-            if (Input.anyKeyDown 
-            && !Input.GetMouseButtonDown(0)
-            && !Input.GetMouseButtonDown(1)
-            && !Input.GetMouseButtonDown(2)
-        ){
-            Load();
-        }
-    }
-
-    private void Load()
-    {
-        //PlayAnim("Exit");
-        if (IsLoad) return;
-        IsLoad = true;
-
-        // 新档先进新手教学：教程阶段不管名字（系统默认名即可），
-        // 起名统一由 BridgeWnd 在大厅里做 ⇒ 不管从哪条路进大厅都会问
-        if (ArchivesData_SO.Current.isNew)
-        {
-            EnterTeach();
-            return;
+            {
+                EnterTeach();
+                return;
+            }
+            else if (Input.GetKeyDown(KeyCode.Y))
+            {
+                EnterFastTest();
+                return;
+            }
+    #endif
+                if (Input.anyKeyDown 
+                && !Input.GetMouseButtonDown(0)
+                && !Input.GetMouseButtonDown(1)
+                && !Input.GetMouseButtonDown(2)
+            ){
+                Load();
+            }
         }
 
-        ResSvc.Instance.AsyncLoadScene("Utnapishitim", () =>
+        private void Load()
         {
-            GameState = GameStateEnum.Bridge;
-            WindowState = WindowStateEnum.Game;
-        });
+            //PlayAnim("Exit");
+            if (IsLoad) return;
+            IsLoad = true;
+
+            // 新档先进新手教学：教程阶段不管名字（系统默认名即可），
+            // 起名统一由 BridgeWnd 在大厅里做 ⇒ 不管从哪条路进大厅都会问
+            if (ArchivesData_SO.Current.isNew)
+            {
+                EnterTeach();
+                return;
+            }
+
+            ResSvc.Instance.AsyncLoadScene("Utnapishitim", () =>
+            {
+                GameState = GameStateEnum.Bridge;
+                WindowState = WindowStateEnum.Game;
+            });
+        }
+
+        private void EnterTeach()
+        {
+            ResSvc.Instance.AsyncLoadScene("Teach", () => {
+                BattleManager.Creat(false);
+            });
+        }
+        private void EnterFastTest()
+        {
+            ResSvc.Instance.AsyncLoadScene("FastTest", () => {
+                BattleManager.Creat(false);
+            });
+        }
+
     }
-
-    private void EnterTeach()
-    {
-        ResSvc.Instance.AsyncLoadScene("Teach", () => {
-            BattleManager.Creat(false);
-        });
-    }
-
-
-}
 }

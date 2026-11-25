@@ -260,7 +260,7 @@ namespace FPSGame.AI
             if (!turret.weapon) return;
             if (!turret.CanFireAt(DetectionTargetPos)) return;
             // 同样按表面距离判射程：否则短射程武器对大型单位(半径>射程)一辈子开不了火
-            float dis = DetectionTargetSurfaceDis(turret.barrel.position);
+            float dis = DetectionTargetSurfaceDis(turret.FirePosition);
             if (dis <= turret.weapon.CurrentWeaponExtremeRange)
             {
                 turret.weapon.ShootInputs(true, true, false);

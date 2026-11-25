@@ -7,6 +7,7 @@ namespace FPSGame.AI
     /// <summary>
     /// 炮台/炮塔：控制底盘(水平)与炮管(垂直)双轴瞄准、限制角度、开火判定。
     /// 原为 AIInputUnitController 的嵌套类，因基类泛型化而提升为独立顶层类，字段/方法/序列化不变。
+    /// <para>[同轴 Coaxial] 不参与任何旋转：只登记一个绑定武器供控制器触发，并用炮口 forward 判定本体是否已瞄准。</para>
     /// </summary>
     [System.Serializable]
     public class Turret
@@ -19,6 +20,9 @@ namespace FPSGame.AI
             [InspectorName("自体")]
             /// <summary>自体炮塔：无武器、无垂直旋转，仅控制底盘水平旋转</summary>
             SelfBody,
+            [InspectorName("同轴")]
+            /// <summary>同轴炮塔：不旋转(武器随本体朝向)，只登记一个绑定武器供控制器触发起火</summary>
+            Coaxial,
         }
 
         [InspectorName("炮塔类型")]
@@ -28,6 +32,7 @@ namespace FPSGame.AI
         public Transform chassis;
 
         [InspectorName("炮管(上下X)")]//上下X
+        /// <summary>炮管转轴；同轴炮塔里就填炮口——只取它的 forward 判是否瞄准，不参与旋转</summary>
         public Transform barrel;
 
         [InspectorName("绑定武器")]
@@ -89,6 +94,9 @@ namespace FPSGame.AI
         private bool integrated;
         private bool HaveBarrel => barrel;
 
+        /// <summary>同轴炮塔：不处理任何旋转，只登记绑定武器供控制器触发起火</summary>
+        public bool IsCoaxial => type == TurretType.Coaxial;
+
         /// <summary>根</summary>
         private Transform root;
 
@@ -97,6 +105,19 @@ namespace FPSGame.AI
         public void Init(Transform root)
         {
             this.root = root;
+            // 同轴炮塔：没有底盘/炮管、不做任何旋转，只把绑定武器交给控制器触发；
+            // "是否已瞄准"靠炮口 forward 判定（见 LookCoaxial），没有参考点就永远不算锁定 ⇒ 直接报错，别静默不开火。
+            if (IsCoaxial)
+            {
+                if (!weapon)
+                {
+                    Debug.LogError($"[Turret Init] 同轴炮塔缺少绑定武器: {root.name}", root);
+                    return;
+                }
+                if (weapon.Owner == null) weapon.Owner = root.gameObject;
+                if (!barrel) Debug.LogError($"[Turret Init] 同轴炮塔缺少炮口(填在炮管字段): {weapon} {root}", root);
+                return;
+            }
             // 引擎坑：default(Quaternion) 是 (0,0,0,0) 而非 identity —— 字段后加/改名/旧资产迁移都会留全零。
             // 它会让 Look() 的 tarBarrelRotation 变成零四元数，RotateTowards 从此永远追不上目标（integrated 炮台转向全靠 barrel 分支，等于彻底失效）。
             // 全零是唯一非法值（w=0 而 xyz 非零是合法的 180°），判定无歧义；但仍报 warning，免得掩盖"策划以为填的值生效了"。
@@ -167,8 +188,30 @@ namespace FPSGame.AI
         [Tooltip("(弧度，转角度为*57")]
         private float dot = 0;
 
+        /// <summary>
+        /// 同轴炮塔的"瞄准"只是判定：本体转向由移动/状态机负责，这里只量炮口 forward 与炮口→目标的夹角。
+        /// dot 取 cos(θ/2) 而不是 cosθ，这样同一个 allowDeviation 阈值与其它类型的 Quaternion.Dot 口径一致。
+        /// </summary>
+        private void LookCoaxial(Vector3 targetPos)
+        {
+            // 同轴的"炮口"就是 barrel 字段（炮口随本体转，所以只量它的 forward）
+            Transform mouth = barrel;
+            if (!mouth) return;
+            Vector3 toTarget = targetPos - mouth.position;
+            if (toTarget.sqrMagnitude < 0.0001f) return;
+            float cos = Vector3.Dot(mouth.forward, toTarget.normalized);
+            dot = Mathf.Sqrt(Mathf.Max(0f, (1f + cos) * 0.5f));
+        }
+
         public void Look(Vector3 targetPos)
         {
+            // 同轴炮塔不旋转，只负责量"本体是否已转到目标"
+            if (IsCoaxial)
+            {
+                LookCoaxial(targetPos);
+                return;
+            }
+
             //修正重力因素（仅完整炮台且武器带重力时）
             if (weapon && weapon.CurrentGravity > 0)
             {
@@ -254,6 +297,7 @@ namespace FPSGame.AI
 
         public void Rotate(float angle)
         {
+            if (IsCoaxial) return;//同轴炮塔不旋转
             if (integrated) return;//一体式炮塔不吃这套
             if (!chassis) return;
             angle *= rotateDir;
@@ -352,6 +396,7 @@ namespace FPSGame.AI
 
         public void Aiming(float time)
         {
+            if (IsCoaxial) return;//没有可写回的旋转
             // 直接应用 Look() 中用 aimSharpness 渐进算出的目标旋转，转向速度完全由 aimSharpness 决定
             if (!integrated) chassis.rotation = chassisRotation;
             if (HaveBarrel) barrel.rotation = barrelRotation;
@@ -359,9 +404,16 @@ namespace FPSGame.AI
         /// <summary> 在Idle状态下同步 </summary>
         public void Synchro()
         {
+            if (IsCoaxial) return;//没有底盘可读回
             if (!integrated) chassisRotation = chassis.rotation;
             if (HaveBarrel) barrelRotation = barrel.rotation;
         }
+
+        /// <summary>
+        /// 开火参考点：同轴炮塔没有底盘，退回发射点/武器本体（Init 已保证同轴一定有武器）。
+        /// 各控制器判射程/开火一律用它，别直接取 barrel.position。
+        /// </summary>
+        public Vector3 FirePosition => chassis ? chassis.position : (firePoint ? firePoint.position : (root ? root.position : Vector3.zero));
 
         public bool IsLockTarget(Vector3 target)
         {
@@ -377,13 +429,13 @@ namespace FPSGame.AI
 
         /// <summary>
         /// 该炮塔当前是否允许对 targetPos 开火（目标距离不小于最小攻击距离）。
-        /// 基于底盘位置判定；minAttackRange<=0 时不限。
+        /// 基于开火参考点 <see cref="FirePosition"/> 判定；minAttackRange<=0 时不限。
         /// 近战武器额外检查垂直高度差：目标与发射点的垂直高度差超过武器射程则视为够不着，不允许开火。
         /// </summary>
         public bool CanFireAt(Vector3 targetPos)
         {
             // 最小攻击距离：目标过近不能开火（minAttackRange<=0 时不限制）
-            if (minAttackRange > 0 && Vector3.Distance(chassis.position, targetPos) < minAttackRange)
+            if (minAttackRange > 0 && Vector3.Distance(FirePosition, targetPos) < minAttackRange)
             {
                 return false;
             }
@@ -392,7 +444,7 @@ namespace FPSGame.AI
             // 远程武器(射程>阈值)可抛射/直线命中高处，跳过该规则。
             if (weapon && weapon.CurrentWeaponExtremeRange <= meleeRangeThreshold)
             {
-                Vector3 firePos = firePoint ? firePoint.position : chassis.position;
+                Vector3 firePos = firePoint ? firePoint.position : FirePosition;
                 float heightDelta = Mathf.Abs(targetPos.y - firePos.y);
                 if (heightDelta > weapon.CurrentWeaponExtremeRange)
                 {
@@ -404,6 +456,8 @@ namespace FPSGame.AI
 
         public Vector3 AimDir()
         {
+            // 同轴炮塔：没有炮管/底盘旋转，取炮口朝向
+            if (IsCoaxial) return barrel ? barrel.forward : Vector3.forward;
             return HaveBarrel ? (barrel.rotation * Quaternion.Inverse(barrelRotation)) * Vector3.forward : chassisRotation * Vector3.forward;
         }
 
@@ -413,6 +467,17 @@ namespace FPSGame.AI
         /// </summary>
         public void DrawGizmosSelected()
         {
+            // 同轴炮塔：没有底盘/炮管转轴，只画炮口朝向（=瞄准判定用的 forward）
+            if (IsCoaxial)
+            {
+                Transform mouth = barrel;
+                if (mouth)
+                {
+                    Gizmos.color = Color.magenta;
+                    Gizmos.DrawRay(mouth.position, mouth.forward * 2.5f);
+                }
+                return;
+            }
             if (!chassis) return;
 
             Transform pivot = HaveBarrel ? barrel : chassis;

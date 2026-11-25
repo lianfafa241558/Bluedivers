@@ -331,11 +331,6 @@ namespace FPSGame.Managers
             }
         }
 
-        /// <summary>启用/禁用单位的 Animator(空投前"冻结待机"、投放时的落地动画)</summary>
-        protected static void SetUnitAnimator(GameObject go, bool value)
-        {
-            if (go.TryGetComponent(out EnemyControllerFX fx) && fx.Animator) fx.Animator.enabled = value;
-        }
 
         /// <summary>确保单位所有 Collider 启用(Animator 关键帧可能在启用后把碰撞体关掉)</summary>
         protected static void EnableUnitColliders(GameObject go)

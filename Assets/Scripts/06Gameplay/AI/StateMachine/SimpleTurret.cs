@@ -120,7 +120,7 @@ namespace FPSGame.AI
             if (!turret.weapon) return;
             if (!turret.CanFireAt(DetectionTargetPos)) return;
             // 按表面距离判射程：射程小于目标半径时，只按中心点算会永远"够不着"⇒ 贴身也不开火
-            float dis = DetectionTargetSurfaceDis(turret.barrel.position);
+            float dis = DetectionTargetSurfaceDis(turret.FirePosition);
             if (dis <= turret.weapon.CurrentWeaponExtremeRange)
             {
                 turret.weapon.ShootInputs(true, true, false);

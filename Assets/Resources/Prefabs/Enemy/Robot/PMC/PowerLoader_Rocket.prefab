@@ -5033,6 +5033,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 1
   armorValue: 70
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 1000
@@ -5118,7 +5119,7 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
-  _knockbackWeight: 1
+  _knockbackWeight: 5
   _knockbackDrag: 3
   _knockbackMaxSpeed: 20
   _pauseAutoRepathWhileKnocked: 1
@@ -5155,7 +5156,7 @@ MonoBehaviour:
     chassis: {fileID: 2212839844615535630}
     barrel: {fileID: 6925693935129250880}
     weapon: {fileID: 8741564840476863133}
-    aimSharpness: 20
+    aimSharpness: 40
     autoRotateSpeed: 0
     detectionFireDelay: 0.1
     minAttackRange: 0
@@ -5170,7 +5171,7 @@ MonoBehaviour:
     chassis: {fileID: 4313288519332814736}
     barrel: {fileID: 3166117155204276170}
     weapon: {fileID: 3656089329415403799}
-    aimSharpness: 20
+    aimSharpness: 40
     autoRotateSpeed: 0
     detectionFireDelay: 3
     minAttackRange: 0
@@ -5265,7 +5266,6 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 6578348376892723638}
-  demolishValue: -1
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
@@ -5330,6 +5330,7 @@ MonoBehaviour:
             m_BoolArgument: 0
           m_CallState: 2
   BirthMaterial: {fileID: 0}
+  BirthTrigger: 0
 --- !u!114 &5673914690511180711
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5444,6 +5445,7 @@ MonoBehaviour:
   armorLevel: 1
   useHealthInsteadOfArmor: 1
   armorValue: 250
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 50
@@ -7540,6 +7542,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: -1
   LineArmor:
   - {fileID: 6488076372148840511}
   armorBreakEffect: []
@@ -7569,6 +7572,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 150
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 1200855157959537310}
@@ -7625,6 +7629,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 150
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 1760806534405440045}
@@ -7710,6 +7715,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 150
+  demolishValue: -1
   LineArmor:
   - {fileID: 1323271606449699295}
   armorBreakEffect:
@@ -7948,6 +7954,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 150
+  demolishValue: -1
   LineArmor:
   - {fileID: 5651405862946936040}
   armorBreakEffect:

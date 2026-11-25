@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FPSGame.Core;
 using FPSGame.Game;
 using UnityEngine;
@@ -10,6 +10,7 @@ namespace FPSGame.AI
 
     /// <summary>
     /// 允许任意 I_AIController 的表现控制器。
+    /// 尽量不要让其他类直接引用
     /// 受击 / 死亡表现与特效管线来自 <see cref="FxControllerBase"/>，本类只额外绑定 AI 时机
     /// （攻击 / 发现目标 / 丢失目标）与诞生材质。
     /// </summary>
@@ -18,6 +19,10 @@ namespace FPSGame.AI
         [InspectorName("初始材质")]
         [SerializeField]
         private Material BirthMaterial;
+
+        [InspectorName("初始动画触发器")]
+        [SerializeField]
+        private bool BirthTrigger;
 
         protected I_AIController m_Controller;
 
@@ -35,8 +40,7 @@ namespace FPSGame.AI
             m_Controller.OnDie += OnDie;
 
             InitFx();
-            if (m_Controller.BirthDuration > 0) TriggerFX(OccasionTypeEnum.Birth, m_Controller.Pos, Quaternion.identity, transform);
-            if (BirthMaterial && m_Controller.BirthDuration > 0) Invoke(nameof(RestoreMat), m_Controller.BirthDuration);
+            OnBirth();
             InitAboStateFxListener();
         }
 
@@ -55,6 +59,18 @@ namespace FPSGame.AI
         {
             UpdateFx();
         }
+
+        protected virtual void OnBirth()
+        {
+            var birthDuration = m_Controller.BirthDuration;
+            if (birthDuration > 0)
+            {
+                TriggerFX(OccasionTypeEnum.Birth, m_Controller.Pos, Quaternion.identity, transform);
+                if (BirthMaterial) Invoke(nameof(RestoreMat), birthDuration);
+                if (BirthTrigger) SetTrigger(Constants.k_AnimEntry,true);
+            }
+        }
+
 
         /// <summary>受击时</summary>
         protected virtual void OnHit(Vector3 pos,Vector3 normal) => PlayHitFx(pos, normal);

@@ -1,4 +1,4 @@
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 using FPSGame.Core;
 using FPSGame.Attributes;
@@ -17,7 +17,7 @@ using System;
 /// 定义对带有`CustomLabelAttribute`特性的字段的面板内容的绘制行为。
 /// </summary>
 [CustomPropertyDrawer(typeof(CompareAttribute))]
-public class CustomLabelDrawer : PropertyDrawer
+public class CompareDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {

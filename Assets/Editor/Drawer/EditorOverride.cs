@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -278,7 +278,7 @@ namespace Pixeye.Unity
             if (fieldInfo == null) return true;
             var compare = Attribute.GetCustomAttribute(fieldInfo, typeof(CompareAttribute)) as CompareAttribute;
             if (compare == null) return true;
-            return CustomLabelDrawer.ShouldDisplayField(prop, compare);
+            return CompareDrawer.ShouldDisplayField(prop, compare);
         }
 
 

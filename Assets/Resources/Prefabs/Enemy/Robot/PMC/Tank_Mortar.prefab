@@ -73,6 +73,11 @@ PrefabInstance:
       propertyPath: Id
       value: Tank_Mortar
       objectReference: {fileID: 0}
+    - target: {fileID: 2158426943552871919, guid: 934c1982213e3f441862417fe259c49e,
+        type: 3}
+      propertyPath: flag
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 3534184139042840447, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -271,7 +276,22 @@ PrefabInstance:
     - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}
       propertyPath: Damages.Array.data[0].MaxLifeTime
-      value: 4
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
+        type: 3}
+      propertyPath: Damages.Array.data[0].ExplosionRange
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
+        type: 3}
+      propertyPath: Damages.Array.data[0].DamageExplosion
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5933658029391790594, guid: 934c1982213e3f441862417fe259c49e,
+        type: 3}
+      propertyPath: Damages.Array.data[0].ShockwaveRadius
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 6562201307434426149, guid: 934c1982213e3f441862417fe259c49e,
         type: 3}

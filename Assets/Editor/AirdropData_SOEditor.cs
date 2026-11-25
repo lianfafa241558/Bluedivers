@@ -493,7 +493,7 @@ public class AirdropData_SOEditor : DataSOEditorBase
         if (fieldInfo == null) return true;
         var cmp = fieldInfo.GetCustomAttribute<CompareAttribute>();
         if (cmp == null) return true;
-        return CustomLabelDrawer.ShouldDisplayField(p, cmp);
+        return CompareDrawer.ShouldDisplayField(p, cmp);
     }
 
     // =====================================================

@@ -44,7 +44,7 @@ namespace FPSGame.Managers
             startTipName = "WaveStart_Robot";
             infoTitle = "侦测发现机器人";
             //机器人平均人口2.23左右
-            spawnInterval = Mathf.Clamp(480f / Mathf.Max(1, creats.Count), 5, 15);
+            spawnInterval = Mathf.Clamp(360f / Mathf.Max(1, creats.Count), 3, 10);
             lastGroupSpawnTime = Time.time - spawnInterval + 5;
 
             Trans(WaveState.Start);
@@ -217,7 +217,7 @@ namespace FPSGame.Managers
             group.unitObjects.Add(go);
 
             RegisterUnit(go);
-            SetUnitAnimator(go, false);
+
         }
 
         /// <summary>普通单位：挂在鹰下方，2列布局按数量沿 Z 轴均匀分布</summary>
@@ -249,7 +249,7 @@ namespace FPSGame.Managers
                 group.unitObjects.Add(go);
 
                 RegisterUnit(go);
-                SetUnitAnimator(go, false);
+
             }
         }
 
@@ -268,9 +268,6 @@ namespace FPSGame.Managers
 
                 // 确保所有Collider处于启用状态（Animator关键帧可能在启用后将其关闭）
                 EnableUnitColliders(unit);
-
-                // 启用Animator（开始落地动画）
-                SetUnitAnimator(unit, true);
 
                 // 设置长期落点：到达后不移除，途中被中断(回Idle)会继续走向该点
                 SetUnitHome(unit);

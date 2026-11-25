@@ -81,6 +81,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
@@ -166,6 +167,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 1
   armorValue: 400
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
@@ -338,6 +340,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 1
   armorValue: 100
+  demolishValue: -1
   LineArmor:
   - {fileID: 1837737819739920966}
   armorBreakEffect:
@@ -408,6 +411,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 1
   armorValue: 225
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect:
   - go: {fileID: 6512250307423866939}
@@ -500,6 +504,7 @@ MonoBehaviour:
   armorLevel: 5
   useHealthInsteadOfArmor: 1
   armorValue: 400
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
@@ -601,6 +606,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 1
   armorValue: 100
+  demolishValue: -1
   LineArmor:
   - {fileID: 4989044582933774862}
   armorBreakEffect:
@@ -734,6 +740,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 0
   armorValue: 0
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 0
@@ -1414,7 +1421,7 @@ MonoBehaviour:
   PathReachingRadius: 2
   m_lastDestination: {x: 0, y: 0, z: 0}
   isImportant: 0
-  _knockbackWeight: 1
+  _knockbackWeight: 10
   _knockbackDrag: 3
   _knockbackMaxSpeed: 20
   _pauseAutoRepathWhileKnocked: 1
@@ -1576,7 +1583,6 @@ MonoBehaviour:
   MaxShield: 0
   showArmorLists: []
   MainPart: {fileID: 2723675281896222779}
-  demolishValue: -1
   AutoDestroy: 0
   showHealth: 0
   m_IsDead: 0
@@ -1615,6 +1621,7 @@ MonoBehaviour:
   fxMaterial: {fileID: 2100000, guid: cc16cd262eb798544824e76d45efc56c, type: 2}
   events: []
   BirthMaterial: {fileID: 0}
+  BirthTrigger: 0
 --- !u!114 &4108433066736170673
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1810,6 +1817,7 @@ MonoBehaviour:
   armorLevel: 4
   useHealthInsteadOfArmor: 1
   armorValue: 400
+  demolishValue: -1
   LineArmor: []
   armorBreakEffect: []
   BleedValue: 1000

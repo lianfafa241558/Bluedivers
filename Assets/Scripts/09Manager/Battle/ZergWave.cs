@@ -1,13 +1,7 @@
 ﻿using System.Collections.Generic;
-using FPSGame.Core;
-using FPSGame.AI;
-using FPSGame.Game;
 using UnityEngine;
-using UnityEngine.AI;
 using FPSGame.Utils;
-using FPSGame.Audio;
 using FPSGame.Gameplay;
-using Random = System.Random;
 using FPSGame.GameContract;
 
 namespace FPSGame.Managers
