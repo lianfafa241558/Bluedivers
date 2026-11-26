@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -15,7 +15,7 @@ namespace FPSGame.UI
 [AddComponentMenu("UI/导演拖拽条目")]
 public class DirectorDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    /// <summary>条目数据（<c>DirectorUnitEntry</c> 或 <c>AirdropData_SO</c>），由面板注入。</summary>
+    /// <summary>条目数据（单位 prefab <c>GameObject</c> 或 <c>AirdropData_SO</c>），由面板注入。</summary>
     public object Data;
 
     public Action<DirectorDragItem, Vector2> DragBegan;

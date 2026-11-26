@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using FPSGame.AI;
 using FPSGame.Core;
@@ -397,11 +397,11 @@ public class DirectorMode : MonoBehaviour
     #region 生成
 
     /// <summary>在落点生成白名单里的单位。成员端不生成（与 <c>WaveManager.CreatUnit</c> 同一口径）。</summary>
-    public GameObject SpawnUnit(DirectorUnitEntry entry)
+    public GameObject SpawnUnit(GameObject prefab)
     {
-        if (entry == null || entry.prefab == null)
+        if (prefab == null)
         {
-            Debug.LogWarning("[导演] 单位条目为空或没挂预制体");
+            Debug.LogWarning("[导演] 没选单位预制体");
             return null;
         }
         if (!HasMarker)
@@ -415,19 +415,12 @@ public class DirectorMode : MonoBehaviour
             return null;
         }
 
-        Vector3 pos = MarkerPoint;
-        if (entry.scatterRange > 0f)
-        {
-            // PV 布景的局部抖动，不进战斗随机流（UnityEngine.Random 在此不参与任何判定）
-            Vector2 circle = UnityEngine.Random.insideUnitCircle * entry.scatterRange;
-            pos += new Vector3(circle.x, 0f, circle.y);
-        }
-        pos = FpsHelper.GetNavMeshPoint(pos);
+        Vector3 pos = FpsHelper.GetNavMeshPoint(MarkerPoint);
 
         var parent = ActorsManager.Instance != null ? ActorsManager.Instance.transform : null;
         float yaw = _controller != null ? _controller.transform.eulerAngles.y : 0f;
-        var go = Object.Instantiate(entry.prefab, pos, Quaternion.Euler(0f, yaw, 0f), parent);
-        go.name = string.IsNullOrEmpty(entry.showName) ? entry.prefab.name : entry.showName;
+        var go = Object.Instantiate(prefab, pos, Quaternion.Euler(0f, yaw, 0f), parent);
+        go.name = prefab.name;
 
         // 出生延迟清 0：PV 布景等不起站立动画（与 WaveManager.CreatUnit 的 IsFixed 同口径）
         var ai = go.GetComponent<I_AIController>();

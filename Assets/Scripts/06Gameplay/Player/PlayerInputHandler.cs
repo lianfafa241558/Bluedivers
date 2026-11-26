@@ -113,6 +113,21 @@ public class PlayerInputHandler : MonoBehaviour
     }
 
     /// <summary>
+    /// "当成玩家操作"的统一口径：游戏界面，或导演「固定机位」（自由视角 + 角色已交还玩家）。
+    /// <para>⚠ 新增需要玩家动作的键位请用它，别各写 <c>WindowStateEnum.Game</c> ——
+    /// 漏一处就是"固定机位只有 WASD 能动"（2026-11-26 实测）。</para>
+    /// </summary>
+    public bool CanProcessAsPlayer(bool allowOperation = false)
+    {
+        if (!CanProcessInput(allowOperation)) return false;
+        return FPSGame.Data.UIState.WindowState == WindowStateEnum.Game || IsDirectorShot;
+    }
+
+    /// <summary>导演固定机位：自由视角窗口 + <c>UIState.PlayerControl</c>（见 DirectorMode.ApplyStateControl）。</summary>
+    private static bool IsDirectorShot =>
+        FPSGame.Data.UIState.WindowState == WindowStateEnum.FreeCamera && FPSGame.Data.UIState.PlayerControl;
+
+    /// <summary>
     /// 玩家输入的位移方向
     /// </summary>
     public Vector3 GetMoveInput()
@@ -274,13 +289,13 @@ public class PlayerInputHandler : MonoBehaviour
     /// <summary>按下下蹲键（C）：切换式，由 PlayerController 维护姿态状态机。</summary>
     public bool GetCrouchToggleDown()
     {
-        return CanProcessInput(WindowStateEnum.Game) && InputManager.GetDown(InputState.Crouching);
+        return CanProcessAsPlayer() && InputManager.GetDown(InputState.Crouching);
     }
 
     /// <summary>按下卧倒键（Z）：切换式，由 PlayerController 维护姿态状态机。</summary>
     public bool GetProneToggleDown()
     {
-        return CanProcessInput(WindowStateEnum.Game) && InputManager.GetDown(InputState.Prone);
+        return CanProcessAsPlayer() && InputManager.GetDown(InputState.Prone);
     }
     /// <summary>
     /// 按下投掷键
@@ -398,7 +413,7 @@ public class PlayerInputHandler : MonoBehaviour
     /// <returns></returns>
     public int GetSwitchWeaponInput()
     {
-        if (CanProcessInput(WindowStateEnum.Game))// && !InWndPrevent)
+        if (CanProcessAsPlayer())// && !InWndPrevent)
         {
             float value= Input.GetAxis("Mouse ScrollWheel");
             //mathf.Sign=0时也返回1

@@ -24,18 +24,20 @@ public partial class FreeCameraWnd : Window
 
     private float _nextHudTime;
 
+    /// <summary>H 键的显隐开关（Tip / showTime / 导演面板 / 落点标记统一听它的）。</summary>
+    private bool _hudVisible = true;
+
     public void Update()
     {
+        // 开窗期间阶段可能变（打完回结算等），每帧对一次开关
+        SyncDirectorState();
+
         if (InputManager.GetDown(InputState.H))
         {
-            bool state = !GetActive(Tip);
-            SetActive(Tip, state);
-            SetActive(showTime.parent, state);
-            if (_panel != null) _panel.SetVisible(state);
-            // 落点标记也要一起藏：它是世界物体，不属于 UI，但拍摄时要"干净画面"
-            if (_director != null) _director.SetMarkerVisible(state);
+            _hudVisible = !_hudVisible;
+            ApplyHudVisibility();
         }
-        if (InputManager.GetDown(InputState.J) && _director != null)
+        if (_directorActive && InputManager.GetDown(InputState.J) && _director != null)
         {
             _director.TogglePause();
         }
@@ -56,6 +58,19 @@ public partial class FreeCameraWnd : Window
         }
 
         RefreshDirectorPanel();
+    }
+
+    /// <summary>
+    /// 面板只有导演模式可用时才显示，其余情况只是原来的自由相机 HUD。
+    /// <para>⚠ Tip/showTime 在 prefab 里必挂，<c>SetActive</c> 内部不判空。</para>
+    /// </summary>
+    private void ApplyHudVisibility()
+    {
+        SetActive(Tip, _hudVisible);
+        SetActive(showTime.parent, _hudVisible);
+        if (_panel != null) _panel.SetVisible(_hudVisible && _directorActive);
+        // 落点标记也要一起藏：它是世界物体，不属于 UI，但拍摄时要"干净画面"
+        if (_director != null) _director.SetMarkerVisible(_hudVisible);
     }
 
     protected override void FirstShowWnd()
@@ -86,12 +101,19 @@ public partial class FreeCameraWnd : Window
         }
 
         // 必须在 FreeCamera 激活之后：控制器在 OnEnable 里取 Camera 组件
-        if (_director != null) _director.Enter();
+        // 每次开窗都重算：只有战斗阶段才进导演模式，其他阶段保持原来的自由相机
+        _directorActive = false;
+        SyncDirectorState();
     }
 
     protected override void HideWnd()
     {
-        if (_director != null) _director.Exit();
+        // 没进过导演模式就别 Exit：它会写回 timeScale=1、改玩家输入，会影响别的阶段
+        if (_director != null && _directorActive)
+        {
+            _director.Exit();
+            _directorActive = false;
+        }
 
         SetActive(camera, false);
         var baseCameraData = camera.GetComponent<Camera>().GetUniversalAdditionalCameraData();

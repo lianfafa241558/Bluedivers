@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using TMPro;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using FPSGame.Core;
@@ -20,9 +19,14 @@ public partial class FreeCameraWnd
     private const float PanelRefreshInterval = 0.2f;
 
     private DirectorMode _director;
-    private DirectorPanel _panel;
+
+    /// <summary>面板本体在 prefab 里（静态结构可手改），这里只要引用。</summary>
+    [InspectorName("导演面板")][SerializeField] private DirectorPanel _panel;
+
     private float _nextPanelRefresh;
     private bool _cameraOverride;
+    /// <summary>当前是否处于导演模式（= 开窗时 / 开窗期间阶段为 Game 且已 Enter）。</summary>
+    private bool _directorActive;
     /// <summary>本次按住 Alt 已经用于"Alt+数字存档位"⇒ 不再抢去做相机微调（否则松手前一直接管相机）。</summary>
     private bool _altUsedForShot;
 
@@ -43,8 +47,13 @@ public partial class FreeCameraWnd
             Debug.LogWarning($"[导演] 找不到单位白名单 Resources/{DirectorUnitDataPath}.asset，单位列表为空");
         }
 
-        _panel = gameObject.AddComponent<DirectorPanel>();
-        _panel.Build(transform, ResolveFont(), unitData != null ? unitData.units : null, LoadAirdrops());
+        if (_panel == null)
+        {
+            Debug.LogError("[导演] FreeCameraWnd.prefab 上没有挂 DirectorPanel，导演面板不可用");
+            return;
+        }
+
+        _panel.Bind(unitData != null ? unitData.groups : null, LoadAirdrops());
         _panel.ShotClicked = index => _director.GotoShot(index);
         _panel.PauseClicked = () => _director.TogglePause();
         _panel.SlowerClicked = () => _director.CycleRate(-1);
@@ -70,7 +79,7 @@ public partial class FreeCameraWnd
             if (picked)
             {
                 _director.SetMarker(point);
-                if (data is DirectorUnitEntry entry) _director.SpawnUnit(entry);
+                if (data is GameObject prefab) _director.SpawnUnit(prefab);
                 else if (data is AirdropData_SO airdrop) _director.ReleaseAirdrop(airdrop);
             }
             else if (!overUI)
@@ -84,18 +93,11 @@ public partial class FreeCameraWnd
         };
 
         _panel.Refresh(_director);
+        ApplyHudVisibility();   // 非战斗阶段开窗时面板默认就是关的
     }
 
     private static bool IsPointerOverUI()
         => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-
-    /// <summary>中文字体直接复用 showTime 上的 TMP（那份是 MSYH SDF），不额外 Resources.Load 字体。</summary>
-    private TMP_FontAsset ResolveFont()
-    {
-        if (showTime == null) return null;
-        var text = showTime.GetComponent<TMP_Text>();
-        return text != null ? text.font : null;
-    }
 
     private static List<AirdropData_SO> LoadAirdrops()
     {
@@ -111,9 +113,35 @@ public partial class FreeCameraWnd
         return result;
     }
 
+    /// <summary>导演工具（暂停/倍率/机位/生成）只在真正的战斗阶段可用。</summary>
+    private static bool DirectorAllowed => GameRoot.GameState == GameStateEnum.Game;
+
+    /// <summary>
+    /// 按当前阶段进出导演模式。Enter/Exit 会改 timeScale 与玩家输入，所以非战斗阶段一律不进入；
+    /// 开窗后阶段变化（打完回结算等）也靠每帧调它兜住。
+    /// </summary>
+    private void SyncDirectorState()
+    {
+        if (_director == null) return;   // 首次开窗前
+
+        bool allowed = DirectorAllowed;
+        if (allowed == _directorActive) return;
+        _directorActive = allowed;
+
+        if (allowed)
+        {
+            _director.Enter();
+            if (_panel != null) _panel.Refresh(_director);
+        }
+        else _director.Exit();
+
+        ApplyHudVisibility();
+    }
+
     private void UpdateDirectorHotkeys()
     {
-        if (_director == null) return;
+        // 非战斗阶段：只保留原来的自由相机键位（H/U/加速），导演那套热键全部不响应
+        if (_director == null || !_directorActive) return;
 
         if (Input.GetKeyDown(KeyCode.Tab)) _director.TogglePointer();
 
@@ -167,7 +195,7 @@ public partial class FreeCameraWnd
 
     private void RefreshDirectorPanel()
     {
-        if (_panel == null || _director == null) return;
+        if (_panel == null || _director == null || !_directorActive) return;
         if (Time.unscaledTime < _nextPanelRefresh) return;
         _nextPanelRefresh = Time.unscaledTime + PanelRefreshInterval;
         _panel.Refresh(_director);

@@ -9,7 +9,7 @@
 - 按钮底 `FX_TEX_Lock.png`（Sliced，`Cancel`/`Server`/下拉框都用它）
 - 格子/图标框 `Hexagonal_Frame3.png`；勾点 `circular_128.png`；实底 `TEX_White_16x16.png`；条 `Bar5.png`(Sliced)
 - 任务图标 `Resources/Images/Objectives/*`（`ResSvc.LoadSprite("Objectives/…", true)`；ResSvc 未就绪降级 `Resources.Load`）
-- 字体 `Assets/Art/Font/fSimpleRound SDF.asset`（TMP；项目里 `fontSize` 16~32 混用）
+- 字体 `Assets/Art/Font/fSimpleRound SDF.asset`（TMP；项目里 `fontSize` 16~32 混用）。⚠ `MSYH SDF.asset` 只有 **145 个字符**（1024² 图集、multiAtlas 关）⇒ 拿它当主字体会让大部分中文落回 TMP Settings 的默认字体 `fSimpleRound SDF`，每个文本多一个 `TMP SubMeshUI [...]` + 材质实例（`hideFlags=DontSave`，不进 prefab）
 - 配色：主色 `(0.651,0.867,0.867)`、面板黑 `(0,0,0,0.88)`、正文 `(0.92,0.94,0.96)`、次要 `(0.62,0.66,0.70)`、选中行 `(0.42,0.26,0.05,0.96)`
 
 ## 硬经验（踩过的坑）
